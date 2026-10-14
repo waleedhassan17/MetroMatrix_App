@@ -31,6 +31,13 @@ import { emailVerificationSlice } from '../screens/Auth/EmailVerification/emailV
 import { forgotPasswordSlice } from '../screens/Auth/ForgotPassword/forgotPasswordSlice';
 import { profileSlice } from '../screens/Account/Profile/profileSlice';
 import { changePasswordSlice } from '../screens/Account/ChangePassword/changePasswordSlice';
+import { partnerSignInSlice } from '../screens/Auth/PartnerSignIn/partnerSignInSlice';
+import { partnerSignUpSlice } from '../screens/Auth/PartnerSignUp/partnerSignUpSlice';
+import { serviceSelectSlice } from '../screens/Partner/ServiceSelect/serviceSelectSlice';
+import { businessProfileSlice } from '../screens/Partner/BusinessProfile/businessProfileSlice';
+import { documentsSlice } from '../screens/Partner/Documents/documentsSlice';
+import { reviewSubmitSlice } from '../screens/Partner/ReviewSubmit/reviewSubmitSlice';
+import { pendingApprovalSlice } from '../screens/Partner/PendingApproval/pendingApprovalSlice';
 
 // `auth` is persisted through its OWN persistReducer so that exactly one
 // field reaches disk. The session (user, business, tokens) is never
@@ -54,6 +61,13 @@ const rootReducer = combineReducers({
   forgotPassword: forgotPasswordSlice.reducer,
   profile: profileSlice.reducer,
   changePassword: changePasswordSlice.reducer,
+  partnerSignIn: partnerSignInSlice.reducer,
+  partnerSignUp: partnerSignUpSlice.reducer,
+  serviceSelect: serviceSelectSlice.reducer,
+  businessProfile: businessProfileSlice.reducer,
+  documents: documentsSlice.reducer,
+  reviewSubmit: reviewSubmitSlice.reducer,
+  pendingApproval: pendingApprovalSlice.reducer,
 });
 
 type RootReducerState = ReturnType<typeof rootReducer>;

@@ -23,8 +23,16 @@ import { useAppSelector } from '../hooks/useReduxHooks';
 import { useTheme } from '../theme';
 import type { RootStackParamList } from '../types';
 import type { IRoute } from '../navigations-maps/types';
-import { EMAIL_VERIFY_ROUTES, ONBOARDING_ROUTE, UNAUTHENTICATED_ROUTES } from '../navigations-maps/Auth';
-import { resolveGate, type Gate } from './sessionGate';
+import {
+  EMAIL_VERIFY_ROUTES,
+  ONBOARDING_ROUTE,
+  PARTNER_SETUP_ROUTES,
+  PENDING_ROUTES,
+  REJECTED_ROUTES,
+  SUSPENDED_ROUTES,
+  UNAUTHENTICATED_ROUTES,
+} from '../navigations-maps/Auth';
+import { partnerSetupInitialRoute, resolveGate, type Gate } from './sessionGate';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -35,11 +43,25 @@ const BaseNavigator: React.FC = () => {
 
   const unauthenticated = [...(!auth.hasSeenOnboarding ? [ONBOARDING_ROUTE] : []), ...UNAUTHENTICATED_ROUTES];
 
-  const routes: IRoute[] = gate === 'verify' ? EMAIL_VERIFY_ROUTES : unauthenticated;
+  const BRANCHES: Partial<Record<Gate, IRoute[]>> = {
+    verify: EMAIL_VERIFY_ROUTES,
+    partnerSetup: PARTNER_SETUP_ROUTES,
+    pending: PENDING_ROUTES,
+    rejected: REJECTED_ROUTES,
+    suspended: SUSPENDED_ROUTES,
+  };
+  const routes: IRoute[] = BRANCHES[gate] ?? unauthenticated;
+
+  // Partner setup resumes where it was left (QA 15); every other branch
+  // starts on its first route.
+  const initialRouteName = (
+    gate === 'partnerSetup' ? partnerSetupInitialRoute(auth.business) : routes[0].title
+  ) as keyof RootStackParamList;
 
   return (
     <Stack.Navigator
       id="BaseNavigator"
+      initialRouteName={initialRouteName}
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: colors.canvas },

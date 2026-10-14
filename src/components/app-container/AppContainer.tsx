@@ -17,6 +17,9 @@ import { toastConfig } from '../../Custom-Components/toastConfig';
 
 import BaseNavigator from '../../navigators/BaseNavigator';
 import CustomerNavigator from '../../navigators/CustomerNavigator';
+import StorePartnerNavigator from '../../navigators/StorePartnerNavigator';
+import DoctorPartnerNavigator from '../../navigators/DoctorPartnerNavigator';
+import KitchenPartnerNavigator from '../../navigators/KitchenPartnerNavigator';
 import { resolveGate, isGateCleared } from '../../navigators/sessionGate';
 
 import {
@@ -135,6 +138,16 @@ export const AppContainer: React.FC = () => {
     switch (gate) {
       case 'customer':
         return <CustomerNavigator key="customer" />;
+      case 'partner':
+        // Approved partner: the app for the business's service.
+        switch (auth.business?.serviceType) {
+          case 'healthcare':
+            return <DoctorPartnerNavigator key="partner-doctor" />;
+          case 'food':
+            return <KitchenPartnerNavigator key="partner-kitchen" />;
+          default:
+            return <StorePartnerNavigator key="partner-store" />;
+        }
       default:
         return <BaseNavigator key={`base-${gate}`} />;
     }

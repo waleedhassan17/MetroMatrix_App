@@ -26,3 +26,7 @@ export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL?.trim() || DEFAULT_A
 // the API verifies at POST /auth/google; the web button uses it directly.
 // See docs/GOOGLE_SIGNIN.md.
 export const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?.trim() || '';
+
+// Where partners whose account is paused can reach a human.
+// TODO: confirm the real support address before release.
+export const SUPPORT_EMAIL = 'support@metromatrix.app';
