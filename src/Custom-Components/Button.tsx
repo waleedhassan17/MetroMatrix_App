@@ -83,7 +83,7 @@ export const Button: React.FC<ButtonProps> = ({
   const inactive = disabled || loading;
 
   const press = (to: number) => {
-    scale.value = withTiming(to, { duration: motion.press.duration, easing: Easing.out(Easing.quad) });
+    scale.set(withTiming(to, { duration: motion.press.duration, easing: Easing.out(Easing.quad) }));
   };
 
   return (

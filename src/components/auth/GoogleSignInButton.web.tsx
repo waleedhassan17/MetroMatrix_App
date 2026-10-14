@@ -19,7 +19,9 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({ onIdToke
   const [failed, setFailed] = useState(!isGoogleSignInAvailable());
   // Latest callbacks without re-initialising GIS on every render.
   const handlers = useRef({ onIdToken, onError });
-  handlers.current = { onIdToken, onError };
+  useEffect(() => {
+    handlers.current = { onIdToken, onError };
+  }, [onIdToken, onError]);
 
   useEffect(() => {
     if (failed) return;

@@ -58,7 +58,7 @@ export const ScreenShell: React.FC<ScreenShellProps> = ({
   const insets = useSafeAreaInsets();
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler(e => {
-    scrollY.value = e.contentOffset.y;
+    scrollY.set(e.contentOffset.y);
   });
 
   const titleBlock = title ? (

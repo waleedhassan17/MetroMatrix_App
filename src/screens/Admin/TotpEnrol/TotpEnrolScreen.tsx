@@ -159,7 +159,7 @@ const TotpEnrolScreen: React.FC = () => {
               />
             </View>
             <AppText variant="small" tone="muted" align="center">
-              Can't scan? Enter this key instead:
+              {"Can't scan? Enter this key instead:"}
             </AppText>
             <View style={styles.secret}>
               <AppText variant="bodyStrong" selectable accessibilityLabel={`Setup key ${s.enrolment.secret}`}>

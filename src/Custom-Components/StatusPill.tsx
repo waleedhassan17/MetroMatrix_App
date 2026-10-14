@@ -23,7 +23,7 @@ export const StatusPill: React.FC<{ label: string; tone?: PillTone }> = ({ label
   const { colors, service, motion } = useTheme();
   const scale = useSharedValue(0.8);
   useEffect(() => {
-    scale.value = withSpring(1, motion.spring);
+    scale.set(withSpring(1, motion.spring));
   }, [scale, motion.spring]);
   const animated = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 

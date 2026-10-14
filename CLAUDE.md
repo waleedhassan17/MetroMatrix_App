@@ -17,9 +17,12 @@ npm run web            # Expo web
 npm start              # Metro only
 npm run type-check     # tsc --noEmit
 npm run check:tokens   # design-token gate (must pass)
-npm test               # jest
-npm run gates          # tsc + check:tokens + jest — run before every commit
+npm run lint           # eslint (0 errors; warnings are informational)
+npm test               # jest (jest-expo preset)
+npm run gates          # tsc + check:tokens + eslint + jest — run before every commit
 ```
+
+Expo Go runs everything except Google sign-in and push. Those need a dev build. The code detects Expo Go and shows a message instead of crashing.
 
 `android/` and `ios/` are generated (continuous native generation) and gitignored. `app.json` and its config plugins are the source of truth, so never hand-edit native folders.
 
@@ -73,20 +76,28 @@ src/
   hooks/                     useAppDispatch / useAppSelector, useSignOut, …
   networks/
     network/apiHelpers.ts    the axios client, refresh queue, AuthError, unwrap
-    <domain>/<x>Network.ts   one function per endpoint
+    <domain>/<x>Network.ts   one function per endpoint (auth, users, media, businesses, admin)
   serializers/               defensive backend → app mapping, one file per domain
   models/                    validation + form schemas, one file per domain
   types/                     shared types (navigation param lists, auth/business types)
-  utils/                     storageUtils, authEvents, phone, alert (web-safe), haptics
+  utils/                     storageUtils, authEvents, phone, alert (web-safe), haptics, pickers, formErrors
+  services/                  device/SDK adapters: googleAuth(.web), push, location
   theme/                     tokens, services, typography, ThemeProvider/useTheme — the ONLY place raw values live
-  Custom-Components/         the design-system components (tokens only)
-  components/app-container/  AppContainer + appContainerSlice (bootstrapSession)
-  navigations-maps/          Base.ts (ROUTES), Auth.ts (gate route arrays), <Nav>.ts, types.ts (IRoute)
-  navigators/                BaseNavigator + per-role navigators (dumb mappers)
+  Custom-Components/         the design-system components (tokens only); barrel: @custom/index
+  components/app-container/  AppContainer, appContainerSlice (bootstrap/refresh/push), OfflineGate, PushPrePrompt
+  components/auth/           shared auth forms, AuthErrorNotice, GoogleSignInButton(.web)
+  components/shared/         ErrorBoundary
+  navigations-maps/          Base.ts (ROUTES), Auth.ts (gate arrays), Customer/Partner/Admin/Approvals/Account.ts, types.ts
+  navigators/                sessionGate.ts (the ladder), BaseNavigator, Customer/Store/Doctor/Kitchen/AdminNavigator,
+                             RouteTabs (tab mapper), stacks/ (AccountStack, AdminStack)
   screens/<Area>/<Name>/     NameScreen.tsx + nameSlice.ts
+                             Areas: Onboarding, Auth, Partner, Admin, Customer, Account, Dev
 scripts/check-design-tokens.js
-docs/                        integration notes (Google sign-in, …)
+docs/                        API_CONTRACT_ASSUMED.md, GOOGLE_SIGNIN.md
+assets/                      images/ (icons, splash), onboarding/ (placeholder photos — replace)
 ```
+
+Stateless screens have no slice. Their state is global (`auth`, `preferences`) or they only navigate. These are Welcome, Rejected, Suspended, CustomerHome, Orders and PartnerHome.
 
 ## How to add a screen
 
@@ -118,7 +129,7 @@ const styles = useStyles(makeStyles); // memoised on the active theme (mode + se
 
 ## Session gates (BaseNavigator branch order)
 
-The order matters; each branch is commented in `BaseNavigator.tsx`:
+The order matters. It lives in ONE pure function, `resolveGate()` in `src/navigators/sessionGate.ts`, which has its own unit test. BaseNavigator and AppContainer both call it:
 
 1. not authenticated → onboarding (if not yet seen) + unauthenticated
 2. pending TOTP → admin TOTP
@@ -135,4 +146,16 @@ Once the gate is cleared, `AppContainer.renderNavigator()` mounts the navigator 
 
 ## API contract
 
-Every network call is built from MetroMatrix-API `docs/API_AUTH.md`, never from guesses. Values not yet confirmed against that document are marked `TODO(API_AUTH)`.
+Every network call is built from MetroMatrix-API `docs/API_AUTH.md`, never from guesses. That document was unavailable while Chunk 1 was built, so the app runs on `docs/API_CONTRACT_ASSUMED.md`. Every dependency on it is marked `TODO(API_AUTH)` (`grep -rn "TODO(API_AUTH)" src`).
+
+When the real document arrives, reconcile it in one pass:
+- update the networks, serializers and models;
+- leave screens and slices alone.
+
+## Testing on Expo / web
+
+- **Expo Go** (`npm start`): runs the whole app except native Google sign-in and push.
+- **Web** (`npm run web`):
+  - Google sign-in uses Google Identity Services and needs `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`.
+  - Deep paths work, e.g. `/sign-in`, `/business/sign-in`, `/staff/sign-in`.
+  - `/dev/gallery` exists only in development builds.

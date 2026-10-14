@@ -168,7 +168,7 @@ api.interceptors.response.use(
         const token = await refreshTokens();
         originalRequest.headers.Authorization = `Bearer ${token}`;
         return api(originalRequest);
-      } catch (refreshError) {
+      } catch {
         if (leadsRefresh) {
           await clearTokens();
           // Tell the app the session is gone so it resets and returns to

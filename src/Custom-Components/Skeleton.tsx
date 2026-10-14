@@ -27,11 +27,11 @@ export const Skeleton: React.FC<SkeletonProps> = ({ width = '100%', height, shap
   const pulse = useSharedValue<number>(opacity.skeletonHigh);
 
   useEffect(() => {
-    pulse.value = withRepeat(
+    pulse.set(withRepeat(
       withTiming(opacity.skeletonLow, { duration: motion.pulse.duration, easing: Easing.inOut(Easing.quad) }),
       -1,
       true,
-    );
+    ));
   }, [pulse, opacity.skeletonLow, motion.pulse.duration]);
 
   const animated = useAnimatedStyle(() => ({ opacity: pulse.value }));

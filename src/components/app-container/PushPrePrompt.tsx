@@ -49,7 +49,7 @@ export const PushPrePrompt: React.FC<{ active: boolean }> = ({ active }) => {
         </>
       }>
       <AppText variant="small" tone="muted">
-        You can change this any time in your phone's settings.
+        {"You can change this any time in your phone's settings."}
       </AppText>
     </Sheet>
   );

@@ -17,6 +17,9 @@ module.exports = {
     'react/react-in-jsx-scope': 'off',
     'react/prop-types': 'off',
     'no-console': ['warn', { allow: ['warn', 'error'] }],
+    // React Native needs require(): bundled assets (images) are required, and
+    // native modules absent from Expo Go are required lazily, after a guard.
+    '@typescript-eslint/no-require-imports': 'off',
     // Editor-side feedback for the same thing `npm run check:tokens` gates.
     // Warnings here; the script is what actually fails the build.
     'no-restricted-syntax': [
@@ -39,4 +42,11 @@ module.exports = {
       },
     ],
   },
+  overrides: [
+    {
+      // The theme DEFINES the tokens; raw values are the point there.
+      files: ['src/theme/**/*.ts', 'src/theme/**/*.tsx'],
+      rules: { 'no-restricted-syntax': 'off' },
+    },
+  ],
 };

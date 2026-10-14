@@ -9,12 +9,13 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTheme } from '../theme';
 import { Icon } from '../Custom-Components/Icon';
+import { AppText } from '../Custom-Components/AppText';
 import type { ITabRoute } from '../navigations-maps/types';
 
 const Tab = createBottomTabNavigator();
 
 export const RouteTabs: React.FC<{ id: string; routes: ITabRoute[] }> = ({ id, routes }) => {
-  const { colors, service, type, size } = useTheme();
+  const { colors, service, size } = useTheme();
   return (
     <Tab.Navigator
       id={id as never}
@@ -27,7 +28,6 @@ export const RouteTabs: React.FC<{ id: string; routes: ITabRoute[] }> = ({ id, r
           borderTopColor: colors.line,
           borderTopWidth: size.hairline,
         },
-        tabBarLabelStyle: { ...type.small },
         sceneStyle: { backgroundColor: colors.canvas },
       }}>
       {routes.map(route => (
@@ -36,7 +36,12 @@ export const RouteTabs: React.FC<{ id: string; routes: ITabRoute[] }> = ({ id, r
           name={route.title}
           component={route.component}
           options={{
-            tabBarLabel: route.label,
+            // AppText, so tab labels honour the same 130% dynamic-type cap.
+            tabBarLabel: ({ color }) => (
+              <AppText variant="small" style={{ color }} numberOfLines={1}>
+                {route.label}
+              </AppText>
+            ),
             tabBarAccessibilityLabel: route.label,
             tabBarIcon: ({ color }) => <Icon name={route.icon} size="lg" color={color} />,
           }}

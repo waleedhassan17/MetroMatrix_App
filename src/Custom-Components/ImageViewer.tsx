@@ -49,53 +49,51 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ visible, uri, title, o
   const savedTx = useSharedValue(0);
   const savedTy = useSharedValue(0);
 
+  // .get()/.set() rather than `.value =`: the React Compiler lint cannot tell
+  // a shared value from React state and flags direct writes.
   useEffect(() => {
     if (!visible) {
-      scale.value = 1;
-      savedScale.value = 1;
-      tx.value = 0;
-      ty.value = 0;
-      savedTx.value = 0;
-      savedTy.value = 0;
+      for (const v of [scale, savedScale]) v.set(1);
+      for (const v of [tx, ty, savedTx, savedTy]) v.set(0);
     }
   }, [visible, scale, savedScale, tx, ty, savedTx, savedTy]);
 
   const pinch = Gesture.Pinch()
     .onUpdate(e => {
-      scale.value = Math.min(MAX_ZOOM, Math.max(1, savedScale.value * e.scale));
+      scale.set(Math.min(MAX_ZOOM, Math.max(1, savedScale.get() * e.scale)));
     })
     .onEnd(() => {
-      savedScale.value = scale.value;
+      savedScale.set(scale.get());
     });
 
   const pan = Gesture.Pan()
     .onUpdate(e => {
-      if (scale.value <= 1) return;
-      tx.value = savedTx.value + e.translationX;
-      ty.value = savedTy.value + e.translationY;
+      if (scale.get() <= 1) return;
+      tx.set(savedTx.get() + e.translationX);
+      ty.set(savedTy.get() + e.translationY);
     })
     .onEnd(() => {
-      savedTx.value = tx.value;
-      savedTy.value = ty.value;
+      savedTx.set(tx.get());
+      savedTy.set(ty.get());
     });
 
   const doubleTap = Gesture.Tap()
     .numberOfTaps(2)
     .onEnd(() => {
-      const zoomIn = scale.value <= 1;
+      const zoomIn = scale.get() <= 1;
       const target = zoomIn ? 2 : 1;
-      scale.value = withTiming(target, { duration: motion.sheet.duration });
-      savedScale.value = target;
+      scale.set(withTiming(target, { duration: motion.sheet.duration }));
+      savedScale.set(target);
       if (!zoomIn) {
-        tx.value = withTiming(0, { duration: motion.sheet.duration });
-        ty.value = withTiming(0, { duration: motion.sheet.duration });
-        savedTx.value = 0;
-        savedTy.value = 0;
+        tx.set(withTiming(0, { duration: motion.sheet.duration }));
+        ty.set(withTiming(0, { duration: motion.sheet.duration }));
+        savedTx.set(0);
+        savedTy.set(0);
       }
     });
 
   const animated = useAnimatedStyle(() => ({
-    transform: [{ translateX: tx.value }, { translateY: ty.value }, { scale: scale.value }],
+    transform: [{ translateX: tx.get() }, { translateY: ty.get() }, { scale: scale.get() }],
   }));
 
   return (
