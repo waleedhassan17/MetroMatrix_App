@@ -10,8 +10,15 @@ import type { IRoute } from './types';
 import { ROUTES } from './Base';
 
 import WelcomeScreen from '../screens/Auth/Welcome/WelcomeScreen';
+import DesignGalleryScreen from '../screens/Dev/DesignGallery/DesignGalleryScreen';
+
+/** Dev builds only: the design-system gallery, reachable from Welcome. */
+const DEV_ROUTES: IRoute[] = __DEV__
+  ? [{ title: ROUTES.DESIGN_GALLERY, component: DesignGalleryScreen }]
+  : [];
 
 /** ── Unauthenticated flow ── */
 export const UNAUTHENTICATED_ROUTES: IRoute[] = [
   { title: ROUTES.WELCOME, component: WelcomeScreen, options: { animation: 'none' } },
+  ...DEV_ROUTES,
 ];

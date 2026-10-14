@@ -23,6 +23,7 @@ import { appContainerSlice } from '../components/app-container/appContainerSlice
 
 // ── Per-screen slices ──
 // (register each screen's slice here — see CLAUDE.md "How to add a screen")
+import { designGallerySlice } from '../screens/Dev/DesignGallery/designGallerySlice';
 
 // `auth` is persisted through its OWN persistReducer so that exactly one
 // field reaches disk. The session (user, business, tokens) is never
@@ -38,6 +39,7 @@ const rootReducer = combineReducers({
   auth: persistReducer(authPersistConfig, authReducer),
   preferences: preferencesSlice.reducer,
   appContainer: appContainerSlice.reducer,
+  designGallery: designGallerySlice.reducer,
 });
 
 type RootReducerState = ReturnType<typeof rootReducer>;

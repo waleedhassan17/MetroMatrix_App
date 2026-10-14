@@ -11,7 +11,15 @@
  *   fontSize: 14            -> a type role          (...type.body)
  *   fontWeight: '600'       -> a type role
  *   fontFamily: 'Roboto'    -> a type role (src/theme/typography.ts)
- *   '#1B2A41'               -> a colour token       (colors.brand)
+ *   '#1B2A41' / rgba(...)   -> a colour token       (colors.brand)
+ *   lineHeight / letterSpacing literals            -> a type role
+ *   borderRadius: 12        -> radius.md
+ *   padding: 16, gap: 8     -> space.s16, space.s8
+ *   shadowRadius / elevation literals             -> elevation.float
+ * and rule 8 of CLAUDE.md:
+ *   expo-linear-gradient    (no gradients as surfaces)
+ *   emoji anywhere in UI code
+ *   ActivityIndicator in src/screens (content loads with Skeleton)
  *
  * Tokens are DEFINED in src/theme/**, which is outside the scanned roots.
  * ALLOWED lists deliberate exceptions inside them; each needs a reason.
@@ -27,6 +35,27 @@ const ALLOWED = new Map([
 
 const RULES = [
   { re: /fontSize:\s*\d/g, msg: 'hardcoded fontSize — use a type role' },
+  { re: /lineHeight:\s*\d/g, msg: 'hardcoded lineHeight — use a type role' },
+  { re: /letterSpacing:\s*-?\d/g, msg: 'hardcoded letterSpacing — use a type role' },
+  { re: /borderRadius:\s*[1-9]/g, msg: 'hardcoded borderRadius — use radius.*' },
+  {
+    re: /\b(margin|padding)(Top|Bottom|Left|Right|Horizontal|Vertical|Start|End)?:\s*-?[1-9]/g,
+    msg: 'hardcoded spacing — use space.*',
+  },
+  { re: /\b(gap|rowGap|columnGap):\s*[1-9]/g, msg: 'hardcoded gap — use space.*' },
+  { re: /\b(shadowRadius|shadowOpacity):\s*[0-9.]/g, msg: 'hardcoded shadow — use elevation.*' },
+  { re: /\belevation:\s*[1-9]/g, msg: 'hardcoded elevation — use elevation.*' },
+  { re: /\b(rgba?|hsla?)\(/g, msg: 'hardcoded colour function — use a colour token' },
+  { re: /(expo|react-native)-linear-gradient/g, msg: 'gradient import — no gradients as surfaces (rule 8)' },
+  {
+    re: /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]/gu,
+    msg: 'emoji — no emoji in UI copy (rule 8)',
+  },
+  {
+    re: /\bActivityIndicator\b/g,
+    msg: 'spinner in a screen — load content with Skeleton (rule 8)',
+    roots: ['src/screens'],
+  },
   { re: /fontWeight:\s*'\d00'/g, msg: 'hardcoded fontWeight — use a type role' },
   { re: /fontFamily:\s*'[^']+'/g, msg: 'hardcoded fontFamily — use a type role' },
   // Both quote styles: matching only single quotes lets every JSX attribute
@@ -56,7 +85,8 @@ for (const root of ROOTS) {
     lines.forEach((line, i) => {
       // A commented-out line is not shipped code.
       if (/^\s*(\/\/|\*)/.test(line)) return;
-      for (const { re, msg } of RULES) {
+      for (const { re, msg, roots } of RULES) {
+        if (roots && !roots.some(r => file.startsWith(r))) continue;
         re.lastIndex = 0;
         if (re.test(line)) findings.push({ file, line: i + 1, msg, text: line.trim() });
       }

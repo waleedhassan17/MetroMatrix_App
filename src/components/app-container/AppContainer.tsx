@@ -9,9 +9,10 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, StatusBar } from 'react-native';
 import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import Toast from 'react-native-toast-message';
+import { navigationTheme, useStyles, useTheme, type Theme } from '../../theme';
+import { toastConfig } from '../../Custom-Components/toastConfig';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import type { RootStackParamList } from '../../types';
 
@@ -32,6 +33,8 @@ const linking: LinkingOptions<RootStackParamList> = {
 export const AppContainer: React.FC = () => {
   const dispatch = useAppDispatch();
   const isAppReady = useAppSelector(selectIsAppReady);
+  const theme = useTheme();
+  const styles = useStyles(makeStyles);
 
   // ─── Session restore on cold start: stored token → GET /auth/me refreshes
   // the user and the app opens on their view; missing/invalid token →
@@ -92,20 +95,27 @@ export const AppContainer: React.FC = () => {
   const renderNavigator = () => <BaseNavigator key="base-unauthenticated" />;
 
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle="dark-content" translucent />
-      <View style={styles.container}>
-        {isAppReady ? (
-          <NavigationContainer linking={linking}>{renderNavigator()}</NavigationContainer>
-        ) : null}
-      </View>
-      <Toast />
-    </SafeAreaProvider>
+    <View style={styles.container}>
+      <StatusBar
+        barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'}
+        backgroundColor={theme.colors.canvas}
+        translucent
+      />
+      {isAppReady ? (
+        <NavigationContainer linking={linking} theme={navigationTheme(theme)}>
+          {renderNavigator()}
+        </NavigationContainer>
+      ) : null}
+      <Toast config={toastConfig} topOffset={theme.space.s56} />
+    </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-});
+// The root paints canvas so no white frame shows behind a navigator swap or
+// a dark-mode transition.
+const makeStyles = ({ colors }: Theme) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.canvas },
+  });
 
 export default AppContainer;
