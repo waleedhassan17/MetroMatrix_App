@@ -6,10 +6,12 @@ import {
   SUBTYPE_SERVICE,
   businessProfileToPayload,
   businessToProfileForm,
+  cleanDocumentNotes,
   emptyBusinessProfile,
   isProfileComplete,
   missingDocuments,
   validateBusinessProfile,
+  validateDecisionReason,
   type BusinessProfileForm,
 } from '../businessModel';
 import type { Business, SubType } from '../../types/auth';
@@ -146,5 +148,17 @@ describe('payload and form mapping', () => {
     expect(isProfileComplete(null)).toBe(false);
     expect(isProfileComplete({ name: 'a', phone: 'p', city: 'c', address: 'x' } as Business)).toBe(true);
     expect(isProfileComplete({ name: 'a', phone: '', city: 'c', address: 'x' } as Business)).toBe(false);
+  });
+});
+
+describe('admin decisions', () => {
+  it('requires a reason the partner can act on', () => {
+    expect(validateDecisionReason('').reason).toBe('Give the partner a reason');
+    expect(validateDecisionReason('  short  ').reason).toMatch(/at least 10/);
+    expect(validateDecisionReason('The PMDC certificate has expired.')).toEqual({});
+  });
+
+  it('sends only non-empty, trimmed document notes', () => {
+    expect(cleanDocumentNotes({ d1: '  Blurry  ', d2: '   ', d3: '' })).toEqual({ d1: 'Blurry' });
   });
 });

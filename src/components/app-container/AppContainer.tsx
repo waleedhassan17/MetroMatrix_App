@@ -20,6 +20,7 @@ import CustomerNavigator from '../../navigators/CustomerNavigator';
 import StorePartnerNavigator from '../../navigators/StorePartnerNavigator';
 import DoctorPartnerNavigator from '../../navigators/DoctorPartnerNavigator';
 import KitchenPartnerNavigator from '../../navigators/KitchenPartnerNavigator';
+import AdminNavigator from '../../navigators/AdminNavigator';
 import { resolveGate, isGateCleared } from '../../navigators/sessionGate';
 
 import {
@@ -148,6 +149,8 @@ export const AppContainer: React.FC = () => {
           default:
             return <StorePartnerNavigator key="partner-store" />;
         }
+      case 'admin':
+        return <AdminNavigator key="admin" />;
       default:
         return <BaseNavigator key={`base-${gate}`} />;
     }

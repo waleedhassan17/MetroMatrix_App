@@ -24,6 +24,8 @@ import ReviewSubmitScreen from '../screens/Partner/ReviewSubmit/ReviewSubmitScre
 import PendingApprovalScreen from '../screens/Partner/PendingApproval/PendingApprovalScreen';
 import RejectedScreen from '../screens/Partner/Rejected/RejectedScreen';
 import SuspendedScreen from '../screens/Partner/Suspended/SuspendedScreen';
+import AdminSignInScreen from '../screens/Admin/AdminSignIn/AdminSignInScreen';
+import TotpEnrolScreen from '../screens/Admin/TotpEnrol/TotpEnrolScreen';
 import DesignGalleryScreen from '../screens/Dev/DesignGallery/DesignGalleryScreen';
 
 /** Shown once per install, before Welcome. */
@@ -46,7 +48,18 @@ export const UNAUTHENTICATED_ROUTES: IRoute[] = [
   { title: ROUTES.PARTNER_SIGN_IN, component: PartnerSignInScreen },
   { title: ROUTES.PARTNER_SIGN_UP, component: PartnerSignUpScreen },
   { title: ROUTES.FORGOT_PASSWORD, component: ForgotPasswordScreen },
+  { title: ROUTES.ADMIN_SIGN_IN, component: AdminSignInScreen },
   ...DEV_ROUTES,
+];
+
+/**
+ * ── 2. Admin TOTP challenge (no tokens yet) ──
+ * AdminTotp reuses AdminSignInScreen on its code step. An admin who has not
+ * enrolled starts on TotpEnrol instead (BaseNavigator picks the initial).
+ */
+export const ADMIN_TOTP_ROUTES: IRoute[] = [
+  { title: ROUTES.ADMIN_TOTP, component: AdminSignInScreen, options: { animation: 'none' } },
+  { title: ROUTES.TOTP_ENROL, component: TotpEnrolScreen, options: { animation: 'none' } },
 ];
 
 /** ── 3. Email not verified ── */

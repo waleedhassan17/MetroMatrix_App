@@ -38,6 +38,10 @@ import { businessProfileSlice } from '../screens/Partner/BusinessProfile/busines
 import { documentsSlice } from '../screens/Partner/Documents/documentsSlice';
 import { reviewSubmitSlice } from '../screens/Partner/ReviewSubmit/reviewSubmitSlice';
 import { pendingApprovalSlice } from '../screens/Partner/PendingApproval/pendingApprovalSlice';
+import { adminSignInSlice } from '../screens/Admin/AdminSignIn/adminSignInSlice';
+import { totpEnrolSlice } from '../screens/Admin/TotpEnrol/totpEnrolSlice';
+import { approvalQueueSlice } from '../screens/Admin/ApprovalQueue/approvalQueueSlice';
+import { businessReviewSlice } from '../screens/Admin/BusinessReview/businessReviewSlice';
 
 // `auth` is persisted through its OWN persistReducer so that exactly one
 // field reaches disk. The session (user, business, tokens) is never
@@ -68,6 +72,10 @@ const rootReducer = combineReducers({
   documents: documentsSlice.reducer,
   reviewSubmit: reviewSubmitSlice.reducer,
   pendingApproval: pendingApprovalSlice.reducer,
+  adminSignIn: adminSignInSlice.reducer,
+  totpEnrol: totpEnrolSlice.reducer,
+  approvalQueue: approvalQueueSlice.reducer,
+  businessReview: businessReviewSlice.reducer,
 });
 
 type RootReducerState = ReturnType<typeof rootReducer>;

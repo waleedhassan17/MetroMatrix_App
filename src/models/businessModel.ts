@@ -294,3 +294,23 @@ export const businessToProfileForm = (business: Business): BusinessProfileForm =
 /** Has the partner saved a complete profile (so setup can resume past it)? */
 export const isProfileComplete = (business: Business | null): boolean =>
   !!business && !!business.name && !!business.phone && !!business.city && !!business.address;
+
+// ─── Admin decisions ─────────────────────────────────
+/** The partner reads this reason, so it must say something. */
+export const MIN_REASON_LENGTH = 10;
+
+export const validateDecisionReason = (reason: string): ValidationErrors => {
+  const errors: ValidationErrors = {};
+  const trimmed = reason.trim();
+  if (!trimmed) errors.reason = 'Give the partner a reason';
+  else if (trimmed.length < MIN_REASON_LENGTH) errors.reason = `Use at least ${MIN_REASON_LENGTH} characters`;
+  return errors;
+};
+
+/** Only notes with text are sent: { [documentId]: note }. */
+export const cleanDocumentNotes = (notes: Record<string, string>): Record<string, string> =>
+  Object.fromEntries(
+    Object.entries(notes)
+      .map(([id, note]) => [id, note.trim()] as const)
+      .filter(([, note]) => note.length > 0),
+  );

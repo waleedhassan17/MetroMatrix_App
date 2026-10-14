@@ -24,6 +24,7 @@ import { useTheme } from '../theme';
 import type { RootStackParamList } from '../types';
 import type { IRoute } from '../navigations-maps/types';
 import {
+  ADMIN_TOTP_ROUTES,
   EMAIL_VERIFY_ROUTES,
   ONBOARDING_ROUTE,
   PARTNER_SETUP_ROUTES,
@@ -44,6 +45,7 @@ const BaseNavigator: React.FC = () => {
   const unauthenticated = [...(!auth.hasSeenOnboarding ? [ONBOARDING_ROUTE] : []), ...UNAUTHENTICATED_ROUTES];
 
   const BRANCHES: Partial<Record<Gate, IRoute[]>> = {
+    totp: ADMIN_TOTP_ROUTES,
     verify: EMAIL_VERIFY_ROUTES,
     partnerSetup: PARTNER_SETUP_ROUTES,
     pending: PENDING_ROUTES,
@@ -52,10 +54,15 @@ const BaseNavigator: React.FC = () => {
   };
   const routes: IRoute[] = BRANCHES[gate] ?? unauthenticated;
 
-  // Partner setup resumes where it was left (QA 15); every other branch
-  // starts on its first route.
+  // Partner setup resumes where it was left (QA 15); a first-time admin
+  // enrols an authenticator before the code step; every other branch starts
+  // on its first route.
   const initialRouteName = (
-    gate === 'partnerSetup' ? partnerSetupInitialRoute(auth.business) : routes[0].title
+    gate === 'partnerSetup'
+      ? partnerSetupInitialRoute(auth.business)
+      : gate === 'totp' && auth.pendingTotp && !auth.pendingTotp.enrolled
+        ? 'TotpEnrol'
+        : routes[0].title
   ) as keyof RootStackParamList;
 
   return (
