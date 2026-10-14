@@ -1,18 +1,25 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — App Container Slice (createAppSlice pattern)
 // ═══════════════════════════════════════════════════════
-// Holds app-shell state: readiness and network status. Lives alongside
-// AppContainer.tsx in components/app-container/. Survives RESET_ALL_STATE.
+// Holds app-shell state: readiness, network status, and the session
+// bootstrap. Lives alongside AppContainer.tsx. Survives RESET_ALL_STATE.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getAccessToken } from '../../utils/storageUtils';
-import { signOut } from '../../screens/Auth/authSlice';
+import { getAccessToken, clearTokens } from '../../utils/storageUtils';
+import { authMe } from '../../networks/auth/authNetwork';
+import { isNetworkError } from '../../networks/network/apiHelpers';
+import { setSession, signOut } from '../../screens/Auth/authSlice';
 
 export interface AppContainerSliceState {
   error: string;
   status: 'idle' | 'loading' | 'failed';
   isAppReady: boolean;
+  /**
+   * Cold start found a stored session but could not reach the API. The app
+   * shows an offline state with Retry instead of bouncing a signed-in user
+   * to Welcome.
+   */
   networkIsDown: boolean;
 }
 
@@ -22,6 +29,8 @@ const initialState: AppContainerSliceState = {
   isAppReady: false,
   networkIsDown: false,
 };
+
+type BootstrapOutcome = 'restored' | 'signedOut' | 'offline';
 
 export const appContainerSlice = createAppSlice({
   name: 'appContainer',
@@ -49,36 +58,63 @@ export const appContainerSlice = createAppSlice({
      *
      *   token missing        → app ready, unauthenticated (Welcome)
      *   authMe OK            → setSession with the FRESH user + business
-     *   authMe 401/rejected  → tokens cleared, signed out → Welcome
-     *   network unreachable  → networkIsDown, keep the tokens; retry later
-     *
-     * P0: only the "token missing" branch exists. The authMe branches arrive
-     * with the auth domain layer (P2).
+     *                          (role, verification, business status may all
+     *                          have changed server-side)
+     *   authMe rejected      → tokens cleared, signed out → Welcome
+     *   network unreachable  → networkIsDown; tokens KEPT; Retry re-runs this
      */
     bootstrapSession: create.asyncThunk(
-      async (_: void, { dispatch }) => {
+      async (_: void, { dispatch }): Promise<BootstrapOutcome> => {
         const token = await getAccessToken();
         if (!token) {
-          // No token ⇒ no session. Also reconciles a stale in-memory
-          // isAuthenticated (tokens wiped outside a normal sign-out).
+          // No token ⇒ no session. Also reconciles stale in-memory state
+          // (tokens wiped outside a normal sign-out).
           dispatch(signOut());
-          return { restored: false as const };
+          return 'signedOut';
         }
-        return { restored: false as const };
+        try {
+          const session = await authMe();
+          dispatch(setSession(session));
+          return 'restored';
+        } catch (e) {
+          if (isNetworkError(e)) return 'offline';
+          await clearTokens();
+          dispatch(signOut());
+          return 'signedOut';
+        }
       },
       {
         pending: state => {
           state.status = 'loading';
         },
-        fulfilled: state => {
+        fulfilled: (state, action) => {
           state.status = 'idle';
           state.isAppReady = true;
+          state.networkIsDown = action.payload === 'offline';
         },
         rejected: state => {
           state.status = 'idle';
           state.isAppReady = true;
         },
       },
+    ),
+
+    /**
+     * Mid-session re-read of /auth/me (business suspended, approval landed,
+     * email verified). Unlike bootstrap it never signs anyone out: a 401 is
+     * the interceptor's business, and a network blip leaves state as it was.
+     */
+    refreshSession: create.asyncThunk(
+      async (_: void, { dispatch }) => {
+        try {
+          const session = await authMe();
+          dispatch(setSession(session));
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      {},
     ),
   }),
 
@@ -90,6 +126,7 @@ export const appContainerSlice = createAppSlice({
       state.isAppReady = true;
       state.status = 'idle';
       state.error = '';
+      state.networkIsDown = false;
     });
   },
 
@@ -101,8 +138,14 @@ export const appContainerSlice = createAppSlice({
   },
 });
 
-export const { setAppIsReady, setNetworkIsDown, setAppError, clearAppError, bootstrapSession } =
-  appContainerSlice.actions;
+export const {
+  setAppIsReady,
+  setNetworkIsDown,
+  setAppError,
+  clearAppError,
+  bootstrapSession,
+  refreshSession,
+} = appContainerSlice.actions;
 
 export const { selectAppStatus, selectAppError, selectIsAppReady, selectNetworkIsDown } =
   appContainerSlice.selectors;

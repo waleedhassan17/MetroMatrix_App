@@ -1,27 +1,40 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Global Auth Slice (createAppSlice pattern)
 // ═══════════════════════════════════════════════════════
-// Holds global auth state only (session, onboarding flag). Per-screen
-// state/thunks live in their own co-located slices.
-//
-// P0 skeleton: user / business / pendingTotp and setSession / setBusiness
-// arrive with the auth domain layer (P2), typed from docs/API_AUTH.md.
+// Holds global auth state only: the session user, their business (partners),
+// the admin TOTP challenge between sign-in steps, and the onboarding flag.
+// Per-screen form state and thunks live in their own co-located slices.
 //
 // Persistence: only `hasSeenOnboarding` is written to disk (nested
-// persistReducer in store.ts). The session itself is rebuilt from the
-// secure-store token by appContainer's bootstrapSession on every cold start.
+// persistReducer in store.ts). The session is rebuilt from the secure-store
+// token by appContainer's bootstrapSession on every cold start.
 
+import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { resetAllState } from '@store/resetAllState';
+import type { Business, User } from '../../types/auth';
+
+export interface PendingTotp {
+  challengeToken: string;
+  /** False on an admin's first sign-in: the TOTP step becomes enrolment. */
+  enrolled: boolean;
+  email: string;
+}
 
 export interface AuthSliceState {
+  user: User | null;
+  business: Business | null;
   isAuthenticated: boolean;
   hasSeenOnboarding: boolean;
+  pendingTotp: PendingTotp | null;
 }
 
 const initialState: AuthSliceState = {
+  user: null,
+  business: null,
   isAuthenticated: false,
   hasSeenOnboarding: false,
+  pendingTotp: null,
 };
 
 /** Back to a signed-out session, keeping what belongs to the install. */
@@ -34,6 +47,26 @@ export const authSlice = createAppSlice({
   name: 'auth',
   initialState,
   reducers: create => ({
+    /** A session was opened or refreshed (/auth/me). */
+    setSession: create.reducer(
+      (state, action: PayloadAction<{ user: User; business: Business | null }>) => {
+        state.user = action.payload.user;
+        state.business = action.payload.business;
+        state.isAuthenticated = true;
+        state.pendingTotp = null;
+        // Anyone who has signed in has, by definition, seen the app's pitch.
+        state.hasSeenOnboarding = true;
+      },
+    ),
+    setUser: create.reducer((state, action: PayloadAction<User>) => {
+      state.user = action.payload;
+    }),
+    setBusiness: create.reducer((state, action: PayloadAction<Business | null>) => {
+      state.business = action.payload;
+    }),
+    setPendingTotp: create.reducer((state, action: PayloadAction<PendingTotp | null>) => {
+      state.pendingTotp = action.payload;
+    }),
     signOut: create.reducer(state => toSignedOut(state)),
     setOnboardingSeen: create.reducer(state => {
       state.hasSeenOnboarding = true;
@@ -48,13 +81,31 @@ export const authSlice = createAppSlice({
   },
 
   selectors: {
+    selectUser: state => state.user,
+    selectBusiness: state => state.business,
     selectIsAuthenticated: state => state.isAuthenticated,
     selectHasSeenOnboarding: state => state.hasSeenOnboarding,
+    selectPendingTotp: state => state.pendingTotp,
+    selectRole: state => state.user?.role ?? null,
+    selectIsEmailVerified: state => state.user?.isEmailVerified ?? false,
+    selectBusinessStatus: state => state.business?.status ?? null,
+    selectServiceType: state => state.business?.serviceType ?? null,
   },
 });
 
-export const { signOut, setOnboardingSeen } = authSlice.actions;
+export const { setSession, setUser, setBusiness, setPendingTotp, signOut, setOnboardingSeen } =
+  authSlice.actions;
 
-export const { selectIsAuthenticated, selectHasSeenOnboarding } = authSlice.selectors;
+export const {
+  selectUser,
+  selectBusiness,
+  selectIsAuthenticated,
+  selectHasSeenOnboarding,
+  selectPendingTotp,
+  selectRole,
+  selectIsEmailVerified,
+  selectBusinessStatus,
+  selectServiceType,
+} = authSlice.selectors;
 
 export default authSlice.reducer;

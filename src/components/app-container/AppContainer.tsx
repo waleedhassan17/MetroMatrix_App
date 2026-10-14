@@ -18,7 +18,7 @@ import type { RootStackParamList } from '../../types';
 
 import BaseNavigator from '../../navigators/BaseNavigator';
 
-import { bootstrapSession, selectIsAppReady } from './appContainerSlice';
+import { bootstrapSession, refreshSession, selectIsAppReady } from './appContainerSlice';
 import { signOut } from '../../screens/Auth/authSlice';
 import { resetAllState } from '../../store/resetAllState';
 import { setSessionExpiredHandler, setBusinessStatusStaleHandler } from '../../utils/authEvents';
@@ -82,7 +82,7 @@ export const AppContainer: React.FC = () => {
       const now = Date.now();
       if (now - statusRefreshAt.current < 5000) return;
       statusRefreshAt.current = now;
-      dispatch(bootstrapSession());
+      dispatch(refreshSession());
     });
     return () => setBusinessStatusStaleHandler(null);
   }, [dispatch]);

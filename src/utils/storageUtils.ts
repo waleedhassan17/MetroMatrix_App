@@ -21,6 +21,9 @@ import * as SecureStore from 'expo-secure-store';
 // SecureStore keys may only contain alphanumerics, '.', '-' and '_'.
 const ACCESS_TOKEN_KEY = 'metromatrix.accessToken';
 const REFRESH_TOKEN_KEY = 'metromatrix.refreshToken';
+// The Expo push token this install registered with the API, so sign-out can
+// unregister exactly that device.
+const PUSH_TOKEN_KEY = 'metromatrix.pushToken';
 
 // ─── Backend (secure-store on native, localStorage on web) ───
 const isWeb = Platform.OS === 'web';
@@ -65,6 +68,7 @@ const backend = {
 const cache: Record<string, string | null | undefined> = {
   [ACCESS_TOKEN_KEY]: undefined,
   [REFRESH_TOKEN_KEY]: undefined,
+  [PUSH_TOKEN_KEY]: undefined,
 };
 
 const read = async (key: string): Promise<string | null> => {
@@ -93,4 +97,17 @@ export const clearTokens = async () => {
   cache[ACCESS_TOKEN_KEY] = null;
   cache[REFRESH_TOKEN_KEY] = null;
   await Promise.all([backend.remove(ACCESS_TOKEN_KEY), backend.remove(REFRESH_TOKEN_KEY)]);
+};
+
+// ─── Push Token Helpers ─────────────────────────────
+export const setPushToken = async (token: string) => {
+  cache[PUSH_TOKEN_KEY] = token;
+  await backend.set(PUSH_TOKEN_KEY, token);
+};
+
+export const getPushToken = async (): Promise<string | null> => read(PUSH_TOKEN_KEY);
+
+export const clearPushToken = async () => {
+  cache[PUSH_TOKEN_KEY] = null;
+  await backend.remove(PUSH_TOKEN_KEY);
 };
