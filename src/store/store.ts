@@ -24,6 +24,13 @@ import { appContainerSlice } from '../components/app-container/appContainerSlice
 // ── Per-screen slices ──
 // (register each screen's slice here — see CLAUDE.md "How to add a screen")
 import { designGallerySlice } from '../screens/Dev/DesignGallery/designGallerySlice';
+import { onboardingSlice } from '../screens/Onboarding/onboardingSlice';
+import { customerSignInSlice } from '../screens/Auth/CustomerSignIn/customerSignInSlice';
+import { customerSignUpSlice } from '../screens/Auth/CustomerSignUp/customerSignUpSlice';
+import { emailVerificationSlice } from '../screens/Auth/EmailVerification/emailVerificationSlice';
+import { forgotPasswordSlice } from '../screens/Auth/ForgotPassword/forgotPasswordSlice';
+import { profileSlice } from '../screens/Account/Profile/profileSlice';
+import { changePasswordSlice } from '../screens/Account/ChangePassword/changePasswordSlice';
 
 // `auth` is persisted through its OWN persistReducer so that exactly one
 // field reaches disk. The session (user, business, tokens) is never
@@ -40,6 +47,13 @@ const rootReducer = combineReducers({
   preferences: preferencesSlice.reducer,
   appContainer: appContainerSlice.reducer,
   designGallery: designGallerySlice.reducer,
+  onboarding: onboardingSlice.reducer,
+  customerSignIn: customerSignInSlice.reducer,
+  customerSignUp: customerSignUpSlice.reducer,
+  emailVerification: emailVerificationSlice.reducer,
+  forgotPassword: forgotPasswordSlice.reducer,
+  profile: profileSlice.reducer,
+  changePassword: changePasswordSlice.reducer,
 });
 
 type RootReducerState = ReturnType<typeof rootReducer>;

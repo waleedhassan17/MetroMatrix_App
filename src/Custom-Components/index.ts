@@ -27,3 +27,5 @@ export * from './StatusTimeline';
 export * from './StickyCTA';
 export * from './TextField';
 export * from './toastConfig';
+export * from './InlineNotice';
+export * from './TextLink';

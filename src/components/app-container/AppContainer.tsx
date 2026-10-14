@@ -1,40 +1,86 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Root AppContainer
 // ═══════════════════════════════════════════════════════
-// Top-level app shell rendered inside Provider/PersistGate. Owns: session
-// bootstrap (fetch-me), the renderNavigator() role switch, the navigation
-// container, deep linking, the status bar, the native-splash release, and
-// toast notifications.
+// Top-level app shell rendered inside Provider/PersistGate/ThemeProvider.
+// Owns: session bootstrap (fetch-me), the renderNavigator() role switch, the
+// navigation container + deep linking, the status bar, the native-splash
+// release, the push pre-prompt, and toast notifications.
 
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, StatusBar } from 'react-native';
-import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
+import { NavigationContainer, type LinkingOptions } from '@react-navigation/native';
 import * as SplashScreen from 'expo-splash-screen';
 import Toast from 'react-native-toast-message';
+import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { navigationTheme, useStyles, useTheme, type Theme } from '../../theme';
 import { toastConfig } from '../../Custom-Components/toastConfig';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
-import type { RootStackParamList } from '../../types';
 
 import BaseNavigator from '../../navigators/BaseNavigator';
+import CustomerNavigator from '../../navigators/CustomerNavigator';
+import { resolveGate, isGateCleared } from '../../navigators/sessionGate';
 
-import { bootstrapSession, refreshSession, selectIsAppReady } from './appContainerSlice';
+import {
+  bootstrapSession,
+  refreshSession,
+  selectIsAppReady,
+  selectNetworkIsDown,
+} from './appContainerSlice';
+import { OfflineGate } from './OfflineGate';
+import { PushPrePrompt } from './PushPrePrompt';
 import { signOut } from '../../screens/Auth/authSlice';
 import { resetAllState } from '../../store/resetAllState';
 import { setSessionExpiredHandler, setBusinessStatusStaleHandler } from '../../utils/authEvents';
 
 // ─── Deep linking ─────────────────────────────────────
-// metromatrix://verify-email   → Email verification (P3)
-// metromatrix://reset-password → Forgot-password OTP step (P3)
-const linking: LinkingOptions<RootStackParamList> = {
+// metromatrix://verify-email?code=123456          → EmailVerification
+// metromatrix://reset-password?email=…&code=…     → ForgotPassword (code step)
+// The same config gives the web build readable paths. Each root navigator
+// owns different routes; a path only resolves while its navigator is mounted.
+const linking: LinkingOptions<ReactNavigation.RootParamList> = {
   prefixes: ['metromatrix://'],
+  config: {
+    screens: {
+      // No screen claims '/': the gate's first route (Onboarding on a fresh
+      // install, Welcome after) must win, as it does on native.
+      Onboarding: 'intro',
+      Welcome: 'welcome',
+      CustomerSignIn: 'sign-in',
+      CustomerSignUp: 'sign-up',
+      PartnerSignIn: 'business/sign-in',
+      PartnerSignUp: 'business/sign-up',
+      ForgotPassword: 'reset-password',
+      AdminSignIn: 'staff/sign-in',
+      AdminTotp: 'staff/verify',
+      TotpEnrol: 'staff/authenticator',
+      EmailVerification: 'verify-email',
+      ServiceSelect: 'business/service',
+      BusinessProfile: 'business/details',
+      Documents: 'business/documents',
+      ReviewSubmit: 'business/review',
+      PendingApproval: 'business/pending',
+      Rejected: 'business/changes-needed',
+      Suspended: 'business/paused',
+      DesignGallery: 'dev/gallery',
+      HomeTab: 'home',
+      OrdersTab: 'orders',
+      ApprovalsTab: {
+        screens: { ApprovalQueue: 'approvals', BusinessReview: 'approvals/:id' },
+      },
+      ProfileTab: {
+        screens: { Profile: 'profile', ChangePassword: 'profile/password' },
+      },
+    },
+  } as LinkingOptions<ReactNavigation.RootParamList>['config'],
 };
 
 export const AppContainer: React.FC = () => {
   const dispatch = useAppDispatch();
   const isAppReady = useAppSelector(selectIsAppReady);
+  const networkIsDown = useAppSelector(selectNetworkIsDown);
+  const auth = useAppSelector(state => state.auth);
   const theme = useTheme();
   const styles = useStyles(makeStyles);
+  const gate = resolveGate(auth);
 
   // ─── Session restore on cold start: stored token → GET /auth/me refreshes
   // the user and the app opens on their view; missing/invalid token →
@@ -55,27 +101,22 @@ export const AppContainer: React.FC = () => {
   }, [isAppReady]);
 
   // ─── Session-expired bridge: when the axios 401-refresh flow gives up it
-  // has already cleared the stored tokens; this handler resets the store so
-  // the navigator switches back to Welcome instead of leaving the user on
+  // has already cleared the stored tokens; this resets the store so the
+  // navigator switches back to Welcome instead of leaving the user on
   // authenticated screens whose every request fails.
   useEffect(() => {
     setSessionExpiredHandler(() => {
       dispatch(resetAllState());
       dispatch(signOut());
-      Toast.show({
-        type: 'info',
-        text1: 'Session expired',
-        text2: 'Please sign in again.',
-      });
+      Toast.show({ type: 'info', text1: 'Session expired', text2: 'Please sign in again.' });
     });
     return () => setSessionExpiredHandler(null);
   }, [dispatch]);
 
   // ─── Business-status-stale bridge: a partner request 403'd with
-  // BUSINESS_SUSPENDED. Re-run the session bootstrap — /auth/me returns the
-  // fresh business status and BaseNavigator swaps to the Suspended gate.
-  // Debounced: a screen firing several requests at once must trigger only
-  // one refresh.
+  // BUSINESS_SUSPENDED. Re-read /auth/me — the fresh business status makes
+  // the gate route to Suspended. Debounced: a screen firing several requests
+  // at once must trigger one refresh.
   const statusRefreshAt = useRef(0);
   useEffect(() => {
     setBusinessStatusStaleHandler(() => {
@@ -87,12 +128,19 @@ export const AppContainer: React.FC = () => {
     return () => setBusinessStatusStaleHandler(null);
   }, [dispatch]);
 
-  // ─── Which top-level navigator mounts. Every gated state — unauthenticated,
-  // TOTP pending, email unverified, partner setup / pending / rejected /
-  // suspended — is a branch inside BaseNavigator. Customer, approved-partner
-  // and admin navigators arrive with their phases (P3–P5). Keys make a swap
-  // remount, so back-navigation cannot cross from one app into another.
-  const renderNavigator = () => <BaseNavigator key="base-unauthenticated" />;
+  // ─── Which top-level navigator mounts. Every gated state is a branch inside
+  // BaseNavigator; a cleared gate mounts the role's app. Keys make a swap
+  // remount, so back-navigation can never cross from one app into another.
+  const renderNavigator = () => {
+    switch (gate) {
+      case 'customer':
+        return <CustomerNavigator key="customer" />;
+      default:
+        return <BaseNavigator key={`base-${gate}`} />;
+    }
+  };
+
+  const offline = networkIsDown && !auth.isAuthenticated;
 
   return (
     <View style={styles.container}>
@@ -101,11 +149,14 @@ export const AppContainer: React.FC = () => {
         backgroundColor={theme.colors.canvas}
         translucent
       />
-      {isAppReady ? (
+      {!isAppReady ? null : offline ? (
+        <OfflineGate />
+      ) : (
         <NavigationContainer linking={linking} theme={navigationTheme(theme)}>
           {renderNavigator()}
         </NavigationContainer>
-      ) : null}
+      )}
+      <PushPrePrompt active={isAppReady && isGateCleared(gate)} />
       <Toast config={toastConfig} topOffset={theme.space.s56} />
     </View>
   );

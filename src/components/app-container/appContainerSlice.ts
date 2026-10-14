@@ -10,6 +10,9 @@ import { getAccessToken, clearTokens } from '../../utils/storageUtils';
 import { authMe } from '../../networks/auth/authNetwork';
 import { isNetworkError } from '../../networks/network/apiHelpers';
 import { setSession, signOut } from '../../screens/Auth/authSlice';
+import { registerDevice } from '../../networks/users/usersNetwork';
+import { setPushToken } from '../../utils/storageUtils';
+import { obtainPushToken, pushPlatform } from '../../services/push';
 
 export interface AppContainerSliceState {
   error: string;
@@ -116,6 +119,27 @@ export const appContainerSlice = createAppSlice({
       },
       {},
     ),
+
+    /**
+     * Register this device for push after a session opens. `ask` shows the OS
+     * dialog (after the pre-prompt sheet); otherwise only an existing grant is
+     * used, so each new session silently re-registers a rotated token.
+     * Never fails the session: push is a nicety.
+     */
+    registerPushAsync: create.asyncThunk(
+      async ({ ask }: { ask: boolean }) => {
+        try {
+          const token = await obtainPushToken(ask);
+          if (!token) return null;
+          await registerDevice(token, pushPlatform());
+          await setPushToken(token);
+          return token;
+        } catch {
+          return null;
+        }
+      },
+      {},
+    ),
   }),
 
   // Belt-and-braces for the stuck-splash class of bug: signing out must never
@@ -145,6 +169,7 @@ export const {
   clearAppError,
   bootstrapSession,
   refreshSession,
+  registerPushAsync,
 } = appContainerSlice.actions;
 
 export const { selectAppStatus, selectAppError, selectIsAppReady, selectNetworkIsDown } =

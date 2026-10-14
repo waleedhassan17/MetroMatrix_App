@@ -4,37 +4,45 @@
 // Dumb mapper over the route arrays in navigations-maps/Auth.ts. Which
 // top-level navigator mounts — this one, the customer app, a partner app or
 // the admin console — is decided by AppContainer.renderNavigator(); this
-// navigator only handles the session-gate branches for users who are not
-// (yet) inside an app: sign-in, TOTP, email verification, partner setup,
-// approval, rejection, suspension, onboarding.
+// navigator only shows the gate branch resolveGate() picks:
 //
-// P0: only the unauthenticated branch exists. The gate ladder (P2) is, in
-// this order — and the order matters, each step is commented where it lands:
 //   1. not authenticated      → onboarding (if unseen) + unauthenticated
-//   2. pending TOTP           → admin TOTP
+//   2. pending TOTP           → admin TOTP (or first-time enrolment)
 //   3. email not verified     → verify
-//   4. partner, no/draft biz  → partner setup
+//   4. partner, no/draft biz  → partner setup (resumes where it left off)
 //   5. pending_approval       → pending
-//   6. rejected               → rejected
+//   6. rejected               → rejected + setup routes (edit and resubmit)
 //   7. suspended              → suspended
+//
+// ORDER MATTERS and lives in ONE place — navigators/sessionGate.ts — with a
+// unit test; this file only maps the answer to routes.
 
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useAppSelector } from '../hooks/useReduxHooks';
+import { useTheme } from '../theme';
 import type { RootStackParamList } from '../types';
 import type { IRoute } from '../navigations-maps/types';
-import { UNAUTHENTICATED_ROUTES } from '../navigations-maps/Auth';
+import { EMAIL_VERIFY_ROUTES, ONBOARDING_ROUTE, UNAUTHENTICATED_ROUTES } from '../navigations-maps/Auth';
+import { resolveGate, type Gate } from './sessionGate';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const BaseNavigator: React.FC = () => {
-  const routes: IRoute[] = UNAUTHENTICATED_ROUTES;
+  const auth = useAppSelector(state => state.auth);
+  const { colors } = useTheme();
+  const gate: Gate = resolveGate(auth);
+
+  const unauthenticated = [...(!auth.hasSeenOnboarding ? [ONBOARDING_ROUTE] : []), ...UNAUTHENTICATED_ROUTES];
+
+  const routes: IRoute[] = gate === 'verify' ? EMAIL_VERIFY_ROUTES : unauthenticated;
 
   return (
     <Stack.Navigator
       id="BaseNavigator"
       screenOptions={{
         headerShown: false,
-        animation: 'none',
+        contentStyle: { backgroundColor: colors.canvas },
       }}>
       {routes.map(route => (
         <Stack.Screen

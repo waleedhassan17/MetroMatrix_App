@@ -14,11 +14,14 @@ export interface PreferencesSliceState {
   themeMode: ThemeMode;
   /** The customer's last-used service, so Home reopens where they left it. */
   lastService: Exclude<ServiceName, 'neutral'>;
+  /** The notifications pre-prompt has been answered on this device. */
+  pushPromptSeen: boolean;
 }
 
 const initialState: PreferencesSliceState = {
   themeMode: 'system',
   lastService: 'shopping',
+  pushPromptSeen: false,
 };
 
 export const preferencesSlice = createAppSlice({
@@ -27,6 +30,9 @@ export const preferencesSlice = createAppSlice({
   reducers: create => ({
     setThemeMode: create.reducer((state, action: PayloadAction<ThemeMode>) => {
       state.themeMode = action.payload;
+    }),
+    setPushPromptSeen: create.reducer(state => {
+      state.pushPromptSeen = true;
     }),
     setLastService: create.reducer(
       (state, action: PayloadAction<PreferencesSliceState['lastService']>) => {
@@ -38,9 +44,10 @@ export const preferencesSlice = createAppSlice({
   selectors: {
     selectThemeMode: state => state.themeMode,
     selectLastService: state => state.lastService,
+    selectPushPromptSeen: state => state.pushPromptSeen,
   },
 });
 
-export const { setThemeMode, setLastService } = preferencesSlice.actions;
+export const { setThemeMode, setLastService, setPushPromptSeen } = preferencesSlice.actions;
 
-export const { selectThemeMode, selectLastService } = preferencesSlice.selectors;
+export const { selectThemeMode, selectLastService, selectPushPromptSeen } = preferencesSlice.selectors;

@@ -7,7 +7,8 @@ import { useStyles, useTheme, type Theme } from '../theme';
 export interface CardProps {
   children: React.ReactNode;
   elevation?: 'none' | 'float';
-  padded?: boolean;
+  /** true: 16 all round with a 16 gap; 'horizontal': list cards (rows bring their own height). */
+  padded?: boolean | 'horizontal';
   onPress?: () => void;
   accessibilityLabel?: string;
   style?: StyleProp<ViewStyle>;
@@ -21,6 +22,7 @@ const makeStyles = ({ colors, radius, space }: Theme) =>
   StyleSheet.create({
     root: { backgroundColor: colors.surface, borderRadius: radius.lg, overflow: 'hidden' },
     padded: { padding: space.s16, gap: space.s16 },
+    paddedX: { paddingHorizontal: space.s16 },
   });
 
 export const Card: React.FC<CardProps> = ({
@@ -38,7 +40,8 @@ export const Card: React.FC<CardProps> = ({
   const frame = [
     styles.root,
     theme.elevation[elevation],
-    padded && styles.padded,
+    padded === true && styles.padded,
+    padded === 'horizontal' && styles.paddedX,
     selected && { borderColor: theme.service.accent, borderWidth: theme.size.focusBorder },
     invalid && { borderColor: theme.colors.danger, borderWidth: theme.size.focusBorder },
     style,

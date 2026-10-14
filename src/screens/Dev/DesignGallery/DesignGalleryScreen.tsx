@@ -208,8 +208,8 @@ const Stories: React.FC = () => {
           <AppText variant="title">Card, float</AppText>
         </Card>
         <ImageCard image={SAMPLE_IMAGE} title="Al-Noor Pharmacy" subtitle="Gulberg III, Lahore" onPress={() => setViewerOpen(true)} />
-        <Card padded={false}>
-          <View style={styles.listInset}>
+        <Card padded="horizontal">
+          <View>
             <ListRow title="Notifications" subtitle="Order and approval updates" leftIcon="bell" onPress={() => undefined} />
             <Divider />
             <ListRow title="Theme" value="System" leftIcon="moon" onPress={() => undefined} />
