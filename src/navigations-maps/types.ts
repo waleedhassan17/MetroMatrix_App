@@ -6,7 +6,7 @@
 
 import type React from 'react';
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
-import type { IconName } from '../Custom-Components/Icon';
+import type { IonName } from '../Custom-Components/Icon';
 
 export interface IRoute {
   /** Route name — must never change (deep links + navigate() strings). */
@@ -17,10 +17,11 @@ export interface IRoute {
   initialParams?: Record<string, unknown>;
 }
 
-/** A bottom tab: its route, label and Feather glyph. */
+/** A bottom tab: its route, label and Ionicons pair — outline at rest, filled when selected. */
 export interface ITabRoute {
   title: string;
   component: React.ComponentType<any>;
   label: string;
-  icon: IconName;
+  icon: IonName;
+  iconActive: IonName;
 }

@@ -110,7 +110,6 @@ const Card: React.FC<{ data: ServiceCardData; onPress: () => void }> = ({ data, 
                   source={data.image}
                   style={styles.photo}
                   contentFit="cover"
-                  contentPosition="top"
                   transition={motion.press.duration}
                 />
                 <PhotoScrim />

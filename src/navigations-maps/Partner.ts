@@ -7,19 +7,43 @@ import { ROUTES } from './Base';
 import PartnerHomeScreen from '../screens/Partner/PartnerHome/PartnerHomeScreen';
 import AccountStack from '../navigators/stacks/AccountStack';
 
-const profileTab: ITabRoute = { title: ROUTES.PROFILE_TAB, component: AccountStack, label: 'Profile', icon: 'user' };
+const profileTab: ITabRoute = {
+  title: ROUTES.PROFILE_TAB,
+  component: AccountStack,
+  label: 'Profile',
+  icon: 'person-circle-outline',
+  iconActive: 'person-circle',
+};
 
 export const STORE_PARTNER_TAB_ROUTES: ITabRoute[] = [
-  { title: ROUTES.HOME_TAB, component: PartnerHomeScreen, label: 'Store', icon: 'shopping-bag' },
+  {
+    title: ROUTES.HOME_TAB,
+    component: PartnerHomeScreen,
+    label: 'Store',
+    icon: 'storefront-outline',
+    iconActive: 'storefront',
+  },
   profileTab,
 ];
 
 export const DOCTOR_PARTNER_TAB_ROUTES: ITabRoute[] = [
-  { title: ROUTES.HOME_TAB, component: PartnerHomeScreen, label: 'Practice', icon: 'heart' },
+  {
+    title: ROUTES.HOME_TAB,
+    component: PartnerHomeScreen,
+    label: 'Practice',
+    icon: 'medkit-outline',
+    iconActive: 'medkit',
+  },
   profileTab,
 ];
 
 export const KITCHEN_PARTNER_TAB_ROUTES: ITabRoute[] = [
-  { title: ROUTES.HOME_TAB, component: PartnerHomeScreen, label: 'Kitchen', icon: 'coffee' },
+  {
+    title: ROUTES.HOME_TAB,
+    component: PartnerHomeScreen,
+    label: 'Kitchen',
+    icon: 'restaurant-outline',
+    iconActive: 'restaurant',
+  },
   profileTab,
 ];

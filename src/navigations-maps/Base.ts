@@ -54,4 +54,4 @@ export const ROUTES = {
   DESIGN_GALLERY: 'DesignGallery',
 } as const;
 
-export type RouteName = typeof ROUTES[keyof typeof ROUTES];
+export type RouteName = (typeof ROUTES)[keyof typeof ROUTES];

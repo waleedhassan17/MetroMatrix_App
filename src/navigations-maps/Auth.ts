@@ -44,7 +44,9 @@ export const ONBOARDING_ROUTE: IRoute = {
 };
 
 /** Dev builds only: the design-system gallery (/dev/gallery on web). */
-const DEV_ROUTES: IRoute[] = __DEV__ ? [{ title: ROUTES.DESIGN_GALLERY, component: DesignGalleryScreen }] : [];
+const DEV_ROUTES: IRoute[] = __DEV__
+  ? [{ title: ROUTES.DESIGN_GALLERY, component: DesignGalleryScreen }]
+  : [];
 
 /** ── 1. Not authenticated ── */
 export const UNAUTHENTICATED_ROUTES: IRoute[] = [
@@ -53,7 +55,11 @@ export const UNAUTHENTICATED_ROUTES: IRoute[] = [
   { title: ROUTES.SIGN_IN, component: SignInScreen },
   { title: ROUTES.SIGN_UP, component: SignUpScreen, options: { animation: 'fade' } },
   { title: ROUTES.PROVIDER_SIGN_IN, component: ProviderSignInScreen },
-  { title: ROUTES.PROVIDER_SIGN_UP, component: ProviderSignUpScreen, options: { animation: 'fade' } },
+  {
+    title: ROUTES.PROVIDER_SIGN_UP,
+    component: ProviderSignUpScreen,
+    options: { animation: 'fade' },
+  },
   { title: ROUTES.FORGOT_PASSWORD, component: ForgotPasswordScreen },
   { title: ROUTES.RESET_PASSWORD_OTP, component: ResetPasswordOTPScreen },
   { title: ROUTES.RESET_PASSWORD, component: ResetPasswordScreen },
@@ -65,18 +71,30 @@ export const UNAUTHENTICATED_ROUTES: IRoute[] = [
 /** ── 2. Staff TOTP challenge (no tokens yet) ── */
 export const ADMIN_TOTP_ROUTES: IRoute[] = [
   { title: ROUTES.ADMIN_TOTP, component: AdminTotpScreen, options: { animation: 'none' } },
-  { title: ROUTES.ADMIN_TWO_FACTOR_ENROL, component: AdminTwoFactorEnrolScreen, options: { animation: 'none' } },
+  {
+    title: ROUTES.ADMIN_TWO_FACTOR_ENROL,
+    component: AdminTwoFactorEnrolScreen,
+    options: { animation: 'none' },
+  },
 ];
 
 /** ── 3. Email not verified ── */
 export const EMAIL_VERIFY_ROUTES: IRoute[] = [
-  { title: ROUTES.EMAIL_VERIFICATION, component: EmailVerificationScreen, options: { animation: 'none' } },
+  {
+    title: ROUTES.EMAIL_VERIFICATION,
+    component: EmailVerificationScreen,
+    options: { animation: 'none' },
+  },
   { title: ROUTES.VERIFY_SUCCESS, component: VerifySuccessScreen },
 ];
 
 /** ── 4. User, profile incomplete ── */
 export const COMPLETE_PROFILE_ROUTES: IRoute[] = [
-  { title: ROUTES.COMPLETE_PROFILE, component: CompleteProfileScreen, options: { animation: 'none' } },
+  {
+    title: ROUTES.COMPLETE_PROFILE,
+    component: CompleteProfileScreen,
+    options: { animation: 'none' },
+  },
 ];
 
 /** ── 5. Provider with no application, or a draft ── */
@@ -86,7 +104,11 @@ export const PARTNER_SETUP_ROUTES: IRoute[] = [
 
 /** ── 6. Submitted, awaiting approval ── */
 export const PENDING_ROUTES: IRoute[] = [
-  { title: ROUTES.PROVIDER_APPROVAL_PENDING, component: ProviderApprovalPendingScreen, options: { animation: 'none' } },
+  {
+    title: ROUTES.PROVIDER_APPROVAL_PENDING,
+    component: ProviderApprovalPendingScreen,
+    options: { animation: 'none' },
+  },
 ];
 
 /** ── 7. Rejected: the reason first, then Personal Info to resubmit ── */

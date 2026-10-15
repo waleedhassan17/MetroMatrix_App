@@ -8,7 +8,25 @@ import OrdersScreen from '../screens/Customer/Orders/OrdersScreen';
 import AccountStack from '../navigators/stacks/AccountStack';
 
 export const CUSTOMER_TAB_ROUTES: ITabRoute[] = [
-  { title: ROUTES.HOME_TAB, component: HomeStack, label: 'Home', icon: 'home' },
-  { title: ROUTES.ORDERS_TAB, component: OrdersScreen, label: 'Orders', icon: 'package' },
-  { title: ROUTES.PROFILE_TAB, component: AccountStack, label: 'Profile', icon: 'user' },
+  {
+    title: ROUTES.HOME_TAB,
+    component: HomeStack,
+    label: 'Home',
+    icon: 'home-outline',
+    iconActive: 'home',
+  },
+  {
+    title: ROUTES.ORDERS_TAB,
+    component: OrdersScreen,
+    label: 'Orders',
+    icon: 'receipt-outline',
+    iconActive: 'receipt',
+  },
+  {
+    title: ROUTES.PROFILE_TAB,
+    component: AccountStack,
+    label: 'Profile',
+    icon: 'person-circle-outline',
+    iconActive: 'person-circle',
+  },
 ];
