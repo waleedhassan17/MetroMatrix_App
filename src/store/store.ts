@@ -45,6 +45,17 @@ import { adminTotpSlice } from '../screens/Admin/AdminTotp/adminTotpSlice';
 import { adminTwoFactorEnrolSlice } from '../screens/Admin/AdminTwoFactorEnrol/adminTwoFactorEnrolSlice';
 import { approvalQueueSlice } from '../screens/Admin/ApprovalQueue/approvalQueueSlice';
 import { businessReviewSlice } from '../screens/Admin/BusinessReview/businessReviewSlice';
+// Shopping (customer)
+import { bagSlice } from '../screens/Shopping/Customer/Bag/bagSlice';
+import { savedSlice } from '../screens/Shopping/Customer/Saved/savedSlice';
+import { shoppingHomeSlice } from '../screens/Shopping/Customer/ShoppingHome/shoppingHomeSlice';
+import { categoryBrowseSlice } from '../screens/Shopping/Customer/CategoryBrowse/categoryBrowseSlice';
+import { storeListSlice } from '../screens/Shopping/Customer/StoreList/storeListSlice';
+import { storePageSlice } from '../screens/Shopping/Customer/StorePage/storePageSlice';
+import { productListSlice } from '../screens/Shopping/Customer/ProductList/productListSlice';
+import { shopSearchSlice } from '../screens/Shopping/Customer/ShopSearch/shopSearchSlice';
+import { productDetailSlice } from '../screens/Shopping/Customer/ProductDetail/productDetailSlice';
+import { productReviewsSlice } from '../screens/Shopping/Customer/ProductReviews/productReviewsSlice';
 
 // `auth` is persisted through its OWN persistReducer so that exactly one
 // field reaches disk. The session (user, business, tokens) is never
@@ -82,6 +93,17 @@ const rootReducer = combineReducers({
   adminTwoFactorEnrol: adminTwoFactorEnrolSlice.reducer,
   approvalQueue: approvalQueueSlice.reducer,
   businessReview: businessReviewSlice.reducer,
+  // Shopping (customer)
+  bag: bagSlice.reducer,
+  saved: savedSlice.reducer,
+  shoppingHome: shoppingHomeSlice.reducer,
+  categoryBrowse: categoryBrowseSlice.reducer,
+  storeList: storeListSlice.reducer,
+  storePage: storePageSlice.reducer,
+  productList: productListSlice.reducer,
+  shopSearch: shopSearchSlice.reducer,
+  productDetail: productDetailSlice.reducer,
+  productReviews: productReviewsSlice.reducer,
 });
 
 type RootReducerState = ReturnType<typeof rootReducer>;

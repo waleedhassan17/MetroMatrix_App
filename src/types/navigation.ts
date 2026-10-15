@@ -83,7 +83,8 @@ export type HomeStackParamList = ShopBrowseParamList & {
   ShoppingHome: undefined;
   CategoryBrowse: { categoryId?: string } | undefined;
   StoreList: undefined;
-  ShopSearch: { q?: string } | undefined;
+  /** Scoped to one store when opened from its page. */
+  ShopSearch: { q?: string; storeId?: string; storeName?: string } | undefined;
 };
 
 /** The customer's Orders tab: Shop / Health / Food, then an order and its steps. */

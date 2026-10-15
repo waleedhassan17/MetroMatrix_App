@@ -8,7 +8,11 @@ import { AppText } from './AppText';
 const makeStyles = ({ colors, size, space }: Theme) =>
   StyleSheet.create({
     row: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
-    line: { flex: 1, height: size.hairline, backgroundColor: colors.line },
+    // A plain divider spans its parent's width; it never grows (in a column a
+    // flex: 1 hairline would take half the screen).
+    line: { alignSelf: 'stretch', height: size.hairline, backgroundColor: colors.line },
+    // Either side of a label ("or") in a row.
+    split: { flex: 1, height: size.hairline, backgroundColor: colors.line },
   });
 
 export const Divider: React.FC<{ label?: string }> = ({ label }) => {
@@ -16,11 +20,11 @@ export const Divider: React.FC<{ label?: string }> = ({ label }) => {
   if (!label) return <View style={styles.line} />;
   return (
     <View style={styles.row} accessibilityRole="text" accessibilityLabel={label}>
-      <View style={styles.line} />
+      <View style={styles.split} />
       <AppText variant="small" tone="faint">
         {label}
       </AppText>
-      <View style={styles.line} />
+      <View style={styles.split} />
     </View>
   );
 };

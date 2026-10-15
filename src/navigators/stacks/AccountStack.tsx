@@ -15,6 +15,7 @@ const AccountStack: React.FC = () => (
         name={route.title as keyof AccountStackParamList}
         component={route.component}
         options={route.options}
+        initialParams={route.initialParams}
       />
     ))}
   </Stack.Navigator>

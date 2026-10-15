@@ -72,9 +72,10 @@ const makeStyles = ({ colors, space, radius, size, type, elevation }: Theme) =>
       ...type.input,
       color: colors.ink,
       paddingVertical: space.s12,
-      // Web draws its own focus outline inside the field; the field's accent
-      // border is the focus ring.
+      // Web: no browser focus ring; the field's accent border is the ring.
+      // 'solid' at 0 px, because Chrome paints `auto` rings at any width.
       outlineWidth: 0,
+      outlineStyle: 'solid',
     },
     prefix: {
       paddingRight: space.s12,

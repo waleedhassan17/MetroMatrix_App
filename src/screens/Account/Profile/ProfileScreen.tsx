@@ -174,6 +174,12 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
         ) : null}
       </Card>
 
+      {user.role === 'customer' ? (
+        <Card padded="horizontal">
+          <ListRow title="Saved" subtitle="Products you hearted" leftIcon="heart-outline" onPress={() => navigation.navigate('Saved')} />
+        </Card>
+      ) : null}
+
       <Card padded="horizontal">
         <ListRow
           title={googleOnly ? 'Set a password' : 'Change password'}

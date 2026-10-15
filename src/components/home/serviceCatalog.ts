@@ -30,7 +30,7 @@ export const SERVICE_CARDS: ServiceCardData[] = [
     title: 'Smart Shopping',
     category: 'RETAIL',
     description: 'Explore the latest trends and everyday essentials delivered to your doorstep.',
-    live: false,
+    live: true,
     cta: 'Explore',
     image: require('../../../assets/images/services/shopping.jpg'),
     glyph: 'shopping-outline',

@@ -91,6 +91,12 @@ const CustomerHomeScreen: React.FC<Props> = ({ navigation }) => {
           onPress: () => tabs?.navigate('OrdersTab'),
         },
         {
+          key: 'saved',
+          label: 'Saved',
+          icon: 'heart-outline',
+          onPress: () => tabs?.navigate('ProfileTab', { screen: 'Saved' }),
+        },
+        {
           key: 'password',
           label: 'Change Password',
           icon: 'lock-closed-outline',
@@ -115,6 +121,7 @@ const CustomerHomeScreen: React.FC<Props> = ({ navigation }) => {
   const open = (card: ServiceCardData) => {
     dispatch(setLastService(card.service));
     if (card.service === 'food') navigation.navigate('FoodHome');
+    else if (card.service === 'shopping') navigation.navigate('ShoppingHome');
     else navigation.navigate('ServicePreview', { service: card.service });
   };
 

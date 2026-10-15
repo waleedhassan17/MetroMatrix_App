@@ -39,6 +39,7 @@ import { setSessionExpiredHandler, setBusinessStatusStaleHandler } from '../../u
 // ─── Deep linking ─────────────────────────────────────
 // metromatrix://verify-success?token=…        → VerifySuccess (the email link)
 // metromatrix://reset-password?email=…        → ResetPasswordOTP
+// metromatrix://shop/store/:slug, shop/product/:id → a store, a product
 // The same config gives the web build readable paths. Each root navigator
 // owns different routes; a path only resolves while its navigator is mounted.
 const linking: LinkingOptions<ReactNavigation.RootParamList> = {
@@ -68,9 +69,24 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       AdminTwoFactorEnrol: 'staff/authenticator',
       DesignGallery: 'dev/gallery',
       // /home (a partner's home too), /home/food, /home/services/healthcare
+      // Shopping: /shop, /shop/store/:slug, /shop/product/:id … (exact, so
+      // they read the same in a link and in the address bar).
       HomeTab: {
         path: 'home',
-        screens: { CustomerHome: '', FoodHome: 'food', ServicePreview: 'services/:service' },
+        screens: {
+          CustomerHome: '',
+          FoodHome: 'food',
+          ServicePreview: 'services/:service',
+          ShoppingHome: { path: 'shop', exact: true },
+          CategoryBrowse: { path: 'shop/categories', exact: true },
+          StoreList: { path: 'shop/stores', exact: true },
+          ShopSearch: { path: 'shop/search', exact: true },
+          StorePage: { path: 'shop/store/:slug', exact: true },
+          ProductList: { path: 'shop/products', exact: true },
+          ProductDetail: { path: 'shop/product/:id', exact: true },
+          ProductReviews: { path: 'shop/product/:productId/reviews', exact: true },
+          Bag: { path: 'shop/bag', exact: true },
+        },
       },
       OrdersTab: {
         path: 'orders',
@@ -80,7 +96,7 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
         screens: { ApprovalQueue: 'approvals', BusinessReview: 'approvals/:id' },
       },
       ProfileTab: {
-        screens: { Profile: 'profile', ChangePassword: 'profile/password' },
+        screens: { Profile: 'profile', ChangePassword: 'profile/password', Saved: 'profile/saved' },
       },
     },
   } as LinkingOptions<ReactNavigation.RootParamList>['config'],

@@ -8,7 +8,6 @@ import { storePalette, useStyles, useTheme, type Theme } from '../../theme';
 import type { StoreSummary } from '../../types/shopping';
 import { cdn } from '../../utils/cdn';
 import { AppText } from '../AppText';
-import { initialsOf } from '../Avatar';
 import { IonIcon } from '../Icon';
 
 const makeStyles = ({ colors, radius, space, size, elevation }: Theme) =>
@@ -39,6 +38,15 @@ const makeStyles = ({ colors, radius, space, size, elevation }: Theme) =>
     },
   });
 
+/** "Lawn & Loom" → "LL": the first letter of up to two words (symbols skipped). */
+export const storeInitials = (name: string): string =>
+  name
+    .split(/\s+/)
+    .filter(w => /[A-Za-z0-9]/.test(w))
+    .slice(0, 2)
+    .map(w => (w.match(/[A-Za-z0-9]/) ?? [''])[0].toUpperCase())
+    .join('');
+
 /** A store's logo, or its initials on its brand colour. */
 export const StoreMark: React.FC<{ store: Pick<StoreSummary, 'name' | 'logoUrl' | 'brandColor' | 'onBrandColor'>; small?: boolean }> = ({
   store,
@@ -53,7 +61,7 @@ export const StoreMark: React.FC<{ store: Pick<StoreSummary, 'name' | 'logoUrl' 
       {store.logoUrl ? (
         <Image source={{ uri: cdn(store.logoUrl, { w: side, h: side }) ?? undefined }} style={styles.logo} contentFit="cover" />
       ) : (
-        <AppText style={[small ? type.micro : type.title, { color: palette.onAccent }]}>{initialsOf(store.name)}</AppText>
+        <AppText style={[small ? type.micro : type.title, { color: palette.onAccent }]}>{storeInitials(store.name)}</AppText>
       )}
     </View>
   );

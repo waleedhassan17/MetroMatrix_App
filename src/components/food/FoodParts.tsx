@@ -57,7 +57,7 @@ const makeStyles = ({ colors, space, size, radius, gutter, elevation, type }: Th
       borderRadius: radius.pill,
       backgroundColor: colors.surfaceSunk,
     },
-    searchInput: { flex: 1, ...type.input, color: colors.ink, paddingVertical: space.s0, outlineWidth: 0 },
+    searchInput: { flex: 1, ...type.input, color: colors.ink, paddingVertical: space.s0, outlineWidth: 0, outlineStyle: 'solid' },
     // Sections
     section: { gap: space.s12 },
     sectionHead: { paddingHorizontal: gutter, gap: space.s4 },

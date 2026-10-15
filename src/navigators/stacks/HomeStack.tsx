@@ -15,6 +15,7 @@ const HomeStack: React.FC = () => (
         name={route.title as keyof HomeStackParamList}
         component={route.component}
         options={route.options}
+        initialParams={route.initialParams}
       />
     ))}
   </Stack.Navigator>
