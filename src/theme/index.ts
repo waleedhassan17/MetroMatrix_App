@@ -9,3 +9,4 @@ export * from './contrast';
 export * from './brandMarks';
 export * from './theme';
 export * from './ThemeProvider';
+export * from './StoreBrandScope';

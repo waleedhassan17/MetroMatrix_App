@@ -19,6 +19,7 @@ import { returnDaysLeft, validateReturn } from '../shopping/returnFormModel';
 import { validateReview } from '../shopping/reviewFormModel';
 import { brandContrast, validatePaymentAccount, validateStoreSettings } from '../shopping/storeModel';
 import { buildMatrix, setAllStock, skuFor, totalStock } from '../shopping/variantMatrixModel';
+import { choose, initialChoice, isValueAvailable, stockNote, variantFor } from '../shopping/variantPickerModel';
 import { ORDER_STATUSES, PAYMENT_STATUSES } from '../../serializers/shopping/orderSerializer';
 import type { StoreSettings } from '../../types/shopping';
 
@@ -219,5 +220,32 @@ describe('filters, addresses and paging', () => {
     expect(appendUnique([{ id: 'a' }, { id: 'b' }], [{ id: 'b' }, { id: 'c' }]).map(r => r.id)).toEqual(['a', 'b', 'c']);
     expect(hasMorePages({ page: 1, pageSize: 20, total: 21 })).toBe(true);
     expect(hasMorePages({ page: 2, pageSize: 20, total: 40 })).toBe(false);
+  });
+});
+
+describe('variant picker', () => {
+  const v = (id: string, option1: string, option2: string, stock: number) => ({ id, option1, option2, sku: id, stock, price: 1000, compareAtPrice: null });
+  const p = {
+    option1: { name: 'Size', values: ['S', 'M', 'L'], swatches: {} },
+    option2: { name: 'Colour', values: ['Black', 'Rust'], swatches: {} },
+    variants: [v('a', 'S', 'Black', 0), v('b', 'S', 'Rust', 2), v('c', 'M', 'Black', 5), v('d', 'M', 'Rust', 0), v('e', 'L', 'Black', 0), v('f', 'L', 'Rust', 0)],
+  };
+
+  it('starts on the first variant in stock', () => {
+    expect(initialChoice(p)).toEqual({ option1: 'S', option2: 'Rust' });
+    expect(initialChoice(p, 'c')).toEqual({ option1: 'M', option2: 'Black' });
+  });
+
+  it('offers only buyable values, given the other choice', () => {
+    expect(isValueAvailable(p, 1, 'L', { option1: null, option2: null })).toBe(false);
+    expect(isValueAvailable(p, 2, 'Black', { option1: 'S', option2: null })).toBe(false);
+    expect(isValueAvailable(p, 2, 'Black', { option1: 'M', option2: null })).toBe(true);
+  });
+
+  it('moves the other option when a choice would be sold out', () => {
+    expect(choose(p, { option1: 'S', option2: 'Rust' }, 1, 'M')).toEqual({ option1: 'M', option2: 'Black' });
+    expect(variantFor(p, { option1: 'M', option2: 'Black' })?.id).toBe('c');
+    expect(stockNote(variantFor(p, { option1: 'S', option2: 'Rust' })).text).toBe('Only 2 left');
+    expect(stockNote(null).tone).toBe('danger');
   });
 });

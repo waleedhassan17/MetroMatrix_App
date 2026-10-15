@@ -17,7 +17,7 @@ export interface ShopCategory {
   id: string;
   name: string;
   slug: string;
-  /** MaterialCommunityIcons glyph name, chosen by the API. */
+  /** Ionicons glyph name, chosen by the API (the tile falls back to a tag). */
   icon: string;
   parentId: string | null;
   productCount: number;

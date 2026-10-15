@@ -4,7 +4,7 @@ import type { ITabRoute } from './types';
 import { ROUTES } from './Base';
 
 import HomeStack from '../navigators/stacks/HomeStack';
-import OrdersScreen from '../screens/Customer/Orders/OrdersScreen';
+import OrdersStack from '../navigators/stacks/OrdersStack';
 import AccountStack from '../navigators/stacks/AccountStack';
 
 export const CUSTOMER_TAB_ROUTES: ITabRoute[] = [
@@ -17,7 +17,7 @@ export const CUSTOMER_TAB_ROUTES: ITabRoute[] = [
   },
   {
     title: ROUTES.ORDERS_TAB,
-    component: OrdersScreen,
+    component: OrdersStack,
     label: 'Orders',
     icon: 'receipt-outline',
     iconActive: 'receipt',

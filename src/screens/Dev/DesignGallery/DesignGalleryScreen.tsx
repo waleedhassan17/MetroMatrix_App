@@ -42,6 +42,7 @@ import {
 import { BrandMark, BrandWordmark } from '@components/brand';
 import { AuthHeader, AuthTabs, ProviderBadge, type AuthTab } from '@components/auth/AuthChrome';
 import { selectPreviewService, setPreviewService } from './designGallerySlice';
+import { ShoppingStories } from './ShoppingStories';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'DesignGallery'>;
 
@@ -278,6 +279,8 @@ const Stories: React.FC = () => {
       <Section title="Empty">
         <EmptyState icon="shopping-bag" title="Nothing here yet" body="Coming in the next update." action={{ label: 'Refresh', onPress: () => undefined }} />
       </Section>
+
+      <ShoppingStories />
 
       <Section title="Overlays">
         <Button label="Open sheet" variant="secondary" onPress={() => setSheetOpen(true)} />

@@ -36,6 +36,10 @@ const ALLOWED = new Map([
     'the legibility scrim over service photos (both colours are theme tokens) — imagery, not a surface',
   ],
   [
+    'src/screens/Dev/DesignGallery/ShoppingStories.tsx',
+    'demo STORE brand colours (data a store chooses, painted only through StoreBrandScope) — dev-only gallery',
+  ],
+  [
     'src/screens/Onboarding/OnboardingScreen.tsx',
     "the onboarding preview card's header gradient, copied from the FYP app (its colours still come from the theme)",
   ],

@@ -72,7 +72,10 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
         path: 'home',
         screens: { CustomerHome: '', FoodHome: 'food', ServicePreview: 'services/:service' },
       },
-      OrdersTab: 'orders',
+      OrdersTab: {
+        path: 'orders',
+        screens: { Orders: '' },
+      },
       ApprovalsTab: {
         screens: { ApprovalQueue: 'approvals', BusinessReview: 'approvals/:id' },
       },

@@ -190,6 +190,30 @@ export const size = {
   headerWell: 40,
   /** The slide-out side menu: at most this wide (85% of the window below it). */
   sideMenu: 340,
+  // ── Shopping ──
+  /** Product photos are portrait 4:5 (width / height), as fashion catalogues shoot. */
+  productAspect: 0.8,
+  /** Home banners and store covers. */
+  bannerAspect: 2,
+  coverAspect: 2.4,
+  /** A product card in a horizontal rail. */
+  railCard: 156,
+  /** A store card in a horizontal rail. */
+  storeCard: 264,
+  storeLogo: 56,
+  storeLogoSmall: 28,
+  /** Colour swatch in the variant sheet. */
+  swatch: 36,
+  /** Bag count on the header bag icon. */
+  countBadge: 18,
+  /** Category tile glyph well. */
+  categoryWell: 56,
+  /** The bag line thumbnail (4:5). */
+  lineThumb: 64,
+  /** Charts: the Today sparkline and the Insights charts. */
+  chart: { spark: 56, bar: 168, line: 168 },
+  /** Rating-breakdown bar track. */
+  ratingBar: 6,
 } as const;
 
 export const opacity = {
@@ -197,6 +221,8 @@ export const opacity = {
   pressed: 0.72,
   skeletonLow: 0.45,
   skeletonHigh: 1,
+  /** A sold-out product's photo. */
+  soldOut: 0.55,
 } as const;
 
 // ─── Depth (the FYP's three elevations) ─────────────
@@ -229,6 +255,16 @@ export const buildElevation = (palette: Palette): Elevation => ({
 export const motion = {
   /** Press feedback: 180 ms ease-out. */
   press: { duration: 180, scale: 0.97 },
+  /** A remote photo fading in. */
+  imageFade: 150,
+  /** Home banners advance this often, and pause while touched. */
+  bannerInterval: 6000,
+  /** Search suggestions wait for typing to pause this long. */
+  suggestDebounce: 250,
+  /** Checkout re-prices this long after the last change. */
+  previewDebounce: 300,
+  /** The store's Orders list refreshes this often while on screen. */
+  ordersPoll: 30000,
   /** Sheets and step transitions. */
   sheet: { duration: 240 },
   /** Badges and pills arriving. */

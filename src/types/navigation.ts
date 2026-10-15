@@ -8,6 +8,7 @@
 
 import type { NavigatorScreenParams } from '@react-navigation/native';
 import type { DocumentKind } from './auth';
+import type { OrderSegment, ProductSort } from './shopping';
 
 /** BaseNavigator: onboarding, sign-in and every session gate. */
 export type RootStackParamList = {
@@ -40,23 +41,104 @@ export type RootStackParamList = {
 /** Which sign-in a password reset returns to (the FYP's `userType`). */
 export type AuthUserType = 'user' | 'provider';
 
+/**
+ * The customer's Shopping screens that any customer stack can push, so a
+ * product opens where you are (Home, Orders or Profile). Params are flat
+ * strings and numbers only: on web they become the URL.
+ */
+export type ShopBrowseParamList = {
+  StorePage: { slug: string; name?: string };
+  /** One product list for every entry: a collection, a category, "New this week", a search. */
+  ProductList: {
+    title: string;
+    q?: string;
+    storeId?: string;
+    categoryId?: string;
+    collectionId?: string;
+    sort?: ProductSort;
+    onSale?: boolean;
+  };
+  ProductDetail: { id: string; name?: string };
+  ProductReviews: { productId: string; name?: string };
+  Bag: undefined;
+  Checkout: undefined;
+  OrderPlaced: { groupCode: string };
+  AddressForm: { id?: string } | undefined;
+  Notifications: undefined;
+};
+
 /** Profile tab stack — shared by every role app. */
-export type AccountStackParamList = {
+export type AccountStackParamList = ShopBrowseParamList & {
   Profile: undefined;
   ChangePassword: undefined;
+  Saved: undefined;
+  AddressBook: undefined;
 };
 
 /** The customer's Home tab: the three-service launcher and each service. */
-export type HomeStackParamList = {
+export type HomeStackParamList = ShopBrowseParamList & {
   CustomerHome: undefined;
   FoodHome: undefined;
   ServicePreview: { service: 'healthcare' | 'shopping' };
+  ShoppingHome: undefined;
+  CategoryBrowse: { categoryId?: string } | undefined;
+  StoreList: undefined;
+  ShopSearch: { q?: string } | undefined;
+};
+
+/** The customer's Orders tab: Shop / Health / Food, then an order and its steps. */
+export type OrdersStackParamList = ShopBrowseParamList & {
+  Orders: { segment?: OrderSegment } | undefined;
+  OrderDetail: { groupCode: string };
+  PaymentProof: { orderId: string; groupCode: string };
+  ReturnRequest: { orderId: string; groupCode: string };
+  WriteReview: { orderId: string; itemId: string; groupCode: string };
 };
 
 export type CustomerTabParamList = {
   HomeTab: NavigatorScreenParams<HomeStackParamList> | undefined;
-  OrdersTab: undefined;
+  OrdersTab: NavigatorScreenParams<OrdersStackParamList> | undefined;
   ProfileTab: NavigatorScreenParams<AccountStackParamList> | undefined;
+};
+
+/** The store partner's four tabs. */
+export type StoreTabParamList = {
+  HomeTab: undefined;
+  OrdersTab: undefined;
+  ProductsTab: undefined;
+  MoreTab: undefined;
+};
+
+/** The store partner's app: the tabs, with every tool pushed over them. */
+export type StorePartnerStackParamList = {
+  StoreTabs: NavigatorScreenParams<StoreTabParamList> | undefined;
+  StoreOrderDetail: { id: string; code?: string };
+  ProductForm: { id?: string } | undefined;
+  Inventory: { lowStock?: boolean } | undefined;
+  Collections: undefined;
+  Coupons: undefined;
+  CouponForm: { id?: string } | undefined;
+  StoreReturns: undefined;
+  StoreReturnDetail: { id: string };
+  StoreReviews: undefined;
+  Insights: undefined;
+  StoreProfile: undefined;
+  StoreSettings: undefined;
+  PaymentAccounts: undefined;
+  Profile: undefined;
+  ChangePassword: undefined;
+  Notifications: undefined;
+};
+
+/** The admin console's Shopping tab. */
+export type AdminShopStackParamList = {
+  ShopOverview: undefined;
+  ShopCategories: undefined;
+  ShopBanners: undefined;
+  BannerForm: { id?: string } | undefined;
+  ShopReports: undefined;
+  OrderLookup: { groupCode?: string } | undefined;
+  ShopStores: undefined;
 };
 
 export type PartnerTabParamList = {
@@ -71,5 +153,6 @@ export type AdminStackParamList = {
 
 export type AdminTabParamList = {
   ApprovalsTab: NavigatorScreenParams<AdminStackParamList> | undefined;
+  ShopAdminTab: NavigatorScreenParams<AdminShopStackParamList> | undefined;
   ProfileTab: NavigatorScreenParams<AccountStackParamList> | undefined;
 };

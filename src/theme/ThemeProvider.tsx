@@ -26,6 +26,11 @@ export const ServiceScope: React.FC<{ service: ServiceName; children: React.Reac
   children,
 }) => <ThemeContext.Provider value={getTheme(service)}>{children}</ThemeContext.Provider>;
 
+/** A whole Theme for a subtree — StoreBrandScope's store colours. */
+export const ThemeScope: React.FC<{ theme: Theme; children: React.ReactNode }> = ({ theme, children }) => (
+  <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>
+);
+
 export const useTheme = (): Theme => useContext(ThemeContext);
 
 export function useStyles<T>(factory: (theme: Theme) => T): T {
