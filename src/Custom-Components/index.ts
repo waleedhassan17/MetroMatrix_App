@@ -33,4 +33,6 @@ export * from './toastConfig';
 export * from './InlineNotice';
 export * from './TextLink';
 export * from './ToggleRow';
+export * from './PhotoStrip';
+export * from './TextAction';
 export * from './shopping';

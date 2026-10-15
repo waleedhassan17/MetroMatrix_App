@@ -177,6 +177,10 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       {user.role === 'customer' ? (
         <Card padded="horizontal">
           <ListRow title="Saved" subtitle="Products you hearted" leftIcon="heart-outline" onPress={() => navigation.navigate('Saved')} />
+          <Divider />
+          <ListRow title="Addresses" subtitle="Where your orders are delivered" leftIcon="location-outline" onPress={() => navigation.navigate('AddressBook')} />
+          <Divider />
+          <ListRow title="Notifications" leftIcon="notifications-outline" onPress={() => navigation.navigate('Notifications')} />
         </Card>
       ) : null}
 

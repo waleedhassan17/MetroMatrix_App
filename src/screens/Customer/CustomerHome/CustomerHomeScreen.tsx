@@ -8,11 +8,11 @@
 // card wears its own service's colour.
 // Stateless: opening a service records it in preferences.lastService.
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useSignOut } from '@hooks/useSignOut';
 import { APP_VERSION } from '@/services/appInfo';
@@ -26,6 +26,7 @@ import { HomeHeader } from '@components/home/HomeParts';
 import { SideMenu, type SideMenuSection } from '@components/home/SideMenu';
 import type { HomeStackParamList } from '@/types';
 import { selectUser } from '../../Auth/authSlice';
+import { loadUnreadCountAsync, selectUnreadCount } from '../../Account/Notifications/notificationsSlice';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'CustomerHome'>;
 
@@ -70,6 +71,14 @@ const CustomerHomeScreen: React.FC<Props> = ({ navigation }) => {
   const { service, colors } = useTheme();
   const insets = useSafeAreaInsets();
   const user = useAppSelector(selectUser);
+  const unread = useAppSelector(selectUnreadCount);
+
+  // The bell's count, fresh whenever the home is shown.
+  useFocusEffect(
+    useCallback(() => {
+      void dispatch(loadUnreadCountAsync());
+    }, [dispatch]),
+  );
   const { confirmSignOut } = useSignOut();
   const [menuOpen, setMenuOpen] = useState(false);
   const tabs = navigation.getParent();
@@ -95,6 +104,18 @@ const CustomerHomeScreen: React.FC<Props> = ({ navigation }) => {
           label: 'Saved',
           icon: 'heart-outline',
           onPress: () => tabs?.navigate('ProfileTab', { screen: 'Saved' }),
+        },
+        {
+          key: 'addresses',
+          label: 'Addresses',
+          icon: 'location-outline',
+          onPress: () => tabs?.navigate('ProfileTab', { screen: 'AddressBook' }),
+        },
+        {
+          key: 'notifications',
+          label: 'Notifications',
+          icon: 'notifications-outline',
+          onPress: () => navigation.navigate('Notifications'),
         },
         {
           key: 'password',
@@ -130,13 +151,8 @@ const CustomerHomeScreen: React.FC<Props> = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <HomeHeader
           onMenu={() => setMenuOpen(true)}
-          onNotifications={() =>
-            Toast.show({
-              type: 'info',
-              text1: "You're all caught up",
-              text2: 'No new notifications.',
-            })
-          }
+          onNotifications={() => navigation.navigate('Notifications')}
+          unread={unread}
         />
 
         <View style={[styles.live, { backgroundColor: service.accentSoft }]}>

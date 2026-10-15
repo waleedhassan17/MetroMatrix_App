@@ -7,7 +7,7 @@
 // release, the push pre-prompt, and toast notifications.
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, View, StyleSheet, StatusBar } from 'react-native';
+import { Animated, Linking, View, StyleSheet, StatusBar } from 'react-native';
 import { NavigationContainer, type LinkingOptions } from '@react-navigation/native';
 import * as NativeSplash from 'expo-splash-screen';
 import Toast from 'react-native-toast-message';
@@ -31,6 +31,7 @@ import {
 } from './appContainerSlice';
 import { OfflineGate } from './OfflineGate';
 import { PushPrePrompt } from './PushPrePrompt';
+import { onPushTap, pushTapUrl } from '../../services/push';
 import { signOut } from '../../screens/Auth/authSlice';
 import { SplashScreen } from '../../screens/Onboarding/Splash/SplashScreen';
 import { resetAllState } from '../../store/resetAllState';
@@ -40,6 +41,7 @@ import { setSessionExpiredHandler, setBusinessStatusStaleHandler } from '../../u
 // metromatrix://verify-success?token=…        → VerifySuccess (the email link)
 // metromatrix://reset-password?email=…        → ResetPasswordOTP
 // metromatrix://shop/store/:slug, shop/product/:id → a store, a product
+// metromatrix://orders/:groupCode               → an order
 // The same config gives the web build readable paths. Each root navigator
 // owns different routes; a path only resolves while its navigator is mounted.
 const linking: LinkingOptions<ReactNavigation.RootParamList> = {
@@ -86,17 +88,33 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
           ProductDetail: { path: 'shop/product/:id', exact: true },
           ProductReviews: { path: 'shop/product/:productId/reviews', exact: true },
           Bag: { path: 'shop/bag', exact: true },
+          Checkout: { path: 'shop/checkout', exact: true },
+          OrderPlaced: { path: 'shop/placed/:groupCode', exact: true },
         },
       },
+      // metromatrix://orders/MM-24A7Q2 → that order (push taps land here too)
       OrdersTab: {
         path: 'orders',
-        screens: { Orders: '' },
+        screens: {
+          Orders: '',
+          OrderDetail: ':groupCode',
+          PaymentProof: ':groupCode/pay/:orderId',
+          ReturnRequest: ':groupCode/return/:orderId',
+          WriteReview: ':groupCode/review/:orderId/:itemId',
+        },
       },
       ApprovalsTab: {
         screens: { ApprovalQueue: 'approvals', BusinessReview: 'approvals/:id' },
       },
       ProfileTab: {
-        screens: { Profile: 'profile', ChangePassword: 'profile/password', Saved: 'profile/saved' },
+        screens: {
+          Profile: 'profile',
+          ChangePassword: 'profile/password',
+          Saved: 'profile/saved',
+          AddressBook: 'profile/addresses',
+          AddressForm: 'profile/addresses/edit',
+          Notifications: 'profile/notifications',
+        },
       },
     },
   } as LinkingOptions<ReactNavigation.RootParamList>['config'],
@@ -171,6 +189,16 @@ export const AppContainer: React.FC = () => {
     });
     return () => setBusinessStatusStaleHandler(null);
   }, [dispatch]);
+
+  // ─── Push taps: open what the push is about (an order, a return), through
+  // the app's own deep links, once the role's app is mounted.
+  useEffect(() => {
+    if (gate !== 'customer' && gate !== 'partner') return;
+    return onPushTap(data => {
+      const url = pushTapUrl(data, gate === 'partner');
+      if (url) void Linking.openURL(url);
+    });
+  }, [gate]);
 
   // ─── Which top-level navigator mounts. Every gated state is a branch inside
   // BaseNavigator; a cleared gate mounts the role's app. Keys make a swap

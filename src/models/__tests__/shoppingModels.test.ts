@@ -19,6 +19,7 @@ import { returnDaysLeft, validateReturn } from '../shopping/returnFormModel';
 import { validateReview } from '../shopping/reviewFormModel';
 import { brandContrast, validatePaymentAccount, validateStoreSettings } from '../shopping/storeModel';
 import { buildMatrix, setAllStock, skuFor, totalStock } from '../shopping/variantMatrixModel';
+import { pushTapUrl } from '../../services/push';
 import { choose, initialChoice, isValueAvailable, stockNote, variantFor } from '../shopping/variantPickerModel';
 import { ORDER_STATUSES, PAYMENT_STATUSES } from '../../serializers/shopping/orderSerializer';
 import type { StoreSettings } from '../../types/shopping';
@@ -247,5 +248,16 @@ describe('variant picker', () => {
     expect(variantFor(p, { option1: 'M', option2: 'Black' })?.id).toBe('c');
     expect(stockNote(variantFor(p, { option1: 'S', option2: 'Rust' })).text).toBe('Only 2 left');
     expect(stockNote(null).tone).toBe('danger');
+  });
+});
+
+describe('push taps', () => {
+  it('opens the order for a customer and the store order or return for a store', () => {
+    expect(pushTapUrl({ groupCode: 'MM-24A7Q2', orderId: 'o_1' }, false)).toBe('metromatrix://orders/MM-24A7Q2');
+    expect(pushTapUrl({ productId: 'p_1' }, false)).toBe('metromatrix://shop/product/p_1');
+    expect(pushTapUrl({ groupCode: 'MM-1', orderId: 'o_1' }, true)).toBe('metromatrix://store/orders/o_1');
+    expect(pushTapUrl({ returnId: 'rt_1', orderId: 'o_1' }, true)).toBe('metromatrix://store/returns/rt_1');
+    expect(pushTapUrl({}, false)).toBeNull();
+    expect(pushTapUrl(null, true)).toBeNull();
   });
 });

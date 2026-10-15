@@ -56,6 +56,16 @@ import { productListSlice } from '../screens/Shopping/Customer/ProductList/produ
 import { shopSearchSlice } from '../screens/Shopping/Customer/ShopSearch/shopSearchSlice';
 import { productDetailSlice } from '../screens/Shopping/Customer/ProductDetail/productDetailSlice';
 import { productReviewsSlice } from '../screens/Shopping/Customer/ProductReviews/productReviewsSlice';
+import { checkoutSlice } from '../screens/Shopping/Customer/Checkout/checkoutSlice';
+import { orderDetailSlice } from '../screens/Shopping/Customer/OrderDetail/orderDetailSlice';
+import { paymentProofSlice } from '../screens/Shopping/Customer/PaymentProof/paymentProofSlice';
+import { returnRequestSlice } from '../screens/Shopping/Customer/ReturnRequest/returnRequestSlice';
+import { writeReviewSlice } from '../screens/Shopping/Customer/WriteReview/writeReviewSlice';
+import { ordersSlice } from '../screens/Customer/Orders/ordersSlice';
+// Account (core)
+import { addressBookSlice } from '../screens/Account/AddressBook/addressBookSlice';
+import { addressFormSlice } from '../screens/Account/AddressForm/addressFormSlice';
+import { notificationsSlice } from '../screens/Account/Notifications/notificationsSlice';
 
 // `auth` is persisted through its OWN persistReducer so that exactly one
 // field reaches disk. The session (user, business, tokens) is never
@@ -104,6 +114,16 @@ const rootReducer = combineReducers({
   shopSearch: shopSearchSlice.reducer,
   productDetail: productDetailSlice.reducer,
   productReviews: productReviewsSlice.reducer,
+  checkout: checkoutSlice.reducer,
+  orderDetail: orderDetailSlice.reducer,
+  paymentProof: paymentProofSlice.reducer,
+  returnRequest: returnRequestSlice.reducer,
+  writeReview: writeReviewSlice.reducer,
+  orders: ordersSlice.reducer,
+  // Account (core)
+  addressBook: addressBookSlice.reducer,
+  addressForm: addressFormSlice.reducer,
+  notifications: notificationsSlice.reducer,
 });
 
 type RootReducerState = ReturnType<typeof rootReducer>;

@@ -123,3 +123,7 @@ export const uploadToCloudinary = async (
     xhr.send(form);
   });
 };
+
+/** Sign, then upload: one call for a photo a form attaches (review, return, payment proof, product). */
+export const uploadImage = async (file: LocalFile, purpose: UploadPurpose, onProgress?: (fraction: number) => void): Promise<UploadedFile> =>
+  uploadToCloudinary(file, await signUpload(purpose), onProgress);

@@ -50,3 +50,30 @@ export const obtainPushToken = async (ask: boolean): Promise<string | null> => {
 
 export const pushPlatform = (): 'android' | 'ios' | 'web' =>
   Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web';
+
+/**
+ * Where a tapped push goes, as one of the app's own deep links (the
+ * navigation container routes it). The API puts groupCode / orderId /
+ * returnId / productId in the push's data, as it does for in-app
+ * notifications. TODO(API_SHOPPING): confirm the push data keys.
+ */
+export const pushTapUrl = (data: Record<string, unknown> | null | undefined, isStore: boolean): string | null => {
+  const s = (k: string) => (typeof data?.[k] === 'string' && data[k] ? (data[k] as string) : null);
+  if (isStore) {
+    if (s('returnId')) return `metromatrix://store/returns/${encodeURIComponent(s('returnId')!)}`;
+    if (s('orderId')) return `metromatrix://store/orders/${encodeURIComponent(s('orderId')!)}`;
+    return null;
+  }
+  if (s('groupCode')) return `metromatrix://orders/${encodeURIComponent(s('groupCode')!)}`;
+  if (s('productId')) return `metromatrix://shop/product/${encodeURIComponent(s('productId')!)}`;
+  return null;
+};
+
+/** Calls `handler` with a tapped push's data; returns the unsubscribe. A no-op where push isn't available. */
+export const onPushTap = (handler: (data: Record<string, unknown>) => void): (() => void) => {
+  if (!isPushSupported()) return () => undefined;
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const Notifications = require('expo-notifications') as typeof import('expo-notifications');
+  const sub = Notifications.addNotificationResponseReceivedListener(r => handler((r.notification.request.content.data ?? {}) as Record<string, unknown>));
+  return () => sub.remove();
+};

@@ -17,6 +17,10 @@ import ProductListScreen from '../screens/Shopping/Customer/ProductList/ProductL
 import ProductDetailScreen from '../screens/Shopping/Customer/ProductDetail/ProductDetailScreen';
 import ProductReviewsScreen from '../screens/Shopping/Customer/ProductReviews/ProductReviewsScreen';
 import BagScreen from '../screens/Shopping/Customer/Bag/BagScreen';
+import CheckoutScreen from '../screens/Shopping/Customer/Checkout/CheckoutScreen';
+import OrderPlacedScreen from '../screens/Shopping/Customer/OrderPlaced/OrderPlacedScreen';
+import AddressFormScreen from '../screens/Account/AddressForm/AddressFormScreen';
+import NotificationsScreen from '../screens/Account/Notifications/NotificationsScreen';
 
 export const SHOP_HOME_ROUTES: IRoute[] = [
   { title: ROUTES.SHOPPING_HOME, component: ShoppingHomeScreen },
@@ -31,4 +35,9 @@ export const SHOP_BROWSE_ROUTES: IRoute[] = [
   { title: ROUTES.PRODUCT_DETAIL, component: ProductDetailScreen },
   { title: ROUTES.PRODUCT_REVIEWS, component: ProductReviewsScreen },
   { title: ROUTES.BAG, component: BagScreen },
+  { title: ROUTES.CHECKOUT, component: CheckoutScreen },
+  // No swipe back from "Order placed": the order is done; its buttons lead on.
+  { title: ROUTES.ORDER_PLACED, component: OrderPlacedScreen, options: { gestureEnabled: false } },
+  { title: ROUTES.ADDRESS_FORM, component: AddressFormScreen },
+  { title: ROUTES.NOTIFICATIONS, component: NotificationsScreen },
 ];
