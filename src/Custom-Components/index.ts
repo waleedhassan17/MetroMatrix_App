@@ -16,6 +16,7 @@ export * from './ImageCard';
 export * from './ImageViewer';
 export * from './LargeTitleHeader';
 export * from './ListRow';
+export * from './LiveDot';
 export * from './OtpInput';
 export * from './PhotoScrim';
 export * from './PasswordStrength';

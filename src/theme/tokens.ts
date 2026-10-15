@@ -60,6 +60,10 @@ export interface Palette {
   scrimClear: string;
   /** Text and icons painted on `scrim`. */
   onScrim: string;
+  /** Secondary text on a photo or dark ground (the FYP's inkInverseSoft — 90% keeps AA). */
+  onScrimSoft: string;
+  /** Badges floating on a photo: near-opaque white, so they read on any image. */
+  glass: string;
   /** Ground of the full-screen document viewer. */
   viewer: string;
   /** Role Selection's "Service Provider" card: the FYP's indigo icon on its tint. */
@@ -95,6 +99,8 @@ const light: Palette = {
   scrim: 'rgba(28, 25, 23, 0.62)',
   scrimClear: 'rgba(28, 25, 23, 0)',
   onScrim: '#FFFFFF',
+  onScrimSoft: 'rgba(255, 255, 255, 0.9)',
+  glass: 'rgba(255, 255, 255, 0.94)',
   viewer: '#0C0A09',
   roleProvider: '#6366F1',
   roleProviderSoft: '#F0F4FF',
@@ -178,8 +184,10 @@ export const size = {
   kitchenArt: 148,
   kitchenArtSmall: 112,
   promoCard: 136,
-  /** Customer home: the photo panel of a service card (the FYP's 160, a touch taller). */
-  serviceArt: 176,
+  /** Customer home: the photo panel of a service card (the FYP's 160, taller for the premium card). */
+  serviceArt: 208,
+  /** Customer home: the FYP's 40 pt header wells. */
+  headerWell: 40,
 } as const;
 
 export const opacity = {
@@ -227,6 +235,8 @@ export const motion = {
   pulse: { duration: 900 },
   /** Large-title collapse distance. */
   titleCollapse: 44,
+  /** A live indicator's ring pulse. */
+  livePulse: { duration: 1400, scale: 2.4 },
   /** The slow breath on Provider Approval Pending's mark (the FYP's pulse). */
   breath: { duration: 1200, scale: 1.06 },
   /** The JS splash (FYP splash.tsx timings). */
