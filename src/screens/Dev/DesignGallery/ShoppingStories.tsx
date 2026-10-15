@@ -68,6 +68,8 @@ const STORE: StoreSummary = {
   slug: 'demo-store',
   name: 'Lawn & Loom',
   tagline: 'Hand-finished eastern wear from Lahore',
+  about: 'Every kurta is cut in-house and embroidered by artisans we know by name.',
+  categories: ['Kurtas & sets', 'Formals', 'Bags'],
   logoUrl: null,
   coverUrl: photo('1733470381591-c5dfb9df3c3d'),
   brandColor: '#7A1F3D',

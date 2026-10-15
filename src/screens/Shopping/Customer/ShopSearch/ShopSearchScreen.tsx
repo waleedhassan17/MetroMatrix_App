@@ -198,7 +198,14 @@ const ShopSearchContent: React.FC<Props> = ({ navigation, route }) => {
             ) : null}
             {categories.categories.length ? (
               <View style={styles.group}>
-                <AppText variant="title">Browse categories</AppText>
+                <View style={styles.head}>
+                  <AppText variant="title">Browse categories</AppText>
+                  <Pressable onPress={() => navigation.navigate('CategoryBrowse')} hitSlop={8} accessibilityRole="link" accessibilityLabel="See all categories">
+                    <AppText variant="small" tone="accentDeep">
+                      See all
+                    </AppText>
+                  </Pressable>
+                </View>
                 <View style={styles.tiles}>
                   {categories.categories.flatMap(c => [c, ...c.children]).slice(0, 8).map(c => (
                     <CategoryTile key={c.id} name={c.name} icon={c.icon} onPress={() => openList({ title: c.name, categoryId: c.id })} />

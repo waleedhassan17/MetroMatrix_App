@@ -15,7 +15,7 @@ import { useStyles, useTheme, type Theme } from '../theme';
 export interface SkeletonProps {
   width?: DimensionValue;
   height?: number;
-  shape?: 'sm' | 'md' | 'lg' | 'pill';
+  shape?: 'sm' | 'md' | 'lg' | 'xl' | 'pill';
 }
 
 const makeStyles = ({ colors }: Theme) =>

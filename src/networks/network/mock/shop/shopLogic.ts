@@ -144,11 +144,27 @@ export const categoryTree = (shop: MockShop) => {
 
 export const categoryAndChildren = (shop: MockShop, id: string) => [id, ...shop.categories.filter(c => c.parentId === id).map(c => c.id)];
 
+/** The store's category names, most products first (the brand card's chips). */
+const storeCategories = (shop: MockShop, storeId: string) => {
+  const counts = new Map<string, number>();
+  for (const p of shop.products) {
+    if (p.storeId !== storeId || !isListed(p) || !p.categoryId) continue;
+    counts.set(p.categoryId, (counts.get(p.categoryId) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([id]) => shop.categories.find(c => c.id === id)?.name)
+    .filter((n): n is string => !!n)
+    .slice(0, 8);
+};
+
 export const storeSummaryView = (shop: MockShop, s: MockStore) => ({
   id: s.id,
   slug: s.slug,
   name: s.name,
   tagline: s.tagline,
+  about: s.about,
+  categories: storeCategories(shop, s.id),
   logoUrl: s.logoUrl,
   coverUrl: s.coverUrl,
   brandColor: s.brandColor,

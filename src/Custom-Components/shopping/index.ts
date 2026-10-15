@@ -1,4 +1,5 @@
 // The Shopping components (tokens only, like the rest of the kit).
+export * from './BrandCard';
 export * from './CartStoreGroup';
 export * from './CategoryTile';
 export * from './ChoiceChip';

@@ -58,6 +58,10 @@ export interface Palette {
   scrim: string;
   /** The scrim's clear end — where a photo scrim fades from. */
   scrimClear: string;
+  /** The strong scrim (brand cards: copy sits mid-card, on any photo). */
+  scrimFaint: string;
+  scrimMid: string;
+  scrimDeep: string;
   /** Text and icons painted on `scrim`. */
   onScrim: string;
   /** Secondary text on a photo or dark ground (the FYP's inkInverseSoft — 90% keeps AA). */
@@ -98,6 +102,9 @@ const light: Palette = {
   overlay: 'rgba(28, 25, 23, 0.45)',
   scrim: 'rgba(28, 25, 23, 0.62)',
   scrimClear: 'rgba(28, 25, 23, 0)',
+  scrimFaint: 'rgba(28, 25, 23, 0.12)',
+  scrimMid: 'rgba(28, 25, 23, 0.4)',
+  scrimDeep: 'rgba(28, 25, 23, 0.88)',
   onScrim: '#FFFFFF',
   onScrimSoft: 'rgba(255, 255, 255, 0.9)',
   glass: 'rgba(255, 255, 255, 0.94)',
@@ -216,6 +223,10 @@ export const size = {
   ratingBar: 6,
   /** Inventory's stock field beside each row. */
   stockField: 96,
+  /** The brand list (the FYP's): a brand's photo card, and the featured logo ring. */
+  brandCard: 220,
+  brandRing: 64,
+  brandRingInner: 52,
 } as const;
 
 export const opacity = {

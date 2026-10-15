@@ -53,6 +53,10 @@ export interface StoreSummary {
   slug: string;
   name: string;
   tagline: string;
+  /** The store's story (the brand card shows two lines). */
+  about: string;
+  /** What it sells: its products' category names, most stocked first. */
+  categories: string[];
   logoUrl: string | null;
   coverUrl: string | null;
   brandColor: string;
@@ -75,7 +79,6 @@ export interface Collection {
 }
 
 export interface StoreDetail extends StoreSummary {
-  about: string;
   socials: StoreSocials;
   phone: string | null;
   whatsapp: string | null;

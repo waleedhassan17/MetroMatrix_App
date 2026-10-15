@@ -77,6 +77,9 @@ describe('the dummy API payloads', () => {
     expect(catalog.productSummarySerializer(json(productSummaryView(shop, p)))?.storeName).toBe('Lawn & Loom');
     const store = catalog.storeDetailSerializer(json(storeDetailView(shop, shop.stores[1])))!;
     expect(store.brandColor).toBe('#111827');
+    // The brand card: its story and what it sells, most stocked first.
+    expect(store.about.length).toBeGreaterThan(10);
+    expect(store.categories.length).toBeGreaterThan(0);
     expect(store.collections.length).toBeGreaterThan(0);
   });
 

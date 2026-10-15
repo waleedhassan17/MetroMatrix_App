@@ -6,11 +6,11 @@
 // two-column product grid the server pages.
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions, type ViewStyle } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, TextInput, View, useWindowDimensions, type ViewStyle } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useStyles, useTheme, type Theme } from '@theme/index';
+import { MAX_FONT_SCALE, useStyles, useTheme, type Theme } from '@theme/index';
 import {
   AppText,
   CountIconButton,
@@ -53,6 +53,7 @@ const makeStyles = ({ colors, space, size, radius, gutter, type }: Theme) =>
       backgroundColor: colors.surfaceSunk,
     },
     pillText: { ...type.input, color: colors.inkFaint, flex: 1 },
+    pillInput: { ...type.input, color: colors.ink, flex: 1, paddingVertical: space.s0, outlineWidth: 0, outlineStyle: 'solid' },
     banner: { borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.surfaceSunk },
     bannerText: { position: 'absolute', left: space.s20, right: space.s20, bottom: space.s20, gap: space.s4 },
     bannerDots: { flexDirection: 'row', justifyContent: 'center', gap: space.s4, paddingTop: space.s8 },
@@ -138,6 +139,38 @@ export const SearchPill: React.FC<{ label: string; onPress: () => void; style?: 
         {label}
       </AppText>
     </Pressable>
+  );
+};
+
+// ─── Search field (filters in place) ──────────────────
+export const SearchField: React.FC<{ value: string; onChange: (text: string) => void; placeholder: string; style?: ViewStyle }> = ({
+  value,
+  onChange,
+  placeholder,
+  style,
+}) => {
+  const styles = useStyles(makeStyles);
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.pill, style]}>
+      <IonIcon name="search" size="md" color={colors.inkMuted} />
+      <TextInput
+        value={value}
+        onChangeText={onChange}
+        placeholder={placeholder}
+        placeholderTextColor={colors.inkFaint}
+        style={styles.pillInput}
+        returnKeyType="search"
+        autoCorrect={false}
+        maxFontSizeMultiplier={MAX_FONT_SCALE}
+        accessibilityLabel={placeholder}
+      />
+      {value ? (
+        <Pressable onPress={() => onChange('')} hitSlop={8} accessibilityRole="button" accessibilityLabel="Clear search">
+          <IonIcon name="close-circle" size="md" color={colors.inkFaint} />
+        </Pressable>
+      ) : null}
+    </View>
   );
 };
 

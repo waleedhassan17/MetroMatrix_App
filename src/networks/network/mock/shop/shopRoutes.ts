@@ -181,9 +181,10 @@ export function registerShopRoutes(kit: ShopKit) {
         .filter(b => b.isActive && Date.parse(b.startsAt) <= now && (!b.endsAt || Date.parse(b.endsAt) > now))
         .sort((a, b) => a.position - b.position),
       categories: categoryTree(shop),
+      // The stores staff feature (admin → Stores), in name order.
       featuredStores: shop.stores
-        .filter(s => s.isFeatured || shop.products.some(p => p.storeId === s.id && isListed(p)))
-        .sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured))
+        .filter(s => s.isFeatured)
+        .sort((a, b) => a.name.localeCompare(b.name))
         .map(s => storeSummaryView(shop, s)),
       newThisWeek: [...listed]
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))

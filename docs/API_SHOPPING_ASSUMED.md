@@ -49,9 +49,9 @@ One checkout makes an **order group** (`MM-XXXXXX`), with one **store order** (`
 
 | Function (`catalogNetwork`) | Method + path | 2xx `data` | Errors |
 |---|---|---|---|
-| `getShopHome` | `GET /shop/home` | `ShopHome { banners (live now, by position), categories (tree), featuredStores, newThisWeek }` | — |
+| `getShopHome` | `GET /shop/home` | `ShopHome { banners (live now, by position), categories (tree), featuredStores (the stores staff feature), newThisWeek }` | — |
 | `getCategories` | `GET /shop/categories` | `ShopCategory[]` tree. Each has `icon` (an Ionicons name), `productCount`, and `children`. | — |
-| `listStores` | `GET /shop/stores?q&city&page&pageSize` | `Paged<StoreSummary>`, featured first | — |
+| `listStores` | `GET /shop/stores?q&city&page&pageSize` | `Paged<StoreSummary>`, featured first. A summary carries the brand card: `name`, `tagline`, `about`, `categories` (its products' category names, most stocked first), `coverUrl`, `logoUrl`, brand colours, rating, `isFeatured`, `isPaused`, `productCount` | — |
 | `getStore` | `GET /shop/stores/:slug` | `StoreDetail` (brand colours, `isPaused`, `pauseMessage`, policies, collections, socials, phone/WhatsApp) | `404 NOT_FOUND` |
 | `listProducts` / `countProducts` | `GET /shop/products?q&storeId&categoryId&collectionId&sort&minPrice&maxPrice&minRating&inStock&onSale&page&pageSize` | `Paged<ProductSummary>`. Sorts: `relevance`, `newest`, `price_asc`, `price_desc`, `rating`, `trending`. `categoryId` includes its children. `q` tolerates typos. `countProducts` sends `pageSize=1` and reads `total`. | — |
 | `suggestProducts` | `GET /shop/products/suggest?q` (2+ characters) | `SearchSuggestion[]`: categories, then stores, then up to 5 products | — |

@@ -1,43 +1,44 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Shopping home slice
+// MetroMatrix — Shopping home slice (the brand list, as in the FYP)
 // ═══════════════════════════════════════════════════════
-// GET /shop/home (banners, categories, featured stores, new this week) and
-// the first trending products, together, so the page fills in one go.
+// GET /shop/home for the banners and the featured brands; the brand search
+// text. "All brands" pages from the server (usePagedList on /shop/stores).
 
+import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getShopHome, listProducts } from '@networks/shopping/catalogNetwork';
+import { getShopHome } from '@networks/shopping/catalogNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
-import type { ProductSummary, ShopHome } from '@/types';
+import type { ShopHome } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
-
-/** Trending products shown on the home before "See all". */
-export const HOME_TRENDING = 6;
 
 export interface ShoppingHomeSliceState {
   home: ShopHome | null;
-  trending: ProductSummary[];
   status: FormStatus;
   refreshing: boolean;
   error: ServerError;
+  /** "Search brands" — filters the list on the server. */
+  brandQuery: string;
 }
 
 const initialState: ShoppingHomeSliceState = {
   home: null,
-  trending: [],
   status: 'idle',
   refreshing: false,
   error: NO_ERROR,
+  brandQuery: '',
 };
 
 export const shoppingHomeSlice = createAppSlice({
   name: 'shoppingHome',
   initialState,
   reducers: create => ({
+    setBrandQuery: create.reducer((state, action: PayloadAction<string>) => {
+      state.brandQuery = action.payload;
+    }),
     loadShoppingHomeAsync: create.asyncThunk(
       async (_: { refresh: boolean }, { rejectWithValue }) => {
         try {
-          const [home, trending] = await Promise.all([getShopHome(), listProducts({ sort: 'trending' }, 1, HOME_TRENDING)]);
-          return { home, trending: trending.items };
+          return await getShopHome();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -51,8 +52,7 @@ export const shoppingHomeSlice = createAppSlice({
         fulfilled: (state, action) => {
           state.status = 'succeeded';
           state.refreshing = false;
-          state.home = action.payload.home;
-          state.trending = action.payload.trending;
+          state.home = action.payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -67,5 +67,5 @@ export const shoppingHomeSlice = createAppSlice({
   },
 });
 
-export const { loadShoppingHomeAsync } = shoppingHomeSlice.actions;
+export const { setBrandQuery, loadShoppingHomeAsync } = shoppingHomeSlice.actions;
 export const { selectShoppingHome } = shoppingHomeSlice.selectors;

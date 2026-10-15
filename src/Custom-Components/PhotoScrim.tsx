@@ -7,13 +7,18 @@ import { StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme';
 
-export const PhotoScrim: React.FC = () => {
+/**
+ * `strong` darkens from the top down (the FYP's brand cards), for copy that
+ * sits higher on the photo; the default keeps the photo clear up top.
+ */
+export const PhotoScrim: React.FC<{ strength?: 'soft' | 'strong' }> = ({ strength = 'soft' }) => {
   const { colors } = useTheme();
+  const strong = strength === 'strong';
   return (
     <LinearGradient
       pointerEvents="none"
-      colors={[colors.scrimClear, colors.scrimClear, colors.scrim]}
-      locations={[0, 0.35, 1]}
+      colors={strong ? [colors.scrimFaint, colors.scrimMid, colors.scrimDeep] : [colors.scrimClear, colors.scrimClear, colors.scrim]}
+      locations={strong ? [0, 0.45, 1] : [0, 0.35, 1]}
       style={StyleSheet.absoluteFill}
     />
   );

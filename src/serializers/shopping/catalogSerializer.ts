@@ -50,6 +50,8 @@ export const storeSummarySerializer = (raw: unknown): StoreSummary | null => {
     slug: str(raw.slug, id),
     name,
     tagline: str(raw.tagline),
+    about: str(raw.about),
+    categories: arr(raw.categories).map(c => str(c)).filter(Boolean).slice(0, 8),
     logoUrl: strOrNull(raw.logoUrl),
     coverUrl: strOrNull(raw.coverUrl),
     brandColor: color(raw.brandColor, BRAND_FALLBACK.brand),
