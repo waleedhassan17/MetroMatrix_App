@@ -7,7 +7,16 @@ MetroMatrix is a zero-commission community marketplace with three services: **Sh
 - partners (store, doctor, kitchen), who get the partner app for their service
 - admins, who approve partners
 
-The app follows the **FinMatrix app architecture exactly**. The old MetroMatrix FYP app is a UX reference only. Never copy its code paths, Firebase setup, or per-role duplicate network files.
+The app follows the **FinMatrix app architecture exactly**. Its **look and flows follow the owner's MetroMatrix FYP app** (`~/MetroMatrix/Waleed-MetroMatrix`):
+- white, light-only screens in the platform system font, with the FYP icon, splash and onboarding;
+- Role Selection → (Provider Selection) → sign in / sign up → email link → profile steps;
+- the FYP's three-card user home.
+
+Copy the FYP's UX, never its code paths, Firebase setup or per-role duplicate network files. There is no Facebook login.
+
+## Backend switch (one file)
+
+`src/config/env.ts` → `BACKEND_URL` (or `EXPO_PUBLIC_API_URL`). While it is empty, `api` uses the dummy API (`src/networks/network/mock/`: `mockServer.ts` routes, `mockDb.ts` seeded accounts, `mockConfig.ts` rules, `mockFood.ts` catalogue). The dummy API answers exactly what `docs/API_CONTRACT_ASSUMED.md` specifies, so nothing else changes when the real URL is set. When you add an endpoint, add its mock route in the same change.
 
 ## Commands
 
@@ -59,6 +68,7 @@ Set environment in `.env.local`; see `.env.example`. `src/config/env.ts` is the 
    - emoji in UI copy
    - gradients as surfaces
    - centred spinners for content (use `Skeleton` instead)
+   - decorative background shapes on any screen: watermark glyphs, faint circles or "bubbles", ambient glows (the owner asked for clean white screens)
 9. **Every phase ends** with its acceptance commands run, then a commit `chunk1/pN: <summary>` (later chunks use their own prefix).
 
 ## Folder map
@@ -72,11 +82,12 @@ src/
     createAppSlice.ts        buildCreateSlice with asyncThunk — every slice uses it
     store.ts                 combineReducers, RESET_ALL_STATE root handling, persist config
     resetAllState.ts         the RESET_ALL_STATE action
-    preferencesSlice.ts      themeMode, lastService (device-scoped, persisted)
+    preferencesSlice.ts      lastService, pushPromptSeen (device-scoped, persisted)
   hooks/                     useAppDispatch / useAppSelector, useSignOut, …
   networks/
     network/apiHelpers.ts    the axios client, refresh queue, AuthError, unwrap
-    <domain>/<x>Network.ts   one function per endpoint (auth, users, media, businesses, admin)
+    network/mock/            the dummy API (axios adapter + AsyncStorage DB) used while no backend URL is set
+    <domain>/<x>Network.ts   one function per endpoint (auth, users, media, businesses, admin, food)
   serializers/               defensive backend → app mapping, one file per domain
   models/                    validation + form schemas, one file per domain
   types/                     shared types (navigation param lists, auth/business types)
@@ -85,19 +96,23 @@ src/
   theme/                     tokens, services, typography, ThemeProvider/useTheme — the ONLY place raw values live
   Custom-Components/         the design-system components (tokens only); barrel: @custom/index
   components/app-container/  AppContainer, appContainerSlice (bootstrap/refresh/push), OfflineGate, PushPrePrompt
-  components/auth/           shared auth forms, AuthErrorNotice, GoogleSignInButton(.web)
+  components/auth/           AuthChrome (frame/header/tabs/badge), AuthFields, ChoiceCard, StepFlow, AuthErrorNotice, GoogleSignInButton(.web)
+  components/brand/          BrandMark, BrandWordmark (splash, onboarding)
+  components/home/           ServiceCard + serviceCatalog (the customer home's three cards)
+  components/food/           FoodParts (search, promos, cuisines, kitchen cards)
   components/shared/         ErrorBoundary
-  navigations-maps/          Base.ts (ROUTES), Auth.ts (gate arrays), Customer/Partner/Admin/Approvals/Account.ts, types.ts
+  navigations-maps/          Base.ts (ROUTES), Auth.ts (gate arrays), Customer/Home/Partner/Admin/Approvals/Account.ts, types.ts
   navigators/                sessionGate.ts (the ladder), BaseNavigator, Customer/Store/Doctor/Kitchen/AdminNavigator,
-                             RouteTabs (tab mapper), stacks/ (AccountStack, AdminStack)
+                             RouteTabs (tab mapper), stacks/ (HomeStack, AccountStack, AdminStack)
   screens/<Area>/<Name>/     NameScreen.tsx + nameSlice.ts
-                             Areas: Onboarding, Auth, Partner, Admin, Customer, Account, Dev
+                             Areas: Onboarding (+ Splash), RoleSelection, ProviderSelection, Auth, Partner,
+                             Admin, Customer, Account, Dev
 scripts/check-design-tokens.js
 docs/                        API_CONTRACT_ASSUMED.md, GOOGLE_SIGNIN.md
-assets/                      images/ (icons, splash), onboarding/ (placeholder photos — replace)
+assets/images/               FYP icon + splash mark; services/ (card photos — sources in CREDITS.md)
 ```
 
-Stateless screens have no slice. Their state is global (`auth`, `preferences`) or they only navigate. These are Welcome, Rejected, Suspended, CustomerHome, Orders and PartnerHome.
+Stateless screens have no slice. Their state is global (`auth`, `preferences`) or they only navigate. These are Rejected, Suspended, CustomerHome, ServicePreview, Orders and PartnerHome.
 
 ## How to add a screen
 
@@ -125,19 +140,24 @@ const styles = useStyles(makeStyles); // memoised on the active theme (mode + se
 
 - Service accents come from `useTheme().service` (`accent`, `accentDeep`, `accentSoft`, `accentLine`, `onAccent`).
 - Wrap a subtree in `<ServiceScope service="food">` to switch its accent.
-- Auth and admin use `neutral`.
+- Auth, admin and the customer shell (home, tabs, profile) use `neutral` (MetroMatrix emerald). Each service screen scopes its own accent: Food pink (Foodpanda-like), Healthcare blue, Shopping orange.
+- Onboarding: everything on a slide, including the primary button, wears that slide's colour.
+- Platform-specific files (`X.web.tsx`) must never import `./X`; on web that path resolves to the file itself. Put shared code in a third module (see `sheetShared.ts`, `dateFieldShared.ts`).
 
 ## Session gates (BaseNavigator branch order)
 
 The order matters. It lives in ONE pure function, `resolveGate()` in `src/navigators/sessionGate.ts`, which has its own unit test. BaseNavigator and AppContainer both call it:
 
-1. not authenticated → onboarding (if not yet seen) + unauthenticated
-2. pending TOTP → admin TOTP
-3. email not verified → verify
-4. partner with no business, or a `draft` one → partner setup
-5. `pending_approval` → pending
-6. `rejected` → rejected
-7. `suspended` → suspended
+1. not authenticated → Onboarding (first launch only) + Role Selection, Provider Selection, SignIn/SignUp, ProviderSignIn/ProviderSignUp, ForgotPassword → ResetPasswordOTP → ResetPassword
+2. pending TOTP (staff sign in on the ordinary SignIn) → AdminTotp, or AdminTwoFactorEnrol on a first sign-in
+3. email not verified → EmailVerification (a link; VerifySuccess handles the deep link)
+4. customer whose profile is incomplete → CompleteProfile (3 steps)
+5. provider with no business, or a `draft` one → PersonalInfo (3 steps, resumes at the unfinished one)
+6. `pending_approval` → ProviderApprovalPending
+7. `rejected` → Rejected (+ PersonalInfo to resubmit)
+8. `suspended` → Suspended
+
+The splash plays on every launch as an overlay in AppContainer. It lifts only once both its animation and `bootstrapSession` are done.
 
 Once the gate is cleared, `AppContainer.renderNavigator()` mounts the navigator for the role:
 - `customer` → `CustomerNavigator`
@@ -146,7 +166,7 @@ Once the gate is cleared, `AppContainer.renderNavigator()` mounts the navigator 
 
 ## API contract
 
-Every network call is built from MetroMatrix-API `docs/API_AUTH.md`, never from guesses. That document was unavailable while Chunk 1 was built, so the app runs on `docs/API_CONTRACT_ASSUMED.md`. Every dependency on it is marked `TODO(API_AUTH)` (`grep -rn "TODO(API_AUTH)" src`).
+Every network call is built from MetroMatrix-API `docs/API_AUTH.md`, never from guesses. That document was unavailable, so the app runs on `docs/API_CONTRACT_ASSUMED.md`, which the dummy API implements. Every dependency on it is marked `TODO(API_AUTH)` or `TODO(API_FOOD)` (`grep -rn "TODO(API_" src`).
 
 When the real document arrives, reconcile it in one pass:
 - update the networks, serializers and models;
@@ -154,8 +174,9 @@ When the real document arrives, reconcile it in one pass:
 
 ## Testing on Expo / web
 
-- **Expo Go** (`npm start`): runs the whole app except native Google sign-in and push.
+- **Expo Go** (`npm start`): runs the whole app except native Google sign-in and push, against the dummy API. Seeded accounts and codes are in `docs/API_CONTRACT_ASSUMED.md` → "Mock mode".
 - **Web** (`npm run web`):
   - Google sign-in uses Google Identity Services and needs `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`.
-  - Deep paths work, e.g. `/sign-in`, `/business/sign-in`, `/staff/sign-in`.
+  - Deep paths work, e.g. `/get-started`, `/sign-in`, `/provider/sign-in`, `/home/food`.
+  - Bottom sheets render as a `Modal` (`Sheet.web.tsx`), because `@gorhom/bottom-sheet` never presents in a browser.
   - `/dev/gallery` exists only in development builds.

@@ -128,6 +128,25 @@ The business `phone` is the provider's own phone, captured at sign-up.
 | `suspendBusiness` | `POST /admin/businesses/:id/suspend` | `{ reason }` | `Business` |
 | `reinstateBusiness` | `POST /admin/businesses/:id/reinstate` | — | `Business` |
 
+## Food (`/food`) — customer, bearer
+
+`TODO(API_FOOD)`: assumed for the customer Food home, not yet in any backend document.
+
+| Function | Method + path | Query | 2xx `data` |
+|---|---|---|---|
+| `getFoodHome` | `GET /food/home` | `?city=Lahore` (the customer's profile city) | `FoodHome` |
+
+```
+FoodHome = { area, promos: FoodPromo[], cuisines: Cuisine[], kitchens: Kitchen[] }
+FoodPromo = { id, title, subtitle, code | null }
+Cuisine   = { slug, name }
+Kitchen   = { id, name, kind: 'restaurant' | 'home_kitchen' | 'cloud_kitchen', cuisines: string[], area,
+              rating (0–5), ratingCount, etaMin, etaMax (minutes), deliveryFee (Rs, 0 = free), minOrder (Rs),
+              priceLevel (1–3), distanceKm, deal | null, isNew, imageUrl | null }
+```
+
+Kitchens arrive nearest first. Search and the cuisine filter run on the device (`foodModel.filterKitchens`).
+
 ## Admin sign-in flow
 
 1. `POST /auth/signin` (from the User sign-in) returns `{ challengeToken, totpEnrolled }` for a staff account. **No tokens are issued.**
@@ -152,6 +171,7 @@ Rules (`mock/mockConfig.ts`):
 | Provider application | Approves itself **30 s** after you submit, or an admin approves it in the console. |
 | Uploads | Accepted with simulated progress. The file stays on the device. |
 | Access token | Expires after 15 minutes and is refreshed silently. |
+| Food home | A fixed, fictional catalogue led by local fast-food brands (`mock/mockFood.ts`), with the customer's own address as the delivery area. |
 
 Seeded accounts (`mock/mockDb.ts`):
 
