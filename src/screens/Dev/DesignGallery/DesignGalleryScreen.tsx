@@ -224,11 +224,11 @@ const Stories: React.FC = () => {
         <ImageCard image={SAMPLE_IMAGE} title="Al-Noor Pharmacy" subtitle="Gulberg III, Lahore" onPress={() => setViewerOpen(true)} />
         <Card padded="horizontal">
           <View>
-            <ListRow title="Notifications" subtitle="Order and approval updates" leftIcon="bell" onPress={() => undefined} />
+            <ListRow title="Notifications" subtitle="Order and approval updates" leftIcon="notifications-outline" onPress={() => undefined} />
             <Divider />
-            <ListRow title="Theme" value="System" leftIcon="moon" onPress={() => undefined} />
+            <ListRow title="Theme" value="System" leftIcon="moon-outline" onPress={() => undefined} />
             <Divider />
-            <ListRow title="Sign out" leftIcon="log-out" destructive onPress={() => undefined} />
+            <ListRow title="Sign out" leftIcon="log-out-outline" destructive onPress={() => undefined} />
           </View>
         </Card>
         <Divider label="or" />

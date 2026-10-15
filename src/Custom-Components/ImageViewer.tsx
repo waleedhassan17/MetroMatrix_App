@@ -100,7 +100,12 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ visible, uri, title, o
     <Modal visible={visible} onRequestClose={onClose} animationType="fade" statusBarTranslucent>
       <GestureHandlerRootView style={styles.root}>
         <View style={[styles.bar, { paddingTop: insets.top }]}>
-          <IconButton icon="x" onPress={onClose} accessibilityLabel="Close document" tone="onScrim" />
+          <IconButton
+            icon="close"
+            onPress={onClose}
+            accessibilityLabel="Close document"
+            tone="onScrim"
+          />
           {title ? (
             <AppText variant="title" tone="onScrim" numberOfLines={1} style={styles.title}>
               {title}

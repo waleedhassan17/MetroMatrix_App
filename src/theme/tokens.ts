@@ -188,6 +188,8 @@ export const size = {
   serviceArt: 160,
   /** Customer home: the FYP's 40 pt header wells. */
   headerWell: 40,
+  /** The slide-out side menu: at most this wide (85% of the window below it). */
+  sideMenu: 340,
 } as const;
 
 export const opacity = {

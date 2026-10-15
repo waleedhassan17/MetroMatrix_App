@@ -232,7 +232,7 @@ const CompleteProfileScreen: React.FC = () => {
                 label={s.photo.previewUri ? 'Change Photo' : 'Choose Photo'}
                 variant="secondary"
                 size="sm"
-                leftIcon="image"
+                leftIcon="images-outline"
                 onPress={() => void pick('library')}
                 disabled={uploading || loading}
               />
@@ -241,7 +241,7 @@ const CompleteProfileScreen: React.FC = () => {
                   label="Take Photo"
                   variant="secondary"
                   size="sm"
-                  leftIcon="camera"
+                  leftIcon="camera-outline"
                   onPress={() => void pick('camera')}
                   disabled={uploading || loading}
                 />

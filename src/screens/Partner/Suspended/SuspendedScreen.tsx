@@ -36,7 +36,7 @@ const SuspendedScreen: React.FC = () => {
         <ListRow
           title="Contact support"
           subtitle={SUPPORT_EMAIL}
-          leftIcon="mail"
+          leftIcon="mail-outline"
           onPress={() => void Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=Paused%20account`)}
         />
       </Card>

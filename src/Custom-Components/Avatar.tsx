@@ -6,7 +6,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { AppText } from './AppText';
-import { Icon } from './Icon';
+import { IonIcon } from './Icon';
 
 export interface AvatarProps {
   name: string;
@@ -55,13 +55,25 @@ export const Avatar: React.FC<AvatarProps> = ({
   const styles = useStyles(makeStyles);
   const { size: sizes, service, opacity, motion } = useTheme();
   const dim = sizes.avatar[size];
-  const variant = size === 'xl' ? 'h1' : size === 'lg' ? 'h2' : size === 'md' ? 'bodyStrong' : 'small';
+  const variant =
+    size === 'xl' ? 'h1' : size === 'lg' ? 'h2' : size === 'md' ? 'bodyStrong' : 'small';
 
   const body = (
     <View>
-      <View style={[styles.root, styles.center, { width: dim, height: dim }, uploading && { opacity: opacity.disabled }]}>
+      <View
+        style={[
+          styles.root,
+          styles.center,
+          { width: dim, height: dim },
+          uploading && { opacity: opacity.disabled },
+        ]}>
         {uri ? (
-          <Image source={{ uri }} style={{ width: dim, height: dim }} contentFit="cover" transition={motion.press.duration} />
+          <Image
+            source={{ uri }}
+            style={{ width: dim, height: dim }}
+            contentFit="cover"
+            transition={motion.press.duration}
+          />
         ) : (
           <AppText variant={variant} tone="accentDeep">
             {initialsOf(name)}
@@ -70,7 +82,7 @@ export const Avatar: React.FC<AvatarProps> = ({
       </View>
       {editable ? (
         <View style={styles.badge}>
-          <Icon name={uploading ? 'loader' : 'camera'} size="sm" color={service.onAccent} />
+          <IonIcon name={uploading ? 'sync' : 'camera'} size="sm" color={service.onAccent} />
         </View>
       ) : null}
     </View>

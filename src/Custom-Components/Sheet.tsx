@@ -22,7 +22,14 @@ import { makeSheetStyles as makeStyles, type SheetProps } from './sheetShared';
 
 export type { SheetProps } from './sheetShared';
 
-export const Sheet: React.FC<SheetProps> = ({ visible, onClose, title, subtitle, children, footer }) => {
+export const Sheet: React.FC<SheetProps> = ({
+  visible,
+  onClose,
+  title,
+  subtitle,
+  children,
+  footer,
+}) => {
   const styles = useStyles(makeStyles);
   const { colors, radius, size, space } = useTheme();
   const insets = useSafeAreaInsets();
@@ -35,7 +42,12 @@ export const Sheet: React.FC<SheetProps> = ({ visible, onClose, title, subtitle,
 
   const backdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} pressBehavior="close" />
+      <BottomSheetBackdrop
+        {...props}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        pressBehavior="close"
+      />
     ),
     [],
   );
@@ -64,11 +76,13 @@ export const Sheet: React.FC<SheetProps> = ({ visible, onClose, title, subtitle,
               </AppText>
             ) : null}
           </View>
-          <IconButton icon="x" onPress={onClose} accessibilityLabel="Close" tone="muted" />
+          <IconButton icon="close" onPress={onClose} accessibilityLabel="Close" tone="muted" />
         </View>
         <View style={styles.body}>{children}</View>
         {footer ? (
-          <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, space.s16) }]}>{footer}</View>
+          <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, space.s16) }]}>
+            {footer}
+          </View>
         ) : (
           <View style={{ height: Math.max(insets.bottom, space.s16) }} />
         )}

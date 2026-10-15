@@ -9,7 +9,12 @@
 
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { interpolate, useAnimatedStyle, Extrapolation, type SharedValue } from 'react-native-reanimated';
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+  Extrapolation,
+  type SharedValue,
+} from 'react-native-reanimated';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { AppText } from './AppText';
 import { IconButton } from './IconButton';
@@ -42,7 +47,12 @@ const makeStyles = ({ size, space, colors, gutter }: Theme) =>
       height: size.hairline,
       backgroundColor: colors.line,
     },
-    block: { paddingHorizontal: gutter, paddingTop: space.s8, paddingBottom: space.s24, gap: space.s8 },
+    block: {
+      paddingHorizontal: gutter,
+      paddingTop: space.s8,
+      paddingBottom: space.s24,
+      gap: space.s8,
+    },
   });
 
 export const LargeTitleHeader: React.FC<LargeTitleHeaderProps> = ({
@@ -66,9 +76,13 @@ export const LargeTitleHeader: React.FC<LargeTitleHeaderProps> = ({
   return (
     <View style={styles.bar}>
       <View style={styles.side}>
-        {onBack ? <IconButton icon="arrow-left" onPress={onBack} accessibilityLabel={backLabel} /> : null}
+        {onBack ? (
+          <IconButton icon="arrow-back" onPress={onBack} accessibilityLabel={backLabel} />
+        ) : null}
       </View>
-      <Animated.View style={[styles.center, smallTitle]} importantForAccessibility="no-hide-descendants">
+      <Animated.View
+        style={[styles.center, smallTitle]}
+        importantForAccessibility="no-hide-descendants">
         {title ? (
           <AppText variant="title" numberOfLines={1}>
             {title}

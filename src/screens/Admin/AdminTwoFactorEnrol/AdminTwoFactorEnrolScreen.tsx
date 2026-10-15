@@ -117,7 +117,7 @@ const AdminTwoFactorEnrolScreen: React.FC = () => {
               </View>
             ))}
           </View>
-          <Button label="Copy all codes" leftIcon="copy" variant="secondary" onPress={copyCodes} fullWidth />
+          <Button label="Copy all codes" leftIcon="copy-outline" variant="secondary" onPress={copyCodes} fullWidth />
         </Card>
         <Checkbox
           checked={s.codesCopied}

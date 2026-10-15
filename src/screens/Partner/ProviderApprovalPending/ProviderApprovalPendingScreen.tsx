@@ -205,7 +205,7 @@ const PendingContent: React.FC<{ business: Business }> = ({ business }) => {
         <Button
           label="Contact Support"
           variant="secondary"
-          leftIcon="mail"
+          leftIcon="mail-outline"
           onPress={() => void Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=Application%20review`)}
           fullWidth
         />

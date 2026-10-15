@@ -221,7 +221,7 @@ const BusinessReviewScreen: React.FC<Props> = ({ navigation, route }) => {
             subtitle={[b.owner.email, b.owner.phone ? formatPkPhoneForDisplay(b.owner.phone) : null]
               .filter(Boolean)
               .join(' · ')}
-            leftIcon="user"
+            leftIcon="person-outline"
             onPress={b.owner.email ? () => void Linking.openURL(`mailto:${b.owner.email}`) : undefined}
             accessibilityHint="Email the owner"
           />

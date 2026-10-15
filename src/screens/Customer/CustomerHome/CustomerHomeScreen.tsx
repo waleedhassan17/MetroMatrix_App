@@ -1,25 +1,29 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Customer home (the FYP's user home, premium)
 // ═══════════════════════════════════════════════════════
-// The FYP's frame and nothing more: the brand centred between two header
-// wells, a "Live services" badge, "Our Services" with its count and one
+// The FYP's frame and nothing more: the brand centred between the menu
+// (which opens the side menu) and the bell, a "Live services" badge, "Our Services" with its count and one
 // premium photo card per service. A launcher's job is to launch: the Food
 // Court card opens the Food Court, Health and Shopping open what is coming. The shell wears MetroMatrix emerald; each
 // card wears its own service's colour.
 // Stateless: opening a service records it in preferences.lastService.
 
-import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import React, { useState } from 'react';
+import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useSignOut } from '@hooks/useSignOut';
+import { APP_VERSION } from '@/services/appInfo';
+import { SUPPORT_EMAIL } from '@/config/env';
 import { setLastService } from '@store/preferencesSlice';
 import { useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, LiveDot } from '@custom/index';
 import { ServiceCard, type ServiceCardData } from '@components/home/ServiceCard';
 import { SERVICE_CARDS } from '@components/home/serviceCatalog';
 import { HomeHeader } from '@components/home/HomeParts';
+import { SideMenu, type SideMenuSection } from '@components/home/SideMenu';
 import type { HomeStackParamList } from '@/types';
 import { selectUser } from '../../Auth/authSlice';
 
@@ -66,6 +70,47 @@ const CustomerHomeScreen: React.FC<Props> = ({ navigation }) => {
   const { service, colors } = useTheme();
   const insets = useSafeAreaInsets();
   const user = useAppSelector(selectUser);
+  const { confirmSignOut } = useSignOut();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const tabs = navigation.getParent();
+
+  const menu: SideMenuSection[] = [
+    {
+      title: 'Account',
+      items: [
+        {
+          key: 'profile',
+          label: 'My Profile',
+          icon: 'person-circle-outline',
+          onPress: () => tabs?.navigate('ProfileTab'),
+        },
+        {
+          key: 'orders',
+          label: 'My Orders',
+          icon: 'receipt-outline',
+          onPress: () => tabs?.navigate('OrdersTab'),
+        },
+        {
+          key: 'password',
+          label: 'Change Password',
+          icon: 'lock-closed-outline',
+          onPress: () => tabs?.navigate('ProfileTab', { screen: 'ChangePassword' }),
+        },
+      ],
+    },
+    {
+      title: 'Support',
+      items: [
+        {
+          key: 'help',
+          label: 'Help & Support',
+          icon: 'help-buoy-outline',
+          onPress: () =>
+            void Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=Help%20with%20MetroMatrix`),
+        },
+      ],
+    },
+  ];
 
   const open = (card: ServiceCardData) => {
     dispatch(setLastService(card.service));
@@ -77,9 +122,7 @@ const CustomerHomeScreen: React.FC<Props> = ({ navigation }) => {
     <View style={[styles.root, { paddingTop: insets.top }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <HomeHeader
-          name={user?.name ?? ''}
-          avatarUrl={user?.avatarUrl}
-          onProfile={() => navigation.getParent()?.navigate('ProfileTab')}
+          onMenu={() => setMenuOpen(true)}
           onNotifications={() =>
             Toast.show({
               type: 'info',
@@ -118,6 +161,18 @@ const CustomerHomeScreen: React.FC<Props> = ({ navigation }) => {
           ))}
         </View>
       </ScrollView>
+
+      <SideMenu
+        visible={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        name={user?.name ?? ''}
+        email={user?.email ?? ''}
+        avatarUrl={user?.avatarUrl}
+        verified={!!user?.isEmailVerified}
+        sections={menu}
+        onSignOut={confirmSignOut}
+        version={APP_VERSION}
+      />
     </View>
   );
 };

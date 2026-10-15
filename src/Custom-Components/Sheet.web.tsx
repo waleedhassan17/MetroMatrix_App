@@ -40,7 +40,14 @@ const makeStyles = ({ colors, space, size, radius, elevation }: Theme) =>
     },
   });
 
-export const Sheet: React.FC<SheetProps> = ({ visible, onClose, title, subtitle, children, footer }) => {
+export const Sheet: React.FC<SheetProps> = ({
+  visible,
+  onClose,
+  title,
+  subtitle,
+  children,
+  footer,
+}) => {
   const styles = useStyles(makeStyles);
   const parts = useStyles(makeSheetStyles);
   const { space } = useTheme();
@@ -50,7 +57,12 @@ export const Sheet: React.FC<SheetProps> = ({ visible, onClose, title, subtitle,
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.root}>
-        <Pressable style={styles.scrim} onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" />
+        <Pressable
+          style={styles.scrim}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Close"
+        />
         <View style={styles.panel} accessibilityViewIsModal accessibilityLabel={title}>
           <View style={styles.handle} />
           <View style={parts.head}>
@@ -64,7 +76,7 @@ export const Sheet: React.FC<SheetProps> = ({ visible, onClose, title, subtitle,
                 </AppText>
               ) : null}
             </View>
-            <IconButton icon="x" onPress={onClose} accessibilityLabel="Close" tone="muted" />
+            <IconButton icon="close" onPress={onClose} accessibilityLabel="Close" tone="muted" />
           </View>
           <ScrollView keyboardShouldPersistTaps="handled">
             <View style={parts.body}>{children}</View>

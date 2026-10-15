@@ -3,10 +3,10 @@
 import React from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../theme';
-import { Icon, type IconName } from './Icon';
+import { IonIcon, type IonName } from './Icon';
 
 export interface IconButtonProps {
-  icon: IconName;
+  icon: IonName;
   onPress: () => void;
   accessibilityLabel: string;
   tone?: 'ink' | 'muted' | 'onScrim';
@@ -33,7 +33,8 @@ export const IconButton: React.FC<IconButtonProps> = ({
 }) => {
   const styles = useStyles(makeStyles);
   const { colors, opacity } = useTheme();
-  const color = tone === 'muted' ? colors.inkMuted : tone === 'onScrim' ? colors.onScrim : colors.ink;
+  const color =
+    tone === 'muted' ? colors.inkMuted : tone === 'onScrim' ? colors.onScrim : colors.ink;
   return (
     <Pressable
       onPress={onPress}
@@ -46,7 +47,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
         pressed && { backgroundColor: colors.surfaceSunk },
         disabled && { opacity: opacity.disabled },
       ]}>
-      <Icon name={icon} size="lg" color={color} />
+      <IonIcon name={icon} size="lg" color={color} />
     </Pressable>
   );
 };

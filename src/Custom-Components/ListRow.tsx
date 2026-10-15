@@ -1,15 +1,18 @@
-// ListRow — title, optional subtitle, leading slot, trailing value/chevron.
+// ListRow — title, optional subtitle, leading icon tile, trailing value/chevron.
+// The leading icon sits in a soft tile of the service accent (danger for a
+// destructive row), the settings-list pattern people read at a glance.
 
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { AppText } from './AppText';
-import { Icon, type IconName } from './Icon';
+import { IonIcon, type IonName } from './Icon';
 
 export interface ListRowProps {
   title: string;
   subtitle?: string;
-  leftIcon?: IconName;
+  /** Ionicons glyph, shown in a tinted tile. */
+  leftIcon?: IonName;
   left?: React.ReactNode;
   right?: React.ReactNode;
   value?: string;
@@ -19,7 +22,7 @@ export interface ListRowProps {
   accessibilityHint?: string;
 }
 
-const makeStyles = ({ space, size }: Theme) =>
+const makeStyles = ({ space, size, radius }: Theme) =>
   StyleSheet.create({
     root: {
       flexDirection: 'row',
@@ -27,6 +30,13 @@ const makeStyles = ({ space, size }: Theme) =>
       minHeight: size.control.lg,
       paddingVertical: space.s12,
       gap: space.s12,
+    },
+    tile: {
+      width: size.subTypeTile,
+      height: size.subTypeTile,
+      borderRadius: radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     body: { flex: 1, gap: space.s4 },
   });
@@ -44,8 +54,7 @@ export const ListRow: React.FC<ListRowProps> = ({
   accessibilityHint,
 }) => {
   const styles = useStyles(makeStyles);
-  const { colors, opacity } = useTheme();
-  const tint = destructive ? colors.danger : colors.ink;
+  const { colors, service, opacity } = useTheme();
   return (
     <Pressable
       onPress={onPress}
@@ -54,7 +63,20 @@ export const ListRow: React.FC<ListRowProps> = ({
       accessibilityLabel={[title, subtitle, value].filter(Boolean).join(', ')}
       accessibilityHint={accessibilityHint}
       style={({ pressed }) => [styles.root, pressed && { opacity: opacity.pressed }]}>
-      {left ?? (leftIcon ? <Icon name={leftIcon} size="md" color={tint} /> : null)}
+      {left ??
+        (leftIcon ? (
+          <View
+            style={[
+              styles.tile,
+              { backgroundColor: destructive ? colors.dangerSoft : service.accentSoft },
+            ]}>
+            <IonIcon
+              name={leftIcon}
+              size="md"
+              color={destructive ? colors.danger : service.accent}
+            />
+          </View>
+        ) : null)}
       <View style={styles.body}>
         <AppText variant="title" tone={destructive ? 'danger' : 'ink'} numberOfLines={1}>
           {title}
@@ -71,7 +93,7 @@ export const ListRow: React.FC<ListRowProps> = ({
         </AppText>
       ) : null}
       {right}
-      {chevron ? <Icon name="chevron-right" size="md" color={colors.inkFaint} /> : null}
+      {chevron ? <IonIcon name="chevron-forward" size="md" color={colors.inkFaint} /> : null}
     </Pressable>
   );
 };

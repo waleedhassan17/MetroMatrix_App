@@ -12,11 +12,16 @@
 
 import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { haptics } from '../utils/haptics';
 import { AppText } from './AppText';
-import { Icon, IonIcon, type IconName, type IonName } from './Icon';
+import { IonIcon, type IonName } from './Icon';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -28,7 +33,8 @@ export interface ButtonProps {
   size?: ButtonSize;
   loading?: boolean;
   disabled?: boolean;
-  leftIcon?: IconName;
+  /** Ionicons glyph before the label. */
+  leftIcon?: IonName;
   /** Ionicons glyph after the label (the FYP's "Continue to Registration →"). */
   rightIon?: IonName;
   fullWidth?: boolean;
@@ -122,8 +128,11 @@ export const Button: React.FC<ButtonProps> = ({
         animated,
       ]}>
       <View style={[styles.content, loading && styles.hidden]}>
-        {leftIcon ? <Icon name={leftIcon} size="md" color={palette.fg} /> : null}
-        <AppText variant={size === 'sm' ? 'small' : 'button'} style={{ color: palette.fg }} numberOfLines={1}>
+        {leftIcon ? <IonIcon name={leftIcon} size="md" color={palette.fg} /> : null}
+        <AppText
+          variant={size === 'sm' ? 'small' : 'button'}
+          style={{ color: palette.fg }}
+          numberOfLines={1}>
           {label}
         </AppText>
         {rightIon ? <IonIcon name={rightIon} size="md" color={palette.fg} /> : null}

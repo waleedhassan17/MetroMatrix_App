@@ -182,15 +182,15 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
               ? 'You sign in with Google. Add a password to sign in with email too.'
               : undefined
           }
-          leftIcon="lock"
+          leftIcon="lock-closed-outline"
           onPress={() => navigation.navigate('ChangePassword')}
         />
         <Divider />
-        <ListRow title="Sign out" leftIcon="log-out" onPress={confirmSignOut} chevron={false} />
+        <ListRow title="Sign out" leftIcon="log-out-outline" onPress={confirmSignOut} chevron={false} />
         <Divider />
         <ListRow
           title="Delete account"
-          leftIcon="trash-2"
+          leftIcon="trash-outline"
           destructive
           chevron={false}
           onPress={() => dispatch(openDelete())}

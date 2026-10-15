@@ -94,7 +94,10 @@ export const DocumentUploadTile: React.FC<DocumentUploadTileProps> = ({
 
   return (
     <View
-      style={[styles.root, highlighted && { borderColor: colors.danger, borderWidth: size.focusBorder }]}
+      style={[
+        styles.root,
+        highlighted && { borderColor: colors.danger, borderWidth: size.focusBorder },
+      ]}
       accessible={false}>
       <View style={styles.head}>
         <Pressable
@@ -104,7 +107,11 @@ export const DocumentUploadTile: React.FC<DocumentUploadTileProps> = ({
           accessibilityLabel={`View ${label}`}
           style={styles.thumb}>
           {thumbnailUri && !isPdf ? (
-            <Image source={{ uri: thumbnailUri }} style={StyleSheet.absoluteFill} contentFit="cover" />
+            <Image
+              source={{ uri: thumbnailUri }}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+            />
           ) : (
             <Icon
               name={isPdf ? 'file-text' : state === 'empty' ? 'upload' : 'image'}
@@ -145,22 +152,46 @@ export const DocumentUploadTile: React.FC<DocumentUploadTileProps> = ({
 
       <View style={styles.actions}>
         {state === 'empty' ? (
-          <Button label="Add document" size="sm" variant="secondary" leftIcon="plus" onPress={onPick} />
+          <Button
+            label="Add document"
+            size="sm"
+            variant="secondary"
+            leftIcon="add"
+            onPress={onPick}
+          />
         ) : null}
         {state === 'uploading' && error && onRetry ? (
-          <Button label="Retry" size="sm" variant="secondary" leftIcon="refresh-cw" onPress={onRetry} />
+          <Button
+            label="Retry"
+            size="sm"
+            variant="secondary"
+            leftIcon="refresh"
+            onPress={onRetry}
+          />
         ) : null}
         {state === 'uploaded' ? (
           <>
             {onView ? <Button label="View" size="sm" variant="ghost" onPress={onView} /> : null}
             <Button label="Replace" size="sm" variant="ghost" onPress={onPick} />
             {onRemove ? (
-              <Button label="Remove" size="sm" variant="ghost" onPress={onRemove} accessibilityLabel={`Remove ${label}`} />
+              <Button
+                label="Remove"
+                size="sm"
+                variant="ghost"
+                onPress={onRemove}
+                accessibilityLabel={`Remove ${label}`}
+              />
             ) : null}
           </>
         ) : null}
         {state === 'rejected' ? (
-          <Button label="Replace document" size="sm" variant="secondary" leftIcon="upload" onPress={onPick} />
+          <Button
+            label="Replace document"
+            size="sm"
+            variant="secondary"
+            leftIcon="cloud-upload-outline"
+            onPress={onPick}
+          />
         ) : null}
       </View>
     </View>

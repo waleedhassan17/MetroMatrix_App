@@ -374,17 +374,17 @@ const PersonalInfoScreen: React.FC<Props> = ({ route }) => {
           title={s.pickingFor ? DOCUMENT_LABELS[s.pickingFor].label : ''}
           subtitle="Use good light and keep the whole document in frame.">
           {Platform.OS !== 'web' ? (
-            <ListRow title="Take a photo" leftIcon="camera" onPress={async () => s.pickingFor && upload(s.pickingFor, await takePhoto())} />
+            <ListRow title="Take a photo" leftIcon="camera-outline" onPress={async () => s.pickingFor && upload(s.pickingFor, await takePhoto())} />
           ) : null}
           <ListRow
             title="Choose from photos"
-            leftIcon="image"
+            leftIcon="images-outline"
             onPress={async () => s.pickingFor && upload(s.pickingFor, await pickImageFromLibrary())}
           />
           <ListRow
             title="Choose a file"
             subtitle="PDF or image"
-            leftIcon="file"
+            leftIcon="document-text-outline"
             onPress={async () => s.pickingFor && upload(s.pickingFor, await pickDocumentFile())}
           />
         </Sheet>
