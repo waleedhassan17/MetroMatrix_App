@@ -10,6 +10,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Button, Card, EmptyState, IconButton, InlineNotice, ScreenShell, SkeletonLines, StatusPill, TextAction } from '@custom/index';
 import type { AdminBanner, AdminShopStackParamList } from '@/types';
@@ -31,6 +32,7 @@ export const targetText = (b: AdminBanner) =>
   b.target.kind === 'store' ? `Store · ${b.target.slug}` : b.target.kind === 'category' ? `Category · ${b.target.name || b.target.id}` : `Product · ${b.target.id}`;
 
 const ShopBannersScreen: React.FC<Props> = ({ navigation }) => {
+  const { back } = useBack({ name: 'ShopOverview' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { size } = useTheme();
@@ -46,7 +48,7 @@ const ShopBannersScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <ScreenShell
       title="Home banners"
-      onBack={() => navigation.goBack()}
+      onBack={back}
       footer={<Button label="New banner" leftIcon="add" onPress={() => navigation.navigate('BannerForm')} fullWidth />}>
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
       {s.status === 'loading' && !list.length ? <SkeletonLines lines={6} /> : null}

@@ -10,6 +10,7 @@ import { Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { useSaved, useShopBootstrap, useShopNav } from '@hooks/useShop';
 import { policyLines } from '@models/shopping/storePolicyModel';
 import { stockNote } from '@models/shopping/variantPickerModel';
@@ -112,6 +113,7 @@ const OptionsPreview: React.FC<{ product: ProductDetail; onOpen: () => void }> =
 };
 
 const ProductDetailContent: React.FC<Props> = ({ navigation, route }) => {
+  const { back } = useBack({ name: 'ShoppingHome' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service, size, opacity } = useTheme();
@@ -171,7 +173,7 @@ const ProductDetailContent: React.FC<Props> = ({ navigation, route }) => {
   if (!p) {
     return (
       <View style={styles.root}>
-        <ShopTopBar onBack={() => navigation.goBack()} />
+        <ShopTopBar onBack={back} />
         {e.status === 'failed' ? (
           <SectionError message={e.error.message} onRetry={() => void dispatch(loadProductAsync(id))} />
         ) : (
@@ -194,7 +196,7 @@ const ProductDetailContent: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <View style={styles.root}>
-      <ShopTopBar onBack={() => navigation.goBack()} right={right} />
+      <ShopTopBar onBack={back} right={right} />
       <ScrollView contentContainerStyle={styles.content}>
         <ImageGallery images={p.images} title={p.name} badge={off ? `−${off}%` : null} />
 

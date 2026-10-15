@@ -8,6 +8,7 @@ import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { usePagedList } from '@hooks/usePagedList';
 import { listReviews } from '@networks/shopping/catalogNetwork';
 import { ServiceScope, StoreBrandScope, useStyles, type Theme } from '@theme/index';
@@ -40,7 +41,8 @@ const ProductReviewsScreen: React.FC<Props> = props => {
   );
 };
 
-const ProductReviewsContent: React.FC<Props> = ({ navigation, route }) => {
+const ProductReviewsContent: React.FC<Props> = ({ route }) => {
+  const { back } = useBack({ name: 'ProductDetail', params: { id: route.params.productId } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { productId } = route.params;
@@ -62,7 +64,7 @@ const ProductReviewsContent: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <View style={styles.root}>
-      <ShopTopBar title={route.params.name ? `Reviews · ${route.params.name}` : 'Reviews'} onBack={() => navigation.goBack()} />
+      <ShopTopBar title={route.params.name ? `Reviews · ${route.params.name}` : 'Reviews'} onBack={back} />
       <FlatList
         data={list.rows}
         keyExtractor={r => r.id}

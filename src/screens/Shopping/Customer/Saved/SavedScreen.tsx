@@ -9,6 +9,7 @@ import { StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { usePagedList } from '@hooks/usePagedList';
+import { useBack } from '@hooks/useBack';
 import { useShopBootstrap } from '@hooks/useShop';
 import { listWishlist } from '@networks/shopping/wishlistNetwork';
 import { ServiceScope, useStyles, type Theme } from '@theme/index';
@@ -25,7 +26,8 @@ const SavedScreen: React.FC<Props> = props => (
   </ServiceScope>
 );
 
-const SavedContent: React.FC<Props> = ({ navigation }) => {
+const SavedContent: React.FC<Props> = () => {
+  const { back, canGoBack } = useBack({ name: 'Profile' });
   const styles = useStyles(makeStyles);
   const root = useNavigation<{ navigate: (name: string, params?: object) => void }>();
   const list = usePagedList((page, size) => listWishlist(page, size), 'saved');
@@ -33,7 +35,7 @@ const SavedContent: React.FC<Props> = ({ navigation }) => {
 
   return (
     <View style={styles.root}>
-      <ShopTopBar title="Saved" onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} />
+      <ShopTopBar title="Saved" onBack={canGoBack ? back : undefined} />
       <ProductGrid
         list={list}
         onRemoveFromSaved={id => list.setRows(rows => rows.filter(r => r.id !== id))}
@@ -41,7 +43,7 @@ const SavedContent: React.FC<Props> = ({ navigation }) => {
           icon: 'heart',
           title: 'Nothing saved yet',
           body: 'Tap the heart on anything you like, and it waits for you here.',
-          action: { label: 'Start shopping', onPress: () => root.navigate('HomeTab', { screen: 'ShoppingHome' }) },
+          action: { label: 'Start shopping', onPress: () => root.navigate('HomeTab', { screen: 'ShoppingHome', initial: false }) },
         }}
       />
     </View>

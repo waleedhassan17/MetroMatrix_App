@@ -10,6 +10,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { usePagedList } from '@hooks/usePagedList';
 import { listPartnerReviews } from '@networks/shopping/partner/partnerReviewsNetwork';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
@@ -37,7 +38,8 @@ const StoreReviewsScreen: React.FC<Props> = props => (
   </ServiceScope>
 );
 
-const StoreReviewsContent: React.FC<Props> = ({ navigation }) => {
+const StoreReviewsContent: React.FC<Props> = () => {
+  const { back } = useBack({ name: 'StoreTabs', params: { screen: 'MoreTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { size } = useTheme();
@@ -57,7 +59,7 @@ const StoreReviewsContent: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <ScreenShell title="Reviews" onBack={() => navigation.goBack()} scroll={false}>
+    <ScreenShell title="Reviews" onBack={back} scroll={false}>
       <View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
           <ChoiceChip label="Not replied" selected={s.unrepliedOnly} onPress={() => dispatch(setUnrepliedOnly(!s.unrepliedOnly))} />

@@ -8,6 +8,7 @@ import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { PAYMENT_ACCOUNT_KINDS, accountKindLabel, validatePaymentAccount } from '@models/shopping/storeModel';
 import { ServiceScope, useStyles, type Theme } from '@theme/index';
 import { AppText, Button, Card, ChoiceChip, EmptyState, InlineNotice, ScreenShell, Sheet, SkeletonLines, StatusPill, TextAction, TextField } from '@custom/index';
@@ -41,7 +42,8 @@ const PaymentAccountsScreen: React.FC<Props> = props => (
   </ServiceScope>
 );
 
-const PaymentAccountsContent: React.FC<Props> = ({ navigation }) => {
+const PaymentAccountsContent: React.FC<Props> = () => {
+  const { back } = useBack({ name: 'StoreTabs', params: { screen: 'MoreTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectPaymentAccounts);
@@ -69,7 +71,7 @@ const PaymentAccountsContent: React.FC<Props> = ({ navigation }) => {
     <ScreenShell
       title="Payment accounts"
       subtitle="Customers who pay by transfer send money here, straight to you."
-      onBack={() => navigation.goBack()}
+      onBack={back}
       footer={<Button label="Add an account" leftIcon="add" onPress={() => dispatch(openAccountSheet(null))} fullWidth />}>
       {s.error.message && s.editing === null ? <InlineNotice message={s.error.message} /> : null}
       {s.status === 'loading' && !s.accounts.length ? (

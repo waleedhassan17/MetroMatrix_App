@@ -11,6 +11,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { RETURN_STATUS } from '@models/shopping/orderStatusModel';
 import { returnReasonLabel } from '@models/shopping/returnFormModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
@@ -49,7 +50,8 @@ const StoreReturnDetailScreen: React.FC<Props> = props => (
   </ServiceScope>
 );
 
-const StoreReturnDetailContent: React.FC<Props> = ({ navigation, route }) => {
+const StoreReturnDetailContent: React.FC<Props> = ({ route }) => {
+  const { back } = useBack({ name: 'StoreReturns' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service, colors, size } = useTheme();
@@ -72,7 +74,7 @@ const StoreReturnDetailContent: React.FC<Props> = ({ navigation, route }) => {
 
   if (!r) {
     return (
-      <ScreenShell title="Return" onBack={() => navigation.goBack()}>
+      <ScreenShell title="Return" onBack={back}>
         {s.status === 'failed' ? <InlineNotice message={s.error.message} /> : <SkeletonLines lines={8} />}
       </ScreenShell>
     );
@@ -82,7 +84,7 @@ const StoreReturnDetailContent: React.FC<Props> = ({ navigation, route }) => {
   const max = r.items.reduce((n, i) => n + i.unitPrice * i.quantity, 0);
 
   return (
-    <ScreenShell title={`Return · ${r.orderCode}`} onBack={() => navigation.goBack()}>
+    <ScreenShell title={`Return · ${r.orderCode}`} onBack={back}>
       <StatusPill label={st.label} tone={st.tone} />
       <AppText variant="small" tone="muted">
         {r.customerName} · {formatDateTime(r.createdAt)}

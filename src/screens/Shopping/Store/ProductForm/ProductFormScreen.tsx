@@ -13,6 +13,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { MAX_PRODUCT_PHOTOS, isFormDirty, salePreviewPercent, validateProductForm } from '@models/shopping/productFormModel';
 import { totalStock, variantLabel } from '@models/shopping/variantMatrixModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
@@ -98,6 +99,7 @@ const ProductFormScreen: React.FC<Props> = props => (
 );
 
 const ProductFormContent: React.FC<Props> = ({ navigation, route }) => {
+  const { back } = useBack({ name: 'StoreTabs', params: { screen: 'ProductsTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service, size, space, opacity } = useTheme();
@@ -175,7 +177,7 @@ const ProductFormContent: React.FC<Props> = ({ navigation, route }) => {
 
   if (s.loadStatus !== 'succeeded') {
     return (
-      <ScreenShell title={id ? 'Edit product' : 'New product'} onBack={() => navigation.goBack()}>
+      <ScreenShell title={id ? 'Edit product' : 'New product'} onBack={back}>
         {s.loadStatus === 'failed' ? (
           <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadProductFormAsync(id)) }} />
         ) : (
@@ -188,7 +190,7 @@ const ProductFormContent: React.FC<Props> = ({ navigation, route }) => {
   return (
     <ScreenShell
       title={s.productId ? 'Edit product' : 'New product'}
-      onBack={() => navigation.goBack()}
+      onBack={back}
       headerRight={f.status !== 'active' && s.productId ? <StatusPill label={f.status === 'archived' ? 'Hidden' : 'Draft'} /> : undefined}
       footer={
         <View style={styles.footer}>

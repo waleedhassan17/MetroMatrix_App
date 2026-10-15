@@ -8,6 +8,7 @@ import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { formatAddress } from '@models/addressModel';
 import { ORDER_STATUS, PAYMENT_METHOD_LABEL, PAYMENT_STATUS } from '@models/shopping/orderStatusModel';
 import { useStyles, type Theme } from '@theme/index';
@@ -26,7 +27,8 @@ const makeStyles = ({ space }: Theme) =>
     pills: { flexDirection: 'row', gap: space.s8, flexWrap: 'wrap' },
   });
 
-const OrderLookupScreen: React.FC<Props> = ({ navigation, route }) => {
+const OrderLookupScreen: React.FC<Props> = ({ route }) => {
+  const { back } = useBack({ name: 'ShopOverview' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectOrderLookup);
@@ -43,7 +45,7 @@ const OrderLookupScreen: React.FC<Props> = ({ navigation, route }) => {
   const find = () => s.code.length >= 4 && void dispatch(lookupOrderAsync(s.code));
 
   return (
-    <ScreenShell title="Find an order" onBack={() => navigation.goBack()}>
+    <ScreenShell title="Find an order" onBack={back}>
       <TextField label="Order code" value={s.code} onChangeText={t => dispatch(setLookupCode(t))} onSubmitEditing={find} autoCapitalize="characters" autoCorrect={false} placeholder="MM-24A7Q2" returnKeyType="search" />
       <Button label="Find" onPress={find} disabled={s.code.length < 4} loading={s.status === 'loading'} fullWidth />
       {s.status === 'failed' ? <InlineNotice message={s.error.message} /> : null}

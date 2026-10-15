@@ -10,6 +10,7 @@ import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { couponValueLabel, emptyCouponForm, fromCoupon, generateCode, toCouponInput, validateCouponForm } from '@models/shopping/couponFormModel';
 import { ServiceScope, useStyles, type Theme } from '@theme/index';
 import { AppText, Button, Card, DateField, InlineNotice, ScreenShell, SegmentTabs, TextAction, TextField, ToggleRow } from '@custom/index';
@@ -38,7 +39,8 @@ const CouponFormScreen: React.FC<Props> = props => (
   </ServiceScope>
 );
 
-const CouponFormContent: React.FC<Props> = ({ navigation, route }) => {
+const CouponFormContent: React.FC<Props> = ({ route }) => {
+  const { back } = useBack({ name: 'Coupons' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const list = useAppSelector(selectCoupons);
@@ -66,7 +68,7 @@ const CouponFormContent: React.FC<Props> = ({ navigation, route }) => {
     if (saveCouponAsync.fulfilled.match(r)) {
       haptics.success();
       Toast.show({ type: 'success', text1: id ? 'Coupon saved' : `${f.code} is ready`, text2: f.isActive ? 'Customers see it at checkout.' : 'It’s off until you turn it on.' });
-      navigation.goBack();
+      back();
     } else haptics.warning();
   };
 
@@ -79,7 +81,7 @@ const CouponFormContent: React.FC<Props> = ({ navigation, route }) => {
         style: 'destructive',
         onPress: async () => {
           const r = await dispatch(deleteCouponAsync(s.id!));
-          if (deleteCouponAsync.fulfilled.match(r)) navigation.goBack();
+          if (deleteCouponAsync.fulfilled.match(r)) back();
         },
       },
     ]);
@@ -89,7 +91,7 @@ const CouponFormContent: React.FC<Props> = ({ navigation, route }) => {
   return (
     <ScreenShell
       title={id ? 'Edit coupon' : 'New coupon'}
-      onBack={() => navigation.goBack()}
+      onBack={back}
       footer={<Button label="Save coupon" onPress={() => void save()} loading={s.status === 'loading'} fullWidth />}>
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
       <TextField

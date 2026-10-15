@@ -9,6 +9,7 @@ import React, { useEffect } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { validatePaymentProof } from '@models/shopping/paymentProofModel';
 import { ServiceScope } from '@theme/index';
 import { AppText, Button, Card, InlineNotice, PhotoStrip, ScreenShell, TextField } from '@custom/index';
@@ -37,7 +38,8 @@ const PaymentProofScreen: React.FC<Props> = props => (
   </ServiceScope>
 );
 
-const PaymentProofContent: React.FC<Props> = ({ navigation, route }) => {
+const PaymentProofContent: React.FC<Props> = ({ route }) => {
+  const { back } = useBack({ name: 'OrderDetail', params: { groupCode: route.params.groupCode } });
   const dispatch = useAppDispatch();
   const { orderId, groupCode } = route.params;
   const s = useAppSelector(selectPaymentProof);
@@ -65,7 +67,7 @@ const PaymentProofContent: React.FC<Props> = ({ navigation, route }) => {
     if (submitPaymentProofAsync.fulfilled.match(r)) {
       haptics.success();
       Toast.show({ type: 'success', text1: 'Sent to the store', text2: 'They’ll confirm once they see it in their account.' });
-      navigation.goBack();
+      back();
     } else haptics.warning();
   };
 
@@ -73,7 +75,7 @@ const PaymentProofContent: React.FC<Props> = ({ navigation, route }) => {
     <ScreenShell
       title="I’ve paid"
       subtitle={order ? `${order.store.name} · ${formatPKR(order.total)}` : undefined}
-      onBack={() => navigation.goBack()}
+      onBack={back}
       footer={<Button label="Send to the store" onPress={() => void submit()} loading={s.status === 'loading'} disabled={busy} fullWidth />}>
       {order?.paymentProof?.rejectionReason && order.paymentStatus === 'proof_rejected' ? (
         <InlineNotice title="The store couldn’t find your last payment" message={order.paymentProof.rejectionReason} />

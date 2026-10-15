@@ -10,6 +10,7 @@ import { Linking, Pressable, ScrollView, StyleSheet, View, useWindowDimensions }
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { usePagedList } from '@hooks/usePagedList';
 import { useShopBootstrap, useShopNav } from '@hooks/useShop';
 import { listProducts } from '@networks/shopping/catalogNetwork';
@@ -186,7 +187,8 @@ const StoreHeader: React.FC<{ store: StoreDetail; total: number; slug: string; c
   );
 };
 
-const StorePageContent: React.FC<Props> = ({ navigation, route }) => {
+const StorePageContent: React.FC<Props> = ({ route }) => {
+  const { back } = useBack({ name: 'ShoppingHome' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { size } = useTheme();
@@ -215,7 +217,7 @@ const StorePageContent: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <View style={styles.root}>
-      <ShopTopBar title={title} onBack={() => navigation.goBack()} right={searchButton} />
+      <ShopTopBar title={title} onBack={back} right={searchButton} />
       {!e.store ? (
         e.status === 'failed' ? (
           <SectionError message={e.error.message} onRetry={() => void dispatch(loadStoreAsync(slug))} />

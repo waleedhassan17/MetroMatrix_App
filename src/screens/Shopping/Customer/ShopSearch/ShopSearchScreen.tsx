@@ -11,6 +11,7 @@ import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { useDebouncedValue } from '@hooks/usePagedList';
 import { useShopNav } from '@hooks/useShop';
 import { MAX_FONT_SCALE, ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
@@ -59,6 +60,7 @@ const ShopSearchScreen: React.FC<Props> = props => (
 );
 
 const ShopSearchContent: React.FC<Props> = ({ navigation, route }) => {
+  const { back } = useBack({ name: 'ShoppingHome' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { colors, motion, opacity } = useTheme();
@@ -101,7 +103,7 @@ const ShopSearchContent: React.FC<Props> = ({ navigation, route }) => {
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
       <View style={styles.bar}>
-        <IconButton icon="chevron-back" onPress={() => navigation.goBack()} accessibilityLabel="Back" />
+        <IconButton icon="chevron-back" onPress={back} accessibilityLabel="Back" />
         <View style={styles.field}>
           <IonIcon name="search" size="md" color={colors.inkMuted} />
           <TextInput

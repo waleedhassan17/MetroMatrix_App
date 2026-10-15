@@ -11,6 +11,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { BRAND_PRESETS, ON_BRAND_CHOICES, brandContrast, validateStoreProfile } from '@models/shopping/storeModel';
 import { ServiceScope, StoreBrandScope, useStyles, useTheme, type Theme } from '@theme/index';
 import {
@@ -51,7 +52,8 @@ const StoreProfileScreen: React.FC<Props> = props => (
   </ServiceScope>
 );
 
-const StoreProfileContent: React.FC<Props> = ({ navigation }) => {
+const StoreProfileContent: React.FC<Props> = () => {
+  const { back } = useBack({ name: 'StoreTabs', params: { screen: 'MoreTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { colors, size } = useTheme();
@@ -64,7 +66,7 @@ const StoreProfileContent: React.FC<Props> = ({ navigation }) => {
 
   if (!f || !s.profile) {
     return (
-      <ScreenShell title="Store profile" onBack={() => navigation.goBack()}>
+      <ScreenShell title="Store profile" onBack={back}>
         {s.status === 'failed' ? <InlineNotice message={s.error.message} /> : <SkeletonLines lines={8} />}
       </ScreenShell>
     );
@@ -94,7 +96,7 @@ const StoreProfileContent: React.FC<Props> = ({ navigation }) => {
     <ScreenShell
       title="Store profile"
       subtitle={s.profile.name}
-      onBack={() => navigation.goBack()}
+      onBack={back}
       footer={<Button label="Save profile" onPress={() => void save()} loading={s.saveStatus === 'loading'} disabled={!!s.uploading} fullWidth />}>
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
 

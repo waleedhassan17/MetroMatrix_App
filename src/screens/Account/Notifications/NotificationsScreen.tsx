@@ -10,6 +10,7 @@ import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { usePagedList } from '@hooks/usePagedList';
 import { listNotifications } from '@networks/notifications/notificationsNetwork';
 import { useStyles, useTheme, type Theme } from '@theme/index';
@@ -46,6 +47,7 @@ const makeStyles = ({ space, size, radius }: Theme) =>
 type Nav = { navigate: (name: string, params?: object) => void; push: (name: string, params?: object) => void };
 
 const NotificationsScreen: React.FC<Props> = ({ navigation }) => {
+  const { back, canGoBack } = useBack();
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service, colors, opacity } = useTheme();
@@ -85,7 +87,7 @@ const NotificationsScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <ScreenShell
       title="Notifications"
-      onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
+      onBack={canGoBack ? back : undefined}
       headerRight={unread > 0 ? <IconButton icon="checkmark-done-outline" onPress={markAll} accessibilityLabel="Mark all as read" /> : undefined}
       scroll={false}>
       <FlatList

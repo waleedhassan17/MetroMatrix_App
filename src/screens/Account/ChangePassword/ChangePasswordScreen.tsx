@@ -7,6 +7,7 @@ import type { TextInput } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { hasErrors, validateChangePassword } from '@models/authModel';
 import { visibleErrors } from '@utils/formErrors';
 import { haptics } from '@utils/haptics';
@@ -17,7 +18,8 @@ import { changePasswordAsync, resetChangePassword, selectChangePassword, setFiel
 
 type Props = NativeStackScreenProps<AccountStackParamList, 'ChangePassword'>;
 
-const ChangePasswordScreen: React.FC<Props> = ({ navigation }) => {
+const ChangePasswordScreen: React.FC<Props> = () => {
+  const { back } = useBack({ name: 'Profile' });
   const dispatch = useAppDispatch();
   const user = useAppSelector(selectUser);
   const s = useAppSelector(selectChangePassword);
@@ -46,7 +48,7 @@ const ChangePasswordScreen: React.FC<Props> = ({ navigation }) => {
     if (changePasswordAsync.fulfilled.match(r)) {
       haptics.success();
       Toast.show({ type: 'success', text1: requireCurrent ? 'Password changed' : 'Password set' });
-      navigation.goBack();
+      back();
     } else haptics.warning();
   };
 
@@ -58,7 +60,7 @@ const ChangePasswordScreen: React.FC<Props> = ({ navigation }) => {
           ? 'Use at least 8 characters, with a letter and a number.'
           : 'Add a password so you can also sign in with your email.'
       }
-      onBack={() => navigation.goBack()}
+      onBack={back}
       footer={
         <Button
           label={requireCurrent ? 'Change password' : 'Set password'}

@@ -8,6 +8,7 @@ import React, { useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { useShopNav } from '@hooks/useShop';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Divider, IonIcon, ListRow, SkeletonLines, categoryIcon } from '@custom/index';
@@ -46,7 +47,8 @@ const CategoryBrowseScreen: React.FC<Props> = props => (
   </ServiceScope>
 );
 
-const CategoryBrowseContent: React.FC<Props> = ({ navigation, route }) => {
+const CategoryBrowseContent: React.FC<Props> = ({ route }) => {
+  const { back } = useBack({ name: 'ShoppingHome' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { colors, service } = useTheme();
@@ -70,7 +72,7 @@ const CategoryBrowseContent: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <View style={styles.root}>
-      <ShopTopBar title="Categories" onBack={() => navigation.goBack()} />
+      <ShopTopBar title="Categories" onBack={back} />
       <Divider />
       {s.status === 'failed' && !s.categories.length ? (
         <SectionError

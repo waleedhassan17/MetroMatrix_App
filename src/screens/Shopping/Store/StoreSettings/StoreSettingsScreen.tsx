@@ -10,6 +10,7 @@ import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { CITIES } from '@models/businessModel';
 import { validateStoreSettings } from '@models/shopping/storeModel';
 import { ServiceScope, useStyles, type Theme } from '@theme/index';
@@ -35,6 +36,7 @@ const StoreSettingsScreen: React.FC<Props> = props => (
 );
 
 const StoreSettingsContent: React.FC<Props> = ({ navigation }) => {
+  const { back } = useBack({ name: 'StoreTabs', params: { screen: 'MoreTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectStoreSettings);
@@ -46,7 +48,7 @@ const StoreSettingsContent: React.FC<Props> = ({ navigation }) => {
 
   if (!f) {
     return (
-      <ScreenShell title="Settings" onBack={() => navigation.goBack()}>
+      <ScreenShell title="Settings" onBack={back}>
         {s.status === 'failed' ? <InlineNotice message={s.error.message} /> : <SkeletonLines lines={8} />}
       </ScreenShell>
     );
@@ -70,7 +72,7 @@ const StoreSettingsContent: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <ScreenShell title="Settings" onBack={() => navigation.goBack()} footer={<Button label="Save settings" onPress={() => void save()} loading={s.saveStatus === 'loading'} fullWidth />}>
+    <ScreenShell title="Settings" onBack={back} footer={<Button label="Save settings" onPress={() => void save()} loading={s.saveStatus === 'loading'} fullWidth />}>
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
 
       <Card>

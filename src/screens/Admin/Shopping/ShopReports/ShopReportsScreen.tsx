@@ -10,6 +10,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { usePagedList } from '@hooks/usePagedList';
 import { listReports } from '@networks/admin/adminShopNetwork';
 import { useStyles, useTheme, type Theme } from '@theme/index';
@@ -37,7 +38,8 @@ const makeStyles = ({ colors, space, size, radius }: Theme) =>
     grow: { flex: 1 },
   });
 
-const ShopReportsScreen: React.FC<Props> = ({ navigation }) => {
+const ShopReportsScreen: React.FC<Props> = () => {
+  const { back } = useBack({ name: 'ShopOverview' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { size } = useTheme();
@@ -53,7 +55,7 @@ const ShopReportsScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <ScreenShell title="Reported products" onBack={() => navigation.goBack()} scroll={false}>
+    <ScreenShell title="Reported products" onBack={back} scroll={false}>
       <SegmentTabs options={SEGMENTS} value={s.status} onChange={k => dispatch(setReportsStatus(k))} accessibilityLabel="Reports" />
       {s.error.message && !s.removing ? <InlineNotice message={s.error.message} /> : null}
       <FlatList

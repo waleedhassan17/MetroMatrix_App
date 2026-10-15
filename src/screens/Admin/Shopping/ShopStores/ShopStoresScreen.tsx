@@ -6,6 +6,7 @@ import React from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { useDebouncedValue, usePagedList } from '@hooks/usePagedList';
 import { listAdminStores } from '@networks/admin/adminShopNetwork';
 import { useStyles, type Theme } from '@theme/index';
@@ -22,7 +23,8 @@ const makeStyles = ({ space }: Theme) =>
     list: { paddingBottom: space.s40 },
   });
 
-const ShopStoresScreen: React.FC<Props> = ({ navigation }) => {
+const ShopStoresScreen: React.FC<Props> = () => {
+  const { back } = useBack({ name: 'ShopOverview' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectShopStores);
@@ -35,7 +37,7 @@ const ShopStoresScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <ScreenShell title="Stores" subtitle="Featured stores lead the Shopping home." onBack={() => navigation.goBack()} scroll={false}>
+    <ScreenShell title="Stores" subtitle="Featured stores lead the Shopping home." onBack={back} scroll={false}>
       <TextField label="Search" value={s.query} onChangeText={t => dispatch(setStoresQuery(t))} icon="search" placeholder="Store or city" clearable />
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
       <FlatList

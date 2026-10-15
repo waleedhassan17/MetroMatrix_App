@@ -60,8 +60,8 @@ const OrderPlacedContent: React.FC<Props> = ({ navigation, route }) => {
 
   const leave = (to: 'order' | 'shop') => {
     navigation.popToTop();
-    if (to === 'order') root.navigate('OrdersTab', { screen: 'OrderDetail', params: { groupCode } });
-    else root.navigate('HomeTab', { screen: 'ShoppingHome' });
+    if (to === 'order') root.navigate('OrdersTab', { screen: 'OrderDetail', params: { groupCode }, initial: false });
+    else root.navigate('HomeTab', { screen: 'ShoppingHome', initial: false });
   };
 
   return (

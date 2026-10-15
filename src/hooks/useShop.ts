@@ -67,6 +67,8 @@ export const useShopNav = () => {
         (navigation as unknown as { navigate: (name: string, p?: object) => void }).navigate('HomeTab', {
           screen: 'ShopSearch',
           params: scope,
+          // Keep the Home stack's first screen under it, so back works.
+          initial: false,
         }),
       openBanner: (b: Banner) => {
         const t = b.target;

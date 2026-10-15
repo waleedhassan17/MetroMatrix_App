@@ -15,10 +15,16 @@ export interface ShopBannersSliceState {
 
 const initialState: ShopBannersSliceState = { banners: [], status: 'idle', busy: false, error: NO_ERROR };
 
-const input = (b: AdminBanner) => {
-  const { id: _id, ...rest } = b;
-  return rest;
-};
+const input = (b: AdminBanner) => ({
+  imageUrl: b.imageUrl,
+  headline: b.headline,
+  subhead: b.subhead,
+  target: b.target,
+  startsAt: b.startsAt,
+  endsAt: b.endsAt,
+  position: b.position,
+  isActive: b.isActive,
+});
 
 export const shopBannersSlice = createAppSlice({
   name: 'shopBanners',

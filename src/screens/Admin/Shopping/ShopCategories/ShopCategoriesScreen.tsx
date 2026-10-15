@@ -9,6 +9,7 @@ import React, { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { useStyles, useTheme, type Theme } from '@theme/index';
 import {
   AppText,
@@ -48,7 +49,8 @@ const makeStyles = ({ space, size, radius }: Theme) =>
     icons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
   });
 
-const ShopCategoriesScreen: React.FC<Props> = ({ navigation }) => {
+const ShopCategoriesScreen: React.FC<Props> = () => {
+  const { back } = useBack({ name: 'ShopOverview' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service } = useTheme();
@@ -92,7 +94,7 @@ const ShopCategoriesScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <ScreenShell
       title="Categories"
-      onBack={() => navigation.goBack()}
+      onBack={back}
       footer={<Button label="New top-level category" leftIcon="add" onPress={() => dispatch(openCategorySheet({ id: '', parentId: null, name: '', icon: 'pricetag-outline' }))} fullWidth />}>
       {s.error.message && !s.sheet ? <InlineNotice message={s.error.message} /> : null}
       {s.status === 'loading' && !s.tree.length ? <SkeletonLines lines={8} /> : null}

@@ -10,6 +10,7 @@ import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { useDebouncedValue, usePagedList } from '@hooks/usePagedList';
 import { listInventory } from '@networks/shopping/partner/inventoryNetwork';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
@@ -74,7 +75,8 @@ const InventoryScreen: React.FC<Props> = props => (
   </ServiceScope>
 );
 
-const InventoryContent: React.FC<Props> = ({ navigation, route }) => {
+const InventoryContent: React.FC<Props> = ({ route }) => {
+  const { back } = useBack({ name: 'StoreTabs', params: { screen: 'MoreTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service, colors, size } = useTheme();
@@ -135,7 +137,7 @@ const InventoryContent: React.FC<Props> = ({ navigation, route }) => {
   return (
     <ScreenShell
       title="Inventory"
-      onBack={() => navigation.goBack()}
+      onBack={back}
       scroll={false}
       headerRight={<TextAction label={s.selecting ? 'Done' : 'Select'} onPress={() => dispatch(toggleSelecting())} />}>
       <TextField label="Search" value={s.query} onChangeText={t => dispatch(setInventoryQuery(t))} icon="search" placeholder="Product or SKU" clearable autoCorrect={false} />

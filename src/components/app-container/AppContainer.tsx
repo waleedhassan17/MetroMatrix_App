@@ -79,8 +79,11 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       // /home (a partner's home too), /home/food, /home/services/healthcare
       // Shopping: /shop, /shop/store/:slug, /shop/product/:id … (exact, so
       // they read the same in a link and in the address bar).
+      // initialRouteName: a link straight to a deep screen still has the tab's
+      // first screen under it, so back works (web refresh, push taps).
       HomeTab: {
         path: 'home',
+        initialRouteName: 'CustomerHome',
         screens: {
           CustomerHome: '',
           FoodHome: 'food',
@@ -101,6 +104,7 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       // metromatrix://orders/MM-24A7Q2 → that order (push taps land here too)
       OrdersTab: {
         path: 'orders',
+        initialRouteName: 'Orders',
         screens: {
           Orders: '',
           OrderDetail: ':groupCode',
@@ -110,9 +114,11 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
         },
       },
       ApprovalsTab: {
+        initialRouteName: 'ApprovalQueue',
         screens: { ApprovalQueue: 'approvals', BusinessReview: 'approvals/:id' },
       },
       ShopAdminTab: {
+        initialRouteName: 'ShopOverview',
         screens: {
           ShopOverview: 'admin/shop',
           ShopReports: 'admin/shop/reports',
@@ -124,6 +130,7 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
         },
       },
       ProfileTab: {
+        initialRouteName: 'Profile',
         screens: {
           Profile: 'profile',
           ChangePassword: 'profile/password',

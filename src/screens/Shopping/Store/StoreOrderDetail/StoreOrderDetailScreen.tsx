@@ -14,6 +14,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { formatAddress } from '@models/addressModel';
 import { COURIERS, ORDER_STATUS, PAYMENT_METHOD_LABEL, PAYMENT_STATUS } from '@models/shopping/orderStatusModel';
 import { whatsappUrl } from '@models/shopping/storePolicyModel';
@@ -101,7 +102,8 @@ const StoreOrderDetailScreen: React.FC<Props> = props => (
   </ServiceScope>
 );
 
-const StoreOrderDetailContent: React.FC<Props> = ({ navigation, route }) => {
+const StoreOrderDetailContent: React.FC<Props> = ({ route }) => {
+  const { back } = useBack({ name: 'StoreTabs', params: { screen: 'OrdersTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { size, service } = useTheme();
@@ -286,7 +288,7 @@ const StoreOrderDetailContent: React.FC<Props> = ({ navigation, route }) => {
   const reasonOk = ui.reason.trim().length >= 5;
 
   return (
-    <ScreenShell title={route.params.code ?? o?.code ?? 'Order'} onBack={() => navigation.goBack()} scroll={false}>
+    <ScreenShell title={route.params.code ?? o?.code ?? 'Order'} onBack={back} scroll={false}>
       {!o ? (
         e.status === 'failed' ? (
           <InlineNotice message={e.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadStoreOrderAsync(id)) }} />

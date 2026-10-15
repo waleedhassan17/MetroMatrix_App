@@ -9,6 +9,7 @@ import React, { useEffect, useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { useDebouncedValue, usePagedList } from '@hooks/usePagedList';
 import { useShopBootstrap } from '@hooks/useShop';
 import { listProducts } from '@networks/shopping/catalogNetwork';
@@ -82,7 +83,8 @@ const ProductListScreen: React.FC<Props> = props => (
   </ServiceScope>
 );
 
-const ProductListContent: React.FC<Props> = ({ navigation, route }) => {
+const ProductListContent: React.FC<Props> = ({ route }) => {
+  const { back } = useBack({ name: 'ShoppingHome' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
@@ -150,7 +152,7 @@ const ProductListContent: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <View style={styles.root}>
-      <ShopTopBar title={title} onBack={() => navigation.goBack()} />
+      <ShopTopBar title={title} onBack={back} />
       <ProductGrid
         list={list}
         header={header}

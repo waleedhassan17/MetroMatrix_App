@@ -10,6 +10,7 @@ import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { ADDRESS_LABELS, emptyAddressForm, fromAddress, validateAddressForm, type AddressForm } from '@models/addressModel';
 import { hasErrors } from '@models/authModel';
 import { CITIES } from '@models/businessModel';
@@ -46,7 +47,8 @@ const makeStyles = ({ space }: Theme) =>
     chips: { flexDirection: 'row', gap: space.s8 },
   });
 
-const AddressFormScreen: React.FC<Props> = ({ navigation, route }) => {
+const AddressFormScreen: React.FC<Props> = ({ route }) => {
+  const { back } = useBack({ name: 'AddressBook' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const user = useAppSelector(selectUser);
@@ -83,14 +85,14 @@ const AddressFormScreen: React.FC<Props> = ({ navigation, route }) => {
     if (saveAddressAsync.fulfilled.match(r)) {
       haptics.success();
       Toast.show({ type: 'success', text1: id ? 'Address updated' : 'Address added' });
-      navigation.goBack();
+      back();
     } else haptics.warning();
   };
 
   return (
     <ScreenShell
       title={id ? 'Edit address' : 'New address'}
-      onBack={() => navigation.goBack()}
+      onBack={back}
       footer={<Button label="Save address" onPress={() => void save()} loading={s.status === 'loading'} fullWidth />}>
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
       <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel="Address label">

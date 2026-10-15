@@ -9,6 +9,7 @@ import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { ServiceScope, useStyles, type Theme } from '@theme/index';
 import { AppText, Button, Card, Divider, EmptyState, IconButton, InlineNotice, ScreenShell, Sheet, SkeletonLines, TextAction, TextField } from '@custom/index';
 import type { Collection, StorePartnerStackParamList } from '@/types';
@@ -37,7 +38,8 @@ const CollectionsScreen: React.FC<Props> = props => (
   </ServiceScope>
 );
 
-const CollectionsContent: React.FC<Props> = ({ navigation }) => {
+const CollectionsContent: React.FC<Props> = () => {
+  const { back } = useBack({ name: 'StoreTabs', params: { screen: 'MoreTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectCollections);
@@ -64,7 +66,7 @@ const CollectionsContent: React.FC<Props> = ({ navigation }) => {
     <ScreenShell
       title="Collections"
       subtitle="The shelves on your store page, in this order."
-      onBack={() => navigation.goBack()}
+      onBack={back}
       footer={<Button label="New collection" leftIcon="add" onPress={() => dispatch(openCollectionSheet(null))} fullWidth />}>
       {s.error.message && s.editing === null ? <InlineNotice message={s.error.message} /> : null}
       {s.status === 'loading' && !list.length ? (

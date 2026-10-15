@@ -12,6 +12,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import dayjs from 'dayjs';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, BarChart, Card, Divider, InlineNotice, LineChart, ScreenShell, SegmentTabs, SkeletonLines } from '@custom/index';
 import type { InsightsRange, StorePartnerStackParamList } from '@/types';
@@ -54,7 +55,8 @@ const InsightsScreen: React.FC<Props> = props => (
   </ServiceScope>
 );
 
-const InsightsContent: React.FC<Props> = ({ navigation }) => {
+const InsightsContent: React.FC<Props> = () => {
+  const { back } = useBack({ name: 'StoreTabs', params: { screen: 'MoreTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { size } = useTheme();
@@ -69,7 +71,7 @@ const InsightsContent: React.FC<Props> = ({ navigation }) => {
   const avg = d && d.orderCount ? Math.round(d.recordedSales / d.orderCount) : 0;
 
   return (
-    <ScreenShell title="Insights" onBack={() => navigation.goBack()}>
+    <ScreenShell title="Insights" onBack={back}>
       <SegmentTabs options={RANGES} value={s.range} onChange={r => dispatch(setInsightsRange(r))} accessibilityLabel="Range" />
       {s.error.message ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadInsightsAsync(s.range)) }} /> : null}
       {!d ? (

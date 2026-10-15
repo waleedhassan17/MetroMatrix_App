@@ -10,6 +10,7 @@ import React, { useCallback, useEffect } from 'react';
 import { FlatList, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { useDebouncedValue, usePagedList } from '@hooks/usePagedList';
 import { useShopBootstrap, useShopNav } from '@hooks/useShop';
 import { listStores } from '@networks/shopping/catalogNetwork';
@@ -129,7 +130,8 @@ const ShoppingHomeScreen: React.FC<Props> = props => (
   </ServiceScope>
 );
 
-const ShoppingHomeContent: React.FC<Props> = ({ navigation }) => {
+const ShoppingHomeContent: React.FC<Props> = () => {
+  const { back } = useBack({ name: 'CustomerHome' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service, size } = useTheme();
@@ -181,7 +183,7 @@ const ShoppingHomeContent: React.FC<Props> = ({ navigation }) => {
     <View style={styles.root}>
       <ShopTopBar
         title="Smart Shopping"
-        onBack={() => navigation.goBack()}
+        onBack={back}
         right={
           <IconButton
             icon="search"

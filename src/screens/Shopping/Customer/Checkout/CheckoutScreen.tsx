@@ -8,9 +8,11 @@
 
 import React, { useEffect, useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { CommonActions } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { useDebouncedValue } from '@hooks/usePagedList';
 import { formatAddress } from '@models/addressModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
@@ -103,6 +105,7 @@ const CheckoutScreen: React.FC<Props> = props => (
 );
 
 const CheckoutContent: React.FC<Props> = ({ navigation }) => {
+  const { back } = useBack({ name: 'Bag' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service, colors, motion } = useTheme();
@@ -144,7 +147,17 @@ const CheckoutContent: React.FC<Props> = ({ navigation }) => {
       haptics.success();
       dispatch(newCheckoutKey());
       void dispatch(loadBagAsync());
-      navigation.replace('OrderPlaced', { groupCode: r.payload.code });
+      // The Bag and Checkout leave the history: back from "Order placed" returns
+      // to where they were shopping, never to an empty Bag or a used checkout.
+      const groupCode = r.payload.code;
+      navigation.dispatch(state => {
+        const routes = state.routes.filter(rt => rt.name !== 'Bag' && rt.name !== 'Checkout');
+        return CommonActions.reset({
+          ...state,
+          routes: [...routes, { key: `OrderPlaced-${groupCode}`, name: 'OrderPlaced', params: { groupCode } }],
+          index: routes.length,
+        });
+      });
       return;
     }
     haptics.warning();
@@ -152,7 +165,7 @@ const CheckoutContent: React.FC<Props> = ({ navigation }) => {
     if (code === 'OUT_OF_STOCK') {
       Toast.show({ type: 'error', text1: 'Something just sold out', text2: 'Check your bag, then try again.' });
       void dispatch(loadBagAsync());
-      navigation.goBack();
+      back();
     } else if (code === 'CHECKOUT_BLOCKED') {
       void dispatch(previewCheckoutAsync(input));
     }
@@ -230,7 +243,7 @@ const CheckoutContent: React.FC<Props> = ({ navigation }) => {
 
   return (
     <View style={styles.root}>
-      <ShopTopBar title="Checkout" onBack={() => navigation.goBack()} showBag={false} />
+      <ShopTopBar title="Checkout" onBack={back} showBag={false} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <AppText variant="h2">Deliver to</AppText>
         {book.status === 'loading' && !book.addresses.length ? (

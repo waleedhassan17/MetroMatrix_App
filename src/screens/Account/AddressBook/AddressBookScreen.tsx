@@ -8,6 +8,7 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { ADDRESS_LABELS, formatAddress } from '@models/addressModel';
 import { useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Button, Card, EmptyState, InlineNotice, IonIcon, ScreenShell, SkeletonLines, StatusPill, TextAction } from '@custom/index';
@@ -69,6 +70,7 @@ const AddressCard: React.FC<{ address: Address; busy: boolean; onEdit: () => voi
 };
 
 const AddressBookScreen: React.FC<Props> = ({ navigation }) => {
+  const { back } = useBack({ name: 'Profile' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectAddressBook);
@@ -88,7 +90,7 @@ const AddressBookScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <ScreenShell
       title="Addresses"
-      onBack={() => navigation.goBack()}
+      onBack={back}
       scroll={false}
       footer={<Button label="Add an address" leftIcon="add" onPress={() => navigation.navigate('AddressForm')} fullWidth />}>
       {s.actionError.message ? <InlineNotice message={s.actionError.message} /> : null}

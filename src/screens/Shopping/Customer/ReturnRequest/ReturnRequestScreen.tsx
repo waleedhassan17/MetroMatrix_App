@@ -11,6 +11,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { MAX_RETURN_PHOTOS, RETURN_REASONS, returnDaysLeft, validateReturn } from '@models/shopping/returnFormModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import {
@@ -63,7 +64,8 @@ const ReturnRequestScreen: React.FC<Props> = props => (
   </ServiceScope>
 );
 
-const ReturnRequestContent: React.FC<Props> = ({ navigation, route }) => {
+const ReturnRequestContent: React.FC<Props> = ({ route }) => {
+  const { back } = useBack({ name: 'OrderDetail', params: { groupCode: route.params.groupCode } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service, colors, size } = useTheme();
@@ -77,7 +79,7 @@ const ReturnRequestContent: React.FC<Props> = ({ navigation, route }) => {
 
   if (!order) {
     return (
-      <ScreenShell title="Return items" onBack={() => navigation.goBack()}>
+      <ScreenShell title="Return items" onBack={back}>
         <SkeletonLines lines={6} />
       </ScreenShell>
     );
@@ -113,7 +115,7 @@ const ReturnRequestContent: React.FC<Props> = ({ navigation, route }) => {
       haptics.success();
       void dispatch(loadOrderGroupAsync(groupCode));
       Toast.show({ type: 'success', text1: 'Return requested', text2: `${order.store.name} will reply soon.` });
-      navigation.goBack();
+      back();
     } else haptics.warning();
   };
 
@@ -121,7 +123,7 @@ const ReturnRequestContent: React.FC<Props> = ({ navigation, route }) => {
     <ScreenShell
       title="Return items"
       subtitle={`${order.store.name}${days !== null && days >= 0 ? ` · ${days === 0 ? 'last day to return' : `${days} days left to return`}` : ''}`}
-      onBack={() => navigation.goBack()}
+      onBack={back}
       footer={<Button label="Request return" onPress={() => void submit()} loading={s.status === 'loading'} disabled={busy} fullWidth />}>
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
 

@@ -137,7 +137,7 @@ const OrdersScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   }, [asked, dispatch]);
 
-  const toShop = () => (navigation.getParent() as unknown as { navigate: (n: string, p?: object) => void } | undefined)?.navigate('HomeTab', { screen: 'ShoppingHome' });
+  const toShop = () => (navigation.getParent() as unknown as { navigate: (n: string, p?: object) => void } | undefined)?.navigate('HomeTab', { screen: 'ShoppingHome', initial: false });
 
   return (
     <ScreenShell title="Orders" scroll={false}>

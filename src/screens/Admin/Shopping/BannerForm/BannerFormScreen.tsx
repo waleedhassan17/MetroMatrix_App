@@ -10,6 +10,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { useStyles, useTheme, type Theme } from '@theme/index';
 import {
   AppText,
@@ -62,7 +63,8 @@ const makeStyles = ({ colors, space, size, radius }: Theme) =>
     half: { flex: 1 },
   });
 
-const BannerFormScreen: React.FC<Props> = ({ navigation, route }) => {
+const BannerFormScreen: React.FC<Props> = ({ route }) => {
+  const { back } = useBack({ name: 'ShopBanners' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { colors, size } = useTheme();
@@ -100,7 +102,7 @@ const BannerFormScreen: React.FC<Props> = ({ navigation, route }) => {
     const r = await dispatch(saveBannerAsync({ id: s.id, input: toBannerInput(f, s.categories) }));
     if (saveBannerAsync.fulfilled.match(r)) {
       Toast.show({ type: 'success', text1: 'Banner saved' });
-      navigation.goBack();
+      back();
     }
   };
 
@@ -113,13 +115,13 @@ const BannerFormScreen: React.FC<Props> = ({ navigation, route }) => {
         style: 'destructive',
         onPress: async () => {
           const r = await dispatch(deleteBannerAsync(s.id!));
-          if (deleteBannerAsync.fulfilled.match(r)) navigation.goBack();
+          if (deleteBannerAsync.fulfilled.match(r)) back();
         },
       },
     ]);
 
   return (
-    <ScreenShell title={id ? 'Edit banner' : 'New banner'} onBack={() => navigation.goBack()} footer={<Button label="Save banner" onPress={() => void save()} loading={s.status === 'loading'} disabled={s.uploading} fullWidth />}>
+    <ScreenShell title={id ? 'Edit banner' : 'New banner'} onBack={back} footer={<Button label="Save banner" onPress={() => void save()} loading={s.status === 'loading'} disabled={s.uploading} fullWidth />}>
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
       <Pressable onPress={() => void pick()} style={[styles.image, errors.imageUrl ? { borderWidth: size.focusBorder, borderColor: colors.danger } : null]} accessibilityRole="button" accessibilityLabel={f.imageUrl ? 'Change the image' : 'Add an image'}>
         {f.imageUrl ? (

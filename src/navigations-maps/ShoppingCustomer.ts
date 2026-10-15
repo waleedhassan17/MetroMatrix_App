@@ -36,8 +36,8 @@ export const SHOP_BROWSE_ROUTES: IRoute[] = [
   { title: ROUTES.PRODUCT_REVIEWS, component: ProductReviewsScreen },
   { title: ROUTES.BAG, component: BagScreen },
   { title: ROUTES.CHECKOUT, component: CheckoutScreen },
-  // No swipe back from "Order placed": the order is done; its buttons lead on.
-  { title: ROUTES.ORDER_PLACED, component: OrderPlacedScreen, options: { gestureEnabled: false } },
+  // Checkout leaves the Bag and itself out of the history, so back from here is safe.
+  { title: ROUTES.ORDER_PLACED, component: OrderPlacedScreen },
   { title: ROUTES.ADDRESS_FORM, component: AddressFormScreen },
   { title: ROUTES.NOTIFICATIONS, component: NotificationsScreen },
 ];

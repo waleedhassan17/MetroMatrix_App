@@ -8,6 +8,7 @@ import React from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { useDebouncedValue, usePagedList } from '@hooks/usePagedList';
 import { useShopNav } from '@hooks/useShop';
 import { listStores } from '@networks/shopping/catalogNetwork';
@@ -33,7 +34,8 @@ const StoreListScreen: React.FC<Props> = props => (
   </ServiceScope>
 );
 
-const StoreListContent: React.FC<Props> = ({ navigation }) => {
+const StoreListContent: React.FC<Props> = () => {
+  const { back } = useBack({ name: 'ShoppingHome' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service } = useTheme();
@@ -44,7 +46,7 @@ const StoreListContent: React.FC<Props> = ({ navigation }) => {
 
   return (
     <View style={styles.root}>
-      <ShopTopBar title="Stores" onBack={() => navigation.goBack()} />
+      <ShopTopBar title="Stores" onBack={back} />
       <View style={styles.search}>
         <TextField
           label="Search stores"

@@ -9,6 +9,7 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { COUPON_STATUS_LABEL, couponValueLabel } from '@models/shopping/couponFormModel';
 import { ServiceScope, useStyles, type Theme } from '@theme/index';
 import { AppText, Button, Card, EmptyState, InlineNotice, ScreenShell, SkeletonLines, StatusPill } from '@custom/index';
@@ -35,6 +36,7 @@ const CouponsScreen: React.FC<Props> = props => (
 );
 
 const CouponsContent: React.FC<Props> = ({ navigation }) => {
+  const { back } = useBack({ name: 'StoreTabs', params: { screen: 'MoreTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectCoupons);
@@ -48,7 +50,7 @@ const CouponsContent: React.FC<Props> = ({ navigation }) => {
   return (
     <ScreenShell
       title="Coupons"
-      onBack={() => navigation.goBack()}
+      onBack={back}
       scroll={false}
       footer={<Button label="New coupon" leftIcon="add" onPress={() => navigation.navigate('CouponForm')} fullWidth />}>
       <FlatList

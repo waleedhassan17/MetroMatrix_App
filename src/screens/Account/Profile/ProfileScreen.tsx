@@ -8,6 +8,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useSignOut } from '@hooks/useSignOut';
+import { useBack } from '@hooks/useBack';
 import { hasErrors, nationalFromPkPhone, validateProfile } from '@models/authModel';
 import { visibleErrors } from '@utils/formErrors';
 import { haptics } from '@utils/haptics';
@@ -58,6 +59,8 @@ const makeStyles = ({ space }: Theme) =>
   });
 
 const ProfileScreen: React.FC<Props> = ({ navigation }) => {
+  // A tab's first screen in the customer app; pushed from More in the store app.
+  const { back, canGoBack } = useBack();
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const user = useAppSelector(selectUser);
@@ -111,7 +114,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <ScreenShell title="Profile">
+    <ScreenShell title="Profile" onBack={canGoBack ? back : undefined}>
       <View style={styles.header}>
         <Avatar
           name={user.name || user.email}

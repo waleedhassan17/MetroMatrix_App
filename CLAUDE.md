@@ -132,6 +132,8 @@ Stateless screens have no slice. Their state is global (`auth`, `preferences`) o
 2. Register the slice in `src/store/store.ts` under "Per-screen slices" (`<name>: <name>Slice.reducer`).
 3. Add the route name to `ROUTES` in `src/navigations-maps/Base.ts` and its params to `RootStackParamList` (`src/types/navigation.ts`), or to the relevant navigator's param list.
 4. Add an `IRoute` entry to the right array in `src/navigations-maps/*.ts`. Never register a screen inside a navigator file directly.
+   - A back button calls `back` from `useBack({ name: '<parent>' })` (`src/hooks/useBack.ts`), never `navigation.goBack()`. With no history (a link, a push tap, a web refresh) it lands on the parent instead of doing nothing, and it answers Android's hardware back too.
+   - A jump into another tab passes `initial: false`, so that tab's first screen stays underneath.
 5. Style only through the theme (see below), then run `npm run gates`.
 
 ## Styling pattern

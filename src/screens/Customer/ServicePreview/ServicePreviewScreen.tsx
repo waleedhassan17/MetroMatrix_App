@@ -10,6 +10,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppDispatch } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { setLastService } from '@store/preferencesSlice';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Button, IonIcon, MciIcon, PhotoScrim } from '@custom/index';
@@ -57,6 +58,7 @@ const ServicePreviewScreen: React.FC<Props> = props => (
 );
 
 const Preview: React.FC<Props> = ({ navigation, route }) => {
+  const { back } = useBack({ name: 'CustomerHome' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service, colors, motion } = useTheme();
@@ -75,7 +77,7 @@ const Preview: React.FC<Props> = ({ navigation, route }) => {
             </>
           ) : null}
           <Pressable
-            onPress={() => navigation.goBack()}
+            onPress={back}
             style={[styles.back, { top: insets.top + 8 }]}
             accessibilityRole="button"
             accessibilityLabel="Back"

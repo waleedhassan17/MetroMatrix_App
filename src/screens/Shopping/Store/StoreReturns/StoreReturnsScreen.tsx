@@ -6,6 +6,7 @@ import React from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { usePagedList } from '@hooks/usePagedList';
 import { listPartnerReturns } from '@networks/shopping/partner/partnerReturnsNetwork';
 import { RETURN_STATUS } from '@models/shopping/orderStatusModel';
@@ -32,6 +33,7 @@ const StoreReturnsScreen: React.FC<Props> = props => (
 );
 
 const StoreReturnsContent: React.FC<Props> = ({ navigation }) => {
+  const { back } = useBack({ name: 'StoreTabs', params: { screen: 'MoreTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { opacity } = useTheme();
@@ -39,7 +41,7 @@ const StoreReturnsContent: React.FC<Props> = ({ navigation }) => {
   const list = usePagedList((page, size) => listPartnerReturns(s.openOnly ? 'open' : null, page, size), `store-returns|${s.openOnly}`);
 
   return (
-    <ScreenShell title="Returns" onBack={() => navigation.goBack()} scroll={false}>
+    <ScreenShell title="Returns" onBack={back} scroll={false}>
       <SegmentTabs
         options={[
           { key: 'open', label: 'To do' },

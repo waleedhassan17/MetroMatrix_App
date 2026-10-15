@@ -10,6 +10,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { MAX_REVIEW_PHOTOS, RATING_WORDS, validateReview } from '@models/shopping/reviewFormModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Button, InlineNotice, IonIcon, PhotoStrip, ScreenShell, SkeletonLines, TextField } from '@custom/index';
@@ -50,7 +51,8 @@ const WriteReviewScreen: React.FC<Props> = props => (
   </ServiceScope>
 );
 
-const WriteReviewContent: React.FC<Props> = ({ navigation, route }) => {
+const WriteReviewContent: React.FC<Props> = ({ route }) => {
+  const { back } = useBack({ name: 'OrderDetail', params: { groupCode: route.params.groupCode } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { colors, size } = useTheme();
@@ -83,14 +85,14 @@ const WriteReviewContent: React.FC<Props> = ({ navigation, route }) => {
       haptics.success();
       void dispatch(loadOrderGroupAsync(groupCode));
       Toast.show({ type: 'success', text1: 'Thanks for your review', text2: 'It helps other shoppers, and the store.' });
-      navigation.goBack();
+      back();
     } else haptics.warning();
   };
 
   return (
     <ScreenShell
       title="Write a review"
-      onBack={() => navigation.goBack()}
+      onBack={back}
       footer={<Button label="Post review" onPress={() => void submit()} loading={s.status === 'loading'} disabled={busy} fullWidth />}>
       {item ? (
         <View style={styles.item}>

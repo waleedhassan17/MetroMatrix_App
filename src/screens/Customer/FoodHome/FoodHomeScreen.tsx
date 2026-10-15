@@ -15,6 +15,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { filterKitchens } from '@models/foodModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, EmptyState, InlineNotice, IonIcon, MciIcon } from '@custom/index';
@@ -59,7 +60,8 @@ const FoodHomeScreen: React.FC<Props> = props => (
   </ServiceScope>
 );
 
-const FoodHomeContent: React.FC<Props> = ({ navigation }) => {
+const FoodHomeContent: React.FC<Props> = () => {
+  const { back } = useBack({ name: 'CustomerHome' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service, colors } = useTheme();
@@ -103,7 +105,7 @@ const FoodHomeContent: React.FC<Props> = ({ navigation }) => {
         }>
         {/* 0 — back and where it delivers */}
         <View style={styles.bar}>
-          <Pressable onPress={() => navigation.goBack()} style={styles.back} accessibilityRole="button" accessibilityLabel="Back" hitSlop={8}>
+          <Pressable onPress={back} style={styles.back} accessibilityRole="button" accessibilityLabel="Back" hitSlop={8}>
             <IonIcon name="arrow-back" size="lg" color={colors.ink} />
           </Pressable>
           <View style={[styles.pin, { backgroundColor: service.accentSoft }]}>

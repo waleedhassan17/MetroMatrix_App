@@ -15,6 +15,7 @@ import * as Clipboard from 'expo-clipboard';
 import { Image } from 'expo-image';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useBack } from '@hooks/useBack';
 import { formatAddress } from '@models/addressModel';
 import { needsPayment, ORDER_STATUS, PAYMENT_METHOD_LABEL, PAYMENT_STATUS } from '@models/shopping/orderStatusModel';
 import { returnDaysLeft } from '@models/shopping/returnFormModel';
@@ -84,6 +85,7 @@ const OrderDetailScreen: React.FC<Props> = props => (
 );
 
 const OrderDetailContent: React.FC<Props> = ({ navigation, route }) => {
+  const { back } = useBack({ name: 'Orders' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service, size, colors, opacity } = useTheme();
@@ -287,7 +289,7 @@ const OrderDetailContent: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <View style={styles.root}>
-      <ShopTopBar title={`Order ${groupCode}`} onBack={() => navigation.goBack()} />
+      <ShopTopBar title={`Order ${groupCode}`} onBack={back} />
       {!g ? (
         e.status === 'failed' ? (
           <SectionError message={e.error.message} onRetry={() => void dispatch(loadOrderGroupAsync(groupCode))} />
