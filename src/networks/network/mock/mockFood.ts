@@ -2,8 +2,8 @@
 // MetroMatrix — Dummy Food catalogue (customer Food home)
 // ═══════════════════════════════════════════════════════
 // Static and fictional — any likeness to a real brand is accidental. Food
-// launches with local fast-food brands first, then restaurants and home
-// kitchens. Replaced wholesale by GET /food/home once the backend serves it.
+// Court launches with local fast-food brands first, then restaurants and
+// home kitchens. Replaced wholesale by GET /food/home once the backend serves it.
 
 export const MOCK_CUISINES = [
   { slug: 'burgers', name: 'Burgers' },
@@ -17,7 +17,7 @@ export const MOCK_CUISINES = [
 ];
 
 export const MOCK_PROMOS = [
-  { id: 'p1', title: 'Free delivery on your first 3 orders', subtitle: 'From any brand, no minimum.', code: 'METRO3' },
+  { id: 'p1', title: '20% off your first order', subtitle: 'At any vendor in the Food Court.', code: 'METRO20' },
   { id: 'p2', title: 'Smash burger Fridays', subtitle: 'Up to 30% off at local burger brands.', code: null },
 ];
 

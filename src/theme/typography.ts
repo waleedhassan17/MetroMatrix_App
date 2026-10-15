@@ -15,6 +15,8 @@ export type TypeRole =
   | 'h1'
   | 'screenTitle'
   | 'h2'
+  | 'heading'
+  | 'cardTitle'
   | 'barTitle'
   | 'title'
   | 'body'
@@ -24,6 +26,8 @@ export type TypeRole =
   | 'label'
   | 'small'
   | 'caption'
+  | 'chip'
+  | 'tag'
   | 'micro';
 
 export type TypeScale = Record<TypeRole, TextStyle>;
@@ -46,6 +50,10 @@ export const type: TypeScale = {
   screenTitle: font('600', 24, 30),
   /** Section heading. (T.heading) */
   h2: font('600', 20, 26, -0.3),
+  /** Home section titles: "Our Services" (FYP userHome sectionTitle). */
+  heading: font('700', 22, 28, -0.3),
+  /** The title set on a service card's photo (FYP userHome cardTitle). */
+  cardTitle: font('700', 20, 26),
   /** The app bar's title. (T.barTitle) */
   barTitle: font('600', 18, 24),
   /** Card title and list-row primary line. (T.subhead) */
@@ -64,6 +72,10 @@ export const type: TypeScale = {
   small: font('500', 13, 18),
   /** Metadata, timestamps, helper text. (T.caption) */
   caption: font('400', 12, 16),
+  /** Pill chips: "3 Available", "Explore" (FYP userHome countText / exploreText). */
+  chip: font('600', 12, 16),
+  /** Uppercase photo badges: RETAIL, MEDICAL (FYP userHome categoryText, 0.5 tracking). */
+  tag: font('700', 10, 12, 0.5),
   /** Counters and badges only. (T.micro) */
   micro: font('600', 11, 14),
 };

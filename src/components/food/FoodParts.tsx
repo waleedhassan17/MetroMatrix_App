@@ -154,12 +154,12 @@ export const FoodSearchBar: React.FC<{ value: string; onChange: (v: string) => v
         <TextInput
           value={value}
           onChangeText={onChange}
-          placeholder="Search for kitchens, cuisines and dishes"
+          placeholder="Search vendors, cuisines and dishes"
           placeholderTextColor={colors.inkFaint}
           style={styles.searchInput}
           returnKeyType="search"
           autoCorrect={false}
-          accessibilityLabel="Search kitchens"
+          accessibilityLabel="Search the Food Court"
         />
         {value ? (
           <Pressable onPress={() => onChange('')} hitSlop={8} accessibilityRole="button" accessibilityLabel="Clear search">

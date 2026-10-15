@@ -24,7 +24,7 @@ import { AppText } from '../../../Custom-Components/AppText';
 
 /** The three services, in the order onboarding introduces them. */
 const SERVICES: { service: Exclude<ServiceName, 'neutral'>; label: string }[] = [
-  { service: 'food', label: 'Food' },
+  { service: 'food', label: 'Food Court' },
   { service: 'healthcare', label: 'Healthcare' },
   { service: 'shopping', label: 'Shopping' },
 ];

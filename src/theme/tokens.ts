@@ -184,8 +184,8 @@ export const size = {
   kitchenArt: 148,
   kitchenArtSmall: 112,
   promoCard: 136,
-  /** Customer home: the photo panel of a service card (the FYP's 160, taller for the premium card). */
-  serviceArt: 208,
+  /** Customer home: the photo panel of a service card (FYP userHome imageContainer, 160). */
+  serviceArt: 160,
   /** Customer home: the FYP's 40 pt header wells. */
   headerWell: 40,
 } as const;

@@ -84,7 +84,7 @@ const RoleSelectionScreen: React.FC<Props> = ({ navigation }) => {
               icon={<IonIcon name="person" size="xl" color={service.highlight} />}
               iconBg={service.accentSoft}
               title="User"
-              description="Order food, book doctors and shop from trusted sellers"
+              description="Discover local food vendors, book doctors and shop from trusted sellers"
               onPress={() => choose('user')}
             />
           </View>

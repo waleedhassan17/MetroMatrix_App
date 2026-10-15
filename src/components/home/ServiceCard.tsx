@@ -1,12 +1,16 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Service card (the FYP home's card, premium)
+// MetroMatrix — Service card (the FYP home's card)
 // ═══════════════════════════════════════════════════════
-// The FYP's anatomy, refined: a tall photo with the category badge top-left
-// and the status top-right, the title and a one-line promise set on the
-// photo; below it, three highlights, the description and a call to action
-// in the service's own colour. The whole card is the button (the FYP's
-// lesson: a chip inside a card must not swallow the tap) and sinks a
-// little under the finger.
+// The FYP's card at the FYP's measurements (userHome.tsx): a 160 pt photo
+// with the category badge top-left and the status badge top-right (12 pt
+// in, 12×6 padding, radius 8, 10 pt bold tracked text), the title on the
+// photo (20 pt bold, 12 pt in); below it, the description (12 pt) and the
+// Explore chip (14×8 padding) in 14×12 padding. Radius 20.
+// The premium layer is in the finish, not in extra content: a legibility
+// scrim instead of the FYP's text shadow, each service's own colour on its
+// status badge and chip, a live pulse on what is open, and a card that
+// sinks a little under the finger. The whole card is the button (the FYP's
+// lesson: a chip inside a card must not swallow the tap).
 
 import React, { useState } from 'react';
 import { Animated, Pressable, StyleSheet, View, type ImageSourcePropType } from 'react-native';
@@ -20,16 +24,12 @@ import { PhotoScrim } from '../../Custom-Components/PhotoScrim';
 export interface ServiceCardData {
   service: Exclude<ServiceName, 'neutral'>;
   title: string;
-  /** One line under the title, on the photo. */
-  tagline: string;
-  /** The badge on the photo: FOOD, MEDICAL, RETAIL. */
+  /** The badge on the photo: FOOD COURT, MEDICAL, RETAIL. */
   category: string;
-  categoryIcon: MciName;
   description: string;
   /** Open now, or still on its way. */
   live: boolean;
   cta: string;
-  highlights: { icon: MciName; label: string }[];
   /** A bundled photo; without one the panel is the service's colour and glyph. */
   image: ImageSourcePropType | null;
   glyph: MciName;
@@ -40,61 +40,52 @@ const makeStyles = ({ colors, space, size, radius, elevation }: Theme) =>
     card: {
       borderRadius: radius.xl,
       backgroundColor: colors.surface,
-      borderWidth: size.hairline,
-      borderColor: colors.line,
       ...elevation.raised,
     },
     clip: { borderRadius: radius.xl, overflow: 'hidden' },
-    art: { height: size.serviceArt, justifyContent: 'flex-end', overflow: 'hidden' },
-    photo: { ...StyleSheet.absoluteFillObject },
-    badges: {
-      position: 'absolute',
-      top: space.s12,
-      left: space.s12,
-      right: space.s12,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-    },
-    badge: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space.s4 + space.s4 / 2,
-      paddingHorizontal: space.s12 - space.s4 / 2,
-      paddingVertical: space.s4 + space.s4 / 2,
-      borderRadius: radius.pill,
-    },
-    onPhoto: { padding: space.s16, gap: space.s4 },
-    body: { padding: space.s16, gap: space.s16 },
-    highlights: { flexDirection: 'row', alignItems: 'center' },
-    highlight: {
-      flex: 1,
-      flexDirection: 'row',
+    art: {
+      height: size.serviceArt,
       alignItems: 'center',
       justifyContent: 'center',
-      gap: space.s4 + space.s4 / 2,
-      paddingHorizontal: space.s4,
+      overflow: 'hidden',
     },
-    highlightRule: { width: size.hairline, height: space.s16, backgroundColor: colors.line },
-    rule: { height: size.hairline, backgroundColor: colors.line },
-    foot: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
+    photo: { ...StyleSheet.absoluteFillObject },
+    badge: {
+      position: 'absolute',
+      top: space.s12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space.s4 + space.s4 / 2,
+      paddingHorizontal: space.s12,
+      paddingVertical: space.s4 + space.s4 / 2,
+      borderRadius: radius.sm,
+    },
+    title: { position: 'absolute', left: space.s12, right: space.s16, bottom: space.s12 },
+    content: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space.s12,
+      paddingHorizontal: space.s12 + space.s4 / 2,
+      paddingVertical: space.s12,
+    },
     description: { flex: 1 },
-    cta: {
+    explore: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: space.s4,
-      paddingLeft: space.s16,
-      paddingRight: space.s12,
-      height: size.control.sm,
-      borderRadius: radius.pill,
+      paddingHorizontal: space.s12 + space.s4 / 2,
+      paddingVertical: space.s8,
+      borderRadius: radius.xl,
     },
   });
 
 const Card: React.FC<{ data: ServiceCardData; onPress: () => void }> = ({ data, onPress }) => {
   const styles = useStyles(makeStyles);
-  const { colors, service, motion, size } = useTheme();
+  const { colors, service, motion, size, space, elevation } = useTheme();
   const [scale] = useState(() => new Animated.Value(1));
   const springTo = (toValue: number) =>
     Animated.spring(scale, { toValue, ...motion.spring, useNativeDriver: true }).start();
+  const fg = data.live ? service.onAccent : service.accentDeep;
 
   return (
     <Pressable
@@ -102,75 +93,83 @@ const Card: React.FC<{ data: ServiceCardData; onPress: () => void }> = ({ data, 
       onPressIn={() => springTo(motion.press.scale + (1 - motion.press.scale) / 2)}
       onPressOut={() => springTo(1)}
       accessibilityRole="button"
-      accessibilityLabel={`${data.title}. ${data.live ? 'Open now' : 'Coming soon'}. ${data.tagline}.`}
+      accessibilityLabel={`${data.title}. ${data.live ? 'Open now' : 'Coming soon'}. ${
+        data.description
+      }`}
       accessibilityHint={data.live ? 'Opens this service' : 'Shows what is coming'}>
       <Animated.View style={[styles.card, { transform: [{ scale }] }]}>
         <View style={styles.clip}>
-          {/* Photo, badges, title */}
-          <View style={[styles.art, { backgroundColor: data.image ? colors.surfaceSunk : service.accent }]}>
+          <View
+            style={[
+              styles.art,
+              { backgroundColor: data.image ? colors.surfaceSunk : service.accent },
+            ]}>
             {data.image ? (
               <>
-                <Image source={data.image} style={styles.photo} contentFit="cover" transition={motion.press.duration} />
+                <Image
+                  source={data.image}
+                  style={styles.photo}
+                  contentFit="cover"
+                  contentPosition="top"
+                  transition={motion.press.duration}
+                />
                 <PhotoScrim />
               </>
-            ) : null}
-            <View style={styles.badges}>
-              <View style={[styles.badge, { backgroundColor: colors.glass }]}>
-                <MciIcon name={data.categoryIcon} size="sm" color={service.accent} />
-                <AppText variant="micro">{data.category}</AppText>
-              </View>
-              {data.live ? (
-                <View style={[styles.badge, { backgroundColor: service.accent }]}>
-                  <LiveDot color={service.onAccent} size={size.eyebrowDot} />
-                  <AppText variant="micro" style={{ color: service.onAccent }}>
-                    Open now
-                  </AppText>
-                </View>
-              ) : (
-                <View style={[styles.badge, { backgroundColor: colors.glass }]}>
-                  <IonIcon name="time-outline" size="sm" color={colors.inkMuted} />
-                  <AppText variant="micro" tone="muted">
-                    Coming soon
-                  </AppText>
-                </View>
-              )}
-            </View>
-            <View style={styles.onPhoto}>
-              <AppText variant="h1" tone="onScrim">
-                {data.title}
+            ) : (
+              <MciIcon name={data.glyph} size="hero" color={service.onAccent} />
+            )}
+
+            {/* Category — top left */}
+            <View
+              style={[
+                styles.badge,
+                { left: space.s12, backgroundColor: colors.surface, ...elevation.input },
+              ]}>
+              <AppText variant="tag" tone="muted">
+                {data.category}
               </AppText>
-              <AppText variant="small" style={{ color: colors.onScrimSoft }} numberOfLines={1}>
-                {data.tagline}
+            </View>
+
+            {/* Status — top right */}
+            <View
+              style={[
+                styles.badge,
+                { right: space.s12, backgroundColor: data.live ? service.accent : colors.glass },
+              ]}>
+              {data.live ? (
+                <LiveDot color={service.onAccent} size={size.eyebrowDot} />
+              ) : (
+                <IonIcon name="time-outline" size="sm" color={colors.inkMuted} />
+              )}
+              <AppText
+                variant="tag"
+                style={{ color: data.live ? service.onAccent : colors.inkMuted }}>
+                {data.live ? 'OPEN NOW' : 'COMING SOON'}
+              </AppText>
+            </View>
+
+            {/* Title — bottom left */}
+            <View style={styles.title}>
+              <AppText variant="cardTitle" tone="onScrim" numberOfLines={1}>
+                {data.title}
               </AppText>
             </View>
           </View>
 
-          {/* Highlights, description, call to action */}
-          <View style={styles.body}>
-            <View style={styles.highlights}>
-              {data.highlights.map((h, i) => (
-                <React.Fragment key={h.label}>
-                  {i > 0 ? <View style={styles.highlightRule} /> : null}
-                  <View style={styles.highlight}>
-                    <MciIcon name={h.icon} size="sm" color={service.accent} />
-                    <AppText variant="caption" numberOfLines={1}>
-                      {h.label}
-                    </AppText>
-                  </View>
-                </React.Fragment>
-              ))}
-            </View>
-            <View style={styles.rule} />
-            <View style={styles.foot}>
-              <AppText variant="small" tone="muted" numberOfLines={2} style={styles.description}>
-                {data.description}
+          {/* Description and Explore — below the photo */}
+          <View style={styles.content}>
+            <AppText variant="caption" tone="muted" numberOfLines={2} style={styles.description}>
+              {data.description}
+            </AppText>
+            <View
+              style={[
+                styles.explore,
+                { backgroundColor: data.live ? service.accent : service.accentSoft },
+              ]}>
+              <AppText variant="chip" style={{ color: fg }}>
+                {data.cta}
               </AppText>
-              <View style={[styles.cta, { backgroundColor: data.live ? service.accent : service.accentSoft }]}>
-                <AppText variant="small" style={{ color: data.live ? service.onAccent : service.accentDeep }}>
-                  {data.cta}
-                </AppText>
-                <IonIcon name="arrow-forward" size="sm" color={data.live ? service.onAccent : service.accentDeep} />
-              </View>
+              <IonIcon name="chevron-forward" size="sm" color={fg} />
             </View>
           </View>
         </View>

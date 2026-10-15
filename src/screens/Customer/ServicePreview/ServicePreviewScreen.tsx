@@ -108,7 +108,7 @@ const Preview: React.FC<Props> = ({ navigation, route }) => {
             </View>
           ))}
           <Button
-            label="Order food meanwhile"
+            label="Visit the Food Court meanwhile"
             variant="secondary"
             onPress={() => {
               dispatch(setLastService('food'));

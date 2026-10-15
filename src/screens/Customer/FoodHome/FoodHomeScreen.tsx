@@ -1,11 +1,13 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Food (opened from the home's Food card)
+// MetroMatrix — Food Court (opened from the home's Food Court card)
 // ═══════════════════════════════════════════════════════
-// Foodpanda is the competitor, so this reads like the delivery app a
-// Pakistani customer already knows — where it delivers, a sticky search,
-// promotions, cuisines, home kitchens near you and every kitchen — in Food's
-// pink, with more air and calmer type. Live against GET /food/home (the dummy
-// API until the backend serves it).
+// The Food Court gathers a city's food vendors — fast-food brands first,
+// then restaurants and home kitchens — under one roof. Unlike Foodpanda,
+// MetroMatrix takes no commission and runs no riders of its own: vendors
+// deliver with their own riders through MetroMatrix's delivery app. Foodpanda's familiar layout (sticky search,
+// promotions, cuisines, vendor cards) in Food's pink, with more air and
+// calmer type. Live against GET /food/home (the dummy API until the backend
+// serves it).
 
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
@@ -108,11 +110,11 @@ const FoodHomeContent: React.FC<Props> = ({ navigation }) => {
             <MciIcon name="map-marker" size="md" color={service.accent} />
           </View>
           <View style={styles.barText}>
-            <AppText variant="caption" tone="muted">
-              Deliver to
+            <AppText variant="title" accessibilityRole="header">
+              Food Court
             </AppText>
-            <AppText variant="bodyStrong" numberOfLines={1}>
-              {area}
+            <AppText variant="caption" tone="muted" numberOfLines={1}>
+              Delivering to {area}
             </AppText>
           </View>
         </View>
@@ -146,8 +148,8 @@ const FoodHomeContent: React.FC<Props> = ({ navigation }) => {
                 </FoodSection>
               ) : null}
               <FoodSection
-                title={filtering ? `${kitchens.length} ${kitchens.length === 1 ? 'result' : 'results'}` : 'All kitchens'}
-                subtitle={filtering ? undefined : `${kitchens.length} delivering to you`}>
+                title={filtering ? `${kitchens.length} ${kitchens.length === 1 ? 'result' : 'results'}` : 'All vendors'}
+                subtitle={filtering ? undefined : `${kitchens.length} vendors near you`}>
                 {kitchens.length ? (
                   <View style={styles.cards}>
                     {kitchens.map(k => (

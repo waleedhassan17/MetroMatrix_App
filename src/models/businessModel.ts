@@ -44,9 +44,9 @@ export const SERVICE_LABELS: Record<ServiceType, { title: string; partnerTitle: 
     description: 'Provide healthcare consultations and medical services',
   },
   food: {
-    title: 'Food',
-    partnerTitle: 'Food Partner',
-    description: 'Cook and deliver meals to customers near you',
+    title: 'Food Court',
+    partnerTitle: 'Food Court Vendor',
+    description: 'List your restaurant, cloud kitchen or home kitchen in the Food Court',
   },
 };
 

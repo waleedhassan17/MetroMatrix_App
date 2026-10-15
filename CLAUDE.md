@@ -10,7 +10,7 @@ MetroMatrix is a zero-commission community marketplace with three services: **Sh
 The app follows the **FinMatrix app architecture exactly**. Its **look and flows follow the owner's MetroMatrix FYP app** (`~/MetroMatrix/Waleed-MetroMatrix`):
 - white, light-only screens in the platform system font, with the FYP icon, splash and onboarding;
 - Role Selection → (Provider Selection) → sign in / sign up → email link → profile steps;
-- the FYP's three-card user home.
+- the FYP's three-card user home. Food is branded **Food Court**: a platform for food vendors. Unlike Foodpanda, MetroMatrix takes **no commission** and runs **no rider fleet**. Vendors deliver with their own riders through MetroMatrix's delivery app. Delivery details (time, fee, area) are fine to show; never imply MetroMatrix's own couriers or a cut of the order.
 
 Copy the FYP's UX, never its code paths, Firebase setup or per-role duplicate network files. There is no Facebook login.
 
