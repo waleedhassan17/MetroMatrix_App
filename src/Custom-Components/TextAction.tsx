@@ -5,6 +5,7 @@ import React from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { AppText } from './AppText';
+import { useOnGradient } from './headerInk';
 import { IonIcon, type IonName } from './Icon';
 
 const makeStyles = ({ space, size }: Theme) =>
@@ -22,7 +23,18 @@ export const TextAction: React.FC<{
 }> = ({ label, onPress, tone = 'accent', icon, disabled, accessibilityLabel }) => {
   const styles = useStyles(makeStyles);
   const { service, colors, opacity } = useTheme();
-  const color = disabled ? colors.inkFaint : tone === 'danger' ? colors.danger : tone === 'muted' ? colors.inkMuted : service.accentDeep;
+  const onGradient = useOnGradient();
+  const color = onGradient
+    ? disabled
+      ? colors.onScrimSoft
+      : colors.onScrim
+    : disabled
+      ? colors.inkFaint
+      : tone === 'danger'
+        ? colors.danger
+        : tone === 'muted'
+          ? colors.inkMuted
+          : service.accentDeep;
   return (
     <Pressable
       onPress={onPress}

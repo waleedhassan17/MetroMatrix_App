@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../../theme';
 import { AppText } from '../AppText';
 import { IonIcon, type IonName } from '../Icon';
+import { useOnGradient } from '../headerInk';
 
 const makeStyles = ({ size, radius, space, colors }: Theme) =>
   StyleSheet.create({
@@ -27,11 +28,15 @@ const makeStyles = ({ size, radius, space, colors }: Theme) =>
 
 export const CountBadge: React.FC<{ count: number }> = ({ count }) => {
   const styles = useStyles(makeStyles);
-  const { service } = useTheme();
+  const { service, colors } = useTheme();
+  // On the gradient header the badge turns white, ringed in the header's own deep accent.
+  const onGradient = useOnGradient();
   if (count <= 0) return null;
   return (
-    <View style={[styles.badge, { backgroundColor: service.accent }]} pointerEvents="none">
-      <AppText variant="micro" tone="onAccent">
+    <View
+      style={[styles.badge, onGradient ? { backgroundColor: colors.surface, borderColor: service.accentDeep } : { backgroundColor: service.accent }]}
+      pointerEvents="none">
+      <AppText variant="micro" style={{ color: onGradient ? service.accentDeep : service.onAccent }}>
         {count > 99 ? '99+' : count}
       </AppText>
     </View>
@@ -45,9 +50,11 @@ export const CountIconButton: React.FC<{
   onPress: () => void;
   label: string;
   tone?: 'ink' | 'onScrim';
-}> = ({ icon, count, onPress, label, tone = 'ink' }) => {
+}> = ({ icon, count, onPress, label, tone: toneProp }) => {
   const styles = useStyles(makeStyles);
   const { colors, opacity } = useTheme();
+  const onGradient = useOnGradient();
+  const tone = toneProp ?? (onGradient ? 'onScrim' : 'ink');
   return (
     <Pressable
       onPress={onPress}

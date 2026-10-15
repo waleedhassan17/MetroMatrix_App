@@ -40,6 +40,10 @@ const ALLOWED = new Map([
     'demo STORE brand colours (data a store chooses, painted only through StoreBrandScope) — dev-only gallery',
   ],
   [
+    'src/Custom-Components/PageHeader.tsx',
+    "the FYP's module-page header the owner asked for on Shopping and Health (theme.header.gradient, AA-tested stops)",
+  ],
+  [
     'src/screens/Onboarding/OnboardingScreen.tsx',
     "the onboarding preview card's header gradient, copied from the FYP app (its colours still come from the theme)",
   ],

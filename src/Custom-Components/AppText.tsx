@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { Text, type TextProps } from 'react-native';
-import { useTheme, MAX_FONT_SCALE, type TypeRole } from '../theme';
+import { useTheme, type TypeRole } from '../theme';
 
 export type TextTone =
   | 'ink'
@@ -34,10 +34,10 @@ export const AppText: React.FC<AppTextProps> = ({
   tone = 'ink',
   align,
   style,
-  maxFontSizeMultiplier = MAX_FONT_SCALE,
+  maxFontSizeMultiplier,
   ...rest
 }) => {
-  const { type, colors, service } = useTheme();
+  const { type, colors, service, maxFontScale } = useTheme();
   const color: Record<TextTone, string> = {
     ink: colors.ink,
     muted: colors.inkMuted,
@@ -55,7 +55,7 @@ export const AppText: React.FC<AppTextProps> = ({
   };
   return (
     <Text
-      maxFontSizeMultiplier={maxFontSizeMultiplier}
+      maxFontSizeMultiplier={maxFontSizeMultiplier ?? maxFontScale}
       style={[type[variant], { color: color[tone] }, align ? { textAlign: align } : null, style]}
       {...rest}
     />

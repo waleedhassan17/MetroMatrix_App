@@ -67,7 +67,7 @@ Set environment in `.env.local`; see `.env.example`. `src/config/env.ts` is the 
 7. **No raw design values** in `src/screens`, `src/components`, `src/Custom-Components` or `src/navigators`. Every colour, size, radius, font, shadow and duration comes from `useTheme()`. `npm run check:tokens` enforces this and must pass.
 8. **Banned in the UI:**
    - emoji in UI copy
-   - gradients as surfaces
+   - gradients as surfaces — with one exception the owner asked for: the FYP's module-page header (`PageHeader`, chosen by `theme.header`) on Shopping and Health screens
    - centred spinners for content (use `Skeleton` instead)
    - decorative background shapes on any screen: watermark glyphs, faint circles or "bubbles", ambient glows (the owner asked for clean white screens)
 9. **Every phase ends** with its acceptance commands run, then a commit `chunk1/pN: <summary>` (later chunks use their own prefix).
@@ -153,6 +153,8 @@ const styles = useStyles(makeStyles); // memoised on the active theme (mode + se
 - Wrap a subtree in `<ServiceScope service="food">` to switch its accent.
 - Auth, admin and the customer shell (home, tabs, profile) use `neutral` (MetroMatrix emerald). Each service screen scopes its own accent: Food pink (Foodpanda-like), Healthcare blue, Shopping orange.
 - Inside a store (its page, its products) `<StoreBrandScope brand onBrand>` swaps the accent for the store's own colour, with AA-safe text and darker brand-coloured text.
+- Page headers follow the module, never the screen (`theme.header`): Shopping and Health pages wear the FYP's gradient `PageHeader` (rounded bottom, large white title, actions in white), which `ScreenShell` and `ShopTopBar` pick automatically; inside a store the bar turns white with the store's colour as a rule under it. Controls in the header's trailing slot or `headerContent` paint themselves for the gradient (`OnGradientContext`).
+- Healthcare's theme is the clinical scale: body text 15, captions 13, touch targets 48, dynamic type to 150% (`theme.maxFontScale`).
 - Shopping copy: "Bag" (never cart), "Recorded sales" (never revenue or income), money only through `formatPKR`, order/payment/return wording only from `orderStatusModel`, every remote image through `cdn()`.
 - Onboarding: everything on a slide, including the primary button, wears that slide's colour.
 - Platform-specific files (`X.web.tsx`) must never import `./X`; on web that path resolves to the file itself. Put shared code in a third module (see `sheetShared.ts`, `dateFieldShared.ts`).

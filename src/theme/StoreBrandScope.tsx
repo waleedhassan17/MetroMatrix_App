@@ -68,6 +68,9 @@ const SHOPPING = getTheme('shopping');
 export const storeTheme = (brand: string | null | undefined, onBrand: string | null | undefined): Theme => ({
   ...SHOPPING,
   service: storePalette(brand, onBrand),
+  // Inside a store the bar is white with the store's colour as a rule under
+  // it (the FYP's BrandHeader): a vendor's hex behind a title can't be trusted.
+  header: { tone: 'surface', gradient: SHOPPING.header.gradient },
 });
 
 export const StoreBrandScope: React.FC<{

@@ -38,7 +38,7 @@ type Props = NativeStackScreenProps<HomeStackParamList, 'ShoppingHome'>;
 const makeStyles = ({ colors, space, gutter }: Theme) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.canvas },
-    header: { gap: space.s24, paddingTop: space.s8, paddingBottom: space.s16 },
+    header: { gap: space.s24, paddingTop: space.s20, paddingBottom: space.s16 },
     block: { gap: space.s12 },
     rail: { paddingHorizontal: gutter, gap: space.s8 },
     allHead: {
@@ -53,8 +53,6 @@ const makeStyles = ({ colors, space, gutter }: Theme) =>
   });
 
 interface HeaderProps {
-  query: string;
-  onQuery: (q: string) => void;
   searching: boolean;
   banners: React.ComponentProps<typeof BannerCarousel>['banners'];
   onBanner: React.ComponentProps<typeof BannerCarousel>['onOpen'];
@@ -68,8 +66,6 @@ interface HeaderProps {
 
 /** A stable component handed to the list as an element, so the rails keep their scroll position. */
 const BrandListHeader: React.FC<HeaderProps> = React.memo(function BrandListHeader({
-  query,
-  onQuery,
   searching,
   banners,
   onBanner,
@@ -83,7 +79,6 @@ const BrandListHeader: React.FC<HeaderProps> = React.memo(function BrandListHead
   const styles = useStyles(makeStyles);
   return (
     <View style={styles.header}>
-      <SearchField value={query} onChange={onQuery} placeholder="Search brands" />
       {error ? (
         <View style={styles.state}>
           <InlineNotice message={error} action={{ label: 'Try again', onPress: onRetry }} />
@@ -162,8 +157,6 @@ const ShoppingHomeContent: React.FC<Props> = () => {
 
   const header = (
     <BrandListHeader
-      query={s.brandQuery}
-      onQuery={onQuery}
       searching={q.length > 0}
       banners={s.home?.banners ?? []}
       onBanner={nav.openBanner}
@@ -183,6 +176,7 @@ const ShoppingHomeContent: React.FC<Props> = () => {
     <View style={styles.root}>
       <ShopTopBar
         title="Smart Shopping"
+        subtitle="Browse brands and stores"
         onBack={back}
         right={
           <IconButton
@@ -190,8 +184,9 @@ const ShoppingHomeContent: React.FC<Props> = () => {
             onPress={() => nav.openSearch()}
             accessibilityLabel="Search products"
           />
-        }
-      />
+        }>
+        <SearchField value={s.brandQuery} onChange={onQuery} placeholder="Search brands" />
+      </ShopTopBar>
       <FlatList
         data={brands.rows}
         keyExtractor={b => b.id}

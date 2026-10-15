@@ -18,11 +18,13 @@ import {
   IconButton,
   InlineNotice,
   IonIcon,
+  PageHeader,
   PhotoScrim,
   ProductCard,
   ProductCardSkeleton,
   type EmptyStateProps,
 } from '@custom/index';
+import { useOnGradient } from '@custom/headerInk';
 import { useBagCount, useSaved, useShopNav } from '@hooks/useShop';
 import type { PagedList } from '@hooks/usePagedList';
 import type { Banner, ProductSummary } from '@/types';
@@ -37,6 +39,7 @@ const makeStyles = ({ colors, space, size, radius, gutter, type }: Theme) =>
       paddingHorizontal: space.s8,
       backgroundColor: colors.canvas,
     },
+    barRuled: { borderBottomWidth: size.focusBorder },
     barTitle: { flex: 1, paddingHorizontal: space.s4 },
     barSide: { flexDirection: 'row', alignItems: 'center' },
     section: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingHorizontal: gutter, gap: space.s12 },
@@ -52,6 +55,7 @@ const makeStyles = ({ colors, space, size, radius, gutter, type }: Theme) =>
       borderRadius: radius.pill,
       backgroundColor: colors.surfaceSunk,
     },
+    pillOnGradient: { marginHorizontal: space.s0, backgroundColor: colors.surface },
     pillText: { ...type.input, color: colors.inkFaint, flex: 1 },
     pillInput: { ...type.input, color: colors.ink, flex: 1, paddingVertical: space.s0, outlineWidth: 0, outlineStyle: 'solid' },
     banner: { borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.surfaceSunk },
@@ -68,19 +72,40 @@ const makeStyles = ({ colors, space, size, radius, gutter, type }: Theme) =>
   });
 
 // ─── Top bar ──────────────────────────────────────────
+// The Shopping module's page header: the FYP's orange gradient PageHeader
+// (search, the Bag and other actions in white). Inside a store the theme
+// asks for a white bar instead, with the store's colour as a rule under it
+// (the FYP's BrandHeader).
 export const ShopTopBar: React.FC<{
   title?: string;
+  subtitle?: string;
   onBack?: () => void;
   /** Extra buttons before the Bag. */
   right?: React.ReactNode;
   showBag?: boolean;
-}> = ({ title, onBack, right, showBag = true }) => {
+  /** Gradient header only: content inside it, under the title (a search field). */
+  children?: React.ReactNode;
+}> = ({ title, subtitle, onBack, right, showBag = true, children }) => {
   const styles = useStyles(makeStyles);
   const insets = useSafeAreaInsets();
+  const { header, service } = useTheme();
   const count = useBagCount();
   const { openBag } = useShopNav();
+  const actions = (
+    <>
+      {right}
+      {showBag ? <CountIconButton icon="bag-handle-outline" count={count} onPress={openBag} label="Bag" /> : null}
+    </>
+  );
+  if (header.tone === 'gradient') {
+    return (
+      <PageHeader title={title} subtitle={subtitle} onBack={onBack} right={actions}>
+        {children}
+      </PageHeader>
+    );
+  }
   return (
-    <View style={[styles.bar, { paddingTop: insets.top }]}>
+    <View style={[styles.bar, styles.barRuled, { paddingTop: insets.top, borderBottomColor: service.accent }]}>
       {onBack ? <IconButton icon="chevron-back" onPress={onBack} accessibilityLabel="Back" /> : null}
       <View style={styles.barTitle}>
         {title ? (
@@ -88,11 +113,13 @@ export const ShopTopBar: React.FC<{
             {title}
           </AppText>
         ) : null}
+        {subtitle ? (
+          <AppText variant="caption" tone="muted" numberOfLines={1}>
+            {subtitle}
+          </AppText>
+        ) : null}
       </View>
-      <View style={styles.barSide}>
-        {right}
-        {showBag ? <CountIconButton icon="bag-handle-outline" count={count} onPress={openBag} label="Bag" /> : null}
-      </View>
+      <View style={styles.barSide}>{actions}</View>
     </View>
   );
 };
@@ -132,8 +159,9 @@ export const ShopSection: React.FC<{ title: string; subtitle?: string; onSeeAll?
 export const SearchPill: React.FC<{ label: string; onPress: () => void; style?: ViewStyle }> = ({ label, onPress, style }) => {
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
+  const onGradient = useOnGradient();
   return (
-    <Pressable onPress={onPress} accessibilityRole="search" accessibilityLabel={label} style={[styles.pill, style]}>
+    <Pressable onPress={onPress} accessibilityRole="search" accessibilityLabel={label} style={[styles.pill, onGradient && styles.pillOnGradient, style]}>
       <IonIcon name="search" size="md" color={colors.inkMuted} />
       <AppText style={styles.pillText} numberOfLines={1}>
         {label}
@@ -151,8 +179,9 @@ export const SearchField: React.FC<{ value: string; onChange: (text: string) => 
 }) => {
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
+  const onGradient = useOnGradient();
   return (
-    <View style={[styles.pill, style]}>
+    <View style={[styles.pill, onGradient && styles.pillOnGradient, style]}>
       <IonIcon name="search" size="md" color={colors.inkMuted} />
       <TextInput
         value={value}

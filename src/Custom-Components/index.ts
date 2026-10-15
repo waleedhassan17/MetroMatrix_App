@@ -15,6 +15,7 @@ export * from './IconButton';
 export * from './ImageCard';
 export * from './ImageViewer';
 export * from './LargeTitleHeader';
+export * from './PageHeader';
 export * from './ListRow';
 export * from './LiveDot';
 export * from './OtpInput';

@@ -83,6 +83,9 @@ export const type: TypeScale = {
 /** Dynamic type is honoured up to 130% — beyond that fixed-height controls clip. */
 export const MAX_FONT_SCALE = 1.3;
 
+/** Healthcare's booking and appointment screens wrap to 150% (the clinical scale). */
+export const CLINICAL_FONT_SCALE = 1.5;
+
 /**
  * The same system face for raw DOM controls on web (the date input), which
  * do not inherit React Native Web's text font by themselves.

@@ -151,7 +151,7 @@ export const size = {
   border: 1,
   focusBorder: 2,
   /** Minimum touch target (WCAG / Material). */
-  touch: 44,
+  touch: 44 as number,
   /** sm: compact buttons · md: the FYP's 50 pt buttons · lg: the FYP's 56 pt inputs. */
   control: { sm: 36, md: 50, lg: 56 },
   /** hero: the glyph on a kitchen card's art panel. */

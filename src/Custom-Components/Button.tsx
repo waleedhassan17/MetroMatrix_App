@@ -21,6 +21,7 @@ import Animated, {
 import { useStyles, useTheme, type Theme } from '../theme';
 import { haptics } from '../utils/haptics';
 import { AppText } from './AppText';
+import { useOnGradient } from './headerInk';
 import { IonIcon, type IonName } from './Icon';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
@@ -82,13 +83,17 @@ export const Button: React.FC<ButtonProps> = ({
   const scale = useSharedValue(1);
   const animated = useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));
 
+  // On the gradient page header a primary button turns white with accent text.
+  const onGradient = useOnGradient();
   const inactive = disabled || loading;
   const greyed = disabled && !loading;
 
   const palette = {
     primary: greyed
       ? { bg: colors.disabled, fg: colors.onBrand, border: colors.disabled }
-      : { bg: service.accent, fg: service.onAccent, border: service.accent },
+      : onGradient
+        ? { bg: colors.surface, fg: service.accentDeep, border: colors.surface }
+        : { bg: service.accent, fg: service.onAccent, border: service.accent },
     secondary: { bg: colors.surface, fg: colors.ink, border: colors.line },
     ghost: { bg: 'transparent', fg: service.accentDeep, border: 'transparent' },
     destructive: greyed

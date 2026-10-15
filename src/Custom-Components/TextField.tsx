@@ -23,7 +23,7 @@ import {
   type TextInputProps,
   type ViewStyle,
 } from 'react-native';
-import { useStyles, useTheme, MAX_FONT_SCALE, type Theme } from '../theme';
+import { useStyles, useTheme, type Theme } from '../theme';
 import { AppText } from './AppText';
 import { IonIcon, type IonName } from './Icon';
 
@@ -107,7 +107,7 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(
     ref,
   ) => {
     const styles = useStyles(makeStyles);
-    const { colors, service, opacity } = useTheme();
+    const { colors, service, opacity, maxFontScale } = useTheme();
     const [focused, setFocused] = useState(false);
     const [revealed, setRevealed] = useState(false);
 
@@ -154,7 +154,7 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(
             placeholderTextColor={colors.inkFaint}
             selectionColor={service.accent}
             cursorColor={service.accent}
-            maxFontSizeMultiplier={MAX_FONT_SCALE}
+            maxFontSizeMultiplier={maxFontScale}
             accessibilityLabel={accessibilityLabel ?? label}
             accessibilityHint={error ?? helper}
             onFocus={e => {

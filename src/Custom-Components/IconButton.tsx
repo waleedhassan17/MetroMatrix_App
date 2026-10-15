@@ -4,6 +4,7 @@ import React from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { IonIcon, type IonName } from './Icon';
+import { useOnGradient } from './headerInk';
 
 export interface IconButtonProps {
   icon: IonName;
@@ -28,11 +29,13 @@ export const IconButton: React.FC<IconButtonProps> = ({
   icon,
   onPress,
   accessibilityLabel,
-  tone = 'ink',
+  tone: toneProp,
   disabled,
 }) => {
   const styles = useStyles(makeStyles);
   const { colors, opacity } = useTheme();
+  const onGradient = useOnGradient();
+  const tone = toneProp ?? (onGradient ? 'onScrim' : 'ink');
   const color =
     tone === 'muted' ? colors.inkMuted : tone === 'onScrim' ? colors.onScrim : colors.ink;
   return (
