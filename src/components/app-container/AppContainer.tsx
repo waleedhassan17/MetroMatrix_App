@@ -6,10 +6,10 @@
 // navigation container + deep linking, the status bar, the native-splash
 // release, the push pre-prompt, and toast notifications.
 
-import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, StatusBar } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Animated, View, StyleSheet, StatusBar } from 'react-native';
 import { NavigationContainer, type LinkingOptions } from '@react-navigation/native';
-import * as SplashScreen from 'expo-splash-screen';
+import * as NativeSplash from 'expo-splash-screen';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { navigationTheme, useStyles, useTheme, type Theme } from '../../theme';
@@ -32,12 +32,13 @@ import {
 import { OfflineGate } from './OfflineGate';
 import { PushPrePrompt } from './PushPrePrompt';
 import { signOut } from '../../screens/Auth/authSlice';
+import { SplashScreen } from '../../screens/Onboarding/Splash/SplashScreen';
 import { resetAllState } from '../../store/resetAllState';
 import { setSessionExpiredHandler, setBusinessStatusStaleHandler } from '../../utils/authEvents';
 
 // ─── Deep linking ─────────────────────────────────────
-// metromatrix://verify-email?code=123456          → EmailVerification
-// metromatrix://reset-password?email=…&code=…     → ForgotPassword (code step)
+// metromatrix://verify-success?token=…        → VerifySuccess (the email link)
+// metromatrix://reset-password?email=…        → ResetPasswordOTP
 // The same config gives the web build readable paths. Each root navigator
 // owns different routes; a path only resolves while its navigator is mounted.
 const linking: LinkingOptions<ReactNavigation.RootParamList> = {
@@ -45,27 +46,32 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
   config: {
     screens: {
       // No screen claims '/': the gate's first route (Onboarding on a fresh
-      // install, Welcome after) must win, as it does on native.
+      // install, Role Selection after) must win, as it does on native.
       Onboarding: 'intro',
-      Welcome: 'welcome',
-      CustomerSignIn: 'sign-in',
-      CustomerSignUp: 'sign-up',
-      PartnerSignIn: 'business/sign-in',
-      PartnerSignUp: 'business/sign-up',
-      ForgotPassword: 'reset-password',
-      AdminSignIn: 'staff/sign-in',
-      AdminTotp: 'staff/verify',
-      TotpEnrol: 'staff/authenticator',
+      RoleSelection: 'get-started',
+      ProviderSelection: 'provider/choose-service',
+      SignIn: 'sign-in',
+      SignUp: 'sign-up',
+      ProviderSignIn: 'provider/sign-in',
+      ProviderSignUp: 'provider/sign-up',
+      ForgotPassword: 'forgot-password',
+      ResetPasswordOTP: 'reset-password',
+      ResetPassword: 'reset-password/new',
       EmailVerification: 'verify-email',
-      ServiceSelect: 'business/service',
-      BusinessProfile: 'business/details',
-      Documents: 'business/documents',
-      ReviewSubmit: 'business/review',
-      PendingApproval: 'business/pending',
-      Rejected: 'business/changes-needed',
-      Suspended: 'business/paused',
+      VerifySuccess: 'verify-success',
+      CompleteProfile: 'complete-profile',
+      PersonalInfo: 'provider/personal-info',
+      ProviderApprovalPending: 'provider/pending',
+      Rejected: 'provider/changes-needed',
+      Suspended: 'provider/paused',
+      AdminTotp: 'staff/verify',
+      AdminTwoFactorEnrol: 'staff/authenticator',
       DesignGallery: 'dev/gallery',
-      HomeTab: 'home',
+      // /home (a partner's home too), /home/food, /home/services/healthcare
+      HomeTab: {
+        path: 'home',
+        screens: { CustomerHome: '', FoodHome: 'food', ServicePreview: 'services/:service' },
+      },
       OrdersTab: 'orders',
       ApprovalsTab: {
         screens: { ApprovalQueue: 'approvals', BusinessReview: 'approvals/:id' },
@@ -88,25 +94,40 @@ export const AppContainer: React.FC = () => {
 
   // ─── Session restore on cold start: stored token → GET /auth/me refreshes
   // the user and the app opens on their view; missing/invalid token →
-  // Welcome. Sets isAppReady when done.
+  // Role Selection. Sets isAppReady when done.
   useEffect(() => {
     dispatch(bootstrapSession());
   }, [dispatch]);
 
-  // ─── Native splash: held from App.tsx (fonts) until the session gate is
-  // known, so the first frame the user sees is the right navigator — never a
-  // spinner, never a flash of Welcome before their home screen.
+  // ─── Splash: the native splash is held from App.tsx until the JS splash
+  // has painted the same mark in the same place, then released — native → JS
+  // reads as one moment. The JS splash plays every launch and stays up until
+  // BOTH its animation and bootstrapSession are done, so it can never lift
+  // onto a stale route; then it fades out over the right navigator.
+  const [splashPlayed, setSplashPlayed] = useState(false);
+  const [splashGone, setSplashGone] = useState(false);
+  const [splashOpacity] = useState(() => new Animated.Value(1));
+  const releaseNativeSplash = useCallback(() => {
+    void NativeSplash.hideAsync().catch(() => {
+      /* already hidden (fast refresh) */
+    });
+  }, []);
+  const onSplashPlayed = useCallback(() => setSplashPlayed(true), []);
+
   useEffect(() => {
-    if (isAppReady) {
-      void SplashScreen.hideAsync().catch(() => {
-        /* already hidden (fast refresh) */
-      });
-    }
-  }, [isAppReady]);
+    if (!splashPlayed || !isAppReady) return;
+    const fade = Animated.timing(splashOpacity, {
+      toValue: 0,
+      duration: theme.motion.sheet.duration,
+      useNativeDriver: true,
+    });
+    fade.start(() => setSplashGone(true));
+    return () => fade.stop();
+  }, [splashPlayed, isAppReady, splashOpacity, theme.motion.sheet.duration]);
 
   // ─── Session-expired bridge: when the axios 401-refresh flow gives up it
   // has already cleared the stored tokens; this resets the store so the
-  // navigator switches back to Welcome instead of leaving the user on
+  // navigator switches back to Role Selection instead of leaving the user on
   // authenticated screens whose every request fails.
   useEffect(() => {
     setSessionExpiredHandler(() => {
@@ -172,14 +193,21 @@ export const AppContainer: React.FC = () => {
           {renderNavigator()}
         </NavigationContainer>
       )}
-      <PushPrePrompt active={isAppReady && isGateCleared(gate)} />
+      <PushPrePrompt active={splashGone && isGateCleared(gate)} />
+      {splashGone ? null : (
+        <Animated.View
+          style={[StyleSheet.absoluteFill, { opacity: splashOpacity }]}
+          pointerEvents={splashPlayed && isAppReady ? 'none' : 'auto'}
+          onLayout={releaseNativeSplash}>
+          <SplashScreen onDone={onSplashPlayed} />
+        </Animated.View>
+      )}
       <Toast config={toastConfig} topOffset={theme.space.s56} />
     </View>
   );
 };
 
-// The root paints canvas so no white frame shows behind a navigator swap or
-// a dark-mode transition.
+// The root paints canvas so no blank frame shows behind a navigator swap.
 const makeStyles = ({ colors }: Theme) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.canvas },

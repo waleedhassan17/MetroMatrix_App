@@ -3,10 +3,11 @@
 // ═══════════════════════════════════════════════════════
 // Controlled by `visible` so a slice can own whether it is open. Sizes to its
 // content; the backdrop dismisses. Requires BottomSheetModalProvider at the
-// root (App.tsx).
+// root (App.tsx). The bottom-sheet library never presents in a browser, so
+// web resolves Sheet.web.tsx (a Modal) behind the same props.
 
 import React, { useCallback, useEffect, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -14,32 +15,12 @@ import {
   type BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useStyles, useTheme, type Theme } from '../theme';
+import { useStyles, useTheme } from '../theme';
 import { AppText } from './AppText';
 import { IconButton } from './IconButton';
+import { makeSheetStyles as makeStyles, type SheetProps } from './sheetShared';
 
-export interface SheetProps {
-  visible: boolean;
-  onClose: () => void;
-  title: string;
-  subtitle?: string;
-  children: React.ReactNode;
-  footer?: React.ReactNode;
-}
-
-const makeStyles = ({ space, gutter }: Theme) =>
-  StyleSheet.create({
-    head: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      paddingHorizontal: gutter,
-      paddingBottom: space.s12,
-      gap: space.s8,
-    },
-    headText: { flex: 1, gap: space.s4, paddingTop: space.s8 },
-    body: { paddingHorizontal: gutter, gap: space.s16 },
-    footer: { paddingHorizontal: gutter, paddingTop: space.s16, gap: space.s8 },
-  });
+export type { SheetProps } from './sheetShared';
 
 export const Sheet: React.FC<SheetProps> = ({ visible, onClose, title, subtitle, children, footer }) => {
   const styles = useStyles(makeStyles);

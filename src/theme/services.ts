@@ -79,11 +79,5 @@ export const SERVICE_PALETTES: Record<ColorMode, Record<ServiceName, ServicePale
 
 export const SERVICE_NAMES: ServiceName[] = ['shopping', 'healthcare', 'food', 'neutral'];
 
-/**
- * The FYP's brand glow: emerald at the heart, falling off through the logo's
- * teal. Decorative light behind the splash mark and the overview slide.
- */
-export const BRAND_GLOW: [string, string] = ['#10B981', '#14B8A6'];
-
 /** The logo's emerald → teal sweep (the overview card header on onboarding). */
 export const BRAND_GRADIENT: [string, string] = ['#047857', '#0F766E'];

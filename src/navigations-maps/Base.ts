@@ -1,32 +1,37 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Route names
 // ═══════════════════════════════════════════════════════
-// The single source of route-name strings. A name must NEVER change once
-// shipped: deep links (metromatrix://) and navigate() strings depend on it.
-// Add new names; never rename or reuse old ones.
+// The single source of route-name strings — the FYP app's names, so the two
+// apps read the same. A name must NEVER change once shipped: deep links
+// (metromatrix://) and navigate() strings depend on it.
 
 export const ROUTES = {
-  // ── Unauthenticated (BaseNavigator) ──
+  // ── Entry (BaseNavigator, signed out) ──
   ONBOARDING: 'Onboarding',
-  WELCOME: 'Welcome',
-  CUSTOMER_SIGN_IN: 'CustomerSignIn',
-  CUSTOMER_SIGN_UP: 'CustomerSignUp',
-  PARTNER_SIGN_IN: 'PartnerSignIn',
-  PARTNER_SIGN_UP: 'PartnerSignUp',
-  FORGOT_PASSWORD: 'ForgotPassword',
-  ADMIN_SIGN_IN: 'AdminSignIn',
+  ROLE_SELECTION: 'RoleSelection',
+  PROVIDER_SELECTION: 'ProviderSelection',
 
-  // ── Session gates (BaseNavigator) ──
-  ADMIN_TOTP: 'AdminTotp',
-  TOTP_ENROL: 'TotpEnrol',
+  // ── User authentication ──
+  SIGN_IN: 'SignIn',
+  SIGN_UP: 'SignUp',
+  FORGOT_PASSWORD: 'ForgotPassword',
+  RESET_PASSWORD_OTP: 'ResetPasswordOTP',
+  RESET_PASSWORD: 'ResetPassword',
   EMAIL_VERIFICATION: 'EmailVerification',
-  SERVICE_SELECT: 'ServiceSelect',
-  BUSINESS_PROFILE: 'BusinessProfile',
-  DOCUMENTS: 'Documents',
-  REVIEW_SUBMIT: 'ReviewSubmit',
-  PENDING_APPROVAL: 'PendingApproval',
+  VERIFY_SUCCESS: 'VerifySuccess',
+  COMPLETE_PROFILE: 'CompleteProfile',
+
+  // ── Provider authentication ──
+  PROVIDER_SIGN_IN: 'ProviderSignIn',
+  PROVIDER_SIGN_UP: 'ProviderSignUp',
+  PERSONAL_INFO: 'PersonalInfo',
+  PROVIDER_APPROVAL_PENDING: 'ProviderApprovalPending',
   REJECTED: 'Rejected',
   SUSPENDED: 'Suspended',
+
+  // ── Staff (signs in from SignIn) ──
+  ADMIN_TOTP: 'AdminTotp',
+  ADMIN_TWO_FACTOR_ENROL: 'AdminTwoFactorEnrol',
 
   // ── Tabs (role navigators) ──
   HOME_TAB: 'HomeTab',
@@ -36,6 +41,8 @@ export const ROUTES = {
 
   // ── Screens inside tabs ──
   CUSTOMER_HOME: 'CustomerHome',
+  FOOD_HOME: 'FoodHome',
+  SERVICE_PREVIEW: 'ServicePreview',
   ORDERS: 'Orders',
   PARTNER_HOME: 'PartnerHome',
   PROFILE: 'Profile',

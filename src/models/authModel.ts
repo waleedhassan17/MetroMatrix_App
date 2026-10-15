@@ -219,6 +219,13 @@ export const validateProfile = (data: ProfileData): ValidationErrors => {
   return errors;
 };
 
+/** Provider Personal Info, step 1: the phone is required — customers call it. */
+export const validateProviderBasics = (data: ProfileData): ValidationErrors => {
+  const errors = validateProfile(data);
+  if (!errors.phone && !data.phone.trim()) errors.phone = 'Phone number is required';
+  return errors;
+};
+
 // ─── Password Strength ───────────────────────────────
 // A meter, not the policy: it grades what the policy already accepts. The
 // UI maps each level to a token (PasswordStrength component) — no colours

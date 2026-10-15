@@ -7,33 +7,38 @@
 // its params are exactly what that caller passed.
 
 import type { NavigatorScreenParams } from '@react-navigation/native';
-import type { DocumentKind, Portal, ServiceType, SubType } from './auth';
+import type { DocumentKind } from './auth';
 
 /** BaseNavigator: onboarding, sign-in and every session gate. */
 export type RootStackParamList = {
   Onboarding: undefined;
-  Welcome: undefined;
-  CustomerSignIn: { email?: string } | undefined;
-  CustomerSignUp: undefined;
-  PartnerSignIn: { email?: string } | undefined;
-  PartnerSignUp: undefined;
-  /** Deep link metromatrix://reset-password?email=…&code=… */
-  ForgotPassword: { email?: string; code?: string; portal?: Exclude<Portal, 'admin'> } | undefined;
-  AdminSignIn: { email?: string } | undefined;
-  AdminTotp: undefined;
-  TotpEnrol: undefined;
-  /** Deep link metromatrix://verify-email?code=… */
-  EmailVerification: { code?: string } | undefined;
-  ServiceSelect: undefined;
-  BusinessProfile: { serviceType?: ServiceType; subType?: SubType } | undefined;
-  /** `highlight`: kinds the server reported missing on submit. */
-  Documents: { highlight?: DocumentKind[] } | undefined;
-  ReviewSubmit: undefined;
-  PendingApproval: undefined;
+  RoleSelection: undefined;
+  ProviderSelection: undefined;
+  SignIn: { email?: string } | undefined;
+  SignUp: undefined;
+  ProviderSignIn: { email?: string } | undefined;
+  ProviderSignUp: undefined;
+  ForgotPassword: { email?: string; userType?: AuthUserType } | undefined;
+  /** Deep link metromatrix://reset-password?email=… */
+  ResetPasswordOTP: { email: string; userType?: AuthUserType };
+  /** The reset token stays in the OTP slice — never in a route param (a web URL). */
+  ResetPassword: { email: string; userType?: AuthUserType };
+  EmailVerification: undefined;
+  /** Deep link metromatrix://verify-success?token=… */
+  VerifySuccess: { token?: string } | undefined;
+  CompleteProfile: undefined;
+  /** `step` jumps to a step; `highlight` marks documents the server said are missing. */
+  PersonalInfo: { step?: 1 | 2 | 3; highlight?: DocumentKind[] } | undefined;
+  ProviderApprovalPending: undefined;
   Rejected: undefined;
   Suspended: undefined;
+  AdminTotp: undefined;
+  AdminTwoFactorEnrol: undefined;
   DesignGallery: undefined;
 };
+
+/** Which sign-in a password reset returns to (the FYP's `userType`). */
+export type AuthUserType = 'user' | 'provider';
 
 /** Profile tab stack — shared by every role app. */
 export type AccountStackParamList = {
@@ -41,8 +46,15 @@ export type AccountStackParamList = {
   ChangePassword: undefined;
 };
 
+/** The customer's Home tab: the three-service launcher and each service. */
+export type HomeStackParamList = {
+  CustomerHome: undefined;
+  FoodHome: undefined;
+  ServicePreview: { service: 'healthcare' | 'shopping' };
+};
+
 export type CustomerTabParamList = {
-  HomeTab: undefined;
+  HomeTab: NavigatorScreenParams<HomeStackParamList> | undefined;
   OrdersTab: undefined;
   ProfileTab: NavigatorScreenParams<AccountStackParamList> | undefined;
 };

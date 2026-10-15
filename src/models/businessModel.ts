@@ -209,7 +209,7 @@ export const BUSINESS_FORM_SCHEMA: Record<SubType, BusinessFormSchema> = {
   },
   restaurant: {
     nameLabel: 'Restaurant Name',
-    namePlaceholder: 'Butt Karahi',
+    namePlaceholder: 'Karahi House',
     addressLabel: 'Restaurant address',
     lead: [cuisine],
     details: [experience, about],

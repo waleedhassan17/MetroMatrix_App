@@ -1,56 +1,49 @@
-// Reducer behaviour of the screen slices the QA matrix leans on: OTP
-// attempts and lock-out, resend countdowns, the reset-password steps,
-// DOCUMENTS_MISSING, the TOTP step and the approval queue.
+// Reducer behaviour of the screen slices the QA matrix leans on: the email
+// link check, resend countdowns, the three reset-password steps, the
+// multi-step profile forms, DOCUMENTS_MISSING, the TOTP step and the
+// approval queue.
 
 import { emailVerificationSlice } from '../Auth/EmailVerification/emailVerificationSlice';
 import { forgotPasswordSlice } from '../Auth/ForgotPassword/forgotPasswordSlice';
-import { reviewSubmitSlice } from '../Partner/ReviewSubmit/reviewSubmitSlice';
-import { adminSignInSlice } from '../Admin/AdminSignIn/adminSignInSlice';
+import { resetPasswordOtpSlice } from '../Auth/ResetPasswordOTP/resetPasswordOtpSlice';
+import { resetPasswordSlice } from '../Auth/ResetPassword/resetPasswordSlice';
+import { completeProfileSlice } from '../Auth/CompleteProfile/completeProfileSlice';
+import { personalInfoSlice } from '../Partner/PersonalInfo/personalInfoSlice';
+import { providerApprovalPendingSlice } from '../Partner/ProviderApprovalPending/providerApprovalPendingSlice';
+import { providerSelectionSlice } from '../ProviderSelection/providerSelectionSlice';
+import { adminTotpSlice } from '../Admin/AdminTotp/adminTotpSlice';
 import { approvalQueueSlice } from '../Admin/ApprovalQueue/approvalQueueSlice';
-import type { BusinessSummary } from '../../types/auth';
+import type { Business, BusinessSummary } from '../../types/auth';
+import { makeUser } from '../../__fixtures__/users';
 
 const init = <S>(reducer: (s: S | undefined, a: { type: string }) => S) => reducer(undefined, { type: '@@init' });
 
-describe('emailVerificationSlice', () => {
+describe('emailVerificationSlice (link based, as in the FYP)', () => {
   const { reducer, actions } = emailVerificationSlice;
 
-  it('reports attempts left and clears the code after a wrong code (QA 5)', () => {
-    const typed = reducer(init(reducer), actions.setCode('111111'));
-    const state = reducer(
-      typed,
-      actions.verifyEmailAsync.rejected(null, 'r', '111111', {
-        message: 'Wrong code',
-        code: 'INVALID_OTP',
-        details: { attemptsLeft: 3 },
-      }),
-    );
-    expect(state.attemptsLeft).toBe(3);
-    expect(state.locked).toBe(false);
-    expect(state.code).toBe('');
-    expect(state.error.message).toBe('Wrong code');
+  it('"I Verified My Email" before the link was opened says so', () => {
+    const s = reducer(init(reducer), actions.checkVerifiedAsync.fulfilled(false, 'r', { silent: false }));
+    expect(s.status).toBe('failed');
+    expect(s.error.code).toBe('NOT_VERIFIED');
+    expect(s.autoSignIn).toBe(false);
   });
 
-  it('locks on the fifth miss and points to resend', () => {
-    const state = reducer(
-      init(reducer),
-      actions.verifyEmailAsync.rejected(null, 'r', '111111', {
-        message: 'Too many attempts',
-        code: 'OTP_LOCKED',
-        details: { retryAfter: 0 },
-      }),
-    );
-    expect(state.locked).toBe(true);
-    expect(state.attemptsLeft).toBe(0);
+  it('the silent re-check never shows "not yet"', () => {
+    const s = reducer(init(reducer), actions.checkVerifiedAsync.fulfilled(false, 'r', { silent: true }));
+    expect(s.error.message).toBe('');
+    expect(s.checks).toBe(1);
   });
 
-  it('takes the resend countdown from the server and lifts the lock (QA 6)', () => {
-    const locked = { ...init(reducer), locked: true, attemptsLeft: 0 };
+  it('a verified link switches to "signing you in automatically"', () => {
+    const s = reducer(init(reducer), actions.checkVerifiedAsync.fulfilled(true, 'r', { silent: true }));
+    expect(s).toMatchObject({ autoSignIn: true, status: 'succeeded' });
+  });
+
+  it('takes the resend countdown from the server (QA 6)', () => {
     const before = Date.now();
-    const state = reducer(locked, actions.resendCodeAsync.fulfilled(45, 'r', undefined));
-    expect(state.locked).toBe(false);
-    expect(state.attemptsLeft).toBeNull();
-    expect(state.resendAvailableAt).toBeGreaterThanOrEqual(before + 45_000);
-    expect(state.resendAvailableAt).toBeLessThan(before + 46_000);
+    const s = reducer(init(reducer), actions.resendAsync.fulfilled(45, 'r', undefined));
+    expect(s.resendAvailableAt).toBeGreaterThanOrEqual(before + 45_000);
+    expect(s.resendAvailableAt).toBeLessThan(before + 46_000);
   });
 
   it('starts the first 60 s countdown only once', () => {
@@ -60,61 +53,144 @@ describe('emailVerificationSlice', () => {
   });
 });
 
-describe('forgotPasswordSlice (QA 11)', () => {
-  const { reducer, actions } = forgotPasswordSlice;
-
-  it('walks email → otp → reset → done', () => {
-    let s = reducer(init(reducer), actions.setEmail('a@x.com'));
-    s = reducer(s, actions.requestCodeAsync.fulfilled(60, 'r', 'a@x.com'));
-    expect(s.step).toBe('otp');
-    s = reducer(s, actions.verifyCodeAsync.fulfilled('reset-token', 'r', { email: 'a@x.com', code: '123456' }));
-    expect(s).toMatchObject({ step: 'reset', resetToken: 'reset-token' });
-    s = reducer(s, actions.resetPasswordAsync.fulfilled(true, 'r', { resetToken: 'reset-token', password: 'metro2026' }));
-    expect(s).toMatchObject({ step: 'done', resetToken: '', password: '' });
+describe('password reset — three screens, three slices (QA 11)', () => {
+  it('Forgot Password starts the resend countdown the OTP screen reads', () => {
+    const { reducer, actions } = forgotPasswordSlice;
+    const before = Date.now();
+    const s = reducer(init(reducer), actions.requestCodeAsync.fulfilled(60, 'r', 'a@x.com'));
+    expect(s.status).toBe('succeeded');
+    expect(s.resendAvailableAt).toBeGreaterThanOrEqual(before + 60_000);
   });
 
-  it('a spent reset token sends the user back to the code step', () => {
-    const s = reducer(
-      { ...init(reducer), step: 'reset' as const, resetToken: 't' },
-      actions.resetPasswordAsync.rejected(null, 'r', { resetToken: 't', password: 'x' }, {
-        message: 'Expired',
-        code: 'RESET_TOKEN_INVALID',
+  it('a wrong code counts down attempts and clears the input', () => {
+    const { reducer, actions } = resetPasswordOtpSlice;
+    let s = reducer(init(reducer), actions.setCode('111111'));
+    s = reducer(
+      s,
+      actions.verifyCodeAsync.rejected(null, 'r', { email: 'a@x.com', code: '111111' }, {
+        message: 'Wrong code',
+        code: 'INVALID_OTP',
+        details: { attemptsLeft: 3 },
       }),
     );
-    expect(s.step).toBe('otp');
+    expect(s).toMatchObject({ attemptsLeft: 3, code: '' });
   });
 
-  it('a reset link with email and code opens on the code step', () => {
-    const s = reducer(init(reducer), actions.prefillFromLink({ email: 'a@x.com', code: '123456' }));
-    expect(s).toMatchObject({ step: 'otp', email: 'a@x.com', code: '123456' });
-  });
-});
-
-describe('reviewSubmitSlice (QA 17)', () => {
-  const { reducer, actions } = reviewSubmitSlice;
-  it('keeps the missing documents the server named', () => {
+  it('OTP_LOCKED ends the attempt', () => {
+    const { reducer, actions } = resetPasswordOtpSlice;
     const s = reducer(
       init(reducer),
-      actions.submitAsync.rejected(null, 'r', undefined, {
-        message: 'Missing documents',
-        code: 'DOCUMENTS_MISSING',
-        details: { missing: ['pmdc_certificate'] },
-      }),
+      actions.verifyCodeAsync.rejected(null, 'r', { email: 'a@x.com', code: '111111' }, { message: 'Locked', code: 'OTP_LOCKED' }),
     );
-    expect(s.missing).toEqual(['pmdc_certificate']);
-    expect(s.error.code).toBe('DOCUMENTS_MISSING');
+    expect(s.attemptsLeft).toBe(0);
+  });
+
+  it('an accepted code keeps the reset token in the slice, not a route param', () => {
+    const { reducer, actions } = resetPasswordOtpSlice;
+    const s = reducer(init(reducer), actions.verifyCodeAsync.fulfilled('reset-token', 'r', { email: 'a@x.com', code: '123456' }));
+    expect(s.resetToken).toBe('reset-token');
+  });
+
+  it('a successful reset clears the new password', () => {
+    const { reducer, actions } = resetPasswordSlice;
+    let s = reducer(init(reducer), actions.setField({ field: 'password', value: 'Metro2026' }));
+    s = reducer(s, actions.resetPasswordAsync.fulfilled(true, 'r', { resetToken: 't', password: 'Metro2026' }));
+    expect(s).toMatchObject({ status: 'succeeded', password: '', confirmPassword: '' });
   });
 });
 
-describe('adminSignInSlice (QA 20, 23)', () => {
-  const { reducer, actions } = adminSignInSlice;
+describe('completeProfileSlice (3 steps)', () => {
+  const { reducer, actions } = completeProfileSlice;
 
-  it('clears the password once the challenge arrives (no session yet)', () => {
-    let s = reducer(init(reducer), actions.setPassword('secret'));
-    s = reducer(s, actions.signInAsync.fulfilled('totp', 'r', { email: 'a@x.com', password: 'secret' }));
-    expect(s.password).toBe('');
-    expect(s.status).toBe('idle');
+  it('touching a step marks only that step\'s fields', () => {
+    const s = reducer(init(reducer), actions.touchStep());
+    expect(s.touched).toEqual({ dateOfBirth: true, gender: true });
   });
+
+  it('server field errors send the user back to the step that owns them', () => {
+    const s = reducer(
+      { ...init(reducer), step: 3 as const },
+      actions.submitProfileAsync.rejected(null, 'r', {} as never, {
+        message: 'Invalid',
+        code: 'VALIDATION_ERROR',
+        details: { fields: { city: 'Unknown city' } },
+      }),
+    );
+    expect(s.step).toBe(2);
+  });
+
+  it('a photo upload keeps its preview and resolves to the stored url', () => {
+    const file = { uri: 'file:///me.jpg', name: 'me.jpg', mimeType: 'image/jpeg' };
+    let s = reducer(init(reducer), actions.uploadPhotoAsync.pending('r', file));
+    expect(s.photo).toMatchObject({ status: 'uploading', previewUri: 'file:///me.jpg' });
+    s = reducer(s, actions.uploadPhotoAsync.fulfilled('https://cdn/me.jpg', 'r', file));
+    expect(s.photo).toMatchObject({ status: 'uploaded', url: 'https://cdn/me.jpg' });
+  });
+});
+
+describe('personalInfoSlice (providers, 3 steps)', () => {
+  const { reducer, actions } = personalInfoSlice;
+  const provider = makeUser({ role: 'partner', name: 'Ayesha Khan', phone: '+923001234567', providerSubType: 'doctor' });
+
+  it('prefills from the account and resumes a saved draft at the documents step (QA 15)', () => {
+    const draft = { id: 'b1', name: 'Clinic', city: 'Lahore', address: 'Main Boulevard', details: {}, location: null } as unknown as Business;
+    const fresh = reducer(init(reducer), actions.initialise({ user: provider, business: null }));
+    expect(fresh).toMatchObject({ step: 1, fullName: 'Ayesha Khan', phone: '3001234567' });
+    const resumed = reducer(init(reducer), actions.initialise({ user: provider, business: draft }));
+    expect(resumed.step).toBe(3);
+  });
+
+  it('DOCUMENTS_MISSING highlights the tiles the server named (QA 17)', () => {
+    const s = reducer(
+      init(reducer),
+      actions.submitApplicationAsync.rejected(null, 'r', undefined, {
+        message: 'Missing documents',
+        code: 'DOCUMENTS_MISSING',
+        details: { missing: ['medical_license'] },
+      }),
+    );
+    expect(s).toMatchObject({ step: 3, highlight: ['medical_license'] });
+  });
+});
+
+describe('providerApprovalPendingSlice', () => {
+  const { reducer, actions } = providerApprovalPendingSlice;
+  it('counts checks and schedules the next one 30 s out', () => {
+    const before = Date.now();
+    const s = reducer(init(reducer), actions.checkStatusAsync.fulfilled('pending_approval', 'r', { manual: false }));
+    expect(s.checks).toBe(1);
+    expect(s.nextCheckAt).toBeGreaterThanOrEqual(before + 30_000);
+  });
+  it('a failed silent poll stays quiet; a failed Check Now says so', () => {
+    const quiet = reducer(
+      reducer(init(reducer), actions.checkStatusAsync.pending('r', { manual: false })),
+      actions.checkStatusAsync.rejected(null, 'r', { manual: false }, { message: 'Offline' }),
+    );
+    expect(quiet.error.message).toBe('');
+    const loud = reducer(
+      reducer(init(reducer), actions.checkStatusAsync.pending('r', { manual: true })),
+      actions.checkStatusAsync.rejected(null, 'r', { manual: true }, { message: 'Offline' }),
+    );
+    expect(loud.error.message).toBe('Offline');
+  });
+});
+
+describe('providerSelectionSlice', () => {
+  const { reducer, actions } = providerSelectionSlice;
+  it('Food needs a kitchen type before it can continue', () => {
+    let s = reducer(init(reducer), actions.chooseService('food'));
+    expect(s.subType).toBeNull();
+    s = reducer(s, actions.chooseKitchen('home_kitchen'));
+    expect(s).toMatchObject({ serviceType: 'food', subType: 'home_kitchen' });
+  });
+  it('Doctor and Vendor carry their one sub-type', () => {
+    expect(reducer(init(reducer), actions.chooseService('healthcare')).subType).toBe('doctor');
+    expect(reducer(init(reducer), actions.chooseService('shopping')).subType).toBe('store');
+  });
+});
+
+describe('adminTotpSlice (QA 20, 23)', () => {
+  const { reducer, actions } = adminTotpSlice;
 
   it('explains a reused recovery code', () => {
     const s = reducer(
@@ -124,7 +200,7 @@ describe('adminSignInSlice (QA 20, 23)', () => {
         code: 'RECOVERY_CODE_USED',
       }),
     );
-    expect(s.totpError.message).toMatch(/already been used/);
+    expect(s.error.message).toMatch(/already been used/);
   });
 
   it('toggling recovery mode clears both inputs', () => {

@@ -64,7 +64,8 @@
         {
           "iosUrlScheme": "com.googleusercontent.apps.TODO-ios-client-id"
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ]
   }
 }

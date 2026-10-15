@@ -21,6 +21,7 @@ import { REQUIRED_DOCUMENTS, missingDocuments } from '../../../models/businessMo
 import type { DocumentKind, ServiceType, SubType } from '../../../types/auth';
 import { MOCK } from './mockConfig';
 import { getDb, newId, saveDb, type MockBusiness, type MockDb, type MockUser } from './mockDb';
+import { MOCK_CUISINES, MOCK_KITCHENS, MOCK_PROMOS } from './mockFood';
 
 // ─── Plumbing ────────────────────────────────────────
 class MockError extends Error {
@@ -58,13 +59,17 @@ const isoNow = () => new Date().toISOString();
 const sleep = (ms: number) => (ms > 0 ? new Promise(r => setTimeout(r, ms)) : Promise.resolve());
 const latency = () => MOCK.LATENCY_MS[0] + Math.random() * (MOCK.LATENCY_MS[1] - MOCK.LATENCY_MS[0]);
 
-const publicUser = (u: MockUser) => {
-  const { password: _p, verificationSentAt: _v, totpEnrolled: _t, recoveryCodes: _r, ...rest } = u;
-  return rest;
+// Fields the real API never sends (secrets, mock-only bookkeeping) are dropped.
+const omit = <T extends object, K extends keyof T>(obj: T, keys: K[]): Omit<T, K> => {
+  const copy = { ...obj };
+  for (const k of keys) delete copy[k];
+  return copy;
 };
 
+const publicUser = (u: MockUser) => omit(u, ['password', 'verificationSentAt', 'totpEnrolled', 'recoveryCodes']);
+
 const publicBusiness = (b: MockBusiness) => {
-  const { autoApprove: _a, ...rest } = b;
+  const rest = omit(b, ['autoApprove']);
   return {
     ...rest,
     requiredDocuments: REQUIRED_DOCUMENTS[b.subType],
@@ -584,6 +589,19 @@ route('GET', '/businesses/me/status', ctx => {
     rejectionReason: business.rejectionReason,
     suspensionReason: business.suspensionReason,
     documents: business.documents.map(d => ({ id: d.id, kind: d.kind, status: d.status, reviewerNote: d.reviewerNote })),
+  };
+});
+
+// ── Food (customer discovery) ──
+route('GET', '/food/home', ctx => {
+  const user = requireUser(ctx);
+  const city = String(ctx.query.city ?? user.city ?? 'Lahore');
+  return {
+    area: user.streetAddress ? `${user.streetAddress}, ${city}` : city,
+    promos: MOCK_PROMOS,
+    cuisines: MOCK_CUISINES,
+    // Nearest first, as a delivery app lists them.
+    kitchens: [...MOCK_KITCHENS].sort((a, b) => a.distanceKm - b.distanceKm),
   };
 });
 

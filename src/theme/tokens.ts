@@ -56,10 +56,15 @@ export interface Palette {
   overlay: string;
   /** Text-legibility scrim over photography. */
   scrim: string;
+  /** The scrim's clear end — where a photo scrim fades from. */
+  scrimClear: string;
   /** Text and icons painted on `scrim`. */
   onScrim: string;
   /** Ground of the full-screen document viewer. */
   viewer: string;
+  /** Role Selection's "Service Provider" card: the FYP's indigo icon on its tint. */
+  roleProvider: string;
+  roleProviderSoft: string;
 }
 
 const light: Palette = {
@@ -88,8 +93,11 @@ const light: Palette = {
   star: '#D97706',
   overlay: 'rgba(28, 25, 23, 0.45)',
   scrim: 'rgba(28, 25, 23, 0.62)',
+  scrimClear: 'rgba(28, 25, 23, 0)',
   onScrim: '#FFFFFF',
   viewer: '#0C0A09',
+  roleProvider: '#6366F1',
+  roleProviderSoft: '#F0F4FF',
 };
 
 export const PALETTES: Record<ColorMode, Palette> = { light };
@@ -133,7 +141,8 @@ export const size = {
   touch: 44,
   /** sm: compact buttons · md: the FYP's 50 pt buttons · lg: the FYP's 56 pt inputs. */
   control: { sm: 36, md: 50, lg: 56 },
-  icon: { sm: 16, md: 20, lg: 24, xl: 32 },
+  /** hero: the glyph on a kitchen card's art panel. */
+  icon: { sm: 16, md: 20, lg: 24, xl: 32, hero: 56 },
   avatar: { sm: 32, md: 44, lg: 64, xl: 96 },
   /** Role / provider card icon tile. */
   tile: 64,
@@ -154,11 +163,23 @@ export const size = {
   logoMark: 40,
   /** The native splash mark's imageWidth (app.json) — the JS splash matches it. */
   splashMark: 104,
-  /** Ambient glow behind the splash mark / onboarding cards. */
-  glow: 320,
-  glowLarge: 380,
   /** Paragraph measure for onboarding and empty-state prose. */
   prose: 460,
+  /** Onboarding preview card width, its row icon tile, eyebrow dot, top-bar mark. */
+  previewCard: 300,
+  previewRowIcon: 26,
+  eyebrowDot: 6,
+  markSmall: 28,
+  /** Role / provider card: icon tile radius, chevron well, sub-type icon tile. */
+  chevronWell: 32,
+  subTypeTile: 36,
+  /** Food home: the horizontal kitchen tile, the art panels, the promo card. */
+  kitchenTile: 248,
+  kitchenArt: 148,
+  kitchenArtSmall: 112,
+  promoCard: 136,
+  /** Customer home: the photo panel of a service card (the FYP's 160, a touch taller). */
+  serviceArt: 176,
 } as const;
 
 export const opacity = {
@@ -206,6 +227,8 @@ export const motion = {
   pulse: { duration: 900 },
   /** Large-title collapse distance. */
   titleCollapse: 44,
+  /** The slow breath on Provider Approval Pending's mark (the FYP's pulse). */
+  breath: { duration: 1200, scale: 1.06 },
   /** The JS splash (FYP splash.tsx timings). */
-  splash: { glow: 460, word: 420, tag: 380, stagger: 140, lead: 120, hold: 520 },
+  splash: { word: 420, tag: 380, stagger: 140, lead: 120, hold: 520 },
 } as const;

@@ -21,7 +21,7 @@ import type { Business, SubType } from '../../types/auth';
 const SUB_TYPES: SubType[] = ['store', 'doctor', 'restaurant', 'home_kitchen', 'cloud_kitchen'];
 
 const filled = (overrides: Partial<BusinessProfileForm> = {}): BusinessProfileForm => ({
-  name: 'Butt Karahi',
+  name: 'Karahi House',
   city: 'Lahore',
   address: '12 Main Boulevard, Gulberg',
   location: null,

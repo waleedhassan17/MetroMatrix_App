@@ -1,8 +1,9 @@
-import { isGateCleared, partnerSetupInitialRoute, resolveGate, type GateInput } from '../sessionGate';
+import { isGateCleared, resolveGate, totpInitialRoute, type GateInput } from '../sessionGate';
 import type { Business, BusinessStatus, User, UserRole } from '../../types/auth';
 import { makeUser } from '../../__fixtures__/users';
 
-const user = (role: UserRole, isEmailVerified = true): User => makeUser({ role, isEmailVerified });
+const user = (role: UserRole, isEmailVerified = true, profileComplete = true): User =>
+  makeUser({ role, isEmailVerified, profileComplete });
 
 const business = (status: BusinessStatus, extra: Partial<Business> = {}): Business =>
   ({
@@ -36,13 +37,22 @@ describe('resolveGate — the BaseNavigator ladder, in order', () => {
     expect(resolveGate(input({ isAuthenticated: false, pendingTotp }))).toBe('totp');
   });
 
-  it('3. email not verified → verify, for every role and before any partner gate', () => {
+  it('3. email not verified → verify, for every role and before any profile gate', () => {
     for (const role of ['customer', 'partner', 'admin'] as UserRole[]) {
-      expect(resolveGate(input({ user: user(role, false), business: business('rejected') }))).toBe('verify');
+      expect(resolveGate(input({ user: user(role, false, false), business: business('rejected') }))).toBe('verify');
     }
   });
 
-  it('4. partner with no business or a draft → partnerSetup', () => {
+  it('4. a user whose profile is incomplete → completeProfile', () => {
+    expect(resolveGate(input({ user: user('customer', true, false) }))).toBe('completeProfile');
+  });
+
+  it('profile completion never gates providers or staff', () => {
+    expect(resolveGate(input({ user: user('partner', true, false), business: business('approved') }))).toBe('partner');
+    expect(resolveGate(input({ user: user('admin', true, false) }))).toBe('admin');
+  });
+
+  it('5. provider with no application or a draft → partnerSetup', () => {
     expect(resolveGate(input({ user: user('partner') }))).toBe('partnerSetup');
     expect(resolveGate(input({ user: user('partner'), business: business('draft') }))).toBe('partnerSetup');
   });
@@ -52,7 +62,7 @@ describe('resolveGate — the BaseNavigator ladder, in order', () => {
     ['rejected', 'rejected'],
     ['suspended', 'suspended'],
     ['approved', 'partner'],
-  ] as const)('5–7. partner business %s → %s', (status, gate) => {
+  ] as const)('6–8. provider application %s → %s', (status, gate) => {
     expect(resolveGate(input({ user: user('partner'), business: business(status) }))).toBe(gate);
   });
 
@@ -69,22 +79,14 @@ describe('resolveGate — the BaseNavigator ladder, in order', () => {
 
   it('only role apps count as cleared', () => {
     expect(['customer', 'partner', 'admin'].every(g => isGateCleared(g as never))).toBe(true);
-    expect(['verify', 'pending', 'totp', 'partnerSetup'].some(g => isGateCleared(g as never))).toBe(false);
+    expect(['verify', 'completeProfile', 'pending', 'totp', 'partnerSetup'].some(g => isGateCleared(g as never))).toBe(false);
   });
 });
 
-describe('partnerSetupInitialRoute — draft resume (QA 15)', () => {
-  it('no business → ServiceSelect', () => {
-    expect(partnerSetupInitialRoute(null)).toBe('ServiceSelect');
-  });
-  it('incomplete profile → BusinessProfile', () => {
-    expect(partnerSetupInitialRoute(business('draft', { address: '' }))).toBe('BusinessProfile');
-  });
-  it('profile saved, documents missing → Documents', () => {
-    expect(partnerSetupInitialRoute(business('draft'))).toBe('Documents');
-  });
-  it('everything uploaded → ReviewSubmit', () => {
-    const documents = ['cnic', 'business_license'].map(kind => ({ kind, status: 'pending' }));
-    expect(partnerSetupInitialRoute(business('draft', { documents } as never))).toBe('ReviewSubmit');
+describe('totpInitialRoute', () => {
+  it('a first sign-in enrols an authenticator; afterwards, the code step', () => {
+    expect(totpInitialRoute({ challengeToken: 'c', enrolled: false, email: 'a@x.com' })).toBe('AdminTwoFactorEnrol');
+    expect(totpInitialRoute({ challengeToken: 'c', enrolled: true, email: 'a@x.com' })).toBe('AdminTotp');
+    expect(totpInitialRoute(null)).toBe('AdminTotp');
   });
 });

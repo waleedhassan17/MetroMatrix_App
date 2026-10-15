@@ -72,6 +72,9 @@ const makeStyles = ({ colors, space, radius, size, type, elevation }: Theme) =>
       ...type.input,
       color: colors.ink,
       paddingVertical: space.s12,
+      // Web draws its own focus outline inside the field; the field's accent
+      // border is the focus ring.
+      outlineWidth: 0,
     },
     prefix: {
       paddingRight: space.s12,

@@ -1,135 +1,182 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Verify email
+// MetroMatrix — Verify Your Email (the FYP's link flow)
 // ═══════════════════════════════════════════════════════
-// Shows the address, takes the 6-digit code (auto-submits when complete),
-// reports attempts left and the lock after the fifth miss, and counts down
-// to the next resend from the server's retryAfter. A metromatrix://
-// verify-email?code=… link fills and submits the code.
 
 import React, { useCallback, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useCountdown } from '@hooks/useCountdown';
 import { useSignOut } from '@hooks/useSignOut';
-import { OTP_LENGTH } from '@models/authModel';
+import { USE_MOCK_API } from '@/config/env';
 import { haptics } from '@utils/haptics';
-import { useStyles, type Theme } from '@theme/index';
-import { AppText, Button, Card, InlineNotice, OtpInput, ScreenShell, TextLink } from '@custom/index';
-import type { RootStackParamList } from '@/types';
+import { useStyles, useTheme, type Theme } from '@theme/index';
+import { AppText, Button, InlineNotice, IonIcon, type IonName } from '@custom/index';
+import { AuthHeader, AuthScreen } from '@components/auth/AuthChrome';
 import { selectUser } from '../authSlice';
-import {
-  resendCodeAsync,
-  selectEmailVerification,
-  setCode,
-  startCooldownIfIdle,
-  verifyEmailAsync,
-} from './emailVerificationSlice';
+import { checkVerifiedAsync, resendAsync, selectEmailVerification, startCooldownIfIdle } from './emailVerificationSlice';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'EmailVerification'>;
+/** How often the screen quietly re-checks while it is open. */
+const RECHECK_MS = 4000;
 
-const makeStyles = ({ space }: Theme) =>
+const makeStyles = ({ colors, space, size, radius, elevation }: Theme) =>
   StyleSheet.create({
-    resend: { alignItems: 'center', gap: space.s4 },
+    hero: {
+      alignSelf: 'center',
+      width: size.avatar.xl,
+      height: size.avatar.xl,
+      borderRadius: radius.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    emailBox: {
+      alignItems: 'center',
+      gap: space.s4,
+      padding: space.s16,
+      borderRadius: radius.md,
+      backgroundColor: colors.surfaceSunk,
+    },
+    auto: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.s8 },
+    card: {
+      gap: space.s12,
+      padding: space.s16,
+      borderRadius: radius.md,
+      borderWidth: size.hairline,
+      borderColor: colors.line,
+      backgroundColor: colors.surface,
+      ...elevation.input,
+    },
+    step: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
+    center: { alignItems: 'center' },
   });
 
-const EmailVerificationScreen: React.FC<Props> = ({ route }) => {
+const Steps: React.FC<{ title: string; items: { icon: IonName; text: string }[] }> = ({ title, items }) => {
+  const styles = useStyles(makeStyles);
+  const { service } = useTheme();
+  return (
+    <View style={styles.card}>
+      <AppText variant="title">{title}</AppText>
+      {items.map(item => (
+        <View key={item.text} style={styles.step}>
+          <IonIcon name={item.icon} size="md" color={service.accent} />
+          <AppText variant="body" tone="muted" style={{ flex: 1 }}>
+            {item.text}
+          </AppText>
+        </View>
+      ))}
+    </View>
+  );
+};
+
+const EmailVerificationScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
+  const { service } = useTheme();
   const user = useAppSelector(selectUser);
-  const state = useAppSelector(selectEmailVerification);
-  const secondsLeft = useCountdown(state.resendAvailableAt);
+  const s = useAppSelector(selectEmailVerification);
+  const secondsLeft = useCountdown(s.resendAvailableAt);
   const { signOutNow, signingOut } = useSignOut();
-  const linkCode = route.params?.code;
 
   useEffect(() => {
     dispatch(startCooldownIfIdle());
   }, [dispatch]);
 
-  const verify = useCallback(
-    async (code: string) => {
-      if (code.length !== OTP_LENGTH || state.status === 'loading' || state.locked) return;
-      const result = await dispatch(verifyEmailAsync(code));
-      if (verifyEmailAsync.rejected.match(result)) haptics.warning();
-      else haptics.success();
-    },
-    [dispatch, state.status, state.locked],
+  // A quiet re-check while the screen is open (the FYP's auto sign-in).
+  useFocusEffect(
+    useCallback(() => {
+      const id = setInterval(() => dispatch(checkVerifiedAsync({ silent: true })), RECHECK_MS);
+      return () => clearInterval(id);
+    }, [dispatch]),
   );
 
-  // Deep link: fill and submit once.
-  useEffect(() => {
-    if (linkCode && /^\d{6}$/.test(linkCode)) {
-      dispatch(setCode(linkCode));
-      void verify(linkCode);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [linkCode]);
+  const check = async () => {
+    const r = await dispatch(checkVerifiedAsync({ silent: false }));
+    if (checkVerifiedAsync.fulfilled.match(r) && r.payload) haptics.success();
+    else haptics.warning();
+  };
 
   const resend = async () => {
-    const result = await dispatch(resendCodeAsync());
-    if (resendCodeAsync.fulfilled.match(result)) {
-      Toast.show({ type: 'success', text1: 'New code sent', text2: `Check ${user?.email ?? 'your inbox'}.` });
+    const r = await dispatch(resendAsync());
+    if (resendAsync.fulfilled.match(r)) {
+      Toast.show({ type: 'success', text1: 'Email sent', text2: `We sent a new link to ${user?.email ?? 'your inbox'}.` });
     }
   };
 
-  const attemptsMessage =
-    state.locked
-      ? 'Too many tries. Request a new code to continue.'
-      : state.attemptsLeft !== null
-        ? `${state.attemptsLeft} ${state.attemptsLeft === 1 ? 'attempt' : 'attempts'} left.`
-        : null;
-
   return (
-    <ScreenShell
-      title="Check your email"
-      subtitle={`We sent a 6-digit code to ${user?.email ?? 'your email'}.`}
-      footer={
-        <Button
-          label="Verify email"
-          onPress={() => verify(state.code)}
-          loading={state.status === 'loading'}
-          disabled={state.code.length !== OTP_LENGTH || state.locked}
-          fullWidth
-          size="lg"
-        />
-      }>
-      {state.error.message && state.error.code !== 'OTP_LOCKED' ? (
-        <InlineNotice
-          tone={state.error.code === 'NETWORK_ERROR' ? 'warning' : 'error'}
-          message={state.error.message}
-        />
-      ) : null}
-      <Card>
-        <OtpInput
-          value={state.code}
-          onChange={code => dispatch(setCode(code))}
-          onComplete={verify}
-          error={state.status === 'failed' && !!state.error.message}
-          disabled={state.locked || state.status === 'loading'}
-        />
-        {attemptsMessage ? (
-          <AppText variant="small" tone={state.locked ? 'danger' : 'muted'} accessibilityLiveRegion="polite">
-            {attemptsMessage}
+    <AuthScreen>
+      <View style={[styles.hero, { backgroundColor: service.accentSoft }]}>
+        <IonIcon name="mail-unread-outline" size="xl" color={service.accent} />
+      </View>
+      <AuthHeader hideLogo title="Verify Your Email" subtitle="We've sent a verification link to your email address." />
+
+      <View style={styles.emailBox}>
+        <AppText variant="small" tone="muted">
+          Email sent to:
+        </AppText>
+        <AppText variant="bodyStrong">{user?.email ?? ''}</AppText>
+      </View>
+
+      {s.autoSignIn ? (
+        <View style={styles.auto} accessibilityLiveRegion="polite">
+          <IonIcon name="checkmark-circle" size="md" color={service.accent} />
+          <AppText variant="bodyStrong" tone="accentDeep">
+            Email verified — signing you in automatically...
           </AppText>
-        ) : null}
-      </Card>
-      <View style={styles.resend}>
+        </View>
+      ) : null}
+
+      {s.error.message ? (
+        <InlineNotice tone={s.error.code === 'NOT_VERIFIED' ? 'info' : 'error'} message={s.error.message} />
+      ) : null}
+
+      <Button
+        label={s.autoSignIn ? 'Email Verified' : 'I Verified My Email'}
+        onPress={check}
+        loading={s.status === 'loading'}
+        disabled={s.autoSignIn}
+        fullWidth
+      />
+      <View style={styles.center}>
         {secondsLeft > 0 ? (
           <AppText variant="small" tone="muted" accessibilityLiveRegion="polite">
-            Resend code in {secondsLeft}s
+            Resend email in {secondsLeft}s
           </AppText>
         ) : (
-          <Button
-            label="Resend code"
-            variant="ghost"
-            onPress={resend}
-            loading={state.resendStatus === 'loading'}
-          />
+          <Button label="Resend Email" variant="ghost" onPress={resend} loading={s.resendStatus === 'loading'} />
         )}
       </View>
-      <TextLink lead="Wrong email?" label={signingOut ? 'Signing out' : 'Sign out'} onPress={() => void signOutNow()} />
-    </ScreenShell>
+
+      <Steps
+        title="How to verify:"
+        items={[
+          { icon: 'mail-outline', text: 'Check your email inbox (and spam folder)' },
+          { icon: 'link-outline', text: 'Click the verification link in the email' },
+          { icon: 'checkmark-done-outline', text: 'Come back here — we sign you in automatically' },
+        ]}
+      />
+      <Steps
+        title="Didn't receive the email?"
+        items={[
+          { icon: 'folder-open-outline', text: 'Check your spam/junk folder' },
+          { icon: 'at-outline', text: 'Make sure the email address above is correct' },
+          { icon: 'time-outline', text: 'Wait a few minutes, then tap "Resend Email"' },
+        ]}
+      />
+      {USE_MOCK_API ? (
+        <AppText variant="caption" tone="muted" align="center">
+          Demo mode: the link counts as opened a few seconds after it is sent.
+        </AppText>
+      ) : null}
+      <View style={styles.center}>
+        <Button
+          label={signingOut ? 'Signing out...' : 'Wrong email? Sign out'}
+          variant="ghost"
+          size="sm"
+          onPress={() => void signOutNow()}
+        />
+      </View>
+    </AuthScreen>
   );
 };
 

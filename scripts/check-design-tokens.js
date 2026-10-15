@@ -31,6 +31,14 @@ const ROOTS = ['src/screens', 'src/components', 'src/Custom-Components', 'src/na
 
 const ALLOWED = new Map([
   // ['src/path/File.tsx', 'reason this file may hold raw values'],
+  [
+    'src/Custom-Components/PhotoScrim.tsx',
+    'the legibility scrim over service photos (both colours are theme tokens) — imagery, not a surface',
+  ],
+  [
+    'src/screens/Onboarding/OnboardingScreen.tsx',
+    "the onboarding preview card's header gradient, copied from the FYP app (its colours still come from the theme)",
+  ],
 ]);
 
 const RULES = [

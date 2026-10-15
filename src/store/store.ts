@@ -24,22 +24,25 @@ import { appContainerSlice } from '../components/app-container/appContainerSlice
 // ── Per-screen slices ──
 // (register each screen's slice here — see CLAUDE.md "How to add a screen")
 import { designGallerySlice } from '../screens/Dev/DesignGallery/designGallerySlice';
-import { onboardingSlice } from '../screens/Onboarding/onboardingSlice';
-import { customerSignInSlice } from '../screens/Auth/CustomerSignIn/customerSignInSlice';
-import { customerSignUpSlice } from '../screens/Auth/CustomerSignUp/customerSignUpSlice';
-import { emailVerificationSlice } from '../screens/Auth/EmailVerification/emailVerificationSlice';
+import { roleSelectionSlice } from '../screens/RoleSelection/roleSelectionSlice';
+import { providerSelectionSlice } from '../screens/ProviderSelection/providerSelectionSlice';
+import { signInSlice } from '../screens/Auth/SignIn/signInSlice';
+import { signUpSlice } from '../screens/Auth/SignUp/signUpSlice';
+import { providerSignInSlice } from '../screens/Auth/ProviderSignIn/providerSignInSlice';
+import { providerSignUpSlice } from '../screens/Auth/ProviderSignUp/providerSignUpSlice';
 import { forgotPasswordSlice } from '../screens/Auth/ForgotPassword/forgotPasswordSlice';
+import { resetPasswordOtpSlice } from '../screens/Auth/ResetPasswordOTP/resetPasswordOtpSlice';
+import { resetPasswordSlice } from '../screens/Auth/ResetPassword/resetPasswordSlice';
+import { emailVerificationSlice } from '../screens/Auth/EmailVerification/emailVerificationSlice';
+import { verifySuccessSlice } from '../screens/Auth/VerifySuccess/verifySuccessSlice';
+import { completeProfileSlice } from '../screens/Auth/CompleteProfile/completeProfileSlice';
+import { personalInfoSlice } from '../screens/Partner/PersonalInfo/personalInfoSlice';
+import { providerApprovalPendingSlice } from '../screens/Partner/ProviderApprovalPending/providerApprovalPendingSlice';
+import { foodHomeSlice } from '../screens/Customer/FoodHome/foodHomeSlice';
 import { profileSlice } from '../screens/Account/Profile/profileSlice';
 import { changePasswordSlice } from '../screens/Account/ChangePassword/changePasswordSlice';
-import { partnerSignInSlice } from '../screens/Auth/PartnerSignIn/partnerSignInSlice';
-import { partnerSignUpSlice } from '../screens/Auth/PartnerSignUp/partnerSignUpSlice';
-import { serviceSelectSlice } from '../screens/Partner/ServiceSelect/serviceSelectSlice';
-import { businessProfileSlice } from '../screens/Partner/BusinessProfile/businessProfileSlice';
-import { documentsSlice } from '../screens/Partner/Documents/documentsSlice';
-import { reviewSubmitSlice } from '../screens/Partner/ReviewSubmit/reviewSubmitSlice';
-import { pendingApprovalSlice } from '../screens/Partner/PendingApproval/pendingApprovalSlice';
-import { adminSignInSlice } from '../screens/Admin/AdminSignIn/adminSignInSlice';
-import { totpEnrolSlice } from '../screens/Admin/TotpEnrol/totpEnrolSlice';
+import { adminTotpSlice } from '../screens/Admin/AdminTotp/adminTotpSlice';
+import { adminTwoFactorEnrolSlice } from '../screens/Admin/AdminTwoFactorEnrol/adminTwoFactorEnrolSlice';
 import { approvalQueueSlice } from '../screens/Admin/ApprovalQueue/approvalQueueSlice';
 import { businessReviewSlice } from '../screens/Admin/BusinessReview/businessReviewSlice';
 
@@ -58,22 +61,25 @@ const rootReducer = combineReducers({
   preferences: preferencesSlice.reducer,
   appContainer: appContainerSlice.reducer,
   designGallery: designGallerySlice.reducer,
-  onboarding: onboardingSlice.reducer,
-  customerSignIn: customerSignInSlice.reducer,
-  customerSignUp: customerSignUpSlice.reducer,
-  emailVerification: emailVerificationSlice.reducer,
+  roleSelection: roleSelectionSlice.reducer,
+  providerSelection: providerSelectionSlice.reducer,
+  signIn: signInSlice.reducer,
+  signUp: signUpSlice.reducer,
+  providerSignIn: providerSignInSlice.reducer,
+  providerSignUp: providerSignUpSlice.reducer,
   forgotPassword: forgotPasswordSlice.reducer,
+  resetPasswordOtp: resetPasswordOtpSlice.reducer,
+  resetPassword: resetPasswordSlice.reducer,
+  emailVerification: emailVerificationSlice.reducer,
+  verifySuccess: verifySuccessSlice.reducer,
+  completeProfile: completeProfileSlice.reducer,
+  personalInfo: personalInfoSlice.reducer,
+  providerApprovalPending: providerApprovalPendingSlice.reducer,
+  foodHome: foodHomeSlice.reducer,
   profile: profileSlice.reducer,
   changePassword: changePasswordSlice.reducer,
-  partnerSignIn: partnerSignInSlice.reducer,
-  partnerSignUp: partnerSignUpSlice.reducer,
-  serviceSelect: serviceSelectSlice.reducer,
-  businessProfile: businessProfileSlice.reducer,
-  documents: documentsSlice.reducer,
-  reviewSubmit: reviewSubmitSlice.reducer,
-  pendingApproval: pendingApprovalSlice.reducer,
-  adminSignIn: adminSignInSlice.reducer,
-  totpEnrol: totpEnrolSlice.reducer,
+  adminTotp: adminTotpSlice.reducer,
+  adminTwoFactorEnrol: adminTwoFactorEnrolSlice.reducer,
   approvalQueue: approvalQueueSlice.reducer,
   businessReview: businessReviewSlice.reducer,
 });

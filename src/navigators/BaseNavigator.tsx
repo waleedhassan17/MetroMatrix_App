@@ -6,13 +6,14 @@
 // the admin console — is decided by AppContainer.renderNavigator(); this
 // navigator only shows the gate branch resolveGate() picks:
 //
-//   1. not authenticated      → onboarding (if unseen) + unauthenticated
+//   1. not authenticated      → onboarding (if unseen) + Role Selection …
 //   2. pending TOTP           → admin TOTP (or first-time enrolment)
-//   3. email not verified     → verify
-//   4. partner, no/draft biz  → partner setup (resumes where it left off)
-//   5. pending_approval       → pending
-//   6. rejected               → rejected + setup routes (edit and resubmit)
-//   7. suspended              → suspended
+//   3. email not verified     → Email Verification
+//   4. user, profile pending  → Complete Profile
+//   5. provider, no/draft app → Personal Info (resumes at the unfinished step)
+//   6. pending_approval       → Provider Approval Pending
+//   7. rejected               → Rejected + Personal Info (edit and resubmit)
+//   8. suspended              → Suspended
 //
 // ORDER MATTERS and lives in ONE place — navigators/sessionGate.ts — with a
 // unit test; this file only maps the answer to routes.
@@ -25,6 +26,7 @@ import type { RootStackParamList } from '../types';
 import type { IRoute } from '../navigations-maps/types';
 import {
   ADMIN_TOTP_ROUTES,
+  COMPLETE_PROFILE_ROUTES,
   EMAIL_VERIFY_ROUTES,
   ONBOARDING_ROUTE,
   PARTNER_SETUP_ROUTES,
@@ -33,7 +35,7 @@ import {
   SUSPENDED_ROUTES,
   UNAUTHENTICATED_ROUTES,
 } from '../navigations-maps/Auth';
-import { partnerSetupInitialRoute, resolveGate, type Gate } from './sessionGate';
+import { resolveGate, totpInitialRoute, type Gate } from './sessionGate';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -47,6 +49,7 @@ const BaseNavigator: React.FC = () => {
   const BRANCHES: Partial<Record<Gate, IRoute[]>> = {
     totp: ADMIN_TOTP_ROUTES,
     verify: EMAIL_VERIFY_ROUTES,
+    completeProfile: COMPLETE_PROFILE_ROUTES,
     partnerSetup: PARTNER_SETUP_ROUTES,
     pending: PENDING_ROUTES,
     rejected: REJECTED_ROUTES,
@@ -54,16 +57,9 @@ const BaseNavigator: React.FC = () => {
   };
   const routes: IRoute[] = BRANCHES[gate] ?? unauthenticated;
 
-  // Partner setup resumes where it was left (QA 15); a first-time admin
-  // enrols an authenticator before the code step; every other branch starts
-  // on its first route.
-  const initialRouteName = (
-    gate === 'partnerSetup'
-      ? partnerSetupInitialRoute(auth.business)
-      : gate === 'totp' && auth.pendingTotp && !auth.pendingTotp.enrolled
-        ? 'TotpEnrol'
-        : routes[0].title
-  ) as keyof RootStackParamList;
+  // A first-time admin enrols an authenticator before the code step; every
+  // other branch starts on its first route (Personal Info resumes its own step).
+  const initialRouteName = (gate === 'totp' ? totpInitialRoute(auth.pendingTotp) : routes[0].title) as keyof RootStackParamList;
 
   return (
     <Stack.Navigator

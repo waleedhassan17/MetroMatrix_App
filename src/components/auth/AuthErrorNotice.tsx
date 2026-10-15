@@ -11,26 +11,25 @@ import type { Portal } from '../../types/auth';
 import type { ServerError } from '../../screens/Auth/shared/formStatus';
 
 const PORTAL_LABEL: Record<Portal, string> = {
-  customer: 'Go to customer sign-in',
-  partner: 'Go to business sign-in',
-  admin: 'Go to staff sign-in',
+  customer: 'Sign in as a User',
+  partner: 'Sign in as a Service Provider',
+  admin: 'Sign in as a User',
 };
 
 export const AuthErrorNotice: React.FC<{
   error: ServerError;
   fallbackTitle?: string;
   onGoToPortal?: (portal: Portal) => void;
-}> = ({ error, fallbackTitle = "Couldn't sign you in", onGoToPortal }) => {
+}> = ({ error, fallbackTitle, onGoToPortal }) => {
   if (!error.message) return null;
   if (error.code === 'NETWORK_ERROR') {
-    return <InlineNotice tone="warning" title="You're offline" message="Check your connection, then try again." />;
+    return <InlineNotice tone="warning" message="You're offline. Check your connection, then try again." />;
   }
   const portal = error.details?.portal as Portal | undefined;
   if (error.code === 'WRONG_PORTAL' && portal && onGoToPortal && PORTAL_LABEL[portal]) {
     return (
       <InlineNotice
         tone="info"
-        title="This account signs in elsewhere"
         message={error.message}
         action={{ label: PORTAL_LABEL[portal], onPress: () => onGoToPortal(portal) }}
       />

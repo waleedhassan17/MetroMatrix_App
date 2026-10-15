@@ -16,7 +16,8 @@ export interface PreferencesSliceState {
 }
 
 const initialState: PreferencesSliceState = {
-  lastService: 'shopping',
+  // Food first: the flagship service, and the first one onboarding shows.
+  lastService: 'food',
   pushPromptSeen: false,
 };
 

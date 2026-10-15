@@ -11,7 +11,7 @@ export type IconName = React.ComponentProps<typeof Feather>['name'];
 export type IonName = React.ComponentProps<typeof Ionicons>['name'];
 export type MciName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 
-type IconSize = 'sm' | 'md' | 'lg' | 'xl';
+type IconSize = 'sm' | 'md' | 'lg' | 'xl' | 'hero';
 
 interface BaseProps {
   size?: IconSize;

@@ -70,3 +70,9 @@ export const type: TypeScale = {
 
 /** Dynamic type is honoured up to 130% — beyond that fixed-height controls clip. */
 export const MAX_FONT_SCALE = 1.3;
+
+/**
+ * The same system face for raw DOM controls on web (the date input), which
+ * do not inherit React Native Web's text font by themselves.
+ */
+export const WEB_SYSTEM_FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';

@@ -9,7 +9,7 @@ const user = { id: 'u1', role: 'customer', isEmailVerified: true } as User;
 
 describe('RESET_ALL_STATE at the root reducer', () => {
   it('wipes account-scoped slices and keeps the shell, preferences and onboarding flag', () => {
-    store.dispatch(setLastService('food'));
+    store.dispatch(setLastService('healthcare'));
     store.dispatch(setOnboardingSeen());
     store.dispatch(setSession({ user, business: null }));
     store.dispatch(setPreviewService('food'));
@@ -23,7 +23,7 @@ describe('RESET_ALL_STATE at the root reducer', () => {
     expect(state.auth.user).toBeNull();
     expect(state.auth.isAuthenticated).toBe(false);
     // device-scoped: survives
-    expect(state.preferences.lastService).toBe('food');
+    expect(state.preferences.lastService).toBe('healthcare');
     expect(state.auth.hasSeenOnboarding).toBe(true);
     expect(state.appContainer).toBe(readyBefore);
   });

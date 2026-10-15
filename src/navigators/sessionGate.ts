@@ -6,27 +6,29 @@
 // order is written once and unit-tested (navigators/__tests__/sessionGate).
 //
 // ORDER MATTERS — each step assumes the ones above it have passed:
-//   1. not authenticated   → onboarding + sign-in. A pending admin TOTP
-//                            challenge is a sub-state of this: no tokens
-//                            exist until the second factor is accepted.
+//   1. not authenticated   → onboarding (first launch) + Role Selection and
+//                            sign-in. A pending staff TOTP challenge is a
+//                            sub-state of this: no tokens exist until the
+//                            second factor is accepted.
 //   2. pending TOTP        → the TOTP step (or first-time enrolment)
-//   3. email not verified  → verify. Before any partner gate: an unverified
-//                            partner must not start a business draft.
-//   4. partner, no business or a draft → partner setup
-//   5. pending_approval    → pending. After setup: a submitted draft moves
-//                            here, never back into the form.
-//   6. rejected            → rejected (with the setup routes, to resubmit)
-//   7. suspended           → suspended
+//   3. email not verified  → Email Verification. Before any profile gate: an
+//                            unverified account must not start a profile.
+//   4. user, profile incomplete      → Complete Profile
+//   5. provider, no application or a draft → Personal Info
+//   6. pending_approval    → Provider Approval Pending. After setup: a
+//                            submitted application moves here, never back.
+//   7. rejected            → Rejected (with Personal Info, to resubmit)
+//   8. suspended           → Suspended
 // Only then does the role pick the app.
 
 import type { Business, BusinessStatus, User } from '../types/auth';
 import type { PendingTotp } from '../screens/Auth/authSlice';
-import { isProfileComplete, missingDocuments } from '../models/businessModel';
 
 export type Gate =
   | 'unauthenticated'
   | 'totp'
   | 'verify'
+  | 'completeProfile'
   | 'partnerSetup'
   | 'pending'
   | 'rejected'
@@ -61,10 +63,10 @@ export const resolveGate = ({ isAuthenticated, user, business, pendingTotp }: Ga
     case 'super_admin':
       return 'admin';
     case 'customer':
-      return 'customer';
+      return user.profileComplete ? 'customer' : 'completeProfile';
     default:
       // Riders are refused at sign-in; a restored rider session lands back
-      // on Welcome rather than in an app built for someone else.
+      // on Role Selection rather than in an app built for someone else.
       return 'unauthenticated';
   }
 };
@@ -73,14 +75,6 @@ export const resolveGate = ({ isAuthenticated, user, business, pendingTotp }: Ga
 export const isGateCleared = (gate: Gate): boolean =>
   gate === 'customer' || gate === 'partner' || gate === 'admin';
 
-export type PartnerSetupRoute = 'ServiceSelect' | 'BusinessProfile' | 'Documents' | 'ReviewSubmit';
-
-/**
- * Where partner setup resumes (QA 15: kill the app mid-setup, reopen, land
- * where you left off with your data intact).
- */
-export const partnerSetupInitialRoute = (business: Business | null): PartnerSetupRoute => {
-  if (!business) return 'ServiceSelect';
-  if (!isProfileComplete(business)) return 'BusinessProfile';
-  return missingDocuments(business.subType, business.documents).length ? 'Documents' : 'ReviewSubmit';
-};
+/** The TOTP branch opens on enrolment for a staff member's first sign-in. */
+export const totpInitialRoute = (pendingTotp: PendingTotp | null): 'AdminTotp' | 'AdminTwoFactorEnrol' =>
+  pendingTotp && !pendingTotp.enrolled ? 'AdminTwoFactorEnrol' : 'AdminTotp';
