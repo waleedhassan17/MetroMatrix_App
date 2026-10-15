@@ -17,7 +17,16 @@ import { api, unwrap, toAuthError, AuthError } from '../network/apiHelpers';
 import { isObject, num, str } from '../../serializers/serializerUtils';
 import type { LocalFile, SignedUpload, UploadedFile } from '../../types/auth';
 
-export type UploadPurpose = 'avatar' | 'business_document';
+export type UploadPurpose =
+  | 'avatar'
+  | 'business_document'
+  // Shopping (TODO(API_SHOPPING): the API's UPLOAD_PURPOSES must list these)
+  | 'product_image'
+  | 'store_logo'
+  | 'store_cover'
+  | 'review_photo'
+  | 'return_photo'
+  | 'payment_proof';
 
 export const signUpload = async (purpose: UploadPurpose): Promise<SignedUpload> => {
   try {

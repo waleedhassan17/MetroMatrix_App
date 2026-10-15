@@ -22,18 +22,12 @@ import type { DocumentKind, ServiceType, SubType } from '../../../types/auth';
 import { MOCK } from './mockConfig';
 import { getDb, newId, saveDb, type MockBusiness, type MockDb, type MockUser } from './mockDb';
 import { MOCK_CUISINES, MOCK_KITCHENS, MOCK_PROMOS } from './mockFood';
+import { ShopError } from './shop/shopLogic';
+import { registerShopRoutes } from './shop/shopRoutes';
 
 // ─── Plumbing ────────────────────────────────────────
-class MockError extends Error {
-  constructor(
-    public status: number,
-    public code: string,
-    message: string,
-    public details?: Record<string, unknown>,
-  ) {
-    super(message);
-  }
-}
+// One error type for every route; the shop routes throw the same class.
+class MockError extends ShopError {}
 
 interface Ctx {
   db: MockDb;
@@ -42,6 +36,10 @@ interface Ctx {
   params: string[];
   token: string | null;
   now: number;
+  /** Request headers, lower-cased (Idempotency-Key). */
+  headers: Record<string, string>;
+  /** Override the 200 a successful handler answers with (201 on creates). */
+  setStatus: (status: number) => void;
 }
 
 type Handler = (ctx: Ctx) => unknown | Promise<unknown>;
@@ -689,6 +687,19 @@ route('POST', '/admin/businesses/:id/reinstate', ctx => {
   return publicBusiness(b);
 });
 
+// ── Shopping (customer, store partner, admin) — see ./shop/ ──
+registerShopRoutes({
+  route,
+  requireUser,
+  optionalUser: ctx => {
+    const session = ctx.token ? ctx.db.access[ctx.token] : undefined;
+    if (!session || session.expiresAt < ctx.now) return null;
+    return ctx.db.users.find(u => u.id === session.userId) ?? null;
+  },
+  requirePartnerBusiness: ctx => requirePartnerBusiness(ctx),
+  requireAdmin,
+});
+
 // ─── The adapter ─────────────────────────────────────
 const respond = (config: InternalAxiosRequestConfig, status: number, data: unknown): AxiosResponse => ({
   data,
@@ -724,6 +735,12 @@ const bearer = (config: InternalAxiosRequestConfig): string | null => {
   return value?.startsWith('Bearer ') ? value.slice(7) : null;
 };
 
+const headersOf = (config: InternalAxiosRequestConfig): Record<string, string> => {
+  const h = config.headers as unknown as { toJSON?: () => Record<string, unknown> } | undefined;
+  const raw = (typeof h?.toJSON === 'function' ? h.toJSON() : (h as Record<string, unknown>)) ?? {};
+  return Object.fromEntries(Object.entries(raw).filter(([, v]) => typeof v === 'string').map(([k, v]) => [k.toLowerCase(), v as string]));
+};
+
 export const mockAdapter: AxiosAdapter = async config => {
   await sleep(latency());
   const method = (config.method ?? 'get').toUpperCase();
@@ -745,11 +762,15 @@ export const mockAdapter: AxiosAdapter = async config => {
       params: match.params!.slice(1),
       token: bearer(config),
       now: Date.now(),
+      headers: headersOf(config),
+      setStatus: s => {
+        status = s;
+      },
     });
     payload = { data: result };
     if (method === 'POST' && /^\/(auth\/signup|businesses)$/.test(path)) status = 201;
   } catch (e) {
-    const err = e instanceof MockError ? e : new MockError(500, 'MOCK_ERROR', (e as Error).message);
+    const err = e instanceof ShopError ? e : new MockError(500, 'MOCK_ERROR', (e as Error).message);
     status = err.status;
     payload = { error: { code: err.code, message: err.message, details: err.details ?? null } };
   }

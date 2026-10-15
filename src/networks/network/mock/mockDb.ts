@@ -11,6 +11,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { REQUIRED_DOCUMENTS } from '../../../models/businessModel';
 import type { DocumentKind, ServiceType, SubType } from '../../../types/auth';
 import { MOCK, SEED_PASSWORD, STAFF_PASSWORD } from './mockConfig';
+import { SHOP_SEED_SHOPPER, SHOP_SEED_USERS, seedShop } from './shop/shopSeed';
+import type { MockShop } from './shop/shopTypes';
 
 export interface MockUser {
   id: string;
@@ -84,6 +86,8 @@ export interface MockDb {
   /** staff sign-in challenge → user */
   challenges: Record<string, { userId: string; expiresAt: number }>;
   devices: { userId: string; token: string }[];
+  /** Shopping (stores, catalogue, bags, orders …) — see ./shop/. */
+  shop: MockShop;
 }
 
 export const newId = (prefix: string) =>
@@ -183,6 +187,26 @@ export const seedDb = (): MockDb => ({
       totpEnrolled: true,
       recoveryCodes: ['MM7K-Q2PX', 'MM4D-8LNA', 'MM9R-3VWE', 'MM2H-6TZC'],
     }),
+    ...SHOP_SEED_USERS.map(u =>
+      baseUser({
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        role: 'partner',
+        city: u.city,
+        providerServiceType: 'shopping',
+        providerSubType: 'store',
+      }),
+    ),
+    baseUser({
+      id: SHOP_SEED_SHOPPER.id,
+      email: SHOP_SEED_SHOPPER.email,
+      name: SHOP_SEED_SHOPPER.name,
+      role: 'customer',
+      gender: 'male',
+      phone: '+923451234567',
+      streetAddress: 'House 88, Street 9, DHA Phase 5',
+    }),
     baseUser({
       id: 'u_newadmin',
       email: 'newadmin@metromatrix.app',
@@ -241,13 +265,42 @@ export const seedDb = (): MockDb => ({
         placeholderDoc('business_license', 'rejected', 'This licence expired in March 2026.'),
       ],
     }),
+    ...SHOP_SEED_USERS.map(u =>
+      seedBusiness({
+        id: u.businessId,
+        ownerId: u.id,
+        serviceType: 'shopping',
+        subType: 'store',
+        name: { s_lawn: 'Lawn & Loom', s_urban: 'Urban Thread', s_volt: 'Volt Gadgets' }[u.storeId],
+        city: u.city,
+        status: 'approved',
+        reviewedAt: iso(60 * DAY),
+        details: { storeCategory: u.storeId === 's_volt' ? 'Electronics' : 'Fashion', experience: '5', briefDescription: 'Seeded demo store.' },
+      }),
+    ),
   ],
   access: {},
   refresh: {},
   resets: {},
   challenges: {},
   devices: [],
+  shop: seedShop(),
 });
+
+/**
+ * Old installs saved a DB from before a feature existed. Fill in anything
+ * missing from the seed — new collections, and seed accounts that weren't
+ * there yet — without touching what the tester created.
+ */
+const ensureCollections = (loaded: Partial<MockDb>): MockDb => {
+  const seed = seedDb();
+  const out = { ...seed, ...loaded } as MockDb;
+  for (const u of seed.users) if (!out.users.some(x => x.id === u.id || x.email === u.email)) out.users.push(u);
+  for (const b of seed.businesses) if (!out.businesses.some(x => x.id === b.id)) out.businesses.push(b);
+  if (!loaded.shop) out.shop = seed.shop;
+  else for (const k of Object.keys(seed.shop) as (keyof MockShop)[]) if (out.shop[k] === undefined) (out.shop as any)[k] = seed.shop[k];
+  return out;
+};
 
 // ─── Persistence ─────────────────────────────────────
 let db: MockDb | null = null;
@@ -259,7 +312,7 @@ export const getDb = async (): Promise<MockDb> => {
     loading = (async () => {
       try {
         const raw = await AsyncStorage.getItem(MOCK.STORAGE_KEY);
-        db = raw ? (JSON.parse(raw) as MockDb) : seedDb();
+        db = raw ? ensureCollections(JSON.parse(raw) as Partial<MockDb>) : seedDb();
       } catch {
         db = seedDb();
       }
