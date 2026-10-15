@@ -185,3 +185,5 @@ Seeded accounts (`mock/mockDb.ts`):
 | `newadmin@metromatrix.app` | `Admin2026` | Admin who has not set up an authenticator yet (enrol flow) |
 
 Any new sign-up works too, as a customer or a provider.
+
+Shopping adds the store owners `store@` (Lawn & Loom), `urban@` and `volt@metromatrix.app`, a second shopper `hamza@metromatrix.app`, and orders, coupons and reports for them: see [API_SHOPPING_ASSUMED.md → Mock mode](API_SHOPPING_ASSUMED.md#mock-mode).

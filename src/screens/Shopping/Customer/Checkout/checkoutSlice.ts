@@ -12,8 +12,8 @@
 // two orders.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
-import * as Crypto from 'expo-crypto';
 import { createAppSlice } from '@store/createAppSlice';
+import { newUuid } from '@utils/ids';
 import { listAvailableCoupons, placeOrder, previewCheckout } from '@networks/shopping/checkoutNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import type { AvailableCoupon, CheckoutInput, CheckoutPreview, OrderGroup, PaymentMethod } from '@/types';
@@ -76,7 +76,7 @@ export const checkoutSlice = createAppSlice({
   reducers: create => ({
     /** A fresh key — on arrival when there is none, and after an order is placed. */
     newCheckoutKey: create.preparedReducer(
-      () => ({ payload: Crypto.randomUUID() }),
+      () => ({ payload: newUuid() }),
       (state, action: PayloadAction<string>) => {
         state.idempotencyKey = action.payload;
       },

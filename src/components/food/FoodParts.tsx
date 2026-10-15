@@ -12,7 +12,7 @@
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
-import { useStyles, useTheme, type Theme } from '../../theme';
+import { MAX_FONT_SCALE, useStyles, useTheme, type Theme } from '../../theme';
 import { AppText } from '../../Custom-Components/AppText';
 import { IonIcon, MciIcon, type MciName } from '../../Custom-Components/Icon';
 import { Skeleton } from '../../Custom-Components/Skeleton';
@@ -155,6 +155,7 @@ export const FoodSearchBar: React.FC<{ value: string; onChange: (v: string) => v
           value={value}
           onChangeText={onChange}
           placeholder="Search vendors, cuisines and dishes"
+          maxFontSizeMultiplier={MAX_FONT_SCALE}
           placeholderTextColor={colors.inkFaint}
           style={styles.searchInput}
           returnKeyType="search"

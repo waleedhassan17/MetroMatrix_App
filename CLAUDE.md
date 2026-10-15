@@ -16,7 +16,7 @@ Copy the FYP's UX, never its code paths, Firebase setup or per-role duplicate ne
 
 ## Backend switch (one file)
 
-`src/config/env.ts` → `BACKEND_URL` (or `EXPO_PUBLIC_API_URL`). While it is empty, `api` uses the dummy API (`src/networks/network/mock/`: `mockServer.ts` routes, `mockDb.ts` seeded accounts, `mockConfig.ts` rules, `mockFood.ts` catalogue). The dummy API answers exactly what `docs/API_CONTRACT_ASSUMED.md` specifies, so nothing else changes when the real URL is set. When you add an endpoint, add its mock route in the same change.
+`src/config/env.ts` → `BACKEND_URL` (or `EXPO_PUBLIC_API_URL`). While it is empty, `api` uses the dummy API (`src/networks/network/mock/`: `mockServer.ts` routes, `mockDb.ts` seeded accounts, `mockConfig.ts` rules, `mockFood.ts` catalogue, `shop/` the whole Shopping API with its seed and server rules). The dummy API answers exactly what `docs/API_CONTRACT_ASSUMED.md` and `docs/API_SHOPPING_ASSUMED.md` specify, so nothing else changes when the real URL is set. When you add an endpoint, add its mock route in the same change. Shop writes are all-or-nothing (a failed request leaves the dummy DB as it was).
 
 ## Commands
 
@@ -43,6 +43,7 @@ Set environment in `.env.local`; see `.env.example`. `src/config/env.ts` is the 
    - The path is: `XScreen.tsx` → co-located `xSlice.ts` (built with `createAppSlice`, thunks via `create.asyncThunk`) → `src/networks/<domain>/<x>Network.ts` → `src/serializers/<domain>Serializer.ts`.
    - Validation lives in `src/models/<domain>Model.ts` as pure functions returning `{ field: message }`.
    - Screens never import axios, never call networks directly, and never shape API data.
+   - The one exception, as in FinMatrix: a server-paged list hands its network function to `usePagedList` (`src/hooks/usePagedList.ts`), which receives serialized `Paged<T>` pages. Filters and search text still live in the screen's slice.
 2. **The folder root is `src/`**, with aliases defined identically in `tsconfig.json` and `babel.config.js`: `@`, `@screens`, `@components`, `@custom`, `@store`, `@networks`, `@models`, `@serializers`, `@hooks`, `@theme`, `@utils`, `@navigators`, `@assets`.
 3. **Navigation.**
    - Routes are `IRoute[]` arrays in `src/navigations-maps/*.ts`. Navigators are dumb mappers.
@@ -82,37 +83,45 @@ src/
     createAppSlice.ts        buildCreateSlice with asyncThunk — every slice uses it
     store.ts                 combineReducers, RESET_ALL_STATE root handling, persist config
     resetAllState.ts         the RESET_ALL_STATE action
-    preferencesSlice.ts      lastService, pushPromptSeen (device-scoped, persisted)
-  hooks/                     useAppDispatch / useAppSelector, useSignOut, …
+    preferencesSlice.ts      lastService, pushPromptSeen, recentSearches (persisted; searches cleared on sign-out)
+  hooks/                     useAppDispatch / useAppSelector, useSignOut, usePagedList (+ useDebouncedValue), useShop (bag count, hearts, shop navigation)
   networks/
     network/apiHelpers.ts    the axios client, refresh queue, AuthError, unwrap
     network/mock/            the dummy API (axios adapter + AsyncStorage DB) used while no backend URL is set
-    <domain>/<x>Network.ts   one function per endpoint (auth, users, media, businesses, admin, food)
-  serializers/               defensive backend → app mapping, one file per domain
-  models/                    validation + form schemas, one file per domain
+    network/mock/shop/       the dummy Shopping API: shopTypes, shopSeed (3 stores, 52 products, orders), shopLogic (rules), shopRoutes
+    <domain>/<x>Network.ts   one function per endpoint (auth, users, media, businesses, admin, food, addresses, notifications)
+    shopping/                catalogue, wishlist, cart, checkout, orders, returns, reviews; shopping/partner/ the store app's
+  serializers/               defensive backend → app mapping, one file per domain (shopping/ per resource)
+  models/                    validation + form schemas, one file per domain; shopping/ holds the ONE order-status map
+                             (orderStatusModel), filters, variant matrix/picker, product/coupon/return/review/store rules
   types/                     shared types (navigation param lists, auth/business types)
-  utils/                     storageUtils, authEvents, phone, alert (web-safe), haptics, pickers, formErrors
-  services/                  device/SDK adapters: googleAuth(.web), push, location
-  theme/                     tokens, services, typography, ThemeProvider/useTheme — the ONLY place raw values live
-  Custom-Components/         the design-system components (tokens only); barrel: @custom/index
+  utils/                     storageUtils, authEvents, phone, alert (web-safe), haptics, pickers, formErrors,
+                             money (formatPKR — the only way money is shown), cdn (image sizing), dates, ids
+  services/                  device/SDK adapters: googleAuth(.web), push (+ push-tap routing), location
+  theme/                     tokens, services, typography, ThemeProvider/useTheme, StoreBrandScope — the ONLY place raw values live
+  Custom-Components/         the design-system components (tokens only); barrel: @custom/index; shopping/ (ProductCard,
+                             VariantSheet, FilterSheet, CartStoreGroup, charts/ …)
   components/app-container/  AppContainer, appContainerSlice (bootstrap/refresh/push), OfflineGate, PushPrePrompt
   components/auth/           AuthChrome (frame/header/tabs/badge), AuthFields, ChoiceCard, StepFlow, AuthErrorNotice, GoogleSignInButton(.web)
   components/brand/          BrandMark, BrandWordmark (splash, onboarding)
   components/home/           ServiceCard + serviceCatalog (the customer home's three cards)
   components/food/           FoodParts (search, promos, cuisines, kitchen cards)
+  components/shopping/       ShopParts (top bar + Bag, banners, product grid), StoreParts, ReviewItem
   components/shared/         ErrorBoundary
-  navigations-maps/          Base.ts (ROUTES), Auth.ts (gate arrays), Customer/Home/Partner/Admin/Approvals/Account.ts, types.ts
+  navigations-maps/          Base.ts (ROUTES), Auth.ts (gate arrays), Customer/Home/Partner/Admin/Approvals/Account.ts,
+                             ShoppingCustomer.ts (Home-only + browse routes spread into Home, Orders, Account),
+                             CustomerOrders.ts, StorePartner.ts (tabs + stack), AdminShopping.ts, types.ts
   navigators/                sessionGate.ts (the ladder), BaseNavigator, Customer/Store/Doctor/Kitchen/AdminNavigator,
-                             RouteTabs (tab mapper), stacks/ (HomeStack, AccountStack, AdminStack)
+                             RouteTabs (tab mapper), stacks/ (HomeStack, OrdersStack, AccountStack, AdminStack, AdminShopStack)
   screens/<Area>/<Name>/     NameScreen.tsx + nameSlice.ts
                              Areas: Onboarding (+ Splash), RoleSelection, ProviderSelection, Auth, Partner,
-                             Admin, Customer, Account, Dev
+                             Admin (+ Admin/Shopping), Customer, Account, Shopping/Customer, Shopping/Store, Dev
 scripts/check-design-tokens.js
-docs/                        API_CONTRACT_ASSUMED.md, GOOGLE_SIGNIN.md
+docs/                        API_CONTRACT_ASSUMED.md, API_SHOPPING_ASSUMED.md, MOCK_IMAGES.md, GOOGLE_SIGNIN.md
 assets/images/               FYP icon + splash mark; services/ (card photos — sources in CREDITS.md)
 ```
 
-Stateless screens have no slice. Their state is global (`auth`, `preferences`) or they only navigate. These are Rejected, Suspended, CustomerHome, ServicePreview, Orders and PartnerHome.
+Stateless screens have no slice. Their state is global (`auth`, `preferences`) or they only navigate. These are Rejected, Suspended, CustomerHome, ServicePreview, PartnerHome, OrderPlaced, Saved and StoreMore. Slices other screens read (`bag`, `saved`, `addressBook`, `orderDetail`, `notifications`) live beside the screen that owns them.
 
 ## How to add a screen
 
@@ -141,6 +150,8 @@ const styles = useStyles(makeStyles); // memoised on the active theme (mode + se
 - Service accents come from `useTheme().service` (`accent`, `accentDeep`, `accentSoft`, `accentLine`, `onAccent`).
 - Wrap a subtree in `<ServiceScope service="food">` to switch its accent.
 - Auth, admin and the customer shell (home, tabs, profile) use `neutral` (MetroMatrix emerald). Each service screen scopes its own accent: Food pink (Foodpanda-like), Healthcare blue, Shopping orange.
+- Inside a store (its page, its products) `<StoreBrandScope brand onBrand>` swaps the accent for the store's own colour, with AA-safe text and darker brand-coloured text.
+- Shopping copy: "Bag" (never cart), "Recorded sales" (never revenue or income), money only through `formatPKR`, order/payment/return wording only from `orderStatusModel`, every remote image through `cdn()`.
 - Onboarding: everything on a slide, including the primary button, wears that slide's colour.
 - Platform-specific files (`X.web.tsx`) must never import `./X`; on web that path resolves to the file itself. Put shared code in a third module (see `sheetShared.ts`, `dateFieldShared.ts`).
 
@@ -160,13 +171,13 @@ The order matters. It lives in ONE pure function, `resolveGate()` in `src/naviga
 The splash plays on every launch as an overlay in AppContainer. It lifts only once both its animation and `bootstrapSession` are done.
 
 Once the gate is cleared, `AppContainer.renderNavigator()` mounts the navigator for the role:
-- `customer` → `CustomerNavigator`
-- approved `partner` → `Store`/`Doctor`/`KitchenPartnerNavigator`, chosen by `serviceType`
-- `admin` / `super_admin` → `AdminNavigator`
+- `customer` → `CustomerNavigator` (Home · Orders · Profile; Smart Shopping opens from the home card)
+- approved `partner` → `Store`/`Doctor`/`KitchenPartnerNavigator`, chosen by `serviceType` (the store app is a stack over Today · Orders · Products · More)
+- `admin` / `super_admin` → `AdminNavigator` (Approvals · Shopping · Profile)
 
 ## API contract
 
-Every network call is built from MetroMatrix-API `docs/API_AUTH.md`, never from guesses. That document was unavailable, so the app runs on `docs/API_CONTRACT_ASSUMED.md`, which the dummy API implements. Every dependency on it is marked `TODO(API_AUTH)` or `TODO(API_FOOD)` (`grep -rn "TODO(API_" src`).
+Every network call is built from MetroMatrix-API `docs/API_AUTH.md` / `docs/API_SHOPPING.md`, never from guesses. Those documents were unavailable, so the app runs on `docs/API_CONTRACT_ASSUMED.md` and `docs/API_SHOPPING_ASSUMED.md` (NestJS conventions: `{ success, data }`, `VALIDATION_FAILED`, `page/pageSize`, integer rupees, `Idempotency-Key` on checkout), which the dummy API implements. Every dependency is marked `TODO(API_AUTH)`, `TODO(API_FOOD)` or `TODO(API_SHOPPING)` (`grep -rn "TODO(API_" src`).
 
 When the real document arrives, reconcile it in one pass:
 - update the networks, serializers and models;
@@ -177,6 +188,7 @@ When the real document arrives, reconcile it in one pass:
 - **Expo Go** (`npm start`): runs the whole app except native Google sign-in and push, against the dummy API. Seeded accounts and codes are in `docs/API_CONTRACT_ASSUMED.md` → "Mock mode".
 - **Web** (`npm run web`):
   - Google sign-in uses Google Identity Services and needs `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`.
-  - Deep paths work, e.g. `/get-started`, `/sign-in`, `/provider/sign-in`, `/home/food`.
+  - Deep paths work, e.g. `/get-started`, `/sign-in`, `/provider/sign-in`, `/home/food`, `/shop`, `/shop/store/lawn-and-loom-7a1f3`, `/shop/product/p_l1`, `/orders/MM-24A7Q2`, `/store/orders/:id`, `/admin/shop`.
+  - After adding new folders or `.web.tsx` files, restart Metro with `--clear` (its watcher can miss them).
   - Bottom sheets render as a `Modal` (`Sheet.web.tsx`), because `@gorhom/bottom-sheet` never presents in a browser.
   - `/dev/gallery` exists only in development builds.

@@ -26,7 +26,8 @@ export type UploadPurpose =
   | 'store_cover'
   | 'review_photo'
   | 'return_photo'
-  | 'payment_proof';
+  | 'payment_proof'
+  | 'banner_image';
 
 export const signUpload = async (purpose: UploadPurpose): Promise<SignedUpload> => {
   try {

@@ -112,6 +112,17 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       ApprovalsTab: {
         screens: { ApprovalQueue: 'approvals', BusinessReview: 'approvals/:id' },
       },
+      ShopAdminTab: {
+        screens: {
+          ShopOverview: 'admin/shop',
+          ShopReports: 'admin/shop/reports',
+          ShopCategories: 'admin/shop/categories',
+          ShopBanners: 'admin/shop/banners',
+          BannerForm: 'admin/shop/banners/edit',
+          ShopStores: 'admin/shop/stores',
+          OrderLookup: 'admin/shop/orders',
+        },
+      },
       ProfileTab: {
         screens: {
           Profile: 'profile',

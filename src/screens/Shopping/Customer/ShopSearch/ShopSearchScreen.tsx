@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useDebouncedValue } from '@hooks/usePagedList';
 import { useShopNav } from '@hooks/useShop';
-import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
+import { MAX_FONT_SCALE, ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, CategoryTile, ChoiceChip, Divider, IconButton, IonIcon, type IonName } from '@custom/index';
 import { addRecentSearch, clearRecentSearches, removeRecentSearch, selectRecentSearches } from '@store/preferencesSlice';
 import type { HomeStackParamList, SearchSuggestion } from '@/types';
@@ -112,6 +112,7 @@ const ShopSearchContent: React.FC<Props> = ({ navigation, route }) => {
             placeholderTextColor={colors.inkFaint}
             style={styles.input}
             autoFocus
+            maxFontSizeMultiplier={MAX_FONT_SCALE}
             returnKeyType="search"
             autoCorrect={false}
             autoCapitalize="none"

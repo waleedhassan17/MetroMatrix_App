@@ -26,7 +26,7 @@ These are the NestJS backend's own conventions (`src/common/*` in the API repo).
 | JSON | camelCase fields; snake_case enum values; ISO-8601 UTC times named `…At`; flat `lat`/`lng`; phones `+92…`. |
 | Money | **Integer rupees** everywhere. Never floats, never paisa. The app formats only through `formatPKR`. |
 | Idempotency | `POST /shop/checkout` takes `Idempotency-Key: <uuid>`. A repeat with the same key (per user) replays the first response, status included. A repeat while the first request is still running gets `409 IDEMPOTENCY_IN_PROGRESS`. |
-| Uploads | `POST /media/sign` with `purpose` set to `product_image`, `store_logo`, `store_cover`, `review_photo`, `return_photo` or `payment_proof`. The app sends only the resulting `{ url, publicId }`. |
+| Uploads | `POST /media/sign` with `purpose` set to `product_image`, `store_logo`, `store_cover`, `review_photo`, `return_photo`, `payment_proof` or (staff) `banner_image`. The app sends only the resulting `{ url, publicId }`. |
 | Atomic writes | A request that fails changes nothing. |
 
 The response types are in `src/types/shopping.ts`. The table cells below name those types; the serializers in `src/serializers/shopping/` map the wire shapes onto them.
@@ -232,13 +232,13 @@ The dummy API keeps the same envelope, status codes and error codes as Chunk 1 (
 - **Existing installs:** on load, any collection or seed account an install is missing is filled in, so you keep your account and gain the shop.
 - **Photos:** product photos come from Unsplash (see `docs/MOCK_IMAGES.md`); uploads stay on the device.
 
-Seeded shop accounts (password **`Metro2026`**; staff `Admin2026` + TOTP `123456`):
+Seeded shop accounts (password **`Metro2026`**; staff `Admin2026` + TOTP `123456`). Store owners sign in as Service Provider → Vendor Registration → Sign In.
 
 | Account | Who | What to try |
 |---|---|---|
 | `customer@metromatrix.app` | Ayesha Khan, customer, Lahore | Addresses in Lahore (default) and **Quetta** (`CITY_NOT_SERVED` for Urban Thread and Volt Gadgets). Orders: `MM-24A7Q2` (delivered: review, return), `MM-31KX8D` (shipped + confirmed), `MM-40BN5T` (**payment needed**, transfer), `MM-18ZC3W` (cancelled). Three saved products, one of them sold out. |
 | `hamza@metromatrix.app` | Hamza, a second customer | Orders in the stores' New / To pack / To ship queues, a transfer awaiting the store's check, and a delivered order with an open return |
-| `store@metromatrix.app` | **Lawn & Loom**, Lahore, maroon `#7A1F3D` | Nationwide delivery; COD up to Rs 15,000; Raast and bank accounts; coupons `LAWN10`, `WELCOME500`, `SPRING15` (expired); a sold-out bag |
+| `store@metromatrix.app` | **Lawn & Loom**, Lahore, maroon `#7A1F3D`. The busiest seeded store: start here | Nationwide delivery; COD up to Rs 15,000; Raast and bank accounts; coupons `LAWN10`, `WELCOME500`, `SPRING15` (expired); a sold-out bag |
 | `urban@metromatrix.app` | **Urban Thread**, Karachi, near-black `#111827` | Delivers to Karachi, Lahore, Islamabad and Rawalpindi; coupon `URBAN300` (one use in total) |
 | `volt@metromatrix.app` | **Volt Gadgets**, Lahore, teal `#0F766E` | Delivers to Lahore, Islamabad, Rawalpindi and Faisalabad; coupon `VOLT5`; 14-day returns; a reported product (`p_v18`) for the admin queue |
 | `admin@metromatrix.app` | Super admin | Shopping console: overview, categories, banners, the reports queue, order lookup, featured stores |
