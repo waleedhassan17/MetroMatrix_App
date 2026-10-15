@@ -6,12 +6,23 @@
 // through here, so a renamed or missing field degrades in one place.
 // TODO(API_AUTH): field names per docs/API_CONTRACT_ASSUMED.md.
 
-import type { AuthProvider, AuthResult, AuthTokens, Business, TotpChallenge, TotpEnrolment, User, UserRole } from '../types/auth';
-import { businessSerializer } from './businessSerializer';
-import { bool, enumList, isObject, str, strOrNull } from './serializerUtils';
+import type {
+  AuthProvider,
+  AuthResult,
+  AuthTokens,
+  Business,
+  Gender,
+  TotpChallenge,
+  TotpEnrolment,
+  User,
+  UserRole,
+} from '../types/auth';
+import { businessSerializer, SERVICE_TYPES, SUB_TYPES } from './businessSerializer';
+import { bool, enumList, isObject, oneOf, str, strOrNull } from './serializerUtils';
 
 export const USER_ROLES: readonly UserRole[] = ['customer', 'partner', 'rider', 'admin', 'super_admin'];
 const PROVIDERS: readonly AuthProvider[] = ['password', 'google'];
+const GENDERS: readonly Gender[] = ['male', 'female', 'other'];
 
 /**
  * An unknown role falls back to `customer` — the least-privileged app — so a
@@ -34,6 +45,16 @@ export const userSerializer = (raw: unknown): User => {
     hasPassword: bool(r.hasPassword, !providers.length || providers.includes('password')),
     providers: providers.length ? providers : ['password'],
     createdAt: str(r.createdAt),
+    // Missing ⇒ complete: a server that predates CompleteProfile must not
+    // trap every existing customer on it.
+    profileComplete: bool(r.profileComplete, true),
+    dateOfBirth: strOrNull(r.dateOfBirth),
+    gender: oneOf(r.gender, GENDERS, null),
+    streetAddress: strOrNull(r.streetAddress),
+    city: strOrNull(r.city),
+    postalCode: strOrNull(r.postalCode),
+    providerServiceType: oneOf(r.providerServiceType ?? r.serviceType, SERVICE_TYPES, null),
+    providerSubType: oneOf(r.providerSubType ?? r.subType, SUB_TYPES, null),
   };
 };
 

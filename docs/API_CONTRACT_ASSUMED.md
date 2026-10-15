@@ -11,6 +11,8 @@ Screens and slices should not need to change.
 
 Base URL: `API_BASE_URL` (`src/config/env.ts`), e.g. `https://<heroku-app>.herokuapp.com/api/v1`.
 
+**No backend yet?** Leave `BACKEND_URL` in `src/config/env.ts` empty. Every request is then answered by the dummy API in `src/networks/network/mock/`, which implements this whole contract (see [Mock mode](#mock-mode)). Setting the URL is the only change needed to go live.
+
 ## Conventions
 
 | Item | Assumed | Where |
@@ -31,8 +33,8 @@ Base URL: `API_BASE_URL` (`src/config/env.ts`), e.g. `https://<heroku-app>.herok
 | `ServiceType` | `shopping \| healthcare \| food` | ″ |
 | `SubType` | `store` (shopping) · `doctor` (healthcare) · `restaurant \| home_kitchen \| cloud_kitchen` (food) | ″ |
 | `BusinessStatus` | `draft \| pending_approval \| approved \| rejected \| suspended` | ″ |
-| `DocumentKind` | `cnic_front \| cnic_back \| storefront_photo \| pmdc_certificate \| medical_degree \| food_license \| kitchen_photo` | ″ |
-| `User` | `{ id, email, name, phone \| null, role, avatarUrl \| null, isEmailVerified, hasPassword, providers: ('password' \| 'google')[], createdAt }` | `authSerializer.userSerializer` |
+| `DocumentKind` | `cnic \| medical_license \| degree_certificate \| business_license \| food_license \| kitchen_photo` | ″ |
+| `User` | `{ id, email, name, phone \| null, role, avatarUrl \| null, isEmailVerified, hasPassword, providers: ('password' \| 'google')[], createdAt, profileComplete, dateOfBirth \| null, gender: 'male' \| 'female' \| 'other' \| null, streetAddress \| null, city \| null, postalCode \| null, providerServiceType \| null, providerSubType \| null }` | `authSerializer.userSerializer` |
 | `BusinessDocument` | `{ id, kind, url, publicId, mimeType, status: 'pending' \| 'accepted' \| 'rejected', reviewerNote \| null, uploadedAt }` | `businessSerializer` |
 | `Business` | `{ id, ownerId, serviceType, subType, name, phone, city, address, location: { lat, lng } \| null, details: Record<string,string>, status, documents[], requiredDocuments: DocumentKind[], missingDocuments: DocumentKind[], rejectionReason \| null, suspensionReason \| null, submittedAt \| null, reviewedAt \| null, createdAt, updatedAt }` | `businessSerializer` |
 | `AuthResult` | `{ user, business \| null, tokens }` | `authSerializer.authResultSerializer` |
@@ -42,13 +44,14 @@ Base URL: `API_BASE_URL` (`src/config/env.ts`), e.g. `https://<heroku-app>.herok
 
 | Function | Method + path | Body | 2xx `data` | Notable errors |
 |---|---|---|---|---|
-| `authSignup` | `POST /auth/signup` | `{ name, email, phone?, password, portal: 'customer'\|'partner', acceptedTerms: true }` | `AuthResult` (user unverified; a 6-digit code is emailed) | `EMAIL_TAKEN` 409, validation 400 |
-| `authSignin` | `POST /auth/signin` | `{ email, password, portal }` | customer/partner: `AuthResult`; admin portal: `TotpChallenge` (no tokens) | `INVALID_CREDENTIALS` 401, `WRONG_PORTAL` 403 `details: { portal }` |
+| `authSignup` | `POST /auth/signup` | `{ name, email, phone, password, portal: 'customer'\|'partner', subType? (providers), acceptedTerms: true }` | `AuthResult` (user unverified; a verification LINK is emailed). Providers get `providerServiceType` / `providerSubType` from `subType`. | `EMAIL_TAKEN` 409, validation 400 |
+| `authSignin` | `POST /auth/signin` | `{ email, password, portal }` | customer/partner: `AuthResult`. **Staff accounts on the customer portal** (they sign in from the User sign-in, as in the FYP app): `TotpChallenge`, no tokens. | `INVALID_CREDENTIALS` 401, `WRONG_PORTAL` 403 `details: { portal }` |
 | `authAdminTotp` | `POST /auth/admin/totp` | `{ challengeToken, code }` or `{ challengeToken, recoveryCode }` | `AuthResult` | `TOTP_INVALID` 401, `RECOVERY_CODE_USED` 401, `CHALLENGE_EXPIRED` 401 |
 | `adminTotpEnrol` | `POST /auth/admin/totp/enrol` | `{ challengeToken }` | `{ secret, otpauthUrl }` | `CHALLENGE_EXPIRED` |
 | `adminTotpConfirm` | `POST /auth/admin/totp/confirm` | `{ challengeToken, code }` | `AuthResult & { recoveryCodes: string[] }` | `TOTP_INVALID` |
 | `authGoogle` | `POST /auth/google` | `{ idToken, portal: 'customer' }` | `AuthResult` (email verified) | `GOOGLE_TOKEN_INVALID` 401, `WRONG_PORTAL` |
-| `authVerifyEmail` | `POST /auth/verify-email` (bearer) | `{ code }` | `{ user }` | `INVALID_OTP` 400 `details: { attemptsLeft }`, `OTP_LOCKED` 429 `details: { retryAfter }`, `OTP_EXPIRED` 400 |
+| `authVerificationStatus` | `GET /auth/verification-status` (bearer) | — | `{ isEmailVerified }`. Polled by "I Verified My Email". | 401 |
+| `authVerifyEmail` | `POST /auth/verify-email` | `{ token }` (from the link `metromatrix://verify-success?token=…`) | `{ user }` | `VERIFY_TOKEN_INVALID` 400 |
 | `authResendVerification` | `POST /auth/resend-verification` (bearer) | — | `{ retryAfter }` (seconds until the next resend) | `RESEND_TOO_SOON` 429 `details: { retryAfter }` |
 | `authRefresh` | `POST /auth/refresh` | `{ refreshToken }` | token pair (rotated) | 401 → session over |
 | `authLogout` | `POST /auth/logout` (bearer) | `{ refreshToken? }` | — | ignored |
@@ -68,6 +71,7 @@ Base URL: `API_BASE_URL` (`src/config/env.ts`), e.g. `https://<heroku-app>.herok
 | Function | Method + path | Body | 2xx `data` |
 |---|---|---|---|
 | `updateMe` | `PATCH /users/me` | `{ name?, phone?, avatarUrl? }` | `{ user }` |
+| `completeProfile` | `PATCH /users/me/profile` | `{ dateOfBirth (YYYY-MM-DD), gender, streetAddress, city, postalCode?, avatarUrl? }` | `{ user }` with `profileComplete: true` |
 | `registerDevice` | `POST /users/me/devices` | `{ token, platform: 'android' \| 'ios' \| 'web' }` | — |
 | `unregisterDevice` | `DELETE /users/me/devices/:token` | — | — |
 
@@ -96,20 +100,22 @@ Any partner request may return **403 `BUSINESS_SUSPENDED`**. The client then re-
 
 | Sub-type | Documents |
 |---|---|
-| store | `cnic_front`, `cnic_back`, `storefront_photo` |
-| doctor | `cnic_front`, `cnic_back`, `pmdc_certificate`, `medical_degree` |
-| restaurant | `cnic_front`, `cnic_back`, `food_license`, `storefront_photo` |
-| home_kitchen | `cnic_front`, `cnic_back`, `kitchen_photo` |
-| cloud_kitchen | `cnic_front`, `cnic_back`, `food_license`, `kitchen_photo` |
+| doctor | `cnic`, `medical_license`, `degree_certificate` |
+| store (vendor) | `cnic`, `business_license` |
+| restaurant | `cnic`, `food_license` |
+| cloud_kitchen | `cnic`, `food_license` |
+| home_kitchen | `cnic`, `kitchen_photo` |
 
 ### Per-sub-type `details` (`businessModel.BUSINESS_FORM_SCHEMA`)
 
 | Sub-type | Extra fields |
 |---|---|
-| store | `storeCategory` |
-| doctor | `specialty`, `pmdcNumber` |
-| restaurant / cloud_kitchen | `cuisine` |
-| home_kitchen | `cuisine`, `dailyCapacity` |
+| doctor | `specialty`, `pmdcNumber`, `experience`, `briefDescription` |
+| store (vendor) | `storeCategory`, `experience`, `briefDescription` |
+| restaurant / cloud_kitchen | `cuisine`, `experience`, `briefDescription` |
+| home_kitchen | `cuisine`, `dailyCapacity`, `experience`, `briefDescription` |
+
+The business `phone` is the provider's own phone, captured at sign-up.
 
 ## Admin (`/admin/businesses`) — admin / super_admin, bearer
 
@@ -124,10 +130,38 @@ Any partner request may return **403 `BUSINESS_SUSPENDED`**. The client then re-
 
 ## Admin sign-in flow
 
-1. `POST /auth/signin { portal: 'admin' }` returns `{ challengeToken, totpEnrolled }`. **No tokens are issued.**
+1. `POST /auth/signin` (from the User sign-in) returns `{ challengeToken, totpEnrolled }` for a staff account. **No tokens are issued.**
 2. If `totpEnrolled` is true, go to step 3. Otherwise go to the enrol branch below.
 3. `POST /auth/admin/totp` with a code or a recovery code returns `AuthResult`.
 
 Enrol branch:
 1. `POST /auth/admin/totp/enrol` returns the QR material.
 2. `POST /auth/admin/totp/confirm` returns `AuthResult` and `recoveryCodes`. The codes are shown once.
+
+## Mock mode
+
+When `src/config/env.ts` has no backend URL, `src/networks/network/mock/mockServer.ts` answers every request above. It uses the same envelope, status codes and error codes, with 300–700 ms of simulated latency. Data persists on the device (AsyncStorage), so kill-and-reopen keeps you signed in.
+
+Rules (`mock/mockConfig.ts`):
+
+| What | Rule |
+|---|---|
+| Email verification link | Counts as opened **5 s** after it is sent. Tapping "I Verified My Email" after that signs you in. The deep link `metromatrix://verify-success?token=mock-verify-<userId>` also works. |
+| Password-reset code | **123456**, with 5 attempts and then a lock. |
+| Staff authenticator code | **123456**. New staff accounts see the secret `JBSWY3DPEHPK3PXP`. |
+| Provider application | Approves itself **30 s** after you submit, or an admin approves it in the console. |
+| Uploads | Accepted with simulated progress. The file stays on the device. |
+| Access token | Expires after 15 minutes and is refreshed silently. |
+
+Seeded accounts (`mock/mockDb.ts`):
+
+| Account | Password | State |
+|---|---|---|
+| `customer@metromatrix.app` | `Metro2026` | Customer, verified, profile complete |
+| `doctor@metromatrix.app` | `Metro2026` | Doctor, **approved** → Doctor app |
+| `kitchen@metromatrix.app` | `Metro2026` | Home kitchen, **pending** review |
+| `vendor@metromatrix.app` | `Metro2026` | Vendor, **rejected** with notes |
+| `admin@metromatrix.app` | `Admin2026` | Super admin. TOTP `123456`; recovery codes `MM7K-Q2PX`, `MM4D-8LNA`, `MM9R-3VWE`, `MM2H-6TZC` |
+| `newadmin@metromatrix.app` | `Admin2026` | Admin who has not set up an authenticator yet (enrol flow) |
+
+Any new sign-up works too, as a customer or a provider.

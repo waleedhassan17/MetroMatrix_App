@@ -10,19 +10,9 @@ import reducer, {
 } from '../authSlice';
 import { resetAllState } from '../../../store/resetAllState';
 import type { Business, User } from '../../../types/auth';
+import { makeUser } from '../../../__fixtures__/users';
 
-const user: User = {
-  id: 'u1',
-  email: 'a@x.com',
-  name: 'Ayesha',
-  phone: null,
-  role: 'partner',
-  avatarUrl: null,
-  isEmailVerified: true,
-  hasPassword: true,
-  providers: ['password'],
-  createdAt: '',
-};
+const user: User = makeUser({ id: 'u1', email: 'a@x.com', name: 'Ayesha', phone: null, role: 'partner' });
 
 const business = { id: 'b1', status: 'pending_approval', serviceType: 'food' } as Business;
 

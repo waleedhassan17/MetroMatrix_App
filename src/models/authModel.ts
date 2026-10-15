@@ -7,6 +7,7 @@
 // TODO(API_AUTH): confirm PASSWORD_POLICY against MetroMatrix-API.
 
 import { isValidPkMobile, normalizePkPhone, PK_MOBILE_MESSAGE } from '../utils/phone';
+import type { Gender } from '../types/auth';
 
 export interface ValidationErrors {
   [field: string]: string;
@@ -80,44 +81,30 @@ export const validateSignIn = (data: SignInData): ValidationErrors => {
   return errors;
 };
 
-// ─── Sign Up ──────────────────────────────────────────
+// ─── Sign Up (the FYP's four fields) ─────────────────
 export interface SignUpData {
   name: string;
-  email: string;
   /** National part only (the field shows +92). */
   phone: string;
+  email: string;
   password: string;
-  confirmPassword: string;
-  acceptedTerms: boolean;
-  /** Partners only. */
-  acceptedPartnerTerms?: boolean;
 }
 
-export const validateSignUp = (
-  data: SignUpData,
-  options: { phoneRequired: boolean; partnerTerms: boolean } = { phoneRequired: false, partnerTerms: false },
-): ValidationErrors => {
+export const validateSignUp = (data: SignUpData): ValidationErrors => {
   const errors: ValidationErrors = {};
 
   if (!data.name.trim()) errors.name = 'Full name is required';
   else if (data.name.trim().length < 2) errors.name = 'Name must be at least 2 characters';
 
+  const phone = validatePhone(data.phone, true);
+  if (phone) errors.phone = phone;
+
   const email = validateEmail(data.email);
   if (email) errors.email = email;
-
-  const phone = validatePhone(data.phone, options.phoneRequired);
-  if (phone) errors.phone = phone;
 
   const password = validatePassword(data.password);
   if (password) errors.password = password;
 
-  if (!data.confirmPassword) errors.confirmPassword = 'Confirm your password';
-  else if (data.password !== data.confirmPassword) errors.confirmPassword = 'Passwords do not match';
-
-  if (!data.acceptedTerms) errors.acceptedTerms = 'Accept the Terms and Privacy Policy to continue';
-  if (options.partnerTerms && !data.acceptedPartnerTerms) {
-    errors.acceptedPartnerTerms = 'Accept the Partner Agreement to continue';
-  }
   return errors;
 };
 
@@ -158,6 +145,62 @@ export const validateChangePassword = (
   if (requireCurrent && data.currentPassword && data.currentPassword === data.password) {
     errors.password = 'Choose a password you have not used here';
   }
+  return errors;
+};
+
+// ─── Complete profile (customers, 3 steps) ────────────
+export const MIN_AGE = 13;
+
+/** "2001-08-15" → Date at local midnight, or null if not a real calendar date. */
+export const parseIsoDate = (iso: string): Date | null => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!m) return null;
+  const date = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return date.getFullYear() === Number(m[1]) && date.getMonth() === Number(m[2]) - 1 && date.getDate() === Number(m[3])
+    ? date
+    : null;
+};
+
+export const ageOn = (birth: Date, today: Date): number => {
+  let age = today.getFullYear() - birth.getFullYear();
+  const beforeBirthday =
+    today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate());
+  if (beforeBirthday) age -= 1;
+  return age;
+};
+
+export interface PersonalStepData {
+  /** ISO date, YYYY-MM-DD. */
+  dateOfBirth: string;
+  gender: Gender | null;
+}
+
+export const validatePersonalStep = (data: PersonalStepData, today: Date = new Date()): ValidationErrors => {
+  const errors: ValidationErrors = {};
+  if (!data.dateOfBirth) errors.dateOfBirth = 'Select your date of birth';
+  else {
+    const birth = parseIsoDate(data.dateOfBirth);
+    if (!birth) errors.dateOfBirth = 'Enter a valid date';
+    else if (birth > today) errors.dateOfBirth = 'Date of birth cannot be in the future';
+    else if (ageOn(birth, today) < MIN_AGE) errors.dateOfBirth = `You must be at least ${MIN_AGE} to use MetroMatrix`;
+    else if (ageOn(birth, today) > 120) errors.dateOfBirth = 'Enter a valid date';
+  }
+  if (!data.gender) errors.gender = 'Select your gender';
+  return errors;
+};
+
+export interface LocationStepData {
+  streetAddress: string;
+  city: string;
+  postalCode: string;
+}
+
+export const validateLocationStep = (data: LocationStepData): ValidationErrors => {
+  const errors: ValidationErrors = {};
+  if (!data.streetAddress.trim()) errors.streetAddress = 'Street address is required';
+  else if (data.streetAddress.trim().length < 5) errors.streetAddress = 'Add your street and area';
+  if (!data.city) errors.city = 'Select your city';
+  if (data.postalCode && !/^\d{5}$/.test(data.postalCode.trim())) errors.postalCode = 'Postal codes are 5 digits';
   return errors;
 };
 

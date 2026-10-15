@@ -20,6 +20,14 @@ const fullUser = {
   hasPassword: true,
   providers: ['password'],
   createdAt: '2026-10-01T00:00:00Z',
+  profileComplete: false,
+  dateOfBirth: '1995-04-12',
+  gender: 'female',
+  streetAddress: '12 Main Boulevard',
+  city: 'Lahore',
+  postalCode: '54000',
+  providerServiceType: 'food',
+  providerSubType: 'home_kitchen',
 };
 
 describe('userSerializer', () => {
@@ -35,6 +43,14 @@ describe('userSerializer', () => {
       hasPassword: true,
       providers: ['password'],
       createdAt: '2026-10-01T00:00:00Z',
+      profileComplete: false,
+      dateOfBirth: '1995-04-12',
+      gender: 'female',
+      streetAddress: '12 Main Boulevard',
+      city: 'Lahore',
+      postalCode: '54000',
+      providerServiceType: 'food',
+      providerSubType: 'home_kitchen',
     });
   });
 
@@ -63,6 +79,17 @@ describe('userSerializer', () => {
     const u = userSerializer({ id: 'g', providers: ['google'] });
     expect(u.hasPassword).toBe(false);
     expect(u.providers).toEqual(['google']);
+  });
+
+  it('defaults missing profile fields safely', () => {
+    const u = userSerializer({ id: 'a', gender: 'robot', providerSubType: 'spaceship' });
+    expect(u.profileComplete).toBe(true);
+    expect(u.gender).toBeNull();
+    expect(u.providerSubType).toBeNull();
+    expect(userSerializer({ id: 'a', subType: 'doctor', serviceType: 'healthcare' })).toMatchObject({
+      providerSubType: 'doctor',
+      providerServiceType: 'healthcare',
+    });
   });
 
   it('drops unknown providers and coerces empty strings to null', () => {

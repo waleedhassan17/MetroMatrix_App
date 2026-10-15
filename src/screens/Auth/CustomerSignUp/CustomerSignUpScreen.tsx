@@ -29,7 +29,7 @@ const CustomerSignUpScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const form = useAppSelector(selectCustomerSignUp);
 
-  const errors = validateSignUp({ ...form.values, acceptedTerms: form.acceptedTerms });
+  const errors = validateSignUp(form.values);
   const shown = visibleErrors(errors, form.touched);
   const busy = form.status === 'loading' || form.googleStatus === 'loading';
 

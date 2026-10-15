@@ -5,7 +5,8 @@
 // through `api`; nothing else in the app imports axios.
 
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import { API_BASE_URL } from '../../config/env';
+import { API_BASE_URL, MOCK_BASE_URL, USE_MOCK_API } from '../../config/env';
+import { mockAdapter } from './mock/mockServer';
 import { setTokens, getAccessToken, getRefreshToken, clearTokens } from '../../utils/storageUtils';
 import {
   emitSessionExpired,
@@ -28,6 +29,7 @@ export const AUTH_PATHS = {
   adminTotp: '/auth/admin/totp',
   refresh: '/auth/refresh',
   logout: '/auth/logout',
+  verifyEmail: '/auth/verify-email',
   forgotPassword: '/auth/forgot-password',
   verifyResetOtp: '/auth/verify-reset-otp',
   resetPassword: '/auth/reset-password',
@@ -46,12 +48,24 @@ const NO_REFRESH_PATHS: string[] = [
   AUTH_PATHS.resetPassword,
 ];
 
-// ─── Axios Instance ─────────────────────────────────
-export const api = axios.create({
-  baseURL: API_BASE_URL,
+// ─── Axios Instances ────────────────────────────────
+// With no backend configured (src/config/env.ts), both clients are answered
+// by the dummy API (./mock/mockServer.ts) instead of the network. Nothing
+// else in the app knows or cares which one is behind them.
+const clientConfig = {
+  baseURL: USE_MOCK_API ? MOCK_BASE_URL : API_BASE_URL,
   timeout: 30000,
   headers: { 'Content-Type': 'application/json' },
-});
+  ...(USE_MOCK_API ? { adapter: mockAdapter } : null),
+};
+
+export const api = axios.create(clientConfig);
+
+/**
+ * The refresh call's own client: it must bypass the interceptors it serves
+ * (a 401 there must not trigger another refresh).
+ */
+export const refreshClient = axios.create(clientConfig);
 
 // ─── Request Interceptor ────────────────────────────
 api.interceptors.request.use(
@@ -112,9 +126,9 @@ export const refreshTokens = async (): Promise<string> => {
     if (!refreshToken) {
       throw new Error('No refresh token');
     }
-    // Bare axios, not `api`: the refresh call must not pass through the
+    // refreshClient, not `api`: the refresh call must not pass through the
     // interceptors it is serving.
-    const { data } = await axios.post(`${API_BASE_URL}${AUTH_PATHS.refresh}`, { refreshToken });
+    const { data } = await refreshClient.post(AUTH_PATHS.refresh, { refreshToken });
     const body = unwrapBody<any>(data);
     // TODO(API_AUTH): confirm whether the pair is top-level or under `tokens`.
     const pair = body?.tokens ?? body;

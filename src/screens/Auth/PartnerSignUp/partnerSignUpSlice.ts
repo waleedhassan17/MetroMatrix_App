@@ -63,7 +63,7 @@ export const partnerSignUpSlice = createAppSlice({
           const result = await authSignup({
             name: values.name,
             email: values.email,
-            phone: toPkPhone(values.phone),
+            phone: toPkPhone(values.phone) ?? '',
             password: values.password,
             portal: 'partner',
           });

@@ -26,16 +26,18 @@ import {
   userSerializer,
   type SessionPayload,
 } from '../../serializers/authSerializer';
-import type { AuthResult, Portal, TotpChallenge, User } from '../../types/auth';
+import type { AuthResult, Portal, SubType, TotpChallenge, User } from '../../types/auth';
 
 // ─── Types ────────────────────────────────────────────
 export interface SignupPayload {
   name: string;
   email: string;
-  /** Canonical +92…, or undefined to omit. */
-  phone?: string;
+  /** Canonical +92…. */
+  phone: string;
   password: string;
   portal: Extract<Portal, 'customer' | 'partner'>;
+  /** Providers: the type picked on Provider Selection. */
+  subType?: SubType;
 }
 
 export interface SigninPayload {
@@ -74,10 +76,10 @@ export const authSignup = async (payload: SignupPayload): Promise<AuthResult> =>
     const response = await api.post(AUTH_PATHS.signup, {
       name: payload.name.trim(),
       email: payload.email.trim().toLowerCase(),
-      // Omitted entirely when blank — '' is not undefined to @IsOptional().
       phone: payload.phone,
       password: payload.password,
       portal: payload.portal,
+      ...(payload.subType ? { subType: payload.subType } : null),
       acceptedTerms: true,
     });
     return await openSession(authResultSerializer(unwrap(response)));
@@ -129,10 +131,25 @@ export const authGoogle = async (idToken: string): Promise<AuthResult> => {
   }
 };
 
-// ─── Email verification ──────────────────────────────
-export const authVerifyEmail = async (code: string): Promise<User> => {
+// ─── Email verification (a link, as in the FYP app) ──
+/**
+ * Has the user opened the link we emailed? Polled by "I Verified My Email".
+ * TODO(API_AUTH): confirm the path and response shape.
+ */
+export const authVerificationStatus = async (): Promise<boolean> => {
   try {
-    const response = await api.post('/auth/verify-email', { code });
+    const response = await api.get('/auth/verification-status');
+    const body = unwrap(response);
+    return body?.isEmailVerified === true || body?.verified === true;
+  } catch (e) {
+    throw toAuthError(e);
+  }
+};
+
+/** The deep link's token: metromatrix://verify-success?token=… */
+export const authVerifyEmail = async (token: string): Promise<User> => {
+  try {
+    const response = await api.post(AUTH_PATHS.verifyEmail, { token });
     const body = unwrap(response);
     return userSerializer(body?.user ?? body);
   } catch (e) {

@@ -32,7 +32,7 @@ import {
   TextField,
 } from '@custom/index';
 import type { RootStackParamList } from '@/types';
-import { selectBusiness } from '../../Auth/authSlice';
+import { selectBusiness, selectUser } from '../../Auth/authSlice';
 import {
   clearLocation,
   initialise,
@@ -57,8 +57,8 @@ const BusinessProfileScreen: React.FC<Props> = ({ navigation, route }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const business = useAppSelector(selectBusiness);
+  const user = useAppSelector(selectUser);
   const s = useAppSelector(selectBusinessProfile);
-  const phoneRef = useRef<TextInput>(null);
   const addressRef = useRef<TextInput>(null);
 
   // Sub-type: an explicit choice from ServiceSelect wins; else the draft's.
@@ -77,7 +77,7 @@ const BusinessProfileScreen: React.FC<Props> = ({ navigation, route }) => {
   const save = async () => {
     dispatch(markSubmitted());
     if (hasErrors(errors) || saving) return;
-    const result = await dispatch(saveDraftAsync({ business, serviceType, subType, form: s.form }));
+    const result = await dispatch(saveDraftAsync({ business, serviceType, subType, form: s.form, phone: user?.phone ?? '' }));
     if (saveDraftAsync.fulfilled.match(result)) {
       haptics.success();
       navigation.navigate('Documents');
@@ -85,7 +85,7 @@ const BusinessProfileScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const pickerSpec: DetailFieldSpec | null =
-    s.picker && s.picker !== 'city' ? schema.details.find(d => d.key === s.picker) ?? null : null;
+    s.picker && s.picker !== 'city' ? [...schema.lead, ...schema.details].find(d => d.key === s.picker) ?? null : null;
 
   return (
     <ServiceScope service={serviceType}>
@@ -111,20 +111,6 @@ const BusinessProfileScreen: React.FC<Props> = ({ navigation, route }) => {
             error={shown.name}
             placeholder={schema.namePlaceholder}
             autoCapitalize="words"
-            returnKeyType="next"
-            onSubmitEditing={() => phoneRef.current?.focus()}
-            submitBehavior="submit"
-          />
-          <TextField
-            ref={phoneRef}
-            label="Business phone"
-            mode="phone"
-            value={s.form.phone}
-            onChangeText={value => dispatch(setCoreField({ field: 'phone', value }))}
-            onBlur={() => dispatch(touch('phone'))}
-            error={shown.phone}
-            placeholder="42 35761234"
-            helper="Mobile or landline."
             returnKeyType="next"
             onSubmitEditing={() => addressRef.current?.focus()}
             submitBehavior="submit"
@@ -174,9 +160,9 @@ const BusinessProfileScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
         </Card>
 
-        {schema.details.length ? (
+        {[...schema.lead, ...schema.details].length ? (
           <Card>
-            {schema.details.map(field =>
+            {[...schema.lead, ...schema.details].map(field =>
               field.kind === 'picker' ? (
                 <PickerField
                   key={field.key}

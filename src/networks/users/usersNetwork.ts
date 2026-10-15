@@ -5,7 +5,7 @@
 
 import { api, unwrap, toAuthError } from '../network/apiHelpers';
 import { userSerializer } from '../../serializers/authSerializer';
-import type { User } from '../../types/auth';
+import type { Gender, User } from '../../types/auth';
 
 export interface UpdateMePayload {
   name?: string;
@@ -17,6 +17,27 @@ export interface UpdateMePayload {
 export const updateMe = async (patch: UpdateMePayload): Promise<User> => {
   try {
     const response = await api.patch('/users/me', patch);
+    const body = unwrap(response);
+    return userSerializer(body?.user ?? body);
+  } catch (e) {
+    throw toAuthError(e);
+  }
+};
+
+export interface CompleteProfilePayload {
+  /** ISO date, YYYY-MM-DD. */
+  dateOfBirth: string;
+  gender: Gender;
+  streetAddress: string;
+  city: string;
+  postalCode?: string;
+  avatarUrl?: string | null;
+}
+
+/** CompleteProfile's three steps in one save; marks the profile complete. */
+export const completeProfile = async (payload: CompleteProfilePayload): Promise<User> => {
+  try {
+    const response = await api.patch('/users/me/profile', payload);
     const body = unwrap(response);
     return userSerializer(body?.user ?? body);
   } catch (e) {

@@ -1,18 +1,8 @@
 import { isGateCleared, partnerSetupInitialRoute, resolveGate, type GateInput } from '../sessionGate';
 import type { Business, BusinessStatus, User, UserRole } from '../../types/auth';
+import { makeUser } from '../../__fixtures__/users';
 
-const user = (role: UserRole, isEmailVerified = true): User => ({
-  id: 'u',
-  email: 'u@x.com',
-  name: 'U',
-  phone: null,
-  role,
-  avatarUrl: null,
-  isEmailVerified,
-  hasPassword: true,
-  providers: ['password'],
-  createdAt: '',
-});
+const user = (role: UserRole, isEmailVerified = true): User => makeUser({ role, isEmailVerified });
 
 const business = (status: BusinessStatus, extra: Partial<Business> = {}): Business =>
   ({
@@ -94,7 +84,7 @@ describe('partnerSetupInitialRoute — draft resume (QA 15)', () => {
     expect(partnerSetupInitialRoute(business('draft'))).toBe('Documents');
   });
   it('everything uploaded → ReviewSubmit', () => {
-    const documents = ['cnic_front', 'cnic_back', 'storefront_photo'].map(kind => ({ kind, status: 'pending' }));
+    const documents = ['cnic', 'business_license'].map(kind => ({ kind, status: 'pending' }));
     expect(partnerSetupInitialRoute(business('draft', { documents } as never))).toBe('ReviewSubmit');
   });
 });

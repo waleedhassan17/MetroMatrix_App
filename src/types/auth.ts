@@ -12,14 +12,16 @@ export type SubType = 'store' | 'doctor' | 'restaurant' | 'home_kitchen' | 'clou
 export type BusinessStatus = 'draft' | 'pending_approval' | 'approved' | 'rejected' | 'suspended';
 export type AuthProvider = 'password' | 'google';
 
+/** Verification documents — the FYP's list, mapped to MetroMatrix's sub-types. */
 export type DocumentKind =
-  | 'cnic_front'
-  | 'cnic_back'
-  | 'storefront_photo'
-  | 'pmdc_certificate'
-  | 'medical_degree'
+  | 'cnic'
+  | 'medical_license'
+  | 'degree_certificate'
+  | 'business_license'
   | 'food_license'
   | 'kitchen_photo';
+
+export type Gender = 'male' | 'female' | 'other';
 
 export type DocumentStatus = 'pending' | 'accepted' | 'rejected';
 
@@ -36,6 +38,16 @@ export interface User {
   hasPassword: boolean;
   providers: AuthProvider[];
   createdAt: string;
+  /** Customers: CompleteProfile has been finished (or skipped past). */
+  profileComplete: boolean;
+  dateOfBirth: string | null;
+  gender: Gender | null;
+  streetAddress: string | null;
+  city: string | null;
+  postalCode: string | null;
+  /** Partners: the type picked on Provider Selection at sign-up. */
+  providerServiceType: ServiceType | null;
+  providerSubType: SubType | null;
 }
 
 export interface GeoPoint {

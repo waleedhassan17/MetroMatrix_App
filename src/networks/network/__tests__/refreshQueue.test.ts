@@ -1,5 +1,5 @@
-import axios, { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
-import { api, AuthError, extractErrorCode, toAuthError, unwrap } from '../apiHelpers';
+import { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
+import { api, AuthError, extractErrorCode, refreshClient, toAuthError, unwrap } from '../apiHelpers';
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '../../../utils/storageUtils';
 import {
   clearIntentionalSignOut,
@@ -40,7 +40,7 @@ describe('apiHelpers — single-flight refresh', () => {
     api.defaults.adapter = tokenServer as never;
     expired.mockReset();
     setSessionExpiredHandler(expired);
-    refreshSpy = jest.spyOn(axios, 'post').mockImplementation(async () => {
+    refreshSpy = jest.spyOn(refreshClient, 'post').mockImplementation(async () => {
       await delay(20); // keep the refresh in flight while the others arrive
       return { data: { data: { accessToken: 'access-2', refreshToken: 'refresh-2' } } };
     });

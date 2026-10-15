@@ -12,6 +12,7 @@
 // TODO(API_AUTH): /media/sign shape per docs/API_CONTRACT_ASSUMED.md.
 
 import { Platform } from 'react-native';
+import { USE_MOCK_API } from '../../config/env';
 import { api, unwrap, toAuthError, AuthError } from '../network/apiHelpers';
 import { isObject, num, str } from '../../serializers/serializerUtils';
 import type { LocalFile, SignedUpload, UploadedFile } from '../../types/auth';
@@ -48,12 +49,27 @@ const appendFile = async (form: FormData, file: LocalFile) => {
   form.append('file', { uri: file.uri, name: file.name, type: file.mimeType } as unknown as Blob);
 };
 
+/** Dummy API: a believable upload — progress over ~1.2 s, then the local file. */
+const mockUpload = (file: LocalFile, onProgress?: (fraction: number) => void): Promise<UploadedFile> =>
+  new Promise(resolve => {
+    let step = 0;
+    const tick = setInterval(() => {
+      step += 1;
+      onProgress?.(Math.min(1, step / 6));
+      if (step >= 6) {
+        clearInterval(tick);
+        resolve({ url: file.uri, publicId: `mock/${file.name}`, mimeType: file.mimeType });
+      }
+    }, 200);
+  });
+
 /** Resolves with the stored file; onProgress receives 0..1. */
 export const uploadToCloudinary = async (
   file: LocalFile,
   signed: SignedUpload,
   onProgress?: (fraction: number) => void,
 ): Promise<UploadedFile> => {
+  if (USE_MOCK_API) return mockUpload(file, onProgress);
   const form = new FormData();
   await appendFile(form, file);
   form.append('api_key', signed.apiKey);

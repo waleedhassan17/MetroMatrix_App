@@ -1,14 +1,21 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Business (partner) model
+// MetroMatrix — Provider (business) model
 // ═══════════════════════════════════════════════════════
-// Which services offer which sub-types, which form fields each sub-type
-// shows, which documents it must upload (mirroring the API's
-// required-documents.ts), and the human labels for all of it.
+// Provider Selection's choices, the professional fields PersonalInfo shows
+// for each sub-type, and the documents each must upload — the FYP app's
+// provider-info flow, mapped onto MetroMatrix's services:
+//
+//   Doctor (healthcare)  specialty, clinic name, PMDC no., experience, about
+//                        docs: CNIC, medical licence, degree certificate
+//   Food                 restaurant / home kitchen / cloud kitchen
+//                        cuisine (+ daily capacity for home kitchens)
+//                        docs: CNIC + food licence (home kitchen: kitchen photo)
+//   Vendor (shopping)    category, store name, experience, about
+//                        docs: CNIC, business licence
 // TODO(API_AUTH): confirm REQUIRED_DOCUMENTS and the `details` keys.
 
 import type { Business, BusinessDocument, DocumentKind, GeoPoint, ServiceType, SubType } from '../types/auth';
-import { isValidPkPhone, PK_PHONE_MESSAGE } from '../utils/phone';
-import { toPkPhone, type ValidationErrors } from './authModel';
+import type { ValidationErrors } from './authModel';
 
 // ─── Services and sub-types ──────────────────────────
 export const SERVICE_SUBTYPES: Record<ServiceType, SubType[]> = {
@@ -28,49 +35,49 @@ export const SUBTYPE_SERVICE: Record<SubType, ServiceType> = {
 export const SERVICE_LABELS: Record<ServiceType, { title: string; partnerTitle: string; description: string }> = {
   shopping: {
     title: 'Shopping',
-    partnerTitle: 'Shopping store',
-    description: 'Sell your products to customers across your city.',
+    partnerTitle: 'Vendor Registration',
+    description: 'Sell products and manage your online store',
   },
   healthcare: {
     title: 'Healthcare',
-    partnerTitle: 'Healthcare doctor',
-    description: 'Offer consultations and manage your appointments.',
+    partnerTitle: 'Doctor',
+    description: 'Provide healthcare consultations and medical services',
   },
   food: {
     title: 'Food',
-    partnerTitle: 'Food',
-    description: 'Take orders from a restaurant, your home or a delivery kitchen.',
+    partnerTitle: 'Food Partner',
+    description: 'Cook and deliver meals to customers near you',
   },
 };
 
 export const SUBTYPE_LABELS: Record<SubType, { title: string; description: string }> = {
-  store: { title: 'Store', description: 'A shop with products to sell.' },
+  store: { title: 'Vendor', description: 'A shop with products to sell.' },
   doctor: { title: 'Doctor', description: 'A PMDC-registered practitioner.' },
   restaurant: { title: 'Restaurant', description: 'Dine-in or takeaway with a public address.' },
-  home_kitchen: { title: 'Home kitchen', description: 'Home-cooked food from your own kitchen.' },
-  cloud_kitchen: { title: 'Cloud kitchen', description: 'A delivery-only commercial kitchen.' },
+  home_kitchen: { title: 'Home Kitchen', description: 'Home-cooked food from your own kitchen.' },
+  cloud_kitchen: { title: 'Cloud Kitchen', description: 'A delivery-only commercial kitchen.' },
 };
+
+/** "Doctor", "Vendor", "Home Kitchen" — the provider badge on sign-in / sign-up. */
+export const providerTypeLabel = (subType: SubType | null | undefined): string =>
+  subType ? SUBTYPE_LABELS[subType].title : 'Service Provider';
 
 // ─── Documents ───────────────────────────────────────
 export const REQUIRED_DOCUMENTS: Record<SubType, DocumentKind[]> = {
-  store: ['cnic_front', 'cnic_back', 'storefront_photo'],
-  doctor: ['cnic_front', 'cnic_back', 'pmdc_certificate', 'medical_degree'],
-  restaurant: ['cnic_front', 'cnic_back', 'food_license', 'storefront_photo'],
-  home_kitchen: ['cnic_front', 'cnic_back', 'kitchen_photo'],
-  cloud_kitchen: ['cnic_front', 'cnic_back', 'food_license', 'kitchen_photo'],
+  doctor: ['cnic', 'medical_license', 'degree_certificate'],
+  store: ['cnic', 'business_license'],
+  restaurant: ['cnic', 'food_license'],
+  cloud_kitchen: ['cnic', 'food_license'],
+  home_kitchen: ['cnic', 'kitchen_photo'],
 };
 
 export const DOCUMENT_LABELS: Record<DocumentKind, { label: string; hint: string }> = {
-  cnic_front: { label: 'CNIC — front', hint: 'A clear photo of the front of your CNIC.' },
-  cnic_back: { label: 'CNIC — back', hint: 'The back of the same CNIC.' },
-  storefront_photo: { label: 'Storefront photo', hint: 'Your shop front with the signboard visible.' },
-  pmdc_certificate: {
-    label: 'PMDC registration certificate',
-    hint: 'Your current Pakistan Medical and Dental Council certificate.',
-  },
-  medical_degree: { label: 'Medical degree', hint: 'MBBS, BDS or equivalent.' },
-  food_license: { label: 'Food authority licence', hint: 'Your provincial food authority licence.' },
-  kitchen_photo: { label: 'Kitchen photo', hint: 'A clear photo of the kitchen you cook in.' },
+  cnic: { label: 'National ID Card (CNIC)', hint: 'Both sides of your CNIC in one clear photo or PDF.' },
+  medical_license: { label: 'Medical License', hint: 'Your current PMDC registration certificate.' },
+  degree_certificate: { label: 'Degree Certificate', hint: 'MBBS, BDS or equivalent.' },
+  business_license: { label: 'Business License', hint: 'Trade licence or NTN certificate for your store.' },
+  food_license: { label: 'Food Authority License', hint: 'Your provincial food authority licence.' },
+  kitchen_photo: { label: 'Kitchen Photo', hint: 'A clear photo of the kitchen you cook in.' },
 };
 
 /** Required kinds with no uploaded document that is still standing. */
@@ -79,8 +86,10 @@ export const missingDocuments = (subType: SubType, documents: Pick<BusinessDocum
   return REQUIRED_DOCUMENTS[subType].filter(kind => !present.has(kind));
 };
 
-// ─── Profile form ────────────────────────────────────
-export const CITIES = [
+// ─── Pickers ─────────────────────────────────────────
+const options = (values: string[]) => values.map(v => ({ value: v, label: v }));
+
+export const CITIES = options([
   'Lahore',
   'Karachi',
   'Islamabad',
@@ -92,36 +101,39 @@ export const CITIES = [
   'Sialkot',
   'Gujranwala',
   'Hyderabad',
-].map(c => ({ value: c, label: c }));
+]);
 
-export const STORE_CATEGORIES = ['Grocery', 'Fashion', 'Electronics', 'Home and living', 'Beauty', 'Pharmacy', 'Other'].map(
-  c => ({ value: c, label: c }),
-);
+export const STORE_CATEGORIES = options(['Grocery', 'Fashion', 'Electronics', 'Home and living', 'Beauty', 'Pharmacy', 'Other']);
 
-export const SPECIALTIES = [
-  'General physician',
-  'Paediatrics',
-  'Gynaecology',
-  'Dermatology',
-  'Cardiology',
-  'Orthopaedics',
-  'Psychiatry',
-  'Dentistry',
-  'ENT',
+export const SPECIALTIES = options([
+  'General Physician',
+  'Cardiologist',
+  'Dermatologist',
+  'Pediatrician',
+  'Gynecologist',
+  'Orthopedic Surgeon',
+  'Psychiatrist',
+  'Dentist',
+  'ENT Specialist',
   'Other',
-].map(c => ({ value: c, label: c }));
+]);
 
-export const CUISINES = ['Pakistani', 'BBQ', 'Chinese', 'Fast food', 'Desi home food', 'Bakery', 'Healthy', 'Other'].map(c => ({
-  value: c,
-  label: c,
-}));
+export const CUISINES = options(['Pakistani', 'BBQ', 'Chinese', 'Fast Food', 'Desi Home Food', 'Bakery', 'Healthy', 'Other']);
 
-export type DetailKey = 'storeCategory' | 'specialty' | 'pmdcNumber' | 'cuisine' | 'dailyCapacity';
+// ─── Professional info (PersonalInfo step 2) ─────────
+export type DetailKey =
+  | 'storeCategory'
+  | 'specialty'
+  | 'pmdcNumber'
+  | 'cuisine'
+  | 'dailyCapacity'
+  | 'experience'
+  | 'briefDescription';
 
 export interface DetailFieldSpec {
   key: DetailKey;
   label: string;
-  kind: 'text' | 'number' | 'picker';
+  kind: 'text' | 'number' | 'picker' | 'multiline';
   placeholder: string;
   helper?: string;
   options?: { value: string; label: string }[];
@@ -133,8 +145,28 @@ export interface BusinessFormSchema {
   namePlaceholder: string;
   addressLabel: string;
   addressHelper?: string;
+  /** Fields above the name (specialty, category, cuisine — the FYP order). */
+  lead: DetailFieldSpec[];
+  /** Fields after the address (PMDC no., experience, about …). */
   details: DetailFieldSpec[];
 }
+
+const experience: DetailFieldSpec = {
+  key: 'experience',
+  label: 'Experience',
+  kind: 'number',
+  placeholder: '5',
+  helper: 'Years in this work.',
+  required: true,
+};
+
+const about: DetailFieldSpec = {
+  key: 'briefDescription',
+  label: 'Brief Description',
+  kind: 'multiline',
+  placeholder: 'Tell us about your services...',
+  required: true,
+};
 
 const cuisine: DetailFieldSpec = {
   key: 'cuisine',
@@ -146,57 +178,49 @@ const cuisine: DetailFieldSpec = {
 };
 
 export const BUSINESS_FORM_SCHEMA: Record<SubType, BusinessFormSchema> = {
-  store: {
-    nameLabel: 'Store name',
-    namePlaceholder: 'Al-Noor General Store',
-    addressLabel: 'Store address',
-    details: [
-      {
-        key: 'storeCategory',
-        label: 'What do you sell?',
-        kind: 'picker',
-        placeholder: 'Choose a category',
-        options: STORE_CATEGORIES,
-        required: true,
-      },
-    ],
-  },
   doctor: {
-    nameLabel: 'Clinic or practice name',
-    namePlaceholder: 'Dr. Ayesha Khan Clinic',
+    nameLabel: 'Professional/Clinic Name',
+    namePlaceholder: 'Your practice name',
     addressLabel: 'Clinic address',
+    lead: [
+      { key: 'specialty', label: 'Specialty', kind: 'picker', placeholder: 'Select your specialty', options: SPECIALTIES, required: true },
+    ],
     details: [
-      {
-        key: 'specialty',
-        label: 'Specialty',
-        kind: 'picker',
-        placeholder: 'Choose your specialty',
-        options: SPECIALTIES,
-        required: true,
-      },
       {
         key: 'pmdcNumber',
-        label: 'PMDC registration number',
+        label: 'PMDC Registration Number',
         kind: 'text',
         placeholder: '12345-P',
-        helper: 'As printed on your PMDC certificate.',
+        helper: 'As printed on your medical license.',
         required: true,
       },
+      experience,
+      about,
     ],
   },
+  store: {
+    nameLabel: 'Business Name',
+    namePlaceholder: 'Your store name',
+    addressLabel: 'Store address',
+    lead: [
+      { key: 'storeCategory', label: 'Category', kind: 'picker', placeholder: 'Select a category', options: STORE_CATEGORIES, required: true },
+    ],
+    details: [experience, about],
+  },
   restaurant: {
-    nameLabel: 'Restaurant name',
+    nameLabel: 'Restaurant Name',
     namePlaceholder: 'Butt Karahi',
     addressLabel: 'Restaurant address',
-    details: [cuisine],
+    lead: [cuisine],
+    details: [experience, about],
   },
   home_kitchen: {
-    nameLabel: 'Kitchen name',
+    nameLabel: 'Kitchen Name',
     namePlaceholder: "Ammi's Kitchen",
     addressLabel: 'Pickup area',
     addressHelper: 'Your area and street. Customers see only the area until they order.',
+    lead: [cuisine],
     details: [
-      cuisine,
       {
         key: 'dailyCapacity',
         label: 'Meals you can cook a day',
@@ -205,20 +229,26 @@ export const BUSINESS_FORM_SCHEMA: Record<SubType, BusinessFormSchema> = {
         helper: 'Orders stop for the day when you reach it.',
         required: true,
       },
+      experience,
+      about,
     ],
   },
   cloud_kitchen: {
-    nameLabel: 'Kitchen name',
+    nameLabel: 'Kitchen Name',
     namePlaceholder: 'Late Night Bites',
     addressLabel: 'Kitchen address',
-    details: [cuisine],
+    lead: [cuisine],
+    details: [experience, about],
   },
 };
 
+export const allDetailFields = (subType: SubType): DetailFieldSpec[] => [
+  ...BUSINESS_FORM_SCHEMA[subType].lead,
+  ...BUSINESS_FORM_SCHEMA[subType].details,
+];
+
 export interface BusinessProfileForm {
   name: string;
-  /** National part only (the field shows +92). Mobile or landline. */
-  phone: string;
   city: string;
   address: string;
   location: GeoPoint | null;
@@ -227,7 +257,6 @@ export interface BusinessProfileForm {
 
 export const emptyBusinessProfile = (): BusinessProfileForm => ({
   name: '',
-  phone: '',
   city: '',
   address: '',
   location: null,
@@ -241,31 +270,34 @@ export const validateBusinessProfile = (subType: SubType, form: BusinessProfileF
   if (!form.name.trim()) errors.name = `${schema.nameLabel} is required`;
   else if (form.name.trim().length < 2) errors.name = 'Use at least 2 characters';
 
-  const phone = toPkPhone(form.phone);
-  if (!phone) errors.phone = 'Business phone is required';
-  else if (!isValidPkPhone(phone)) errors.phone = PK_PHONE_MESSAGE;
-
   if (!form.city) errors.city = 'Choose a city';
   if (!form.address.trim()) errors.address = `${schema.addressLabel} is required`;
   else if (form.address.trim().length < 5) errors.address = 'Add the street and area';
 
-  for (const field of schema.details) {
+  for (const field of allDetailFields(subType)) {
     const value = (form.details[field.key] ?? '').trim();
     if (field.required && !value) {
       errors[field.key] = `${field.label} is required`;
     } else if (field.kind === 'number' && value && !/^\d{1,4}$/.test(value)) {
       errors[field.key] = 'Enter a whole number';
-    } else if (field.kind === 'number' && value && Number(value) < 1) {
+    } else if (field.key === 'dailyCapacity' && value && Number(value) < 1) {
       errors[field.key] = 'Enter at least 1';
+    } else if (field.key === 'briefDescription' && value && value.length < 20) {
+      errors[field.key] = 'Write at least 20 characters';
     }
   }
   return errors;
 };
 
-/** Form → the create/PATCH body. Only the sub-type's own detail keys are sent. */
-export const businessProfileToPayload = (serviceType: ServiceType, subType: SubType, form: BusinessProfileForm) => {
+/** Form → the create/PATCH body. The business phone is the provider's own. */
+export const businessProfileToPayload = (
+  serviceType: ServiceType,
+  subType: SubType,
+  form: BusinessProfileForm,
+  phone: string,
+) => {
   const details: Record<string, string> = {};
-  for (const field of BUSINESS_FORM_SCHEMA[subType].details) {
+  for (const field of allDetailFields(subType)) {
     const value = form.details[field.key]?.trim();
     if (value) details[field.key] = value;
   }
@@ -273,7 +305,7 @@ export const businessProfileToPayload = (serviceType: ServiceType, subType: SubT
     serviceType,
     subType,
     name: form.name.trim(),
-    phone: toPkPhone(form.phone) ?? '',
+    phone,
     city: form.city,
     address: form.address.trim(),
     location: form.location,
@@ -284,16 +316,15 @@ export const businessProfileToPayload = (serviceType: ServiceType, subType: SubT
 /** Business → form values (resume a draft, edit after rejection). */
 export const businessToProfileForm = (business: Business): BusinessProfileForm => ({
   name: business.name,
-  phone: business.phone.startsWith('+92') ? business.phone.slice(3) : business.phone.replace(/\D/g, ''),
   city: business.city,
   address: business.address,
   location: business.location,
   details: { ...business.details },
 });
 
-/** Has the partner saved a complete profile (so setup can resume past it)? */
+/** Has the provider saved their professional info (so setup can resume past it)? */
 export const isProfileComplete = (business: Business | null): boolean =>
-  !!business && !!business.name && !!business.phone && !!business.city && !!business.address;
+  !!business && !!business.name && !!business.city && !!business.address;
 
 // ─── Admin decisions ─────────────────────────────────
 /** The partner reads this reason, so it must say something. */

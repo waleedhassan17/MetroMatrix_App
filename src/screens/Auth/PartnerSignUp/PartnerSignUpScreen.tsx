@@ -27,10 +27,7 @@ const PartnerSignUpScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const form = useAppSelector(selectPartnerSignUp);
 
-  const errors = validateSignUp(
-    { ...form.values, acceptedTerms: form.acceptedTerms, acceptedPartnerTerms: form.acceptedPartnerTerms },
-    { phoneRequired: true, partnerTerms: true },
-  );
+  const errors = validateSignUp(form.values);
   const shown = visibleErrors(errors, form.touched);
   const loading = form.status === 'loading';
 

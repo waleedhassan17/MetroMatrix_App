@@ -32,11 +32,10 @@ export const BUSINESS_STATUSES: readonly BusinessStatus[] = [
   'suspended',
 ];
 export const DOCUMENT_KINDS: readonly DocumentKind[] = [
-  'cnic_front',
-  'cnic_back',
-  'storefront_photo',
-  'pmdc_certificate',
-  'medical_degree',
+  'cnic',
+  'medical_license',
+  'degree_certificate',
+  'business_license',
   'food_license',
   'kitchen_photo',
 ];
@@ -165,7 +164,7 @@ export const businessStatusSerializer = (raw: unknown): BusinessStatusInfo | nul
       .filter(isObject)
       .map(d => ({
         id: str(d.id ?? d._id),
-        kind: oneOf(d.kind, DOCUMENT_KINDS, 'cnic_front'),
+        kind: oneOf(d.kind, DOCUMENT_KINDS, 'cnic'),
         status: oneOf(d.status, DOCUMENT_STATUSES, 'pending'),
         reviewerNote: strOrNull(d.reviewerNote ?? d.note),
       })),

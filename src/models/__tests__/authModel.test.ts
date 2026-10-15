@@ -1,5 +1,9 @@
 import {
+  ageOn,
   getPasswordStrength,
+  parseIsoDate,
+  validateLocationStep,
+  validatePersonalStep,
   nationalFromPkPhone,
   toPkPhone,
   validateChangePassword,
@@ -14,12 +18,9 @@ import {
 
 const valid: SignUpData = {
   name: 'Ayesha Khan',
+  phone: '3124890176',
   email: 'ayesha@example.com',
-  phone: '',
   password: 'metro2026',
-  confirmPassword: 'metro2026',
-  acceptedTerms: true,
-  acceptedPartnerTerms: true,
 };
 
 describe('validateSignIn', () => {
@@ -53,8 +54,8 @@ describe('validatePassword (policy identical to the API)', () => {
   });
 });
 
-describe('validateSignUp', () => {
-  it('accepts a valid customer with no phone', () => {
+describe('validateSignUp (the FYP four fields)', () => {
+  it('accepts a valid sign-up', () => {
     expect(validateSignUp(valid)).toEqual({});
   });
 
@@ -63,37 +64,50 @@ describe('validateSignUp', () => {
     expect(validateSignUp({ ...valid, name: ' A ' }).name).toBe('Name must be at least 2 characters');
   });
 
-  it('validates the email', () => {
-    expect(validateSignUp({ ...valid, email: 'nope' }).email).toBe('Enter a valid email address');
-  });
-
-  it('treats phone as optional for customers but checks it when given', () => {
-    expect(validateSignUp({ ...valid, phone: '3124890176' })).toEqual({});
+  it('requires a valid Pakistani mobile', () => {
+    expect(validateSignUp({ ...valid, phone: '' }).phone).toBe('Mobile number is required');
     expect(validateSignUp({ ...valid, phone: '4235761234' }).phone).toMatch(/valid Pakistani mobile/);
     expect(validateSignUp({ ...valid, phone: '31248' }).phone).toMatch(/valid Pakistani mobile/);
   });
 
-  it('requires phone for partners', () => {
-    const opts = { phoneRequired: true, partnerTerms: true };
-    expect(validateSignUp(valid, opts).phone).toBe('Mobile number is required');
-    expect(validateSignUp({ ...valid, phone: '3124890176' }, opts)).toEqual({});
+  it('validates the email and applies the password policy', () => {
+    expect(validateSignUp({ ...valid, email: 'nope' }).email).toBe('Enter a valid email address');
+    expect(validateSignUp({ ...valid, password: 'short1' }).password).toBe('Use at least 8 characters');
+    expect(validateSignUp({ ...valid, password: 'lettersonly' }).password).toBe('Add at least one number');
+  });
+});
+
+describe('CompleteProfile steps', () => {
+  const today = new Date(2026, 9, 15);
+
+  it('personal: needs a real past date of birth, at least 13 years ago, and a gender', () => {
+    expect(validatePersonalStep({ dateOfBirth: '1995-04-12', gender: 'female' }, today)).toEqual({});
+    expect(validatePersonalStep({ dateOfBirth: '', gender: null }, today)).toEqual({
+      dateOfBirth: 'Select your date of birth',
+      gender: 'Select your gender',
+    });
+    expect(validatePersonalStep({ dateOfBirth: '2026-02-30', gender: 'male' }, today).dateOfBirth).toBe('Enter a valid date');
+    expect(validatePersonalStep({ dateOfBirth: '2027-01-01', gender: 'male' }, today).dateOfBirth).toMatch(/future/);
+    expect(validatePersonalStep({ dateOfBirth: '2014-01-01', gender: 'other' }, today).dateOfBirth).toMatch(/at least 13/);
   });
 
-  it('applies the password policy and confirmation', () => {
-    expect(validateSignUp({ ...valid, password: 'short1', confirmPassword: 'short1' }).password).toBe(
-      'Use at least 8 characters',
-    );
-    expect(validateSignUp({ ...valid, confirmPassword: '' }).confirmPassword).toBe('Confirm your password');
-    expect(validateSignUp({ ...valid, confirmPassword: 'metro2027' }).confirmPassword).toBe('Passwords do not match');
+  it('age counts birthdays correctly', () => {
+    expect(ageOn(new Date(2013, 9, 16), today)).toBe(12);
+    expect(ageOn(new Date(2013, 9, 15), today)).toBe(13);
+    expect(parseIsoDate('2001-08-15')?.getDate()).toBe(15);
+    expect(parseIsoDate('15/08/2001')).toBeNull();
   });
 
-  it('requires terms, and partner terms only for partners', () => {
-    expect(validateSignUp({ ...valid, acceptedTerms: false }).acceptedTerms).toBeDefined();
-    expect(validateSignUp({ ...valid, acceptedPartnerTerms: false })).toEqual({});
-    expect(
-      validateSignUp({ ...valid, phone: '3124890176', acceptedPartnerTerms: false }, { phoneRequired: true, partnerTerms: true })
-        .acceptedPartnerTerms,
-    ).toBeDefined();
+  it('location: street and city required, postal code optional but 5 digits', () => {
+    expect(validateLocationStep({ streetAddress: '12 Main Boulevard', city: 'Lahore', postalCode: '' })).toEqual({});
+    expect(validateLocationStep({ streetAddress: '', city: '', postalCode: '' })).toEqual({
+      streetAddress: 'Street address is required',
+      city: 'Select your city',
+    });
+    expect(validateLocationStep({ streetAddress: 'abc', city: 'Lahore', postalCode: '540' })).toEqual({
+      streetAddress: 'Add your street and area',
+      postalCode: 'Postal codes are 5 digits',
+    });
   });
 });
 

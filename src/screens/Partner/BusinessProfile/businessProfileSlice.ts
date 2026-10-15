@@ -21,7 +21,7 @@ import type { Business, ServiceType, SubType } from '@/types';
 import { setBusiness } from '../../Auth/authSlice';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../Auth/shared/formStatus';
 
-type CoreField = 'name' | 'phone' | 'city' | 'address';
+type CoreField = 'name' | 'city' | 'address';
 export type ProfileField = CoreField | DetailKey;
 
 export interface BusinessProfileSliceState {
@@ -124,11 +124,17 @@ export const businessProfileSlice = createAppSlice({
 
     saveDraftAsync: create.asyncThunk(
       async (
-        args: { business: Business | null; serviceType: ServiceType; subType: SubType; form: BusinessProfileForm },
+        args: {
+          business: Business | null;
+          serviceType: ServiceType;
+          subType: SubType;
+          form: BusinessProfileForm;
+          phone: string;
+        },
         { dispatch, rejectWithValue },
       ) => {
         try {
-          const payload = businessProfileToPayload(args.serviceType, args.subType, args.form);
+          const payload = businessProfileToPayload(args.serviceType, args.subType, args.form, args.phone);
           const saved = args.business ? await updateMyBusiness(payload) : await createBusiness(payload);
           dispatch(setBusiness(saved));
           return saved.id;
