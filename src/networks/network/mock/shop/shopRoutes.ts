@@ -968,8 +968,10 @@ export function registerShopRoutes(kit: ShopKit) {
     const mine = db.shop.orders.filter(o => o.storeId === store.id);
     const counts: Record<string, number> = { new: 0, to_pack: 0, to_ship: 0, shipped: 0, done: 0, cancelled: 0 };
     for (const o of mine) counts[segmentOf(o)]++;
+    // `payment=proof_submitted`: every order with a transfer to check, whatever its segment.
+    const payment = ctx.query.payment ? String(ctx.query.payment) : null;
     const rows = mine
-      .filter(o => segmentOf(o) === String(ctx.query.segment ?? 'new'))
+      .filter(o => (payment ? o.paymentStatus === payment && o.status !== 'cancelled' : segmentOf(o) === String(ctx.query.segment ?? 'new')))
       .filter(o => !q || o.code.toLowerCase().includes(q) || (db.users.find(u => u.id === o.userId)?.name ?? '').toLowerCase().includes(q))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
       .map(o => partnerOrderRow(db, o));

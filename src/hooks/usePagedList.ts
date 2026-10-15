@@ -11,9 +11,11 @@ import { useFocusEffect } from '@react-navigation/native';
 import { appendUnique, hasMorePages, LIST_PAGE_SIZE } from '../models/pagingModel';
 import type { Paged } from '../types/shopping';
 
-export interface PagedList<T> {
+export interface PagedList<T, P extends Paged<T> = Paged<T>> {
   /** The pages loaded so far, in the server's order. */
   rows: T[];
+  /** The first page's whole answer — for extras some lists carry (segment counts). */
+  first: P | null;
   /** Rows the filters match in all — may exceed what has loaded. */
   total: number;
   hasMore: boolean;
@@ -26,6 +28,8 @@ export interface PagedList<T> {
   reload: () => void;
   /** Page one again, keeping the rows on screen (pull to refresh). */
   refresh: () => void;
+  /** Page one again with no indicator at all (a timer while the screen is open). */
+  poll: () => void;
   /** The next page, appended — a list's onEndReached. */
   loadMore: () => void;
   /** Change rows locally after an action (remove a saved item, …). */
@@ -38,13 +42,17 @@ export interface PagedList<T> {
  * and when `key` changes; an answer for filters no longer on screen is
  * dropped (the generation guard), and only one "load more" runs at a time.
  */
-export function usePagedList<T>(
-  fetchPage: (page: number, pageSize: number) => Promise<Paged<T>>,
+/** The row type of a page type. */
+type RowOf<P> = P extends Paged<infer T> ? T : never;
+
+export function usePagedList<P extends Paged<unknown>, T = RowOf<P>>(
+  fetchPage: (page: number, pageSize: number) => Promise<P>,
   key: string,
   options: { enabled?: boolean; keyOf?: (row: T) => string | undefined; pageSize?: number } = {},
-): PagedList<T> {
+): PagedList<T, P & Paged<T>> {
   const { enabled = true, keyOf, pageSize = LIST_PAGE_SIZE } = options;
   const [rows, setRowsState] = useState<T[]>([]);
+  const [first, setFirst] = useState<(P & Paged<T>) | null>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [hasMore, setHasMore] = useState(false);
@@ -67,25 +75,28 @@ export function usePagedList<T>(
   const moreInFlight = useRef(false);
 
   const load = useCallback(
-    (mode: 'reload' | 'refresh') => {
+    (mode: 'reload' | 'refresh' | 'poll') => {
       if (!enabled) return;
+      // A poll never interrupts the person scrolling further pages in.
+      if (mode === 'poll' && moreInFlight.current) return;
       const gen = ++generation.current;
       moreInFlight.current = false;
       if (mode === 'reload') setIsLoading(true);
-      else setIsRefreshing(true);
+      else if (mode === 'refresh') setIsRefreshing(true);
       setIsLoadingMore(false);
-      setError('');
+      if (mode !== 'poll') setError('');
       fetchRef
         .current(1, pageSize)
         .then(p => {
           if (gen !== generation.current) return;
-          setRowsState(p.items);
+          setRowsState(p.items as T[]);
+          setFirst(p as P & Paged<T>);
           setPage(1);
           setTotal(p.total);
           setHasMore(hasMorePages(p));
         })
         .catch((e: unknown) => {
-          if (gen !== generation.current) return;
+          if (gen !== generation.current || mode === 'poll') return;
           setError(e instanceof Error ? e.message : 'Could not load this list.');
         })
         .finally(() => {
@@ -101,6 +112,7 @@ export function usePagedList<T>(
 
   const reload = useCallback(() => load('reload'), [load]);
   const refresh = useCallback(() => load('refresh'), [load]);
+  const poll = useCallback(() => load('poll'), [load]);
 
   const loadMore = useCallback(() => {
     if (!enabled || isLoading || moreInFlight.current || !hasMore) return;
@@ -111,7 +123,7 @@ export function usePagedList<T>(
       .current(page + 1, pageSize)
       .then(p => {
         if (gen !== generation.current) return;
-        setRowsState(prev => appendUnique(prev, p.items, keyOfRef.current));
+        setRowsState(prev => appendUnique(prev, p.items as T[], keyOfRef.current));
         setPage(page + 1);
         setTotal(p.total);
         setHasMore(hasMorePages(p));
@@ -131,7 +143,7 @@ export function usePagedList<T>(
   // On focus (coming back from a detail) and whenever the filters change.
   useFocusEffect(reload);
 
-  return { rows, total, hasMore, isLoading, isLoadingMore, isRefreshing, error, reload, refresh, loadMore, setRows };
+  return { rows, first, total, hasMore, isLoading, isLoadingMore, isRefreshing, error, reload, refresh, poll, loadMore, setRows };
 }
 
 /** `value`, once it has stopped changing for `ms` — a search box's query. */

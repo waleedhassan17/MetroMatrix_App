@@ -66,3 +66,15 @@ export const validatePaymentAccount = (a: PaymentAccountInput): ValidationErrors
   }
   return errors;
 };
+
+/** Brand colours a store can start from (any hex works). */
+export const BRAND_PRESETS = ['#7A1F3D', '#111827', '#0F766E', '#1E3A8A', '#9A3412', '#065F46', '#6B21A8', '#B91C1C', '#C25100', '#334155'];
+
+/** The text colour on the brand: white, or the app's ink. */
+export const ON_BRAND_CHOICES: { value: string; label: string }[] = [
+  { value: '#FFFFFF', label: 'White text' },
+  { value: '#1C1917', label: 'Dark text' },
+];
+
+/** "7a1f3d" / "#7A1F3D" → "#7A1F3D" while typing (never more than 6 digits). */
+export const normaliseHex = (raw: string) => `#${raw.replace(/[^0-9a-fA-F]/g, '').slice(0, 6).toUpperCase()}`;

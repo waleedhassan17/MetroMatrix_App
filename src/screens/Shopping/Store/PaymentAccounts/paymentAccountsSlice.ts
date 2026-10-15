@@ -1,0 +1,110 @@
+// MetroMatrix — Payment accounts slice: where customers send transfers.
+
+import type { PayloadAction } from '@reduxjs/toolkit';
+import { createAppSlice } from '@store/createAppSlice';
+import { createPaymentAccount, deletePaymentAccount, listPaymentAccounts, updatePaymentAccount } from '@networks/shopping/partner/storeNetwork';
+import { toRejectedValue } from '@networks/network/apiHelpers';
+import { normaliseAccountNumber } from '@models/shopping/storeModel';
+import type { PaymentAccount, PaymentAccountInput } from '@/types';
+import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+
+export interface PaymentAccountsSliceState {
+  accounts: PaymentAccount[];
+  status: FormStatus;
+  busy: string | null;
+  error: ServerError;
+  /** The sheet: null closed, '' new, an id to edit. */
+  editing: string | null;
+  form: PaymentAccountInput;
+  submitted: boolean;
+}
+
+const blank = (): PaymentAccountInput => ({ kind: 'raast', title: '', number: '', bankName: null, isActive: true });
+
+const initialState: PaymentAccountsSliceState = { accounts: [], status: 'idle', busy: null, error: NO_ERROR, editing: null, form: blank(), submitted: false };
+
+export const paymentAccountsSlice = createAppSlice({
+  name: 'paymentAccounts',
+  initialState,
+  reducers: create => ({
+    openAccountSheet: create.reducer((state, action: PayloadAction<PaymentAccount | null>) => {
+      const a = action.payload;
+      state.editing = a ? a.id : '';
+      state.form = a ? { kind: a.kind, title: a.title, number: a.number, bankName: a.bankName, isActive: a.isActive } : blank();
+      state.submitted = false;
+      state.error = NO_ERROR;
+    }),
+    closeAccountSheet: create.reducer(state => {
+      state.editing = null;
+    }),
+    setAccountField: create.reducer(<K extends keyof PaymentAccountInput>(state: PaymentAccountsSliceState, action: PayloadAction<{ field: K; value: PaymentAccountInput[K] }>) => {
+      state.form[action.payload.field] = action.payload.value;
+    }),
+    markAccountSubmitted: create.reducer(state => {
+      state.submitted = true;
+    }),
+    loadAccountsAsync: create.asyncThunk(
+      async (_: void, { rejectWithValue }) => {
+        try {
+          return await listPaymentAccounts();
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        pending: state => {
+          state.status = 'loading';
+        },
+        fulfilled: (state, action) => {
+          state.status = 'succeeded';
+          state.accounts = action.payload;
+        },
+        rejected: (state, action) => {
+          state.status = 'failed';
+          state.error = readRejection(action, "We couldn't load your accounts.");
+        },
+      },
+    ),
+    changeAccountAsync: create.asyncThunk(
+      async (
+        change: { kind: 'save'; id: string; input: PaymentAccountInput } | { kind: 'delete'; id: string } | { kind: 'toggle'; account: PaymentAccount },
+        { rejectWithValue },
+      ) => {
+        try {
+          if (change.kind === 'save') {
+            const input = { ...change.input, number: normaliseAccountNumber(change.input.kind, change.input.number), bankName: change.input.kind === 'bank' ? change.input.bankName : null };
+            await (change.id ? updatePaymentAccount(change.id, input) : createPaymentAccount(input));
+          } else if (change.kind === 'delete') await deletePaymentAccount(change.id);
+          else {
+            const { id, ...rest } = change.account;
+            await updatePaymentAccount(id, { ...rest, isActive: !rest.isActive });
+          }
+          return await listPaymentAccounts();
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        pending: (state, action) => {
+          state.busy = action.meta.arg.kind;
+          state.error = NO_ERROR;
+        },
+        fulfilled: (state, action) => {
+          state.busy = null;
+          state.accounts = action.payload;
+          state.editing = null;
+        },
+        rejected: (state, action) => {
+          state.busy = null;
+          state.error = readRejection(action, "That didn't save.");
+        },
+      },
+    ),
+  }),
+  selectors: {
+    selectPaymentAccounts: state => state,
+  },
+});
+
+export const { openAccountSheet, closeAccountSheet, setAccountField, markAccountSubmitted, loadAccountsAsync, changeAccountAsync } = paymentAccountsSlice.actions;
+export const { selectPaymentAccounts } = paymentAccountsSlice.selectors;

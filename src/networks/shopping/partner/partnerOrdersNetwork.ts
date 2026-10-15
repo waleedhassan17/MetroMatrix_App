@@ -10,7 +10,12 @@ import { clean, pageParams, request } from '../http';
 
 const BASE = '/partner/shop/orders';
 
-export const listPartnerOrders = (query: { segment: PartnerOrderSegment; q?: string }, page: number, pageSize = 20) =>
+/** `payment: 'proof_submitted'` lists every order with a transfer to check, across segments. */
+export const listPartnerOrders = (
+  query: { segment: PartnerOrderSegment; q?: string; payment?: 'proof_submitted' },
+  page: number,
+  pageSize = 20,
+) =>
   request(() => api.get(BASE, { params: clean({ ...query, ...pageParams(page, pageSize) }) }), raw => ({
     ...paged(raw, partnerOrderRowSerializer),
     segmentCounts: isObject(raw) && isObject(raw.segmentCounts)

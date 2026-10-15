@@ -1,5 +1,6 @@
 // MetroMatrix — Partner app tabs. One array per service so each partner
-// navigator can grow its own tools without touching the others.
+// navigator can grow its own tools without touching the others. The store
+// partner's app has its own map (StorePartner.ts).
 
 import type { ITabRoute } from './types';
 import { ROUTES } from './Base';
@@ -14,17 +15,6 @@ const profileTab: ITabRoute = {
   icon: 'person-circle-outline',
   iconActive: 'person-circle',
 };
-
-export const STORE_PARTNER_TAB_ROUTES: ITabRoute[] = [
-  {
-    title: ROUTES.HOME_TAB,
-    component: PartnerHomeScreen,
-    label: 'Store',
-    icon: 'storefront-outline',
-    iconActive: 'storefront',
-  },
-  profileTab,
-];
 
 export const DOCTOR_PARTNER_TAB_ROUTES: ITabRoute[] = [
   {

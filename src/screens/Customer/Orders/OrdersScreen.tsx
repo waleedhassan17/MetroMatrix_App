@@ -6,7 +6,7 @@
 // payment the store is waiting for first).
 
 import React, { useEffect } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';

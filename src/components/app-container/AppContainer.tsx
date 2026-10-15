@@ -70,6 +70,12 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       AdminTotp: 'staff/verify',
       AdminTwoFactorEnrol: 'staff/authenticator',
       DesignGallery: 'dev/gallery',
+      // The store partner's app (its own stack): metromatrix://store/orders/:id
+      StoreOrderDetail: 'store/orders/:id',
+      StoreReturnDetail: 'store/returns/:id',
+      ProductForm: 'store/products/edit',
+      Inventory: 'store/inventory',
+      Insights: 'store/insights',
       // /home (a partner's home too), /home/food, /home/services/healthcare
       // Shopping: /shop, /shop/store/:slug, /shop/product/:id … (exact, so
       // they read the same in a link and in the address bar).

@@ -66,6 +66,23 @@ import { ordersSlice } from '../screens/Customer/Orders/ordersSlice';
 import { addressBookSlice } from '../screens/Account/AddressBook/addressBookSlice';
 import { addressFormSlice } from '../screens/Account/AddressForm/addressFormSlice';
 import { notificationsSlice } from '../screens/Account/Notifications/notificationsSlice';
+// Shopping (store partner)
+import { storeTodaySlice } from '../screens/Shopping/Store/StoreToday/storeTodaySlice';
+import { storeOrdersSlice } from '../screens/Shopping/Store/StoreOrders/storeOrdersSlice';
+import { storeOrderDetailSlice } from '../screens/Shopping/Store/StoreOrderDetail/storeOrderDetailSlice';
+import { storeProductsSlice } from '../screens/Shopping/Store/StoreProducts/storeProductsSlice';
+import { productFormSlice } from '../screens/Shopping/Store/ProductForm/productFormSlice';
+import { inventorySlice } from '../screens/Shopping/Store/Inventory/inventorySlice';
+import { collectionsSlice } from '../screens/Shopping/Store/Collections/collectionsSlice';
+import { couponsSlice } from '../screens/Shopping/Store/Coupons/couponsSlice';
+import { couponFormSlice } from '../screens/Shopping/Store/CouponForm/couponFormSlice';
+import { storeReturnsSlice } from '../screens/Shopping/Store/StoreReturns/storeReturnsSlice';
+import { storeReturnDetailSlice } from '../screens/Shopping/Store/StoreReturnDetail/storeReturnDetailSlice';
+import { storeReviewsSlice } from '../screens/Shopping/Store/StoreReviews/storeReviewsSlice';
+import { insightsSlice } from '../screens/Shopping/Store/Insights/insightsSlice';
+import { storeProfileSlice } from '../screens/Shopping/Store/StoreProfile/storeProfileSlice';
+import { storeSettingsSlice } from '../screens/Shopping/Store/StoreSettings/storeSettingsSlice';
+import { paymentAccountsSlice } from '../screens/Shopping/Store/PaymentAccounts/paymentAccountsSlice';
 
 // `auth` is persisted through its OWN persistReducer so that exactly one
 // field reaches disk. The session (user, business, tokens) is never
@@ -124,6 +141,23 @@ const rootReducer = combineReducers({
   addressBook: addressBookSlice.reducer,
   addressForm: addressFormSlice.reducer,
   notifications: notificationsSlice.reducer,
+  // Shopping (store partner)
+  storeToday: storeTodaySlice.reducer,
+  storeOrders: storeOrdersSlice.reducer,
+  storeOrderDetail: storeOrderDetailSlice.reducer,
+  storeProducts: storeProductsSlice.reducer,
+  productForm: productFormSlice.reducer,
+  inventory: inventorySlice.reducer,
+  collections: collectionsSlice.reducer,
+  coupons: couponsSlice.reducer,
+  couponForm: couponFormSlice.reducer,
+  storeReturns: storeReturnsSlice.reducer,
+  storeReturnDetail: storeReturnDetailSlice.reducer,
+  storeReviews: storeReviewsSlice.reducer,
+  insights: insightsSlice.reducer,
+  storeProfile: storeProfileSlice.reducer,
+  storeSettings: storeSettingsSlice.reducer,
+  paymentAccounts: paymentAccountsSlice.reducer,
 });
 
 type RootReducerState = ReturnType<typeof rootReducer>;

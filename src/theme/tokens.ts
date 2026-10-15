@@ -214,6 +214,8 @@ export const size = {
   chart: { spark: 56, bar: 168, line: 168 },
   /** Rating-breakdown bar track. */
   ratingBar: 6,
+  /** Inventory's stock field beside each row. */
+  stockField: 96,
 } as const;
 
 export const opacity = {
