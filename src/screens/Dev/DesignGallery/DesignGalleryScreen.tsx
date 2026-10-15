@@ -10,7 +10,6 @@ import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
-import { selectThemeMode, setThemeMode, type ThemeMode } from '@store/preferencesSlice';
 import { ServiceScope, useStyles, useTheme, type ServiceName, type Theme } from '@theme/index';
 import type { RootStackParamList } from '@/types';
 import {
@@ -40,17 +39,13 @@ import {
   StatusTimeline,
   TextField,
 } from '@custom/index';
+import { BrandMark, BrandWordmark } from '@components/brand';
+import { AuthHeader, AuthTabs, ProviderBadge, type AuthTab } from '@components/auth/AuthChrome';
 import { selectPreviewService, setPreviewService } from './designGallerySlice';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'DesignGallery'>;
 
 const SAMPLE_IMAGE = require('../../../../assets/images/icon.png');
-
-const MODES: { key: ThemeMode; label: string }[] = [
-  { key: 'system', label: 'System' },
-  { key: 'light', label: 'Light' },
-  { key: 'dark', label: 'Dark' },
-];
 
 const SERVICES: { key: ServiceName; label: string }[] = [
   { key: 'neutral', label: 'Neutral' },
@@ -124,6 +119,7 @@ const Swatches: React.FC = () => {
 
 const Stories: React.FC = () => {
   const styles = useStyles(makeStyles);
+  const { size } = useTheme();
   const [text, setText] = useState('');
   const [email, setEmail] = useState('not-an-email');
   const [password, setPassword] = useState('Metro2026!');
@@ -135,9 +131,27 @@ const Stories: React.FC = () => {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [authTab, setAuthTab] = useState<AuthTab>('signin');
 
   return (
     <>
+      <Section title="Brand">
+        <View style={styles.row}>
+          <BrandMark size={size.thumb} />
+          <BrandWordmark variant="compact" />
+        </View>
+        <BrandWordmark variant="display" />
+      </Section>
+
+      <Section title="Auth">
+        <AuthHeader
+          title="Welcome Back"
+          subtitle="Sign in to continue your registration"
+          badge={<ProviderBadge label="Home kitchen" service="food" />}
+        />
+        <AuthTabs value={authTab} onChange={setAuthTab} />
+      </Section>
+
       <Section title="Colour">
         <Swatches />
       </Section>
@@ -175,7 +189,7 @@ const Stories: React.FC = () => {
       </Section>
 
       <Section title="Fields">
-        <TextField label="Full name" value={text} onChangeText={setText} placeholder="Ayesha Khan" clearable leftIcon="user" />
+        <TextField label="Full name" value={text} onChangeText={setText} placeholder="Ayesha Khan" clearable icon="person-outline" />
         <TextField label="Email" mode="email" value={email} onChangeText={setEmail} error="Enter a valid email address" />
         <TextField label="Password" mode="password" value={password} onChangeText={setPassword} />
         <PasswordStrength password={password} />
@@ -295,7 +309,6 @@ const Stories: React.FC = () => {
 
 const DesignGalleryScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
-  const mode = useAppSelector(selectThemeMode);
   const service = useAppSelector(selectPreviewService);
 
   return (
@@ -306,7 +319,6 @@ const DesignGalleryScreen: React.FC<Props> = ({ navigation }) => {
         subtitle="Quiet Metro, every component."
         onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
         footer={<Button label="Sticky call to action" onPress={() => undefined} fullWidth />}>
-        <SegmentTabs options={MODES} value={mode} onChange={m => dispatch(setThemeMode(m))} accessibilityLabel="Theme mode" />
         <SegmentTabs options={SERVICES} value={service} onChange={s => dispatch(setPreviewService(s))} accessibilityLabel="Service accent" />
         <Stories />
       </ScreenShell>

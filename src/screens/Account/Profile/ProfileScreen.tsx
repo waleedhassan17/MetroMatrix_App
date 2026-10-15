@@ -9,7 +9,6 @@ import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useSignOut } from '@hooks/useSignOut';
 import { hasErrors, nationalFromPkPhone, validateProfile } from '@models/authModel';
-import { selectThemeMode, setThemeMode, type ThemeMode } from '@store/preferencesSlice';
 import { visibleErrors } from '@utils/formErrors';
 import { haptics } from '@utils/haptics';
 import { pickImageFromLibrary } from '@utils/pickers';
@@ -24,7 +23,6 @@ import {
   ListRow,
   ProgressBar,
   ScreenShell,
-  SegmentTabs,
   Sheet,
   TextField,
 } from '@custom/index';
@@ -46,12 +44,6 @@ import {
 
 type Props = NativeStackScreenProps<AccountStackParamList, 'Profile'>;
 
-const THEME_OPTIONS: { key: ThemeMode; label: string }[] = [
-  { key: 'system', label: 'System' },
-  { key: 'light', label: 'Light' },
-  { key: 'dark', label: 'Dark' },
-];
-
 const ROLE_LABEL: Record<string, string> = {
   customer: 'Customer',
   partner: 'Partner',
@@ -70,7 +62,6 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   const styles = useStyles(makeStyles);
   const user = useAppSelector(selectUser);
   const business = useAppSelector(selectBusiness);
-  const themeMode = useAppSelector(selectThemeMode);
   const p = useAppSelector(selectProfile);
   const { confirmSignOut } = useSignOut();
 
@@ -181,18 +172,6 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
             fullWidth
           />
         ) : null}
-      </Card>
-
-      <Card>
-        <AppText variant="micro" tone="muted">
-          Appearance
-        </AppText>
-        <SegmentTabs
-          options={THEME_OPTIONS}
-          value={themeMode}
-          onChange={mode => dispatch(setThemeMode(mode))}
-          accessibilityLabel="Theme"
-        />
       </Card>
 
       <Card padded="horizontal">

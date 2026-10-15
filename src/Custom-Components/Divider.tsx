@@ -17,7 +17,7 @@ export const Divider: React.FC<{ label?: string }> = ({ label }) => {
   return (
     <View style={styles.row} accessibilityRole="text" accessibilityLabel={label}>
       <View style={styles.line} />
-      <AppText variant="micro" tone="muted">
+      <AppText variant="small" tone="faint">
         {label}
       </AppText>
       <View style={styles.line} />

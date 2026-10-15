@@ -58,3 +58,13 @@ export const contrastRatio = (a: string, b: string): number => {
   const [hi, lo] = la > lb ? [la, lb] : [lb, la];
   return (hi + 0.05) / (lo + 0.05);
 };
+
+const toHex = (n: number) => Math.round(Math.max(0, Math.min(255, n))).toString(16).padStart(2, '0');
+
+/** Blend `a` toward `b` by `t` (0..1) in sRGB — the FYP's `mix`. */
+export const mix = (a: string, b: string, t: number): string => {
+  const x = parseHex(a);
+  const y = parseHex(b);
+  if (!x || !y) return a;
+  return `#${toHex(x.r + (y.r - x.r) * t)}${toHex(x.g + (y.g - x.g) * t)}${toHex(x.b + (y.b - x.b) * t)}`;
+};

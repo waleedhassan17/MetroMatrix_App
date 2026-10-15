@@ -23,7 +23,7 @@ export interface BottomSheetPickerProps<V extends string> {
   onSelect: (value: V) => void;
 }
 
-const makeStyles = ({ space, size, colors, radius }: Theme) =>
+const makeStyles = ({ space, size, colors, radius, elevation }: Theme) =>
   StyleSheet.create({
     option: {
       flexDirection: 'row',
@@ -37,13 +37,14 @@ const makeStyles = ({ space, size, colors, radius }: Theme) =>
     field: {
       flexDirection: 'row',
       alignItems: 'center',
-      minHeight: size.control.md,
+      minHeight: size.control.lg,
       borderRadius: radius.md,
       borderWidth: size.border,
-      borderColor: colors.lineStrong,
+      borderColor: colors.line,
       backgroundColor: colors.surface,
-      paddingHorizontal: space.s12,
+      paddingHorizontal: space.s16,
       gap: space.s8,
+      ...elevation.input,
     },
     fieldRoot: { gap: space.s8 },
   });
@@ -105,7 +106,7 @@ export const PickerField: React.FC<{
   const { colors } = useTheme();
   return (
     <View style={styles.fieldRoot}>
-      <AppText variant="small" tone={error ? 'danger' : 'muted'}>
+      <AppText variant="label" tone={error ? 'danger' : 'ink'}>
         {label}
       </AppText>
       <Pressable
@@ -114,7 +115,7 @@ export const PickerField: React.FC<{
         accessibilityLabel={`${label}: ${valueLabel ?? placeholder}`}
         accessibilityHint={error}
         style={[styles.field, error ? { borderColor: colors.danger } : null]}>
-        <AppText variant="body" tone={valueLabel ? 'ink' : 'faint'} style={{ flex: 1 }} numberOfLines={1}>
+        <AppText variant="input" tone={valueLabel ? 'ink' : 'faint'} style={{ flex: 1 }} numberOfLines={1}>
           {valueLabel ?? placeholder}
         </AppText>
         <Icon name="chevron-down" size="md" color={colors.inkMuted} />

@@ -7,16 +7,15 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import * as SplashScreen from 'expo-splash-screen';
-import { useFonts } from 'expo-font';
 import { store, persistor } from './src/store/store';
 import { ThemeProvider } from './src/theme';
-import { FONT_MAP } from './src/theme/fonts';
 import AppContainer from './src/components/app-container/AppContainer';
 import ErrorBoundary from './src/components/shared/ErrorBoundary';
 
-// Keep the native splash up until fonts are loaded AND AppContainer knows
-// which navigator to mount (bootstrapSession settled). Nothing renders in
-// between — no JS spinner, no flash of system font.
+// Keep the native splash up until AppContainer knows which navigator to
+// mount (bootstrapSession settled); the JS splash then plays over it. The app
+// renders in the platform system font (like the FYP), so there is no font to
+// wait for.
 void SplashScreen.preventAutoHideAsync().catch(() => {
   /* already prevented (fast refresh) */
 });
@@ -26,11 +25,6 @@ void SplashScreen.preventAutoHideAsync().catch(() => {
 // GET /auth/me — the user signs in again only when the stored token is
 // missing or no longer refreshable.
 const App = () => {
-  const [fontsLoaded, fontError] = useFonts(FONT_MAP);
-  // A font that fails to load must not hold the splash forever; the type
-  // scale falls back to the platform face.
-  if (!fontsLoaded && !fontError) return null;
-
   return (
     <ErrorBoundary>
       <GestureHandlerRootView style={styles.root}>

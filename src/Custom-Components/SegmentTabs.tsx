@@ -17,24 +17,26 @@ export interface SegmentTabsProps<K extends string> {
   accessibilityLabel?: string;
 }
 
+// The FYP's Sign In / Sign Up switcher: a sunk track, the selected segment
+// raised on white with a soft shadow and an accent label.
 const makeStyles = ({ colors, space, radius, size, elevation }: Theme) =>
   StyleSheet.create({
     track: {
       flexDirection: 'row',
       backgroundColor: colors.surfaceSunk,
-      borderRadius: radius.md,
+      borderRadius: radius.sm,
       padding: space.s4,
       gap: space.s4,
     },
     segment: {
       flex: 1,
-      minHeight: size.control.sm,
+      minHeight: size.touch,
       alignItems: 'center',
       justifyContent: 'center',
       borderRadius: radius.sm,
       paddingHorizontal: space.s8,
     },
-    selected: { backgroundColor: colors.surface, ...elevation.none },
+    selected: { backgroundColor: colors.surface, ...elevation.raised },
   });
 
 export function SegmentTabs<K extends string>({
@@ -56,7 +58,10 @@ export function SegmentTabs<K extends string>({
             accessibilityState={{ selected }}
             accessibilityLabel={option.label}
             style={[styles.segment, selected && styles.selected]}>
-            <AppText variant="small" tone={selected ? 'ink' : 'muted'} numberOfLines={1}>
+            <AppText
+              variant={selected ? 'bodyStrong' : 'label'}
+              tone={selected ? 'accent' : 'muted'}
+              numberOfLines={1}>
               {option.label}
             </AppText>
           </Pressable>

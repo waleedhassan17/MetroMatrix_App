@@ -1,6 +1,4 @@
-// Dev-only: which service accent the gallery previews. Theme MODE is not here
-// — the gallery flips the real `preferences.themeMode`, so what you see is
-// exactly what every screen gets.
+// Dev-only: which service accent the gallery previews (the app is light only).
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';

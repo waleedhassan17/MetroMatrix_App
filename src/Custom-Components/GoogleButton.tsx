@@ -1,13 +1,15 @@
 // ═══════════════════════════════════════════════════════
-// GoogleButton — "Continue with Google", per Google's branding guidelines
+// GoogleButton — the FYP's social sign-in button
 // ═══════════════════════════════════════════════════════
-// Pure UI: white (or Google's dark) surface, the four-colour G, the exact
-// label. Token acquisition lives in components/auth/GoogleSignInButton.
+// White, hairline border, radius 8, 50 pt, the red Google logo and the word
+// "Google" — exactly the FYP auth screens' button (Facebook removed). Pure
+// UI: token acquisition lives in components/auth/GoogleSignInButton.
 
 import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
-import { useStyles, useTheme, GOOGLE_BUTTON, GOOGLE_G_PATHS, GOOGLE_LABEL, MAX_FONT_SCALE, type Theme } from '../theme';
+import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
+import { GOOGLE_ICON, useStyles, useTheme, type Theme } from '../theme';
+import { AppText } from './AppText';
+import { IonIcon } from './Icon';
 
 export interface GoogleButtonProps {
   onPress: () => void;
@@ -16,17 +18,20 @@ export interface GoogleButtonProps {
   label?: string;
 }
 
-const makeStyles = ({ radius, size, space }: Theme) =>
+const makeStyles = ({ colors, radius, size, space, elevation }: Theme) =>
   StyleSheet.create({
     root: {
       minHeight: size.control.md,
-      borderRadius: radius.pill,
+      borderRadius: radius.sm,
       borderWidth: size.border,
+      borderColor: colors.line,
+      backgroundColor: colors.surface,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: space.s12,
+      gap: space.s8,
       paddingHorizontal: space.s16,
+      ...elevation.input,
     },
   });
 
@@ -34,38 +39,24 @@ export const GoogleButton: React.FC<GoogleButtonProps> = ({
   onPress,
   loading = false,
   disabled = false,
-  label = 'Continue with Google',
+  label = 'Google',
 }) => {
   const styles = useStyles(makeStyles);
-  const { mode, size, opacity } = useTheme();
-  const look = GOOGLE_BUTTON[mode];
+  const { colors, opacity } = useTheme();
   const inactive = disabled || loading;
   return (
     <Pressable
       onPress={onPress}
       disabled={inactive}
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={label === 'Google' ? 'Continue with Google' : label}
       accessibilityState={{ disabled: inactive, busy: loading }}
       style={({ pressed }) => [
         styles.root,
-        { backgroundColor: look.surface, borderColor: look.border },
         (pressed || disabled) && { opacity: disabled ? opacity.disabled : opacity.pressed },
       ]}>
-      <View>
-        {loading ? (
-          <ActivityIndicator color={look.text} />
-        ) : (
-          <Svg width={size.icon.md} height={size.icon.md} viewBox="0 0 48 48">
-            {GOOGLE_G_PATHS.map(p => (
-              <Path key={p.fill} fill={p.fill} d={p.d} />
-            ))}
-          </Svg>
-        )}
-      </View>
-      <Text maxFontSizeMultiplier={MAX_FONT_SCALE} style={[GOOGLE_LABEL, { color: look.text }]}>
-        {label}
-      </Text>
+      {loading ? <ActivityIndicator color={colors.inkMuted} /> : <IonIcon name="logo-google" size="md" color={GOOGLE_ICON} />}
+      <AppText variant="label">{loading ? 'Loading...' : label}</AppText>
     </Pressable>
   );
 };

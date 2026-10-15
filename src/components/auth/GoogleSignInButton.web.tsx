@@ -14,7 +14,7 @@ import { GOOGLE_CLIENT_ID, loadGoogleIdentity, isGoogleSignInAvailable } from '.
 import type { GoogleSignInButtonProps } from './GoogleSignInButton';
 
 export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({ onIdToken, onError, busy, disabled }) => {
-  const { mode, size, opacity } = useTheme();
+  const { size, opacity } = useTheme();
   const container = useRef<View>(null);
   const [failed, setFailed] = useState(!isGoogleSignInAvailable());
   // Latest callbacks without re-initialising GIS on every render.
@@ -41,7 +41,7 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({ onIdToke
         if (node) {
           gis.renderButton(node, {
             type: 'standard',
-            theme: mode === 'dark' ? 'filled_black' : 'outline',
+            theme: 'outline',
             size: 'large',
             text: 'continue_with',
             shape: 'pill',
@@ -60,7 +60,7 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({ onIdToke
       cancelled = true;
       window.google?.accounts?.id?.cancel();
     };
-  }, [failed, mode]);
+  }, [failed]);
 
   if (failed) {
     return (

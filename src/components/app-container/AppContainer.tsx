@@ -161,7 +161,7 @@ export const AppContainer: React.FC = () => {
   return (
     <View style={styles.container}>
       <StatusBar
-        barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'}
+        barStyle="dark-content"
         backgroundColor={theme.colors.canvas}
         translucent
       />

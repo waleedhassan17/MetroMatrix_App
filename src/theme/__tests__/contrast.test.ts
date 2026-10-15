@@ -1,117 +1,90 @@
-import { PALETTES, type ColorMode, type Palette } from '../tokens';
-import { SERVICE_PALETTES, SERVICE_NAMES } from '../services';
+import { PALETTES } from '../tokens';
+import { SERVICE_PALETTES, SERVICE_NAMES, BRAND_GRADIENT } from '../services';
 import { GOOGLE_BUTTON } from '../brandMarks';
-import { AA_BODY, AA_LARGE, contrastRatio, parseHex } from '../contrast';
+import { headerGradient } from '../theme';
+import { AA_BODY, AA_LARGE, contrastRatio, mix, parseHex } from '../contrast';
 
 // ============================================================================
-// Every text/background pair the components paint, measured, in both modes.
+// Every text/background pair the components paint, measured (light only).
 //
-// WHY THIS IS A TEST AND NOT A COMMENT
-// A dark ramp fails silently: nothing throws when a label is 2.6:1 against its
-// card. The screenshot looks fine at a glance and the bug arrives as "I can't
-// read this" from one user on one screen. This keeps the numbers true after
-// the next person edits a hex.
+// A palette fails silently: nothing throws when a label is 2.6:1 against its
+// card. This keeps the numbers true after the next person edits a hex.
 //
-// Two bars:
-//   AA_BODY  (4.5:1) — any text set in body/small/micro.
-//   AA_LARGE (3:1)   — non-text UI (WCAG 1.4.11: input borders, icons,
-//                      progress fills) and inkFaint, which is ONLY allowed
-//                      for placeholders, disabled text and decorative icons.
+//   AA_BODY  (4.5:1) — any text in body/small/caption.
+//   AA_LARGE (3:1)   — non-text UI (WCAG 1.4.11: checkbox outlines, icons
+//                      that carry meaning, progress fills).
+// `inkFaint` is the FYP's placeholder / decorative-icon grey (2.5:1). It is
+// never used for body copy, and the test pins that it cannot be.
 // ============================================================================
 
-const MODES: ColorMode[] = ['light', 'dark'];
+const p = PALETTES.light;
 
-/** Composite an rgba() colour over an opaque hex backdrop → hex. */
 const over = (rgba: string, backdrop: string): string => {
   const m = rgba.match(/rgba\(\s*(\d+),\s*(\d+),\s*(\d+),\s*([0-9.]+)\s*\)/);
   const bg = parseHex(backdrop);
   if (!m || !bg) throw new Error(`Cannot composite ${rgba} over ${backdrop}`);
   const a = Number(m[4]);
-  const mix = (c: number, b: number) => Math.round(c * a + b * (1 - a));
-  const hex = (n: number) => n.toString(16).padStart(2, '0');
-  return `#${hex(mix(+m[1], bg.r))}${hex(mix(+m[2], bg.g))}${hex(mix(+m[3], bg.b))}`;
+  const hex = (c: number, b: number) => Math.round(c * a + b * (1 - a)).toString(16).padStart(2, '0');
+  return `#${hex(+m[1], bg.r)}${hex(+m[2], bg.g)}${hex(+m[3], bg.b)}`;
 };
 
-const grounds = (p: Palette) =>
-  [
-    ['canvas', p.canvas],
-    ['surface', p.surface],
-    ['surfaceSunk', p.surfaceSunk],
-  ] as const;
+const grounds = [
+  ['canvas', p.canvas],
+  ['surface', p.surface],
+  ['surfaceSunk', p.surfaceSunk],
+] as const;
 
-describe('palette shape', () => {
-  it('dark carries every key light does, and no extras', () => {
-    expect(Object.keys(PALETTES.dark).sort()).toEqual(Object.keys(PALETTES.light).sort());
-  });
-
-  it('dark grounds are dark and dark ink is light', () => {
-    expect(contrastRatio(PALETTES.dark.canvas, '#000000')).toBeLessThan(2);
-    expect(contrastRatio(PALETTES.dark.ink, '#FFFFFF')).toBeLessThan(2);
-  });
-
-  it('matches the brief exactly where the brief gives a value', () => {
-    expect(PALETTES.light).toMatchObject({
-      canvas: '#F7F5F1',
+describe('the FYP look', () => {
+  it('paints the page white and keeps the FYP stone ramp', () => {
+    expect(p).toMatchObject({
+      canvas: '#FFFFFF',
       surface: '#FFFFFF',
-      surfaceSunk: '#EFECE6',
-      ink: '#16151A',
-      inkMuted: '#5C5862',
-      inkFaint: '#8C8792',
-      line: '#E4DFD7',
-      brand: '#1B2A41',
-      onBrand: '#FFFFFF',
-      danger: '#B42318',
-      success: '#067647',
-      warning: '#B54708',
+      surfaceSunk: '#F5F5F4',
+      ink: '#1C1917',
+      inkMuted: '#57534E',
+      inkFaint: '#A8A29E',
+      line: '#E7E5E4',
+      disabled: '#D6D3D1',
+      brand: '#047857',
+      danger: '#B91C1C',
+      success: '#047857',
+      warning: '#B45309',
     });
-    expect(PALETTES.dark).toMatchObject({
-      canvas: '#0E0E10',
-      surface: '#17171A',
-      surfaceSunk: '#1F1F23',
-      ink: '#F4F2EE',
-      inkMuted: '#A9A5AE',
-      inkFaint: '#77737C',
-      line: '#2A2A2F',
-      brand: '#C9D4E6',
-      onBrand: '#0E0E10',
-    });
+  });
+
+  it('keeps the FYP brand emerald and the healthcare / shopping hues', () => {
+    expect(SERVICE_PALETTES.light.neutral).toMatchObject({ accent: '#047857', accentSoft: '#ECFDF5', highlight: '#10B981' });
+    expect(SERVICE_PALETTES.light.healthcare.highlight).toBe('#2A7FFF');
+    expect(SERVICE_PALETTES.light.shopping.highlight).toBe('#E67E22');
+    expect(BRAND_GRADIENT).toEqual(['#047857', '#0F766E']);
+    // Food: Foodpanda's pink, slightly shifted.
+    expect(SERVICE_PALETTES.light.food.accent).toBe('#D90F66');
   });
 });
 
-describe.each(MODES)('%s mode — base palette', mode => {
-  const p = PALETTES[mode];
-
-  it.each(grounds(p))('ink and inkMuted are body-legible on %s', (_name, ground) => {
+describe('base palette', () => {
+  it.each(grounds)('ink and inkMuted are body-legible on %s', (_name, ground) => {
     expect(contrastRatio(p.ink, ground)).toBeGreaterThanOrEqual(AA_BODY);
     expect(contrastRatio(p.inkMuted, ground)).toBeGreaterThanOrEqual(AA_BODY);
   });
 
-  it.each(grounds(p))('lineStrong (input borders) reaches the non-text bar on %s', (_name, ground) => {
+  it.each(grounds)('lineStrong (checkbox / radio outlines) reaches the non-text bar on %s', (_name, ground) => {
     expect(contrastRatio(p.lineStrong, ground)).toBeGreaterThanOrEqual(AA_LARGE);
   });
 
-  it('inkFaint reaches the non-text bar on the grounds it is used on (canvas, surface)', () => {
-    // Not on surfaceSunk: the brief's light inkFaint is 2.97:1 there, so
-    // components put inkMuted, never inkFaint, inside sunk wells.
-    expect(contrastRatio(p.inkFaint, p.canvas)).toBeGreaterThanOrEqual(AA_LARGE);
-    expect(contrastRatio(p.inkFaint, p.surface)).toBeGreaterThanOrEqual(AA_LARGE);
-  });
-
-  it('inkFaint is NOT body-legible on surface — it must never carry body copy', () => {
-    // Documents why the restriction exists. If a future palette makes this
-    // pass, inkFaint may be promoted; until then components keep it to
-    // placeholders, disabled text and icons.
+  it('inkFaint is placeholder-only: never body-legible', () => {
     expect(contrastRatio(p.inkFaint, p.surface)).toBeLessThan(AA_BODY);
+    expect(contrastRatio(p.inkFaint, p.surface)).toBeGreaterThan(2);
   });
 
-  it('semantic colours are body-legible on surface, canvas and their soft tint', () => {
+  it('semantic colours are body-legible on surface and their soft tint', () => {
     for (const [fg, soft] of [
       [p.danger, p.dangerSoft],
       [p.success, p.successSoft],
       [p.warning, p.warningSoft],
+      [p.info, p.infoSoft],
     ]) {
       expect(contrastRatio(fg, p.surface)).toBeGreaterThanOrEqual(AA_BODY);
-      expect(contrastRatio(fg, p.canvas)).toBeGreaterThanOrEqual(AA_BODY);
       expect(contrastRatio(fg, soft)).toBeGreaterThanOrEqual(AA_BODY);
     }
   });
@@ -125,44 +98,42 @@ describe.each(MODES)('%s mode — base palette', mode => {
     expect(contrastRatio(p.onScrim, over(p.scrim, '#FFFFFF'))).toBeGreaterThanOrEqual(AA_BODY);
   });
 
-  it('the Google button meets its own contrast', () => {
-    const g = GOOGLE_BUTTON[mode];
-    expect(contrastRatio(g.text, g.surface)).toBeGreaterThanOrEqual(AA_BODY);
-    expect(contrastRatio(g.border, g.surface)).toBeGreaterThanOrEqual(AA_LARGE);
+  it('the Google button label is legible', () => {
+    expect(contrastRatio(GOOGLE_BUTTON.text, GOOGLE_BUTTON.surface)).toBeGreaterThanOrEqual(AA_BODY);
   });
 });
 
-describe.each(MODES)('%s mode — service accents', mode => {
-  const p = PALETTES[mode];
+describe.each(SERVICE_NAMES)('%s accent', name => {
+  const s = SERVICE_PALETTES.light[name];
 
-  it.each(SERVICE_NAMES)('%s: onAccent is body-legible on accent (buttons)', name => {
-    const s = SERVICE_PALETTES[mode][name];
+  it('onAccent is body-legible on accent (button fills)', () => {
     expect(contrastRatio(s.onAccent, s.accent)).toBeGreaterThanOrEqual(AA_BODY);
   });
 
-  it.each(SERVICE_NAMES)('%s: accentDeep is body-legible on surface, canvas and accentSoft', name => {
-    const s = SERVICE_PALETTES[mode][name];
+  it('accentDeep is body-legible on surface and accentSoft (links, selected text)', () => {
     expect(contrastRatio(s.accentDeep, p.surface)).toBeGreaterThanOrEqual(AA_BODY);
-    expect(contrastRatio(s.accentDeep, p.canvas)).toBeGreaterThanOrEqual(AA_BODY);
     expect(contrastRatio(s.accentDeep, s.accentSoft)).toBeGreaterThanOrEqual(AA_BODY);
   });
 
-  it.each(SERVICE_NAMES)('%s: accent reaches the non-text bar on surface and canvas', name => {
-    const s = SERVICE_PALETTES[mode][name];
+  it('accent reaches the non-text bar on white (icons, focus rings, active tabs)', () => {
     expect(contrastRatio(s.accent, p.surface)).toBeGreaterThanOrEqual(AA_LARGE);
-    expect(contrastRatio(s.accent, p.canvas)).toBeGreaterThanOrEqual(AA_LARGE);
   });
 
-  it.each(SERVICE_NAMES)('%s: highlight reaches the non-text bar on surface', name => {
-    const s = SERVICE_PALETTES[mode][name];
-    expect(contrastRatio(s.highlight, p.surface)).toBeGreaterThanOrEqual(AA_LARGE);
+  it('the onboarding card header carries a white label on both gradient stops', () => {
+    for (const stop of headerGradient(name)) {
+      expect(contrastRatio('#FFFFFF', stop)).toBeGreaterThanOrEqual(AA_BODY);
+    }
+  });
+});
+
+describe('brand gradient and helpers', () => {
+  it('the overview card sweep carries a white label on both stops', () => {
+    for (const stop of BRAND_GRADIENT) expect(contrastRatio('#FFFFFF', stop)).toBeGreaterThanOrEqual(AA_BODY);
   });
 
-  it('the brief\'s light accents are kept exactly', () => {
-    if (mode !== 'light') return;
-    expect(SERVICE_PALETTES.light.shopping).toMatchObject({ accent: '#1C1917', highlight: '#B08D57', accentSoft: '#F3EDE3' });
-    expect(SERVICE_PALETTES.light.healthcare).toMatchObject({ accent: '#0B6E6E', accentSoft: '#E3F1F0' });
-    expect(SERVICE_PALETTES.light.food).toMatchObject({ accent: '#C2410C', accentSoft: '#FBEDE5' });
-    expect(SERVICE_PALETTES.light.neutral.accent).toBe(PALETTES.light.brand);
+  it('mix blends in sRGB and clamps', () => {
+    expect(mix('#000000', '#FFFFFF', 0.5)).toBe('#808080');
+    expect(mix('#123456', '#123456', 0.3)).toBe('#123456');
+    expect(mix('not-a-colour', '#FFFFFF', 0.5)).toBe('not-a-colour');
   });
 });

@@ -14,7 +14,7 @@ interface State {
   error: Error | null;
 }
 
-const theme = getTheme('light');
+const theme = getTheme('neutral');
 
 export class ErrorBoundary extends React.Component<{ children: React.ReactNode }, State> {
   state: State = { error: null };

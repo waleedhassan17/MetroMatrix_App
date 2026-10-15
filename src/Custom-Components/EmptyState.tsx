@@ -39,7 +39,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ title, body, icon, actio
         </View>
       ) : null}
       <View style={styles.text}>
-        <AppText variant="display" align="center" accessibilityRole="header">
+        <AppText variant="h2" align="center" accessibilityRole="header">
           {title}
         </AppText>
         <AppText variant="body" tone="muted" align="center">

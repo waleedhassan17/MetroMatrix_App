@@ -1,54 +1,60 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — "Quiet Metro" tokens
+// MetroMatrix — Design tokens (the FYP app's look, light only)
 // ═══════════════════════════════════════════════════════
 // The base layer: neutrals, semantic colours, space, shape, depth, motion.
-// Identical in every service — this is what makes the app one app. A service
-// earns an accent (./services.ts); it does not earn its own greys or radii.
+// Values come from the MetroMatrix FYP app (constants/theme.ts there): a warm
+// stone neutral ramp, emerald brand, platform system font. Two deliberate
+// changes from the FYP:
+//   • the page canvas is pure white (#FFFFFF), not the FYP's warm paper;
+//   • the app is light-only, like the FYP's app.json (userInterfaceStyle).
 //
 // Every value a component paints is written down HERE (or in ./services.ts,
 // ./typography.ts, ./brandMarks.ts) and nowhere else. scripts/check-design-
 // tokens.js fails the build on a raw value anywhere in the UI folders.
-//
-// Contrast is not asserted by eye: src/theme/__tests__/contrast.test.ts
-// measures every text/background pair the components use, in both modes.
 
 import { Platform, StyleSheet, type ViewStyle } from 'react-native';
 
-export type ColorMode = 'light' | 'dark';
+export type ColorMode = 'light';
 
 export interface Palette {
-  /** Screen ground. */
+  /** Screen ground — white. */
   canvas: string;
   /** Cards, sheets, inputs. */
   surface: string;
-  /** Wells, tracks, skeletons, pressed rows. */
+  /** Wells, tab tracks, skeletons, thumbnails. */
   surfaceSunk: string;
-  /** Primary text. */
+  /** The ONE primary text colour. */
   ink: string;
-  /** Secondary text — passes AA body on every ground. */
+  /** The ONE secondary text colour — passes AA body on white. */
   inkMuted: string;
-  /**
-   * Placeholder, disabled text and decorative icons ONLY (3:1, not 4.5:1),
-   * and only on canvas or surface — on surfaceSunk the brief's light value
-   * measures 2.97:1, so sunk wells use inkMuted.
-   */
+  /** Icons, placeholders, disabled labels. Never body copy (2.5:1). */
   inkFaint: string;
-  /** Hairlines and resting borders. */
+  /** Hairline borders, input borders (the FYP's input look). */
   line: string;
-  /** Input borders, checkbox outlines — the line a control needs to be seen. */
+  /** Dividers inside a card, where `line` is too loud. */
+  lineSoft: string;
+  /** Checkbox / radio outlines — a control that must be found. */
   lineStrong: string;
+  /** Disabled control fills (the grey primary button before a form is valid). */
+  disabled: string;
   brand: string;
   onBrand: string;
   danger: string;
   dangerSoft: string;
+  /** Border of a destructive control / error notice where the soft is too faint. */
+  dangerLine: string;
   onDanger: string;
   success: string;
   successSoft: string;
   warning: string;
   warningSoft: string;
+  info: string;
+  infoSoft: string;
+  /** Rating stars. Amber, and only ever this. */
+  star: string;
   /** Behind sheets and dialogs. */
   overlay: string;
-  /** Text-legibility scrim over photography (bottom of onboarding pages). */
+  /** Text-legibility scrim over photography. */
   scrim: string;
   /** Text and icons painted on `scrim`. */
   onScrim: string;
@@ -57,56 +63,36 @@ export interface Palette {
 }
 
 const light: Palette = {
-  canvas: '#F7F5F1',
+  canvas: '#FFFFFF',
   surface: '#FFFFFF',
-  surfaceSunk: '#EFECE6',
-  ink: '#16151A',
-  inkMuted: '#5C5862',
-  inkFaint: '#8C8792',
-  line: '#E4DFD7',
-  lineStrong: '#7D7883',
-  brand: '#1B2A41',
+  surfaceSunk: '#F5F5F4',
+  ink: '#1C1917',
+  inkMuted: '#57534E',
+  inkFaint: '#A8A29E',
+  line: '#E7E5E4',
+  lineSoft: '#F5F5F4',
+  lineStrong: '#78716C',
+  disabled: '#D6D3D1',
+  brand: '#047857',
   onBrand: '#FFFFFF',
-  danger: '#B42318',
-  dangerSoft: '#FEF3F2',
+  danger: '#B91C1C',
+  dangerSoft: '#FEF2F2',
+  dangerLine: '#FECACA',
   onDanger: '#FFFFFF',
-  success: '#067647',
-  successSoft: '#ECFDF3',
-  warning: '#B54708',
-  warningSoft: '#FFFAEB',
-  overlay: 'rgba(22, 21, 26, 0.40)',
-  scrim: 'rgba(14, 14, 16, 0.62)',
+  success: '#047857',
+  successSoft: '#ECFDF5',
+  warning: '#B45309',
+  warningSoft: '#FEF6EC',
+  info: '#1D4ED8',
+  infoSoft: '#EFF6FF',
+  star: '#D97706',
+  overlay: 'rgba(28, 25, 23, 0.45)',
+  scrim: 'rgba(28, 25, 23, 0.62)',
   onScrim: '#FFFFFF',
-  viewer: '#0E0E10',
+  viewer: '#0C0A09',
 };
 
-// Dark semantic colours are LIFTED, not reused: #B42318 on #17171A is 2.6:1.
-// Each lifted value clears 4.5:1 on `surface` (see the contrast test).
-const dark: Palette = {
-  canvas: '#0E0E10',
-  surface: '#17171A',
-  surfaceSunk: '#1F1F23',
-  ink: '#F4F2EE',
-  inkMuted: '#A9A5AE',
-  inkFaint: '#77737C',
-  line: '#2A2A2F',
-  lineStrong: '#77737C',
-  brand: '#C9D4E6',
-  onBrand: '#0E0E10',
-  danger: '#F97066',
-  dangerSoft: '#2A1715',
-  onDanger: '#0E0E10',
-  success: '#47CD89',
-  successSoft: '#0F2419',
-  warning: '#FDB022',
-  warningSoft: '#2A1F0B',
-  overlay: 'rgba(0, 0, 0, 0.60)',
-  scrim: 'rgba(0, 0, 0, 0.62)',
-  onScrim: '#FFFFFF',
-  viewer: '#000000',
-};
-
-export const PALETTES: Record<ColorMode, Palette> = { light, dark };
+export const PALETTES: Record<ColorMode, Palette> = { light };
 
 // ─── Space — 4-pt scale ─────────────────────────────
 export const space = {
@@ -122,30 +108,35 @@ export const space = {
   s56: 56,
 } as const;
 
-/** Side gutter for every screen. */
+/** Side gutter for every screen (the FYP's 24). */
 export const GUTTER = space.s24;
 
-// ─── Shape ──────────────────────────────────────────
+// ─── Shape (the FYP's radius roles) ─────────────────
 export const radius = {
+  /** Chips, badges, small tags, social buttons, tab tracks. */
   sm: 8,
-  md: 14,
-  lg: 22,
+  /** Inputs, cards. */
+  md: 12,
+  /** Role / provider cards, document tiles. */
+  lg: 16,
+  /** Bottom sheets and the single hero. */
+  xl: 20,
   pill: 999,
 } as const;
 
 // ─── Sizes (controls, icons, avatars) ───────────────
-// Not part of the brief's scale, but every component needs them and a
-// literal `height: 48` in a component is exactly the drift the gate exists
-// to stop.
 export const size = {
   hairline: StyleSheet.hairlineWidth,
   border: 1,
   focusBorder: 2,
   /** Minimum touch target (WCAG / Material). */
   touch: 44,
-  control: { sm: 36, md: 48, lg: 56 },
+  /** sm: compact buttons · md: the FYP's 50 pt buttons · lg: the FYP's 56 pt inputs. */
+  control: { sm: 36, md: 50, lg: 56 },
   icon: { sm: 16, md: 20, lg: 24, xl: 32 },
   avatar: { sm: 32, md: 44, lg: 64, xl: 96 },
+  /** Role / provider card icon tile. */
+  tile: 64,
   otpCell: { width: 48, height: 56 },
   checkbox: 22,
   progress: 4,
@@ -153,12 +144,21 @@ export const size = {
   timelineLine: 2,
   pageDot: 8,
   pageDotActive: 24,
+  /** Onboarding indicator pitch (dot centre to dot centre). */
+  pagePitch: 20,
   qr: 196,
   tabBar: 64,
   headerBar: 52,
   sheetHandle: 4,
   thumb: 56,
   logoMark: 40,
+  /** The native splash mark's imageWidth (app.json) — the JS splash matches it. */
+  splashMark: 104,
+  /** Ambient glow behind the splash mark / onboarding cards. */
+  glow: 320,
+  glowLarge: 380,
+  /** Paragraph measure for onboarding and empty-state prose. */
+  prose: 460,
 } as const;
 
 export const opacity = {
@@ -168,37 +168,30 @@ export const opacity = {
   skeletonHigh: 1,
 } as const;
 
-// ─── Depth ──────────────────────────────────────────
-// `none` is a hairline in the `line` colour — the default for cards.
-// `float` lifts sticky CTAs and sheets: y 8, blur 24, ink at 6% (Android
-// elevation 6). Shadows vanish on dark grounds, so dark `float` keeps the
-// hairline and deepens the shadow instead of relying on it alone.
+// ─── Depth (the FYP's three elevations) ─────────────
+// flat     bordered, no shadow — the default card
+// raised   lifted off the page: the one card a screen wants read first
+// overlay  sheets, modals, floating action bars (StickyCTA)
+// input    the FYP's barely-there shadow under text inputs and social buttons
 export interface Elevation {
   none: ViewStyle;
+  raised: ViewStyle;
   float: ViewStyle;
+  input: ViewStyle;
 }
 
-const floatShadow = (mode: ColorMode, ink: string): ViewStyle =>
+const shadow = (height: number, blur: number, alpha: number, androidElevation: number, ink: string): ViewStyle =>
   Platform.select<ViewStyle>({
-    android: { elevation: 6, shadowColor: ink },
-    ios: {
-      shadowColor: ink,
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: mode === 'dark' ? 0.5 : 0.06,
-      shadowRadius: 12,
-    },
-    default: {
-      boxShadow:
-        mode === 'dark' ? '0px 8px 24px rgba(0, 0, 0, 0.5)' : '0px 8px 24px rgba(22, 21, 26, 0.06)',
-    },
+    ios: { shadowColor: ink, shadowOffset: { width: 0, height }, shadowOpacity: alpha, shadowRadius: blur / 2 },
+    android: { elevation: androidElevation, shadowColor: ink },
+    default: { boxShadow: `0px ${height}px ${blur}px rgba(28, 25, 23, ${alpha})` },
   }) ?? {};
 
-export const buildElevation = (mode: ColorMode, palette: Palette): Elevation => ({
+export const buildElevation = (palette: Palette): Elevation => ({
   none: { borderWidth: size.hairline, borderColor: palette.line },
-  float: {
-    ...floatShadow(mode, mode === 'dark' ? '#000000' : palette.ink),
-    ...(mode === 'dark' ? { borderWidth: size.hairline, borderColor: palette.line } : null),
-  },
+  raised: shadow(3, 20, 0.07, 3, palette.ink),
+  float: shadow(10, 40, 0.14, 12, palette.ink),
+  input: shadow(1, 4, 0.05, 1, palette.ink),
 });
 
 // ─── Motion ─────────────────────────────────────────
@@ -213,4 +206,6 @@ export const motion = {
   pulse: { duration: 900 },
   /** Large-title collapse distance. */
   titleCollapse: 44,
+  /** The JS splash (FYP splash.tsx timings). */
+  splash: { glow: 460, word: 420, tag: 380, stagger: 140, lead: 120, hold: 520 },
 } as const;

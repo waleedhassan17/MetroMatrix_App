@@ -1,15 +1,17 @@
 // ═══════════════════════════════════════════════════════
-// TextField — label above, helper/error below
+// TextField — the FYP's auth input
 // ═══════════════════════════════════════════════════════
+// Label above (14 / 500), a 56 pt white field with a hairline border, radius
+// 12, a barely-there shadow, an Ionicons glyph on the left and the eye toggle
+// on password fields; helper or error below. Focus draws the accent border.
+//
 // Modes:
 //   text / email / numeric — the obvious keyboards and autofill hints
 //   password — secure entry with a reveal toggle
 //   phone    — a fixed "+92" prefix; the field holds the 10-digit national
-//              number only (a typed leading 0 or 92 is dropped), so the model
-//              composes "+92" + value and never sees ambiguous input
+//              number only (a typed leading 0 or 92 is dropped)
 //
-// forwardRef exposes the TextInput so forms can move focus to the next field
-// on "next" and submit on the last.
+// forwardRef exposes the TextInput so forms can move focus to the next field.
 
 import React, { forwardRef, useState } from 'react';
 import {
@@ -23,7 +25,7 @@ import {
 } from 'react-native';
 import { useStyles, useTheme, MAX_FONT_SCALE, type Theme } from '../theme';
 import { AppText } from './AppText';
-import { Icon, type IconName } from './Icon';
+import { IonIcon, type IonName } from './Icon';
 
 export type TextFieldMode = 'text' | 'email' | 'password' | 'phone' | 'numeric';
 
@@ -35,7 +37,8 @@ export interface TextFieldProps
   mode?: TextFieldMode;
   helper?: string;
   error?: string;
-  leftIcon?: IconName;
+  /** Ionicons glyph inside the field, on the left (the FYP's mail-outline …). */
+  icon?: IonName;
   clearable?: boolean;
   containerStyle?: StyleProp<ViewStyle>;
 }
@@ -48,28 +51,30 @@ export const sanitizePkNational = (raw: string): string => {
   return digits.slice(0, 10);
 };
 
-const makeStyles = ({ colors, space, radius, size, type }: Theme) =>
+const makeStyles = ({ colors, space, radius, size, type, elevation }: Theme) =>
   StyleSheet.create({
     root: { gap: space.s8 },
     box: {
       flexDirection: 'row',
       alignItems: 'center',
-      minHeight: size.control.md,
+      minHeight: size.control.lg,
       borderRadius: radius.md,
       borderWidth: size.border,
-      borderColor: colors.lineStrong,
+      borderColor: colors.line,
       backgroundColor: colors.surface,
-      paddingHorizontal: space.s12,
-      gap: space.s8,
+      paddingHorizontal: space.s16,
+      gap: space.s12,
+      ...elevation.input,
     },
+    multiline: { alignItems: 'flex-start', paddingVertical: space.s12 },
     input: {
       flex: 1,
-      ...type.body,
+      ...type.input,
       color: colors.ink,
       paddingVertical: space.s12,
     },
     prefix: {
-      paddingRight: space.s8,
+      paddingRight: space.s12,
       borderRightWidth: size.border,
       borderRightColor: colors.line,
     },
@@ -85,10 +90,11 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(
       mode = 'text',
       helper,
       error,
-      leftIcon,
+      icon,
       clearable = false,
       containerStyle,
       editable = true,
+      multiline,
       onFocus,
       onBlur,
       accessibilityLabel,
@@ -112,18 +118,24 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(
               ? { keyboardType: 'number-pad' }
               : {};
 
-    const borderColor = error ? colors.danger : focused ? service.accent : colors.lineStrong;
+    const borderColor = error ? colors.danger : focused ? service.accent : colors.line;
 
     return (
       <View style={[styles.root, containerStyle]}>
-        <AppText variant="small" tone={error ? 'danger' : focused ? 'accentDeep' : 'muted'}>
+        <AppText variant="label" tone={error ? 'danger' : 'ink'}>
           {label}
         </AppText>
-        <View style={[styles.box, { borderColor }, !editable && { opacity: opacity.disabled }]}>
-          {leftIcon ? <Icon name={leftIcon} size="md" color={colors.inkFaint} /> : null}
+        <View
+          style={[
+            styles.box,
+            multiline && styles.multiline,
+            { borderColor },
+            !editable && { opacity: opacity.disabled },
+          ]}>
+          {icon ? <IonIcon name={icon} size="md" color={colors.inkMuted} /> : null}
           {mode === 'phone' ? (
             <View style={styles.prefix}>
-              <AppText variant="body" tone="muted">
+              <AppText variant="input" tone="muted">
                 +92
               </AppText>
             </View>
@@ -133,6 +145,7 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(
             value={value}
             onChangeText={text => onChangeText(mode === 'phone' ? sanitizePkNational(text) : text)}
             editable={editable}
+            multiline={multiline}
             secureTextEntry={mode === 'password' && !revealed}
             placeholderTextColor={colors.inkFaint}
             selectionColor={service.accent}
@@ -153,12 +166,8 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(
             {...rest}
           />
           {clearable && value.length > 0 && editable ? (
-            <Pressable
-              onPress={() => onChangeText('')}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={`Clear ${label}`}>
-              <Icon name="x-circle" size="md" color={colors.inkFaint} />
+            <Pressable onPress={() => onChangeText('')} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Clear ${label}`}>
+              <IonIcon name="close-circle" size="md" color={colors.inkFaint} />
             </Pressable>
           ) : null}
           {mode === 'password' ? (
@@ -167,19 +176,19 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel={revealed ? 'Hide password' : 'Show password'}>
-              <Icon name={revealed ? 'eye-off' : 'eye'} size="md" color={colors.inkMuted} />
+              <IonIcon name={revealed ? 'eye-outline' : 'eye-off-outline'} size="md" color={colors.inkMuted} />
             </Pressable>
           ) : null}
         </View>
         {error ? (
           <View style={styles.message} accessibilityLiveRegion="polite">
-            <Icon name="alert-circle" size="sm" color={colors.danger} />
-            <AppText variant="small" tone="danger">
+            <IonIcon name="alert-circle" size="sm" color={colors.danger} />
+            <AppText variant="small" tone="danger" style={{ flex: 1 }}>
               {error}
             </AppText>
           </View>
         ) : helper ? (
-          <AppText variant="small" tone="muted">
+          <AppText variant="caption" tone="muted">
             {helper}
           </AppText>
         ) : null}

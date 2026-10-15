@@ -1,19 +1,23 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Service accent layer
 // ═══════════════════════════════════════════════════════
-// Three layers resolve into what a screen sees (the FYP palettes.ts idea):
+// The FYP's module palettes (theme/palettes.ts there):
 //
-//   base      ./tokens.ts — neutrals, type, space, radius, depth. Identical
-//             everywhere.
-//   service   this file — an accent set, and NOTHING else.
-//   brand     (later chunks) a store's own colours, same shape, overriding
-//             the service accent inside that store's subtree only.
+//   neutral     the app before a service claims it — auth, onboarding,
+//               admin. MetroMatrix's own emerald (the logo).
+//   healthcare  clinical blue (FYP HealthcareTheme).
+//   shopping    shopping orange (FYP Shopping/Brand theme).
+//   food        Foodpanda is the competitor, so Food wears Foodpanda's pink
+//               with only slight changes: the fill is a hair deeper than their
+//               #D70F64 (#D90F66), with a richer wine-pink for text and a
+//               cleaner blush for soft grounds — the premium touch is in the
+//               restraint, not a different colour.
 //
-// A service layer is deliberately five colours. A vertical earns an accent;
-// it does not earn a design language.
-//
-// Auth and admin wear `neutral`, which is the brand navy — nothing there
-// implies a service the user has not entered yet.
+// `accent` is a FILL with `onAccent` text on it, so it must clear AA 4.5:1.
+// Where the FYP's brightest hue does not (#2A7FFF 3.6, #E67E22 2.7, #059669
+// 3.8), `accent` takes the FYP's own deeper step — exactly the rule the FYP's
+// brand palette states for its buttons — and the bright hue lives on as
+// `highlight`, for dots, glows and indicators that carry no text.
 
 import type { ColorMode } from './tokens';
 
@@ -24,91 +28,62 @@ export interface ServicePalette {
   accent: string;
   /** Pressed fill, and accent-coloured TEXT — passes AA on surface and accentSoft. */
   accentDeep: string;
-  /** Soft accent ground: selected chips, tinted wells, highlight rows. */
+  /** Soft accent ground: selected chips, tinted wells, icon tiles. */
   accentSoft: string;
   /** Hairline on a selected control. */
   accentLine: string;
-  /** Text and icons painted ON `accent`. Never assume this is white. */
+  /** Text and icons painted ON `accent`. */
   onAccent: string;
-  /** Shopping's brass highlight — decorative only (rules, stars), never text. */
+  /** The service's brightest hue — decorative only (dots, glows, indicators). */
   highlight: string;
 }
 
 const LIGHT: Record<ServiceName, ServicePalette> = {
-  shopping: {
-    accent: '#1C1917',
-    accentDeep: '#0C0A09',
-    accentSoft: '#F3EDE3',
-    accentLine: '#D9CBB4',
+  neutral: {
+    accent: '#047857',
+    accentDeep: '#065F46',
+    accentSoft: '#ECFDF5',
+    accentLine: '#A7F3D0',
     onAccent: '#FFFFFF',
-    highlight: '#B08D57',
+    highlight: '#10B981',
   },
   healthcare: {
-    accent: '#0B6E6E',
-    accentDeep: '#075353',
-    accentSoft: '#E3F1F0',
-    accentLine: '#A9D3D0',
+    accent: '#1E6AE1',
+    accentDeep: '#1857C0',
+    accentSoft: '#EAF3FF',
+    accentLine: '#D6E8FF',
     onAccent: '#FFFFFF',
-    highlight: '#0B6E6E',
+    highlight: '#2A7FFF',
   },
-  food: {
-    accent: '#C2410C',
-    accentDeep: '#9A3412',
-    accentSoft: '#FBEDE5',
-    accentLine: '#F0C3A8',
-    onAccent: '#FFFFFF',
-    highlight: '#C2410C',
-  },
-  neutral: {
-    accent: '#1B2A41',
-    accentDeep: '#111B2B',
-    accentSoft: '#E8ECF2',
-    accentLine: '#C9D4E6',
-    onAccent: '#FFFFFF',
-    highlight: '#1B2A41',
-  },
-};
-
-// Dark accents are re-tuned, not inverted: shopping's near-black accent would
-// vanish on a near-black canvas, so it becomes warm stone with dark ink on it.
-const DARK: Record<ServiceName, ServicePalette> = {
   shopping: {
-    accent: '#E7E5E4',
-    accentDeep: '#F5F5F4',
-    accentSoft: '#26221E',
-    accentLine: '#4A4038',
-    onAccent: '#1C1917',
-    highlight: '#C9A876',
-  },
-  healthcare: {
-    accent: '#3FB8B0',
-    accentDeep: '#7DD3CB',
-    accentSoft: '#0F2726',
-    accentLine: '#1F4A47',
-    onAccent: '#0E0E10',
-    highlight: '#3FB8B0',
+    accent: '#C25100',
+    accentDeep: '#A84600',
+    accentSoft: '#FFF5EB',
+    accentLine: '#F8D1AD',
+    onAccent: '#FFFFFF',
+    highlight: '#E67E22',
   },
   food: {
-    accent: '#F97316',
-    accentDeep: '#FDBA8C',
-    accentSoft: '#2B1A10',
-    accentLine: '#4D2C17',
-    onAccent: '#0E0E10',
-    highlight: '#F97316',
-  },
-  neutral: {
-    accent: '#C9D4E6',
-    accentDeep: '#E2E8F2',
-    accentSoft: '#1C2330',
-    accentLine: '#34405A',
-    onAccent: '#0E0E10',
-    highlight: '#C9D4E6',
+    accent: '#D90F66',
+    accentDeep: '#AE0C52',
+    accentSoft: '#FFF0F6',
+    accentLine: '#F9C6DC',
+    onAccent: '#FFFFFF',
+    highlight: '#E8287A',
   },
 };
 
 export const SERVICE_PALETTES: Record<ColorMode, Record<ServiceName, ServicePalette>> = {
   light: LIGHT,
-  dark: DARK,
 };
 
 export const SERVICE_NAMES: ServiceName[] = ['shopping', 'healthcare', 'food', 'neutral'];
+
+/**
+ * The FYP's brand glow: emerald at the heart, falling off through the logo's
+ * teal. Decorative light behind the splash mark and the overview slide.
+ */
+export const BRAND_GLOW: [string, string] = ['#10B981', '#14B8A6'];
+
+/** The logo's emerald → teal sweep (the overview card header on onboarding). */
+export const BRAND_GRADIENT: [string, string] = ['#047857', '#0F766E'];

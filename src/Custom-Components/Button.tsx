@@ -1,22 +1,22 @@
 // ═══════════════════════════════════════════════════════
-// Button — primary / secondary / ghost / destructive × sm / md / lg
+// Button — the FYP's pill buttons
 // ═══════════════════════════════════════════════════════
-// Loading keeps the button's width: the label stays laid out (invisible) and
-// the spinner sits over it, so the CTA never jumps. Primary presses tap a
-// light haptic. Press feedback is a 180 ms ease-out scale.
+// primary      accent fill, white label; GREY fill while disabled (the FYP's
+//              "button turns green when the form is complete")
+// secondary    white, hairline border, ink label
+// ghost        no ground, accent-deep label (links: "Forgot Password?")
+// destructive  danger fill
+// Sizes: sm 36 · md 50 (the FYP's auth buttons) · lg 56.
+// Loading keeps the width: the label stays laid out (invisible) under the
+// spinner. Primary presses tap a light haptic.
 
 import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { haptics } from '../utils/haptics';
 import { AppText } from './AppText';
-import { Icon, type IconName } from './Icon';
+import { Icon, IonIcon, type IconName, type IonName } from './Icon';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -29,6 +29,8 @@ export interface ButtonProps {
   loading?: boolean;
   disabled?: boolean;
   leftIcon?: IconName;
+  /** Ionicons glyph after the label (the FYP's "Continue to Registration →"). */
+  rightIon?: IonName;
   fullWidth?: boolean;
   accessibilityLabel?: string;
   accessibilityHint?: string;
@@ -43,12 +45,12 @@ const makeStyles = ({ size, radius, space }: Theme) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      borderRadius: radius.md,
-      paddingHorizontal: space.s20,
+      borderRadius: radius.pill,
+      paddingHorizontal: space.s24,
     },
-    sm: { minHeight: size.control.sm, paddingHorizontal: space.s12, borderRadius: radius.sm },
+    sm: { minHeight: size.control.sm, paddingHorizontal: space.s16 },
     md: { minHeight: size.control.md },
-    lg: { minHeight: size.control.lg, paddingHorizontal: space.s24 },
+    lg: { minHeight: size.control.lg },
     fullWidth: { alignSelf: 'stretch' },
     content: { flexDirection: 'row', alignItems: 'center', gap: space.s8 },
     hidden: { opacity: 0 },
@@ -63,6 +65,7 @@ export const Button: React.FC<ButtonProps> = ({
   loading = false,
   disabled = false,
   leftIcon,
+  rightIon,
   fullWidth = false,
   accessibilityLabel,
   accessibilityHint,
@@ -71,16 +74,21 @@ export const Button: React.FC<ButtonProps> = ({
   const styles = useStyles(makeStyles);
   const { colors, service, motion, opacity, size: sizes } = useTheme();
   const scale = useSharedValue(1);
-  const animated = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-
-  const palette = {
-    primary: { bg: service.accent, fg: service.onAccent, border: service.accent },
-    secondary: { bg: colors.surface, fg: colors.ink, border: colors.lineStrong },
-    ghost: { bg: 'transparent', fg: service.accentDeep, border: 'transparent' },
-    destructive: { bg: colors.danger, fg: colors.onDanger, border: colors.danger },
-  }[variant];
+  const animated = useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));
 
   const inactive = disabled || loading;
+  const greyed = disabled && !loading;
+
+  const palette = {
+    primary: greyed
+      ? { bg: colors.disabled, fg: colors.onBrand, border: colors.disabled }
+      : { bg: service.accent, fg: service.onAccent, border: service.accent },
+    secondary: { bg: colors.surface, fg: colors.ink, border: colors.line },
+    ghost: { bg: 'transparent', fg: service.accentDeep, border: 'transparent' },
+    destructive: greyed
+      ? { bg: colors.disabled, fg: colors.onDanger, border: colors.disabled }
+      : { bg: colors.danger, fg: colors.onDanger, border: colors.danger },
+  }[variant];
 
   const press = (to: number) => {
     scale.set(withTiming(to, { duration: motion.press.duration, easing: Easing.out(Easing.quad) }));
@@ -110,14 +118,15 @@ export const Button: React.FC<ButtonProps> = ({
           borderColor: palette.border,
           borderWidth: variant === 'secondary' ? sizes.border : 0,
         },
-        disabled && !loading && { opacity: opacity.disabled },
+        greyed && (variant === 'secondary' || variant === 'ghost') && { opacity: opacity.disabled },
         animated,
       ]}>
       <View style={[styles.content, loading && styles.hidden]}>
         {leftIcon ? <Icon name={leftIcon} size="md" color={palette.fg} /> : null}
-        <AppText variant={size === 'sm' ? 'small' : 'bodyStrong'} style={{ color: palette.fg }} numberOfLines={1}>
+        <AppText variant={size === 'sm' ? 'small' : 'button'} style={{ color: palette.fg }} numberOfLines={1}>
           {label}
         </AppText>
+        {rightIon ? <IonIcon name={rightIon} size="md" color={palette.fg} /> : null}
       </View>
       {loading ? (
         <View style={styles.spinner} pointerEvents="none">

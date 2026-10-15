@@ -17,9 +17,17 @@ export interface InlineNoticeProps {
   action?: { label: string; onPress: () => void };
 }
 
+// The FYP's error container: a soft ground, a 4 pt rule on the left in the
+// tone's colour, radius 8.
 const makeStyles = ({ space, radius }: Theme) =>
   StyleSheet.create({
-    root: { flexDirection: 'row', gap: space.s12, padding: space.s16, borderRadius: radius.md },
+    root: {
+      flexDirection: 'row',
+      gap: space.s8,
+      padding: space.s12,
+      borderRadius: radius.sm,
+      borderLeftWidth: space.s4,
+    },
     body: { flex: 1, gap: space.s4, alignItems: 'flex-start' },
   });
 
@@ -35,7 +43,7 @@ export const InlineNotice: React.FC<InlineNoticeProps> = ({ tone = 'error', titl
   const l = look[tone];
   return (
     <View
-      style={[styles.root, { backgroundColor: l.bg }]}
+      style={[styles.root, { backgroundColor: l.bg, borderLeftColor: l.fg }]}
       accessibilityRole="alert"
       accessibilityLiveRegion="polite">
       <Icon name={l.icon} size="md" color={l.fg} />
@@ -45,7 +53,7 @@ export const InlineNotice: React.FC<InlineNoticeProps> = ({ tone = 'error', titl
             {title}
           </AppText>
         ) : null}
-        <AppText variant="small" tone={l.text}>
+        <AppText variant="body" tone={l.text}>
           {message}
         </AppText>
         {action ? <Button label={action.label} variant="ghost" size="sm" onPress={action.onPress} /> : null}

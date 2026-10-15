@@ -2,10 +2,9 @@
 // MetroMatrix — Theme assembly
 // ═══════════════════════════════════════════════════════
 // Combines the base tokens, one service accent and the type scale into the
-// object useTheme() returns. Pure — no React, no Redux — so tests and
-// non-component code can build a theme directly.
+// object useTheme() returns. Pure — no React, no Redux. Light only.
 
-import { DefaultTheme, DarkTheme, type Theme as NavigationTheme } from '@react-navigation/native';
+import { DefaultTheme, type Theme as NavigationTheme } from '@react-navigation/native';
 import {
   PALETTES,
   buildElevation,
@@ -20,7 +19,8 @@ import {
   type Elevation,
 } from './tokens';
 import { SERVICE_PALETTES, SERVICE_NAMES, type ServiceName, type ServicePalette } from './services';
-import { type, FONT_FACES, type TypeScale } from './typography';
+import { type, type TypeScale } from './typography';
+import { mix } from './contrast';
 
 export interface Theme {
   mode: ColorMode;
@@ -37,63 +37,56 @@ export interface Theme {
   gutter: number;
 }
 
-const build = (mode: ColorMode, serviceName: ServiceName): Theme => {
-  const colors = PALETTES[mode];
+const build = (serviceName: ServiceName): Theme => {
+  const colors = PALETTES.light;
   return {
-    mode,
+    mode: 'light',
     serviceName,
     colors,
-    service: SERVICE_PALETTES[mode][serviceName],
+    service: SERVICE_PALETTES.light[serviceName],
     type,
     space,
     radius,
     size,
     opacity,
-    elevation: buildElevation(mode, colors),
+    elevation: buildElevation(colors),
     motion,
     gutter: GUTTER,
   };
 };
 
-// Built once: eight objects, referentially stable, so useStyles() memoises
-// on identity and a re-render never rebuilds a StyleSheet needlessly.
-const THEMES = (['light', 'dark'] as const).reduce(
-  (acc, mode) => {
-    acc[mode] = SERVICE_NAMES.reduce(
-      (byService, name) => {
-        byService[name] = build(mode, name);
-        return byService;
-      },
-      {} as Record<ServiceName, Theme>,
-    );
+// Built once, so useStyles() memoises on identity.
+const THEMES = SERVICE_NAMES.reduce(
+  (acc, name) => {
+    acc[name] = build(name);
     return acc;
   },
-  {} as Record<ColorMode, Record<ServiceName, Theme>>,
+  {} as Record<ServiceName, Theme>,
 );
 
-export const getTheme = (mode: ColorMode, serviceName: ServiceName = 'neutral'): Theme =>
-  THEMES[mode][serviceName];
+export const getTheme = (serviceName: ServiceName = 'neutral'): Theme => THEMES[serviceName];
 
-/** React Navigation theme: navigators paint canvas, never a white default. */
-export const navigationTheme = (theme: Theme): NavigationTheme => {
-  const base = theme.mode === 'dark' ? DarkTheme : DefaultTheme;
-  return {
-    ...base,
-    dark: theme.mode === 'dark',
-    colors: {
-      ...base.colors,
-      primary: theme.service.accent,
-      background: theme.colors.canvas,
-      card: theme.colors.surface,
-      text: theme.colors.ink,
-      border: theme.colors.line,
-      notification: theme.colors.danger,
-    },
-    fonts: {
-      regular: { fontFamily: FONT_FACES.sans400, fontWeight: '400' },
-      medium: { fontFamily: FONT_FACES.sans500, fontWeight: '500' },
-      bold: { fontFamily: FONT_FACES.sans600, fontWeight: '600' },
-      heavy: { fontFamily: FONT_FACES.sans700, fontWeight: '700' },
-    },
-  };
+/**
+ * A service's page-header gradient, derived the way the FYP's AppBar does
+ * (`headerGradientStops`): start at the accent's deep step, end 22% toward
+ * ink. Both stops carry a white label at AA.
+ */
+export const headerGradient = (serviceName: ServiceName): [string, string] => {
+  const deep = SERVICE_PALETTES.light[serviceName].accentDeep;
+  return [deep, mix(deep, PALETTES.light.ink, 0.22)];
 };
+
+/** React Navigation theme: navigators paint white, never a grey default. */
+export const navigationTheme = (theme: Theme): NavigationTheme => ({
+  ...DefaultTheme,
+  dark: false,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: theme.service.accent,
+    background: theme.colors.canvas,
+    card: theme.colors.surface,
+    text: theme.colors.ink,
+    border: theme.colors.line,
+    notification: theme.colors.danger,
+  },
+});

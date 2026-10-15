@@ -20,7 +20,7 @@ export interface CardProps {
 
 const makeStyles = ({ colors, radius, space }: Theme) =>
   StyleSheet.create({
-    root: { backgroundColor: colors.surface, borderRadius: radius.lg, overflow: 'hidden' },
+    root: { backgroundColor: colors.surface, borderRadius: radius.md, overflow: 'hidden' },
     padded: { padding: space.s16, gap: space.s16 },
     paddedX: { paddingHorizontal: space.s16 },
   });

@@ -31,7 +31,7 @@ const makeStyles = ({ colors, size, radius, space }: Theme) =>
       height: size.otpCell.height,
       borderRadius: radius.md,
       borderWidth: size.border,
-      borderColor: colors.lineStrong,
+      borderColor: colors.line,
       backgroundColor: colors.surface,
       alignItems: 'center',
       justifyContent: 'center',
