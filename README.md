@@ -60,3 +60,4 @@ The full rules and seeded accounts are in [docs/API_CONTRACT_ASSUMED.md → Mock
   - set the iOS Google URL scheme (`app.json`)
   - Google sign-in setup: [docs/GOOGLE_SIGNIN.md](docs/GOOGLE_SIGNIN.md)
 - **Photos:** service-card sources and licences are in [assets/images/services/CREDITS.md](assets/images/services/CREDITS.md); the dummy catalogue's in [docs/MOCK_IMAGES.md](docs/MOCK_IMAGES.md).
+# MetroMatrix_App
