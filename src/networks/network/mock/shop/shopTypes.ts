@@ -260,7 +260,15 @@ export interface MockNotification {
   type: NotificationType;
   title: string;
   body: string;
-  data: { groupCode: string | null; orderId: string | null; returnId: string | null; productId: string | null };
+  data: {
+    groupCode: string | null;
+    orderId: string | null;
+    returnId: string | null;
+    productId: string | null;
+    appointmentCode?: string | null;
+    appointmentId?: string | null;
+    prescriptionId?: string | null;
+  };
   isRead: boolean;
   createdAt: string;
 }

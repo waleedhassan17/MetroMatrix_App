@@ -13,6 +13,8 @@ import type { DocumentKind, ServiceType, SubType } from '../../../types/auth';
 import { MOCK, SEED_PASSWORD, STAFF_PASSWORD } from './mockConfig';
 import { SHOP_SEED_SHOPPER, SHOP_SEED_USERS, seedShop } from './shop/shopSeed';
 import type { MockShop } from './shop/shopTypes';
+import { HEALTH_SEED_USERS, seedHealth } from './health/healthSeed';
+import type { MockHealth } from './health/healthTypes';
 
 export interface MockUser {
   id: string;
@@ -72,6 +74,9 @@ export interface MockBusiness {
   updatedAt: string;
   /** Seeded applications stay put; ones submitted in the app auto-approve. */
   autoApprove: boolean;
+  /** Doctors: listed for patients (Practice setup published), and staff's PMDC check. */
+  isListed?: boolean;
+  pmdcVerified?: boolean;
 }
 
 export interface MockDb {
@@ -88,6 +93,8 @@ export interface MockDb {
   devices: { userId: string; token: string }[];
   /** Shopping (stores, catalogue, bags, orders …) — see ./shop/. */
   shop: MockShop;
+  /** Healthcare (doctors, availability, appointments …) — see ./health/. */
+  health: MockHealth;
 }
 
 export const newId = (prefix: string) =>
@@ -207,6 +214,17 @@ export const seedDb = (): MockDb => ({
       phone: '+923451234567',
       streetAddress: 'House 88, Street 9, DHA Phase 5',
     }),
+    ...HEALTH_SEED_USERS.map(u =>
+      baseUser({
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        role: 'partner',
+        gender: u.gender,
+        providerServiceType: 'healthcare',
+        providerSubType: 'doctor',
+      }),
+    ),
     baseUser({
       id: 'u_newadmin',
       email: 'newadmin@metromatrix.app',
@@ -225,6 +243,8 @@ export const seedDb = (): MockDb => ({
       name: 'Dr. Bilal Ahmed Clinic',
       status: 'approved',
       reviewedAt: iso(DAY),
+      isListed: true,
+      pmdcVerified: true,
       details: {
         specialty: 'Cardiologist',
         pmdcNumber: '45821-P',
@@ -278,6 +298,21 @@ export const seedDb = (): MockDb => ({
         details: { storeCategory: u.storeId === 's_volt' ? 'Electronics' : 'Fashion', experience: '5', briefDescription: 'Seeded demo store.' },
       }),
     ),
+    ...HEALTH_SEED_USERS.map(u =>
+      seedBusiness({
+        id: u.businessId,
+        ownerId: u.id,
+        serviceType: 'healthcare',
+        subType: 'doctor',
+        name: u.businessName,
+        status: u.status,
+        reviewedAt: u.status === 'approved' ? iso(30 * DAY) : null,
+        submittedAt: iso(u.status === 'approved' ? 32 * DAY : 2 * DAY),
+        isListed: u.listed,
+        pmdcVerified: u.status === 'approved',
+        details: { specialty: u.specialty, pmdcNumber: u.pmdc, experience: '8', briefDescription: 'Seeded demo doctor.' },
+      }),
+    ),
   ],
   access: {},
   refresh: {},
@@ -285,6 +320,7 @@ export const seedDb = (): MockDb => ({
   challenges: {},
   devices: [],
   shop: seedShop(),
+  health: seedHealth(),
 });
 
 /**
@@ -299,6 +335,14 @@ const ensureCollections = (loaded: Partial<MockDb>): MockDb => {
   for (const b of seed.businesses) if (!out.businesses.some(x => x.id === b.id)) out.businesses.push(b);
   if (!loaded.shop) out.shop = seed.shop;
   else for (const k of Object.keys(seed.shop) as (keyof MockShop)[]) if (out.shop[k] === undefined) (out.shop as any)[k] = seed.shop[k];
+  if (!loaded.health) out.health = seed.health;
+  else for (const k of Object.keys(seed.health) as (keyof MockHealth)[]) if (out.health[k] === undefined) (out.health as any)[k] = seed.health[k];
+  // Businesses saved before doctors could be listed: the seed's own doctors keep their state.
+  for (const b of out.businesses) {
+    const s = seed.businesses.find(x => x.id === b.id);
+    if (s && b.isListed === undefined) b.isListed = s.isListed;
+    if (s && b.pmdcVerified === undefined) b.pmdcVerified = s.pmdcVerified;
+  }
   return out;
 };
 

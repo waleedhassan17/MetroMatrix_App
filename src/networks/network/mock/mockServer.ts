@@ -24,6 +24,7 @@ import { getDb, newId, saveDb, type MockBusiness, type MockDb, type MockUser } f
 import { MOCK_CUISINES, MOCK_KITCHENS, MOCK_PROMOS } from './mockFood';
 import { ShopError } from './shop/shopLogic';
 import { registerShopRoutes } from './shop/shopRoutes';
+import { registerHealthRoutes } from './health/healthRoutes';
 
 // ─── Plumbing ────────────────────────────────────────
 // One error type for every route; the shop routes throw the same class.
@@ -647,6 +648,10 @@ route('GET', '/admin/businesses/:id', ctx => {
 
 route('POST', '/admin/businesses/:id/approve', ctx => {
   const b = adminBusiness(ctx);
+  // TODO(API_HEALTH): a doctor is approved only after staff check the PMDC number.
+  if (b.subType === 'doctor' && !b.pmdcVerified) {
+    throw new MockError(422, 'PMDC_NOT_VERIFIED', "Check the doctor's PMDC registration first (Health → Doctor verification).");
+  }
   b.status = 'approved';
   b.reviewedAt = isoNow();
   b.rejectionReason = null;
@@ -698,6 +703,20 @@ registerShopRoutes({
   },
   requirePartnerBusiness: ctx => requirePartnerBusiness(ctx),
   requireAdmin,
+});
+
+// ── Healthcare (patients, doctors, admin) — see ./health/ ──
+registerHealthRoutes({
+  route,
+  requireUser,
+  optionalUser: ctx => {
+    const session = ctx.token ? ctx.db.access[ctx.token] : undefined;
+    if (!session || session.expiresAt < ctx.now) return null;
+    return ctx.db.users.find(u => u.id === session.userId) ?? null;
+  },
+  requirePartnerBusiness: ctx => requirePartnerBusiness(ctx),
+  requireAdmin,
+  publicBusiness,
 });
 
 // ─── The adapter ─────────────────────────────────────

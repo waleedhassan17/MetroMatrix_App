@@ -1,0 +1,44 @@
+// MetroMatrix — The doctor's public profile and booking rules.
+
+import type { BookingRules, DoctorOwnProfile, ExperienceRow, Qualification } from '../../types/health';
+import type { ValidationErrors } from '../authModel';
+
+export const TITLES = ['Dr.', 'Prof. Dr.', 'Assoc. Prof. Dr.', 'Asst. Prof. Dr.'];
+export const LANGUAGES = ['Urdu', 'English', 'Punjabi', 'Sindhi', 'Pashto', 'Saraiki', 'Balochi'];
+export const MAX_ABOUT = 1200;
+export const MAX_SERVICES = 20;
+
+export const BOOKING_WINDOW_CHOICES = [7, 14, 30];
+export const MIN_NOTICE_CHOICES = [15, 30, 60, 120, 240];
+export const CANCEL_CUTOFF_CHOICES = [1, 2, 4, 12, 24];
+
+export const DEFAULT_BOOKING_RULES: BookingRules = { windowDays: 14, minNoticeMinutes: 60, cancelCutoffHours: 4, videoPrepay: false };
+
+export const emptyQualification = (): Qualification => ({ degree: '', institute: '', year: null });
+export const emptyExperience = (): ExperienceRow => ({ role: '', place: '', from: null, to: null });
+
+/** "1 h" / "30 min" for a notice choice. */
+export const minutesLabel = (m: number) => (m >= 60 ? `${m / 60} h` : `${m} min`);
+
+export const validateDoctorProfile = (p: DoctorOwnProfile, thisYear: number): ValidationErrors => {
+  const errors: ValidationErrors = {};
+  if (p.name.trim().length < 3) errors.name = 'Enter your full name';
+  if (!p.specialtySlug) errors.specialtySlug = 'Choose your specialty';
+  if (p.secondarySpecialtySlug && p.secondarySpecialtySlug === p.specialtySlug) errors.secondarySpecialtySlug = 'Choose a different second specialty';
+  if (p.practisingSince !== null && (p.practisingSince < 1950 || p.practisingSince > thisYear)) errors.practisingSince = 'Check the year';
+  if (!p.languages.length) errors.languages = 'Choose at least one language';
+  if (p.about.length > MAX_ABOUT) errors.about = `Keep it under ${MAX_ABOUT} characters`;
+  if (p.services.length > MAX_SERVICES) errors.services = `Up to ${MAX_SERVICES} services`;
+  p.qualifications.forEach((q, i) => {
+    if (!q.degree.trim()) errors[`qualification.${i}.degree`] = 'Enter the degree or remove this row';
+    if (q.year !== null && (q.year < 1950 || q.year > thisYear)) errors[`qualification.${i}.year`] = 'Check the year';
+  });
+  p.experience.forEach((e, i) => {
+    if (!e.role.trim() || !e.place.trim()) errors[`experience.${i}.role`] = 'Enter the role and the place, or remove this row';
+    if (e.from !== null && e.to !== null && e.to < e.from) errors[`experience.${i}.to`] = 'The end year is before the start';
+  });
+  return errors;
+};
+
+/** Years in practice, from the year they started. */
+export const yearsSince = (since: number | null, thisYear: number) => (since ? Math.max(0, thisYear - since) : 0);

@@ -4,6 +4,7 @@ module.exports = {
   // jest-expo knows how to mock.
   preset: 'jest-expo',
   setupFiles: ['<rootDir>/jest.setup.js'],
+  globalSetup: '<rootDir>/jest.globalSetup.js',
   testPathIgnorePatterns: ['/node_modules/', '/android/', '/ios/', '/dist/'],
   // Redux Toolkit ships ESM (and pulls immer's legacy-esm build); Expo and RN
   // packages ship untranspiled TS/ESM. Let Babel transform all of them.

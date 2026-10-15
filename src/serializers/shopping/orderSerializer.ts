@@ -91,7 +91,7 @@ export const orderItemSerializer = (raw: unknown): OrderItem | null => {
   };
 };
 
-const instructionsSerializer = (raw: unknown): PaymentInstructions | null => {
+export const instructionsSerializer = (raw: unknown): PaymentInstructions | null => {
   if (!isObject(raw)) return null;
   const accountNumber = str(raw.accountNumber);
   if (!accountNumber) return null;
@@ -105,7 +105,7 @@ const instructionsSerializer = (raw: unknown): PaymentInstructions | null => {
   };
 };
 
-const proofSerializer = (raw: unknown): PaymentProof | null => {
+export const proofSerializer = (raw: unknown): PaymentProof | null => {
   if (!isObject(raw) || !str(raw.transactionId)) return null;
   return {
     transactionId: str(raw.transactionId),

@@ -32,6 +32,11 @@ const ICON: Record<NotificationType, IonName> = {
   payment_proof: 'card-outline',
   return_requested: 'return-down-back-outline',
   low_stock: 'alert-circle-outline',
+  appointment_update: 'calendar-outline',
+  appointment_reminder: 'alarm-outline',
+  appointment_new: 'calendar-number-outline',
+  appointment_payment: 'card-outline',
+  prescription_ready: 'document-text-outline',
 };
 
 const makeStyles = ({ space, size, radius }: Theme) =>

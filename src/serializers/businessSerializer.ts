@@ -20,7 +20,7 @@ import type {
   SubType,
 } from '../types/auth';
 import { REQUIRED_DOCUMENTS, SUBTYPE_SERVICE, missingDocuments } from '../models/businessModel';
-import { arr, enumList, isObject, num, oneOf, str, strOrNull } from './serializerUtils';
+import { arr, bool, enumList, isObject, num, oneOf, str, strOrNull } from './serializerUtils';
 
 export const SERVICE_TYPES: readonly ServiceType[] = ['shopping', 'healthcare', 'food'];
 export const SUB_TYPES: readonly SubType[] = ['store', 'doctor', 'restaurant', 'home_kitchen', 'cloud_kitchen'];
@@ -108,6 +108,9 @@ export const businessSerializer = (raw: unknown): Business | null => {
     reviewedAt: strOrNull(raw.reviewedAt),
     createdAt: str(raw.createdAt),
     updatedAt: str(raw.updatedAt),
+    // TODO(API_HEALTH): doctor listing + PMDC check (docs/API_HEALTH_ASSUMED.md).
+    isListed: subType === 'doctor' ? bool(raw.isListed) : null,
+    pmdcVerified: subType === 'doctor' ? bool(raw.pmdcVerified) : null,
   };
 };
 

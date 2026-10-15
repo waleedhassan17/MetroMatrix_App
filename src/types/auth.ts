@@ -88,6 +88,13 @@ export interface Business {
   reviewedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /**
+   * Doctors only: patients can find and book them (Practice setup published).
+   * null for every other service. TODO(API_HEALTH)
+   */
+  isListed: boolean | null;
+  /** Doctors only: staff have checked the PMDC number. TODO(API_HEALTH) */
+  pmdcVerified: boolean | null;
 }
 
 export interface BusinessOwner {

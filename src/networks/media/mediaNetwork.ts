@@ -27,7 +27,11 @@ export type UploadPurpose =
   | 'review_photo'
   | 'return_photo'
   | 'payment_proof'
-  | 'banner_image';
+  | 'banner_image'
+  // Healthcare (TODO(API_HEALTH): the API's UPLOAD_PURPOSES must list these)
+  | 'health_record'
+  | 'doctor_photo'
+  | 'consult_attachment';
 
 export const signUpload = async (purpose: UploadPurpose): Promise<SignedUpload> => {
   try {

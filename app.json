@@ -23,7 +23,11 @@
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
-        "CAMERA"
+        "CAMERA",
+        "RECORD_AUDIO",
+        "MODIFY_AUDIO_SETTINGS",
+        "READ_CALENDAR",
+        "WRITE_CALENDAR"
       ]
     },
     "ios": {
@@ -54,8 +58,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "MetroMatrix needs your photos to upload verification documents and your profile picture.",
-          "cameraPermission": "MetroMatrix needs the camera to photograph verification documents."
+          "photosPermission": "MetroMatrix needs your photos to upload documents, health records and pictures.",
+          "cameraPermission": "MetroMatrix needs the camera to photograph documents and health records."
         }
       ],
       "expo-notifications",
@@ -65,7 +69,27 @@
           "iosUrlScheme": "com.googleusercontent.apps.TODO-ios-client-id"
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "MetroMatrix uses the camera for video consultations with your doctor.",
+          "microphonePermission": "MetroMatrix uses the microphone for video consultations with your doctor.",
+          "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "MetroMatrix uses the microphone for video consultations with your doctor."
+        }
+      ],
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "MetroMatrix adds your appointments to your calendar when you ask it to."
+        }
+      ]
     ]
   }
 }

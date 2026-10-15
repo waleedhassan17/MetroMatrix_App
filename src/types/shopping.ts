@@ -4,13 +4,10 @@
 // TODO(API_SHOPPING): reconcile with MetroMatrix-API docs/API_SHOPPING.md.
 // Money is INTEGER rupees everywhere; format only with utils/money.formatPKR.
 
-/** One page of a list: `GET …?page=&pageSize=` → `{ items, total, page, pageSize }`. */
-export interface Paged<T> {
-  items: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
+import type { PaymentAccountKind, PaymentInstructions, PaymentProof } from './payments';
+
+// The shared payment shapes live in ./payments (Healthcare uses them too).
+export type { Paged, PaymentAccount, PaymentAccountInput, PaymentAccountKind, PaymentInstructions, PaymentProof } from './payments';
 
 // ─── Catalogue ────────────────────────────────────────
 export interface ShopCategory {
@@ -25,7 +22,6 @@ export interface ShopCategory {
 }
 
 export type PaymentMethod = 'cod' | 'transfer';
-export type PaymentAccountKind = 'raast' | 'jazzcash' | 'easypaisa' | 'bank';
 
 export interface StoreSocials {
   instagram: string | null;
@@ -403,22 +399,6 @@ export interface OrderItem {
   returnableQuantity: number;
 }
 
-export interface PaymentInstructions {
-  kind: PaymentAccountKind;
-  accountTitle: string;
-  accountNumber: string;
-  bankName: string | null;
-  amount: number;
-  payBy: string;
-}
-
-export interface PaymentProof {
-  transactionId: string;
-  imageUrl: string | null;
-  submittedAt: string;
-  rejectionReason: string | null;
-}
-
 export interface StoreOrder {
   id: string;
   code: string;
@@ -525,14 +505,29 @@ export type NotificationType =
   | 'new_order'
   | 'payment_proof'
   | 'return_requested'
-  | 'low_stock';
+  | 'low_stock'
+  // Healthcare (TODO(API_HEALTH))
+  | 'appointment_update'
+  | 'appointment_reminder'
+  | 'appointment_new'
+  | 'appointment_payment'
+  | 'prescription_ready';
 
 export interface AppNotification {
   id: string;
   type: NotificationType;
   title: string;
   body: string;
-  data: { groupCode: string | null; orderId: string | null; returnId: string | null; productId: string | null };
+  data: {
+    groupCode: string | null;
+    orderId: string | null;
+    returnId: string | null;
+    productId: string | null;
+    /** Healthcare: the patient's appointment (by code) or the doctor's (by id). */
+    appointmentCode: string | null;
+    appointmentId: string | null;
+    prescriptionId: string | null;
+  };
   isRead: boolean;
   createdAt: string;
 }
@@ -722,16 +717,6 @@ export interface StoreSettings {
   pauseMessage: string | null;
 }
 
-export interface PaymentAccount {
-  id: string;
-  kind: PaymentAccountKind;
-  title: string;
-  number: string;
-  bankName: string | null;
-  isActive: boolean;
-}
-
-export type PaymentAccountInput = Omit<PaymentAccount, 'id'>;
 
 // ─── Admin ────────────────────────────────────────────
 export interface ShopOverview {

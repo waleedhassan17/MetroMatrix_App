@@ -15,6 +15,11 @@ const TYPES: readonly NotificationType[] = [
   'payment_proof',
   'return_requested',
   'low_stock',
+  'appointment_update',
+  'appointment_reminder',
+  'appointment_new',
+  'appointment_payment',
+  'prescription_ready',
 ];
 
 export const notificationSerializer = (raw: unknown): AppNotification | null => {
@@ -32,6 +37,10 @@ export const notificationSerializer = (raw: unknown): AppNotification | null => 
       orderId: strOrNull(data.orderId),
       returnId: strOrNull(data.returnId),
       productId: strOrNull(data.productId),
+      // TODO(API_HEALTH): health notification data (docs/API_HEALTH_ASSUMED.md).
+      appointmentCode: strOrNull(data.appointmentCode),
+      appointmentId: strOrNull(data.appointmentId),
+      prescriptionId: strOrNull(data.prescriptionId),
     },
     isRead: bool(raw.isRead),
     createdAt: iso(raw.createdAt),
