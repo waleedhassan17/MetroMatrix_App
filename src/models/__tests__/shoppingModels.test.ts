@@ -14,7 +14,7 @@ import {
   RETURN_STATUS,
 } from '../shopping/orderStatusModel';
 import { normaliseTransactionId, validatePaymentProof } from '../shopping/paymentProofModel';
-import { emptyProductForm, makeCover, movePhoto, salePreviewPercent, syncVariants, validateProductForm } from '../shopping/productFormModel';
+import { emptyProductForm, makeCover, movePhoto, salePreviewPercent, skuBaseFromName, syncVariants, validateProductForm } from '../shopping/productFormModel';
 import { returnDaysLeft, validateReturn } from '../shopping/returnFormModel';
 import { validateReview } from '../shopping/reviewFormModel';
 import { brandContrast, validatePaymentAccount, validateStoreSettings } from '../shopping/storeModel';
@@ -259,5 +259,12 @@ describe('push taps', () => {
     expect(pushTapUrl({ returnId: 'rt_1', orderId: 'o_1' }, true)).toBe('metromatrix://store/returns/rt_1');
     expect(pushTapUrl({}, false)).toBeNull();
     expect(pushTapUrl(null, true)).toBeNull();
+  });
+});
+
+describe('SKU prefix', () => {
+  it('comes from the name when the store sets none', () => {
+    expect(skuBaseFromName('Braided leather watch strap')).toBe('BLWS');
+    expect(skuBaseFromName('  ')).toBe('SKU');
   });
 });

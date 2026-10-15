@@ -47,6 +47,8 @@ export const ToggleRow: React.FC<ToggleRowProps> = ({ label, helper, value, onCh
         trackColor={{ false: colors.disabled, true: service.accent }}
         thumbColor={colors.surface}
         ios_backgroundColor={colors.disabled}
+        // react-native-web paints its own teal thumb when on unless told otherwise.
+        {...({ activeThumbColor: colors.surface } as object)}
         accessibilityElementsHidden
         importantForAccessibility="no"
       />

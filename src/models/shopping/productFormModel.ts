@@ -95,6 +95,15 @@ export const validateProductForm = (form: ProductForm, intent: 'draft' | 'publis
   return errors;
 };
 
+/** "Braided leather watch strap" → "BLWS": a SKU prefix when the store didn't set one. */
+export const skuBaseFromName = (name: string): string =>
+  name
+    .split(/\s+/)
+    .map(w => w.replace(/[^A-Za-z0-9]/g, '')[0] ?? '')
+    .join('')
+    .toUpperCase()
+    .slice(0, 4) || 'SKU';
+
 export const toProductInput = (form: ProductForm, status: PartnerProductStatus): PartnerProductInput => ({
   name: form.name.trim(),
   description: form.description.trim(),
@@ -113,7 +122,7 @@ export const toProductInput = (form: ProductForm, status: PartnerProductStatus):
     id: v.id,
     option1: v.option1,
     option2: v.option2,
-    sku: v.sku.trim().toUpperCase() || skuFor(form.baseSku, v.option1, v.option2),
+    sku: v.sku.trim().toUpperCase() || skuFor(form.baseSku.trim() || skuBaseFromName(form.name), v.option1, v.option2),
     stock: Math.max(0, toInt(v.stock)),
     priceDelta: toInt(v.priceDelta),
   })),
