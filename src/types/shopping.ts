@@ -4,7 +4,7 @@
 // TODO(API_SHOPPING): reconcile with MetroMatrix-API docs/API_SHOPPING.md.
 // Money is INTEGER rupees everywhere; format only with utils/money.formatPKR.
 
-import type { PaymentAccountKind, PaymentInstructions, PaymentProof } from './payments';
+import type { PaymentInstructions, PaymentProof } from './payments';
 
 // The shared payment shapes live in ./payments (Healthcare uses them too).
 export type { Paged, PaymentAccount, PaymentAccountInput, PaymentAccountKind, PaymentInstructions, PaymentProof } from './payments';
