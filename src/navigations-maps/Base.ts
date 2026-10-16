@@ -104,6 +104,60 @@ export const ROUTES = {
   ORDER_LOOKUP: 'OrderLookup',
   SHOP_STORES: 'ShopStores',
 
+  // ── Healthcare: the patient. Everything after Health home is mounted in
+  // the Home, Orders and Profile stacks alike, so a visit opens where you are. ──
+  HEALTH_HOME: 'HealthHome',
+  HEALTH_SEARCH: 'HealthSearch',
+  SPECIALTY_LIST: 'SpecialtyList',
+  CONDITION_LIST: 'ConditionList',
+  DOCTOR_LIST: 'DoctorList',
+  DOCTOR_PROFILE: 'DoctorProfile',
+  DOCTOR_REVIEWS: 'DoctorReviews',
+  BOOKING_CONFIRMED: 'BookingConfirmed',
+  APPOINTMENT_DETAIL: 'AppointmentDetail',
+  VIDEO_PRECHECK: 'VideoPrecheck',
+  VIDEO_CONSULT: 'VideoConsult',
+  POST_CONSULT_REVIEW: 'PostConsultReview',
+  PRESCRIPTION_LIST: 'PrescriptionList',
+  PRESCRIPTION_VIEW: 'PrescriptionView',
+  HEALTH_RECORDS: 'HealthRecords',
+  RECORD_DETAIL: 'RecordDetail',
+  RECORD_UPLOAD: 'RecordUpload',
+  FAMILY_MEMBERS: 'FamilyMembers',
+  FAMILY_MEMBER_FORM: 'FamilyMemberForm',
+  SYMPTOM_CHECKER: 'SymptomChecker',
+  SYMPTOM_RESULT: 'SymptomResult',
+  EMERGENCY: 'Emergency',
+
+  // ── Healthcare: the doctor's app (a stack over four tabs; Practice setup
+  // is its root until the doctor is listed) ──
+  DOCTOR_TABS: 'DoctorTabs',
+  TODAY_TAB: 'TodayTab',
+  CALENDAR_TAB: 'CalendarTab',
+  PATIENTS_TAB: 'PatientsTab',
+  DOCTOR_TODAY: 'DoctorToday',
+  DOCTOR_CALENDAR: 'DoctorCalendar',
+  DOCTOR_PATIENTS: 'DoctorPatients',
+  DOCTOR_MORE: 'DoctorMore',
+  PRACTICE_SETUP: 'PracticeSetup',
+  AVAILABILITY: 'Availability',
+  TIME_OFF: 'TimeOff',
+  DOCTOR_APPOINTMENT: 'DoctorAppointment',
+  PRESCRIPTION_WRITER: 'PrescriptionWriter',
+  PATIENT_HISTORY: 'PatientHistory',
+  MY_REVIEWS: 'MyReviews',
+  DOCTOR_INSIGHTS: 'DoctorInsights',
+  DOCTOR_PROFILE_EDIT: 'DoctorProfileEdit',
+
+  // ── Healthcare: the admin console's tab ──
+  HEALTH_ADMIN_TAB: 'HealthAdminTab',
+  HEALTH_OVERVIEW: 'HealthOverview',
+  SPECIALTIES: 'Specialties',
+  CONDITIONS: 'Conditions',
+  DOCTOR_VERIFICATION: 'DoctorVerification',
+  REVIEW_MODERATION: 'ReviewModeration',
+  APPOINTMENT_LOOKUP: 'AppointmentLookup',
+
   // ── Dev only ──
   DESIGN_GALLERY: 'DesignGallery',
 } as const;

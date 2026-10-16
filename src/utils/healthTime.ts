@@ -157,3 +157,6 @@ export const ageFrom = (dateOfBirth: string | null, now: number = Date.now()): n
   const years = today.diff(dob, 'year');
   return years >= 0 && years < 130 ? years : null;
 };
+
+/** "15 Oct 2026" — the day an instant falls on at the practice (reviews, records, prescriptions). */
+export const formatOn = (iso: string, timezone: string = PKT) => formatDayFull(dateInZone(iso, timezone));

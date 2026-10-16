@@ -43,6 +43,7 @@ import { BrandMark, BrandWordmark } from '@components/brand';
 import { AuthHeader, AuthTabs, ProviderBadge, type AuthTab } from '@components/auth/AuthChrome';
 import { selectPreviewService, setPreviewService } from './designGallerySlice';
 import { ShoppingStories } from './ShoppingStories';
+import { HealthStories } from './HealthStories';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'DesignGallery'>;
 
@@ -281,6 +282,8 @@ const Stories: React.FC = () => {
       </Section>
 
       <ShoppingStories />
+
+      <HealthStories />
 
       <Section title="Overlays">
         <Button label="Open sheet" variant="secondary" onPress={() => setSheetOpen(true)} />

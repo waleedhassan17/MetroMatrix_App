@@ -227,6 +227,27 @@ export const size = {
   brandCard: 220,
   brandRing: 64,
   brandRingInner: 52,
+  // ── Healthcare ──
+  /** A doctor's photo (rounded square): rail card, list card, profile header. */
+  doctorPhoto: { sm: 48, md: 64, lg: 96 },
+  /** DateStrip day chip. */
+  dayChip: { width: 60, height: 76 },
+  /** AppointmentCard date block. */
+  dateBlock: 56,
+  /** SpecialtyTile glyph well. */
+  specialtyWell: 52,
+  /** PrescriptionSheet morning / afternoon / night dot. */
+  doseDot: 10,
+  /** Calendar: one hour's height, and the time gutter. */
+  calendarHour: 64,
+  calendarGutter: 52,
+  /** Video precheck camera preview (3:4 portrait). */
+  previewAspect: 0.75,
+  /** Mic level meter bars. */
+  meterBar: 6,
+  meterHeight: 28,
+  /** A compact doctor card in the Available today rail. */
+  doctorRailCard: 280,
 } as const;
 
 export const opacity = {
@@ -278,6 +299,8 @@ export const motion = {
   previewDebounce: 300,
   /** The store's Orders list refreshes this often while on screen. */
   ordersPoll: 30000,
+  /** The doctor's Today queue refreshes this often while on screen. */
+  queuePoll: 30000,
   /** Sheets and step transitions. */
   sheet: { duration: 240 },
   /** Badges and pills arriving. */

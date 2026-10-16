@@ -629,6 +629,8 @@ export interface CalendarRange {
 }
 
 export interface PreviousVisit {
+  /** The doctor's own appointment id (opens DoctorAppointment). */
+  appointmentId: string;
   code: string;
   startAt: string;
   kind: ConsultKind;

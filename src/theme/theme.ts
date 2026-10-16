@@ -119,6 +119,21 @@ export function headerGradient(serviceName: ServiceName): [string, string] {
   return [deep, mix(deep, PALETTES.light.ink, 0.22)];
 }
 
+/**
+ * The same theme with every type role scaled — the Design Gallery's preview
+ * of a phone set to large text (150%), where the OS multiplier can't be set.
+ */
+export const withTextScale = (theme: Theme, factor: number): Theme => ({
+  ...theme,
+  type: Object.fromEntries(
+    Object.entries(theme.type).map(([role, style]) => [
+      role,
+      { ...style, fontSize: (style.fontSize ?? 14) * factor, lineHeight: style.lineHeight ? style.lineHeight * factor : undefined },
+    ]),
+  ) as TypeScale,
+  maxFontScale: 1,
+});
+
 /** React Navigation theme: navigators paint white, never a grey default. */
 export const navigationTheme = (theme: Theme): NavigationTheme => ({
   ...DefaultTheme,

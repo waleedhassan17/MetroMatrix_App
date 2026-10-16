@@ -631,7 +631,7 @@ export const previousVisitsOf = (h: MockHealth, a: Pick<MockAppointment, 'doctor
     .sort((x, y) => y.startAt.localeCompare(x.startAt))
     .map(o => {
       const p = o.prescriptionId ? h.prescriptions.find(x => x.id === o.prescriptionId) : null;
-      return { code: o.code, startAt: o.startAt, kind: o.kind, diagnosis: p?.diagnosis ?? null, prescriptionId: o.prescriptionId, notes: o.notes.text || null };
+      return { appointmentId: o.id, code: o.code, startAt: o.startAt, kind: o.kind, diagnosis: p?.diagnosis ?? null, prescriptionId: o.prescriptionId, notes: o.notes.text || null };
     });
 
 export const doctorAppointmentView = (h: MockHealth, a: MockAppointment, now: number) => {

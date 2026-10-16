@@ -186,7 +186,7 @@ Detail adds:
 | GET | `/medicines/suggest` | `q` | `[{ name, strength, form, isFavourite }≤12]`, favourites first |
 | GET | `/diagnoses/recent` | | `string[≤8]` |
 | GET | `/patients` | `q?`, `page` | page of `{ id, name, age, gender, lastVisitAt, visits }`; only the doctor's own patients |
-| GET | `/patients/:id/history` | | `{ patient, visits[{ code, startAt, kind, diagnosis, prescriptionId, notes }] }` with this doctor only |
+| GET | `/patients/:id/history` | | `{ patient, visits[{ appointmentId, code, startAt, kind, diagnosis, prescriptionId, notes }] }` with this doctor only |
 | GET | `/reviews` | `unreplied?`, `page` | page of `Review` |
 | GET | `/reviews/summary` | | `ReviewSummary` |
 | POST | `/reviews/:id/reply` | `{ text ≤600 }` | `Review` (editable for 24 h: `409 REPLY_LOCKED`) |

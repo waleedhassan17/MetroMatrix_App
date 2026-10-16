@@ -1,10 +1,13 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — "I've paid": the transfer's transaction ID (+ screenshot)
 // ═══════════════════════════════════════════════════════
+// One flow for both services: a shop order's transfer to the store, or an
+// appointment's transfer to the doctor.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { submitPaymentProof } from '@networks/shopping/ordersNetwork';
+import { submitAppointmentPaymentProof } from '@networks/health/appointmentsNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import { normaliseTransactionId } from '@models/shopping/paymentProofModel';
 import type { LocalFile } from '@/types';
@@ -12,6 +15,7 @@ import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../.
 import { pendingPhoto, photoFailed, photoKey, photoProgress, photoUploaded, upload, type FormPhoto } from '../shared/photoUploads';
 
 export interface PaymentProofSliceState {
+  /** The order or appointment being paid for. */
   orderId: string | null;
   transactionId: string;
   touched: boolean;
@@ -85,6 +89,31 @@ export const paymentProofSlice = createAppSlice({
         },
       },
     ),
+
+    // TODO(API_HEALTH): POST /healthcare/appointments/:code/payment-proof.
+    submitAppointmentProofAsync: create.asyncThunk(
+      async ({ code, transactionId, imageUrl }: { code: string; transactionId: string; imageUrl: string | null }, { rejectWithValue }) => {
+        try {
+          return await submitAppointmentPaymentProof(code, { transactionId: normaliseTransactionId(transactionId), imageUrl });
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        pending: state => {
+          state.status = 'loading';
+          state.touched = true;
+          state.error = NO_ERROR;
+        },
+        fulfilled: state => {
+          state.status = 'succeeded';
+        },
+        rejected: (state, action) => {
+          state.status = 'failed';
+          state.error = readRejection(action, "We couldn't send that. Check the ID and try again.");
+        },
+      },
+    ),
   }),
   selectors: {
     selectPaymentProof: state => state,
@@ -92,6 +121,13 @@ export const paymentProofSlice = createAppSlice({
 });
 
 export { photoKey };
-export const { startPaymentProof, setTransactionId, touchTransactionId, removeProofPhoto, addProofPhotoAsync, submitPaymentProofAsync } =
-  paymentProofSlice.actions;
+export const {
+  startPaymentProof,
+  setTransactionId,
+  touchTransactionId,
+  removeProofPhoto,
+  addProofPhotoAsync,
+  submitPaymentProofAsync,
+  submitAppointmentProofAsync,
+} = paymentProofSlice.actions;
 export const { selectPaymentProof } = paymentProofSlice.selectors;

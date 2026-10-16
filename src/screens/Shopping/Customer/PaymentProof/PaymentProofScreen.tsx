@@ -1,9 +1,10 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — "I've paid" (a transfer to the store)
+// MetroMatrix — "I've paid" (a transfer to the store, or to the doctor)
 // ═══════════════════════════════════════════════════════
 // The transaction ID from the bank or wallet app (any spacing or case), and
 // optionally its screenshot. The store checks it against its own account,
-// then ships.
+// then ships; the doctor checks theirs, then confirms the appointment. One
+// screen for both services: `appointmentCode` in the params means a doctor.
 
 import React, { useEffect } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -26,28 +27,35 @@ import {
   selectPaymentProof,
   setTransactionId,
   startPaymentProof,
+  submitAppointmentProofAsync,
   submitPaymentProofAsync,
   touchTransactionId,
 } from './paymentProofSlice';
+import { selectAppointmentEntry } from '../../../Health/Patient/AppointmentDetail/appointmentDetailSlice';
 
 type Props = NativeStackScreenProps<OrdersStackParamList, 'PaymentProof'>;
 
 const PaymentProofScreen: React.FC<Props> = props => (
-  <ServiceScope service="shopping">
+  <ServiceScope service={'appointmentCode' in props.route.params ? 'healthcare' : 'shopping'}>
     <PaymentProofContent {...props} />
   </ServiceScope>
 );
 
 const PaymentProofContent: React.FC<Props> = ({ route }) => {
-  const { back } = useBack({ name: 'OrderDetail', params: { groupCode: route.params.groupCode } });
+  const p = route.params;
+  const appointmentCode = 'appointmentCode' in p ? p.appointmentCode : null;
+  const orderId = 'orderId' in p ? p.orderId : null;
+  const groupCode = 'groupCode' in p ? p.groupCode : '';
+  const { back } = useBack(appointmentCode ? { name: 'AppointmentDetail', params: { code: appointmentCode } } : { name: 'OrderDetail', params: { groupCode } });
   const dispatch = useAppDispatch();
-  const { orderId, groupCode } = route.params;
   const s = useAppSelector(selectPaymentProof);
   const order = useAppSelector(st => selectOrderGroup(st, groupCode)).group?.orders.find(o => o.id === orderId) ?? null;
+  const appointment = useAppSelector(st => (appointmentCode ? selectAppointmentEntry(st, appointmentCode).appointment : null));
+  const payee = appointmentCode ? 'the doctor' : 'the store';
 
   useEffect(() => {
-    dispatch(startPaymentProof(orderId));
-  }, [dispatch, orderId]);
+    dispatch(startPaymentProof(appointmentCode ?? orderId ?? ''));
+  }, [dispatch, orderId, appointmentCode]);
 
   const error = validatePaymentProof(s.transactionId).transactionId;
   const busy = uploading(s.photos);
@@ -63,23 +71,37 @@ const PaymentProofContent: React.FC<Props> = ({ route }) => {
       haptics.warning();
       return;
     }
-    const r = await dispatch(submitPaymentProofAsync({ orderId, transactionId: s.transactionId, imageUrl: storedUrls(s.photos)[0] ?? null }));
-    if (submitPaymentProofAsync.fulfilled.match(r)) {
+    const imageUrl = storedUrls(s.photos)[0] ?? null;
+    const r = appointmentCode
+      ? await dispatch(submitAppointmentProofAsync({ code: appointmentCode, transactionId: s.transactionId, imageUrl }))
+      : await dispatch(submitPaymentProofAsync({ orderId: orderId ?? '', transactionId: s.transactionId, imageUrl }));
+    if (submitPaymentProofAsync.fulfilled.match(r) || submitAppointmentProofAsync.fulfilled.match(r)) {
       haptics.success();
-      Toast.show({ type: 'success', text1: 'Sent to the store', text2: 'They’ll confirm once they see it in their account.' });
+      Toast.show({ type: 'success', text1: `Sent to ${payee}`, text2: 'They’ll confirm once they see it in their account.' });
       back();
     } else haptics.warning();
   };
 
+  const subtitle = appointment
+    ? `${appointment.doctor.name} · ${formatPKR(appointment.payment.amount)}`
+    : order
+      ? `${order.store.name} · ${formatPKR(order.total)}`
+      : undefined;
+  const rejected = appointment
+    ? appointment.payment.status === 'proof_rejected'
+      ? appointment.payment.proof?.rejectionReason
+      : null
+    : order?.paymentStatus === 'proof_rejected'
+      ? order.paymentProof?.rejectionReason
+      : null;
+
   return (
     <ScreenShell
       title="I’ve paid"
-      subtitle={order ? `${order.store.name} · ${formatPKR(order.total)}` : undefined}
+      subtitle={subtitle}
       onBack={back}
-      footer={<Button label="Send to the store" onPress={() => void submit()} loading={s.status === 'loading'} disabled={busy} fullWidth />}>
-      {order?.paymentProof?.rejectionReason && order.paymentStatus === 'proof_rejected' ? (
-        <InlineNotice title="The store couldn’t find your last payment" message={order.paymentProof.rejectionReason} />
-      ) : null}
+      footer={<Button label={`Send to ${payee}`} onPress={() => void submit()} loading={s.status === 'loading'} disabled={busy} fullWidth />}>
+      {rejected ? <InlineNotice title={`${payee === 'the store' ? 'The store' : 'The doctor'} couldn’t find your last payment`} message={rejected} /> : null}
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
       <TextField
         label="Transaction ID"
@@ -97,7 +119,9 @@ const PaymentProofContent: React.FC<Props> = ({ route }) => {
         <PhotoStrip photos={s.photos} max={1} onAdd={() => void addPhoto()} onRemove={key => dispatch(removeProofPhoto(key))} addLabel="Add the receipt" />
       </Card>
       <AppText variant="small" tone="muted">
-        MetroMatrix never holds your money: you paid the store directly. They check their own account, then ship.
+        {appointmentCode
+          ? 'MetroMatrix never holds your money: you paid the doctor directly. They check their own account, then confirm your appointment.'
+          : 'MetroMatrix never holds your money: you paid the store directly. They check their own account, then ship.'}
       </AppText>
     </ScreenShell>
   );

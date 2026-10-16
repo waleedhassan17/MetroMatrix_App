@@ -9,6 +9,7 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
 import type { DocumentKind } from './auth';
 import type { OrderSegment, ProductSort } from './shopping';
+import type { AppointmentSegment, ConsultKind } from './health';
 
 /** BaseNavigator: onboarding, sign-in and every session gate. */
 export type RootStackParamList = {
@@ -65,10 +66,44 @@ export type ShopBrowseParamList = {
   OrderPlaced: { groupCode: string };
   AddressForm: { id?: string } | undefined;
   Notifications: undefined;
+  /** "I've paid": a shop order's transfer, or an appointment's. */
+  PaymentProof: { orderId: string; groupCode: string } | { appointmentCode: string };
+};
+
+/**
+ * The patient's Health screens that any customer stack can push (Home, Orders,
+ * Profile), so a visit, a prescription or a record opens where you are.
+ */
+export type HealthBrowseParamList = {
+  HealthSearch: { q?: string } | undefined;
+  SpecialtyList: undefined;
+  ConditionList: undefined;
+  /** The list's context (specialty, condition, a search) and any preset filter. */
+  DoctorList: { specialty?: string; condition?: string; q?: string; title?: string; kind?: ConsultKind; availableToday?: boolean } | undefined;
+  /** `locationId`/`kind` preselect how the patient wants to be seen. */
+  DoctorProfile: { id: string; name?: string; locationId?: string; kind?: ConsultKind };
+  DoctorReviews: { doctorId: string; name?: string };
+  BookingConfirmed: { code: string };
+  AppointmentDetail: { code: string };
+  /** The patient joins by appointment code, the doctor by appointment id. */
+  VideoPrecheck: { code?: string; appointmentId?: string };
+  VideoConsult: { code?: string; appointmentId?: string };
+  PostConsultReview: { code: string };
+  PrescriptionList: undefined;
+  PrescriptionView: { id: string };
+  HealthRecords: { memberId?: string } | undefined;
+  RecordDetail: { id: string };
+  /** `attachTo`: an appointment code the new record is shared with afterwards. */
+  RecordUpload: { memberId?: string; attachTo?: string } | undefined;
+  FamilyMembers: undefined;
+  FamilyMemberForm: { id?: string } | undefined;
+  SymptomChecker: undefined;
+  SymptomResult: undefined;
+  Emergency: undefined;
 };
 
 /** Profile tab stack — shared by every role app. */
-export type AccountStackParamList = ShopBrowseParamList & {
+export type AccountStackParamList = ShopBrowseParamList & HealthBrowseParamList & {
   Profile: undefined;
   ChangePassword: undefined;
   Saved: undefined;
@@ -76,8 +111,9 @@ export type AccountStackParamList = ShopBrowseParamList & {
 };
 
 /** The customer's Home tab: the three-service launcher and each service. */
-export type HomeStackParamList = ShopBrowseParamList & {
+export type HomeStackParamList = ShopBrowseParamList & HealthBrowseParamList & {
   CustomerHome: undefined;
+  HealthHome: undefined;
   FoodHome: undefined;
   ServicePreview: { service: 'healthcare' | 'shopping' };
   ShoppingHome: undefined;
@@ -88,10 +124,10 @@ export type HomeStackParamList = ShopBrowseParamList & {
 };
 
 /** The customer's Orders tab: Shop / Health / Food, then an order and its steps. */
-export type OrdersStackParamList = ShopBrowseParamList & {
-  Orders: { segment?: OrderSegment } | undefined;
+export type OrdersStackParamList = ShopBrowseParamList & HealthBrowseParamList & {
+  /** `service`: the segment to open on (Shop, Health or Food); `visits`: Health's Upcoming / Past. */
+  Orders: { segment?: OrderSegment; service?: 'shop' | 'health' | 'food'; visits?: AppointmentSegment } | undefined;
   OrderDetail: { groupCode: string };
-  PaymentProof: { orderId: string; groupCode: string };
   ReturnRequest: { orderId: string; groupCode: string };
   WriteReview: { orderId: string; itemId: string; groupCode: string };
 };
@@ -142,6 +178,44 @@ export type AdminShopStackParamList = {
   ShopStores: undefined;
 };
 
+/** The doctor's four tabs. */
+export type DoctorTabParamList = {
+  TodayTab: undefined;
+  CalendarTab: undefined;
+  PatientsTab: undefined;
+  MoreTab: undefined;
+};
+
+/** The doctor's app: the tabs (or Practice setup, until listed), with every tool pushed over them. */
+export type DoctorPartnerStackParamList = {
+  DoctorTabs: NavigatorScreenParams<DoctorTabParamList> | undefined;
+  PracticeSetup: undefined;
+  Availability: { locationId?: string; tab?: 'locations' | 'hours' | 'preview' } | undefined;
+  TimeOff: { date?: string } | undefined;
+  DoctorAppointment: { id: string };
+  PrescriptionWriter: { appointmentId: string };
+  PatientHistory: { id: string; name?: string };
+  MyReviews: undefined;
+  DoctorInsights: undefined;
+  DoctorProfileEdit: undefined;
+  PaymentAccounts: undefined;
+  VideoPrecheck: { code?: string; appointmentId?: string };
+  VideoConsult: { code?: string; appointmentId?: string };
+  Profile: undefined;
+  ChangePassword: undefined;
+  Notifications: undefined;
+};
+
+/** The admin console's Health tab. */
+export type AdminHealthStackParamList = {
+  HealthOverview: undefined;
+  Specialties: undefined;
+  Conditions: undefined;
+  DoctorVerification: { businessId?: string } | undefined;
+  ReviewModeration: undefined;
+  AppointmentLookup: { code?: string } | undefined;
+};
+
 export type PartnerTabParamList = {
   HomeTab: undefined;
   ProfileTab: NavigatorScreenParams<AccountStackParamList> | undefined;
@@ -155,5 +229,6 @@ export type AdminStackParamList = {
 export type AdminTabParamList = {
   ApprovalsTab: NavigatorScreenParams<AdminStackParamList> | undefined;
   ShopAdminTab: NavigatorScreenParams<AdminShopStackParamList> | undefined;
+  HealthAdminTab: NavigatorScreenParams<AdminHealthStackParamList> | undefined;
   ProfileTab: NavigatorScreenParams<AccountStackParamList> | undefined;
 };

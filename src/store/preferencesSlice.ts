@@ -19,6 +19,8 @@ export interface PreferencesSliceState {
   pushPromptSeen: boolean;
   /** Recent Shopping searches, newest first. Cleared on sign-out (they are the person's). */
   recentSearches: string[];
+  /** Recent Health searches ("acne", a doctor's name), newest first. Cleared on sign-out. */
+  recentHealthSearches: string[];
 }
 
 const initialState: PreferencesSliceState = {
@@ -26,6 +28,7 @@ const initialState: PreferencesSliceState = {
   lastService: 'food',
   pushPromptSeen: false,
   recentSearches: [],
+  recentHealthSearches: [],
 };
 
 export const preferencesSlice = createAppSlice({
@@ -52,12 +55,25 @@ export const preferencesSlice = createAppSlice({
     clearRecentSearches: create.reducer(state => {
       state.recentSearches = [];
     }),
+    addRecentHealthSearch: create.reducer((state, action: PayloadAction<string>) => {
+      const q = action.payload.trim();
+      if (!q) return;
+      const rest = (state.recentHealthSearches ?? []).filter(x => x.toLowerCase() !== q.toLowerCase());
+      state.recentHealthSearches = [q, ...rest].slice(0, MAX_RECENT_SEARCHES);
+    }),
+    removeRecentHealthSearch: create.reducer((state, action: PayloadAction<string>) => {
+      state.recentHealthSearches = (state.recentHealthSearches ?? []).filter(x => x !== action.payload);
+    }),
+    clearRecentHealthSearches: create.reducer(state => {
+      state.recentHealthSearches = [];
+    }),
   }),
 
   // The device keeps its settings across accounts; a person's searches go with them.
   extraReducers: builder => {
     builder.addCase(resetAllState, state => {
       state.recentSearches = [];
+      state.recentHealthSearches = [];
     });
   },
 
@@ -65,10 +81,19 @@ export const preferencesSlice = createAppSlice({
     selectLastService: state => state.lastService,
     selectPushPromptSeen: state => state.pushPromptSeen,
     selectRecentSearches: state => state.recentSearches ?? [],
+    selectRecentHealthSearches: state => state.recentHealthSearches ?? [],
   },
 });
 
-export const { setLastService, setPushPromptSeen, addRecentSearch, removeRecentSearch, clearRecentSearches } =
-  preferencesSlice.actions;
+export const {
+  setLastService,
+  setPushPromptSeen,
+  addRecentSearch,
+  removeRecentSearch,
+  clearRecentSearches,
+  addRecentHealthSearch,
+  removeRecentHealthSearch,
+  clearRecentHealthSearches,
+} = preferencesSlice.actions;
 
-export const { selectLastService, selectPushPromptSeen, selectRecentSearches } = preferencesSlice.selectors;
+export const { selectLastService, selectPushPromptSeen, selectRecentSearches, selectRecentHealthSearches } = preferencesSlice.selectors;

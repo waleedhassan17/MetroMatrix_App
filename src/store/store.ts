@@ -58,6 +58,11 @@ import { productDetailSlice } from '../screens/Shopping/Customer/ProductDetail/p
 import { productReviewsSlice } from '../screens/Shopping/Customer/ProductReviews/productReviewsSlice';
 import { checkoutSlice } from '../screens/Shopping/Customer/Checkout/checkoutSlice';
 import { orderDetailSlice } from '../screens/Shopping/Customer/OrderDetail/orderDetailSlice';
+import { appointmentDetailSlice } from '../screens/Health/Patient/AppointmentDetail/appointmentDetailSlice';
+import { conditionListSlice } from '../screens/Health/Patient/ConditionList/conditionListSlice';
+import { specialtyListSlice } from '../screens/Health/Patient/SpecialtyList/specialtyListSlice';
+import { healthSearchSlice } from '../screens/Health/Patient/HealthSearch/healthSearchSlice';
+import { healthHomeSlice } from '../screens/Health/Patient/HealthHome/healthHomeSlice';
 import { paymentProofSlice } from '../screens/Shopping/Customer/PaymentProof/paymentProofSlice';
 import { returnRequestSlice } from '../screens/Shopping/Customer/ReturnRequest/returnRequestSlice';
 import { writeReviewSlice } from '../screens/Shopping/Customer/WriteReview/writeReviewSlice';
@@ -141,6 +146,11 @@ const rootReducer = combineReducers({
   productReviews: productReviewsSlice.reducer,
   checkout: checkoutSlice.reducer,
   orderDetail: orderDetailSlice.reducer,
+  appointmentDetail: appointmentDetailSlice.reducer,
+  conditionList: conditionListSlice.reducer,
+  specialtyList: specialtyListSlice.reducer,
+  healthSearch: healthSearchSlice.reducer,
+  healthHome: healthHomeSlice.reducer,
   paymentProof: paymentProofSlice.reducer,
   returnRequest: returnRequestSlice.reducer,
   writeReview: writeReviewSlice.reducer,

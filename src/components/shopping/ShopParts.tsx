@@ -171,12 +171,14 @@ export const SearchPill: React.FC<{ label: string; onPress: () => void; style?: 
 };
 
 // ─── Search field (filters in place) ──────────────────
-export const SearchField: React.FC<{ value: string; onChange: (text: string) => void; placeholder: string; style?: ViewStyle }> = ({
-  value,
-  onChange,
-  placeholder,
-  style,
-}) => {
+export const SearchField: React.FC<{
+  value: string;
+  onChange: (text: string) => void;
+  placeholder: string;
+  style?: ViewStyle;
+  autoFocus?: boolean;
+  onSubmit?: () => void;
+}> = ({ value, onChange, placeholder, style, autoFocus, onSubmit }) => {
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   const onGradient = useOnGradient();
@@ -191,6 +193,8 @@ export const SearchField: React.FC<{ value: string; onChange: (text: string) => 
         style={styles.pillInput}
         returnKeyType="search"
         autoCorrect={false}
+        autoFocus={autoFocus}
+        onSubmitEditing={onSubmit}
         maxFontSizeMultiplier={MAX_FONT_SCALE}
         accessibilityLabel={placeholder}
       />

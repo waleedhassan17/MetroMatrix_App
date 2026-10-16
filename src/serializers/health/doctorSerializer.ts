@@ -258,6 +258,7 @@ const previousVisitSerializer = (raw: unknown): PreviousVisit | null => {
   const startAt = isoOrNull(raw.startAt);
   if (!startAt) return null;
   return {
+    appointmentId: str(raw.appointmentId),
     code: str(raw.code),
     startAt,
     kind: oneOf(raw.kind, KINDS, 'clinic'),
