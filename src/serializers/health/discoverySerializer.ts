@@ -12,6 +12,8 @@ import type {
   DoctorReview,
   DoctorReviewSummary,
   ExperienceRow,
+  HealthBanner,
+  HealthBannerTarget,
   HealthHome,
   HealthSuggestions,
   PracticeLocation,
@@ -68,6 +70,8 @@ export const conditionSerializer = (raw: unknown): Condition | null => {
     nameUr: strOrNull(raw.nameUr),
     specialtySlug: strOrNull(raw.specialtySlug),
     isCommon: bool(raw.isCommon),
+    // TODO(API_HEALTH): conditions carry no icon yet; proposed as the condition `icon` key.
+    icon: strOrNull(raw.icon),
   };
 };
 
@@ -241,6 +245,28 @@ export const slotDaySerializer = (raw: unknown): SlotDay | null => {
   };
 };
 
+const BANNER_SCREENS = ['video_consultation', 'symptom_checker', 'emergency', 'records', 'available_today'] as const;
+
+/**
+ * A Health banner: `{ id, imageUrl, title, subtitle, targetType, targetScreen,
+ * target: { id, slug, name } }` (the target resolved by the server). A banner
+ * whose target can't be opened is dropped. TODO(API_HEALTH): banners.
+ */
+export const healthBannerSerializer = (raw: unknown): HealthBanner | null => {
+  if (!isObject(raw) || !str(raw.id) || !str(raw.imageUrl) || !str(raw.title)) return null;
+  const t = isObject(raw.target) ? raw.target : {};
+  const type = str(raw.targetType, 'none');
+  let target: HealthBannerTarget | null = null;
+  if (type === 'specialty' || type === 'condition') target = str(t.slug) ? { kind: type, slug: str(t.slug), name: str(t.name) } : null;
+  else if (type === 'doctor') target = str(t.id) ? { kind: 'doctor', id: str(t.id), name: str(t.name, 'Doctor') } : null;
+  else if (type === 'screen') {
+    const screen = oneOf(raw.targetScreen, BANNER_SCREENS, null);
+    target = screen ? { kind: 'screen', screen } : null;
+  } else if (type === 'none') target = { kind: 'none' };
+  if (!target) return null;
+  return { id: str(raw.id), imageUrl: str(raw.imageUrl), headline: str(raw.title), subhead: strOrNull(raw.subtitle), target };
+};
+
 export const healthHomeSerializer = (raw: unknown): HealthHome | null => {
   if (!isObject(raw)) return null;
   return {
@@ -249,6 +275,8 @@ export const healthHomeSerializer = (raw: unknown): HealthHome | null => {
     specialties: compact(arr(raw.specialties).map(specialtySerializer)),
     commonConditions: compact(arr(raw.commonConditions).map(conditionSerializer)),
     availableToday: compact(arr(raw.availableToday).map(doctorCardSerializer)),
+    featuredDoctors: compact(arr(raw.featuredDoctors).map(doctorCardSerializer)),
+    banners: compact(arr(raw.banners).map(healthBannerSerializer)),
     upcoming: raw.upcoming ? appointmentSummarySerializer(raw.upcoming) : null,
     emergencyNumbers: emergencyNumbersSerializer(raw.emergencyNumbers),
   };

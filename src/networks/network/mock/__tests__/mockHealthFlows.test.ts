@@ -8,7 +8,7 @@
 import { authAdminTotp, authSignin } from '../../../auth/authNetwork';
 import { approveBusiness } from '../../../admin/adminBusinessNetwork';
 import { verifyPmdc } from '../../../admin/adminHealthNetwork';
-import { getDoctor, listDoctors, suggest } from '../../../health/discoveryNetwork';
+import { getDoctor, getHealthHome, listDoctors, suggest } from '../../../health/discoveryNetwork';
 import { listDays, listSlots } from '../../../health/availabilityNetwork';
 import {
   bookAppointment,
@@ -97,6 +97,28 @@ beforeEach(async () => {
 });
 
 describe('discovery', () => {
+  it("builds the home for the patient's city: its banners, its best-rated doctors, concerns with icons", async () => {
+    const lahore = await getHealthHome('Lahore');
+    expect(lahore.banners.map(b => b.id)).toEqual(['hb_video', 'hb_skin', 'hb_symptoms', 'hb_child', 'hb_family']);
+    expect(lahore.banners[1].target).toEqual({ kind: 'specialty', slug: 'dermatologist', name: 'Dermatologist' });
+    expect(lahore.featuredDoctors.length).toBeGreaterThan(0);
+    for (const d of lahore.featuredDoctors) expect(d.photoUrl).toMatch(/^https:\/\/images\.unsplash\.com\//);
+    const ratings = lahore.featuredDoctors.map(d => d.rating ?? 0);
+    expect([...ratings].sort((a, b) => b - a)).toEqual(ratings);
+    expect(lahore.specialties).toHaveLength(12);
+    expect(lahore.commonConditions.length).toBeGreaterThan(0);
+    for (const c of lahore.commonConditions) expect(c.icon).toBeTruthy();
+
+    // The paediatric banner is for Lahore only.
+    const karachi = await getHealthHome('Karachi');
+    expect(karachi.banners.map(b => b.id)).not.toContain('hb_child');
+  });
+
+  it('marks every demo profile as fictional', async () => {
+    const d = await getDoctor('d_ayesha');
+    expect(d.about).toMatch(/\(Demo profile: this doctor is fictional\.\)$/);
+  });
+
   it('finds the condition behind an everyday word, and dermatologists for it', async () => {
     const s = await suggest('pimples');
     expect(s.conditions.map(c => c.name)).toContain('Acne');

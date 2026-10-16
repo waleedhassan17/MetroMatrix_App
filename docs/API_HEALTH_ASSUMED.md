@@ -112,15 +112,17 @@ Detail adds:
 
 | Method | Path | Query / body | Response |
 |---|---|---|---|
-| GET | `/healthcare/home` | `city?` (default: the patient's default address city, else Lahore) | `{ city, cities[], specialties[8], commonConditions[], availableToday[DoctorCard ≤10], upcoming: Appointment\|null, emergencyNumbers[{ label, number }] }` |
+| GET | `/healthcare/home` | `city?` (default: the patient's default address city, else Lahore) | `{ city, cities[], specialties[12], commonConditions[], availableToday[DoctorCard ≤10], featuredDoctors[DoctorCard ≤10], banners[HealthBanner ≤10], upcoming: Appointment\|null, emergencyNumbers[{ label, number }] }`. `featuredDoctors`: the city's listed doctors, best rated first (more reviews breaks a tie). |
 | GET | `/healthcare/specialties` | `city?` | `Specialty[] { id, slug, name, nameUr?, icon, doctorCount }`. The app is in English: `nameUr` is optional and never shown. |
-| GET | `/healthcare/conditions` | `q?` (matches the name and aliases) | `Condition[] { id, slug, name, nameUr, specialtySlug, isCommon }` |
+| GET | `/healthcare/conditions` | `q?` (matches the name and aliases) | `Condition[] { id, slug, name, nameUr, specialtySlug, isCommon, icon }`. `icon` (an Ionicons name, or null) is set on the common ones, for the home's concern chips. |
 | GET | `/healthcare/search/suggest` | `q` | `{ doctors[{ id, name, specialtyName }≤5], specialties[≤5], conditions[≤6] }`. "pimples" → Acne → dermatologists. |
 | GET | `/healthcare/doctors` | `specialty, condition, q, city, kind=video\|clinic, availableToday, gender=female\|male, maxFee, minYears, minRating, language, area, sort=recommended\|earliest\|fee_low\|most_reviewed\|most_experienced, page, pageSize` | page of `DoctorCard`. A doctor serves a city with a clinic there, or anywhere by video. With `kind`, fee and availability are for that kind. |
 | GET | `/healthcare/doctors/:id` | | `DoctorProfile` (listed doctors only) |
 | GET | `/healthcare/doctors/:id/locations/:locationId/days` | `from?` (`YYYY-MM-DD`), `days` (default 14) | `[{ date, slotCount }]` |
 | GET | `/healthcare/doctors/:id/locations/:locationId/slots` | `date` | `{ date, timezone, slots[{ startAt, period: morning\|afternoon\|evening\|night }], nextAvailable: { date, startAt }\|null }` (`nextAvailable` only when the day is empty) |
 | GET | `/healthcare/doctors/:id/reviews` | `kind?`, `rating?` (1–5), `sort=recent\|highest\|lowest`, `page` | page of `Review` |
+
+**HealthBanner** (staff-chosen home promotions): `{ id, imageUrl, title, subtitle, targetType: specialty|condition|doctor|screen|none, targetScreen: video_consultation|symptom_checker|emergency|records|available_today|null, target: { id, slug, name }|null }`. The home sends only live ones: active, inside `startsAt`–`endsAt`, for the patient's city or every city, and with a target that still exists. Sorted by `sort`.
 
 **Free slots** come from:
 - the location's weekly hours, cut into `slotMinutes` steps;
@@ -249,4 +251,4 @@ While `BACKEND_URL` is empty, the dummy API answers all of the above. It differs
 | `pmdc@metromatrix.app` | Dr. Sana Iqbal | Waiting for approval with the PMDC number unchecked (admin → Health → Doctor verification) |
 | `admin@metromatrix.app` (`Admin2026`, code `123456`) | Staff | Health tab |
 
-The catalogue has 16 specialties and 40 conditions, plus 23 listed fictional doctors in Lahore, Karachi and Islamabad. Doctors show initials only: no stock photos of strangers presented as doctors.
+The catalogue has 16 specialties and 40 conditions (18 common, each with its own icon), plus 23 fictional doctors in Lahore, Karachi and Islamabad. Each demo doctor wears a licensed stock portrait (Unsplash; listed in `docs/MOCK_IMAGES.md`), chosen by the owner for the demo, and each profile's `about` ends with "(Demo profile: this doctor is fictional.)". A real doctor's own photo replaces the portrait. The home has five banners: video consultation, skin specialists, the symptom checker, paediatricians (Lahore only), and family records.

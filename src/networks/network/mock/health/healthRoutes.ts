@@ -6,7 +6,7 @@
 
 import type { MockBusiness, MockDb, MockUser } from '../mockDb';
 import type { ShopCtx, ShopKit } from '../shop/shopRoutes';
-import type { MockAppointment, MockDoctor, MockHealth, MockLocation } from './healthTypes';
+import type { MockAppointment, MockDoctor, MockHealth, MockHealthBanner, MockLocation } from './healthTypes';
 import type { AppointmentPaymentMethod, ConsultKind, Medicine, ReasonTag, WeekDayHours } from '../../../../types/health';
 import { PKT, addDays, ageFrom, dateInZone, todayInZone } from '../../../../utils/healthTime';
 import {
@@ -388,6 +388,43 @@ export function registerHealthRoutes(kit: HealthKit) {
   };
 
   // ══ Discovery (public) ═══════════════════════════════
+  /**
+   * The home's promotions: active, inside their window, for this city (or
+   * every city), with a target the patient can still open — resolved to its
+   * id, slug and name. TODO(API_HEALTH): banners.
+   */
+  const liveBanners = (h: MockHealth, city: string, now: number) =>
+    (h.banners ?? [])
+      .filter(b => b.isActive && (!b.startsAt || Date.parse(b.startsAt) <= now) && (!b.endsAt || Date.parse(b.endsAt) > now))
+      .filter(b => !b.city || b.city.toLowerCase() === city.toLowerCase())
+      .map(b => {
+        let target: { id: string; slug?: string; name: string } | null = null;
+        if (b.targetType === 'specialty') {
+          const sp = h.specialties.find(x => x.id === b.targetId);
+          target = sp ? { id: sp.id, slug: sp.slug, name: sp.name } : null;
+        } else if (b.targetType === 'condition') {
+          const c = h.conditions.find(x => x.id === b.targetId);
+          target = c ? { id: c.id, slug: c.slug, name: c.name } : null;
+        } else if (b.targetType === 'doctor') {
+          const d = h.doctors.find(x => x.id === b.targetId && x.isListed);
+          target = d ? { id: d.id, name: `${d.title} ${d.name}` } : null;
+        }
+        const openable = b.targetType === 'screen' ? !!b.targetScreen : b.targetType === 'none' || !!target;
+        return openable ? { b, target } : null;
+      })
+      .filter((x): x is { b: MockHealthBanner; target: { id: string; slug?: string; name: string } | null } => !!x)
+      .sort((x, y) => x.b.sort - y.b.sort)
+      .slice(0, 10)
+      .map(({ b, target }) => ({
+        id: b.id,
+        imageUrl: b.imageUrl,
+        title: b.title,
+        subtitle: b.subtitle,
+        targetType: b.targetType,
+        targetScreen: b.targetScreen,
+        target,
+      }));
+
   route('GET', '/healthcare/home', ctx => {
     const { db, now, query } = ctx;
     const h = db.health;
@@ -410,9 +447,15 @@ export function registerHealthRoutes(kit: HealthKit) {
     return {
       city,
       cities,
-      specialties: [...h.specialties].sort((a, b) => a.sort - b.sort).slice(0, 8).map(s => specialtyView(h, s.slug, city)),
+      specialties: [...h.specialties].sort((a, b) => a.sort - b.sort).slice(0, 12).map(s => specialtyView(h, s.slug, city)),
       commonConditions: h.conditions.filter(c => c.isCommon).map(({ aliases: _a, ...c }) => c),
       availableToday,
+      // The city's best-rated doctors (most reviews breaks a tie).
+      featuredDoctors: listed
+        .map(d => doctorCardView(h, d, now))
+        .sort((x, y) => (y.rating ?? 0) - (x.rating ?? 0) || y.reviewCount - x.reviewCount)
+        .slice(0, 10),
+      banners: liveBanners(h, city, now),
       upcoming: upcoming ? appointmentSummaryView(h, upcoming, now) : null,
       emergencyNumbers: EMERGENCY_NUMBERS,
     };
@@ -1603,7 +1646,7 @@ export function registerHealthRoutes(kit: HealthKit) {
     const input = conditionInput(ctx.body, h);
     const slug = slugify(input.name);
     if (h.conditions.some(c => c.slug === slug)) throw new HealthError(409, 'CONDITION_EXISTS', 'This condition exists.');
-    const c = { id: `cn_${slug}`, slug, ...input };
+    const c = { id: `cn_${slug}`, slug, icon: null, ...input };
     h.conditions.push(c);
     ctx.setStatus(201);
     return c;

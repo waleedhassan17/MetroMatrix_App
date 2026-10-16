@@ -36,6 +36,10 @@ describe('cdn', () => {
       'https://images.unsplash.com/photo-1?w=200&fit=max&auto=format&q=70',
     );
     expect(cdn('file:///tmp/a.jpg', { w: 100 })).toBe('file:///tmp/a.jpg');
+    // A demo portrait keeps its face-centred crop.
+    expect(cdn('https://images.unsplash.com/photo-2?fit=facearea&facepad=3.2', { w: 48, h: 48 })).toMatch(
+      /^https:\/\/images\.unsplash\.com\/photo-2\?w=\d+&h=\d+&fit=facearea&facepad=3\.2&auto=format&q=70$/,
+    );
     expect(cdn(null, { w: 100 })).toBeNull();
   });
 

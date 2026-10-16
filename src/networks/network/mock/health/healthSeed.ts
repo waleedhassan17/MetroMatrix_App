@@ -12,7 +12,7 @@
 //   pmdc@metromatrix.app       Dr. Sana Iqbal — waiting for approval, PMDC not checked
 // Times are relative to the moment the dummy database is created.
 
-import type { MockAppointment, MockDoctor, MockDoctorReview, MockFormularyItem, MockHealth, MockLocation } from './healthTypes';
+import type { MockAppointment, MockDoctor, MockDoctorReview, MockFormularyItem, MockHealth, MockHealthBanner, MockLocation } from './healthTypes';
 import type { ConsultKind, ExperienceRow, Qualification, WeekDayHours } from '../../../../types/health';
 import type { Gender } from '../../../../types/auth';
 import { PKT, addDays, todayInZone, zonedToIso } from '../../../../utils/healthTime';
@@ -80,6 +80,28 @@ const CONDITIONS: [slug: string, name: string, nameUr: string, specialty: string
   ['chronic-cough', 'Chronic cough', 'پرانی کھانسی', 'pulmonologist', false, ['long cough']],
   ['weight-management', 'Weight management', 'وزن میں کمی', 'nutritionist', true, ['weight loss', 'obesity', 'diet plan']],
 ];
+
+/** The common concerns' own icons, so a row of them reads at a glance. */
+const CONDITION_ICONS: Record<string, string> = {
+  acne: 'sparkles-outline',
+  'hair-loss': 'body-outline',
+  fever: 'thermometer-outline',
+  'flu-and-cold': 'snow-outline',
+  diabetes: 'water-outline',
+  'high-blood-pressure': 'pulse-outline',
+  'back-pain': 'accessibility-outline',
+  'joint-pain': 'walk-outline',
+  migraine: 'flash-outline',
+  anxiety: 'cloudy-outline',
+  'pregnancy-care': 'woman-outline',
+  'irregular-periods': 'calendar-outline',
+  'child-vaccination': 'shield-checkmark-outline',
+  'sore-throat': 'mic-outline',
+  acidity: 'flame-outline',
+  'stomach-pain': 'restaurant-outline',
+  toothache: 'happy-outline',
+  'weight-management': 'scale-outline',
+};
 
 const FORMULARY: MockFormularyItem[] = [
   { name: 'Paracetamol', strength: '500 mg', form: 'tablet' },
@@ -797,6 +819,125 @@ const seedReviews = (d: DoctorSeed, locs: MockLocation[], now: number): MockDoct
   return out;
 };
 
+// ─── Demo photos (Unsplash License; credited in docs/MOCK_IMAGES.md) ───
+// Stand-ins for the fictional doctors' own uploads: licensed portraits,
+// gender-matched, one face per doctor. Every demo profile says it is fictional.
+const unsplash = (id: string) => `https://images.unsplash.com/${id}`;
+/** A face-centred crop; cdn() keeps it and adds the rendered size. */
+const portrait = (id: string) => `${unsplash(id)}?fit=facearea&facepad=3.2`;
+
+export const DEMO_PORTRAITS: Record<string, string> = {
+  d_ayesha: portrait('photo-1659353888906-adb3e0041693'), // Fotos
+  d_hina: portrait('photo-1670191247079-f9713ae06dcf'), // Kamal Hoseinianzade
+  d_mariam: portrait('photo-1757125736482-328a3cdd9743'), // Ike Ellyana
+  d_farah: portrait('photo-1713865467253-ce0ac8477d34'), // Look Studio
+  d_nida: portrait('photo-1623854767648-e7bb8009f0db'), // Siednji Leon
+  d_saima: portrait('photo-1678695972687-033fa0bdbac9'), // Ato Aikins
+  d_rabia: portrait('photo-1559839734-2b71ea197ec2'), // Humberto Chávez
+  d_sana_m: portrait('photo-1673865641073-4479f93a7776'), // Bermix Studio
+  d_mehwish: portrait('photo-1758691462651-611d730c5272'), // Vitaly Gariev
+  d_amna: portrait('photo-1770134223774-13b735e29201'), // Beatriz Mendez
+  d_sadia: portrait('photo-1643297654416-05795d62e39c'), // Eben Kassaye
+  d_bilal: portrait('photo-1612349317150-e413f6a5b16d'), // Usman Yousaf
+  d_usman: portrait('photo-1659353889416-fab1265eaa7f'), // Fotos
+  d_kamran: portrait('photo-1637059824899-a441006a6875'), // vaibhav vivian
+  d_imran: portrait('photo-1622253694242-abeb37a33e97'), // Bruno Rodrigues
+  d_adeel: portrait('photo-1730597842283-943c7986ee2c'), // Muhammad Hicham
+  d_ahmed: portrait('photo-1678940805950-73f2127f9d4e'), // Frederick Medina
+  d_faisal: portrait('photo-1700041785712-649e859d9909'), // mohamad azaam
+  d_zeeshan: portrait('photo-1769072610024-5b8a50f05c73'), // David Akinwale
+  d_omar: portrait('photo-1666887360369-1901f341fdad'), // Nappy
+  d_waqas: portrait('photo-1622902046580-2b47f47f5471'), // Dalton Ngangi
+  d_tahir: portrait('photo-1659353888096-cc5e333db5e0'), // Fotos
+  d_hamza: portrait('photo-1756699279298-c89cdef354ab'), // SoyBreno
+};
+
+export const DEMO_NOTE = ' (Demo profile: this doctor is fictional.)';
+
+/** The Health home's promotions (photos: Unsplash License). */
+const BANNERS: MockHealthBanner[] = [
+  {
+    id: 'hb_video',
+    imageUrl: unsplash('photo-1758691463620-188ca7c1a04f'), // Vitaly Gariev
+    title: 'See a doctor by video today',
+    subtitle: 'PMDC-verified doctors, from home. You pay the doctor directly.',
+    targetType: 'screen',
+    targetId: null,
+    targetScreen: 'video_consultation',
+    city: null,
+    startsAt: null,
+    endsAt: null,
+    sort: 1,
+    isActive: true,
+  },
+  {
+    id: 'hb_skin',
+    imageUrl: unsplash('photo-1688588162416-f7a7e726e0bf'), // Anna Keibalo
+    title: 'Skin and hair specialists',
+    subtitle: 'Acne, hair fall and eczema, seen by dermatologists near you.',
+    targetType: 'specialty',
+    targetId: 'sp_dermatologist',
+    targetScreen: null,
+    city: null,
+    startsAt: null,
+    endsAt: null,
+    sort: 2,
+    isActive: true,
+  },
+  {
+    id: 'hb_symptoms',
+    imageUrl: unsplash('photo-1758273241078-8eec353836be'), // Vitaly Gariev
+    title: 'Not sure who to see?',
+    subtitle: 'Describe how you feel and we will suggest the right specialist.',
+    targetType: 'screen',
+    targetId: null,
+    targetScreen: 'symptom_checker',
+    city: null,
+    startsAt: null,
+    endsAt: null,
+    sort: 3,
+    isActive: true,
+  },
+  {
+    id: 'hb_child',
+    imageUrl: unsplash('photo-1708687045004-a3e3c4420e6d'), // Ortopediatri Çocuk Ortopedi Akademisi
+    title: 'Gentle care for your child',
+    subtitle: 'Paediatricians in Lahore for check-ups, fevers and vaccines.',
+    targetType: 'specialty',
+    targetId: 'sp_pediatrician',
+    targetScreen: null,
+    city: 'Lahore',
+    startsAt: null,
+    endsAt: null,
+    sort: 4,
+    isActive: true,
+  },
+  {
+    id: 'hb_family',
+    imageUrl: unsplash('photo-1632053002928-1919605ee6f7'), // CDC
+    title: "Your family's records, in one place",
+    subtitle: 'Reports and prescriptions for everyone you book for.',
+    targetType: 'screen',
+    targetId: null,
+    targetScreen: 'records',
+    city: null,
+    startsAt: null,
+    endsAt: null,
+    sort: 5,
+    isActive: true,
+  },
+];
+
+/** Older stored dummy data: add the portraits, the demo note and the banners. */
+export const migrateHealth = (h: MockHealth) => {
+  for (const d of h.doctors) {
+    if (!d.photoUrl && DEMO_PORTRAITS[d.id]) d.photoUrl = DEMO_PORTRAITS[d.id];
+    if (DEMO_PORTRAITS[d.id] && !d.about.includes(DEMO_NOTE.trim())) d.about = `${d.about}${DEMO_NOTE}`;
+  }
+  if (!h.banners) h.banners = BANNERS.map(b => ({ ...b }));
+  for (const c of h.conditions) if (c.icon === undefined) c.icon = CONDITION_ICONS[c.slug] ?? null;
+};
+
 const RULES_DEFAULT = { windowDays: 14, minNoticeMinutes: 60, cancelCutoffHours: 4, videoPrepay: false };
 
 const aboutFor = (d: DoctorSeed, specialtyName: string, years: number) =>
@@ -818,6 +959,7 @@ export const seedHealth = (now: number = Date.now()): MockHealth => {
       nameUr,
       specialtySlug,
       isCommon,
+      icon: CONDITION_ICONS[slug] ?? null,
       aliases,
     })),
     doctors: [],
@@ -892,6 +1034,7 @@ export const seedHealth = (now: number = Date.now()): MockHealth => {
     formulary: FORMULARY,
     idempotency: {},
     contested: [],
+    banners: BANNERS.map(b => ({ ...b })),
     seq: 1,
   };
 
@@ -904,12 +1047,12 @@ export const seedHealth = (now: number = Date.now()): MockHealth => {
       title: 'Dr.',
       name: d.name,
       gender: d.gender,
-      photoUrl: null,
+      photoUrl: DEMO_PORTRAITS[d.id] ?? null,
       specialtySlug: d.specialty,
       secondarySpecialtySlug: d.secondary ?? null,
       practisingSince: d.since,
       languages: d.languages,
-      about: aboutFor(d, spec.name, year - d.since),
+      about: `${aboutFor(d, spec.name, year - d.since)}${DEMO_NOTE}`,
       qualifications: d.quals.map(([degree, institute, y]): Qualification => ({ degree, institute, year: y })),
       experience: d.exp.map(([role, place, from, to]): ExperienceRow => ({ role, place, from, to })),
       services: d.services,

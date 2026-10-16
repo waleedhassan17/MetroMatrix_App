@@ -170,7 +170,7 @@ const DoctorProfileContent: React.FC<Props> = ({ route, navigation }) => {
             <DoctorPhoto name={d.name} uri={d.photoUrl} size="lg" />
             <View style={styles.heroText}>
               <DoctorBadges badges={d.badges} />
-              <AppText variant="bodyStrong">{d.specialty.name}</AppText>
+              <AppText variant="bodyStrong" tone="accentDeep">{d.specialty.name}</AppText>
               {d.qualifications ? <AppText variant="small">{d.qualifications}</AppText> : null}
               <AppText variant="small" tone="muted">
                 {[d.yearsExperience ? `${d.yearsExperience} years experience` : null, d.languages.length ? `Speaks ${d.languages.join(', ')}` : null].filter(Boolean).join(' · ')}

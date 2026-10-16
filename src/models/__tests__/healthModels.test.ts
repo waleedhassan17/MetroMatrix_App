@@ -14,6 +14,7 @@ import {
   validatePrescription,
 } from '../health/prescriptionModel';
 import { activeFilterCount, baseQuery, clearFilters, isQuickOn, queryKey, toggleQuick } from '../health/filterModel';
+import { concernIcon, homeSpecialties } from '../health/homeModel';
 import { emptyFamilyMember, validateFamilyMember } from '../health/familyMemberModel';
 import { validateRecord } from '../health/recordModel';
 import { dimensionsFor, validateDoctorReview, validateReply } from '../health/reviewFormModel';
@@ -228,7 +229,7 @@ describe('adminHealthModel', () => {
   });
 
   it('round-trips a condition through the form', () => {
-    const c = { id: 'cn_acne', slug: 'acne', name: 'Acne', nameUr: null, specialtySlug: 'dermatologist', isCommon: true, aliases: ['pimples', 'breakouts'] };
+    const c = { id: 'cn_acne', slug: 'acne', name: 'Acne', nameUr: null, specialtySlug: 'dermatologist', isCommon: true, icon: null, aliases: ['pimples', 'breakouts'] };
     const f = conditionForm(c);
     expect(f.aliases).toBe('pimples, breakouts');
     expect(conditionInput(f)).toEqual({ name: 'Acne', specialtySlug: 'dermatologist', isCommon: true, aliases: ['pimples', 'breakouts'] });
@@ -239,5 +240,23 @@ describe('adminHealthModel', () => {
     expect(validatePmdcNote('ok')).toHaveProperty('note');
     expect(validatePmdcNote('Matched on the register')).toEqual({});
     expect(validateHideReason('  ')).toHaveProperty('reason');
+  });
+});
+
+describe('the Health home', () => {
+  const sp = (slug: string, doctorCount: number) => ({ id: slug, slug, name: slug, icon: `${slug}-outline`, doctorCount });
+
+  it('puts specialties with doctors first, in the API order, then the rest', () => {
+    const list = [sp('a', 0), sp('b', 2), sp('c', 0), sp('d', 1), sp('e', 3)];
+    expect(homeSpecialties(list, 4).map(s => s.slug)).toEqual(['b', 'd', 'e', 'a']);
+    expect(homeSpecialties(list).map(s => s.slug)).toEqual(['b', 'd', 'e', 'a', 'c']);
+  });
+
+  it("gives a concern its own icon, else its specialty's, else a medical kit", () => {
+    const c = (icon: string | null, specialtySlug: string | null) => ({ id: 'c', slug: 'c', name: 'C', specialtySlug, isCommon: true, icon });
+    const list = [sp('dermatologist', 1)];
+    expect(concernIcon(c('flame-outline', 'dermatologist'), list)).toBe('flame-outline');
+    expect(concernIcon(c(null, 'dermatologist'), list)).toBe('dermatologist-outline');
+    expect(concernIcon(c(null, 'unknown'), list)).toBe('medkit-outline');
   });
 });

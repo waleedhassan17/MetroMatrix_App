@@ -1,6 +1,7 @@
 // DoctorPhoto — the doctor's photo as a rounded square, or their initials on
-// the soft accent ground. Never a stock photo: a face that isn't theirs
-// would mislead a patient.
+// the soft accent ground. The photo is the one the doctor uploaded; only the
+// demo seed's fictional doctors wear licensed stock portraits, and their
+// profiles say so.
 
 import React from 'react';
 import { StyleSheet, View } from 'react-native';

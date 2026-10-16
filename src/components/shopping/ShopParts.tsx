@@ -5,10 +5,9 @@
 // section header, the search pill, the home's banner carousel, and the
 // two-column product grid the server pages.
 
-import React, { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View, useWindowDimensions, type ViewStyle } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Animated, Pressable, StyleSheet, TextInput, View, type ViewStyle } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
-import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MAX_FONT_SCALE, useStyles, useTheme, type Theme } from '@theme/index';
 import {
@@ -19,16 +18,16 @@ import {
   InlineNotice,
   IonIcon,
   PageHeader,
-  PhotoScrim,
+  PhotoBannerCarousel,
   ProductCard,
   ProductCardSkeleton,
   type EmptyStateProps,
 } from '@custom/index';
 import { useOnGradient } from '@custom/headerInk';
 import { useBagCount, useSaved, useShopNav } from '@hooks/useShop';
+import { useCalmMotion } from '@hooks/useCalmMotion';
 import type { PagedList } from '@hooks/usePagedList';
 import type { Banner, ProductSummary } from '@/types';
-import { cdn } from '@utils/cdn';
 
 const makeStyles = ({ colors, space, size, radius, gutter, type, elevation }: Theme) =>
   StyleSheet.create({
@@ -60,11 +59,8 @@ const makeStyles = ({ colors, space, size, radius, gutter, type, elevation }: Th
     },
     pillOnGradient: { marginHorizontal: space.s0, backgroundColor: colors.surface, borderColor: colors.surface },
     pillText: { ...type.input, color: colors.inkFaint, flex: 1 },
+    pillHint: { flex: 1 },
     pillInput: { ...type.input, color: colors.ink, flex: 1, paddingVertical: space.s0, outlineWidth: 0, outlineStyle: 'solid' },
-    banner: { borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.surfaceSunk },
-    bannerText: { position: 'absolute', left: space.s20, right: space.s20, bottom: space.s20, gap: space.s4 },
-    bannerDots: { flexDirection: 'row', justifyContent: 'center', gap: space.s4, paddingTop: space.s8 },
-    dot: { width: size.pageDot, height: size.pageDot, borderRadius: radius.pill, backgroundColor: colors.line },
     // Two columns with the page gutter outside and space.s12 between them:
     // each cell carries gutter on its outer side and half the gap inside.
     cellLeft: { flex: 1, paddingLeft: gutter, paddingRight: space.s12 / 2, paddingBottom: space.s24 },
@@ -159,18 +155,48 @@ export const ShopSection: React.FC<{ title: string; subtitle?: string; onSeeAll?
 };
 
 // ─── Search pill (opens the search screen) ────────────
-export const SearchPill: React.FC<{ label: string; onPress: () => void; style?: ViewStyle }> = ({ label, onPress, style }) => {
+/**
+ * `hints` rotate in the pill ("Search doctors", "Search specialties" …),
+ * fading between each other; they hold on the first under reduced motion.
+ * A screen reader always hears `label`.
+ */
+export const SearchPill: React.FC<{ label: string; onPress: () => void; style?: ViewStyle; hints?: string[] }> = ({ label, onPress, style, hints }) => {
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   const onGradient = useOnGradient();
+  const { hint, fade } = useRotatingHint(hints);
   return (
     <Pressable onPress={onPress} accessibilityRole="search" accessibilityLabel={label} style={[styles.pill, onGradient && styles.pillOnGradient, style]}>
       <IonIcon name="search" size="md" color={colors.inkMuted} />
-      <AppText style={styles.pillText} numberOfLines={1}>
-        {label}
-      </AppText>
+      <Animated.View style={[styles.pillHint, { opacity: fade }]}>
+        <AppText style={styles.pillText} numberOfLines={1}>
+          {hint ?? label}
+        </AppText>
+      </Animated.View>
     </Pressable>
   );
+};
+
+const useRotatingHint = (hints: string[] | undefined) => {
+  const { motion } = useTheme();
+  const calm = useCalmMotion();
+  const [index, setIndex] = useState(0);
+  const [fade] = useState(() => new Animated.Value(1));
+  const count = hints?.length ?? 0;
+  useEffect(() => {
+    if (count < 2 || calm) return;
+    const t = setInterval(() => {
+      Animated.timing(fade, { toValue: 0, duration: motion.hintFade, useNativeDriver: true }).start(() => {
+        setIndex(i => (i + 1) % count);
+        Animated.timing(fade, { toValue: 1, duration: motion.hintFade, useNativeDriver: true }).start();
+      });
+    }, motion.hintInterval);
+    return () => {
+      clearInterval(t);
+      fade.setValue(1);
+    };
+  }, [count, calm, fade, motion.hintFade, motion.hintInterval]);
+  return { hint: count ? hints![calm ? 0 : index % count] : null, fade };
 };
 
 // ─── Search field (filters in place) ──────────────────
@@ -211,83 +237,10 @@ export const SearchField: React.FC<{
 };
 
 // ─── Banner carousel ──────────────────────────────────
-/** Advances every 6 s; a touch pauses it until the finger lifts. */
-export const BannerCarousel: React.FC<{ banners: Banner[]; onOpen: (b: Banner) => void }> = ({ banners, onOpen }) => {
-  const styles = useStyles(makeStyles);
-  const { gutter, space, size, motion, colors } = useTheme();
-  const { width } = useWindowDimensions();
-  const ref = useRef<ScrollView>(null);
-  const [index, setIndex] = useState(0);
-  const [held, setHeld] = useState(false);
-  const cardWidth = Math.min(width, 640) - gutter * 2;
-  const pitch = cardWidth + space.s12;
-
-  useEffect(() => {
-    if (held || banners.length < 2) return;
-    const t = setInterval(() => {
-      setIndex(i => {
-        const next = (i + 1) % banners.length;
-        ref.current?.scrollTo({ x: next * pitch, animated: true });
-        return next;
-      });
-    }, motion.bannerInterval);
-    return () => clearInterval(t);
-  }, [held, banners.length, pitch, motion.bannerInterval]);
-
-  if (!banners.length) return null;
-  return (
-    <View>
-      <ScrollView
-        ref={ref}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        snapToInterval={pitch}
-        decelerationRate="fast"
-        contentContainerStyle={{ paddingHorizontal: gutter, gap: space.s12 }}
-        onTouchStart={() => setHeld(true)}
-        onTouchEnd={() => setHeld(false)}
-        onScrollBeginDrag={() => setHeld(true)}
-        onMomentumScrollEnd={e => {
-          setIndex(Math.round(e.nativeEvent.contentOffset.x / pitch));
-          setHeld(false);
-        }}>
-        {banners.map(b => (
-          <Pressable
-            key={b.id}
-            onPress={() => onOpen(b)}
-            accessibilityRole="button"
-            accessibilityLabel={`${b.headline}${b.subhead ? `. ${b.subhead}` : ''}`}
-            style={[styles.banner, { width: cardWidth, aspectRatio: size.bannerAspect }]}>
-            <Image
-              source={{ uri: cdn(b.imageUrl, { w: cardWidth, h: cardWidth / size.bannerAspect }) ?? undefined }}
-              style={StyleSheet.absoluteFill}
-              contentFit="cover"
-              transition={motion.imageFade}
-            />
-            <PhotoScrim />
-            <View style={styles.bannerText}>
-              <AppText variant="h2" tone="onScrim">
-                {b.headline}
-              </AppText>
-              {b.subhead ? (
-                <AppText variant="small" style={{ color: colors.onScrimSoft }}>
-                  {b.subhead}
-                </AppText>
-              ) : null}
-            </View>
-          </Pressable>
-        ))}
-      </ScrollView>
-      {banners.length > 1 ? (
-        <View style={styles.bannerDots} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          {banners.map((b, i) => (
-            <View key={b.id} style={[styles.dot, i === index && { backgroundColor: colors.ink, width: size.pageDotActive }]} />
-          ))}
-        </View>
-      ) : null}
-    </View>
-  );
-};
+/** The shop's promotions (the shared PhotoBannerCarousel). */
+export const BannerCarousel: React.FC<{ banners: Banner[]; onOpen: (b: Banner) => void }> = ({ banners, onOpen }) => (
+  <PhotoBannerCarousel banners={banners} onOpen={onOpen} />
+);
 
 // ─── Product grid (server-paged) ──────────────────────
 export const ProductGridSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => {

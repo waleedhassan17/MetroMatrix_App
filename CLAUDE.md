@@ -86,7 +86,8 @@ src/
     preferencesSlice.ts      lastService, pushPromptSeen, recentSearches, recentHealthSearches (persisted; searches cleared on sign-out)
   hooks/                     useAppDispatch / useAppSelector, useSignOut, usePagedList (+ useDebouncedValue), useShop (bag count, hearts, shop navigation),
                              useServiceNav (home ↔ service apps, tabs, leaving a service),
-                             useHealth (Health navigation), useBack, useCountdown, useNow, useBarStyle
+                             useHealth (Health navigation, banner targets), useBack, useCountdown, useNow, useBarStyle,
+                             useCalmMotion (reduce motion / screen reader: nothing moves by itself)
   networks/
     network/apiHelpers.ts    the axios client, refresh queue, AuthError, unwrap
     network/mock/            the dummy API (axios adapter + AsyncStorage DB) used while no backend URL is set
@@ -112,15 +113,17 @@ src/
   theme/                     tokens, services, typography, ThemeProvider/useTheme, StoreBrandScope — the ONLY place raw values live
   Custom-Components/         the design-system components (tokens only); barrel: @custom/index; shopping/ (ProductCard,
                              VariantSheet, FilterSheet, CartStoreGroup, charts/ …); health/ (DoctorCard, DateStrip, SlotGrid,
-                             AppointmentCard, PrescriptionSheet, EmergencyBanner …); PageHeader (the FYP gradient header);
-                             ServiceTabBar (the FYP per-service bottom bars)
+                             AppointmentCard, PrescriptionSheet, EmergencyBanner, and the home's CareCard, PhotoTile,
+                             DoctorSpotlightCard, NextVisitCard, ConcernTile …); PageHeader (the FYP gradient header);
+                             ServiceTabBar (the FYP per-service bottom bars); PhotoBannerCarousel (Shopping's and Health's banners)
   components/app-container/  AppContainer, appContainerSlice (bootstrap/refresh/push), OfflineGate, PushPrePrompt
   components/auth/           AuthChrome (frame/header/tabs/badge), AuthFields, ChoiceCard, StepFlow, AuthErrorNotice, GoogleSignInButton(.web)
   components/brand/          BrandMark, BrandWordmark (splash, onboarding)
   components/home/           ServiceCard + serviceCatalog (the customer home's three cards)
   components/food/           FoodParts (search, promos, cuisines, kitchen cards)
   components/shopping/       ShopParts (top bar + Bag, banners, product grid, SearchField), StoreParts, ReviewItem
-  components/health/         HealthParts (sections, action tiles, the appointment-action hook)
+  components/health/         HealthParts (sections, rows, the trust list, banner calls to action, the appointment-action
+                             hook), healthPhotos (the Health home's bundled photos)
   components/shared/         ErrorBoundary
   navigations-maps/          Base.ts (ROUTES), Auth.ts (gate arrays), Customer.ts (the customer root stack), Partner/Admin/
                              Approvals/Account.ts, HealthPatient.ts / ShoppingCustomer.ts / FoodCustomer.ts (each service
@@ -136,7 +139,7 @@ src/
                              Health/Patient, Health/Doctor, Dev
 scripts/check-design-tokens.js
 docs/                        API_CONTRACT_ASSUMED.md, API_SHOPPING_ASSUMED.md, API_HEALTH_ASSUMED.md, MOCK_IMAGES.md, GOOGLE_SIGNIN.md
-assets/images/               FYP icon + splash mark; services/ (card photos — sources in CREDITS.md)
+assets/images/               FYP icon + splash mark; services/ and health/ (card photos — sources in each CREDITS.md)
 ```
 
 Stateless screens have no slice. Their state is global (`auth`, `preferences`) or they only navigate. These are Rejected, Suspended, CustomerHome, ServicePreview, PartnerHome, OrderPlaced, Saved, StoreMore, BookingConfirmed, PrescriptionList, DoctorMore, FoodOrders, and the tab lists HealthAppointments and ShopOrders (they read `ordersSlice`, and share their lists with Orders via `Orders/OrdersLists.tsx`). Slices other screens read (`bag`, `saved`, `addressBook`, `orderDetail`, `notifications`, `family`, `appointmentDetail`) live beside the screen that owns them. BookAppointment is a sheet over DoctorProfile (`BookAppointmentSheet` + its slice), not a route.
@@ -176,6 +179,7 @@ const styles = useStyles(makeStyles); // memoised on the active theme (mode + se
 - Profile is the FYP's account screen: a hero that scrolls away (`ScreenShell headerScrolls`), Overview · Addresses · Settings, count tiles, and menu groups under `overline` titles whose rows take the FYP's categorical icon colours (`ListRow tint`, `theme.rowTint`).
 - Every screen stands on pure white (`colors.canvas`, pinned by `theme/__tests__/canvas.test.ts`), except Digital Health: the FYP's healthcare ground `#F8FBFF` under white cards, with slate ink (`HEALTH_PALETTE`). Only full-screen media (the video call, the photo viewer) are dark.
 - Healthcare uses the FYP's type like every service; its touch targets stay 48 and dynamic type goes to 150% (`theme.maxFontScale`).
+- The Health home is photo-led: a bento of three soft cards (`CareCard`, `theme.careTint`) whose photos fade into their ground, photo tiles for Health's own services, staff banners, a specialty grid in categorical colours (`theme.specialtyTint`), the city's top doctors, and the trust list. Every photo shows what its card does and is licensed: bundled ones are listed in `assets/images/health/CREDITS.md`, remote ones (banners, demo portraits) in `docs/MOCK_IMAGES.md`. Demo doctors are fictional; their stock portraits say so in the profile. Nothing on the page moves by itself under reduced motion or a screen reader (`useCalmMotion`).
 - Cards are the FYP card by default (`Card`, `elevation.card`: a `lineSoft` border and a soft slate shadow, radius 16). Section heads use `sectionTitle` (19/800). The side gutter is the FYP's 20.
 - Bottom tabs: a service app's bar is `ServiceTabBar`, in the look its theme names (`theme.tabBar`: Health's gradient pill, Shopping's lifted tint bar, Food's soft pill). A service's Home tab back leaves the service (`useServiceNav().leaveService`); other tab roots get `{ asTab: true }` and hide their back (`useIsTabRoot`). Jumps between the home and a service app go through `useServiceNav`, never a hard-coded parent.
 - Health copy: calm and plain, no exclamation marks; red only for emergencies (`appointmentStatusModel` never uses `danger`); appointment and payment wording only from `appointmentStatusModel`; every time through `healthTime` in the practice's timezone; "Recorded fees" (never earnings); the symptom checker names areas to discuss, never a diagnosis.

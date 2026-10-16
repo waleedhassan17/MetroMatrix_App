@@ -76,6 +76,28 @@ describe('health serializers on junk input', () => {
 });
 
 describe('health serializers on partial input', () => {
+  it('home banners need a photo, words and somewhere to go; concerns keep their icon', () => {
+    const h = healthHomeSerializer({
+      city: 'Lahore',
+      banners: [
+        { id: 'b1', imageUrl: 'https://x/1.jpg', title: 'Skin', subtitle: 'Derm', targetType: 'specialty', target: { id: 's', slug: 'dermatologist', name: 'Dermatologist' } },
+        { id: 'b2', imageUrl: 'https://x/2.jpg', title: 'Video', targetType: 'screen', targetScreen: 'video_consultation' },
+        { id: 'b3', imageUrl: 'https://x/3.jpg', title: 'Unknown screen', targetType: 'screen', targetScreen: 'teleport' },
+        { id: 'b4', title: 'No photo', targetType: 'screen', targetScreen: 'records' },
+        { id: 'b5', imageUrl: 'https://x/5.jpg', title: 'Doctor gone', targetType: 'doctor', target: null },
+        { id: 'b6', imageUrl: 'https://x/6.jpg', title: 'Doctor', targetType: 'doctor', target: { id: 'd1' } },
+      ],
+      featuredDoctors: [{ id: 'd1', name: 'Dr. A' }, null, { name: 'no id' }],
+      commonConditions: [{ slug: 'fever', name: 'Fever', icon: 'thermometer-outline' }, { slug: 'acne', name: 'Acne' }],
+    })!;
+    expect(h.banners.map(b => b.id)).toEqual(['b1', 'b2', 'b6']);
+    expect(h.banners[0]).toEqual({ id: 'b1', imageUrl: 'https://x/1.jpg', headline: 'Skin', subhead: 'Derm', target: { kind: 'specialty', slug: 'dermatologist', name: 'Dermatologist' } });
+    expect(h.banners[1]).toMatchObject({ subhead: null, target: { kind: 'screen', screen: 'video_consultation' } });
+    expect(h.banners[2].target).toEqual({ kind: 'doctor', id: 'd1', name: 'Doctor' });
+    expect(h.featuredDoctors.map(d => d.id)).toEqual(['d1']);
+    expect(h.commonConditions.map(c => c.icon)).toEqual(['thermometer-outline', null]);
+  });
+
   it('a doctor card with strings for numbers and an unknown badge', () => {
     const d = doctorCardSerializer({ id: 'd1', name: 'Dr. A', rating: '4.86', reviewCount: '12', fromFee: '1499.6', badges: ['pmdc_verified', 'famous'], yearsExperience: -3 })!;
     expect(d.rating).toBe(4.9);

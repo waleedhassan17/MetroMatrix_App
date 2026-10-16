@@ -41,6 +41,8 @@ export interface MockCondition {
   nameUr: string | null;
   specialtySlug: string | null;
   isCommon: boolean;
+  /** Ionicons glyph for the home's concern chips (the common ones). */
+  icon: string | null;
   aliases: string[];
 }
 
@@ -206,6 +208,23 @@ export interface MockFormularyItem {
   form: MedicineForm;
 }
 
+/** A Health home promotion. targetId is a specialty, condition or doctor id. */
+export interface MockHealthBanner {
+  id: string;
+  imageUrl: string;
+  title: string;
+  subtitle: string | null;
+  targetType: 'specialty' | 'condition' | 'doctor' | 'screen' | 'none';
+  targetId: string | null;
+  targetScreen: 'video_consultation' | 'symptom_checker' | 'emergency' | 'records' | 'available_today' | null;
+  /** null: every city. */
+  city: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  sort: number;
+  isActive: boolean;
+}
+
 export interface MockHealth {
   specialties: MockSpecialty[];
   conditions: MockCondition[];
@@ -228,5 +247,6 @@ export interface MockHealth {
   idempotency: Record<string, { status: number; payload: unknown }>;
   /** Clinic days (locationId|date) where the dummy API already let another patient take the first time. */
   contested: string[];
+  banners: MockHealthBanner[];
   seq: number;
 }

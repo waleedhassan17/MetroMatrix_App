@@ -13,7 +13,7 @@ import type { DocumentKind, ServiceType, SubType } from '../../../types/auth';
 import { MOCK, SEED_PASSWORD, STAFF_PASSWORD } from './mockConfig';
 import { SHOP_SEED_SHOPPER, SHOP_SEED_USERS, seedShop } from './shop/shopSeed';
 import type { MockShop } from './shop/shopTypes';
-import { HEALTH_SEED_USERS, seedHealth } from './health/healthSeed';
+import { HEALTH_SEED_USERS, migrateHealth, seedHealth } from './health/healthSeed';
 import type { MockHealth } from './health/healthTypes';
 
 export interface MockUser {
@@ -337,6 +337,7 @@ const ensureCollections = (loaded: Partial<MockDb>): MockDb => {
   else for (const k of Object.keys(seed.shop) as (keyof MockShop)[]) if (out.shop[k] === undefined) (out.shop as any)[k] = seed.shop[k];
   if (!loaded.health) out.health = seed.health;
   else for (const k of Object.keys(seed.health) as (keyof MockHealth)[]) if (out.health[k] === undefined) (out.health as any)[k] = seed.health[k];
+  migrateHealth(out.health);
   // Businesses saved before doctors could be listed: the seed's own doctors keep their state.
   for (const b of out.businesses) {
     const s = seed.businesses.find(x => x.id === b.id);

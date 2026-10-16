@@ -2,9 +2,10 @@
 // DoctorCard — what a patient needs to choose a doctor, at a glance
 // ═══════════════════════════════════════════════════════
 // Photo, name with the verified tick, specialty (in the accent, as the FYP's), one line
-// of qualifications, then rating · experience · measured wait (only when
-// the API has it), when they're next free and the starting fee. Footer
-// buttons only for what the doctor offers. `compact` is the rail card.
+// of qualifications, then a strip of numbers (experience, rating and its
+// reviews, measured wait; only what the API has), when they're next free
+// and the starting fee. Footer buttons only for what the doctor offers.
+// `compact` is the rail card, with the numbers on one line instead.
 
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -57,7 +58,37 @@ const makeStyles = ({ colors, space, radius, size, elevation }: Theme) =>
     },
     buttons: { flexDirection: 'row', gap: space.s8 },
     button: { flex: 1 },
+    strip: {
+      flexDirection: 'row',
+      borderRadius: radius.md,
+      backgroundColor: colors.surfaceSunk,
+      paddingVertical: space.s8,
+    },
+    cell: { flex: 1, alignItems: 'center', gap: space.s0 },
+    cellValue: { flexDirection: 'row', alignItems: 'center', gap: space.s4 },
+    rule: { width: size.hairline, marginVertical: space.s4, backgroundColor: colors.line },
   });
+
+/** Experience · rating (with how many reviews) · measured wait: what the API has. */
+const stripCells = (d: DoctorCardData) =>
+  [
+    d.yearsExperience
+      ? { key: 'exp', value: `${d.yearsExperience} yrs`, caption: 'Experience', star: false }
+      : null,
+    d.rating !== null
+      ? {
+          key: 'rating',
+          value: d.rating.toFixed(1),
+          caption: `${d.reviewCount.toLocaleString('en-US')} ${
+            d.reviewCount === 1 ? 'review' : 'reviews'
+          }`,
+          star: true,
+        }
+      : { key: 'rating', value: 'New', caption: 'No reviews yet', star: false },
+    d.waitMinutes !== null
+      ? { key: 'wait', value: `~${d.waitMinutes} min`, caption: 'Wait time', star: false }
+      : null,
+  ].filter((c): c is { key: string; value: string; caption: string; star: boolean } => c !== null);
 
 export const DoctorCard: React.FC<DoctorCardProps> = ({
   doctor: d,
@@ -107,27 +138,44 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({
                 {d.qualifications}
               </AppText>
             ) : null}
-            <View style={styles.stats}>
-              {d.rating !== null ? (
-                <View style={styles.stat}>
-                  <IonIcon name="star" size="sm" color={colors.star} />
-                  <AppText variant="caption">
-                    {d.rating.toFixed(1)}{' '}
-                    <AppText variant="caption" tone="muted">{`(${d.reviewCount.toLocaleString(
-                      'en-US',
-                    )})`}</AppText>
-                  </AppText>
-                </View>
-              ) : null}
-              {d.yearsExperience ? (
-                <AppText variant="caption" tone="muted">{`${d.yearsExperience} yrs`}</AppText>
-              ) : null}
-              {d.waitMinutes !== null && !compact ? (
-                <AppText variant="caption" tone="muted">{`~${d.waitMinutes} min wait`}</AppText>
-              ) : null}
-            </View>
+            {compact ? (
+              <View style={styles.stats}>
+                {d.rating !== null ? (
+                  <View style={styles.stat}>
+                    <IonIcon name="star" size="sm" color={colors.star} />
+                    <AppText variant="caption">
+                      {d.rating.toFixed(1)}{' '}
+                      <AppText variant="caption" tone="muted">{`(${d.reviewCount.toLocaleString(
+                        'en-US',
+                      )})`}</AppText>
+                    </AppText>
+                  </View>
+                ) : null}
+                {d.yearsExperience ? (
+                  <AppText variant="caption" tone="muted">{`${d.yearsExperience} yrs`}</AppText>
+                ) : null}
+              </View>
+            ) : null}
           </View>
         </View>
+        {!compact ? (
+          <View style={styles.strip}>
+            {stripCells(d).map((c, i) => (
+              <React.Fragment key={c.key}>
+                {i > 0 ? <View style={styles.rule} /> : null}
+                <View style={styles.cell}>
+                  <View style={styles.cellValue}>
+                    {c.star ? <IonIcon name="star" size="sm" color={colors.star} /> : null}
+                    <AppText variant="bodyStrong">{c.value}</AppText>
+                  </View>
+                  <AppText variant="caption" tone="muted">
+                    {c.caption}
+                  </AppText>
+                </View>
+              </React.Fragment>
+            ))}
+          </View>
+        ) : null}
         <View style={styles.meta}>
           <AvailabilityChip availability={d.availability} />
           <AppText variant="small" tone="muted">

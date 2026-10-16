@@ -34,6 +34,8 @@ export interface Condition {
   nameUr?: string | null;
   specialtySlug: string | null;
   isCommon: boolean;
+  /** Ionicons glyph chosen by the API (the common ones have one); else its specialty's. */
+  icon: string | null;
 }
 
 export interface EmergencyNumber {
@@ -190,12 +192,34 @@ export interface SlotDay {
   nextAvailable: { date: string; startAt: string } | null;
 }
 
+/** The Health screens a banner can open. */
+export type HealthBannerScreen = 'video_consultation' | 'symptom_checker' | 'emergency' | 'records' | 'available_today';
+
+export type HealthBannerTarget =
+  | { kind: 'specialty'; slug: string; name: string }
+  | { kind: 'condition'; slug: string; name: string }
+  | { kind: 'doctor'; id: string; name: string }
+  | { kind: 'screen'; screen: HealthBannerScreen }
+  | { kind: 'none' };
+
+/** A Health home promotion, chosen by staff (photo, words, where it leads). */
+export interface HealthBanner {
+  id: string;
+  imageUrl: string;
+  headline: string;
+  subhead: string | null;
+  target: HealthBannerTarget;
+}
+
 export interface HealthHome {
   city: string;
   cities: string[];
   specialties: Specialty[];
   commonConditions: Condition[];
   availableToday: DoctorCardData[];
+  /** Top doctors in the city (the spotlight rail). */
+  featuredDoctors: DoctorCardData[];
+  banners: HealthBanner[];
   upcoming: AppointmentSummary | null;
   emergencyNumbers: EmergencyNumber[];
 }

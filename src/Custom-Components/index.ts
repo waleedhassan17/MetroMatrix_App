@@ -20,6 +20,7 @@ export * from './ListRow';
 export * from './LiveDot';
 export * from './OtpInput';
 export * from './PhotoScrim';
+export * from './PhotoBannerCarousel';
 export * from './PasswordStrength';
 export * from './ProgressBar';
 export * from './ScreenShell';

@@ -158,6 +158,33 @@ export const ROW_TINTS: Record<RowTint, { fg: string; bg: string }> = {
   grey: { fg: light.inkMuted, bg: light.surfaceSunk },
 };
 
+// ─── Health home: the "How can we help you today?" cards ─
+// Each card is a soft ground with its photo fading up into it (`fade` is
+// the ground at zero opacity, for the photo scrim). Ink stays slate.
+export type CareTint = 'video' | 'clinic' | 'today';
+
+export const CARE_TINTS: Record<CareTint, { bg: string; fade: string; fg: string }> = {
+  video: { bg: '#E6F0FF', fade: 'rgba(230, 240, 255, 0)', fg: '#1857C0' },
+  clinic: { bg: '#FDEEE6', fade: 'rgba(253, 238, 230, 0)', fg: '#9A3412' },
+  today: { bg: '#E3F6EE', fade: 'rgba(227, 246, 238, 0)', fg: '#047857' },
+};
+
+/**
+ * Specialty wells: a categorical colour per tile (cycled), so a grid of
+ * eight reads as eight things at a glance (the FYP's per-specialty colours).
+ * Each glyph clears 3:1 on its ground.
+ */
+export const SPECIALTY_TINTS: { fg: string; bg: string }[] = [
+  { fg: '#1857C0', bg: '#E6F0FF' },
+  { fg: '#BE185D', bg: '#FCE7F3' },
+  { fg: '#7C3AED', bg: '#EDE9FE' },
+  { fg: '#B45309', bg: '#FEF3C7' },
+  { fg: '#B91C1C', bg: '#FEE2E2' },
+  { fg: '#047857', bg: '#D1FAE5' },
+  { fg: '#0E7490', bg: '#CFFAFE' },
+  { fg: '#4338CA', bg: '#E0E7FF' },
+];
+
 // ─── Space — 4-pt scale ─────────────────────────────
 export const space = {
   s0: 0,
@@ -297,6 +324,13 @@ export const size = {
   meterHeight: 28,
   /** A compact doctor card in the Available today rail. */
   doctorRailCard: 280,
+  /** Health home: the bento cards (tall = two short and the 12 between), the photo tiles, the spotlight card. */
+  careTall: 268,
+  careShort: 128,
+  photoTile: { width: 112, image: 84 },
+  spotlightCard: 272,
+  /** The white ring round a portrait on a coloured card. */
+  portraitRing: 2,
 } as const;
 
 export const opacity = {
@@ -353,6 +387,10 @@ export const motion = {
   imageFade: 150,
   /** Home banners advance this often, and pause while touched. */
   bannerInterval: 6000,
+  /** A search pill's hint ("doctors", "specialties" …) changes this often, */
+  hintInterval: 3000,
+  /** fading out and back in over this long. */
+  hintFade: 180,
   /** Search suggestions wait for typing to pause this long. */
   suggestDebounce: 250,
   /** Checkout re-prices this long after the last change. */

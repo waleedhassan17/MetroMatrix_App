@@ -62,3 +62,45 @@ All are published under the [Unsplash License](https://unsplash.com/license): fr
 | `PB1` | Power banks | https://images.unsplash.com/photo-1566554738544-d962991c3fee | `p_v13` |
 | `PB2` | Power banks | https://images.unsplash.com/photo-1706275399494-fb26bbc5da63 | `p_v14` |
 | `SW1` | Smartwatches | https://images.unsplash.com/photo-1461141346587-763ab02bced9 | `p_v15` |
+
+# Health: demo doctors and banners
+
+The dummy Health API (`src/networks/network/mock/health/healthSeed.ts`) gives its fictional doctors portraits and its home banners photos, all from Unsplash under the same licence. Like the shop's photos, they are loaded from Unsplash's CDN, never bundled. The Health home's own card and tile photos are bundled; see `assets/images/health/CREDITS.md`.
+
+- **Demo profiles:** every seeded doctor is fictional. Each one's `about` ends with "(Demo profile: this doctor is fictional.)". The portraits are stock photos of real people, matched to each doctor's gender, so use them only in demo and dev data. A real doctor's own uploaded photo always replaces them.
+- **Framing:** portraits ask Unsplash for a face-centred crop (`fit=facearea&facepad=3.2`); `cdn()` keeps that framing and changes only the size.
+- **Banners:** each banner opens a specialty or one of Health's screens. Its photo shows that subject.
+
+| Doctor | Name | Portrait | Photographer |
+|---|---|---|---|
+| `d_ayesha` | Ayesha Siddiqui | https://images.unsplash.com/photo-1659353888906-adb3e0041693 | [Fotos](https://unsplash.com/@fotospk) |
+| `d_hina` | Hina Shah | https://images.unsplash.com/photo-1670191247079-f9713ae06dcf | [Kamal Hoseinianzade](https://unsplash.com/@teravis_sk) |
+| `d_mariam` | Mariam Saleem | https://images.unsplash.com/photo-1757125736482-328a3cdd9743 | [Ike Ellyana](https://unsplash.com/@ikemotret20) |
+| `d_farah` | Farah Naz | https://images.unsplash.com/photo-1713865467253-ce0ac8477d34 | [Look Studio](https://unsplash.com/@lookphoto) |
+| `d_nida` | Nida Hussain | https://images.unsplash.com/photo-1623854767648-e7bb8009f0db | [Siednji Leon](https://unsplash.com/@siednji) |
+| `d_saima` | Saima Rafiq | https://images.unsplash.com/photo-1678695972687-033fa0bdbac9 | [Ato Aikins](https://unsplash.com/@ato_aikins) |
+| `d_rabia` | Rabia Qureshi | https://images.unsplash.com/photo-1559839734-2b71ea197ec2 | [Humberto Chávez](https://unsplash.com/@betoframe) |
+| `d_sana_m` | Sana Mirza | https://images.unsplash.com/photo-1673865641073-4479f93a7776 | [Bermix Studio](https://unsplash.com/@bermixstudio) |
+| `d_mehwish` | Mehwish Abbasi | https://images.unsplash.com/photo-1758691462651-611d730c5272 | [Vitaly Gariev](https://unsplash.com/@silverkblack) |
+| `d_amna` | Amna Yousaf | https://images.unsplash.com/photo-1770134223774-13b735e29201 | [Beatriz Mendez](https://unsplash.com/@beatrizmendez) |
+| `d_sadia` | Sadia Iqbal | https://images.unsplash.com/photo-1643297654416-05795d62e39c | [Eben Kassaye](https://unsplash.com/@ebengech) |
+| `d_bilal` | Bilal Ahmed | https://images.unsplash.com/photo-1612349317150-e413f6a5b16d | [Usman Yousaf](https://unsplash.com/@usmanyousaf) |
+| `d_usman` | Usman Tariq | https://images.unsplash.com/photo-1659353889416-fab1265eaa7f | [Fotos](https://unsplash.com/@fotospk) |
+| `d_kamran` | Kamran Akhtar | https://images.unsplash.com/photo-1637059824899-a441006a6875 | [vaibhav vivian](https://unsplash.com/@vrahim11) |
+| `d_imran` | Imran Chaudhry | https://images.unsplash.com/photo-1622253694242-abeb37a33e97 | [Bruno Rodrigues](https://unsplash.com/@naosouogagliasso) |
+| `d_adeel` | Adeel Raza | https://images.unsplash.com/photo-1730597842283-943c7986ee2c | [Muhammad Hicham](https://unsplash.com/@drfox_) |
+| `d_ahmed` | Ahmed Khan | https://images.unsplash.com/photo-1678940805950-73f2127f9d4e | [Frederick Medina](https://unsplash.com/@frederickjmedina) |
+| `d_faisal` | Faisal Memon | https://images.unsplash.com/photo-1700041785712-649e859d9909 | [mohamad azaam](https://unsplash.com/@mreke88) |
+| `d_zeeshan` | Zeeshan Ali | https://images.unsplash.com/photo-1769072610024-5b8a50f05c73 | [David Akinwale](https://unsplash.com/@jayex2) |
+| `d_omar` | Omar Siddiqui | https://images.unsplash.com/photo-1666887360369-1901f341fdad | [Nappy](https://unsplash.com/@nappystudio) |
+| `d_waqas` | Waqas Butt | https://images.unsplash.com/photo-1622902046580-2b47f47f5471 | [Dalton Ngangi](https://unsplash.com/@daltonngangi) |
+| `d_tahir` | Tahir Mehmood | https://images.unsplash.com/photo-1659353888096-cc5e333db5e0 | [Fotos](https://unsplash.com/@fotospk) |
+| `d_hamza` | Hamza Rauf | https://images.unsplash.com/photo-1756699279298-c89cdef354ab | [SoyBreno](https://unsplash.com/@soybrenofotografia) |
+
+| Banner | Headline | Photo | Photographer |
+|---|---|---|---|
+| `hb_video` | See a doctor by video today | https://images.unsplash.com/photo-1758691463620-188ca7c1a04f | [Vitaly Gariev](https://unsplash.com/@silverkblack) |
+| `hb_skin` | Skin and hair specialists | https://images.unsplash.com/photo-1688588162416-f7a7e726e0bf | [Anna Keibalo](https://unsplash.com/@anyutakejbalo) |
+| `hb_symptoms` | Not sure who to see? | https://images.unsplash.com/photo-1758273241078-8eec353836be | [Vitaly Gariev](https://unsplash.com/@silverkblack) |
+| `hb_child` | Gentle care for your child | https://images.unsplash.com/photo-1708687045004-a3e3c4420e6d | [Ortopediatri Çocuk Ortopedi Akademisi](https://unsplash.com/@ortopediatri) |
+| `hb_family` | Your family's records, in one place | https://images.unsplash.com/photo-1632053002928-1919605ee6f7 | [CDC](https://unsplash.com/@cdc) |

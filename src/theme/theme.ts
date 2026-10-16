@@ -16,6 +16,8 @@ import {
   GUTTER,
   HEALTH_PALETTE,
   ROW_TINTS,
+  CARE_TINTS,
+  SPECIALTY_TINTS,
   type ColorMode,
   type Palette,
   type Elevation,
@@ -56,6 +58,9 @@ export interface Theme {
   maxFontScale: number;
   /** The FYP profile's categorical icon chips (fixed across services). */
   rowTint: typeof ROW_TINTS;
+  /** Health home: the bento card grounds and the specialty wells. */
+  careTint: typeof CARE_TINTS;
+  specialtyTint: typeof SPECIALTY_TINTS;
   /** How this service's bottom tab bar marks the selected tab (the FYP's per-module bars). */
   tabBar: TabBarStyle;
 }
@@ -112,6 +117,8 @@ const build = (serviceName: ServiceName): Theme => {
     },
     maxFontScale: clinical ? CLINICAL_FONT_SCALE : MAX_FONT_SCALE,
     rowTint: ROW_TINTS,
+    careTint: CARE_TINTS,
+    specialtyTint: SPECIALTY_TINTS,
     tabBar: {
       variant: TAB_BARS[serviceName],
       gradient: [SERVICE_PALETTES.light[serviceName].highlight, SERVICE_PALETTES.light[serviceName].accent],

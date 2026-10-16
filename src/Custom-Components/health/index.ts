@@ -16,3 +16,8 @@ export * from './SlotGrid';
 export * from './SpecialtyTile';
 export * from './StatTrio';
 export * from './StarInput';
+export * from './CareCard';
+export * from './ConcernTile';
+export * from './DoctorSpotlightCard';
+export * from './NextVisitCard';
+export * from './PhotoTile';

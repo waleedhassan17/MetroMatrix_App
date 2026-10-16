@@ -30,8 +30,17 @@ export const cdn = (url: string | null | undefined, { w, h, fit = 'fill' }: CdnO
   }
 
   if (url.includes('images.unsplash.com')) {
-    const [base] = url.split('?');
-    const params = [`w=${width}`, height ? `h=${height}` : null, `fit=${fit === 'fill' ? 'crop' : 'max'}`, 'auto=format', 'q=70']
+    const [base, query = ''] = url.split('?');
+    // A face-centred portrait (fit=facearea&facepad=N) keeps its framing; only the size changes.
+    const facepad = /(?:^|&)fit=facearea(?:&|$)/.test(query) ? /(?:^|&)facepad=([\d.]+)/.exec(query)?.[1] ?? '2' : null;
+    const params = [
+      `w=${width}`,
+      height ? `h=${height}` : null,
+      facepad ? 'fit=facearea' : `fit=${fit === 'fill' ? 'crop' : 'max'}`,
+      facepad ? `facepad=${facepad}` : null,
+      'auto=format',
+      'q=70',
+    ]
       .filter(Boolean)
       .join('&');
     return `${base}?${params}`;
