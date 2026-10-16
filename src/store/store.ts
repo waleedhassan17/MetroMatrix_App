@@ -59,6 +59,19 @@ import { productReviewsSlice } from '../screens/Shopping/Customer/ProductReviews
 import { checkoutSlice } from '../screens/Shopping/Customer/Checkout/checkoutSlice';
 import { orderDetailSlice } from '../screens/Shopping/Customer/OrderDetail/orderDetailSlice';
 import { appointmentDetailSlice } from '../screens/Health/Patient/AppointmentDetail/appointmentDetailSlice';
+import { videoSlice } from '../screens/Health/Patient/VideoPrecheck/videoSlice';
+import { postConsultReviewSlice } from '../screens/Health/Patient/PostConsultReview/postConsultReviewSlice';
+import { symptomCheckerSlice } from '../screens/Health/Patient/SymptomChecker/symptomCheckerSlice';
+import { recordUploadSlice } from '../screens/Health/Patient/RecordUpload/recordUploadSlice';
+import { recordDetailSlice } from '../screens/Health/Patient/RecordDetail/recordDetailSlice';
+import { healthRecordsSlice } from '../screens/Health/Patient/HealthRecords/healthRecordsSlice';
+import { prescriptionViewSlice } from '../screens/Health/Patient/PrescriptionView/prescriptionViewSlice';
+import { doctorReviewsSlice } from '../screens/Health/Patient/DoctorReviews/doctorReviewsSlice';
+import { bookAppointmentSlice } from '../screens/Health/Patient/BookAppointment/bookAppointmentSlice';
+import { familyMemberFormSlice } from '../screens/Health/Patient/FamilyMemberForm/familyMemberFormSlice';
+import { familySlice } from '../screens/Health/Patient/FamilyMembers/familySlice';
+import { doctorProfileSlice } from '../screens/Health/Patient/DoctorProfile/doctorProfileSlice';
+import { doctorListSlice } from '../screens/Health/Patient/DoctorList/doctorListSlice';
 import { conditionListSlice } from '../screens/Health/Patient/ConditionList/conditionListSlice';
 import { specialtyListSlice } from '../screens/Health/Patient/SpecialtyList/specialtyListSlice';
 import { healthSearchSlice } from '../screens/Health/Patient/HealthSearch/healthSearchSlice';
@@ -147,6 +160,19 @@ const rootReducer = combineReducers({
   checkout: checkoutSlice.reducer,
   orderDetail: orderDetailSlice.reducer,
   appointmentDetail: appointmentDetailSlice.reducer,
+  video: videoSlice.reducer,
+  postConsultReview: postConsultReviewSlice.reducer,
+  symptomChecker: symptomCheckerSlice.reducer,
+  recordUpload: recordUploadSlice.reducer,
+  recordDetail: recordDetailSlice.reducer,
+  healthRecords: healthRecordsSlice.reducer,
+  prescriptionView: prescriptionViewSlice.reducer,
+  doctorReviews: doctorReviewsSlice.reducer,
+  bookAppointment: bookAppointmentSlice.reducer,
+  familyMemberForm: familyMemberFormSlice.reducer,
+  family: familySlice.reducer,
+  doctorProfile: doctorProfileSlice.reducer,
+  doctorList: doctorListSlice.reducer,
   conditionList: conditionListSlice.reducer,
   specialtyList: specialtyListSlice.reducer,
   healthSearch: healthSearchSlice.reducer,

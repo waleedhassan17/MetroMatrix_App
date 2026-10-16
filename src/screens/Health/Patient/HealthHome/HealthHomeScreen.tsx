@@ -98,16 +98,23 @@ const HealthHomeContent: React.FC<Props> = ({ navigation }) => {
       ) : null}
 
       <View style={styles.block}>
-        <HealthSection title="Find by specialty" onSeeAll={() => navigation.navigate('SpecialtyList')} seeAllLabel="All specialties" />
+        <HealthSection title="Find by specialty" />
         {!home ? (
           <SkeletonLines lines={4} />
         ) : (
           <View style={styles.grid}>
-            {[specialties.slice(0, 4), specialties.slice(4, 8)].map((row, i) => (
+            {[specialties.slice(0, 3), specialties.slice(3, 6), specialties.slice(6, 8)].map((row, i) => (
               <View key={i} style={styles.gridRow}>
                 {row.map(sp => (
                   <SpecialtyTile key={sp.slug} specialty={sp} onPress={() => nav.openDoctors({ specialty: sp.slug, title: sp.name })} />
                 ))}
+                {i === 2 ? (
+                  <SpecialtyTile
+                    specialty={{ id: 'all', slug: 'all', name: 'All specialties', nameUr: 'تمام شعبے', icon: 'grid-outline', doctorCount: 0 }}
+                    showCount={false}
+                    onPress={() => navigation.navigate('SpecialtyList')}
+                  />
+                ) : null}
               </View>
             ))}
           </View>

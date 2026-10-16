@@ -76,6 +76,16 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       ProductForm: 'store/products/edit',
       Inventory: 'store/inventory',
       Insights: 'store/insights',
+      // The doctor's app (its own stack): metromatrix://doctor/appointments/:id
+      DoctorAppointment: 'doctor/appointments/:id',
+      PrescriptionWriter: 'doctor/appointments/:appointmentId/prescription',
+      PracticeSetup: 'doctor/setup',
+      Availability: 'doctor/availability',
+      TimeOff: 'doctor/time-off',
+      PatientHistory: 'doctor/patients/:id',
+      MyReviews: 'doctor/reviews',
+      DoctorInsights: 'doctor/insights',
+      DoctorProfileEdit: 'doctor/profile',
       // /home (a partner's home too), /home/food, /home/services/healthcare
       // Shopping: /shop, /shop/store/:slug, /shop/product/:id … (exact, so
       // they read the same in a link and in the address bar).
@@ -99,6 +109,19 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
           Bag: { path: 'shop/bag', exact: true },
           Checkout: { path: 'shop/checkout', exact: true },
           OrderPlaced: { path: 'shop/placed/:groupCode', exact: true },
+          // Health: /health, metromatrix://health/doctor/:id,
+          // metromatrix://health/specialty/:slug (the doctors for it) …
+          HealthHome: { path: 'health', exact: true },
+          HealthSearch: { path: 'health/search', exact: true },
+          SpecialtyList: { path: 'health/specialties', exact: true },
+          ConditionList: { path: 'health/conditions', exact: true },
+          DoctorList: { path: 'health/doctors', exact: true, alias: [{ path: 'health/specialty/:specialty', exact: true }] },
+          DoctorProfile: { path: 'health/doctor/:id', exact: true },
+          DoctorReviews: { path: 'health/doctor/:doctorId/reviews', exact: true },
+          BookingConfirmed: { path: 'health/booked/:code', exact: true },
+          SymptomChecker: { path: 'health/symptoms', exact: true },
+          SymptomResult: { path: 'health/symptoms/result', exact: true },
+          Emergency: { path: 'health/emergency', exact: true },
         },
       },
       // metromatrix://orders/MM-24A7Q2 → that order (push taps land here too)
@@ -111,6 +134,10 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
           PaymentProof: ':groupCode/pay/:orderId',
           ReturnRequest: ':groupCode/return/:orderId',
           WriteReview: ':groupCode/review/:orderId/:itemId',
+          // metromatrix://health/appointment/:code → that visit (push taps too)
+          AppointmentDetail: { path: 'health/appointment/:code', exact: true },
+          VideoPrecheck: { path: 'health/appointment/:code/video', exact: true },
+          PostConsultReview: { path: 'health/appointment/:code/rate', exact: true },
         },
       },
       ApprovalsTab: {
@@ -129,6 +156,17 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
           OrderLookup: 'admin/shop/orders',
         },
       },
+      HealthAdminTab: {
+        initialRouteName: 'HealthOverview',
+        screens: {
+          HealthOverview: 'admin/health',
+          Specialties: 'admin/health/specialties',
+          Conditions: 'admin/health/conditions',
+          DoctorVerification: 'admin/health/doctors',
+          ReviewModeration: 'admin/health/reviews',
+          AppointmentLookup: 'admin/health/appointments',
+        },
+      },
       ProfileTab: {
         initialRouteName: 'Profile',
         screens: {
@@ -138,6 +176,13 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
           AddressBook: 'profile/addresses',
           AddressForm: 'profile/addresses/edit',
           Notifications: 'profile/notifications',
+          HealthRecords: 'profile/records',
+          RecordUpload: 'profile/records/new',
+          RecordDetail: 'profile/records/:id',
+          PrescriptionList: 'profile/prescriptions',
+          PrescriptionView: 'profile/prescriptions/:id',
+          FamilyMembers: 'profile/family',
+          FamilyMemberForm: 'profile/family/edit',
         },
       },
     },

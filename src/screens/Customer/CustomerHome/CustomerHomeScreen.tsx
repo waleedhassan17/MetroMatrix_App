@@ -112,6 +112,24 @@ const CustomerHomeScreen: React.FC<Props> = ({ navigation }) => {
           onPress: () => tabs?.navigate('ProfileTab', { screen: 'AddressBook', initial: false }),
         },
         {
+          key: 'appointments',
+          label: 'Appointments',
+          icon: 'calendar-outline',
+          onPress: () => tabs?.navigate('OrdersTab', { screen: 'Orders', params: { service: 'health' } }),
+        },
+        {
+          key: 'records',
+          label: 'Health records',
+          icon: 'folder-open-outline',
+          onPress: () => tabs?.navigate('ProfileTab', { screen: 'HealthRecords', initial: false }),
+        },
+        {
+          key: 'family',
+          label: 'Family members',
+          icon: 'people-outline',
+          onPress: () => tabs?.navigate('ProfileTab', { screen: 'FamilyMembers', initial: false }),
+        },
+        {
           key: 'notifications',
           label: 'Notifications',
           icon: 'notifications-outline',
@@ -143,6 +161,7 @@ const CustomerHomeScreen: React.FC<Props> = ({ navigation }) => {
     dispatch(setLastService(card.service));
     if (card.service === 'food') navigation.navigate('FoodHome');
     else if (card.service === 'shopping') navigation.navigate('ShoppingHome');
+    else if (card.service === 'healthcare') navigation.navigate('HealthHome');
     else navigation.navigate('ServicePreview', { service: card.service });
   };
 

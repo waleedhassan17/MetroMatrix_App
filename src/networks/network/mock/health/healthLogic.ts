@@ -666,6 +666,7 @@ export const doctorAppointmentView = (h: MockHealth, a: MockAppointment, now: nu
     notes: a.notes,
     payment: { method: a.paymentMethod, status: a.paymentStatus, amount: a.fee, instructions: a.instructions, proof: a.proof },
     checkedInAt: a.checkedInAt,
+    joinOpensAt: a.kind === 'video' ? joinOpensAt(a) : null,
     actions: doctorActions(h, a, now),
     prescription: p ? prescriptionView(h, p) : null,
     timeline: a.events,

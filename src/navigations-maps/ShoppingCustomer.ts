@@ -21,6 +21,7 @@ import CheckoutScreen from '../screens/Shopping/Customer/Checkout/CheckoutScreen
 import OrderPlacedScreen from '../screens/Shopping/Customer/OrderPlaced/OrderPlacedScreen';
 import AddressFormScreen from '../screens/Account/AddressForm/AddressFormScreen';
 import NotificationsScreen from '../screens/Account/Notifications/NotificationsScreen';
+import PaymentProofScreen from '../screens/Shopping/Customer/PaymentProof/PaymentProofScreen';
 
 export const SHOP_HOME_ROUTES: IRoute[] = [
   { title: ROUTES.SHOPPING_HOME, component: ShoppingHomeScreen },
@@ -40,4 +41,6 @@ export const SHOP_BROWSE_ROUTES: IRoute[] = [
   { title: ROUTES.ORDER_PLACED, component: OrderPlacedScreen },
   { title: ROUTES.ADDRESS_FORM, component: AddressFormScreen },
   { title: ROUTES.NOTIFICATIONS, component: NotificationsScreen },
+  // "I've paid" for a shop order or an appointment, from whichever tab you're in.
+  { title: ROUTES.PAYMENT_PROOF, component: PaymentProofScreen },
 ];

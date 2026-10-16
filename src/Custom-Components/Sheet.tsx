@@ -15,7 +15,7 @@ import {
   type BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useStyles, useTheme } from '../theme';
+import { ThemeScope, useStyles, useTheme } from '../theme';
 import { AppText } from './AppText';
 import { IconButton } from './IconButton';
 import { makeSheetStyles as makeStyles, type SheetProps } from './sheetShared';
@@ -31,7 +31,8 @@ export const Sheet: React.FC<SheetProps> = ({
   footer,
 }) => {
   const styles = useStyles(makeStyles);
-  const { colors, radius, size, space } = useTheme();
+  const theme = useTheme();
+  const { colors, radius, size, space } = theme;
   const insets = useSafeAreaInsets();
   const ref = useRef<BottomSheetModal>(null);
 
@@ -64,29 +65,33 @@ export const Sheet: React.FC<SheetProps> = ({
       backgroundStyle={{ backgroundColor: colors.surface, borderRadius: radius.xl }}
       handleIndicatorStyle={{ backgroundColor: colors.lineStrong, height: size.sheetHandle }}
       accessibilityLabel={title}>
-      <BottomSheetScrollView keyboardShouldPersistTaps="handled">
-        <View style={styles.head}>
-          <View style={styles.headText}>
-            <AppText variant="h2" accessibilityRole="header">
-              {title}
-            </AppText>
-            {subtitle ? (
-              <AppText variant="body" tone="muted">
-                {subtitle}
+      {/* The modal renders at the provider, outside this screen's ServiceScope:
+          carry the caller's theme in, so a Health sheet stays blue. */}
+      <ThemeScope theme={theme}>
+        <BottomSheetScrollView keyboardShouldPersistTaps="handled">
+          <View style={styles.head}>
+            <View style={styles.headText}>
+              <AppText variant="h2" accessibilityRole="header">
+                {title}
               </AppText>
-            ) : null}
+              {subtitle ? (
+                <AppText variant="body" tone="muted">
+                  {subtitle}
+                </AppText>
+              ) : null}
+            </View>
+            <IconButton icon="close" onPress={onClose} accessibilityLabel="Close" tone="muted" />
           </View>
-          <IconButton icon="close" onPress={onClose} accessibilityLabel="Close" tone="muted" />
-        </View>
-        <View style={styles.body}>{children}</View>
-        {footer ? (
-          <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, space.s16) }]}>
-            {footer}
-          </View>
-        ) : (
-          <View style={{ height: Math.max(insets.bottom, space.s16) }} />
-        )}
-      </BottomSheetScrollView>
+          <View style={styles.body}>{children}</View>
+          {footer ? (
+            <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, space.s16) }]}>
+              {footer}
+            </View>
+          ) : (
+            <View style={{ height: Math.max(insets.bottom, space.s16) }} />
+          )}
+        </BottomSheetScrollView>
+      </ThemeScope>
     </BottomSheetModal>
   );
 };

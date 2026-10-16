@@ -226,7 +226,7 @@ export interface MockHealth {
   formulary: MockFormularyItem[];
   /** user|key → the first response to that booking. */
   idempotency: Record<string, { status: number; payload: unknown }>;
-  /** Slots the dummy API pretends another patient took first (see mockConfig). */
+  /** Clinic days (locationId|date) where the dummy API already let another patient take the first time. */
   contested: string[];
   seq: number;
 }

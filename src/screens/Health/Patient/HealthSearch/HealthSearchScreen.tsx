@@ -29,7 +29,7 @@ const makeStyles = ({ colors, space, size, gutter }: Theme) =>
     head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     row: { flexDirection: 'row', alignItems: 'center', gap: space.s12, minHeight: size.touch, paddingVertical: space.s8 },
     rowText: { flex: 1, gap: space.s0 },
-    ur: { writingDirection: 'rtl' },
+    ur: { writingDirection: 'rtl', textAlign: 'left' },
   });
 
 const HealthSearchScreen: React.FC<Props> = props => (
@@ -38,7 +38,14 @@ const HealthSearchScreen: React.FC<Props> = props => (
   </ServiceScope>
 );
 
-const Row: React.FC<{ icon: IonName; title: string; caption?: string | null; onPress: () => void; label: string }> = ({ icon, title, caption, onPress, label }) => {
+const Row: React.FC<{ icon: IonName; title: string; caption?: string | null; ur?: string | null; onPress: () => void; label: string }> = ({
+  icon,
+  title,
+  caption,
+  ur,
+  onPress,
+  label,
+}) => {
   const styles = useStyles(makeStyles);
   const { colors, opacity } = useTheme();
   return (
@@ -48,6 +55,11 @@ const Row: React.FC<{ icon: IonName; title: string; caption?: string | null; onP
         <AppText variant="body" numberOfLines={2}>
           {title}
         </AppText>
+        {ur ? (
+          <AppText variant="caption" tone="muted" numberOfLines={1} style={styles.ur}>
+            {ur}
+          </AppText>
+        ) : null}
         {caption ? (
           <AppText variant="caption" tone="muted" numberOfLines={1}>
             {caption}
@@ -108,7 +120,7 @@ const HealthSearchContent: React.FC<Props> = ({ route }) => {
                     key={c.slug}
                     icon="pulse-outline"
                     title={c.name}
-                    caption={c.nameUr}
+                    ur={c.nameUr}
                     label={`${c.name}, condition`}
                     onPress={() => {
                       remember();
@@ -128,7 +140,8 @@ const HealthSearchContent: React.FC<Props> = ({ route }) => {
                     key={sp.slug}
                     icon={sp.icon as IonName}
                     title={sp.name}
-                    caption={[sp.nameUr, `${sp.doctorCount} ${sp.doctorCount === 1 ? 'doctor' : 'doctors'}`].filter(Boolean).join(' · ')}
+                    ur={sp.nameUr}
+                    caption={`${sp.doctorCount} ${sp.doctorCount === 1 ? 'doctor' : 'doctors'}`}
                     label={`${sp.name}, specialty`}
                     onPress={() => {
                       remember();

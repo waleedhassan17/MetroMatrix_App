@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════
 // PaymentInstructionsCard — where to send a transfer, and by when
 // ═══════════════════════════════════════════════════════
-// MetroMatrix never touches the money: the customer pays the store's own
-// account. The card gives the exact amount and account (each copyable), the
+// MetroMatrix never touches the money: the customer pays the store's (or
+// the doctor's) own account. The card gives the exact amount and account (each copyable), the
 // time left, and the "I've paid" step. A rejected proof says why.
 
 import React from 'react';
@@ -12,6 +12,7 @@ import Toast from 'react-native-toast-message';
 import { useStyles, useTheme, type Theme } from '../../theme';
 import { accountKindLabel } from '../../models/shopping/storeModel';
 import type { PaymentInstructions, PaymentProof, PaymentStatus } from '../../types/shopping';
+import type { AppointmentPaymentStatus } from '../../types/health';
 import { timeLeft } from '../../utils/dates';
 import { haptics } from '../../utils/haptics';
 import { formatPKR } from '../../utils/money';
@@ -24,9 +25,11 @@ import { InlineNotice } from '../InlineNotice';
 
 export interface PaymentInstructionsCardProps {
   instructions: PaymentInstructions;
-  status: PaymentStatus;
+  status: PaymentStatus | AppointmentPaymentStatus;
   proof: PaymentProof | null;
   onPaid?: () => void;
+  /** Who is paid directly: the store (Shopping) or the doctor (Health). */
+  payee?: 'store' | 'doctor';
 }
 
 const makeStyles = ({ space }: Theme) =>
@@ -62,7 +65,7 @@ const CopyRow: React.FC<{ label: string; value: string; display?: string }> = ({
   );
 };
 
-export const PaymentInstructionsCard: React.FC<PaymentInstructionsCardProps> = ({ instructions, status, proof, onPaid }) => {
+export const PaymentInstructionsCard: React.FC<PaymentInstructionsCardProps> = ({ instructions, status, proof, onPaid, payee = 'store' }) => {
   const left = timeLeft(instructions.payBy);
   const owed = status === 'awaiting_transfer' || status === 'proof_rejected';
   return (
@@ -73,14 +76,14 @@ export const PaymentInstructionsCard: React.FC<PaymentInstructionsCardProps> = (
         </AppText>
         <AppText variant="small" tone="muted">
           {owed
-            ? `${left ? `${left}. ` : ''}Pay the store directly, then share the transaction ID.`
+            ? `${left ? `${left}. ` : ''}Pay the ${payee} directly, then share the transaction ID.`
             : status === 'proof_submitted'
-              ? `The store is checking transaction ${proof?.transactionId ?? ''}.`
-              : 'The store has confirmed your payment.'}
+              ? `The ${payee} is checking transaction ${proof?.transactionId ?? ''}.`
+              : `The ${payee} has confirmed your payment.`}
         </AppText>
       </View>
       {status === 'proof_rejected' && proof?.rejectionReason ? (
-        <InlineNotice tone="error" title="The store couldn't find your payment" message={proof.rejectionReason} />
+        <InlineNotice tone={payee === 'doctor' ? 'warning' : 'error'} title={`The ${payee} couldn't find your payment`} message={proof.rejectionReason} />
       ) : null}
       {owed ? (
         <>

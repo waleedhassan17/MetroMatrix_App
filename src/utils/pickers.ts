@@ -52,3 +52,33 @@ export const pickDocumentFile = async (): Promise<LocalFile | null> => {
     file: asset.file,
   };
 };
+
+/** Several photos at once (a multi-page report), up to `max`. */
+export const pickImagesFromLibrary = async (max: number): Promise<LocalFile[]> => {
+  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (!permission.granted) return [];
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'],
+    allowsMultipleSelection: true,
+    selectionLimit: max,
+    quality: 0.8,
+  });
+  if (result.canceled) return [];
+  return (result.assets ?? []).slice(0, max).map((a, i) => fromImageAsset(a, `page_${Date.now()}_${i + 1}.jpg`));
+};
+
+/** Several files (PDFs or images) at once. */
+export const pickDocumentFiles = async (max: number): Promise<LocalFile[]> => {
+  const result = await DocumentPicker.getDocumentAsync({
+    type: ['image/*', 'application/pdf'],
+    copyToCacheDirectory: true,
+    multiple: true,
+  });
+  if (result.canceled) return [];
+  return (result.assets ?? []).slice(0, max).map(a => ({
+    uri: a.uri,
+    name: a.name,
+    mimeType: a.mimeType ?? 'application/octet-stream',
+    file: a.file,
+  }));
+};

@@ -10,7 +10,7 @@ import { clean, pageParams, request } from '../shopping/http';
 
 export type DoctorReviewSort = 'recent' | 'highest' | 'lowest';
 
-export const listDoctorReviews = (doctorId: string, filter: { kind: ConsultKind | null; sort: DoctorReviewSort }, page: number, pageSize = 20) =>
+export const listDoctorReviews = (doctorId: string, filter: { kind: ConsultKind | null; sort: DoctorReviewSort; rating?: number | null }, page: number, pageSize = 20) =>
   request(
     () => api.get(`/healthcare/doctors/${encodeURIComponent(doctorId)}/reviews`, { params: clean({ ...filter, ...pageParams(page, pageSize) }) }),
     raw => paged(raw, doctorReviewSerializer),

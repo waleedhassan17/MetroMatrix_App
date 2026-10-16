@@ -120,7 +120,7 @@ Detail adds:
 | GET | `/healthcare/doctors/:id` | | `DoctorProfile` (listed doctors only) |
 | GET | `/healthcare/doctors/:id/locations/:locationId/days` | `from?` (`YYYY-MM-DD`), `days` (default 14) | `[{ date, slotCount }]` |
 | GET | `/healthcare/doctors/:id/locations/:locationId/slots` | `date` | `{ date, timezone, slots[{ startAt, period: morning\|afternoon\|evening\|night }], nextAvailable: { date, startAt }\|null }` (`nextAvailable` only when the day is empty) |
-| GET | `/healthcare/doctors/:id/reviews` | `kind?`, `sort=recent\|highest\|lowest`, `page` | page of `Review` |
+| GET | `/healthcare/doctors/:id/reviews` | `kind?`, `rating?` (1–5), `sort=recent\|highest\|lowest`, `page` | page of `Review` |
 
 **Free slots** come from:
 - the location's weekly hours, cut into `slotMinutes` steps;
@@ -235,7 +235,7 @@ While `BACKEND_URL` is empty, the dummy API answers all of the above. It differs
 - **Stats update immediately.** They are recomputed on every read; the real nightly job can lag.
 - **Reminder pushes aren't sent.** The dummy API can't send pushes. Booking, confirmation and other notifications appear in the in-app Notifications list, and tapping one routes exactly as a push would.
 - **The demo video consultation never runs out.** `customer@` always has a video consultation with Dr. Bilal Ahmed that starts within 15 minutes, so you can test two-device video at any time. Sign in as `customer@` on one phone and `doctor@` on the other. The room is a public `meet.jit.si` room; the first person in may be asked to sign in to start it.
-- **A slot is always "taken" first.** At Dr. Bilal Ahmed's Gulberg Heart Clinic, the first free time of any day is taken by another patient a moment before you confirm. Use it to see the "Someone booked this time" message and the three alternatives.
+- **A slot is always "taken" first.** At Dr. Bilal Ahmed's Gulberg Heart Clinic, the first time you try a day's earliest free time, another patient takes it a moment before you confirm (once per day). Use it to see the "Someone booked this time" message and the three alternatives.
 - **Images stay on the device.** Uploaded files keep their local URI. Records and photos you upload on web disappear when the page reloads.
 
 **Seeded accounts** (password `Metro2026`):

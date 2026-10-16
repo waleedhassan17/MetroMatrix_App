@@ -18,6 +18,8 @@ const safe = (fn: () => Promise<void>) => {
 
 export const haptics = {
   press: () => safe(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)),
+  /** A selection tick (a time slot, a star). */
+  select: () => safe(() => Haptics.selectionAsync()),
   success: () => safe(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)),
   warning: () => safe(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning)),
 };

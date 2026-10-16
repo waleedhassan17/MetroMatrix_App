@@ -662,6 +662,8 @@ export interface DoctorAppointmentDetail {
   notes: { text: string; attachments: string[]; updatedAt: string | null };
   payment: AppointmentPayment;
   checkedInAt: string | null;
+  /** Video: when the room opens (10 minutes before). */
+  joinOpensAt: string | null;
   actions: DoctorActions;
   prescription: Prescription | null;
   timeline: AppointmentEvent[];

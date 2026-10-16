@@ -11,11 +11,13 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { attachRecords, cancelAppointment, getAppointment, rescheduleAppointment } from '@networks/health/appointmentsNetwork';
 import { listDays, listSlots } from '@networks/health/availabilityNetwork';
+import { listRecords } from '@networks/health/recordsNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import { alternativesFrom } from '@serializers/health/appointmentSerializer';
-import type { AppointmentDetail, CancelReason, DayAvailability, Slot } from '@/types';
+import type { AppointmentDetail, CancelReason, DayAvailability, HealthRecord, Slot } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { submitAppointmentProofAsync } from '../../../Shopping/Customer/PaymentProof/paymentProofSlice';
+import { confirmBookingAsync } from '../BookAppointment/bookAppointmentSlice';
 
 export interface AppointmentEntry {
   appointment: AppointmentDetail | null;
@@ -42,6 +44,8 @@ export interface AppointmentDetailSliceState {
   actionError: ServerError;
   cancelSheet: { open: boolean; reason: CancelReason | null; note: string };
   reschedule: RescheduleSheet;
+  /** "Share more records": the patient's records, and which are picked. */
+  recordsSheet: { open: boolean; records: HealthRecord[]; selected: string[]; loading: boolean };
 }
 
 const EMPTY: AppointmentEntry = { appointment: null, status: 'idle', error: NO_ERROR };
@@ -63,6 +67,7 @@ const initialState: AppointmentDetailSliceState = {
   actionError: NO_ERROR,
   cancelSheet: { open: false, reason: null, note: '' },
   reschedule: NO_RESCHEDULE,
+  recordsSheet: { open: false, records: [], selected: [], loading: false },
 };
 
 const save = (state: AppointmentDetailSliceState, a: AppointmentDetail) => {
@@ -96,6 +101,39 @@ export const appointmentDetailSlice = createAppSlice({
     pickRescheduleSlot: create.reducer((state, action: PayloadAction<string>) => {
       state.reschedule.selected = action.payload;
     }),
+    closeRecordsSheet: create.reducer(state => {
+      state.recordsSheet.open = false;
+    }),
+    togglePickedRecord: create.reducer((state, action: PayloadAction<string>) => {
+      const id = action.payload;
+      const sel = state.recordsSheet.selected;
+      state.recordsSheet.selected = sel.includes(id) ? sel.filter(x => x !== id) : [...sel, id];
+    }),
+
+    /** Opens "Share more records" with what is already shared ticked. */
+    openRecordsSheetAsync: create.asyncThunk(
+      async (_: { shared: string[] }, { rejectWithValue }) => {
+        try {
+          return (await listRecords({ memberId: null, type: null }, 1, 50)).items;
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        pending: (state, action) => {
+          state.recordsSheet = { open: true, records: state.recordsSheet.records, selected: action.meta.arg.shared, loading: true };
+          state.actionError = NO_ERROR;
+        },
+        fulfilled: (state, action) => {
+          state.recordsSheet.records = action.payload;
+          state.recordsSheet.loading = false;
+        },
+        rejected: (state, action) => {
+          state.recordsSheet.loading = false;
+          state.actionError = readRejection(action, "Your records didn't load.");
+        },
+      },
+    ),
 
     loadAppointmentAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
@@ -256,6 +294,7 @@ export const appointmentDetailSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.busy = null;
+          state.recordsSheet.open = false;
           save(state, action.payload);
         },
         rejected: (state, action) => {
@@ -268,6 +307,8 @@ export const appointmentDetailSlice = createAppSlice({
   extraReducers: builder => {
     // A sent payment proof answers with the whole appointment.
     builder.addCase(submitAppointmentProofAsync.fulfilled, (state, action) => save(state, action.payload));
+    // A booking opens Booking confirmed without a second request.
+    builder.addCase(confirmBookingAsync.fulfilled, (state, action) => save(state, action.payload));
   },
   selectors: {
     selectAppointmentEntry: (state, code: string): AppointmentEntry => state.byCode[code] ?? EMPTY,
@@ -284,6 +325,9 @@ export const {
   setCancelNote,
   closeReschedule,
   pickRescheduleSlot,
+  closeRecordsSheet,
+  togglePickedRecord,
+  openRecordsSheetAsync,
   loadAppointmentAsync,
   cancelAppointmentAsync,
   openRescheduleAsync,

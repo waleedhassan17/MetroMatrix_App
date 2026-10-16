@@ -187,6 +187,16 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
         </Card>
       ) : null}
 
+      {user.role === 'customer' ? (
+        <Card padded="horizontal">
+          <ListRow title="Health records" subtitle="Reports, scans and prescriptions" leftIcon="folder-open-outline" onPress={() => navigation.navigate('HealthRecords')} />
+          <Divider />
+          <ListRow title="Prescriptions" subtitle="From your visits" leftIcon="document-text-outline" onPress={() => navigation.navigate('PrescriptionList')} />
+          <Divider />
+          <ListRow title="Family members" subtitle="Book and keep records for them" leftIcon="people-outline" onPress={() => navigation.navigate('FamilyMembers')} />
+        </Card>
+      ) : null}
+
       <Card padded="horizontal">
         <ListRow
           title={googleOnly ? 'Set a password' : 'Change password'}

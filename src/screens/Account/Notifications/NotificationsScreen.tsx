@@ -75,12 +75,15 @@ const NotificationsScreen: React.FC<Props> = ({ navigation }) => {
     const nav = navigation as unknown as Nav;
     const d = n.data;
     if (isStore) {
-      if (d.returnId) nav.navigate('StoreReturnDetail', { id: d.returnId });
+      if (d.appointmentId) nav.navigate('DoctorAppointment', { id: d.appointmentId });
+      else if (d.returnId) nav.navigate('StoreReturnDetail', { id: d.returnId });
       else if (d.orderId) nav.navigate('StoreOrderDetail', { id: d.orderId });
       else if (d.productId) nav.navigate('ProductForm', { id: d.productId });
       return;
     }
-    if (d.groupCode) nav.navigate('OrdersTab', { screen: 'OrderDetail', params: { groupCode: d.groupCode }, initial: false });
+    if (d.prescriptionId) nav.push('PrescriptionView', { id: d.prescriptionId });
+    else if (d.appointmentCode) nav.navigate('OrdersTab', { screen: 'AppointmentDetail', params: { code: d.appointmentCode }, initial: false });
+    else if (d.groupCode) nav.navigate('OrdersTab', { screen: 'OrderDetail', params: { groupCode: d.groupCode }, initial: false });
     else if (d.productId) nav.push('ProductDetail', { id: d.productId });
   };
 

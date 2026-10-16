@@ -543,8 +543,10 @@ export function registerHealthRoutes(kit: HealthKit) {
     const h = db.health;
     const d = listedDoctor(h, params[0]);
     const kind = query.kind === 'video' || query.kind === 'clinic' ? query.kind : null;
+    const stars = num(query.rating);
     const rows = visibleReviews(h, d.id)
       .filter(r => !kind || r.kind === kind)
+      .filter(r => stars === null || r.rating === stars)
       .sort((a, b) =>
         query.sort === 'highest' ? b.rating - a.rating || b.createdAt.localeCompare(a.createdAt) : query.sort === 'lowest' ? a.rating - b.rating : b.createdAt.localeCompare(a.createdAt),
       )
@@ -585,7 +587,8 @@ export function registerHealthRoutes(kit: HealthKit) {
     const free = slotsFor(h, loc, date, now).some(s => s.startAt === startAt);
     // Mock mode's race: at Dr. Bilal's Gulberg clinic the first free time of
     // a day is always taken by another patient a moment before you confirm.
-    const contestedKey = `${loc.id}|${startAt}`;
+    // Once per day at that clinic, so picking an alternative then books it.
+    const contestedKey = `${loc.id}|${date}`;
     const contested =
       free && loc.id === 'loc_bilal_2' && !h.contested.includes(contestedKey) && slotsFor(h, loc, date, now)[0]?.startAt === startAt;
     if (!free || contested) {

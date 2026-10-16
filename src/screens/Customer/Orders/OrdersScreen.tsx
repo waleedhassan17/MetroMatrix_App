@@ -3,7 +3,8 @@
 // ═══════════════════════════════════════════════════════
 // One place for everything ordered across the services. Shopping orders are
 // grouped by checkout; each card leads with what most needs attention (a
-// payment the store is waiting for first).
+// payment the store is waiting for first). Health lists appointments,
+// Upcoming (soonest first) or Past, each with its one action now.
 
 import React, { useEffect } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
@@ -12,14 +13,17 @@ import { Image } from 'expo-image';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { usePagedList } from '@hooks/usePagedList';
 import { listOrders } from '@networks/shopping/ordersNetwork';
+import { listAppointments } from '@networks/health/appointmentsNetwork';
+import { APPOINTMENT_SEGMENTS } from '@models/health/appointmentStatusModel';
+import { useAppointmentAction } from '@components/health/HealthParts';
 import { groupHeadline } from '@models/shopping/orderStatusModel';
 import { ServiceScope, storePalette, useStyles, useTheme, type Theme } from '@theme/index';
-import { AppText, Card, ChoiceChip, EmptyState, InlineNotice, ScreenShell, SegmentTabs, SkeletonLines, StatusPill, storeInitials } from '@custom/index';
-import type { OrderGroupSummary, OrderSegment, OrdersStackParamList } from '@/types';
+import { AppText, AppointmentCard, Card, ChoiceChip, EmptyState, InlineNotice, ScreenShell, SegmentTabs, SkeletonLines, StatusPill, storeInitials } from '@custom/index';
+import type { AppointmentSegment, OrderGroupSummary, OrderSegment, OrdersStackParamList } from '@/types';
 import { cdn } from '@utils/cdn';
 import { formatDateTime } from '@utils/dates';
 import { formatPKR } from '@utils/money';
-import { selectOrdersView, setOrdersSegment, setOrdersService, type OrdersService } from './ordersSlice';
+import { selectOrdersView, setOrdersSegment, setOrdersService, setVisitsSegment, type OrdersService } from './ordersSlice';
 
 type Props = NativeStackScreenProps<OrdersStackParamList, 'Orders'>;
 
@@ -124,11 +128,48 @@ const ShopOrders: React.FC<{ segment: OrderSegment; onOpen: (code: string) => vo
   );
 };
 
+const Appointments: React.FC<{ segment: AppointmentSegment; onOpen: (code: string) => void; onFind: () => void }> = ({ segment, onOpen, onFind }) => {
+  const styles = useStyles(makeStyles);
+  const actionFor = useAppointmentAction();
+  const list = usePagedList((page, size) => listAppointments(segment, page, size), `appointments|${segment}`);
+  return (
+    <ServiceScope service="healthcare">
+      <FlatList
+        data={list.rows}
+        keyExtractor={a => a.id}
+        contentContainerStyle={styles.list}
+        onEndReached={list.loadMore}
+        onEndReachedThreshold={0.5}
+        onRefresh={list.refresh}
+        refreshing={list.isRefreshing}
+        renderItem={({ item }) => <AppointmentCard appointment={item} onPress={() => onOpen(item.code)} action={actionFor(item)} />}
+        ListEmptyComponent={
+          list.isLoading ? (
+            <SkeletonLines lines={6} />
+          ) : list.error ? (
+            <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
+          ) : (
+            <EmptyState
+              icon="calendar"
+              title={segment === 'upcoming' ? 'No upcoming appointments' : 'No past appointments'}
+              body={segment === 'upcoming' ? 'Book a video consultation or a clinic visit in a few taps.' : 'Visits you’ve had show here, with their prescriptions.'}
+              action={segment === 'upcoming' ? { label: 'Find a doctor', onPress: onFind } : undefined}
+            />
+          )
+        }
+        ListFooterComponent={list.isLoadingMore ? <SkeletonLines lines={2} /> : null}
+      />
+    </ServiceScope>
+  );
+};
+
 const OrdersScreen: React.FC<Props> = ({ navigation, route }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const v = useAppSelector(selectOrdersView);
   const asked = route.params?.segment;
+  const askedService = route.params?.service;
+  const askedVisits = route.params?.visits;
 
   useEffect(() => {
     if (asked) {
@@ -137,7 +178,13 @@ const OrdersScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   }, [asked, dispatch]);
 
-  const toShop = () => (navigation.getParent() as unknown as { navigate: (n: string, p?: object) => void } | undefined)?.navigate('HomeTab', { screen: 'ShoppingHome', initial: false });
+  useEffect(() => {
+    if (askedService) dispatch(setOrdersService(askedService));
+    if (askedVisits) dispatch(setVisitsSegment(askedVisits));
+  }, [askedService, askedVisits, dispatch]);
+
+  const home = (screen: string) => (navigation.getParent() as unknown as { navigate: (n: string, p?: object) => void } | undefined)?.navigate('HomeTab', { screen, initial: false });
+  const toShop = () => home('ShoppingHome');
 
   return (
     <ScreenShell title="Orders" scroll={false}>
@@ -152,7 +199,14 @@ const OrdersScreen: React.FC<Props> = ({ navigation, route }) => {
           <ShopOrders segment={v.segment} onOpen={groupCode => navigation.navigate('OrderDetail', { groupCode })} onShop={toShop} />
         </>
       ) : v.service === 'health' ? (
-        <EmptyState icon="activity" title="No appointments yet" body="Doctor bookings will show here once Digital Health opens." />
+        <>
+          <View style={styles.chips}>
+            {APPOINTMENT_SEGMENTS.map(sg => (
+              <ChoiceChip key={sg.key} label={sg.label} selected={v.visits === sg.key} onPress={() => dispatch(setVisitsSegment(sg.key))} />
+            ))}
+          </View>
+          <Appointments segment={v.visits} onOpen={code => navigation.navigate('AppointmentDetail', { code })} onFind={() => home('HealthHome')} />
+        </>
       ) : (
         <EmptyState icon="coffee" title="No Food Court orders yet" body="Orders from the Food Court's vendors will show here." />
       )}

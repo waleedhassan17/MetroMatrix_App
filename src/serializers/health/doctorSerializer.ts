@@ -299,6 +299,7 @@ export const doctorAppointmentSerializer = (raw: unknown): DoctorAppointmentDeta
     notes: { text: str(n.text), attachments: strings(n.attachments), updatedAt: isoOrNull(n.updatedAt) },
     payment: paymentSerializer(raw.payment),
     checkedInAt: isoOrNull(raw.checkedInAt),
+    joinOpensAt: isoOrNull(raw.joinOpensAt),
     actions: actionsSerializer(raw.actions),
     prescription: raw.prescription ? prescriptionSerializer(raw.prescription) : null,
     timeline: compact(arr(raw.timeline).map(eventSerializer)),

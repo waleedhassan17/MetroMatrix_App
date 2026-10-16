@@ -30,3 +30,15 @@ export const locateBusiness = async (): Promise<LocatedPlace | null> => {
     return { location, city: null, address: null };
   }
 };
+
+/** "I need help. I'm here: <map link>" — for the Emergency screen's SMS. Null when refused. */
+export const locationForSms = async (): Promise<string | null> => {
+  try {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') return null;
+    const p = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+    return `https://maps.google.com/?q=${p.coords.latitude.toFixed(6)},${p.coords.longitude.toFixed(6)}`;
+  } catch {
+    return null;
+  }
+};

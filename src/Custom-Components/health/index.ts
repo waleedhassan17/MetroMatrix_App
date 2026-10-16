@@ -15,3 +15,4 @@ export * from './ReviewSummary';
 export * from './SlotGrid';
 export * from './SpecialtyTile';
 export * from './StatTrio';
+export * from './StarInput';

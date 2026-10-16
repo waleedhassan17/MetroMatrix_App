@@ -60,10 +60,14 @@ export const pushPlatform = (): 'android' | 'ios' | 'web' =>
 export const pushTapUrl = (data: Record<string, unknown> | null | undefined, isStore: boolean): string | null => {
   const s = (k: string) => (typeof data?.[k] === 'string' && data[k] ? (data[k] as string) : null);
   if (isStore) {
+    // TODO(API_HEALTH): a doctor's appointment pushes carry appointmentId.
+    if (s('appointmentId')) return `metromatrix://doctor/appointments/${encodeURIComponent(s('appointmentId')!)}`;
     if (s('returnId')) return `metromatrix://store/returns/${encodeURIComponent(s('returnId')!)}`;
     if (s('orderId')) return `metromatrix://store/orders/${encodeURIComponent(s('orderId')!)}`;
     return null;
   }
+  if (s('prescriptionId')) return `metromatrix://profile/prescriptions/${encodeURIComponent(s('prescriptionId')!)}`;
+  if (s('appointmentCode')) return `metromatrix://health/appointment/${encodeURIComponent(s('appointmentCode')!)}`;
   if (s('groupCode')) return `metromatrix://orders/${encodeURIComponent(s('groupCode')!)}`;
   if (s('productId')) return `metromatrix://shop/product/${encodeURIComponent(s('productId')!)}`;
   return null;

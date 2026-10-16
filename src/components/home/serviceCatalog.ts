@@ -20,7 +20,7 @@ export const SERVICE_CARDS: ServiceCardData[] = [
     title: 'Digital Health',
     category: 'MEDICAL',
     description: 'Connect with certified doctors and manage health records seamlessly.',
-    live: false,
+    live: true,
     cta: 'Explore',
     image: require('../../../assets/images/services/healthcare.jpg'),
     glyph: 'stethoscope',
