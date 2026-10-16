@@ -30,7 +30,7 @@ import type { PagedList } from '@hooks/usePagedList';
 import type { Banner, ProductSummary } from '@/types';
 import { cdn } from '@utils/cdn';
 
-const makeStyles = ({ colors, space, size, radius, gutter, type }: Theme) =>
+const makeStyles = ({ colors, space, size, radius, gutter, type, elevation }: Theme) =>
   StyleSheet.create({
     bar: {
       flexDirection: 'row',
@@ -53,9 +53,12 @@ const makeStyles = ({ colors, space, size, radius, gutter, type }: Theme) =>
       marginHorizontal: gutter,
       paddingHorizontal: space.s16,
       borderRadius: radius.pill,
-      backgroundColor: colors.surfaceSunk,
+      // The FYP search box: white, a line, a soft shadow.
+      backgroundColor: colors.surface,
+      ...elevation.card,
+      borderColor: colors.line,
     },
-    pillOnGradient: { marginHorizontal: space.s0, backgroundColor: colors.surface },
+    pillOnGradient: { marginHorizontal: space.s0, backgroundColor: colors.surface, borderColor: colors.surface },
     pillText: { ...type.input, color: colors.inkFaint, flex: 1 },
     pillInput: { ...type.input, color: colors.ink, flex: 1, paddingVertical: space.s0, outlineWidth: 0, outlineStyle: 'solid' },
     banner: { borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.surfaceSunk },
@@ -135,7 +138,7 @@ export const ShopSection: React.FC<{ title: string; subtitle?: string; onSeeAll?
   return (
     <View style={styles.section}>
       <View style={styles.sectionText}>
-        <AppText variant="h2" accessibilityRole="header">
+        <AppText variant="sectionTitle" accessibilityRole="header">
           {title}
         </AppText>
         {subtitle ? (

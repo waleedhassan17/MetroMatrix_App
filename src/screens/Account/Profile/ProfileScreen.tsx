@@ -87,7 +87,7 @@ interface MenuItem {
   onPress: () => void;
 }
 
-const makeStyles = ({ colors, space, radius, size, rowTint }: Theme) =>
+const makeStyles = ({ colors, space, radius, size, rowTint, elevation }: Theme) =>
   StyleSheet.create({
     hero: { alignItems: 'center', gap: space.s4, paddingBottom: space.s4 },
     avatar: { paddingBottom: space.s8 },
@@ -112,9 +112,8 @@ const makeStyles = ({ colors, space, radius, size, rowTint }: Theme) =>
       paddingVertical: space.s16,
       paddingHorizontal: space.s8,
       borderRadius: radius.lg,
-      borderWidth: size.hairline,
-      borderColor: colors.line,
       backgroundColor: colors.surface,
+      ...elevation.card,
     },
     statIcon: { width: size.subTypeTile, height: size.subTypeTile, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
     section: { gap: space.s8 },
@@ -125,8 +124,8 @@ const makeStyles = ({ colors, space, radius, size, rowTint }: Theme) =>
       minHeight: size.control.lg,
       paddingHorizontal: space.s16,
       borderRadius: radius.lg,
-      borderWidth: size.hairline,
-      borderColor: colors.line,
+      backgroundColor: colors.surface,
+      ...elevation.card,
     },
     signOutIcon: {
       width: size.subTypeTile,

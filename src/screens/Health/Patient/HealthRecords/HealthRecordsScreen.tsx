@@ -33,7 +33,7 @@ const makeStyles = ({ colors, space, radius, gutter, elevation, size }: Theme) =
     filters: { gap: space.s8, paddingVertical: space.s12 },
     list: { paddingHorizontal: gutter - space.s4, paddingBottom: space.s40 },
     cell: { width: '50%', padding: space.s4 },
-    card: { borderRadius: radius.lg, backgroundColor: colors.surface, overflow: 'hidden', ...elevation.none },
+    card: { borderRadius: radius.lg, backgroundColor: colors.surface, overflow: 'hidden', ...elevation.card },
     thumb: { width: '100%', aspectRatio: size.productAspect, backgroundColor: colors.surfaceSunk, alignItems: 'center', justifyContent: 'center' },
     pages: { position: 'absolute', right: space.s8, top: space.s8, paddingHorizontal: space.s8, borderRadius: radius.pill, backgroundColor: colors.glass },
     body: { padding: space.s12, gap: space.s4 },

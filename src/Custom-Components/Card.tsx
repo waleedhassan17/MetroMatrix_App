@@ -1,4 +1,6 @@
-// Card — surface on canvas. `none` elevation is a hairline; `float` lifts it.
+// Card — surface on canvas. The default is the FYP card (`card`): a whisper of
+// a border and a soft slate shadow, radius 16. `none` is a plain hairline;
+// `float` lifts it further.
 
 import React from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
@@ -6,7 +8,7 @@ import { useStyles, useTheme, type Theme } from '../theme';
 
 export interface CardProps {
   children: React.ReactNode;
-  elevation?: 'none' | 'float';
+  elevation?: 'none' | 'card' | 'float';
   /** true: 16 all round with a 16 gap; 'horizontal': list cards (rows bring their own height). */
   padded?: boolean | 'horizontal';
   onPress?: () => void;
@@ -20,14 +22,15 @@ export interface CardProps {
 
 const makeStyles = ({ colors, radius, space }: Theme) =>
   StyleSheet.create({
-    root: { backgroundColor: colors.surface, borderRadius: radius.md, overflow: 'hidden' },
+    // No overflow clip: on iOS it would clip the card's own shadow.
+    root: { backgroundColor: colors.surface, borderRadius: radius.lg },
     padded: { padding: space.s16, gap: space.s16 },
     paddedX: { paddingHorizontal: space.s16 },
   });
 
 export const Card: React.FC<CardProps> = ({
   children,
-  elevation = 'none',
+  elevation = 'card',
   padded = true,
   onPress,
   accessibilityLabel,

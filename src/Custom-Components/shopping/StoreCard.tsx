@@ -12,7 +12,7 @@ import { IonIcon } from '../Icon';
 
 const makeStyles = ({ colors, radius, space, size, elevation }: Theme) =>
   StyleSheet.create({
-    rail: { width: size.storeCard, borderRadius: radius.lg, backgroundColor: colors.surface, overflow: 'hidden', ...elevation.none },
+    rail: { width: size.storeCard, borderRadius: radius.lg, backgroundColor: colors.surface, overflow: 'hidden', ...elevation.card },
     cover: { width: '100%', aspectRatio: size.coverAspect, backgroundColor: colors.surfaceSunk },
     body: { flexDirection: 'row', alignItems: 'center', gap: space.s12, padding: space.s12 },
     row: { flexDirection: 'row', alignItems: 'center', gap: space.s12, paddingVertical: space.s12 },

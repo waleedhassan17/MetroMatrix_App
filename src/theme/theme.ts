@@ -14,6 +14,7 @@ import {
   opacity,
   motion,
   GUTTER,
+  HEALTH_PALETTE,
   ROW_TINTS,
   type ColorMode,
   type Palette,
@@ -21,7 +22,6 @@ import {
 } from './tokens';
 import { SERVICE_PALETTES, SERVICE_NAMES, type ServiceName, type ServicePalette } from './services';
 import { type, type TypeScale, MAX_FONT_SCALE, CLINICAL_FONT_SCALE } from './typography';
-import { mix } from './contrast';
 
 /**
  * The page header a module's screens wear (the FYP's `barTone`, chosen by the
@@ -83,31 +83,22 @@ const TAB_BARS: Record<ServiceName, TabBarVariant> = {
 const GRADIENT_HEADERS: ServiceName[] = ['shopping', 'healthcare'];
 
 /**
- * Healthcare's clinical scale (the brief's accessibility rules, for older
- * patients): body text never below 15, captions 13, every touch target 48,
- * and dynamic type to 150% (screens are laid out to wrap, not clip).
+ * Health's touch targets stay at 48 and its text may scale to 150% (the
+ * brief's accessibility rules for older patients); the type itself is the
+ * FYP's, the same as every other service.
  */
-const CLINICAL_TYPE: TypeScale = {
-  ...type,
-  body: { ...type.body, fontSize: 15, lineHeight: 22 },
-  bodyStrong: { ...type.bodyStrong, fontSize: 15, lineHeight: 22 },
-  label: { ...type.label, fontSize: 15, lineHeight: 20 },
-  small: { ...type.small, fontSize: 14, lineHeight: 20 },
-  caption: { ...type.caption, fontSize: 13, lineHeight: 18 },
-  chip: { ...type.chip, fontSize: 13, lineHeight: 18 },
-  micro: { ...type.micro, fontSize: 12, lineHeight: 16 },
-};
 const CLINICAL_SIZE: typeof size = { ...size, touch: 48 };
 
 const build = (serviceName: ServiceName): Theme => {
-  const colors = PALETTES.light;
   const clinical = serviceName === 'healthcare';
+  // Health wears the FYP's healthcare ground and slate ink.
+  const colors = clinical ? HEALTH_PALETTE : PALETTES.light;
   return {
     mode: 'light',
     serviceName,
     colors,
     service: SERVICE_PALETTES.light[serviceName],
-    type: clinical ? CLINICAL_TYPE : type,
+    type,
     space,
     radius,
     size: clinical ? CLINICAL_SIZE : size,
@@ -140,13 +131,13 @@ const THEMES = SERVICE_NAMES.reduce(
 export const getTheme = (serviceName: ServiceName = 'neutral'): Theme => THEMES[serviceName];
 
 /**
- * A service's page-header gradient, derived the way the FYP's AppBar does
- * (`headerGradientStops`): start at the accent's deep step, end 22% toward
- * ink. Both stops carry a white label at AA.
+ * A service's page-header gradient: the FYP's bright module colour sweeping
+ * to its deep step (accent → accentDeep), so a header reads as the service,
+ * never as a dull navy or brown. White text passes AA on both stops (tested).
  */
 export function headerGradient(serviceName: ServiceName): [string, string] {
-  const deep = SERVICE_PALETTES.light[serviceName].accentDeep;
-  return [deep, mix(deep, PALETTES.light.ink, 0.22)];
+  const { accent, accentDeep } = SERVICE_PALETTES.light[serviceName];
+  return [accent, accentDeep];
 }
 
 const WITH_GRADIENT = new WeakMap<Theme, Theme>();

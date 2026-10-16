@@ -182,7 +182,7 @@ export const FoodSection: React.FC<{ title: string; subtitle?: string; children:
   return (
     <View style={styles.section}>
       <View style={styles.sectionHead}>
-        <AppText variant="h2" accessibilityRole="header">
+        <AppText variant="sectionTitle" accessibilityRole="header">
           {title}
         </AppText>
         {subtitle ? (

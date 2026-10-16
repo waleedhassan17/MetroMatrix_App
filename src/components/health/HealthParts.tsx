@@ -23,7 +23,7 @@ const makeStyles = ({ colors, space, radius, size, elevation }: Theme) =>
       borderRadius: radius.lg,
       backgroundColor: colors.surface,
       minHeight: size.touch,
-      ...elevation.none,
+      ...elevation.card,
     },
     well: { width: size.specialtyWell, height: size.specialtyWell, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
     row: { flexDirection: 'row', alignItems: 'center', gap: space.s12, padding: space.s16, borderRadius: radius.lg, minHeight: size.touch },
@@ -41,7 +41,7 @@ export const HealthSection: React.FC<{ title: string; subtitle?: string; onSeeAl
   return (
     <View style={styles.section}>
       <View style={styles.sectionText}>
-        <AppText variant="h2" accessibilityRole="header">
+        <AppText variant="sectionTitle" accessibilityRole="header">
           {title}
         </AppText>
         {subtitle ? (

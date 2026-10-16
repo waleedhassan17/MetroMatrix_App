@@ -26,7 +26,7 @@ export interface AppointmentAction {
 
 const makeStyles = ({ colors, space, radius, size, elevation }: Theme) =>
   StyleSheet.create({
-    root: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space.s16, gap: space.s12, ...elevation.none },
+    root: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space.s16, gap: space.s12, ...elevation.card },
     main: { flexDirection: 'row', gap: space.s12 },
     block: { width: size.dateBlock, minHeight: size.dateBlock, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', paddingVertical: space.s4 },
     text: { flex: 1, gap: space.s4 },

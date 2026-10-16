@@ -41,8 +41,8 @@ const makeStyles = ({ space, radius, size, gutter }: Theme) =>
     root: {
       paddingHorizontal: gutter - space.s8,
       paddingBottom: space.s24,
-      borderBottomLeftRadius: radius.xl,
-      borderBottomRightRadius: radius.xl,
+      borderBottomLeftRadius: radius.header,
+      borderBottomRightRadius: radius.header,
       overflow: 'hidden',
       gap: space.s16,
     },
@@ -72,7 +72,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, eyebrow
             </AppText>
           ) : null}
           {title ? (
-            <AppText variant="heading" tone="onScrim" numberOfLines={2} accessibilityRole="header">
+            <AppText variant="pageTitle" tone="onScrim" numberOfLines={2} accessibilityRole="header">
               {title}
             </AppText>
           ) : null}

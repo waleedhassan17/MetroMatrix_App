@@ -32,7 +32,9 @@ export type TypeRole =
   | 'overline'
   | 'tab'
   | 'tabActive'
-  | 'tabSmall';
+  | 'tabSmall'
+  | 'pageTitle'
+  | 'sectionTitle';
 
 export type TypeScale = Record<TypeRole, TextStyle>;
 
@@ -88,6 +90,10 @@ export const type: TypeScale = {
   tab: font('500', 11, 14, 0.1),
   tabActive: font('700', 11, 14, 0.1),
   tabSmall: font('700', 10, 12),
+  /** The module page header's title (the FYP's bold white header title). */
+  pageTitle: font('800', 24, 30, -0.5),
+  /** A page's section heads: "Find by specialty", "Featured brands" (the FYP's 19 / 800). */
+  sectionTitle: font('800', 19, 24, -0.4),
 };
 
 /** Dynamic type is honoured up to 130% — beyond that fixed-height controls clip. */

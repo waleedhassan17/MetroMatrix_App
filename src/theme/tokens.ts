@@ -121,6 +121,27 @@ const light: Palette = {
 
 export const PALETTES: Record<ColorMode, Palette> = { light };
 
+/**
+ * Digital Health's ground and ink — the FYP's healthcare screens: a pale
+ * clinical blue page (#F8FBFF) under white cards, and cool slate text instead
+ * of the warm stone ramp. Every other service keeps `light`.
+ */
+export const HEALTH_PALETTE: Palette = {
+  ...light,
+  canvas: '#F8FBFF',
+  surfaceSunk: '#F1F5F9',
+  ink: '#0F172A',
+  inkMuted: '#64748B',
+  inkFaint: '#94A3B8',
+  line: '#E2E8F0',
+  lineSoft: '#EEF2FF',
+  lineStrong: '#64748B',
+  disabled: '#CBD5E1',
+};
+
+/** The FYP cards' soft slate shadow colour. */
+export const CARD_SHADOW = '#64748B';
+
 // ─── Row tints — the FYP profile's categorical icon chips ──
 // A menu of a dozen rows in one colour is a wall; these let someone find
 // "Addresses" by its colour without reading. Fixed across services, like a
@@ -151,8 +172,8 @@ export const space = {
   s56: 56,
 } as const;
 
-/** Side gutter for every screen (the FYP's 24). */
-export const GUTTER = space.s24;
+/** Side gutter for every screen (the FYP's 20). */
+export const GUTTER = space.s20;
 
 // ─── Shape (the FYP's radius roles) ─────────────────
 export const radius = {
@@ -164,6 +185,8 @@ export const radius = {
   lg: 16,
   /** Bottom sheets and the single hero. */
   xl: 20,
+  /** The module page header's rounded foot (the FYP's 24). */
+  header: 24,
   pill: 999,
 } as const;
 
@@ -297,13 +320,20 @@ export interface Elevation {
   input: ViewStyle;
   /** The service tab bars' lift: a soft shadow cast upward. */
   tabBar: ViewStyle;
+  /** The FYP card: a whisper of a border and a soft slate shadow. The default card. */
+  card: ViewStyle;
 }
+
+const rgb = (hex: string) => {
+  const n = parseInt(hex.replace('#', ''), 16);
+  return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`;
+};
 
 const shadow = (height: number, blur: number, alpha: number, androidElevation: number, ink: string): ViewStyle =>
   Platform.select<ViewStyle>({
     ios: { shadowColor: ink, shadowOffset: { width: 0, height }, shadowOpacity: alpha, shadowRadius: blur / 2 },
     android: { elevation: androidElevation, shadowColor: ink },
-    default: { boxShadow: `0px ${height}px ${blur}px rgba(28, 25, 23, ${alpha})` },
+    default: { boxShadow: `0px ${height}px ${blur}px rgba(${rgb(ink)}, ${alpha})` },
   }) ?? {};
 
 export const buildElevation = (palette: Palette): Elevation => ({
@@ -312,6 +342,7 @@ export const buildElevation = (palette: Palette): Elevation => ({
   float: shadow(10, 40, 0.14, 12, palette.ink),
   input: shadow(1, 4, 0.05, 1, palette.ink),
   tabBar: shadow(-3, 24, 0.08, 12, palette.ink),
+  card: { borderWidth: size.border, borderColor: palette.lineSoft, ...shadow(4, 24, 0.08, 3, CARD_SHADOW) },
 });
 
 // ─── Motion ─────────────────────────────────────────

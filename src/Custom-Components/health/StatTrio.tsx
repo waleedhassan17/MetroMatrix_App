@@ -7,9 +7,9 @@ import { useStyles, type Theme } from '../../theme';
 import type { DoctorStats } from '../../types/health';
 import { AppText } from '../AppText';
 
-const makeStyles = ({ space, colors, size, radius }: Theme) =>
+const makeStyles = ({ space, colors, size, radius, elevation }: Theme) =>
   StyleSheet.create({
-    root: { flexDirection: 'row', borderRadius: radius.md, borderWidth: size.hairline, borderColor: colors.line },
+    root: { flexDirection: 'row', borderRadius: radius.lg, backgroundColor: colors.surface, ...elevation.card },
     cell: { flex: 1, alignItems: 'center', gap: space.s4, paddingVertical: space.s12, paddingHorizontal: space.s8 },
     rule: { width: size.hairline, backgroundColor: colors.line },
   });

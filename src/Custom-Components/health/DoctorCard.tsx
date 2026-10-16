@@ -32,7 +32,7 @@ const makeStyles = ({ colors, space, radius, size, elevation }: Theme) =>
       borderRadius: radius.lg,
       padding: space.s16,
       gap: space.s12,
-      ...elevation.none,
+      ...elevation.card,
     },
     compact: { width: size.doctorRailCard },
     main: { gap: space.s12 },

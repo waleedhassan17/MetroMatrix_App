@@ -1,18 +1,29 @@
 // The owner's rule: every screen sits on pure white — in every service, inside
-// a store, and behind the navigators (no grey default between screens).
+// a store, and behind the navigators (no grey default between screens) —
+// except Digital Health, which wears the FYP's pale clinical blue (#F8FBFF)
+// under white cards, as the owner chose.
 
 import { SERVICE_NAMES } from '../services';
 import { getTheme, navigationTheme, withGradientHeader, headerGradient } from '../theme';
 import { storeTheme } from '../StoreBrandScope';
+import { AA_BODY, contrastRatio } from '../contrast';
 
 const WHITE = '#FFFFFF';
 
 describe('screen ground', () => {
-  it.each(SERVICE_NAMES)('%s screens are pure white', name => {
+  it.each(SERVICE_NAMES.filter(n => n !== 'healthcare'))('%s screens are pure white', name => {
     const t = getTheme(name);
     expect(t.colors.canvas.toUpperCase()).toBe(WHITE);
     expect(t.colors.surface.toUpperCase()).toBe(WHITE);
     expect(navigationTheme(t).colors.background.toUpperCase()).toBe(WHITE);
+  });
+
+  it('Health pages are the FYP pale blue with white cards and slate ink', () => {
+    const h = getTheme('healthcare');
+    expect(h.colors.canvas.toUpperCase()).toBe('#F8FBFF');
+    expect(h.colors.surface.toUpperCase()).toBe(WHITE);
+    expect(h.colors.ink.toUpperCase()).toBe('#0F172A');
+    expect(h.colors.inkMuted.toUpperCase()).toBe('#64748B');
   });
 
   it('a store page is pure white whatever its brand colour', () => {
@@ -34,10 +45,18 @@ describe('screen ground', () => {
     expect(withGradientHeader(getTheme('shopping'))).toBe(getTheme('shopping'));
   });
 
-  it('Health is the clinical scale: body 15, touch 48, text to 150%', () => {
+  it('Health text and its header read at AA', () => {
     const h = getTheme('healthcare');
-    expect(h.type.body.fontSize).toBeGreaterThanOrEqual(15);
-    expect(h.type.small.fontSize).toBeGreaterThanOrEqual(14);
+    for (const ground of [h.colors.canvas, h.colors.surface]) {
+      expect(contrastRatio(h.colors.ink, ground)).toBeGreaterThanOrEqual(AA_BODY);
+      expect(contrastRatio(h.colors.inkMuted, ground)).toBeGreaterThanOrEqual(AA_BODY);
+    }
+    for (const stop of h.header.gradient) expect(contrastRatio('#FFFFFF', stop)).toBeGreaterThanOrEqual(AA_BODY);
+  });
+
+  it('Health uses the FYP type, with 48 pt touch targets and text to 150%', () => {
+    const h = getTheme('healthcare');
+    expect(h.type.body).toEqual(getTheme('neutral').type.body);
     expect(h.size.touch).toBeGreaterThanOrEqual(48);
     expect(h.maxFontScale).toBe(1.5);
     expect(getTheme('shopping').maxFontScale).toBe(1.3);
