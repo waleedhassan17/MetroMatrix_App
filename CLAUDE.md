@@ -8,9 +8,9 @@ MetroMatrix is a zero-commission community marketplace with three services: **Sh
 - admins, who approve partners
 
 The app follows the **FinMatrix app architecture exactly**. Its **look and flows follow the owner's MetroMatrix FYP app** (`~/MetroMatrix/Waleed-MetroMatrix`):
-- white, light-only screens in the platform system font, with the FYP icon, splash and onboarding;
+- white, light-only screens in the platform system font, with the FYP icon, splash and onboarding (Health keeps the FYP's pale clinical blue);
 - Role Selection → (Provider Selection) → sign in / sign up → email link → profile steps;
-- the FYP's three-card user home. Food is branded **Food Court**: a platform for food vendors. Unlike Foodpanda, MetroMatrix takes **no commission** and runs **no rider fleet**. Vendors deliver with their own riders through MetroMatrix's delivery app. Delivery details (time, fee, area) are fine to show; never imply MetroMatrix's own couriers or a cut of the order.
+- the FYP's three-card user home, with no bottom bar; each service opens its own app with its own bottom tabs, as in the FYP. The app is in English: no Urdu text or language switch. Food is branded **Food Court**: a platform for food vendors. Unlike Foodpanda, MetroMatrix takes **no commission** and runs **no rider fleet**. Vendors deliver with their own riders through MetroMatrix's delivery app. Delivery details (time, fee, area) are fine to show; never imply MetroMatrix's own couriers or a cut of the order.
 
 Copy the FYP's UX, never its code paths, Firebase setup or per-role duplicate network files. There is no Facebook login.
 
@@ -67,7 +67,7 @@ Set environment in `.env.local`; see `.env.example`. `src/config/env.ts` is the 
 7. **No raw design values** in `src/screens`, `src/components`, `src/Custom-Components` or `src/navigators`. Every colour, size, radius, font, shadow and duration comes from `useTheme()`. `npm run check:tokens` enforces this and must pass.
 8. **Banned in the UI:**
    - emoji in UI copy
-   - gradients as surfaces — with one exception the owner asked for: the FYP's module-page header (`PageHeader`, chosen by `theme.header`) on Shopping and Health screens, and on Orders and the account pages (`PageHeaderScope`)
+   - gradients as surfaces — with one exception the owner asked for: the FYP's module-page header (`PageHeader`, chosen by `theme.header`) on Shopping and Health screens, and on Orders and the account pages (`PageHeaderScope`); and the Health tab bar's selected-icon pill (`ServiceTabBar`)
    - centred spinners for content (use `Skeleton` instead)
    - decorative background shapes on any screen: watermark glyphs, faint circles or "bubbles", ambient glows (the owner asked for clean white screens)
 9. **Every phase ends** with its acceptance commands run, then a commit `chunk1/pN: <summary>` (later chunks use their own prefix).
@@ -85,6 +85,7 @@ src/
     resetAllState.ts         the RESET_ALL_STATE action
     preferencesSlice.ts      lastService, pushPromptSeen, recentSearches, recentHealthSearches (persisted; searches cleared on sign-out)
   hooks/                     useAppDispatch / useAppSelector, useSignOut, usePagedList (+ useDebouncedValue), useShop (bag count, hearts, shop navigation),
+                             useServiceNav (home ↔ service apps, tabs, leaving a service),
                              useHealth (Health navigation), useBack, useCountdown, useNow, useBarStyle
   networks/
     network/apiHelpers.ts    the axios client, refresh queue, AuthError, unwrap
@@ -111,7 +112,8 @@ src/
   theme/                     tokens, services, typography, ThemeProvider/useTheme, StoreBrandScope — the ONLY place raw values live
   Custom-Components/         the design-system components (tokens only); barrel: @custom/index; shopping/ (ProductCard,
                              VariantSheet, FilterSheet, CartStoreGroup, charts/ …); health/ (DoctorCard, DateStrip, SlotGrid,
-                             AppointmentCard, PrescriptionSheet, EmergencyBanner …); PageHeader (the FYP gradient header)
+                             AppointmentCard, PrescriptionSheet, EmergencyBanner …); PageHeader (the FYP gradient header);
+                             ServiceTabBar (the FYP per-service bottom bars)
   components/app-container/  AppContainer, appContainerSlice (bootstrap/refresh/push), OfflineGate, PushPrePrompt
   components/auth/           AuthChrome (frame/header/tabs/badge), AuthFields, ChoiceCard, StepFlow, AuthErrorNotice, GoogleSignInButton(.web)
   components/brand/          BrandMark, BrandWordmark (splash, onboarding)
@@ -120,13 +122,14 @@ src/
   components/shopping/       ShopParts (top bar + Bag, banners, product grid, SearchField), StoreParts, ReviewItem
   components/health/         HealthParts (sections, action tiles, the appointment-action hook)
   components/shared/         ErrorBoundary
-  navigations-maps/          Base.ts (ROUTES), Auth.ts (gate arrays), Customer/Home/Partner/Admin/Approvals/Account.ts,
-                             ShoppingCustomer.ts (Home-only + browse routes spread into Home, Orders, Account),
-                             HealthPatient.ts (Home-only + browse routes, spread like Shopping's), CustomerOrders.ts,
-                             StorePartner.ts and DoctorPartner.ts (tabs + stack), AdminShopping.ts, AdminHealth.ts, types.ts
-  navigators/                sessionGate.ts (the ladder + doctorRootRoute), BaseNavigator, Customer/Store/Doctor/Kitchen/AdminNavigator,
-                             RouteTabs (tab mapper), stacks/ (HomeStack, OrdersStack, AccountStack, AdminStack, AdminShopStack,
-                             AdminHealthStack)
+  navigations-maps/          Base.ts (ROUTES), Auth.ts (gate arrays), Customer.ts (the customer root stack), Partner/Admin/
+                             Approvals/Account.ts, HealthPatient.ts / ShoppingCustomer.ts / FoodCustomer.ts (each service
+                             app's tabs + the pages pushed over them), StorePartner.ts and DoctorPartner.ts (tabs + stack),
+                             AdminShopping.ts, AdminHealth.ts, types.ts
+  navigators/                sessionGate.ts (the ladder + doctorRootRoute), BaseNavigator, CustomerNavigator (root stack),
+                             Health/Shop/FoodAppNavigator (a service's stack over its tabs), Store/Doctor/Kitchen/AdminNavigator,
+                             RouteTabs (partner/staff tab mapper), ServiceTabs (service tab mapper → ServiceTabBar),
+                             stacks/ (AccountStack, AdminStack, AdminShopStack, AdminHealthStack)
   screens/<Area>/<Name>/     NameScreen.tsx + nameSlice.ts
                              Areas: Onboarding (+ Splash), RoleSelection, ProviderSelection, Auth, Partner,
                              Admin (+ Admin/Shopping, Admin/Health), Customer, Account, Shopping/Customer, Shopping/Store,
@@ -136,7 +139,7 @@ docs/                        API_CONTRACT_ASSUMED.md, API_SHOPPING_ASSUMED.md, A
 assets/images/               FYP icon + splash mark; services/ (card photos — sources in CREDITS.md)
 ```
 
-Stateless screens have no slice. Their state is global (`auth`, `preferences`) or they only navigate. These are Rejected, Suspended, CustomerHome, ServicePreview, PartnerHome, OrderPlaced, Saved, StoreMore, BookingConfirmed, PrescriptionList and DoctorMore. Slices other screens read (`bag`, `saved`, `addressBook`, `orderDetail`, `notifications`, `family`, `appointmentDetail`) live beside the screen that owns them. BookAppointment is a sheet over DoctorProfile (`BookAppointmentSheet` + its slice), not a route.
+Stateless screens have no slice. Their state is global (`auth`, `preferences`) or they only navigate. These are Rejected, Suspended, CustomerHome, ServicePreview, PartnerHome, OrderPlaced, Saved, StoreMore, BookingConfirmed, PrescriptionList, DoctorMore, FoodOrders, and the tab lists HealthAppointments and ShopOrders (they read `ordersSlice`, and share their lists with Orders via `Orders/OrdersLists.tsx`). Slices other screens read (`bag`, `saved`, `addressBook`, `orderDetail`, `notifications`, `family`, `appointmentDetail`) live beside the screen that owns them. BookAppointment is a sheet over DoctorProfile (`BookAppointmentSheet` + its slice), not a route.
 
 ## How to add a screen
 
@@ -166,13 +169,15 @@ const styles = useStyles(makeStyles); // memoised on the active theme (mode + se
 
 - Service accents come from `useTheme().service` (`accent`, `accentDeep`, `accentSoft`, `accentLine`, `onAccent`).
 - Wrap a subtree in `<ServiceScope service="food">` to switch its accent.
-- Auth, admin and the customer shell (home, tabs, profile) use `neutral` (MetroMatrix emerald). Each service screen scopes its own accent: Food pink (Foodpanda-like), Healthcare blue, Shopping orange.
+- Auth, admin and the customer shell (home, profile, orders) use `neutral` (MetroMatrix emerald). Each service app scopes its own accent: Food pink (Foodpanda-like), Healthcare blue, Shopping orange.
 - Inside a store (its page, its products) `<StoreBrandScope brand onBrand>` swaps the accent for the store's own colour, with AA-safe text and darker brand-coloured text.
-- Page headers follow the module, never the screen (`theme.header`): Shopping and Health pages wear the FYP's gradient `PageHeader` (rounded bottom, large white title, actions in white), which `ScreenShell` and `ShopTopBar` pick automatically; inside a store the bar turns white with the store's colour as a rule under it. Controls in the header's trailing slot or `headerContent` paint themselves for the gradient (`OnGradientContext`; `Avatar` too).
+- Page headers follow the module, never the screen (`theme.header`): Shopping and Health pages wear the FYP's gradient `PageHeader` (the service's accent sweeping to its deep step, a radius-24 foot, a bold `pageTitle`, actions in white), which `ScreenShell` and `ShopTopBar` pick automatically; inside a store the bar turns white with the store's colour as a rule under it. Controls in the header's trailing slot or `headerContent` paint themselves for the gradient (`OnGradientContext`; `Avatar` too).
 - The customer shell's own pages wear it as well, in the colour of the scope they open in: Orders, Profile, Change password, Addresses, Address form and Notifications wrap themselves in `PageHeaderScope` (emerald in the customer and admin apps, the service's colour in the store and doctor apps). A new account page does the same.
 - Profile is the FYP's account screen: a hero that scrolls away (`ScreenShell headerScrolls`), Overview · Addresses · Settings, count tiles, and menu groups under `overline` titles whose rows take the FYP's categorical icon colours (`ListRow tint`, `theme.rowTint`).
-- Every screen stands on pure white (`colors.canvas`, pinned by `theme/__tests__/canvas.test.ts`). Only full-screen media (the video call, the photo viewer) are dark.
-- Healthcare's theme is the clinical scale: body text 15, captions 13, touch targets 48, dynamic type to 150% (`theme.maxFontScale`).
+- Every screen stands on pure white (`colors.canvas`, pinned by `theme/__tests__/canvas.test.ts`), except Digital Health: the FYP's healthcare ground `#F8FBFF` under white cards, with slate ink (`HEALTH_PALETTE`). Only full-screen media (the video call, the photo viewer) are dark.
+- Healthcare uses the FYP's type like every service; its touch targets stay 48 and dynamic type goes to 150% (`theme.maxFontScale`).
+- Cards are the FYP card by default (`Card`, `elevation.card`: a `lineSoft` border and a soft slate shadow, radius 16). Section heads use `sectionTitle` (19/800). The side gutter is the FYP's 20.
+- Bottom tabs: a service app's bar is `ServiceTabBar`, in the look its theme names (`theme.tabBar`: Health's gradient pill, Shopping's lifted tint bar, Food's soft pill). A service's Home tab back leaves the service (`useServiceNav().leaveService`); other tab roots get `{ asTab: true }` and hide their back (`useIsTabRoot`). Jumps between the home and a service app go through `useServiceNav`, never a hard-coded parent.
 - Health copy: calm and plain, no exclamation marks; red only for emergencies (`appointmentStatusModel` never uses `danger`); appointment and payment wording only from `appointmentStatusModel`; every time through `healthTime` in the practice's timezone; "Recorded fees" (never earnings); the symptom checker names areas to discuss, never a diagnosis.
 - Shopping copy: "Bag" (never cart), "Recorded sales" (never revenue or income), money only through `formatPKR`, order/payment/return wording only from `orderStatusModel`, every remote image through `cdn()`.
 - Onboarding: everything on a slide, including the primary button, wears that slide's colour.
@@ -194,7 +199,7 @@ The order matters. It lives in ONE pure function, `resolveGate()` in `src/naviga
 The splash plays on every launch as an overlay in AppContainer. It lifts only once both its animation and `bootstrapSession` are done.
 
 Once the gate is cleared, `AppContainer.renderNavigator()` mounts the navigator for the role:
-- `customer` → `CustomerNavigator` (Home · Orders · Profile; Smart Shopping opens from the home card)
+- `customer` → `CustomerNavigator`: a root stack (`CustomerStack`) with the three-card home (no bottom bar; its side menu opens Orders, Profile, Saved, Addresses…) and one app per service: Health (Home · Appointments · Records · Profile), Shopping (Home · Bag · Saved · Orders), Food Court (Home · Orders · Profile)
 - approved `partner` → `Store`/`Doctor`/`KitchenPartnerNavigator`, chosen by `serviceType`. The store app is a stack over Today · Orders · Products · More. The doctor app is a stack over Today · Calendar · Patients · More; it opens on PracticeSetup until the doctor is listed (`doctorRootRoute(business)`).
 - `admin` / `super_admin` → `AdminNavigator` (Approvals · Shopping · Health · Profile). A doctor is approved only after staff check the PMDC number (Health → Doctor verification); the server answers `422 PMDC_NOT_VERIFIED` otherwise.
 
@@ -211,7 +216,7 @@ When the real document arrives, reconcile it in one pass:
 - **Expo Go** (`npm start`): runs the whole app except native Google sign-in and push, against the dummy API. Seeded accounts and codes are in `docs/API_CONTRACT_ASSUMED.md` → "Mock mode" (doctors and patients in `docs/API_HEALTH_ASSUMED.md` → "Mock mode"). Video consultations open public meet.jit.si rooms in a WebView; on web they open in a new tab.
 - **Web** (`npm run web`):
   - Google sign-in uses Google Identity Services and needs `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`.
-  - Deep paths work, e.g. `/get-started`, `/sign-in`, `/provider/sign-in`, `/home/food`, `/shop`, `/shop/store/lawn-and-loom-7a1f3`, `/shop/product/p_l1`, `/orders/MM-24A7Q2`, `/store/orders/:id`, `/admin/shop`, `/health`, `/health/doctor/:id`, `/health/appointment/:code`, `/doctor/appointments/:id`, `/admin/health`.
+  - Deep paths work, e.g. `/get-started`, `/sign-in`, `/provider/sign-in`, `/home/food`, `/shop`, `/shop/store/lawn-and-loom-7a1f3`, `/shop/product/p_l1`, `/orders/MM-24A7Q2`, `/store/orders/:id`, `/admin/shop`, `/health`, `/health/appointments`, `/health/doctor/:id`, `/health/appointment/:code`, `/shop/orders`, `/shop/bag`, `/profile/records`, `/doctor/appointments/:id`, `/admin/health`. The kitchen and staff Profile tab is `/account`.
   - After adding new folders or `.web.tsx` files, restart Metro with `--clear` (its watcher can miss them). Don't start it with `CI=1`: that turns watch mode off and the browser keeps the old bundle.
   - Bottom sheets render as a `Modal` (`Sheet.web.tsx`), because `@gorhom/bottom-sheet` never presents in a browser.
   - `/dev/gallery` exists only in development builds.

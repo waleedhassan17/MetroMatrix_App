@@ -20,7 +20,8 @@ import { loadFamilyAsync, removeFamilyMemberAsync, selectFamily } from './family
 
 type Props = NativeStackScreenProps<AccountStackParamList, 'FamilyMembers'>;
 
-const makeStyles = ({ space }: Theme) => StyleSheet.create({ row: { flexDirection: 'row', alignItems: 'center', gap: space.s4 } });
+const makeStyles = ({ space }: Theme) =>
+  StyleSheet.create({ row: { flexDirection: 'row', alignItems: 'center', gap: space.s4 }, grow: { flex: 1 } });
 
 const FamilyMembersScreen: React.FC<Props> = props => (
   <ServiceScope service="healthcare">
@@ -64,17 +65,18 @@ const FamilyMembersContent: React.FC<Props> = ({ navigation }) => {
             return (
               <View key={m.id}>
                 {i > 0 ? <Divider /> : null}
-                <ListRow
-                  title={m.name}
-                  subtitle={[relationLabel(m.relation), age !== null ? `${age} years` : null].filter(Boolean).join(' · ')}
-                  left={<Avatar name={m.name} size="sm" />}
-                  onPress={() => navigation.navigate('FamilyMemberForm', { id: m.id })}
-                  right={
-                    <View style={styles.row}>
-                      <IconButton icon="trash-outline" tone="muted" onPress={() => remove(m.id, m.name)} accessibilityLabel={`Remove ${m.name}`} disabled={s.removing === m.id} />
-                    </View>
-                  }
-                />
+                {/* Remove sits beside the row, not inside it: a button can't hold a button. */}
+                <View style={styles.row}>
+                  <View style={styles.grow}>
+                    <ListRow
+                      title={m.name}
+                      subtitle={[relationLabel(m.relation), age !== null ? `${age} years` : null].filter(Boolean).join(' · ')}
+                      left={<Avatar name={m.name} size="sm" />}
+                      onPress={() => navigation.navigate('FamilyMemberForm', { id: m.id })}
+                    />
+                  </View>
+                  <IconButton icon="trash-outline" tone="muted" onPress={() => remove(m.id, m.name)} accessibilityLabel={`Remove ${m.name}`} disabled={s.removing === m.id} />
+                </View>
               </View>
             );
           })}
