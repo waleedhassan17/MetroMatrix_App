@@ -59,6 +59,18 @@ import { productReviewsSlice } from '../screens/Shopping/Customer/ProductReviews
 import { checkoutSlice } from '../screens/Shopping/Customer/Checkout/checkoutSlice';
 import { orderDetailSlice } from '../screens/Shopping/Customer/OrderDetail/orderDetailSlice';
 import { appointmentDetailSlice } from '../screens/Health/Patient/AppointmentDetail/appointmentDetailSlice';
+import { doctorCalendarSlice } from '../screens/Health/Doctor/DoctorCalendar/doctorCalendarSlice';
+import { doctorInsightsSlice } from '../screens/Health/Doctor/DoctorInsights/doctorInsightsSlice';
+import { myReviewsSlice } from '../screens/Health/Doctor/MyReviews/myReviewsSlice';
+import { patientHistorySlice } from '../screens/Health/Doctor/PatientHistory/patientHistorySlice';
+import { doctorPatientsSlice } from '../screens/Health/Doctor/DoctorPatients/doctorPatientsSlice';
+import { prescriptionWriterSlice } from '../screens/Health/Doctor/PrescriptionWriter/prescriptionWriterSlice';
+import { doctorAppointmentSlice } from '../screens/Health/Doctor/DoctorAppointment/doctorAppointmentSlice';
+import { doctorTodaySlice } from '../screens/Health/Doctor/DoctorToday/doctorTodaySlice';
+import { timeOffSlice } from '../screens/Health/Doctor/TimeOff/timeOffSlice';
+import { availabilitySlice } from '../screens/Health/Doctor/Availability/availabilitySlice';
+import { doctorProfileEditSlice } from '../screens/Health/Doctor/DoctorProfileEdit/doctorProfileEditSlice';
+import { practiceSetupSlice } from '../screens/Health/Doctor/PracticeSetup/practiceSetupSlice';
 import { videoSlice } from '../screens/Health/Patient/VideoPrecheck/videoSlice';
 import { postConsultReviewSlice } from '../screens/Health/Patient/PostConsultReview/postConsultReviewSlice';
 import { symptomCheckerSlice } from '../screens/Health/Patient/SymptomChecker/symptomCheckerSlice';
@@ -160,6 +172,18 @@ const rootReducer = combineReducers({
   checkout: checkoutSlice.reducer,
   orderDetail: orderDetailSlice.reducer,
   appointmentDetail: appointmentDetailSlice.reducer,
+  doctorCalendar: doctorCalendarSlice.reducer,
+  doctorInsights: doctorInsightsSlice.reducer,
+  myReviews: myReviewsSlice.reducer,
+  patientHistory: patientHistorySlice.reducer,
+  doctorPatients: doctorPatientsSlice.reducer,
+  prescriptionWriter: prescriptionWriterSlice.reducer,
+  doctorAppointment: doctorAppointmentSlice.reducer,
+  doctorToday: doctorTodaySlice.reducer,
+  timeOff: timeOffSlice.reducer,
+  availability: availabilitySlice.reducer,
+  doctorProfileEdit: doctorProfileEditSlice.reducer,
+  practiceSetup: practiceSetupSlice.reducer,
   video: videoSlice.reducer,
   postConsultReview: postConsultReviewSlice.reducer,
   symptomChecker: symptomCheckerSlice.reducer,

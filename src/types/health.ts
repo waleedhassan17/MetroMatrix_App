@@ -489,6 +489,8 @@ export interface DoctorOwnProfile {
   gender: Gender | null;
   photoUrl: string | null;
   specialtySlug: string | null;
+  /** The specialty's name, as patients see it (read-only). */
+  specialtyName: string;
   secondarySpecialtySlug: string | null;
   practisingSince: number | null;
   languages: string[];

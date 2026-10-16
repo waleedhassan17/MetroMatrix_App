@@ -247,12 +247,13 @@ const COMPLETENESS = (h: MockHealth, d: MockDoctor) => {
   return { items, percent, isListed: d.isListed, canPublish: percent === 100 && !d.isListed };
 };
 
-const ownProfileView = (d: MockDoctor) => ({
+const ownProfileView = (h: MockHealth, d: MockDoctor) => ({
   title: d.title,
   name: d.name,
   gender: d.gender,
   photoUrl: d.photoUrl,
   specialtySlug: d.specialtySlug,
+  specialtyName: specialtyBySlug(h, d.specialtySlug)?.name ?? '',
   secondarySpecialtySlug: d.secondarySpecialtySlug,
   practisingSince: d.practisingSince,
   languages: d.languages,
@@ -949,7 +950,7 @@ export function registerHealthRoutes(kit: HealthKit) {
   });
 
   // ══ Doctor: profile and practice ═════════════════════
-  route('GET', '/healthcare/doctor/profile', ctx => ownProfileView(myDoctor(ctx).doctor));
+  route('GET', '/healthcare/doctor/profile', ctx => ownProfileView(ctx.db.health, myDoctor(ctx).doctor));
 
   route('PATCH', '/healthcare/doctor/profile', ctx => {
     const { doctor: d } = myDoctor(ctx);
@@ -968,7 +969,7 @@ export function registerHealthRoutes(kit: HealthKit) {
     if (b.bookingRules?.videoPrepay !== undefined) {
       for (const l of locationsOf(h, d.id)) if (l.kind === 'video') l.requiresPrepay = !!b.bookingRules.videoPrepay;
     }
-    return ownProfileView(d);
+    return ownProfileView(h, d);
   });
 
   route('GET', '/healthcare/doctor/profile/completeness', ctx => COMPLETENESS(ctx.db.health, myDoctor(ctx).doctor));

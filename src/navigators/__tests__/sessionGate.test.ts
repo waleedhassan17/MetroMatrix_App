@@ -1,4 +1,4 @@
-import { isGateCleared, resolveGate, totpInitialRoute, type GateInput } from '../sessionGate';
+import { doctorRootRoute, isGateCleared, resolveGate, totpInitialRoute, type GateInput } from '../sessionGate';
 import type { Business, BusinessStatus, User, UserRole } from '../../types/auth';
 import { makeUser } from '../../__fixtures__/users';
 
@@ -88,5 +88,16 @@ describe('totpInitialRoute', () => {
     expect(totpInitialRoute({ challengeToken: 'c', enrolled: false, email: 'a@x.com' })).toBe('AdminTwoFactorEnrol');
     expect(totpInitialRoute({ challengeToken: 'c', enrolled: true, email: 'a@x.com' })).toBe('AdminTotp');
     expect(totpInitialRoute(null)).toBe('AdminTotp');
+  });
+});
+
+describe('doctorRootRoute — Practice setup until listed', () => {
+  it('opens a new doctor on Practice setup', () => {
+    expect(doctorRootRoute({ isListed: false })).toBe('PracticeSetup');
+    expect(doctorRootRoute({ isListed: null })).toBe('PracticeSetup');
+    expect(doctorRootRoute(null)).toBe('PracticeSetup');
+  });
+  it('opens a listed doctor on the tabs', () => {
+    expect(doctorRootRoute({ isListed: true })).toBe('DoctorTabs');
   });
 });

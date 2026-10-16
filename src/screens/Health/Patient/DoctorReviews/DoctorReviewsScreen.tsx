@@ -15,7 +15,7 @@ import { listDoctorReviews } from '@networks/health/reviewsNetwork';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { ChoiceChip, Divider, DoctorReviewItem, EmptyState, InlineNotice, PageHeader, ReviewSummary, SkeletonLines } from '@custom/index';
 import type { HomeStackParamList } from '@/types';
-import { selectDoctorEntry } from '../DoctorProfile/doctorProfileSlice';
+import { loadDoctorAsync, selectDoctorEntry } from '../DoctorProfile/doctorProfileSlice';
 import { resetReviewFilters, selectDoctorReviewFilters, setReviewKind, setReviewRating, setReviewSort } from './doctorReviewsSlice';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'DoctorReviews'>;
@@ -42,12 +42,17 @@ const DoctorReviewsContent: React.FC<Props> = ({ route }) => {
   const styles = useStyles(makeStyles);
   const { service } = useTheme();
   const f = useAppSelector(selectDoctorReviewFilters);
-  const profile = useAppSelector(st => selectDoctorEntry(st, doctorId)).profile;
+  const entry = useAppSelector(st => selectDoctorEntry(st, doctorId));
+  const profile = entry.profile;
   const list = usePagedList((page, size) => listDoctorReviews(doctorId, f, page, size), `reviews|${doctorId}|${f.kind}|${f.rating}|${f.sort}`);
 
   useEffect(() => {
     dispatch(resetReviewFilters());
   }, [dispatch, doctorId]);
+  // Opened from a link: the summary comes with the profile.
+  useEffect(() => {
+    if (entry.status === 'idle') void dispatch(loadDoctorAsync(doctorId));
+  }, [entry.status, dispatch, doctorId]);
 
   const header = (
     <View style={styles.head}>

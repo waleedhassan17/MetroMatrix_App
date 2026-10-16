@@ -1,8 +1,9 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Payment accounts (where customers send transfers)
+// MetroMatrix — Payment accounts (where customers or patients send transfers)
 // ═══════════════════════════════════════════════════════
-// Raast, JazzCash, Easypaisa or a bank account in the store's own name.
-// Customers pay these directly; MetroMatrix never holds the money.
+// Raast, JazzCash, Easypaisa or a bank account in the partner's own name.
+// Customers (a doctor's patients) pay these directly; MetroMatrix never holds
+// the money. One screen for stores and doctors: the business picks the words.
 
 import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -36,14 +37,19 @@ const makeStyles = ({ space }: Theme) =>
 /** "PK36SCBL0000001123456702" → "PK36 •••• 6702" in lists. */
 const masked = (n: string) => (n.length > 8 ? `${n.slice(0, 4)} •••• ${n.slice(-4)}` : n);
 
-const PaymentAccountsScreen: React.FC<Props> = props => (
-  <ServiceScope service="shopping">
-    <PaymentAccountsContent {...props} />
-  </ServiceScope>
-);
+const PaymentAccountsScreen: React.FC<Props> = props => {
+  const doctor = useAppSelector(st => st.auth.business?.serviceType === 'healthcare');
+  return (
+    <ServiceScope service={doctor ? 'healthcare' : 'shopping'}>
+      <PaymentAccountsContent {...props} />
+    </ServiceScope>
+  );
+};
 
 const PaymentAccountsContent: React.FC<Props> = () => {
-  const { back } = useBack({ name: 'StoreTabs', params: { screen: 'MoreTab' } });
+  const doctor = useAppSelector(st => st.auth.business?.serviceType === 'healthcare');
+  const { back } = useBack(doctor ? { name: 'DoctorTabs', params: { screen: 'MoreTab' } } : { name: 'StoreTabs', params: { screen: 'MoreTab' } });
+  const who = doctor ? 'Patients' : 'Customers';
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectPaymentAccounts);
@@ -62,7 +68,7 @@ const PaymentAccountsContent: React.FC<Props> = () => {
   };
 
   const remove = (a: PaymentAccount) =>
-    Alert.alert(`Remove ${accountKindLabel(a.kind)} ${masked(a.number)}?`, 'Customers will no longer see it.', [
+    Alert.alert(`Remove ${accountKindLabel(a.kind)} ${masked(a.number)}?`, `${who} will no longer see it.`, [
       { text: 'Keep it', style: 'cancel' },
       { text: 'Remove', style: 'destructive', onPress: () => void dispatch(changeAccountAsync({ kind: 'delete', id: a.id })) },
     ]);
@@ -70,20 +76,20 @@ const PaymentAccountsContent: React.FC<Props> = () => {
   return (
     <ScreenShell
       title="Payment accounts"
-      subtitle="Customers who pay by transfer send money here, straight to you."
+      subtitle={`${who} who pay by transfer send money here, straight to you.`}
       onBack={back}
       footer={<Button label="Add an account" leftIcon="add" onPress={() => dispatch(openAccountSheet(null))} fullWidth />}>
       {s.error.message && s.editing === null ? <InlineNotice message={s.error.message} /> : null}
       {s.status === 'loading' && !s.accounts.length ? (
         <SkeletonLines lines={4} />
       ) : !s.accounts.length ? (
-        <EmptyState icon="credit-card" title="No accounts yet" body="Add one to take transfers. Without one, customers can only pay cash on delivery." />
+        <EmptyState icon="credit-card" title="No accounts yet" body={doctor ? 'Add one to take transfers before video consultations. Without one, patients pay at the visit.' : 'Add one to take transfers. Without one, customers can only pay cash on delivery.'} />
       ) : (
         s.accounts.map(a => (
           <Card key={a.id}>
             <View style={styles.head}>
               <AppText variant="title">{accountKindLabel(a.kind)}</AppText>
-              <StatusPill label={a.isActive ? 'Shown to customers' : 'Off'} tone={a.isActive ? 'success' : 'neutral'} />
+              <StatusPill label={a.isActive ? `Shown to ${who.toLowerCase()}` : 'Off'} tone={a.isActive ? 'success' : 'neutral'} />
             </View>
             <AppText variant="bodyStrong">{a.title}</AppText>
             <AppText variant="body" tone="muted">

@@ -35,3 +35,6 @@ export const validateFamilyMember = (m: FamilyMemberInput, today: string): Valid
   if (m.phone && !isValidPkMobile(m.phone)) errors.phone = 'Enter a Pakistani mobile number';
   return errors;
 };
+
+/** "Female", "Male", "Other" (null stays null). */
+export const genderLabel = (g: string | null | undefined) => (g ? g[0].toUpperCase() + g.slice(1) : null);

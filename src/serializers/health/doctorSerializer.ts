@@ -52,6 +52,7 @@ export const ownProfileSerializer = (raw: unknown): DoctorOwnProfile | null => {
     gender: gender(raw.gender),
     photoUrl: strOrNull(raw.photoUrl),
     specialtySlug: strOrNull(raw.specialtySlug),
+    specialtyName: str(raw.specialtyName),
     secondarySpecialtySlug: strOrNull(raw.secondarySpecialtySlug),
     practisingSince: numOrNull(raw.practisingSince),
     languages: strings(raw.languages),

@@ -1,8 +1,16 @@
-// MetroMatrix — Payment accounts slice: where customers send transfers.
+// MetroMatrix — Payment accounts slice: where customers (or patients) send
+// transfers. One screen for stores and doctors: the partner's service picks
+// the endpoints.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { createPaymentAccount, deletePaymentAccount, listPaymentAccounts, updatePaymentAccount } from '@networks/shopping/partner/storeNetwork';
+import {
+  createDoctorPaymentAccount,
+  deleteDoctorPaymentAccount,
+  listDoctorPaymentAccounts,
+  updateDoctorPaymentAccount,
+} from '@networks/health/doctor/practiceNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import { normaliseAccountNumber } from '@models/shopping/storeModel';
 import type { PaymentAccount, PaymentAccountInput } from '@/types';
@@ -18,6 +26,12 @@ export interface PaymentAccountsSliceState {
   form: PaymentAccountInput;
   submitted: boolean;
 }
+
+type PartnerState = { auth: { business: { serviceType: string } | null } };
+
+const STORE = { list: listPaymentAccounts, create: createPaymentAccount, update: updatePaymentAccount, remove: deletePaymentAccount };
+const DOCTOR = { list: listDoctorPaymentAccounts, create: createDoctorPaymentAccount, update: updateDoctorPaymentAccount, remove: deleteDoctorPaymentAccount };
+const apiFor = (getState: () => unknown) => ((getState() as PartnerState).auth.business?.serviceType === 'healthcare' ? DOCTOR : STORE);
 
 const blank = (): PaymentAccountInput => ({ kind: 'raast', title: '', number: '', bankName: null, isActive: true });
 
@@ -44,9 +58,9 @@ export const paymentAccountsSlice = createAppSlice({
       state.submitted = true;
     }),
     loadAccountsAsync: create.asyncThunk(
-      async (_: void, { rejectWithValue }) => {
+      async (_: void, { getState, rejectWithValue }) => {
         try {
-          return await listPaymentAccounts();
+          return await apiFor(getState).list();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -68,18 +82,19 @@ export const paymentAccountsSlice = createAppSlice({
     changeAccountAsync: create.asyncThunk(
       async (
         change: { kind: 'save'; id: string; input: PaymentAccountInput } | { kind: 'delete'; id: string } | { kind: 'toggle'; account: PaymentAccount },
-        { rejectWithValue },
+        { getState, rejectWithValue },
       ) => {
         try {
+          const api = apiFor(getState);
           if (change.kind === 'save') {
             const input = { ...change.input, number: normaliseAccountNumber(change.input.kind, change.input.number), bankName: change.input.kind === 'bank' ? change.input.bankName : null };
-            await (change.id ? updatePaymentAccount(change.id, input) : createPaymentAccount(input));
-          } else if (change.kind === 'delete') await deletePaymentAccount(change.id);
+            await (change.id ? api.update(change.id, input) : api.create(input));
+          } else if (change.kind === 'delete') await api.remove(change.id);
           else {
             const { id, ...rest } = change.account;
-            await updatePaymentAccount(id, { ...rest, isActive: !rest.isActive });
+            await api.update(id, { ...rest, isActive: !rest.isActive });
           }
-          return await listPaymentAccounts();
+          return await api.list();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

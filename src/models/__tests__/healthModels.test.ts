@@ -174,6 +174,7 @@ describe('family, records, reviews, profile', () => {
       gender: 'male',
       photoUrl: null,
       specialtySlug: 'general-physician',
+      specialtyName: 'General physician',
       secondarySpecialtySlug: 'general-physician',
       practisingSince: 2019,
       languages: [],

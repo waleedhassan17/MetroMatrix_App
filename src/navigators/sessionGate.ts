@@ -78,3 +78,10 @@ export const isGateCleared = (gate: Gate): boolean =>
 /** The TOTP branch opens on enrolment for a staff member's first sign-in. */
 export const totpInitialRoute = (pendingTotp: PendingTotp | null): 'AdminTotp' | 'AdminTwoFactorEnrol' =>
   pendingTotp && !pendingTotp.enrolled ? 'AdminTwoFactorEnrol' : 'AdminTotp';
+
+/**
+ * The doctor's app opens on Practice setup until the doctor is listed for
+ * patients (the checklist, then Publish); after that, on the tabs.
+ */
+export const doctorRootRoute = (business: Pick<Business, 'isListed'> | null): 'PracticeSetup' | 'DoctorTabs' =>
+  business?.isListed ? 'DoctorTabs' : 'PracticeSetup';
