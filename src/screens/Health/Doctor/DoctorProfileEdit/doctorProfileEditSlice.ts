@@ -10,6 +10,7 @@ import { getOwnProfile, updateOwnProfile } from '@networks/health/doctor/profile
 import { listConditions, listSpecialties } from '@networks/health/discoveryNetwork';
 import { uploadImage } from '@networks/media/mediaNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
+import { ownProfilePatch } from '@models/health/doctorProfileModel';
 import type { Condition, DoctorOwnProfile, LocalFile, Specialty } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 
@@ -121,12 +122,7 @@ export const doctorProfileEditSlice = createAppSlice({
     saveOwnProfileAsync: create.asyncThunk(
       async (form: DoctorOwnProfile, { rejectWithValue }) => {
         try {
-          const { pmdcNumber: _p, isListed: _l, specialtyName: _s, ...patch } = form;
-          return await updateOwnProfile({
-            ...patch,
-            qualifications: form.qualifications.filter(q => q.degree.trim()),
-            experience: form.experience.filter(e => e.role.trim() && e.place.trim()),
-          });
+          return await updateOwnProfile(ownProfilePatch(form));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

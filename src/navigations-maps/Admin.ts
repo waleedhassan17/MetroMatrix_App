@@ -1,10 +1,11 @@
-// MetroMatrix — Admin console tabs (Approvals, Shopping, Profile).
+// MetroMatrix — Admin console tabs (Approvals, Shopping, Health, Profile).
 
 import type { ITabRoute } from './types';
 import { ROUTES } from './Base';
 
 import AdminStack from '../navigators/stacks/AdminStack';
 import AdminShopStack from '../navigators/stacks/AdminShopStack';
+import AdminHealthStack from '../navigators/stacks/AdminHealthStack';
 import AccountStack from '../navigators/stacks/AccountStack';
 
 export const ADMIN_TAB_ROUTES: ITabRoute[] = [
@@ -21,6 +22,13 @@ export const ADMIN_TAB_ROUTES: ITabRoute[] = [
     label: 'Shopping',
     icon: 'bag-handle-outline',
     iconActive: 'bag-handle',
+  },
+  {
+    title: ROUTES.HEALTH_ADMIN_TAB,
+    component: AdminHealthStack,
+    label: 'Health',
+    icon: 'medkit-outline',
+    iconActive: 'medkit',
   },
   {
     title: ROUTES.PROFILE_TAB,

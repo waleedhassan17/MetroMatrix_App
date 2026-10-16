@@ -42,3 +42,21 @@ export const validateDoctorProfile = (p: DoctorOwnProfile, thisYear: number): Va
 
 /** Years in practice, from the year they started. */
 export const yearsSince = (since: number | null, thisYear: number) => (since ? Math.max(0, thisYear - since) : 0);
+
+/** The fields a doctor can change, ready to send: blank qualification and experience rows dropped. */
+export const ownProfilePatch = (p: DoctorOwnProfile): Partial<DoctorOwnProfile> => ({
+  title: p.title,
+  name: p.name,
+  gender: p.gender,
+  photoUrl: p.photoUrl,
+  specialtySlug: p.specialtySlug,
+  secondarySpecialtySlug: p.secondarySpecialtySlug,
+  practisingSince: p.practisingSince,
+  languages: p.languages,
+  about: p.about,
+  qualifications: p.qualifications.filter(q => q.degree.trim()),
+  experience: p.experience.filter(e => e.role.trim() && e.place.trim()),
+  services: p.services,
+  conditionSlugs: p.conditionSlugs,
+  bookingRules: p.bookingRules,
+});

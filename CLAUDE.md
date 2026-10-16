@@ -16,7 +16,7 @@ Copy the FYP's UX, never its code paths, Firebase setup or per-role duplicate ne
 
 ## Backend switch (one file)
 
-`src/config/env.ts` → `BACKEND_URL` (or `EXPO_PUBLIC_API_URL`). While it is empty, `api` uses the dummy API (`src/networks/network/mock/`: `mockServer.ts` routes, `mockDb.ts` seeded accounts, `mockConfig.ts` rules, `mockFood.ts` catalogue, `shop/` the whole Shopping API with its seed and server rules). The dummy API answers exactly what `docs/API_CONTRACT_ASSUMED.md` and `docs/API_SHOPPING_ASSUMED.md` specify, so nothing else changes when the real URL is set. When you add an endpoint, add its mock route in the same change. Shop writes are all-or-nothing (a failed request leaves the dummy DB as it was).
+`src/config/env.ts` → `BACKEND_URL` (or `EXPO_PUBLIC_API_URL`). While it is empty, `api` uses the dummy API (`src/networks/network/mock/`: `mockServer.ts` routes, `mockDb.ts` seeded accounts, `mockConfig.ts` rules, `mockFood.ts` catalogue, `shop/` the whole Shopping API with its seed and server rules, `health/` the whole Healthcare API with its seed and server rules). The dummy API answers exactly what `docs/API_CONTRACT_ASSUMED.md`, `docs/API_SHOPPING_ASSUMED.md` and `docs/API_HEALTH_ASSUMED.md` specify, so nothing else changes when the real URL is set. When you add an endpoint, add its mock route in the same change. Shop and Health writes are all-or-nothing (a failed request leaves the dummy DB as it was).
 
 ## Commands
 
@@ -83,45 +83,60 @@ src/
     createAppSlice.ts        buildCreateSlice with asyncThunk — every slice uses it
     store.ts                 combineReducers, RESET_ALL_STATE root handling, persist config
     resetAllState.ts         the RESET_ALL_STATE action
-    preferencesSlice.ts      lastService, pushPromptSeen, recentSearches (persisted; searches cleared on sign-out)
-  hooks/                     useAppDispatch / useAppSelector, useSignOut, usePagedList (+ useDebouncedValue), useShop (bag count, hearts, shop navigation)
+    preferencesSlice.ts      lastService, pushPromptSeen, recentSearches, recentHealthSearches (persisted; searches cleared on sign-out)
+  hooks/                     useAppDispatch / useAppSelector, useSignOut, usePagedList (+ useDebouncedValue), useShop (bag count, hearts, shop navigation),
+                             useHealth (Health navigation), useBack, useCountdown, useNow, useBarStyle
   networks/
     network/apiHelpers.ts    the axios client, refresh queue, AuthError, unwrap
     network/mock/            the dummy API (axios adapter + AsyncStorage DB) used while no backend URL is set
     network/mock/shop/       the dummy Shopping API: shopTypes, shopSeed (3 stores, 52 products, orders), shopLogic (rules), shopRoutes
+    network/mock/health/     the dummy Healthcare API: healthTypes, healthSeed (16 specialties, ~40 conditions, 24 doctors,
+                             appointments in every status), healthLogic (slots, rules), healthRoutes
     <domain>/<x>Network.ts   one function per endpoint (auth, users, media, businesses, admin, food, addresses, notifications)
     shopping/                catalogue, wishlist, cart, checkout, orders, returns, reviews; shopping/partner/ the store app's
-  serializers/               defensive backend → app mapping, one file per domain (shopping/ per resource)
+    health/                  discovery, availability, appointments, family, records, prescriptions, reviews, video, symptom;
+                             health/doctor/ the doctor app's; admin/adminHealthNetwork the Health console
+  serializers/               defensive backend → app mapping, one file per domain (shopping/ and health/ per resource)
   models/                    validation + form schemas, one file per domain; shopping/ holds the ONE order-status map
-                             (orderStatusModel), filters, variant matrix/picker, product/coupon/return/review/store rules
-  types/                     shared types (navigation param lists, auth/business types)
+                             (orderStatusModel), filters, variant matrix/picker, product/coupon/return/review/store rules;
+                             health/ holds the ONE appointment-status map (appointmentStatusModel), booking, family, record,
+                             prescription (dose patterns), availability (overlaps), review, doctor profile, filter, emergency
+                             and admin rules
+  types/                     shared types (navigation param lists, auth/business, shopping, health, payments)
   utils/                     storageUtils, authEvents, phone, alert (web-safe), haptics, pickers, formErrors,
-                             money (formatPKR — the only way money is shown), cdn (image sizing), dates, ids
-  services/                  device/SDK adapters: googleAuth(.web), push (+ push-tap routing), location
+                             money (formatPKR — the only way money is shown), cdn (image sizing), dates, ids,
+                             healthTime (every Health time, shown in the practice's timezone), maps, prescriptionHtml
+  services/                  device/SDK adapters: googleAuth(.web), push (+ push-tap routing), location, calendar,
+                             prescriptionPdf (expo-print + sharing; the print dialog on web)
   theme/                     tokens, services, typography, ThemeProvider/useTheme, StoreBrandScope — the ONLY place raw values live
   Custom-Components/         the design-system components (tokens only); barrel: @custom/index; shopping/ (ProductCard,
-                             VariantSheet, FilterSheet, CartStoreGroup, charts/ …)
+                             VariantSheet, FilterSheet, CartStoreGroup, charts/ …); health/ (DoctorCard, DateStrip, SlotGrid,
+                             AppointmentCard, PrescriptionSheet, EmergencyBanner …); PageHeader (the FYP gradient header)
   components/app-container/  AppContainer, appContainerSlice (bootstrap/refresh/push), OfflineGate, PushPrePrompt
   components/auth/           AuthChrome (frame/header/tabs/badge), AuthFields, ChoiceCard, StepFlow, AuthErrorNotice, GoogleSignInButton(.web)
   components/brand/          BrandMark, BrandWordmark (splash, onboarding)
   components/home/           ServiceCard + serviceCatalog (the customer home's three cards)
   components/food/           FoodParts (search, promos, cuisines, kitchen cards)
-  components/shopping/       ShopParts (top bar + Bag, banners, product grid), StoreParts, ReviewItem
+  components/shopping/       ShopParts (top bar + Bag, banners, product grid, SearchField), StoreParts, ReviewItem
+  components/health/         HealthParts (sections, action tiles, the appointment-action hook)
   components/shared/         ErrorBoundary
   navigations-maps/          Base.ts (ROUTES), Auth.ts (gate arrays), Customer/Home/Partner/Admin/Approvals/Account.ts,
                              ShoppingCustomer.ts (Home-only + browse routes spread into Home, Orders, Account),
-                             CustomerOrders.ts, StorePartner.ts (tabs + stack), AdminShopping.ts, types.ts
-  navigators/                sessionGate.ts (the ladder), BaseNavigator, Customer/Store/Doctor/Kitchen/AdminNavigator,
-                             RouteTabs (tab mapper), stacks/ (HomeStack, OrdersStack, AccountStack, AdminStack, AdminShopStack)
+                             HealthPatient.ts (Home-only + browse routes, spread like Shopping's), CustomerOrders.ts,
+                             StorePartner.ts and DoctorPartner.ts (tabs + stack), AdminShopping.ts, AdminHealth.ts, types.ts
+  navigators/                sessionGate.ts (the ladder + doctorRootRoute), BaseNavigator, Customer/Store/Doctor/Kitchen/AdminNavigator,
+                             RouteTabs (tab mapper), stacks/ (HomeStack, OrdersStack, AccountStack, AdminStack, AdminShopStack,
+                             AdminHealthStack)
   screens/<Area>/<Name>/     NameScreen.tsx + nameSlice.ts
                              Areas: Onboarding (+ Splash), RoleSelection, ProviderSelection, Auth, Partner,
-                             Admin (+ Admin/Shopping), Customer, Account, Shopping/Customer, Shopping/Store, Dev
+                             Admin (+ Admin/Shopping, Admin/Health), Customer, Account, Shopping/Customer, Shopping/Store,
+                             Health/Patient, Health/Doctor, Dev
 scripts/check-design-tokens.js
-docs/                        API_CONTRACT_ASSUMED.md, API_SHOPPING_ASSUMED.md, MOCK_IMAGES.md, GOOGLE_SIGNIN.md
+docs/                        API_CONTRACT_ASSUMED.md, API_SHOPPING_ASSUMED.md, API_HEALTH_ASSUMED.md, MOCK_IMAGES.md, GOOGLE_SIGNIN.md
 assets/images/               FYP icon + splash mark; services/ (card photos — sources in CREDITS.md)
 ```
 
-Stateless screens have no slice. Their state is global (`auth`, `preferences`) or they only navigate. These are Rejected, Suspended, CustomerHome, ServicePreview, PartnerHome, OrderPlaced, Saved and StoreMore. Slices other screens read (`bag`, `saved`, `addressBook`, `orderDetail`, `notifications`) live beside the screen that owns them.
+Stateless screens have no slice. Their state is global (`auth`, `preferences`) or they only navigate. These are Rejected, Suspended, CustomerHome, ServicePreview, PartnerHome, OrderPlaced, Saved, StoreMore, BookingConfirmed, PrescriptionList and DoctorMore. Slices other screens read (`bag`, `saved`, `addressBook`, `orderDetail`, `notifications`, `family`, `appointmentDetail`) live beside the screen that owns them. BookAppointment is a sheet over DoctorProfile (`BookAppointmentSheet` + its slice), not a route.
 
 ## How to add a screen
 
@@ -155,6 +170,7 @@ const styles = useStyles(makeStyles); // memoised on the active theme (mode + se
 - Inside a store (its page, its products) `<StoreBrandScope brand onBrand>` swaps the accent for the store's own colour, with AA-safe text and darker brand-coloured text.
 - Page headers follow the module, never the screen (`theme.header`): Shopping and Health pages wear the FYP's gradient `PageHeader` (rounded bottom, large white title, actions in white), which `ScreenShell` and `ShopTopBar` pick automatically; inside a store the bar turns white with the store's colour as a rule under it. Controls in the header's trailing slot or `headerContent` paint themselves for the gradient (`OnGradientContext`).
 - Healthcare's theme is the clinical scale: body text 15, captions 13, touch targets 48, dynamic type to 150% (`theme.maxFontScale`).
+- Health copy: calm and plain, no exclamation marks; red only for emergencies (`appointmentStatusModel` never uses `danger`); appointment and payment wording only from `appointmentStatusModel`; every time through `healthTime` in the practice's timezone; "Recorded fees" (never earnings); the symptom checker names areas to discuss, never a diagnosis.
 - Shopping copy: "Bag" (never cart), "Recorded sales" (never revenue or income), money only through `formatPKR`, order/payment/return wording only from `orderStatusModel`, every remote image through `cdn()`.
 - Onboarding: everything on a slide, including the primary button, wears that slide's colour.
 - Platform-specific files (`X.web.tsx`) must never import `./X`; on web that path resolves to the file itself. Put shared code in a third module (see `sheetShared.ts`, `dateFieldShared.ts`).
@@ -176,12 +192,12 @@ The splash plays on every launch as an overlay in AppContainer. It lifts only on
 
 Once the gate is cleared, `AppContainer.renderNavigator()` mounts the navigator for the role:
 - `customer` → `CustomerNavigator` (Home · Orders · Profile; Smart Shopping opens from the home card)
-- approved `partner` → `Store`/`Doctor`/`KitchenPartnerNavigator`, chosen by `serviceType` (the store app is a stack over Today · Orders · Products · More)
-- `admin` / `super_admin` → `AdminNavigator` (Approvals · Shopping · Profile)
+- approved `partner` → `Store`/`Doctor`/`KitchenPartnerNavigator`, chosen by `serviceType`. The store app is a stack over Today · Orders · Products · More. The doctor app is a stack over Today · Calendar · Patients · More; it opens on PracticeSetup until the doctor is listed (`doctorRootRoute(business)`).
+- `admin` / `super_admin` → `AdminNavigator` (Approvals · Shopping · Health · Profile). A doctor is approved only after staff check the PMDC number (Health → Doctor verification); the server answers `422 PMDC_NOT_VERIFIED` otherwise.
 
 ## API contract
 
-Every network call is built from MetroMatrix-API `docs/API_AUTH.md` / `docs/API_SHOPPING.md`, never from guesses. Those documents were unavailable, so the app runs on `docs/API_CONTRACT_ASSUMED.md` and `docs/API_SHOPPING_ASSUMED.md` (NestJS conventions: `{ success, data }`, `VALIDATION_FAILED`, `page/pageSize`, integer rupees, `Idempotency-Key` on checkout), which the dummy API implements. Every dependency is marked `TODO(API_AUTH)`, `TODO(API_FOOD)` or `TODO(API_SHOPPING)` (`grep -rn "TODO(API_" src`).
+Every network call is built from MetroMatrix-API `docs/API_AUTH.md` / `docs/API_SHOPPING.md` / `docs/API_HEALTH.md`, never from guesses. Those documents were unavailable when each chunk was built, so the app runs on `docs/API_CONTRACT_ASSUMED.md`, `docs/API_SHOPPING_ASSUMED.md` and `docs/API_HEALTH_ASSUMED.md` (NestJS conventions: `{ success, data }`, `VALIDATION_FAILED`, `page/pageSize`, integer rupees, `Idempotency-Key` on checkout and booking; Health lives under `/healthcare`, `/healthcare/doctor` and `/admin/healthcare` because `/health` is the uptime check), which the dummy API implements. Every dependency is marked `TODO(API_AUTH)`, `TODO(API_FOOD)`, `TODO(API_SHOPPING)` or `TODO(API_HEALTH)` (`grep -rn "TODO(API_" src`).
 
 When the real document arrives, reconcile it in one pass:
 - update the networks, serializers and models;
@@ -189,10 +205,10 @@ When the real document arrives, reconcile it in one pass:
 
 ## Testing on Expo / web
 
-- **Expo Go** (`npm start`): runs the whole app except native Google sign-in and push, against the dummy API. Seeded accounts and codes are in `docs/API_CONTRACT_ASSUMED.md` → "Mock mode".
+- **Expo Go** (`npm start`): runs the whole app except native Google sign-in and push, against the dummy API. Seeded accounts and codes are in `docs/API_CONTRACT_ASSUMED.md` → "Mock mode" (doctors and patients in `docs/API_HEALTH_ASSUMED.md` → "Mock mode"). Video consultations open public meet.jit.si rooms in a WebView; on web they open in a new tab.
 - **Web** (`npm run web`):
   - Google sign-in uses Google Identity Services and needs `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`.
-  - Deep paths work, e.g. `/get-started`, `/sign-in`, `/provider/sign-in`, `/home/food`, `/shop`, `/shop/store/lawn-and-loom-7a1f3`, `/shop/product/p_l1`, `/orders/MM-24A7Q2`, `/store/orders/:id`, `/admin/shop`.
-  - After adding new folders or `.web.tsx` files, restart Metro with `--clear` (its watcher can miss them).
+  - Deep paths work, e.g. `/get-started`, `/sign-in`, `/provider/sign-in`, `/home/food`, `/shop`, `/shop/store/lawn-and-loom-7a1f3`, `/shop/product/p_l1`, `/orders/MM-24A7Q2`, `/store/orders/:id`, `/admin/shop`, `/health`, `/health/doctor/:id`, `/health/appointment/:code`, `/doctor/appointments/:id`, `/admin/health`.
+  - After adding new folders or `.web.tsx` files, restart Metro with `--clear` (its watcher can miss them). Don't start it with `CI=1`: that turns watch mode off and the browser keeps the old bundle.
   - Bottom sheets render as a `Modal` (`Sheet.web.tsx`), because `@gorhom/bottom-sheet` never presents in a browser.
   - `/dev/gallery` exists only in development builds.

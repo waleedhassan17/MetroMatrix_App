@@ -17,7 +17,18 @@ import { activeFilterCount, baseQuery, clearFilters, isQuickOn, queryKey, toggle
 import { emptyFamilyMember, validateFamilyMember } from '../health/familyMemberModel';
 import { validateRecord } from '../health/recordModel';
 import { dimensionsFor, validateDoctorReview, validateReply } from '../health/reviewFormModel';
-import { validateDoctorProfile } from '../health/doctorProfileModel';
+import { ownProfilePatch, validateDoctorProfile } from '../health/doctorProfileModel';
+import {
+  conditionForm,
+  conditionInput,
+  parseAliases,
+  specialtyForm,
+  specialtyInput,
+  validateCondition,
+  validateHideReason,
+  validatePmdcNote,
+  validateSpecialty,
+} from '../health/adminHealthModel';
 import { APPOINTMENT_PAYMENT_STATUSES, APPOINTMENT_STATUSES } from '../../serializers/health/appointmentSerializer';
 import type { DoctorOwnProfile, Medicine } from '../../types/health';
 
@@ -189,5 +200,44 @@ describe('family, records, reviews, profile', () => {
     };
     const e = validateDoctorProfile(p, 2026);
     expect(Object.keys(e).sort()).toEqual(['experience.0.to', 'languages', 'qualification.0.degree', 'secondarySpecialtySlug']);
+
+    // What goes to the server: never the read-only fields, never blank rows.
+    const patch = ownProfilePatch(p);
+    expect(Object.keys(patch)).not.toContain('pmdcNumber');
+    expect(Object.keys(patch)).not.toContain('isListed');
+    expect(Object.keys(patch)).not.toContain('specialtyName');
+    expect(patch.qualifications).toEqual([]);
+    expect(patch.experience).toHaveLength(1);
+  });
+});
+
+describe('adminHealthModel', () => {
+  it('reads other names for a condition', () => {
+    expect(parseAliases(' Pimples, breakouts ,, pimples،دانے\nzits ')).toEqual(['pimples', 'breakouts', 'دانے', 'zits']);
+    expect(parseAliases(Array.from({ length: 20 }, (_, i) => `a${i}`).join(','))).toHaveLength(12);
+  });
+
+  it('validates a specialty and sends clean values', () => {
+    const f = specialtyForm(null, 17);
+    expect(f.sort).toBe('17');
+    expect(Object.keys(validateSpecialty(f)).sort()).toEqual(['name', 'nameUr']);
+    const ok = { ...f, name: ' Rheumatologist ', nameUr: 'ماہر امراض جوڑ', sort: '5' };
+    expect(validateSpecialty(ok)).toEqual({});
+    expect(validateSpecialty({ ...ok, sort: '5.5' })).toHaveProperty('sort');
+    expect(specialtyInput(ok)).toEqual({ name: 'Rheumatologist', nameUr: 'ماہر امراض جوڑ', icon: 'medkit-outline', sort: 5 });
+  });
+
+  it('round-trips a condition through the form', () => {
+    const c = { id: 'cn_acne', slug: 'acne', name: 'Acne', nameUr: null, specialtySlug: 'dermatologist', isCommon: true, aliases: ['pimples', 'breakouts'] };
+    const f = conditionForm(c);
+    expect(f.aliases).toBe('pimples, breakouts');
+    expect(conditionInput(f)).toEqual({ name: 'Acne', nameUr: null, specialtySlug: 'dermatologist', isCommon: true, aliases: ['pimples', 'breakouts'] });
+    expect(validateCondition({ ...f, name: 'A' })).toHaveProperty('name');
+  });
+
+  it('asks for a note and a reason', () => {
+    expect(validatePmdcNote('ok')).toHaveProperty('note');
+    expect(validatePmdcNote('Matched on the register')).toEqual({});
+    expect(validateHideReason('  ')).toHaveProperty('reason');
   });
 });

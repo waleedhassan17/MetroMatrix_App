@@ -6,9 +6,12 @@
 //   pending_approval → Approve · Reject (reason + per-document notes)
 //   approved         → Suspend (reason)
 //   suspended        → Reinstate
+// A doctor is approved only after staff check the PMDC number (Health →
+// Doctor verification); until then Approve is held and the notice links there.
 
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import Toast from 'react-native-toast-message';
@@ -98,12 +101,18 @@ const BusinessReviewScreen: React.FC<Props> = ({ navigation, route }) => {
   const s = useAppSelector(selectBusinessReview);
   const id = route.params.id;
 
-  useEffect(() => {
-    dispatch(loadBusinessAsync(id));
-    return () => {
+  useEffect(
+    () => () => {
       dispatch(resetReview());
-    };
-  }, [id, dispatch]);
+    },
+    [id, dispatch],
+  );
+  // Reload on focus: the PMDC check happens on the Health tab.
+  useFocusEffect(
+    useCallback(() => {
+      dispatch(loadBusinessAsync(id));
+    }, [id, dispatch]),
+  );
 
   const b = s.business;
   const reasonErrors = validateDecisionReason(s.reason);
@@ -156,10 +165,13 @@ const BusinessReviewScreen: React.FC<Props> = ({ navigation, route }) => {
   }
 
   const schema = BUSINESS_FORM_SCHEMA[b.subType];
+  const pmdcHeld = b.subType === 'doctor' && b.pmdcVerified !== true;
+  const checkPmdc = () =>
+    navigation.getParent()?.navigate('HealthAdminTab', { screen: 'DoctorVerification', params: { businessId: b.id }, initial: false });
   const footer =
     b.status === 'pending_approval' ? (
       <>
-        <Button label="Approve" onPress={confirmApprove} loading={s.deciding === 'approve'} fullWidth size="lg" />
+        <Button label="Approve" onPress={confirmApprove} loading={s.deciding === 'approve'} disabled={pmdcHeld || !!s.deciding} fullWidth size="lg" />
         <Button
           label="Reject"
           variant="secondary"
@@ -212,6 +224,18 @@ const BusinessReviewScreen: React.FC<Props> = ({ navigation, route }) => {
           ) : null}
           {b.suspensionReason && b.status === 'suspended' ? (
             <InlineNotice tone="warning" title="Suspension reason" message={b.suspensionReason} />
+          ) : null}
+          {b.subType === 'doctor' && b.status === 'pending_approval' ? (
+            pmdcHeld ? (
+              <InlineNotice
+                tone="warning"
+                title="PMDC number not checked yet"
+                message="Check the registration on the PMDC register before approving this doctor."
+                action={{ label: 'Check PMDC', onPress: checkPmdc }}
+              />
+            ) : (
+              <InlineNotice tone="success" message="PMDC registration checked." />
+            )
           ) : null}
         </Card>
 
