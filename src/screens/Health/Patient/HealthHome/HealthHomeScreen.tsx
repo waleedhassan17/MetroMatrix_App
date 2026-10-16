@@ -111,7 +111,7 @@ const HealthHomeContent: React.FC<Props> = ({ navigation }) => {
                 ))}
                 {i === 2 ? (
                   <SpecialtyTile
-                    specialty={{ id: 'all', slug: 'all', name: 'All specialties', nameUr: 'تمام شعبے', icon: 'grid-outline', doctorCount: 0 }}
+                    specialty={{ id: 'all', slug: 'all', name: 'All specialties', icon: 'grid-outline', doctorCount: 0 }}
                     showCount={false}
                     onPress={() => navigation.navigate('SpecialtyList')}
                   />

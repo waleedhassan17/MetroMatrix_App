@@ -5,7 +5,7 @@ import React from 'react';
 import type { Condition } from '../../types/health';
 import { ChoiceChip } from '../shopping/ChoiceChip';
 
-export const ConditionChip: React.FC<{ condition: Pick<Condition, 'name' | 'nameUr'>; onPress: () => void }> = ({ condition, onPress }) => (
+export const ConditionChip: React.FC<{ condition: Pick<Condition, 'name'>; onPress: () => void }> = ({ condition, onPress }) => (
   <ChoiceChip label={condition.name} onPress={onPress} accessibilityHint={`Doctors who treat ${condition.name}`} />
 );
 

@@ -113,9 +113,9 @@ Detail adds:
 | Method | Path | Query / body | Response |
 |---|---|---|---|
 | GET | `/healthcare/home` | `city?` (default: the patient's default address city, else Lahore) | `{ city, cities[], specialties[8], commonConditions[], availableToday[DoctorCard ≤10], upcoming: Appointment\|null, emergencyNumbers[{ label, number }] }` |
-| GET | `/healthcare/specialties` | `city?` | `Specialty[] { id, slug, name, nameUr, icon, doctorCount }` |
-| GET | `/healthcare/conditions` | `q?` (matches name, Urdu name and aliases) | `Condition[] { id, slug, name, nameUr, specialtySlug, isCommon }` |
-| GET | `/healthcare/search/suggest` | `q` | `{ doctors[{ id, name, specialtyName }≤5], specialties[≤5], conditions[≤6] }`. "pimples" → Acne → dermatologists; Urdu input matches Urdu names. |
+| GET | `/healthcare/specialties` | `city?` | `Specialty[] { id, slug, name, nameUr?, icon, doctorCount }`. The app is in English: `nameUr` is optional and never shown. |
+| GET | `/healthcare/conditions` | `q?` (matches the name and aliases) | `Condition[] { id, slug, name, nameUr, specialtySlug, isCommon }` |
+| GET | `/healthcare/search/suggest` | `q` | `{ doctors[{ id, name, specialtyName }≤5], specialties[≤5], conditions[≤6] }`. "pimples" → Acne → dermatologists. |
 | GET | `/healthcare/doctors` | `specialty, condition, q, city, kind=video\|clinic, availableToday, gender=female\|male, maxFee, minYears, minRating, language, area, sort=recommended\|earliest\|fee_low\|most_reviewed\|most_experienced, page, pageSize` | page of `DoctorCard`. A doctor serves a city with a clinic there, or anywhere by video. With `kind`, fee and availability are for that kind. |
 | GET | `/healthcare/doctors/:id` | | `DoctorProfile` (listed doctors only) |
 | GET | `/healthcare/doctors/:id/locations/:locationId/days` | `from?` (`YYYY-MM-DD`), `days` (default 14) | `[{ date, slotCount }]` |
@@ -197,8 +197,8 @@ Detail adds:
 | Method | Path | Body | Response |
 |---|---|---|---|
 | GET | `/overview` | | `{ listedDoctors, bySpecialty[{ name, count }], bookingsToday, cancelledToday, noShowsToday, pendingVerification }` |
-| GET / POST / PATCH / DELETE | `/specialties[/:id]` | `{ name, nameUr, icon, sort }` | `Specialty + sort` (`409 SPECIALTY_EXISTS`, `409 SPECIALTY_IN_USE`) |
-| GET / POST / PATCH / DELETE | `/conditions[/:id]` | `{ name, nameUr, specialtySlug, isCommon, aliases[] }`; `q?` on GET | `Condition + aliases` |
+| GET / POST / PATCH / DELETE | `/specialties[/:id]` | `{ name, icon, sort }` (`nameUr` optional) | `Specialty + sort` (`409 SPECIALTY_EXISTS`, `409 SPECIALTY_IN_USE`) |
+| GET / POST / PATCH / DELETE | `/conditions[/:id]` | `{ name, specialtySlug, isCommon, aliases[] }` (`nameUr` optional); `q?` on GET | `Condition + aliases` |
 | GET | `/doctors` | `status=pending\|all` | `[{ businessId, name, specialty, city, pmdcNumber, pmdcVerified, pmdcNote, pmdcVerifiedAt, status, submittedAt, documents[] }]` |
 | POST | `/doctors/:businessId/pmdc-verify` | `{ note }` | the same row |
 | GET | `/reviews` | `hidden?`, `page` | page of `Review` (with `doctorName`) |
@@ -249,4 +249,4 @@ While `BACKEND_URL` is empty, the dummy API answers all of the above. It differs
 | `pmdc@metromatrix.app` | Dr. Sana Iqbal | Waiting for approval with the PMDC number unchecked (admin → Health → Doctor verification) |
 | `admin@metromatrix.app` (`Admin2026`, code `123456`) | Staff | Health tab |
 
-The catalogue has 16 specialties and 40 conditions in English and Urdu, plus 23 listed fictional doctors in Lahore, Karachi and Islamabad. Doctors show initials only: no stock photos of strangers presented as doctors.
+The catalogue has 16 specialties and 40 conditions, plus 23 listed fictional doctors in Lahore, Karachi and Islamabad. Doctors show initials only: no stock photos of strangers presented as doctors.

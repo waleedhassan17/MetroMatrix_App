@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Admin: conditions
 // ═══════════════════════════════════════════════════════
-// What patients type when they don't know the specialty: each condition, its
-// Urdu name, the other words people use ("pimples" for Acne), the specialty
-// it leads to, and whether Health home shows it as common.
+// What patients type when they don't know the specialty: each condition, the
+// other words people use ("pimples" for Acne), the specialty it leads to, and
+// whether Health home shows it as common.
 
 import React, { useEffect } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
@@ -83,7 +83,7 @@ const ConditionsScreen: React.FC<Props> = () => {
     ]);
 
   const subtitle = (c: AdminCondition) =>
-    [c.nameUr, specialtyName(c.specialtySlug) ?? 'No specialty', c.aliases.length ? `Also: ${c.aliases.slice(0, 4).join(', ')}` : null].filter(Boolean).join(' · ');
+    [specialtyName(c.specialtySlug) ?? 'No specialty', c.aliases.length ? `Also: ${c.aliases.slice(0, 4).join(', ')}` : null].filter(Boolean).join(' · ');
 
   const aliasCount = f ? parseAliases(f.aliases).length : 0;
 
@@ -127,12 +127,11 @@ const ConditionsScreen: React.FC<Props> = () => {
         title={f?.id ? 'Edit condition' : 'New condition'}
         footer={<Button label="Save" loading={s.busy} onPress={save} fullWidth />}>
         <TextField label="Condition" value={f?.name ?? ''} onChangeText={t => dispatch(setConditionForm({ name: t.slice(0, 60) }))} placeholder="Acne" error={errors.name} />
-        <TextField label="Urdu name (optional)" value={f?.nameUr ?? ''} onChangeText={t => dispatch(setConditionForm({ nameUr: t.slice(0, 60) }))} placeholder="کیل مہاسے" />
         <TextField
           label="Other names patients use"
           value={f?.aliases ?? ''}
           onChangeText={t => dispatch(setConditionForm({ aliases: t.slice(0, 400) }))}
-          placeholder="pimples, breakouts, دانے"
+          placeholder="pimples, breakouts, zits"
           multiline
           helper={`Separate them with commas. ${aliasCount} of ${MAX_ALIASES}.`}
           error={errors.aliases}

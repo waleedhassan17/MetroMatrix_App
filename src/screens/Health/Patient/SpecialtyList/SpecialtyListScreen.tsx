@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — All specialties
 // ═══════════════════════════════════════════════════════
-// Every specialty as a tile (English and Urdu, with how many doctors there
-// are in your city); type to narrow, in either language.
+// Every specialty as a tile, with how many doctors there are in your city;
+// type to narrow.
 
 import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -47,7 +47,7 @@ const SpecialtyListContent: React.FC<Props> = () => {
   }, [dispatch, city]);
 
   const q = s.query.trim().toLowerCase();
-  const shown = s.items.filter(sp => !q || sp.name.toLowerCase().includes(q) || sp.nameUr.includes(s.query.trim()));
+  const shown = s.items.filter(sp => !q || sp.name.toLowerCase().includes(q));
   const rows: Specialty[][] = [];
   for (let i = 0; i < shown.length; i += COLS) rows.push(shown.slice(i, i + COLS));
 

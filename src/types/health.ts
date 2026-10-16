@@ -15,8 +15,8 @@ export type DoctorBadge = 'pmdc_verified' | 'top_booked';
 export interface SpecialtyRef {
   slug: string;
   name: string;
-  /** Urdu name, shown after the English one. */
-  nameUr: string;
+  /** The API may send an Urdu name; the app is in English and doesn't show it. */
+  nameUr?: string;
 }
 
 export interface Specialty extends SpecialtyRef {
@@ -30,7 +30,8 @@ export interface Condition {
   id: string;
   slug: string;
   name: string;
-  nameUr: string | null;
+  /** Sent by the API, not shown (the app is in English). */
+  nameUr?: string | null;
   specialtySlug: string | null;
   isCommon: boolean;
 }
@@ -718,13 +719,13 @@ export interface AdminSpecialty extends Specialty {
   sort: number;
 }
 
-export type AdminSpecialtyInput = Pick<AdminSpecialty, 'name' | 'nameUr' | 'icon' | 'sort'>;
+export type AdminSpecialtyInput = Pick<AdminSpecialty, 'name' | 'icon' | 'sort'>;
 
 export interface AdminCondition extends Condition {
   aliases: string[];
 }
 
-export type AdminConditionInput = Pick<AdminCondition, 'name' | 'nameUr' | 'specialtySlug' | 'isCommon' | 'aliases'>;
+export type AdminConditionInput = Pick<AdminCondition, 'name' | 'specialtySlug' | 'isCommon' | 'aliases'>;
 
 export interface AdminDoctor {
   businessId: string;

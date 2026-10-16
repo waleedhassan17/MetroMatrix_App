@@ -82,7 +82,7 @@ const HealthOverviewScreen: React.FC<Props> = ({ navigation }) => {
         <Divider />
         <ListRow title="Reviews" subtitle="Hide a review that breaks the rules" leftIcon="chatbox-ellipses-outline" onPress={() => navigation.navigate('ReviewModeration')} />
         <Divider />
-        <ListRow title="Specialties" subtitle="What patients browse, in English and Urdu" leftIcon="grid-outline" onPress={() => navigation.navigate('Specialties')} />
+        <ListRow title="Specialties" subtitle="What patients browse, and in what order" leftIcon="grid-outline" onPress={() => navigation.navigate('Specialties')} />
         <Divider />
         <ListRow title="Conditions" subtitle="Search words and the specialty each leads to" leftIcon="list-outline" onPress={() => navigation.navigate('Conditions')} />
         <Divider />

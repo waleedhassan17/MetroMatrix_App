@@ -1538,8 +1538,7 @@ export function registerHealthRoutes(kit: HealthKit) {
 
   const specialtyInput = (b: Record<string, any>) => {
     const fields: Record<string, string> = {};
-    if (text(b.name).length < 3) fields.name = 'Enter the English name';
-    if (text(b.nameUr).length < 2) fields.nameUr = 'Enter the Urdu name';
+    if (text(b.name).length < 3) fields.name = 'Enter the name';
     if (!text(b.icon)) fields.icon = 'Choose an icon';
     if (Object.keys(fields).length) throw bad('Check the specialty.', fields);
     return { name: text(b.name), nameUr: text(b.nameUr), icon: text(b.icon), sort: Math.round(Number(b.sort) || 99) };

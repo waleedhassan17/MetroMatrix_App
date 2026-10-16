@@ -1,5 +1,5 @@
-// SpecialtyTile — a line icon in a soft accent circle, the English name, the
-// Urdu name under it (right to left), and how many doctors there are.
+// SpecialtyTile — a line icon in a soft accent circle, the name, and how many
+// doctors there are.
 
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -21,7 +21,6 @@ const makeStyles = ({ colors, space, radius, size }: Theme) =>
       minHeight: size.touch,
     },
     well: { width: size.specialtyWell, height: size.specialtyWell, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-    ur: { writingDirection: 'rtl' },
   });
 
 export const SpecialtyTile: React.FC<{ specialty: Specialty; onPress: () => void; showCount?: boolean }> = ({ specialty: s, onPress, showCount = true }) => {
@@ -39,11 +38,6 @@ export const SpecialtyTile: React.FC<{ specialty: Specialty; onPress: () => void
       <AppText variant="small" align="center" numberOfLines={2}>
         {s.name}
       </AppText>
-      {s.nameUr ? (
-        <AppText variant="caption" tone="muted" align="center" style={styles.ur} numberOfLines={1}>
-          {s.nameUr}
-        </AppText>
-      ) : null}
       {showCount ? (
         <AppText variant="micro" tone="faint">
           {s.doctorCount} {s.doctorCount === 1 ? 'doctor' : 'doctors'}

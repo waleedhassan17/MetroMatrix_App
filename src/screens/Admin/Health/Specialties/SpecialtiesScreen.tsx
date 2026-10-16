@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Admin: specialties
 // ═══════════════════════════════════════════════════════
-// The specialties patients browse, in the order they see them: English and
-// Urdu names, a line icon, how many doctors are listed. Add, edit, move up
+// The specialties patients browse, in the order they see them: the name, a
+// line icon, how many doctors are listed. Add, edit, move up
 // and down; one with doctors listed under it can't be deleted.
 
 import React, { useEffect } from 'react';
@@ -111,9 +111,6 @@ const SpecialtiesScreen: React.FC<Props> = () => {
                 </View>
                 <View style={styles.text}>
                   <AppText variant="bodyStrong">{x.name}</AppText>
-                  <AppText variant="small" tone="muted">
-                    {x.nameUr}
-                  </AppText>
                   <AppText variant="caption" tone="muted">
                     {x.doctorCount} {x.doctorCount === 1 ? 'doctor' : 'doctors'} listed
                   </AppText>
@@ -147,8 +144,7 @@ const SpecialtiesScreen: React.FC<Props> = () => {
         onClose={() => dispatch(openSpecialtySheet(null))}
         title={f?.id ? 'Edit specialty' : 'New specialty'}
         footer={<Button label="Save" loading={s.busy} onPress={save} fullWidth />}>
-        <TextField label="English name" value={f?.name ?? ''} onChangeText={t => dispatch(setSpecialtyForm({ name: t.slice(0, 40) }))} placeholder="Dermatologist" error={errors.name} />
-        <TextField label="Urdu name" value={f?.nameUr ?? ''} onChangeText={t => dispatch(setSpecialtyForm({ nameUr: t.slice(0, 40) }))} placeholder="ماہر امراض جلد" error={errors.nameUr} />
+        <TextField label="Name" value={f?.name ?? ''} onChangeText={t => dispatch(setSpecialtyForm({ name: t.slice(0, 40) }))} placeholder="Dermatologist" error={errors.name} />
         <TextField
           label="Place in the list"
           value={f?.sort ?? ''}

@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════
 // DoctorCard — what a patient needs to choose a doctor, at a glance
 // ═══════════════════════════════════════════════════════
-// Photo, name with the verified tick, specialty (Urdu after a dot), one line
+// Photo, name with the verified tick, specialty (in the accent, as the FYP's), one line
 // of qualifications, then rating · experience · measured wait (only when
 // the API has it), when they're next free and the starting fee. Footer
 // buttons only for what the doctor offers. `compact` is the rail card.
@@ -99,11 +99,8 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({
                 <IonIcon name="checkmark-circle" size="sm" color={service.accent} />
               ) : null}
             </View>
-            <AppText variant="small" numberOfLines={1}>
+            <AppText variant="small" tone="accentDeep" numberOfLines={1}>
               {d.specialty.name}
-              {d.specialty.nameUr ? (
-                <AppText variant="small" tone="muted">{` · ${d.specialty.nameUr}`}</AppText>
-              ) : null}
             </AppText>
             {d.qualifications && !compact ? (
               <AppText variant="caption" tone="muted" numberOfLines={1}>

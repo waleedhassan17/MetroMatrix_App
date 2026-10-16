@@ -17,7 +17,6 @@ export interface SpecialtyForm {
   /** '' for a new one. */
   id: string;
   name: string;
-  nameUr: string;
   icon: string;
   sort: string;
 }
@@ -25,7 +24,6 @@ export interface SpecialtyForm {
 export interface ConditionForm {
   id: string;
   name: string;
-  nameUr: string;
   specialtySlug: string | null;
   isCommon: boolean;
   /** Comma-separated, as typed. */
@@ -34,18 +32,18 @@ export interface ConditionForm {
 
 export const specialtyForm = (s: AdminSpecialty | null, nextSort: number): SpecialtyForm =>
   s
-    ? { id: s.id, name: s.name, nameUr: s.nameUr, icon: s.icon, sort: String(s.sort) }
-    : { id: '', name: '', nameUr: '', icon: SPECIALTY_ICONS[0], sort: String(nextSort) };
+    ? { id: s.id, name: s.name, icon: s.icon, sort: String(s.sort) }
+    : { id: '', name: '', icon: SPECIALTY_ICONS[0], sort: String(nextSort) };
 
 export const conditionForm = (c: AdminCondition | null): ConditionForm =>
   c
-    ? { id: c.id, name: c.name, nameUr: c.nameUr ?? '', specialtySlug: c.specialtySlug, isCommon: c.isCommon, aliases: c.aliases.join(', ') }
-    : { id: '', name: '', nameUr: '', specialtySlug: null, isCommon: false, aliases: '' };
+    ? { id: c.id, name: c.name, specialtySlug: c.specialtySlug, isCommon: c.isCommon, aliases: c.aliases.join(', ') }
+    : { id: '', name: '', specialtySlug: null, isCommon: false, aliases: '' };
 
-/** "pimples, Breakouts ,, دانے" → ['pimples', 'breakouts', 'دانے'] (deduped, lower-cased, at most 12). */
+/** "pimples, Breakouts ,, zits" → ['pimples', 'breakouts', 'zits'] (deduped, lower-cased, at most 12). */
 export const parseAliases = (raw: string): string[] => {
   const out: string[] = [];
-  for (const part of raw.split(/[,،\n]/)) {
+  for (const part of raw.split(/[,\n]/)) {
     const a = part.trim().replace(/\s+/g, ' ').toLowerCase();
     if (a && !out.includes(a)) out.push(a);
   }
@@ -54,8 +52,7 @@ export const parseAliases = (raw: string): string[] => {
 
 export const validateSpecialty = (f: SpecialtyForm): ValidationErrors => {
   const errors: ValidationErrors = {};
-  if (f.name.trim().length < 3) errors.name = 'Enter the English name';
-  if (f.nameUr.trim().length < 2) errors.nameUr = 'Enter the Urdu name';
+  if (f.name.trim().length < 3) errors.name = 'Enter the name';
   if (!f.icon) errors.icon = 'Choose an icon';
   const sort = Number(f.sort);
   if (!/^\d{1,3}$/.test(f.sort.trim()) || !Number.isInteger(sort)) errors.sort = 'A whole number, 0 to 999';
@@ -64,7 +61,6 @@ export const validateSpecialty = (f: SpecialtyForm): ValidationErrors => {
 
 export const specialtyInput = (f: SpecialtyForm): AdminSpecialtyInput => ({
   name: f.name.trim(),
-  nameUr: f.nameUr.trim(),
   icon: f.icon,
   sort: Number(f.sort.trim()),
 });
@@ -72,13 +68,12 @@ export const specialtyInput = (f: SpecialtyForm): AdminSpecialtyInput => ({
 export const validateCondition = (f: ConditionForm): ValidationErrors => {
   const errors: ValidationErrors = {};
   if (f.name.trim().length < 2) errors.name = 'Enter the condition';
-  if (f.aliases.split(/[,،\n]/).filter(a => a.trim()).length > MAX_ALIASES) errors.aliases = `At most ${MAX_ALIASES} other names`;
+  if (f.aliases.split(/[,\n]/).filter(a => a.trim()).length > MAX_ALIASES) errors.aliases = `At most ${MAX_ALIASES} other names`;
   return errors;
 };
 
 export const conditionInput = (f: ConditionForm): AdminConditionInput => ({
   name: f.name.trim(),
-  nameUr: f.nameUr.trim() || null,
   specialtySlug: f.specialtySlug,
   isCommon: f.isCommon,
   aliases: parseAliases(f.aliases),

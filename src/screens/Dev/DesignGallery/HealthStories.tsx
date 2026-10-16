@@ -39,7 +39,7 @@ const DOCTOR: DoctorCardData = {
   name: 'Dr. Ayesha Siddiqui',
   photoUrl: null,
   gender: 'female',
-  specialty: { slug: 'dermatologist', name: 'Dermatologist', nameUr: 'ماہر امراض جلد' },
+  specialty: { slug: 'dermatologist', name: 'Dermatologist' },
   qualifications: 'MBBS, FCPS (Dermatology)',
   yearsExperience: 13,
   rating: 4.9,
@@ -211,13 +211,13 @@ const Stories: React.FC = () => {
       <Section title="Health · PatientPicker, tiles, chips">
         <PatientPicker family={FAMILY} selected={who} onSelect={setWho} onAdd={() => undefined} />
         <View style={styles.tiles}>
-          <SpecialtyTile specialty={{ id: '1', slug: 'dermatologist', name: 'Dermatologist', nameUr: 'ماہر امراض جلد', icon: 'body-outline', doctorCount: 12 }} onPress={() => undefined} />
-          <SpecialtyTile specialty={{ id: '2', slug: 'gynecologist', name: 'Gynecologist', nameUr: 'ماہر امراض نسواں', icon: 'woman-outline', doctorCount: 8 }} onPress={() => undefined} />
-          <SpecialtyTile specialty={{ id: '3', slug: 'pediatrician', name: 'Pediatrician', nameUr: 'ماہر امراض اطفال', icon: 'happy-outline', doctorCount: 9 }} onPress={() => undefined} />
+          <SpecialtyTile specialty={{ id: '1', slug: 'dermatologist', name: 'Dermatologist', icon: 'body-outline', doctorCount: 12 }} onPress={() => undefined} />
+          <SpecialtyTile specialty={{ id: '2', slug: 'gynecologist', name: 'Gynecologist', icon: 'woman-outline', doctorCount: 8 }} onPress={() => undefined} />
+          <SpecialtyTile specialty={{ id: '3', slug: 'pediatrician', name: 'Pediatrician', icon: 'happy-outline', doctorCount: 9 }} onPress={() => undefined} />
         </View>
         <View style={styles.row}>
           {['Acne', 'Fever', 'Diabetes', 'Back pain'].map(n => (
-            <ConditionChip key={n} condition={{ name: n, nameUr: null }} onPress={() => undefined} />
+            <ConditionChip key={n} condition={{ name: n }} onPress={() => undefined} />
           ))}
         </View>
       </Section>

@@ -1,5 +1,5 @@
 // MetroMatrix — Health search slice: the text being typed and its live
-// suggestions (doctors, specialties, conditions — English or Urdu).
+// suggestions (doctors, specialties, conditions).
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';

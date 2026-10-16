@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Doctor profile (booking lives here)
 // ═══════════════════════════════════════════════════════
-// One scroll. Who the doctor is (verified, specialty in English and Urdu,
+// One scroll. Who the doctor is (verified, specialty,
 // qualifications, experience, languages), measured stats, then "Choose how
 // to see the doctor" — video and each clinic as rows with their own fee and
 // next free time — and that row's days and times right under it. Tap a
@@ -65,7 +65,6 @@ const makeStyles = ({ colors, space, radius, gutter }: Theme) =>
   StyleSheet.create({
     hero: { flexDirection: 'row', gap: space.s16 },
     heroText: { flex: 1, gap: space.s4 },
-    ur: { writingDirection: 'rtl' },
     block: { gap: space.s12 },
     bleed: { marginHorizontal: -gutter },
     railContent: { paddingHorizontal: gutter, gap: space.s12 },
@@ -172,11 +171,6 @@ const DoctorProfileContent: React.FC<Props> = ({ route, navigation }) => {
             <View style={styles.heroText}>
               <DoctorBadges badges={d.badges} />
               <AppText variant="bodyStrong">{d.specialty.name}</AppText>
-              {d.specialty.nameUr ? (
-                <AppText variant="small" tone="muted" style={styles.ur}>
-                  {d.specialty.nameUr}
-                </AppText>
-              ) : null}
               {d.qualifications ? <AppText variant="small">{d.qualifications}</AppText> : null}
               <AppText variant="small" tone="muted">
                 {[d.yearsExperience ? `${d.yearsExperience} years experience` : null, d.languages.length ? `Speaks ${d.languages.join(', ')}` : null].filter(Boolean).join(' · ')}
@@ -259,7 +253,7 @@ const DoctorProfileContent: React.FC<Props> = ({ route, navigation }) => {
               <HealthSection title="Conditions treated" />
               <View style={styles.tags}>
                 {d.conditions.map(c => (
-                  <ConditionChip key={c.slug} condition={{ name: c.name, nameUr: null }} onPress={() => nav.openDoctors({ condition: c.slug, title: `Doctors who treat ${c.name}` })} />
+                  <ConditionChip key={c.slug} condition={{ name: c.name }} onPress={() => nav.openDoctors({ condition: c.slug, title: `Doctors who treat ${c.name}` })} />
                 ))}
               </View>
             </View>

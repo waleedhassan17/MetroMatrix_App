@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Conditions A–Z
 // ═══════════════════════════════════════════════════════
-// Patients often know "acne", not "dermatologist": every condition with its
-// Urdu name, grouped by letter; type a word you use ("pimples") to find it.
+// Patients often know "acne", not "dermatologist": every condition, grouped
+// by letter; type a word you use ("pimples") to find it.
 
 import React, { useEffect } from 'react';
 import { Pressable, SectionList, StyleSheet, View } from 'react-native';
@@ -27,7 +27,6 @@ const makeStyles = ({ colors, space, size, gutter }: Theme) =>
     row: { flexDirection: 'row', alignItems: 'center', gap: space.s12, minHeight: size.touch, paddingVertical: space.s12 },
     text: { flex: 1, gap: space.s0 },
     state: { paddingTop: space.s16 },
-    ur: { writingDirection: 'rtl' },
   });
 
 const ConditionListScreen: React.FC<Props> = props => (
@@ -84,11 +83,6 @@ const ConditionListContent: React.FC<Props> = () => {
             accessibilityLabel={`${item.name}. Doctors who treat it`}>
             <View style={styles.text}>
               <AppText variant="body">{item.name}</AppText>
-              {item.nameUr ? (
-                <AppText variant="caption" tone="muted" style={styles.ur}>
-                  {item.nameUr}
-                </AppText>
-              ) : null}
             </View>
             <IonIcon name="chevron-forward" size="md" color={colors.inkFaint} />
           </Pressable>

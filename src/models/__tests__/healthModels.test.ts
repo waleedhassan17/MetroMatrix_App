@@ -213,25 +213,25 @@ describe('family, records, reviews, profile', () => {
 
 describe('adminHealthModel', () => {
   it('reads other names for a condition', () => {
-    expect(parseAliases(' Pimples, breakouts ,, pimples،دانے\nzits ')).toEqual(['pimples', 'breakouts', 'دانے', 'zits']);
+    expect(parseAliases(' Pimples, breakouts ,, pimples\nzits ')).toEqual(['pimples', 'breakouts', 'zits']);
     expect(parseAliases(Array.from({ length: 20 }, (_, i) => `a${i}`).join(','))).toHaveLength(12);
   });
 
   it('validates a specialty and sends clean values', () => {
     const f = specialtyForm(null, 17);
     expect(f.sort).toBe('17');
-    expect(Object.keys(validateSpecialty(f)).sort()).toEqual(['name', 'nameUr']);
-    const ok = { ...f, name: ' Rheumatologist ', nameUr: 'ماہر امراض جوڑ', sort: '5' };
+    expect(Object.keys(validateSpecialty(f)).sort()).toEqual(['name']);
+    const ok = { ...f, name: ' Rheumatologist ', sort: '5' };
     expect(validateSpecialty(ok)).toEqual({});
     expect(validateSpecialty({ ...ok, sort: '5.5' })).toHaveProperty('sort');
-    expect(specialtyInput(ok)).toEqual({ name: 'Rheumatologist', nameUr: 'ماہر امراض جوڑ', icon: 'medkit-outline', sort: 5 });
+    expect(specialtyInput(ok)).toEqual({ name: 'Rheumatologist', icon: 'medkit-outline', sort: 5 });
   });
 
   it('round-trips a condition through the form', () => {
     const c = { id: 'cn_acne', slug: 'acne', name: 'Acne', nameUr: null, specialtySlug: 'dermatologist', isCommon: true, aliases: ['pimples', 'breakouts'] };
     const f = conditionForm(c);
     expect(f.aliases).toBe('pimples, breakouts');
-    expect(conditionInput(f)).toEqual({ name: 'Acne', nameUr: null, specialtySlug: 'dermatologist', isCommon: true, aliases: ['pimples', 'breakouts'] });
+    expect(conditionInput(f)).toEqual({ name: 'Acne', specialtySlug: 'dermatologist', isCommon: true, aliases: ['pimples', 'breakouts'] });
     expect(validateCondition({ ...f, name: 'A' })).toHaveProperty('name');
   });
 

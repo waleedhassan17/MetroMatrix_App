@@ -1,4 +1,4 @@
-// MetroMatrix — Conditions A–Z, filtered by name, Urdu name or the word patients use.
+// MetroMatrix — Conditions A–Z, filtered by name or the word patients use.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
