@@ -11,6 +11,7 @@ import { useBack } from '@hooks/useBack';
 import { hasErrors, validateChangePassword } from '@models/authModel';
 import { visibleErrors } from '@utils/formErrors';
 import { haptics } from '@utils/haptics';
+import { PageHeaderScope } from '@theme/index';
 import { Button, Card, InlineNotice, PasswordStrength, ScreenShell, TextField } from '@custom/index';
 import type { AccountStackParamList } from '@/types';
 import { selectUser } from '../../Auth/authSlice';
@@ -18,7 +19,13 @@ import { changePasswordAsync, resetChangePassword, selectChangePassword, setFiel
 
 type Props = NativeStackScreenProps<AccountStackParamList, 'ChangePassword'>;
 
-const ChangePasswordScreen: React.FC<Props> = () => {
+const ChangePasswordScreen: React.FC<Props> = props => (
+  <PageHeaderScope>
+    <ChangePasswordContent {...props} />
+  </PageHeaderScope>
+);
+
+const ChangePasswordContent: React.FC<Props> = () => {
   const { back } = useBack({ name: 'Profile' });
   const dispatch = useAppDispatch();
   const user = useAppSelector(selectUser);

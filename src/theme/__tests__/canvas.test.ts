@@ -2,7 +2,7 @@
 // a store, and behind the navigators (no grey default between screens).
 
 import { SERVICE_NAMES } from '../services';
-import { getTheme, navigationTheme } from '../theme';
+import { getTheme, navigationTheme, withGradientHeader, headerGradient } from '../theme';
 import { storeTheme } from '../StoreBrandScope';
 
 const WHITE = '#FFFFFF';
@@ -23,6 +23,15 @@ describe('screen ground', () => {
     const tones = Object.fromEntries(SERVICE_NAMES.map(n => [n, getTheme(n).header.tone]));
     expect(tones).toEqual({ shopping: 'gradient', healthcare: 'gradient', food: 'surface', neutral: 'surface' });
     expect(storeTheme('#C25100', '#FFFFFF').header.tone).toBe('surface');
+  });
+
+  it('Orders and the account pages wear the gradient header in their scope colour, on the same white', () => {
+    const neutral = withGradientHeader(getTheme('neutral'));
+    expect(neutral.header).toEqual({ tone: 'gradient', gradient: headerGradient('neutral') });
+    expect(neutral.colors.canvas.toUpperCase()).toBe(WHITE);
+    // Cached, so styles memoise; a gradient theme is returned as it is.
+    expect(withGradientHeader(getTheme('neutral'))).toBe(neutral);
+    expect(withGradientHeader(getTheme('shopping'))).toBe(getTheme('shopping'));
   });
 
   it('Health is the clinical scale: body 15, touch 48, text to 150%', () => {

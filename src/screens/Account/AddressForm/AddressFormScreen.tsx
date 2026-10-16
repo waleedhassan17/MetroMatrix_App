@@ -14,7 +14,7 @@ import { useBack } from '@hooks/useBack';
 import { ADDRESS_LABELS, emptyAddressForm, fromAddress, validateAddressForm, type AddressForm } from '@models/addressModel';
 import { hasErrors } from '@models/authModel';
 import { CITIES } from '@models/businessModel';
-import { useStyles, type Theme } from '@theme/index';
+import { PageHeaderScope, useStyles, type Theme } from '@theme/index';
 import {
   BottomSheetPicker,
   Button,
@@ -47,7 +47,13 @@ const makeStyles = ({ space }: Theme) =>
     chips: { flexDirection: 'row', gap: space.s8 },
   });
 
-const AddressFormScreen: React.FC<Props> = ({ route }) => {
+const AddressFormScreen: React.FC<Props> = props => (
+  <PageHeaderScope>
+    <AddressFormContent {...props} />
+  </PageHeaderScope>
+);
+
+const AddressFormContent: React.FC<Props> = ({ route }) => {
   const { back } = useBack({ name: 'AddressBook' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);

@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { useStyles, useTheme, type Theme } from '../theme';
+import { useStyles, useTheme, type RowTint, type Theme } from '../theme';
 import { AppText } from './AppText';
 import { IonIcon, type IonName } from './Icon';
 
@@ -13,6 +13,8 @@ export interface ListRowProps {
   subtitle?: string;
   /** Ionicons glyph, shown in a tinted tile. */
   leftIcon?: IonName;
+  /** The tile's colour: the service accent unless a categorical tint is given (profile menus). */
+  tint?: RowTint;
   left?: React.ReactNode;
   right?: React.ReactNode;
   value?: string;
@@ -45,6 +47,7 @@ export const ListRow: React.FC<ListRowProps> = ({
   title,
   subtitle,
   leftIcon,
+  tint,
   left,
   right,
   value,
@@ -54,7 +57,12 @@ export const ListRow: React.FC<ListRowProps> = ({
   accessibilityHint,
 }) => {
   const styles = useStyles(makeStyles);
-  const { colors, service, opacity } = useTheme();
+  const { colors, service, opacity, rowTint } = useTheme();
+  const tile = destructive
+    ? { bg: colors.dangerSoft, fg: colors.danger }
+    : tint
+      ? rowTint[tint]
+      : { bg: service.accentSoft, fg: service.accent };
   return (
     <Pressable
       onPress={onPress}
@@ -65,16 +73,8 @@ export const ListRow: React.FC<ListRowProps> = ({
       style={({ pressed }) => [styles.root, pressed && { opacity: opacity.pressed }]}>
       {left ??
         (leftIcon ? (
-          <View
-            style={[
-              styles.tile,
-              { backgroundColor: destructive ? colors.dangerSoft : service.accentSoft },
-            ]}>
-            <IonIcon
-              name={leftIcon}
-              size="md"
-              color={destructive ? colors.danger : service.accent}
-            />
+          <View style={[styles.tile, { backgroundColor: tile.bg }]}>
+            <IonIcon name={leftIcon} size="md" color={tile.fg} />
           </View>
         ) : null)}
       <View style={styles.body}>

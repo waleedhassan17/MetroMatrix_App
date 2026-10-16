@@ -66,6 +66,10 @@ export interface Palette {
   onScrim: string;
   /** Secondary text on a photo or dark ground (the FYP's inkInverseSoft — 90% keeps AA). */
   onScrimSoft: string;
+  /** A soft white ground on the gradient header: the avatar's well, the role pill. */
+  onScrimTint: string;
+  /** The white ring around the avatar on the gradient header. */
+  onScrimLine: string;
   /** Badges floating on a photo: near-opaque white, so they read on any image. */
   glass: string;
   /** Ground of the full-screen document viewer. */
@@ -107,6 +111,8 @@ const light: Palette = {
   scrimDeep: 'rgba(28, 25, 23, 0.88)',
   onScrim: '#FFFFFF',
   onScrimSoft: 'rgba(255, 255, 255, 0.9)',
+  onScrimTint: 'rgba(255, 255, 255, 0.18)',
+  onScrimLine: 'rgba(255, 255, 255, 0.35)',
   glass: 'rgba(255, 255, 255, 0.94)',
   viewer: '#0C0A09',
   roleProvider: '#6366F1',
@@ -114,6 +120,22 @@ const light: Palette = {
 };
 
 export const PALETTES: Record<ColorMode, Palette> = { light };
+
+// ─── Row tints — the FYP profile's categorical icon chips ──
+// A menu of a dozen rows in one colour is a wall; these let someone find
+// "Addresses" by its colour without reading. Fixed across services, like a
+// settings app's icons (the FYP's ROW_TINT). The FYP's hues, deepened where
+// they miss 3:1 on their own ground (rose, amber) so the glyph still reads.
+export type RowTint = 'violet' | 'blue' | 'rose' | 'amber' | 'red' | 'grey';
+
+export const ROW_TINTS: Record<RowTint, { fg: string; bg: string }> = {
+  violet: { fg: '#7C3AED', bg: '#EDE9FE' },
+  blue: { fg: '#2563EB', bg: '#DBEAFE' },
+  rose: { fg: '#DB2777', bg: '#FCE7F3' },
+  amber: { fg: '#B45309', bg: '#FEF3C7' },
+  red: { fg: light.danger, bg: light.dangerSoft },
+  grey: { fg: light.inkMuted, bg: light.surfaceSunk },
+};
 
 // ─── Space — 4-pt scale ─────────────────────────────
 export const space = {
@@ -157,6 +179,8 @@ export const size = {
   /** hero: the glyph on a kitchen card's art panel. */
   icon: { sm: 16, md: 20, lg: 24, xl: 32, hero: 56 },
   avatar: { sm: 32, md: 44, lg: 64, xl: 96 },
+  /** The white ring around the avatar on the profile hero (the FYP's 3 px). */
+  avatarRing: 3,
   /** Role / provider card icon tile. */
   tile: 64,
   otpCell: { width: 48, height: 56 },

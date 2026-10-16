@@ -17,7 +17,7 @@ import { listAppointments } from '@networks/health/appointmentsNetwork';
 import { APPOINTMENT_SEGMENTS } from '@models/health/appointmentStatusModel';
 import { useAppointmentAction } from '@components/health/HealthParts';
 import { groupHeadline } from '@models/shopping/orderStatusModel';
-import { ServiceScope, storePalette, useStyles, useTheme, type Theme } from '@theme/index';
+import { PageHeaderScope, ServiceScope, storePalette, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, AppointmentCard, Card, ChoiceChip, EmptyState, InlineNotice, ScreenShell, SegmentTabs, SkeletonLines, StatusPill, storeInitials } from '@custom/index';
 import type { AppointmentSegment, OrderGroupSummary, OrderSegment, OrdersStackParamList } from '@/types';
 import { cdn } from '@utils/cdn';
@@ -163,7 +163,13 @@ const Appointments: React.FC<{ segment: AppointmentSegment; onOpen: (code: strin
   );
 };
 
-const OrdersScreen: React.FC<Props> = ({ navigation, route }) => {
+const OrdersScreen: React.FC<Props> = props => (
+  <PageHeaderScope>
+    <OrdersContent {...props} />
+  </PageHeaderScope>
+);
+
+const OrdersContent: React.FC<Props> = ({ navigation, route }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const v = useAppSelector(selectOrdersView);
@@ -187,7 +193,7 @@ const OrdersScreen: React.FC<Props> = ({ navigation, route }) => {
   const toShop = () => home('ShoppingHome');
 
   return (
-    <ScreenShell title="Orders" scroll={false}>
+    <ScreenShell title="Orders" subtitle="Shopping, appointments and Food Court" scroll={false}>
       <SegmentTabs options={SERVICES} value={v.service} onChange={k => dispatch(setOrdersService(k))} accessibilityLabel="Service" />
       {v.service === 'shop' ? (
         <>

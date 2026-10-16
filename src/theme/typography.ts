@@ -28,7 +28,8 @@ export type TypeRole =
   | 'caption'
   | 'chip'
   | 'tag'
-  | 'micro';
+  | 'micro'
+  | 'overline';
 
 export type TypeScale = Record<TypeRole, TextStyle>;
 
@@ -78,6 +79,8 @@ export const type: TypeScale = {
   tag: font('700', 10, 12, 0.5),
   /** Counters and badges only. (T.micro) */
   micro: font('600', 11, 14),
+  /** Menu section titles, set in capitals: ACCOUNT, HEALTH (the FYP profile's sectionTitle). */
+  overline: { ...font('700', 11, 14, 0.8), textTransform: 'uppercase' },
 };
 
 /** Dynamic type is honoured up to 130% — beyond that fixed-height controls clip. */

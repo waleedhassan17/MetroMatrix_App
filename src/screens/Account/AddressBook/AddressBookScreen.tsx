@@ -10,7 +10,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { ADDRESS_LABELS, formatAddress } from '@models/addressModel';
-import { useStyles, useTheme, type Theme } from '@theme/index';
+import { PageHeaderScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Button, Card, EmptyState, InlineNotice, IonIcon, ScreenShell, SkeletonLines, StatusPill, TextAction } from '@custom/index';
 import type { AccountStackParamList, Address } from '@/types';
 import { Alert } from '@utils/alert';
@@ -69,7 +69,13 @@ const AddressCard: React.FC<{ address: Address; busy: boolean; onEdit: () => voi
   );
 };
 
-const AddressBookScreen: React.FC<Props> = ({ navigation }) => {
+const AddressBookScreen: React.FC<Props> = props => (
+  <PageHeaderScope>
+    <AddressBookContent {...props} />
+  </PageHeaderScope>
+);
+
+const AddressBookContent: React.FC<Props> = ({ navigation }) => {
   const { back } = useBack({ name: 'Profile' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);

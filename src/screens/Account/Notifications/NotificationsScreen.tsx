@@ -13,7 +13,7 @@ import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { usePagedList } from '@hooks/usePagedList';
 import { listNotifications } from '@networks/notifications/notificationsNetwork';
-import { useStyles, useTheme, type Theme } from '@theme/index';
+import { PageHeaderScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Divider, EmptyState, IconButton, InlineNotice, IonIcon, ScreenShell, SkeletonLines, type IonName } from '@custom/index';
 import type { AppNotification, NotificationType, ShopBrowseParamList } from '@/types';
 import { formatDay } from '@utils/dates';
@@ -51,7 +51,13 @@ const makeStyles = ({ space, size, radius }: Theme) =>
 
 type Nav = { navigate: (name: string, params?: object) => void; push: (name: string, params?: object) => void };
 
-const NotificationsScreen: React.FC<Props> = ({ navigation }) => {
+const NotificationsScreen: React.FC<Props> = props => (
+  <PageHeaderScope>
+    <NotificationsContent {...props} />
+  </PageHeaderScope>
+);
+
+const NotificationsContent: React.FC<Props> = ({ navigation }) => {
   const { back, canGoBack } = useBack();
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);

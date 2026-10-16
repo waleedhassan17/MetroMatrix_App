@@ -22,9 +22,13 @@ import type { Touched } from '@utils/formErrors';
 
 type Field = 'name' | 'phone';
 
+/** The FYP profile's three tabs (Addresses is the customer's only). */
+export type ProfileTab = 'overview' | 'addresses' | 'settings';
+
 export interface ProfileSliceState {
   /** The user id the form was loaded from — reload when it changes. */
   loadedFor: string | null;
+  tab: ProfileTab;
   name: string;
   phone: string;
   touched: Touched<Field>;
@@ -39,6 +43,7 @@ export interface ProfileSliceState {
 
 const initialState: ProfileSliceState = {
   loadedFor: null,
+  tab: 'overview',
   name: '',
   phone: '',
   touched: {},
@@ -60,6 +65,9 @@ export const profileSlice = createAppSlice({
       state.name = action.payload.name;
       state.phone = nationalFromPkPhone(action.payload.phone);
       state.touched = {};
+    }),
+    setProfileTab: create.reducer((state, action: PayloadAction<ProfileTab>) => {
+      state.tab = action.payload;
     }),
     setName: create.reducer((state, action: PayloadAction<string>) => {
       state.name = action.payload;
@@ -186,6 +194,7 @@ export const profileSlice = createAppSlice({
 
 export const {
   loadFromUser,
+  setProfileTab,
   setName,
   setPhone,
   touch,

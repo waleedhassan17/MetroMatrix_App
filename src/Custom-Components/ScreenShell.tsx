@@ -27,6 +27,11 @@ export interface ScreenShellProps {
   headerRight?: React.ReactNode;
   /** Gradient header only: content inside it, under the title (search pill, chips, segments). */
   headerContent?: React.ReactNode;
+  /**
+   * Gradient header only: the header scrolls away with the content, as the
+   * FYP's profile hero does; a band in its colour stays under the status bar.
+   */
+  headerScrolls?: boolean;
   /** Hide the bar entirely (full-bleed screens such as onboarding). */
   bare?: boolean;
   scroll?: boolean;
@@ -44,6 +49,7 @@ const makeStyles = ({ colors, space, gutter }: Theme) =>
     flex: { flex: 1 },
     content: { paddingBottom: space.s32 },
     padded: { paddingHorizontal: gutter, gap: space.s16 },
+    scrollingHeader: { paddingBottom: space.s20 },
   });
 
 export const ScreenShell: React.FC<ScreenShellProps> = ({
@@ -53,6 +59,7 @@ export const ScreenShell: React.FC<ScreenShellProps> = ({
   onBack,
   headerRight,
   headerContent,
+  headerScrolls = false,
   bare = false,
   scroll = true,
   padded = true,
@@ -70,18 +77,24 @@ export const ScreenShell: React.FC<ScreenShellProps> = ({
     scrollY.set(e.contentOffset.y);
   });
   const gradient = !bare && header.tone === 'gradient';
+  const scrolling = gradient && headerScrolls && scroll;
   useBarStyle(gradient);
 
   const titleBlock =
     title && !gradient ? <LargeTitleBlock title={title} subtitle={subtitle} eyebrow={eyebrow} scrollY={scrollY} /> : null;
   const body = <View style={padded ? styles.padded : null}>{children}</View>;
+  const pageHeader = (
+    <PageHeader title={title} subtitle={subtitle} eyebrow={eyebrow} onBack={onBack} right={headerRight} safeTop={!scrolling}>
+      {headerContent}
+    </PageHeader>
+  );
 
   return (
     <View style={[styles.root, { paddingTop: bare || gradient ? 0 : insets.top }]} testID={testID}>
-      {bare ? null : gradient ? (
-        <PageHeader title={title} subtitle={subtitle} eyebrow={eyebrow} onBack={onBack} right={headerRight}>
-          {headerContent}
-        </PageHeader>
+      {bare ? null : scrolling ? (
+        <View style={{ height: insets.top, backgroundColor: header.gradient[0] }} />
+      ) : gradient ? (
+        pageHeader
       ) : (
         <LargeTitleHeader title={title} scrollY={scrollY} onBack={onBack} right={headerRight} />
       )}
@@ -93,7 +106,7 @@ export const ScreenShell: React.FC<ScreenShellProps> = ({
             onScroll={onScroll}
             scrollEventThrottle={16}
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={[styles.content, gradient && { paddingTop: space.s20 }]}
+            contentContainerStyle={[styles.content, gradient && !scrolling && { paddingTop: space.s20 }]}
             refreshControl={
               onRefresh ? (
                 <RefreshControl
@@ -105,6 +118,7 @@ export const ScreenShell: React.FC<ScreenShellProps> = ({
                 />
               ) : undefined
             }>
+            {scrolling ? <View style={styles.scrollingHeader}>{pageHeader}</View> : null}
             {titleBlock}
             {body}
           </Animated.ScrollView>

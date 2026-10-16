@@ -14,6 +14,7 @@ import {
   opacity,
   motion,
   GUTTER,
+  ROW_TINTS,
   type ColorMode,
   type Palette,
   type Elevation,
@@ -53,6 +54,8 @@ export interface Theme {
   header: HeaderStyle;
   /** Dynamic type is honoured up to this multiple (Health: 150%). */
   maxFontScale: number;
+  /** The FYP profile's categorical icon chips (fixed across services). */
+  rowTint: typeof ROW_TINTS;
 }
 
 const GRADIENT_HEADERS: ServiceName[] = ['shopping', 'healthcare'];
@@ -95,6 +98,7 @@ const build = (serviceName: ServiceName): Theme => {
       gradient: headerGradient(serviceName),
     },
     maxFontScale: clinical ? CLINICAL_FONT_SCALE : MAX_FONT_SCALE,
+    rowTint: ROW_TINTS,
   };
 };
 
@@ -118,6 +122,23 @@ export function headerGradient(serviceName: ServiceName): [string, string] {
   const deep = SERVICE_PALETTES.light[serviceName].accentDeep;
   return [deep, mix(deep, PALETTES.light.ink, 0.22)];
 }
+
+const WITH_GRADIENT = new WeakMap<Theme, Theme>();
+
+/**
+ * The same theme wearing the gradient page header, in its own service's
+ * colour — the customer shell's own pages (Orders, Profile and the account
+ * pages), as in the FYP. Cached so useStyles() keeps memoising on identity.
+ */
+export const withGradientHeader = (theme: Theme): Theme => {
+  if (theme.header.tone === 'gradient') return theme;
+  let t = WITH_GRADIENT.get(theme);
+  if (!t) {
+    t = { ...theme, header: { tone: 'gradient', gradient: headerGradient(theme.serviceName) } };
+    WITH_GRADIENT.set(theme, t);
+  }
+  return t;
+};
 
 /**
  * The same theme with every type role scaled — the Design Gallery's preview

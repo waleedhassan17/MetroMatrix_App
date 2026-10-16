@@ -29,6 +29,8 @@ export interface PageHeaderProps {
   right?: React.ReactNode;
   /** Inside the header, under the title: a search pill, chips, a segment. */
   children?: React.ReactNode;
+  /** False when something else already clears the status bar (a header that scrolls under a fixed band). */
+  safeTop?: boolean;
 }
 
 const GRADIENT_START = { x: 0, y: 0 };
@@ -50,7 +52,7 @@ const makeStyles = ({ space, radius, size, gutter }: Theme) =>
     inner: { paddingHorizontal: space.s8, gap: space.s12 },
   });
 
-export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, eyebrow, onBack, backLabel = 'Back', right, children }) => {
+export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, eyebrow, onBack, backLabel = 'Back', right, children, safeTop = true }) => {
   const styles = useStyles(makeStyles);
   const { header, colors, space } = useTheme();
   const insets = useSafeAreaInsets();
@@ -60,7 +62,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, eyebrow
       colors={header.gradient}
       start={GRADIENT_START}
       end={GRADIENT_END}
-      style={[styles.root, { paddingTop: insets.top + space.s12 }]}>
+      style={[styles.root, { paddingTop: (safeTop ? insets.top : 0) + space.s12 }]}>
       <View style={styles.row}>
         {onBack ? <IconButton icon="chevron-back" tone="onScrim" onPress={onBack} accessibilityLabel={backLabel} /> : null}
         <View style={styles.text}>

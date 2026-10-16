@@ -1,5 +1,7 @@
 // Avatar — a photo, or initials on the accent soft. Editable avatars carry a
-// camera badge and show upload progress as a ring of opacity.
+// camera badge and show upload progress as a ring of opacity. On the gradient
+// page header (the profile hero) it wears the FYP's look: a soft white well,
+// a white ring, white initials and a white camera button.
 
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -7,6 +9,7 @@ import { Image } from 'expo-image';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { AppText } from './AppText';
 import { IonIcon } from './Icon';
+import { useOnGradient } from './headerInk';
 
 export interface AvatarProps {
   name: string;
@@ -29,6 +32,8 @@ const makeStyles = ({ colors, radius, size, service }: Theme) =>
   StyleSheet.create({
     root: { borderRadius: radius.pill, overflow: 'hidden', backgroundColor: service.accentSoft },
     center: { alignItems: 'center', justifyContent: 'center' },
+    onGradient: { backgroundColor: colors.onScrimTint, borderWidth: size.avatarRing, borderColor: colors.onScrimLine },
+    badgeOnGradient: { backgroundColor: colors.surface },
     badge: {
       position: 'absolute',
       right: 0,
@@ -54,6 +59,7 @@ export const Avatar: React.FC<AvatarProps> = ({
 }) => {
   const styles = useStyles(makeStyles);
   const { size: sizes, service, opacity, motion } = useTheme();
+  const onGradient = useOnGradient();
   const dim = sizes.avatar[size];
   const variant =
     size === 'xl' ? 'h1' : size === 'lg' ? 'h2' : size === 'md' ? 'bodyStrong' : 'small';
@@ -64,6 +70,7 @@ export const Avatar: React.FC<AvatarProps> = ({
         style={[
           styles.root,
           styles.center,
+          onGradient && styles.onGradient,
           { width: dim, height: dim },
           uploading && { opacity: opacity.disabled },
         ]}>
@@ -75,14 +82,14 @@ export const Avatar: React.FC<AvatarProps> = ({
             transition={motion.press.duration}
           />
         ) : (
-          <AppText variant={variant} tone="accentDeep">
+          <AppText variant={variant} tone={onGradient ? 'onScrim' : 'accentDeep'}>
             {initialsOf(name)}
           </AppText>
         )}
       </View>
       {editable ? (
-        <View style={styles.badge}>
-          <IonIcon name={uploading ? 'sync' : 'camera'} size="sm" color={service.onAccent} />
+        <View style={[styles.badge, onGradient && styles.badgeOnGradient]}>
+          <IonIcon name={uploading ? 'sync' : 'camera'} size="sm" color={onGradient ? service.accentDeep : service.onAccent} />
         </View>
       ) : null}
     </View>

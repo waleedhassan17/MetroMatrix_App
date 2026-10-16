@@ -12,7 +12,7 @@
 // Define `makeStyles` at module scope so its identity is stable.
 
 import React, { createContext, useContext, useMemo } from 'react';
-import { getTheme, type Theme } from './theme';
+import { getTheme, withGradientHeader, type Theme } from './theme';
 import type { ServiceName } from './services';
 
 const ThemeContext = createContext<Theme>(getTheme('neutral'));
@@ -30,6 +30,17 @@ export const ServiceScope: React.FC<{ service: ServiceName; children: React.Reac
 export const ThemeScope: React.FC<{ theme: Theme; children: React.ReactNode }> = ({ theme, children }) => (
   <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>
 );
+
+/**
+ * The customer shell's own pages — Orders, Profile and the account pages —
+ * wear the FYP's gradient page header too, in the colour of the scope they
+ * open in (emerald in the customer and admin apps; the service's own colour
+ * inside the store and doctor apps).
+ */
+export const PageHeaderScope: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const theme = useContext(ThemeContext);
+  return <ThemeContext.Provider value={withGradientHeader(theme)}>{children}</ThemeContext.Provider>;
+};
 
 export const useTheme = (): Theme => useContext(ThemeContext);
 
