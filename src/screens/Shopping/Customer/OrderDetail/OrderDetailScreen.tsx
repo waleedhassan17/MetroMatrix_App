@@ -85,7 +85,7 @@ const OrderDetailScreen: React.FC<Props> = props => (
 );
 
 const OrderDetailContent: React.FC<Props> = ({ navigation, route }) => {
-  const { back } = useBack({ name: 'Orders' });
+  const { back } = useBack({ name: 'ShopTabs', params: { screen: 'ShopOrdersTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service, size, colors, opacity } = useTheme();

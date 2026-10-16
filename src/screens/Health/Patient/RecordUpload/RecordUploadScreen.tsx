@@ -63,7 +63,7 @@ const RecordUploadScreen: React.FC<Props> = props => (
 );
 
 const RecordUploadContent: React.FC<Props> = ({ route }) => {
-  const { back } = useBack({ name: 'HealthRecords' });
+  const { back } = useBack({ name: 'HealthTabs', params: { screen: 'RecordsTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service, opacity } = useTheme();

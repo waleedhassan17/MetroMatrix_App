@@ -39,6 +39,26 @@ export const ROUTES = {
   PROFILE_TAB: 'ProfileTab',
   APPROVALS_TAB: 'ApprovalsTab',
 
+  // ── Customer service apps (the FYP's: each service a stack over its own
+  // tabs, opened from the three-card home on the CustomerStack root) ──
+  HEALTH_APP: 'HealthApp',
+  SHOP_APP: 'ShopApp',
+  FOOD_APP: 'FoodApp',
+  HEALTH_TABS: 'HealthTabs',
+  SHOP_TABS: 'ShopTabs',
+  FOOD_TABS: 'FoodTabs',
+  HEALTH_HOME_TAB: 'HealthHomeTab',
+  APPOINTMENTS_TAB: 'AppointmentsTab',
+  RECORDS_TAB: 'RecordsTab',
+  HEALTH_PROFILE_TAB: 'HealthProfileTab',
+  SHOP_HOME_TAB: 'ShopHomeTab',
+  BAG_TAB: 'BagTab',
+  SAVED_TAB: 'SavedTab',
+  SHOP_ORDERS_TAB: 'ShopOrdersTab',
+  FOOD_HOME_TAB: 'FoodHomeTab',
+  FOOD_ORDERS_TAB: 'FoodOrdersTab',
+  FOOD_PROFILE_TAB: 'FoodProfileTab',
+
   // ── Screens inside tabs ──
   CUSTOMER_HOME: 'CustomerHome',
   FOOD_HOME: 'FoodHome',

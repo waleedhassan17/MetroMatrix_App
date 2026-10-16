@@ -44,6 +44,10 @@ const ALLOWED = new Map([
     "the FYP's module-page header the owner asked for on Shopping and Health (theme.header.gradient, AA-tested stops)",
   ],
   [
+    'src/Custom-Components/ServiceTabBar.tsx',
+    "the FYP Health tab bar's selected-icon pill (theme.tabBar.gradient: the service's highlight → accent) — a 40×32 marker, not a surface",
+  ],
+  [
     'src/screens/Onboarding/OnboardingScreen.tsx',
     "the onboarding preview card's header gradient, copied from the FYP app (its colours still come from the theme)",
   ],

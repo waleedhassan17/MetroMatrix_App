@@ -33,7 +33,7 @@ const PrescriptionListScreen: React.FC<Props> = props => (
 );
 
 const PrescriptionListContent: React.FC<Props> = () => {
-  const { back, canGoBack } = useBack({ name: 'Profile' });
+  const { back, canGoBack } = useBack({ name: 'HealthTabs', params: { screen: 'HealthProfileTab' } });
   const styles = useStyles(makeStyles);
   const { service, colors } = useTheme();
   const nav = useHealthNav();

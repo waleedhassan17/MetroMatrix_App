@@ -89,7 +89,7 @@ const AppointmentDetailScreen: React.FC<Props> = props => (
 
 const AppointmentDetailContent: React.FC<Props> = ({ route, navigation }) => {
   const { code } = route.params;
-  const { back } = useBack({ name: 'Orders', params: { service: 'health' } });
+  const { back } = useBack({ name: 'HealthTabs', params: { screen: 'AppointmentsTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service, colors } = useTheme();

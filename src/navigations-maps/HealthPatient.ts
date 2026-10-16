@@ -1,12 +1,11 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Healthcare (patient) routes
 // ═══════════════════════════════════════════════════════
-// HEALTH_HOME_ROUTES live in the Home stack only (the Digital Health card
-// opens them). HEALTH_BROWSE_ROUTES are spread into the Home, Orders and
-// Profile stacks alike, so a doctor, a visit, a prescription or a record
-// opens in the tab you are in.
+// The customer's Digital Health app, the FYP's way: HEALTH_TABS (Home ·
+// Appointments · Records · Profile) under HEALTH_APP_ROUTES, which push over
+// the tabs. HEALTH_BROWSE_ROUTES also stays in the shared Profile stack.
 
-import type { IRoute } from './types';
+import type { IRoute, ITabRoute } from './types';
 import { ROUTES } from './Base';
 
 import HealthHomeScreen from '../screens/Health/Patient/HealthHome/HealthHomeScreen';
@@ -31,8 +30,9 @@ import FamilyMemberFormScreen from '../screens/Health/Patient/FamilyMemberForm/F
 import SymptomCheckerScreen from '../screens/Health/Patient/SymptomChecker/SymptomCheckerScreen';
 import SymptomResultScreen from '../screens/Health/Patient/SymptomResult/SymptomResultScreen';
 import EmergencyScreen from '../screens/Health/Patient/Emergency/EmergencyScreen';
-
-export const HEALTH_HOME_ROUTES: IRoute[] = [{ title: ROUTES.HEALTH_HOME, component: HealthHomeScreen }];
+import HealthAppointmentsScreen from '../screens/Health/Patient/HealthAppointments/HealthAppointmentsScreen';
+import ProfileScreen from '../screens/Account/Profile/ProfileScreen';
+import PaymentProofScreen from '../screens/Shopping/Customer/PaymentProof/PaymentProofScreen';
 
 export const HEALTH_BROWSE_ROUTES: IRoute[] = [
   { title: ROUTES.HEALTH_SEARCH, component: HealthSearchScreen, options: { animation: 'fade' } },
@@ -57,4 +57,21 @@ export const HEALTH_BROWSE_ROUTES: IRoute[] = [
   { title: ROUTES.SYMPTOM_CHECKER, component: SymptomCheckerScreen },
   { title: ROUTES.SYMPTOM_RESULT, component: SymptomResultScreen },
   { title: ROUTES.EMERGENCY, component: EmergencyScreen },
+];
+
+const AS_TAB = { asTab: true };
+
+/** The FYP's Health tabs: Home · Appointments · Records · Profile. */
+export const HEALTH_TABS: ITabRoute[] = [
+  { title: ROUTES.HEALTH_HOME_TAB, component: HealthHomeScreen, label: 'Home', icon: 'home-outline', iconActive: 'home', initialParams: AS_TAB },
+  { title: ROUTES.APPOINTMENTS_TAB, component: HealthAppointmentsScreen, label: 'Appointments', icon: 'calendar-outline', iconActive: 'calendar', initialParams: AS_TAB },
+  { title: ROUTES.RECORDS_TAB, component: HealthRecordsScreen, label: 'Records', icon: 'document-text-outline', iconActive: 'document-text', initialParams: AS_TAB },
+  { title: ROUTES.HEALTH_PROFILE_TAB, component: ProfileScreen, label: 'Profile', icon: 'person-outline', iconActive: 'person', initialParams: AS_TAB },
+];
+
+/** Everything that opens over the Health tabs (Records is a tab, not a page here). */
+export const HEALTH_APP_ROUTES: IRoute[] = [
+  ...HEALTH_BROWSE_ROUTES.filter(r => r.title !== ROUTES.HEALTH_RECORDS),
+  // "I've paid" for an appointment's transfer (the screen Shopping shares).
+  { title: ROUTES.PAYMENT_PROOF, component: PaymentProofScreen },
 ];

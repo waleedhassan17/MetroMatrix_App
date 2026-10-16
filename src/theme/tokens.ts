@@ -194,6 +194,8 @@ export const size = {
   pagePitch: 20,
   qr: 196,
   tabBar: 64,
+  /** The FYP Health tab bar's active-icon pill. */
+  tabPill: { width: 40, height: 32 },
   headerBar: 52,
   sheetHandle: 4,
   thumb: 56,
@@ -293,6 +295,8 @@ export interface Elevation {
   raised: ViewStyle;
   float: ViewStyle;
   input: ViewStyle;
+  /** The service tab bars' lift: a soft shadow cast upward. */
+  tabBar: ViewStyle;
 }
 
 const shadow = (height: number, blur: number, alpha: number, androidElevation: number, ink: string): ViewStyle =>
@@ -307,6 +311,7 @@ export const buildElevation = (palette: Palette): Elevation => ({
   raised: shadow(3, 20, 0.07, 3, palette.ink),
   float: shadow(10, 40, 0.14, 12, palette.ink),
   input: shadow(1, 4, 0.05, 1, palette.ink),
+  tabBar: shadow(-3, 24, 0.08, 12, palette.ink),
 });
 
 // ─── Motion ─────────────────────────────────────────

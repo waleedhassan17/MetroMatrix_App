@@ -58,10 +58,11 @@ const OrderPlacedContent: React.FC<Props> = ({ navigation, route }) => {
     if (e.status === 'idle') void dispatch(loadOrderGroupAsync(groupCode));
   }, [e.status, groupCode, dispatch]);
 
+  // Back to the Shopping tabs, then the order over them (or the shop's Home tab).
   const leave = (to: 'order' | 'shop') => {
     navigation.popToTop();
-    if (to === 'order') root.navigate('OrdersTab', { screen: 'OrderDetail', params: { groupCode }, initial: false });
-    else root.navigate('HomeTab', { screen: 'ShoppingHome', initial: false });
+    if (to === 'order') root.navigate('OrderDetail', { groupCode });
+    else root.navigate('ShopTabs', { screen: 'ShopHomeTab' });
   };
 
   return (

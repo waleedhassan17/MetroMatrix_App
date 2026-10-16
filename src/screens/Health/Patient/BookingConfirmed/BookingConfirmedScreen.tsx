@@ -9,7 +9,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { StackActions } from '@react-navigation/native';
 import * as Clipboard from 'expo-clipboard';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
@@ -57,11 +56,8 @@ const BookingConfirmedContent: React.FC<Props> = ({ route, navigation }) => {
     if (!a && entry.status === 'idle') void dispatch(loadAppointmentAsync(code));
   }, [a, entry.status, code, dispatch]);
 
-  const done = () => {
-    const names = navigation.getState()?.routeNames ?? [];
-    if (names.includes('HealthHome' as never)) navigation.navigate('HealthHome');
-    else navigation.dispatch(StackActions.popToTop());
-  };
+  // Done: back to the Health tabs, on Appointments, where the new visit is.
+  const done = () => (navigation as unknown as { navigate: (n: string, p?: object) => void }).navigate('HealthTabs', { screen: 'AppointmentsTab' });
 
   if (!a) {
     return (

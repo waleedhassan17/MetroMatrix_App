@@ -56,7 +56,29 @@ export interface Theme {
   maxFontScale: number;
   /** The FYP profile's categorical icon chips (fixed across services). */
   rowTint: typeof ROW_TINTS;
+  /** How this service's bottom tab bar marks the selected tab (the FYP's per-module bars). */
+  tabBar: TabBarStyle;
 }
+
+/**
+ * The FYP's per-module tab bars:
+ *   gradientPill  Health — the selected icon white on a small gradient pill
+ *   tint          Shopping — a rounded, lifted bar; the selected tab in accent
+ *   softPill      Home services (our Food Court) — a soft accent pill
+ *   pill          the partner and staff apps' bar (RouteTabs)
+ */
+export type TabBarVariant = 'pill' | 'gradientPill' | 'tint' | 'softPill';
+export interface TabBarStyle {
+  variant: TabBarVariant;
+  /** gradientPill only: highlight → accent (the FYP's #2A7FFF → #1E6AE1). */
+  gradient: [string, string];
+}
+const TAB_BARS: Record<ServiceName, TabBarVariant> = {
+  neutral: 'pill',
+  healthcare: 'gradientPill',
+  shopping: 'tint',
+  food: 'softPill',
+};
 
 const GRADIENT_HEADERS: ServiceName[] = ['shopping', 'healthcare'];
 
@@ -99,6 +121,10 @@ const build = (serviceName: ServiceName): Theme => {
     },
     maxFontScale: clinical ? CLINICAL_FONT_SCALE : MAX_FONT_SCALE,
     rowTint: ROW_TINTS,
+    tabBar: {
+      variant: TAB_BARS[serviceName],
+      gradient: [SERVICE_PALETTES.light[serviceName].highlight, SERVICE_PALETTES.light[serviceName].accent],
+    },
   };
 };
 

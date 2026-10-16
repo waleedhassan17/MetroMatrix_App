@@ -86,58 +86,91 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       MyReviews: 'doctor/reviews',
       DoctorInsights: 'doctor/insights',
       DoctorProfileEdit: 'doctor/profile',
-      // /home (a partner's home too), /home/food, /home/services/healthcare
-      // Shopping: /shop, /shop/store/:slug, /shop/product/:id … (exact, so
-      // they read the same in a link and in the address bar).
-      // initialRouteName: a link straight to a deep screen still has the tab's
-      // first screen under it, so back works (web refresh, push taps).
-      HomeTab: {
-        path: 'home',
-        initialRouteName: 'CustomerHome',
+      // ── The customer app (the FYP's): the home and its pages on the root
+      // stack; each service its own app with its own tabs. Every service app
+      // has its tabs under a deep link (initialRouteName), so back from a
+      // linked doctor, order or record lands on that service's tabs.
+      CustomerHome: 'home',
+      ServicePreview: 'home/services/:service',
+      Orders: 'orders',
+      Profile: 'profile',
+      ChangePassword: 'profile/password',
+      AddressBook: 'profile/addresses',
+      AddressForm: 'profile/addresses/edit',
+      Notifications: 'profile/notifications',
+      // Health: /health, metromatrix://health/doctor/:id,
+      // metromatrix://health/appointment/:code (push taps too) …
+      HealthApp: {
+        initialRouteName: 'HealthTabs',
         screens: {
-          CustomerHome: '',
-          FoodHome: 'food',
-          ServicePreview: 'services/:service',
-          ShoppingHome: { path: 'shop', exact: true },
-          CategoryBrowse: { path: 'shop/categories', exact: true },
-          StoreList: { path: 'shop/stores', exact: true },
-          ShopSearch: { path: 'shop/search', exact: true },
-          StorePage: { path: 'shop/store/:slug', exact: true },
-          ProductList: { path: 'shop/products', exact: true },
-          ProductDetail: { path: 'shop/product/:id', exact: true },
-          ProductReviews: { path: 'shop/product/:productId/reviews', exact: true },
-          Bag: { path: 'shop/bag', exact: true },
-          Checkout: { path: 'shop/checkout', exact: true },
-          OrderPlaced: { path: 'shop/placed/:groupCode', exact: true },
-          // Health: /health, metromatrix://health/doctor/:id,
-          // metromatrix://health/specialty/:slug (the doctors for it) …
-          HealthHome: { path: 'health', exact: true },
-          HealthSearch: { path: 'health/search', exact: true },
-          SpecialtyList: { path: 'health/specialties', exact: true },
-          ConditionList: { path: 'health/conditions', exact: true },
-          DoctorList: { path: 'health/doctors', exact: true, alias: [{ path: 'health/specialty/:specialty', exact: true }] },
-          DoctorProfile: { path: 'health/doctor/:id', exact: true },
-          DoctorReviews: { path: 'health/doctor/:doctorId/reviews', exact: true },
-          BookingConfirmed: { path: 'health/booked/:code', exact: true },
-          SymptomChecker: { path: 'health/symptoms', exact: true },
-          SymptomResult: { path: 'health/symptoms/result', exact: true },
-          Emergency: { path: 'health/emergency', exact: true },
+          HealthTabs: {
+            initialRouteName: 'HealthHomeTab',
+            screens: {
+              HealthHomeTab: 'health',
+              AppointmentsTab: 'health/appointments',
+              RecordsTab: 'profile/records',
+              HealthProfileTab: 'health/profile',
+            },
+          },
+          HealthSearch: 'health/search',
+          SpecialtyList: 'health/specialties',
+          ConditionList: 'health/conditions',
+          DoctorList: { path: 'health/doctors', alias: ['health/specialty/:specialty'] },
+          DoctorProfile: 'health/doctor/:id',
+          DoctorReviews: 'health/doctor/:doctorId/reviews',
+          BookingConfirmed: 'health/booked/:code',
+          AppointmentDetail: 'health/appointment/:code',
+          VideoPrecheck: 'health/appointment/:code/video',
+          PostConsultReview: 'health/appointment/:code/rate',
+          PaymentProof: 'health/appointment/:appointmentCode/pay',
+          PrescriptionList: 'profile/prescriptions',
+          PrescriptionView: 'profile/prescriptions/:id',
+          RecordUpload: 'profile/records/new',
+          RecordDetail: 'profile/records/:id',
+          FamilyMembers: 'profile/family',
+          FamilyMemberForm: 'profile/family/edit',
+          SymptomChecker: 'health/symptoms',
+          SymptomResult: 'health/symptoms/result',
+          Emergency: 'health/emergency',
         },
       },
-      // metromatrix://orders/MM-24A7Q2 → that order (push taps land here too)
-      OrdersTab: {
-        path: 'orders',
-        initialRouteName: 'Orders',
+      // Shopping: /shop, /shop/store/:slug, /shop/product/:id;
+      // metromatrix://orders/MM-24A7Q2 → that order (push taps too)
+      ShopApp: {
+        initialRouteName: 'ShopTabs',
         screens: {
-          Orders: '',
-          OrderDetail: ':groupCode',
-          PaymentProof: ':groupCode/pay/:orderId',
-          ReturnRequest: ':groupCode/return/:orderId',
-          WriteReview: ':groupCode/review/:orderId/:itemId',
-          // metromatrix://health/appointment/:code → that visit (push taps too)
-          AppointmentDetail: { path: 'health/appointment/:code', exact: true },
-          VideoPrecheck: { path: 'health/appointment/:code/video', exact: true },
-          PostConsultReview: { path: 'health/appointment/:code/rate', exact: true },
+          ShopTabs: {
+            initialRouteName: 'ShopHomeTab',
+            screens: {
+              ShopHomeTab: 'shop',
+              BagTab: 'shop/bag',
+              SavedTab: 'profile/saved',
+              ShopOrdersTab: 'shop/orders',
+            },
+          },
+          CategoryBrowse: 'shop/categories',
+          StoreList: 'shop/stores',
+          ShopSearch: 'shop/search',
+          StorePage: 'shop/store/:slug',
+          ProductList: 'shop/products',
+          ProductDetail: 'shop/product/:id',
+          ProductReviews: 'shop/product/:productId/reviews',
+          Checkout: 'shop/checkout',
+          OrderPlaced: 'shop/placed/:groupCode',
+          OrderDetail: 'orders/:groupCode',
+          PaymentProof: 'orders/:groupCode/pay/:orderId',
+          ReturnRequest: 'orders/:groupCode/return/:orderId',
+          WriteReview: 'orders/:groupCode/review/:orderId/:itemId',
+        },
+      },
+      // Food Court: /home/food (its Home tab)
+      FoodApp: {
+        initialRouteName: 'FoodTabs',
+        screens: {
+          FoodTabs: {
+            initialRouteName: 'FoodHomeTab',
+            screens: { FoodHomeTab: 'home/food', FoodOrdersTab: 'food/orders', FoodProfileTab: 'food/profile' },
+          },
         },
       },
       ApprovalsTab: {
@@ -167,23 +200,11 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
           AppointmentLookup: 'admin/health/appointments',
         },
       },
+      // The kitchen's and staff's Profile tab (the customer's Profile lives at /profile).
       ProfileTab: {
+        path: 'account',
         initialRouteName: 'Profile',
-        screens: {
-          Profile: 'profile',
-          ChangePassword: 'profile/password',
-          Saved: 'profile/saved',
-          AddressBook: 'profile/addresses',
-          AddressForm: 'profile/addresses/edit',
-          Notifications: 'profile/notifications',
-          HealthRecords: 'profile/records',
-          RecordUpload: 'profile/records/new',
-          RecordDetail: 'profile/records/:id',
-          PrescriptionList: 'profile/prescriptions',
-          PrescriptionView: 'profile/prescriptions/:id',
-          FamilyMembers: 'profile/family',
-          FamilyMemberForm: 'profile/family/edit',
-        },
+        screens: { Profile: '', ChangePassword: 'password', Notifications: 'notifications' },
       },
     },
   } as LinkingOptions<ReactNavigation.RootParamList>['config'],

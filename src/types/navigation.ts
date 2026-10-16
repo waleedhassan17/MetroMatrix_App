@@ -138,6 +138,65 @@ export type CustomerTabParamList = {
   ProfileTab: NavigatorScreenParams<AccountStackParamList> | undefined;
 };
 
+// ─── The customer app, the FYP's way ──────────────────
+// A root stack (the three-card home and the account pages) and one app per
+// service, each a stack over its own bottom tabs. A tab root carries
+// `asTab`, so it hides the back control a pushed copy of it shows.
+
+export type TabRootParams = { asTab?: boolean } | undefined;
+
+export type HealthTabParamList = {
+  HealthHomeTab: TabRootParams;
+  AppointmentsTab: { asTab?: boolean; visits?: AppointmentSegment } | undefined;
+  RecordsTab: { asTab?: boolean; memberId?: string } | undefined;
+  HealthProfileTab: TabRootParams;
+};
+
+export type ShopTabParamList = {
+  ShopHomeTab: TabRootParams;
+  BagTab: TabRootParams;
+  SavedTab: TabRootParams;
+  ShopOrdersTab: { asTab?: boolean; segment?: OrderSegment } | undefined;
+};
+
+export type FoodTabParamList = {
+  FoodHomeTab: TabRootParams;
+  FoodOrdersTab: TabRootParams;
+  FoodProfileTab: TabRootParams;
+};
+
+export type HealthAppParamList = HealthBrowseParamList & {
+  HealthTabs: NavigatorScreenParams<HealthTabParamList> | undefined;
+};
+
+export type ShopAppParamList = ShopBrowseParamList & {
+  ShopTabs: NavigatorScreenParams<ShopTabParamList> | undefined;
+  CategoryBrowse: { categoryId?: string } | undefined;
+  StoreList: undefined;
+  ShopSearch: { q?: string; storeId?: string; storeName?: string } | undefined;
+  OrderDetail: { groupCode: string };
+  ReturnRequest: { orderId: string; groupCode: string };
+  WriteReview: { orderId: string; itemId: string; groupCode: string };
+};
+
+export type FoodAppParamList = {
+  FoodTabs: NavigatorScreenParams<FoodTabParamList> | undefined;
+};
+
+export type CustomerStackParamList = {
+  CustomerHome: undefined;
+  ServicePreview: { service: 'healthcare' | 'shopping' };
+  Orders: OrdersStackParamList['Orders'];
+  Profile: undefined;
+  ChangePassword: undefined;
+  AddressBook: undefined;
+  AddressForm: { id?: string } | undefined;
+  Notifications: undefined;
+  HealthApp: NavigatorScreenParams<HealthAppParamList> | undefined;
+  ShopApp: NavigatorScreenParams<ShopAppParamList> | undefined;
+  FoodApp: NavigatorScreenParams<FoodAppParamList> | undefined;
+};
+
 /** The store partner's four tabs. */
 export type StoreTabParamList = {
   HomeTab: undefined;

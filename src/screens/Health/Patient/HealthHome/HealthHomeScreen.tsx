@@ -11,7 +11,7 @@ import React, { useCallback, useEffect } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
-import { useBack } from '@hooks/useBack';
+import { useServiceNav } from '@hooks/useServiceNav';
 import { useHealthNav } from '@hooks/useHealth';
 import { ServiceScope, useStyles, type Theme } from '@theme/index';
 import {
@@ -56,7 +56,8 @@ const HealthHomeScreen: React.FC<Props> = props => (
 );
 
 const HealthHomeContent: React.FC<Props> = ({ navigation }) => {
-  const { back, canGoBack } = useBack({ name: 'CustomerHome' });
+  // The service's Home tab: back leaves the service for the three cards.
+  const { leaveService: back } = useServiceNav();
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectHealthHome);
@@ -78,7 +79,7 @@ const HealthHomeContent: React.FC<Props> = ({ navigation }) => {
     <ScreenShell
       title="Digital Health"
       subtitle={first ? `Hi ${first}. See a doctor in a few taps.` : 'See a doctor in a few taps.'}
-      onBack={canGoBack ? back : undefined}
+      onBack={back}
       headerRight={<TextAction label={city} icon="location-outline" onPress={() => dispatch(setCityPicker(true))} accessibilityLabel={`City: ${city}. Change`} />}
       headerContent={<SearchPill label="Doctors, specialties, conditions" onPress={nav.openSearch} />}
       refreshing={s.refreshing}

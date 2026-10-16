@@ -23,6 +23,7 @@ export * from './PhotoScrim';
 export * from './PasswordStrength';
 export * from './ProgressBar';
 export * from './ScreenShell';
+export * from './ServiceTabBar';
 export * from './SegmentTabs';
 export * from './Sheet';
 export * from './Skeleton';

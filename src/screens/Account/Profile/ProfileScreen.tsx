@@ -18,6 +18,7 @@ import dayjs from 'dayjs';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useSignOut } from '@hooks/useSignOut';
 import { useBack } from '@hooks/useBack';
+import { useIsTabRoot, useServiceNav } from '@hooks/useServiceNav';
 import { hasErrors, nationalFromPkPhone, validateProfile } from '@models/authModel';
 import { ADDRESS_LABELS, formatAddress } from '@models/addressModel';
 import { visibleErrors } from '@utils/formErrors';
@@ -197,6 +198,9 @@ const ProfileScreen: React.FC<Props> = props => (
 const ProfileContent: React.FC<Props> = ({ navigation }) => {
   // A tab's first screen in the customer app; pushed from More in the partner apps.
   const { back, canGoBack } = useBack();
+  const asTab = useIsTabRoot();
+  // Rows that belong to a service open in that service's app (over its tabs).
+  const svc = useServiceNav();
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { colors, opacity, service } = useTheme();
@@ -243,8 +247,6 @@ const ProfileContent: React.FC<Props> = ({ navigation }) => {
   const deleteReady = googleOnly ? p.deleteConfirmation.trim() === 'DELETE' : p.deleteConfirmation.length > 0;
 
   // Jumps into another tab keep that tab's first screen underneath.
-  const parentTabs = navigation.getParent() as unknown as { navigate: (n: string, p?: object) => void } | undefined;
-  const toOrders = (params: object) => parentTabs?.navigate('OrdersTab', { screen: 'Orders', params, initial: false });
 
   const save = async () => {
     if (hasErrors(errors)) return;
@@ -300,17 +302,17 @@ const ProfileContent: React.FC<Props> = ({ navigation }) => {
 
   const shopping: MenuItem[] = isCustomer
     ? [
-        { key: 'orders', title: 'My orders', subtitle: 'Track and review every order', icon: 'receipt-outline', onPress: () => toOrders({ service: 'shop' }) },
-        { key: 'saved', title: 'Saved', subtitle: 'Products you hearted', icon: 'heart-outline', tint: 'rose', onPress: () => navigation.navigate('Saved') },
+        { key: 'orders', title: 'My orders', subtitle: 'Track and review every order', icon: 'receipt-outline', onPress: () => svc.openShopTab('ShopOrdersTab') },
+        { key: 'saved', title: 'Saved', subtitle: 'Products you hearted', icon: 'heart-outline', tint: 'rose', onPress: () => svc.openShopTab('SavedTab') },
       ]
     : [];
 
   const health: MenuItem[] = isCustomer
     ? [
-        { key: 'visits', title: 'My appointments', subtitle: 'Upcoming and past visits', icon: 'calendar-outline', onPress: () => toOrders({ service: 'health' }) },
-        { key: 'records', title: 'Health records', subtitle: 'Reports, scans and results', icon: 'folder-open-outline', tint: 'blue', onPress: () => navigation.navigate('HealthRecords') },
-        { key: 'rx', title: 'Prescriptions', subtitle: 'From your visits', icon: 'document-text-outline', tint: 'violet', onPress: () => navigation.navigate('PrescriptionList') },
-        { key: 'family', title: 'Family members', subtitle: 'Book and keep records for them', icon: 'people-outline', tint: 'amber', onPress: () => navigation.navigate('FamilyMembers') },
+        { key: 'visits', title: 'My appointments', subtitle: 'Upcoming and past visits', icon: 'calendar-outline', onPress: () => svc.openHealthTab('AppointmentsTab') },
+        { key: 'records', title: 'Health records', subtitle: 'Reports, scans and results', icon: 'folder-open-outline', tint: 'blue', onPress: () => svc.openHealthTab('RecordsTab') },
+        { key: 'rx', title: 'Prescriptions', subtitle: 'From your visits', icon: 'document-text-outline', tint: 'violet', onPress: () => svc.openHealth('PrescriptionList') },
+        { key: 'family', title: 'Family members', subtitle: 'Book and keep records for them', icon: 'people-outline', tint: 'amber', onPress: () => svc.openHealth('FamilyMembers') },
       ]
     : [];
 
@@ -360,9 +362,9 @@ const ProfileContent: React.FC<Props> = ({ navigation }) => {
             tint="violet"
             value={family.status === 'succeeded' ? family.members.length : null}
             label="Family"
-            onPress={() => navigation.navigate('FamilyMembers')}
+            onPress={() => svc.openHealth('FamilyMembers')}
           />
-          <StatTile icon="heart-outline" tint="accent" value={savedStatus === 'succeeded' ? savedIds.length : null} label="Saved" onPress={() => navigation.navigate('Saved')} />
+          <StatTile icon="heart-outline" tint="accent" value={savedStatus === 'succeeded' ? savedIds.length : null} label="Saved" onPress={() => svc.openShopTab('SavedTab')} />
         </View>
       ) : null}
       <MenuSection title="Account" items={account} />
@@ -469,7 +471,7 @@ const ProfileContent: React.FC<Props> = ({ navigation }) => {
   return (
     <ScreenShell
       headerScrolls
-      onBack={canGoBack ? back : undefined}
+      onBack={canGoBack && !asTab ? back : undefined}
       headerRight={<IconButton icon="settings-outline" onPress={() => dispatch(setProfileTab('settings'))} accessibilityLabel="Settings" />}
       headerContent={hero}>
       <SegmentTabs options={tabs} value={tab} onChange={k => dispatch(setProfileTab(k))} accessibilityLabel="Profile" />

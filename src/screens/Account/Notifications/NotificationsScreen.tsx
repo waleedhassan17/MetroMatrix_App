@@ -11,6 +11,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
+import { useServiceNav } from '@hooks/useServiceNav';
 import { usePagedList } from '@hooks/usePagedList';
 import { listNotifications } from '@networks/notifications/notificationsNetwork';
 import { PageHeaderScope, useStyles, useTheme, type Theme } from '@theme/index';
@@ -59,6 +60,7 @@ const NotificationsScreen: React.FC<Props> = props => (
 
 const NotificationsContent: React.FC<Props> = ({ navigation }) => {
   const { back, canGoBack } = useBack();
+  const svc = useServiceNav();
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service, colors, opacity } = useTheme();
@@ -87,10 +89,11 @@ const NotificationsContent: React.FC<Props> = ({ navigation }) => {
       else if (d.productId) nav.navigate('ProductForm', { id: d.productId });
       return;
     }
-    if (d.prescriptionId) nav.push('PrescriptionView', { id: d.prescriptionId });
-    else if (d.appointmentCode) nav.navigate('OrdersTab', { screen: 'AppointmentDetail', params: { code: d.appointmentCode }, initial: false });
-    else if (d.groupCode) nav.navigate('OrdersTab', { screen: 'OrderDetail', params: { groupCode: d.groupCode }, initial: false });
-    else if (d.productId) nav.push('ProductDetail', { id: d.productId });
+    // A customer's notice opens in its service's app, over that service's tabs.
+    if (d.prescriptionId) svc.openHealth('PrescriptionView', { id: d.prescriptionId });
+    else if (d.appointmentCode) svc.openHealth('AppointmentDetail', { code: d.appointmentCode });
+    else if (d.groupCode) svc.openShop('OrderDetail', { groupCode: d.groupCode });
+    else if (d.productId) svc.openShop('ProductDetail', { id: d.productId });
   };
 
   const markAll = () => {

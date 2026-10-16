@@ -29,7 +29,10 @@ export type TypeRole =
   | 'chip'
   | 'tag'
   | 'micro'
-  | 'overline';
+  | 'overline'
+  | 'tab'
+  | 'tabActive'
+  | 'tabSmall';
 
 export type TypeScale = Record<TypeRole, TextStyle>;
 
@@ -81,6 +84,10 @@ export const type: TypeScale = {
   micro: font('600', 11, 14),
   /** Menu section titles, set in capitals: ACCOUNT, HEALTH (the FYP profile's sectionTitle). */
   overline: { ...font('700', 11, 14, 0.8), textTransform: 'uppercase' },
+  /** Service tab bars: the FYP Health bar's 11 pt labels, bolder when selected; Shopping's 10 pt bold. */
+  tab: font('500', 11, 14, 0.1),
+  tabActive: font('700', 11, 14, 0.1),
+  tabSmall: font('700', 10, 12),
 };
 
 /** Dynamic type is honoured up to 130% — beyond that fixed-height controls clip. */

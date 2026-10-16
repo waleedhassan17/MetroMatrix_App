@@ -12,6 +12,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
+import { useIsTabRoot } from '@hooks/useServiceNav';
 import { usePagedList } from '@hooks/usePagedList';
 import { listRecords } from '@networks/health/recordsNetwork';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
@@ -86,6 +87,7 @@ const HealthRecordsScreen: React.FC<Props> = props => (
 
 const HealthRecordsContent: React.FC<Props> = ({ navigation, route }) => {
   const { back, canGoBack } = useBack({ name: 'Profile' });
+  const asTab = useIsTabRoot();
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { size } = useTheme();
@@ -109,7 +111,7 @@ const HealthRecordsContent: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <View style={styles.root}>
-      <PageHeader title="Health records" subtitle="Reports, scans and prescriptions" onBack={canGoBack ? back : undefined} />
+      <PageHeader title="Health records" subtitle="Reports, scans and prescriptions" onBack={canGoBack && !asTab ? back : undefined} />
       <View style={styles.filters}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
           <ChoiceChip label="Everyone" selected={f.memberId === null} onPress={() => dispatch(setRecordsMember(null))} />

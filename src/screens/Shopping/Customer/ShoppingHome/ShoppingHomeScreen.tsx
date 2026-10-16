@@ -10,7 +10,7 @@ import React, { useCallback, useEffect } from 'react';
 import { FlatList, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
-import { useBack } from '@hooks/useBack';
+import { useServiceNav } from '@hooks/useServiceNav';
 import { useDebouncedValue, usePagedList } from '@hooks/usePagedList';
 import { useShopBootstrap, useShopNav } from '@hooks/useShop';
 import { listStores } from '@networks/shopping/catalogNetwork';
@@ -126,7 +126,8 @@ const ShoppingHomeScreen: React.FC<Props> = props => (
 );
 
 const ShoppingHomeContent: React.FC<Props> = () => {
-  const { back } = useBack({ name: 'CustomerHome' });
+  // The service's Home tab: back leaves the service for the three cards.
+  const { leaveService: back } = useServiceNav();
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service, size } = useTheme();

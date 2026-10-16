@@ -29,7 +29,7 @@ const FamilyMembersScreen: React.FC<Props> = props => (
 );
 
 const FamilyMembersContent: React.FC<Props> = ({ navigation }) => {
-  const { back, canGoBack } = useBack({ name: 'Profile' });
+  const { back, canGoBack } = useBack({ name: 'HealthTabs', params: { screen: 'HealthProfileTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectFamily);

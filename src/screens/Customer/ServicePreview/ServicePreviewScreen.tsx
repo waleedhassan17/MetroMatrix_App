@@ -11,6 +11,7 @@ import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppDispatch } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
+import { useServiceNav } from '@hooks/useServiceNav';
 import { setLastService } from '@store/preferencesSlice';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Button, IonIcon, MciIcon, PhotoScrim } from '@custom/index';
@@ -59,6 +60,7 @@ const ServicePreviewScreen: React.FC<Props> = props => (
 
 const Preview: React.FC<Props> = ({ navigation, route }) => {
   const { back } = useBack({ name: 'CustomerHome' });
+  const { openFood } = useServiceNav();
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service, colors, motion } = useTheme();
@@ -114,7 +116,8 @@ const Preview: React.FC<Props> = ({ navigation, route }) => {
             variant="secondary"
             onPress={() => {
               dispatch(setLastService('food'));
-              navigation.replace('FoodHome');
+              navigation.goBack();
+              openFood();
             }}
             fullWidth
           />

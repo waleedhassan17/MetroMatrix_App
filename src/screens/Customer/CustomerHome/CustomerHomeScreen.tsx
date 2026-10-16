@@ -3,9 +3,11 @@
 // ═══════════════════════════════════════════════════════
 // The FYP's frame and nothing more: the brand centred between the menu
 // (which opens the side menu) and the bell, a "Live services" badge, "Our Services" with its count and one
-// premium photo card per service. A launcher's job is to launch: the Food
-// Court card opens the Food Court, Health and Shopping open what is coming. The shell wears MetroMatrix emerald; each
-// card wears its own service's colour.
+// premium photo card per service. A launcher's job is to launch: each card
+// opens that service's own app, with its own bottom tabs (the FYP's). The
+// home has no bottom bar: its side menu opens orders, profile and the rest.
+// The shell wears MetroMatrix emerald; each card wears its own service's
+// colour.
 // Stateless: opening a service records it in preferences.lastService.
 
 import React, { useCallback, useState } from 'react';
@@ -15,6 +17,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useSignOut } from '@hooks/useSignOut';
+import { useServiceNav } from '@hooks/useServiceNav';
 import { APP_VERSION } from '@/services/appInfo';
 import { SUPPORT_EMAIL } from '@/config/env';
 import { setLastService } from '@store/preferencesSlice';
@@ -24,11 +27,11 @@ import { ServiceCard, type ServiceCardData } from '@components/home/ServiceCard'
 import { SERVICE_CARDS } from '@components/home/serviceCatalog';
 import { HomeHeader } from '@components/home/HomeParts';
 import { SideMenu, type SideMenuSection } from '@components/home/SideMenu';
-import type { HomeStackParamList } from '@/types';
+import type { CustomerStackParamList } from '@/types';
 import { selectUser } from '../../Auth/authSlice';
 import { loadUnreadCountAsync, selectUnreadCount } from '../../Account/Notifications/notificationsSlice';
 
-type Props = NativeStackScreenProps<HomeStackParamList, 'CustomerHome'>;
+type Props = NativeStackScreenProps<CustomerStackParamList, 'CustomerHome'>;
 
 // The FYP home's measurements (userHome.tsx): 20 pt sides; the Live badge
 // 16 pt under the header and 20 pt above the section; the section 16 pt
@@ -81,7 +84,7 @@ const CustomerHomeScreen: React.FC<Props> = ({ navigation }) => {
   );
   const { confirmSignOut } = useSignOut();
   const [menuOpen, setMenuOpen] = useState(false);
-  const tabs = navigation.getParent();
+  const svc = useServiceNav();
 
   const menu: SideMenuSection[] = [
     {
@@ -91,43 +94,43 @@ const CustomerHomeScreen: React.FC<Props> = ({ navigation }) => {
           key: 'profile',
           label: 'My Profile',
           icon: 'person-circle-outline',
-          onPress: () => tabs?.navigate('ProfileTab'),
+          onPress: () => navigation.navigate('Profile'),
         },
         {
           key: 'orders',
           label: 'My Orders',
           icon: 'receipt-outline',
-          onPress: () => tabs?.navigate('OrdersTab'),
+          onPress: () => navigation.navigate('Orders'),
         },
         {
           key: 'saved',
           label: 'Saved',
           icon: 'heart-outline',
-          onPress: () => tabs?.navigate('ProfileTab', { screen: 'Saved', initial: false }),
+          onPress: () => svc.openShopTab('SavedTab'),
         },
         {
           key: 'addresses',
           label: 'Addresses',
           icon: 'location-outline',
-          onPress: () => tabs?.navigate('ProfileTab', { screen: 'AddressBook', initial: false }),
+          onPress: () => navigation.navigate('AddressBook'),
         },
         {
           key: 'appointments',
           label: 'Appointments',
           icon: 'calendar-outline',
-          onPress: () => tabs?.navigate('OrdersTab', { screen: 'Orders', params: { service: 'health' } }),
+          onPress: () => svc.openHealthTab('AppointmentsTab'),
         },
         {
           key: 'records',
           label: 'Health records',
           icon: 'folder-open-outline',
-          onPress: () => tabs?.navigate('ProfileTab', { screen: 'HealthRecords', initial: false }),
+          onPress: () => svc.openHealthTab('RecordsTab'),
         },
         {
           key: 'family',
           label: 'Family members',
           icon: 'people-outline',
-          onPress: () => tabs?.navigate('ProfileTab', { screen: 'FamilyMembers', initial: false }),
+          onPress: () => svc.openHealth('FamilyMembers'),
         },
         {
           key: 'notifications',
@@ -139,7 +142,7 @@ const CustomerHomeScreen: React.FC<Props> = ({ navigation }) => {
           key: 'password',
           label: 'Change Password',
           icon: 'lock-closed-outline',
-          onPress: () => tabs?.navigate('ProfileTab', { screen: 'ChangePassword', initial: false }),
+          onPress: () => navigation.navigate('ChangePassword'),
         },
       ],
     },
@@ -159,9 +162,10 @@ const CustomerHomeScreen: React.FC<Props> = ({ navigation }) => {
 
   const open = (card: ServiceCardData) => {
     dispatch(setLastService(card.service));
-    if (card.service === 'food') navigation.navigate('FoodHome');
-    else if (card.service === 'shopping') navigation.navigate('ShoppingHome');
-    else if (card.service === 'healthcare') navigation.navigate('HealthHome');
+    // Each service is its own app with its own tabs, as in the FYP.
+    if (card.service === 'food') svc.openFood();
+    else if (card.service === 'shopping') svc.openShop();
+    else if (card.service === 'healthcare') svc.openHealth();
     else navigation.navigate('ServicePreview', { service: card.service });
   };
 

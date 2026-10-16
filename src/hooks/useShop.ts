@@ -38,7 +38,7 @@ export const useSaved = () => {
       if (setSavedAsync.rejected.match(r)) {
         Toast.show({ type: 'error', text1: save ? "Couldn't save it" : "Couldn't remove it", text2: 'Check your connection and try again.' });
       } else if (save) {
-        Toast.show({ type: 'success', text1: 'Saved', text2: 'Find it in Profile → Saved.' });
+        Toast.show({ type: 'success', text1: 'Saved', text2: 'Find it in the Saved tab.' });
       }
     },
     [dispatch, set],
@@ -62,14 +62,9 @@ export const useShopNav = () => {
       openStore: (slug: string, name?: string) => navigation.navigate('StorePage', { slug, name }),
       openList: (params: ShopBrowseParamList['ProductList']) => navigation.push('ProductList', params),
       openBag: () => navigation.navigate('Bag'),
-      /** Search lives in the Home tab; opened from a store's page it searches that store. */
+      /** Search opens over the Shopping tabs; from a store's page it searches that store. */
       openSearch: (scope?: { storeId: string; storeName: string }) =>
-        (navigation as unknown as { navigate: (name: string, p?: object) => void }).navigate('HomeTab', {
-          screen: 'ShopSearch',
-          params: scope,
-          // Keep the Home stack's first screen under it, so back works.
-          initial: false,
-        }),
+        (navigation as unknown as { navigate: (name: string, p?: object) => void }).navigate('ShopSearch', scope),
       openBanner: (b: Banner) => {
         const t = b.target;
         if (t.kind === 'store') navigation.navigate('StorePage', { slug: t.slug });

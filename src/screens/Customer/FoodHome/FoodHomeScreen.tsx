@@ -15,7 +15,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
-import { useBack } from '@hooks/useBack';
+import { useServiceNav } from '@hooks/useServiceNav';
 import { filterKitchens } from '@models/foodModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, EmptyState, InlineNotice, IonIcon, MciIcon } from '@custom/index';
@@ -61,7 +61,8 @@ const FoodHomeScreen: React.FC<Props> = props => (
 );
 
 const FoodHomeContent: React.FC<Props> = () => {
-  const { back } = useBack({ name: 'CustomerHome' });
+  // The service's Home tab: back leaves the service for the three cards.
+  const { leaveService: back } = useServiceNav();
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service, colors } = useTheme();

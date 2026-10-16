@@ -37,7 +37,7 @@ const RecordDetailScreen: React.FC<Props> = props => (
 
 const RecordDetailContent: React.FC<Props> = ({ route }) => {
   const { id } = route.params;
-  const { back } = useBack({ name: 'HealthRecords' });
+  const { back } = useBack({ name: 'HealthTabs', params: { screen: 'RecordsTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service, size } = useTheme();

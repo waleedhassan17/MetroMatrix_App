@@ -24,4 +24,8 @@ export interface ITabRoute {
   label: string;
   icon: IonName;
   iconActive: IonName;
+  /** A service app's tab roots carry `{ asTab: true }`, so they hide their back control. */
+  initialParams?: Record<string, unknown>;
+  /** A hook returning the count shown on the icon (the Bag). Called on every render of the bar. */
+  useBadge?: () => number;
 }

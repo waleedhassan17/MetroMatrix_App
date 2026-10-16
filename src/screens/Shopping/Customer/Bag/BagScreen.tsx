@@ -13,6 +13,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
+import { useIsTabRoot } from '@hooks/useServiceNav';
 import { useShopNav } from '@hooks/useShop';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Button, CartStoreGroup, EmptyState, InlineNotice, SkeletonLines, StickyCTA } from '@custom/index';
@@ -38,6 +39,7 @@ const BagScreen: React.FC<Props> = props => (
 
 const BagContent: React.FC<Props> = ({ navigation }) => {
   const { back } = useBack({ name: 'ShoppingHome' });
+  const asTab = useIsTabRoot();
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service } = useTheme();
@@ -73,7 +75,7 @@ const BagContent: React.FC<Props> = ({ navigation }) => {
 
   return (
     <View style={styles.root}>
-      <ShopTopBar title="Bag" onBack={back} showBag={false} />
+      <ShopTopBar title="Bag" onBack={asTab ? undefined : back} showBag={false} />
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={b.refreshing} onRefresh={() => void dispatch(loadBagAsync({ refresh: true }))} tintColor={service.accent} />}>
@@ -86,7 +88,7 @@ const BagContent: React.FC<Props> = ({ navigation }) => {
             icon="shopping-bag"
             title="Your bag is empty"
             body="Add something you love from any store. Each store delivers its own items."
-            action={{ label: 'Start shopping', onPress: () => root.navigate('HomeTab', { screen: 'ShoppingHome', initial: false }) }}
+            action={{ label: 'Start shopping', onPress: () => root.navigate('ShopTabs', { screen: 'ShopHomeTab' }) }}
           />
         ) : (
           <>
