@@ -199,6 +199,9 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
             initialRouteName: 'FoodHomeTab',
             screens: { FoodHomeTab: 'home/food', FoodOrdersTab: 'food/orders', FoodProfileTab: 'food/profile' },
           },
+          FoodVendors: 'food/restaurants',
+          FoodSearch: 'food/search',
+          FoodVendor: 'food/vendor/:slug',
         },
       },
       ApprovalsTab: {

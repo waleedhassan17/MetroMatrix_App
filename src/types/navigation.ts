@@ -182,6 +182,11 @@ export type ShopAppParamList = ShopBrowseParamList & {
 
 export type FoodAppParamList = {
   FoodTabs: NavigatorScreenParams<FoodTabParamList> | undefined;
+  /** A list of vendors: a cuisine, a home rail's "See all", or pick-up places. */
+  FoodVendors: { title?: string; cuisine?: string; rail?: string; pickup?: boolean } | undefined;
+  FoodSearch: { q?: string } | undefined;
+  /** A vendor's page (by slug); `dish` opens that dish's sheet. */
+  FoodVendor: { slug: string; dish?: string };
 };
 
 export type CustomerStackParamList = {

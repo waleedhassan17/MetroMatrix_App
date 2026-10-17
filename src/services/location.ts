@@ -42,3 +42,15 @@ export const locationForSms = async (): Promise<string | null> => {
     return null;
   }
 };
+
+/** Where the customer is now (Food Court's "Use my current location"); null when refused or unavailable. */
+export const currentPoint = async (): Promise<GeoPoint | null> => {
+  try {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') return null;
+    const p = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+    return { lat: p.coords.latitude, lng: p.coords.longitude };
+  } catch {
+    return null;
+  }
+};

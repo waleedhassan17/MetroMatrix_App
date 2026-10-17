@@ -1,54 +1,10 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Food discovery types (customer Food home)
+// MetroMatrix — Food Court types (customers, vendors, riders)
 // ═══════════════════════════════════════════════════════
 
 import type { SubType } from './auth';
 
 export type KitchenKind = Extract<SubType, 'restaurant' | 'home_kitchen' | 'cloud_kitchen'>;
-
-export interface Cuisine {
-  /** Stable key — the UI picks the glyph from it. */
-  slug: string;
-  name: string;
-}
-
-export interface Kitchen {
-  id: string;
-  name: string;
-  kind: KitchenKind;
-  cuisines: string[];
-  area: string;
-  rating: number;
-  ratingCount: number;
-  /** Delivery window in minutes. */
-  etaMin: number;
-  etaMax: number;
-  /** Rupees; 0 is free delivery. */
-  deliveryFee: number;
-  minOrder: number;
-  /** 1–3 ("Rs", "Rs Rs", "Rs Rs Rs"). */
-  priceLevel: number;
-  distanceKm: number;
-  /** A short promotion ("20% off", "Free dessert"), or null. */
-  deal: string | null;
-  isNew: boolean;
-  imageUrl: string | null;
-}
-
-export interface FoodPromo {
-  id: string;
-  title: string;
-  subtitle: string;
-  code: string | null;
-}
-
-export interface FoodHome {
-  /** The delivery area the list was built for. */
-  area: string;
-  promos: FoodPromo[];
-  cuisines: Cuisine[];
-  kitchens: Kitchen[];
-}
 
 // ═══════════════════════════════════════════════════════
 // Food Court vendors and riders (MetroMatrix-API, Food chunk)
@@ -403,4 +359,186 @@ export interface WeeklyMenuEntry {
   itemId: string;
   name: string;
   days: number[];
+}
+
+// ─── Discovery: what a customer can order from where they are ─────────────
+/** Where the customer wants food: a saved address, or where they are. */
+export interface FoodPoint {
+  lat: number;
+  lng: number;
+  /** "Home · Gulberg III", "Current location". */
+  label: string;
+  addressId: string | null;
+}
+
+export interface EtaRange {
+  min: number;
+  max: number;
+  /** "27–37 min". */
+  label: string;
+}
+
+/** A vendor as cards show it, with the quote for the customer's point. */
+export interface VendorCard {
+  id: string;
+  slug: string;
+  name: string;
+  tagline: string | null;
+  logoUrl: string | null;
+  coverUrl: string | null;
+  brandColor: string;
+  onBrandColor: string;
+  cuisines: { name: string; slug: string }[];
+  priceLevel: number;
+  ratingAvg: number;
+  ratingCount: number;
+  isHomeKitchen: boolean;
+  isFeatured: boolean;
+  isNew: boolean;
+  distanceKm: number | null;
+  eta: EtaRange;
+  /** Rupees; 0 is free delivery. */
+  deliveryFee: number;
+  minOrder: number;
+  freeDeliveryOver: number | null;
+  /** The best live deal, e.g. "20% off". */
+  dealLabel: string | null;
+  fulfilment: { delivery: boolean; pickup: boolean };
+  preorderOnly: boolean;
+  openState: { open: boolean; paused: boolean; label: string; opensAt: string | null };
+}
+
+export interface FoodHome {
+  coverage: { delivering: boolean; message: string | null; pickupNearby: number };
+  cuisines: FoodCuisine[];
+  orderAgain: VendorCard[];
+  offers: VendorCard[];
+  homeKitchens: VendorCard[];
+  topRated: VendorCard[];
+  fastest: VendorCard[];
+  newOnFoodCourt: VendorCard[];
+  freeDelivery: VendorCard[];
+}
+
+export type VendorSort = 'recommended' | 'distance' | 'rating' | 'delivery_time' | 'delivery_fee';
+
+export interface VendorListQuery {
+  lat: number;
+  lng: number;
+  q?: string;
+  cuisine?: string;
+  sort?: VendorSort;
+  freeDelivery?: boolean;
+  offers?: boolean;
+  minRating?: number;
+  pickup?: boolean;
+  homeKitchen?: boolean;
+  openNow?: boolean;
+  priceLevel?: number;
+}
+
+/** Why a dish can't be ordered right now (null: it can). */
+export type DishUnavailableReason = 'outside_hours' | 'sold_out' | 'unavailable' | 'not_today' | 'not_on_menu' | string;
+
+/** A dish in a vendor's menu, as customers see it. */
+export interface DishCard {
+  id: string;
+  name: string;
+  description: string | null;
+  photoUrl: string | null;
+  fromPrice: number;
+  hasVariants: boolean;
+  hasOptions: boolean;
+  tags: ItemTag[];
+  isDeal: boolean;
+  serves: number | null;
+  available: boolean;
+  unavailableReason: DishUnavailableReason | null;
+  soldOut: boolean;
+  remainingToday: number | null;
+  /** "6 left today" when few remain. */
+  remainingLabel: string | null;
+  sold30d: number;
+}
+
+export interface MenuSection {
+  id: string;
+  name: string;
+  availableFrom: string | null;
+  availableTo: string | null;
+  /** Inside its daily window right now. */
+  availableNow: boolean;
+  items: DishCard[];
+}
+
+export interface FoodDeal {
+  id: string;
+  title: string;
+  label: string;
+  freeDelivery: boolean;
+}
+
+/** A vendor's own page. */
+export interface VendorPage extends VendorCard {
+  paused: boolean;
+  pauseMessage: string | null;
+  location: { addressLine: string | null; area: string | null; city: string | null; lat: number | null; lng: number | null; phone: string | null };
+  /** For the customer's point; null when none was sent. */
+  delivery: { available: boolean; outOfZone: boolean; fee: number; minOrder: number; eta: EtaRange } | null;
+  pickup: { readyIn: EtaRange } | null;
+  acceptsCod: boolean;
+  deals: FoodDeal[];
+  menu: MenuSection[];
+  popular: DishCard[];
+}
+
+export interface SheetOption {
+  id: string;
+  name: string;
+  priceDelta: number;
+  isDefault: boolean;
+  available: boolean;
+}
+
+export interface SheetGroup {
+  id: string;
+  name: string;
+  minSelect: number;
+  maxSelect: number;
+  required: boolean;
+  /** Only for this size; null for every size. */
+  variantId: string | null;
+  options: SheetOption[];
+}
+
+/** The dish sheet: sizes, and the add-on groups each size offers. */
+export interface ItemSheet {
+  id: string;
+  name: string;
+  description: string | null;
+  photoUrl: string | null;
+  tags: ItemTag[];
+  isDeal: boolean;
+  serves: number | null;
+  basePrice: number;
+  fromPrice: number;
+  category: { id: string; name: string };
+  available: boolean;
+  unavailableReason: DishUnavailableReason | null;
+  remainingToday: number | null;
+  variants: { id: string; name: string; price: number; groupIds: string[] }[];
+  groups: SheetGroup[];
+}
+
+export interface DishHit {
+  id: string;
+  name: string;
+  photoUrl: string | null;
+  fromPrice: number;
+  tags: ItemTag[];
+}
+
+export interface FoodSearchResult {
+  vendors: VendorCard[];
+  dishes: { vendor: VendorCard; items: DishHit[] }[];
 }

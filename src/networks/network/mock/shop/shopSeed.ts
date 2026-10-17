@@ -658,15 +658,15 @@ const banners: MockBanner[] = [
 const addresses: MockAddress[] = [
   {
     id: 'ad_customer_home', userId: 'u_customer', label: 'home', fullName: 'Ayesha Khan', phone: '+923001234567', city: 'Lahore',
-    area: 'Gulberg III', line1: 'House 12, Main Boulevard', landmark: 'Near Liberty roundabout', lat: null, lng: null, isDefault: true,
+    area: 'Gulberg III', line1: 'House 12, Main Boulevard', landmark: 'Near Liberty roundabout', lat: 31.516, lng: 74.342, isDefault: true,
   },
   {
     id: 'ad_customer_work', userId: 'u_customer', label: 'work', fullName: 'Ayesha Khan', phone: '+923001234567', city: 'Quetta',
-    area: 'Jinnah Town', line1: 'Office 4, Zarghoon Road', landmark: null, lat: null, lng: null, isDefault: false,
+    area: 'Jinnah Town', line1: 'Office 4, Zarghoon Road', landmark: null, lat: 30.1979, lng: 67.0097, isDefault: false,
   },
   {
     id: 'ad_shopper_home', userId: 'u_shopper', label: 'home', fullName: 'Hamza Qureshi', phone: '+923451234567', city: 'Lahore',
-    area: 'DHA Phase 5', line1: 'House 88, Street 9', landmark: null, lat: null, lng: null, isDefault: true,
+    area: 'DHA Phase 5', line1: 'House 88, Street 9', landmark: null, lat: 31.4718, lng: 74.4023, isDefault: true,
   },
 ];
 

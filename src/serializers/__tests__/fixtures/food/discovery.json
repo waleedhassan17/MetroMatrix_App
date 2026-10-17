@@ -1,0 +1,2090 @@
+{
+ "home": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "coverage": {
+     "delivering": true,
+     "message": null,
+     "pickupNearby": 2
+    },
+    "cuisines": [
+     {
+      "id": "dcf59fe7-2f02-4b9e-8d6f-e0ed068b09c2",
+      "name": "Pakistani",
+      "slug": "pakistani",
+      "icon": "pakistani"
+     },
+     {
+      "id": "1cb733c0-626a-4e63-92d5-461aa95c414e",
+      "name": "BBQ",
+      "slug": "bbq",
+      "icon": "bbq"
+     },
+     {
+      "id": "32f0d252-1cf6-4541-8c81-2bf87eb14020",
+      "name": "Fast food",
+      "slug": "fast-food",
+      "icon": "fast_food"
+     },
+     {
+      "id": "217f9946-c21f-4c72-ae99-93a3d8ac8b12",
+      "name": "Burgers",
+      "slug": "burgers",
+      "icon": "burger"
+     },
+     {
+      "id": "7561a8dd-2462-4c1b-9212-5acdd64ad1a5",
+      "name": "Pizza",
+      "slug": "pizza",
+      "icon": "pizza"
+     },
+     {
+      "id": "84980e7c-2ce2-4ec7-9884-9ef68d9953d6",
+      "name": "Chinese",
+      "slug": "chinese",
+      "icon": "chinese"
+     },
+     {
+      "id": "156eb067-dcdb-4922-a5e7-b0fe912eacea",
+      "name": "Biryani",
+      "slug": "biryani",
+      "icon": "biryani"
+     },
+     {
+      "id": "5fb77372-8949-4971-ac2b-139a4f50be14",
+      "name": "Karahi",
+      "slug": "karahi",
+      "icon": "karahi"
+     },
+     {
+      "id": "7f5e907f-4bc7-4b16-be93-b78920206072",
+      "name": "Desserts",
+      "slug": "desserts",
+      "icon": "dessert"
+     },
+     {
+      "id": "473e9dbe-6591-4d5d-ac5d-5838fe1af565",
+      "name": "Bakery",
+      "slug": "bakery",
+      "icon": "bakery"
+     },
+     {
+      "id": "834db5a2-fb3d-4b80-aea3-fd72e706b13f",
+      "name": "Cafe",
+      "slug": "cafe",
+      "icon": "cafe"
+     },
+     {
+      "id": "69c226f4-744e-455c-8ed8-acf2a1167ade",
+      "name": "Healthy",
+      "slug": "healthy",
+      "icon": "healthy"
+     },
+     {
+      "id": "b8fab87f-2344-465f-b893-e447ccdcdc28",
+      "name": "Breakfast",
+      "slug": "breakfast",
+      "icon": "breakfast"
+     },
+     {
+      "id": "33e2be7d-1408-4fdd-b8a2-ae005f12ebf1",
+      "name": "Shawarma",
+      "slug": "shawarma",
+      "icon": "shawarma"
+     },
+     {
+      "id": "416ad00a-4f67-4c81-81bd-d8dcd0117d99",
+      "name": "Rolls",
+      "slug": "rolls",
+      "icon": "roll"
+     },
+     {
+      "id": "e0e2908c-fd87-4fad-b1c9-8c8e481d72eb",
+      "name": "Ice cream",
+      "slug": "ice-cream",
+      "icon": "ice_cream"
+     },
+     {
+      "id": "152301e4-0b1e-493a-8c1b-3da8cd903b9f",
+      "name": "Home food",
+      "slug": "home-food",
+      "icon": "home_food"
+     },
+     {
+      "id": "2beb9d4b-fdd0-4be5-872e-cb10554e0fc8",
+      "name": "Beverages",
+      "slug": "beverages",
+      "icon": "beverage"
+     }
+    ],
+    "banners": [],
+    "orderAgain": [],
+    "offers": [],
+    "homeKitchens": [
+     {
+      "id": "0d29ed60-aee6-4a8d-a838-3bdaf267028a",
+      "slug": "ammi-ka-khana-demo",
+      "name": "Ammi ka Khana (demo)",
+      "tagline": "Home-cooked salan and roti, made fresh each day",
+      "logoUrl": "https://placehold.co/256x256/047857/FFFFFF/png?text=AK",
+      "coverUrl": "https://images.unsplash.com/photo-1588644525273-f37b60d78512",
+      "brandColor": "#047857",
+      "onBrandColor": "#FFFFFF",
+      "cuisines": [
+       {
+        "name": "Home food",
+        "slug": "home-food"
+       },
+       {
+        "name": "Pakistani",
+        "slug": "pakistani"
+       }
+      ],
+      "priceLevel": 1,
+      "ratingAvg": 0,
+      "ratingCount": 0,
+      "isHomeKitchen": true,
+      "isFeatured": false,
+      "isNew": true,
+      "distanceKm": 3.9,
+      "etaRange": {
+       "min": 36,
+       "max": 46,
+       "label": "36–46 min"
+      },
+      "deliveryFee": 120,
+      "minOrder": 600,
+      "freeDeliveryOver": null,
+      "dealLabel": null,
+      "fulfilment": {
+       "delivery": true,
+       "pickup": true
+      },
+      "preorderOnly": false,
+      "openState": {
+       "open": false,
+       "paused": false,
+       "label": "Opens 11:00 AM",
+       "opensAt": "2026-10-18T06:00:00.000Z"
+      }
+     }
+    ],
+    "topRated": [
+     {
+      "id": "c2a85152-5e67-4475-9f83-f6b0754afaa3",
+      "slug": "karachi-biryani-house-demo",
+      "name": "Karachi Biryani House (demo)",
+      "tagline": "Karachi-style biryani, slow-cooked every morning.",
+      "logoUrl": "https://placehold.co/256x256/B45309/FFFFFF/png?text=KB",
+      "coverUrl": "https://images.unsplash.com/photo-1559528896-c5310744cce8",
+      "brandColor": "#B45309",
+      "onBrandColor": "#FFFFFF",
+      "cuisines": [
+       {
+        "name": "Pakistani",
+        "slug": "pakistani"
+       },
+       {
+        "name": "BBQ",
+        "slug": "bbq"
+       }
+      ],
+      "priceLevel": 2,
+      "ratingAvg": 4.6,
+      "ratingCount": 312,
+      "isHomeKitchen": false,
+      "isFeatured": false,
+      "isNew": true,
+      "distanceKm": 0.7,
+      "etaRange": {
+       "min": 27,
+       "max": 37,
+       "label": "27–37 min"
+      },
+      "deliveryFee": 99,
+      "minOrder": 500,
+      "freeDeliveryOver": 2500,
+      "dealLabel": null,
+      "fulfilment": {
+       "delivery": true,
+       "pickup": true
+      },
+      "preorderOnly": false,
+      "openState": {
+       "open": true,
+       "paused": false,
+       "label": "Open until 4:00 AM",
+       "opensAt": null
+      }
+     }
+    ],
+    "fastest": [
+     {
+      "id": "c2a85152-5e67-4475-9f83-f6b0754afaa3",
+      "slug": "karachi-biryani-house-demo",
+      "name": "Karachi Biryani House (demo)",
+      "tagline": "Karachi-style biryani, slow-cooked every morning.",
+      "logoUrl": "https://placehold.co/256x256/B45309/FFFFFF/png?text=KB",
+      "coverUrl": "https://images.unsplash.com/photo-1559528896-c5310744cce8",
+      "brandColor": "#B45309",
+      "onBrandColor": "#FFFFFF",
+      "cuisines": [
+       {
+        "name": "Pakistani",
+        "slug": "pakistani"
+       },
+       {
+        "name": "BBQ",
+        "slug": "bbq"
+       }
+      ],
+      "priceLevel": 2,
+      "ratingAvg": 4.6,
+      "ratingCount": 312,
+      "isHomeKitchen": false,
+      "isFeatured": false,
+      "isNew": true,
+      "distanceKm": 0.7,
+      "etaRange": {
+       "min": 27,
+       "max": 37,
+       "label": "27–37 min"
+      },
+      "deliveryFee": 99,
+      "minOrder": 500,
+      "freeDeliveryOver": 2500,
+      "dealLabel": null,
+      "fulfilment": {
+       "delivery": true,
+       "pickup": true
+      },
+      "preorderOnly": false,
+      "openState": {
+       "open": true,
+       "paused": false,
+       "label": "Open until 4:00 AM",
+       "opensAt": null
+      }
+     }
+    ],
+    "newOnFoodCourt": [
+     {
+      "id": "0d29ed60-aee6-4a8d-a838-3bdaf267028a",
+      "slug": "ammi-ka-khana-demo",
+      "name": "Ammi ka Khana (demo)",
+      "tagline": "Home-cooked salan and roti, made fresh each day",
+      "logoUrl": "https://placehold.co/256x256/047857/FFFFFF/png?text=AK",
+      "coverUrl": "https://images.unsplash.com/photo-1588644525273-f37b60d78512",
+      "brandColor": "#047857",
+      "onBrandColor": "#FFFFFF",
+      "cuisines": [
+       {
+        "name": "Home food",
+        "slug": "home-food"
+       },
+       {
+        "name": "Pakistani",
+        "slug": "pakistani"
+       }
+      ],
+      "priceLevel": 1,
+      "ratingAvg": 0,
+      "ratingCount": 0,
+      "isHomeKitchen": true,
+      "isFeatured": false,
+      "isNew": true,
+      "distanceKm": 3.9,
+      "etaRange": {
+       "min": 36,
+       "max": 46,
+       "label": "36–46 min"
+      },
+      "deliveryFee": 120,
+      "minOrder": 600,
+      "freeDeliveryOver": null,
+      "dealLabel": null,
+      "fulfilment": {
+       "delivery": true,
+       "pickup": true
+      },
+      "preorderOnly": false,
+      "openState": {
+       "open": false,
+       "paused": false,
+       "label": "Opens 11:00 AM",
+       "opensAt": "2026-10-18T06:00:00.000Z"
+      }
+     },
+     {
+      "id": "c2a85152-5e67-4475-9f83-f6b0754afaa3",
+      "slug": "karachi-biryani-house-demo",
+      "name": "Karachi Biryani House (demo)",
+      "tagline": "Karachi-style biryani, slow-cooked every morning.",
+      "logoUrl": "https://placehold.co/256x256/B45309/FFFFFF/png?text=KB",
+      "coverUrl": "https://images.unsplash.com/photo-1559528896-c5310744cce8",
+      "brandColor": "#B45309",
+      "onBrandColor": "#FFFFFF",
+      "cuisines": [
+       {
+        "name": "Pakistani",
+        "slug": "pakistani"
+       },
+       {
+        "name": "BBQ",
+        "slug": "bbq"
+       }
+      ],
+      "priceLevel": 2,
+      "ratingAvg": 4.6,
+      "ratingCount": 312,
+      "isHomeKitchen": false,
+      "isFeatured": false,
+      "isNew": true,
+      "distanceKm": 0.7,
+      "etaRange": {
+       "min": 27,
+       "max": 37,
+       "label": "27–37 min"
+      },
+      "deliveryFee": 99,
+      "minOrder": 500,
+      "freeDeliveryOver": 2500,
+      "dealLabel": null,
+      "fulfilment": {
+       "delivery": true,
+       "pickup": true
+      },
+      "preorderOnly": false,
+      "openState": {
+       "open": true,
+       "paused": false,
+       "label": "Open until 4:00 AM",
+       "opensAt": null
+      }
+     }
+    ],
+    "freeDelivery": []
+   }
+  }
+ },
+ "homeSignedIn": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "coverage": {
+     "delivering": true,
+     "message": null,
+     "pickupNearby": 2
+    },
+    "cuisines": [
+     {
+      "id": "dcf59fe7-2f02-4b9e-8d6f-e0ed068b09c2",
+      "name": "Pakistani",
+      "slug": "pakistani",
+      "icon": "pakistani"
+     },
+     {
+      "id": "1cb733c0-626a-4e63-92d5-461aa95c414e",
+      "name": "BBQ",
+      "slug": "bbq",
+      "icon": "bbq"
+     },
+     {
+      "id": "32f0d252-1cf6-4541-8c81-2bf87eb14020",
+      "name": "Fast food",
+      "slug": "fast-food",
+      "icon": "fast_food"
+     },
+     {
+      "id": "217f9946-c21f-4c72-ae99-93a3d8ac8b12",
+      "name": "Burgers",
+      "slug": "burgers",
+      "icon": "burger"
+     },
+     {
+      "id": "7561a8dd-2462-4c1b-9212-5acdd64ad1a5",
+      "name": "Pizza",
+      "slug": "pizza",
+      "icon": "pizza"
+     },
+     {
+      "id": "84980e7c-2ce2-4ec7-9884-9ef68d9953d6",
+      "name": "Chinese",
+      "slug": "chinese",
+      "icon": "chinese"
+     },
+     {
+      "id": "156eb067-dcdb-4922-a5e7-b0fe912eacea",
+      "name": "Biryani",
+      "slug": "biryani",
+      "icon": "biryani"
+     },
+     {
+      "id": "5fb77372-8949-4971-ac2b-139a4f50be14",
+      "name": "Karahi",
+      "slug": "karahi",
+      "icon": "karahi"
+     },
+     {
+      "id": "7f5e907f-4bc7-4b16-be93-b78920206072",
+      "name": "Desserts",
+      "slug": "desserts",
+      "icon": "dessert"
+     },
+     {
+      "id": "473e9dbe-6591-4d5d-ac5d-5838fe1af565",
+      "name": "Bakery",
+      "slug": "bakery",
+      "icon": "bakery"
+     },
+     {
+      "id": "834db5a2-fb3d-4b80-aea3-fd72e706b13f",
+      "name": "Cafe",
+      "slug": "cafe",
+      "icon": "cafe"
+     },
+     {
+      "id": "69c226f4-744e-455c-8ed8-acf2a1167ade",
+      "name": "Healthy",
+      "slug": "healthy",
+      "icon": "healthy"
+     },
+     {
+      "id": "b8fab87f-2344-465f-b893-e447ccdcdc28",
+      "name": "Breakfast",
+      "slug": "breakfast",
+      "icon": "breakfast"
+     },
+     {
+      "id": "33e2be7d-1408-4fdd-b8a2-ae005f12ebf1",
+      "name": "Shawarma",
+      "slug": "shawarma",
+      "icon": "shawarma"
+     },
+     {
+      "id": "416ad00a-4f67-4c81-81bd-d8dcd0117d99",
+      "name": "Rolls",
+      "slug": "rolls",
+      "icon": "roll"
+     },
+     {
+      "id": "e0e2908c-fd87-4fad-b1c9-8c8e481d72eb",
+      "name": "Ice cream",
+      "slug": "ice-cream",
+      "icon": "ice_cream"
+     },
+     {
+      "id": "152301e4-0b1e-493a-8c1b-3da8cd903b9f",
+      "name": "Home food",
+      "slug": "home-food",
+      "icon": "home_food"
+     },
+     {
+      "id": "2beb9d4b-fdd0-4be5-872e-cb10554e0fc8",
+      "name": "Beverages",
+      "slug": "beverages",
+      "icon": "beverage"
+     }
+    ],
+    "banners": [],
+    "orderAgain": [],
+    "offers": [],
+    "homeKitchens": [
+     {
+      "id": "0d29ed60-aee6-4a8d-a838-3bdaf267028a",
+      "slug": "ammi-ka-khana-demo",
+      "name": "Ammi ka Khana (demo)",
+      "tagline": "Home-cooked salan and roti, made fresh each day",
+      "logoUrl": "https://placehold.co/256x256/047857/FFFFFF/png?text=AK",
+      "coverUrl": "https://images.unsplash.com/photo-1588644525273-f37b60d78512",
+      "brandColor": "#047857",
+      "onBrandColor": "#FFFFFF",
+      "cuisines": [
+       {
+        "name": "Home food",
+        "slug": "home-food"
+       },
+       {
+        "name": "Pakistani",
+        "slug": "pakistani"
+       }
+      ],
+      "priceLevel": 1,
+      "ratingAvg": 0,
+      "ratingCount": 0,
+      "isHomeKitchen": true,
+      "isFeatured": false,
+      "isNew": true,
+      "distanceKm": 3.9,
+      "etaRange": {
+       "min": 36,
+       "max": 46,
+       "label": "36–46 min"
+      },
+      "deliveryFee": 120,
+      "minOrder": 600,
+      "freeDeliveryOver": null,
+      "dealLabel": null,
+      "fulfilment": {
+       "delivery": true,
+       "pickup": true
+      },
+      "preorderOnly": false,
+      "openState": {
+       "open": false,
+       "paused": false,
+       "label": "Opens 11:00 AM",
+       "opensAt": "2026-10-18T06:00:00.000Z"
+      }
+     }
+    ],
+    "topRated": [
+     {
+      "id": "c2a85152-5e67-4475-9f83-f6b0754afaa3",
+      "slug": "karachi-biryani-house-demo",
+      "name": "Karachi Biryani House (demo)",
+      "tagline": "Karachi-style biryani, slow-cooked every morning.",
+      "logoUrl": "https://placehold.co/256x256/B45309/FFFFFF/png?text=KB",
+      "coverUrl": "https://images.unsplash.com/photo-1559528896-c5310744cce8",
+      "brandColor": "#B45309",
+      "onBrandColor": "#FFFFFF",
+      "cuisines": [
+       {
+        "name": "Pakistani",
+        "slug": "pakistani"
+       },
+       {
+        "name": "BBQ",
+        "slug": "bbq"
+       }
+      ],
+      "priceLevel": 2,
+      "ratingAvg": 4.6,
+      "ratingCount": 312,
+      "isHomeKitchen": false,
+      "isFeatured": false,
+      "isNew": true,
+      "distanceKm": 0.7,
+      "etaRange": {
+       "min": 27,
+       "max": 37,
+       "label": "27–37 min"
+      },
+      "deliveryFee": 99,
+      "minOrder": 500,
+      "freeDeliveryOver": 2500,
+      "dealLabel": null,
+      "fulfilment": {
+       "delivery": true,
+       "pickup": true
+      },
+      "preorderOnly": false,
+      "openState": {
+       "open": true,
+       "paused": false,
+       "label": "Open until 4:00 AM",
+       "opensAt": null
+      }
+     }
+    ],
+    "fastest": [
+     {
+      "id": "c2a85152-5e67-4475-9f83-f6b0754afaa3",
+      "slug": "karachi-biryani-house-demo",
+      "name": "Karachi Biryani House (demo)",
+      "tagline": "Karachi-style biryani, slow-cooked every morning.",
+      "logoUrl": "https://placehold.co/256x256/B45309/FFFFFF/png?text=KB",
+      "coverUrl": "https://images.unsplash.com/photo-1559528896-c5310744cce8",
+      "brandColor": "#B45309",
+      "onBrandColor": "#FFFFFF",
+      "cuisines": [
+       {
+        "name": "Pakistani",
+        "slug": "pakistani"
+       },
+       {
+        "name": "BBQ",
+        "slug": "bbq"
+       }
+      ],
+      "priceLevel": 2,
+      "ratingAvg": 4.6,
+      "ratingCount": 312,
+      "isHomeKitchen": false,
+      "isFeatured": false,
+      "isNew": true,
+      "distanceKm": 0.7,
+      "etaRange": {
+       "min": 27,
+       "max": 37,
+       "label": "27–37 min"
+      },
+      "deliveryFee": 99,
+      "minOrder": 500,
+      "freeDeliveryOver": 2500,
+      "dealLabel": null,
+      "fulfilment": {
+       "delivery": true,
+       "pickup": true
+      },
+      "preorderOnly": false,
+      "openState": {
+       "open": true,
+       "paused": false,
+       "label": "Open until 4:00 AM",
+       "opensAt": null
+      }
+     }
+    ],
+    "newOnFoodCourt": [
+     {
+      "id": "0d29ed60-aee6-4a8d-a838-3bdaf267028a",
+      "slug": "ammi-ka-khana-demo",
+      "name": "Ammi ka Khana (demo)",
+      "tagline": "Home-cooked salan and roti, made fresh each day",
+      "logoUrl": "https://placehold.co/256x256/047857/FFFFFF/png?text=AK",
+      "coverUrl": "https://images.unsplash.com/photo-1588644525273-f37b60d78512",
+      "brandColor": "#047857",
+      "onBrandColor": "#FFFFFF",
+      "cuisines": [
+       {
+        "name": "Home food",
+        "slug": "home-food"
+       },
+       {
+        "name": "Pakistani",
+        "slug": "pakistani"
+       }
+      ],
+      "priceLevel": 1,
+      "ratingAvg": 0,
+      "ratingCount": 0,
+      "isHomeKitchen": true,
+      "isFeatured": false,
+      "isNew": true,
+      "distanceKm": 3.9,
+      "etaRange": {
+       "min": 36,
+       "max": 46,
+       "label": "36–46 min"
+      },
+      "deliveryFee": 120,
+      "minOrder": 600,
+      "freeDeliveryOver": null,
+      "dealLabel": null,
+      "fulfilment": {
+       "delivery": true,
+       "pickup": true
+      },
+      "preorderOnly": false,
+      "openState": {
+       "open": false,
+       "paused": false,
+       "label": "Opens 11:00 AM",
+       "opensAt": "2026-10-18T06:00:00.000Z"
+      }
+     },
+     {
+      "id": "c2a85152-5e67-4475-9f83-f6b0754afaa3",
+      "slug": "karachi-biryani-house-demo",
+      "name": "Karachi Biryani House (demo)",
+      "tagline": "Karachi-style biryani, slow-cooked every morning.",
+      "logoUrl": "https://placehold.co/256x256/B45309/FFFFFF/png?text=KB",
+      "coverUrl": "https://images.unsplash.com/photo-1559528896-c5310744cce8",
+      "brandColor": "#B45309",
+      "onBrandColor": "#FFFFFF",
+      "cuisines": [
+       {
+        "name": "Pakistani",
+        "slug": "pakistani"
+       },
+       {
+        "name": "BBQ",
+        "slug": "bbq"
+       }
+      ],
+      "priceLevel": 2,
+      "ratingAvg": 4.6,
+      "ratingCount": 312,
+      "isHomeKitchen": false,
+      "isFeatured": false,
+      "isNew": true,
+      "distanceKm": 0.7,
+      "etaRange": {
+       "min": 27,
+       "max": 37,
+       "label": "27–37 min"
+      },
+      "deliveryFee": 99,
+      "minOrder": 500,
+      "freeDeliveryOver": 2500,
+      "dealLabel": null,
+      "fulfilment": {
+       "delivery": true,
+       "pickup": true
+      },
+      "preorderOnly": false,
+      "openState": {
+       "open": true,
+       "paused": false,
+       "label": "Open until 4:00 AM",
+       "opensAt": null
+      }
+     }
+    ],
+    "freeDelivery": []
+   }
+  }
+ },
+ "homeFar": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "coverage": {
+     "delivering": false,
+     "message": "Not delivering here yet",
+     "pickupNearby": 0
+    },
+    "cuisines": [
+     {
+      "id": "dcf59fe7-2f02-4b9e-8d6f-e0ed068b09c2",
+      "name": "Pakistani",
+      "slug": "pakistani",
+      "icon": "pakistani"
+     },
+     {
+      "id": "1cb733c0-626a-4e63-92d5-461aa95c414e",
+      "name": "BBQ",
+      "slug": "bbq",
+      "icon": "bbq"
+     },
+     {
+      "id": "32f0d252-1cf6-4541-8c81-2bf87eb14020",
+      "name": "Fast food",
+      "slug": "fast-food",
+      "icon": "fast_food"
+     },
+     {
+      "id": "217f9946-c21f-4c72-ae99-93a3d8ac8b12",
+      "name": "Burgers",
+      "slug": "burgers",
+      "icon": "burger"
+     },
+     {
+      "id": "7561a8dd-2462-4c1b-9212-5acdd64ad1a5",
+      "name": "Pizza",
+      "slug": "pizza",
+      "icon": "pizza"
+     },
+     {
+      "id": "84980e7c-2ce2-4ec7-9884-9ef68d9953d6",
+      "name": "Chinese",
+      "slug": "chinese",
+      "icon": "chinese"
+     },
+     {
+      "id": "156eb067-dcdb-4922-a5e7-b0fe912eacea",
+      "name": "Biryani",
+      "slug": "biryani",
+      "icon": "biryani"
+     },
+     {
+      "id": "5fb77372-8949-4971-ac2b-139a4f50be14",
+      "name": "Karahi",
+      "slug": "karahi",
+      "icon": "karahi"
+     },
+     {
+      "id": "7f5e907f-4bc7-4b16-be93-b78920206072",
+      "name": "Desserts",
+      "slug": "desserts",
+      "icon": "dessert"
+     },
+     {
+      "id": "473e9dbe-6591-4d5d-ac5d-5838fe1af565",
+      "name": "Bakery",
+      "slug": "bakery",
+      "icon": "bakery"
+     },
+     {
+      "id": "834db5a2-fb3d-4b80-aea3-fd72e706b13f",
+      "name": "Cafe",
+      "slug": "cafe",
+      "icon": "cafe"
+     },
+     {
+      "id": "69c226f4-744e-455c-8ed8-acf2a1167ade",
+      "name": "Healthy",
+      "slug": "healthy",
+      "icon": "healthy"
+     },
+     {
+      "id": "b8fab87f-2344-465f-b893-e447ccdcdc28",
+      "name": "Breakfast",
+      "slug": "breakfast",
+      "icon": "breakfast"
+     },
+     {
+      "id": "33e2be7d-1408-4fdd-b8a2-ae005f12ebf1",
+      "name": "Shawarma",
+      "slug": "shawarma",
+      "icon": "shawarma"
+     },
+     {
+      "id": "416ad00a-4f67-4c81-81bd-d8dcd0117d99",
+      "name": "Rolls",
+      "slug": "rolls",
+      "icon": "roll"
+     },
+     {
+      "id": "e0e2908c-fd87-4fad-b1c9-8c8e481d72eb",
+      "name": "Ice cream",
+      "slug": "ice-cream",
+      "icon": "ice_cream"
+     },
+     {
+      "id": "152301e4-0b1e-493a-8c1b-3da8cd903b9f",
+      "name": "Home food",
+      "slug": "home-food",
+      "icon": "home_food"
+     },
+     {
+      "id": "2beb9d4b-fdd0-4be5-872e-cb10554e0fc8",
+      "name": "Beverages",
+      "slug": "beverages",
+      "icon": "beverage"
+     }
+    ],
+    "banners": [],
+    "orderAgain": [],
+    "offers": [],
+    "homeKitchens": [],
+    "topRated": [],
+    "fastest": [],
+    "newOnFoodCourt": [],
+    "freeDelivery": []
+   }
+  }
+ },
+ "homeErr": {
+  "status": 400,
+  "body": {
+   "success": false,
+   "error": {
+    "code": "VALIDATION_FAILED",
+    "message": "lat must be a latitude string or number",
+    "details": {
+     "fields": {
+      "lat": [
+       "lat must be a latitude string or number"
+      ],
+      "lng": [
+       "lng must be a longitude string or number"
+      ]
+     }
+    }
+   }
+  }
+ },
+ "vendors": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [
+     {
+      "id": "c2a85152-5e67-4475-9f83-f6b0754afaa3",
+      "slug": "karachi-biryani-house-demo",
+      "name": "Karachi Biryani House (demo)",
+      "tagline": "Karachi-style biryani, slow-cooked every morning.",
+      "logoUrl": "https://placehold.co/256x256/B45309/FFFFFF/png?text=KB",
+      "coverUrl": "https://images.unsplash.com/photo-1559528896-c5310744cce8",
+      "brandColor": "#B45309",
+      "onBrandColor": "#FFFFFF",
+      "cuisines": [
+       {
+        "name": "Pakistani",
+        "slug": "pakistani"
+       },
+       {
+        "name": "BBQ",
+        "slug": "bbq"
+       }
+      ],
+      "priceLevel": 2,
+      "ratingAvg": 4.6,
+      "ratingCount": 312,
+      "isHomeKitchen": false,
+      "isFeatured": false,
+      "isNew": true,
+      "distanceKm": 0.7,
+      "etaRange": {
+       "min": 27,
+       "max": 37,
+       "label": "27–37 min"
+      },
+      "deliveryFee": 99,
+      "minOrder": 500,
+      "freeDeliveryOver": 2500,
+      "dealLabel": null,
+      "fulfilment": {
+       "delivery": true,
+       "pickup": true
+      },
+      "preorderOnly": false,
+      "openState": {
+       "open": true,
+       "paused": false,
+       "label": "Open until 4:00 AM",
+       "opensAt": null
+      }
+     },
+     {
+      "id": "0d29ed60-aee6-4a8d-a838-3bdaf267028a",
+      "slug": "ammi-ka-khana-demo",
+      "name": "Ammi ka Khana (demo)",
+      "tagline": "Home-cooked salan and roti, made fresh each day",
+      "logoUrl": "https://placehold.co/256x256/047857/FFFFFF/png?text=AK",
+      "coverUrl": "https://images.unsplash.com/photo-1588644525273-f37b60d78512",
+      "brandColor": "#047857",
+      "onBrandColor": "#FFFFFF",
+      "cuisines": [
+       {
+        "name": "Home food",
+        "slug": "home-food"
+       },
+       {
+        "name": "Pakistani",
+        "slug": "pakistani"
+       }
+      ],
+      "priceLevel": 1,
+      "ratingAvg": 0,
+      "ratingCount": 0,
+      "isHomeKitchen": true,
+      "isFeatured": false,
+      "isNew": true,
+      "distanceKm": 3.9,
+      "etaRange": {
+       "min": 36,
+       "max": 46,
+       "label": "36–46 min"
+      },
+      "deliveryFee": 120,
+      "minOrder": 600,
+      "freeDeliveryOver": null,
+      "dealLabel": null,
+      "fulfilment": {
+       "delivery": true,
+       "pickup": true
+      },
+      "preorderOnly": false,
+      "openState": {
+       "open": false,
+       "paused": false,
+       "label": "Opens 11:00 AM",
+       "opensAt": "2026-10-18T06:00:00.000Z"
+      }
+     }
+    ],
+    "total": 2,
+    "page": 1,
+    "pageSize": 20
+   }
+  }
+ },
+ "vendorsRating": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [
+     {
+      "id": "c2a85152-5e67-4475-9f83-f6b0754afaa3",
+      "slug": "karachi-biryani-house-demo",
+      "name": "Karachi Biryani House (demo)",
+      "tagline": "Karachi-style biryani, slow-cooked every morning.",
+      "logoUrl": "https://placehold.co/256x256/B45309/FFFFFF/png?text=KB",
+      "coverUrl": "https://images.unsplash.com/photo-1559528896-c5310744cce8",
+      "brandColor": "#B45309",
+      "onBrandColor": "#FFFFFF",
+      "cuisines": [
+       {
+        "name": "Pakistani",
+        "slug": "pakistani"
+       },
+       {
+        "name": "BBQ",
+        "slug": "bbq"
+       }
+      ],
+      "priceLevel": 2,
+      "ratingAvg": 4.6,
+      "ratingCount": 312,
+      "isHomeKitchen": false,
+      "isFeatured": false,
+      "isNew": true,
+      "distanceKm": 0.7,
+      "etaRange": {
+       "min": 27,
+       "max": 37,
+       "label": "27–37 min"
+      },
+      "deliveryFee": 99,
+      "minOrder": 500,
+      "freeDeliveryOver": 2500,
+      "dealLabel": null,
+      "fulfilment": {
+       "delivery": true,
+       "pickup": true
+      },
+      "preorderOnly": false,
+      "openState": {
+       "open": true,
+       "paused": false,
+       "label": "Open until 4:00 AM",
+       "opensAt": null
+      }
+     },
+     {
+      "id": "0d29ed60-aee6-4a8d-a838-3bdaf267028a",
+      "slug": "ammi-ka-khana-demo",
+      "name": "Ammi ka Khana (demo)",
+      "tagline": "Home-cooked salan and roti, made fresh each day",
+      "logoUrl": "https://placehold.co/256x256/047857/FFFFFF/png?text=AK",
+      "coverUrl": "https://images.unsplash.com/photo-1588644525273-f37b60d78512",
+      "brandColor": "#047857",
+      "onBrandColor": "#FFFFFF",
+      "cuisines": [
+       {
+        "name": "Home food",
+        "slug": "home-food"
+       },
+       {
+        "name": "Pakistani",
+        "slug": "pakistani"
+       }
+      ],
+      "priceLevel": 1,
+      "ratingAvg": 0,
+      "ratingCount": 0,
+      "isHomeKitchen": true,
+      "isFeatured": false,
+      "isNew": true,
+      "distanceKm": 3.9,
+      "etaRange": {
+       "min": 36,
+       "max": 46,
+       "label": "36–46 min"
+      },
+      "deliveryFee": 120,
+      "minOrder": 600,
+      "freeDeliveryOver": null,
+      "dealLabel": null,
+      "fulfilment": {
+       "delivery": true,
+       "pickup": true
+      },
+      "preorderOnly": false,
+      "openState": {
+       "open": false,
+       "paused": false,
+       "label": "Opens 11:00 AM",
+       "opensAt": "2026-10-18T06:00:00.000Z"
+      }
+     }
+    ],
+    "total": 2,
+    "page": 1,
+    "pageSize": 20
+   }
+  }
+ },
+ "vendorsCuisine": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [],
+    "total": 0,
+    "page": 1,
+    "pageSize": 20
+   }
+  }
+ },
+ "vendorsFilters": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [],
+    "total": 0,
+    "page": 1,
+    "pageSize": 20
+   }
+  }
+ },
+ "vendorsPickup": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [
+     {
+      "id": "c2a85152-5e67-4475-9f83-f6b0754afaa3",
+      "slug": "karachi-biryani-house-demo",
+      "name": "Karachi Biryani House (demo)",
+      "tagline": "Karachi-style biryani, slow-cooked every morning.",
+      "logoUrl": "https://placehold.co/256x256/B45309/FFFFFF/png?text=KB",
+      "coverUrl": "https://images.unsplash.com/photo-1559528896-c5310744cce8",
+      "brandColor": "#B45309",
+      "onBrandColor": "#FFFFFF",
+      "cuisines": [
+       {
+        "name": "Pakistani",
+        "slug": "pakistani"
+       },
+       {
+        "name": "BBQ",
+        "slug": "bbq"
+       }
+      ],
+      "priceLevel": 2,
+      "ratingAvg": 4.6,
+      "ratingCount": 312,
+      "isHomeKitchen": false,
+      "isFeatured": false,
+      "isNew": true,
+      "distanceKm": 0.7,
+      "etaRange": {
+       "min": 20,
+       "max": 30,
+       "label": "20–30 min"
+      },
+      "deliveryFee": 0,
+      "minOrder": 0,
+      "freeDeliveryOver": null,
+      "dealLabel": null,
+      "fulfilment": {
+       "delivery": true,
+       "pickup": true
+      },
+      "preorderOnly": false,
+      "openState": {
+       "open": true,
+       "paused": false,
+       "label": "Open until 4:00 AM",
+       "opensAt": null
+      }
+     },
+     {
+      "id": "0d29ed60-aee6-4a8d-a838-3bdaf267028a",
+      "slug": "ammi-ka-khana-demo",
+      "name": "Ammi ka Khana (demo)",
+      "tagline": "Home-cooked salan and roti, made fresh each day",
+      "logoUrl": "https://placehold.co/256x256/047857/FFFFFF/png?text=AK",
+      "coverUrl": "https://images.unsplash.com/photo-1588644525273-f37b60d78512",
+      "brandColor": "#047857",
+      "onBrandColor": "#FFFFFF",
+      "cuisines": [
+       {
+        "name": "Home food",
+        "slug": "home-food"
+       },
+       {
+        "name": "Pakistani",
+        "slug": "pakistani"
+       }
+      ],
+      "priceLevel": 1,
+      "ratingAvg": 0,
+      "ratingCount": 0,
+      "isHomeKitchen": true,
+      "isFeatured": false,
+      "isNew": true,
+      "distanceKm": 3.9,
+      "etaRange": {
+       "min": 20,
+       "max": 30,
+       "label": "20–30 min"
+      },
+      "deliveryFee": 0,
+      "minOrder": 0,
+      "freeDeliveryOver": null,
+      "dealLabel": null,
+      "fulfilment": {
+       "delivery": true,
+       "pickup": true
+      },
+      "preorderOnly": false,
+      "openState": {
+       "open": false,
+       "paused": false,
+       "label": "Opens 11:00 AM",
+       "opensAt": "2026-10-18T06:00:00.000Z"
+      }
+     }
+    ],
+    "total": 2,
+    "page": 1,
+    "pageSize": 20
+   }
+  }
+ },
+ "vendorsHome": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [
+     {
+      "id": "0d29ed60-aee6-4a8d-a838-3bdaf267028a",
+      "slug": "ammi-ka-khana-demo",
+      "name": "Ammi ka Khana (demo)",
+      "tagline": "Home-cooked salan and roti, made fresh each day",
+      "logoUrl": "https://placehold.co/256x256/047857/FFFFFF/png?text=AK",
+      "coverUrl": "https://images.unsplash.com/photo-1588644525273-f37b60d78512",
+      "brandColor": "#047857",
+      "onBrandColor": "#FFFFFF",
+      "cuisines": [
+       {
+        "name": "Home food",
+        "slug": "home-food"
+       },
+       {
+        "name": "Pakistani",
+        "slug": "pakistani"
+       }
+      ],
+      "priceLevel": 1,
+      "ratingAvg": 0,
+      "ratingCount": 0,
+      "isHomeKitchen": true,
+      "isFeatured": false,
+      "isNew": true,
+      "distanceKm": 3.9,
+      "etaRange": {
+       "min": 36,
+       "max": 46,
+       "label": "36–46 min"
+      },
+      "deliveryFee": 120,
+      "minOrder": 600,
+      "freeDeliveryOver": null,
+      "dealLabel": null,
+      "fulfilment": {
+       "delivery": true,
+       "pickup": true
+      },
+      "preorderOnly": false,
+      "openState": {
+       "open": false,
+       "paused": false,
+       "label": "Opens 11:00 AM",
+       "opensAt": "2026-10-18T06:00:00.000Z"
+      }
+     }
+    ],
+    "total": 1,
+    "page": 1,
+    "pageSize": 20
+   }
+  }
+ },
+ "vendorsPage2": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [
+     {
+      "id": "0d29ed60-aee6-4a8d-a838-3bdaf267028a",
+      "slug": "ammi-ka-khana-demo",
+      "name": "Ammi ka Khana (demo)",
+      "tagline": "Home-cooked salan and roti, made fresh each day",
+      "logoUrl": "https://placehold.co/256x256/047857/FFFFFF/png?text=AK",
+      "coverUrl": "https://images.unsplash.com/photo-1588644525273-f37b60d78512",
+      "brandColor": "#047857",
+      "onBrandColor": "#FFFFFF",
+      "cuisines": [
+       {
+        "name": "Home food",
+        "slug": "home-food"
+       },
+       {
+        "name": "Pakistani",
+        "slug": "pakistani"
+       }
+      ],
+      "priceLevel": 1,
+      "ratingAvg": 0,
+      "ratingCount": 0,
+      "isHomeKitchen": true,
+      "isFeatured": false,
+      "isNew": true,
+      "distanceKm": 3.9,
+      "etaRange": {
+       "min": 36,
+       "max": 46,
+       "label": "36–46 min"
+      },
+      "deliveryFee": 120,
+      "minOrder": 600,
+      "freeDeliveryOver": null,
+      "dealLabel": null,
+      "fulfilment": {
+       "delivery": true,
+       "pickup": true
+      },
+      "preorderOnly": false,
+      "openState": {
+       "open": false,
+       "paused": false,
+       "label": "Opens 11:00 AM",
+       "opensAt": "2026-10-18T06:00:00.000Z"
+      }
+     }
+    ],
+    "total": 2,
+    "page": 2,
+    "pageSize": 1
+   }
+  }
+ },
+ "vendorPage": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "c2a85152-5e67-4475-9f83-f6b0754afaa3",
+    "slug": "karachi-biryani-house-demo",
+    "name": "Karachi Biryani House (demo)",
+    "tagline": "Karachi-style biryani, slow-cooked every morning.",
+    "logoUrl": "https://placehold.co/256x256/B45309/FFFFFF/png?text=KB",
+    "coverUrl": "https://images.unsplash.com/photo-1559528896-c5310744cce8",
+    "brandColor": "#B45309",
+    "onBrandColor": "#FFFFFF",
+    "cuisines": [
+     {
+      "name": "Pakistani",
+      "slug": "pakistani"
+     },
+     {
+      "name": "BBQ",
+      "slug": "bbq"
+     }
+    ],
+    "priceLevel": 2,
+    "ratingAvg": 4.6,
+    "ratingCount": 312,
+    "isHomeKitchen": false,
+    "isFeatured": false,
+    "isNew": true,
+    "distanceKm": 0.7,
+    "etaRange": {
+     "min": 27,
+     "max": 37,
+     "label": "27–37 min"
+    },
+    "deliveryFee": 99,
+    "minOrder": 500,
+    "freeDeliveryOver": 2500,
+    "dealLabel": null,
+    "fulfilment": {
+     "delivery": true,
+     "pickup": true
+    },
+    "preorderOnly": false,
+    "openState": {
+     "open": true,
+     "paused": false,
+     "label": "Open until 4:00 AM",
+     "opensAt": null
+    },
+    "paused": false,
+    "pauseMessage": null,
+    "location": {
+     "addressLine": "12-C Main Boulevard, Gulberg III",
+     "area": "Gulberg III",
+     "city": "Lahore",
+     "lat": 31.5102,
+     "lng": 74.3441,
+     "phone": "+923001110001"
+    },
+    "delivery": {
+     "available": true,
+     "outOfZone": false,
+     "fee": 99,
+     "minOrder": 500,
+     "etaRange": {
+      "min": 27,
+      "max": 37,
+      "label": "27–37 min"
+     }
+    },
+    "pickup": {
+     "readyIn": {
+      "min": 20,
+      "max": 30,
+      "label": "20–30 min"
+     }
+    },
+    "acceptsCod": true,
+    "deals": [],
+    "ratingSummary": null,
+    "menu": [
+     {
+      "id": "c5578f83-7e69-4e92-9d46-aaa1c305c2b4",
+      "name": "Biryani",
+      "availableFrom": null,
+      "availableTo": null,
+      "availableNow": true,
+      "items": [
+       {
+        "id": "bbbe4e51-b596-439d-8a9a-3eeb9533f311",
+        "name": "Chicken Biryani",
+        "description": "Long-grain rice, slow-cooked chicken, fried onions and mint.",
+        "photoUrl": "https://images.unsplash.com/photo-1782541370275-6761522e39d1",
+        "fromPrice": 650,
+        "hasVariants": true,
+        "hasOptions": true,
+        "tags": [
+         "spicy",
+         "bestseller"
+        ],
+        "isDeal": false,
+        "serves": 1,
+        "available": true,
+        "unavailableReason": null,
+        "soldOut": false,
+        "remainingToday": null,
+        "remainingLabel": null,
+        "sold30d": 0
+       }
+      ]
+     }
+    ],
+    "popular": []
+   }
+  }
+ },
+ "vendorPageNoPoint": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "c2a85152-5e67-4475-9f83-f6b0754afaa3",
+    "slug": "karachi-biryani-house-demo",
+    "name": "Karachi Biryani House (demo)",
+    "tagline": "Karachi-style biryani, slow-cooked every morning.",
+    "logoUrl": "https://placehold.co/256x256/B45309/FFFFFF/png?text=KB",
+    "coverUrl": "https://images.unsplash.com/photo-1559528896-c5310744cce8",
+    "brandColor": "#B45309",
+    "onBrandColor": "#FFFFFF",
+    "cuisines": [
+     {
+      "name": "Pakistani",
+      "slug": "pakistani"
+     },
+     {
+      "name": "BBQ",
+      "slug": "bbq"
+     }
+    ],
+    "priceLevel": 2,
+    "ratingAvg": 4.6,
+    "ratingCount": 312,
+    "isHomeKitchen": false,
+    "isFeatured": false,
+    "isNew": true,
+    "distanceKm": null,
+    "etaRange": {
+     "min": 25,
+     "max": 35,
+     "label": "25–35 min"
+    },
+    "deliveryFee": 99,
+    "minOrder": 500,
+    "freeDeliveryOver": 2500,
+    "dealLabel": null,
+    "fulfilment": {
+     "delivery": true,
+     "pickup": true
+    },
+    "preorderOnly": false,
+    "openState": {
+     "open": true,
+     "paused": false,
+     "label": "Open until 4:00 AM",
+     "opensAt": null
+    },
+    "paused": false,
+    "pauseMessage": null,
+    "location": {
+     "addressLine": "12-C Main Boulevard, Gulberg III",
+     "area": "Gulberg III",
+     "city": "Lahore",
+     "lat": 31.5102,
+     "lng": 74.3441,
+     "phone": "+923001110001"
+    },
+    "delivery": null,
+    "pickup": {
+     "readyIn": {
+      "min": 20,
+      "max": 30,
+      "label": "20–30 min"
+     }
+    },
+    "acceptsCod": true,
+    "deals": [],
+    "ratingSummary": null,
+    "menu": [
+     {
+      "id": "c5578f83-7e69-4e92-9d46-aaa1c305c2b4",
+      "name": "Biryani",
+      "availableFrom": null,
+      "availableTo": null,
+      "availableNow": true,
+      "items": [
+       {
+        "id": "bbbe4e51-b596-439d-8a9a-3eeb9533f311",
+        "name": "Chicken Biryani",
+        "description": "Long-grain rice, slow-cooked chicken, fried onions and mint.",
+        "photoUrl": "https://images.unsplash.com/photo-1782541370275-6761522e39d1",
+        "fromPrice": 650,
+        "hasVariants": true,
+        "hasOptions": true,
+        "tags": [
+         "spicy",
+         "bestseller"
+        ],
+        "isDeal": false,
+        "serves": 1,
+        "available": true,
+        "unavailableReason": null,
+        "soldOut": false,
+        "remainingToday": null,
+        "remainingLabel": null,
+        "sold30d": 0
+       }
+      ]
+     }
+    ],
+    "popular": []
+   }
+  }
+ },
+ "vendorPageFar": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "22e363e5-ffc2-42e8-adf2-d2d0a36cf899",
+    "slug": "smash-lab-demo",
+    "name": "Smash Lab (demo)",
+    "tagline": "Smash burgers and loaded fries, delivery only",
+    "logoUrl": "https://placehold.co/256x256/1D4ED8/FFFFFF/png?text=SL",
+    "coverUrl": "https://images.unsplash.com/photo-1703219338500-90f646e60c1b",
+    "brandColor": "#1D4ED8",
+    "onBrandColor": "#FFFFFF",
+    "cuisines": [
+     {
+      "name": "Burgers",
+      "slug": "burgers"
+     },
+     {
+      "name": "Fast food",
+      "slug": "fast-food"
+     }
+    ],
+    "priceLevel": 2,
+    "ratingAvg": 4.4,
+    "ratingCount": 158,
+    "isHomeKitchen": false,
+    "isFeatured": false,
+    "isNew": true,
+    "distanceKm": 1031.3,
+    "etaRange": {
+     "min": 2833,
+     "max": 2843,
+     "label": "2833–2843 min"
+    },
+    "deliveryFee": 129,
+    "minOrder": 600,
+    "freeDeliveryOver": 1500,
+    "dealLabel": null,
+    "fulfilment": {
+     "delivery": true,
+     "pickup": false
+    },
+    "preorderOnly": false,
+    "openState": {
+     "open": true,
+     "paused": false,
+     "label": "Open until 3:00 AM",
+     "opensAt": null
+    },
+    "paused": false,
+    "pauseMessage": null,
+    "location": {
+     "addressLine": "7 Phase 5, DHA",
+     "area": null,
+     "city": "Lahore",
+     "lat": 31.4633,
+     "lng": 74.4089,
+     "phone": "+923001110003"
+    },
+    "delivery": {
+     "available": false,
+     "outOfZone": true,
+     "fee": 129,
+     "minOrder": 600,
+     "etaRange": {
+      "min": 2833,
+      "max": 2843,
+      "label": "2833–2843 min"
+     }
+    },
+    "pickup": null,
+    "acceptsCod": true,
+    "deals": [],
+    "ratingSummary": null,
+    "menu": [
+     {
+      "id": "ced708b7-36a5-405d-84f5-3bbfb870cfd4",
+      "name": "Smash burgers",
+      "availableFrom": null,
+      "availableTo": null,
+      "availableNow": true,
+      "items": [
+       {
+        "id": "3649ad55-71af-4a96-81b1-5c5c45a332e4",
+        "name": "Classic Smash",
+        "description": "Smashed beef, cheese, pickles, house sauce.",
+        "photoUrl": "https://images.unsplash.com/photo-1703219338500-90f646e60c1b",
+        "fromPrice": 890,
+        "hasVariants": true,
+        "hasOptions": true,
+        "tags": [
+         "bestseller"
+        ],
+        "isDeal": false,
+        "serves": null,
+        "available": true,
+        "unavailableReason": null,
+        "soldOut": false,
+        "remainingToday": null,
+        "remainingLabel": null,
+        "sold30d": 0
+       },
+       {
+        "id": "f724f584-d70a-4b7c-a883-025cc807d762",
+        "name": "Spicy Crunch Chicken",
+        "description": null,
+        "photoUrl": null,
+        "fromPrice": 820,
+        "hasVariants": false,
+        "hasOptions": false,
+        "tags": [
+         "spicy"
+        ],
+        "isDeal": false,
+        "serves": null,
+        "available": true,
+        "unavailableReason": null,
+        "soldOut": false,
+        "remainingToday": null,
+        "remainingLabel": null,
+        "sold30d": 0
+       }
+      ]
+     },
+     {
+      "id": "8762e977-d264-41d5-b698-c189a89e4c23",
+      "name": "Sides",
+      "availableFrom": null,
+      "availableTo": null,
+      "availableNow": true,
+      "items": [
+       {
+        "id": "4dcb7328-9dda-4803-8766-da463dfca825",
+        "name": "Loaded fries",
+        "description": null,
+        "photoUrl": "https://images.unsplash.com/photo-1647705195905-671a25be159d",
+        "fromPrice": 590,
+        "hasVariants": false,
+        "hasOptions": false,
+        "tags": [],
+        "isDeal": true,
+        "serves": null,
+        "available": true,
+        "unavailableReason": null,
+        "soldOut": false,
+        "remainingToday": null,
+        "remainingLabel": null,
+        "sold30d": 0
+       }
+      ]
+     }
+    ],
+    "popular": []
+   }
+  }
+ },
+ "vendorPageHome": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "0d29ed60-aee6-4a8d-a838-3bdaf267028a",
+    "slug": "ammi-ka-khana-demo",
+    "name": "Ammi ka Khana (demo)",
+    "tagline": "Home-cooked salan and roti, made fresh each day",
+    "logoUrl": "https://placehold.co/256x256/047857/FFFFFF/png?text=AK",
+    "coverUrl": "https://images.unsplash.com/photo-1588644525273-f37b60d78512",
+    "brandColor": "#047857",
+    "onBrandColor": "#FFFFFF",
+    "cuisines": [
+     {
+      "name": "Home food",
+      "slug": "home-food"
+     },
+     {
+      "name": "Pakistani",
+      "slug": "pakistani"
+     }
+    ],
+    "priceLevel": 1,
+    "ratingAvg": 0,
+    "ratingCount": 0,
+    "isHomeKitchen": true,
+    "isFeatured": false,
+    "isNew": true,
+    "distanceKm": 3.9,
+    "etaRange": {
+     "min": 36,
+     "max": 46,
+     "label": "36–46 min"
+    },
+    "deliveryFee": 120,
+    "minOrder": 600,
+    "freeDeliveryOver": null,
+    "dealLabel": null,
+    "fulfilment": {
+     "delivery": true,
+     "pickup": true
+    },
+    "preorderOnly": false,
+    "openState": {
+     "open": false,
+     "paused": false,
+     "label": "Opens 11:00 AM",
+     "opensAt": "2026-10-18T06:00:00.000Z"
+    },
+    "paused": false,
+    "pauseMessage": null,
+    "location": {
+     "addressLine": "45 Block J, Model Town",
+     "area": null,
+     "city": "Lahore",
+     "lat": 31.4848,
+     "lng": 74.3238,
+     "phone": "+923001110002"
+    },
+    "delivery": {
+     "available": true,
+     "outOfZone": false,
+     "fee": 120,
+     "minOrder": 600,
+     "etaRange": {
+      "min": 36,
+      "max": 46,
+      "label": "36–46 min"
+     }
+    },
+    "pickup": {
+     "readyIn": {
+      "min": 20,
+      "max": 30,
+      "label": "20–30 min"
+     }
+    },
+    "acceptsCod": true,
+    "deals": [],
+    "ratingSummary": null,
+    "menu": [
+     {
+      "id": "dc1b58c5-73af-4829-b20f-0b4cfb12b840",
+      "name": "Today's handi",
+      "availableFrom": null,
+      "availableTo": null,
+      "availableNow": true,
+      "items": [
+       {
+        "id": "aeabe6ae-aa19-42cb-92d1-bb4bdd18345f",
+        "name": "Chicken Qorma with 2 roti",
+        "description": null,
+        "photoUrl": null,
+        "fromPrice": 550,
+        "hasVariants": false,
+        "hasOptions": false,
+        "tags": [],
+        "isDeal": false,
+        "serves": 1,
+        "available": true,
+        "unavailableReason": null,
+        "soldOut": false,
+        "remainingToday": 20,
+        "remainingLabel": null,
+        "sold30d": 0
+       }
+      ]
+     }
+    ],
+    "popular": []
+   }
+  }
+ },
+ "vendorPageErr": {
+  "status": 404,
+  "body": {
+   "success": false,
+   "error": {
+    "code": "NOT_FOUND",
+    "message": "This vendor is not on Food Court."
+   }
+  }
+ },
+ "item": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "bbbe4e51-b596-439d-8a9a-3eeb9533f311",
+    "name": "Chicken Biryani",
+    "description": "Long-grain rice, slow-cooked chicken, fried onions and mint.",
+    "photoUrl": "https://images.unsplash.com/photo-1782541370275-6761522e39d1",
+    "tags": [
+     "spicy",
+     "bestseller"
+    ],
+    "isDeal": false,
+    "serves": 1,
+    "basePrice": 650,
+    "fromPrice": 650,
+    "category": {
+     "id": "c5578f83-7e69-4e92-9d46-aaa1c305c2b4",
+     "name": "Biryani"
+    },
+    "available": true,
+    "unavailableReason": null,
+    "remainingToday": null,
+    "variants": [
+     {
+      "id": "fcc83830-d72c-4820-8ac1-21368f839959",
+      "name": "Single",
+      "price": 650,
+      "groupIds": [
+       "ce687152-e595-4316-bfb9-77f93e74a1d7"
+      ]
+     },
+     {
+      "id": "d214b8b8-6ed8-4a03-bf14-5a5446ae4d06",
+      "name": "Half kg",
+      "price": 1100,
+      "groupIds": [
+       "ce687152-e595-4316-bfb9-77f93e74a1d7"
+      ]
+     },
+     {
+      "id": "3fe00ce3-8510-4967-bd6a-041d9d0f3986",
+      "name": "Family (1 kg)",
+      "price": 2100,
+      "groupIds": [
+       "ce687152-e595-4316-bfb9-77f93e74a1d7"
+      ]
+     },
+     {
+      "id": "8ff9fc12-ce1b-49cc-a56a-7360ab484411",
+      "name": "Deg (5 kg)",
+      "price": 9500,
+      "groupIds": [
+       "ce687152-e595-4316-bfb9-77f93e74a1d7"
+      ]
+     }
+    ],
+    "groups": [
+     {
+      "id": "ce687152-e595-4316-bfb9-77f93e74a1d7",
+      "name": "Add raita or salad",
+      "minSelect": 0,
+      "maxSelect": 2,
+      "required": false,
+      "variantId": null,
+      "options": [
+       {
+        "id": "f5ea42b4-31e2-4e8e-855f-c105fb61eafc",
+        "name": "Raita",
+        "priceDelta": 60,
+        "isDefault": false,
+        "available": false
+       },
+       {
+        "id": "5ce4c508-5263-4a0e-9d88-79a00f8b67aa",
+        "name": "Kachumber salad",
+        "priceDelta": 80,
+        "isDefault": false,
+        "available": true
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "search": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "vendors": [
+     {
+      "id": "c2a85152-5e67-4475-9f83-f6b0754afaa3",
+      "slug": "karachi-biryani-house-demo",
+      "name": "Karachi Biryani House (demo)",
+      "tagline": "Karachi-style biryani, slow-cooked every morning.",
+      "logoUrl": "https://placehold.co/256x256/B45309/FFFFFF/png?text=KB",
+      "coverUrl": "https://images.unsplash.com/photo-1559528896-c5310744cce8",
+      "brandColor": "#B45309",
+      "onBrandColor": "#FFFFFF",
+      "cuisines": [
+       {
+        "name": "Pakistani",
+        "slug": "pakistani"
+       },
+       {
+        "name": "BBQ",
+        "slug": "bbq"
+       }
+      ],
+      "priceLevel": 2,
+      "ratingAvg": 4.6,
+      "ratingCount": 312,
+      "isHomeKitchen": false,
+      "isFeatured": false,
+      "isNew": true,
+      "distanceKm": 0.7,
+      "etaRange": {
+       "min": 27,
+       "max": 37,
+       "label": "27–37 min"
+      },
+      "deliveryFee": 99,
+      "minOrder": 500,
+      "freeDeliveryOver": 2500,
+      "dealLabel": null,
+      "fulfilment": {
+       "delivery": true,
+       "pickup": true
+      },
+      "preorderOnly": false,
+      "openState": {
+       "open": true,
+       "paused": false,
+       "label": "Open until 4:00 AM",
+       "opensAt": null
+      }
+     }
+    ],
+    "dishes": [
+     {
+      "vendor": {
+       "id": "c2a85152-5e67-4475-9f83-f6b0754afaa3",
+       "slug": "karachi-biryani-house-demo",
+       "name": "Karachi Biryani House (demo)",
+       "tagline": "Karachi-style biryani, slow-cooked every morning.",
+       "logoUrl": "https://placehold.co/256x256/B45309/FFFFFF/png?text=KB",
+       "coverUrl": "https://images.unsplash.com/photo-1559528896-c5310744cce8",
+       "brandColor": "#B45309",
+       "onBrandColor": "#FFFFFF",
+       "cuisines": [
+        {
+         "name": "Pakistani",
+         "slug": "pakistani"
+        },
+        {
+         "name": "BBQ",
+         "slug": "bbq"
+        }
+       ],
+       "priceLevel": 2,
+       "ratingAvg": 4.6,
+       "ratingCount": 312,
+       "isHomeKitchen": false,
+       "isFeatured": false,
+       "isNew": true,
+       "distanceKm": 0.7,
+       "etaRange": {
+        "min": 27,
+        "max": 37,
+        "label": "27–37 min"
+       },
+       "deliveryFee": 99,
+       "minOrder": 500,
+       "freeDeliveryOver": 2500,
+       "dealLabel": null,
+       "fulfilment": {
+        "delivery": true,
+        "pickup": true
+       },
+       "preorderOnly": false,
+       "openState": {
+        "open": true,
+        "paused": false,
+        "label": "Open until 4:00 AM",
+        "opensAt": null
+       }
+      },
+      "items": [
+       {
+        "id": "bbbe4e51-b596-439d-8a9a-3eeb9533f311",
+        "name": "Chicken Biryani",
+        "photoUrl": "https://images.unsplash.com/photo-1782541370275-6761522e39d1",
+        "fromPrice": 650,
+        "tags": [
+         "spicy",
+         "bestseller"
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "searchBurger": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "vendors": [],
+    "dishes": []
+   }
+  }
+ },
+ "searchNone": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "vendors": [],
+    "dishes": []
+   }
+  }
+ }
+}

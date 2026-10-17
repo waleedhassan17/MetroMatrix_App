@@ -58,7 +58,7 @@ export const DishRow: React.FC<DishRowProps> = ({ name, price, photoUrl, detail,
       >
         <View style={[styles.thumb, !available && styles.dim]}>
           {photoUrl ? (
-            <Image source={{ uri: cdn(photoUrl, { w: size.thumb * 2 }) ?? undefined }} style={styles.fill} contentFit="cover" />
+            <Image source={{ uri: cdn(photoUrl, { w: size.thumb, h: size.thumb }) ?? undefined }} style={styles.fill} contentFit="cover" />
           ) : (
             <IonIcon name="restaurant-outline" size="md" color={colors.inkFaint} />
           )}

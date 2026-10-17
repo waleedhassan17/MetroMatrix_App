@@ -104,3 +104,29 @@ The dummy Health API (`src/networks/network/mock/health/healthSeed.ts`) gives it
 | `hb_symptoms` | Not sure who to see? | https://images.unsplash.com/photo-1758273241078-8eec353836be | [Vitaly Gariev](https://unsplash.com/@silverkblack) |
 | `hb_child` | Gentle care for your child | https://images.unsplash.com/photo-1708687045004-a3e3c4420e6d | [Ortopediatri Çocuk Ortopedi Akademisi](https://unsplash.com/@ortopediatri) |
 | `hb_family` | Your family's records, in one place | https://images.unsplash.com/photo-1632053002928-1919605ee6f7 | [CDC](https://unsplash.com/@cdc) |
+
+## Food Court
+
+The dummy Food Court's vendor covers and dish photos (`src/networks/network/mock/food/foodImages.ts`, the `FOOD_IMG` map) are also loaded from Unsplash's image CDN. Each was checked on its photo page as free under the Unsplash License (not Unsplash+). They stand in for the photos a vendor uploads.
+
+- **Vendor names:** seeded vendor names are fictional.
+- **Logos:** generated initials on the vendor's colour (placehold.co).
+- **Left out:** photos showing another restaurant's name, packaging or watermark.
+
+| Key | Subject | Photographer | Photo page |
+|---|---|---|---|
+| `biryani` | Bowl of biryani | Steve Tsang | https://unsplash.com/photos/OterGMpkdsM |
+| `kebab` | Kebabs on a kettle grill | Z Grills Australia | https://unsplash.com/photos/n0zK35d967w |
+| `kebabGrill` | Skewers on a BBQ pit | Z Grills Australia | https://unsplash.com/photos/jkP5KFVbpGg |
+| `curry` | Chicken curry with naan | Mohammad Fahim | https://unsplash.com/photos/vl2y3qoKq3E |
+| `tikka` | Naan, samosas and tikka | Neil Marshall | https://unsplash.com/photos/VGzwj6AXjJM |
+| `burger` | Cheeseburger and fries | Hybrid Storytellers | https://unsplash.com/photos/lzKFHmEVnrM |
+| `pizza` | A slice of pizza | Inna Safa | https://unsplash.com/photos/pwEDmiquo4U |
+| `thali` | Rice, daal and curry on one plate | Abhishek Sanwa Limbu | https://unsplash.com/photos/5Q-7kgG7xbo |
+| `shawarma` | Beef shawarma | Alexander Mils | https://unsplash.com/photos/SNLfVYmL8os |
+| `noodles` | Plate of noodles | Debbie Tea | https://unsplash.com/photos/LO7rNP0LRro |
+| `fries` | A box of fries | Josh Duke | https://unsplash.com/photos/PtFTpdv-aWw |
+| `friesTray` | Fries with dips | henry perks | https://unsplash.com/photos/O-SfuUoZUDs |
+| `chai` | A glass of tea | Mehrshad Rajabi | https://unsplash.com/photos/BRVpzGwNzzI |
+| `salad` | Vegetable salad bowl | Anna Pelzer | https://unsplash.com/photos/IGfIGP5ONV0 |
+| `cake` | Slice of chocolate cake | Taylor Kiser | https://unsplash.com/photos/tCnOMWITk_4 |

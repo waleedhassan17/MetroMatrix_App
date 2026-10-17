@@ -8,6 +8,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from './createAppSlice';
 import type { ServiceName } from '../theme/services';
 import { resetAllState } from './resetAllState';
+import type { FoodPoint } from '../types/food';
 
 /** Recent Shopping searches kept on the device. */
 export const MAX_RECENT_SEARCHES = 10;
@@ -21,6 +22,9 @@ export interface PreferencesSliceState {
   recentSearches: string[];
   /** Recent Health searches ("acne", a doctor's name), newest first. Cleared on sign-out. */
   recentHealthSearches: string[];
+  /** Food Court: where to deliver (a saved address or where the customer is). */
+  foodPoint?: FoodPoint | null;
+  recentFoodSearches?: string[];
 }
 
 const initialState: PreferencesSliceState = {
@@ -67,6 +71,18 @@ export const preferencesSlice = createAppSlice({
     clearRecentHealthSearches: create.reducer(state => {
       state.recentHealthSearches = [];
     }),
+    setFoodPoint: create.reducer((state, action: PayloadAction<FoodPoint | null>) => {
+      state.foodPoint = action.payload;
+    }),
+    addRecentFoodSearch: create.reducer((state, action: PayloadAction<string>) => {
+      const q = action.payload.trim();
+      if (!q) return;
+      const rest = (state.recentFoodSearches ?? []).filter(x => x.toLowerCase() !== q.toLowerCase());
+      state.recentFoodSearches = [q, ...rest].slice(0, MAX_RECENT_SEARCHES);
+    }),
+    clearRecentFoodSearches: create.reducer(state => {
+      state.recentFoodSearches = [];
+    }),
   }),
 
   // The device keeps its settings across accounts; a person's searches go with them.
@@ -74,6 +90,9 @@ export const preferencesSlice = createAppSlice({
     builder.addCase(resetAllState, state => {
       state.recentSearches = [];
       state.recentHealthSearches = [];
+      // A saved address belongs to the account that saved it.
+      state.foodPoint = null;
+      state.recentFoodSearches = [];
     });
   },
 
@@ -82,6 +101,8 @@ export const preferencesSlice = createAppSlice({
     selectPushPromptSeen: state => state.pushPromptSeen,
     selectRecentSearches: state => state.recentSearches ?? [],
     selectRecentHealthSearches: state => state.recentHealthSearches ?? [],
+    selectFoodPoint: state => state.foodPoint ?? null,
+    selectRecentFoodSearches: state => state.recentFoodSearches ?? [],
   },
 });
 
@@ -94,6 +115,16 @@ export const {
   addRecentHealthSearch,
   removeRecentHealthSearch,
   clearRecentHealthSearches,
+  setFoodPoint,
+  addRecentFoodSearch,
+  clearRecentFoodSearches,
 } = preferencesSlice.actions;
 
-export const { selectLastService, selectPushPromptSeen, selectRecentSearches, selectRecentHealthSearches } = preferencesSlice.selectors;
+export const {
+  selectLastService,
+  selectPushPromptSeen,
+  selectRecentSearches,
+  selectRecentHealthSearches,
+  selectFoodPoint,
+  selectRecentFoodSearches,
+} = preferencesSlice.selectors;

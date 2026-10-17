@@ -21,7 +21,6 @@ import { REQUIRED_DOCUMENTS, missingDocuments } from '../../../models/businessMo
 import type { DocumentKind, ServiceType, SubType } from '../../../types/auth';
 import { MOCK } from './mockConfig';
 import { getDb, newId, saveDb, type MockBusiness, type MockDb, type MockUser } from './mockDb';
-import { MOCK_CUISINES, MOCK_KITCHENS, MOCK_PROMOS } from './mockFood';
 import { ShopError } from './shop/shopLogic';
 import { registerShopRoutes } from './shop/shopRoutes';
 import { registerHealthRoutes } from './health/healthRoutes';
@@ -625,19 +624,6 @@ route('GET', '/businesses/me/status', ctx => {
     rejectionReason: business.rejectionReason,
     suspensionReason: business.suspensionReason,
     documents: business.documents.map(d => ({ id: d.id, kind: d.kind, status: d.status, reviewerNote: d.reviewerNote })),
-  };
-});
-
-// ── Food (customer discovery) ──
-route('GET', '/food/home', ctx => {
-  const user = requireUser(ctx);
-  const city = String(ctx.query.city ?? user.city ?? 'Lahore');
-  return {
-    area: user.streetAddress ? `${user.streetAddress}, ${city}` : city,
-    promos: MOCK_PROMOS,
-    cuisines: MOCK_CUISINES,
-    // Nearest first, as a delivery app lists them.
-    kitchens: [...MOCK_KITCHENS].sort((a, b) => a.distanceKm - b.distanceKm),
   };
 });
 

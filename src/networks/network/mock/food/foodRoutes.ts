@@ -51,6 +51,7 @@ import {
 } from './foodWire';
 import type { MockFoodVendor, MockRider, MockRiderVehicle } from './foodTypes';
 import { registerMenuRoutes } from './foodMenuRoutes';
+import { registerDiscoveryRoutes } from './foodDiscoveryRoutes';
 import { isValidPkMobile, isValidPkPhone, normalizePkPhone } from '../../../../utils/phone';
 
 export interface FoodKit extends ShopKit {
@@ -539,6 +540,9 @@ export function registerFoodRoutes(kit: FoodKit) {
 
   // ── The menu ──
   registerMenuRoutes(route, myVendor);
+
+  // ── Discovery (customers, signed in or not) ──
+  registerDiscoveryRoutes(route, kit.optionalUser, { dealsFor: () => [], orderAgain: () => [] });
 
   // ── Staff ──
   route('POST', '/admin/food/branches/:id/food-safety-check', ctx => {

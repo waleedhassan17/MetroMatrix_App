@@ -297,6 +297,14 @@ export const size = {
   categoryWell: 56,
   /** The bag line thumbnail (4:5). */
   lineThumb: 64,
+  // ── Food Court ──
+  /** A vendor card's food photo (list), and the narrower rail card's. */
+  vendorPhotoAspect: 2.1,
+  railPhotoAspect: 1.7,
+  /** A dish's photo in the menu, beside its text. */
+  dishPhoto: 96,
+  /** The vendor page's cover. */
+  vendorCoverAspect: 1.8,
   /** Charts: the Today sparkline and the Insights charts. */
   chart: { spark: 56, bar: 168, line: 168 },
   /** Rating-breakdown bar track. */

@@ -40,7 +40,11 @@ import { verifySuccessSlice } from '../screens/Auth/VerifySuccess/verifySuccessS
 import { completeProfileSlice } from '../screens/Auth/CompleteProfile/completeProfileSlice';
 import { personalInfoSlice } from '../screens/Partner/PersonalInfo/personalInfoSlice';
 import { providerApprovalPendingSlice } from '../screens/Partner/ProviderApprovalPending/providerApprovalPendingSlice';
-import { foodHomeSlice } from '../screens/Customer/FoodHome/foodHomeSlice';
+import { foodHomeSlice } from '../screens/Food/Customer/FoodHome/foodHomeSlice';
+import { foodVendorsSlice } from '../screens/Food/Customer/FoodVendors/foodVendorsSlice';
+import { foodSearchSlice } from '../screens/Food/Customer/FoodSearch/foodSearchSlice';
+import { foodVendorSlice } from '../screens/Food/Customer/FoodVendor/foodVendorSlice';
+import { itemSheetSlice } from '../screens/Food/Customer/FoodVendor/itemSheetSlice';
 import { profileSlice } from '../screens/Account/Profile/profileSlice';
 import { changePasswordSlice } from '../screens/Account/ChangePassword/changePasswordSlice';
 import { adminTotpSlice } from '../screens/Admin/AdminTotp/adminTotpSlice';
@@ -182,6 +186,10 @@ const rootReducer = combineReducers({
   personalInfo: personalInfoSlice.reducer,
   providerApprovalPending: providerApprovalPendingSlice.reducer,
   foodHome: foodHomeSlice.reducer,
+  foodVendors: foodVendorsSlice.reducer,
+  foodSearch: foodSearchSlice.reducer,
+  foodVendor: foodVendorSlice.reducer,
+  itemSheet: itemSheetSlice.reducer,
   profile: profileSlice.reducer,
   changePassword: changePasswordSlice.reducer,
   adminTotp: adminTotpSlice.reducer,

@@ -180,6 +180,9 @@ export const ROUTES = {
   APPOINTMENT_LOOKUP: 'AppointmentLookup',
 
   // ── Food: the vendor's app (navigations-maps/FoodVendor.ts) ──
+  FOOD_VENDORS: 'FoodVendors',
+  FOOD_SEARCH: 'FoodSearch',
+  FOOD_VENDOR: 'FoodVendor',
   VENDOR_TABS: 'VendorTabs',
   MENU_TAB: 'MenuTab',
   RIDERS_TAB: 'RidersTab',

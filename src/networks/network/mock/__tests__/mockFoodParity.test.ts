@@ -7,6 +7,7 @@
 
 import vendorReal from '../../../../serializers/__tests__/fixtures/food/vendor.json';
 import menuReal from '../../../../serializers/__tests__/fixtures/food/menu.json';
+import discoveryReal from '../../../../serializers/__tests__/fixtures/food/discovery.json';
 import { authSignin } from '../../../auth/authNetwork';
 import { api } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
@@ -14,7 +15,7 @@ import { SEED_PASSWORD } from '../mockConfig';
 import { getDb, resetMockDb } from '../mockDb';
 
 type Body = { success: boolean; data?: unknown; error?: { code: string; details?: unknown } };
-const R = { ...vendorReal, ...menuReal } as unknown as Record<string, { status: number; body: Body }>;
+const R = { ...vendorReal, ...menuReal, ...discoveryReal } as unknown as Record<string, { status: number; body: Body }>;
 
 // Thursday 15 October 2026, 3 PM in Pakistan.
 const T0 = new Date('2026-10-15T10:00:00Z').getTime();
@@ -57,9 +58,11 @@ const diff = (name: string, realBody: Body, mockBody: Body, paths: string[]) => 
 };
 
 /** Differences the dummy API keeps on purpose. Each says why; anything new fails the test. */
-const KNOWN: Record<string, string> = {};
+const KNOWN: Record<string, string> = {
+  'vendorPageErr:error +details': 'The dummy API sends details: null on every error; the API leaves it out when there are none. The app reads both.',
+};
 
-type As = 'vendor' | 'rider' | 'home';
+type As = 'vendor' | 'rider' | 'home' | 'guest';
 const CASES: { fixture: string; as: As; run: () => Promise<Body>; paths: string[] }[] = [];
 const add = (fixture: string, as: As, run: () => Promise<Body>, paths: string[]) => CASES.push({ fixture, as, run, paths });
 
@@ -134,6 +137,28 @@ add(
 );
 add('home.todayPatch', 'home', () => call('patch', '/food/vendor/today', { items: [{ itemId: 'mi_qorma', portions: 20, cooking: true }] }), ['', 'items.0']);
 add('home.slotsPut', 'home', () => call('put', '/food/vendor/preorder-slots', [{ weekday: 5, slotStart: '13:00', cutoffMinutesBefore: 180, maxOrders: 15 }]), ['0']);
+// Discovery, signed out, from Gulberg (the captures' point).
+const P = 'lat=31.5160&lng=74.3420';
+const CARD = ['', 'etaRange', 'openState', 'fulfilment', 'cuisines.0'];
+add('home', 'guest', () => call('get', `/food/home?${P}`), ['', 'coverage', 'cuisines.0', ...CARD.map(k => `homeKitchens.0${k ? `.${k}` : ''}`)]);
+add('homeFar', 'guest', () => call('get', '/food/home?lat=24.8607&lng=67.0011'), ['', 'coverage']);
+add('homeErr', 'guest', () => call('get', '/food/home'), ['', 'error', 'error.details', 'error.details.fields']);
+add('vendors', 'guest', () => call('get', `/food/vendors?${P}`), ['', ...CARD.map(k => `items.0${k ? `.${k}` : ''}`)]);
+add('vendorPage', 'guest', () => call('get', `/food/vendors/biryani-bazaar?${P}`), [
+  '',
+  'delivery',
+  'delivery.etaRange',
+  'pickup',
+  'pickup.readyIn',
+  'location',
+  'openState',
+  'menu.0',
+  'menu.0.items.0',
+]);
+add('vendorPageNoPoint', 'guest', () => call('get', '/food/vendors/biryani-bazaar'), ['']);
+add('vendorPageErr', 'guest', () => call('get', '/food/vendors/no-such-kitchen'), ['', 'error']);
+add('item', 'guest', () => call('get', '/food/items/mi_chicken_biryani'), ['', 'category', 'variants.0', 'groups.0', 'groups.0.options.0']);
+add('search', 'guest', () => call('get', `/food/search?q=biryani&${P}`), ['', 'vendors.0', 'dishes.0', 'dishes.0.vendor', 'dishes.0.items.0']);
 add('home.weeklyPut', 'home', () => call('put', '/food/vendor/weekly-menu', [{ itemId: 'mi_pulao', days: [5] }]), ['0']);
 
 beforeAll(() => {
@@ -149,6 +174,16 @@ it('answers every captured vendor and rider request with the real keys', async (
   for (const c of CASES) {
     if (c.as !== who) {
       await clearTokens();
+      if (c.as === 'guest') {
+        // Signed out, on a fresh seed (the vendor cases above take a kitchen offline).
+        if (who !== 'guest') {
+          await resetMockDb();
+          await clearTokens();
+        }
+        who = c.as;
+        found.push(...diff(c.fixture, R[c.fixture].body, await c.run(), c.paths));
+        continue;
+      }
       if (c.as === 'vendor') await authSignin({ email: 'restaurant@metromatrix.app', password: SEED_PASSWORD, portal: 'partner' });
       else if (c.as === 'home') await authSignin({ email: 'homekitchen@metromatrix.app', password: SEED_PASSWORD, portal: 'partner' });
       else await authSignin({ username: 'biryani-bazaar.ali', password: SEED_PASSWORD, portal: 'partner' });
