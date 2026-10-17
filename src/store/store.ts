@@ -45,6 +45,10 @@ import { foodVendorsSlice } from '../screens/Food/Customer/FoodVendors/foodVendo
 import { foodSearchSlice } from '../screens/Food/Customer/FoodSearch/foodSearchSlice';
 import { foodVendorSlice } from '../screens/Food/Customer/FoodVendor/foodVendorSlice';
 import { itemSheetSlice } from '../screens/Food/Customer/FoodVendor/itemSheetSlice';
+import { foodBagSlice } from '../screens/Food/Customer/FoodBag/foodBagSlice';
+import { foodCheckoutSlice } from '../screens/Food/Customer/FoodCheckout/foodCheckoutSlice';
+import { vendorPromotionsSlice } from '../screens/Food/Vendor/VendorPromotions/vendorPromotionsSlice';
+import { vendorPromotionSlice } from '../screens/Food/Vendor/VendorPromotion/vendorPromotionSlice';
 import { profileSlice } from '../screens/Account/Profile/profileSlice';
 import { changePasswordSlice } from '../screens/Account/ChangePassword/changePasswordSlice';
 import { adminTotpSlice } from '../screens/Admin/AdminTotp/adminTotpSlice';
@@ -190,6 +194,10 @@ const rootReducer = combineReducers({
   foodSearch: foodSearchSlice.reducer,
   foodVendor: foodVendorSlice.reducer,
   itemSheet: itemSheetSlice.reducer,
+  foodBag: foodBagSlice.reducer,
+  foodCheckout: foodCheckoutSlice.reducer,
+  vendorPromotions: vendorPromotionsSlice.reducer,
+  vendorPromotion: vendorPromotionSlice.reducer,
   profile: profileSlice.reducer,
   changePassword: changePasswordSlice.reducer,
   adminTotp: adminTotpSlice.reducer,

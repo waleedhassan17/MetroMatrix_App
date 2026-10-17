@@ -38,6 +38,7 @@ const SECTIONS: { title: string; items: Item[] }[] = [
     items: [
       { label: 'Kitchen setup', hint: 'The checklist customers need', icon: 'checkmark-done-outline', to: 'VendorSetup' },
       { label: 'Your brand', hint: 'Name, logo, cover, cuisines', icon: 'color-palette-outline', to: 'VendorBrand' },
+      { label: 'Deals', hint: 'Offers you fund — one per order, the best one', icon: 'pricetag-outline', to: 'VendorPromotions' },
       { label: 'Plan', hint: 'Community plan · no commission', icon: 'ribbon-outline', to: 'VendorPlan' },
     ],
   },

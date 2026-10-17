@@ -183,6 +183,9 @@ export const ROUTES = {
   FOOD_VENDORS: 'FoodVendors',
   FOOD_SEARCH: 'FoodSearch',
   FOOD_VENDOR: 'FoodVendor',
+  FOOD_BAG: 'FoodBag',
+  FOOD_CHECKOUT: 'FoodCheckout',
+  FOOD_ORDER_PLACED: 'FoodOrderPlaced',
   VENDOR_TABS: 'VendorTabs',
   MENU_TAB: 'MenuTab',
   RIDERS_TAB: 'RidersTab',
@@ -200,6 +203,8 @@ export const ROUTES = {
   VENDOR_OPTION_GROUP: 'VendorOptionGroup',
   VENDOR_WEEKLY_MENU: 'VendorWeeklyMenu',
   VENDOR_PREORDER_SLOTS: 'VendorPreorderSlots',
+  VENDOR_PROMOTIONS: 'VendorPromotions',
+  VENDOR_PROMOTION: 'VendorPromotion',
 
   // ── Food: the rider's app (navigations-maps/Rider.ts) ──
   RIDER_TABS: 'RiderTabs',

@@ -187,6 +187,107 @@ export interface MockPreorderSlot {
   maxOrders: number;
 }
 
+export interface MockCartLine {
+  id: string;
+  itemId: string;
+  variantId: string | null;
+  optionIds: string[];
+  quantity: number;
+  notes: string | null;
+  /** The price the customer saw when adding it (a change is a warning). */
+  unitPriceSeen: number;
+  createdAt: string;
+}
+
+/** One bag per customer, from one vendor. */
+export interface MockFoodCart {
+  userId: string;
+  businessId: string;
+  fulfilment: 'delivery' | 'pickup';
+  scheduledFor: string | null;
+  lines: MockCartLine[];
+}
+
+export interface MockPromotion {
+  id: string;
+  businessId: string;
+  title: string;
+  kind: 'percent_off_order' | 'percent_off_items' | 'flat_off' | 'free_delivery';
+  value: number;
+  itemIds: string[];
+  minOrder: number;
+  maxDiscount: number | null;
+  code: string | null;
+  startsAt: string;
+  endsAt: string | null;
+  weekdays: number[];
+  timeFrom: string | null;
+  timeTo: string | null;
+  usageLimit: number | null;
+  perUserLimit: number | null;
+  usedCount: number;
+  firstOrderOnly: boolean;
+  isActive: boolean;
+}
+
+export interface MockFoodOrderEvent {
+  kind: string;
+  from: string | null;
+  to: string | null;
+  actorRole: string;
+  note: string | null;
+  at: string;
+}
+
+export interface MockFoodOrder {
+  id: string;
+  code: string;
+  userId: string;
+  businessId: string;
+  fulfilment: 'delivery' | 'pickup';
+  scheduledFor: string | null;
+  /** The pre-order slot it holds a place in. */
+  slotId: string | null;
+  /** The kitchen day its portions were taken from (they go back on a cancel that day). */
+  portionDate: string | null;
+  status: 'placed' | 'accepted' | 'preparing' | 'ready' | 'on_the_way' | 'delivered' | 'picked_up' | 'rejected' | 'auto_rejected' | 'cancelled';
+  paymentMethod: 'cod' | 'transfer' | 'pay_at_pickup';
+  paymentStatus: 'cod_pending' | 'unpaid' | 'awaiting_transfer' | 'proof_submitted' | 'paid' | 'void' | 'refund_due' | 'refunded';
+  payBy: string | null;
+  accounts: { kind: string; accountTitle: string; accountNumber: string; bankName: string | null }[] | null;
+  paymentRef: string | null;
+  paymentProofUrl: string | null;
+  paymentRejectedReason: string | null;
+  address: Record<string, unknown> | null;
+  distanceKm: number | null;
+  items: { id: string; itemId: string; name: string; variantId: string | null; variant: string | null; options: { id: string; name: string; group: string; priceDelta: number }[]; quantity: number; unitPrice: number; lineTotal: number; notes: string | null; portions: number }[];
+  subtotal: number;
+  discount: number;
+  deliveryFee: number;
+  total: number;
+  promotion: { id: string; title: string; kind: string; code: string | null } | null;
+  cutlery: boolean;
+  note: string | null;
+  etaMinutes: number | null;
+  promisedAt: string | null;
+  acceptBy: string | null;
+  riderId: string | null;
+  riderStep: string | null;
+  handedToExternal: boolean;
+  codCollected: number | null;
+  cancelledBy: string | null;
+  cancelReason: string | null;
+  placedAt: string;
+  acceptedAt: string | null;
+  preparingAt: string | null;
+  readyAt: string | null;
+  pickedUpAt: string | null;
+  deliveredAt: string | null;
+  cancelledAt: string | null;
+  events: MockFoodOrderEvent[];
+  updatedAt: string;
+}
+
 export interface MockFood {
   cuisines: MockCuisine[];
   vendors: MockFoodVendor[];
@@ -195,6 +296,12 @@ export interface MockFood {
   items: MockMenuItem[];
   groups: MockOptionGroup[];
   slots: MockPreorderSlot[];
+  carts: MockFoodCart[];
+  orders: MockFoodOrder[];
+  promotions: MockPromotion[];
+  favourites: { userId: string; businessId: string; savedAt: string }[];
+  /** Checkout's Idempotency-Key → the order it placed. */
+  idempotency: Record<string, string>;
   /** Ids for new rows. */
   seq: number;
 }

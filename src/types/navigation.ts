@@ -187,6 +187,10 @@ export type FoodAppParamList = {
   FoodSearch: { q?: string } | undefined;
   /** A vendor's page (by slug); `dish` opens that dish's sheet. */
   FoodVendor: { slug: string; dish?: string };
+  FoodBag: undefined;
+  FoodCheckout: undefined;
+  /** Straight after checkout: the order's code (its page reads the rest). */
+  FoodOrderPlaced: { code: string };
 };
 
 export type CustomerStackParamList = {
@@ -273,6 +277,9 @@ export type FoodVendorStackParamList = {
   VendorOptionGroup: { id?: string } | undefined;
   VendorWeeklyMenu: undefined;
   VendorPreorderSlots: undefined;
+  VendorPromotions: undefined;
+  /** A deal: edit one (`id`) or a new one. */
+  VendorPromotion: { id?: string } | undefined;
   PaymentAccounts: undefined;
   Profile: undefined;
   ChangePassword: undefined;

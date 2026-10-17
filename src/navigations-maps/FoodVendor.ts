@@ -27,6 +27,8 @@ import VendorOptionGroupsScreen from '../screens/Food/Vendor/VendorOptionGroups/
 import VendorOptionGroupScreen from '../screens/Food/Vendor/VendorOptionGroup/VendorOptionGroupScreen';
 import VendorWeeklyMenuScreen from '../screens/Food/Vendor/VendorWeeklyMenu/VendorWeeklyMenuScreen';
 import VendorPreorderSlotsScreen from '../screens/Food/Vendor/VendorPreorderSlots/VendorPreorderSlotsScreen';
+import VendorPromotionsScreen from '../screens/Food/Vendor/VendorPromotions/VendorPromotionsScreen';
+import VendorPromotionScreen from '../screens/Food/Vendor/VendorPromotion/VendorPromotionScreen';
 import PaymentAccountsScreen from '../screens/Shopping/Store/PaymentAccounts/PaymentAccountsScreen';
 import ProfileScreen from '../screens/Account/Profile/ProfileScreen';
 import ChangePasswordScreen from '../screens/Account/ChangePassword/ChangePasswordScreen';
@@ -61,6 +63,8 @@ export const FOOD_VENDOR_STACK_ROUTES: IRoute[] = [
   { title: ROUTES.VENDOR_OPTION_GROUP, component: VendorOptionGroupScreen },
   { title: ROUTES.VENDOR_WEEKLY_MENU, component: VendorWeeklyMenuScreen },
   { title: ROUTES.VENDOR_PREORDER_SLOTS, component: VendorPreorderSlotsScreen },
+  { title: ROUTES.VENDOR_PROMOTIONS, component: VendorPromotionsScreen },
+  { title: ROUTES.VENDOR_PROMOTION, component: VendorPromotionScreen },
   { title: ROUTES.PAYMENT_ACCOUNTS, component: PaymentAccountsScreen },
   { title: ROUTES.PROFILE, component: ProfileScreen },
   { title: ROUTES.CHANGE_PASSWORD, component: ChangePasswordScreen },

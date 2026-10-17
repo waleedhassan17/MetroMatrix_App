@@ -198,16 +198,16 @@ export const inWindow = (from: string | null, to: string | null, m: number) => {
   return a < b ? m >= a && m < b : m >= a || m < b;
 };
 
-/** Can the dish be ordered now? null when it can, else the reason. */
-export const unavailableReason = (db: MockDb, v: MockFoodVendor, i: MockMenuItem, now: number): string | null => {
+/** Can the dish be ordered for `at` (default now)? null when it can, else the reason. */
+export const unavailableReason = (db: MockDb, v: MockFoodVendor, i: MockMenuItem, now: number, at: number = now): string | null => {
   const c = db.food.categories.find(x => x.id === i.categoryId);
   if (!i.isActive || !c?.isActive) return 'not_on_menu';
   const o = overrideOf(i, v, now);
   if (!o.isAvailable) return 'unavailable';
   if (o.unavailableUntil && Date.parse(o.unavailableUntil) > now) return 'unavailable';
-  const weekday = new Date(`${dateInZone(isoNow(now), v.timezone)}T00:00:00Z`).getUTCDay();
+  const weekday = new Date(`${dateInZone(isoNow(at), v.timezone)}T00:00:00Z`).getUTCDay();
   if (!i.days.includes(weekday)) return 'not_today';
-  if (!inWindow(c.availableFrom, c.availableTo, localMinutes(now, v.timezone))) return 'outside_hours';
+  if (!inWindow(c.availableFrom, c.availableTo, localMinutes(at, v.timezone))) return 'outside_hours';
   if (o.remainingToday !== null && o.remainingToday <= 0) return 'sold_out';
   return null;
 };

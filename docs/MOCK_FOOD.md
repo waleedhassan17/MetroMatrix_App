@@ -17,12 +17,18 @@ While `src/config/env.ts` has no backend URL, the Food Court routes are answered
 | Menu | categories (`GET/POST /food/vendor/menu/categories`, `PATCH/DELETE /:id`, `PUT /reorder`), dishes (`GET/POST /menu/items`, `GET/PATCH/DELETE /:id`, `POST /:id/duplicate`, `PUT /:id/variants`, `PUT /:id/option-groups`, `PUT /reorder`), add-on groups (`GET/POST /menu/option-groups`, `GET/PUT/DELETE /:id`) |
 | Availability | `GET/PATCH /food/vendor/availability` (dishes off, optionally until a time; add-ons out of stock) |
 | Home kitchens | `GET/PATCH /food/vendor/today` (portions, cooking today), `GET/PUT /food/vendor/preorder-slots`, `PUT /food/vendor/weekly-menu` |
+| Discovery (signed in or not) | `GET /food/home?lat&lng`, `GET /food/vendors` (rails, cuisine, filters, sorts, pages), `GET /food/vendors/:slug`, `GET /food/items/:id`, `GET /food/search?q` |
+| The bag | `GET/DELETE/PATCH /food/cart` (delivery or pick-up, a time), `POST /food/cart/items` (`?replace=true` starts a new bag), `PATCH/DELETE /food/cart/items/:id`, `POST /food/cart/preview` |
+| Checkout | `POST /food/checkout` (Idempotency-Key), `GET /food/vendors/:id/slots` |
+| Customer orders | `GET /food/orders?status=active\|past`, `GET /food/orders/:code` (+ `/tracking`), `POST /:code/cancel`, `/payment-proof`, `/reorder` |
+| The kitchen's board | `GET /food/vendor/orders?status=new\|active\|done\|<status>&scheduled`, `GET /:id`, `POST /:id/{accept,reject,preparing,ready,handed-external,picked-up,delivered,cancel}`, `POST /:id/payment/{confirm,reject}` |
+| Deals | `GET/POST /food/vendor/promotions`, `GET/PATCH/DELETE /:id`, `POST /:id/deactivate` |
 | Rider | `GET /food/rider/me` |
 | Staff | `POST /admin/food/branches/:id/food-safety-check` |
 | Session | `business.food { brandId, brandSlug, branchStatus, isLive, setupComplete }` on a food vendor's `/auth/me` and sign-in |
 | Sign-in | `identifier` (an email, or a rider's username) on the partner portal |
 
-Each later backend phase (menu, discovery, ordering, deliveries, admin) adds its routes here in the same change as the app screens that use them.
+Each later backend phase (deliveries, reviews, admin) adds its routes here in the same change as the app screens that use them.
 
 ## The rules it enforces
 
@@ -55,6 +61,19 @@ Each later backend phase (menu, discovery, ordering, deliveries, admin) adds its
   - Setting portions resets what is left, and a new day resets it to the day's portions.
   - Slots are for home kitchens only, and no two can be at the same time.
   - The checklist adds the menu, and today's portions (or, for pre-order-only kitchens, slots).
+- **The bag.**
+  - One kitchen at a time: another kitchen's dish is `409 CART_OTHER_VENDOR` (`details.currentVendor`, `itemCount`) unless `?replace=true`.
+  - The same dish with the same size, add-ons and note goes on one line (at most 50 of a dish, 40 lines).
+  - Sizes and add-on rules are checked as a dish goes in (`OPTION_REQUIRED`, `OPTION_LIMIT`, `OPTION_INVALID`), and so are today's portions (`PORTIONS_SOLD_OUT`).
+  - Every read re-prices the bag; whatever changed is a warning on its line.
+- **Scheduling.** A home kitchen with slots takes orders for a slot's start until its cutoff, up to its places (`SLOT_FULL`); anyone else at least 30 minutes ahead (or the prep time), at most 7 days, inside opening hours. A time that can't be used is refused and not kept.
+- **The planner** (bag, preview and checkout share it): the kitchen, the address (a saved one with a map pin), the time, each line, the minimum order, the deal, the way to pay — in that order, every problem listed, the first one first.
+- **Money.** Total = subtotal − the deal + the kitchen's delivery fee. No other fee. The fee is the band for the straight-line distance, and nothing over the kitchen's free-delivery amount or for pick-up.
+- **Deals.** One per order: the best for the customer. A coded deal applies only when its code is typed (`PROMO_INVALID`, `PROMO_EXPIRED`, `PROMO_LIMIT_REACHED`). Days, a daily window (past midnight allowed), first orders only, and limits in all and per customer. A used deal can't be deleted, only switched off. The plan allows 10 running deals.
+- **Paying.** Cash on delivery (up to the kitchen's limit), pay at pick-up, or a transfer to the kitchen's own account within 10 minutes (then a receipt; the kitchen confirms or rejects it). MetroMatrix never holds the money.
+- **Checkout.** Needs an Idempotency-Key (`400 IDEMPOTENCY_KEY_REQUIRED`); the same key returns the same order. It takes the slot place, today's portions and the deal use, or nothing.
+- **The order.** The API's status machine and who may make each move (`409 INVALID_TRANSITION`): the customer cancels only before the kitchen answers; a transfer must be paid before cooking when the kitchen asks for that (`409 PAYMENT_NOT_CONFIRMED`); cash is settled when the food changes hands. A cancel or decline gives back today's portions and the deal use, and settles the payment.
+- **The minute jobs** run before every Food request: an order not answered by `acceptBy` (the kitchen's auto-reject minutes) is declined, and a transfer not paid by `payBy` is cancelled.
 - **All-or-nothing.** A write that fails part-way leaves the dummy database as it was.
 
 ## Seeded accounts (password `Metro2026`)
@@ -68,10 +87,14 @@ Each later backend phase (menu, discovery, ordering, deliveries, admin) adds its
 | `biryani-bazaar.ali` | Rider | Ali Raza, an active rider for Biryani Bazaar |
 | `biryani-bazaar.usman` | Rider | Usman Tariq, on leave (rider routes answer `RIDER_INACTIVE`) |
 
+Customers order as `customer@metromatrix.app` (Ayesha Khan, with a pinned home address in Gulberg). Biryani Bazaar has two deals: 10% off over Rs 500 (automatic) and Rs 150 off over Rs 1,500 with the code `BAZAAR150`; Slice Theory has free delivery.
+
 Seeded names are fictional. The logos are generated initials that stand in for a vendor's own upload.
 
 ## Tests
 
 - `src/serializers/__tests__/foodVendorRealResponses.test.ts` and `foodMenuRealResponses.test.ts`: real API responses (`fixtures/food/vendor.json` and `menu.json`, captured from a local backend with three demo vendors; tokens and passwords say "redacted") through the Food serializers.
 - `src/networks/network/mock/__tests__/mockFoodParity.test.ts`: every captured response has the same keys as the dummy API's answer to the same request.
-- `src/networks/network/mock/__tests__/mockFoodVendorFlows.test.ts` and `mockFoodMenuFlows.test.ts`: the rules above, driven through the app's real Food networks.
+- `foodDiscoveryRealResponses.test.ts` and `foodOrdersRealResponses.test.ts`: the discovery and ordering captures (`discovery.json`, `orders.json`).
+- `src/networks/network/mock/__tests__/mockFoodOrderParity.test.ts`: the captured ordering run (bag, deals, preview, checkout, the kitchen's moves, a transfer, cancels) replayed against the dummy API, key for key.
+- `src/networks/network/mock/__tests__/mockFoodVendorFlows.test.ts`, `mockFoodMenuFlows.test.ts`, `mockFoodDiscoveryFlows.test.ts` and `mockFoodOrderFlows.test.ts`: the rules above, driven through the app's real Food networks.

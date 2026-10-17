@@ -38,7 +38,7 @@ const makeStyles = ({ space }: Theme) =>
     rowText: { flex: 1, gap: space.s4 },
   });
 
-const CopyRow: React.FC<{ label: string; value: string; display?: string }> = ({ label, value, display }) => {
+export const CopyRow: React.FC<{ label: string; value: string; display?: string }> = ({ label, value, display }) => {
   const styles = useStyles(makeStyles);
   const { service, opacity } = useTheme();
   const copy = async () => {

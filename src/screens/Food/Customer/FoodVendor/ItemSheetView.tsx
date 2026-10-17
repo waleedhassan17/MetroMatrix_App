@@ -10,11 +10,12 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
-import { MAX_NOTE, MAX_QUANTITY, firstProblem, groupHint, groupsFor, linePrice, unavailableLabel } from '@models/food/itemSelectionModel';
+import { MAX_NOTE, MAX_QUANTITY, firstProblem, groupHint, groupsFor, linePrice, unavailableLabel, type Selection } from '@models/food/itemSelectionModel';
 import { ITEM_TAG_LABEL } from '@models/food/menuModel';
 import { useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Button, InlineNotice, QuantityStepper, Sheet, SkeletonLines, TextField } from '@custom/index';
 import { ChoiceLine } from '@custom/food/ChoiceLine';
+import type { ItemSheet } from '@/types';
 import { cdn } from '@utils/cdn';
 import { formatPKR } from '@utils/money';
 import { haptics } from '@utils/haptics';
@@ -33,14 +34,16 @@ const makeStyles = ({ colors, space, size, radius }: Theme) =>
   });
 
 export interface ItemSheetViewProps {
-  /** Adds the line (the bag, from the next phase); resolves true when it went in. */
-  onAdd: () => Promise<boolean> | boolean;
+  /** Adds the line to the bag; resolves true when the sheet can close. */
+  onAdd: (sheet: ItemSheet, selection: Selection) => Promise<boolean> | boolean;
   adding?: boolean;
+  /** Why the last add didn't go in. */
+  addError?: string | null;
   /** Ordering is closed for this vendor right now (paused, out of zone…): say why instead. */
   blockedReason?: string | null;
 }
 
-export const ItemSheetView: React.FC<ItemSheetViewProps> = ({ onAdd, adding, blockedReason }) => {
+export const ItemSheetView: React.FC<ItemSheetViewProps> = ({ onAdd, adding, addError, blockedReason }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { size } = useTheme();
@@ -60,7 +63,7 @@ export const ItemSheetView: React.FC<ItemSheetViewProps> = ({ onAdd, adding, blo
       haptics.warning();
       return;
     }
-    if (await onAdd()) {
+    if (await onAdd(sheet, sel)) {
       haptics.success();
       dispatch(closeItemSheet());
     }
@@ -121,6 +124,7 @@ export const ItemSheetView: React.FC<ItemSheetViewProps> = ({ onAdd, adding, blo
             ) : null}
           </View>
           {why || blockedReason ? <InlineNotice tone="warning" message={why ?? blockedReason!} /> : null}
+          {addError ? <InlineNotice message={addError} /> : null}
           {sheet.remainingToday !== null && sheet.remainingToday > 0 && sheet.remainingToday <= 10 ? (
             <AppText variant="small" tone="warning">{`${sheet.remainingToday} left today`}</AppText>
           ) : null}

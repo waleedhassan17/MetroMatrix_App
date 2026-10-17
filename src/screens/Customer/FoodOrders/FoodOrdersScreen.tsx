@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Food Court → Orders (a tab)
 // ═══════════════════════════════════════════════════════
-// Orders from the Food Court's vendors will list here once ordering opens;
-// until then, the way back to the vendors.
+// Orders from the Food Court's vendors list here; with none yet, the way
+// back to the vendors.
 
 import React from 'react';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
@@ -16,7 +16,7 @@ const FoodOrdersScreen: React.FC<Props> = ({ navigation }) => (
     <EmptyState
       icon="coffee"
       title="No Food Court orders yet"
-      body="Menus and ordering open in the next update. Your orders will show here, with each vendor's delivery time."
+      body="Orders you place show here, with each kitchen's delivery time."
       action={{ label: 'Browse the Food Court', onPress: () => navigation.navigate('FoodHomeTab') }}
     />
   </ScreenShell>

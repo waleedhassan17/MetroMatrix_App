@@ -10,16 +10,19 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, SectionList, StyleSheet, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ViewToken } from 'react-native';
 import { Image } from 'expo-image';
+import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { lineInput } from '@models/food/bagModel';
 import { useBack } from '@hooks/useBack';
 import { categoryWindowLabel } from '@models/food/menuModel';
 import { cuisineLine, distanceLabel, feeLabel, ratingLabel } from '@models/food/discoveryModel';
 import { ServiceScope, StoreBrandScope, useStyles, useTheme, type Theme } from '@theme/index';
-import { AppText, Card, ChoiceChip, Divider, IconButton, IonIcon, InlineNotice, ListRow, Sheet, Skeleton, SkeletonLines, TextAction } from '@custom/index';
+import { AppText, Button, Card, ChoiceChip, Divider, IconButton, IonIcon, InlineNotice, ListRow, Sheet, Skeleton, SkeletonLines, TextAction } from '@custom/index';
 import { MenuDishRow } from '@custom/food/MenuDishRow';
+import { BagBar } from '@custom/food/BagBar';
 import type { DishCard, FoodAppParamList, MenuSection, VendorPage } from '@/types';
 import { callNumber, navigateTo } from '@utils/maps';
 import { cdn } from '@utils/cdn';
@@ -29,6 +32,7 @@ import { selectFoodPoint } from '@store/preferencesSlice';
 import { loadVendorPageAsync, selectVendorPage } from './foodVendorSlice';
 import { openItemSheetAsync } from './itemSheetSlice';
 import { ItemSheetView } from './ItemSheetView';
+import { addToFoodBagAsync, clearFoodBagErrors, dismissOtherVendor, loadFoodBagAsync, selectFoodBag } from '../FoodBag/foodBagSlice';
 
 type Props = NativeStackScreenProps<FoodAppParamList, 'FoodVendor'>;
 
@@ -71,6 +75,8 @@ const makeStyles = ({ colors, space, size, radius, gutter, elevation }: Theme) =
     sectionHead: { paddingHorizontal: gutter, paddingTop: space.s24, gap: space.s4 },
     item: { paddingHorizontal: gutter },
     list: { paddingBottom: space.s56 },
+    listWithBar: { paddingBottom: size.control.lg + space.s56 + space.s24 },
+    confirmButtons: { gap: space.s8 },
     skeleton: { gap: space.s16 },
   });
 
@@ -92,7 +98,7 @@ const blockedReasonOf = (p: VendorPage): string | null => {
   return null;
 };
 
-const FoodVendorContent: React.FC<Props> = ({ route }) => {
+const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
   const { slug, dish } = route.params;
   const { back } = useBack({ name: 'FoodTabs' });
   const dispatch = useAppDispatch();
@@ -101,6 +107,7 @@ const FoodVendorContent: React.FC<Props> = ({ route }) => {
   const insets = useSafeAreaInsets();
   const point = useAppSelector(selectFoodPoint);
   const { page, status, error } = useAppSelector(st => selectVendorPage(st, slug));
+  const bag = useAppSelector(selectFoodBag);
   const [info, setInfo] = useState(false);
   const [active, setActive] = useState(0);
   const [tabsY, setTabsY] = useState(0);
@@ -113,6 +120,13 @@ const FoodVendorContent: React.FC<Props> = ({ route }) => {
   useEffect(() => {
     void dispatch(loadVendorPageAsync({ slug, at: atKey ? { lat: Number(atKey.split(',')[0]), lng: Number(atKey.split(',')[1]) } : null }));
   }, [dispatch, slug, atKey]);
+
+  // The bag may have changed elsewhere (checkout, another device).
+  useFocusEffect(
+    useCallback(() => {
+      void dispatch(loadFoodBagAsync());
+    }, [dispatch]),
+  );
 
   // From search: open the dish's sheet once the page is in.
   const openedDish = useRef<string | null>(null);
@@ -182,6 +196,18 @@ const FoodVendorContent: React.FC<Props> = ({ route }) => {
   }
 
   const blocked = blockedReasonOf(page);
+  const bagHere = bag.cart.vendor?.id === page.id && bag.cart.itemCount > 0;
+
+  const addToBag = async (input: Parameters<typeof lineInput>[1], sel: Parameters<typeof lineInput>[2], replace = false) => {
+    dispatch(clearFoodBagErrors());
+    const r = await dispatch(addToFoodBagAsync({ input: lineInput(page.id, input, sel), replace }));
+    if (addToFoodBagAsync.fulfilled.match(r)) {
+      Toast.show({ type: 'success', text1: `${sel.quantity} × ${input.name} in your bag` });
+      return true;
+    }
+    // Another kitchen's dishes are in the bag: close the dish and ask.
+    return (r.payload as { code?: string } | undefined)?.code === 'CART_OTHER_VENDOR';
+  };
   const tabs = (
     <ScrollView ref={tabBar} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
       {page.menu.map((c, i) => (
@@ -327,7 +353,7 @@ const FoodVendorContent: React.FC<Props> = ({ route }) => {
         viewabilityConfig={{ itemVisiblePercentThreshold: 40 }}
         onScroll={onScroll}
         scrollEventThrottle={32}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={bagHere ? styles.listWithBar : styles.list}
         onScrollToIndexFailed={() => undefined}
       />
 
@@ -341,13 +367,35 @@ const FoodVendorContent: React.FC<Props> = ({ route }) => {
         )}
       </View>
 
-      <ItemSheetView
-        blockedReason={blocked}
-        onAdd={() => {
-          Toast.show({ type: 'info', text1: 'Your bag is coming next', text2: 'Ordering opens in the next update.' });
-          return false;
-        }}
-      />
+      {bagHere ? <BagBar count={bag.cart.itemCount} subtotal={bag.cart.subtotal} busy={bag.adding} onPress={() => navigation.navigate('FoodBag')} /> : null}
+
+      <ItemSheetView blockedReason={blocked} adding={bag.adding} addError={bag.addError.message || null} onAdd={(sheet, sel) => addToBag(sheet, sel)} />
+
+      <Sheet
+        visible={!!bag.otherVendor}
+        onClose={() => dispatch(dismissOtherVendor())}
+        title="Start a new bag?"
+        subtitle={bag.otherVendor ? `Your bag has ${bag.otherVendor.itemCount} ${bag.otherVendor.itemCount === 1 ? 'dish' : 'dishes'} from ${bag.otherVendor.name}.` : undefined}
+      >
+        <AppText variant="body" tone="muted">
+          {`Each order comes from one kitchen. Starting a new bag from ${page.name} removes what’s in your bag now.`}
+        </AppText>
+        <View style={styles.confirmButtons}>
+          <Button
+            label="Start a new bag"
+            loading={bag.adding}
+            onPress={() => {
+              const pending = bag.otherVendor;
+              if (!pending) return;
+              void dispatch(addToFoodBagAsync({ input: pending.input, replace: true })).then(r => {
+                if (addToFoodBagAsync.fulfilled.match(r)) Toast.show({ type: 'success', text1: `New bag from ${page.name}` });
+              });
+            }}
+            fullWidth
+          />
+          <Button label="Keep my bag" variant="secondary" onPress={() => dispatch(dismissOtherVendor())} fullWidth />
+        </View>
+      </Sheet>
 
       <Sheet visible={info} onClose={() => setInfo(false)} title={page.name} subtitle={page.isHomeKitchen ? 'Home kitchen' : undefined}>
         <Card padded="horizontal">

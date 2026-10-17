@@ -542,3 +542,296 @@ export interface FoodSearchResult {
   vendors: VendorCard[];
   dishes: { vendor: VendorCard; items: DishHit[] }[];
 }
+
+// ─── Ordering: the bag, checkout, orders (customer and vendor) ─────────────
+export type FoodFulfilment = 'delivery' | 'pickup';
+/** Customers always pay the vendor directly. */
+export type FoodPaymentMethod = 'cod' | 'transfer' | 'pay_at_pickup';
+export type FoodOrderStatus = 'placed' | 'accepted' | 'preparing' | 'ready' | 'on_the_way' | 'delivered' | 'picked_up' | 'rejected' | 'auto_rejected' | 'cancelled';
+export type FoodPaymentStatus = 'cod_pending' | 'unpaid' | 'awaiting_transfer' | 'proof_submitted' | 'paid' | 'void' | 'refund_due' | 'refunded';
+/** Where an assigned rider is with an order. */
+export type RiderStep = 'assigned' | 'accepted_by_rider' | 'arrived_at_branch' | 'picked_up' | 'arrived_at_customer' | 'delivered' | 'declined' | string;
+
+/** Something to fix before checkout (the API's own words). */
+export interface FoodIssue {
+  code: string;
+  message: string;
+  details: Record<string, unknown> | null;
+}
+
+export interface FoodCartVendor {
+  id: string;
+  name: string;
+  slug: string;
+  logoUrl: string | null;
+  openState: { open: boolean; paused: boolean; label: string };
+  acceptsDelivery: boolean;
+  acceptsPickup: boolean;
+  preorderOnly: boolean;
+}
+
+export interface FoodCartLine {
+  id: string;
+  itemId: string;
+  name: string;
+  photoUrl: string | null;
+  variant: { id: string; name: string } | null;
+  options: { id: string; name: string; group: string; priceDelta: number }[];
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
+  notes: string | null;
+  priceChanged: boolean;
+  error: FoodIssue | null;
+}
+
+/** A bag scheduled for later: the time, how it reads, and the pre-order slot it takes. */
+export interface FoodScheduled {
+  at: string;
+  label: string;
+  slotId: string | null;
+}
+
+export interface FoodCart {
+  empty: boolean;
+  vendor: FoodCartVendor | null;
+  fulfilment: FoodFulfilment | null;
+  scheduledFor: FoodScheduled | null;
+  lines: FoodCartLine[];
+  itemCount: number;
+  subtotal: number;
+  warnings: FoodIssue[];
+  issues: FoodIssue[];
+}
+
+/** A vendor's pre-order slots over the next week (home kitchens). */
+export interface FoodSlots {
+  timezone: string;
+  preorderOnly: boolean;
+  usesSlots: boolean;
+  slots: { slotId: string; startsAt: string; cutoffAt: string; label: string; maxOrders: number; remaining: number; full: boolean }[];
+}
+
+export interface FoodTotals {
+  subtotal: number;
+  discount: number;
+  deliveryFee: number;
+  total: number;
+}
+
+/** A vendor's account a transfer goes to. */
+export interface FoodTransferAccount {
+  kind: string;
+  title: string;
+  number: string;
+  bankName: string | null;
+}
+
+/** Totals exactly as checkout would charge them, with every issue. */
+export interface FoodPreview {
+  ok: boolean;
+  issues: FoodIssue[];
+  warnings: FoodIssue[];
+  vendor: FoodCartVendor | null;
+  fulfilment: FoodFulfilment;
+  scheduledFor: FoodScheduled | null;
+  lines: FoodCartLine[];
+  totals: FoodTotals;
+  deal: { id: string; title: string; kind: string; code: string | null; discount: number } | null;
+  minOrder: number;
+  shortfall: number;
+  freeDeliveryOver: number | null;
+  distanceKm: number | null;
+  /** As soon as possible only; a scheduled bag has its time instead. */
+  eta: EtaRange | null;
+  payment: {
+    method: FoodPaymentMethod | null;
+    available: Record<FoodPaymentMethod, boolean>;
+    codLimit: number;
+    accounts: FoodTransferAccount[];
+  };
+}
+
+export interface FoodCheckoutInput {
+  addressId: string | null;
+  paymentMethod: FoodPaymentMethod;
+  promoCode: string | null;
+  cutlery: boolean;
+  note: string | null;
+  building: string | null;
+  floor: string | null;
+  riderInstructions: string | null;
+}
+
+export interface FoodOrderSummary {
+  id: string;
+  code: string;
+  status: FoodOrderStatus;
+  statusLabel: string;
+  fulfilment: FoodFulfilment;
+  vendor: { id: string; name: string; slug: string; logoUrl: string | null };
+  itemCount: number;
+  total: number;
+  placedAt: string;
+  scheduledFor: string | null;
+}
+
+export interface FoodOrderRider {
+  name: string;
+  phone: string | null;
+  vehicle: string | null;
+  step: RiderStep;
+  locationLive: boolean;
+  lastPosition: { lat: number; lng: number } | null;
+  at: string | null;
+}
+
+export interface FoodOrderEvent {
+  kind: string;
+  from: string | null;
+  to: string | null;
+  actorRole: string | null;
+  note: string | null;
+  at: string;
+}
+
+export interface FoodOrder {
+  id: string;
+  code: string;
+  status: FoodOrderStatus;
+  statusLabel: string;
+  fulfilment: FoodFulfilment;
+  scheduledFor: string | null;
+  placedAt: string;
+  /** The vendor must answer by then, or the order is declined for them. */
+  acceptBy: string | null;
+  vendor: {
+    id: string;
+    name: string;
+    slug: string;
+    logoUrl: string | null;
+    phone: string | null;
+    location: { addressLine: string | null; area: string | null; city: string | null; lat: number | null; lng: number | null };
+  };
+  items: { id: string; itemId: string; name: string; variant: string | null; options: { name: string; group: string; priceDelta: number }[]; quantity: number; unitPrice: number; lineTotal: number; notes: string | null }[];
+  totals: FoodTotals;
+  deal: { id: string; code: string | null; kind: string; title: string } | null;
+  payment: {
+    method: FoodPaymentMethod;
+    status: FoodPaymentStatus;
+    payBy: string | null;
+    accounts: FoodTransferAccount[] | null;
+    reference: string | null;
+    proofUrl: string | null;
+    rejectedReason: string | null;
+    instructions: string | null;
+  };
+  address: {
+    label: string | null;
+    fullName: string | null;
+    phone: string | null;
+    line1: string | null;
+    area: string | null;
+    city: string | null;
+    landmark: string | null;
+    building: string | null;
+    floor: string | null;
+    riderInstructions: string | null;
+    lat: number | null;
+    lng: number | null;
+  } | null;
+  distanceKm: number | null;
+  cutlery: boolean;
+  note: string | null;
+  eta: { minutes: number | null; promisedAt: string | null };
+  rider: FoodOrderRider | null;
+  handedToExternal: boolean;
+  /** Vendor view: cash the rider or counter took. */
+  codCollected: number | null;
+  cancelledBy: string | null;
+  cancelReason: string | null;
+  timestamps: Record<'acceptedAt' | 'preparingAt' | 'readyAt' | 'pickedUpAt' | 'deliveredAt' | 'cancelledAt', string | null>;
+  events: FoodOrderEvent[];
+  canCancel: boolean;
+  canReview: boolean;
+  canReorder: boolean;
+}
+
+/** The live view of an order on its way. */
+export interface FoodTracking {
+  code: string;
+  status: FoodOrderStatus;
+  statusLabel: string;
+  fulfilment: FoodFulfilment;
+  eta: { promisedAt: string | null; minutesLeft: number | null };
+  branch: { name: string; phone: string | null; lat: number | null; lng: number | null };
+  drop: { lat: number; lng: number } | null;
+  rider: FoodOrderRider | null;
+  handedToExternal: boolean;
+  updatedAt: string | null;
+}
+
+/** An order on the vendor's board. */
+export interface BoardCard {
+  id: string;
+  code: string;
+  status: FoodOrderStatus;
+  statusLabel: string;
+  fulfilment: FoodFulfilment;
+  scheduledFor: string | null;
+  placedAt: string;
+  acceptBy: string | null;
+  promisedAt: string | null;
+  total: number;
+  payment: { method: FoodPaymentMethod; status: FoodPaymentStatus };
+  itemCount: number;
+  itemsSummary: string;
+  customerName: string | null;
+  riderId: string | null;
+  handedToExternal: boolean;
+}
+
+export type PromotionKind = 'percent_off_order' | 'percent_off_items' | 'flat_off' | 'free_delivery';
+export type PromotionState = 'live' | 'scheduled' | 'ended' | 'inactive';
+
+export interface FoodPromotion {
+  id: string;
+  title: string;
+  kind: PromotionKind;
+  value: number;
+  itemIds: string[];
+  minOrder: number;
+  maxDiscount: number | null;
+  code: string | null;
+  startsAt: string;
+  endsAt: string | null;
+  weekdays: number[];
+  timeFrom: string | null;
+  timeTo: string | null;
+  usageLimit: number | null;
+  perUserLimit: number | null;
+  usedCount: number;
+  firstOrderOnly: boolean;
+  isActive: boolean;
+  state: PromotionState;
+  /** "10% off over Rs 500" — what customers see on cards. */
+  label: string;
+}
+
+export interface PromotionInput {
+  title: string;
+  kind: PromotionKind;
+  value: number;
+  /** percent_off_items: the dishes it applies to. */
+  itemIds: string[];
+  minOrder: number;
+  maxDiscount: number | null;
+  code: string | null;
+  endsAt: string | null;
+  weekdays: number[];
+  timeFrom: string | null;
+  timeTo: string | null;
+  usageLimit: number | null;
+  perUserLimit: number | null;
+  firstOrderOnly: boolean;
+}
