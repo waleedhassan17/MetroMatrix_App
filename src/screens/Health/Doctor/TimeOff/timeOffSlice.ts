@@ -2,7 +2,7 @@
 // MetroMatrix — Time off
 // ═══════════════════════════════════════════════════════
 // Days you won't see patients, at every location or one. Over booked visits
-// the API answers with them first (TIME_OFF_CONFLICT); confirming cancels
+// the API answers with them first (TIME_OFF_CONFLICTS); confirming cancels
 // them and tells each patient.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
@@ -107,7 +107,7 @@ export const timeOffSlice = createAppSlice({
         rejected: (state, action) => {
           state.busy = null;
           const e = readRejection(action, "The time off wasn't saved.");
-          if (e.code === 'TIME_OFF_CONFLICT') state.conflicts = conflictsFrom(e.details);
+          if (e.code === 'TIME_OFF_CONFLICTS') state.conflicts = conflictsFrom(e.details);
           else state.error = e;
         },
       },

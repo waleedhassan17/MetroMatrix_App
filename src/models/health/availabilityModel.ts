@@ -20,6 +20,19 @@ export const WEEKDAYS: { day: number; short: string; long: string }[] = [
 
 export const weekdayName = (day: number) => WEEKDAYS.find(w => w.day === day)?.long ?? 'Day';
 
+/**
+ * The app's days run 1 (Monday) … 7 (Sunday); the API's weekdays 0 (Sunday)
+ * … 6 (Saturday). Null for anything else.
+ */
+export const appDayFromWeekday = (weekday: number): number | null =>
+  Number.isInteger(weekday) && weekday >= 0 && weekday <= 6 ? (weekday === 0 ? 7 : weekday) : null;
+
+export const weekdayFromAppDay = (day: number): number => (day === 7 ? 0 : day);
+
+/** The week as the API's schedule body: `[{ weekday, start, end }]` (23:59 ends the day as "24:00"). */
+export const scheduleBody = (hours: WeekDayHours[]) =>
+  hours.flatMap(d => d.ranges.map(r => ({ weekday: weekdayFromAppDay(d.day), start: r.from, end: r.to === '23:59' ? '24:00' : r.to })));
+
 export const SLOT_LENGTHS = [10, 15, 20, 30, 45, 60];
 export const DEFAULT_RANGE: TimeRange = { from: '17:00', to: '21:00' };
 

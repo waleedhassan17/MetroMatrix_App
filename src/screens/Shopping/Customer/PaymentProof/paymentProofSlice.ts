@@ -90,7 +90,7 @@ export const paymentProofSlice = createAppSlice({
       },
     ),
 
-    // TODO(API_HEALTH): POST /healthcare/appointments/:code/payment-proof.
+    // POST /health/appointments/:code/payment-proof (API_HEALTH.md §4.2).
     submitAppointmentProofAsync: create.asyncThunk(
       async ({ code, transactionId, imageUrl }: { code: string; transactionId: string; imageUrl: string | null }, { rejectWithValue }) => {
         try {

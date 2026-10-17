@@ -88,20 +88,30 @@ export const clearFilters = (q: DoctorQuery): DoctorQuery =>
   baseQuery(q.city, { specialty: q.specialty, condition: q.condition, q: q.q });
 
 /** The query string the API takes (unset values dropped by the network). */
+/** The app's sort names → the API's (`GET /health/doctors?sort=`). */
+const SORT_PARAM: Record<DoctorSort, string> = {
+  recommended: 'recommended',
+  earliest: 'earliest',
+  fee_low: 'fee_asc',
+  most_reviewed: 'reviews',
+  most_experienced: 'experience',
+};
+
+/** The query string for `GET /health/doctors` (MetroMatrix-API docs/API_HEALTH.md §4.1). */
 export const toParams = (q: DoctorQuery) => ({
   specialty: q.specialty,
   condition: q.condition,
   q: q.q,
   city: q.city,
   kind: q.kind,
-  availableToday: q.availableToday || undefined,
+  availableToday: q.availableToday ? 'true' : undefined,
   gender: q.gender,
   maxFee: q.maxFee,
-  minYears: q.minYears,
+  minExperience: q.minYears,
   minRating: q.minRating,
   language: q.language,
   area: q.area,
-  sort: q.sort,
+  sort: SORT_PARAM[q.sort] ?? 'recommended',
 });
 
 /** A stable key for usePagedList: a new key restarts the list. */

@@ -23,6 +23,13 @@ export const CANCEL_REASONS: { key: CancelReason; label: string }[] = [
   { key: 'other', label: 'Something else' },
 ];
 
+/** The cancel reason as the API keeps it: one line of text ("Schedule clash: travelling"). */
+export const cancelReasonText = (reason: CancelReason, note: string | null): string => {
+  const label = CANCEL_REASONS.find(r => r.key === reason)?.label ?? 'Cancelled by the patient';
+  const extra = (note ?? '').trim();
+  return extra ? `${label}: ${extra}` : label;
+};
+
 export const MAX_REASON = 300;
 export const MAX_ATTACHED_RECORDS = 10;
 
@@ -31,10 +38,9 @@ export const MAX_ATTACHED_RECORDS = 10;
  * clinic (no choice to make). A video consultation is paid at the consult
  * or by transfer, and only by transfer when the doctor asks for prepayment.
  */
-export const paymentOptionsFor = (location: Pick<PracticeLocation, 'kind' | 'requiresPrepay'>): AppointmentPaymentMethod[] => {
-  if (location.kind === 'clinic') return ['pay_at_visit'];
-  return location.requiresPrepay ? ['transfer'] : ['pay_at_visit', 'transfer'];
-};
+/** Clinic visits are paid at the clinic; video is always a transfer to the doctor (API_HEALTH §4.2). */
+export const paymentOptionsFor = (location: Pick<PracticeLocation, 'kind' | 'requiresPrepay'>): AppointmentPaymentMethod[] =>
+  location.kind === 'clinic' ? ['pay_at_visit'] : ['transfer'];
 
 export const defaultPaymentFor = (location: Pick<PracticeLocation, 'kind' | 'requiresPrepay'>): AppointmentPaymentMethod =>
   paymentOptionsFor(location)[0];

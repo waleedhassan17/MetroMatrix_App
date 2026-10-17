@@ -179,7 +179,10 @@ const HealthHomeContent: React.FC<Props> = ({ navigation }) => {
 
         {!home || home.featuredDoctors.length ? (
           <View style={styles.block}>
-            <HealthSection title={`Top doctors in ${city}`} subtitle="Rated highest by their patients" />
+            <HealthSection
+              title={home?.featuredScope === 'nationwide' ? 'Top doctors across Pakistan' : `Top doctors in ${city}`}
+              subtitle="Well rated, with times open soon"
+            />
             {!home ? (
               <View style={styles.railSkeleton}>
                 <View style={styles.spotlightSkeleton}>

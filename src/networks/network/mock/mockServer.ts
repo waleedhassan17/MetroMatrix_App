@@ -471,15 +471,38 @@ route('DELETE', '/users/me/devices/:token', ctx => {
 });
 
 // ── Media ──
-route('POST', '/media/sign', ctx => {
-  requireUser(ctx);
+// The API's upload purposes (MetroMatrix-API UPLOAD_PURPOSES); PHI ones are private.
+const UPLOAD_PURPOSES = [
+  'avatar',
+  'business_document',
+  'product_image',
+  'store_branding',
+  'review_photo',
+  'return_photo',
+  'payment_proof',
+  'banner',
+  'doctor_photo',
+  'health_record',
+  'medical_note',
+];
+const PRIVATE_PURPOSES = ['health_record', 'medical_note'];
+
+route('POST', '/media/sign-upload', ctx => {
+  const user = requireUser(ctx);
+  const purpose = String(ctx.body.purpose ?? '');
+  if (!UPLOAD_PURPOSES.includes(purpose)) throw new MockError(400, 'VALIDATION_FAILED', 'Unknown upload purpose.', { fields: { purpose: ['unknown purpose'] } });
+  const folder = `metromatrix/development/${user.id}/${purpose}`;
   return {
     cloudName: 'mock',
     apiKey: 'mock',
     timestamp: Math.floor(ctx.now / 1000),
     signature: 'mock-signature',
-    folder: `metromatrix/${ctx.body.purpose ?? 'misc'}`,
+    folder,
+    publicIdPrefix: `${folder}/`,
     uploadUrl: 'mock://upload',
+    allowedFormats: 'jpg,jpeg,png,webp,heic,pdf',
+    maxBytes: 15_000_000,
+    ...(PRIVATE_PURPOSES.includes(purpose) ? { type: 'authenticated' } : {}),
   };
 });
 
@@ -648,7 +671,7 @@ route('GET', '/admin/businesses/:id', ctx => {
 
 route('POST', '/admin/businesses/:id/approve', ctx => {
   const b = adminBusiness(ctx);
-  // TODO(API_HEALTH): a doctor is approved only after staff check the PMDC number.
+  // A doctor is approved only after staff check the PMDC number (API_HEALTH.md: 422 PMDC_NOT_VERIFIED).
   if (b.subType === 'doctor' && !b.pmdcVerified) {
     throw new MockError(422, 'PMDC_NOT_VERIFIED', "Check the doctor's PMDC registration first (Health → Doctor verification).");
   }
@@ -777,7 +800,8 @@ export const mockAdapter: AxiosAdapter = async config => {
     const result = await match.handler({
       db,
       body: parseBody(config.data),
-      query: config.params ?? {},
+      // As on the wire: a query string in the URL, then axios params on top.
+      query: { ...Object.fromEntries(new URLSearchParams((config.url ?? '').split('?')[1] ?? '')), ...(config.params ?? {}) },
       params: match.params!.slice(1),
       token: bearer(config),
       now: Date.now(),

@@ -257,7 +257,8 @@ export interface MockReport {
 export interface MockNotification {
   id: string;
   userId: string;
-  type: NotificationType;
+  /** Shopping's kinds, or a Health notice's real type (`health.appointment.new`, …). */
+  type: NotificationType | `health.${string}`;
   title: string;
   body: string;
   data: {

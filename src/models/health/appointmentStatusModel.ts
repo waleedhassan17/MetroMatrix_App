@@ -37,6 +37,9 @@ export const APPOINTMENT_PAYMENT_STATUS: Record<AppointmentPaymentStatus, Status
   proof_rejected: { label: 'Payment not found', tone: 'warning', description: 'The doctor could not find your transfer.' },
   paid: { label: 'Paid', tone: 'success', description: 'The doctor has confirmed your payment.' },
   collected: { label: 'Paid at visit', tone: 'success', description: 'The fee was paid at the visit.' },
+  void: { label: 'Nothing to pay', tone: 'neutral', description: 'Nothing is owed for this appointment.' },
+  refund_due: { label: 'Refund due', tone: 'warning', description: 'You paid for a visit that did not happen. The doctor will send it back.' },
+  refunded: { label: 'Refunded', tone: 'success', description: 'The doctor has sent your payment back.' },
 };
 
 export const PAYMENT_METHOD_LABEL: Record<AppointmentPaymentMethod, string> = {
@@ -73,6 +76,9 @@ const EVENT_LABEL: Record<AppointmentEventType, string> = {
   cancelled: 'Cancelled',
   no_show: 'Marked as missed',
   prescription_issued: 'Prescription issued',
+  refund_due: 'Refund due',
+  refunded: 'Refunded',
+  note: 'Update',
 };
 
 export const eventLabel = (type: AppointmentEventType): string => EVENT_LABEL[type] ?? 'Update';

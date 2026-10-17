@@ -60,8 +60,9 @@ export const pushPlatform = (): 'android' | 'ios' | 'web' =>
 export const pushTapUrl = (data: Record<string, unknown> | null | undefined, isStore: boolean): string | null => {
   const s = (k: string) => (typeof data?.[k] === 'string' && data[k] ? (data[k] as string) : null);
   if (isStore) {
-    // TODO(API_HEALTH): a doctor's appointment pushes carry appointmentId.
-    if (s('appointmentId')) return `metromatrix://doctor/appointments/${encodeURIComponent(s('appointmentId')!)}`;
+    // A doctor's appointment pushes carry appointmentCode (API_HEALTH §6); doctor routes take the code.
+    const visit = s('appointmentCode') ?? s('appointmentId');
+    if (visit) return `metromatrix://doctor/appointments/${encodeURIComponent(visit)}`;
     if (s('returnId')) return `metromatrix://store/returns/${encodeURIComponent(s('returnId')!)}`;
     if (s('orderId')) return `metromatrix://store/orders/${encodeURIComponent(s('orderId')!)}`;
     return null;

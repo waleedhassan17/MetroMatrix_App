@@ -19,23 +19,24 @@ import { PKT, addDays, todayInZone, zonedToIso } from '../../../../utils/healthT
 import { DAY, HOUR, MINUTE, appointmentCode, nextAvailable } from './healthLogic';
 
 // ─── Catalogue ────────────────────────────────────────
+// Icons are the API's keys (healthCommon.iconGlyph maps them to the app's glyphs).
 const SPECIALTIES: [slug: string, name: string, nameUr: string, icon: string][] = [
-  ['general-physician', 'General physician', 'جنرل فزیشن', 'medkit-outline'],
-  ['dermatologist', 'Dermatologist', 'ماہر امراض جلد', 'body-outline'],
-  ['gynecologist', 'Gynecologist', 'ماہر امراض نسواں', 'woman-outline'],
-  ['pediatrician', 'Pediatrician', 'ماہر امراض اطفال', 'happy-outline'],
-  ['cardiologist', 'Cardiologist', 'ماہر امراض قلب', 'heart-outline'],
-  ['orthopedic-surgeon', 'Orthopedic surgeon', 'ماہر امراض ہڈی و جوڑ', 'accessibility-outline'],
-  ['ent-specialist', 'ENT specialist', 'ماہر ناک، کان، گلا', 'ear-outline'],
-  ['eye-specialist', 'Eye specialist', 'ماہر امراض چشم', 'eye-outline'],
-  ['neurologist', 'Neurologist', 'ماہر امراض دماغ و اعصاب', 'pulse-outline'],
-  ['psychiatrist', 'Psychiatrist', 'ماہر نفسیات', 'chatbubbles-outline'],
-  ['gastroenterologist', 'Gastroenterologist', 'ماہر امراض معدہ و جگر', 'nutrition-outline'],
-  ['urologist', 'Urologist', 'ماہر امراض گردہ و مثانہ', 'water-outline'],
-  ['endocrinologist', 'Endocrinologist', 'ماہر امراض غدود', 'flask-outline'],
-  ['dentist', 'Dentist', 'ماہر امراض دندان', 'happy-outline'],
-  ['pulmonologist', 'Pulmonologist', 'ماہر امراض سینہ', 'cloud-outline'],
-  ['nutritionist', 'Nutritionist', 'ماہر غذائیت', 'leaf-outline'],
+  ['general-physician', 'General physician', 'جنرل فزیشن', 'stethoscope'],
+  ['dermatologist', 'Dermatologist', 'ماہر امراض جلد', 'skin'],
+  ['gynecologist', 'Gynecologist', 'ماہر امراض نسواں', 'female'],
+  ['pediatrician', 'Pediatrician', 'ماہر امراض اطفال', 'child'],
+  ['cardiologist', 'Cardiologist', 'ماہر امراض قلب', 'heart'],
+  ['orthopedic-surgeon', 'Orthopedic surgeon', 'ماہر امراض ہڈی و جوڑ', 'bone'],
+  ['ent-specialist', 'ENT specialist', 'ماہر ناک، کان، گلا', 'ear'],
+  ['eye-specialist', 'Eye specialist', 'ماہر امراض چشم', 'eye'],
+  ['neurologist', 'Neurologist', 'ماہر امراض دماغ و اعصاب', 'neuro'],
+  ['psychiatrist', 'Psychiatrist', 'ماہر نفسیات', 'brain'],
+  ['gastroenterologist', 'Gastroenterologist', 'ماہر امراض معدہ و جگر', 'stomach'],
+  ['urologist', 'Urologist', 'ماہر امراض گردہ و مثانہ', 'kidney'],
+  ['endocrinologist', 'Endocrinologist', 'ماہر امراض غدود', 'hormone'],
+  ['dentist', 'Dentist', 'ماہر امراض دندان', 'tooth'],
+  ['pulmonologist', 'Pulmonologist', 'ماہر امراض سینہ', 'lungs'],
+  ['nutritionist', 'Nutritionist', 'ماہر غذائیت', 'apple'],
 ];
 
 const CONDITIONS: [slug: string, name: string, nameUr: string, specialty: string, common: boolean, aliases: string[]][] = [
@@ -81,26 +82,26 @@ const CONDITIONS: [slug: string, name: string, nameUr: string, specialty: string
   ['weight-management', 'Weight management', 'وزن میں کمی', 'nutritionist', true, ['weight loss', 'obesity', 'diet plan']],
 ];
 
-/** The common concerns' own icons, so a row of them reads at a glance. */
+/** The common concerns' own icon keys, so a row of them reads at a glance. */
 const CONDITION_ICONS: Record<string, string> = {
-  acne: 'sparkles-outline',
-  'hair-loss': 'body-outline',
-  fever: 'thermometer-outline',
-  'flu-and-cold': 'snow-outline',
-  diabetes: 'water-outline',
-  'high-blood-pressure': 'pulse-outline',
-  'back-pain': 'accessibility-outline',
-  'joint-pain': 'walk-outline',
-  migraine: 'flash-outline',
-  anxiety: 'cloudy-outline',
-  'pregnancy-care': 'woman-outline',
-  'irregular-periods': 'calendar-outline',
-  'child-vaccination': 'shield-checkmark-outline',
-  'sore-throat': 'mic-outline',
-  acidity: 'flame-outline',
-  'stomach-pain': 'restaurant-outline',
-  toothache: 'happy-outline',
-  'weight-management': 'scale-outline',
+  acne: 'sparkles',
+  'hair-loss': 'skin',
+  fever: 'thermometer',
+  'flu-and-cold': 'snowflake',
+  diabetes: 'drop',
+  'high-blood-pressure': 'heart-pulse',
+  'back-pain': 'bone',
+  'joint-pain': 'walk',
+  migraine: 'flash',
+  anxiety: 'cloud',
+  'pregnancy-care': 'female',
+  'irregular-periods': 'calendar',
+  'child-vaccination': 'shield',
+  'sore-throat': 'mic',
+  acidity: 'flame',
+  'stomach-pain': 'restaurant',
+  toothache: 'tooth',
+  'weight-management': 'scale',
 };
 
 const FORMULARY: MockFormularyItem[] = [
@@ -116,7 +117,7 @@ const FORMULARY: MockFormularyItem[] = [
   { name: 'Cetirizine', strength: '10 mg', form: 'tablet' },
   { name: 'Loratadine', strength: '10 mg', form: 'tablet' },
   { name: 'Montelukast', strength: '10 mg', form: 'tablet' },
-  { name: 'Salbutamol', strength: '100 mcg', form: 'inhaler' },
+  { name: 'Salbutamol', strength: '100 mcg', form: 'other' },
   { name: 'Omeprazole', strength: '20 mg', form: 'capsule' },
   { name: 'Esomeprazole', strength: '40 mg', form: 'capsule' },
   { name: 'Domperidone', strength: '10 mg', form: 'tablet' },
@@ -775,7 +776,7 @@ const TEXTS = [
   null,
   'Waited a little longer than expected, but the consultation was worth it.',
 ];
-const TAG_POOL = ['No waiting time', 'Great experience', 'Explained clearly', 'Listened carefully', 'Friendly staff', 'On time', 'Good follow-up', 'Clean clinic'];
+const TAG_POOL = ['No waiting time', 'Great experience', 'Explained clearly', 'Friendly staff', 'On time', 'Clean clinic', 'Good value'];
 const REPLIES = ['Thank you for your kind words. Wishing you good health.', 'Thank you. Please book a follow-up if anything changes.'];
 
 const lcg = (seed: number) => {

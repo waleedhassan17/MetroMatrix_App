@@ -50,6 +50,7 @@ import {
   doctorMoveAsync,
   loadDoctorAppointmentAsync,
   openDoctorSheet,
+  openSharedRecordAsync,
   selectDoctorAppointmentEntry,
   selectDoctorAppointmentUi,
   setNotesDraft,
@@ -221,6 +222,13 @@ const DoctorAppointmentContent: React.FC<Props> = ({ route, navigation }) => {
               <AppText variant="bodyStrong">{r.title}</AppText>
               <AppText variant="caption" tone="muted">{`${recordTypeLabel(r.type)} · ${r.memberName} · ${r.recordedOn}`}</AppText>
               <View style={styles.file}>
+                {!r.files.length ? (
+                  <TextAction
+                    label={ui.openingRecord === r.id ? 'Opening…' : 'Open report'}
+                    icon="eye-outline"
+                    onPress={() => void dispatch(openSharedRecordAsync({ id: a.id, recordId: r.id }))}
+                  />
+                ) : null}
                 {r.files.map((f, i) => (
                   <TextAction
                     key={f.url}

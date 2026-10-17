@@ -86,7 +86,8 @@ const MyReviewsContent: React.FC<Props> = () => {
         onRefresh={list.refresh}
         refreshing={list.isRefreshing}
         renderItem={({ item }) => {
-          const canEdit = !!item.reply && !!item.replyEditableUntil && Date.parse(item.replyEditableUntil) > now;
+          // A reply can always be changed (the API replaces it); a deadline only applies when one is given.
+          const canEdit = !!item.reply && (!item.replyEditableUntil || Date.parse(item.replyEditableUntil) > now);
           return (
             <DoctorReviewItem
               review={item}

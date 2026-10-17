@@ -10,6 +10,7 @@ describe('pushTapUrl', () => {
   });
 
   it('sends a doctor to their appointment', () => {
+    expect(pushTapUrl({ appointmentCode: 'HC-7KQ2MZ' }, true)).toBe('metromatrix://doctor/appointments/HC-7KQ2MZ');
     expect(pushTapUrl({ appointmentId: 'ap_9' }, true)).toBe('metromatrix://doctor/appointments/ap_9');
   });
 

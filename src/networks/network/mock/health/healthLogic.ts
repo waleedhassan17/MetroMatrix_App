@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Dummy Health rules and views
+// MetroMatrix — Dummy Health rules
 // ═══════════════════════════════════════════════════════
-// The server rules docs/API_HEALTH_ASSUMED.md promises, so the app's
+// The server rules MetroMatrix-API docs/API_HEALTH.md promises, so the app's
 // behaviour against the dummy API is the behaviour it will have for real:
 // slots come from weekly hours, slot length, bookings, time off, the booking
 // window and minimum notice; a transfer has a deadline; the join window
@@ -10,15 +10,11 @@
 
 import type { MockDb } from '../mockDb';
 import { ShopError } from '../shop/shopLogic';
-import type { MockAppointment, MockDoctor, MockDoctorReview, MockHealth, MockLocation } from './healthTypes';
-import type { AppointmentStatus, ConsultKind, ReviewDimension, SlotPeriod, WeekDayHours } from '../../../../types/health';
+import type { MockAppointment, MockDoctor, MockHealth, MockLocation } from './healthTypes';
+import type { AppointmentStatus, ConsultKind, SlotPeriod } from '../../../../types/health';
 import {
-  PKT,
   addDays,
-  ageFrom,
   dateInZone,
-  formatDayShort,
-  formatSlot,
   hourOfDay,
   isoWeekday,
   todayInZone,
@@ -152,69 +148,6 @@ export const alternativesAfter = (h: MockHealth, loc: MockLocation, afterIso: st
   return out;
 };
 
-/** "Available today, 6:00 PM" · "Available tomorrow, 2:00 PM" · "Available Fri 17 Oct, 5:00 PM". */
-export const availabilityOf = (loc: MockLocation, next: { date: string; startAt: string } | null, now: number) => {
-  if (!next) return { label: 'No times in the next two weeks', today: false, nextAt: null };
-  const today = todayInZone(loc.timezone, now);
-  const time = formatSlot(next.startAt, loc.timezone);
-  const label =
-    next.date === today
-      ? `Available today, ${time}`
-      : next.date === addDays(today, 1)
-        ? `Available tomorrow, ${time}`
-        : `Available ${formatDayShort(next.date)}, ${time}`;
-  return { label, today: next.date === today, nextAt: next.startAt };
-};
-
-const DAY_SHORT = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-const fmt12 = (hm: string) => {
-  const m = toMin(hm);
-  const h = Math.floor(m / 60);
-  return `${h % 12 === 0 ? 12 : h % 12}:${String(m % 60).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
-};
-
-/** Weekly hours worded for patients, days with the same hours grouped: "Mon, Wed, Fri" · "5:00 PM – 9:00 PM". */
-export const timingsOf = (hours: WeekDayHours[]) => {
-  const groups: { days: number[]; hours: string }[] = [];
-  for (const d of [...hours].sort((a, b) => a.day - b.day)) {
-    if (!d.ranges.length) continue;
-    const text = d.ranges.map(r => `${fmt12(r.from)} – ${fmt12(r.to)}`).join(', ');
-    const g = groups.find(x => x.hours === text);
-    if (g) g.days.push(d.day);
-    else groups.push({ days: [d.day], hours: text });
-  }
-  return groups.map(g => {
-    const consecutive = g.days.length > 2 && g.days.every((d, i) => i === 0 || d === g.days[i - 1] + 1);
-    return {
-      days: consecutive ? `${DAY_SHORT[g.days[0]]} – ${DAY_SHORT[g.days[g.days.length - 1]]}` : g.days.map(d => DAY_SHORT[d]).join(', '),
-      hours: g.hours,
-    };
-  });
-};
-
-// ─── Views (wire shapes) ──────────────────────────────
-export const locationView = (h: MockHealth, loc: MockLocation, now: number) => ({
-  id: loc.id,
-  kind: loc.kind,
-  name: loc.name,
-  area: loc.area,
-  city: loc.city,
-  address: loc.address,
-  lat: loc.lat,
-  lng: loc.lng,
-  phone: loc.phone,
-  fee: loc.fee,
-  slotMinutes: loc.slotMinutes,
-  instructions: loc.instructions,
-  timezone: loc.timezone,
-  availability: availabilityOf(loc, nextAvailable(h, loc, now), now),
-  timings: timingsOf(loc.hours),
-  requiresPrepay: loc.kind === 'video' && loc.requiresPrepay,
-});
-
-export const doctorLocationView = (h: MockHealth, loc: MockLocation, now: number) => ({ ...locationView(h, loc, now), hours: loc.hours });
-
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 const round1 = (n: number | null) => (n === null ? null : Math.round(n * 10) / 10);
 
@@ -236,46 +169,6 @@ export const doctorStats = (h: MockHealth, d: MockDoctor) => {
   };
 };
 
-const DIMENSION_LABEL: Record<ReviewDimension, string> = { diagnosis: 'Diagnosis', staff: 'Staff', environment: 'Clinic environment' };
-
-export const reviewSummaryView = (h: MockHealth, doctorId: string) => {
-  const reviews = visibleReviews(h, doctorId);
-  const distribution = [0, 0, 0, 0, 0];
-  for (const r of reviews) distribution[Math.min(5, Math.max(1, r.rating)) - 1] += 1;
-  const tagCounts = new Map<string, number>();
-  for (const r of reviews) for (const t of r.tags) tagCounts.set(t, (tagCounts.get(t) ?? 0) + 1);
-  return {
-    average: reviews.length ? round1(avg(reviews.map(r => r.rating))) : null,
-    count: reviews.length,
-    recommendPct: reviews.length >= 3 ? Math.round((reviews.filter(r => r.recommend).length / reviews.length) * 100) : null,
-    distribution,
-    dimensions: (Object.keys(DIMENSION_LABEL) as ReviewDimension[])
-      .map(key => {
-        const scores = reviews.map(r => r.dimensions[key]).filter((x): x is number => typeof x === 'number');
-        return { key, label: DIMENSION_LABEL[key], score: scores.length >= 3 ? round1(avg(scores)) : null };
-      })
-      .filter(d => d.score !== null),
-    tags: [...tagCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([label, count]) => ({ label, count })),
-  };
-};
-
-export const reviewView = (r: MockDoctorReview, now: number, forOwner = false) => ({
-  id: r.id,
-  authorName: r.anonymous ? initialsName(r.authorName) : r.authorName,
-  rating: r.rating,
-  kind: r.kind,
-  tags: r.tags,
-  text: r.text,
-  recommend: r.recommend,
-  createdAt: r.createdAt,
-  reply: r.reply,
-  isHidden: r.isHidden,
-  replyEditableUntil:
-    forOwner && r.reply && now < Date.parse(r.reply.createdAt) + REPLY_EDIT_HOURS * HOUR
-      ? new Date(Date.parse(r.reply.createdAt) + REPLY_EDIT_HOURS * HOUR).toISOString()
-      : null,
-});
-
 /** "Ayesha Khan" → "A. K." (an anonymous review). */
 export const initialsName = (name: string) =>
   name
@@ -284,9 +177,6 @@ export const initialsName = (name: string) =>
     .slice(0, 2)
     .map(p => `${p[0].toUpperCase()}.`)
     .join(' ') || 'Verified patient';
-
-const qualificationLine = (d: MockDoctor) => d.qualifications.map(q => q.degree).join(', ');
-const years = (d: MockDoctor, now: number) => (d.practisingSince ? Math.max(0, new Date(now).getUTCFullYear() - d.practisingSince) : 0);
 
 /** The earliest next slot across the doctor's locations (optionally of one kind). */
 export const earliestOf = (h: MockHealth, d: MockDoctor, now: number, kind?: ConsultKind | null) => {
@@ -297,81 +187,6 @@ export const earliestOf = (h: MockHealth, d: MockDoctor, now: number, kind?: Con
     if (next && (!best || next.startAt < best.next.startAt)) best = { loc, next };
   }
   return best;
-};
-
-export const doctorCardView = (h: MockHealth, d: MockDoctor, now: number, kind?: ConsultKind | null) => {
-  const locs = locationsOf(h, d.id);
-  const stats = doctorStats(h, d);
-  const fees = locs.filter(l => !kind || l.kind === kind).map(l => l.fee);
-  const best = earliestOf(h, d, now, kind);
-  const badges = [h.pmdc[d.businessId ?? '']?.verified !== false ? 'pmdc_verified' : null, d.topBooked ? 'top_booked' : null].filter(Boolean);
-  return {
-    id: d.id,
-    name: `${d.title} ${d.name}`.trim(),
-    photoUrl: d.photoUrl,
-    gender: d.gender,
-    specialty: specialtyRef(h, d.specialtySlug),
-    qualifications: qualificationLine(d),
-    yearsExperience: years(d, now),
-    rating: stats.rating,
-    reviewCount: stats.reviewCount,
-    waitMinutes: stats.waitMinutes,
-    badges,
-    offersVideo: locs.some(l => l.kind === 'video'),
-    offersClinic: locs.some(l => l.kind === 'clinic'),
-    fromFee: fees.length ? Math.min(...fees) : 0,
-    availability: best ? availabilityOf(best.loc, best.next, now) : { label: 'No times in the next two weeks', today: false, nextAt: null },
-    city: d.city,
-  };
-};
-
-export const doctorProfileView = (h: MockHealth, d: MockDoctor, now: number) => {
-  const card = doctorCardView(h, d, now);
-  const stats = doctorStats(h, d);
-  const locs = locationsOf(h, d.id);
-  const similar = h.doctors
-    .filter(o => o.id !== d.id && o.isListed && o.specialtySlug === d.specialtySlug)
-    .sort((a, b) => (a.city === d.city ? 0 : 1) - (b.city === d.city ? 0 : 1))
-    .slice(0, 6)
-    .map(o => doctorCardView(h, o, now));
-  return {
-    ...card,
-    title: d.title,
-    about: d.about,
-    languages: d.languages,
-    services: d.services,
-    conditions: d.conditionSlugs
-      .map(slug => h.conditions.find(c => c.slug === slug))
-      .filter(Boolean)
-      .map(c => ({ slug: c!.slug, name: c!.name })),
-    qualificationList: d.qualifications,
-    experienceList: d.experience,
-    locations: [...locs.filter(l => l.kind === 'video'), ...locs.filter(l => l.kind === 'clinic')].map(l => locationView(h, l, now)),
-    stats: {
-      satisfactionPct: stats.satisfactionPct,
-      waitMinutes: stats.waitMinutes,
-      timeWithPatientMinutes: stats.timeWithPatientMinutes,
-      reviewCount: stats.reviewCount,
-    },
-    reviewSummary: reviewSummaryView(h, d.id),
-    topReviews: visibleReviews(h, d.id)
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .slice(0, 3)
-      .map(r => reviewView(r, now)),
-    similar,
-    bookingRules: d.bookingRules,
-  };
-};
-
-export const specialtyView = (h: MockHealth, slug: string, city: string | null) => {
-  const s = specialtyBySlug(h, slug)!;
-  const doctorCount = h.doctors.filter(
-    d =>
-      d.isListed &&
-      (d.specialtySlug === slug || d.secondarySpecialtySlug === slug) &&
-      (!city || servesCity(h, d, city)),
-  ).length;
-  return { id: s.id, slug: s.slug, name: s.name, nameUr: s.nameUr, icon: s.icon, doctorCount };
 };
 
 /** A doctor serves a city with a clinic there, or anywhere by video. */
@@ -385,10 +200,11 @@ export const settleAppointments = (db: MockDb, now: number) => {
     // An unpaid transfer past its deadline frees the slot.
     if (a.status === 'awaiting_payment' && a.instructions && Date.parse(a.instructions.payBy) < now && a.paymentStatus !== 'proof_submitted') {
       a.status = 'cancelled';
+      a.paymentStatus = 'void';
       a.cancelledBy = 'system';
       a.cancelReason = 'The payment did not arrive before the deadline.';
       addEvent(a, 'cancelled', 'The payment did not arrive before the deadline.', now);
-      notifyHealth(db, a.userId, 'appointment_update', 'Appointment cancelled', `Your appointment ${a.code} was cancelled because the payment did not arrive in time.`, {
+      notifyHealth(db, a.userId, 'health.appointment.cancelled', 'Appointment cancelled', `Your appointment ${a.code} was cancelled because the payment did not arrive in time.`, {
         appointmentCode: a.code,
       });
     }
@@ -402,7 +218,8 @@ export const addEvent = (a: MockAppointment, type: MockAppointment['events'][num
 export const notifyHealth = (
   db: MockDb,
   userId: string,
-  type: 'appointment_update' | 'appointment_reminder' | 'appointment_new' | 'appointment_payment' | 'prescription_ready',
+  /** The real API's types (docs/API_HEALTH.md §6). */
+  type: `health.${'appointment' | 'payment' | 'prescription' | 'review'}${string}`,
   title: string,
   body: string,
   data: { appointmentCode?: string; appointmentId?: string; prescriptionId?: string },
@@ -441,112 +258,25 @@ export const cancelCutoff = (h: MockHealth, a: MockAppointment) =>
   doctorById(h, a.doctorId)?.bookingRules.cancelCutoffHours ?? 4;
 
 export const patientFlags = (h: MockHealth, a: MockAppointment, now: number) => {
-  const upcoming = Date.parse(a.startAt) > now;
-  const cancellable = (a.status === 'awaiting_payment' || a.status === 'confirmed') && upcoming;
+  const start = Date.parse(a.startAt);
+  const cancellable = (a.status === 'awaiting_payment' || a.status === 'confirmed') && start > now;
   return {
     canCancel: cancellable,
-    canReschedule: cancellable && a.rescheduleCount < 1,
+    // Once per visit, and only before the doctor's notice period.
+    canReschedule: cancellable && a.rescheduleCount < 1 && !a.rescheduledFromId && now < start - cancelCutoff(h, a) * HOUR,
     canJoinVideo: canJoin(a, now),
     canReview: a.status === 'completed' && !a.reviewId && now - Date.parse(a.completedAt ?? a.endAt) < REVIEW_WINDOW_DAYS * DAY,
-    canPay: a.status === 'awaiting_payment' && (a.paymentStatus === 'awaiting_transfer' || a.paymentStatus === 'proof_rejected'),
+    // A transfer to the doctor, any time before the visit (prepaid video before its deadline).
+    canPay:
+      a.paymentMethod === 'transfer' &&
+      (a.status === 'awaiting_payment' || a.status === 'confirmed') &&
+      (a.paymentStatus === 'awaiting_transfer' || a.paymentStatus === 'proof_rejected'),
     canAttachRecords: isActive(a),
   };
 };
 
 export const isLateCancel = (h: MockHealth, a: MockAppointment, now: number) =>
   Date.parse(a.startAt) - now < cancelCutoff(h, a) * HOUR;
-
-const patientAge = (a: MockAppointment, now: number) => ageFrom(a.patientDob, now);
-
-const doctorRef = (h: MockHealth, a: MockAppointment) => {
-  const d = doctorById(h, a.doctorId);
-  return {
-    id: a.doctorId,
-    name: d ? `${d.title} ${d.name}`.trim() : 'Doctor',
-    photoUrl: d?.photoUrl ?? null,
-    specialty: specialtyRef(h, d?.specialtySlug ?? null),
-  };
-};
-
-const locationRef = (h: MockHealth, a: MockAppointment) => {
-  const l = locationById(h, a.locationId);
-  return {
-    id: a.locationId,
-    kind: a.kind,
-    name: l?.name ?? (a.kind === 'video' ? 'Video consultation' : 'Clinic'),
-    area: l?.area ?? '',
-    city: l?.city ?? '',
-    address: l?.address ?? null,
-    lat: l?.lat ?? null,
-    lng: l?.lng ?? null,
-    phone: l?.phone ?? null,
-    instructions: l?.instructions ?? null,
-  };
-};
-
-const tzOf = (h: MockHealth, a: MockAppointment) => locationById(h, a.locationId)?.timezone ?? PKT;
-
-export const appointmentSummaryView = (h: MockHealth, a: MockAppointment, now: number) => {
-  const flags = patientFlags(h, a, now);
-  return {
-    id: a.id,
-    code: a.code,
-    status: a.status,
-    kind: a.kind,
-    startAt: a.startAt,
-    endAt: a.endAt,
-    timezone: tzOf(h, a),
-    doctor: doctorRef(h, a),
-    location: locationRef(h, a),
-    patientName: a.patientName,
-    fee: a.fee,
-    paymentStatus: a.paymentStatus,
-    canJoinVideo: flags.canJoinVideo,
-    canPay: flags.canPay,
-    canReview: flags.canReview,
-    joinOpensAt: a.kind === 'video' ? joinOpensAt(a) : null,
-  };
-};
-
-const RELATION_LABEL: Record<string, string> = { spouse: 'Spouse', child: 'Child', parent: 'Parent', sibling: 'Sibling', other: 'Family' };
-
-export const recordView = (h: MockHealth, r: MockHealth['records'][number]) => {
-  const member = r.memberId ? h.family.find(f => f.id === r.memberId) : null;
-  return { ...r, memberName: member ? member.name : 'Me' };
-};
-
-export const appointmentDetailView = (h: MockHealth, a: MockAppointment, now: number) => {
-  const flags = patientFlags(h, a, now);
-  const late = flags.canCancel && isLateCancel(h, a, now);
-  const member = a.familyMemberId ? h.family.find(f => f.id === a.familyMemberId) : null;
-  return {
-    ...appointmentSummaryView(h, a, now),
-    patient: {
-      familyMemberId: a.familyMemberId,
-      name: a.patientName,
-      relation: member ? RELATION_LABEL[member.relation] : null,
-      age: patientAge(a, now),
-      gender: a.patientGender,
-    },
-    reasonTags: a.reasonTags,
-    reason: a.reason,
-    records: a.recordIds
-      .map(id => h.records.find(r => r.id === id))
-      .filter(Boolean)
-      .map(r => recordView(h, r!)),
-    payment: { method: a.paymentMethod, status: a.paymentStatus, amount: a.fee, instructions: a.instructions, proof: a.proof },
-    timeline: a.events,
-    flags,
-    isLateCancel: late,
-    lateCancelNote: late
-      ? `This is within ${cancelCutoff(h, a)} hours of your appointment, so it is recorded as a late cancellation. The doctor can see how often this happens.`
-      : null,
-    cancelReason: a.cancelReason,
-    rescheduleCount: a.rescheduleCount,
-    prescriptionId: a.prescriptionId,
-    reviewed: !!a.reviewId,
-  };
-};
 
 // ─── Doctor side ──────────────────────────────────────
 export const patientKey = (a: Pick<MockAppointment, 'userId' | 'familyMemberId'>) => `${a.userId}~${a.familyMemberId ?? 'self'}`;
@@ -566,110 +296,6 @@ export const doctorActions = (h: MockHealth, a: MockAppointment, now: number) =>
     canConfirmPayment: awaitingProof,
     canWritePrescription: (a.status === 'in_progress' || a.status === 'completed') && !a.prescriptionId,
     canJoinVideo: canJoin(a, now),
-  };
-};
-
-const firstVisit = (h: MockHealth, a: MockAppointment) =>
-  !h.appointments.some(
-    o => o.id !== a.id && o.doctorId === a.doctorId && patientKey(o) === patientKey(a) && o.status === 'completed' && o.startAt < a.startAt,
-  );
-
-export const queueItemView = (h: MockHealth, a: MockAppointment, now: number) => ({
-  id: a.id,
-  code: a.code,
-  startAt: a.startAt,
-  timezone: tzOf(h, a),
-  kind: a.kind,
-  status: a.status,
-  patient: { name: a.patientName, age: patientAge(a, now), gender: a.patientGender },
-  firstVisit: firstVisit(h, a),
-  reason: [a.reasonTags.map(t => ({ follow_up: 'Follow-up', new_problem: 'New problem', reports_review: 'Reports review' })[t]).join(', '), a.reason]
-    .filter(Boolean)
-    .join(' · ') || null,
-  checkedInAt: a.checkedInAt,
-  paymentMethod: a.paymentMethod,
-  paymentStatus: a.paymentStatus,
-  locationId: a.locationId,
-  locationName: locationById(h, a.locationId)?.name ?? '',
-  canJoinVideo: canJoin(a, now),
-  joinOpensAt: a.kind === 'video' ? joinOpensAt(a) : null,
-  actions: doctorActions(h, a, now),
-});
-
-export const prescriptionView = (h: MockHealth, p: MockHealth['prescriptions'][number]) => {
-  const a = h.appointments.find(x => x.id === p.appointmentId)!;
-  const d = doctorById(h, p.doctorId);
-  const l = a ? locationById(h, a.locationId) : null;
-  return {
-    id: p.id,
-    appointmentCode: a?.code ?? '',
-    doctorId: p.doctorId,
-    locationId: a?.locationId ?? '',
-    kind: a?.kind ?? 'clinic',
-    doctor: {
-      name: d ? `${d.title} ${d.name}` : 'Doctor',
-      specialtyName: specialtyRef(h, d?.specialtySlug ?? null).name,
-      qualifications: d ? qualificationLine(d) : '',
-      pmdcNumber: d?.pmdcNumber ?? '',
-      place: l ? (l.kind === 'video' ? 'Video consultation' : `${l.name}, ${l.area}, ${l.city}`) : '',
-      phone: l?.phone ?? null,
-    },
-    patient: { name: a?.patientName ?? 'Patient', age: a ? ageFrom(a.patientDob, Date.parse(p.issuedAt)) : null, gender: a?.patientGender ?? null },
-    issuedAt: p.issuedAt,
-    diagnosis: p.diagnosis,
-    medicines: p.medicines,
-    tests: p.tests,
-    advice: p.advice,
-    followUpInDays: p.followUpInDays,
-    editableUntil: new Date(Date.parse(p.issuedAt) + PRESCRIPTION_EDIT_HOURS * HOUR).toISOString(),
-  };
-};
-
-export const previousVisitsOf = (h: MockHealth, a: Pick<MockAppointment, 'doctorId' | 'userId' | 'familyMemberId'>, exceptId?: string) =>
-  h.appointments
-    .filter(o => o.id !== exceptId && o.doctorId === a.doctorId && patientKey(o) === patientKey(a) && o.status === 'completed')
-    .sort((x, y) => y.startAt.localeCompare(x.startAt))
-    .map(o => {
-      const p = o.prescriptionId ? h.prescriptions.find(x => x.id === o.prescriptionId) : null;
-      return { appointmentId: o.id, code: o.code, startAt: o.startAt, kind: o.kind, diagnosis: p?.diagnosis ?? null, prescriptionId: o.prescriptionId, notes: o.notes.text || null };
-    });
-
-export const doctorAppointmentView = (h: MockHealth, a: MockAppointment, now: number) => {
-  const others = h.appointments.filter(o => o.doctorId === a.doctorId && patientKey(o) === patientKey(a));
-  const p = a.prescriptionId ? h.prescriptions.find(x => x.id === a.prescriptionId) : null;
-  return {
-    id: a.id,
-    code: a.code,
-    status: a.status,
-    kind: a.kind,
-    startAt: a.startAt,
-    endAt: a.endAt,
-    timezone: tzOf(h, a),
-    location: locationRef(h, a),
-    patient: {
-      id: patientKey(a),
-      name: a.patientName,
-      age: patientAge(a, now),
-      gender: a.patientGender,
-      phone: a.patientPhone,
-      visitsWithYou: others.filter(o => o.status === 'completed').length,
-      noShows: others.filter(o => o.status === 'no_show').length,
-      lateCancels: others.filter(o => o.status === 'cancelled' && o.lateCancel).length,
-    },
-    reasonTags: a.reasonTags,
-    reason: a.reason,
-    records: a.recordIds
-      .map(id => h.records.find(r => r.id === id))
-      .filter(Boolean)
-      .map(r => recordView(h, r!)),
-    previousVisits: previousVisitsOf(h, a, a.id),
-    notes: a.notes,
-    payment: { method: a.paymentMethod, status: a.paymentStatus, amount: a.fee, instructions: a.instructions, proof: a.proof },
-    checkedInAt: a.checkedInAt,
-    joinOpensAt: a.kind === 'video' ? joinOpensAt(a) : null,
-    actions: doctorActions(h, a, now),
-    prescription: p ? prescriptionView(h, p) : null,
-    timeline: a.events,
   };
 };
 
@@ -781,24 +407,25 @@ const RULES: SymptomRule[] = [
   },
 ];
 
+/** As the API lists them (red-flags.ts): Rescue 1122 and the Edhi ambulance. */
 export const EMERGENCY_NUMBERS = [
-  { label: 'Rescue 1122', number: '1122' },
+  { label: 'Rescue', number: '1122' },
   { label: 'Edhi ambulance', number: '115' },
-  { label: 'Police', number: '15' },
 ];
 
 export const DISCLAIMER =
   'This is general information, not a diagnosis. Only a doctor who examines you can diagnose and treat you. If symptoms are severe or getting worse, call 1122.';
 
-export const checkSymptoms = (h: MockHealth, text: string) => {
-  if (RED_FLAGS.some(re => re.test(text))) {
-    return { emergency: true, emergencyNumbers: EMERGENCY_NUMBERS, areas: [], specialty: null, disclaimer: DISCLAIMER };
-  }
+export const EMERGENCY_MESSAGE =
+  'This could be an emergency. Call 1122 or 115 now, or go to the nearest emergency department. Do not wait for an appointment.';
+
+/** Red flags first (never a suggestion then); otherwise the matching specialty and what to discuss. */
+export const checkSymptoms = (text: string): { emergency: true } | { emergency: false; slug: string; areas: { title: string; body: string }[] } => {
+  if (RED_FLAGS.some(re => re.test(text))) return { emergency: true };
   const hits = RULES.filter(r => r.re.test(text));
-  const rule = hits[0];
-  const slug = rule?.specialty ?? 'general-physician';
+  const slug = hits[0]?.specialty ?? 'general-physician';
   const areas = (hits.length ? hits.flatMap(r => r.areas) : RULES[1].areas).slice(0, 3);
-  return { emergency: false, emergencyNumbers: EMERGENCY_NUMBERS, areas, specialty: specialtyRef(h, slug), disclaimer: DISCLAIMER };
+  return { emergency: false, slug, areas };
 };
 
 /** A Jitsi room only this appointment's two people know (meet.jit.si: deep links to the app turned off). */

@@ -13,6 +13,7 @@ import {
   completeAppointment,
   confirmPayment,
   getDoctorAppointment,
+  openSharedRecord,
   rejectPayment,
   saveNotes,
   type DoctorAction,
@@ -35,11 +36,21 @@ export interface DoctorAppointmentSliceState {
   busy: DoctorMove | null;
   sheet: { kind: 'cancel' | 'reject' | 'complete' | null; reason: string };
   viewing: string | null;
+  /** A shared report being opened (its files come with short-lived links, on demand). */
+  openingRecord: string | null;
   error: ServerError;
 }
 
 const EMPTY: DoctorAppointmentEntry = { appointment: null, status: 'idle', error: NO_ERROR };
-const initialState: DoctorAppointmentSliceState = { byId: {}, notes: {}, busy: null, sheet: { kind: null, reason: '' }, viewing: null, error: NO_ERROR };
+const initialState: DoctorAppointmentSliceState = {
+  byId: {},
+  notes: {},
+  busy: null,
+  sheet: { kind: null, reason: '' },
+  viewing: null,
+  openingRecord: null,
+  error: NO_ERROR,
+};
 
 const save = (state: DoctorAppointmentSliceState, a: DoctorAppointmentDetail) => {
   state.byId[a.id] = { appointment: a, status: 'succeeded', error: NO_ERROR };
@@ -92,6 +103,31 @@ export const doctorAppointmentSlice = createAppSlice({
       },
     ),
 
+    openSharedRecordAsync: create.asyncThunk(
+      async ({ id, recordId }: { id: string; recordId: string }, { rejectWithValue }) => {
+        try {
+          return await openSharedRecord(id, recordId);
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        pending: (state, action) => {
+          state.openingRecord = action.meta.arg.recordId;
+          state.error = NO_ERROR;
+        },
+        fulfilled: (state, action) => {
+          state.openingRecord = null;
+          const record = state.byId[action.meta.arg.id]?.appointment?.records.find(r => r.id === action.meta.arg.recordId);
+          if (record) record.files = action.payload.files;
+        },
+        rejected: (state, action) => {
+          state.openingRecord = null;
+          state.error = readRejection(action, "The report didn't open. It may no longer be shared.");
+        },
+      },
+    ),
+
     doctorMoveAsync: create.asyncThunk(
       async ({ id, move, reason, paymentCollected, notes }: { id: string; move: DoctorMove; reason?: string; paymentCollected?: boolean; notes?: string }, { rejectWithValue }) => {
         try {
@@ -136,5 +172,14 @@ export const doctorAppointmentSlice = createAppSlice({
   },
 });
 
-export const { setNotesDraft, openDoctorSheet, closeDoctorSheet, setSheetReason, viewFile, loadDoctorAppointmentAsync, doctorMoveAsync } = doctorAppointmentSlice.actions;
+export const {
+  setNotesDraft,
+  openDoctorSheet,
+  closeDoctorSheet,
+  setSheetReason,
+  viewFile,
+  loadDoctorAppointmentAsync,
+  openSharedRecordAsync,
+  doctorMoveAsync,
+} = doctorAppointmentSlice.actions;
 export const { selectDoctorAppointmentEntry, selectDoctorAppointmentUi } = doctorAppointmentSlice.selectors;

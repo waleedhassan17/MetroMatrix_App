@@ -68,12 +68,20 @@ const signInAdmin = async () => {
   await authAdminTotp(outcome.challenge.challengeToken, { code: MOCK.TOTP_CODE });
 };
 
-/** The first free slot from tomorrow at a location (skipping Dr. Bilal's contested first slot). */
+/**
+ * The first free slot from tomorrow at a location that the demo patient is
+ * not already booked at (the API refuses PATIENT_OVERLAP), after `skip` others.
+ */
 const firstSlot = async (doctorId: string, locationId: string, skip = 0) => {
+  const db = await getDb();
+  const busy = db.health.appointments.filter(a => a.userId === 'u_customer' && ['awaiting_payment', 'confirmed', 'checked_in', 'in_progress'].includes(a.status));
+  const clear = (startAt: string) => !busy.some(a => Math.abs(Date.parse(a.startAt) - Date.parse(startAt)) < HOUR);
   const days = await listDays(doctorId, locationId, addDays(todayInZone(PKT, T0), 1));
-  const day = days.find(d => d.slotCount > skip)!;
-  const slots = await listSlots(doctorId, locationId, day.date);
-  return slots.slots[skip].startAt;
+  for (const d of days.filter(x => x.slotCount > 0)) {
+    const free = (await listSlots(doctorId, locationId, d.date)).slots.filter(x => clear(x.startAt));
+    if (free.length > skip) return free[skip].startAt;
+  }
+  throw new Error('no free slot');
 };
 
 const booking = (over: Partial<BookingInput> & Pick<BookingInput, 'doctorId' | 'locationId' | 'startAt'>): BookingInput => ({
@@ -103,8 +111,10 @@ describe('discovery', () => {
     expect(lahore.banners[1].target).toEqual({ kind: 'specialty', slug: 'dermatologist', name: 'Dermatologist' });
     expect(lahore.featuredDoctors.length).toBeGreaterThan(0);
     for (const d of lahore.featuredDoctors) expect(d.photoUrl).toMatch(/^https:\/\/images\.unsplash\.com\//);
-    const ratings = lahore.featuredDoctors.map(d => d.rating ?? 0);
-    expect([...ratings].sort((a, b) => b - a)).toEqual(ratings);
+    // Recommended order: well rated, many reviews; all of them in Lahore.
+    expect(lahore.featuredDoctors.every(d => (d.rating ?? 0) >= 4)).toBe(true);
+    const db = await getDb();
+    for (const d of lahore.featuredDoctors) expect(db.health.locations.some(l => l.doctorId === d.id && l.city === 'Lahore')).toBe(true);
     expect(lahore.specialties).toHaveLength(12);
     expect(lahore.commonConditions.length).toBeGreaterThan(0);
     for (const c of lahore.commonConditions) expect(c.icon).toBeTruthy();
@@ -136,7 +146,9 @@ describe('discovery', () => {
     expect(d.locations).toHaveLength(4);
     expect(d.locations[0].kind).toBe('video');
     expect(new Set(d.locations.map(l => l.fee)).size).toBe(4);
-    for (const l of d.locations) expect(l.availability.label).toMatch(/^Available |^No times/);
+    // The API's words, or none when a location has no time open.
+    for (const l of d.locations) if (l.availability.label !== null) expect(l.availability.label).toMatch(/^Available |^Next available /);
+    expect(d.locations.some(l => l.availability.label)).toBe(true);
   });
 
   it('filters by video and available today, server-side', async () => {
@@ -192,7 +204,9 @@ describe('booking', () => {
   });
 
   it("simulates another patient taking Dr. Bilal's first Gulberg time (mock mode)", async () => {
-    const startAt = await firstSlot('d_bilal', 'loc_bilal_2');
+    // The very first time of the next open day, whatever else is booked.
+    const open = (await listDays('d_bilal', 'loc_bilal_2', addDays(todayInZone(PKT, T0), 1))).find(d => d.slotCount > 0)!;
+    const startAt = (await listSlots('d_bilal', 'loc_bilal_2', open.date)).slots[0].startAt;
     const e = await failure(bookAppointment(booking({ doctorId: 'd_bilal', locationId: 'loc_bilal_2', startAt }), 'k-1'));
     expect(e.code).toBe('SLOT_TAKEN');
     const day = await listSlots('d_bilal', 'loc_bilal_2', dateInZone(startAt, PKT));
@@ -234,7 +248,8 @@ describe('booking', () => {
     expect(paid.payment.status).toBe('proof_submitted');
 
     await signIn('derm@metromatrix.app', 'partner');
-    const confirmed = await confirmPayment(a.id);
+    // Doctor routes take the appointment code.
+    const confirmed = await confirmPayment(a.code);
     expect(confirmed.status).toBe('confirmed');
     expect(confirmed.payment.status).toBe('paid');
   });
@@ -260,9 +275,13 @@ describe('the doctor app', () => {
       followUpInDays: 14,
     });
     expect(rx.followUpInDays).toBe(14);
-    expect((await getDoctorAppointment(waiting.id)).actions.canWritePrescription).toBe(false);
+    // Still editable for 24 hours after the visit, then locked.
+    expect((await getDoctorAppointment(waiting.id)).actions.canWritePrescription).toBe(true);
+    const edited = await updatePrescription(rx.id, { diagnosis: 'Contact dermatitis (mild)', medicines: rx.medicines, tests: [], advice: 'Rest', followUpInDays: 14 });
+    expect(edited.diagnosis).toBe('Contact dermatitis (mild)');
 
     jest.setSystemTime(T0 + 25 * HOUR);
+    expect((await getDoctorAppointment(waiting.id)).actions.canWritePrescription).toBe(false);
     const locked = await failure(updatePrescription(rx.id, { diagnosis: 'Changed', medicines: [], tests: [], advice: 'Rest', followUpInDays: null }));
     expect(locked.code).toBe('PRESCRIPTION_LOCKED');
   });
@@ -275,7 +294,7 @@ describe('the doctor app', () => {
     const rated = await reviewAppointment(acne.code, { rating: 5, recommend: true, dimensions: { diagnosis: 5, staff: 5, environment: 4 }, tags: ['Explained clearly'], text: null, anonymous: true });
     expect(rated.reviewed).toBe(true);
     const again = await failure(reviewAppointment(acne.code, { rating: 4, recommend: true, dimensions: {}, tags: [], text: null, anonymous: true }));
-    expect(again.code).toBe('ALREADY_REVIEWED');
+    expect(again.code).toBe('REVIEW_EXISTS');
 
     await signIn('derm@metromatrix.app', 'partner');
     const patients = await listPatients('', 1);
@@ -288,7 +307,7 @@ describe('the doctor app', () => {
     const clinic = (await listLocations()).find(l => l.kind === 'clinic')!;
     // The video hours run 08:00–12:00 every day.
     const e = await failure(saveHours(clinic.id, [{ day: 1, ranges: [{ from: '11:00', to: '13:00' }] }]));
-    expect(e.code).toBe('VALIDATION_FAILED');
+    expect(e.code).toBe('SCHEDULE_OVERLAP');
     expect(overlapsFrom(e.details)).toEqual([{ day: 1, otherLocationName: 'Video consultation' }]);
   });
 
@@ -298,7 +317,7 @@ describe('the doctor app', () => {
     const booked = db.health.appointments.find(a => a.doctorId === 'd_ayesha' && a.status === 'awaiting_payment' && Date.parse(a.startAt) > T0)!;
     const day = dateInZone(booked.startAt, PKT);
     const e = await failure(addTimeOff({ from: day, to: day, locationId: null, reason: 'Conference' }));
-    expect(e.code).toBe('TIME_OFF_CONFLICT');
+    expect(e.code).toBe('TIME_OFF_CONFLICTS');
     expect(conflictsFrom(e.details).map(c => c.code)).toContain(booked.code);
     await addTimeOff({ from: day, to: day, locationId: null, reason: 'Conference' }, true);
     expect(db.health.appointments.find(a => a.id === booked.id)!.status).toBe('cancelled');
@@ -322,7 +341,7 @@ describe('video, symptoms and staff', () => {
     const room = await joinVideo(demo.code);
     expect(room.roomUrl).toMatch(/^https:\/\/meet\.jit\.si\/MetroMatrix-/);
     const later = upcoming.items.find(a => a.kind === 'video' && a.doctor.id === 'd_ayesha')!;
-    expect((await failure(joinVideo(later.code))).code).toMatch(/VIDEO_NOT_OPEN|INVALID_TRANSITION/);
+    expect((await failure(joinVideo(later.code))).code).toBe('VIDEO_NOT_JOINABLE');
   });
 
   it('sends red flags to Emergency and everything else to a specialty, always with the disclaimer', async () => {

@@ -14,7 +14,7 @@ export const RELATIONS: { key: FamilyRelation; label: string }[] = [
 
 export const relationLabel = (r: FamilyRelation) => RELATIONS.find(x => x.key === r)?.label ?? 'Family';
 
-export const MAX_FAMILY = 10;
+export const MAX_FAMILY = 8;
 
 export const emptyFamilyMember = (): FamilyMemberInput => ({
   name: '',

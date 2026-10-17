@@ -26,7 +26,8 @@ export const MOCK = {
   /** Simulated network latency, so loading states are visible. */
   LATENCY_MS: IN_TESTS ? ([0, 0] as const) : ([300, 700] as const),
   /** Where the dummy database is persisted (survives app restarts). */
-  STORAGE_KEY: 'metromatrix.mock-db.v1',
+  // v2: Health speaks the real API_HEALTH.md (icon keys, reschedules, payments); a v1 database reseeds.
+  STORAGE_KEY: 'metromatrix.mock-db.v2',
 } as const;
 
 /** Every seeded account uses this password (staff use STAFF_PASSWORD). */

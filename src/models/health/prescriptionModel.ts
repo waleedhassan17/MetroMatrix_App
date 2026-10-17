@@ -15,7 +15,6 @@ export const MEDICINE_FORMS: { key: MedicineForm; label: string }[] = [
   { key: 'injection', label: 'Injection' },
   { key: 'drops', label: 'Drops' },
   { key: 'cream', label: 'Cream' },
-  { key: 'inhaler', label: 'Inhaler' },
   { key: 'other', label: 'Other' },
 ];
 

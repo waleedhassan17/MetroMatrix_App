@@ -138,6 +138,8 @@ const AppointmentDetailContent: React.FC<Props> = ({ route, navigation }) => {
     const res = await dispatch(rescheduleAsync({ code, startAt: r.selected }));
     if (rescheduleAsync.fulfilled.match(res)) {
       haptics.success();
+      // The new time is a new appointment with its own code: show that one.
+      if (res.payload.code !== code) navigation.setParams({ code: res.payload.code });
       Toast.show({ type: 'success', text1: 'Appointment moved', text2: formatWhen(res.payload.startAt, res.payload.timezone) });
     } else haptics.warning();
   };

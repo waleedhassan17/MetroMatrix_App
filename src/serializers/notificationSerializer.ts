@@ -20,7 +20,31 @@ const TYPES: readonly NotificationType[] = [
   'appointment_new',
   'appointment_payment',
   'prescription_ready',
+  'review_new',
 ];
+
+/**
+ * Health notices as MetroMatrix-API docs/API_HEALTH.md §6 names them
+ * (`health.appointment.booked`, …) → the app's kinds (icon and wording).
+ */
+const HEALTH_TYPES: Record<string, NotificationType> = {
+  'health.appointment.new': 'appointment_new',
+  'health.appointment.reminder': 'appointment_reminder',
+  'health.payment.proof': 'appointment_payment',
+  'health.payment.confirmed': 'appointment_payment',
+  'health.payment.rejected': 'appointment_payment',
+  'health.payment.refunded': 'appointment_payment',
+  'health.prescription': 'prescription_ready',
+  'health.review.new': 'review_new',
+  'health.review.reply': 'review_reply',
+};
+
+const typeOf = (raw: unknown): NotificationType => {
+  const t = str(raw);
+  if (HEALTH_TYPES[t]) return HEALTH_TYPES[t];
+  if (t.startsWith('health.appointment.')) return 'appointment_update';
+  return oneOf(t, TYPES, 'order_update');
+};
 
 export const notificationSerializer = (raw: unknown): AppNotification | null => {
   if (!isObject(raw)) return null;
@@ -29,7 +53,7 @@ export const notificationSerializer = (raw: unknown): AppNotification | null => 
   const data = isObject(raw.data) ? raw.data : {};
   return {
     id,
-    type: oneOf(raw.type, TYPES, 'order_update'),
+    type: typeOf(raw.type),
     title: str(raw.title),
     body: str(raw.body),
     data: {
@@ -37,12 +61,12 @@ export const notificationSerializer = (raw: unknown): AppNotification | null => 
       orderId: strOrNull(data.orderId),
       returnId: strOrNull(data.returnId),
       productId: strOrNull(data.productId),
-      // TODO(API_HEALTH): health notification data (docs/API_HEALTH_ASSUMED.md).
+      // Health notices carry the appointment's code; the doctor app opens appointments by code too.
       appointmentCode: strOrNull(data.appointmentCode),
-      appointmentId: strOrNull(data.appointmentId),
+      appointmentId: strOrNull(data.appointmentId) ?? strOrNull(data.appointmentCode),
       prescriptionId: strOrNull(data.prescriptionId),
     },
-    isRead: bool(raw.isRead),
+    isRead: bool(raw.isRead) || !!strOrNull(raw.readAt),
     createdAt: iso(raw.createdAt),
   };
 };

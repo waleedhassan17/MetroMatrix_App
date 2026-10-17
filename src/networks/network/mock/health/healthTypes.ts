@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Dummy Health database shapes
 // ═══════════════════════════════════════════════════════
-// Rows are kept close to the wire shape in docs/API_HEALTH_ASSUMED.md; the
-// routes build each response from them (healthLogic views).
+// Rows keep the app's own vocabulary; healthWire builds each response in
+// the shape MetroMatrix-API docs/API_HEALTH.md describes.
 
 import type {
   AppointmentEventType,
@@ -32,6 +32,8 @@ export interface MockSpecialty {
   nameUr: string;
   icon: string;
   sort: number;
+  /** Staff retire a specialty instead of deleting it (absent = active). */
+  isActive?: boolean;
 }
 
 export interface MockCondition {
@@ -41,9 +43,11 @@ export interface MockCondition {
   nameUr: string | null;
   specialtySlug: string | null;
   isCommon: boolean;
-  /** Ionicons glyph for the home's concern chips (the common ones). */
+  /** The API's icon key for the home's concern chips (the common ones). */
   icon: string | null;
   aliases: string[];
+  /** Staff retire a condition instead of deleting it (absent = active). */
+  isActive?: boolean;
 }
 
 export interface MockDoctor {
@@ -141,6 +145,8 @@ export interface MockAppointment {
   cancelReason: string | null;
   lateCancel: boolean;
   rescheduleCount: number;
+  /** The appointment this one replaced (a reschedule books a new one). */
+  rescheduledFromId?: string | null;
   notes: { text: string; attachments: string[]; updatedAt: string | null };
   prescriptionId: string | null;
   reviewId: string | null;

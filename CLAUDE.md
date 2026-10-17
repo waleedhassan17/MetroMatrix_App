@@ -16,7 +16,7 @@ Copy the FYP's UX, never its code paths, Firebase setup or per-role duplicate ne
 
 ## Backend switch (one file)
 
-`src/config/env.ts` → `BACKEND_URL` (or `EXPO_PUBLIC_API_URL`). While it is empty, `api` uses the dummy API (`src/networks/network/mock/`: `mockServer.ts` routes, `mockDb.ts` seeded accounts, `mockConfig.ts` rules, `mockFood.ts` catalogue, `shop/` the whole Shopping API with its seed and server rules, `health/` the whole Healthcare API with its seed and server rules). The dummy API answers exactly what `docs/API_CONTRACT_ASSUMED.md`, `docs/API_SHOPPING_ASSUMED.md` and `docs/API_HEALTH_ASSUMED.md` specify, so nothing else changes when the real URL is set. When you add an endpoint, add its mock route in the same change. Shop and Health writes are all-or-nothing (a failed request leaves the dummy DB as it was).
+`src/config/env.ts` → `BACKEND_URL` (or `EXPO_PUBLIC_API_URL`). While it is empty, `api` uses the dummy API (`src/networks/network/mock/`: `mockServer.ts` routes, `mockDb.ts` seeded accounts, `mockConfig.ts` rules, `mockFood.ts` catalogue, `shop/` the whole Shopping API with its seed and server rules, `health/` the whole Healthcare API with its seed and server rules). The dummy API answers exactly what `docs/API_CONTRACT_ASSUMED.md` and `docs/API_SHOPPING_ASSUMED.md` specify, and for Health the real `docs/API_HEALTH.md` (see `docs/MOCK_HEALTH.md`), so nothing else changes when the real URL is set. When you add an endpoint, add its mock route in the same change. Shop and Health writes are all-or-nothing (a failed request leaves the dummy DB as it was).
 
 ## Commands
 
@@ -92,13 +92,16 @@ src/
     network/apiHelpers.ts    the axios client, refresh queue, AuthError, unwrap
     network/mock/            the dummy API (axios adapter + AsyncStorage DB) used while no backend URL is set
     network/mock/shop/       the dummy Shopping API: shopTypes, shopSeed (3 stores, 52 products, orders), shopLogic (rules), shopRoutes
-    network/mock/health/     the dummy Healthcare API: healthTypes, healthSeed (16 specialties, ~40 conditions, 24 doctors,
-                             appointments in every status), healthLogic (slots, rules), healthRoutes
+    network/mock/health/     the dummy Healthcare API, in the real API's shapes: healthTypes, healthSeed (16 specialties,
+                             ~40 conditions, 23 doctors, appointments in every status), healthLogic (slots, rules),
+                             healthWire (rows → the API's shapes), healthRoutes
     <domain>/<x>Network.ts   one function per endpoint (auth, users, media, businesses, admin, food, addresses, notifications)
     shopping/                catalogue, wishlist, cart, checkout, orders, returns, reviews; shopping/partner/ the store app's
     health/                  discovery, availability, appointments, family, records, prescriptions, reviews, video, symptom;
-                             health/doctor/ the doctor app's; admin/adminHealthNetwork the Health console
-  serializers/               defensive backend → app mapping, one file per domain (shopping/ and health/ per resource)
+                             referenceIndex (specialty and condition slug ↔ id); health/doctor/ the doctor app's;
+                             admin/adminHealthNetwork the Health console
+  serializers/               defensive backend → app mapping, one file per domain (shopping/ and health/ per resource;
+                             health/healthCommon holds every Health wire map); __tests__/fixtures/health/ real API responses
   models/                    validation + form schemas, one file per domain; shopping/ holds the ONE order-status map
                              (orderStatusModel), filters, variant matrix/picker, product/coupon/return/review/store rules;
                              health/ holds the ONE appointment-status map (appointmentStatusModel), booking, family, record,
@@ -137,8 +140,9 @@ src/
                              Areas: Onboarding (+ Splash), RoleSelection, ProviderSelection, Auth, Partner,
                              Admin (+ Admin/Shopping, Admin/Health), Customer, Account, Shopping/Customer, Shopping/Store,
                              Health/Patient, Health/Doctor, Dev
-scripts/check-design-tokens.js
-docs/                        API_CONTRACT_ASSUMED.md, API_SHOPPING_ASSUMED.md, API_HEALTH_ASSUMED.md, MOCK_IMAGES.md, GOOGLE_SIGNIN.md
+scripts/check-design-tokens.js, capture-health-fixtures.js (real Health responses → the serializer fixture)
+docs/                        API_CONTRACT_ASSUMED.md, API_SHOPPING_ASSUMED.md, API_HEALTH.md (a copy of the backend's),
+                             MOCK_HEALTH.md, MOCK_IMAGES.md, GOOGLE_SIGNIN.md
 assets/images/               FYP icon + splash mark; services/ and health/ (card photos — sources in each CREDITS.md)
 ```
 
@@ -209,18 +213,26 @@ Once the gate is cleared, `AppContainer.renderNavigator()` mounts the navigator 
 
 ## API contract
 
-Every network call is built from MetroMatrix-API `docs/API_AUTH.md` / `docs/API_SHOPPING.md` / `docs/API_HEALTH.md`, never from guesses. Those documents were unavailable when each chunk was built, so the app runs on `docs/API_CONTRACT_ASSUMED.md`, `docs/API_SHOPPING_ASSUMED.md` and `docs/API_HEALTH_ASSUMED.md` (NestJS conventions: `{ success, data }`, `VALIDATION_FAILED`, `page/pageSize`, integer rupees, `Idempotency-Key` on checkout and booking; Health lives under `/healthcare`, `/healthcare/doctor` and `/admin/healthcare` because `/health` is the uptime check), which the dummy API implements. Every dependency is marked `TODO(API_AUTH)`, `TODO(API_FOOD)`, `TODO(API_SHOPPING)` or `TODO(API_HEALTH)` (`grep -rn "TODO(API_" src`).
+Every network call is built from MetroMatrix-API `docs/API_AUTH.md` / `docs/API_SHOPPING.md` / `docs/API_HEALTH.md`, never from guesses.
 
-When the real document arrives, reconcile it in one pass:
-- update the networks, serializers and models;
+- **Healthcare is on the real contract** (`health/sync-1`). Paths are `/health`, `/health/doctor` (appointments by **code**) and `/admin/health`; uploads go through `/media/sign-upload`.
+  - `docs/API_HEALTH.md` is a copy of the backend's; the backend repository is the source of truth.
+  - Serializers map the wire to the app's own words in `types/health.ts`: offset times become UTC, icon keys become glyphs, `booked`/`in_consultation` become `confirmed`/`in_progress`, `unpaid` becomes `pay_at_visit`. Every map lives in `serializers/health/healthCommon.ts`.
+  - Networks map the app's input to the real bodies. When one screen needs several routes, `requestAll` (`networks/shopping/http.ts`) calls them together.
+  - Values the API doesn't send yet are derived and marked `TODO(API_HEALTH)`.
+  - When the backend's document changes: copy it, update the networks, serializers, models and the dummy API, refresh the fixture (`scripts/capture-health-fixtures.js`), and run the gates. The parity test fails on any key the two disagree on (`docs/MOCK_HEALTH.md`).
+- **Auth, Shopping and Food still run on assumed documents**: `docs/API_CONTRACT_ASSUMED.md` and `docs/API_SHOPPING_ASSUMED.md`. They follow NestJS conventions: `{ success, data }`, `VALIDATION_FAILED`, `page/pageSize`, integer rupees, `Idempotency-Key` on checkout and booking. The dummy API implements them. Every dependency is marked `TODO(API_AUTH)`, `TODO(API_FOOD)` or `TODO(API_SHOPPING)` (`grep -rn "TODO(API_" src`).
+
+When a real document arrives, reconcile it in one pass:
+- update the networks, serializers and models (and the dummy API);
 - leave screens and slices alone.
 
 ## Testing on Expo / web
 
-- **Expo Go** (`npm start`): runs the whole app except native Google sign-in and push, against the dummy API. Seeded accounts and codes are in `docs/API_CONTRACT_ASSUMED.md` → "Mock mode" (doctors and patients in `docs/API_HEALTH_ASSUMED.md` → "Mock mode"). Video consultations open public meet.jit.si rooms in a WebView; on web they open in a new tab.
+- **Expo Go** (`npm start`): runs the whole app except native Google sign-in and push, against the dummy API. Seeded accounts and codes are in `docs/API_CONTRACT_ASSUMED.md` → "Mock mode" (doctors and patients in `docs/MOCK_HEALTH.md`). Video consultations open public meet.jit.si rooms in a WebView; on web they open in a new tab.
 - **Web** (`npm run web`):
   - Google sign-in uses Google Identity Services and needs `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`.
-  - Deep paths work, e.g. `/get-started`, `/sign-in`, `/provider/sign-in`, `/home/food`, `/shop`, `/shop/store/lawn-and-loom-7a1f3`, `/shop/product/p_l1`, `/orders/MM-24A7Q2`, `/store/orders/:id`, `/admin/shop`, `/health`, `/health/appointments`, `/health/doctor/:id`, `/health/appointment/:code`, `/shop/orders`, `/shop/bag`, `/profile/records`, `/doctor/appointments/:id`, `/admin/health`. The kitchen and staff Profile tab is `/account`.
+  - Deep paths work, e.g. `/get-started`, `/sign-in`, `/provider/sign-in`, `/home/food`, `/shop`, `/shop/store/lawn-and-loom-7a1f3`, `/shop/product/p_l1`, `/orders/MM-24A7Q2`, `/store/orders/:id`, `/admin/shop`, `/health`, `/health/appointments`, `/health/doctor/:id`, `/health/appointment/:code`, `/shop/orders`, `/shop/bag`, `/profile/records`, `/doctor/appointments/:code`, `/admin/health`. The kitchen and staff Profile tab is `/account`.
   - After adding new folders or `.web.tsx` files, restart Metro with `--clear` (its watcher can miss them). Don't start it with `CI=1`: that turns watch mode off and the browser keeps the old bundle.
   - Bottom sheets render as a `Modal` (`Sheet.web.tsx`), because `@gorhom/bottom-sheet` never presents in a browser.
   - `/dev/gallery` exists only in development builds.

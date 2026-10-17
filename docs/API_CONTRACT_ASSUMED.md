@@ -79,7 +79,7 @@ Base URL: `API_BASE_URL` (`src/config/env.ts`), e.g. `https://<heroku-app>.herok
 
 | Function | Method + path | Body | 2xx `data` |
 |---|---|---|---|
-| `signUpload` | `POST /media/sign` | `{ purpose: 'avatar' \| 'business_document' }` | `{ cloudName, apiKey, timestamp, signature, folder, uploadUrl? }` |
+| `signUpload` | `POST /media/sign-upload` (the real path, since `health/sync-1`) | `{ purpose: 'avatar' \| 'business_document' }` | `{ cloudName, apiKey, timestamp, signature, folder, publicIdPrefix, uploadUrl, allowedFormats, maxBytes, type? }` |
 | `uploadToCloudinary` | `POST https://api.cloudinary.com/v1_1/<cloudName>/auto/upload` (multipart: `file, api_key, timestamp, signature, folder`) | — | `{ secure_url, public_id, resource_type, format, bytes }` |
 
 ## Businesses (`/businesses`) — partner, bearer

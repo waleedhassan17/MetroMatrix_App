@@ -108,7 +108,7 @@ export const businessSerializer = (raw: unknown): Business | null => {
     reviewedAt: strOrNull(raw.reviewedAt),
     createdAt: str(raw.createdAt),
     updatedAt: str(raw.updatedAt),
-    // TODO(API_HEALTH): doctor listing + PMDC check (docs/API_HEALTH_ASSUMED.md).
+    // Doctors only: listed for patients, and the PMDC check (MetroMatrix-API docs/API_AUTH.md, A1).
     isListed: subType === 'doctor' ? bool(raw.isListed) : null,
     pmdcVerified: subType === 'doctor' ? bool(raw.pmdcVerified) : null,
   };

@@ -1,39 +1,39 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Dummy Health routes (every endpoint in API_HEALTH_ASSUMED)
+// MetroMatrix — Dummy Health routes (MetroMatrix-API docs/API_HEALTH.md)
 // ═══════════════════════════════════════════════════════
-// Patients under /healthcare, the doctor partner under /healthcare/doctor,
-// staff under /admin/healthcare. Writes are all-or-nothing, like the shop's.
+// Discovery and the patient under /health, the doctor under /health/doctor
+// (appointments by CODE), staff under /admin/health. Bodies, statuses,
+// error codes and shapes are the real API's (healthWire); the rules behind
+// them are healthLogic's. Writes are all-or-nothing, like the shop's.
 
 import type { MockBusiness, MockDb, MockUser } from '../mockDb';
 import type { ShopCtx, ShopKit } from '../shop/shopRoutes';
 import type { MockAppointment, MockDoctor, MockHealth, MockHealthBanner, MockLocation } from './healthTypes';
-import type { AppointmentPaymentMethod, ConsultKind, Medicine, ReasonTag, WeekDayHours } from '../../../../types/health';
+import type { AppointmentPaymentMethod, ConsultKind, Medicine, MedicineForm, ReasonTag, RecordType, WeekDayHours } from '../../../../types/health';
 import { PKT, addDays, ageFrom, dateInZone, todayInZone } from '../../../../utils/healthTime';
+import { appDayFromWeekday } from '../../../../models/health/availabilityModel';
+import { REVIEW_TAG_CODES, reviewTagLabel } from '../../../../models/health/reviewFormModel';
+import { recordTypeIn } from '../../../../serializers/health/healthCommon';
 import {
   DAY,
+  DISCLAIMER,
+  EMERGENCY_MESSAGE,
+  EMERGENCY_NUMBERS,
   HOUR,
   HealthError,
   MINUTE,
   PAY_WINDOW_MIN,
-  PRESCRIPTION_EDIT_HOURS,
-  REPLY_EDIT_HOURS,
   REVIEW_WINDOW_DAYS,
   addEvent,
   alternativesAfter,
   appointmentCode,
-  appointmentDetailView,
-  appointmentSummaryView,
   canJoin,
+  cancelCutoff,
   checkSymptoms,
   doctorActions,
-  doctorAppointmentView,
   doctorById,
-  doctorCardView,
-  doctorLocationView,
   doctorOfOwner,
-  doctorProfileView,
   earliestOf,
-  EMERGENCY_NUMBERS,
   isActive,
   isLateCancel,
   isoNow,
@@ -43,23 +43,43 @@ import {
   notifyHealth,
   patientFlags,
   patientKey,
-  prescriptionView,
-  previousVisitsOf,
-  queueItemView,
-  recordView,
-  reviewSummaryView,
-  reviewView,
   roomUrl,
   servesCity,
   settleAppointments,
   slotsFor,
   specialtyBySlug,
-  specialtyView,
   visibleReviews,
 } from './healthLogic';
+import {
+  adminAppointmentWire,
+  cardWire,
+  completenessWire,
+  conditionWire,
+  displayName,
+  doctorAppointmentWire,
+  doctorLocationWire,
+  familyWire,
+  iconKey,
+  notesWire,
+  ownProfileWire,
+  patientAppointmentWire,
+  prescriptionOpen,
+  prescriptionWire,
+  profileWire,
+  recordWire,
+  reviewWire,
+  scheduleWire,
+  slotsWire,
+  specialtyRefWire,
+  specialtyWire,
+  summaryWire,
+  videoJoinWire,
+  videoWindow,
+  zoned,
+} from './healthWire';
 
 export interface HealthKit extends ShopKit {
-  /** The business as the API sends it (session payloads, publish). */
+  /** The business as the API sends it (session payloads). */
   publicBusiness: (b: MockBusiness) => unknown;
 }
 
@@ -69,6 +89,7 @@ const bad = (message: string, fields: Record<string, string>, extra: Record<stri
     ...extra,
   });
 const notFound = (what: string) => new HealthError(404, 'NOT_FOUND', `${what} not found.`);
+const notListed = () => new HealthError(404, 'DOCTOR_NOT_LISTED', 'This doctor is not taking bookings on MetroMatrix.');
 const transition = (message: string) => new HealthError(409, 'INVALID_TRANSITION', message);
 
 const page = (q: Record<string, any>) => {
@@ -84,8 +105,9 @@ const bool = (v: unknown) => v === true || v === 'true' || v === 1 || v === '1';
 const num = (v: unknown): number | null => (v === undefined || v === null || v === '' ? null : Number.isFinite(Number(v)) ? Number(v) : null);
 const text = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
-const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
+const HHMM = /^(([01]\d|2[0-3]):[0-5]\d|24:00)$/;
 const toMin = (hhmm: string) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
+const instantOf = (v: unknown) => (typeof v === 'string' && !Number.isNaN(Date.parse(v)) ? new Date(v).toISOString() : '');
 
 const norm = (s: string) => s.toLowerCase().normalize('NFKC').trim();
 const matches = (q: string, ...hay: (string | null | undefined)[]) => {
@@ -93,14 +115,22 @@ const matches = (q: string, ...hay: (string | null | undefined)[]) => {
   return !!n && hay.some(h => h && norm(h).includes(n));
 };
 
+/** Retired by staff: gone from patients' lists. */
+const live = (x: { isActive?: boolean }) => x.isActive !== false;
+
 const slugify = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 /** The Pakistan-day date of an ISO instant (dashboards, "today"). */
 const pkDay = (iso: string) => dateInZone(iso, PKT);
 
-/** The doctor ladder of a patient's appointments: soonest first for upcoming, latest first for past. */
 const upcomingFirst = (a: MockAppointment, b: MockAppointment) => a.startAt.localeCompare(b.startAt);
 const latestFirst = (a: MockAppointment, b: MockAppointment) => b.startAt.localeCompare(a.startAt);
+
+const REASON_TAGS: ReasonTag[] = ['follow_up', 'new_problem', 'reports_review'];
+const RECORD_TYPES = ['lab_report', 'prescription', 'scan', 'discharge_summary', 'other'];
+const FORMS: MedicineForm[] = ['tablet', 'capsule', 'syrup', 'injection', 'cream', 'drops', 'other'];
+const TIMINGS = ['before_meal', 'after_meal', 'with_meal', 'bedtime', 'as_needed'];
+const TITLE_LABEL: Record<string, string> = { dr: 'Dr.', prof: 'Prof. Dr.', assoc_prof: 'Assoc. Prof. Dr.', asst_prof: 'Asst. Prof. Dr.' };
 
 /** Video can be tested any time: customer@ always has a consult with Dr. Bilal starting within 15 minutes. */
 const ensureDemoVideo = (h: MockHealth, now: number) => {
@@ -131,11 +161,12 @@ const ensureDemoVideo = (h: MockHealth, now: number) => {
     reasonTags: ['follow_up'],
     reason: 'Video follow-up (demo consultation)',
     recordIds: [],
-    paymentMethod: 'pay_at_visit',
+    paymentMethod: 'transfer',
     now,
   });
+  // The demo consultation is already paid, so it can be joined straight away.
   a.status = 'confirmed';
-  addEvent(a, 'confirmed', null, now);
+  a.paymentStatus = 'paid';
   h.appointments.push(a);
 };
 
@@ -171,7 +202,8 @@ const newAppointment = (
   kind: o.loc.kind,
   startAt: o.startAt,
   endAt: new Date(Date.parse(o.startAt) + o.loc.slotMinutes * MINUTE).toISOString(),
-  status: o.paymentMethod === 'transfer' ? 'awaiting_payment' : 'confirmed',
+  // A prepaid video is held until the transfer arrives; everything else is booked.
+  status: o.paymentMethod === 'transfer' && o.loc.requiresPrepay ? 'awaiting_payment' : 'confirmed',
   reasonTags: o.reasonTags,
   reason: o.reason,
   recordIds: o.recordIds,
@@ -188,6 +220,7 @@ const newAppointment = (
   cancelReason: null,
   lateCancel: false,
   rescheduleCount: 0,
+  rescheduledFromId: null,
   notes: { text: '', attachments: [], updatedAt: null },
   prescriptionId: null,
   reviewId: null,
@@ -231,95 +264,59 @@ const ensureDoctor = (db: MockDb, user: MockUser, business: MockBusiness): MockD
   return doctor;
 };
 
-const COMPLETENESS = (h: MockHealth, d: MockDoctor) => {
-  const locs = locationsOf(h, d.id);
-  const items = [
-    { key: 'photo', label: 'Profile photo', done: !!d.photoUrl },
-    { key: 'about', label: 'About you', done: d.about.trim().length >= 50 },
-    { key: 'qualifications', label: 'Qualifications', done: d.qualifications.length > 0 },
-    { key: 'services', label: 'Services and conditions', done: d.services.length > 0 && d.conditionSlugs.length > 0 },
-    { key: 'location', label: 'At least one location', done: locs.length > 0 },
-    { key: 'hours', label: 'Weekly hours', done: locs.some(l => l.hours.some(x => x.ranges.length)) },
-    { key: 'preview', label: 'Preview what patients see', done: d.previewSeen },
-  ];
-  const done = items.filter(i => i.done).length;
-  const percent = Math.round((done / items.length) * 100);
-  return { items, percent, isListed: d.isListed, canPublish: percent === 100 && !d.isListed };
-};
-
-const ownProfileView = (h: MockHealth, d: MockDoctor) => ({
-  title: d.title,
-  name: d.name,
-  gender: d.gender,
-  photoUrl: d.photoUrl,
-  specialtySlug: d.specialtySlug,
-  specialtyName: specialtyBySlug(h, d.specialtySlug)?.name ?? '',
-  secondarySpecialtySlug: d.secondarySpecialtySlug,
-  practisingSince: d.practisingSince,
-  languages: d.languages,
-  about: d.about,
-  qualifications: d.qualifications,
-  experience: d.experience,
-  services: d.services,
-  conditionSlugs: d.conditionSlugs,
-  bookingRules: d.bookingRules,
-  pmdcNumber: d.pmdcNumber,
-  isListed: d.isListed,
-});
-
-/** Within-day validity of a week; a clash with another location is checked separately. */
-const weekErrors = (hours: WeekDayHours[]) => {
+/** `[{ weekday 0–6, start, end }]` → the dummy database's Monday-first week; within-day rules checked. */
+const weekFromBody = (raw: unknown): WeekDayHours[] => {
+  const week: WeekDayHours[] = [1, 2, 3, 4, 5, 6, 7].map(day => ({ day, ranges: [] }));
   const fields: Record<string, string> = {};
-  for (const d of hours) {
+  (Array.isArray(raw) ? raw : []).forEach((r: any, i: number) => {
+    const day = appDayFromWeekday(Number(r?.weekday));
+    const from = String(r?.start ?? '');
+    const to = String(r?.end ?? '');
+    if (!day) fields[`${i}.weekday`] = 'weekday is 0 (Sunday) to 6 (Saturday)';
+    else if (!HHMM.test(from) || !HHMM.test(to) || toMin(to) - toMin(from) < 15) fields[`${i}.end`] = 'At least 15 minutes, ending after it starts';
+    else week[day - 1].ranges.push({ from, to });
+  });
+  for (const d of week) {
+    d.ranges.sort((a, b) => toMin(a.from) - toMin(b.from));
     d.ranges.forEach((r, i) => {
-      if (!HHMM.test(r.from) || !HHMM.test(r.to)) fields[`day.${d.day}.${i}`] = 'Use times like 09:00';
-      else if (toMin(r.to) - toMin(r.from) < 15) fields[`day.${d.day}.${i}`] = 'At least 15 minutes, ending after it starts';
-      else if (d.ranges.some((o, j) => j !== i && toMin(r.from) < toMin(o.to) && toMin(o.from) < toMin(r.to))) fields[`day.${d.day}.${i}`] = 'Overlaps another range';
+      if (i && toMin(r.from) < toMin(d.ranges[i - 1].to)) fields[`day.${d.day}`] = 'Two ranges overlap on this day';
     });
   }
-  return fields;
+  if (Object.keys(fields).length) throw bad('Check the hours.', fields);
+  return week;
 };
 
-const cleanWeek = (raw: unknown): WeekDayHours[] =>
-  [1, 2, 3, 4, 5, 6, 7].map(day => {
-    const found = Array.isArray(raw) ? raw.find((x: any) => Number(x?.day) === day) : null;
-    const ranges = Array.isArray(found?.ranges) ? found.ranges.map((r: any) => ({ from: String(r?.from ?? ''), to: String(r?.to ?? '') })) : [];
-    return { day, ranges };
-  });
-
 const DOSE = /^(\d+(\.5)?|½)\+(\d+(\.5)?|½)\+(\d+(\.5)?|½)$/;
-const cleanMedicines = (raw: unknown): Medicine[] =>
-  (Array.isArray(raw) ? raw : [])
+
+/** The prescription body (§4.3) → the dummy database's rows. */
+const prescriptionFromBody = (body: Record<string, any>) => {
+  const diagnosis = text(body.diagnosis);
+  const medicines: Medicine[] = (Array.isArray(body.medicines) ? body.medicines : [])
     .filter((m: any) => text(m?.name))
     .map((m: any) => ({
       name: text(m.name),
       strength: text(m.strength),
-      form: m.form ?? 'tablet',
-      dose: String(m.dose ?? '').replace(/\s/g, ''),
-      timing: m.timing ?? null,
-      days: Math.round(Number(m.days) || 0),
+      form: FORMS.includes(m.form) ? m.form : 'tablet',
+      dose: String(m.dosePattern ?? '').replace(/\s/g, ''),
+      timing: TIMINGS.includes(m.timing) ? m.timing : null,
+      days: Math.round(Number(m.durationDays) || 0),
       instructions: text(m.instructions) || null,
     }));
-
-const validatePrescription = (body: Record<string, any>) => {
-  const diagnosis = text(body.diagnosis);
-  const medicines = cleanMedicines(body.medicines);
-  const tests: string[] = Array.isArray(body.tests) ? body.tests.map(text).filter(Boolean) : [];
+  const tests: string[] = (Array.isArray(body.tests) ? body.tests : []).map((t: any) => text(t?.name ?? t)).filter(Boolean);
   const advice = text(body.advice) || null;
   const follow = num(body.followUpInDays);
   const fields: Record<string, string> = {};
   if (diagnosis.length < 2) fields.diagnosis = 'Enter the diagnosis';
-  if (!medicines.length && !tests.length && !advice) fields.medicines = 'Add a medicine, a test or advice';
   medicines.forEach((m, i) => {
-    if (!DOSE.test(m.dose)) fields[`medicine.${i}.dose`] = 'Use a pattern like 1+0+1';
-    if (m.days < 1 || m.days > 365) fields[`medicine.${i}.days`] = '1 to 365 days';
+    if (!DOSE.test(m.dose)) fields[`medicines.${i}.dosePattern`] = 'Use a pattern like 1+0+1';
+    if (m.days < 1 || m.days > 365) fields[`medicines.${i}.durationDays`] = '1 to 365 days';
   });
   if (Object.keys(fields).length) throw bad('Check the prescription.', fields);
   return { diagnosis, medicines, tests, advice, followUpInDays: follow && follow > 0 ? Math.round(follow) : null };
 };
 
 export function registerHealthRoutes(kit: HealthKit) {
-  const { requireUser, optionalUser, requirePartnerBusiness, requireAdmin, publicBusiness } = kit;
+  const { requireUser, optionalUser, requirePartnerBusiness, requireAdmin } = kit;
 
   // Writes are all-or-nothing: a request that fails part-way leaves the
   // dummy database exactly as it was (notifications included).
@@ -368,31 +365,49 @@ export function registerHealthRoutes(kit: HealthKit) {
     return a;
   };
 
-  /** The doctor's own appointment by id. */
+  /** The doctor's own appointment by CODE (another doctor's: 404). */
   const doctorAppointment = (ctx: ShopCtx, doctor: MockDoctor) => {
-    const a = ctx.db.health.appointments.find(x => x.id === decodeURIComponent(ctx.params[0]) && x.doctorId === doctor.id);
+    const code = decodeURIComponent(ctx.params[0]).toUpperCase();
+    const a = ctx.db.health.appointments.find(x => x.code === code && x.doctorId === doctor.id);
     if (!a) throw notFound('Appointment');
     return a;
   };
 
   const listedDoctor = (h: MockHealth, id: string) => {
     const d = doctorById(h, decodeURIComponent(id));
-    if (!d || !d.isListed) throw notFound('Doctor');
+    if (!d || !d.isListed) throw notListed();
     return d;
   };
 
-  const defaultCity = (db: MockDb, user: MockUser | null) => {
-    if (!user) return 'Lahore';
-    const address = db.shop.addresses.filter(a => a.userId === user.id).sort((a, b) => Number(b.isDefault) - Number(a.isDefault))[0];
-    return address?.city ?? user.city ?? 'Lahore';
+  const pmdcOf = (db: MockDb, d: MockDoctor) => {
+    const b = db.businesses.find(x => x.id === d.businessId);
+    const p = db.health.pmdc[d.businessId ?? ''];
+    return { verified: b ? !!b.pmdcVerified : p?.verified !== false, at: p?.at ?? null };
+  };
+
+  /** Cities with listed doctors (a clinic there), most doctors first. */
+  const citiesOf = (h: MockHealth) => {
+    const count = new Map<string, Set<string>>();
+    for (const l of h.locations) {
+      if (l.kind !== 'clinic' || !l.isActive || !doctorById(h, l.doctorId)?.isListed) continue;
+      count.set(l.city, (count.get(l.city) ?? new Set()).add(l.doctorId));
+    }
+    return [...count.entries()].sort((a, b) => b[1].size - a[1].size || a[0].localeCompare(b[0])).map(([c]) => c);
+  };
+
+  /** The home's city: asked (in its usual spelling), the patient's default address city when doctors practise there, else the busiest. */
+  const homeCity = (db: MockDb, user: MockUser | null, asked: string, cities: string[]) => {
+    if (asked) return cities.find(c => c.toLowerCase() === asked.toLowerCase()) ?? asked;
+    if (user) {
+      const address = db.shop.addresses.filter(a => a.userId === user.id).sort((a, b) => Number(b.isDefault) - Number(a.isDefault))[0];
+      const known = cities.find(c => c.toLowerCase() === (address?.city ?? user.city ?? '').toLowerCase());
+      if (known) return known;
+    }
+    return cities[0] ?? 'Lahore';
   };
 
   // ══ Discovery (public) ═══════════════════════════════
-  /**
-   * The home's promotions: active, inside their window, for this city (or
-   * every city), with a target the patient can still open — resolved to its
-   * id, slug and name. TODO(API_HEALTH): banners.
-   */
+  /** Live banners for this city, each with its resolved target; one whose target has gone is left out. */
   const liveBanners = (h: MockHealth, city: string, now: number) =>
     (h.banners ?? [])
       .filter(b => b.isActive && (!b.startsAt || Date.parse(b.startsAt) <= now) && (!b.endsAt || Date.parse(b.endsAt) > now))
@@ -407,7 +422,7 @@ export function registerHealthRoutes(kit: HealthKit) {
           target = c ? { id: c.id, slug: c.slug, name: c.name } : null;
         } else if (b.targetType === 'doctor') {
           const d = h.doctors.find(x => x.id === b.targetId && x.isListed);
-          target = d ? { id: d.id, name: `${d.title} ${d.name}` } : null;
+          target = d ? { id: d.id, name: displayName(d) } : null;
         }
         const openable = b.targetType === 'screen' ? !!b.targetScreen : b.targetType === 'none' || !!target;
         return openable ? { b, target } : null;
@@ -415,31 +430,81 @@ export function registerHealthRoutes(kit: HealthKit) {
       .filter((x): x is { b: MockHealthBanner; target: { id: string; slug?: string; name: string } | null } => !!x)
       .sort((x, y) => x.b.sort - y.b.sort)
       .slice(0, 10)
-      .map(({ b, target }) => ({
-        id: b.id,
-        imageUrl: b.imageUrl,
-        title: b.title,
-        subtitle: b.subtitle,
-        targetType: b.targetType,
-        targetScreen: b.targetScreen,
-        target,
-      }));
+      .map(({ b, target }) => ({ id: b.id, imageUrl: b.imageUrl, title: b.title, subtitle: b.subtitle, targetType: b.targetType, targetScreen: b.targetScreen, target }));
 
-  route('GET', '/healthcare/home', ctx => {
+  /** `GET /health/doctors` (§4.1), shared by the home's rails. */
+  const listDoctors = (h: MockHealth, query: Record<string, any>, now: number) => {
+    const kind: ConsultKind | null = query.kind === 'video' || query.kind === 'clinic' ? query.kind : null;
+    const city = text(query.city);
+    const q = text(query.q);
+    const minFee = num(query.minFee);
+    const maxFee = num(query.maxFee);
+    const minYears = num(query.minExperience);
+    const minRating = num(query.minRating);
+    const specialty = text(query.specialty) || h.specialties.find(s => s.id === query.specialtyId)?.slug || '';
+    const condition = text(query.condition) || h.conditions.find(c => c.id === query.conditionId)?.slug || '';
+    const today = todayInZone(PKT, now);
+    const year = new Date(now).getUTCFullYear();
+    const fee = (d: MockDoctor) => {
+      const fees = locationsOf(h, d.id).filter(l => !kind || l.kind === kind).map(l => l.fee);
+      return fees.length ? Math.min(...fees) : null;
+    };
+    let rows = h.doctors
+      .filter(d => d.isListed)
+      .filter(d => !specialty || d.specialtySlug === specialty || d.secondarySpecialtySlug === specialty)
+      .filter(d => {
+        if (!condition) return true;
+        const c = h.conditions.find(x => x.slug === condition);
+        return d.conditionSlugs.includes(condition) || (!!c?.specialtySlug && d.specialtySlug === c.specialtySlug);
+      })
+      .filter(d => {
+        if (!q) return true;
+        const conds = h.conditions.filter(c => matches(q, c.name, c.nameUr, ...c.aliases)).map(c => c.slug);
+        const spec = specialtyBySlug(h, d.specialtySlug);
+        return matches(q, d.name, spec?.name, spec?.nameUr) || d.conditionSlugs.some(s => conds.includes(s));
+      })
+      .filter(d => !city || kind === 'video' || locationsOf(h, d.id).some(l => l.kind === 'clinic' && l.city.toLowerCase() === city.toLowerCase()))
+      .filter(d => !kind || locationsOf(h, d.id).some(l => l.kind === kind))
+      .filter(d => !query.area || locationsOf(h, d.id).some(l => l.kind === 'clinic' && matches(String(query.area), l.area)))
+      .filter(d => !query.gender || d.gender === query.gender)
+      .filter(d => minFee === null || (fee(d) ?? -1) >= minFee)
+      .filter(d => maxFee === null || (fee(d) ?? Infinity) <= maxFee)
+      .filter(d => minYears === null || (d.practisingSince !== null && year - d.practisingSince >= minYears))
+      .filter(d => !query.language || d.languages.some(l => l.toLowerCase() === String(query.language).toLowerCase()))
+      .map(d => ({ d, card: cardWire(h, d, now, kind) }))
+      .filter(x => minRating === null || x.card.ratingAvg >= minRating)
+      .filter(x => !bool(query.availableToday) || (!!x.card.nextAvailable?.at && pkDay(x.card.nextAvailable.at) === today));
+    const score = (x: (typeof rows)[number]) => (x.card.ratingAvg || 4) * Math.log10(10 + x.card.ratingCount) + (x.d.topBooked ? 1 : 0);
+    const next = (x: (typeof rows)[number]) => (x.card.nextAvailable?.at ? Date.parse(x.card.nextAvailable.at) : Infinity);
+    const sort = String(query.sort ?? 'recommended');
+    rows = [...rows].sort((a, b) => {
+      switch (sort) {
+        case 'earliest':
+          return next(a) - next(b);
+        case 'fee_asc':
+          return (a.card.minFee ?? Infinity) - (b.card.minFee ?? Infinity);
+        case 'fee_desc':
+          return (b.card.minFee ?? -1) - (a.card.minFee ?? -1);
+        case 'reviews':
+          return b.card.ratingCount - a.card.ratingCount || b.card.ratingAvg - a.card.ratingAvg;
+        case 'experience':
+          return (b.card.yearsExperience ?? 0) - (a.card.yearsExperience ?? 0);
+        default:
+          return score(b) - score(a);
+      }
+    });
+    return rows.map(x => x.card);
+  };
+
+  route('GET', '/health/home', ctx => {
     const { db, now, query } = ctx;
     const h = db.health;
     const user = optionalUser(ctx);
-    const city = text(query.city) || defaultCity(db, user);
     if (user?.id === 'u_customer') ensureDemoVideo(h, now);
-    const cities = [...new Set(h.locations.filter(l => l.kind === 'clinic' && l.isActive).map(l => l.city))].sort();
-    const listed = h.doctors.filter(d => d.isListed && servesCity(h, d, city));
-    const today = todayInZone(PKT, now);
-    const availableToday = listed
-      .map(d => ({ d, best: earliestOf(h, d, now) }))
-      .filter(x => x.best && x.best.next.date === today)
-      .sort((a, b) => a.best!.next.startAt.localeCompare(b.best!.next.startAt))
-      .slice(0, 10)
-      .map(x => doctorCardView(h, x.d, now));
+    const cities = citiesOf(h);
+    const city = homeCity(db, user, text(query.city), cities);
+    const featuredHere = listDoctors(h, { city, sort: 'recommended' }, now).slice(0, 10);
+    const nationwide = !featuredHere.length;
     const upcoming =
       user && user.role === 'customer'
         ? h.appointments.filter(a => a.userId === user.id && isActive(a) && Date.parse(a.endAt) + 30 * MINUTE > now).sort(upcomingFirst)[0]
@@ -447,110 +512,75 @@ export function registerHealthRoutes(kit: HealthKit) {
     return {
       city,
       cities,
-      specialties: [...h.specialties].sort((a, b) => a.sort - b.sort).slice(0, 12).map(s => specialtyView(h, s.slug, city)),
-      commonConditions: h.conditions.filter(c => c.isCommon).map(({ aliases: _a, ...c }) => c),
-      availableToday,
-      // The city's best-rated doctors (most reviews breaks a tie).
-      featuredDoctors: listed
-        .map(d => doctorCardView(h, d, now))
-        .sort((x, y) => (y.rating ?? 0) - (x.rating ?? 0) || y.reviewCount - x.reviewCount)
-        .slice(0, 10),
+      specialties: h.specialties.filter(live).sort((a, b) => a.sort - b.sort).slice(0, 12).map(s => specialtyWire(h, s, city)),
+      commonConditions: h.conditions.filter(c => live(c) && c.isCommon).map(c => conditionWire(h, c)),
+      availableTodayNearby: listDoctors(h, { city, availableToday: 'true', sort: 'earliest' }, now).slice(0, 10),
+      upcomingAppointment: upcoming ? patientAppointmentWire(h, upcoming, now) : null,
+      featuredDoctors: nationwide ? listDoctors(h, { sort: 'recommended' }, now).slice(0, 10) : featuredHere,
+      featuredScope: nationwide ? 'nationwide' : 'city',
       banners: liveBanners(h, city, now),
-      upcoming: upcoming ? appointmentSummaryView(h, upcoming, now) : null,
       emergencyNumbers: EMERGENCY_NUMBERS,
     };
   });
 
-  route('GET', '/healthcare/specialties', ({ db, query }) => {
+  route('GET', '/health/specialties', ({ db, query }) => {
     const h = db.health;
     const city = text(query.city) || null;
-    return [...h.specialties].sort((a, b) => a.sort - b.sort).map(s => specialtyView(h, s.slug, city));
+    return h.specialties.filter(live).sort((a, b) => a.sort - b.sort).map(s => specialtyWire(h, s, city));
   });
 
-  route('GET', '/healthcare/conditions', ({ db, query }) => {
+  route('GET', '/health/conditions', ({ db, query }) => {
+    const h = db.health;
     const q = text(query.q);
-    return db.health.conditions
+    return h.conditions
+      .filter(live)
       .filter(c => !q || matches(q, c.name, c.nameUr, ...c.aliases))
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .map(({ aliases: _a, ...c }) => c);
+      .filter(c => !bool(query.common) || c.isCommon)
+      .sort((a, b) => Number(b.isCommon) - Number(a.isCommon) || a.name.localeCompare(b.name))
+      .map(c => conditionWire(h, c));
   });
 
-  route('GET', '/healthcare/search/suggest', ({ db, query }) => {
+  route('GET', '/health/search/suggest', ({ db, now, query }) => {
     const h = db.health;
     const q = text(query.q);
     if (q.length < 1) return { doctors: [], specialties: [], conditions: [] };
-    const conditions = h.conditions.filter(c => matches(q, c.name, c.nameUr, ...c.aliases));
-    const specialties = h.specialties.filter(
+    const conditions = h.conditions.filter(c => live(c) && matches(q, c.name, c.nameUr, ...c.aliases));
+    const specialties = h.specialties.filter(live).filter(
       s => matches(q, s.name, s.nameUr, s.slug.replace(/-/g, ' ')) || conditions.some(c => c.specialtySlug === s.slug),
     );
     const doctors = h.doctors
       .filter(d => d.isListed)
       .filter(
         d =>
-          matches(q, d.name, `${d.title} ${d.name}`) ||
+          matches(q, d.name, displayName(d)) ||
           specialties.some(s => s.slug === d.specialtySlug) ||
           conditions.some(c => d.conditionSlugs.includes(c.slug)),
       )
       .sort((a, b) => Number(matches(q, b.name)) - Number(matches(q, a.name)) || Number(b.topBooked) - Number(a.topBooked))
       .slice(0, 5)
-      .map(d => ({ id: d.id, name: `${d.title} ${d.name}`, specialtyName: specialtyBySlug(h, d.specialtySlug)?.name ?? '' }));
+      .map(d => cardWire(h, d, now));
     return {
       doctors,
-      specialties: specialties.slice(0, 5).map(s => specialtyView(h, s.slug, null)),
-      conditions: conditions.slice(0, 6).map(({ aliases: _a, ...c }) => c),
+      specialties: specialties.slice(0, 3).map(s => ({ id: s.id, name: s.name, nameUr: s.nameUr, slug: s.slug, icon: iconKey(s.icon), description: null })),
+      conditions: conditions.slice(0, 3).map(c => conditionWire(h, c)),
     };
   });
 
-  route('GET', '/healthcare/doctors', ({ db, now, query }) => {
-    const h = db.health;
-    const kind: ConsultKind | null = query.kind === 'video' || query.kind === 'clinic' ? query.kind : null;
-    const city = text(query.city);
-    const q = text(query.q);
-    const maxFee = num(query.maxFee);
-    const minYears = num(query.minYears);
-    const minRating = num(query.minRating);
-    const today = todayInZone(PKT, now);
-    const year = new Date(now).getUTCFullYear();
-    let rows = h.doctors
-      .filter(d => d.isListed)
-      .filter(d => !query.specialty || d.specialtySlug === query.specialty || d.secondarySpecialtySlug === query.specialty)
-      .filter(d => !query.condition || d.conditionSlugs.includes(String(query.condition)))
-      .filter(d => {
-        if (!q) return true;
-        const conds = h.conditions.filter(c => matches(q, c.name, c.nameUr, ...c.aliases)).map(c => c.slug);
-        const spec = specialtyBySlug(h, d.specialtySlug);
-        return matches(q, d.name, spec?.name, spec?.nameUr) || d.conditionSlugs.some(s => conds.includes(s));
-      })
-      .filter(d => !city || (kind === 'video' ? true : kind === 'clinic' ? locationsOf(h, d.id).some(l => l.kind === 'clinic' && l.city === city) : servesCity(h, d, city)))
-      .filter(d => !kind || locationsOf(h, d.id).some(l => l.kind === kind))
-      .filter(d => !query.gender || d.gender === query.gender)
-      .filter(d => maxFee === null || locationsOf(h, d.id).some(l => (!kind || l.kind === kind) && l.fee <= maxFee))
-      .filter(d => minYears === null || (d.practisingSince !== null && year - d.practisingSince >= minYears))
-      .filter(d => !query.language || d.languages.includes(String(query.language)))
-      .filter(d => !query.area || locationsOf(h, d.id).some(l => l.kind === 'clinic' && matches(String(query.area), l.area)))
-      .map(d => ({ d, card: doctorCardView(h, d, now, kind) }))
-      .filter(x => minRating === null || (x.card.rating ?? 0) >= minRating)
-      .filter(x => !bool(query.availableToday) || (x.card.availability.nextAt && dateInZone(x.card.availability.nextAt, PKT) === today));
-    const sort = String(query.sort ?? 'recommended');
-    const score = (x: (typeof rows)[number]) => (x.card.rating ?? 4) * Math.log10(10 + x.card.reviewCount) + (x.d.topBooked ? 1 : 0);
-    rows = [...rows].sort((a, b) => {
-      switch (sort) {
-        case 'earliest':
-          return (a.card.availability.nextAt ?? '9').localeCompare(b.card.availability.nextAt ?? '9');
-        case 'fee_low':
-          return a.card.fromFee - b.card.fromFee;
-        case 'most_reviewed':
-          return b.card.reviewCount - a.card.reviewCount;
-        case 'most_experienced':
-          return b.card.yearsExperience - a.card.yearsExperience;
-        default:
-          return score(b) - score(a);
-      }
-    });
-    return paginate(rows.map(x => x.card), query);
-  });
+  route('GET', '/health/doctors', ({ db, now, query }) => paginate(listDoctors(db.health, query, now), query));
 
-  route('GET', '/healthcare/doctors/:id', ({ db, now, params }) => doctorProfileView(db.health, listedDoctor(db.health, params[0]), now));
+  route('GET', '/health/doctors/:id', ({ db, now, params }) => profileWire(db.health, listedDoctor(db.health, params[0]), now));
+
+  route('GET', '/health/doctors/:id/similar', ({ db, now, params }) => {
+    const h = db.health;
+    const d = listedDoctor(h, params[0]);
+    const cities = new Set(locationsOf(h, d.id).map(l => l.city));
+    return h.doctors
+      .filter(o => o.id !== d.id && o.isListed && o.specialtySlug === d.specialtySlug)
+      .map(o => ({ o, same: locationsOf(h, o.id).some(l => cities.has(l.city)), card: cardWire(h, o, now) }))
+      .sort((a, b) => Number(b.same) - Number(a.same) || b.card.ratingCount - a.card.ratingCount)
+      .slice(0, 10)
+      .map(x => x.card);
+  });
 
   const locationOf = (h: MockHealth, doctorId: string, locId: string) => {
     const d = listedDoctor(h, doctorId);
@@ -559,266 +589,330 @@ export function registerHealthRoutes(kit: HealthKit) {
     return loc;
   };
 
-  route('GET', '/healthcare/doctors/:id/locations/:loc/days', ({ db, now, params, query }) => {
+  route('GET', '/health/doctors/:id/locations/:loc/slots', ({ db, now, params, query }) => {
     const h = db.health;
     const loc = locationOf(h, params[0], params[1]);
+    const days = num(query.days) ?? 7;
+    if (days < 1 || days > 14) throw bad('days is 1 to 14.', { days: 'days must be between 1 and 14' });
     const today = todayInZone(loc.timezone, now);
-    const from = DATE.test(String(query.from ?? '')) && String(query.from) > today ? String(query.from) : today;
-    const n = Math.min(31, Math.max(1, Math.round(num(query.days) ?? 14)));
-    return Array.from({ length: n }, (_, i) => {
-      const date = addDays(from, i);
-      return { date, slotCount: slotsFor(h, loc, date, now).length };
-    });
+    const from = DATE.test(String(query.from ?? '')) ? String(query.from) : today;
+    return slotsWire(h, loc, from, Math.round(days), now);
   });
 
-  route('GET', '/healthcare/doctors/:id/locations/:loc/slots', ({ db, now, params, query }) => {
-    const h = db.health;
-    const loc = locationOf(h, params[0], params[1]);
-    const date = DATE.test(String(query.date ?? '')) ? String(query.date) : todayInZone(loc.timezone, now);
-    const slots = slotsFor(h, loc, date, now);
-    const next = slots.length ? null : (() => {
-      const after = alternativesAfter(h, loc, `${date}T23:59:59.999Z`, now, 1);
-      return after[0] ? { date: dateInZone(after[0].startAt, loc.timezone), startAt: after[0].startAt } : null;
-    })();
-    return { date, timezone: loc.timezone, slots, nextAvailable: next };
-  });
-
-  route('GET', '/healthcare/doctors/:id/reviews', ({ db, now, params, query }) => {
+  route('GET', '/health/doctors/:id/reviews', ({ db, params, query }) => {
     const h = db.health;
     const d = listedDoctor(h, params[0]);
     const kind = query.kind === 'video' || query.kind === 'clinic' ? query.kind : null;
     const stars = num(query.rating);
+    if (stars !== null && !(stars >= 1 && stars <= 5)) throw bad('rating is 1 to 5.', { rating: 'rating must not be greater than 5' });
     const rows = visibleReviews(h, d.id)
       .filter(r => !kind || r.kind === kind)
       .filter(r => stars === null || r.rating === stars)
       .sort((a, b) =>
-        query.sort === 'highest' ? b.rating - a.rating || b.createdAt.localeCompare(a.createdAt) : query.sort === 'lowest' ? a.rating - b.rating : b.createdAt.localeCompare(a.createdAt),
+        query.sort === 'highest'
+          ? b.rating - a.rating || b.createdAt.localeCompare(a.createdAt)
+          : query.sort === 'lowest'
+            ? a.rating - b.rating || b.createdAt.localeCompare(a.createdAt)
+            : b.createdAt.localeCompare(a.createdAt),
       )
-      .map(r => reviewView(r, now));
+      .map(r => reviewWire(h, r));
     return paginate(rows, query);
   });
 
   // ══ Appointments (patient) ═══════════════════════════
-  route('POST', '/healthcare/appointments', ctx => {
-    const { db, now, body, headers } = ctx;
-    const h = db.health;
-    const user = requireCustomer(ctx);
-    const key = headers['idempotency-key'];
+  /** Booking and reschedule replay the first answer to a repeated Idempotency-Key. */
+  const idempotent = (ctx: ShopCtx, user: MockUser, run: () => { status: number; payload: unknown }) => {
+    const h = ctx.db.health;
+    const key = ctx.headers['idempotency-key'];
     if (!key) throw new HealthError(400, 'IDEMPOTENCY_KEY_REQUIRED', 'Missing Idempotency-Key.');
     const replay = h.idempotency[`${user.id}|${key}`];
     if (replay) {
       ctx.setStatus(replay.status);
       return replay.payload;
     }
-    const doctor = listedDoctor(h, String(body.doctorId ?? ''));
-    const loc = locationById(h, String(body.locationId ?? ''));
-    if (!loc || loc.doctorId !== doctor.id || !loc.isActive) throw notFound('Location');
-    const startAt = typeof body.startAt === 'string' && !Number.isNaN(Date.parse(body.startAt)) ? new Date(body.startAt).toISOString() : '';
-    if (!startAt) throw bad('Choose a time.', { startAt: 'Choose a time' });
+    const out = run();
+    h.idempotency[`${user.id}|${key}`] = out;
+    ctx.setStatus(out.status);
+    return out.payload;
+  };
 
-    const member = body.familyMemberId ? h.family.find(f => f.id === body.familyMemberId && f.userId === user.id) : null;
-    if (body.familyMemberId && !member) throw bad('Choose who the appointment is for.', { familyMemberId: 'Not one of your family members' });
-    const recordIds: string[] = Array.isArray(body.recordIds) ? body.recordIds.filter((id: string) => h.records.some(r => r.id === id && r.userId === user.id)) : [];
-    const method: AppointmentPaymentMethod = body.paymentMethod === 'transfer' ? 'transfer' : 'pay_at_visit';
-    if (loc.kind === 'clinic' && method !== 'pay_at_visit') throw bad('Clinic visits are paid at the clinic.', { paymentMethod: 'Pay at the clinic' });
-    if (loc.kind === 'video' && loc.requiresPrepay && method !== 'transfer') {
-      throw bad('This doctor asks for payment before video consultations.', { paymentMethod: 'Transfer before the consultation' });
-    }
-    const account = method === 'transfer' ? (h.paymentAccounts[doctor.id] ?? []).find(p => p.isActive) : null;
-    if (method === 'transfer' && !account) throw new HealthError(422, 'NO_PAYMENT_ACCOUNT', 'This doctor has not added a payment account yet. Choose pay at the consultation.');
+  /** SLOT_TAKEN, with the three nearest free times. */
+  const slotTaken = (h: MockHealth, loc: MockLocation, startAt: string, now: number, message: string, ignoreId?: string) =>
+    new HealthError(409, 'SLOT_TAKEN', message, {
+      alternatives: alternativesAfter(h, loc, startAt, now, 3, ignoreId).map(s => ({
+        startsAt: zoned(s.startAt, loc.timezone),
+        endsAt: zoned(new Date(Date.parse(s.startAt) + loc.slotMinutes * MINUTE).toISOString(), loc.timezone),
+      })),
+    });
 
-    const date = dateInZone(startAt, loc.timezone);
-    const free = slotsFor(h, loc, date, now).some(s => s.startAt === startAt);
-    // Mock mode's race: at Dr. Bilal's Gulberg clinic the first free time of
-    // a day is always taken by another patient a moment before you confirm.
-    // Once per day at that clinic, so picking an alternative then books it.
-    const contestedKey = `${loc.id}|${date}`;
-    const contested =
-      free && loc.id === 'loc_bilal_2' && !h.contested.includes(contestedKey) && slotsFor(h, loc, date, now)[0]?.startAt === startAt;
-    if (!free || contested) {
+  /** Where a transfer goes and by when (a deadline only when the doctor asks for prepayment). */
+  const transferTo = (h: MockHealth, doctor: MockDoctor, loc: MockLocation, startAt: string, now: number) => {
+    const account = (h.paymentAccounts[doctor.id] ?? []).find(p => p.isActive);
+    if (!account) return null;
+    return {
+      kind: account.kind,
+      accountTitle: account.title,
+      accountNumber: account.number,
+      bankName: account.bankName,
+      amount: loc.fee,
+      payBy: loc.requiresPrepay
+        ? new Date(Math.max(now + 10 * MINUTE, Math.min(now + PAY_WINDOW_MIN * MINUTE, Date.parse(startAt) - 15 * MINUTE))).toISOString()
+        : startAt,
+    };
+  };
+
+  route('POST', '/health/appointments', ctx => {
+    const { db, now, body } = ctx;
+    const h = db.health;
+    const user = requireCustomer(ctx);
+    return idempotent(ctx, user, () => {
+      const doctor = listedDoctor(h, String(body.doctorId ?? ''));
+      const loc = locationById(h, String(body.locationId ?? ''));
+      if (!loc || loc.doctorId !== doctor.id || !loc.isActive) throw notFound('Location');
+      const startAt = instantOf(body.startsAt);
+      if (!startAt) throw bad('Choose a time.', { startsAt: 'startsAt must be a valid ISO 8601 date string' });
+      const member = body.familyMemberId ? h.family.find(f => f.id === body.familyMemberId && f.userId === user.id) : null;
+      if (body.familyMemberId && !member) throw notFound('Family member');
+      const recordIds: string[] = Array.isArray(body.attachmentRecordIds) ? body.attachmentRecordIds : [];
+      if (recordIds.some(id => !h.records.some(r => r.id === id && r.userId === user.id))) throw notFound('Record');
+      // Clinic visits are paid at the clinic; video is always a transfer.
+      const method: AppointmentPaymentMethod = loc.kind === 'video' ? 'transfer' : 'pay_at_visit';
+      const asked = body.paymentMethod;
+      if (asked && asked !== (method === 'transfer' ? 'transfer' : 'pay_at_clinic')) {
+        throw bad(loc.kind === 'video' ? 'Video consultations are paid by transfer.' : 'Clinic visits are paid at the clinic.', { paymentMethod: 'Not available for this visit' });
+      }
+      const date = dateInZone(startAt, loc.timezone);
+      const all = slotsFor(h, loc, date, now);
+      if (!all.length && !h.appointments.some(a => a.locationId === loc.id && a.startAt === startAt && isActive(a))) {
+        throw new HealthError(400, 'SLOT_INVALID', 'That time is not one of the doctor’s slots.');
+      }
+      const free = all.some(s => s.startAt === startAt);
+      // Mock mode's race: at Dr. Bilal's Gulberg clinic the first free time of
+      // a day is always taken by another patient a moment before you confirm.
+      // Once per day at that clinic, so picking an alternative then books it.
+      const contestedKey = `${loc.id}|${date}`;
+      const contested = free && loc.id === 'loc_bilal_2' && !h.contested.includes(contestedKey) && all[0]?.startAt === startAt;
       if (contested) {
         h.contested.push(contestedKey);
-        const ghost = newAppointment(h, {
-          doctorId: doctor.id,
-          loc,
-          startAt,
-          userId: 'u_standin_ghost',
-          familyMemberId: null,
-          patientName: 'Another patient',
-          patientDob: null,
-          patientGender: null,
-          patientPhone: null,
-          reasonTags: [],
-          reason: null,
-          recordIds: [],
-          paymentMethod: 'pay_at_visit',
-          now,
-        });
-        h.appointments.push(ghost);
-        // Kept even though this request fails: the slot really is gone.
-        throw Object.assign(
-          new HealthError(409, 'SLOT_TAKEN', 'Someone booked this time a moment ago. Choose another time.', {
-            alternatives: alternativesAfter(h, loc, startAt, now, 3),
+        h.appointments.push(
+          newAppointment(h, {
+            doctorId: doctor.id,
+            loc,
+            startAt,
+            userId: 'u_standin_ghost',
+            familyMemberId: null,
+            patientName: 'Another patient',
+            patientDob: null,
+            patientGender: null,
+            patientPhone: null,
+            reasonTags: [],
+            reason: null,
+            recordIds: [],
+            paymentMethod: 'pay_at_visit',
+            now,
           }),
-          { keepChanges: true },
         );
+        // Kept even though this request fails: the slot really is gone.
+        throw Object.assign(slotTaken(h, loc, startAt, now, 'Someone booked this time a moment ago. Choose another time.'), { keepChanges: true });
       }
-      throw new HealthError(409, 'SLOT_TAKEN', 'This time is no longer available. Choose another time.', {
-        alternatives: alternativesAfter(h, loc, startAt, now, 3),
+      if (!free) throw slotTaken(h, loc, startAt, now, 'This time is no longer available. Choose another time.');
+      const mine = h.appointments.filter(a => a.userId === user.id && (a.familyMemberId ?? null) === (member?.id ?? null) && isActive(a));
+      const end = Date.parse(startAt) + loc.slotMinutes * MINUTE;
+      const overlap = mine.find(a => Date.parse(a.startAt) < end && Date.parse(startAt) < Date.parse(a.endAt));
+      if (overlap) throw new HealthError(409, 'PATIENT_OVERLAP', 'You already have an appointment at that time.', { appointmentCode: overlap.code });
+      if (h.appointments.filter(a => a.userId === user.id && a.doctorId === doctor.id && isActive(a) && Date.parse(a.startAt) > now).length >= 3) {
+        throw new HealthError(409, 'BOOKING_LIMIT', 'You already have 3 upcoming appointments with this doctor.');
+      }
+      const a = newAppointment(h, {
+        doctorId: doctor.id,
+        loc,
+        startAt,
+        userId: user.id,
+        familyMemberId: member?.id ?? null,
+        patientName: member?.name ?? user.name,
+        patientDob: member?.dateOfBirth ?? user.dateOfBirth,
+        patientGender: (member?.gender ?? (user.gender as MockAppointment['patientGender'])) || null,
+        patientPhone: member?.phone ?? user.phone,
+        reasonTags: (Array.isArray(body.symptoms) ? body.symptoms : []).filter((t: ReasonTag) => REASON_TAGS.includes(t)),
+        reason: text(body.reason).slice(0, 500) || null,
+        recordIds,
+        paymentMethod: method,
+        now,
       });
-    }
-
-    const a = newAppointment(h, {
-      doctorId: doctor.id,
-      loc,
-      startAt,
-      userId: user.id,
-      familyMemberId: member?.id ?? null,
-      patientName: member?.name ?? user.name,
-      patientDob: member?.dateOfBirth ?? user.dateOfBirth,
-      patientGender: (member?.gender ?? (user.gender as MockAppointment['patientGender'])) || null,
-      patientPhone: member?.phone ?? user.phone,
-      reasonTags: (Array.isArray(body.reasonTags) ? body.reasonTags : []).filter((t: string) => ['follow_up', 'new_problem', 'reports_review'].includes(t)),
-      reason: text(body.reason).slice(0, 300) || null,
-      recordIds,
-      paymentMethod: method,
-      now,
+      if (method === 'transfer') a.instructions = transferTo(h, doctor, loc, startAt, now);
+      h.appointments.push(a);
+      if (doctor.ownerId) {
+        notifyHealth(db, doctor.ownerId, 'health.appointment.new', 'New appointment', `${a.patientName} booked ${loc.kind === 'video' ? 'a video consultation' : `a visit at ${loc.name}`}.`, {
+          appointmentCode: a.code,
+        });
+      }
+      return { status: 201, payload: patientAppointmentWire(h, a, now, true) };
     });
-    if (method === 'transfer' && account) {
-      a.instructions = {
-        kind: account.kind,
-        accountTitle: account.title,
-        accountNumber: account.number,
-        bankName: account.bankName,
-        amount: loc.fee,
-        payBy: new Date(Math.max(now + 10 * MINUTE, Math.min(now + PAY_WINDOW_MIN * MINUTE, Date.parse(startAt) - 15 * MINUTE))).toISOString(),
-      };
-    } else addEvent(a, 'confirmed', null, now);
-    h.appointments.push(a);
-    if (doctor.ownerId) {
-      notifyHealth(db, doctor.ownerId, 'appointment_new', 'New appointment', `${a.patientName} booked ${loc.kind === 'video' ? 'a video consultation' : `a visit at ${loc.name}`}.`, {
-        appointmentId: a.id,
-      });
-    }
-    const payload = appointmentDetailView(h, a, now);
-    ctx.setStatus(201);
-    h.idempotency[`${user.id}|${key}`] = { status: 201, payload };
-    return payload;
   });
 
-  route('GET', '/healthcare/appointments', ctx => {
+  route('GET', '/health/appointments', ctx => {
     const { db, now, query } = ctx;
     const h = db.health;
     const user = requireCustomer(ctx);
     if (user.id === 'u_customer') ensureDemoVideo(h, now);
     const mine = h.appointments.filter(a => a.userId === user.id);
     const upcoming = (a: MockAppointment) => isActive(a) && Date.parse(a.endAt) + 30 * MINUTE > now;
-    const rows = query.segment === 'past' ? mine.filter(a => !upcoming(a)).sort(latestFirst) : mine.filter(upcoming).sort(upcomingFirst);
-    return paginate(rows.map(a => appointmentSummaryView(h, a, now)), query);
+    const rows = query.scope === 'past' ? mine.filter(a => !upcoming(a)).sort(latestFirst) : mine.filter(upcoming).sort(upcomingFirst);
+    return paginate(rows.map(a => patientAppointmentWire(h, a, now)), query);
   });
 
-  route('GET', '/healthcare/appointments/:code', ctx => appointmentDetailView(ctx.db.health, myAppointment(ctx, requireCustomer(ctx)), ctx.now));
+  route('GET', '/health/appointments/:code', ctx => patientAppointmentWire(ctx.db.health, myAppointment(ctx, requireCustomer(ctx)), ctx.now, true));
 
-  route('POST', '/healthcare/appointments/:code/cancel', ctx => {
+  /** A cancel voids what was owed and makes a refund due on what was paid. */
+  const settlePaymentOnCancel = (a: MockAppointment, now: number) => {
+    if (a.paymentStatus === 'paid' || a.paymentStatus === 'proof_submitted') {
+      a.paymentStatus = 'refund_due';
+      addEvent(a, 'refund_due', null, now);
+    } else if (a.paymentStatus !== 'collected' && a.paymentStatus !== 'refunded') a.paymentStatus = 'void';
+  };
+
+  route('POST', '/health/appointments/:code/cancel', ctx => {
     const { db, now, body } = ctx;
     const h = db.health;
     const a = myAppointment(ctx, requireCustomer(ctx));
-    if (!patientFlags(h, a, now).canCancel) throw transition('This appointment can no longer be cancelled.');
+    if (!(a.status === 'awaiting_payment' || a.status === 'confirmed')) throw transition('This appointment can no longer be cancelled.');
+    if (Date.parse(a.startAt) <= now) throw new HealthError(409, 'CANCEL_CUTOFF_PASSED', 'The appointment has started; it can no longer be cancelled.');
     const reason = text(body.reason);
-    if (!reason) throw bad('Choose a reason.', { reason: 'Choose a reason' });
+    if (reason.length < 2) throw bad('Say why you are cancelling.', { reason: 'reason must be longer than or equal to 2 characters' });
     a.lateCancel = isLateCancel(h, a, now);
     a.status = 'cancelled';
     a.cancelledBy = 'patient';
-    const words: Record<string, string> = {
-      feeling_better: 'Feeling better',
-      schedule_clash: 'Schedule clash',
-      booked_by_mistake: 'Booked by mistake',
-      other_doctor: 'Seeing another doctor',
-    };
-    a.cancelReason = [words[reason] ?? null, text(body.note) || null].filter(Boolean).join(' — ') || 'Cancelled by the patient';
+    a.cancelReason = reason.slice(0, 500);
+    settlePaymentOnCancel(a, now);
     addEvent(a, 'cancelled', a.lateCancel ? 'Late cancellation' : null, now);
     const d = doctorById(h, a.doctorId);
-    if (d?.ownerId) notifyHealth(db, d.ownerId, 'appointment_update', 'Appointment cancelled', `${a.patientName} cancelled ${a.code}.`, { appointmentId: a.id });
-    return appointmentDetailView(h, a, now);
+    if (d?.ownerId) notifyHealth(db, d.ownerId, 'health.appointment.cancelled', 'Appointment cancelled', `${a.patientName} cancelled ${a.code}.`, { appointmentCode: a.code });
+    return patientAppointmentWire(h, a, now, true);
   });
 
-  route('POST', '/healthcare/appointments/:code/reschedule', ctx => {
+  /** The new time is a new appointment (a new code); the old one is cancelled, its payment carried over. */
+  route('POST', '/health/appointments/:code/reschedule', ctx => {
+    const { db, now, body } = ctx;
+    const h = db.health;
+    const user = requireCustomer(ctx);
+    const old = myAppointment(ctx, user);
+    return idempotent(ctx, user, () => {
+      if (old.rescheduledFromId || old.rescheduleCount > 0) throw new HealthError(409, 'RESCHEDULE_NOT_ALLOWED', 'An appointment can be moved once. Cancel and book again instead.');
+      if (!(old.status === 'awaiting_payment' || old.status === 'confirmed')) throw transition('This appointment can no longer be rescheduled.');
+      const hours = cancelCutoff(h, old);
+      if (now >= Date.parse(old.startAt) - hours * HOUR) {
+        throw new HealthError(409, 'CANCEL_CUTOFF_PASSED', `Rescheduling closes ${hours * 60} minutes before the appointment.`, { cutoffMinutes: hours * 60 });
+      }
+      const loc = locationById(h, old.locationId)!;
+      const startAt = instantOf(body.startsAt);
+      if (!startAt) throw bad('Choose a new time.', { startsAt: 'startsAt must be a valid ISO 8601 date string' });
+      if (!slotsFor(h, loc, dateInZone(startAt, loc.timezone), now, old.id).some(s => s.startAt === startAt)) {
+        throw slotTaken(h, loc, startAt, now, 'This time is no longer available. Choose another time.', old.id);
+      }
+      const a = newAppointment(h, { ...old, loc, startAt, now });
+      a.rescheduledFromId = old.id;
+      a.rescheduleCount = 1;
+      a.events = [{ type: 'rescheduled', note: null, createdAt: isoNow(now) }];
+      // A paid or claimed payment moves to the new appointment.
+      if (old.paymentStatus === 'paid' || old.paymentStatus === 'proof_submitted') {
+        a.paymentStatus = old.paymentStatus;
+        a.proof = old.proof;
+        a.status = 'confirmed';
+      }
+      a.instructions = old.instructions ? { ...old.instructions, payBy: a.status === 'awaiting_payment' ? old.instructions.payBy : startAt } : null;
+      old.status = 'cancelled';
+      old.cancelledBy = 'patient';
+      old.cancelReason = 'rescheduled';
+      old.paymentStatus = 'void';
+      addEvent(old, 'cancelled', 'Rescheduled', now);
+      h.appointments.push(a);
+      const d = doctorById(h, a.doctorId);
+      if (d?.ownerId) notifyHealth(db, d.ownerId, 'health.appointment.new', 'Appointment moved', `${a.patientName} moved ${old.code} to ${a.code}.`, { appointmentCode: a.code });
+      return { status: 200, payload: patientAppointmentWire(h, a, now, true) };
+    });
+  });
+
+  route('POST', '/health/appointments/:code/payment-proof', ctx => {
     const { db, now, body } = ctx;
     const h = db.health;
     const a = myAppointment(ctx, requireCustomer(ctx));
-    if (!patientFlags(h, a, now).canReschedule) throw transition('This appointment can no longer be rescheduled.');
-    const loc = locationById(h, a.locationId)!;
-    const startAt = typeof body.startAt === 'string' && !Number.isNaN(Date.parse(body.startAt)) ? new Date(body.startAt).toISOString() : '';
-    if (!startAt) throw bad('Choose a new time.', { startAt: 'Choose a new time' });
-    const free = slotsFor(h, loc, dateInZone(startAt, loc.timezone), now, a.id).some(s => s.startAt === startAt);
-    if (!free) {
-      throw new HealthError(409, 'SLOT_TAKEN', 'This time is no longer available. Choose another time.', {
-        alternatives: alternativesAfter(h, loc, startAt, now, 3, a.id),
-      });
+    if (a.paymentMethod !== 'transfer' || !(a.paymentStatus === 'awaiting_transfer' || a.paymentStatus === 'proof_rejected') || !(a.status === 'awaiting_payment' || a.status === 'confirmed')) {
+      throw transition('No payment is due for this appointment.');
     }
-    const from = a.startAt;
-    a.startAt = startAt;
-    a.endAt = new Date(Date.parse(startAt) + loc.slotMinutes * MINUTE).toISOString();
-    a.rescheduleCount += 1;
-    addEvent(a, 'rescheduled', from, now);
-    const d = doctorById(h, a.doctorId);
-    if (d?.ownerId) notifyHealth(db, d.ownerId, 'appointment_update', 'Appointment moved', `${a.patientName} moved ${a.code} to a new time.`, { appointmentId: a.id });
-    return appointmentDetailView(h, a, now);
-  });
-
-  route('POST', '/healthcare/appointments/:code/payment-proof', ctx => {
-    const { db, now, body } = ctx;
-    const h = db.health;
-    const a = myAppointment(ctx, requireCustomer(ctx));
-    if (!patientFlags(h, a, now).canPay) throw transition('No payment is due for this appointment.');
-    const id = text(body.transactionId).toUpperCase().replace(/\s+/g, '');
-    if (!/^[A-Z0-9-]{6,40}$/.test(id)) throw bad('Check the transaction ID.', { transactionId: 'Use 6 to 40 letters or digits' });
-    a.proof = { transactionId: id, imageUrl: typeof body.imageUrl === 'string' ? body.imageUrl : null, submittedAt: isoNow(now), rejectionReason: null };
+    const ref = text(body.paymentRef);
+    if (ref.length < 3) throw bad('Enter the transaction reference.', { paymentRef: 'paymentRef must be longer than or equal to 3 characters' });
+    a.proof = { transactionId: ref, imageUrl: typeof body.proofUrl === 'string' ? body.proofUrl : null, submittedAt: isoNow(now), rejectionReason: null };
     a.paymentStatus = 'proof_submitted';
-    addEvent(a, 'payment_proof_submitted', id, now);
+    addEvent(a, 'payment_proof_submitted', ref, now);
     const d = doctorById(h, a.doctorId);
-    if (d?.ownerId) notifyHealth(db, d.ownerId, 'appointment_payment', 'Payment to check', `${a.patientName} sent ${id} for ${a.code}.`, { appointmentId: a.id });
-    return appointmentDetailView(h, a, now);
+    if (d?.ownerId) notifyHealth(db, d.ownerId, 'health.payment.proof', 'Payment to check', `${a.patientName} sent ${ref} for ${a.code}.`, { appointmentCode: a.code });
+    return patientAppointmentWire(h, a, now, true);
   });
 
-  route('POST', '/healthcare/appointments/:code/records', ctx => {
-    const { db, now, body } = ctx;
-    const h = db.health;
+  const attachmentsWire = (h: MockHealth, a: MockAppointment) =>
+    a.recordIds
+      .map(id => h.records.find(r => r.id === id))
+      .filter(Boolean)
+      .map(r => ({ id: r!.id, title: r!.title, type: r!.type }));
+
+  route('GET', '/health/appointments/:code/attachments', ctx => attachmentsWire(ctx.db.health, myAppointment(ctx, requireCustomer(ctx))));
+  route('POST', '/health/appointments/:code/attachments', ctx => {
+    const h = ctx.db.health;
     const user = requireCustomer(ctx);
     const a = myAppointment(ctx, user);
-    if (!isActive(a)) throw transition('Records can be shared only before the visit ends.');
-    const ids: string[] = (Array.isArray(body.recordIds) ? body.recordIds : []).filter((id: string) => h.records.some(r => r.id === id && r.userId === user.id));
+    if (!isActive(a)) throw new HealthError(409, 'ATTACHMENTS_CLOSED', 'Records can be shared only before the visit ends.');
+    const ids: string[] = Array.isArray(ctx.body.recordIds) ? ctx.body.recordIds : [];
+    if (!ids.length || ids.length > 10) throw bad('Share 1 to 10 records.', { recordIds: 'recordIds must contain 1 to 10 ids' });
+    for (const id of ids) {
+      const r = h.records.find(x => x.id === id && x.userId === user.id);
+      if (!r) throw notFound('Record');
+      if ((r.memberId ?? null) !== (a.familyMemberId ?? null)) throw bad('That record is about someone else.', { recordIds: 'Not about this visit’s patient' });
+    }
     a.recordIds = [...new Set([...a.recordIds, ...ids])].slice(0, 10);
-    return appointmentDetailView(h, a, now);
+    ctx.setStatus(201);
+    return attachmentsWire(h, a);
+  });
+  route('DELETE', '/health/appointments/:code/attachments/:recordId', ctx => {
+    const user = requireCustomer(ctx);
+    const a = myAppointment(ctx, user);
+    a.recordIds = a.recordIds.filter(id => id !== decodeURIComponent(ctx.params[1]));
+    return { removed: true };
   });
 
-  route('POST', '/healthcare/appointments/:code/review', ctx => {
+  route('POST', '/health/appointments/:code/review', ctx => {
     const { db, now, body } = ctx;
     const h = db.health;
     const user = requireCustomer(ctx);
     const a = myAppointment(ctx, user);
-    if (a.reviewId) throw new HealthError(409, 'ALREADY_REVIEWED', 'You have already rated this visit.');
-    if (a.status !== 'completed' || now - Date.parse(a.completedAt ?? a.endAt) > REVIEW_WINDOW_DAYS * DAY) {
-      throw transition('Only completed visits from the last 30 days can be rated.');
+    if (a.reviewId) throw new HealthError(409, 'REVIEW_EXISTS', 'You have already rated this visit.');
+    if (a.status !== 'completed') throw new HealthError(403, 'REVIEW_NOT_ALLOWED', 'Only completed visits can be rated.', { reason: 'not_completed' });
+    if (now - Date.parse(a.completedAt ?? a.endAt) > REVIEW_WINDOW_DAYS * DAY) {
+      throw new HealthError(403, 'REVIEW_NOT_ALLOWED', 'Visits can be rated for 30 days.', { reason: 'window_closed' });
     }
-    const rating = Math.round(Number(body.rating));
-    if (!(rating >= 1 && rating <= 5)) throw bad('Tap a star rating.', { rating: 'Tap a star rating' });
-    const dims: Record<string, number> = {};
-    for (const k of ['diagnosis', 'staff', 'environment']) {
-      const v = Math.round(Number(body.dimensions?.[k]));
-      if (v >= 1 && v <= 5 && (k === 'diagnosis' || a.kind === 'clinic')) dims[k] = v;
-    }
+    const score = (v: unknown) => {
+      const n = Math.round(Number(v));
+      return n >= 1 && n <= 5 ? n : null;
+    };
+    const overall = score(body.overall);
+    const diagnosis = score(body.diagnosis);
+    if (!overall || !diagnosis) throw bad('Rate the visit.', { ...(overall ? {} : { overall: 'overall must be 1 to 5' }), ...(diagnosis ? {} : { diagnosis: 'diagnosis must be 1 to 5' }) });
+    const dims: Record<string, number> = { diagnosis };
+    const staff = score(body.staff);
+    const environment = score(body.environment);
+    if (staff) dims.staff = staff;
+    if (environment && a.kind === 'clinic') dims.environment = environment;
+    const codes = Object.values(REVIEW_TAG_CODES) as string[];
     const review = {
       id: nextId(h, 'rv'),
       doctorId: a.doctorId,
       appointmentId: a.id,
       userId: user.id,
       authorName: user.name,
-      anonymous: body.anonymous !== false,
-      rating,
+      anonymous: body.isAnonymous === true,
+      rating: overall,
       recommend: body.recommend !== false,
       dimensions: dims,
-      tags: (Array.isArray(body.tags) ? body.tags : []).map(text).filter(Boolean).slice(0, 8),
+      tags: (Array.isArray(body.tags) ? body.tags : []).filter((t: string) => codes.includes(t)).map(reviewTagLabel),
       text: text(body.text).slice(0, 1000) || null,
       kind: a.kind,
       waitMinutes: a.checkedInAt && a.startedAt ? Math.max(0, Math.round((Date.parse(a.startedAt) - Date.parse(a.checkedInAt)) / MINUTE)) : a.kind === 'video' ? 0 : null,
@@ -830,203 +924,246 @@ export function registerHealthRoutes(kit: HealthKit) {
     h.reviews.push(review);
     a.reviewId = review.id;
     ctx.setStatus(201);
-    return appointmentDetailView(h, a, now);
+    return reviewWire(h, review);
   });
 
-  route('POST', '/healthcare/appointments/:code/video/join', ctx => {
-    const { now } = ctx;
-    const user = requireCustomer(ctx);
-    const a = myAppointment(ctx, user);
-    if (a.kind !== 'video') throw transition('This is a clinic visit.');
-    if (!canJoin(a, now)) {
-      throw new HealthError(403, 'VIDEO_NOT_OPEN', 'The consultation room opens 10 minutes before your time.', {
-        opensAt: new Date(Date.parse(a.startAt) - 10 * MINUTE).toISOString(),
-      });
+  /** docs/VIDEO.md: inside the window, a video visit, booked or under way; a prepaid one must be paid. */
+  const joinCheck = (a: MockAppointment, now: number) => {
+    if (a.kind !== 'video') throw new HealthError(409, 'VIDEO_NOT_JOINABLE', 'This is a clinic visit.', { reason: 'not_video' });
+    if (!(a.status === 'confirmed' || a.status === 'checked_in' || a.status === 'in_progress' || a.status === 'awaiting_payment')) {
+      throw new HealthError(409, 'VIDEO_NOT_JOINABLE', 'This consultation is not open.', { reason: 'status' });
     }
-    return { provider: 'jitsi', roomUrl: roomUrl(a, a.patientName), jwt: null, displayName: a.patientName, closesAt: new Date(Date.parse(a.endAt) + 30 * MINUTE).toISOString() };
+    if (!canJoin({ ...a, status: a.status === 'awaiting_payment' ? 'confirmed' : a.status }, now)) {
+      const w = videoWindow(a);
+      throw new HealthError(409, 'VIDEO_NOT_JOINABLE', 'The consultation room opens 10 minutes before the time.', { reason: 'window', ...w });
+    }
+    if (a.status === 'awaiting_payment') throw new HealthError(402, 'PAYMENT_REQUIRED', 'The doctor asks for payment before the consultation.');
+  };
+
+  route('POST', '/health/appointments/:code/video/join', ctx => {
+    const a = myAppointment(ctx, requireCustomer(ctx));
+    joinCheck(a, ctx.now);
+    return videoJoinWire(a, roomUrl(a, a.patientName), a.patientName, false);
   });
 
   // ══ Family, records, prescriptions ═══════════════════
   const familyInput = (body: Record<string, any>) => {
     const fields: Record<string, string> = {};
-    const name = text(body.name);
-    if (name.length < 2) fields.name = 'Enter their full name';
+    const name = text(body.fullName);
+    if (name.length < 2) fields.fullName = 'Enter their full name';
     if (!['spouse', 'child', 'parent', 'sibling', 'other'].includes(body.relation)) fields.relation = 'Choose the relation';
-    if (!['male', 'female', 'other'].includes(body.gender)) fields.gender = 'Choose the gender';
-    if (!DATE.test(String(body.dateOfBirth ?? ''))) fields.dateOfBirth = 'Choose their date of birth';
+    if (body.gender && !['male', 'female', 'other'].includes(body.gender)) fields.gender = 'Choose the gender';
+    if (body.dateOfBirth && !DATE.test(String(body.dateOfBirth))) fields.dateOfBirth = 'Use YYYY-MM-DD';
     if (Object.keys(fields).length) throw bad('Check the details.', fields);
-    return { name, relation: body.relation, gender: body.gender, dateOfBirth: String(body.dateOfBirth), phone: text(body.phone) || null };
+    return { name, relation: body.relation, gender: body.gender ?? 'other', dateOfBirth: body.dateOfBirth ? String(body.dateOfBirth) : '', phone: text(body.phone) || null };
   };
 
-  const familyView = (m: MockHealth['family'][number]) => ({
-    id: m.id,
-    name: m.name,
-    relation: m.relation,
-    gender: m.gender,
-    dateOfBirth: m.dateOfBirth,
-    phone: m.phone,
-  });
-  route('GET', '/healthcare/family', ctx => {
+  route('GET', '/health/family-members', ctx => {
     const user = requireCustomer(ctx);
-    return ctx.db.health.family.filter(f => f.userId === user.id).map(familyView);
+    return ctx.db.health.family.filter(f => f.userId === user.id).map(m => familyWire(m, ctx.now));
   });
-  route('POST', '/healthcare/family', ctx => {
+  route('POST', '/health/family-members', ctx => {
     const h = ctx.db.health;
     const user = requireCustomer(ctx);
-    if (h.family.filter(f => f.userId === user.id).length >= 10) throw new HealthError(422, 'FAMILY_LIMIT', 'You can add up to 10 family members.');
+    if (h.family.filter(f => f.userId === user.id).length >= 8) throw new HealthError(409, 'FAMILY_LIMIT', 'You can add up to 8 family members.');
     const m = { id: nextId(h, 'fm'), userId: user.id, ...familyInput(ctx.body) };
     h.family.push(m);
     ctx.setStatus(201);
-    return familyView(m);
+    return familyWire(m, ctx.now);
   });
-  route('PATCH', '/healthcare/family/:id', ctx => {
-    const h = ctx.db.health;
+  const myMember = (ctx: ShopCtx) => {
     const user = requireCustomer(ctx);
-    const m = h.family.find(f => f.id === decodeURIComponent(ctx.params[0]) && f.userId === user.id);
+    const m = ctx.db.health.family.find(f => f.id === decodeURIComponent(ctx.params[0]) && f.userId === user.id);
     if (!m) throw notFound('Family member');
-    Object.assign(m, familyInput({ ...m, ...ctx.body }));
-    return familyView(m);
+    return m;
+  };
+  route('GET', '/health/family-members/:id', ctx => familyWire(myMember(ctx), ctx.now));
+  route('PATCH', '/health/family-members/:id', ctx => {
+    const m = myMember(ctx);
+    Object.assign(m, familyInput({ fullName: m.name, relation: m.relation, gender: m.gender, dateOfBirth: m.dateOfBirth || undefined, phone: m.phone, ...ctx.body }));
+    return familyWire(m, ctx.now);
   });
-  route('DELETE', '/healthcare/family/:id', ctx => {
+  route('DELETE', '/health/family-members/:id', ctx => {
     const h = ctx.db.health;
-    const user = requireCustomer(ctx);
-    const m = h.family.find(f => f.id === decodeURIComponent(ctx.params[0]) && f.userId === user.id);
-    if (!m) throw notFound('Family member');
-    if (h.appointments.some(a => a.familyMemberId === m.id && isActive(a))) {
-      throw new HealthError(409, 'MEMBER_HAS_APPOINTMENTS', `${m.name} has an upcoming appointment. Cancel it first.`);
-    }
+    const m = myMember(ctx);
+    // Past appointments keep their snapshot; the member's records go with them.
     h.family = h.family.filter(f => f.id !== m.id);
+    h.records = h.records.filter(r => r.memberId !== m.id);
     return { removed: true };
   });
 
-  route('GET', '/healthcare/records', ctx => {
+  route('GET', '/health/records', ctx => {
     const h = ctx.db.health;
     const user = requireCustomer(ctx);
-    const member = ctx.query.memberId;
+    const person = text(ctx.query.person);
     const rows = h.records
       .filter(r => r.userId === user.id)
-      .filter(r => !member || (member === 'self' ? r.memberId === null : r.memberId === member))
-      .filter(r => !ctx.query.type || r.type === ctx.query.type)
+      .filter(r => !person || (person === 'self' ? r.memberId === null : r.memberId === person))
+      .filter(r => !ctx.query.type || recordWire(h, r, ctx.now).type === ctx.query.type)
       .sort((a, b) => b.recordedOn.localeCompare(a.recordedOn) || b.createdAt.localeCompare(a.createdAt))
-      .map(r => recordView(h, r));
+      .map(r => recordWire(h, r, ctx.now));
     return paginate(rows, ctx.query);
   });
-  route('POST', '/healthcare/records', ctx => {
+  route('POST', '/health/records', ctx => {
     const { db, now, body } = ctx;
     const h = db.health;
     const user = requireCustomer(ctx);
     const fields: Record<string, string> = {};
     const title = text(body.title);
     if (title.length < 2) fields.title = 'Give the record a title';
-    if (!['lab_report', 'prescription', 'imaging', 'discharge', 'other'].includes(body.type)) fields.type = 'Choose a type';
-    if (!DATE.test(String(body.recordedOn ?? ''))) fields.recordedOn = 'Choose the date on the record';
-    const files = (Array.isArray(body.files) ? body.files : []).filter((f: any) => typeof f?.url === 'string').slice(0, 10);
-    if (!files.length) fields.files = 'Add at least one page';
-    if (body.memberId && !h.family.some(f => f.id === body.memberId && f.userId === user.id)) fields.memberId = 'Not one of your family members';
+    if (!RECORD_TYPES.includes(body.type)) fields.type = 'Choose a type';
+    if (body.recordDate && !DATE.test(String(body.recordDate))) fields.recordDate = 'Use YYYY-MM-DD';
+    const files = (Array.isArray(body.files) ? body.files : []).filter((f: any) => typeof f?.url === 'string' && typeof f?.publicId === 'string');
+    if (!files.length || files.length > 10) fields.files = 'Add 1 to 10 files';
+    if (body.familyMemberId && !h.family.some(f => f.id === body.familyMemberId && f.userId === user.id)) fields.familyMemberId = 'Not one of your family members';
     if (Object.keys(fields).length) throw bad('Check the record.', fields);
     const r = {
       id: nextId(h, 'rec'),
       userId: user.id,
-      memberId: body.memberId || null,
+      memberId: body.familyMemberId || null,
       title,
-      type: body.type,
-      recordedOn: String(body.recordedOn),
+      type: recordTypeIn(body.type) as RecordType,
+      recordedOn: body.recordDate ? String(body.recordDate) : todayInZone(PKT, now),
       files: files.map((f: any) => ({ url: f.url, mime: typeof f.mime === 'string' ? f.mime : 'image/jpeg' })),
       createdAt: isoNow(now),
     };
     h.records.push(r);
     ctx.setStatus(201);
-    return recordView(h, r);
+    return recordWire(h, r, now);
   });
-  route('GET', '/healthcare/records/:id', ctx => {
-    const h = ctx.db.health;
+  const myRecord = (ctx: ShopCtx) => {
     const user = requireCustomer(ctx);
-    const r = h.records.find(x => x.id === decodeURIComponent(ctx.params[0]) && x.userId === user.id);
+    const r = ctx.db.health.records.find(x => x.id === decodeURIComponent(ctx.params[0]) && x.userId === user.id);
     if (!r) throw notFound('Record');
-    return recordView(h, r);
+    return r;
+  };
+  route('GET', '/health/records/:id', ctx => recordWire(ctx.db.health, myRecord(ctx), ctx.now));
+  route('PATCH', '/health/records/:id', ctx => {
+    const r = myRecord(ctx);
+    const b = ctx.body;
+    if (b.title !== undefined) r.title = text(b.title) || r.title;
+    if (b.type !== undefined && RECORD_TYPES.includes(b.type)) r.type = recordTypeIn(b.type) as RecordType;
+    if (b.recordDate !== undefined && DATE.test(String(b.recordDate))) r.recordedOn = String(b.recordDate);
+    return recordWire(ctx.db.health, r, ctx.now);
   });
-  route('DELETE', '/healthcare/records/:id', ctx => {
+  route('DELETE', '/health/records/:id', ctx => {
     const h = ctx.db.health;
-    const user = requireCustomer(ctx);
-    const r = h.records.find(x => x.id === decodeURIComponent(ctx.params[0]) && x.userId === user.id);
-    if (!r) throw notFound('Record');
+    const r = myRecord(ctx);
     h.records = h.records.filter(x => x.id !== r.id);
     for (const a of h.appointments) a.recordIds = a.recordIds.filter(id => id !== r.id);
     return { removed: true };
   });
 
-  route('GET', '/healthcare/prescriptions', ctx => {
+  route('GET', '/health/prescriptions', ctx => {
     const h = ctx.db.health;
     const user = requireCustomer(ctx);
+    const member = text(ctx.query.familyMemberId);
     const rows = h.prescriptions
       .map(p => ({ p, a: h.appointments.find(a => a.id === p.appointmentId) }))
-      .filter(x => x.a?.userId === user.id)
+      .filter(x => x.a?.userId === user.id && (!member || x.a.familyMemberId === member))
       .sort((x, y) => y.p.issuedAt.localeCompare(x.p.issuedAt))
-      .map(({ p, a }) => {
-        const d = doctorById(h, p.doctorId);
-        return {
-          id: p.id,
-          appointmentCode: a!.code,
-          doctorName: d ? `${d.title} ${d.name}` : 'Doctor',
-          specialtyName: specialtyBySlug(h, d?.specialtySlug ?? null)?.name ?? '',
-          diagnosis: p.diagnosis,
-          issuedAt: p.issuedAt,
-          patientName: a!.patientName,
-        };
-      });
+      .map(({ p }) => prescriptionWire(h, p, ctx.now));
     return paginate(rows, ctx.query);
   });
-  route('GET', '/healthcare/prescriptions/:id', ctx => {
+  route('GET', '/health/prescriptions/:id', ctx => {
     const h = ctx.db.health;
     const user = requireCustomer(ctx);
     const p = h.prescriptions.find(x => x.id === decodeURIComponent(ctx.params[0]));
     const a = p ? h.appointments.find(x => x.id === p.appointmentId) : null;
     if (!p || a?.userId !== user.id) throw notFound('Prescription');
-    return prescriptionView(h, p);
+    return prescriptionWire(h, p, ctx.now);
   });
 
-  route('POST', '/healthcare/symptoms/check', ctx => {
+  route('POST', '/health/symptom-checker', ctx => {
+    const h = ctx.db.health;
     requireCustomer(ctx);
     const t = text(ctx.body.text);
-    if (t.length < 3) throw bad('Describe how you feel.', { text: 'Describe how you feel in a few words' });
-    return checkSymptoms(ctx.db.health, t);
+    if (t.length < 10 || t.length > 1000) throw bad('Describe how you feel.', { text: 'text must be 10 to 1000 characters' });
+    const checkId = `sc_${Math.random().toString(36).slice(2, 10)}`;
+    const result = checkSymptoms(t);
+    if (result.emergency) {
+      return {
+        checkId,
+        emergency: true,
+        source: 'red_flag',
+        flags: [{ id: 'red_flag', label: 'A sign that needs urgent care' }],
+        message: EMERGENCY_MESSAGE,
+        numbers: EMERGENCY_NUMBERS,
+        disclaimer: DISCLAIMER,
+      };
+    }
+    const s = specialtyBySlug(h, result.slug) ?? specialtyBySlug(h, 'general-physician');
+    return {
+      checkId,
+      emergency: false,
+      source: 'fallback',
+      urgency: 'routine',
+      advice: 'Book a visit in the coming days. If you feel worse, see a doctor sooner.',
+      areasToDiscuss: result.areas.map(a => ({ title: a.title, explanation: a.body })),
+      specialty: s ? { id: s.id, name: s.name, nameUr: s.nameUr, slug: s.slug, icon: iconKey(s.icon), description: null } : null,
+      alternatives: [],
+      disclaimer: DISCLAIMER,
+    };
   });
 
   // ══ Doctor: profile and practice ═════════════════════
-  route('GET', '/healthcare/doctor/profile', ctx => ownProfileView(ctx.db.health, myDoctor(ctx).doctor));
+  route('GET', '/health/doctor/profile', ctx => {
+    const { doctor } = myDoctor(ctx);
+    return ownProfileWire(ctx.db.health, doctor, ctx.now, pmdcOf(ctx.db, doctor));
+  });
 
-  route('PATCH', '/healthcare/doctor/profile', ctx => {
+  route('PATCH', '/health/doctor/profile', ctx => {
     const { doctor: d } = myDoctor(ctx);
     const b = ctx.body;
     const h = ctx.db.health;
     const fields: Record<string, string> = {};
-    if (b.name !== undefined && text(b.name).length < 3) fields.name = 'Enter your full name';
-    if (b.specialtySlug !== undefined && !specialtyBySlug(h, b.specialtySlug)) fields.specialtySlug = 'Choose your specialty';
-    if (b.about !== undefined && String(b.about).length > 1200) fields.about = 'Keep it under 1,200 characters';
+    if (b.fullName !== undefined && text(b.fullName).length < 3) fields.fullName = 'Enter your full name';
+    const primary = b.primarySpecialtyId !== undefined ? h.specialties.find(s => s.id === b.primarySpecialtyId) : undefined;
+    if (b.primarySpecialtyId !== undefined && !primary) fields.primarySpecialtyId = 'Choose your specialty';
+    if (b.about !== undefined && String(b.about).length > 2000) fields.about = 'Keep it under 2,000 characters';
+    if (b.videoPrepayRequired === true && !(h.paymentAccounts[d.id] ?? []).some(a => a.isActive)) {
+      fields.videoPrepayRequired = 'Add a payment account first';
+    }
+    if (Array.isArray(b.experiences) && b.experiences.some((e: any) => !Number.isFinite(Number(e?.fromYear)))) fields['experiences.fromYear'] = 'fromYear is required';
     if (Object.keys(fields).length) throw bad('Check your profile.', fields);
-    for (const k of ['title', 'name', 'gender', 'photoUrl', 'specialtySlug', 'secondarySpecialtySlug', 'practisingSince', 'languages', 'about', 'qualifications', 'experience', 'services'] as const) {
-      if (b[k] !== undefined) (d as any)[k] = typeof b[k] === 'string' ? b[k].trim() : b[k];
+    // A new photo must be the doctor's own upload; re-sending the current one is fine (A9).
+    if (b.title !== undefined) d.title = TITLE_LABEL[b.title] ?? d.title;
+    if (b.fullName !== undefined) d.name = text(b.fullName);
+    for (const k of ['gender', 'photoUrl', 'languages', 'about', 'services'] as const) if (b[k] !== undefined) (d as any)[k] = typeof b[k] === 'string' ? b[k].trim() : b[k];
+    if (primary) d.specialtySlug = primary.slug;
+    if (Array.isArray(b.secondarySpecialtyIds)) d.secondarySpecialtySlug = h.specialties.find(s => s.id === b.secondarySpecialtyIds[0])?.slug ?? null;
+    if (b.practicingSince !== undefined) d.practisingSince = num(b.practicingSince);
+    if (Array.isArray(b.qualifications)) d.qualifications = b.qualifications.map((q: any) => ({ degree: text(q.degree), institute: text(q.institute), year: num(q.year) }));
+    if (Array.isArray(b.experiences)) d.experience = b.experiences.map((e: any) => ({ role: text(e.designation), place: text(e.institute), from: num(e.fromYear), to: num(e.toYear) }));
+    if (Array.isArray(b.conditionIds)) d.conditionSlugs = b.conditionIds.map((id: string) => h.conditions.find(c => c.id === id)?.slug).filter((x: string | undefined): x is string => !!x);
+    if (b.bookingWindowDays !== undefined) d.bookingRules.windowDays = Math.min(30, Math.max(1, Math.round(Number(b.bookingWindowDays))));
+    if (b.minNoticeMinutes !== undefined) d.bookingRules.minNoticeMinutes = Math.max(0, Math.round(Number(b.minNoticeMinutes)));
+    if (b.cancelCutoffMinutes !== undefined) d.bookingRules.cancelCutoffHours = Math.max(0, Number(b.cancelCutoffMinutes)) / 60;
+    if (b.videoPrepayRequired !== undefined) {
+      d.bookingRules.videoPrepay = !!b.videoPrepayRequired;
+      for (const l of locationsOf(h, d.id)) if (l.kind === 'video') l.requiresPrepay = !!b.videoPrepayRequired;
     }
-    if (Array.isArray(b.conditionSlugs)) d.conditionSlugs = b.conditionSlugs.filter((s: string) => h.conditions.some(c => c.slug === s));
-    if (b.bookingRules && typeof b.bookingRules === 'object') d.bookingRules = { ...d.bookingRules, ...b.bookingRules };
-    if (b.bookingRules?.videoPrepay !== undefined) {
-      for (const l of locationsOf(h, d.id)) if (l.kind === 'video') l.requiresPrepay = !!b.bookingRules.videoPrepay;
-    }
-    return ownProfileView(h, d);
+    return ownProfileWire(h, d, ctx.now, pmdcOf(ctx.db, d));
   });
 
-  route('GET', '/healthcare/doctor/profile/completeness', ctx => COMPLETENESS(ctx.db.health, myDoctor(ctx).doctor));
+  route('GET', '/health/doctor/profile/completeness', ctx => {
+    const { doctor } = myDoctor(ctx);
+    return completenessWire(ctx.db.health, doctor, pmdcOf(ctx.db, doctor).verified);
+  });
 
-  route('POST', '/healthcare/doctor/profile/publish', ctx => {
+  route('POST', '/health/doctor/listing/publish', ctx => {
     const { business, doctor } = myDoctor(ctx);
-    const c = COMPLETENESS(ctx.db.health, doctor);
-    if (c.percent < 100) {
-      throw new HealthError(422, 'PROFILE_INCOMPLETE', 'Finish the checklist before patients can find you.', { missing: c.items.filter(i => !i.done).map(i => i.key) });
-    }
-    if (!business.pmdcVerified) throw new HealthError(422, 'PMDC_NOT_VERIFIED', 'MetroMatrix is still checking your PMDC registration.');
+    const c = completenessWire(ctx.db.health, doctor, pmdcOf(ctx.db, doctor).verified);
+    if (c.percent < 100) throw new HealthError(422, 'PROFILE_INCOMPLETE', 'Finish the checklist before patients can find you.', { missing: c.missing });
     doctor.isListed = true;
     business.isListed = true;
-    return publicBusiness(business);
+    return { isListed: true };
+  });
+  route('POST', '/health/doctor/listing/unpublish', ctx => {
+    const { business, doctor } = myDoctor(ctx);
+    doctor.isListed = false;
+    business.isListed = false;
+    return { isListed: false };
   });
 
   const locationInput = (body: Record<string, any>, d: MockDoctor, partial = false) => {
@@ -1035,37 +1172,37 @@ export function registerHealthRoutes(kit: HealthKit) {
     const out: Partial<MockLocation> = {};
     if (!partial || body.kind !== undefined) out.kind = kind;
     if (!partial || body.name !== undefined) {
-      out.name = text(body.name);
+      out.name = text(body.name) || (kind === 'video' ? 'Video consultation' : '');
       if (out.name.length < 2) fields.name = 'Enter a name';
     }
     if (!partial || body.area !== undefined) out.area = text(body.area);
     if (!partial || body.city !== undefined) out.city = text(body.city) || d.city;
     if (!partial || body.fee !== undefined) {
       out.fee = Math.round(Number(body.fee));
-      if (!(out.fee >= 0 && out.fee <= 50000)) fields.fee = 'Enter the fee in rupees';
+      if (!(out.fee >= 0 && out.fee <= 100000)) fields.fee = 'Enter the fee in rupees';
     }
     if (!partial || body.slotMinutes !== undefined) {
-      out.slotMinutes = Math.round(Number(body.slotMinutes));
-      if (![10, 15, 20, 30, 45, 60].includes(out.slotMinutes)) fields.slotMinutes = 'Choose a slot length';
+      out.slotMinutes = Math.round(Number(body.slotMinutes ?? 15));
+      if (!(out.slotMinutes >= 10 && out.slotMinutes <= 60)) fields.slotMinutes = 'slotMinutes is 10 to 60';
     }
-    for (const k of ['address', 'phone', 'instructions'] as const) if (!partial || body[k] !== undefined) (out as any)[k] = text(body[k]) || null;
+    if (!partial || body.addressLine !== undefined) out.address = text(body.addressLine) || null;
+    for (const k of ['phone', 'instructions'] as const) if (!partial || body[k] !== undefined) (out as any)[k] = text(body[k]) || null;
     for (const k of ['lat', 'lng'] as const) if (!partial || body[k] !== undefined) (out as any)[k] = num(body[k]);
-    if (!partial || body.requiresPrepay !== undefined) out.requiresPrepay = kind === 'video' && !!body.requiresPrepay;
     if (kind === 'clinic' && (!partial || body.area !== undefined) && (out.area ?? '').length < 2) fields.area = 'Enter the area';
     if (Object.keys(fields).length) throw bad('Check the location.', fields);
     return out;
   };
 
-  route('GET', '/healthcare/doctor/locations', ctx => {
+  route('GET', '/health/doctor/locations', ctx => {
     const { doctor } = myDoctor(ctx);
-    return locationsOf(ctx.db.health, doctor.id).map(l => doctorLocationView(ctx.db.health, l, ctx.now));
+    return ctx.db.health.locations.filter(l => l.doctorId === doctor.id).map(l => doctorLocationWire(ctx.db.health, l, ctx.now));
   });
-  route('POST', '/healthcare/doctor/locations', ctx => {
+  route('POST', '/health/doctor/locations', ctx => {
     const { doctor } = myDoctor(ctx);
     const h = ctx.db.health;
     const input = locationInput(ctx.body, doctor);
     if (input.kind === 'video' && locationsOf(h, doctor.id).some(l => l.kind === 'video')) {
-      throw new HealthError(409, 'VIDEO_EXISTS', 'You already offer video consultations. Edit that row instead.');
+      throw new HealthError(409, 'CONFLICT', 'You already offer video consultations. Edit that location instead.');
     }
     const loc: MockLocation = {
       id: nextId(h, 'loc'),
@@ -1082,135 +1219,149 @@ export function registerHealthRoutes(kit: HealthKit) {
       slotMinutes: 15,
       instructions: null,
       timezone: PKT,
-      requiresPrepay: false,
+      requiresPrepay: doctor.bookingRules.videoPrepay,
       hours: [1, 2, 3, 4, 5, 6, 7].map(day => ({ day, ranges: [] })),
       isActive: true,
       ...input,
     };
     h.locations.push(loc);
     ctx.setStatus(201);
-    return doctorLocationView(h, loc, ctx.now);
+    return doctorLocationWire(h, loc, ctx.now);
   });
   const ownLocation = (ctx: ShopCtx, d: MockDoctor) => {
     const l = locationById(ctx.db.health, decodeURIComponent(ctx.params[0]));
     if (!l || l.doctorId !== d.id || !l.isActive) throw notFound('Location');
     return l;
   };
-  route('PATCH', '/healthcare/doctor/locations/:id', ctx => {
+  route('PATCH', '/health/doctor/locations/:id', ctx => {
     const { doctor } = myDoctor(ctx);
     const l = ownLocation(ctx, doctor);
     Object.assign(l, locationInput({ kind: l.kind, ...ctx.body }, doctor, true));
-    return doctorLocationView(ctx.db.health, l, ctx.now);
+    return doctorLocationWire(ctx.db.health, l, ctx.now);
   });
-  route('DELETE', '/healthcare/doctor/locations/:id', ctx => {
+  route('DELETE', '/health/doctor/locations/:id', ctx => {
     const { doctor } = myDoctor(ctx);
     const h = ctx.db.health;
     const l = ownLocation(ctx, doctor);
-    const booked = h.appointments.filter(a => a.locationId === l.id && isActive(a) && Date.parse(a.startAt) > ctx.now).length;
-    if (booked) throw new HealthError(409, 'LOCATION_HAS_APPOINTMENTS', `${booked} upcoming ${booked === 1 ? 'appointment is' : 'appointments are'} booked here. Move or cancel them first.`);
+    const booked = h.appointments.filter(a => a.locationId === l.id && isActive(a) && Date.parse(a.startAt) > ctx.now);
+    if (booked.length) {
+      throw new HealthError(409, 'LOCATION_HAS_BOOKINGS', `${booked.length} upcoming ${booked.length === 1 ? 'appointment is' : 'appointments are'} booked here. Move or cancel them first.`, {
+        appointments: booked.map(a => a.code),
+      });
+    }
     l.isActive = false;
     return { removed: true };
   });
-  route('PUT', '/healthcare/doctor/locations/:id/hours', ctx => {
+  route('GET', '/health/doctor/locations/:id/schedule', ctx => scheduleWire(ownLocation(ctx, myDoctor(ctx).doctor)));
+  route('PUT', '/health/doctor/locations/:id/schedule', ctx => {
     const { doctor } = myDoctor(ctx);
     const h = ctx.db.health;
     const l = ownLocation(ctx, doctor);
-    const hours = cleanWeek(ctx.body.hours);
-    const fields = weekErrors(hours);
-    if (Object.keys(fields).length) throw bad('Check the hours.', fields);
-    const overlaps: { day: number; otherLocationName: string }[] = [];
+    const hours = weekFromBody(ctx.body);
     for (const d of hours) {
       for (const other of locationsOf(h, doctor.id)) {
         if (other.id === l.id) continue;
         const theirs = other.hours.find(x => x.day === d.day)?.ranges ?? [];
-        const clash = d.ranges.some(r => theirs.some(t => toMin(r.from) < toMin(t.to) && toMin(t.from) < toMin(r.to)));
-        if (clash && !overlaps.some(o => o.day === d.day && o.otherLocationName === other.name)) overlaps.push({ day: d.day, otherLocationName: other.name });
+        for (const r of d.ranges) {
+          const clash = theirs.find(t => toMin(r.from) < toMin(t.to) && toMin(t.from) < toMin(r.to));
+          if (clash) {
+            const weekday = d.day === 7 ? 0 : d.day;
+            throw new HealthError(409, 'SCHEDULE_OVERLAP', `These hours overlap your hours at ${other.name}.`, {
+              range: { locationId: l.id, weekday, start: r.from, end: r.to },
+              conflict: { locationId: other.id, locationName: other.name, weekday, start: clash.from, end: clash.to },
+            });
+          }
+        }
       }
     }
-    if (overlaps.length) {
-      const DAYS = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-      const first = overlaps[0];
-      throw bad(`These hours overlap your ${DAYS[first.day]} hours at ${first.otherLocationName}.`, { hours: `Overlaps ${first.otherLocationName}` }, { overlaps });
-    }
     l.hours = hours;
-    return doctorLocationView(h, l, ctx.now);
+    return scheduleWire(l);
   });
 
-  route('GET', '/healthcare/doctor/availability/preview', ctx => {
+  route('GET', '/health/doctor/availability/preview', ctx => {
     const { doctor } = myDoctor(ctx);
     const h = ctx.db.health;
     const n = Math.min(14, Math.max(1, Math.round(num(ctx.query.days) ?? 7)));
     doctor.previewSeen = true;
     return {
       locations: locationsOf(h, doctor.id).map(l => {
-        const today = todayInZone(l.timezone, ctx.now);
-        return {
-          id: l.id,
-          name: l.name,
-          kind: l.kind,
-          timezone: l.timezone,
-          days: Array.from({ length: n }, (_, i) => {
-            const date = addDays(today, i);
-            return { date, slots: slotsFor(h, l, date, ctx.now).map(s => s.startAt) };
-          }),
-        };
+        const from = DATE.test(String(ctx.query.from ?? '')) ? String(ctx.query.from) : todayInZone(l.timezone, ctx.now);
+        // Patients can't see an unlisted doctor yet; the preview shows the same slots as if listed.
+        const listed = doctor.isListed;
+        doctor.isListed = true;
+        const view = slotsWire(h, l, from, n, ctx.now);
+        doctor.isListed = listed;
+        return { location: view.location, days: view.days };
       }),
     };
   });
 
-  route('GET', '/healthcare/doctor/time-off', ctx => {
+  /** Time off is stored as whole days in Pakistan time; the API speaks instants. */
+  const timeOffWire = (t: MockHealth['timeOff'][number]) => ({
+    id: t.id,
+    locationId: t.locationId,
+    startsAt: `${t.from}T00:00:00+05:00`.replace(/^(.*)$/, s => new Date(s).toISOString()),
+    endsAt: new Date(`${addDays(t.to, 1)}T00:00:00+05:00`).toISOString(),
+    reason: t.reason,
+  });
+
+  route('GET', '/health/doctor/time-off', ctx => {
     const { doctor } = myDoctor(ctx);
     const h = ctx.db.health;
-    const today = todayInZone(PKT, ctx.now);
+    const from = addDays(todayInZone(PKT, ctx.now), -30);
     return h.timeOff
-      .filter(t => t.doctorId === doctor.id && t.to >= today)
+      .filter(t => t.doctorId === doctor.id && t.to >= from)
       .sort((a, b) => a.from.localeCompare(b.from))
-      .map(t => ({ ...t, locationName: t.locationId ? (locationById(h, t.locationId)?.name ?? null) : null }));
+      .map(timeOffWire);
   });
-  route('POST', '/healthcare/doctor/time-off', ctx => {
+  route('POST', '/health/doctor/time-off', ctx => {
     const { db, now, body } = ctx;
     const { doctor } = myDoctor(ctx);
     const h = db.health;
-    const today = todayInZone(PKT, now);
-    const from = String(body.from ?? '');
-    const to = String(body.to ?? '');
-    const fields: Record<string, string> = {};
-    if (!DATE.test(from) || from < today) fields.from = 'Choose today or a later day';
-    if (!DATE.test(to) || to < from) fields.to = 'The last day is before the first';
+    const start = instantOf(body.startsAt);
+    const end = instantOf(body.endsAt);
+    if (!start || !end) throw bad('Choose the dates.', { startsAt: 'startsAt must be a valid ISO 8601 date string' });
+    if (Date.parse(end) <= Date.parse(start)) throw bad('The end is before the start.', { endsAt: 'endsAt must be after startsAt' });
     const locationId = body.locationId ? String(body.locationId) : null;
-    if (locationId && !locationsOf(h, doctor.id).some(l => l.id === locationId)) fields.locationId = 'Choose one of your locations';
-    if (Object.keys(fields).length) throw bad('Check the dates.', fields);
-    const conflicts = h.appointments.filter(
-      a =>
-        a.doctorId === doctor.id &&
-        isActive(a) &&
-        Date.parse(a.startAt) > now &&
-        (!locationId || a.locationId === locationId) &&
-        dateInZone(a.startAt, PKT) >= from &&
-        dateInZone(a.startAt, PKT) <= to,
-    );
-    if (conflicts.length && !bool(body.cancelConflicts)) {
-      throw new HealthError(409, 'TIME_OFF_CONFLICT', `${conflicts.length} booked ${conflicts.length === 1 ? 'appointment falls' : 'appointments fall'} on these days.`, {
-        appointments: conflicts
-          .sort(upcomingFirst)
-          .map(a => ({ id: a.id, code: a.code, startAt: a.startAt, timezone: PKT, patientName: a.patientName })),
+    if (locationId && !locationsOf(h, doctor.id).some(l => l.id === locationId)) throw notFound('Location');
+    const affected = h.appointments
+      .filter(
+        a =>
+          a.doctorId === doctor.id &&
+          isActive(a) &&
+          (!locationId || a.locationId === locationId) &&
+          Date.parse(a.startAt) < Date.parse(end) &&
+          Date.parse(start) < Date.parse(a.endAt),
+      )
+      .sort(upcomingFirst);
+    if (affected.length && !bool(body.cancelAffected)) {
+      throw new HealthError(409, 'TIME_OFF_CONFLICTS', `${affected.length} patient(s) are booked in that time. Send cancelAffected: true to cancel them.`, {
+        appointments: affected.map(a => ({ code: a.code, startsAt: zoned(a.startAt, PKT), patientName: a.patientName })),
       });
     }
-    for (const a of conflicts) {
+    for (const a of affected) {
       a.status = 'cancelled';
-      a.cancelledBy = 'doctor';
-      a.cancelReason = 'The doctor is not available on this day.';
+      a.cancelledBy = 'system';
+      a.cancelReason = text(body.reason) || 'The doctor is unavailable at this time.';
+      settlePaymentOnCancel(a, now);
       addEvent(a, 'cancelled', a.cancelReason, now);
-      notifyHealth(db, a.userId, 'appointment_update', 'Appointment cancelled', `${doctor.title} ${doctor.name} is not available on that day, so ${a.code} was cancelled. Please book another time.`, {
+      notifyHealth(db, a.userId, 'health.appointment.cancelled', 'Appointment cancelled', `${displayName(doctor)} is not available then, so ${a.code} was cancelled. Please book another time.`, {
         appointmentCode: a.code,
       });
     }
-    const t = { id: nextId(h, 'off'), doctorId: doctor.id, from, to, locationId, reason: text(body.reason) || null };
+    const t = {
+      id: nextId(h, 'off'),
+      doctorId: doctor.id,
+      from: dateInZone(start, PKT),
+      to: dateInZone(new Date(Math.max(Date.parse(start), Date.parse(end) - MINUTE)).toISOString(), PKT),
+      locationId,
+      reason: text(body.reason) || null,
+    };
     h.timeOff.push(t);
     ctx.setStatus(201);
-    return { ...t, locationName: locationId ? (locationById(h, locationId)?.name ?? null) : null };
+    return { ...timeOffWire(t), startsAt: start, endsAt: end };
   });
-  route('DELETE', '/healthcare/doctor/time-off/:id', ctx => {
+  route('DELETE', '/health/doctor/time-off/:id', ctx => {
     const { doctor } = myDoctor(ctx);
     const h = ctx.db.health;
     const t = h.timeOff.find(x => x.id === decodeURIComponent(ctx.params[0]) && x.doctorId === doctor.id);
@@ -1219,39 +1370,48 @@ export function registerHealthRoutes(kit: HealthKit) {
     return { removed: true };
   });
 
-  // Payment accounts (same rules as a store's).
+  // Payment accounts: `{ kind, accountTitle, accountNumber, bankName? }` (validated as in Shopping).
   const accountInput = (b: Record<string, any>) => {
     const kind = ['raast', 'jazzcash', 'easypaisa', 'bank'].includes(b.kind) ? b.kind : null;
     const fields: Record<string, string> = {};
     if (!kind) fields.kind = 'Choose an account type';
-    if (text(b.title).length < 3) fields.title = 'Enter the account title';
-    const number = text(b.number).replace(/\s/g, '').toUpperCase();
+    if (text(b.accountTitle).length < 3) fields.accountTitle = 'Enter the account title';
+    const number = text(b.accountNumber).replace(/\s/g, '').toUpperCase();
     if (kind === 'bank' ? !/^PK\d{2}[A-Z]{4}\d{16}$/.test(number) : !/^(\+92|0)3\d{9}$/.test(number)) {
-      fields.number = kind === 'bank' ? 'Enter a 24-character PK IBAN' : 'Enter the mobile number on the account';
+      fields.accountNumber = kind === 'bank' ? 'Enter a 24-character PK IBAN' : 'Enter the mobile number on the account';
     }
     if (kind === 'bank' && text(b.bankName).length < 2) fields.bankName = 'Enter the bank name';
     if (Object.keys(fields).length) throw bad('Check the account.', fields);
-    return { kind, title: text(b.title), number: number.startsWith('0') ? `+92${number.slice(1)}` : number, bankName: kind === 'bank' ? text(b.bankName) : null, isActive: b.isActive !== false };
+    return { kind, title: text(b.accountTitle), number: number.startsWith('0') ? `+92${number.slice(1)}` : number, bankName: kind === 'bank' ? text(b.bankName) : null, isActive: b.isActive !== false };
   };
-  route('GET', '/healthcare/doctor/payment-accounts', ctx => ctx.db.health.paymentAccounts[myDoctor(ctx).doctor.id] ?? []);
-  route('POST', '/healthcare/doctor/payment-accounts', ctx => {
+  const accountWire = (a: MockHealth['paymentAccounts'][string][number]) => ({
+    id: a.id,
+    kind: a.kind,
+    accountTitle: a.title,
+    accountNumber: a.number,
+    bankName: a.bankName,
+    isActive: a.isActive,
+    createdAt: null,
+  });
+  route('GET', '/health/doctor/payment-accounts', ctx => (ctx.db.health.paymentAccounts[myDoctor(ctx).doctor.id] ?? []).map(accountWire));
+  route('POST', '/health/doctor/payment-accounts', ctx => {
     const { doctor } = myDoctor(ctx);
     const h = ctx.db.health;
     const list = (h.paymentAccounts[doctor.id] ??= []);
-    if (list.filter(a => a.isActive).length >= 4) throw new HealthError(422, 'ACCOUNT_LIMIT', 'You can keep up to 4 active accounts.');
+    if (list.filter(a => a.isActive).length >= 4) throw new HealthError(409, 'CONFLICT', 'You can keep up to 4 active accounts.');
     const acc = { id: nextId(h, 'pa'), ...accountInput(ctx.body) };
     list.push(acc);
     ctx.setStatus(201);
-    return acc;
+    return accountWire(acc);
   });
-  route('PATCH', '/healthcare/doctor/payment-accounts/:id', ctx => {
+  route('PATCH', '/health/doctor/payment-accounts/:id', ctx => {
     const { doctor } = myDoctor(ctx);
     const acc = (ctx.db.health.paymentAccounts[doctor.id] ?? []).find(a => a.id === decodeURIComponent(ctx.params[0]));
     if (!acc) throw notFound('Account');
-    Object.assign(acc, accountInput({ ...acc, ...ctx.body }));
-    return acc;
+    Object.assign(acc, accountInput({ kind: acc.kind, accountTitle: acc.title, accountNumber: acc.number, bankName: acc.bankName, isActive: acc.isActive, ...ctx.body }));
+    return accountWire(acc);
   });
-  route('DELETE', '/healthcare/doctor/payment-accounts/:id', ctx => {
+  route('DELETE', '/health/doctor/payment-accounts/:id', ctx => {
     const { doctor } = myDoctor(ctx);
     const h = ctx.db.health;
     const before = (h.paymentAccounts[doctor.id] ?? []).length;
@@ -1261,67 +1421,60 @@ export function registerHealthRoutes(kit: HealthKit) {
   });
 
   // ══ Doctor: the day ══════════════════════════════════
-  route('GET', '/healthcare/doctor/today', ctx => {
+  const STATUS_RANK: Record<string, number> = { in_progress: 0, checked_in: 1, confirmed: 2, awaiting_payment: 2, completed: 3, no_show: 3 };
+
+  route('GET', '/health/doctor/today', ctx => {
     const { doctor } = myDoctor(ctx);
     const h = ctx.db.health;
     if (doctor.id === 'd_bilal') ensureDemoVideo(h, ctx.now);
-    const date = DATE.test(String(ctx.query.date ?? '')) ? String(ctx.query.date) : todayInZone(PKT, ctx.now);
-    const locationId = ctx.query.locationId ? String(ctx.query.locationId) : null;
-    const day = h.appointments.filter(a => a.doctorId === doctor.id && a.status !== 'cancelled' && dateInZone(a.startAt, PKT) === date);
-    const shown = day.filter(a => !locationId || a.locationId === locationId).sort(upcomingFirst);
+    const date = todayInZone(PKT, ctx.now);
+    const day = h.appointments
+      .filter(a => a.doctorId === doctor.id && a.status !== 'cancelled' && dateInZone(a.startAt, PKT) === date)
+      .sort((a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status] || (a.checkedInAt ?? a.startAt).localeCompare(b.checkedInAt ?? b.startAt));
     return {
       date,
-      timezone: PKT,
-      locations: locationsOf(h, doctor.id).map(l => ({ id: l.id, name: l.name, kind: l.kind })),
       counts: {
-        booked: shown.length,
-        checkedIn: shown.filter(a => a.status === 'checked_in' || a.status === 'in_progress').length,
-        done: shown.filter(a => a.status === 'completed').length,
-        noShow: shown.filter(a => a.status === 'no_show').length,
+        total: day.length,
+        waiting: day.filter(a => a.status === 'checked_in').length,
+        inConsultation: day.filter(a => a.status === 'in_progress').length,
+        remaining: day.filter(a => a.status === 'confirmed' || a.status === 'awaiting_payment').length,
+        done: day.filter(a => a.status === 'completed' || a.status === 'no_show').length,
       },
-      queue: shown.map(a => queueItemView(h, a, ctx.now)),
+      queue: day.map(a => doctorAppointmentWire(h, a, ctx.now)),
     };
   });
 
-  route('GET', '/healthcare/doctor/calendar', ctx => {
+  route('GET', '/health/doctor/appointments', ctx => {
     const { doctor } = myDoctor(ctx);
     const h = ctx.db.health;
-    if (doctor.id === 'd_bilal') ensureDemoVideo(h, ctx.now);
-    const from = DATE.test(String(ctx.query.from ?? '')) ? String(ctx.query.from) : todayInZone(PKT, ctx.now);
-    const to = DATE.test(String(ctx.query.to ?? '')) ? String(ctx.query.to) : addDays(from, 6);
-    return {
-      appointments: h.appointments
-        .filter(a => a.doctorId === doctor.id && a.status !== 'cancelled' && dateInZone(a.startAt, PKT) >= from && dateInZone(a.startAt, PKT) <= to)
-        .sort(upcomingFirst)
-        .map(a => ({
-          id: a.id,
-          startAt: a.startAt,
-          endAt: a.endAt,
-          timezone: PKT,
-          kind: a.kind,
-          locationId: a.locationId,
-          locationName: locationById(h, a.locationId)?.name ?? '',
-          patientName: a.patientName,
-          status: a.status,
-        })),
-      timeOff: h.timeOff
-        .filter(t => t.doctorId === doctor.id && t.to >= from && t.from <= to)
-        .map(t => ({ ...t, locationName: t.locationId ? (locationById(h, t.locationId)?.name ?? null) : null })),
-      locations: locationsOf(h, doctor.id).map(l => ({ id: l.id, name: l.name, kind: l.kind })),
-    };
+    const q = ctx.query;
+    const date = DATE.test(String(q.date ?? '')) ? String(q.date) : null;
+    const from = DATE.test(String(q.from ?? '')) ? String(q.from) : null;
+    const to = DATE.test(String(q.to ?? '')) ? String(q.to) : null;
+    const rows = h.appointments
+      .filter(a => a.doctorId === doctor.id && a.userId !== 'u_standin_ghost')
+      .filter(a => !q.status || STATUS_RANK[a.status] !== undefined || a.status === 'cancelled')
+      .filter(a => !q.locationId || a.locationId === q.locationId)
+      .filter(a => {
+        const d = dateInZone(a.startAt, PKT);
+        return (!date || d === date) && (!from || d >= from) && (!to || d <= to);
+      })
+      .sort(upcomingFirst)
+      .map(a => doctorAppointmentWire(h, a, ctx.now));
+    return paginate(rows, q);
   });
 
-  route('GET', '/healthcare/doctor/appointments/:id', ctx => {
+  route('GET', '/health/doctor/appointments/:code', ctx => {
     const { doctor } = myDoctor(ctx);
-    return doctorAppointmentView(ctx.db.health, doctorAppointment(ctx, doctor), ctx.now);
+    return doctorAppointmentWire(ctx.db.health, doctorAppointment(ctx, doctor), ctx.now, true);
   });
 
   const act = (pattern: string, run: (ctx: ShopCtx, a: MockAppointment, doctor: MockDoctor) => void) =>
-    route('POST', `/healthcare/doctor/appointments/:id/${pattern}`, ctx => {
+    route('POST', `/health/doctor/appointments/:code/${pattern}`, ctx => {
       const { doctor } = myDoctor(ctx);
       const a = doctorAppointment(ctx, doctor);
       run(ctx, a, doctor);
-      return doctorAppointmentView(ctx.db.health, a, ctx.now);
+      return doctorAppointmentWire(ctx.db.health, a, ctx.now);
     });
 
   act('check-in', (ctx, a) => {
@@ -1331,7 +1484,7 @@ export function registerHealthRoutes(kit: HealthKit) {
     addEvent(a, 'checked_in', null, ctx.now);
   });
   act('start', (ctx, a) => {
-    if (!doctorActions(ctx.db.health, a, ctx.now).canStart) throw transition('This consultation can not start now.');
+    if (!doctorActions(ctx.db.health, a, ctx.now).canStart) throw transition('Check the patient in before starting.');
     a.status = 'in_progress';
     a.startedAt = isoNow(ctx.now);
     if (a.kind === 'video' && !a.checkedInAt) a.checkedInAt = a.startedAt;
@@ -1340,8 +1493,9 @@ export function registerHealthRoutes(kit: HealthKit) {
   act('no-show', (ctx, a) => {
     if (!doctorActions(ctx.db.health, a, ctx.now).canNoShow) throw transition('This appointment can not be marked as missed yet.');
     a.status = 'no_show';
+    settlePaymentOnCancel(a, ctx.now);
     addEvent(a, 'no_show', null, ctx.now);
-    notifyHealth(ctx.db, a.userId, 'appointment_update', 'Marked as missed', `Your appointment ${a.code} was marked as missed. You can book another time.`, {
+    notifyHealth(ctx.db, a.userId, 'health.appointment.no_show', 'Marked as missed', `Your appointment ${a.code} was marked as missed. You can book another time.`, {
       appointmentCode: a.code,
     });
   });
@@ -1351,391 +1505,526 @@ export function registerHealthRoutes(kit: HealthKit) {
     a.completedAt = isoNow(ctx.now);
     if (a.paymentMethod === 'pay_at_visit' && bool(ctx.body.paymentCollected)) a.paymentStatus = 'collected';
     addEvent(a, 'completed', null, ctx.now);
-    notifyHealth(ctx.db, a.userId, 'appointment_update', 'Visit complete', `Your visit with ${doctor.title} ${doctor.name} is complete. You can rate it from the appointment.`, {
+    notifyHealth(ctx.db, a.userId, 'health.appointment.completed', 'Visit complete', `Your visit with ${displayName(doctor)} is complete. You can rate it from the appointment.`, {
       appointmentCode: a.code,
     });
   });
   act('cancel', (ctx, a, doctor) => {
     if (!doctorActions(ctx.db.health, a, ctx.now).canCancel) throw transition('This appointment can no longer be cancelled.');
     const reason = text(ctx.body.reason);
-    if (reason.length < 3) throw bad('Tell the patient why.', { reason: 'Tell the patient why' });
+    if (reason.length < 3) throw bad('Tell the patient why.', { reason: 'reason must be longer than or equal to 3 characters' });
     a.status = 'cancelled';
     a.cancelledBy = 'doctor';
     a.cancelReason = reason;
+    settlePaymentOnCancel(a, ctx.now);
     addEvent(a, 'cancelled', reason, ctx.now);
-    notifyHealth(ctx.db, a.userId, 'appointment_update', 'Appointment cancelled', `${doctor.title} ${doctor.name} cancelled ${a.code}: ${reason}`, { appointmentCode: a.code });
+    notifyHealth(ctx.db, a.userId, 'health.appointment.cancelled', 'Appointment cancelled', `${displayName(doctor)} cancelled ${a.code}: ${reason}`, { appointmentCode: a.code });
   });
   act('payment/confirm', (ctx, a) => {
-    if (a.paymentStatus !== 'proof_submitted') throw transition('There is no payment to confirm.');
+    if (a.paymentMethod !== 'transfer') throw transition('Mark a clinic fee paid when completing the visit.');
+    if (!(a.paymentStatus === 'awaiting_transfer' || a.paymentStatus === 'proof_submitted' || a.paymentStatus === 'proof_rejected')) {
+      throw transition('There is no payment to confirm.');
+    }
     a.paymentStatus = 'paid';
     addEvent(a, 'payment_confirmed', null, ctx.now);
-    if (a.status === 'awaiting_payment') {
-      a.status = 'confirmed';
-      addEvent(a, 'confirmed', null, ctx.now);
-    }
-    notifyHealth(ctx.db, a.userId, 'appointment_update', 'Payment confirmed', `Your appointment ${a.code} is confirmed.`, { appointmentCode: a.code });
+    if (a.status === 'awaiting_payment') a.status = 'confirmed';
+    notifyHealth(ctx.db, a.userId, 'health.payment.confirmed', 'Payment confirmed', `The doctor confirmed your payment for ${a.code}.`, { appointmentCode: a.code });
   });
   act('payment/reject', (ctx, a) => {
     if (a.paymentStatus !== 'proof_submitted' || !a.proof) throw transition('There is no payment to check.');
     const reason = text(ctx.body.reason);
-    if (reason.length < 3) throw bad('Tell the patient what was wrong.', { reason: 'Tell the patient what was wrong' });
+    if (reason.length < 3) throw bad('Tell the patient what was wrong.', { reason: 'reason must be longer than or equal to 3 characters' });
     a.paymentStatus = 'proof_rejected';
     a.proof = { ...a.proof, rejectionReason: reason };
-    if (a.instructions) a.instructions.payBy = new Date(Math.max(Date.parse(a.instructions.payBy), ctx.now + 60 * MINUTE)).toISOString();
+    if (a.instructions && a.status === 'awaiting_payment') {
+      a.instructions.payBy = new Date(Math.min(Math.max(Date.parse(a.instructions.payBy), ctx.now + 2 * HOUR), Date.parse(a.startAt))).toISOString();
+    }
     addEvent(a, 'payment_rejected', reason, ctx.now);
-    notifyHealth(ctx.db, a.userId, 'appointment_update', 'Payment not found', `The doctor could not find your payment for ${a.code}: ${reason}`, { appointmentCode: a.code });
+    notifyHealth(ctx.db, a.userId, 'health.payment.rejected', 'Payment not found', `${a.code}: payment not received — ${reason}`, { appointmentCode: a.code });
   });
-  route('PUT', '/healthcare/doctor/appointments/:id/notes', ctx => {
+  act('refund', (ctx, a) => {
+    if (a.paymentStatus !== 'refund_due') throw transition('No refund is due on this appointment.');
+    if (text(ctx.body.refundRef).length < 3) throw bad('Enter the refund reference.', { refundRef: 'refundRef must be longer than or equal to 3 characters' });
+    a.paymentStatus = 'refunded';
+    addEvent(a, 'refunded', text(ctx.body.refundRef), ctx.now);
+  });
+
+  route('GET', '/health/doctor/appointments/:code/notes', ctx => notesWire(doctorAppointment(ctx, myDoctor(ctx).doctor)));
+  route('PUT', '/health/doctor/appointments/:code/notes', ctx => {
     const { doctor } = myDoctor(ctx);
     const a = doctorAppointment(ctx, doctor);
     const t = typeof ctx.body.text === 'string' ? ctx.body.text : '';
-    if (t.length > 4000) throw bad('Keep notes under 4,000 characters.', { text: 'Keep notes under 4,000 characters' });
+    if (t.length > 5000) throw bad('Keep notes under 5,000 characters.', { text: 'text must be shorter than or equal to 5000 characters' });
     a.notes = {
       text: t,
-      attachments: (Array.isArray(ctx.body.attachments) ? ctx.body.attachments : []).filter((u: unknown) => typeof u === 'string').slice(0, 10),
+      attachments: (Array.isArray(ctx.body.files) ? ctx.body.files : []).map((f: any) => f?.url).filter((u: unknown) => typeof u === 'string').slice(0, 10),
       updatedAt: isoNow(ctx.now),
     };
-    return doctorAppointmentView(ctx.db.health, a, ctx.now);
+    return notesWire(a);
   });
-  route('POST', '/healthcare/doctor/appointments/:id/video/join', ctx => {
+  route('POST', '/health/doctor/appointments/:code/video/join', ctx => {
     const { doctor } = myDoctor(ctx);
     const a = doctorAppointment(ctx, doctor);
-    if (!canJoin(a, ctx.now)) {
-      throw new HealthError(403, 'VIDEO_NOT_OPEN', 'The consultation room opens 10 minutes before the time.', {
-        opensAt: new Date(Date.parse(a.startAt) - 10 * MINUTE).toISOString(),
-      });
+    joinCheck({ ...a, status: a.status === 'awaiting_payment' ? 'confirmed' : a.status }, ctx.now);
+    // The doctor's join starts the consultation.
+    if (a.status === 'confirmed' || a.status === 'awaiting_payment') {
+      a.status = 'in_progress';
+      a.startedAt = isoNow(ctx.now);
+      a.checkedInAt ??= a.startedAt;
+      addEvent(a, 'in_progress', null, ctx.now);
     }
-    const name = `${doctor.title} ${doctor.name}`;
-    return { provider: 'jitsi', roomUrl: roomUrl(a, name), jwt: null, displayName: name, closesAt: new Date(Date.parse(a.endAt) + 30 * MINUTE).toISOString() };
+    const name = displayName(doctor);
+    return videoJoinWire(a, roomUrl(a, name), name, true);
+  });
+  route('GET', '/health/doctor/appointments/:code/records/:recordId', ctx => {
+    const { doctor } = myDoctor(ctx);
+    const h = ctx.db.health;
+    const a = doctorAppointment(ctx, doctor);
+    const id = decodeURIComponent(ctx.params[1]);
+    const r = a.recordIds.includes(id) ? h.records.find(x => x.id === id) : null;
+    if (!r) throw notFound('Record');
+    return recordWire(h, r, ctx.now);
   });
 
   // ══ Doctor: prescriptions ════════════════════════════
-  route('POST', '/healthcare/doctor/appointments/:id/prescription', ctx => {
+  route('GET', '/health/doctor/appointments/:code/prescription', ctx => {
+    const { doctor } = myDoctor(ctx);
+    const h = ctx.db.health;
+    const a = doctorAppointment(ctx, doctor);
+    const p = a.prescriptionId ? h.prescriptions.find(x => x.id === a.prescriptionId) : null;
+    return { prescription: p ? prescriptionWire(h, p, ctx.now) : null, locked: !prescriptionOpen(a, ctx.now) };
+  });
+  route('POST', '/health/doctor/appointments/:code/prescription', ctx => {
     const { db, now } = ctx;
     const { doctor } = myDoctor(ctx);
     const h = db.health;
     const a = doctorAppointment(ctx, doctor);
-    if (a.prescriptionId) throw new HealthError(409, 'PRESCRIPTION_EXISTS', 'This visit already has a prescription. Edit it instead.');
-    if (a.status !== 'in_progress' && a.status !== 'completed') throw transition('Start the consultation before writing a prescription.');
-    const p = { id: nextId(h, 'rx'), appointmentId: a.id, doctorId: doctor.id, issuedAt: isoNow(now), ...validatePrescription(ctx.body) };
-    h.prescriptions.push(p);
-    a.prescriptionId = p.id;
-    addEvent(a, 'prescription_issued', null, now);
-    notifyHealth(db, a.userId, 'prescription_ready', 'Your prescription is ready', `${doctor.title} ${doctor.name} wrote a prescription for ${a.patientName}.`, {
+    if (!prescriptionOpen(a, now)) {
+      throw new HealthError(409, 'PRESCRIPTION_LOCKED', a.status === 'completed' ? 'Prescriptions can be changed for 24 hours after the visit.' : 'Start the consultation before writing a prescription.', {
+        reason: a.status === 'completed' ? 'window_closed' : 'not_in_consultation',
+      });
+    }
+    const input = prescriptionFromBody(ctx.body);
+    let p = a.prescriptionId ? h.prescriptions.find(x => x.id === a.prescriptionId) : null;
+    if (p) Object.assign(p, input);
+    else {
+      p = { id: nextId(h, 'rx'), appointmentId: a.id, doctorId: doctor.id, issuedAt: isoNow(now), ...input };
+      h.prescriptions.push(p);
+      a.prescriptionId = p.id;
+      const fav = (h.favourites[doctor.id] ??= []);
+      for (const m of input.medicines) if (!fav.some(f => f.name === m.name && f.strength === m.strength)) fav.push({ name: m.name, strength: m.strength, form: m.form });
+    }
+    notifyHealth(db, a.userId, 'health.prescription', 'Your prescription is ready', `${displayName(doctor)} wrote a prescription for ${a.patientName}.`, {
       prescriptionId: p.id,
       appointmentCode: a.code,
     });
     ctx.setStatus(201);
-    return prescriptionView(h, p);
+    return prescriptionWire(h, p, now);
   });
-  route('PATCH', '/healthcare/doctor/prescriptions/:id', ctx => {
+  route('GET', '/health/doctor/prescriptions/:id', ctx => {
     const { doctor } = myDoctor(ctx);
     const h = ctx.db.health;
     const p = h.prescriptions.find(x => x.id === decodeURIComponent(ctx.params[0]) && x.doctorId === doctor.id);
     if (!p) throw notFound('Prescription');
-    if (ctx.now > Date.parse(p.issuedAt) + PRESCRIPTION_EDIT_HOURS * HOUR) {
-      throw new HealthError(409, 'PRESCRIPTION_LOCKED', 'Prescriptions can be changed for 24 hours after they are written. Write a new one at the next visit.');
-    }
-    Object.assign(p, validatePrescription(ctx.body));
-    return prescriptionView(h, p);
+    return prescriptionWire(h, p, ctx.now);
   });
-  route('GET', '/healthcare/doctor/medicines/suggest', ctx => {
+  route('GET', '/health/doctor/medicines/suggest', ctx => {
     const { doctor } = myDoctor(ctx);
     const h = ctx.db.health;
     const q = text(ctx.query.q);
     const fav = (h.favourites[doctor.id] ?? []).filter(m => !q || matches(q, m.name));
-    const rest = h.formulary.filter(m => (!q ? false : matches(q, m.name)) && !fav.some(f => f.name === m.name && f.strength === m.strength));
-    return [...fav.map(m => ({ ...m, isFavourite: true })), ...rest.map(m => ({ ...m, isFavourite: false }))].slice(0, 12);
+    const rest = h.formulary.filter(m => !!q && matches(q, m.name) && !fav.some(f => f.name === m.name && f.strength === m.strength));
+    return {
+      medicines: [
+        ...fav.map(m => ({ source: 'favourite', name: m.name, strength: m.strength, form: m.form, dosePattern: null, timing: null, useCount: 1 })),
+        ...rest.map(m => ({ source: 'reference', name: m.name, strength: m.strength, form: m.form, dosePattern: null, timing: null, useCount: 0 })),
+      ].slice(0, 15),
+    };
   });
-  route('GET', '/healthcare/doctor/diagnoses/recent', ctx => {
+  route('GET', '/health/doctor/diagnoses/recent', ctx => {
     const { doctor } = myDoctor(ctx);
     const seen: string[] = [];
     for (const p of [...ctx.db.health.prescriptions].filter(x => x.doctorId === doctor.id).sort((a, b) => b.issuedAt.localeCompare(a.issuedAt))) {
-      if (!seen.includes(p.diagnosis)) seen.push(p.diagnosis);
+      if (!seen.some(s => s.toLowerCase() === p.diagnosis.toLowerCase())) seen.push(p.diagnosis);
     }
-    return seen.slice(0, 8);
+    return seen.slice(0, 10);
   });
 
   // ══ Doctor: patients, reviews, insights ══════════════
-  route('GET', '/healthcare/doctor/patients', ctx => {
+  const personRow = (h: MockHealth, list: MockAppointment[], now: number) => {
+    const latest = [...list].sort(latestFirst)[0];
+    const member = latest.familyMemberId ? h.family.find(f => f.id === latest.familyMemberId) : null;
+    return {
+      patientKey: patientKey(latest),
+      name: latest.patientName,
+      gender: latest.patientGender,
+      age: ageFrom(latest.patientDob, now),
+      phone: latest.patientPhone,
+      relation: member?.relation ?? null,
+      visits: list.length,
+      completedVisits: list.filter(a => a.status === 'completed').length,
+      lastVisitAt: zoned(latest.startAt, PKT),
+    };
+  };
+
+  route('GET', '/health/doctor/patients', ctx => {
     const { doctor } = myDoctor(ctx);
     const h = ctx.db.health;
     const q = text(ctx.query.q);
     const groups = new Map<string, MockAppointment[]>();
     for (const a of h.appointments) {
-      if (a.doctorId !== doctor.id || a.status === 'cancelled' || a.userId === 'u_standin_ghost') continue;
-      const key = patientKey(a);
-      groups.set(key, [...(groups.get(key) ?? []), a]);
+      if (a.doctorId !== doctor.id || a.userId === 'u_standin_ghost') continue;
+      groups.set(patientKey(a), [...(groups.get(patientKey(a)) ?? []), a]);
     }
-    const rows = [...groups.entries()]
-      .map(([id, list]) => {
-        const latest = [...list].sort(latestFirst)[0];
-        const done = list.filter(a => a.status === 'completed').sort(latestFirst);
-        return {
-          id,
-          name: latest.patientName,
-          age: ageFrom(latest.patientDob, ctx.now),
-          gender: latest.patientGender,
-          lastVisitAt: (done[0] ?? latest).startAt,
-          visits: done.length,
-        };
-      })
-      .filter(p => !q || matches(q, p.name))
-      .sort((a, b) => b.lastVisitAt.localeCompare(a.lastVisitAt));
+    const rows = [...groups.values()]
+      .map(list => personRow(h, list, ctx.now))
+      .filter(p => !q || matches(q, p.name, p.phone))
+      .sort((a, b) => String(b.lastVisitAt).localeCompare(String(a.lastVisitAt)));
     return paginate(rows, ctx.query);
   });
-  route('GET', '/healthcare/doctor/patients/:id/history', ctx => {
+  route('GET', '/health/doctor/patients/:key', ctx => {
     const { doctor } = myDoctor(ctx);
     const h = ctx.db.health;
     const key = decodeURIComponent(ctx.params[0]);
     const theirs = h.appointments.filter(a => a.doctorId === doctor.id && patientKey(a) === key).sort(latestFirst);
     if (!theirs.length) throw notFound('Patient');
-    const latest = theirs[0];
+    const person: Partial<ReturnType<typeof personRow>> = personRow(h, theirs, ctx.now);
+    // The history leaves out the list row's counts.
+    delete person.completedVisits;
+    delete person.lastVisitAt;
     return {
-      patient: { id: key, name: latest.patientName, age: ageFrom(latest.patientDob, ctx.now), gender: latest.patientGender },
-      visits: previousVisitsOf(h, latest),
+      ...person,
+      previousAppointments: theirs.map(o => ({ code: o.code, startsAt: zoned(o.startAt, PKT), status: o.status === 'in_progress' ? 'in_consultation' : o.status === 'awaiting_payment' || o.status === 'confirmed' ? 'booked' : o.status, kind: o.kind, reason: o.reason })),
+      prescriptions: theirs
+        .filter(o => o.prescriptionId)
+        .map(o => {
+          const p = h.prescriptions.find(x => x.id === o.prescriptionId)!;
+          return { id: p.id, issuedAt: p.issuedAt, diagnosis: p.diagnosis, appointmentCode: o.code };
+        }),
     };
   });
 
-  route('GET', '/healthcare/doctor/reviews', ctx => {
-    const { doctor } = myDoctor(ctx);
-    const rows = visibleReviews(ctx.db.health, doctor.id)
-      .filter(r => !bool(ctx.query.unreplied) || !r.reply)
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .map(r => reviewView(r, ctx.now, true));
-    return paginate(rows, ctx.query);
-  });
-  route('GET', '/healthcare/doctor/reviews/summary', ctx => reviewSummaryView(ctx.db.health, myDoctor(ctx).doctor.id));
-  route('POST', '/healthcare/doctor/reviews/:id/reply', ctx => {
-    const { doctor } = myDoctor(ctx);
-    const r = ctx.db.health.reviews.find(x => x.id === decodeURIComponent(ctx.params[0]) && x.doctorId === doctor.id && !x.isHidden);
-    if (!r) throw notFound('Review');
-    const t = text(ctx.body.text);
-    if (t.length < 2 || t.length > 600) throw bad('Write a reply.', { reply: 'Write a reply of up to 600 characters' });
-    if (r.reply && ctx.now > Date.parse(r.reply.createdAt) + REPLY_EDIT_HOURS * HOUR) {
-      throw new HealthError(409, 'REPLY_LOCKED', 'A reply can be edited for 24 hours after it is posted.');
-    }
-    r.reply = { text: t, createdAt: r.reply?.createdAt ?? isoNow(ctx.now) };
-    return reviewView(r, ctx.now, true);
-  });
-
-  route('GET', '/healthcare/doctor/insights', ctx => {
+  route('GET', '/health/doctor/reviews', ctx => {
     const { doctor } = myDoctor(ctx);
     const h = ctx.db.health;
-    const range = ['7d', '30d', '90d'].includes(ctx.query.range) ? String(ctx.query.range) : '30d';
+    const stars = num(ctx.query.rating);
+    const rows = h.reviews
+      .filter(r => r.doctorId === doctor.id)
+      .filter(r => !bool(ctx.query.unreplied) || !r.reply)
+      .filter(r => stars === null || r.rating === stars)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .map(r => reviewWire(h, r, { owner: true }));
+    return paginate(rows, ctx.query);
+  });
+  route('GET', '/health/doctor/reviews/summary', ctx => summaryWire(ctx.db.health, myDoctor(ctx).doctor.id));
+  route('POST', '/health/doctor/reviews/:id/reply', ctx => {
+    const { doctor } = myDoctor(ctx);
+    const h = ctx.db.health;
+    const r = h.reviews.find(x => x.id === decodeURIComponent(ctx.params[0]) && x.doctorId === doctor.id);
+    if (!r) throw notFound('Review');
+    const t = text(ctx.body.text);
+    if (t.length < 2 || t.length > 1000) throw bad('Write a reply.', { text: 'text must be 2 to 1000 characters' });
+    // Public, and it replaces an earlier reply.
+    r.reply = { text: t, createdAt: isoNow(ctx.now) };
+    return reviewWire(h, r, { owner: true });
+  });
+
+  route('GET', '/health/doctor/insights', ctx => {
+    const { doctor } = myDoctor(ctx);
+    const h = ctx.db.health;
+    const range = ['7d', '30d', '90d'].includes(ctx.query.range) ? String(ctx.query.range) : '7d';
     const n = Number(range.replace('d', ''));
-    const today = todayInZone(PKT, ctx.now);
-    const from = addDays(today, -(n - 1));
-    const inRange = h.appointments.filter(a => a.doctorId === doctor.id && a.userId !== 'u_standin_ghost' && pkDay(a.startAt) >= from && pkDay(a.startAt) <= today);
+    const to = todayInZone(PKT, ctx.now);
+    const from = addDays(to, -(n - 1));
+    const inRange = h.appointments.filter(a => a.doctorId === doctor.id && a.userId !== 'u_standin_ghost' && pkDay(a.startAt) >= from && pkDay(a.startAt) <= to);
     const perDay = Array.from({ length: n }, (_, i) => {
       const date = addDays(from, i);
       const day = inRange.filter(a => pkDay(a.startAt) === date && a.status !== 'cancelled');
-      return { date, video: day.filter(a => a.kind === 'video').length, clinic: day.filter(a => a.kind === 'clinic').length };
+      const video = day.filter(a => a.kind === 'video').length;
+      const clinic = day.filter(a => a.kind === 'clinic').length;
+      return { date, clinic, video, total: video + clinic };
     });
-    const waits = inRange
-      .filter(a => a.status === 'completed' && a.kind === 'clinic' && a.checkedInAt && a.startedAt)
-      .map(a => (Date.parse(a.startedAt!) - Date.parse(a.checkedInAt!)) / MINUTE);
-    const buckets = Math.max(1, Math.ceil(n / 7));
-    const reviews = visibleReviews(h, doctor.id);
-    const ratingTrend = Array.from({ length: buckets }, (_, i) => {
-      const end = addDays(from, Math.min(n - 1, (i + 1) * 7 - 1));
-      const upto = reviews.filter(r => pkDay(r.createdAt) <= end);
-      return upto.length ? { date: end, rating: Math.round((upto.reduce((s, r) => s + r.rating, 0) / upto.length) * 10) / 10 } : null;
-    }).filter(Boolean);
+    const done = inRange.filter(a => a.status === 'completed');
+    const waits = done.filter(a => a.kind === 'clinic' && a.checkedInAt && a.startedAt).map(a => (Date.parse(a.startedAt!) - Date.parse(a.checkedInAt!)) / MINUTE);
+    const consults = done.filter(a => a.startedAt && a.completedAt).map(a => (Date.parse(a.completedAt!) - Date.parse(a.startedAt!)) / MINUTE);
+    const mean = (xs: number[]) => (xs.length >= 3 ? Math.round(xs.reduce((s, x) => s + x, 0) / xs.length) : null);
+    const cancelled = inRange.filter(a => a.status === 'cancelled');
+    const noShow = inRange.filter(a => a.status === 'no_show').length;
+    const settled = done.length + cancelled.length + noShow;
+    const reviews = visibleReviews(h, doctor.id).filter(r => pkDay(r.createdAt) >= from);
+    const trend = new Map<string, number[]>();
+    for (const r of reviews) trend.set(pkDay(r.createdAt), [...(trend.get(pkDay(r.createdAt)) ?? []), r.rating]);
+    const fee = (pred: (a: MockAppointment) => boolean) => inRange.filter(pred).reduce((s, a) => s + a.fee, 0);
     return {
       range,
+      from,
+      to,
+      timezone: PKT,
       perDay,
-      outcomes: {
-        completed: inRange.filter(a => a.status === 'completed').length,
-        cancelled: inRange.filter(a => a.status === 'cancelled').length,
-        noShow: inRange.filter(a => a.status === 'no_show').length,
+      totals: {
+        appointments: inRange.length,
+        completed: done.length,
+        cancelled: cancelled.length,
+        lateCancelled: cancelled.filter(a => a.lateCancel).length,
+        cancelledByDoctor: cancelled.filter(a => a.cancelledBy === 'doctor').length,
+        noShow,
+        upcoming: inRange.filter(a => isActive(a)).length,
       },
-      avgWaitMinutes: waits.length >= 3 ? Math.round(waits.reduce((s, w) => s + w, 0) / waits.length) : null,
-      ratingTrend,
-      recordedFees: inRange.filter(a => a.status === 'completed' && (a.paymentStatus === 'collected' || a.paymentStatus === 'paid')).reduce((s, a) => s + a.fee, 0),
-      appointments: inRange.filter(a => a.status !== 'cancelled').length,
+      rates: {
+        completion: settled ? Math.round((done.length / settled) * 1000) / 1000 : 0,
+        cancellation: settled ? Math.round((cancelled.length / settled) * 1000) / 1000 : 0,
+        noShow: settled ? Math.round((noShow / settled) * 1000) / 1000 : 0,
+      },
+      times: { avgWaitMinutes: mean(waits), waitSamples: waits.length, avgConsultMinutes: mean(consults), consultSamples: consults.length },
+      patients: {
+        new: new Set(done.filter(a => !h.appointments.some(o => o.id !== a.id && o.doctorId === a.doctorId && patientKey(o) === patientKey(a) && o.status === 'completed' && o.startAt < a.startAt)).map(patientKey)).size,
+        returning: new Set(done.filter(a => h.appointments.some(o => o.id !== a.id && o.doctorId === a.doctorId && patientKey(o) === patientKey(a) && o.status === 'completed' && o.startAt < a.startAt)).map(patientKey)).size,
+      },
+      fees: {
+        label: 'Recorded by you — MetroMatrix does not process or hold payments.',
+        recorded: fee(a => a.status === 'completed' && (a.paymentStatus === 'collected' || a.paymentStatus === 'paid')),
+        atClinic: fee(a => a.status === 'completed' && a.paymentStatus === 'collected'),
+        byTransfer: fee(a => a.paymentStatus === 'paid'),
+        refundDue: fee(a => a.paymentStatus === 'refund_due'),
+        refunded: fee(a => a.paymentStatus === 'refunded'),
+      },
+      ratingTrend: [...trend.entries()]
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([date, rs]) => ({ date, reviews: rs.length, average: Math.round((rs.reduce((s, x) => s + x, 0) / rs.length) * 10) / 10 })),
     };
   });
 
   // ══ Admin ════════════════════════════════════════════
-  route('GET', '/admin/healthcare/overview', ctx => {
+  route('GET', '/admin/health/overview', ctx => {
     requireAdmin(ctx);
-    const h = ctx.db.health;
-    const today = todayInZone(PKT, ctx.now);
+    const { db, now } = ctx;
+    const h = db.health;
+    const today = todayInZone(PKT, now);
     const listed = h.doctors.filter(d => d.isListed);
-    const by = new Map<string, number>();
+    const by = new Map<string, { slug: string; name: string; doctors: number }>();
     for (const d of listed) {
-      const name = specialtyBySlug(h, d.specialtySlug)?.name ?? 'Other';
-      by.set(name, (by.get(name) ?? 0) + 1);
+      const s = specialtyBySlug(h, d.specialtySlug);
+      if (!s) continue;
+      const e = by.get(s.slug) ?? { slug: s.slug, name: s.name, doctors: 0 };
+      e.doctors += 1;
+      by.set(s.slug, e);
     }
-    const events = h.appointments.flatMap(a => a.events.map(e => ({ ...e })));
+    const real = h.appointments.filter(a => a.userId !== 'u_standin_ghost');
+    const events = real.flatMap(a => a.events);
+    const doctorBusinesses = db.businesses.filter(b => b.subType === 'doctor');
+    const statusCount: Record<string, number> = {};
+    for (const a of real.filter(a => pkDay(a.startAt) === today)) {
+      const s = a.status === 'in_progress' ? 'in_consultation' : a.status === 'confirmed' || a.status === 'awaiting_payment' ? 'booked' : a.status;
+      statusCount[s] = (statusCount[s] ?? 0) + 1;
+    }
     return {
-      listedDoctors: listed.length,
-      bySpecialty: [...by.entries()].sort((a, b) => b[1] - a[1]).map(([name, count]) => ({ name, count })),
-      bookingsToday: h.appointments.filter(a => pkDay(a.createdAt) === today && a.userId !== 'u_standin_ghost').length,
-      cancelledToday: events.filter(e => e.type === 'cancelled' && pkDay(e.createdAt) === today).length,
-      noShowsToday: events.filter(e => e.type === 'no_show' && pkDay(e.createdAt) === today).length,
-      pendingVerification: ctx.db.businesses.filter(b => b.subType === 'doctor' && b.status === 'pending_approval' && !b.pmdcVerified).length,
+      date: today,
+      doctors: {
+        total: doctorBusinesses.length,
+        listed: listed.length,
+        awaitingPmdc: doctorBusinesses.filter(b => b.status === 'pending_approval' && !b.pmdcVerified).length,
+        unlistedByAdmin: 0,
+      },
+      listedBySpecialty: [...by.values()].sort((a, b) => b.doctors - a.doctors),
+      today: {
+        newBookings: real.filter(a => pkDay(a.createdAt) === today).length,
+        cancellations: events.filter(e => e.type === 'cancelled' && pkDay(e.createdAt) === today).length,
+        noShows: events.filter(e => e.type === 'no_show' && pkDay(e.createdAt) === today).length,
+        appointmentsByStatus: statusCount,
+      },
+      last7Days: {},
+      reviews: { total: h.reviews.length, hidden: h.reviews.filter(r => r.isHidden).length, last7Days: 0 },
+      symptomChecks: { last24h: 0, emergencies24h: 0 },
+      topSpecialties30d: [],
     };
   });
 
-  const specialtyInput = (b: Record<string, any>) => {
-    const fields: Record<string, string> = {};
-    if (text(b.name).length < 3) fields.name = 'Enter the name';
-    if (!text(b.icon)) fields.icon = 'Choose an icon';
-    if (Object.keys(fields).length) throw bad('Check the specialty.', fields);
-    return { name: text(b.name), nameUr: text(b.nameUr), icon: text(b.icon), sort: Math.round(Number(b.sort) || 99) };
+  const adminSpecialtyWire = (h: MockHealth, s: MockHealth['specialties'][number]) => {
+    const { doctorCount, ...rest } = specialtyWire(h, s, null);
+    return { ...rest, keywords: [], sort: s.sort, isActive: s.isActive !== false, doctors: doctorCount };
   };
-  route('GET', '/admin/healthcare/specialties', ctx => {
+  route('GET', '/admin/health/specialties', ctx => {
     requireAdmin(ctx);
     const h = ctx.db.health;
-    return [...h.specialties].sort((a, b) => a.sort - b.sort).map(s => ({ ...specialtyView(h, s.slug, null), sort: s.sort }));
+    return [...h.specialties].sort((a, b) => a.sort - b.sort).map(s => adminSpecialtyWire(h, s));
   });
-  route('POST', '/admin/healthcare/specialties', ctx => {
+  route('POST', '/admin/health/specialties', ctx => {
     requireAdmin(ctx);
     const h = ctx.db.health;
-    const input = specialtyInput(ctx.body);
-    const slug = slugify(input.name);
-    if (h.specialties.some(s => s.slug === slug)) throw new HealthError(409, 'SPECIALTY_EXISTS', 'A specialty with this name exists.');
-    const s = { id: `sp_${slug}`, slug, ...input };
+    const b = ctx.body;
+    const name = text(b.name);
+    const fields: Record<string, string> = {};
+    if (name.length < 2) fields.name = 'name must be longer than or equal to 2 characters';
+    if (!text(b.nameUr)) fields.nameUr = 'nameUr should not be empty';
+    if (!Array.isArray(b.keywords)) fields.keywords = 'keywords must be an array';
+    if (Object.keys(fields).length) throw bad('Check the specialty.', fields);
+    const slug = text(b.slug) || slugify(name);
+    if (h.specialties.some(s => s.slug === slug)) throw new HealthError(409, 'CONFLICT', 'Another specialty already uses this slug.', { fields: { slug: ['already used'] } });
+    const s = { id: `sp_${slug}`, slug, name, nameUr: text(b.nameUr), icon: iconKey(text(b.icon) || null) ?? 'stethoscope', sort: Math.round(Number(b.sort) || 99), isActive: true };
     h.specialties.push(s);
     ctx.setStatus(201);
-    return { ...specialtyView(h, slug, null), sort: s.sort };
+    return adminSpecialtyWire(h, s);
   });
-  route('PATCH', '/admin/healthcare/specialties/:id', ctx => {
+  route('PATCH', '/admin/health/specialties/:id', ctx => {
     requireAdmin(ctx);
     const h = ctx.db.health;
     const s = h.specialties.find(x => x.id === decodeURIComponent(ctx.params[0]));
     if (!s) throw notFound('Specialty');
-    Object.assign(s, specialtyInput({ ...s, ...ctx.body }));
-    return { ...specialtyView(h, s.slug, null), sort: s.sort };
-  });
-  route('DELETE', '/admin/healthcare/specialties/:id', ctx => {
-    requireAdmin(ctx);
-    const h = ctx.db.health;
-    const s = h.specialties.find(x => x.id === decodeURIComponent(ctx.params[0]));
-    if (!s) throw notFound('Specialty');
-    if (h.doctors.some(d => d.specialtySlug === s.slug || d.secondarySpecialtySlug === s.slug)) {
-      throw new HealthError(409, 'SPECIALTY_IN_USE', 'Doctors are listed under this specialty. Move them first.');
-    }
-    h.specialties = h.specialties.filter(x => x.id !== s.id);
-    return { removed: true };
+    const b = ctx.body;
+    if (b.name !== undefined && text(b.name).length >= 2) s.name = text(b.name);
+    if (b.icon !== undefined) s.icon = iconKey(text(b.icon) || null) ?? s.icon;
+    if (b.sort !== undefined) s.sort = Math.round(Number(b.sort));
+    if (b.isActive !== undefined) s.isActive = !!b.isActive;
+    return adminSpecialtyWire(h, s);
   });
 
-  const conditionInput = (b: Record<string, any>, h: MockHealth) => {
-    const fields: Record<string, string> = {};
-    if (text(b.name).length < 2) fields.name = 'Enter the condition';
-    if (b.specialtySlug && !specialtyBySlug(h, b.specialtySlug)) fields.specialtySlug = 'Choose a specialty';
-    if (Object.keys(fields).length) throw bad('Check the condition.', fields);
-    return {
-      name: text(b.name),
-      nameUr: text(b.nameUr) || null,
-      specialtySlug: b.specialtySlug || null,
-      isCommon: !!b.isCommon,
-      aliases: (Array.isArray(b.aliases) ? b.aliases : []).map(text).filter(Boolean).slice(0, 12),
-    };
-  };
-  route('GET', '/admin/healthcare/conditions', ctx => {
-    requireAdmin(ctx);
-    const q = text(ctx.query.q);
-    return ctx.db.health.conditions.filter(c => !q || matches(q, c.name, c.nameUr, ...c.aliases)).sort((a, b) => a.name.localeCompare(b.name));
+  const adminConditionWire = (h: MockHealth, c: MockHealth['conditions'][number]) => ({
+    id: c.id,
+    name: c.name,
+    nameUr: c.nameUr,
+    slug: c.slug,
+    aliases: c.aliases,
+    isCommon: c.isCommon,
+    icon: iconKey(c.icon),
+    isActive: c.isActive !== false,
+    specialties: (() => {
+      const s = c.specialtySlug ? specialtyBySlug(h, c.specialtySlug) : null;
+      return s ? [{ id: s.id, name: s.name, slug: s.slug, rank: 1 }] : [];
+    })(),
   });
-  route('POST', '/admin/healthcare/conditions', ctx => {
+  route('GET', '/admin/health/conditions', ctx => {
     requireAdmin(ctx);
     const h = ctx.db.health;
-    const input = conditionInput(ctx.body, h);
-    const slug = slugify(input.name);
-    if (h.conditions.some(c => c.slug === slug)) throw new HealthError(409, 'CONDITION_EXISTS', 'This condition exists.');
-    const c = { id: `cn_${slug}`, slug, icon: null, ...input };
+    const q = text(ctx.query.q);
+    const rows = h.conditions.filter(c => !q || matches(q, c.name, c.slug, ...c.aliases)).sort((a, b) => a.name.localeCompare(b.name));
+    return paginate(rows.map(c => adminConditionWire(h, c)), ctx.query);
+  });
+  route('POST', '/admin/health/conditions', ctx => {
+    requireAdmin(ctx);
+    const h = ctx.db.health;
+    const b = ctx.body;
+    const name = text(b.name);
+    if (name.length < 2) throw bad('Check the condition.', { name: 'name must be longer than or equal to 2 characters' });
+    const slug = text(b.slug) || slugify(name);
+    if (h.conditions.some(c => c.slug === slug)) throw new HealthError(409, 'CONFLICT', 'Another condition already uses this slug.', { fields: { slug: ['already used'] } });
+    const c = {
+      id: `cn_${slug}`,
+      slug,
+      name,
+      nameUr: text(b.nameUr) || null,
+      specialtySlug: null,
+      isCommon: !!b.isCommon,
+      icon: iconKey(text(b.icon) || null),
+      isActive: true,
+      aliases: (Array.isArray(b.aliases) ? b.aliases : []).map(text).filter(Boolean).slice(0, 40),
+    };
     h.conditions.push(c);
     ctx.setStatus(201);
-    return c;
+    return adminConditionWire(h, c);
   });
-  route('PATCH', '/admin/healthcare/conditions/:id', ctx => {
+  route('PATCH', '/admin/health/conditions/:id', ctx => {
     requireAdmin(ctx);
     const h = ctx.db.health;
     const c = h.conditions.find(x => x.id === decodeURIComponent(ctx.params[0]));
     if (!c) throw notFound('Condition');
-    Object.assign(c, conditionInput({ ...c, ...ctx.body }, h));
-    return c;
+    const b = ctx.body;
+    if (b.name !== undefined && text(b.name).length >= 2) c.name = text(b.name);
+    if (Array.isArray(b.aliases)) c.aliases = b.aliases.map(text).filter(Boolean).slice(0, 40);
+    if (b.isCommon !== undefined) c.isCommon = !!b.isCommon;
+    if (b.icon !== undefined) c.icon = iconKey(text(b.icon) || null);
+    if (b.isActive !== undefined) c.isActive = !!b.isActive;
+    return adminConditionWire(h, c);
   });
-  route('DELETE', '/admin/healthcare/conditions/:id', ctx => {
+  route('PUT', '/admin/health/conditions/:id/specialties', ctx => {
     requireAdmin(ctx);
     const h = ctx.db.health;
     const c = h.conditions.find(x => x.id === decodeURIComponent(ctx.params[0]));
     if (!c) throw notFound('Condition');
-    h.conditions = h.conditions.filter(x => x.id !== c.id);
-    for (const d of h.doctors) d.conditionSlugs = d.conditionSlugs.filter(s => s !== c.slug);
-    return { removed: true };
+    const list = (Array.isArray(ctx.body) ? ctx.body : []) as { specialtyId: string; rank: number }[];
+    const first = [...list].sort((a, b) => Number(a.rank) - Number(b.rank))[0];
+    const s = first ? h.specialties.find(x => x.id === first.specialtyId) : null;
+    if (first && !s) throw notFound('Specialty');
+    c.specialtySlug = s?.slug ?? null;
+    return adminConditionWire(h, c);
   });
 
-  const adminDoctorView = (db: MockDb, b: MockBusiness) => {
-    const p = db.health.pmdc[b.id];
+  /** A doctor row of the staff list; in the dummy API it carries its business's id. */
+  const adminDoctorWire = (db: MockDb, b: MockBusiness) => {
+    const h = db.health;
+    const d = h.doctors.find(x => x.businessId === b.id) ?? null;
+    const p = h.pmdc[b.id];
+    const spec = d ? specialtyRefWire(h, d.specialtySlug) : h.specialties.find(s => norm(s.name) === norm(b.details?.specialty ?? '')) ?? null;
     return {
-      businessId: b.id,
-      name: db.users.find(u => u.id === b.ownerId)?.name ?? b.name,
-      specialty: b.details?.specialty ?? '',
-      city: b.city,
-      pmdcNumber: b.details?.pmdcNumber ?? '',
-      pmdcVerified: !!b.pmdcVerified,
-      pmdcNote: p?.note ?? null,
-      pmdcVerifiedAt: p?.at ?? null,
-      status: b.status,
-      submittedAt: b.submittedAt,
-      documents: b.documents.map(d => ({ id: d.id, kind: d.kind, url: d.url, mimeType: d.mimeType })),
+      id: b.id,
+      title: d ? Object.entries(TITLE_LABEL).find(([, l]) => l === d.title)?.[0] ?? 'dr' : 'dr',
+      fullName: d?.name ?? db.users.find(u => u.id === b.ownerId)?.name?.replace(/^dr\.?\s+/i, '') ?? b.name,
+      pmdcNumber: b.details?.pmdcNumber || d?.pmdcNumber || `UNSET-${b.id}`,
+      pmdcVerifiedAt: b.pmdcVerified ? (p?.at ?? b.submittedAt ?? null) : null,
+      isListed: !!d?.isListed,
+      unlistedReason: null,
+      specialty: spec ? { id: spec.id, name: spec.name, slug: spec.slug } : null,
+      documents: b.documents.map(doc => ({ id: doc.id, kind: doc.kind, url: doc.url, status: 'pending' })),
+      business: { id: b.id, name: b.name, status: b.status, city: b.city, submittedAt: b.submittedAt },
     };
   };
-  route('GET', '/admin/healthcare/doctors', ctx => {
+  route('GET', '/admin/health/doctors', ctx => {
     requireAdmin(ctx);
-    return ctx.db.businesses
-      .filter(b => b.subType === 'doctor' && (ctx.query.status !== 'pending' || b.status === 'pending_approval'))
-      .sort((a, b) => (b.submittedAt ?? '').localeCompare(a.submittedAt ?? ''))
-      .map(b => adminDoctorView(ctx.db, b));
+    const q = ctx.query;
+    const rows = ctx.db.businesses
+      .filter(b => b.subType === 'doctor')
+      .filter(b => !q.businessId || b.id === q.businessId)
+      .filter(b => q.pmdc !== 'unverified' || !b.pmdcVerified)
+      .filter(b => q.pmdc !== 'verified' || !!b.pmdcVerified)
+      .filter(b => !q.q || matches(String(q.q), b.name, b.details?.pmdcNumber))
+      .sort((a, b) => Number(!!a.pmdcVerified) - Number(!!b.pmdcVerified) || (a.submittedAt ?? '').localeCompare(b.submittedAt ?? ''))
+      .map(b => adminDoctorWire(ctx.db, b));
+    return paginate(rows, q);
   });
-  route('POST', '/admin/healthcare/doctors/:id/pmdc-verify', ctx => {
+  route('POST', '/admin/health/doctors/:id/pmdc-verify', ctx => {
     requireAdmin(ctx);
     const b = ctx.db.businesses.find(x => x.id === decodeURIComponent(ctx.params[0]) && x.subType === 'doctor');
     if (!b) throw notFound('Doctor');
-    const note = text(ctx.body.note);
-    if (note.length < 3) throw bad('Add a note.', { note: 'Say how you checked it, e.g. "Matched on the PMDC register"' });
+    if (!b.details?.pmdcNumber) throw new HealthError(409, 'CONFLICT', 'This doctor has not given a PMDC number yet.');
     b.pmdcVerified = true;
-    ctx.db.health.pmdc[b.id] = { verified: true, note, at: isoNow(ctx.now) };
-    return adminDoctorView(ctx.db, b);
+    ctx.db.health.pmdc[b.id] = { verified: true, note: text(ctx.body.note) || null, at: isoNow(ctx.now) };
+    return { id: b.id, pmdcNumber: b.details.pmdcNumber, pmdcVerified: true };
   });
 
-  route('GET', '/admin/healthcare/reviews', ctx => {
+  route('GET', '/admin/health/reviews', ctx => {
     requireAdmin(ctx);
     const h = ctx.db.health;
-    const hidden = ctx.query.hidden === undefined ? null : bool(ctx.query.hidden);
+    const q = ctx.query;
     const rows = h.reviews
-      .filter(r => hidden === null || r.isHidden === hidden)
-      .filter(r => r.text || r.isHidden)
+      .filter(r => !q.doctorId || r.doctorId === q.doctorId)
+      .filter(r => q.hidden === undefined || r.isHidden === bool(q.hidden))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .map(r => {
-        const d = doctorById(h, r.doctorId);
-        return { ...reviewView(r, ctx.now), authorName: r.authorName, doctorName: d ? `${d.title} ${d.name}` : null };
-      });
-    return paginate(rows, ctx.query);
+      .map(r => reviewWire(h, r, { staff: true }));
+    return paginate(rows, q);
   });
   const moderate = (hide: boolean) => (ctx: ShopCtx) => {
     requireAdmin(ctx);
     const h = ctx.db.health;
     const r = h.reviews.find(x => x.id === decodeURIComponent(ctx.params[0]));
     if (!r) throw notFound('Review');
-    if (hide && text(ctx.body.reason).length < 3) throw bad('Give a reason.', { reason: 'Give a reason' });
+    if (hide && text(ctx.body.reason).length < 3) throw bad('Give a reason.', { reason: 'reason must be longer than or equal to 3 characters' });
     r.isHidden = hide;
     r.hiddenReason = hide ? text(ctx.body.reason) : null;
-    const d = doctorById(h, r.doctorId);
-    return { ...reviewView(r, ctx.now), authorName: r.authorName, doctorName: d ? `${d.title} ${d.name}` : null };
+    return reviewWire(h, r, { staff: true });
   };
-  route('POST', '/admin/healthcare/reviews/:id/hide', moderate(true));
-  route('POST', '/admin/healthcare/reviews/:id/unhide', moderate(false));
+  route('POST', '/admin/health/reviews/:id/hide', moderate(true));
+  route('POST', '/admin/health/reviews/:id/unhide', moderate(false));
 
-  route('GET', '/admin/healthcare/appointments/:code', ctx => {
+  route('GET', '/admin/health/appointments/:code', ctx => {
     requireAdmin(ctx);
     const h = ctx.db.health;
     const a = h.appointments.find(x => x.code === decodeURIComponent(ctx.params[0]).toUpperCase());
     if (!a) throw notFound('Appointment');
-    return { ...appointmentDetailView(h, a, ctx.now), doctorBusinessId: doctorById(h, a.doctorId)?.businessId ?? '' };
+    // Staff see booking facts only: no prescription id, notes or records.
+    return adminAppointmentWire(h, a, ctx.now);
   });
+
+  // The dummy API's home-only helpers, for the seed's demo checks.
+  void earliestOf;
+  void servesCity;
+  void patientFlags;
 }

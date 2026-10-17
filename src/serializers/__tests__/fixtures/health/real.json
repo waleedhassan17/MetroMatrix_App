@@ -1,0 +1,5317 @@
+{
+ "home": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "city": "Lahore",
+    "cities": [
+     "Lahore",
+     "Karachi",
+     "Islamabad"
+    ],
+    "specialties": [
+     {
+      "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+      "name": "Dermatologist",
+      "nameUr": "ماہر امراض جلد",
+      "slug": "dermatologist",
+      "icon": "skin",
+      "description": "Skin, hair and nail conditions.",
+      "doctorCount": 1
+     },
+     {
+      "id": "e9565779-4fe4-401f-97c8-a6e69affd3a1",
+      "name": "Gynecologist",
+      "nameUr": "ماہر امراض نسواں",
+      "slug": "gynecologist",
+      "icon": "female",
+      "description": "Women's health, periods, pregnancy and childbirth.",
+      "doctorCount": 1
+     },
+     {
+      "id": "1e7702bf-e34a-4601-b6c2-4388dc071dfb",
+      "name": "General Physician",
+      "nameUr": "جنرل فزیشن",
+      "slug": "general-physician",
+      "icon": "stethoscope",
+      "description": "First doctor for everyday illness: fever, flu, infections, check-ups.",
+      "doctorCount": 2
+     }
+    ],
+    "commonConditions": [
+     {
+      "id": "c8705751-e191-4d68-a6e8-f1a19c8933c3",
+      "name": "Acidity and heartburn",
+      "nameUr": "تیزابیت",
+      "slug": "acidity",
+      "isCommon": true,
+      "icon": "flame",
+      "specialties": [
+       {
+        "id": "80d00a46-42d0-46bf-9317-80c703edf6eb",
+        "name": "Gastroenterologist",
+        "nameUr": "ماہر امراض معدہ و جگر",
+        "slug": "gastroenterologist"
+       },
+       {
+        "id": "1e7702bf-e34a-4601-b6c2-4388dc071dfb",
+        "name": "General Physician",
+        "nameUr": "جنرل فزیشن",
+        "slug": "general-physician"
+       }
+      ]
+     },
+     {
+      "id": "3c28baea-a48d-4f21-b5b9-877b9c8823af",
+      "name": "Acne",
+      "nameUr": "کیل مہاسے",
+      "slug": "acne",
+      "isCommon": true,
+      "icon": "sparkles",
+      "specialties": [
+       {
+        "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+        "name": "Dermatologist",
+        "nameUr": "ماہر امراض جلد",
+        "slug": "dermatologist"
+       }
+      ]
+     },
+     {
+      "id": "b7c20175-af99-4dac-a92c-1eab0f328bd9",
+      "name": "Back pain",
+      "nameUr": "کمر درد",
+      "slug": "back-pain",
+      "isCommon": true,
+      "icon": "physio",
+      "specialties": [
+       {
+        "id": "03212f77-f36d-4501-9e3f-6893d344eb58",
+        "name": "Orthopedic Surgeon",
+        "nameUr": "ماہر امراض ہڈی و جوڑ",
+        "slug": "orthopedic-surgeon"
+       },
+       {
+        "id": "ea697522-a5ca-4743-8ecc-c3019a5c8833",
+        "name": "Physiotherapist",
+        "nameUr": "فزیوتھراپسٹ",
+        "slug": "physiotherapist"
+       }
+      ]
+     }
+    ],
+    "availableTodayNearby": [
+     {
+      "id": "33ba134e-3ac5-45d1-9b2a-be9649a4579d",
+      "title": "prof",
+      "fullName": "Nasreen Akhtar",
+      "displayName": "Prof. Dr. Nasreen Akhtar",
+      "photoUrl": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+      "gender": "female",
+      "specialty": {
+       "id": "e9565779-4fe4-401f-97c8-a6e69affd3a1",
+       "name": "Gynecologist",
+       "nameUr": "ماہر امراض نسواں",
+       "slug": "gynecologist"
+      },
+      "qualifications": "MBBS, FCPS (Obstetrics & Gynaecology)",
+      "yearsExperience": 28,
+      "ratingAvg": 4.3,
+      "ratingCount": 33,
+      "satisfactionPct": 79,
+      "avgWaitMinutes": 18,
+      "pmdcVerified": true,
+      "isTopBooked": false,
+      "minFee": 3500,
+      "offersVideo": false,
+      "offersClinic": true,
+      "nextAvailable": {
+       "at": "2026-10-17T10:00:00.000+05:00",
+       "locationKind": "clinic",
+       "label": "Available today, 10:00 AM"
+      }
+     },
+     {
+      "id": "43e4fe07-b860-4b3c-b945-55afc892f2b9",
+      "title": "dr",
+      "fullName": "Usman Farooq",
+      "displayName": "Dr. Usman Farooq",
+      "photoUrl": "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+      "gender": "male",
+      "specialty": {
+       "id": "1e7702bf-e34a-4601-b6c2-4388dc071dfb",
+       "name": "General Physician",
+       "nameUr": "جنرل فزیشن",
+       "slug": "general-physician"
+      },
+      "qualifications": "MBBS, FCPS (Medicine)",
+      "yearsExperience": 12,
+      "ratingAvg": 4.29,
+      "ratingCount": 17,
+      "satisfactionPct": 82,
+      "avgWaitMinutes": 21,
+      "pmdcVerified": true,
+      "isTopBooked": false,
+      "minFee": 1000,
+      "offersVideo": true,
+      "offersClinic": true,
+      "nextAvailable": {
+       "at": "2026-10-17T10:00:00.000+05:00",
+       "locationKind": "clinic",
+       "label": "Available today, 10:00 AM"
+      }
+     },
+     {
+      "id": "65c3229b-81bd-40ac-99ab-2245b11dbf3a",
+      "title": "prof",
+      "fullName": "Tariq Mehmood",
+      "displayName": "Prof. Dr. Tariq Mehmood",
+      "photoUrl": "https://images.unsplash.com/photo-1678940805950-73f2127f9d4e?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+      "gender": "male",
+      "specialty": {
+       "id": "1acf9c61-fe20-431c-8198-e8092bd850ac",
+       "name": "Cardiologist",
+       "nameUr": "ماہر امراض قلب",
+       "slug": "cardiologist"
+      },
+      "qualifications": "MBBS, FCPS (Cardiology)",
+      "yearsExperience": 31,
+      "ratingAvg": 4,
+      "ratingCount": 34,
+      "satisfactionPct": 76,
+      "avgWaitMinutes": 17,
+      "pmdcVerified": true,
+      "isTopBooked": false,
+      "minFee": 4500,
+      "offersVideo": false,
+      "offersClinic": true,
+      "nextAvailable": {
+       "at": "2026-10-17T10:00:00.000+05:00",
+       "locationKind": "clinic",
+       "label": "Available today, 10:00 AM"
+      }
+     }
+    ],
+    "upcomingAppointment": null,
+    "featuredDoctors": [
+     {
+      "id": "4a3bc2fc-08d7-49ce-a24b-e78cbe26a15d",
+      "title": "dr",
+      "fullName": "Rabia Nadeem",
+      "displayName": "Dr. Rabia Nadeem",
+      "photoUrl": "https://images.unsplash.com/photo-1753486986377-1395ccfb4a8a?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+      "gender": "female",
+      "specialty": {
+       "id": "1e7702bf-e34a-4601-b6c2-4388dc071dfb",
+       "name": "General Physician",
+       "nameUr": "جنرل فزیشن",
+       "slug": "general-physician"
+      },
+      "qualifications": "MBBS, FCPS (Medicine)",
+      "yearsExperience": 6,
+      "ratingAvg": 4.55,
+      "ratingCount": 31,
+      "satisfactionPct": 97,
+      "avgWaitMinutes": 18,
+      "pmdcVerified": true,
+      "isTopBooked": true,
+      "minFee": 1000,
+      "offersVideo": true,
+      "offersClinic": true,
+      "nextAvailable": {
+       "at": "2026-10-17T17:00:00.000+05:00",
+       "locationKind": "clinic",
+       "label": "Available today, 5:00 PM"
+      }
+     },
+     {
+      "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+      "title": "dr",
+      "fullName": "Sana Iqbal",
+      "displayName": "Dr. Sana Iqbal",
+      "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+      "gender": "female",
+      "specialty": {
+       "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+       "name": "Dermatologist",
+       "nameUr": "ماہر امراض جلد",
+       "slug": "dermatologist"
+      },
+      "qualifications": "MBBS, FCPS (Dermatology)",
+      "yearsExperience": 15,
+      "ratingAvg": 4.24,
+      "ratingCount": 41,
+      "satisfactionPct": 78,
+      "avgWaitMinutes": 16,
+      "pmdcVerified": true,
+      "isTopBooked": false,
+      "minFee": 2000,
+      "offersVideo": true,
+      "offersClinic": true,
+      "nextAvailable": {
+       "at": "2026-10-17T10:00:00.000+05:00",
+       "locationKind": "clinic",
+       "label": "Available today, 10:00 AM"
+      }
+     },
+     {
+      "id": "33ba134e-3ac5-45d1-9b2a-be9649a4579d",
+      "title": "prof",
+      "fullName": "Nasreen Akhtar",
+      "displayName": "Prof. Dr. Nasreen Akhtar",
+      "photoUrl": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+      "gender": "female",
+      "specialty": {
+       "id": "e9565779-4fe4-401f-97c8-a6e69affd3a1",
+       "name": "Gynecologist",
+       "nameUr": "ماہر امراض نسواں",
+       "slug": "gynecologist"
+      },
+      "qualifications": "MBBS, FCPS (Obstetrics & Gynaecology)",
+      "yearsExperience": 28,
+      "ratingAvg": 4.3,
+      "ratingCount": 33,
+      "satisfactionPct": 79,
+      "avgWaitMinutes": 18,
+      "pmdcVerified": true,
+      "isTopBooked": false,
+      "minFee": 3500,
+      "offersVideo": false,
+      "offersClinic": true,
+      "nextAvailable": {
+       "at": "2026-10-17T10:00:00.000+05:00",
+       "locationKind": "clinic",
+       "label": "Available today, 10:00 AM"
+      }
+     }
+    ],
+    "featuredScope": "city",
+    "banners": [
+     {
+      "id": "bf8e3300-264f-47e0-a2b8-d71235a06054",
+      "imageUrl": "https://images.unsplash.com/photo-1758691463620-188ca7c1a04f?w=1600&h=800&fit=crop&q=80&auto=format",
+      "title": "See a doctor by video today",
+      "subtitle": "PMDC-verified doctors, from home. You pay the doctor directly.",
+      "targetType": "screen",
+      "targetScreen": "video_consultation",
+      "target": null
+     },
+     {
+      "id": "680da4ca-4d3f-44f6-9d91-e280ad930d23",
+      "imageUrl": "https://images.unsplash.com/photo-1688588162416-f7a7e726e0bf?w=1600&h=800&fit=crop&q=80&auto=format",
+      "title": "Skin and hair specialists",
+      "subtitle": "Acne, hair fall and eczema, seen by dermatologists near you.",
+      "targetType": "specialty",
+      "targetScreen": null,
+      "target": {
+       "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+       "slug": "dermatologist",
+       "name": "Dermatologist"
+      }
+     },
+     {
+      "id": "aa376745-5b5a-4016-acf1-85d6d474978c",
+      "imageUrl": "https://images.unsplash.com/photo-1758273241078-8eec353836be?w=1600&h=800&fit=crop&q=80&auto=format",
+      "title": "Not sure who to see?",
+      "subtitle": "Describe how you feel and we will suggest the right specialist.",
+      "targetType": "screen",
+      "targetScreen": "symptom_checker",
+      "target": null
+     }
+    ],
+    "emergencyNumbers": [
+     {
+      "label": "Rescue",
+      "number": "1122"
+     },
+     {
+      "label": "Edhi ambulance",
+      "number": "115"
+     }
+    ]
+   }
+  }
+ },
+ "specialties": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": [
+    {
+     "id": "1e7702bf-e34a-4601-b6c2-4388dc071dfb",
+     "name": "General Physician",
+     "nameUr": "جنرل فزیشن",
+     "slug": "general-physician",
+     "icon": "stethoscope",
+     "description": "First doctor for everyday illness: fever, flu, infections, check-ups.",
+     "doctorCount": 2
+    },
+    {
+     "id": "e9565779-4fe4-401f-97c8-a6e69affd3a1",
+     "name": "Gynecologist",
+     "nameUr": "ماہر امراض نسواں",
+     "slug": "gynecologist",
+     "icon": "female",
+     "description": "Women's health, periods, pregnancy and childbirth.",
+     "doctorCount": 1
+    },
+    {
+     "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+     "name": "Dermatologist",
+     "nameUr": "ماہر امراض جلد",
+     "slug": "dermatologist",
+     "icon": "skin",
+     "description": "Skin, hair and nail conditions.",
+     "doctorCount": 1
+    }
+   ]
+  }
+ },
+ "conditions": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": [
+    {
+     "id": "3c28baea-a48d-4f21-b5b9-877b9c8823af",
+     "name": "Acne",
+     "nameUr": "کیل مہاسے",
+     "slug": "acne",
+     "isCommon": true,
+     "icon": "sparkles",
+     "specialties": [
+      {
+       "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+       "name": "Dermatologist",
+       "nameUr": "ماہر امراض جلد",
+       "slug": "dermatologist"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "suggest": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "doctors": [
+     {
+      "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+      "title": "dr",
+      "fullName": "Sana Iqbal",
+      "displayName": "Dr. Sana Iqbal",
+      "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+      "gender": "female",
+      "specialty": {
+       "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+       "name": "Dermatologist",
+       "nameUr": "ماہر امراض جلد",
+       "slug": "dermatologist"
+      },
+      "qualifications": "MBBS, FCPS (Dermatology)",
+      "yearsExperience": 15,
+      "ratingAvg": 4.24,
+      "ratingCount": 41,
+      "satisfactionPct": 78,
+      "avgWaitMinutes": 16,
+      "pmdcVerified": true,
+      "isTopBooked": false,
+      "minFee": 2000,
+      "offersVideo": true,
+      "offersClinic": true,
+      "nextAvailable": {
+       "at": "2026-10-17T10:00:00.000+05:00",
+       "locationKind": "clinic",
+       "label": "Available today, 10:00 AM"
+      }
+     },
+     {
+      "id": "9a7b3e15-7962-4a53-b04f-02fc7c6a0eba",
+      "title": "dr",
+      "fullName": "Mehwish Tariq",
+      "displayName": "Dr. Mehwish Tariq",
+      "photoUrl": "https://images.unsplash.com/photo-1706565029539-d09af5896340?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+      "gender": "female",
+      "specialty": {
+       "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+       "name": "Dermatologist",
+       "nameUr": "ماہر امراض جلد",
+       "slug": "dermatologist"
+      },
+      "qualifications": "MBBS, FCPS (Dermatology)",
+      "yearsExperience": 10,
+      "ratingAvg": 4.08,
+      "ratingCount": 40,
+      "satisfactionPct": 73,
+      "avgWaitMinutes": 17,
+      "pmdcVerified": true,
+      "isTopBooked": false,
+      "minFee": 2500,
+      "offersVideo": false,
+      "offersClinic": true,
+      "nextAvailable": {
+       "at": "2026-10-17T17:00:00.000+05:00",
+       "locationKind": "clinic",
+       "label": "Available today, 5:00 PM"
+      }
+     },
+     {
+      "id": "5f7ba80d-cf59-442a-bb19-6252f65cf1f1",
+      "title": "asst_prof",
+      "fullName": "Hamza Qureshi",
+      "displayName": "Asst. Prof. Dr. Hamza Qureshi",
+      "photoUrl": "https://images.unsplash.com/photo-1637059824899-a441006a6875?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+      "gender": "male",
+      "specialty": {
+       "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+       "name": "Dermatologist",
+       "nameUr": "ماہر امراض جلد",
+       "slug": "dermatologist"
+      },
+      "qualifications": "MBBS, FCPS (Dermatology)",
+      "yearsExperience": 17,
+      "ratingAvg": 4.23,
+      "ratingCount": 22,
+      "satisfactionPct": 91,
+      "avgWaitMinutes": 14,
+      "pmdcVerified": true,
+      "isTopBooked": false,
+      "minFee": 2000,
+      "offersVideo": true,
+      "offersClinic": true,
+      "nextAvailable": {
+       "at": "2026-10-17T17:00:00.000+05:00",
+       "locationKind": "clinic",
+       "label": "Available today, 5:00 PM"
+      }
+     }
+    ],
+    "specialties": [
+     {
+      "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+      "name": "Dermatologist",
+      "nameUr": "ماہر امراض جلد",
+      "slug": "dermatologist",
+      "icon": "skin",
+      "description": "Skin, hair and nail conditions."
+     }
+    ],
+    "conditions": [
+     {
+      "id": "6785b22f-5747-4fc4-a1dc-3db194e10052",
+      "name": "Eczema",
+      "nameUr": "ایگزیما",
+      "slug": "eczema",
+      "isCommon": false,
+      "icon": null,
+      "specialties": [
+       {
+        "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+        "name": "Dermatologist",
+        "nameUr": "ماہر امراض جلد",
+        "slug": "dermatologist"
+       },
+       {
+        "id": "34ceb8ae-201a-4726-b540-70ebec708724",
+        "name": "Allergy Specialist",
+        "nameUr": "ماہر امراض الرجی",
+        "slug": "allergy-specialist"
+       }
+      ]
+     },
+     {
+      "id": "5776b663-e60a-44f7-a421-22b39c313cb7",
+      "name": "Psoriasis",
+      "nameUr": "چنبل",
+      "slug": "psoriasis",
+      "isCommon": false,
+      "icon": null,
+      "specialties": [
+       {
+        "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+        "name": "Dermatologist",
+        "nameUr": "ماہر امراض جلد",
+        "slug": "dermatologist"
+       }
+      ]
+     },
+     {
+      "id": "5721b3f6-4918-446e-8781-b6bf9673b2d1",
+      "name": "Warts",
+      "nameUr": "مسے",
+      "slug": "warts",
+      "isCommon": false,
+      "icon": null,
+      "specialties": [
+       {
+        "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+        "name": "Dermatologist",
+        "nameUr": "ماہر امراض جلد",
+        "slug": "dermatologist"
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "doctors": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [
+     {
+      "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+      "title": "dr",
+      "fullName": "Sana Iqbal",
+      "displayName": "Dr. Sana Iqbal",
+      "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+      "gender": "female",
+      "specialty": {
+       "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+       "name": "Dermatologist",
+       "nameUr": "ماہر امراض جلد",
+       "slug": "dermatologist"
+      },
+      "qualifications": "MBBS, FCPS (Dermatology)",
+      "yearsExperience": 15,
+      "ratingAvg": 4.24,
+      "ratingCount": 41,
+      "satisfactionPct": 78,
+      "avgWaitMinutes": 16,
+      "pmdcVerified": true,
+      "isTopBooked": false,
+      "minFee": 2000,
+      "offersVideo": true,
+      "offersClinic": true,
+      "nextAvailable": {
+       "at": "2026-10-17T10:00:00.000+05:00",
+       "locationKind": "clinic",
+       "label": "Available today, 10:00 AM"
+      }
+     }
+    ],
+    "total": 1,
+    "page": 1,
+    "pageSize": 5
+   }
+  }
+ },
+ "doctorProfile": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+    "title": "dr",
+    "fullName": "Sana Iqbal",
+    "gender": "female",
+    "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+    "pmdcNumber": "DEMO-00001-P",
+    "pmdcVerified": true,
+    "pmdcVerifiedAt": "2026-10-16T11:17:20.370Z",
+    "primarySpecialty": {
+     "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+     "name": "Dermatologist",
+     "nameUr": "ماہر امراض جلد",
+     "slug": "dermatologist"
+    },
+    "secondarySpecialtyIds": [],
+    "practicingSince": 2011,
+    "yearsExperience": 15,
+    "about": "Dr. Sana Iqbal is a dermatologist in Lahore with 15 years of practice, seeing patients for acne treatment and acne scar treatment. (Demo profile: this doctor is fictional.)",
+    "languages": [
+     "English",
+     "Urdu",
+     "Punjabi"
+    ],
+    "bookingWindowDays": 14,
+    "minNoticeMinutes": 60,
+    "cancelCutoffMinutes": 120,
+    "videoPrepayRequired": false,
+    "isAccepting": true,
+    "isListed": true,
+    "unlistedReason": null,
+    "qualifications": [
+     {
+      "degree": "MBBS",
+      "institute": "King Edward Medical University",
+      "year": 2010
+     },
+     {
+      "degree": "FCPS (Dermatology)",
+      "institute": "College of Physicians and Surgeons Pakistan",
+      "year": 2015
+     }
+    ],
+    "experiences": [
+     {
+      "designation": "Consultant",
+      "institute": "Lahore Teaching Hospital (demo)",
+      "fromYear": 2016,
+      "toYear": null
+     },
+     {
+      "designation": "Medical Officer",
+      "institute": "Lahore General Hospital (demo)",
+      "fromYear": 2011,
+      "toYear": 2016
+     }
+    ],
+    "services": [
+     "Acne treatment",
+     "Acne scar treatment",
+     "Hair loss treatment",
+     "Chemical peels"
+    ],
+    "conditions": [
+     {
+      "id": "3c28baea-a48d-4f21-b5b9-877b9c8823af",
+      "name": "Acne",
+      "slug": "acne"
+     },
+     {
+      "id": "6785b22f-5747-4fc4-a1dc-3db194e10052",
+      "name": "Eczema",
+      "slug": "eczema"
+     },
+     {
+      "id": "b54bf5c6-919e-437f-9d9b-3900aa2dee0a",
+      "name": "Fungal infection",
+      "slug": "fungal-infection"
+     }
+    ],
+    "stats": {
+     "ratingAvg": 4.24,
+     "ratingCount": 41,
+     "satisfactionPct": 78,
+     "avgWaitMinutes": 16,
+     "avgConsultMinutes": 13,
+     "patientsServed": 11
+    },
+    "nextAvailableAt": "2026-10-17T05:00:00.000Z"
+   }
+  }
+ },
+ "profile": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+    "title": "dr",
+    "fullName": "Sana Iqbal",
+    "displayName": "Dr. Sana Iqbal",
+    "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+    "gender": "female",
+    "specialty": {
+     "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+     "name": "Dermatologist",
+     "nameUr": "ماہر امراض جلد",
+     "slug": "dermatologist"
+    },
+    "qualifications": "MBBS, FCPS (Dermatology)",
+    "yearsExperience": 15,
+    "ratingAvg": 4.24,
+    "ratingCount": 41,
+    "satisfactionPct": 78,
+    "avgWaitMinutes": 16,
+    "pmdcVerified": true,
+    "isTopBooked": false,
+    "minFee": 2000,
+    "offersVideo": true,
+    "offersClinic": true,
+    "nextAvailable": {
+     "at": "2026-10-17T10:00:00.000+05:00",
+     "locationKind": "clinic",
+     "label": "Available today, 10:00 AM"
+    },
+    "about": "Dr. Sana Iqbal is a dermatologist in Lahore with 15 years of practice, seeing patients for acne treatment and acne scar treatment. (Demo profile: this doctor is fictional.)",
+    "languages": [
+     "English",
+     "Urdu",
+     "Punjabi"
+    ],
+    "pmdcNumber": "DEMO-00001-P",
+    "badges": {
+     "pmdcVerified": true,
+     "topBooked": false
+    },
+    "stats": {
+     "ratingAvg": 4.24,
+     "ratingCount": 41,
+     "satisfactionPct": 78,
+     "avgWaitMinutes": 16,
+     "avgConsultMinutes": 13,
+     "patientsServed": 11,
+     "yearsExperience": 15
+    },
+    "booking": {
+     "isAccepting": true,
+     "bookingWindowDays": 14,
+     "cancelCutoffMinutes": 120,
+     "videoPrepayRequired": false
+    },
+    "secondarySpecialties": [],
+    "conditions": [
+     {
+      "id": "3c28baea-a48d-4f21-b5b9-877b9c8823af",
+      "name": "Acne",
+      "nameUr": "کیل مہاسے",
+      "slug": "acne"
+     },
+     {
+      "id": "6785b22f-5747-4fc4-a1dc-3db194e10052",
+      "name": "Eczema",
+      "nameUr": "ایگزیما",
+      "slug": "eczema"
+     },
+     {
+      "id": "b54bf5c6-919e-437f-9d9b-3900aa2dee0a",
+      "name": "Fungal infection",
+      "nameUr": "فنگل انفیکشن",
+      "slug": "fungal-infection"
+     }
+    ],
+    "services": [
+     "Acne treatment",
+     "Acne scar treatment",
+     "Hair loss treatment",
+     "Chemical peels"
+    ],
+    "qualificationList": [
+     {
+      "degree": "MBBS",
+      "institute": "King Edward Medical University",
+      "year": 2010
+     },
+     {
+      "degree": "FCPS (Dermatology)",
+      "institute": "College of Physicians and Surgeons Pakistan",
+      "year": 2015
+     }
+    ],
+    "experiences": [
+     {
+      "designation": "Consultant",
+      "institute": "Lahore Teaching Hospital (demo)",
+      "fromYear": 2016,
+      "toYear": null
+     },
+     {
+      "designation": "Medical Officer",
+      "institute": "Lahore General Hospital (demo)",
+      "fromYear": 2011,
+      "toYear": 2016
+     }
+    ],
+    "locations": [
+     {
+      "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+      "kind": "clinic",
+      "name": "Model Town Clinic (demo)",
+      "addressLine": "13-A Main Boulevard",
+      "area": "Model Town",
+      "city": "Lahore",
+      "lat": 31.487,
+      "lng": 74.3212,
+      "phone": "+923007000000",
+      "timezone": "Asia/Karachi",
+      "fee": 2500,
+      "slotMinutes": 15,
+      "instructions": "Please arrive 10 minutes early and ask for your token at reception.",
+      "nextAvailable": {
+       "at": "2026-10-17T17:00:00.000+05:00",
+       "label": "Available today, 5:00 PM"
+      },
+      "timings": [
+       {
+        "weekday": 1,
+        "weekdayLabel": "Mon",
+        "ranges": [
+         {
+          "start": "17:00",
+          "end": "21:00",
+          "label": "5:00 PM – 9:00 PM"
+         }
+        ]
+       },
+       {
+        "weekday": 2,
+        "weekdayLabel": "Tue",
+        "ranges": [
+         {
+          "start": "17:00",
+          "end": "21:00",
+          "label": "5:00 PM – 9:00 PM"
+         }
+        ]
+       },
+       {
+        "weekday": 3,
+        "weekdayLabel": "Wed",
+        "ranges": [
+         {
+          "start": "17:00",
+          "end": "21:00",
+          "label": "5:00 PM – 9:00 PM"
+         }
+        ]
+       },
+       {
+        "weekday": 4,
+        "weekdayLabel": "Thu",
+        "ranges": [
+         {
+          "start": "17:00",
+          "end": "21:00",
+          "label": "5:00 PM – 9:00 PM"
+         }
+        ]
+       },
+       {
+        "weekday": 5,
+        "weekdayLabel": "Fri",
+        "ranges": [
+         {
+          "start": "17:00",
+          "end": "21:00",
+          "label": "5:00 PM – 9:00 PM"
+         }
+        ]
+       },
+       {
+        "weekday": 6,
+        "weekdayLabel": "Sat",
+        "ranges": [
+         {
+          "start": "17:00",
+          "end": "21:00",
+          "label": "5:00 PM – 9:00 PM"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "id": "2b9e43ef-3ede-42e6-91fe-dac3769b746b",
+      "kind": "clinic",
+      "name": "Gulberg III Medical Centre (demo)",
+      "addressLine": "51-B Main Boulevard",
+      "area": "Gulberg III",
+      "city": "Lahore",
+      "lat": 31.5101,
+      "lng": 74.343,
+      "phone": "+923007000000",
+      "timezone": "Asia/Karachi",
+      "fee": 3000,
+      "slotMinutes": 15,
+      "instructions": "Please arrive 10 minutes early and ask for your token at reception.",
+      "nextAvailable": {
+       "at": "2026-10-17T10:00:00.000+05:00",
+       "label": "Available today, 10:00 AM"
+      },
+      "timings": [
+       {
+        "weekday": 1,
+        "weekdayLabel": "Mon",
+        "ranges": [
+         {
+          "start": "09:30",
+          "end": "13:00",
+          "label": "9:30 AM – 1:00 PM"
+         }
+        ]
+       },
+       {
+        "weekday": 2,
+        "weekdayLabel": "Tue",
+        "ranges": [
+         {
+          "start": "09:30",
+          "end": "13:00",
+          "label": "9:30 AM – 1:00 PM"
+         }
+        ]
+       },
+       {
+        "weekday": 3,
+        "weekdayLabel": "Wed",
+        "ranges": [
+         {
+          "start": "09:30",
+          "end": "13:00",
+          "label": "9:30 AM – 1:00 PM"
+         }
+        ]
+       },
+       {
+        "weekday": 4,
+        "weekdayLabel": "Thu",
+        "ranges": [
+         {
+          "start": "09:30",
+          "end": "13:00",
+          "label": "9:30 AM – 1:00 PM"
+         }
+        ]
+       },
+       {
+        "weekday": 5,
+        "weekdayLabel": "Fri",
+        "ranges": [
+         {
+          "start": "09:30",
+          "end": "13:00",
+          "label": "9:30 AM – 1:00 PM"
+         }
+        ]
+       },
+       {
+        "weekday": 6,
+        "weekdayLabel": "Sat",
+        "ranges": [
+         {
+          "start": "10:00",
+          "end": "13:00",
+          "label": "10:00 AM – 1:00 PM"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "id": "694c4b3f-b22f-443d-a062-ae5e572bd9bb",
+      "kind": "video",
+      "name": "Video consultation",
+      "addressLine": null,
+      "area": null,
+      "city": null,
+      "lat": null,
+      "lng": null,
+      "phone": null,
+      "timezone": "Asia/Karachi",
+      "fee": 2000,
+      "slotMinutes": 30,
+      "instructions": "Join from the app 10 minutes before your time.",
+      "nextAvailable": {
+       "at": "2026-10-19T21:30:00.000+05:00",
+       "label": "Next available Mon 19 Oct"
+      },
+      "timings": [
+       {
+        "weekday": 1,
+        "weekdayLabel": "Mon",
+        "ranges": [
+         {
+          "start": "21:30",
+          "end": "23:00",
+          "label": "9:30 PM – 11:00 PM"
+         }
+        ]
+       },
+       {
+        "weekday": 2,
+        "weekdayLabel": "Tue",
+        "ranges": [
+         {
+          "start": "21:30",
+          "end": "23:00",
+          "label": "9:30 PM – 11:00 PM"
+         }
+        ]
+       },
+       {
+        "weekday": 3,
+        "weekdayLabel": "Wed",
+        "ranges": [
+         {
+          "start": "21:30",
+          "end": "23:00",
+          "label": "9:30 PM – 11:00 PM"
+         }
+        ]
+       },
+       {
+        "weekday": 4,
+        "weekdayLabel": "Thu",
+        "ranges": [
+         {
+          "start": "21:30",
+          "end": "23:00",
+          "label": "9:30 PM – 11:00 PM"
+         }
+        ]
+       },
+       {
+        "weekday": 5,
+        "weekdayLabel": "Fri",
+        "ranges": [
+         {
+          "start": "21:30",
+          "end": "23:00",
+          "label": "9:30 PM – 11:00 PM"
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    "reviewSummary": {
+     "count": 41,
+     "averages": {
+      "overall": 4.2,
+      "diagnosis": 4.1,
+      "staff": 3.8,
+      "environment": 3.7
+     },
+     "satisfactionPct": 78,
+     "distribution": [
+      0,
+      2,
+      7,
+      11,
+      21
+     ],
+     "topTags": [
+      {
+       "tag": "on_time",
+       "count": 13
+      },
+      {
+       "tag": "explained_well",
+       "count": 10
+      },
+      {
+       "tag": "friendly",
+       "count": 9
+      }
+     ],
+     "latest": [
+      {
+       "id": "64c83135-f9b0-42c5-b85f-39d7d6d308dc",
+       "author": "Postman P.",
+       "isAnonymous": false,
+       "verifiedVisit": true,
+       "kind": "clinic",
+       "overall": 5,
+       "diagnosis": 5,
+       "staff": 4,
+       "environment": 4,
+       "recommend": true,
+       "tags": [
+        "explained_well",
+        "on_time"
+       ],
+       "text": "Listened carefully and explained everything.",
+       "createdAt": "2026-10-16T23:54:27.202Z",
+       "reply": {
+        "text": "Thank you — see you at the follow-up.",
+        "at": "2026-10-16T23:54:28.765Z"
+       }
+      },
+      {
+       "id": "c3aa6ed7-22dd-4488-9113-86c06a10cfd1",
+       "author": "Postman P.",
+       "isAnonymous": false,
+       "verifiedVisit": true,
+       "kind": "clinic",
+       "overall": 5,
+       "diagnosis": 5,
+       "staff": 4,
+       "environment": 4,
+       "recommend": true,
+       "tags": [
+        "explained_well",
+        "on_time"
+       ],
+       "text": "Listened carefully and explained everything.",
+       "createdAt": "2026-10-16T12:26:58.041Z",
+       "reply": {
+        "text": "Thank you — see you at the follow-up.",
+        "at": "2026-10-16T12:26:59.584Z"
+       }
+      },
+      {
+       "id": "e15b9279-7fe1-4838-ae45-98d09179ad1d",
+       "author": "Postman P.",
+       "isAnonymous": false,
+       "verifiedVisit": true,
+       "kind": "clinic",
+       "overall": 5,
+       "diagnosis": 5,
+       "staff": 4,
+       "environment": 4,
+       "recommend": true,
+       "tags": [
+        "explained_well",
+        "on_time"
+       ],
+       "text": "Listened carefully and explained everything.",
+       "createdAt": "2026-10-16T12:25:44.011Z",
+       "reply": {
+        "text": "Thank you — see you at the follow-up.",
+        "at": "2026-10-16T12:25:45.568Z"
+       }
+      }
+     ]
+    }
+   }
+  }
+ },
+ "similar": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": [
+    {
+     "id": "9a7b3e15-7962-4a53-b04f-02fc7c6a0eba",
+     "title": "dr",
+     "fullName": "Mehwish Tariq",
+     "displayName": "Dr. Mehwish Tariq",
+     "photoUrl": "https://images.unsplash.com/photo-1706565029539-d09af5896340?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+     "gender": "female",
+     "specialty": {
+      "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+      "name": "Dermatologist",
+      "nameUr": "ماہر امراض جلد",
+      "slug": "dermatologist"
+     },
+     "qualifications": "MBBS, FCPS (Dermatology)",
+     "yearsExperience": 10,
+     "ratingAvg": 4.08,
+     "ratingCount": 40,
+     "satisfactionPct": 73,
+     "avgWaitMinutes": 17,
+     "pmdcVerified": true,
+     "isTopBooked": false,
+     "minFee": 2500,
+     "offersVideo": false,
+     "offersClinic": true,
+     "nextAvailable": {
+      "at": "2026-10-17T17:00:00.000+05:00",
+      "locationKind": "clinic",
+      "label": "Available today, 5:00 PM"
+     }
+    },
+    {
+     "id": "5f7ba80d-cf59-442a-bb19-6252f65cf1f1",
+     "title": "asst_prof",
+     "fullName": "Hamza Qureshi",
+     "displayName": "Asst. Prof. Dr. Hamza Qureshi",
+     "photoUrl": "https://images.unsplash.com/photo-1637059824899-a441006a6875?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+     "gender": "male",
+     "specialty": {
+      "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+      "name": "Dermatologist",
+      "nameUr": "ماہر امراض جلد",
+      "slug": "dermatologist"
+     },
+     "qualifications": "MBBS, FCPS (Dermatology)",
+     "yearsExperience": 17,
+     "ratingAvg": 4.23,
+     "ratingCount": 22,
+     "satisfactionPct": 91,
+     "avgWaitMinutes": 14,
+     "pmdcVerified": true,
+     "isTopBooked": false,
+     "minFee": 2000,
+     "offersVideo": true,
+     "offersClinic": true,
+     "nextAvailable": {
+      "at": "2026-10-17T17:00:00.000+05:00",
+      "locationKind": "clinic",
+      "label": "Available today, 5:00 PM"
+     }
+    }
+   ]
+  }
+ },
+ "slots": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "doctorId": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+    "location": {
+     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "kind": "clinic",
+     "name": "Model Town Clinic (demo)",
+     "area": "Model Town",
+     "city": "Lahore",
+     "timezone": "Asia/Karachi",
+     "fee": 2500,
+     "slotMinutes": 15
+    },
+    "days": [
+     {
+      "date": "2026-10-17",
+      "weekday": 6,
+      "weekdayLabel": "Sat",
+      "dateLabel": "Sat 17 Oct",
+      "isAvailable": true,
+      "slots": [
+       {
+        "startsAt": "2026-10-17T17:00:00.000+05:00",
+        "endsAt": "2026-10-17T17:15:00.000+05:00",
+        "period": "evening"
+       },
+       {
+        "startsAt": "2026-10-17T17:30:00.000+05:00",
+        "endsAt": "2026-10-17T17:45:00.000+05:00",
+        "period": "evening"
+       },
+       {
+        "startsAt": "2026-10-17T18:15:00.000+05:00",
+        "endsAt": "2026-10-17T18:30:00.000+05:00",
+        "period": "evening"
+       }
+      ]
+     },
+     {
+      "date": "2026-10-18",
+      "weekday": 0,
+      "weekdayLabel": "Sun",
+      "dateLabel": "Sun 18 Oct",
+      "isAvailable": false,
+      "slots": []
+     },
+     {
+      "date": "2026-10-19",
+      "weekday": 1,
+      "weekdayLabel": "Mon",
+      "dateLabel": "Mon 19 Oct",
+      "isAvailable": true,
+      "slots": [
+       {
+        "startsAt": "2026-10-19T17:00:00.000+05:00",
+        "endsAt": "2026-10-19T17:15:00.000+05:00",
+        "period": "evening"
+       },
+       {
+        "startsAt": "2026-10-19T17:15:00.000+05:00",
+        "endsAt": "2026-10-19T17:30:00.000+05:00",
+        "period": "evening"
+       },
+       {
+        "startsAt": "2026-10-19T17:30:00.000+05:00",
+        "endsAt": "2026-10-19T17:45:00.000+05:00",
+        "period": "evening"
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "reviews": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [
+     {
+      "id": "64c83135-f9b0-42c5-b85f-39d7d6d308dc",
+      "author": "Postman P.",
+      "isAnonymous": false,
+      "verifiedVisit": true,
+      "kind": "clinic",
+      "overall": 5,
+      "diagnosis": 5,
+      "staff": 4,
+      "environment": 4,
+      "recommend": true,
+      "tags": [
+       "explained_well",
+       "on_time"
+      ],
+      "text": "Listened carefully and explained everything.",
+      "createdAt": "2026-10-16T23:54:27.202Z",
+      "reply": {
+       "text": "Thank you — see you at the follow-up.",
+       "at": "2026-10-16T23:54:28.765Z"
+      }
+     },
+     {
+      "id": "c3aa6ed7-22dd-4488-9113-86c06a10cfd1",
+      "author": "Postman P.",
+      "isAnonymous": false,
+      "verifiedVisit": true,
+      "kind": "clinic",
+      "overall": 5,
+      "diagnosis": 5,
+      "staff": 4,
+      "environment": 4,
+      "recommend": true,
+      "tags": [
+       "explained_well",
+       "on_time"
+      ],
+      "text": "Listened carefully and explained everything.",
+      "createdAt": "2026-10-16T12:26:58.041Z",
+      "reply": {
+       "text": "Thank you — see you at the follow-up.",
+       "at": "2026-10-16T12:26:59.584Z"
+      }
+     },
+     {
+      "id": "e15b9279-7fe1-4838-ae45-98d09179ad1d",
+      "author": "Postman P.",
+      "isAnonymous": false,
+      "verifiedVisit": true,
+      "kind": "clinic",
+      "overall": 5,
+      "diagnosis": 5,
+      "staff": 4,
+      "environment": 4,
+      "recommend": true,
+      "tags": [
+       "explained_well",
+       "on_time"
+      ],
+      "text": "Listened carefully and explained everything.",
+      "createdAt": "2026-10-16T12:25:44.011Z",
+      "reply": {
+       "text": "Thank you — see you at the follow-up.",
+       "at": "2026-10-16T12:25:45.568Z"
+      }
+     }
+    ],
+    "total": 41,
+    "page": 1,
+    "pageSize": 3
+   }
+  }
+ },
+ "family": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": [
+    {
+     "id": "8a24a74b-94f4-4699-92d5-41a7f980b6d7",
+     "fullName": "Zara Raza",
+     "relation": "child",
+     "gender": "female",
+     "dateOfBirth": "2019-04-12",
+     "age": 7,
+     "phone": null,
+     "createdAt": "2026-10-16T11:17:20.747Z"
+    },
+    {
+     "id": "1949eaaf-c97b-4e60-8364-fda37113a953",
+     "fullName": "Shahida Raza",
+     "relation": "parent",
+     "gender": "female",
+     "dateOfBirth": "1958-09-02",
+     "age": 68,
+     "phone": null,
+     "createdAt": "2026-10-16T11:17:20.747Z"
+    }
+   ]
+  }
+ },
+ "book": {
+  "status": 201,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "c7bebff3-35e2-4039-a3b6-fa441e61ec86",
+    "code": "HC-M5UWSH",
+    "status": "booked",
+    "kind": "clinic",
+    "startsAt": "2026-10-17T17:30:00.000+05:00",
+    "endsAt": "2026-10-17T17:45:00.000+05:00",
+    "patient": {
+     "age": null,
+     "name": "Ali Raza",
+     "phone": "+923001234501",
+     "gender": null,
+     "relation": null
+    },
+    "familyMemberId": null,
+    "reason": "Acne for six months",
+    "symptoms": [
+     "pimples"
+    ],
+    "fee": 2500,
+    "payment": {
+     "method": "pay_at_clinic",
+     "status": "unpaid",
+     "payBy": null,
+     "paidAt": null,
+     "paymentRef": null,
+     "proofUrl": null,
+     "rejectedReason": null,
+     "accounts": null,
+     "refundRef": null,
+     "refundedAt": null
+    },
+    "lateCancel": false,
+    "cancelledBy": null,
+    "cancelReason": null,
+    "rescheduledFromId": null,
+    "bookedAt": "2026-10-17T05:00:14.078+05:00",
+    "checkedInAt": null,
+    "startedAt": null,
+    "completedAt": null,
+    "cancelledAt": null,
+    "doctor": {
+     "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+     "displayName": "Dr. Sana Iqbal",
+     "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+     "specialty": "Dermatologist"
+    },
+    "location": {
+     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "kind": "clinic",
+     "name": "Model Town Clinic (demo)",
+     "addressLine": "13-A Main Boulevard",
+     "area": "Model Town",
+     "city": "Lahore",
+     "lat": 31.487,
+     "lng": 74.3212,
+     "phone": "+923007000000",
+     "instructions": "Please arrive 10 minutes early and ask for your token at reception.",
+     "timezone": "Asia/Karachi"
+    },
+    "cancelCutoffAt": "2026-10-17T15:30:00.000+05:00",
+    "prescriptionId": null,
+    "reviewed": false,
+    "events": [
+     {
+      "kind": "status",
+      "from": null,
+      "to": "booked",
+      "actorRole": "patient",
+      "note": null,
+      "at": "2026-10-17T05:00:14.087+05:00"
+     }
+    ],
+    "sharedRecords": [],
+    "can": {
+     "cancel": true,
+     "reschedule": true,
+     "joinVideo": false,
+     "shareRecords": true,
+     "submitPaymentProof": false,
+     "review": false
+    }
+   }
+  }
+ },
+ "slotTaken": {
+  "status": 409,
+  "body": {
+   "success": false,
+   "error": {
+    "code": "SLOT_TAKEN",
+    "message": "Someone just booked that time. Here are the nearest free slots.",
+    "details": {
+     "alternatives": [
+      {
+       "startsAt": "2026-10-17T17:00:00.000+05:00",
+       "endsAt": "2026-10-17T17:15:00.000+05:00"
+      },
+      {
+       "startsAt": "2026-10-17T18:15:00.000+05:00",
+       "endsAt": "2026-10-17T18:30:00.000+05:00"
+      },
+      {
+       "startsAt": "2026-10-17T18:30:00.000+05:00",
+       "endsAt": "2026-10-17T18:45:00.000+05:00"
+      }
+     ]
+    }
+   }
+  }
+ },
+ "appointment": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "c7bebff3-35e2-4039-a3b6-fa441e61ec86",
+    "code": "HC-M5UWSH",
+    "status": "booked",
+    "kind": "clinic",
+    "startsAt": "2026-10-17T17:30:00.000+05:00",
+    "endsAt": "2026-10-17T17:45:00.000+05:00",
+    "patient": {
+     "age": null,
+     "name": "Ali Raza",
+     "phone": "+923001234501",
+     "gender": null,
+     "relation": null
+    },
+    "familyMemberId": null,
+    "reason": "Acne for six months",
+    "symptoms": [
+     "pimples"
+    ],
+    "fee": 2500,
+    "payment": {
+     "method": "pay_at_clinic",
+     "status": "unpaid",
+     "payBy": null,
+     "paidAt": null,
+     "paymentRef": null,
+     "proofUrl": null,
+     "rejectedReason": null,
+     "accounts": null,
+     "refundRef": null,
+     "refundedAt": null
+    },
+    "lateCancel": false,
+    "cancelledBy": null,
+    "cancelReason": null,
+    "rescheduledFromId": null,
+    "bookedAt": "2026-10-17T05:00:14.078+05:00",
+    "checkedInAt": null,
+    "startedAt": null,
+    "completedAt": null,
+    "cancelledAt": null,
+    "doctor": {
+     "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+     "displayName": "Dr. Sana Iqbal",
+     "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+     "specialty": "Dermatologist"
+    },
+    "location": {
+     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "kind": "clinic",
+     "name": "Model Town Clinic (demo)",
+     "addressLine": "13-A Main Boulevard",
+     "area": "Model Town",
+     "city": "Lahore",
+     "lat": 31.487,
+     "lng": 74.3212,
+     "phone": "+923007000000",
+     "instructions": "Please arrive 10 minutes early and ask for your token at reception.",
+     "timezone": "Asia/Karachi"
+    },
+    "cancelCutoffAt": "2026-10-17T15:30:00.000+05:00",
+    "prescriptionId": null,
+    "reviewed": false,
+    "events": [
+     {
+      "kind": "status",
+      "from": null,
+      "to": "booked",
+      "actorRole": "patient",
+      "note": null,
+      "at": "2026-10-17T05:00:14.087+05:00"
+     }
+    ],
+    "sharedRecords": [],
+    "can": {
+     "cancel": true,
+     "reschedule": true,
+     "joinVideo": false,
+     "shareRecords": true,
+     "submitPaymentProof": false,
+     "review": false
+    }
+   }
+  }
+ },
+ "appointments": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [
+     {
+      "id": "dc974a7c-c718-463b-8919-701100d50e0b",
+      "code": "HC-JSUCYS",
+      "status": "booked",
+      "kind": "clinic",
+      "startsAt": "2026-10-17T17:15:00.000+05:00",
+      "endsAt": "2026-10-17T17:30:00.000+05:00",
+      "patient": {
+       "age": null,
+       "name": "Ali Raza",
+       "phone": "+923001234501",
+       "gender": null,
+       "relation": null
+      },
+      "familyMemberId": null,
+      "reason": "Acne for six months",
+      "symptoms": [
+       "pimples"
+      ],
+      "fee": 2500,
+      "payment": {
+       "method": "pay_at_clinic",
+       "status": "unpaid",
+       "payBy": null,
+       "paidAt": null,
+       "paymentRef": null,
+       "proofUrl": null,
+       "rejectedReason": null,
+       "accounts": null,
+       "refundRef": null,
+       "refundedAt": null
+      },
+      "lateCancel": false,
+      "cancelledBy": null,
+      "cancelReason": null,
+      "rescheduledFromId": null,
+      "bookedAt": "2026-10-17T04:59:04.990+05:00",
+      "checkedInAt": null,
+      "startedAt": null,
+      "completedAt": null,
+      "cancelledAt": null,
+      "doctor": {
+       "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+       "displayName": "Dr. Sana Iqbal",
+       "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+       "specialty": "Dermatologist"
+      },
+      "location": {
+       "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+       "kind": "clinic",
+       "name": "Model Town Clinic (demo)",
+       "addressLine": "13-A Main Boulevard",
+       "area": "Model Town",
+       "city": "Lahore",
+       "lat": 31.487,
+       "lng": 74.3212,
+       "phone": "+923007000000",
+       "instructions": "Please arrive 10 minutes early and ask for your token at reception.",
+       "timezone": "Asia/Karachi"
+      },
+      "cancelCutoffAt": "2026-10-17T15:15:00.000+05:00",
+      "prescriptionId": null,
+      "reviewed": false,
+      "can": {
+       "cancel": true,
+       "reschedule": true,
+       "joinVideo": false,
+       "shareRecords": true,
+       "submitPaymentProof": false,
+       "review": false
+      }
+     },
+     {
+      "id": "c7bebff3-35e2-4039-a3b6-fa441e61ec86",
+      "code": "HC-M5UWSH",
+      "status": "booked",
+      "kind": "clinic",
+      "startsAt": "2026-10-17T17:30:00.000+05:00",
+      "endsAt": "2026-10-17T17:45:00.000+05:00",
+      "patient": {
+       "age": null,
+       "name": "Ali Raza",
+       "phone": "+923001234501",
+       "gender": null,
+       "relation": null
+      },
+      "familyMemberId": null,
+      "reason": "Acne for six months",
+      "symptoms": [
+       "pimples"
+      ],
+      "fee": 2500,
+      "payment": {
+       "method": "pay_at_clinic",
+       "status": "unpaid",
+       "payBy": null,
+       "paidAt": null,
+       "paymentRef": null,
+       "proofUrl": null,
+       "rejectedReason": null,
+       "accounts": null,
+       "refundRef": null,
+       "refundedAt": null
+      },
+      "lateCancel": false,
+      "cancelledBy": null,
+      "cancelReason": null,
+      "rescheduledFromId": null,
+      "bookedAt": "2026-10-17T05:00:14.078+05:00",
+      "checkedInAt": null,
+      "startedAt": null,
+      "completedAt": null,
+      "cancelledAt": null,
+      "doctor": {
+       "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+       "displayName": "Dr. Sana Iqbal",
+       "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+       "specialty": "Dermatologist"
+      },
+      "location": {
+       "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+       "kind": "clinic",
+       "name": "Model Town Clinic (demo)",
+       "addressLine": "13-A Main Boulevard",
+       "area": "Model Town",
+       "city": "Lahore",
+       "lat": 31.487,
+       "lng": 74.3212,
+       "phone": "+923007000000",
+       "instructions": "Please arrive 10 minutes early and ask for your token at reception.",
+       "timezone": "Asia/Karachi"
+      },
+      "cancelCutoffAt": "2026-10-17T15:30:00.000+05:00",
+      "prescriptionId": null,
+      "reviewed": false,
+      "can": {
+       "cancel": true,
+       "reschedule": true,
+       "joinVideo": false,
+       "shareRecords": true,
+       "submitPaymentProof": false,
+       "review": false
+      }
+     },
+     {
+      "id": "98c3a72b-2851-40c2-85eb-7e0ae488b61a",
+      "code": "HC-H8AU6Q",
+      "status": "booked",
+      "kind": "clinic",
+      "startsAt": "2026-10-17T18:00:00.000+05:00",
+      "endsAt": "2026-10-17T18:15:00.000+05:00",
+      "patient": {
+       "age": null,
+       "name": "Ali Raza",
+       "phone": "+923001234501",
+       "gender": null,
+       "relation": null
+      },
+      "familyMemberId": null,
+      "reason": "Acne for six months",
+      "symptoms": [
+       "pimples"
+      ],
+      "fee": 2500,
+      "payment": {
+       "method": "pay_at_clinic",
+       "status": "unpaid",
+       "payBy": null,
+       "paidAt": null,
+       "paymentRef": null,
+       "proofUrl": null,
+       "rejectedReason": null,
+       "accounts": null,
+       "refundRef": null,
+       "refundedAt": null
+      },
+      "lateCancel": false,
+      "cancelledBy": null,
+      "cancelReason": null,
+      "rescheduledFromId": "6253b601-30ab-4db5-8963-5c864961e178",
+      "bookedAt": "2026-10-17T04:58:52.759+05:00",
+      "checkedInAt": null,
+      "startedAt": null,
+      "completedAt": null,
+      "cancelledAt": null,
+      "doctor": {
+       "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+       "displayName": "Dr. Sana Iqbal",
+       "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+       "specialty": "Dermatologist"
+      },
+      "location": {
+       "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+       "kind": "clinic",
+       "name": "Model Town Clinic (demo)",
+       "addressLine": "13-A Main Boulevard",
+       "area": "Model Town",
+       "city": "Lahore",
+       "lat": 31.487,
+       "lng": 74.3212,
+       "phone": "+923007000000",
+       "instructions": "Please arrive 10 minutes early and ask for your token at reception.",
+       "timezone": "Asia/Karachi"
+      },
+      "cancelCutoffAt": "2026-10-17T16:00:00.000+05:00",
+      "prescriptionId": null,
+      "reviewed": false,
+      "can": {
+       "cancel": true,
+       "reschedule": false,
+       "joinVideo": false,
+       "shareRecords": true,
+       "submitPaymentProof": false,
+       "review": false
+      }
+     }
+    ],
+    "total": 3,
+    "page": 1,
+    "pageSize": 3
+   }
+  }
+ },
+ "homeSignedIn": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "city": "Lahore",
+    "cities": [
+     "Lahore",
+     "Karachi",
+     "Islamabad"
+    ],
+    "specialties": [
+     {
+      "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+      "name": "Dermatologist",
+      "nameUr": "ماہر امراض جلد",
+      "slug": "dermatologist",
+      "icon": "skin",
+      "description": "Skin, hair and nail conditions.",
+      "doctorCount": 1
+     },
+     {
+      "id": "e9565779-4fe4-401f-97c8-a6e69affd3a1",
+      "name": "Gynecologist",
+      "nameUr": "ماہر امراض نسواں",
+      "slug": "gynecologist",
+      "icon": "female",
+      "description": "Women's health, periods, pregnancy and childbirth.",
+      "doctorCount": 1
+     },
+     {
+      "id": "1e7702bf-e34a-4601-b6c2-4388dc071dfb",
+      "name": "General Physician",
+      "nameUr": "جنرل فزیشن",
+      "slug": "general-physician",
+      "icon": "stethoscope",
+      "description": "First doctor for everyday illness: fever, flu, infections, check-ups.",
+      "doctorCount": 2
+     }
+    ],
+    "commonConditions": [
+     {
+      "id": "c8705751-e191-4d68-a6e8-f1a19c8933c3",
+      "name": "Acidity and heartburn",
+      "nameUr": "تیزابیت",
+      "slug": "acidity",
+      "isCommon": true,
+      "icon": "flame",
+      "specialties": [
+       {
+        "id": "80d00a46-42d0-46bf-9317-80c703edf6eb",
+        "name": "Gastroenterologist",
+        "nameUr": "ماہر امراض معدہ و جگر",
+        "slug": "gastroenterologist"
+       },
+       {
+        "id": "1e7702bf-e34a-4601-b6c2-4388dc071dfb",
+        "name": "General Physician",
+        "nameUr": "جنرل فزیشن",
+        "slug": "general-physician"
+       }
+      ]
+     },
+     {
+      "id": "3c28baea-a48d-4f21-b5b9-877b9c8823af",
+      "name": "Acne",
+      "nameUr": "کیل مہاسے",
+      "slug": "acne",
+      "isCommon": true,
+      "icon": "sparkles",
+      "specialties": [
+       {
+        "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+        "name": "Dermatologist",
+        "nameUr": "ماہر امراض جلد",
+        "slug": "dermatologist"
+       }
+      ]
+     },
+     {
+      "id": "b7c20175-af99-4dac-a92c-1eab0f328bd9",
+      "name": "Back pain",
+      "nameUr": "کمر درد",
+      "slug": "back-pain",
+      "isCommon": true,
+      "icon": "physio",
+      "specialties": [
+       {
+        "id": "03212f77-f36d-4501-9e3f-6893d344eb58",
+        "name": "Orthopedic Surgeon",
+        "nameUr": "ماہر امراض ہڈی و جوڑ",
+        "slug": "orthopedic-surgeon"
+       },
+       {
+        "id": "ea697522-a5ca-4743-8ecc-c3019a5c8833",
+        "name": "Physiotherapist",
+        "nameUr": "فزیوتھراپسٹ",
+        "slug": "physiotherapist"
+       }
+      ]
+     }
+    ],
+    "availableTodayNearby": [
+     {
+      "id": "33ba134e-3ac5-45d1-9b2a-be9649a4579d",
+      "title": "prof",
+      "fullName": "Nasreen Akhtar",
+      "displayName": "Prof. Dr. Nasreen Akhtar",
+      "photoUrl": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+      "gender": "female",
+      "specialty": {
+       "id": "e9565779-4fe4-401f-97c8-a6e69affd3a1",
+       "name": "Gynecologist",
+       "nameUr": "ماہر امراض نسواں",
+       "slug": "gynecologist"
+      },
+      "qualifications": "MBBS, FCPS (Obstetrics & Gynaecology)",
+      "yearsExperience": 28,
+      "ratingAvg": 4.3,
+      "ratingCount": 33,
+      "satisfactionPct": 79,
+      "avgWaitMinutes": 18,
+      "pmdcVerified": true,
+      "isTopBooked": false,
+      "minFee": 3500,
+      "offersVideo": false,
+      "offersClinic": true,
+      "nextAvailable": {
+       "at": "2026-10-17T10:00:00.000+05:00",
+       "locationKind": "clinic",
+       "label": "Available today, 10:00 AM"
+      }
+     },
+     {
+      "id": "43e4fe07-b860-4b3c-b945-55afc892f2b9",
+      "title": "dr",
+      "fullName": "Usman Farooq",
+      "displayName": "Dr. Usman Farooq",
+      "photoUrl": "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+      "gender": "male",
+      "specialty": {
+       "id": "1e7702bf-e34a-4601-b6c2-4388dc071dfb",
+       "name": "General Physician",
+       "nameUr": "جنرل فزیشن",
+       "slug": "general-physician"
+      },
+      "qualifications": "MBBS, FCPS (Medicine)",
+      "yearsExperience": 12,
+      "ratingAvg": 4.29,
+      "ratingCount": 17,
+      "satisfactionPct": 82,
+      "avgWaitMinutes": 21,
+      "pmdcVerified": true,
+      "isTopBooked": false,
+      "minFee": 1000,
+      "offersVideo": true,
+      "offersClinic": true,
+      "nextAvailable": {
+       "at": "2026-10-17T10:00:00.000+05:00",
+       "locationKind": "clinic",
+       "label": "Available today, 10:00 AM"
+      }
+     },
+     {
+      "id": "65c3229b-81bd-40ac-99ab-2245b11dbf3a",
+      "title": "prof",
+      "fullName": "Tariq Mehmood",
+      "displayName": "Prof. Dr. Tariq Mehmood",
+      "photoUrl": "https://images.unsplash.com/photo-1678940805950-73f2127f9d4e?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+      "gender": "male",
+      "specialty": {
+       "id": "1acf9c61-fe20-431c-8198-e8092bd850ac",
+       "name": "Cardiologist",
+       "nameUr": "ماہر امراض قلب",
+       "slug": "cardiologist"
+      },
+      "qualifications": "MBBS, FCPS (Cardiology)",
+      "yearsExperience": 31,
+      "ratingAvg": 4,
+      "ratingCount": 34,
+      "satisfactionPct": 76,
+      "avgWaitMinutes": 17,
+      "pmdcVerified": true,
+      "isTopBooked": false,
+      "minFee": 4500,
+      "offersVideo": false,
+      "offersClinic": true,
+      "nextAvailable": {
+       "at": "2026-10-17T10:00:00.000+05:00",
+       "locationKind": "clinic",
+       "label": "Available today, 10:00 AM"
+      }
+     }
+    ],
+    "upcomingAppointment": {
+     "id": "dc974a7c-c718-463b-8919-701100d50e0b",
+     "code": "HC-JSUCYS",
+     "status": "booked",
+     "kind": "clinic",
+     "startsAt": "2026-10-17T17:15:00.000+05:00",
+     "endsAt": "2026-10-17T17:30:00.000+05:00",
+     "patient": {
+      "age": null,
+      "name": "Ali Raza",
+      "phone": "+923001234501",
+      "gender": null,
+      "relation": null
+     },
+     "familyMemberId": null,
+     "reason": "Acne for six months",
+     "symptoms": [
+      "pimples"
+     ],
+     "fee": 2500,
+     "payment": {
+      "method": "pay_at_clinic",
+      "status": "unpaid",
+      "payBy": null,
+      "paidAt": null,
+      "paymentRef": null,
+      "proofUrl": null,
+      "rejectedReason": null,
+      "accounts": null,
+      "refundRef": null,
+      "refundedAt": null
+     },
+     "lateCancel": false,
+     "cancelledBy": null,
+     "cancelReason": null,
+     "rescheduledFromId": null,
+     "bookedAt": "2026-10-17T04:59:04.990+05:00",
+     "checkedInAt": null,
+     "startedAt": null,
+     "completedAt": null,
+     "cancelledAt": null,
+     "doctor": {
+      "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+      "displayName": "Dr. Sana Iqbal",
+      "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+      "specialty": "Dermatologist"
+     },
+     "location": {
+      "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+      "kind": "clinic",
+      "name": "Model Town Clinic (demo)",
+      "addressLine": "13-A Main Boulevard",
+      "area": "Model Town",
+      "city": "Lahore",
+      "lat": 31.487,
+      "lng": 74.3212,
+      "phone": "+923007000000",
+      "instructions": "Please arrive 10 minutes early and ask for your token at reception.",
+      "timezone": "Asia/Karachi"
+     },
+     "cancelCutoffAt": "2026-10-17T15:15:00.000+05:00",
+     "prescriptionId": null,
+     "reviewed": false,
+     "can": {
+      "cancel": true,
+      "reschedule": true,
+      "joinVideo": false,
+      "shareRecords": true,
+      "submitPaymentProof": false,
+      "review": false
+     }
+    },
+    "featuredDoctors": [
+     {
+      "id": "4a3bc2fc-08d7-49ce-a24b-e78cbe26a15d",
+      "title": "dr",
+      "fullName": "Rabia Nadeem",
+      "displayName": "Dr. Rabia Nadeem",
+      "photoUrl": "https://images.unsplash.com/photo-1753486986377-1395ccfb4a8a?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+      "gender": "female",
+      "specialty": {
+       "id": "1e7702bf-e34a-4601-b6c2-4388dc071dfb",
+       "name": "General Physician",
+       "nameUr": "جنرل فزیشن",
+       "slug": "general-physician"
+      },
+      "qualifications": "MBBS, FCPS (Medicine)",
+      "yearsExperience": 6,
+      "ratingAvg": 4.55,
+      "ratingCount": 31,
+      "satisfactionPct": 97,
+      "avgWaitMinutes": 18,
+      "pmdcVerified": true,
+      "isTopBooked": true,
+      "minFee": 1000,
+      "offersVideo": true,
+      "offersClinic": true,
+      "nextAvailable": {
+       "at": "2026-10-17T17:00:00.000+05:00",
+       "locationKind": "clinic",
+       "label": "Available today, 5:00 PM"
+      }
+     },
+     {
+      "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+      "title": "dr",
+      "fullName": "Sana Iqbal",
+      "displayName": "Dr. Sana Iqbal",
+      "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+      "gender": "female",
+      "specialty": {
+       "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+       "name": "Dermatologist",
+       "nameUr": "ماہر امراض جلد",
+       "slug": "dermatologist"
+      },
+      "qualifications": "MBBS, FCPS (Dermatology)",
+      "yearsExperience": 15,
+      "ratingAvg": 4.24,
+      "ratingCount": 41,
+      "satisfactionPct": 78,
+      "avgWaitMinutes": 16,
+      "pmdcVerified": true,
+      "isTopBooked": false,
+      "minFee": 2000,
+      "offersVideo": true,
+      "offersClinic": true,
+      "nextAvailable": {
+       "at": "2026-10-17T10:00:00.000+05:00",
+       "locationKind": "clinic",
+       "label": "Available today, 10:00 AM"
+      }
+     },
+     {
+      "id": "33ba134e-3ac5-45d1-9b2a-be9649a4579d",
+      "title": "prof",
+      "fullName": "Nasreen Akhtar",
+      "displayName": "Prof. Dr. Nasreen Akhtar",
+      "photoUrl": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+      "gender": "female",
+      "specialty": {
+       "id": "e9565779-4fe4-401f-97c8-a6e69affd3a1",
+       "name": "Gynecologist",
+       "nameUr": "ماہر امراض نسواں",
+       "slug": "gynecologist"
+      },
+      "qualifications": "MBBS, FCPS (Obstetrics & Gynaecology)",
+      "yearsExperience": 28,
+      "ratingAvg": 4.3,
+      "ratingCount": 33,
+      "satisfactionPct": 79,
+      "avgWaitMinutes": 18,
+      "pmdcVerified": true,
+      "isTopBooked": false,
+      "minFee": 3500,
+      "offersVideo": false,
+      "offersClinic": true,
+      "nextAvailable": {
+       "at": "2026-10-17T10:00:00.000+05:00",
+       "locationKind": "clinic",
+       "label": "Available today, 10:00 AM"
+      }
+     }
+    ],
+    "featuredScope": "city",
+    "banners": [
+     {
+      "id": "bf8e3300-264f-47e0-a2b8-d71235a06054",
+      "imageUrl": "https://images.unsplash.com/photo-1758691463620-188ca7c1a04f?w=1600&h=800&fit=crop&q=80&auto=format",
+      "title": "See a doctor by video today",
+      "subtitle": "PMDC-verified doctors, from home. You pay the doctor directly.",
+      "targetType": "screen",
+      "targetScreen": "video_consultation",
+      "target": null
+     },
+     {
+      "id": "680da4ca-4d3f-44f6-9d91-e280ad930d23",
+      "imageUrl": "https://images.unsplash.com/photo-1688588162416-f7a7e726e0bf?w=1600&h=800&fit=crop&q=80&auto=format",
+      "title": "Skin and hair specialists",
+      "subtitle": "Acne, hair fall and eczema, seen by dermatologists near you.",
+      "targetType": "specialty",
+      "targetScreen": null,
+      "target": {
+       "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+       "slug": "dermatologist",
+       "name": "Dermatologist"
+      }
+     },
+     {
+      "id": "aa376745-5b5a-4016-acf1-85d6d474978c",
+      "imageUrl": "https://images.unsplash.com/photo-1758273241078-8eec353836be?w=1600&h=800&fit=crop&q=80&auto=format",
+      "title": "Not sure who to see?",
+      "subtitle": "Describe how you feel and we will suggest the right specialist.",
+      "targetType": "screen",
+      "targetScreen": "symptom_checker",
+      "target": null
+     }
+    ],
+    "emergencyNumbers": [
+     {
+      "label": "Rescue",
+      "number": "1122"
+     },
+     {
+      "label": "Edhi ambulance",
+      "number": "115"
+     }
+    ]
+   }
+  }
+ },
+ "reschedule": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "6fdef4d6-1810-4006-a2ce-b1655fdb4c80",
+    "code": "HC-UR8PCM",
+    "status": "booked",
+    "kind": "clinic",
+    "startsAt": "2026-10-17T18:30:00.000+05:00",
+    "endsAt": "2026-10-17T18:45:00.000+05:00",
+    "patient": {
+     "age": null,
+     "name": "Ali Raza",
+     "phone": "+923001234501",
+     "gender": null,
+     "relation": null
+    },
+    "familyMemberId": null,
+    "reason": "Acne for six months",
+    "symptoms": [
+     "pimples"
+    ],
+    "fee": 2500,
+    "payment": {
+     "method": "pay_at_clinic",
+     "status": "unpaid",
+     "payBy": null,
+     "paidAt": null,
+     "paymentRef": null,
+     "proofUrl": null,
+     "rejectedReason": null,
+     "accounts": null,
+     "refundRef": null,
+     "refundedAt": null
+    },
+    "lateCancel": false,
+    "cancelledBy": null,
+    "cancelReason": null,
+    "rescheduledFromId": "c7bebff3-35e2-4039-a3b6-fa441e61ec86",
+    "bookedAt": "2026-10-17T05:00:14.532+05:00",
+    "checkedInAt": null,
+    "startedAt": null,
+    "completedAt": null,
+    "cancelledAt": null,
+    "doctor": {
+     "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+     "displayName": "Dr. Sana Iqbal",
+     "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+     "specialty": "Dermatologist"
+    },
+    "location": {
+     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "kind": "clinic",
+     "name": "Model Town Clinic (demo)",
+     "addressLine": "13-A Main Boulevard",
+     "area": "Model Town",
+     "city": "Lahore",
+     "lat": 31.487,
+     "lng": 74.3212,
+     "phone": "+923007000000",
+     "instructions": "Please arrive 10 minutes early and ask for your token at reception.",
+     "timezone": "Asia/Karachi"
+    },
+    "cancelCutoffAt": "2026-10-17T16:30:00.000+05:00",
+    "prescriptionId": null,
+    "reviewed": false,
+    "events": [
+     {
+      "kind": "status",
+      "from": null,
+      "to": "booked",
+      "actorRole": "patient",
+      "note": "Rescheduled",
+      "at": "2026-10-17T05:00:14.547+05:00"
+     }
+    ],
+    "sharedRecords": [],
+    "can": {
+     "cancel": true,
+     "reschedule": false,
+     "joinVideo": false,
+     "shareRecords": true,
+     "submitPaymentProof": false,
+     "review": false
+    }
+   }
+  }
+ },
+ "cancel": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "6fdef4d6-1810-4006-a2ce-b1655fdb4c80",
+    "code": "HC-UR8PCM",
+    "status": "cancelled",
+    "kind": "clinic",
+    "startsAt": "2026-10-17T18:30:00.000+05:00",
+    "endsAt": "2026-10-17T18:45:00.000+05:00",
+    "patient": {
+     "age": null,
+     "name": "Ali Raza",
+     "phone": "+923001234501",
+     "gender": null,
+     "relation": null
+    },
+    "familyMemberId": null,
+    "reason": "Acne for six months",
+    "symptoms": [
+     "pimples"
+    ],
+    "fee": 2500,
+    "payment": {
+     "method": "pay_at_clinic",
+     "status": "void",
+     "payBy": null,
+     "paidAt": null,
+     "paymentRef": null,
+     "proofUrl": null,
+     "rejectedReason": null,
+     "accounts": null,
+     "refundRef": null,
+     "refundedAt": null
+    },
+    "lateCancel": false,
+    "cancelledBy": "patient",
+    "cancelReason": "Feeling better",
+    "rescheduledFromId": "c7bebff3-35e2-4039-a3b6-fa441e61ec86",
+    "bookedAt": "2026-10-17T05:00:14.532+05:00",
+    "checkedInAt": null,
+    "startedAt": null,
+    "completedAt": null,
+    "cancelledAt": "2026-10-17T05:00:14.572+05:00",
+    "doctor": {
+     "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+     "displayName": "Dr. Sana Iqbal",
+     "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+     "specialty": "Dermatologist"
+    },
+    "location": {
+     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "kind": "clinic",
+     "name": "Model Town Clinic (demo)",
+     "addressLine": "13-A Main Boulevard",
+     "area": "Model Town",
+     "city": "Lahore",
+     "lat": 31.487,
+     "lng": 74.3212,
+     "phone": "+923007000000",
+     "instructions": "Please arrive 10 minutes early and ask for your token at reception.",
+     "timezone": "Asia/Karachi"
+    },
+    "cancelCutoffAt": "2026-10-17T16:30:00.000+05:00",
+    "prescriptionId": null,
+    "reviewed": false,
+    "events": [
+     {
+      "kind": "status",
+      "from": null,
+      "to": "booked",
+      "actorRole": "patient",
+      "note": "Rescheduled",
+      "at": "2026-10-17T05:00:14.547+05:00"
+     },
+     {
+      "kind": "status",
+      "from": "booked",
+      "to": "cancelled",
+      "actorRole": "patient",
+      "note": "Feeling better",
+      "at": "2026-10-17T05:00:14.573+05:00"
+     },
+     {
+      "kind": "payment",
+      "from": "unpaid",
+      "to": "void",
+      "actorRole": "patient",
+      "note": null,
+      "at": "2026-10-17T05:00:14.574+05:00"
+     }
+    ],
+    "sharedRecords": [],
+    "can": {
+     "cancel": false,
+     "reschedule": false,
+     "joinVideo": false,
+     "shareRecords": false,
+     "submitPaymentProof": false,
+     "review": false
+    }
+   }
+  }
+ },
+ "bookVisit": {
+  "status": 201,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "d2155472-060b-456f-ac29-767c6d1a67e0",
+    "code": "HC-UVSAE3",
+    "status": "booked",
+    "kind": "clinic",
+    "startsAt": "2026-10-17T19:00:00.000+05:00",
+    "endsAt": "2026-10-17T19:15:00.000+05:00",
+    "patient": {
+     "age": null,
+     "name": "Ali Raza",
+     "phone": "+923001234501",
+     "gender": null,
+     "relation": null
+    },
+    "familyMemberId": null,
+    "reason": "Follow-up",
+    "symptoms": [],
+    "fee": 2500,
+    "payment": {
+     "method": "pay_at_clinic",
+     "status": "unpaid",
+     "payBy": null,
+     "paidAt": null,
+     "paymentRef": null,
+     "proofUrl": null,
+     "rejectedReason": null,
+     "accounts": null,
+     "refundRef": null,
+     "refundedAt": null
+    },
+    "lateCancel": false,
+    "cancelledBy": null,
+    "cancelReason": null,
+    "rescheduledFromId": null,
+    "bookedAt": "2026-10-17T05:00:14.593+05:00",
+    "checkedInAt": null,
+    "startedAt": null,
+    "completedAt": null,
+    "cancelledAt": null,
+    "doctor": {
+     "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+     "displayName": "Dr. Sana Iqbal",
+     "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+     "specialty": "Dermatologist"
+    },
+    "location": {
+     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "kind": "clinic",
+     "name": "Model Town Clinic (demo)",
+     "addressLine": "13-A Main Boulevard",
+     "area": "Model Town",
+     "city": "Lahore",
+     "lat": 31.487,
+     "lng": 74.3212,
+     "phone": "+923007000000",
+     "instructions": "Please arrive 10 minutes early and ask for your token at reception.",
+     "timezone": "Asia/Karachi"
+    },
+    "cancelCutoffAt": "2026-10-17T17:00:00.000+05:00",
+    "prescriptionId": null,
+    "reviewed": false,
+    "events": [
+     {
+      "kind": "status",
+      "from": null,
+      "to": "booked",
+      "actorRole": "patient",
+      "note": null,
+      "at": "2026-10-17T05:00:14.600+05:00"
+     }
+    ],
+    "sharedRecords": [],
+    "can": {
+     "cancel": true,
+     "reschedule": true,
+     "joinVideo": false,
+     "shareRecords": true,
+     "submitPaymentProof": false,
+     "review": false
+    }
+   }
+  }
+ },
+ "prescriptions": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [],
+    "total": 0,
+    "page": 1,
+    "pageSize": 3
+   }
+  }
+ },
+ "records": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [],
+    "total": 0,
+    "page": 1,
+    "pageSize": 3
+   }
+  }
+ },
+ "symptomFallback": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "checkId": "55007cf2-c2d0-48d7-a51b-2c900e0a39a5",
+    "emergency": false,
+    "source": "fallback",
+    "urgency": "routine",
+    "advice": "Book a visit in the coming days. If it gets worse, see a doctor sooner.",
+    "areasToDiscuss": [
+     {
+      "title": "Acne",
+      "explanation": "You mentioned something that sounds like acne — tell the doctor when it started and what makes it better or worse."
+     }
+    ],
+    "specialty": {
+     "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+     "name": "Dermatologist",
+     "nameUr": "ماہر امراض جلد",
+     "slug": "dermatologist",
+     "icon": "skin",
+     "description": "Skin, hair and nail conditions."
+    },
+    "alternatives": [],
+    "disclaimer": "This is not a diagnosis or medical advice. It only suggests which kind of doctor to see. If you feel very unwell or your symptoms get worse, call 1122 or 115, or go to the nearest emergency department."
+   }
+  }
+ },
+ "symptomEmergency": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "checkId": "a98b6dee-bafb-4ac8-84ba-79fd9a2e5418",
+    "emergency": true,
+    "source": "red_flag",
+    "flags": [
+     {
+      "id": "chest_pain",
+      "label": "Chest pain or pressure"
+     },
+     {
+      "id": "breathing",
+      "label": "Severe difficulty breathing"
+     }
+    ],
+    "message": "This could be an emergency. Call 1122 or 115 now, or go to the nearest emergency department. Do not wait for an appointment.",
+    "numbers": [
+     {
+      "label": "Rescue",
+      "number": "1122"
+     },
+     {
+      "label": "Edhi ambulance",
+      "number": "115"
+     }
+    ],
+    "disclaimer": "This is not a diagnosis or medical advice. It only suggests which kind of doctor to see. If you feel very unwell or your symptoms get worse, call 1122 or 115, or go to the nearest emergency department."
+   }
+  }
+ },
+ "signUpload": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "cloudName": "demo-cloud",
+    "apiKey": "redacted",
+    "timestamp": "redacted",
+    "signature": "redacted",
+    "folder": "metromatrix/development/e05feed6-bbac-4b56-bee3-44a681c67a87/health_record",
+    "publicIdPrefix": "metromatrix/development/e05feed6-bbac-4b56-bee3-44a681c67a87/health_record/",
+    "uploadUrl": "https://api.cloudinary.com/v1_1/demo-cloud/auto/upload",
+    "allowedFormats": "jpg,jpeg,png,webp,heic,pdf",
+    "maxBytes": 15000000,
+    "type": "authenticated"
+   }
+  }
+ },
+ "completeness": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "percent": 100,
+    "missing": [],
+    "isListed": true
+   }
+  }
+ },
+ "locations": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": [
+    {
+     "id": "2b9e43ef-3ede-42e6-91fe-dac3769b746b",
+     "kind": "clinic",
+     "name": "Gulberg III Medical Centre (demo)",
+     "addressLine": "51-B Main Boulevard",
+     "area": "Gulberg III",
+     "city": "Lahore",
+     "lat": 31.5101,
+     "lng": 74.343,
+     "phone": "+923007000000",
+     "timezone": "Asia/Karachi",
+     "fee": 3000,
+     "slotMinutes": 15,
+     "instructions": "Please arrive 10 minutes early and ask for your token at reception.",
+     "isActive": true,
+     "nextAvailableAt": "2026-10-17T10:00:00.000+05:00"
+    },
+    {
+     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "kind": "clinic",
+     "name": "Model Town Clinic (demo)",
+     "addressLine": "13-A Main Boulevard",
+     "area": "Model Town",
+     "city": "Lahore",
+     "lat": 31.487,
+     "lng": 74.3212,
+     "phone": "+923007000000",
+     "timezone": "Asia/Karachi",
+     "fee": 2500,
+     "slotMinutes": 15,
+     "instructions": "Please arrive 10 minutes early and ask for your token at reception.",
+     "isActive": true,
+     "nextAvailableAt": "2026-10-17T17:00:00.000+05:00"
+    },
+    {
+     "id": "694c4b3f-b22f-443d-a062-ae5e572bd9bb",
+     "kind": "video",
+     "name": "Video consultation",
+     "addressLine": null,
+     "area": null,
+     "city": null,
+     "lat": null,
+     "lng": null,
+     "phone": null,
+     "timezone": "Asia/Karachi",
+     "fee": 2000,
+     "slotMinutes": 30,
+     "instructions": "Join from the app 10 minutes before your time.",
+     "isActive": true,
+     "nextAvailableAt": "2026-10-19T21:30:00.000+05:00"
+    }
+   ]
+  }
+ },
+ "schedule": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "locationId": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+    "timezone": "Asia/Karachi",
+    "ranges": [
+     {
+      "weekday": 1,
+      "weekdayLabel": "Mon",
+      "start": "17:00",
+      "end": "21:00"
+     },
+     {
+      "weekday": 2,
+      "weekdayLabel": "Tue",
+      "start": "17:00",
+      "end": "21:00"
+     },
+     {
+      "weekday": 3,
+      "weekdayLabel": "Wed",
+      "start": "17:00",
+      "end": "21:00"
+     },
+     {
+      "weekday": 4,
+      "weekdayLabel": "Thu",
+      "start": "17:00",
+      "end": "21:00"
+     },
+     {
+      "weekday": 5,
+      "weekdayLabel": "Fri",
+      "start": "17:00",
+      "end": "21:00"
+     },
+     {
+      "weekday": 6,
+      "weekdayLabel": "Sat",
+      "start": "17:00",
+      "end": "21:00"
+     }
+    ]
+   }
+  }
+ },
+ "timeOffList": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": []
+  }
+ },
+ "timeOffConflict": {
+  "status": 409,
+  "body": {
+   "success": false,
+   "error": {
+    "code": "TIME_OFF_CONFLICTS",
+    "message": "4 patient(s) are booked in that time. Send cancelAffected: true to cancel them.",
+    "details": {
+     "appointments": [
+      {
+       "code": "HC-JSUCYS",
+       "startsAt": "2026-10-17T17:15:00.000+05:00",
+       "patientName": "Ali Raza"
+      },
+      {
+       "code": "HC-ARSPBQ",
+       "startsAt": "2026-10-17T17:45:00.000+05:00",
+       "patientName": "Zara Patient"
+      },
+      {
+       "code": "HC-H8AU6Q",
+       "startsAt": "2026-10-17T18:00:00.000+05:00",
+       "patientName": "Ali Raza"
+      }
+     ]
+    }
+   }
+  }
+ },
+ "preview": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "locations": [
+     {
+      "location": {
+       "id": "2b9e43ef-3ede-42e6-91fe-dac3769b746b",
+       "kind": "clinic",
+       "name": "Gulberg III Medical Centre (demo)",
+       "area": "Gulberg III",
+       "city": "Lahore",
+       "timezone": "Asia/Karachi",
+       "fee": 3000,
+       "slotMinutes": 15
+      },
+      "days": [
+       {
+        "date": "2026-10-17",
+        "weekday": 6,
+        "weekdayLabel": "Sat",
+        "dateLabel": "Sat 17 Oct",
+        "isAvailable": true,
+        "slots": [
+         {
+          "startsAt": "2026-10-17T10:00:00.000+05:00",
+          "endsAt": "2026-10-17T10:15:00.000+05:00",
+          "period": "morning"
+         },
+         {
+          "startsAt": "2026-10-17T10:15:00.000+05:00",
+          "endsAt": "2026-10-17T10:30:00.000+05:00",
+          "period": "morning"
+         },
+         {
+          "startsAt": "2026-10-17T10:30:00.000+05:00",
+          "endsAt": "2026-10-17T10:45:00.000+05:00",
+          "period": "morning"
+         }
+        ]
+       },
+       {
+        "date": "2026-10-18",
+        "weekday": 0,
+        "weekdayLabel": "Sun",
+        "dateLabel": "Sun 18 Oct",
+        "isAvailable": false,
+        "slots": []
+       }
+      ]
+     },
+     {
+      "location": {
+       "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+       "kind": "clinic",
+       "name": "Model Town Clinic (demo)",
+       "area": "Model Town",
+       "city": "Lahore",
+       "timezone": "Asia/Karachi",
+       "fee": 2500,
+       "slotMinutes": 15
+      },
+      "days": [
+       {
+        "date": "2026-10-17",
+        "weekday": 6,
+        "weekdayLabel": "Sat",
+        "dateLabel": "Sat 17 Oct",
+        "isAvailable": true,
+        "slots": [
+         {
+          "startsAt": "2026-10-17T17:00:00.000+05:00",
+          "endsAt": "2026-10-17T17:15:00.000+05:00",
+          "period": "evening"
+         },
+         {
+          "startsAt": "2026-10-17T17:30:00.000+05:00",
+          "endsAt": "2026-10-17T17:45:00.000+05:00",
+          "period": "evening"
+         },
+         {
+          "startsAt": "2026-10-17T18:15:00.000+05:00",
+          "endsAt": "2026-10-17T18:30:00.000+05:00",
+          "period": "evening"
+         }
+        ]
+       },
+       {
+        "date": "2026-10-18",
+        "weekday": 0,
+        "weekdayLabel": "Sun",
+        "dateLabel": "Sun 18 Oct",
+        "isAvailable": false,
+        "slots": []
+       }
+      ]
+     },
+     {
+      "location": {
+       "id": "694c4b3f-b22f-443d-a062-ae5e572bd9bb",
+       "kind": "video",
+       "name": "Video consultation",
+       "area": null,
+       "city": null,
+       "timezone": "Asia/Karachi",
+       "fee": 2000,
+       "slotMinutes": 30
+      },
+      "days": [
+       {
+        "date": "2026-10-17",
+        "weekday": 6,
+        "weekdayLabel": "Sat",
+        "dateLabel": "Sat 17 Oct",
+        "isAvailable": false,
+        "slots": []
+       },
+       {
+        "date": "2026-10-18",
+        "weekday": 0,
+        "weekdayLabel": "Sun",
+        "dateLabel": "Sun 18 Oct",
+        "isAvailable": false,
+        "slots": []
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "paymentAccounts": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": [
+    {
+     "id": "165bbc37-64fb-499b-8286-17b45e266c02",
+     "kind": "bank",
+     "accountTitle": "Dr. Sana Iqbal",
+     "accountNumber": "PK00DEMO0000000000000000",
+     "bankName": "Meezan Bank (demo)",
+     "isActive": true,
+     "createdAt": "2026-10-16T11:17:20.780Z"
+    }
+   ]
+  }
+ },
+ "today": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "date": "2026-10-17",
+    "counts": {
+     "total": 6,
+     "waiting": 0,
+     "inConsultation": 0,
+     "remaining": 4,
+     "done": 2
+    },
+    "queue": [
+     {
+      "id": "dc974a7c-c718-463b-8919-701100d50e0b",
+      "code": "HC-JSUCYS",
+      "status": "booked",
+      "kind": "clinic",
+      "startsAt": "2026-10-17T17:15:00.000+05:00",
+      "endsAt": "2026-10-17T17:30:00.000+05:00",
+      "patient": {
+       "age": null,
+       "name": "Ali Raza",
+       "phone": "+923001234501",
+       "gender": null,
+       "relation": null
+      },
+      "familyMemberId": null,
+      "reason": "Acne for six months",
+      "symptoms": [
+       "pimples"
+      ],
+      "fee": 2500,
+      "payment": {
+       "method": "pay_at_clinic",
+       "status": "unpaid",
+       "payBy": null,
+       "paidAt": null,
+       "paymentRef": null,
+       "proofUrl": null,
+       "rejectedReason": null,
+       "accounts": null,
+       "refundRef": null,
+       "refundedAt": null
+      },
+      "lateCancel": false,
+      "cancelledBy": null,
+      "cancelReason": null,
+      "rescheduledFromId": null,
+      "bookedAt": "2026-10-17T04:59:04.990+05:00",
+      "checkedInAt": null,
+      "startedAt": null,
+      "completedAt": null,
+      "cancelledAt": null,
+      "patientKey": "e05feed6-bbac-4b56-bee3-44a681c67a87",
+      "location": {
+       "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+       "kind": "clinic",
+       "name": "Model Town Clinic (demo)",
+       "area": "Model Town",
+       "timezone": "Asia/Karachi"
+      },
+      "waitingMinutes": null,
+      "flags": {
+       "firstVisit": false,
+       "lateCancels": 0,
+       "noShows": 0
+      },
+      "can": {
+       "checkIn": true,
+       "start": false,
+       "complete": false,
+       "noShow": false,
+       "cancel": true,
+       "writePrescription": false,
+       "joinVideo": false,
+       "confirmPayment": false,
+       "rejectPayment": false,
+       "refund": false
+      }
+     },
+     {
+      "id": "14d409db-e0bf-4c13-bbdd-169cba821f38",
+      "code": "HC-ARSPBQ",
+      "status": "booked",
+      "kind": "clinic",
+      "startsAt": "2026-10-17T17:45:00.000+05:00",
+      "endsAt": "2026-10-17T18:00:00.000+05:00",
+      "patient": {
+       "age": 7,
+       "name": "Zara Patient",
+       "phone": null,
+       "gender": "female",
+       "relation": "child"
+      },
+      "familyMemberId": "f15b5d44-d9e2-47a7-a097-93671928a257",
+      "reason": null,
+      "symptoms": [],
+      "fee": 2500,
+      "payment": {
+       "method": "pay_at_clinic",
+       "status": "unpaid",
+       "payBy": null,
+       "paidAt": null,
+       "paymentRef": null,
+       "proofUrl": null,
+       "rejectedReason": null,
+       "accounts": null,
+       "refundRef": null,
+       "refundedAt": null
+      },
+      "lateCancel": false,
+      "cancelledBy": null,
+      "cancelReason": null,
+      "rescheduledFromId": "132cafa5-210d-4c65-9af4-7b2581f748ce",
+      "bookedAt": "2026-10-16T17:25:24.810+05:00",
+      "checkedInAt": null,
+      "startedAt": null,
+      "completedAt": null,
+      "cancelledAt": null,
+      "patientKey": "f15b5d44-d9e2-47a7-a097-93671928a257",
+      "location": {
+       "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+       "kind": "clinic",
+       "name": "Model Town Clinic (demo)",
+       "area": "Model Town",
+       "timezone": "Asia/Karachi"
+      },
+      "waitingMinutes": null,
+      "flags": {
+       "firstVisit": true,
+       "lateCancels": 0,
+       "noShows": 0
+      },
+      "can": {
+       "checkIn": true,
+       "start": false,
+       "complete": false,
+       "noShow": false,
+       "cancel": true,
+       "writePrescription": false,
+       "joinVideo": false,
+       "confirmPayment": false,
+       "rejectPayment": false,
+       "refund": false
+      }
+     },
+     {
+      "id": "98c3a72b-2851-40c2-85eb-7e0ae488b61a",
+      "code": "HC-H8AU6Q",
+      "status": "booked",
+      "kind": "clinic",
+      "startsAt": "2026-10-17T18:00:00.000+05:00",
+      "endsAt": "2026-10-17T18:15:00.000+05:00",
+      "patient": {
+       "age": null,
+       "name": "Ali Raza",
+       "phone": "+923001234501",
+       "gender": null,
+       "relation": null
+      },
+      "familyMemberId": null,
+      "reason": "Acne for six months",
+      "symptoms": [
+       "pimples"
+      ],
+      "fee": 2500,
+      "payment": {
+       "method": "pay_at_clinic",
+       "status": "unpaid",
+       "payBy": null,
+       "paidAt": null,
+       "paymentRef": null,
+       "proofUrl": null,
+       "rejectedReason": null,
+       "accounts": null,
+       "refundRef": null,
+       "refundedAt": null
+      },
+      "lateCancel": false,
+      "cancelledBy": null,
+      "cancelReason": null,
+      "rescheduledFromId": "6253b601-30ab-4db5-8963-5c864961e178",
+      "bookedAt": "2026-10-17T04:58:52.759+05:00",
+      "checkedInAt": null,
+      "startedAt": null,
+      "completedAt": null,
+      "cancelledAt": null,
+      "patientKey": "e05feed6-bbac-4b56-bee3-44a681c67a87",
+      "location": {
+       "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+       "kind": "clinic",
+       "name": "Model Town Clinic (demo)",
+       "area": "Model Town",
+       "timezone": "Asia/Karachi"
+      },
+      "waitingMinutes": null,
+      "flags": {
+       "firstVisit": false,
+       "lateCancels": 0,
+       "noShows": 0
+      },
+      "can": {
+       "checkIn": true,
+       "start": false,
+       "complete": false,
+       "noShow": false,
+       "cancel": true,
+       "writePrescription": false,
+       "joinVideo": false,
+       "confirmPayment": false,
+       "rejectPayment": false,
+       "refund": false
+      }
+     }
+    ]
+   }
+  }
+ },
+ "doctorAppointments": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [],
+    "total": 0,
+    "page": 1,
+    "pageSize": 5
+   }
+  }
+ },
+ "doctorAppointment": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "d2155472-060b-456f-ac29-767c6d1a67e0",
+    "code": "HC-UVSAE3",
+    "status": "booked",
+    "kind": "clinic",
+    "startsAt": "2026-10-17T19:00:00.000+05:00",
+    "endsAt": "2026-10-17T19:15:00.000+05:00",
+    "patient": {
+     "age": null,
+     "name": "Ali Raza",
+     "phone": "+923001234501",
+     "gender": null,
+     "relation": null
+    },
+    "familyMemberId": null,
+    "reason": "Follow-up",
+    "symptoms": [],
+    "fee": 2500,
+    "payment": {
+     "method": "pay_at_clinic",
+     "status": "unpaid",
+     "payBy": null,
+     "paidAt": null,
+     "paymentRef": null,
+     "proofUrl": null,
+     "rejectedReason": null,
+     "accounts": null,
+     "refundRef": null,
+     "refundedAt": null
+    },
+    "lateCancel": false,
+    "cancelledBy": null,
+    "cancelReason": null,
+    "rescheduledFromId": null,
+    "bookedAt": "2026-10-17T05:00:14.593+05:00",
+    "checkedInAt": null,
+    "startedAt": null,
+    "completedAt": null,
+    "cancelledAt": null,
+    "patientKey": "e05feed6-bbac-4b56-bee3-44a681c67a87",
+    "location": {
+     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "kind": "clinic",
+     "name": "Model Town Clinic (demo)",
+     "area": "Model Town",
+     "timezone": "Asia/Karachi"
+    },
+    "waitingMinutes": null,
+    "flags": {
+     "firstVisit": false,
+     "lateCancels": 0,
+     "noShows": 0
+    },
+    "can": {
+     "checkIn": true,
+     "start": false,
+     "complete": false,
+     "noShow": false,
+     "cancel": true,
+     "writePrescription": false,
+     "joinVideo": false,
+     "confirmPayment": false,
+     "rejectPayment": false,
+     "refund": false
+    },
+    "events": [
+     {
+      "kind": "status",
+      "from": null,
+      "to": "booked",
+      "actorRole": "patient",
+      "note": null,
+      "at": "2026-10-17T05:00:14.600+05:00"
+     }
+    ],
+    "history": {
+     "previousAppointments": [
+      {
+       "code": "HC-UR8PCM",
+       "startsAt": "2026-10-17T18:30:00.000+05:00",
+       "status": "cancelled",
+       "kind": "clinic",
+       "reason": "Acne for six months"
+      },
+      {
+       "code": "HC-H8AU6Q",
+       "startsAt": "2026-10-17T18:00:00.000+05:00",
+       "status": "booked",
+       "kind": "clinic",
+       "reason": "Acne for six months"
+      },
+      {
+       "code": "HC-M5UWSH",
+       "startsAt": "2026-10-17T17:30:00.000+05:00",
+       "status": "cancelled",
+       "kind": "clinic",
+       "reason": "Acne for six months"
+      }
+     ],
+     "prescriptions": []
+    },
+    "sharedRecords": []
+   }
+  }
+ },
+ "checkIn": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "d2155472-060b-456f-ac29-767c6d1a67e0",
+    "code": "HC-UVSAE3",
+    "status": "checked_in",
+    "kind": "clinic",
+    "startsAt": "2026-10-17T19:00:00.000+05:00",
+    "endsAt": "2026-10-17T19:15:00.000+05:00",
+    "patient": {
+     "age": null,
+     "name": "Ali Raza",
+     "phone": "+923001234501",
+     "gender": null,
+     "relation": null
+    },
+    "familyMemberId": null,
+    "reason": "Follow-up",
+    "symptoms": [],
+    "fee": 2500,
+    "payment": {
+     "method": "pay_at_clinic",
+     "status": "unpaid",
+     "payBy": null,
+     "paidAt": null,
+     "paymentRef": null,
+     "proofUrl": null,
+     "rejectedReason": null,
+     "accounts": null,
+     "refundRef": null,
+     "refundedAt": null
+    },
+    "lateCancel": false,
+    "cancelledBy": null,
+    "cancelReason": null,
+    "rescheduledFromId": null,
+    "bookedAt": "2026-10-17T05:00:14.593+05:00",
+    "checkedInAt": "2026-10-17T05:00:14.734+05:00",
+    "startedAt": null,
+    "completedAt": null,
+    "cancelledAt": null,
+    "patientKey": "e05feed6-bbac-4b56-bee3-44a681c67a87",
+    "location": {
+     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "kind": "clinic",
+     "name": "Model Town Clinic (demo)",
+     "area": "Model Town",
+     "timezone": "Asia/Karachi"
+    },
+    "waitingMinutes": 0,
+    "flags": {
+     "firstVisit": false,
+     "lateCancels": 0,
+     "noShows": 0
+    },
+    "can": {
+     "checkIn": false,
+     "start": true,
+     "complete": false,
+     "noShow": false,
+     "cancel": true,
+     "writePrescription": false,
+     "joinVideo": false,
+     "confirmPayment": false,
+     "rejectPayment": false,
+     "refund": false
+    }
+   }
+  }
+ },
+ "start": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "d2155472-060b-456f-ac29-767c6d1a67e0",
+    "code": "HC-UVSAE3",
+    "status": "in_consultation",
+    "kind": "clinic",
+    "startsAt": "2026-10-17T19:00:00.000+05:00",
+    "endsAt": "2026-10-17T19:15:00.000+05:00",
+    "patient": {
+     "age": null,
+     "name": "Ali Raza",
+     "phone": "+923001234501",
+     "gender": null,
+     "relation": null
+    },
+    "familyMemberId": null,
+    "reason": "Follow-up",
+    "symptoms": [],
+    "fee": 2500,
+    "payment": {
+     "method": "pay_at_clinic",
+     "status": "unpaid",
+     "payBy": null,
+     "paidAt": null,
+     "paymentRef": null,
+     "proofUrl": null,
+     "rejectedReason": null,
+     "accounts": null,
+     "refundRef": null,
+     "refundedAt": null
+    },
+    "lateCancel": false,
+    "cancelledBy": null,
+    "cancelReason": null,
+    "rescheduledFromId": null,
+    "bookedAt": "2026-10-17T05:00:14.593+05:00",
+    "checkedInAt": "2026-10-17T05:00:14.734+05:00",
+    "startedAt": "2026-10-17T05:00:14.750+05:00",
+    "completedAt": null,
+    "cancelledAt": null,
+    "patientKey": "e05feed6-bbac-4b56-bee3-44a681c67a87",
+    "location": {
+     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "kind": "clinic",
+     "name": "Model Town Clinic (demo)",
+     "area": "Model Town",
+     "timezone": "Asia/Karachi"
+    },
+    "waitingMinutes": null,
+    "flags": {
+     "firstVisit": false,
+     "lateCancels": 0,
+     "noShows": 0
+    },
+    "can": {
+     "checkIn": false,
+     "start": false,
+     "complete": true,
+     "noShow": false,
+     "cancel": false,
+     "writePrescription": true,
+     "joinVideo": false,
+     "confirmPayment": false,
+     "rejectPayment": false,
+     "refund": false
+    }
+   }
+  }
+ },
+ "notesPut": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "appointmentCode": "HC-UVSAE3",
+    "text": "Mild acne; no scarring.",
+    "files": [],
+    "updatedAt": "2026-10-17T00:00:14.769Z"
+   }
+  }
+ },
+ "notes": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "appointmentCode": "HC-UVSAE3",
+    "text": "Mild acne; no scarring.",
+    "files": [],
+    "updatedAt": "2026-10-17T00:00:14.769Z"
+   }
+  }
+ },
+ "prescriptionWrite": {
+  "status": 201,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "89813222-2628-4b34-8ccc-05fefc577018",
+    "appointmentCode": "HC-UVSAE3",
+    "appointmentKind": "clinic",
+    "visitDate": "2026-10-17",
+    "issuedAt": "2026-10-17T05:00:14.783+05:00",
+    "updatedAt": "2026-10-17T05:00:14.783+05:00",
+    "editableUntil": null,
+    "locked": false,
+    "doctor": {
+     "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+     "displayName": "Dr. Sana Iqbal",
+     "qualifications": "MBBS, FCPS (Dermatology)",
+     "pmdcNumber": "DEMO-00001-P",
+     "specialty": "Dermatologist",
+     "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format"
+    },
+    "location": {
+     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "kind": "clinic",
+     "name": "Model Town Clinic (demo)",
+     "addressLine": "13-A Main Boulevard",
+     "area": "Model Town",
+     "city": "Lahore",
+     "phone": "+923007000000"
+    },
+    "patient": {
+     "age": null,
+     "name": "Ali Raza",
+     "phone": "+923001234501",
+     "gender": null,
+     "relation": null
+    },
+    "familyMemberId": null,
+    "diagnosis": "Acne vulgaris (mild)",
+    "advice": "Gentle cleanser twice a day.",
+    "followUpInDays": 30,
+    "followUpOn": "2026-11-16",
+    "medicines": [
+     {
+      "name": "Doxycycline",
+      "strength": "100 mg",
+      "form": "capsule",
+      "dosePattern": "1+0+0",
+      "timing": "after_meal",
+      "durationDays": 30,
+      "instructions": null
+     }
+    ],
+    "tests": [
+     {
+      "name": "CBC",
+      "instructions": null
+     }
+    ]
+   }
+  }
+ },
+ "prescriptionCurrent": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "prescription": {
+     "id": "89813222-2628-4b34-8ccc-05fefc577018",
+     "appointmentCode": "HC-UVSAE3",
+     "appointmentKind": "clinic",
+     "visitDate": "2026-10-17",
+     "issuedAt": "2026-10-17T05:00:14.783+05:00",
+     "updatedAt": "2026-10-17T05:00:14.783+05:00",
+     "editableUntil": null,
+     "locked": false,
+     "doctor": {
+      "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+      "displayName": "Dr. Sana Iqbal",
+      "qualifications": "MBBS, FCPS (Dermatology)",
+      "pmdcNumber": "DEMO-00001-P",
+      "specialty": "Dermatologist",
+      "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format"
+     },
+     "location": {
+      "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+      "kind": "clinic",
+      "name": "Model Town Clinic (demo)",
+      "addressLine": "13-A Main Boulevard",
+      "area": "Model Town",
+      "city": "Lahore",
+      "phone": "+923007000000"
+     },
+     "patient": {
+      "age": null,
+      "name": "Ali Raza",
+      "phone": "+923001234501",
+      "gender": null,
+      "relation": null
+     },
+     "familyMemberId": null,
+     "diagnosis": "Acne vulgaris (mild)",
+     "advice": "Gentle cleanser twice a day.",
+     "followUpInDays": 30,
+     "followUpOn": "2026-11-16",
+     "medicines": [
+      {
+       "name": "Doxycycline",
+       "strength": "100 mg",
+       "form": "capsule",
+       "dosePattern": "1+0+0",
+       "timing": "after_meal",
+       "durationDays": 30,
+       "instructions": null
+      }
+     ],
+     "tests": [
+      {
+       "name": "CBC",
+       "instructions": null
+      }
+     ]
+    },
+    "locked": false
+   }
+  }
+ },
+ "complete": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "d2155472-060b-456f-ac29-767c6d1a67e0",
+    "code": "HC-UVSAE3",
+    "status": "completed",
+    "kind": "clinic",
+    "startsAt": "2026-10-17T19:00:00.000+05:00",
+    "endsAt": "2026-10-17T19:15:00.000+05:00",
+    "patient": {
+     "age": null,
+     "name": "Ali Raza",
+     "phone": "+923001234501",
+     "gender": null,
+     "relation": null
+    },
+    "familyMemberId": null,
+    "reason": "Follow-up",
+    "symptoms": [],
+    "fee": 2500,
+    "payment": {
+     "method": "pay_at_clinic",
+     "status": "paid",
+     "payBy": null,
+     "paidAt": "2026-10-17T05:00:14.808+05:00",
+     "paymentRef": null,
+     "proofUrl": null,
+     "rejectedReason": null,
+     "accounts": null,
+     "refundRef": null,
+     "refundedAt": null
+    },
+    "lateCancel": false,
+    "cancelledBy": null,
+    "cancelReason": null,
+    "rescheduledFromId": null,
+    "bookedAt": "2026-10-17T05:00:14.593+05:00",
+    "checkedInAt": "2026-10-17T05:00:14.734+05:00",
+    "startedAt": "2026-10-17T05:00:14.750+05:00",
+    "completedAt": "2026-10-17T05:00:14.806+05:00",
+    "cancelledAt": null,
+    "patientKey": "e05feed6-bbac-4b56-bee3-44a681c67a87",
+    "location": {
+     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "kind": "clinic",
+     "name": "Model Town Clinic (demo)",
+     "area": "Model Town",
+     "timezone": "Asia/Karachi"
+    },
+    "waitingMinutes": null,
+    "flags": {
+     "firstVisit": false,
+     "lateCancels": 0,
+     "noShows": 0
+    },
+    "can": {
+     "checkIn": false,
+     "start": false,
+     "complete": false,
+     "noShow": false,
+     "cancel": false,
+     "writePrescription": true,
+     "joinVideo": false,
+     "confirmPayment": false,
+     "rejectPayment": false,
+     "refund": false
+    }
+   }
+  }
+ },
+ "doctorAppointmentDone": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "d2155472-060b-456f-ac29-767c6d1a67e0",
+    "code": "HC-UVSAE3",
+    "status": "completed",
+    "kind": "clinic",
+    "startsAt": "2026-10-17T19:00:00.000+05:00",
+    "endsAt": "2026-10-17T19:15:00.000+05:00",
+    "patient": {
+     "age": null,
+     "name": "Ali Raza",
+     "phone": "+923001234501",
+     "gender": null,
+     "relation": null
+    },
+    "familyMemberId": null,
+    "reason": "Follow-up",
+    "symptoms": [],
+    "fee": 2500,
+    "payment": {
+     "method": "pay_at_clinic",
+     "status": "paid",
+     "payBy": null,
+     "paidAt": "2026-10-17T05:00:14.808+05:00",
+     "paymentRef": null,
+     "proofUrl": null,
+     "rejectedReason": null,
+     "accounts": null,
+     "refundRef": null,
+     "refundedAt": null
+    },
+    "lateCancel": false,
+    "cancelledBy": null,
+    "cancelReason": null,
+    "rescheduledFromId": null,
+    "bookedAt": "2026-10-17T05:00:14.593+05:00",
+    "checkedInAt": "2026-10-17T05:00:14.734+05:00",
+    "startedAt": "2026-10-17T05:00:14.750+05:00",
+    "completedAt": "2026-10-17T05:00:14.806+05:00",
+    "cancelledAt": null,
+    "patientKey": "e05feed6-bbac-4b56-bee3-44a681c67a87",
+    "location": {
+     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "kind": "clinic",
+     "name": "Model Town Clinic (demo)",
+     "area": "Model Town",
+     "timezone": "Asia/Karachi"
+    },
+    "waitingMinutes": null,
+    "flags": {
+     "firstVisit": false,
+     "lateCancels": 0,
+     "noShows": 0
+    },
+    "can": {
+     "checkIn": false,
+     "start": false,
+     "complete": false,
+     "noShow": false,
+     "cancel": false,
+     "writePrescription": true,
+     "joinVideo": false,
+     "confirmPayment": false,
+     "rejectPayment": false,
+     "refund": false
+    },
+    "events": [
+     {
+      "kind": "status",
+      "from": null,
+      "to": "booked",
+      "actorRole": "patient",
+      "note": null,
+      "at": "2026-10-17T05:00:14.600+05:00"
+     },
+     {
+      "kind": "status",
+      "from": "booked",
+      "to": "checked_in",
+      "actorRole": "doctor",
+      "note": null,
+      "at": "2026-10-17T05:00:14.735+05:00"
+     },
+     {
+      "kind": "status",
+      "from": "checked_in",
+      "to": "in_consultation",
+      "actorRole": "doctor",
+      "note": null,
+      "at": "2026-10-17T05:00:14.751+05:00"
+     },
+     {
+      "kind": "note",
+      "from": null,
+      "to": null,
+      "actorRole": "doctor",
+      "note": "Prescription issued",
+      "at": "2026-10-17T05:00:14.786+05:00"
+     },
+     {
+      "kind": "status",
+      "from": "in_consultation",
+      "to": "completed",
+      "actorRole": "doctor",
+      "note": null,
+      "at": "2026-10-17T05:00:14.807+05:00"
+     },
+     {
+      "kind": "payment",
+      "from": "unpaid",
+      "to": "paid",
+      "actorRole": "doctor",
+      "note": "Collected at the visit",
+      "at": "2026-10-17T05:00:14.808+05:00"
+     }
+    ],
+    "history": {
+     "previousAppointments": [
+      {
+       "code": "HC-UR8PCM",
+       "startsAt": "2026-10-17T18:30:00.000+05:00",
+       "status": "cancelled",
+       "kind": "clinic",
+       "reason": "Acne for six months"
+      },
+      {
+       "code": "HC-H8AU6Q",
+       "startsAt": "2026-10-17T18:00:00.000+05:00",
+       "status": "booked",
+       "kind": "clinic",
+       "reason": "Acne for six months"
+      },
+      {
+       "code": "HC-M5UWSH",
+       "startsAt": "2026-10-17T17:30:00.000+05:00",
+       "status": "cancelled",
+       "kind": "clinic",
+       "reason": "Acne for six months"
+      }
+     ],
+     "prescriptions": [
+      {
+       "id": "89813222-2628-4b34-8ccc-05fefc577018",
+       "issuedAt": "2026-10-17T00:00:14.783Z",
+       "diagnosis": "Acne vulgaris (mild)",
+       "appointmentCode": "HC-UVSAE3"
+      }
+     ]
+    },
+    "sharedRecords": []
+   }
+  }
+ },
+ "patients": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [
+     {
+      "patientKey": "97e554a2-caa7-4241-81a3-4bc18a2e17a5",
+      "name": "Zara Patient",
+      "gender": "female",
+      "age": 7,
+      "phone": null,
+      "relation": "child",
+      "visits": 2,
+      "completedVisits": 0,
+      "lastVisitAt": "2026-10-19T12:45:00.000Z"
+     },
+     {
+      "patientKey": "6e40f6a8-8b02-4230-ab73-b961ef168ddd",
+      "name": "Postman Patient",
+      "gender": null,
+      "age": null,
+      "phone": null,
+      "relation": null,
+      "visits": 1,
+      "completedVisits": 1,
+      "lastVisitAt": "2026-10-19T12:00:00.000Z"
+     },
+     {
+      "patientKey": "e05feed6-bbac-4b56-bee3-44a681c67a87",
+      "name": "Ali Raza",
+      "gender": null,
+      "age": null,
+      "phone": "+923001234501",
+      "relation": null,
+      "visits": 12,
+      "completedVisits": 7,
+      "lastVisitAt": "2026-10-17T14:00:00.000Z"
+     }
+    ],
+    "total": 14,
+    "page": 1,
+    "pageSize": 3
+   }
+  }
+ },
+ "patientHistory": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "patientKey": "e05feed6-bbac-4b56-bee3-44a681c67a87",
+    "name": "Ali Raza",
+    "gender": null,
+    "age": null,
+    "phone": "+923001234501",
+    "relation": null,
+    "visits": 12,
+    "previousAppointments": [
+     {
+      "code": "HC-UVSAE3",
+      "startsAt": "2026-10-17T19:00:00.000+05:00",
+      "status": "completed",
+      "kind": "clinic",
+      "reason": "Follow-up"
+     },
+     {
+      "code": "HC-UR8PCM",
+      "startsAt": "2026-10-17T18:30:00.000+05:00",
+      "status": "cancelled",
+      "kind": "clinic",
+      "reason": "Acne for six months"
+     },
+     {
+      "code": "HC-H8AU6Q",
+      "startsAt": "2026-10-17T18:00:00.000+05:00",
+      "status": "booked",
+      "kind": "clinic",
+      "reason": "Acne for six months"
+     }
+    ],
+    "prescriptions": [
+     {
+      "id": "89813222-2628-4b34-8ccc-05fefc577018",
+      "issuedAt": "2026-10-17T00:00:14.783Z",
+      "diagnosis": "Acne vulgaris (mild)",
+      "appointmentCode": "HC-UVSAE3"
+     }
+    ]
+   }
+  }
+ },
+ "insights": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "range": "7d",
+    "from": "2026-10-11",
+    "to": "2026-10-17",
+    "timezone": "Asia/Karachi",
+    "perDay": [
+     {
+      "date": "2026-10-11",
+      "clinic": 0,
+      "video": 0,
+      "total": 0
+     },
+     {
+      "date": "2026-10-12",
+      "clinic": 0,
+      "video": 0,
+      "total": 0
+     },
+     {
+      "date": "2026-10-13",
+      "clinic": 0,
+      "video": 1,
+      "total": 1
+     },
+     {
+      "date": "2026-10-14",
+      "clinic": 0,
+      "video": 0,
+      "total": 0
+     },
+     {
+      "date": "2026-10-15",
+      "clinic": 0,
+      "video": 0,
+      "total": 0
+     },
+     {
+      "date": "2026-10-16",
+      "clinic": 1,
+      "video": 0,
+      "total": 1
+     },
+     {
+      "date": "2026-10-17",
+      "clinic": 6,
+      "video": 0,
+      "total": 6
+     }
+    ],
+    "totals": {
+     "appointments": 14,
+     "completed": 5,
+     "cancelled": 6,
+     "lateCancelled": 0,
+     "cancelledByDoctor": 0,
+     "noShow": 0,
+     "upcoming": 3
+    },
+    "rates": {
+     "completion": 0.455,
+     "cancellation": 0.545,
+     "noShow": 0
+    },
+    "times": {
+     "avgWaitMinutes": 2,
+     "waitSamples": 5,
+     "avgConsultMinutes": 2,
+     "consultSamples": 5
+    },
+    "patients": {
+     "new": 2,
+     "returning": 2
+    },
+    "fees": {
+     "label": "Recorded by you — MetroMatrix does not process or hold payments.",
+     "recorded": 12000,
+     "atClinic": 10000,
+     "byTransfer": 2000,
+     "refundDue": 0,
+     "refunded": 0
+    },
+    "ratingTrend": [
+     {
+      "date": "2026-10-11",
+      "reviews": 1,
+      "average": 5
+     },
+     {
+      "date": "2026-10-15",
+      "reviews": 1,
+      "average": 5
+     },
+     {
+      "date": "2026-10-16",
+      "reviews": 3,
+      "average": 5
+     },
+     {
+      "date": "2026-10-17",
+      "reviews": 1,
+      "average": 5
+     }
+    ]
+   }
+  }
+ },
+ "doctorReviews": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [
+     {
+      "id": "64c83135-f9b0-42c5-b85f-39d7d6d308dc",
+      "author": "Postman P.",
+      "isAnonymous": false,
+      "verifiedVisit": true,
+      "kind": "clinic",
+      "overall": 5,
+      "diagnosis": 5,
+      "staff": 4,
+      "environment": 4,
+      "recommend": true,
+      "tags": [
+       "explained_well",
+       "on_time"
+      ],
+      "text": "Listened carefully and explained everything.",
+      "createdAt": "2026-10-16T23:54:27.202Z",
+      "reply": {
+       "text": "Thank you — see you at the follow-up.",
+       "at": "2026-10-16T23:54:28.765Z"
+      },
+      "appointmentCode": "HC-PKSSTF",
+      "hidden": false,
+      "hiddenReason": null
+     },
+     {
+      "id": "c3aa6ed7-22dd-4488-9113-86c06a10cfd1",
+      "author": "Postman P.",
+      "isAnonymous": false,
+      "verifiedVisit": true,
+      "kind": "clinic",
+      "overall": 5,
+      "diagnosis": 5,
+      "staff": 4,
+      "environment": 4,
+      "recommend": true,
+      "tags": [
+       "explained_well",
+       "on_time"
+      ],
+      "text": "Listened carefully and explained everything.",
+      "createdAt": "2026-10-16T12:26:58.041Z",
+      "reply": {
+       "text": "Thank you — see you at the follow-up.",
+       "at": "2026-10-16T12:26:59.584Z"
+      },
+      "appointmentCode": "HC-RHY5E6",
+      "hidden": false,
+      "hiddenReason": null
+     },
+     {
+      "id": "e15b9279-7fe1-4838-ae45-98d09179ad1d",
+      "author": "Postman P.",
+      "isAnonymous": false,
+      "verifiedVisit": true,
+      "kind": "clinic",
+      "overall": 5,
+      "diagnosis": 5,
+      "staff": 4,
+      "environment": 4,
+      "recommend": true,
+      "tags": [
+       "explained_well",
+       "on_time"
+      ],
+      "text": "Listened carefully and explained everything.",
+      "createdAt": "2026-10-16T12:25:44.011Z",
+      "reply": {
+       "text": "Thank you — see you at the follow-up.",
+       "at": "2026-10-16T12:25:45.568Z"
+      },
+      "appointmentCode": "HC-78ZP65",
+      "hidden": false,
+      "hiddenReason": null
+     }
+    ],
+    "total": 41,
+    "page": 1,
+    "pageSize": 3
+   }
+  }
+ },
+ "doctorReviewSummary": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "count": 41,
+    "averages": {
+     "overall": 4.2,
+     "diagnosis": 4.1,
+     "staff": 3.8,
+     "environment": 3.7
+    },
+    "satisfactionPct": 78,
+    "distribution": [
+     0,
+     2,
+     7,
+     11,
+     21
+    ],
+    "topTags": [
+     {
+      "tag": "on_time",
+      "count": 13
+     },
+     {
+      "tag": "explained_well",
+      "count": 10
+     },
+     {
+      "tag": "friendly",
+      "count": 9
+     }
+    ],
+    "latest": [
+     {
+      "id": "64c83135-f9b0-42c5-b85f-39d7d6d308dc",
+      "author": "Postman P.",
+      "isAnonymous": false,
+      "verifiedVisit": true,
+      "kind": "clinic",
+      "overall": 5,
+      "diagnosis": 5,
+      "staff": 4,
+      "environment": 4,
+      "recommend": true,
+      "tags": [
+       "explained_well",
+       "on_time"
+      ],
+      "text": "Listened carefully and explained everything.",
+      "createdAt": "2026-10-16T23:54:27.202Z",
+      "reply": {
+       "text": "Thank you — see you at the follow-up.",
+       "at": "2026-10-16T23:54:28.765Z"
+      }
+     },
+     {
+      "id": "c3aa6ed7-22dd-4488-9113-86c06a10cfd1",
+      "author": "Postman P.",
+      "isAnonymous": false,
+      "verifiedVisit": true,
+      "kind": "clinic",
+      "overall": 5,
+      "diagnosis": 5,
+      "staff": 4,
+      "environment": 4,
+      "recommend": true,
+      "tags": [
+       "explained_well",
+       "on_time"
+      ],
+      "text": "Listened carefully and explained everything.",
+      "createdAt": "2026-10-16T12:26:58.041Z",
+      "reply": {
+       "text": "Thank you — see you at the follow-up.",
+       "at": "2026-10-16T12:26:59.584Z"
+      }
+     },
+     {
+      "id": "e15b9279-7fe1-4838-ae45-98d09179ad1d",
+      "author": "Postman P.",
+      "isAnonymous": false,
+      "verifiedVisit": true,
+      "kind": "clinic",
+      "overall": 5,
+      "diagnosis": 5,
+      "staff": 4,
+      "environment": 4,
+      "recommend": true,
+      "tags": [
+       "explained_well",
+       "on_time"
+      ],
+      "text": "Listened carefully and explained everything.",
+      "createdAt": "2026-10-16T12:25:44.011Z",
+      "reply": {
+       "text": "Thank you — see you at the follow-up.",
+       "at": "2026-10-16T12:25:45.568Z"
+      }
+     }
+    ]
+   }
+  }
+ },
+ "medicines": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "medicines": [
+     {
+      "source": "reference",
+      "name": "Paracetamol",
+      "strength": "120 mg/5 ml",
+      "form": "syrup",
+      "dosePattern": null,
+      "timing": null,
+      "useCount": 0
+     },
+     {
+      "source": "reference",
+      "name": "Paracetamol",
+      "strength": "1 g/100 ml",
+      "form": "injection",
+      "dosePattern": null,
+      "timing": null,
+      "useCount": 0
+     },
+     {
+      "source": "reference",
+      "name": "Paracetamol",
+      "strength": "250 mg/5 ml",
+      "form": "syrup",
+      "dosePattern": null,
+      "timing": null,
+      "useCount": 0
+     }
+    ]
+   }
+  }
+ },
+ "diagnoses": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": [
+    "Acne vulgaris (mild)",
+    "Acne vulgaris (moderate)"
+   ]
+  }
+ },
+ "doctorBusiness": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "a11da3aa-bf9c-4399-86df-4d446aca0e65",
+    "name": "Dr. Sana Iqbal",
+    "slug": "dr-sana-iqbal-dr01",
+    "serviceType": "healthcare",
+    "subType": "doctor",
+    "phone": "+923007000000",
+    "city": "Lahore",
+    "addressLine": "Gulberg III",
+    "lat": null,
+    "lng": null,
+    "status": "approved",
+    "rejectionReason": null,
+    "suspensionReason": null,
+    "submittedAt": "2026-10-16T11:17:20.370Z",
+    "reviewedAt": "2026-10-16T11:17:20.370Z",
+    "createdAt": "2026-10-16T11:17:20.780Z",
+    "updatedAt": "2026-10-16T11:17:20.780Z",
+    "pmdcNumber": "DEMO-00001-P",
+    "isListed": true,
+    "pmdcVerified": true,
+    "documents": [],
+    "requiredDocuments": [
+     {
+      "kind": "cnic_front",
+      "min": 1,
+      "have": 0,
+      "satisfied": false
+     },
+     {
+      "kind": "cnic_back",
+      "min": 1,
+      "have": 0,
+      "satisfied": false
+     },
+     {
+      "kind": "pmdc_certificate",
+      "min": 1,
+      "have": 0,
+      "satisfied": false
+     }
+    ],
+    "missingDocuments": [
+     "cnic_front",
+     "cnic_back",
+     "pmdc_certificate",
+     "degree_certificate"
+    ]
+   }
+  }
+ },
+ "scheduleOverlap": {
+  "status": 409,
+  "body": {
+   "success": false,
+   "error": {
+    "code": "SCHEDULE_OVERLAP",
+    "message": "Mon 17:00–21:00 overlaps Model Town Clinic (demo) 17:00–21:00.",
+    "details": {
+     "range": {
+      "locationId": "2b9e43ef-3ede-42e6-91fe-dac3769b746b",
+      "weekday": 1,
+      "start": "17:00",
+      "end": "21:00"
+     },
+     "conflict": {
+      "locationId": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+      "locationName": "Model Town Clinic (demo)",
+      "weekday": 1,
+      "start": "17:00",
+      "end": "21:00"
+     }
+    }
+   }
+  }
+ },
+ "review": {
+  "status": 201,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "c588673f-866e-453f-b945-18821f81ba5a",
+    "author": "Ali R.",
+    "isAnonymous": false,
+    "verifiedVisit": true,
+    "kind": "clinic",
+    "overall": 5,
+    "diagnosis": 5,
+    "staff": 4,
+    "environment": 4,
+    "recommend": true,
+    "tags": [
+     "explained_well"
+    ],
+    "text": "Clear and kind.",
+    "createdAt": "2026-10-17T00:00:14.891Z",
+    "reply": null
+   }
+  }
+ },
+ "appointmentDone": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "d2155472-060b-456f-ac29-767c6d1a67e0",
+    "code": "HC-UVSAE3",
+    "status": "completed",
+    "kind": "clinic",
+    "startsAt": "2026-10-17T19:00:00.000+05:00",
+    "endsAt": "2026-10-17T19:15:00.000+05:00",
+    "patient": {
+     "age": null,
+     "name": "Ali Raza",
+     "phone": "+923001234501",
+     "gender": null,
+     "relation": null
+    },
+    "familyMemberId": null,
+    "reason": "Follow-up",
+    "symptoms": [],
+    "fee": 2500,
+    "payment": {
+     "method": "pay_at_clinic",
+     "status": "paid",
+     "payBy": null,
+     "paidAt": "2026-10-17T05:00:14.808+05:00",
+     "paymentRef": null,
+     "proofUrl": null,
+     "rejectedReason": null,
+     "accounts": null,
+     "refundRef": null,
+     "refundedAt": null
+    },
+    "lateCancel": false,
+    "cancelledBy": null,
+    "cancelReason": null,
+    "rescheduledFromId": null,
+    "bookedAt": "2026-10-17T05:00:14.593+05:00",
+    "checkedInAt": "2026-10-17T05:00:14.734+05:00",
+    "startedAt": "2026-10-17T05:00:14.750+05:00",
+    "completedAt": "2026-10-17T05:00:14.806+05:00",
+    "cancelledAt": null,
+    "doctor": {
+     "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+     "displayName": "Dr. Sana Iqbal",
+     "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+     "specialty": "Dermatologist"
+    },
+    "location": {
+     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "kind": "clinic",
+     "name": "Model Town Clinic (demo)",
+     "addressLine": "13-A Main Boulevard",
+     "area": "Model Town",
+     "city": "Lahore",
+     "lat": 31.487,
+     "lng": 74.3212,
+     "phone": "+923007000000",
+     "instructions": "Please arrive 10 minutes early and ask for your token at reception.",
+     "timezone": "Asia/Karachi"
+    },
+    "cancelCutoffAt": "2026-10-17T17:00:00.000+05:00",
+    "prescriptionId": "89813222-2628-4b34-8ccc-05fefc577018",
+    "reviewed": true,
+    "events": [
+     {
+      "kind": "status",
+      "from": null,
+      "to": "booked",
+      "actorRole": "patient",
+      "note": null,
+      "at": "2026-10-17T05:00:14.600+05:00"
+     },
+     {
+      "kind": "status",
+      "from": "booked",
+      "to": "checked_in",
+      "actorRole": "doctor",
+      "note": null,
+      "at": "2026-10-17T05:00:14.735+05:00"
+     },
+     {
+      "kind": "status",
+      "from": "checked_in",
+      "to": "in_consultation",
+      "actorRole": "doctor",
+      "note": null,
+      "at": "2026-10-17T05:00:14.751+05:00"
+     },
+     {
+      "kind": "note",
+      "from": null,
+      "to": null,
+      "actorRole": "doctor",
+      "note": "Prescription issued",
+      "at": "2026-10-17T05:00:14.786+05:00"
+     },
+     {
+      "kind": "status",
+      "from": "in_consultation",
+      "to": "completed",
+      "actorRole": "doctor",
+      "note": null,
+      "at": "2026-10-17T05:00:14.807+05:00"
+     },
+     {
+      "kind": "payment",
+      "from": "unpaid",
+      "to": "paid",
+      "actorRole": "doctor",
+      "note": "Collected at the visit",
+      "at": "2026-10-17T05:00:14.808+05:00"
+     }
+    ],
+    "sharedRecords": [],
+    "can": {
+     "cancel": false,
+     "reschedule": false,
+     "joinVideo": false,
+     "shareRecords": false,
+     "submitPaymentProof": false,
+     "review": false
+    }
+   }
+  }
+ },
+ "prescription": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "89813222-2628-4b34-8ccc-05fefc577018",
+    "appointmentCode": "HC-UVSAE3",
+    "appointmentKind": "clinic",
+    "visitDate": "2026-10-17",
+    "issuedAt": "2026-10-17T05:00:14.783+05:00",
+    "updatedAt": "2026-10-17T05:00:14.783+05:00",
+    "editableUntil": "2026-10-18T05:00:14.806+05:00",
+    "locked": false,
+    "doctor": {
+     "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+     "displayName": "Dr. Sana Iqbal",
+     "qualifications": "MBBS, FCPS (Dermatology)",
+     "pmdcNumber": "DEMO-00001-P",
+     "specialty": "Dermatologist",
+     "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format"
+    },
+    "location": {
+     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "kind": "clinic",
+     "name": "Model Town Clinic (demo)",
+     "addressLine": "13-A Main Boulevard",
+     "area": "Model Town",
+     "city": "Lahore",
+     "phone": "+923007000000"
+    },
+    "patient": {
+     "age": null,
+     "name": "Ali Raza",
+     "phone": "+923001234501",
+     "gender": null,
+     "relation": null
+    },
+    "familyMemberId": null,
+    "diagnosis": "Acne vulgaris (mild)",
+    "advice": "Gentle cleanser twice a day.",
+    "followUpInDays": 30,
+    "followUpOn": "2026-11-16",
+    "medicines": [
+     {
+      "name": "Doxycycline",
+      "strength": "100 mg",
+      "form": "capsule",
+      "dosePattern": "1+0+0",
+      "timing": "after_meal",
+      "durationDays": 30,
+      "instructions": null
+     }
+    ],
+    "tests": [
+     {
+      "name": "CBC",
+      "instructions": null
+     }
+    ]
+   }
+  }
+ },
+ "notifications": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [
+     {
+      "id": "a88366b1-5405-4a9a-97e5-9a211d898d01",
+      "type": "health.prescription",
+      "title": "Your prescription is ready",
+      "body": "Open appointment HC-UVSAE3 to see it.",
+      "data": {
+       "prescriptionId": "89813222-2628-4b34-8ccc-05fefc577018",
+       "appointmentCode": "HC-UVSAE3"
+      },
+      "readAt": null,
+      "createdAt": "2026-10-17T00:00:14.788Z"
+     },
+     {
+      "id": "cca5e285-9426-4902-95fd-ad7bf7e26947",
+      "type": "health.appointment.booked",
+      "title": "Booked HC-UVSAE3",
+      "body": "today, 7:00 PM · Model Town Clinic (demo)",
+      "data": {
+       "appointmentCode": "HC-UVSAE3"
+      },
+      "readAt": null,
+      "createdAt": "2026-10-17T00:00:14.613Z"
+     },
+     {
+      "id": "12da20f2-0b7b-48d6-aa97-a3dd827d7ba1",
+      "type": "health.appointment.booked",
+      "title": "Booked HC-UR8PCM",
+      "body": "today, 6:30 PM · Model Town Clinic (demo)",
+      "data": {
+       "appointmentCode": "HC-UR8PCM"
+      },
+      "readAt": null,
+      "createdAt": "2026-10-17T00:00:14.562Z"
+     }
+    ],
+    "total": 9,
+    "page": 1,
+    "pageSize": 5
+   }
+  }
+ },
+ "doctorNotifications": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [
+     {
+      "id": "22eae5fd-b3a8-4d24-868d-be9c0ba3cb88",
+      "type": "health.review.new",
+      "title": "New 5★ review",
+      "body": "Clear and kind.",
+      "data": {
+       "reviewId": "c588673f-866e-453f-b945-18821f81ba5a"
+      },
+      "readAt": null,
+      "createdAt": "2026-10-17T00:00:14.897Z"
+     },
+     {
+      "id": "cd3e154d-8307-40bc-baab-8233dc863911",
+      "type": "health.appointment.new",
+      "title": "New appointment HC-UVSAE3",
+      "body": "Ali Raza · today, 7:00 PM · Model Town Clinic (demo)",
+      "data": {
+       "appointmentCode": "HC-UVSAE3"
+      },
+      "readAt": null,
+      "createdAt": "2026-10-17T00:00:14.612Z"
+     },
+     {
+      "id": "53b0720b-0c64-4fc3-87d4-5265179e8447",
+      "type": "health.appointment.cancelled",
+      "title": "HC-UR8PCM cancelled by the patient",
+      "body": "Feeling better",
+      "data": {
+       "appointmentCode": "HC-UR8PCM"
+      },
+      "readAt": null,
+      "createdAt": "2026-10-17T00:00:14.576Z"
+     }
+    ],
+    "total": 24,
+    "page": 1,
+    "pageSize": 5
+   }
+  }
+ },
+ "bookVideo": {
+  "status": 201,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "f43f552f-14f5-4efa-8fe9-e9eb399a8de6",
+    "code": "HC-ZFBMMX",
+    "status": "booked",
+    "kind": "video",
+    "startsAt": "2026-10-19T22:30:00.000+05:00",
+    "endsAt": "2026-10-19T23:00:00.000+05:00",
+    "patient": {
+     "age": null,
+     "name": "Ali Raza",
+     "phone": "+923001234501",
+     "gender": null,
+     "relation": null
+    },
+    "familyMemberId": null,
+    "reason": null,
+    "symptoms": [],
+    "fee": 2000,
+    "payment": {
+     "method": "transfer",
+     "status": "awaiting_transfer",
+     "payBy": null,
+     "paidAt": null,
+     "paymentRef": null,
+     "proofUrl": null,
+     "rejectedReason": null,
+     "accounts": [
+      {
+       "kind": "bank",
+       "bankName": "Meezan Bank (demo)",
+       "accountTitle": "Dr. Sana Iqbal",
+       "accountNumber": "PK00DEMO0000000000000000"
+      }
+     ],
+     "refundRef": null,
+     "refundedAt": null
+    },
+    "lateCancel": false,
+    "cancelledBy": null,
+    "cancelReason": null,
+    "rescheduledFromId": null,
+    "bookedAt": "2026-10-17T05:00:14.945+05:00",
+    "checkedInAt": null,
+    "startedAt": null,
+    "completedAt": null,
+    "cancelledAt": null,
+    "doctor": {
+     "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+     "displayName": "Dr. Sana Iqbal",
+     "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+     "specialty": "Dermatologist"
+    },
+    "location": {
+     "id": "694c4b3f-b22f-443d-a062-ae5e572bd9bb",
+     "kind": "video",
+     "name": "Video consultation",
+     "addressLine": null,
+     "area": null,
+     "city": null,
+     "lat": null,
+     "lng": null,
+     "phone": null,
+     "instructions": "Join from the app 10 minutes before your time.",
+     "timezone": "Asia/Karachi"
+    },
+    "cancelCutoffAt": "2026-10-19T20:30:00.000+05:00",
+    "prescriptionId": null,
+    "reviewed": false,
+    "events": [
+     {
+      "kind": "status",
+      "from": null,
+      "to": "booked",
+      "actorRole": "patient",
+      "note": null,
+      "at": "2026-10-17T05:00:14.954+05:00"
+     }
+    ],
+    "sharedRecords": [],
+    "can": {
+     "cancel": true,
+     "reschedule": true,
+     "joinVideo": false,
+     "shareRecords": true,
+     "submitPaymentProof": true,
+     "review": false
+    }
+   }
+  }
+ },
+ "videoTooEarly": {
+  "status": 409,
+  "body": {
+   "success": false,
+   "error": {
+    "code": "VIDEO_NOT_JOINABLE",
+    "message": "The call opens 10 minutes before the appointment and closes 30 minutes after it.",
+    "details": {
+     "reason": "window",
+     "opensAt": "2026-10-19T17:20:00.000Z",
+     "closesAt": "2026-10-19T18:30:00.000Z"
+    }
+   }
+  }
+ },
+ "adminOverview": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "date": "2026-10-17",
+    "doctors": {
+     "total": 30,
+     "listed": 30,
+     "awaitingPmdc": 0,
+     "unlistedByAdmin": 0
+    },
+    "listedBySpecialty": [
+     {
+      "slug": "general-physician",
+      "name": "General Physician",
+      "doctors": 4
+     },
+     {
+      "slug": "dermatologist",
+      "name": "Dermatologist",
+      "doctors": 3
+     },
+     {
+      "slug": "gynecologist",
+      "name": "Gynecologist",
+      "doctors": 3
+     }
+    ],
+    "today": {
+     "newBookings": 10,
+     "cancellations": 6,
+     "noShows": 0,
+     "appointmentsByStatus": {
+      "booked": 3,
+      "completed": 3,
+      "cancelled": 6
+     }
+    },
+    "last7Days": {
+     "booked": 67,
+     "completed": 55,
+     "cancelled": 9,
+     "noShow": 0,
+     "video": 10
+    },
+    "reviews": {
+     "total": 642,
+     "hidden": 0,
+     "last7Days": 74
+    },
+    "symptomChecks": {
+     "last24h": 10,
+     "emergencies24h": 5
+    },
+    "topSpecialties30d": [
+     {
+      "slug": "dermatologist",
+      "name": "Dermatologist",
+      "bookings": 60
+     },
+     {
+      "slug": "gynecologist",
+      "name": "Gynecologist",
+      "bookings": 53
+     },
+     {
+      "slug": "general-physician",
+      "name": "General Physician",
+      "bookings": 49
+     }
+    ]
+   }
+  }
+ },
+ "adminSpecialties": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": [
+    {
+     "id": "1e7702bf-e34a-4601-b6c2-4388dc071dfb",
+     "name": "General Physician",
+     "nameUr": "جنرل فزیشن",
+     "slug": "general-physician",
+     "icon": "stethoscope",
+     "description": "First doctor for everyday illness: fever, flu, infections, check-ups.",
+     "keywords": [
+      "fever",
+      "flu",
+      "cold",
+      "cough",
+      "checkup",
+      "general",
+      "bukhar",
+      "nazla",
+      "zukam",
+      "khansi"
+     ],
+     "sort": 0,
+     "isActive": true,
+     "doctors": 4
+    },
+    {
+     "id": "e9565779-4fe4-401f-97c8-a6e69affd3a1",
+     "name": "Gynecologist",
+     "nameUr": "ماہر امراض نسواں",
+     "slug": "gynecologist",
+     "icon": "female",
+     "description": "Women's health, periods, pregnancy and childbirth.",
+     "keywords": [
+      "women",
+      "pregnancy",
+      "periods",
+      "obstetrics",
+      "gynae",
+      "hamal",
+      "mahwari",
+      "lady doctor"
+     ],
+     "sort": 1,
+     "isActive": true,
+     "doctors": 3
+    },
+    {
+     "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+     "name": "Dermatologist",
+     "nameUr": "ماہر امراض جلد",
+     "slug": "dermatologist",
+     "icon": "skin",
+     "description": "Skin, hair and nail conditions.",
+     "keywords": [
+      "skin",
+      "hair",
+      "nails",
+      "acne",
+      "rash",
+      "jild",
+      "baal",
+      "daane",
+      "chehra"
+     ],
+     "sort": 2,
+     "isActive": true,
+     "doctors": 3
+    }
+   ]
+  }
+ },
+ "adminConditions": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [
+     {
+      "id": "3c28baea-a48d-4f21-b5b9-877b9c8823af",
+      "name": "Acne",
+      "nameUr": "کیل مہاسے",
+      "slug": "acne",
+      "aliases": [
+       "pimples",
+       "pimple",
+       "daane",
+       "keel",
+       "muhase",
+       "breakouts"
+      ],
+      "isCommon": true,
+      "icon": "sparkles",
+      "isActive": true,
+      "specialties": [
+       {
+        "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+        "name": "Dermatologist",
+        "slug": "dermatologist",
+        "rank": 1
+       }
+      ]
+     },
+     {
+      "id": "31e21ca0-ba15-4dc1-b8c2-66adbbf40aa7",
+      "name": "Scars",
+      "nameUr": "نشانات",
+      "slug": "scars",
+      "aliases": [
+       "acne scars",
+       "scar marks",
+       "nishan"
+      ],
+      "isCommon": false,
+      "icon": null,
+      "isActive": true,
+      "specialties": [
+       {
+        "id": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+        "name": "Dermatologist",
+        "slug": "dermatologist",
+        "rank": 1
+       },
+       {
+        "id": "b1fe1554-ce0b-459a-9de7-92fa792af4f7",
+        "name": "Plastic Surgeon",
+        "slug": "plastic-surgeon",
+        "rank": 2
+       }
+      ]
+     }
+    ],
+    "total": 2,
+    "page": 1,
+    "pageSize": 20
+   }
+  }
+ },
+ "adminDoctors": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [
+     {
+      "id": "1a002f2d-0871-414b-882c-1fef3ca693ad",
+      "title": "dr",
+      "fullName": "Faisal Raza",
+      "pmdcNumber": "DEMO-00015-P",
+      "pmdcVerifiedAt": "2026-10-16T11:17:20.370Z",
+      "isListed": true,
+      "unlistedReason": null,
+      "specialty": {
+       "id": "0477cc05-e571-45cd-b043-45d1f0dcf172",
+       "name": "Psychiatrist",
+       "slug": "psychiatrist"
+      },
+      "documents": [],
+      "business": {
+       "id": "7b6cfa4b-0c0c-4d52-adc4-0aea37422942",
+       "name": "Dr. Faisal Raza",
+       "status": "approved",
+       "city": "Karachi",
+       "submittedAt": "2026-10-16T11:17:20.370Z"
+      }
+     },
+     {
+      "id": "2643f9ef-afe0-40e7-a467-b7157f0735b3",
+      "title": "dr",
+      "fullName": "Haris Mirza",
+      "pmdcNumber": "DEMO-00029-P",
+      "pmdcVerifiedAt": "2026-10-16T11:17:20.370Z",
+      "isListed": true,
+      "unlistedReason": null,
+      "specialty": {
+       "id": "77198d4b-89fc-48fc-ada6-fa329cf01eac",
+       "name": "Endocrinologist",
+       "slug": "endocrinologist"
+      },
+      "documents": [],
+      "business": {
+       "id": "d59298ad-b4e1-4e7e-b8eb-cc8d46776e7f",
+       "name": "Dr. Haris Mirza",
+       "status": "approved",
+       "city": "Karachi",
+       "submittedAt": "2026-10-16T11:17:20.370Z"
+      }
+     }
+    ],
+    "total": 30,
+    "page": 1,
+    "pageSize": 2
+   }
+  }
+ },
+ "adminReviews": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [
+     {
+      "id": "c588673f-866e-453f-b945-18821f81ba5a",
+      "author": "Ali R.",
+      "isAnonymous": false,
+      "verifiedVisit": true,
+      "kind": "clinic",
+      "overall": 5,
+      "diagnosis": 5,
+      "staff": 4,
+      "environment": 4,
+      "recommend": true,
+      "tags": [
+       "explained_well"
+      ],
+      "text": "Clear and kind.",
+      "createdAt": "2026-10-17T00:00:14.891Z",
+      "reply": null,
+      "appointmentCode": "HC-UVSAE3",
+      "hidden": false,
+      "hiddenReason": null,
+      "doctorId": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+      "doctorName": "Dr. Sana Iqbal",
+      "patientUserId": "e05feed6-bbac-4b56-bee3-44a681c67a87",
+      "authorName": "Ali R.",
+      "hiddenAt": null
+     },
+     {
+      "id": "64c83135-f9b0-42c5-b85f-39d7d6d308dc",
+      "author": "Postman P.",
+      "isAnonymous": false,
+      "verifiedVisit": true,
+      "kind": "clinic",
+      "overall": 5,
+      "diagnosis": 5,
+      "staff": 4,
+      "environment": 4,
+      "recommend": true,
+      "tags": [
+       "explained_well",
+       "on_time"
+      ],
+      "text": "Listened carefully and explained everything.",
+      "createdAt": "2026-10-16T23:54:27.202Z",
+      "reply": {
+       "text": "Thank you — see you at the follow-up.",
+       "at": "2026-10-16T23:54:28.765Z"
+      },
+      "appointmentCode": "HC-PKSSTF",
+      "hidden": false,
+      "hiddenReason": null,
+      "doctorId": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+      "doctorName": "Dr. Sana Iqbal",
+      "patientUserId": "6e40f6a8-8b02-4230-ab73-b961ef168ddd",
+      "authorName": "Postman P.",
+      "hiddenAt": null
+     }
+    ],
+    "total": 642,
+    "page": 1,
+    "pageSize": 2
+   }
+  }
+ },
+ "adminAppointment": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "d2155472-060b-456f-ac29-767c6d1a67e0",
+    "code": "HC-UVSAE3",
+    "status": "completed",
+    "kind": "clinic",
+    "startsAt": "2026-10-17T19:00:00.000+05:00",
+    "endsAt": "2026-10-17T19:15:00.000+05:00",
+    "patient": {
+     "age": null,
+     "name": "Ali Raza",
+     "phone": "+923001234501",
+     "gender": null,
+     "relation": null
+    },
+    "familyMemberId": null,
+    "reason": "Follow-up",
+    "symptoms": [],
+    "fee": 2500,
+    "payment": {
+     "method": "pay_at_clinic",
+     "status": "paid",
+     "payBy": null,
+     "paidAt": "2026-10-17T05:00:14.808+05:00",
+     "paymentRef": null,
+     "proofUrl": null,
+     "rejectedReason": null,
+     "accounts": null,
+     "refundRef": null,
+     "refundedAt": null
+    },
+    "lateCancel": false,
+    "cancelledBy": null,
+    "cancelReason": null,
+    "rescheduledFromId": null,
+    "bookedAt": "2026-10-17T05:00:14.593+05:00",
+    "checkedInAt": "2026-10-17T05:00:14.734+05:00",
+    "startedAt": "2026-10-17T05:00:14.750+05:00",
+    "completedAt": "2026-10-17T05:00:14.806+05:00",
+    "cancelledAt": null,
+    "patientUserId": "e05feed6-bbac-4b56-bee3-44a681c67a87",
+    "doctor": {
+     "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+     "businessId": "a11da3aa-bf9c-4399-86df-4d446aca0e65",
+     "displayName": "Dr. Sana Iqbal",
+     "specialty": "Dermatologist"
+    },
+    "hasPrescription": true,
+    "location": {
+     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "kind": "clinic",
+     "name": "Model Town Clinic (demo)",
+     "city": "Lahore",
+     "timezone": "Asia/Karachi"
+    },
+    "events": [
+     {
+      "kind": "status",
+      "from": null,
+      "to": "booked",
+      "actorRole": "patient",
+      "actorUserId": "e05feed6-bbac-4b56-bee3-44a681c67a87",
+      "note": null,
+      "at": "2026-10-17T05:00:14.600+05:00"
+     },
+     {
+      "kind": "status",
+      "from": "booked",
+      "to": "checked_in",
+      "actorRole": "doctor",
+      "actorUserId": "50d176f7-e91b-458d-8872-8aeea5ed462a",
+      "note": null,
+      "at": "2026-10-17T05:00:14.735+05:00"
+     },
+     {
+      "kind": "status",
+      "from": "checked_in",
+      "to": "in_consultation",
+      "actorRole": "doctor",
+      "actorUserId": "50d176f7-e91b-458d-8872-8aeea5ed462a",
+      "note": null,
+      "at": "2026-10-17T05:00:14.751+05:00"
+     },
+     {
+      "kind": "note",
+      "from": null,
+      "to": null,
+      "actorRole": "doctor",
+      "actorUserId": "50d176f7-e91b-458d-8872-8aeea5ed462a",
+      "note": "Prescription issued",
+      "at": "2026-10-17T05:00:14.786+05:00"
+     },
+     {
+      "kind": "status",
+      "from": "in_consultation",
+      "to": "completed",
+      "actorRole": "doctor",
+      "actorUserId": "50d176f7-e91b-458d-8872-8aeea5ed462a",
+      "note": null,
+      "at": "2026-10-17T05:00:14.807+05:00"
+     },
+     {
+      "kind": "payment",
+      "from": "unpaid",
+      "to": "paid",
+      "actorRole": "doctor",
+      "actorUserId": "50d176f7-e91b-458d-8872-8aeea5ed462a",
+      "note": "Collected at the visit",
+      "at": "2026-10-17T05:00:14.808+05:00"
+     }
+    ]
+   }
+  }
+ },
+ "adminBanners": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": [
+    {
+     "id": "bf8e3300-264f-47e0-a2b8-d71235a06054",
+     "imageUrl": "https://images.unsplash.com/photo-1758691463620-188ca7c1a04f?w=1600&h=800&fit=crop&q=80&auto=format",
+     "title": "See a doctor by video today",
+     "subtitle": "PMDC-verified doctors, from home. You pay the doctor directly.",
+     "targetType": "screen",
+     "targetId": null,
+     "targetScreen": "video_consultation",
+     "city": null,
+     "startsAt": null,
+     "endsAt": null,
+     "sort": 1,
+     "isActive": true
+    },
+    {
+     "id": "680da4ca-4d3f-44f6-9d91-e280ad930d23",
+     "imageUrl": "https://images.unsplash.com/photo-1688588162416-f7a7e726e0bf?w=1600&h=800&fit=crop&q=80&auto=format",
+     "title": "Skin and hair specialists",
+     "subtitle": "Acne, hair fall and eczema, seen by dermatologists near you.",
+     "targetType": "specialty",
+     "targetId": "a8d0046d-be52-40b1-9a28-4c7016617c6f",
+     "targetScreen": null,
+     "city": null,
+     "startsAt": null,
+     "endsAt": null,
+     "sort": 2,
+     "isActive": true
+    },
+    {
+     "id": "aa376745-5b5a-4016-acf1-85d6d474978c",
+     "imageUrl": "https://images.unsplash.com/photo-1758273241078-8eec353836be?w=1600&h=800&fit=crop&q=80&auto=format",
+     "title": "Not sure who to see?",
+     "subtitle": "Describe how you feel and we will suggest the right specialist.",
+     "targetType": "screen",
+     "targetId": null,
+     "targetScreen": "symptom_checker",
+     "city": null,
+     "startsAt": null,
+     "endsAt": null,
+     "sort": 3,
+     "isActive": true
+    }
+   ]
+  }
+ },
+ "adminBusiness": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "a11da3aa-bf9c-4399-86df-4d446aca0e65",
+    "name": "Dr. Sana Iqbal",
+    "slug": "dr-sana-iqbal-dr01",
+    "serviceType": "healthcare",
+    "subType": "doctor",
+    "phone": "+923007000000",
+    "city": "Lahore",
+    "addressLine": "Gulberg III",
+    "lat": null,
+    "lng": null,
+    "status": "approved",
+    "rejectionReason": null,
+    "suspensionReason": null,
+    "submittedAt": "2026-10-16T11:17:20.370Z",
+    "reviewedAt": "2026-10-16T11:17:20.370Z",
+    "createdAt": "2026-10-16T11:17:20.780Z",
+    "updatedAt": "2026-10-16T11:17:20.780Z",
+    "pmdcNumber": "DEMO-00001-P",
+    "isListed": true,
+    "pmdcVerified": true,
+    "documents": [],
+    "requiredDocuments": [
+     {
+      "kind": "cnic_front",
+      "min": 1,
+      "have": 0,
+      "satisfied": false
+     },
+     {
+      "kind": "cnic_back",
+      "min": 1,
+      "have": 0,
+      "satisfied": false
+     },
+     {
+      "kind": "pmdc_certificate",
+      "min": 1,
+      "have": 0,
+      "satisfied": false
+     }
+    ],
+    "missingDocuments": [
+     "cnic_front",
+     "cnic_back",
+     "pmdc_certificate",
+     "degree_certificate"
+    ],
+    "owner": {
+     "id": "50d176f7-e91b-458d-8872-8aeea5ed462a",
+     "email": "someone@example.test",
+     "displayName": "Sana Iqbal",
+     "phone": "+923007000000",
+     "status": "active",
+     "isEmailVerified": true
+    },
+    "history": []
+   }
+  }
+ }
+}

@@ -18,6 +18,26 @@ export async function request<T>(call: () => Promise<AxiosResponse>, serialize: 
   }
 }
 
+/**
+ * One screen's data that the API serves from several routes: the calls run
+ * together, each is unwrapped, and the parts are serialized as one. Any
+ * failure fails the whole read, as one request would.
+ */
+export async function requestAll<K extends string, T>(
+  calls: Record<K, () => Promise<AxiosResponse>>,
+  serialize: (parts: Record<K, unknown>) => T | null,
+): Promise<T> {
+  try {
+    const keys = Object.keys(calls) as K[];
+    const values = await Promise.all(keys.map(k => calls[k]().then(unwrap)));
+    const value = serialize(Object.fromEntries(keys.map((k, i) => [k, values[i]])) as Record<K, unknown>);
+    if (value === null) throw new AuthError('The server sent something unexpected. Try again.', 'BAD_RESPONSE');
+    return value;
+  } catch (e) {
+    throw toAuthError(e);
+  }
+}
+
 /** For calls whose body we don't need (acks like `{ removed: true }`). */
 export const ack = (): true => true;
 

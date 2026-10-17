@@ -1,7 +1,8 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Healthcare types (mirror docs/API_HEALTH_ASSUMED.md)
+// MetroMatrix — Healthcare types (the app's vocabulary)
 // ═══════════════════════════════════════════════════════
-// TODO(API_HEALTH): reconcile with MetroMatrix-API docs/API_HEALTH.md.
+// The serializers map MetroMatrix-API docs/API_HEALTH.md (copy in docs/)
+// into these; screens and slices only ever see these.
 // Money is INTEGER rupees (format with utils/money.formatPKR). Times are ISO
 // UTC; show them only through utils/healthTime in the location's timezone.
 
@@ -21,7 +22,7 @@ export interface SpecialtyRef {
 
 export interface Specialty extends SpecialtyRef {
   id: string;
-  /** Ionicons glyph name chosen by the API. */
+  /** Ionicons glyph (the API's icon key, mapped in healthCommon.iconGlyph). */
   icon: string;
   doctorCount: number;
 }
@@ -34,7 +35,7 @@ export interface Condition {
   nameUr?: string | null;
   specialtySlug: string | null;
   isCommon: boolean;
-  /** Ionicons glyph chosen by the API (the common ones have one); else its specialty's. */
+  /** Ionicons glyph from the API's icon key (the common ones have one); else its specialty's. */
   icon: string | null;
 }
 
@@ -219,6 +220,8 @@ export interface HealthHome {
   availableToday: DoctorCardData[];
   /** Top doctors in the city (the spotlight rail). */
   featuredDoctors: DoctorCardData[];
+  /** `nationwide` when nobody practises in the city yet (the rail's title says so). */
+  featuredScope: 'city' | 'nationwide';
   banners: HealthBanner[];
   upcoming: AppointmentSummary | null;
   emergencyNumbers: EmergencyNumber[];
@@ -266,7 +269,12 @@ export type AppointmentPaymentStatus =
   | 'proof_submitted'
   | 'proof_rejected'
   | 'paid'
-  | 'collected';
+  | 'collected'
+  /** Nothing is owed any more (a cancelled or missed visit that wasn't paid). */
+  | 'void'
+  /** Paid, then cancelled: the doctor owes it back. */
+  | 'refund_due'
+  | 'refunded';
 
 export type AppointmentSegment = 'upcoming' | 'past';
 export type ReasonTag = 'follow_up' | 'new_problem' | 'reports_review';
@@ -284,7 +292,10 @@ export type AppointmentEventType =
   | 'completed'
   | 'cancelled'
   | 'no_show'
-  | 'prescription_issued';
+  | 'prescription_issued'
+  | 'refund_due'
+  | 'refunded'
+  | 'note';
 
 export interface AppointmentEvent {
   type: AppointmentEventType;
@@ -424,7 +435,7 @@ export interface RecordInput {
   files: RecordFile[];
 }
 
-export type MedicineForm = 'tablet' | 'capsule' | 'syrup' | 'injection' | 'drops' | 'cream' | 'inhaler' | 'other';
+export type MedicineForm = 'tablet' | 'capsule' | 'syrup' | 'injection' | 'drops' | 'cream' | 'other';
 export type MedicineTiming = 'before_meal' | 'after_meal' | 'with_meal' | 'bedtime' | 'as_needed';
 
 export interface Medicine {

@@ -1,8 +1,19 @@
 // Health form rules and the one status map.
 
 import { APPOINTMENT_PAYMENT_STATUS, APPOINTMENT_STATUS, appointmentTimeline } from '../health/appointmentStatusModel';
-import { defaultPaymentFor, paymentOptionsFor, validateBooking, validateCancel } from '../health/bookingModel';
-import { copyToWeekdays, crossLocationOverlaps, emptyWeek, formatHHmm, overlapMessage, validateTimeOff, validateWeek } from '../health/availabilityModel';
+import { cancelReasonText, defaultPaymentFor, paymentOptionsFor, validateBooking, validateCancel } from '../health/bookingModel';
+import {
+  appDayFromWeekday,
+  copyToWeekdays,
+  crossLocationOverlaps,
+  emptyWeek,
+  formatHHmm,
+  overlapMessage,
+  scheduleBody,
+  validateTimeOff,
+  validateWeek,
+  weekdayFromAppDay,
+} from '../health/availabilityModel';
 import {
   doseSentence,
   doseSlots,
@@ -13,12 +24,12 @@ import {
   prescriptionToSave,
   validatePrescription,
 } from '../health/prescriptionModel';
-import { activeFilterCount, baseQuery, clearFilters, isQuickOn, queryKey, toggleQuick } from '../health/filterModel';
+import { activeFilterCount, baseQuery, clearFilters, isQuickOn, queryKey, toParams, toggleQuick } from '../health/filterModel';
 import { concernIcon, homeSpecialties } from '../health/homeModel';
 import { emptyFamilyMember, validateFamilyMember } from '../health/familyMemberModel';
 import { validateRecord } from '../health/recordModel';
-import { dimensionsFor, validateDoctorReview, validateReply } from '../health/reviewFormModel';
-import { ownProfilePatch, validateDoctorProfile } from '../health/doctorProfileModel';
+import { REVIEW_TAGS, dimensionsFor, reviewTagCodes, reviewTagLabel, validateDoctorReview, validateReply } from '../health/reviewFormModel';
+import { completenessFrom, ownProfilePatch, validateDoctorProfile } from '../health/doctorProfileModel';
 import {
   conditionForm,
   conditionInput,
@@ -59,9 +70,9 @@ describe('appointmentStatusModel', () => {
 });
 
 describe('bookingModel', () => {
-  it('pays for a clinic at the clinic, and a prepaid video by transfer only', () => {
+  it('pays for a clinic at the clinic, and for video by transfer only', () => {
     expect(paymentOptionsFor({ kind: 'clinic', requiresPrepay: false })).toEqual(['pay_at_visit']);
-    expect(paymentOptionsFor({ kind: 'video', requiresPrepay: false })).toEqual(['pay_at_visit', 'transfer']);
+    expect(paymentOptionsFor({ kind: 'video', requiresPrepay: false })).toEqual(['transfer']);
     expect(paymentOptionsFor({ kind: 'video', requiresPrepay: true })).toEqual(['transfer']);
     expect(defaultPaymentFor({ kind: 'video', requiresPrepay: true })).toBe('transfer');
   });
@@ -258,5 +269,54 @@ describe('the Health home', () => {
     expect(concernIcon(c('flame-outline', 'dermatologist'), list)).toBe('flame-outline');
     expect(concernIcon(c(null, 'dermatologist'), list)).toBe('dermatologist-outline');
     expect(concernIcon(c(null, 'unknown'), list)).toBe('medkit-outline');
+  });
+});
+
+describe('the real API’s vocabulary (MetroMatrix-API docs/API_HEALTH.md)', () => {
+  it('maps Monday-first app days to Sunday-first weekdays and back', () => {
+    expect(appDayFromWeekday(0)).toBe(7);
+    expect(appDayFromWeekday(1)).toBe(1);
+    expect(appDayFromWeekday(6)).toBe(6);
+    expect(appDayFromWeekday(7)).toBeNull();
+    for (const d of [1, 2, 3, 4, 5, 6, 7]) expect(appDayFromWeekday(weekdayFromAppDay(d))).toBe(d);
+  });
+
+  it('sends the week as schedule rows, a range to midnight as 24:00', () => {
+    const week = emptyWeek();
+    week[0].ranges = [{ from: '09:00', to: '13:00' }];
+    week[6].ranges = [{ from: '20:00', to: '23:59' }];
+    expect(scheduleBody(week)).toEqual([
+      { weekday: 1, start: '09:00', end: '13:00' },
+      { weekday: 0, start: '20:00', end: '24:00' },
+    ]);
+  });
+
+  it('turns the server’s missing keys into the checklist, and publishes only at 100%', () => {
+    const c = completenessFrom(['photo', 'weekly_schedule'], 80, false);
+    const done = Object.fromEntries(c.items.map(i => [i.key, i.done]));
+    expect(done).toMatchObject({ photo: false, about: true, location: true, hours: false, preview: false });
+    expect(c.canPublish).toBe(false);
+    expect(completenessFrom([], 100, false).canPublish).toBe(true);
+    expect(completenessFrom([], 100, true).canPublish).toBe(false);
+  });
+
+  it('sends review tags as codes and shows codes as words', () => {
+    expect(REVIEW_TAGS).toHaveLength(7);
+    expect(reviewTagCodes(['On time', 'Friendly staff', 'Not a tag'])).toEqual(['on_time', 'friendly']);
+    expect(reviewTagLabel('clean_clinic')).toBe('Clean clinic');
+    expect(reviewTagLabel('some_new_tag')).toBe('Some new tag');
+    for (const label of REVIEW_TAGS) expect(reviewTagLabel(reviewTagCodes([label])[0])).toBe(label);
+  });
+
+  it('uses the API’s filter names and sort keys', () => {
+    const p = toParams({ ...baseQuery('Lahore'), availableToday: true, minYears: 10, sort: 'fee_low' });
+    expect(p).toMatchObject({ city: 'Lahore', availableToday: 'true', minExperience: 10, sort: 'fee_asc' });
+    expect(toParams(baseQuery('Lahore')).availableToday).toBeUndefined();
+    expect(toParams({ ...baseQuery('Lahore'), sort: 'most_reviewed' }).sort).toBe('reviews');
+  });
+
+  it('keeps a cancel reason as one line of text', () => {
+    expect(cancelReasonText('schedule_clash', ' travelling ')).toBe('Schedule clash: travelling');
+    expect(cancelReasonText('feeling_better', null)).toBe('Feeling better');
   });
 });

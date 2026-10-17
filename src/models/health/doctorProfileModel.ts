@@ -1,6 +1,6 @@
 // MetroMatrix — The doctor's public profile and booking rules.
 
-import type { BookingRules, DoctorOwnProfile, ExperienceRow, Qualification } from '../../types/health';
+import type { BookingRules, Completeness, CompletenessKey, DoctorOwnProfile, ExperienceRow, Qualification } from '../../types/health';
 import type { ValidationErrors } from '../authModel';
 
 export const TITLES = ['Dr.', 'Prof. Dr.', 'Assoc. Prof. Dr.', 'Asst. Prof. Dr.'];
@@ -35,6 +35,7 @@ export const validateDoctorProfile = (p: DoctorOwnProfile, thisYear: number): Va
   });
   p.experience.forEach((e, i) => {
     if (!e.role.trim() || !e.place.trim()) errors[`experience.${i}.role`] = 'Enter the role and the place, or remove this row';
+    else if (e.from === null) errors[`experience.${i}.from`] = 'Enter the year you started';
     if (e.from !== null && e.to !== null && e.to < e.from) errors[`experience.${i}.to`] = 'The end year is before the start';
   });
   return errors;
@@ -60,3 +61,25 @@ export const ownProfilePatch = (p: DoctorOwnProfile): Partial<DoctorOwnProfile> 
   conditionSlugs: p.conditionSlugs,
   bookingRules: p.bookingRules,
 });
+
+/**
+ * The practice set-up checklist. The API names what's missing (its own
+ * keys); each step here covers some of them. "Preview" is ready once there
+ * is a location with hours to preview.
+ */
+const CHECKLIST: { key: CompletenessKey; label: string; covers: string[] }[] = [
+  { key: 'photo', label: 'Profile photo', covers: ['photo'] },
+  { key: 'about', label: 'About you', covers: ['about', 'name', 'gender', 'primary_specialty', 'practicing_since', 'languages'] },
+  { key: 'qualifications', label: 'Qualifications', covers: ['qualifications'] },
+  { key: 'services', label: 'Services and conditions', covers: ['services', 'conditions'] },
+  { key: 'location', label: 'At least one location', covers: ['active_location'] },
+  { key: 'hours', label: 'Weekly hours', covers: ['weekly_schedule'] },
+  { key: 'preview', label: 'Preview what patients see', covers: ['active_location', 'weekly_schedule'] },
+];
+
+/** `{ percent, missing, isListed }` from the API → the app's checklist (the server's percent decides publishing). */
+export const completenessFrom = (missing: string[], percent: number, isListed: boolean): Completeness => {
+  const items = CHECKLIST.map(c => ({ key: c.key, label: c.label, done: !c.covers.some(k => missing.includes(k)) }));
+  const pct = Math.min(100, Math.max(0, Math.round(percent)));
+  return { items, percent: pct, isListed, canPublish: pct === 100 && !isListed };
+};

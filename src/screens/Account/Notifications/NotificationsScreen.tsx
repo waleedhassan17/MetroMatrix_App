@@ -38,6 +38,7 @@ const ICON: Record<NotificationType, IonName> = {
   appointment_new: 'calendar-number-outline',
   appointment_payment: 'card-outline',
   prescription_ready: 'document-text-outline',
+  review_new: 'star-outline',
 };
 
 const makeStyles = ({ space, size, radius }: Theme) =>

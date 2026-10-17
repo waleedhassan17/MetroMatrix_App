@@ -506,12 +506,13 @@ export type NotificationType =
   | 'payment_proof'
   | 'return_requested'
   | 'low_stock'
-  // Healthcare (TODO(API_HEALTH))
+  // Healthcare (the API's `health.*` types, mapped in notificationSerializer)
   | 'appointment_update'
   | 'appointment_reminder'
   | 'appointment_new'
   | 'appointment_payment'
-  | 'prescription_ready';
+  | 'prescription_ready'
+  | 'review_new';
 
 export interface AppNotification {
   id: string;

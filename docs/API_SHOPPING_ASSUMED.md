@@ -26,7 +26,7 @@ These are the NestJS backend's own conventions (`src/common/*` in the API repo).
 | JSON | camelCase fields; snake_case enum values; ISO-8601 UTC times named `…At`; flat `lat`/`lng`; phones `+92…`. |
 | Money | **Integer rupees** everywhere. Never floats, never paisa. The app formats only through `formatPKR`. |
 | Idempotency | `POST /shop/checkout` takes `Idempotency-Key: <uuid>`. A repeat with the same key (per user) replays the first response, status included. A repeat while the first request is still running gets `409 IDEMPOTENCY_IN_PROGRESS`. |
-| Uploads | `POST /media/sign` with `purpose` set to `product_image`, `store_logo`, `store_cover`, `review_photo`, `return_photo`, `payment_proof` or (staff) `banner_image`. The app sends only the resulting `{ url, publicId }`. |
+| Uploads | `POST /media/sign-upload` (the real path, since `health/sync-1`) with `purpose` set to `product_image`, `store_branding` (logo and cover), `review_photo`, `return_photo`, `payment_proof` or (staff) `banner`. `mediaNetwork` maps the app's purposes to these. The app sends only the resulting `{ url, publicId }`. |
 | Atomic writes | A request that fails changes nothing. |
 
 The response types are in `src/types/shopping.ts`. The table cells below name those types; the serializers in `src/serializers/shopping/` map the wire shapes onto them.

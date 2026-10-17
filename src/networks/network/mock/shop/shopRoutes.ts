@@ -763,7 +763,11 @@ export function registerShopRoutes(kit: ShopKit) {
   // ══ Notifications (core) ════════════════════════════
   route('GET', '/notifications', ctx => {
     const user = requireUser(ctx);
-    const rows = ctx.db.shop.notifications.filter(n => n.userId === user.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const rows = ctx.db.shop.notifications
+      .filter(n => n.userId === user.id && (!bool(ctx.query.unread) || !n.isRead))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      // The API's row: `readAt` rather than a flag (API_SHOPPING.md §notifications).
+      .map(({ userId: _owner, isRead, ...n }) => ({ ...n, readAt: isRead ? n.createdAt : null }));
     return paginate(rows, ctx.query);
   });
   route('GET', '/notifications/unread-count', ctx => {

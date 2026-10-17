@@ -9,7 +9,9 @@
 // XMLHttpRequest, not axios or fetch: it is the only API that reports upload
 // progress on native AND web. Native posts a { uri, name, type } part; web
 // posts the real Blob (RN's object trick serializes to "[object Object]").
-// TODO(API_AUTH): /media/sign shape per docs/API_CONTRACT_ASSUMED.md.
+// MetroMatrix-API: POST /media/sign-upload { purpose } signs one upload into
+// metromatrix/{env}/{userId}/{purpose}; the signed allowed_formats (and
+// type, for private PHI uploads) go back to Cloudinary unchanged.
 
 import { Platform } from 'react-native';
 import { USE_MOCK_API } from '../../config/env';
@@ -20,7 +22,7 @@ import type { LocalFile, SignedUpload, UploadedFile } from '../../types/auth';
 export type UploadPurpose =
   | 'avatar'
   | 'business_document'
-  // Shopping (TODO(API_SHOPPING): the API's UPLOAD_PURPOSES must list these)
+  // Shopping
   | 'product_image'
   | 'store_logo'
   | 'store_cover'
@@ -28,14 +30,30 @@ export type UploadPurpose =
   | 'return_photo'
   | 'payment_proof'
   | 'banner_image'
-  // Healthcare (TODO(API_HEALTH): the API's UPLOAD_PURPOSES must list these)
+  // Healthcare
   | 'health_record'
   | 'doctor_photo'
   | 'consult_attachment';
 
+/** The app's purposes → the API's (one store branding folder; doctors' note files are `medical_note`). */
+const API_PURPOSE: Record<UploadPurpose, string> = {
+  avatar: 'avatar',
+  business_document: 'business_document',
+  product_image: 'product_image',
+  store_logo: 'store_branding',
+  store_cover: 'store_branding',
+  review_photo: 'review_photo',
+  return_photo: 'return_photo',
+  payment_proof: 'payment_proof',
+  banner_image: 'banner',
+  health_record: 'health_record',
+  doctor_photo: 'doctor_photo',
+  consult_attachment: 'medical_note',
+};
+
 export const signUpload = async (purpose: UploadPurpose): Promise<SignedUpload> => {
   try {
-    const response = await api.post('/media/sign', { purpose });
+    const response = await api.post('/media/sign-upload', { purpose: API_PURPOSE[purpose] });
     const raw = unwrap(response);
     if (!isObject(raw) || !raw.signature || !raw.cloudName) {
       throw new AuthError('Upload could not be prepared. Please try again.', 'BAD_RESPONSE');
@@ -48,6 +66,8 @@ export const signUpload = async (purpose: UploadPurpose): Promise<SignedUpload> 
       signature: str(raw.signature),
       folder: str(raw.folder),
       uploadUrl: str(raw.uploadUrl) || `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
+      allowedFormats: str(raw.allowedFormats) || null,
+      type: raw.type === 'authenticated' ? 'authenticated' : null,
     };
   } catch (e) {
     throw toAuthError(e);
@@ -90,6 +110,9 @@ export const uploadToCloudinary = async (
   form.append('timestamp', String(signed.timestamp));
   form.append('signature', signed.signature);
   if (signed.folder) form.append('folder', signed.folder);
+  // Signed with the rest: Cloudinary refuses the upload if these are missing.
+  if (signed.allowedFormats) form.append('allowed_formats', signed.allowedFormats);
+  if (signed.type) form.append('type', signed.type);
 
   return new Promise<UploadedFile>((resolve, reject) => {
     const xhr = new XMLHttpRequest();

@@ -90,10 +90,10 @@ export interface Business {
   updatedAt: string;
   /**
    * Doctors only: patients can find and book them (Practice setup published).
-   * null for every other service. TODO(API_HEALTH)
+   * null for every other service (API_AUTH.md, A1).
    */
   isListed: boolean | null;
-  /** Doctors only: staff have checked the PMDC number. TODO(API_HEALTH) */
+  /** Doctors only: staff have checked the PMDC number (API_AUTH.md, A1). */
   pmdcVerified: boolean | null;
 }
 
@@ -157,6 +157,10 @@ export interface SignedUpload {
   signature: string;
   folder: string;
   uploadUrl: string;
+  /** Signed too: sent back unchanged, or Cloudinary refuses the upload. */
+  allowedFormats: string | null;
+  /** `authenticated` for private (PHI) uploads. */
+  type: 'authenticated' | null;
 }
 
 export interface UploadedFile {

@@ -11,16 +11,30 @@ export const DIMENSIONS: { key: ReviewDimension; label: string; clinicOnly: bool
 
 export const dimensionsFor = (kind: ConsultKind) => DIMENSIONS.filter(d => !d.clinicOnly || kind === 'clinic');
 
-export const REVIEW_TAGS = [
-  'No waiting time',
-  'Great experience',
-  'Explained clearly',
-  'Listened carefully',
-  'Friendly staff',
-  'On time',
-  'Clean clinic',
-  'Good follow-up',
-];
+/** The API's seven review tags, by label (the form shows labels; the API takes the codes). */
+export const REVIEW_TAG_CODES = {
+  'No waiting time': 'no_wait',
+  'Great experience': 'great_experience',
+  'Explained clearly': 'explained_well',
+  'Friendly staff': 'friendly',
+  'On time': 'on_time',
+  'Clean clinic': 'clean_clinic',
+  'Good value': 'value_for_money',
+} as const;
+
+export type ReviewTagCode = (typeof REVIEW_TAG_CODES)[keyof typeof REVIEW_TAG_CODES];
+
+export const REVIEW_TAGS = Object.keys(REVIEW_TAG_CODES);
+
+const TAG_LABEL = Object.fromEntries(Object.entries(REVIEW_TAG_CODES).map(([label, code]) => [code, label])) as Record<ReviewTagCode, string>;
+
+/** "explained_well" → "Explained clearly" (an unknown code reads as words). */
+export const reviewTagLabel = (code: string): string =>
+  TAG_LABEL[code as ReviewTagCode] ?? code.replace(/_/g, ' ').replace(/^./, c => c.toUpperCase());
+
+/** The labels a patient chose, as the API's codes. */
+export const reviewTagCodes = (labels: string[]): ReviewTagCode[] =>
+  labels.map(l => REVIEW_TAG_CODES[l as keyof typeof REVIEW_TAG_CODES]).filter((c): c is ReviewTagCode => !!c);
 
 export const RATING_WORDS = ['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
 export const MAX_REVIEW_TEXT = 1000;
