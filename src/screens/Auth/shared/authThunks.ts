@@ -56,6 +56,20 @@ export const signInAndOpen = async (
   return 'session';
 };
 
+/**
+ * Riders sign in on the partner portal with the username their vendor issued
+ * (`identifier`). A partner who types their email here simply gets their own
+ * app (same portal); staff are pointed to the User sign-in.
+ */
+export const riderSignInAndOpen = async (dispatch: Dispatch, username: string, password: string): Promise<'session'> => {
+  const outcome = await authSignin({ username, password, portal: 'partner' });
+  if (outcome.kind !== 'session') {
+    throw new AuthError('This is a staff account. Sign in as a User.', 'WRONG_PORTAL', 403, { accountType: 'admin', portal: 'partner' });
+  }
+  open(dispatch, outcome.result);
+  return 'session';
+};
+
 export const signUpAndOpen = async (dispatch: Dispatch, payload: SignupPayload): Promise<void> => {
   open(dispatch, await authSignup(payload));
 };

@@ -33,7 +33,11 @@ export type UploadPurpose =
   // Healthcare
   | 'health_record'
   | 'doctor_photo'
-  | 'consult_attachment';
+  | 'consult_attachment'
+  // Food (TODO(API_FOOD): food_branding for a brand's logo and cover, menu_item for dish photos)
+  | 'food_logo'
+  | 'food_cover'
+  | 'menu_item';
 
 /** The app's purposes → the API's (one store branding folder; doctors' note files are `medical_note`). */
 const API_PURPOSE: Record<UploadPurpose, string> = {
@@ -49,6 +53,9 @@ const API_PURPOSE: Record<UploadPurpose, string> = {
   health_record: 'health_record',
   doctor_photo: 'doctor_photo',
   consult_attachment: 'medical_note',
+  food_logo: 'food_branding',
+  food_cover: 'food_branding',
+  menu_item: 'menu_item',
 };
 
 export const signUpload = async (purpose: UploadPurpose): Promise<SignedUpload> => {

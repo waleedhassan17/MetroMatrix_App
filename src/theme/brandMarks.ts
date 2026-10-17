@@ -9,5 +9,5 @@
 export const GOOGLE_ICON = '#DB4437';
 
 /** Google's light button: white, grey outline, near-black label. */
-export const GOOGLE_BUTTON = { surface: '#FFFFFF', border: '#E7E5E4', text: '#1C1917' } as const;
+export const GOOGLE_BUTTON = { surface: '#FFFFFF', border: '#E2E8F0', text: '#0F172A' } as const;
 

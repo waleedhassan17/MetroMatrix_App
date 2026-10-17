@@ -19,6 +19,7 @@ export type RootStackParamList = {
   SignIn: { email?: string } | undefined;
   SignUp: undefined;
   ProviderSignIn: { email?: string } | undefined;
+  RiderSignIn: undefined;
   ProviderSignUp: undefined;
   ForgotPassword: { email?: string; userType?: AuthUserType } | undefined;
   /** Deep link metromatrix://reset-password?email=… */
@@ -40,7 +41,7 @@ export type RootStackParamList = {
 };
 
 /** Which sign-in a password reset returns to (the FYP's `userType`). */
-export type AuthUserType = 'user' | 'provider';
+export type AuthUserType = 'user' | 'provider' | 'rider';
 
 /**
  * The customer's Shopping screens that any customer stack can push, so a
@@ -237,6 +238,46 @@ export type AdminShopStackParamList = {
   ShopReports: undefined;
   OrderLookup: { groupCode?: string } | undefined;
   ShopStores: undefined;
+};
+
+/** The Food vendor's tabs: Orders (Today first for home kitchens) · Menu · Riders · More. */
+export type FoodVendorTabParamList = {
+  TodayTab: undefined;
+  OrdersTab: undefined;
+  MenuTab: undefined;
+  RidersTab: undefined;
+  MoreTab: undefined;
+};
+
+/** The Food vendor's app: the tabs (or Setup, until live), with every tool pushed over them. */
+export type FoodVendorStackParamList = {
+  VendorTabs: NavigatorScreenParams<FoodVendorTabParamList> | undefined;
+  VendorSetup: undefined;
+  VendorBrand: undefined;
+  VendorSettings: undefined;
+  VendorHours: undefined;
+  VendorZones: undefined;
+  VendorClosures: undefined;
+  VendorPlan: undefined;
+  VendorRiderDetail: { id: string };
+  PaymentAccounts: undefined;
+  Profile: undefined;
+  ChangePassword: undefined;
+  Notifications: undefined;
+};
+
+/** The rider's tabs. */
+export type RiderTabParamList = {
+  DeliveriesTab: undefined;
+  CashTab: undefined;
+  RiderProfileTab: undefined;
+};
+
+/** The rider's app: the tabs, with the few tools pushed over them. */
+export type RiderStackParamList = {
+  RiderTabs: NavigatorScreenParams<RiderTabParamList> | undefined;
+  ChangePassword: undefined;
+  Notifications: undefined;
 };
 
 /** The doctor's four tabs. */

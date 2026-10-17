@@ -30,6 +30,7 @@ import { providerSelectionSlice } from '../screens/ProviderSelection/providerSel
 import { signInSlice } from '../screens/Auth/SignIn/signInSlice';
 import { signUpSlice } from '../screens/Auth/SignUp/signUpSlice';
 import { providerSignInSlice } from '../screens/Auth/ProviderSignIn/providerSignInSlice';
+import { riderSignInSlice } from '../screens/Auth/RiderSignIn/riderSignInSlice';
 import { providerSignUpSlice } from '../screens/Auth/ProviderSignUp/providerSignUpSlice';
 import { forgotPasswordSlice } from '../screens/Auth/ForgotPassword/forgotPasswordSlice';
 import { resetPasswordOtpSlice } from '../screens/Auth/ResetPasswordOTP/resetPasswordOtpSlice';
@@ -128,6 +129,18 @@ import { bannerFormSlice } from '../screens/Admin/Shopping/BannerForm/bannerForm
 import { shopReportsSlice } from '../screens/Admin/Shopping/ShopReports/shopReportsSlice';
 import { orderLookupSlice } from '../screens/Admin/Shopping/OrderLookup/orderLookupSlice';
 import { shopStoresSlice } from '../screens/Admin/Shopping/ShopStores/shopStoresSlice';
+// Food (vendor)
+import { vendorSetupSlice } from '../screens/Food/Vendor/VendorSetup/vendorSetupSlice';
+import { vendorBrandSlice } from '../screens/Food/Vendor/VendorBrand/vendorBrandSlice';
+import { vendorSettingsSlice } from '../screens/Food/Vendor/VendorSettings/vendorSettingsSlice';
+import { vendorHoursSlice } from '../screens/Food/Vendor/VendorHours/vendorHoursSlice';
+import { vendorZonesSlice } from '../screens/Food/Vendor/VendorZones/vendorZonesSlice';
+import { vendorClosuresSlice } from '../screens/Food/Vendor/VendorClosures/vendorClosuresSlice';
+import { vendorPlanSlice } from '../screens/Food/Vendor/VendorPlan/vendorPlanSlice';
+import { vendorRidersSlice } from '../screens/Food/Vendor/VendorRiders/vendorRidersSlice';
+import { riderDetailSlice } from '../screens/Food/Vendor/RiderDetail/riderDetailSlice';
+// Food (rider)
+import { riderHomeSlice } from '../screens/Food/Rider/RiderDeliveries/riderHomeSlice';
 
 // `auth` is persisted through its OWN persistReducer so that exactly one
 // field reaches disk. The session (user, business, tokens) is never
@@ -150,6 +163,7 @@ const rootReducer = combineReducers({
   signIn: signInSlice.reducer,
   signUp: signUpSlice.reducer,
   providerSignIn: providerSignInSlice.reducer,
+  riderSignIn: riderSignInSlice.reducer,
   providerSignUp: providerSignUpSlice.reducer,
   forgotPassword: forgotPasswordSlice.reducer,
   resetPasswordOtp: resetPasswordOtpSlice.reducer,
@@ -248,6 +262,18 @@ const rootReducer = combineReducers({
   shopReports: shopReportsSlice.reducer,
   orderLookup: orderLookupSlice.reducer,
   shopStores: shopStoresSlice.reducer,
+  // Food (vendor)
+  vendorSetup: vendorSetupSlice.reducer,
+  vendorBrand: vendorBrandSlice.reducer,
+  vendorSettings: vendorSettingsSlice.reducer,
+  vendorHours: vendorHoursSlice.reducer,
+  vendorZones: vendorZonesSlice.reducer,
+  vendorClosures: vendorClosuresSlice.reducer,
+  vendorPlan: vendorPlanSlice.reducer,
+  vendorRiders: vendorRidersSlice.reducer,
+  riderDetail: riderDetailSlice.reducer,
+  // Food (rider)
+  riderHome: riderHomeSlice.reducer,
 });
 
 type RootReducerState = ReturnType<typeof rootReducer>;

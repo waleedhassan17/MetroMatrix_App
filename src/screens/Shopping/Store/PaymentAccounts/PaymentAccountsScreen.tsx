@@ -37,19 +37,27 @@ const makeStyles = ({ space }: Theme) =>
 /** "PK36SCBL0000001123456702" → "PK36 •••• 6702" in lists. */
 const masked = (n: string) => (n.length > 8 ? `${n.slice(0, 4)} •••• ${n.slice(-4)}` : n);
 
+/** Each partner app's tabs (the screen is pushed over them from More). */
+const TABS_OF = { shopping: 'StoreTabs', healthcare: 'DoctorTabs', food: 'VendorTabs' } as const;
+const EMPTY_BODY = {
+  shopping: 'Add one to take transfers. Without one, customers can only pay cash on delivery.',
+  healthcare: 'Add one to take transfers before video consultations. Without one, patients pay at the visit.',
+  food: 'Add one to take transfers. Without one, customers pay cash on delivery or when they collect.',
+} as const;
+
 const PaymentAccountsScreen: React.FC<Props> = props => {
-  const doctor = useAppSelector(st => st.auth.business?.serviceType === 'healthcare');
+  const service = useAppSelector(st => st.auth.business?.serviceType) ?? 'shopping';
   return (
-    <ServiceScope service={doctor ? 'healthcare' : 'shopping'}>
+    <ServiceScope service={service}>
       <PaymentAccountsContent {...props} />
     </ServiceScope>
   );
 };
 
 const PaymentAccountsContent: React.FC<Props> = () => {
-  const doctor = useAppSelector(st => st.auth.business?.serviceType === 'healthcare');
-  const { back } = useBack(doctor ? { name: 'DoctorTabs', params: { screen: 'MoreTab' } } : { name: 'StoreTabs', params: { screen: 'MoreTab' } });
-  const who = doctor ? 'Patients' : 'Customers';
+  const service = useAppSelector(st => st.auth.business?.serviceType);
+  const { back } = useBack({ name: TABS_OF[service ?? 'shopping'], params: { screen: 'MoreTab' } });
+  const who = service === 'healthcare' ? 'Patients' : 'Customers';
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectPaymentAccounts);
@@ -83,7 +91,7 @@ const PaymentAccountsContent: React.FC<Props> = () => {
       {s.status === 'loading' && !s.accounts.length ? (
         <SkeletonLines lines={4} />
       ) : !s.accounts.length ? (
-        <EmptyState icon="credit-card" title="No accounts yet" body={doctor ? 'Add one to take transfers before video consultations. Without one, patients pay at the visit.' : 'Add one to take transfers. Without one, customers can only pay cash on delivery.'} />
+        <EmptyState icon="credit-card" title="No accounts yet" body={EMPTY_BODY[service ?? 'shopping']} />
       ) : (
         s.accounts.map(a => (
           <Card key={a.id}>

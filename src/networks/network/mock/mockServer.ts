@@ -25,6 +25,8 @@ import { MOCK_CUISINES, MOCK_KITCHENS, MOCK_PROMOS } from './mockFood';
 import { ShopError } from './shop/shopLogic';
 import { registerShopRoutes } from './shop/shopRoutes';
 import { registerHealthRoutes } from './health/healthRoutes';
+import { registerFoodRoutes } from './food/foodRoutes';
+import { foodSessionOf } from './food/foodLogic';
 
 // ─── Plumbing ────────────────────────────────────────
 // One error type for every route; the shop routes throw the same class.
@@ -107,11 +109,14 @@ const issueSession = (db: MockDb, user: MockUser) => {
   return { accessToken, refreshToken };
 };
 
+// A food vendor's session also says which brand it is and whether it is live (`business.food`).
 const sessionPayload = (db: MockDb, user: MockUser, now: number) => ({
   user: publicUser(user),
   business: user.role === 'partner' ? (() => {
     const b = settleApproval(businessOf(db, user.id), now);
-    return b ? publicBusiness(b) : null;
+    if (!b) return null;
+    const food = foodSessionOf(db, b, now);
+    return food ? { ...publicBusiness(b), food } : publicBusiness(b);
   })() : null,
 });
 
@@ -216,22 +221,28 @@ route('POST', '/auth/signup', ({ db, body, now }) => {
 });
 
 route('POST', '/auth/signin', ({ db, body, now }) => {
-  const user = findUserByEmail(db, body.email);
+  // `identifier`: an email, or a rider's username (no "@"); `email` as before.
+  const identifier = String(body.identifier ?? body.email ?? '').trim().toLowerCase();
+  const byUsername = !!identifier && !identifier.includes('@');
+  const user = byUsername ? db.users.find(u => u.username === identifier) : findUserByEmail(db, identifier);
   if (!user || !user.password || user.password !== body.password) {
-    throw new MockError(401, 'INVALID_CREDENTIALS', 'Incorrect email or password.');
+    throw new MockError(401, 'INVALID_CREDENTIALS', byUsername ? 'Incorrect username or password.' : 'Incorrect email or password.');
   }
   // As the API does: the password first, then the portal. A wrong door is
   // 403 WRONG_PORTAL naming the account type and the portal that was tried
   // (the app sends staff on to the admin portal itself).
   const staff = user.role === 'admin' || user.role === 'super_admin';
-  const door = staff ? 'admin' : user.role === 'partner' ? 'partner' : 'customer';
+  // Riders use the partner side, with their username.
+  const door = staff ? 'admin' : user.role === 'partner' || user.role === 'rider' ? 'partner' : 'customer';
   if (body.portal !== door) {
     const message =
       door === 'admin'
         ? 'This is an admin account. Sign in on the MetroMatrix admin console.'
-        : door === 'partner'
-          ? 'This is a service provider account. Sign in as a Service Provider.'
-          : 'This is a customer account. Sign in as a User.';
+        : user.role === 'rider'
+          ? 'This is a rider account. Riders sign in on the partner side of the MetroMatrix app with their username.'
+          : door === 'partner'
+            ? 'This is a service provider account. Sign in as a Service Provider.'
+            : 'This is a customer account. Sign in as a User.';
     throw new MockError(403, 'WRONG_PORTAL', message, { accountType: user.role, portal: body.portal ?? null });
   }
   if (staff) {
@@ -485,6 +496,8 @@ const UPLOAD_PURPOSES = [
   'doctor_photo',
   'health_record',
   'medical_note',
+  'food_branding',
+  'menu_item',
 ];
 const PRIVATE_PURPOSES = ['health_record', 'medical_note'];
 
@@ -741,6 +754,20 @@ registerHealthRoutes({
   requirePartnerBusiness: ctx => requirePartnerBusiness(ctx),
   requireAdmin,
   publicBusiness,
+});
+
+// ── Food Court (vendors, riders, admin) — see ./food/ ──
+registerFoodRoutes({
+  route,
+  requireUser,
+  optionalUser: ctx => {
+    const session = ctx.token ? ctx.db.access[ctx.token] : undefined;
+    if (!session || session.expiresAt < ctx.now) return null;
+    return ctx.db.users.find(u => u.id === session.userId) ?? null;
+  },
+  requirePartnerBusiness: ctx => requirePartnerBusiness(ctx),
+  requireAdmin,
+  revokeSessions,
 });
 
 // ─── The adapter ─────────────────────────────────────

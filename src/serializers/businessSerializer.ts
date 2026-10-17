@@ -21,6 +21,7 @@ import type {
 } from '../types/auth';
 import { REQUIRED_DOCUMENTS, SUBTYPE_SERVICE, missingDocuments } from '../models/businessModel';
 import { arr, bool, enumList, isObject, num, oneOf, str, strOrNull } from './serializerUtils';
+import { foodVendorSessionSerializer } from './food/vendorSerializer';
 
 export const SERVICE_TYPES: readonly ServiceType[] = ['shopping', 'healthcare', 'food'];
 export const SUB_TYPES: readonly SubType[] = ['store', 'doctor', 'restaurant', 'home_kitchen', 'cloud_kitchen'];
@@ -111,6 +112,7 @@ export const businessSerializer = (raw: unknown): Business | null => {
     // Doctors only: listed for patients, and the PMDC check (MetroMatrix-API docs/API_AUTH.md, A1).
     isListed: subType === 'doctor' ? bool(raw.isListed) : null,
     pmdcVerified: subType === 'doctor' ? bool(raw.pmdcVerified) : null,
+    food: foodVendorSessionSerializer(raw.food),
   };
 };
 

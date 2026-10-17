@@ -11,6 +11,12 @@ import {
   listDoctorPaymentAccounts,
   updateDoctorPaymentAccount,
 } from '@networks/health/doctor/practiceNetwork';
+import {
+  createVendorPaymentAccount,
+  deleteVendorPaymentAccount,
+  listVendorPaymentAccounts,
+  updateVendorPaymentAccount,
+} from '@networks/food/vendor/settingsNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import { normaliseAccountNumber } from '@models/shopping/storeModel';
 import type { PaymentAccount, PaymentAccountInput } from '@/types';
@@ -31,7 +37,11 @@ type PartnerState = { auth: { business: { serviceType: string } | null } };
 
 const STORE = { list: listPaymentAccounts, create: createPaymentAccount, update: updatePaymentAccount, remove: deletePaymentAccount };
 const DOCTOR = { list: listDoctorPaymentAccounts, create: createDoctorPaymentAccount, update: updateDoctorPaymentAccount, remove: deleteDoctorPaymentAccount };
-const apiFor = (getState: () => unknown) => ((getState() as PartnerState).auth.business?.serviceType === 'healthcare' ? DOCTOR : STORE);
+const FOOD = { list: listVendorPaymentAccounts, create: createVendorPaymentAccount, update: updateVendorPaymentAccount, remove: deleteVendorPaymentAccount };
+const apiFor = (getState: () => unknown) => {
+  const service = (getState() as PartnerState).auth.business?.serviceType;
+  return service === 'healthcare' ? DOCTOR : service === 'food' ? FOOD : STORE;
+};
 
 const blank = (): PaymentAccountInput => ({ kind: 'raast', title: '', number: '', bankName: null, isActive: true });
 

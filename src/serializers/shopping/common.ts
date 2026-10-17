@@ -39,7 +39,7 @@ export function paged<T>(raw: unknown, item: (r: unknown) => T | null): Paged<T>
   };
 }
 
-const DEFAULT_BRAND = '#1C1917';
+const DEFAULT_BRAND = '#0F172A';
 const DEFAULT_ON_BRAND = '#FFFFFF';
 
 export const storeRefSerializer = (raw: unknown): StoreRef | null => {

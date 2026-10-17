@@ -5,6 +5,8 @@
 // docs/API_CONTRACT_ASSUMED.md until MetroMatrix-API docs/API_AUTH.md is
 // available.
 
+import type { FoodVendorSession } from './food';
+
 export type UserRole = 'customer' | 'partner' | 'rider' | 'admin' | 'super_admin';
 export type Portal = 'customer' | 'partner' | 'admin';
 export type ServiceType = 'shopping' | 'healthcare' | 'food';
@@ -95,6 +97,8 @@ export interface Business {
   isListed: boolean | null;
   /** Doctors only: staff have checked the PMDC number (API_AUTH.md, A1). */
   pmdcVerified: boolean | null;
+  /** Food vendors only: their brand and whether they are live (session `business.food`). */
+  food: FoodVendorSession | null;
 }
 
 export interface BusinessOwner {

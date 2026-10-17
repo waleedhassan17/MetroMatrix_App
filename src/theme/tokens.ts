@@ -2,10 +2,10 @@
 // MetroMatrix — Design tokens (the FYP app's look, light only)
 // ═══════════════════════════════════════════════════════
 // The base layer: neutrals, semantic colours, space, shape, depth, motion.
-// Values come from the MetroMatrix FYP app (constants/theme.ts there): a warm
-// stone neutral ramp, emerald brand, platform system font. Two deliberate
-// changes from the FYP:
-//   • the page canvas is pure white (#FFFFFF), not the FYP's warm paper;
+// Values come from the MetroMatrix FYP app: its cool slate neutrals (no warm
+// beige or cream anywhere: the owner asked for clean white screens), emerald
+// brand, platform system font. Two deliberate changes from the FYP:
+//   • the page canvas is pure white (#FFFFFF), not the FYP's paper;
 //   • the app is light-only, like the FYP's app.json (userInterfaceStyle).
 //
 // Every value a component paints is written down HERE (or in ./services.ts,
@@ -82,14 +82,14 @@ export interface Palette {
 const light: Palette = {
   canvas: '#FFFFFF',
   surface: '#FFFFFF',
-  surfaceSunk: '#F5F5F4',
-  ink: '#1C1917',
-  inkMuted: '#57534E',
-  inkFaint: '#A8A29E',
-  line: '#E7E5E4',
-  lineSoft: '#F5F5F4',
-  lineStrong: '#78716C',
-  disabled: '#D6D3D1',
+  surfaceSunk: '#F1F5F9',
+  ink: '#0F172A',
+  inkMuted: '#475569',
+  inkFaint: '#94A3B8',
+  line: '#E2E8F0',
+  lineSoft: '#F1F5F9',
+  lineStrong: '#64748B',
+  disabled: '#CBD5E1',
   brand: '#047857',
   onBrand: '#FFFFFF',
   danger: '#B91C1C',
@@ -99,22 +99,22 @@ const light: Palette = {
   success: '#047857',
   successSoft: '#ECFDF5',
   warning: '#B45309',
-  warningSoft: '#FEF6EC',
+  warningSoft: '#FFFBEB',
   info: '#1D4ED8',
   infoSoft: '#EFF6FF',
   star: '#D97706',
-  overlay: 'rgba(28, 25, 23, 0.45)',
-  scrim: 'rgba(28, 25, 23, 0.62)',
-  scrimClear: 'rgba(28, 25, 23, 0)',
-  scrimFaint: 'rgba(28, 25, 23, 0.12)',
-  scrimMid: 'rgba(28, 25, 23, 0.4)',
-  scrimDeep: 'rgba(28, 25, 23, 0.88)',
+  overlay: 'rgba(15, 23, 42, 0.45)',
+  scrim: 'rgba(15, 23, 42, 0.62)',
+  scrimClear: 'rgba(15, 23, 42, 0)',
+  scrimFaint: 'rgba(15, 23, 42, 0.12)',
+  scrimMid: 'rgba(15, 23, 42, 0.4)',
+  scrimDeep: 'rgba(15, 23, 42, 0.88)',
   onScrim: '#FFFFFF',
   onScrimSoft: 'rgba(255, 255, 255, 0.9)',
   onScrimTint: 'rgba(255, 255, 255, 0.18)',
   onScrimLine: 'rgba(255, 255, 255, 0.35)',
   glass: 'rgba(255, 255, 255, 0.94)',
-  viewer: '#0C0A09',
+  viewer: '#020617',
   roleProvider: '#6366F1',
   roleProviderSoft: '#F0F4FF',
 };
@@ -122,9 +122,9 @@ const light: Palette = {
 export const PALETTES: Record<ColorMode, Palette> = { light };
 
 /**
- * Digital Health's ground and ink — the FYP's healthcare screens: a pale
- * clinical blue page (#F8FBFF) under white cards, and cool slate text instead
- * of the warm stone ramp. Every other service keeps `light`.
+ * Digital Health's ground — the FYP's healthcare screens: a pale clinical
+ * blue page (#F8FBFF) under white cards, with slate text. Every other
+ * service keeps `light` (white).
  */
 export const HEALTH_PALETTE: Palette = {
   ...light,

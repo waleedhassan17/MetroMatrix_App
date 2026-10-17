@@ -18,7 +18,7 @@ describe('storePalette', () => {
 
   it("keeps the store's own text colour when it reads", () => {
     expect(storePalette('#7A1F3D', '#ffffff')).toMatchObject({ accent: '#7A1F3D', onAccent: '#FFFFFF' });
-    expect(storePalette('#F5D90A', '#FFFFFF').onAccent).toBe('#1C1917');
+    expect(storePalette('#F5D90A', '#FFFFFF').onAccent).toBe('#0F172A');
   });
 
   it('darkens a white brand until its buttons show on the page', () => {

@@ -41,7 +41,10 @@ export interface SignupPayload {
 }
 
 export interface SigninPayload {
-  email: string;
+  /** Everyone but riders: the email. */
+  email?: string;
+  /** Riders: the username their vendor gave them (sent as the API's `identifier`). */
+  username?: string;
   password: string;
   portal: Portal;
 }
@@ -54,16 +57,9 @@ export type SigninOutcome =
 const malformed = () =>
   new AuthError('The server sent an unexpected response. Please try again.', 'BAD_RESPONSE');
 
-/**
- * Store the pair and start a fresh session. Rider accounts are refused
- * BEFORE anything is stored (FinMatrix's WRONG_APP pattern): they have no app
- * here, and there is no session to clean up if it never began.
- */
+/** Store the pair and start a fresh session (riders included: their app is RiderNavigator). */
 const openSession = async (result: AuthResult | null): Promise<AuthResult> => {
   if (!result) throw malformed();
-  if (result.user.role === 'rider') {
-    throw new AuthError('Rider accounts sign in through the MetroMatrix Rider app.', 'WRONG_APP');
-  }
   await setTokens(result.tokens.accessToken, result.tokens.refreshToken);
   // A new session starts: its 401s are real and must be handled.
   clearIntentionalSignOut();
@@ -95,7 +91,10 @@ export const authSignup = async (payload: SignupPayload): Promise<AuthResult> =>
 export const authSignin = async (payload: SigninPayload): Promise<SigninOutcome> => {
   try {
     const response = await api.post(AUTH_PATHS.signin, {
-      email: payload.email.trim().toLowerCase(),
+      // Riders sign in with a username (`identifier`, MetroMatrix-API API_AUTH.md).
+      ...(payload.username !== undefined
+        ? { identifier: payload.username.trim().toLowerCase() }
+        : { email: (payload.email ?? '').trim().toLowerCase() }),
       password: payload.password,
       portal: payload.portal,
     });

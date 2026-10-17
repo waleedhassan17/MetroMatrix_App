@@ -23,6 +23,7 @@ export const ROUTES = {
 
   // ── Provider authentication ──
   PROVIDER_SIGN_IN: 'ProviderSignIn',
+  RIDER_SIGN_IN: 'RiderSignIn',
   PROVIDER_SIGN_UP: 'ProviderSignUp',
   PERSONAL_INFO: 'PersonalInfo',
   PROVIDER_APPROVAL_PENDING: 'ProviderApprovalPending',
@@ -177,6 +178,25 @@ export const ROUTES = {
   DOCTOR_VERIFICATION: 'DoctorVerification',
   REVIEW_MODERATION: 'ReviewModeration',
   APPOINTMENT_LOOKUP: 'AppointmentLookup',
+
+  // ── Food: the vendor's app (navigations-maps/FoodVendor.ts) ──
+  VENDOR_TABS: 'VendorTabs',
+  MENU_TAB: 'MenuTab',
+  RIDERS_TAB: 'RidersTab',
+  VENDOR_SETUP: 'VendorSetup',
+  VENDOR_BRAND: 'VendorBrand',
+  VENDOR_SETTINGS: 'VendorSettings',
+  VENDOR_HOURS: 'VendorHours',
+  VENDOR_ZONES: 'VendorZones',
+  VENDOR_CLOSURES: 'VendorClosures',
+  VENDOR_PLAN: 'VendorPlan',
+  VENDOR_RIDER_DETAIL: 'VendorRiderDetail',
+
+  // ── Food: the rider's app (navigations-maps/Rider.ts) ──
+  RIDER_TABS: 'RiderTabs',
+  DELIVERIES_TAB: 'DeliveriesTab',
+  CASH_TAB: 'CashTab',
+  RIDER_PROFILE_TAB: 'RiderProfileTab',
 
   // ── Dev only ──
   DESIGN_GALLERY: 'DesignGallery',

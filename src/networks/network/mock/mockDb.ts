@@ -15,13 +15,17 @@ import { SHOP_SEED_SHOPPER, SHOP_SEED_USERS, seedShop } from './shop/shopSeed';
 import type { MockShop } from './shop/shopTypes';
 import { HEALTH_SEED_USERS, migrateHealth, seedHealth } from './health/healthSeed';
 import type { MockHealth } from './health/healthTypes';
+import { FOOD_SEED_RIDERS, FOOD_SEED_USERS, seedFood } from './food/foodSeed';
+import type { MockFood } from './food/foodTypes';
 
 export interface MockUser {
   id: string;
   email: string;
   name: string;
   phone: string | null;
-  role: 'customer' | 'partner' | 'admin' | 'super_admin';
+  role: 'customer' | 'partner' | 'rider' | 'admin' | 'super_admin';
+  /** Riders sign in with the username their vendor issued (their email is a never-mailed placeholder). */
+  username?: string | null;
   avatarUrl: string | null;
   isEmailVerified: boolean;
   hasPassword: boolean;
@@ -95,6 +99,8 @@ export interface MockDb {
   shop: MockShop;
   /** Healthcare (doctors, availability, appointments …) — see ./health/. */
   health: MockHealth;
+  /** Food Court (vendors, riders …) — see ./food/. */
+  food: MockFood;
 }
 
 export const newId = (prefix: string) =>
@@ -225,6 +231,32 @@ export const seedDb = (): MockDb => ({
         providerSubType: 'doctor',
       }),
     ),
+    ...FOOD_SEED_USERS.map(u =>
+      baseUser({
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        phone: u.phone,
+        role: 'partner',
+        gender: 'male',
+        providerServiceType: 'food',
+        providerSubType: u.subType,
+      }),
+    ),
+    ...FOOD_SEED_RIDERS.map(r =>
+      baseUser({
+        id: r.userId,
+        email: `${r.username}@riders.metromatrix.invalid`,
+        username: r.username,
+        name: r.name,
+        phone: r.phone,
+        role: 'rider',
+        gender: 'male',
+        dateOfBirth: null,
+        streetAddress: null,
+        postalCode: null,
+      }),
+    ),
     baseUser({
       id: 'u_newadmin',
       email: 'newadmin@metromatrix.app',
@@ -313,6 +345,21 @@ export const seedDb = (): MockDb => ({
         details: { specialty: u.specialty, pmdcNumber: u.pmdc, experience: '8', briefDescription: 'Seeded demo doctor.' },
       }),
     ),
+    ...FOOD_SEED_USERS.map(u =>
+      seedBusiness({
+        id: u.businessId,
+        ownerId: u.id,
+        serviceType: 'food',
+        subType: u.subType,
+        name: u.businessName,
+        phone: u.phone,
+        address: u.address,
+        status: 'approved',
+        reviewedAt: iso(45 * DAY),
+        submittedAt: iso(47 * DAY),
+        details: { cuisine: 'Seeded demo kitchen', dailyCapacity: '60', experience: '6', briefDescription: 'Seeded demo kitchen.' },
+      }),
+    ),
   ],
   access: {},
   refresh: {},
@@ -321,6 +368,7 @@ export const seedDb = (): MockDb => ({
   devices: [],
   shop: seedShop(),
   health: seedHealth(),
+  food: seedFood(),
 });
 
 /**
@@ -338,6 +386,8 @@ const ensureCollections = (loaded: Partial<MockDb>): MockDb => {
   if (!loaded.health) out.health = seed.health;
   else for (const k of Object.keys(seed.health) as (keyof MockHealth)[]) if (out.health[k] === undefined) (out.health as any)[k] = seed.health[k];
   migrateHealth(out.health);
+  if (!loaded.food) out.food = seed.food;
+  else for (const k of Object.keys(seed.food) as (keyof MockFood)[]) if (out.food[k] === undefined) (out.food as any)[k] = seed.food[k];
   // Businesses saved before doctors could be listed: the seed's own doctors keep their state.
   for (const b of out.businesses) {
     const s = seed.businesses.find(x => x.id === b.id);

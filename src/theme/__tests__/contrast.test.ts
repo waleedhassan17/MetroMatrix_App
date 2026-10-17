@@ -35,16 +35,16 @@ const grounds = [
 ] as const;
 
 describe('the FYP look', () => {
-  it('paints the page white and keeps the FYP stone ramp', () => {
+  it('paints the page white and keeps the FYP slate ramp (no warm beige anywhere)', () => {
     expect(p).toMatchObject({
       canvas: '#FFFFFF',
       surface: '#FFFFFF',
-      surfaceSunk: '#F5F5F4',
-      ink: '#1C1917',
-      inkMuted: '#57534E',
-      inkFaint: '#A8A29E',
-      line: '#E7E5E4',
-      disabled: '#D6D3D1',
+      surfaceSunk: '#F1F5F9',
+      ink: '#0F172A',
+      inkMuted: '#475569',
+      inkFaint: '#94A3B8',
+      line: '#E2E8F0',
+      disabled: '#CBD5E1',
       brand: '#047857',
       danger: '#B91C1C',
       success: '#047857',

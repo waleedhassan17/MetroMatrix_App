@@ -20,6 +20,7 @@ import CustomerNavigator from '../../navigators/CustomerNavigator';
 import StorePartnerNavigator from '../../navigators/StorePartnerNavigator';
 import DoctorPartnerNavigator from '../../navigators/DoctorPartnerNavigator';
 import KitchenPartnerNavigator from '../../navigators/KitchenPartnerNavigator';
+import RiderNavigator from '../../navigators/RiderNavigator';
 import AdminNavigator from '../../navigators/AdminNavigator';
 import { resolveGate, isGateCleared } from '../../navigators/sessionGate';
 
@@ -59,6 +60,7 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       SignIn: 'sign-in',
       SignUp: 'sign-up',
       ProviderSignIn: 'provider/sign-in',
+      RiderSignIn: 'rider/sign-in',
       ProviderSignUp: 'provider/sign-up',
       ForgotPassword: 'forgot-password',
       ResetPasswordOTP: 'reset-password',
@@ -89,6 +91,22 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       MyReviews: 'doctor/reviews',
       DoctorInsights: 'doctor/insights',
       DoctorProfileEdit: 'doctor/profile',
+      // The Food vendor's app (its own stack): metromatrix://vendor/orders
+      VendorTabs: {
+        screens: { OrdersTab: 'vendor/orders', MenuTab: 'vendor/menu', RidersTab: 'vendor/riders', MoreTab: 'vendor/more' },
+      },
+      VendorSetup: 'vendor/setup',
+      VendorBrand: 'vendor/brand',
+      VendorSettings: 'vendor/settings',
+      VendorHours: 'vendor/hours',
+      VendorZones: 'vendor/zones',
+      VendorClosures: 'vendor/closures',
+      VendorPlan: 'vendor/plan',
+      VendorRiderDetail: 'vendor/riders/:id',
+      // The rider's app: metromatrix://rider/deliveries
+      RiderTabs: {
+        screens: { DeliveriesTab: 'rider/deliveries', CashTab: 'rider/cash', RiderProfileTab: 'rider/profile' },
+      },
       // ── The customer app (the FYP's): the home and its pages on the root
       // stack; each service its own app with its own tabs. Every service app
       // has its tabs under a deep link (initialRouteName), so back from a
@@ -204,7 +222,7 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
           AppointmentLookup: 'admin/health/appointments',
         },
       },
-      // The kitchen's and staff's Profile tab (the customer's Profile lives at /profile).
+      // Staff's Profile tab (the customer's Profile lives at /profile).
       ProfileTab: {
         path: 'account',
         initialRouteName: 'Profile',
@@ -324,6 +342,8 @@ export const AppContainer: React.FC = () => {
           default:
             return <StorePartnerNavigator key="partner-store" />;
         }
+      case 'rider':
+        return <RiderNavigator key="rider" />;
       case 'admin':
         return <AdminNavigator key="admin" />;
       default:

@@ -73,7 +73,7 @@ export const BRAND_PRESETS = ['#7A1F3D', '#111827', '#0F766E', '#1E3A8A', '#9A34
 /** The text colour on the brand: white, or the app's ink. */
 export const ON_BRAND_CHOICES: { value: string; label: string }[] = [
   { value: '#FFFFFF', label: 'White text' },
-  { value: '#1C1917', label: 'Dark text' },
+  { value: '#0F172A', label: 'Dark text' },
 ];
 
 /** "7a1f3d" / "#7A1F3D" → "#7A1F3D" while typing (never more than 6 digits). */

@@ -1,4 +1,4 @@
-import { doctorRootRoute, isGateCleared, resolveGate, totpInitialRoute, type GateInput } from '../sessionGate';
+import { doctorRootRoute, foodVendorRootRoute, isGateCleared, resolveGate, totpInitialRoute, type GateInput } from '../sessionGate';
 import type { Business, BusinessStatus, User, UserRole } from '../../types/auth';
 import { makeUser } from '../../__fixtures__/users';
 
@@ -70,7 +70,12 @@ describe('resolveGate — the BaseNavigator ladder, in order', () => {
     expect(resolveGate(input({ user: user('customer') }))).toBe('customer');
     expect(resolveGate(input({ user: user('admin') }))).toBe('admin');
     expect(resolveGate(input({ user: user('super_admin') }))).toBe('admin');
-    expect(resolveGate(input({ user: user('rider') }))).toBe('unauthenticated');
+    expect(resolveGate(input({ user: user('rider') }))).toBe('rider');
+  });
+
+  it('a rider goes straight to the rider app (the vendor made the account)', () => {
+    expect(resolveGate(input({ user: user('rider', false, false) }))).toBe('rider');
+    expect(resolveGate(input({ isAuthenticated: false, user: user('rider') }))).toBe('unauthenticated');
   });
 
   it('a customer is never gated by a stray business record', () => {
@@ -78,7 +83,7 @@ describe('resolveGate — the BaseNavigator ladder, in order', () => {
   });
 
   it('only role apps count as cleared', () => {
-    expect(['customer', 'partner', 'admin'].every(g => isGateCleared(g as never))).toBe(true);
+    expect(['customer', 'partner', 'rider', 'admin'].every(g => isGateCleared(g as never))).toBe(true);
     expect(['verify', 'completeProfile', 'pending', 'totp', 'partnerSetup'].some(g => isGateCleared(g as never))).toBe(false);
   });
 });
@@ -99,5 +104,17 @@ describe('doctorRootRoute — Practice setup until listed', () => {
   });
   it('opens a listed doctor on the tabs', () => {
     expect(doctorRootRoute({ isListed: true })).toBe('DoctorTabs');
+  });
+});
+
+describe('foodVendorRootRoute — Kitchen setup until live', () => {
+  const food = (isLive: boolean) => ({ brandId: 'br', brandSlug: 'x', branchStatus: 'draft', isLive, setupComplete: isLive });
+  it('opens a kitchen that is not live on Kitchen setup', () => {
+    expect(foodVendorRootRoute({ food: food(false) })).toBe('VendorSetup');
+    expect(foodVendorRootRoute({ food: null })).toBe('VendorSetup');
+    expect(foodVendorRootRoute(null)).toBe('VendorSetup');
+  });
+  it('opens a live kitchen on the tabs', () => {
+    expect(foodVendorRootRoute({ food: food(true) })).toBe('VendorTabs');
   });
 });

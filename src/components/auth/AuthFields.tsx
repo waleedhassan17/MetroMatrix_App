@@ -71,6 +71,57 @@ export const SignInFields: React.FC<{
 };
 
 // ─── Sign up (the FYP's four fields) ──────────────────
+/** Riders: the username their vendor gave them. No "Forgot password": their vendor resets it. */
+export const RiderSignInFields: React.FC<{
+  username: string;
+  password: string;
+  errors: { username?: string; password?: string };
+  onChangeUsername: (v: string) => void;
+  onChangePassword: (v: string) => void;
+  onBlur: (field: 'username' | 'password') => void;
+  onSubmit: () => void;
+  disabled?: boolean;
+}> = ({ username, password, errors, onChangeUsername, onChangePassword, onBlur, onSubmit, disabled }) => {
+  const styles = useStyles(makeStyles);
+  const passwordRef = useRef<TextInput>(null);
+  return (
+    <View style={styles.form}>
+      <TextField
+        label="Username"
+        icon="person-outline"
+        value={username}
+        onChangeText={onChangeUsername}
+        onBlur={() => onBlur('username')}
+        error={errors.username}
+        placeholder="e.g. karachi-biryani.imran"
+        autoCapitalize="none"
+        autoCorrect={false}
+        autoComplete="username"
+        textContentType="username"
+        returnKeyType="next"
+        onSubmitEditing={() => passwordRef.current?.focus()}
+        submitBehavior="submit"
+        editable={!disabled}
+      />
+      <TextField
+        ref={passwordRef}
+        label="Password"
+        mode="password"
+        icon="lock-closed-outline"
+        value={password}
+        onChangeText={onChangePassword}
+        onBlur={() => onBlur('password')}
+        error={errors.password}
+        placeholder="Enter your password"
+        autoComplete="current-password"
+        returnKeyType="go"
+        onSubmitEditing={onSubmit}
+        editable={!disabled}
+      />
+    </View>
+  );
+};
+
 export type SignUpField = 'name' | 'phone' | 'email' | 'password';
 
 export const SignUpFields: React.FC<{

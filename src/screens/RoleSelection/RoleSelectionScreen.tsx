@@ -3,14 +3,15 @@
 // ═══════════════════════════════════════════════════════
 // The first question after onboarding: are you offering services or using
 // them? "Service Provider" → Provider Selection; "User" → Sign In (staff sign
-// in there too, as in the FYP).
+// in there too, as in the FYP); "Rider" → Rider Sign In (riders a Food Court
+// vendor added, with the username the vendor gave them).
 
 import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppDispatch } from '@hooks/useReduxHooks';
-import { useStyles, useTheme, type Theme } from '@theme/index';
+import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, IonIcon } from '@custom/index';
 import { ChoiceCard } from '@components/auth/ChoiceCard';
 import type { AuthUserType, RootStackParamList } from '@/types';
@@ -39,6 +40,20 @@ const makeStyles = ({ colors, space, gutter, size, radius, elevation }: Theme) =
     },
   });
 
+/** Painted in Food Court's colours (the ServiceScope around it): riders deliver for its vendors. */
+const RiderChoice: React.FC<{ onPress: () => void }> = ({ onPress }) => {
+  const { service } = useTheme();
+  return (
+    <ChoiceCard
+      icon={<IonIcon name="bicycle" size="xl" color={service.accentDeep} />}
+      iconBg={service.accentSoft}
+      title="Rider"
+      description="Deliver orders for a Food Court vendor who added you"
+      onPress={onPress}
+    />
+  );
+};
+
 const RoleSelectionScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
@@ -48,6 +63,7 @@ const RoleSelectionScreen: React.FC<Props> = ({ navigation }) => {
   const choose = (role: AuthUserType) => {
     dispatch(selectRole(role));
     if (role === 'provider') navigation.navigate('ProviderSelection');
+    else if (role === 'rider') navigation.navigate('RiderSignIn');
     else navigation.navigate('SignIn');
   };
 
@@ -87,6 +103,9 @@ const RoleSelectionScreen: React.FC<Props> = ({ navigation }) => {
               description="Discover local food vendors, book doctors and shop from trusted sellers"
               onPress={() => choose('user')}
             />
+            <ServiceScope service="food">
+              <RiderChoice onPress={() => choose('rider')} />
+            </ServiceScope>
           </View>
 
           <View style={styles.help}>

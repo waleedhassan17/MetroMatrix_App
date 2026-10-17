@@ -40,6 +40,19 @@ const CUISINE_GLYPH: Record<string, MciName> = {
   'fast food': 'hamburger',
   chinese: 'noodles',
   healthy: 'leaf',
+  // The Food API's cuisine icon keys (GET /food/cuisines).
+  burger: 'hamburger',
+  fast_food: 'hamburger',
+  biryani: 'rice',
+  karahi: 'pot-steam',
+  dessert: 'cupcake',
+  bakery: 'baguette',
+  cafe: 'coffee',
+  breakfast: 'egg-fried',
+  roll: 'food-takeout-box',
+  ice_cream: 'ice-cream',
+  home_food: 'home-heart',
+  beverage: 'cup',
 };
 export const cuisineGlyph = (key: string | undefined): MciName =>
   (key && CUISINE_GLYPH[key.trim().toLowerCase()]) || 'silverware-fork-knife';

@@ -35,6 +35,7 @@ import SuspendedScreen from '../screens/Partner/Suspended/SuspendedScreen';
 import AdminTotpScreen from '../screens/Admin/AdminTotp/AdminTotpScreen';
 import AdminTwoFactorEnrolScreen from '../screens/Admin/AdminTwoFactorEnrol/AdminTwoFactorEnrolScreen';
 import DesignGalleryScreen from '../screens/Dev/DesignGallery/DesignGalleryScreen';
+import RiderSignInScreen from '../screens/Auth/RiderSignIn/RiderSignInScreen';
 
 /** Shown once per install, before Role Selection. */
 export const ONBOARDING_ROUTE: IRoute = {
@@ -55,6 +56,7 @@ export const UNAUTHENTICATED_ROUTES: IRoute[] = [
   { title: ROUTES.SIGN_IN, component: SignInScreen },
   { title: ROUTES.SIGN_UP, component: SignUpScreen, options: { animation: 'fade' } },
   { title: ROUTES.PROVIDER_SIGN_IN, component: ProviderSignInScreen },
+  { title: ROUTES.RIDER_SIGN_IN, component: RiderSignInScreen },
   {
     title: ROUTES.PROVIDER_SIGN_UP,
     component: ProviderSignUpScreen,

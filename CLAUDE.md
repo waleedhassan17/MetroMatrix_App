@@ -16,7 +16,7 @@ Copy the FYP's UX, never its code paths, Firebase setup or per-role duplicate ne
 
 ## Backend switch (one file)
 
-`src/config/env.ts` → `BACKEND_URL` (or `EXPO_PUBLIC_API_URL`). While it is empty, `api` uses the dummy API (`src/networks/network/mock/`: `mockServer.ts` routes, `mockDb.ts` seeded accounts, `mockConfig.ts` rules, `mockFood.ts` catalogue, `shop/` the whole Shopping API with its seed and server rules, `health/` the whole Healthcare API with its seed and server rules). The dummy API answers exactly what `docs/API_CONTRACT_ASSUMED.md` and `docs/API_SHOPPING_ASSUMED.md` specify, and for Health the real `docs/API_HEALTH.md` (see `docs/MOCK_HEALTH.md`), so nothing else changes when the real URL is set. When you add an endpoint, add its mock route in the same change. Shop and Health writes are all-or-nothing (a failed request leaves the dummy DB as it was).
+`src/config/env.ts` → `BACKEND_URL` (or `EXPO_PUBLIC_API_URL`). While it is empty, `api` uses the dummy API (`src/networks/network/mock/`: `mockServer.ts` routes, `mockDb.ts` seeded accounts, `mockConfig.ts` rules, `mockFood.ts` catalogue, `shop/` the whole Shopping API with its seed and server rules, `health/` the whole Healthcare API with its seed and server rules, `food/` the Food API's routes as the backend commits them, see `docs/MOCK_FOOD.md`). The dummy API answers exactly what `docs/API_CONTRACT_ASSUMED.md` and `docs/API_SHOPPING_ASSUMED.md` specify, and for Health the real `docs/API_HEALTH.md` (see `docs/MOCK_HEALTH.md`), so nothing else changes when the real URL is set. When you add an endpoint, add its mock route in the same change. Shop, Health and Food writes are all-or-nothing (a failed request leaves the dummy DB as it was).
 
 ## Commands
 
@@ -95,6 +95,9 @@ src/
     network/mock/health/     the dummy Healthcare API, in the real API's shapes: healthTypes, healthSeed (16 specialties,
                              ~40 conditions, 23 doctors, appointments in every status), healthLogic (slots, rules),
                              healthWire (rows → the API's shapes), healthRoutes
+    network/mock/food/       the dummy Food API, in the real API's shapes: foodTypes, foodSeed (cuisines, 3 demo vendors,
+                             2 riders), foodLogic (open state, go-live checklist, plan, rider usernames), foodWire, foodRoutes
+    network/mock/mockRealtime the in-process stand-in for the Food socket (same surface as the real client)
     <domain>/<x>Network.ts   one function per endpoint (auth, users, media, businesses, admin, food, addresses, notifications)
     shopping/                catalogue, wishlist, cart, checkout, orders, returns, reviews; shopping/partner/ the store app's
     health/                  discovery, availability, appointments, family, records, prescriptions, reviews, video, symptom;
@@ -128,25 +131,26 @@ src/
   components/health/         HealthParts (sections, rows, the trust list, banner calls to action, the appointment-action
                              hook), healthPhotos (the Health home's bundled photos)
   components/shared/         ErrorBoundary
-  navigations-maps/          Base.ts (ROUTES), Auth.ts (gate arrays), Customer.ts (the customer root stack), Partner/Admin/
+  navigations-maps/          Base.ts (ROUTES), Auth.ts (gate arrays), Customer.ts (the customer root stack), Admin/
                              Approvals/Account.ts, HealthPatient.ts / ShoppingCustomer.ts / FoodCustomer.ts (each service
-                             app's tabs + the pages pushed over them), StorePartner.ts and DoctorPartner.ts (tabs + stack),
-                             AdminShopping.ts, AdminHealth.ts, types.ts
-  navigators/                sessionGate.ts (the ladder + doctorRootRoute), BaseNavigator, CustomerNavigator (root stack),
-                             Health/Shop/FoodAppNavigator (a service's stack over its tabs), Store/Doctor/Kitchen/AdminNavigator,
+                             app's tabs + the pages pushed over them), StorePartner.ts, DoctorPartner.ts and FoodVendor.ts
+                             (tabs + stack), Rider.ts, AdminShopping.ts, AdminHealth.ts, types.ts
+  navigators/                sessionGate.ts (the ladder + doctorRootRoute + foodVendorRootRoute), BaseNavigator, CustomerNavigator
+                             (root stack), Health/Shop/FoodAppNavigator (a service's stack over its tabs),
+                             Store/Doctor/KitchenPartner (the Food vendor's app)/Rider/AdminNavigator,
                              RouteTabs (partner/staff tab mapper), ServiceTabs (service tab mapper → ServiceTabBar),
                              stacks/ (AccountStack, AdminStack, AdminShopStack, AdminHealthStack)
   screens/<Area>/<Name>/     NameScreen.tsx + nameSlice.ts
                              Areas: Onboarding (+ Splash), RoleSelection, ProviderSelection, Auth, Partner,
                              Admin (+ Admin/Shopping, Admin/Health), Customer, Account, Shopping/Customer, Shopping/Store,
-                             Health/Patient, Health/Doctor, Dev
+                             Health/Patient, Health/Doctor, Food/Vendor, Food/Rider, Dev
 scripts/check-design-tokens.js, capture-health-fixtures.js (real Health responses → the serializer fixture)
 docs/                        API_CONTRACT_ASSUMED.md, API_SHOPPING_ASSUMED.md, API_HEALTH.md (a copy of the backend's),
-                             MOCK_HEALTH.md, MOCK_IMAGES.md, GOOGLE_SIGNIN.md
+                             MOCK_HEALTH.md, MOCK_FOOD.md, MOCK_IMAGES.md, GOOGLE_SIGNIN.md
 assets/images/               FYP icon + splash mark; services/ and health/ (card photos — sources in each CREDITS.md)
 ```
 
-Stateless screens have no slice. Their state is global (`auth`, `preferences`) or they only navigate. These are Rejected, Suspended, CustomerHome, ServicePreview, PartnerHome, OrderPlaced, Saved, StoreMore, BookingConfirmed, PrescriptionList, DoctorMore, FoodOrders, and the tab lists HealthAppointments and ShopOrders (they read `ordersSlice`, and share their lists with Orders via `Orders/OrdersLists.tsx`). Slices other screens read (`bag`, `saved`, `addressBook`, `orderDetail`, `notifications`, `family`, `appointmentDetail`) live beside the screen that owns them. BookAppointment is a sheet over DoctorProfile (`BookAppointmentSheet` + its slice), not a route.
+Stateless screens have no slice. Their state is global (`auth`, `preferences`) or they only navigate. These are Rejected, Suspended, CustomerHome, ServicePreview, OrderPlaced, Saved, StoreMore, BookingConfirmed, PrescriptionList, DoctorMore, FoodOrders, VendorMore, VendorOrders and VendorMenu (until their API phases), RiderCash, RiderProfile (reads `riderHome`), and the tab lists HealthAppointments and ShopOrders (they read `ordersSlice`, and share their lists with Orders via `Orders/OrdersLists.tsx`). Slices other screens read (`bag`, `saved`, `addressBook`, `orderDetail`, `notifications`, `family`, `appointmentDetail`) live beside the screen that owns them. BookAppointment is a sheet over DoctorProfile (`BookAppointmentSheet` + its slice), not a route.
 
 ## How to add a screen
 
@@ -182,6 +186,7 @@ const styles = useStyles(makeStyles); // memoised on the active theme (mode + se
 - The customer shell's own pages wear it as well, in the colour of the scope they open in: Orders, Profile, Change password, Addresses, Address form and Notifications wrap themselves in `PageHeaderScope` (emerald in the customer and admin apps, the service's colour in the store and doctor apps). A new account page does the same.
 - Profile is the FYP's account screen: a hero that scrolls away (`ScreenShell headerScrolls`), Overview · Addresses · Settings, count tiles, and menu groups under `overline` titles whose rows take the FYP's categorical icon colours (`ListRow tint`, `theme.rowTint`).
 - Every screen stands on pure white (`colors.canvas`, pinned by `theme/__tests__/canvas.test.ts`), except Digital Health: the FYP's healthcare ground `#F8FBFF` under white cards, with slate ink (`HEALTH_PALETTE`). Only full-screen media (the video call, the photo viewer) are dark.
+- Neutrals are the FYP's cool slate (`surfaceSunk #F1F5F9`, `line #E2E8F0`, ink `#0F172A`), pinned by `theme/__tests__/contrast.test.ts`. Never warm stone, cream or beige greys: the owner asked for clean white screens that don't look generated.
 - Healthcare uses the FYP's type like every service; its touch targets stay 48 and dynamic type goes to 150% (`theme.maxFontScale`).
 - The Health home is photo-led: a bento of three soft cards (`CareCard`, `theme.careTint`) whose photos fade into their ground, photo tiles for Health's own services, staff banners, a specialty grid in categorical colours (`theme.specialtyTint`), the city's top doctors, and the trust list. Every photo shows what its card does and is licensed: bundled ones are listed in `assets/images/health/CREDITS.md`, remote ones (banners, demo portraits) in `docs/MOCK_IMAGES.md`. Demo doctors are fictional; their stock portraits say so in the profile. Nothing on the page moves by itself under reduced motion or a screen reader (`useCalmMotion`).
 - Cards are the FYP card by default (`Card`, `elevation.card`: a `lineSoft` border and a soft slate shadow, radius 16). Section heads use `sectionTitle` (19/800). The side gutter is the FYP's 20.
@@ -204,11 +209,14 @@ The order matters. It lives in ONE pure function, `resolveGate()` in `src/naviga
 7. `rejected` → Rejected (+ PersonalInfo to resubmit)
 8. `suspended` → Suspended
 
+A rider (Role Selection → Rider → RiderSignIn: the username their vendor issued, on the partner portal as `identifier`) skips 3–8: the vendor made the account, and its email is a never-mailed placeholder.
+
 The splash plays on every launch as an overlay in AppContainer. It lifts only once both its animation and `bootstrapSession` are done.
 
 Once the gate is cleared, `AppContainer.renderNavigator()` mounts the navigator for the role:
 - `customer` → `CustomerNavigator`: a root stack (`CustomerStack`) with the three-card home (no bottom bar; its side menu opens Orders, Profile, Saved, Addresses…) and one app per service: Health (Home · Appointments · Records · Profile), Shopping (Home · Bag · Saved · Orders), Food Court (Home · Orders · Profile)
-- approved `partner` → `Store`/`Doctor`/`KitchenPartnerNavigator`, chosen by `serviceType`. The store app is a stack over Today · Orders · Products · More. The doctor app is a stack over Today · Calendar · Patients · More; it opens on PracticeSetup until the doctor is listed (`doctorRootRoute(business)`).
+- approved `partner` → `Store`/`Doctor`/`KitchenPartnerNavigator`, chosen by `serviceType`. The store app is a stack over Today · Orders · Products · More. The doctor app is a stack over Today · Calendar · Patients · More; it opens on PracticeSetup until the doctor is listed (`doctorRootRoute(business)`). The Food vendor's app (`KitchenPartnerNavigator`, `navigations-maps/FoodVendor.ts`) is a stack over Orders · Menu · Riders · More; it opens on Kitchen setup until the kitchen is live (`foodVendorRootRoute(business)`, from the session's `business.food`).
+- `rider` → `RiderNavigator`: a stack over Deliveries · Cash · Profile.
 - `admin` / `super_admin` → `AdminNavigator` (Approvals · Shopping · Health · Profile). A doctor is approved only after staff check the PMDC number (Health → Doctor verification); the server answers `422 PMDC_NOT_VERIFIED` otherwise.
 
 ## API contract
@@ -232,7 +240,7 @@ When a real document arrives, reconcile it in one pass:
 - **Expo Go** (`npm start`): runs the whole app except native Google sign-in and push, against the dummy API. Seeded accounts and codes are in `docs/API_CONTRACT_ASSUMED.md` → "Mock mode" (doctors and patients in `docs/MOCK_HEALTH.md`). Video consultations open public meet.jit.si rooms in a WebView; on web they open in a new tab.
 - **Web** (`npm run web`):
   - Google sign-in uses Google Identity Services and needs `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`.
-  - Deep paths work, e.g. `/get-started`, `/sign-in`, `/provider/sign-in`, `/home/food`, `/shop`, `/shop/store/lawn-and-loom-7a1f3`, `/shop/product/p_l1`, `/orders/MM-24A7Q2`, `/store/orders/:id`, `/admin/shop`, `/health`, `/health/appointments`, `/health/doctor/:id`, `/health/appointment/:code`, `/shop/orders`, `/shop/bag`, `/profile/records`, `/doctor/appointments/:code`, `/admin/health`. The kitchen and staff Profile tab is `/account`.
+  - Deep paths work, e.g. `/get-started`, `/sign-in`, `/provider/sign-in`, `/home/food`, `/shop`, `/shop/store/lawn-and-loom-7a1f3`, `/shop/product/p_l1`, `/orders/MM-24A7Q2`, `/store/orders/:id`, `/admin/shop`, `/health`, `/health/appointments`, `/health/doctor/:id`, `/health/appointment/:code`, `/shop/orders`, `/shop/bag`, `/profile/records`, `/doctor/appointments/:code`, `/admin/health`, `/vendor/orders`, `/vendor/setup`, `/vendor/riders/:id`, `/rider/sign-in`, `/rider/deliveries`. The staff Profile tab is `/account`.
   - After adding new folders or `.web.tsx` files, restart Metro with `--clear` (its watcher can miss them). Don't start it with `CI=1`: that turns watch mode off and the browser keeps the old bundle.
   - Bottom sheets render as a `Modal` (`Sheet.web.tsx`), because `@gorhom/bottom-sheet` never presents in a browser.
   - `/dev/gallery` exists only in development builds.

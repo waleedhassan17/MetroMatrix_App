@@ -81,6 +81,24 @@ export const validateSignIn = (data: SignInData): ValidationErrors => {
   return errors;
 };
 
+// ─── Rider sign in (a vendor-issued username) ────────
+/** The API's usernames: lower-case letters, digits, dots, dashes and underscores. */
+export const RIDER_USERNAME_REGEX = /^[a-z0-9._-]{3,60}$/;
+
+export interface RiderSignInData {
+  username: string;
+  password: string;
+}
+
+export const validateRiderSignIn = (data: RiderSignInData): ValidationErrors => {
+  const errors: ValidationErrors = {};
+  const username = data.username.trim().toLowerCase();
+  if (!username) errors.username = 'Enter the username your vendor gave you';
+  else if (!RIDER_USERNAME_REGEX.test(username)) errors.username = 'Usernames use letters, numbers, dots and dashes';
+  if (!data.password) errors.password = 'Password is required';
+  return errors;
+};
+
 // ─── Sign Up (the FYP's four fields) ─────────────────
 export interface SignUpData {
   name: string;
