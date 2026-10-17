@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — The Food vendor's app (restaurant, home or cloud kitchen)
 // ═══════════════════════════════════════════════════════
-// Orders · Menu · Riders · More at the root of a stack; every tool pushes over
-// the tabs. Until the kitchen is live the stack opens on Kitchen setup
-// instead (sessionGate.foodVendorRootRoute).
+// Orders · Menu · Riders · More at the root of a stack (a home kitchen has
+// Today first); every tool pushes over the tabs. Until the kitchen is live the
+// stack opens on Kitchen setup instead (sessionGate.foodVendorRootRoute).
 
 import type { IRoute, ITabRoute } from './types';
 import { ROUTES } from './Base';
@@ -20,6 +20,13 @@ import VendorZonesScreen from '../screens/Food/Vendor/VendorZones/VendorZonesScr
 import VendorClosuresScreen from '../screens/Food/Vendor/VendorClosures/VendorClosuresScreen';
 import VendorPlanScreen from '../screens/Food/Vendor/VendorPlan/VendorPlanScreen';
 import RiderDetailScreen from '../screens/Food/Vendor/RiderDetail/RiderDetailScreen';
+import VendorTodayScreen from '../screens/Food/Vendor/VendorToday/VendorTodayScreen';
+import VendorMenuItemScreen from '../screens/Food/Vendor/VendorMenuItem/VendorMenuItemScreen';
+import VendorCategoriesScreen from '../screens/Food/Vendor/VendorCategories/VendorCategoriesScreen';
+import VendorOptionGroupsScreen from '../screens/Food/Vendor/VendorOptionGroups/VendorOptionGroupsScreen';
+import VendorOptionGroupScreen from '../screens/Food/Vendor/VendorOptionGroup/VendorOptionGroupScreen';
+import VendorWeeklyMenuScreen from '../screens/Food/Vendor/VendorWeeklyMenu/VendorWeeklyMenuScreen';
+import VendorPreorderSlotsScreen from '../screens/Food/Vendor/VendorPreorderSlots/VendorPreorderSlotsScreen';
 import PaymentAccountsScreen from '../screens/Shopping/Store/PaymentAccounts/PaymentAccountsScreen';
 import ProfileScreen from '../screens/Account/Profile/ProfileScreen';
 import ChangePasswordScreen from '../screens/Account/ChangePassword/ChangePasswordScreen';
@@ -32,6 +39,12 @@ export const FOOD_VENDOR_TABS: ITabRoute[] = [
   { title: ROUTES.MORE_TAB, component: VendorMoreScreen, label: 'More', icon: 'grid-outline', iconActive: 'grid' },
 ];
 
+/** A home kitchen's day comes first: what is cooking and how many plates. */
+export const FOOD_VENDOR_HOME_TABS: ITabRoute[] = [
+  { title: ROUTES.TODAY_TAB, component: VendorTodayScreen, label: 'Today', icon: 'today-outline', iconActive: 'today' },
+  ...FOOD_VENDOR_TABS,
+];
+
 /** Pushed over the tabs (the tabs, or Kitchen setup, are the stack's first screen). */
 export const FOOD_VENDOR_STACK_ROUTES: IRoute[] = [
   { title: ROUTES.VENDOR_SETUP, component: VendorSetupScreen },
@@ -42,6 +55,12 @@ export const FOOD_VENDOR_STACK_ROUTES: IRoute[] = [
   { title: ROUTES.VENDOR_CLOSURES, component: VendorClosuresScreen },
   { title: ROUTES.VENDOR_PLAN, component: VendorPlanScreen },
   { title: ROUTES.VENDOR_RIDER_DETAIL, component: RiderDetailScreen },
+  { title: ROUTES.VENDOR_MENU_ITEM, component: VendorMenuItemScreen },
+  { title: ROUTES.VENDOR_CATEGORIES, component: VendorCategoriesScreen },
+  { title: ROUTES.VENDOR_OPTION_GROUPS, component: VendorOptionGroupsScreen },
+  { title: ROUTES.VENDOR_OPTION_GROUP, component: VendorOptionGroupScreen },
+  { title: ROUTES.VENDOR_WEEKLY_MENU, component: VendorWeeklyMenuScreen },
+  { title: ROUTES.VENDOR_PREORDER_SLOTS, component: VendorPreorderSlotsScreen },
   { title: ROUTES.PAYMENT_ACCOUNTS, component: PaymentAccountsScreen },
   { title: ROUTES.PROFILE, component: ProfileScreen },
   { title: ROUTES.CHANGE_PASSWORD, component: ChangePasswordScreen },

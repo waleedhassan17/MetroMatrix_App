@@ -116,10 +116,85 @@ export interface MockRider {
   createdAt: string;
 }
 
+export type MockItemTag = 'spicy' | 'veg' | 'bestseller' | 'new' | 'contains_nuts';
+
+export interface MockMenuCategory {
+  id: string;
+  businessId: string;
+  name: string;
+  sort: number;
+  availableFrom: string | null;
+  availableTo: string | null;
+  isActive: boolean;
+}
+
+/** The branch's own switches for a dish (the API's branch_item_overrides). */
+export interface MockItemOverride {
+  isAvailable: boolean;
+  unavailableUntil: string | null;
+  dailyLimit: number | null;
+  remainingToday: number | null;
+  /** The kitchen-local date `remainingToday` belongs to (reset to the limit each new day). */
+  portionsDate: string | null;
+}
+
+export interface MockMenuItem {
+  id: string;
+  businessId: string;
+  categoryId: string;
+  name: string;
+  description: string | null;
+  photoUrl: string | null;
+  basePrice: number;
+  tags: MockItemTag[];
+  isDeal: boolean;
+  serves: number | null;
+  days: number[];
+  isActive: boolean;
+  sort: number;
+  sold30d: number;
+  variants: { id: string; name: string; price: number; sort: number }[];
+  links: { groupId: string; variantId: string | null; sort: number }[];
+  override: MockItemOverride | null;
+}
+
+export interface MockMenuOption {
+  id: string;
+  name: string;
+  priceDelta: number;
+  isDefault: boolean;
+  isActive: boolean;
+  sort: number;
+  /** The branch's switch (the API's branch_option_overrides). */
+  available: boolean;
+}
+
+export interface MockOptionGroup {
+  id: string;
+  businessId: string;
+  name: string;
+  minSelect: number;
+  maxSelect: number;
+  options: MockMenuOption[];
+}
+
+export interface MockPreorderSlot {
+  id: string;
+  businessId: string;
+  weekday: number;
+  slotStart: string;
+  cutoffMinutesBefore: number;
+  maxOrders: number;
+}
+
 export interface MockFood {
   cuisines: MockCuisine[];
   vendors: MockFoodVendor[];
   riders: MockRider[];
+  categories: MockMenuCategory[];
+  items: MockMenuItem[];
+  groups: MockOptionGroup[];
+  slots: MockPreorderSlot[];
   /** Ids for new rows. */
   seq: number;
 }

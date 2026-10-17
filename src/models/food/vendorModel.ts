@@ -259,17 +259,25 @@ export const validateFeeBands = (rows: FeeBandForm[], maxRadiusKm: number): Vali
 };
 
 // ─── Going live ───────────────────────────────────────
+export interface SetupTarget {
+  name: string;
+  params?: object;
+}
+
 /** Where each checklist step is fixed (null: MetroMatrix does it). */
-export const SETUP_ROUTE: Record<string, string | null> = {
-  profile: 'VendorBrand',
-  location: 'VendorSettings',
-  hours: 'VendorHours',
-  zones: 'VendorZones',
-  payment: 'VendorSettings',
+export const SETUP_ROUTE: Record<string, SetupTarget | null> = {
+  profile: { name: 'VendorBrand' },
+  location: { name: 'VendorSettings' },
+  hours: { name: 'VendorHours' },
+  zones: { name: 'VendorZones' },
+  payment: { name: 'VendorSettings' },
   food_safety: null,
+  menu: { name: 'VendorTabs', params: { screen: 'MenuTab' } },
+  portions: { name: 'VendorTabs', params: { screen: 'TodayTab' } },
+  slots: { name: 'VendorPreorderSlots' },
 };
 
-export const setupRoute = (key: VendorSetupKey): string | null => SETUP_ROUTE[key] ?? null;
+export const setupRoute = (key: VendorSetupKey): SetupTarget | null => SETUP_ROUTE[key] ?? null;
 
 /** Short names for the checklist rows (the API's own label is the fallback for a step the app doesn't know yet). */
 export const SETUP_TITLE: Record<string, string> = {

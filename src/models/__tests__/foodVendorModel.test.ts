@@ -119,8 +119,9 @@ describe('delivery fee bands', () => {
 
 describe('setup and riders', () => {
   it('sends each checklist step to its editor; the food-safety check is MetroMatrix’s', () => {
-    expect(setupRoute('profile')).toBe('VendorBrand');
-    expect(setupRoute('zones')).toBe('VendorZones');
+    expect(setupRoute('profile')).toEqual({ name: 'VendorBrand' });
+    expect(setupRoute('zones')).toEqual({ name: 'VendorZones' });
+    expect(setupRoute('menu')).toEqual({ name: 'VendorTabs', params: { screen: 'MenuTab' } });
     expect(setupRoute('food_safety')).toBeNull();
   });
 

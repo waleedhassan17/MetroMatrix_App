@@ -119,7 +119,7 @@ const VendorSetupContent: React.FC<Props> = ({ navigation }) => {
                     title={setupTitle(item.key, item.label)}
                     subtitle={item.key === 'food_safety' && !item.done ? 'MetroMatrix will contact you to arrange a test order' : HINT[item.key]}
                     left={<IonIcon name={item.done ? 'checkmark-circle' : 'ellipse-outline'} size="lg" color={item.done ? colors.success : colors.lineStrong} />}
-                    onPress={to ? () => navigation.navigate(to as never) : undefined}
+                    onPress={to ? () => (navigation.navigate as (name: string, params?: object) => void)(to.name, to.params) : undefined}
                     chevron={!!to}
                   />
                 </View>

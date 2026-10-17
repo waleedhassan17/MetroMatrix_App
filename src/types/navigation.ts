@@ -260,6 +260,14 @@ export type FoodVendorStackParamList = {
   VendorClosures: undefined;
   VendorPlan: undefined;
   VendorRiderDetail: { id: string };
+  /** A dish: edit one (`id`), or a new one (optionally in `categoryId`). */
+  VendorMenuItem: { id?: string; categoryId?: string } | undefined;
+  VendorCategories: undefined;
+  VendorOptionGroups: undefined;
+  /** An add-on group: edit one (`id`) or a new one. */
+  VendorOptionGroup: { id?: string } | undefined;
+  VendorWeeklyMenu: undefined;
+  VendorPreorderSlots: undefined;
   PaymentAccounts: undefined;
   Profile: undefined;
   ChangePassword: undefined;

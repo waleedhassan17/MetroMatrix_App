@@ -7,6 +7,8 @@
 // docs/MOCK_FOOD.md.
 
 import type { MockCuisine, MockFood, MockFoodVendor, MockHoursRow, MockRider } from './foodTypes';
+import { seedMenus } from './foodMenuSeed';
+import { dateInZone } from '../../../../utils/healthTime';
 
 const DAY = 24 * 60 * 60 * 1000;
 const iso = (msAgo = 0) => new Date(Date.now() - msAgo).toISOString();
@@ -234,5 +236,6 @@ export const seedFood = (): MockFood => ({
   cuisines: seedCuisines(),
   vendors: seedVendors(),
   riders: seedRiders(),
+  ...seedMenus(dateInZone(new Date().toISOString(), 'Asia/Karachi')),
   seq: 0,
 });

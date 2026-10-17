@@ -139,6 +139,14 @@ import { vendorClosuresSlice } from '../screens/Food/Vendor/VendorClosures/vendo
 import { vendorPlanSlice } from '../screens/Food/Vendor/VendorPlan/vendorPlanSlice';
 import { vendorRidersSlice } from '../screens/Food/Vendor/VendorRiders/vendorRidersSlice';
 import { riderDetailSlice } from '../screens/Food/Vendor/RiderDetail/riderDetailSlice';
+import { vendorMenuSlice } from '../screens/Food/Vendor/VendorMenu/vendorMenuSlice';
+import { vendorMenuItemSlice } from '../screens/Food/Vendor/VendorMenuItem/vendorMenuItemSlice';
+import { vendorCategoriesSlice } from '../screens/Food/Vendor/VendorCategories/vendorCategoriesSlice';
+import { vendorOptionGroupsSlice } from '../screens/Food/Vendor/VendorOptionGroups/vendorOptionGroupsSlice';
+import { vendorOptionGroupSlice } from '../screens/Food/Vendor/VendorOptionGroup/vendorOptionGroupSlice';
+import { vendorTodaySlice } from '../screens/Food/Vendor/VendorToday/vendorTodaySlice';
+import { vendorWeeklyMenuSlice } from '../screens/Food/Vendor/VendorWeeklyMenu/vendorWeeklyMenuSlice';
+import { vendorPreorderSlotsSlice } from '../screens/Food/Vendor/VendorPreorderSlots/vendorPreorderSlotsSlice';
 // Food (rider)
 import { riderHomeSlice } from '../screens/Food/Rider/RiderDeliveries/riderHomeSlice';
 
@@ -272,6 +280,14 @@ const rootReducer = combineReducers({
   vendorPlan: vendorPlanSlice.reducer,
   vendorRiders: vendorRidersSlice.reducer,
   riderDetail: riderDetailSlice.reducer,
+  vendorMenu: vendorMenuSlice.reducer,
+  vendorMenuItem: vendorMenuItemSlice.reducer,
+  vendorCategories: vendorCategoriesSlice.reducer,
+  vendorOptionGroups: vendorOptionGroupsSlice.reducer,
+  vendorOptionGroup: vendorOptionGroupSlice.reducer,
+  vendorToday: vendorTodaySlice.reducer,
+  vendorWeeklyMenu: vendorWeeklyMenuSlice.reducer,
+  vendorPreorderSlots: vendorPreorderSlotsSlice.reducer,
   // Food (rider)
   riderHome: riderHomeSlice.reducer,
 });

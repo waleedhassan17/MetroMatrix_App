@@ -22,6 +22,16 @@ interface Item {
   to: string;
 }
 
+const MENU_ITEMS: Item[] = [
+  { label: 'Categories', hint: 'The sections of your menu, in order', icon: 'albums-outline', to: 'VendorCategories' },
+  { label: 'Add-on groups', hint: 'Spice level, toppings, drinks…', icon: 'options-outline', to: 'VendorOptionGroups' },
+];
+
+const HOME_KITCHEN_ITEMS: Item[] = [
+  { label: 'Weekly menu', hint: 'The days you cook each dish', icon: 'calendar-outline', to: 'VendorWeeklyMenu' },
+  { label: 'Pre-order slots', hint: 'When customers can order ahead for', icon: 'time-outline', to: 'VendorPreorderSlots' },
+];
+
 const SECTIONS: { title: string; items: Item[] }[] = [
   {
     title: 'Your kitchen',
@@ -55,10 +65,15 @@ const VendorMoreScreen: React.FC = () => {
   const business = useAppSelector(selectBusiness);
   const { confirmSignOut } = useSignOut();
   const kind = business?.subType === 'home_kitchen' || business?.subType === 'cloud_kitchen' ? business.subType : 'restaurant';
+  const sections = [
+    SECTIONS[0],
+    { title: 'Your menu', items: kind === 'home_kitchen' ? [...MENU_ITEMS, ...HOME_KITCHEN_ITEMS] : MENU_ITEMS },
+    ...SECTIONS.slice(1),
+  ];
   return (
     <ServiceScope service="food">
       <ScreenShell title="More" subtitle={business ? `${business.name} · ${KITCHEN_KIND_NAME[kind]}` : undefined}>
-        {SECTIONS.map(section => (
+        {sections.map(section => (
           <View key={section.title}>
             <AppText variant="micro" tone="muted">
               {section.title.toUpperCase()}

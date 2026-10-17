@@ -1,0 +1,1640 @@
+{
+ "menu.categoriesEmpty": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": []
+  }
+ },
+ "menu.categoryPost": {
+  "status": 201,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "c5578f83-7e69-4e92-9d46-aaa1c305c2b4",
+    "name": "Biryani",
+    "sort": 10,
+    "availableFrom": null,
+    "availableTo": null,
+    "isActive": true,
+    "itemCount": 0
+   }
+  }
+ },
+ "menu.categoryWindow": {
+  "status": 201,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "64531f35-c6d7-47d6-8963-24f16f49f48f",
+    "name": "BBQ",
+    "sort": 20,
+    "availableFrom": "18:00",
+    "availableTo": "23:30",
+    "isActive": true,
+    "itemCount": 0
+   }
+  }
+ },
+ "menu.categoryDrinks": {
+  "status": 201,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "e0407b77-9f39-473e-a486-95cd58b443ad",
+    "name": "Drinks",
+    "sort": 30,
+    "availableFrom": null,
+    "availableTo": null,
+    "isActive": true,
+    "itemCount": 0
+   }
+  }
+ },
+ "menu.categoriesReorder": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": [
+    {
+     "id": "c5578f83-7e69-4e92-9d46-aaa1c305c2b4",
+     "name": "Biryani",
+     "sort": 10,
+     "availableFrom": null,
+     "availableTo": null,
+     "isActive": true,
+     "itemCount": 0
+    },
+    {
+     "id": "64531f35-c6d7-47d6-8963-24f16f49f48f",
+     "name": "BBQ",
+     "sort": 20,
+     "availableFrom": "18:00",
+     "availableTo": "23:30",
+     "isActive": true,
+     "itemCount": 0
+    },
+    {
+     "id": "e0407b77-9f39-473e-a486-95cd58b443ad",
+     "name": "Drinks",
+     "sort": 30,
+     "availableFrom": null,
+     "availableTo": null,
+     "isActive": true,
+     "itemCount": 0
+    }
+   ]
+  }
+ },
+ "menu.categoryPatch": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "e0407b77-9f39-473e-a486-95cd58b443ad",
+    "name": "Cold drinks",
+    "sort": 30,
+    "availableFrom": null,
+    "availableTo": null,
+    "isActive": true
+   }
+  }
+ },
+ "menu.groupPost": {
+  "status": 201,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "ce687152-e595-4316-bfb9-77f93e74a1d7",
+    "name": "Add raita or salad",
+    "minSelect": 0,
+    "maxSelect": 2,
+    "required": false,
+    "usedByItems": 0,
+    "options": [
+     {
+      "id": "f5ea42b4-31e2-4e8e-855f-c105fb61eafc",
+      "name": "Raita",
+      "priceDelta": 60,
+      "isDefault": false,
+      "isActive": true
+     },
+     {
+      "id": "5ce4c508-5263-4a0e-9d88-79a00f8b67aa",
+      "name": "Kachumber salad",
+      "priceDelta": 80,
+      "isDefault": false,
+      "isActive": true
+     }
+    ]
+   }
+  }
+ },
+ "menu.groupRequired": {
+  "status": 201,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "948ef36c-7aeb-4aa1-ad83-7e3dbb3210be",
+    "name": "Spice level",
+    "minSelect": 1,
+    "maxSelect": 1,
+    "required": true,
+    "usedByItems": 0,
+    "options": [
+     {
+      "id": "fa8fa7b6-f162-41d1-b177-6aaa2c604e22",
+      "name": "Mild",
+      "priceDelta": 0,
+      "isDefault": true,
+      "isActive": true
+     },
+     {
+      "id": "39b9dd97-8ccb-4d04-9fa3-f7f688db861d",
+      "name": "Medium",
+      "priceDelta": 0,
+      "isDefault": false,
+      "isActive": true
+     },
+     {
+      "id": "33fa707d-d9da-44bc-be21-702a58bd56ee",
+      "name": "Hot",
+      "priceDelta": 0,
+      "isDefault": false,
+      "isActive": true
+     }
+    ]
+   }
+  }
+ },
+ "menu.groupErr": {
+  "status": 400,
+  "body": {
+   "success": false,
+   "error": {
+    "code": "VALIDATION_FAILED",
+    "message": "minSelect can’t be more than maxSelect.",
+    "details": {
+     "fields": {
+      "minSelect": [
+       "minSelect can’t be more than maxSelect."
+      ]
+     }
+    }
+   }
+  }
+ },
+ "menu.groups": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": [
+    {
+     "id": "ce687152-e595-4316-bfb9-77f93e74a1d7",
+     "name": "Add raita or salad",
+     "minSelect": 0,
+     "maxSelect": 2,
+     "required": false,
+     "usedByItems": 0,
+     "options": [
+      {
+       "id": "f5ea42b4-31e2-4e8e-855f-c105fb61eafc",
+       "name": "Raita",
+       "priceDelta": 60,
+       "isDefault": false,
+       "isActive": true
+      },
+      {
+       "id": "5ce4c508-5263-4a0e-9d88-79a00f8b67aa",
+       "name": "Kachumber salad",
+       "priceDelta": 80,
+       "isDefault": false,
+       "isActive": true
+      }
+     ]
+    },
+    {
+     "id": "948ef36c-7aeb-4aa1-ad83-7e3dbb3210be",
+     "name": "Spice level",
+     "minSelect": 1,
+     "maxSelect": 1,
+     "required": true,
+     "usedByItems": 0,
+     "options": [
+      {
+       "id": "fa8fa7b6-f162-41d1-b177-6aaa2c604e22",
+       "name": "Mild",
+       "priceDelta": 0,
+       "isDefault": true,
+       "isActive": true
+      },
+      {
+       "id": "39b9dd97-8ccb-4d04-9fa3-f7f688db861d",
+       "name": "Medium",
+       "priceDelta": 0,
+       "isDefault": false,
+       "isActive": true
+      },
+      {
+       "id": "33fa707d-d9da-44bc-be21-702a58bd56ee",
+       "name": "Hot",
+       "priceDelta": 0,
+       "isDefault": false,
+       "isActive": true
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "menu.group": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "948ef36c-7aeb-4aa1-ad83-7e3dbb3210be",
+    "name": "Spice level",
+    "minSelect": 1,
+    "maxSelect": 1,
+    "required": true,
+    "usedByItems": 0,
+    "options": [
+     {
+      "id": "fa8fa7b6-f162-41d1-b177-6aaa2c604e22",
+      "name": "Mild",
+      "priceDelta": 0,
+      "isDefault": true,
+      "isActive": true
+     },
+     {
+      "id": "39b9dd97-8ccb-4d04-9fa3-f7f688db861d",
+      "name": "Medium",
+      "priceDelta": 0,
+      "isDefault": false,
+      "isActive": true
+     },
+     {
+      "id": "33fa707d-d9da-44bc-be21-702a58bd56ee",
+      "name": "Hot",
+      "priceDelta": 0,
+      "isDefault": false,
+      "isActive": true
+     }
+    ]
+   }
+  }
+ },
+ "menu.itemPost": {
+  "status": 201,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "bbbe4e51-b596-439d-8a9a-3eeb9533f311",
+    "categoryId": "c5578f83-7e69-4e92-9d46-aaa1c305c2b4",
+    "name": "Chicken Biryani",
+    "description": "Long-grain rice, slow-cooked chicken, fried onions and mint.",
+    "photoUrl": null,
+    "basePrice": 650,
+    "tags": [
+     "spicy",
+     "bestseller"
+    ],
+    "isDeal": false,
+    "serves": 1,
+    "days": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "isActive": true,
+    "sort": 10,
+    "sold30d": 0,
+    "variants": [
+     {
+      "id": "fcc83830-d72c-4820-8ac1-21368f839959",
+      "name": "Single",
+      "price": 650
+     },
+     {
+      "id": "d214b8b8-6ed8-4a03-bf14-5a5446ae4d06",
+      "name": "Half kg",
+      "price": 1100
+     },
+     {
+      "id": "3fe00ce3-8510-4967-bd6a-041d9d0f3986",
+      "name": "Family (1 kg)",
+      "price": 2100
+     }
+    ],
+    "optionGroups": []
+   }
+  }
+ },
+ "menu.itemTagErr": {
+  "status": 400,
+  "body": {
+   "success": false,
+   "error": {
+    "code": "VALIDATION_FAILED",
+    "message": "each value in tags must be one of the following values: spicy, veg, bestseller, new, contains_nuts",
+    "details": {
+     "fields": {
+      "tags": [
+       "each value in tags must be one of the following values: spicy, veg, bestseller, new, contains_nuts"
+      ]
+     }
+    }
+   }
+  }
+ },
+ "menu.itemPlain": {
+  "status": 201,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "dd0d7769-5b30-44f7-89dd-68bb15dbfb76",
+    "categoryId": "64531f35-c6d7-47d6-8963-24f16f49f48f",
+    "name": "Seekh Kebab (4 pcs)",
+    "description": "Charcoal-grilled beef seekh, mint chutney.",
+    "photoUrl": null,
+    "basePrice": 900,
+    "tags": [],
+    "isDeal": false,
+    "serves": null,
+    "days": [
+     4,
+     5,
+     6
+    ],
+    "isActive": true,
+    "sort": 10,
+    "sold30d": 0,
+    "variants": [],
+    "optionGroups": []
+   }
+  }
+ },
+ "menu.itemDrink": {
+  "status": 201,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "504852a1-fb5f-4831-9cb1-bef876a92c07",
+    "categoryId": "e0407b77-9f39-473e-a486-95cd58b443ad",
+    "name": "Soft drink",
+    "description": null,
+    "photoUrl": null,
+    "basePrice": 120,
+    "tags": [],
+    "isDeal": false,
+    "serves": null,
+    "days": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "isActive": true,
+    "sort": 10,
+    "sold30d": 0,
+    "variants": [],
+    "optionGroups": []
+   }
+  }
+ },
+ "menu.itemGroups": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "bbbe4e51-b596-439d-8a9a-3eeb9533f311",
+    "categoryId": "c5578f83-7e69-4e92-9d46-aaa1c305c2b4",
+    "name": "Chicken Biryani",
+    "description": "Long-grain rice, slow-cooked chicken, fried onions and mint.",
+    "photoUrl": null,
+    "basePrice": 650,
+    "tags": [
+     "spicy",
+     "bestseller"
+    ],
+    "isDeal": false,
+    "serves": 1,
+    "days": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "isActive": true,
+    "sort": 10,
+    "sold30d": 0,
+    "variants": [
+     {
+      "id": "fcc83830-d72c-4820-8ac1-21368f839959",
+      "name": "Single",
+      "price": 650
+     },
+     {
+      "id": "d214b8b8-6ed8-4a03-bf14-5a5446ae4d06",
+      "name": "Half kg",
+      "price": 1100
+     },
+     {
+      "id": "3fe00ce3-8510-4967-bd6a-041d9d0f3986",
+      "name": "Family (1 kg)",
+      "price": 2100
+     }
+    ],
+    "optionGroups": [
+     {
+      "groupId": "948ef36c-7aeb-4aa1-ad83-7e3dbb3210be",
+      "variantId": null,
+      "sort": 0
+     },
+     {
+      "groupId": "ce687152-e595-4316-bfb9-77f93e74a1d7",
+      "variantId": null,
+      "sort": 1
+     }
+    ]
+   }
+  }
+ },
+ "menu.itemVariants": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "bbbe4e51-b596-439d-8a9a-3eeb9533f311",
+    "categoryId": "c5578f83-7e69-4e92-9d46-aaa1c305c2b4",
+    "name": "Chicken Biryani",
+    "description": "Long-grain rice, slow-cooked chicken, fried onions and mint.",
+    "photoUrl": null,
+    "basePrice": 650,
+    "tags": [
+     "spicy",
+     "bestseller"
+    ],
+    "isDeal": false,
+    "serves": 1,
+    "days": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "isActive": true,
+    "sort": 10,
+    "sold30d": 0,
+    "variants": [
+     {
+      "id": "fcc83830-d72c-4820-8ac1-21368f839959",
+      "name": "Single",
+      "price": 650
+     },
+     {
+      "id": "d214b8b8-6ed8-4a03-bf14-5a5446ae4d06",
+      "name": "Half kg",
+      "price": 1100
+     },
+     {
+      "id": "3fe00ce3-8510-4967-bd6a-041d9d0f3986",
+      "name": "Family (1 kg)",
+      "price": 2100
+     },
+     {
+      "id": "8ff9fc12-ce1b-49cc-a56a-7360ab484411",
+      "name": "Deg (5 kg)",
+      "price": 9500
+     }
+    ],
+    "optionGroups": [
+     {
+      "groupId": "948ef36c-7aeb-4aa1-ad83-7e3dbb3210be",
+      "variantId": null,
+      "sort": 0
+     },
+     {
+      "groupId": "ce687152-e595-4316-bfb9-77f93e74a1d7",
+      "variantId": null,
+      "sort": 1
+     }
+    ]
+   }
+  }
+ },
+ "menu.item": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "bbbe4e51-b596-439d-8a9a-3eeb9533f311",
+    "categoryId": "c5578f83-7e69-4e92-9d46-aaa1c305c2b4",
+    "name": "Chicken Biryani",
+    "description": "Long-grain rice, slow-cooked chicken, fried onions and mint.",
+    "photoUrl": null,
+    "basePrice": 650,
+    "tags": [
+     "spicy",
+     "bestseller"
+    ],
+    "isDeal": false,
+    "serves": 1,
+    "days": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "isActive": true,
+    "sort": 10,
+    "sold30d": 0,
+    "variants": [
+     {
+      "id": "fcc83830-d72c-4820-8ac1-21368f839959",
+      "name": "Single",
+      "price": 650
+     },
+     {
+      "id": "d214b8b8-6ed8-4a03-bf14-5a5446ae4d06",
+      "name": "Half kg",
+      "price": 1100
+     },
+     {
+      "id": "3fe00ce3-8510-4967-bd6a-041d9d0f3986",
+      "name": "Family (1 kg)",
+      "price": 2100
+     },
+     {
+      "id": "8ff9fc12-ce1b-49cc-a56a-7360ab484411",
+      "name": "Deg (5 kg)",
+      "price": 9500
+     }
+    ],
+    "optionGroups": [
+     {
+      "groupId": "948ef36c-7aeb-4aa1-ad83-7e3dbb3210be",
+      "variantId": null,
+      "sort": 0
+     },
+     {
+      "groupId": "ce687152-e595-4316-bfb9-77f93e74a1d7",
+      "variantId": null,
+      "sort": 1
+     }
+    ]
+   }
+  }
+ },
+ "menu.itemPatch": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "dd0d7769-5b30-44f7-89dd-68bb15dbfb76",
+    "categoryId": "64531f35-c6d7-47d6-8963-24f16f49f48f",
+    "name": "Seekh Kebab (4 pcs)",
+    "description": "Charcoal-grilled beef seekh, mint chutney.",
+    "photoUrl": null,
+    "basePrice": 950,
+    "tags": [
+     "bestseller"
+    ],
+    "isDeal": false,
+    "serves": null,
+    "days": [
+     4,
+     5,
+     6
+    ],
+    "isActive": true,
+    "sort": 10,
+    "sold30d": 0,
+    "variants": [],
+    "optionGroups": []
+   }
+  }
+ },
+ "menu.itemDuplicate": {
+  "status": 201,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "e1fbe4c0-9e62-45bf-a115-6d894f91d5fd",
+    "categoryId": "c5578f83-7e69-4e92-9d46-aaa1c305c2b4",
+    "name": "Chicken Biryani (copy)",
+    "description": "Long-grain rice, slow-cooked chicken, fried onions and mint.",
+    "photoUrl": null,
+    "basePrice": 650,
+    "tags": [
+     "spicy",
+     "bestseller"
+    ],
+    "isDeal": false,
+    "serves": 1,
+    "days": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "isActive": false,
+    "sort": 20,
+    "sold30d": 0,
+    "variants": [
+     {
+      "id": "1e6495c9-c599-42ec-af22-f82b19f68f27",
+      "name": "Single",
+      "price": 650
+     },
+     {
+      "id": "4359cd30-e7a3-4e1f-9411-75a93c4b6e15",
+      "name": "Half kg",
+      "price": 1100
+     },
+     {
+      "id": "43cfb8a0-c8cf-4966-b69c-6fe73f35020d",
+      "name": "Family (1 kg)",
+      "price": 2100
+     },
+     {
+      "id": "43c665a6-5ea2-4edc-b187-31c68e6d26d6",
+      "name": "Deg (5 kg)",
+      "price": 9500
+     }
+    ],
+    "optionGroups": [
+     {
+      "groupId": "948ef36c-7aeb-4aa1-ad83-7e3dbb3210be",
+      "variantId": null,
+      "sort": 0
+     },
+     {
+      "groupId": "ce687152-e595-4316-bfb9-77f93e74a1d7",
+      "variantId": null,
+      "sort": 1
+     }
+    ]
+   }
+  }
+ },
+ "menu.itemDelete": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "removed": true
+   }
+  }
+ },
+ "menu.items": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": [
+    {
+     "id": "bbbe4e51-b596-439d-8a9a-3eeb9533f311",
+     "categoryId": "c5578f83-7e69-4e92-9d46-aaa1c305c2b4",
+     "name": "Chicken Biryani",
+     "description": "Long-grain rice, slow-cooked chicken, fried onions and mint.",
+     "photoUrl": null,
+     "basePrice": 650,
+     "tags": [
+      "spicy",
+      "bestseller"
+     ],
+     "isDeal": false,
+     "serves": 1,
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "isActive": true,
+     "sort": 10,
+     "sold30d": 0,
+     "variants": [
+      {
+       "id": "fcc83830-d72c-4820-8ac1-21368f839959",
+       "name": "Single",
+       "price": 650
+      },
+      {
+       "id": "d214b8b8-6ed8-4a03-bf14-5a5446ae4d06",
+       "name": "Half kg",
+       "price": 1100
+      },
+      {
+       "id": "3fe00ce3-8510-4967-bd6a-041d9d0f3986",
+       "name": "Family (1 kg)",
+       "price": 2100
+      },
+      {
+       "id": "8ff9fc12-ce1b-49cc-a56a-7360ab484411",
+       "name": "Deg (5 kg)",
+       "price": 9500
+      }
+     ],
+     "optionGroups": [
+      {
+       "groupId": "948ef36c-7aeb-4aa1-ad83-7e3dbb3210be",
+       "variantId": null,
+       "sort": 0
+      },
+      {
+       "groupId": "ce687152-e595-4316-bfb9-77f93e74a1d7",
+       "variantId": null,
+       "sort": 1
+      }
+     ]
+    },
+    {
+     "id": "dd0d7769-5b30-44f7-89dd-68bb15dbfb76",
+     "categoryId": "64531f35-c6d7-47d6-8963-24f16f49f48f",
+     "name": "Seekh Kebab (4 pcs)",
+     "description": "Charcoal-grilled beef seekh, mint chutney.",
+     "photoUrl": null,
+     "basePrice": 950,
+     "tags": [
+      "bestseller"
+     ],
+     "isDeal": false,
+     "serves": null,
+     "days": [
+      4,
+      5,
+      6
+     ],
+     "isActive": true,
+     "sort": 10,
+     "sold30d": 0,
+     "variants": [],
+     "optionGroups": []
+    },
+    {
+     "id": "504852a1-fb5f-4831-9cb1-bef876a92c07",
+     "categoryId": "e0407b77-9f39-473e-a486-95cd58b443ad",
+     "name": "Soft drink",
+     "description": null,
+     "photoUrl": null,
+     "basePrice": 120,
+     "tags": [],
+     "isDeal": false,
+     "serves": null,
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "isActive": true,
+     "sort": 10,
+     "sold30d": 0,
+     "variants": [],
+     "optionGroups": []
+    }
+   ]
+  }
+ },
+ "menu.itemsByCategory": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": [
+    {
+     "id": "bbbe4e51-b596-439d-8a9a-3eeb9533f311",
+     "categoryId": "c5578f83-7e69-4e92-9d46-aaa1c305c2b4",
+     "name": "Chicken Biryani",
+     "description": "Long-grain rice, slow-cooked chicken, fried onions and mint.",
+     "photoUrl": null,
+     "basePrice": 650,
+     "tags": [
+      "spicy",
+      "bestseller"
+     ],
+     "isDeal": false,
+     "serves": 1,
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "isActive": true,
+     "sort": 10,
+     "sold30d": 0,
+     "variants": [
+      {
+       "id": "fcc83830-d72c-4820-8ac1-21368f839959",
+       "name": "Single",
+       "price": 650
+      },
+      {
+       "id": "d214b8b8-6ed8-4a03-bf14-5a5446ae4d06",
+       "name": "Half kg",
+       "price": 1100
+      },
+      {
+       "id": "3fe00ce3-8510-4967-bd6a-041d9d0f3986",
+       "name": "Family (1 kg)",
+       "price": 2100
+      },
+      {
+       "id": "8ff9fc12-ce1b-49cc-a56a-7360ab484411",
+       "name": "Deg (5 kg)",
+       "price": 9500
+      }
+     ],
+     "optionGroups": [
+      {
+       "groupId": "948ef36c-7aeb-4aa1-ad83-7e3dbb3210be",
+       "variantId": null,
+       "sort": 0
+      },
+      {
+       "groupId": "ce687152-e595-4316-bfb9-77f93e74a1d7",
+       "variantId": null,
+       "sort": 1
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "menu.itemsReorder": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": [
+    {
+     "id": "bbbe4e51-b596-439d-8a9a-3eeb9533f311",
+     "categoryId": "c5578f83-7e69-4e92-9d46-aaa1c305c2b4",
+     "name": "Chicken Biryani",
+     "description": "Long-grain rice, slow-cooked chicken, fried onions and mint.",
+     "photoUrl": null,
+     "basePrice": 650,
+     "tags": [
+      "spicy",
+      "bestseller"
+     ],
+     "isDeal": false,
+     "serves": 1,
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "isActive": true,
+     "sort": 10,
+     "sold30d": 0,
+     "variants": [
+      {
+       "id": "fcc83830-d72c-4820-8ac1-21368f839959",
+       "name": "Single",
+       "price": 650
+      },
+      {
+       "id": "d214b8b8-6ed8-4a03-bf14-5a5446ae4d06",
+       "name": "Half kg",
+       "price": 1100
+      },
+      {
+       "id": "3fe00ce3-8510-4967-bd6a-041d9d0f3986",
+       "name": "Family (1 kg)",
+       "price": 2100
+      },
+      {
+       "id": "8ff9fc12-ce1b-49cc-a56a-7360ab484411",
+       "name": "Deg (5 kg)",
+       "price": 9500
+      }
+     ],
+     "optionGroups": [
+      {
+       "groupId": "948ef36c-7aeb-4aa1-ad83-7e3dbb3210be",
+       "variantId": null,
+       "sort": 0
+      },
+      {
+       "groupId": "ce687152-e595-4316-bfb9-77f93e74a1d7",
+       "variantId": null,
+       "sort": 1
+      }
+     ]
+    },
+    {
+     "id": "dd0d7769-5b30-44f7-89dd-68bb15dbfb76",
+     "categoryId": "64531f35-c6d7-47d6-8963-24f16f49f48f",
+     "name": "Seekh Kebab (4 pcs)",
+     "description": "Charcoal-grilled beef seekh, mint chutney.",
+     "photoUrl": null,
+     "basePrice": 950,
+     "tags": [
+      "bestseller"
+     ],
+     "isDeal": false,
+     "serves": null,
+     "days": [
+      4,
+      5,
+      6
+     ],
+     "isActive": true,
+     "sort": 10,
+     "sold30d": 0,
+     "variants": [],
+     "optionGroups": []
+    },
+    {
+     "id": "504852a1-fb5f-4831-9cb1-bef876a92c07",
+     "categoryId": "e0407b77-9f39-473e-a486-95cd58b443ad",
+     "name": "Soft drink",
+     "description": null,
+     "photoUrl": null,
+     "basePrice": 120,
+     "tags": [],
+     "isDeal": false,
+     "serves": null,
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "isActive": true,
+     "sort": 10,
+     "sold30d": 0,
+     "variants": [],
+     "optionGroups": []
+    }
+   ]
+  }
+ },
+ "menu.categoryDeleteErr": {
+  "status": 409,
+  "body": {
+   "success": false,
+   "error": {
+    "code": "CONFLICT",
+    "message": "Move or delete this category’s items first.",
+    "details": {
+     "items": 1
+    }
+   }
+  }
+ },
+ "menu.groupDeleteErr": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "removed": true
+   }
+  }
+ },
+ "menu.categories": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": [
+    {
+     "id": "c5578f83-7e69-4e92-9d46-aaa1c305c2b4",
+     "name": "Biryani",
+     "sort": 10,
+     "availableFrom": null,
+     "availableTo": null,
+     "isActive": true,
+     "itemCount": 1
+    },
+    {
+     "id": "64531f35-c6d7-47d6-8963-24f16f49f48f",
+     "name": "BBQ",
+     "sort": 20,
+     "availableFrom": "18:00",
+     "availableTo": "23:30",
+     "isActive": true,
+     "itemCount": 1
+    },
+    {
+     "id": "e0407b77-9f39-473e-a486-95cd58b443ad",
+     "name": "Cold drinks",
+     "sort": 30,
+     "availableFrom": null,
+     "availableTo": null,
+     "isActive": true,
+     "itemCount": 1
+    }
+   ]
+  }
+ },
+ "menu.availability": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [
+     {
+      "itemId": "bbbe4e51-b596-439d-8a9a-3eeb9533f311",
+      "name": "Chicken Biryani",
+      "category": "Biryani",
+      "isAvailable": true,
+      "unavailableUntil": null,
+      "dailyLimit": null,
+      "remainingToday": null
+     },
+     {
+      "itemId": "dd0d7769-5b30-44f7-89dd-68bb15dbfb76",
+      "name": "Seekh Kebab (4 pcs)",
+      "category": "BBQ",
+      "isAvailable": true,
+      "unavailableUntil": null,
+      "dailyLimit": null,
+      "remainingToday": null
+     },
+     {
+      "itemId": "504852a1-fb5f-4831-9cb1-bef876a92c07",
+      "name": "Soft drink",
+      "category": "Cold drinks",
+      "isAvailable": true,
+      "unavailableUntil": null,
+      "dailyLimit": null,
+      "remainingToday": null
+     }
+    ],
+    "options": [
+     {
+      "optionId": "f5ea42b4-31e2-4e8e-855f-c105fb61eafc",
+      "name": "Raita",
+      "group": "Add raita or salad",
+      "isAvailable": true
+     },
+     {
+      "optionId": "5ce4c508-5263-4a0e-9d88-79a00f8b67aa",
+      "name": "Kachumber salad",
+      "group": "Add raita or salad",
+      "isAvailable": true
+     }
+    ]
+   }
+  }
+ },
+ "menu.availabilityPatch": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [
+     {
+      "itemId": "bbbe4e51-b596-439d-8a9a-3eeb9533f311",
+      "name": "Chicken Biryani",
+      "category": "Biryani",
+      "isAvailable": true,
+      "unavailableUntil": null,
+      "dailyLimit": null,
+      "remainingToday": null
+     },
+     {
+      "itemId": "dd0d7769-5b30-44f7-89dd-68bb15dbfb76",
+      "name": "Seekh Kebab (4 pcs)",
+      "category": "BBQ",
+      "isAvailable": false,
+      "unavailableUntil": "2026-10-17T20:31:19.063Z",
+      "dailyLimit": null,
+      "remainingToday": null
+     },
+     {
+      "itemId": "504852a1-fb5f-4831-9cb1-bef876a92c07",
+      "name": "Soft drink",
+      "category": "Cold drinks",
+      "isAvailable": false,
+      "unavailableUntil": null,
+      "dailyLimit": null,
+      "remainingToday": null
+     }
+    ],
+    "options": [
+     {
+      "optionId": "f5ea42b4-31e2-4e8e-855f-c105fb61eafc",
+      "name": "Raita",
+      "group": "Add raita or salad",
+      "isAvailable": false
+     },
+     {
+      "optionId": "5ce4c508-5263-4a0e-9d88-79a00f8b67aa",
+      "name": "Kachumber salad",
+      "group": "Add raita or salad",
+      "isAvailable": true
+     }
+    ]
+   }
+  }
+ },
+ "menu.setupAfter": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "subType": "restaurant",
+    "items": [
+     {
+      "key": "profile",
+      "label": "Brand name, logo and at least one cuisine",
+      "required": true,
+      "done": false
+     },
+     {
+      "key": "location",
+      "label": "Address, map pin and phone",
+      "required": true,
+      "done": true
+     },
+     {
+      "key": "hours",
+      "label": "Opening hours",
+      "required": true,
+      "done": true
+     },
+     {
+      "key": "zones",
+      "label": "Delivery fee bands",
+      "required": true,
+      "done": true
+     },
+     {
+      "key": "payment",
+      "label": "A way to be paid: cash, pay at pickup, or a transfer account",
+      "required": true,
+      "done": true
+     },
+     {
+      "key": "menu",
+      "label": "At least one dish on the menu",
+      "required": true,
+      "done": true
+     }
+    ],
+    "percent": 83,
+    "missing": [
+     "profile"
+    ],
+    "ready": false,
+    "isLive": false
+   }
+  }
+ },
+ "menu.plan": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "planKey": "community",
+    "label": "Community",
+    "priceMinorUnits": 0,
+    "currency": "PKR",
+    "limits": {
+     "brands": 1,
+     "branches": 1,
+     "riders": 25,
+     "menu_items": 1000,
+     "promotions_active": 10
+    },
+    "usage": {
+     "brands": 1,
+     "branches": 1,
+     "riders": 0,
+     "menu_items": 3,
+     "promotions_active": 0
+    },
+    "entitlements": {
+     "riders": true,
+     "promotions": true,
+     "insights": true,
+     "preorders": true
+    },
+    "startedAt": "2026-10-17T16:07:55.558Z",
+    "expiresAt": null,
+    "overrides": {}
+   }
+  }
+ },
+ "menu.todayErr": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "date": "2026-10-17",
+    "weekday": 6,
+    "items": [
+     {
+      "itemId": "bbbe4e51-b596-439d-8a9a-3eeb9533f311",
+      "name": "Chicken Biryani",
+      "onTodaysMenu": true,
+      "cooking": true,
+      "dailyLimit": null,
+      "remainingToday": null,
+      "sold": null
+     },
+     {
+      "itemId": "dd0d7769-5b30-44f7-89dd-68bb15dbfb76",
+      "name": "Seekh Kebab (4 pcs)",
+      "onTodaysMenu": true,
+      "cooking": true,
+      "dailyLimit": null,
+      "remainingToday": null,
+      "sold": null
+     },
+     {
+      "itemId": "504852a1-fb5f-4831-9cb1-bef876a92c07",
+      "name": "Soft drink",
+      "onTodaysMenu": true,
+      "cooking": false,
+      "dailyLimit": null,
+      "remainingToday": null,
+      "sold": null
+     }
+    ]
+   }
+  }
+ },
+ "home.categoryPost": {
+  "status": 201,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "dc1b58c5-73af-4829-b20f-0b4cfb12b840",
+    "name": "Today's handi",
+    "sort": 10,
+    "availableFrom": null,
+    "availableTo": null,
+    "isActive": true,
+    "itemCount": 0
+   }
+  }
+ },
+ "home.itemPost": {
+  "status": 201,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "aeabe6ae-aa19-42cb-92d1-bb4bdd18345f",
+    "categoryId": "dc1b58c5-73af-4829-b20f-0b4cfb12b840",
+    "name": "Chicken Qorma with 2 roti",
+    "description": null,
+    "photoUrl": null,
+    "basePrice": 550,
+    "tags": [],
+    "isDeal": false,
+    "serves": 1,
+    "days": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "isActive": true,
+    "sort": 10,
+    "sold30d": 0,
+    "variants": [],
+    "optionGroups": []
+   }
+  }
+ },
+ "home.itemDaal": {
+  "status": 201,
+  "body": {
+   "success": true,
+   "data": {
+    "id": "9e98a0f3-9a63-46a4-b246-b44f11ca96f4",
+    "categoryId": "dc1b58c5-73af-4829-b20f-0b4cfb12b840",
+    "name": "Daal Chawal",
+    "description": null,
+    "photoUrl": null,
+    "basePrice": 350,
+    "tags": [],
+    "isDeal": false,
+    "serves": null,
+    "days": [
+     1,
+     3,
+     5
+    ],
+    "isActive": true,
+    "sort": 20,
+    "sold30d": 0,
+    "variants": [],
+    "optionGroups": []
+   }
+  }
+ },
+ "home.today": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "date": "2026-10-17",
+    "weekday": 6,
+    "items": [
+     {
+      "itemId": "aeabe6ae-aa19-42cb-92d1-bb4bdd18345f",
+      "name": "Chicken Qorma with 2 roti",
+      "onTodaysMenu": true,
+      "cooking": true,
+      "dailyLimit": null,
+      "remainingToday": null,
+      "sold": null
+     },
+     {
+      "itemId": "9e98a0f3-9a63-46a4-b246-b44f11ca96f4",
+      "name": "Daal Chawal",
+      "onTodaysMenu": false,
+      "cooking": false,
+      "dailyLimit": null,
+      "remainingToday": null,
+      "sold": null
+     }
+    ]
+   }
+  }
+ },
+ "home.todayPatch": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "date": "2026-10-17",
+    "weekday": 6,
+    "items": [
+     {
+      "itemId": "aeabe6ae-aa19-42cb-92d1-bb4bdd18345f",
+      "name": "Chicken Qorma with 2 roti",
+      "onTodaysMenu": true,
+      "cooking": true,
+      "dailyLimit": 20,
+      "remainingToday": 20,
+      "sold": 0
+     },
+     {
+      "itemId": "9e98a0f3-9a63-46a4-b246-b44f11ca96f4",
+      "name": "Daal Chawal",
+      "onTodaysMenu": false,
+      "cooking": false,
+      "dailyLimit": null,
+      "remainingToday": null,
+      "sold": null
+     }
+    ]
+   }
+  }
+ },
+ "home.slots": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": []
+  }
+ },
+ "home.slotsPut": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": [
+    {
+     "id": "8fadefa1-386b-4f55-a5e0-e01cd4cb4ea8",
+     "weekday": 5,
+     "slotStart": "13:00",
+     "cutoffMinutesBefore": 180,
+     "maxOrders": 15
+    },
+    {
+     "id": "2618118d-75dd-4ce1-aa8c-e1918f536cfc",
+     "weekday": 5,
+     "slotStart": "19:30",
+     "cutoffMinutesBefore": 240,
+     "maxOrders": 20
+    }
+   ]
+  }
+ },
+ "home.weeklyPut": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": [
+    {
+     "itemId": "aeabe6ae-aa19-42cb-92d1-bb4bdd18345f",
+     "name": "Chicken Qorma with 2 roti",
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ]
+    },
+    {
+     "itemId": "9e98a0f3-9a63-46a4-b246-b44f11ca96f4",
+     "name": "Daal Chawal",
+     "days": [
+      5
+     ]
+    }
+   ]
+  }
+ },
+ "home.items": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": [
+    {
+     "id": "aeabe6ae-aa19-42cb-92d1-bb4bdd18345f",
+     "categoryId": "dc1b58c5-73af-4829-b20f-0b4cfb12b840",
+     "name": "Chicken Qorma with 2 roti",
+     "description": null,
+     "photoUrl": null,
+     "basePrice": 550,
+     "tags": [],
+     "isDeal": false,
+     "serves": 1,
+     "days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "isActive": true,
+     "sort": 10,
+     "sold30d": 0,
+     "variants": [],
+     "optionGroups": []
+    },
+    {
+     "id": "9e98a0f3-9a63-46a4-b246-b44f11ca96f4",
+     "categoryId": "dc1b58c5-73af-4829-b20f-0b4cfb12b840",
+     "name": "Daal Chawal",
+     "description": null,
+     "photoUrl": null,
+     "basePrice": 350,
+     "tags": [],
+     "isDeal": false,
+     "serves": null,
+     "days": [
+      5
+     ],
+     "isActive": true,
+     "sort": 20,
+     "sold30d": 0,
+     "variants": [],
+     "optionGroups": []
+    }
+   ]
+  }
+ },
+ "home.setupAfter": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "subType": "home_kitchen",
+    "items": [
+     {
+      "key": "profile",
+      "label": "Brand name, logo and at least one cuisine",
+      "required": true,
+      "done": false
+     },
+     {
+      "key": "location",
+      "label": "Address, map pin and phone",
+      "required": true,
+      "done": true
+     },
+     {
+      "key": "hours",
+      "label": "Opening hours",
+      "required": true,
+      "done": false
+     },
+     {
+      "key": "zones",
+      "label": "Delivery fee bands",
+      "required": true,
+      "done": false
+     },
+     {
+      "key": "payment",
+      "label": "A way to be paid: cash, pay at pickup, or a transfer account",
+      "required": true,
+      "done": true
+     },
+     {
+      "key": "food_safety",
+      "label": "MetroMatrix food-safety check (after a test order)",
+      "required": true,
+      "done": false
+     },
+     {
+      "key": "menu",
+      "label": "At least one dish on the menu",
+      "required": true,
+      "done": true
+     },
+     {
+      "key": "portions",
+      "label": "Today’s portions for at least one dish",
+      "required": true,
+      "done": true
+     },
+     {
+      "key": "slots",
+      "label": "Pre-order slots",
+      "required": false,
+      "done": true
+     }
+    ],
+    "percent": 50,
+    "missing": [
+     "profile",
+     "hours",
+     "zones",
+     "food_safety"
+    ],
+    "ready": false,
+    "isLive": false
+   }
+  }
+ },
+ "home.availability": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [
+     {
+      "itemId": "aeabe6ae-aa19-42cb-92d1-bb4bdd18345f",
+      "name": "Chicken Qorma with 2 roti",
+      "category": "Today's handi",
+      "isAvailable": true,
+      "unavailableUntil": null,
+      "dailyLimit": 20,
+      "remainingToday": 20
+     },
+     {
+      "itemId": "9e98a0f3-9a63-46a4-b246-b44f11ca96f4",
+      "name": "Daal Chawal",
+      "category": "Today's handi",
+      "isAvailable": false,
+      "unavailableUntil": null,
+      "dailyLimit": null,
+      "remainingToday": null
+     }
+    ],
+    "options": []
+   }
+  }
+ }
+}

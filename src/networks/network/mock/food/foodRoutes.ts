@@ -50,6 +50,7 @@ import {
   settingsWire,
 } from './foodWire';
 import type { MockFoodVendor, MockRider, MockRiderVehicle } from './foodTypes';
+import { registerMenuRoutes } from './foodMenuRoutes';
 import { isValidPkMobile, isValidPkPhone, normalizePkPhone } from '../../../../utils/phone';
 
 export interface FoodKit extends ShopKit {
@@ -535,6 +536,9 @@ export function registerFoodRoutes(kit: FoodKit) {
     const { rider, vendor } = meRider(ctx);
     return riderMeWire(ctx.db, rider, vendor, ctx.now);
   });
+
+  // ── The menu ──
+  registerMenuRoutes(route, myVendor);
 
   // ── Staff ──
   route('POST', '/admin/food/branches/:id/food-safety-check', ctx => {

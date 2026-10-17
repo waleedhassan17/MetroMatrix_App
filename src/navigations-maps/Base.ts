@@ -191,6 +191,12 @@ export const ROUTES = {
   VENDOR_CLOSURES: 'VendorClosures',
   VENDOR_PLAN: 'VendorPlan',
   VENDOR_RIDER_DETAIL: 'VendorRiderDetail',
+  VENDOR_MENU_ITEM: 'VendorMenuItem',
+  VENDOR_CATEGORIES: 'VendorCategories',
+  VENDOR_OPTION_GROUPS: 'VendorOptionGroups',
+  VENDOR_OPTION_GROUP: 'VendorOptionGroup',
+  VENDOR_WEEKLY_MENU: 'VendorWeeklyMenu',
+  VENDOR_PREORDER_SLOTS: 'VendorPreorderSlots',
 
   // ── Food: the rider's app (navigations-maps/Rider.ts) ──
   RIDER_TABS: 'RiderTabs',

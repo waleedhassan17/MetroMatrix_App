@@ -5,7 +5,8 @@
 // objects the app reads. A key only one side has fails here unless it is
 // listed in KNOWN with the reason.
 
-import real from '../../../../serializers/__tests__/fixtures/food/vendor.json';
+import vendorReal from '../../../../serializers/__tests__/fixtures/food/vendor.json';
+import menuReal from '../../../../serializers/__tests__/fixtures/food/menu.json';
 import { authSignin } from '../../../auth/authNetwork';
 import { api } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
@@ -13,14 +14,14 @@ import { SEED_PASSWORD } from '../mockConfig';
 import { getDb, resetMockDb } from '../mockDb';
 
 type Body = { success: boolean; data?: unknown; error?: { code: string; details?: unknown } };
-const R = real as unknown as Record<string, { status: number; body: Body }>;
+const R = { ...vendorReal, ...menuReal } as unknown as Record<string, { status: number; body: Body }>;
 
 // Thursday 15 October 2026, 3 PM in Pakistan.
 const T0 = new Date('2026-10-15T10:00:00Z').getTime();
 
-const call = async (method: 'get' | 'post' | 'put' | 'patch', url: string, body?: unknown): Promise<Body> => {
+const call = async (method: 'get' | 'post' | 'put' | 'patch' | 'delete', url: string, body?: unknown): Promise<Body> => {
   try {
-    const res = method === 'get' ? await api.get(url) : await api[method](url, body);
+    const res = method === 'get' || method === 'delete' ? await api[method](url) : await api[method](url, body);
     return res.data as Body;
   } catch (e) {
     return ((e as { response?: { data?: Body } }).response?.data ?? { success: false }) as Body;
@@ -58,8 +59,9 @@ const diff = (name: string, realBody: Body, mockBody: Body, paths: string[]) => 
 /** Differences the dummy API keeps on purpose. Each says why; anything new fails the test. */
 const KNOWN: Record<string, string> = {};
 
-const CASES: { fixture: string; as: 'vendor' | 'rider'; run: () => Promise<Body>; paths: string[] }[] = [];
-const add = (fixture: string, as: 'vendor' | 'rider', run: () => Promise<Body>, paths: string[]) => CASES.push({ fixture, as, run, paths });
+type As = 'vendor' | 'rider' | 'home';
+const CASES: { fixture: string; as: As; run: () => Promise<Body>; paths: string[] }[] = [];
+const add = (fixture: string, as: As, run: () => Promise<Body>, paths: string[]) => CASES.push({ fixture, as, run, paths });
 
 add('resto.meAfter', 'vendor', () => call('get', '/auth/me'), ['business.food']);
 add('cuisines', 'vendor', () => call('get', '/food/cuisines'), ['0']);
@@ -99,6 +101,41 @@ add('resto.goLive', 'vendor', async () => {
 add('resto.riderReset', 'vendor', () => call('post', '/food/vendor/riders/rd_usman/reset-password'), ['']);
 add('rider.me', 'rider', () => call('get', '/food/rider/me'), ['', 'rider', 'vendor']);
 
+// The menu (the restaurant), then a home kitchen's day.
+add('menu.categories', 'vendor', () => call('get', '/food/vendor/menu/categories'), ['0']);
+add('menu.categoryWindow', 'vendor', () => call('post', '/food/vendor/menu/categories', { name: 'Late night', availableFrom: '22:00', availableTo: '02:00' }), ['']);
+add('menu.item', 'vendor', () => call('get', '/food/vendor/menu/items/mi_chicken_biryani'), ['', 'variants.0', 'optionGroups.0']);
+add('menu.items', 'vendor', () => call('get', '/food/vendor/menu/items'), ['0']);
+add('menu.groupRequired', 'vendor', () => call('get', '/food/vendor/menu/option-groups/og_spice'), ['', 'options.0']);
+add('menu.groups', 'vendor', () => call('get', '/food/vendor/menu/option-groups'), ['0', '0.options.0']);
+add('menu.groupErr', 'vendor', () => call('post', '/food/vendor/menu/option-groups', { name: 'Bad', minSelect: 3, maxSelect: 1, options: [{ name: 'A', priceDelta: 0 }] }), [
+  '',
+  'error',
+  'error.details',
+  'error.details.fields',
+]);
+add('menu.itemTagErr', 'vendor', () => call('post', '/food/vendor/menu/items', { categoryId: 'mc_resto_biryani', name: 'Bad tags', basePrice: 100, tags: ['nope'] }), [
+  '',
+  'error',
+  'error.details',
+]);
+add('menu.categoryDeleteErr', 'vendor', () => call('delete', '/food/vendor/menu/categories/mc_resto_biryani'), ['', 'error', 'error.details']);
+add('menu.categoriesReorder', 'vendor', () => call('put', '/food/vendor/menu/categories/reorder', { ids: ['mc_resto_biryani', 'mc_resto_karahi'] }), ['0']);
+add('menu.itemDuplicate', 'vendor', () => call('post', '/food/vendor/menu/items/mi_chicken_biryani/duplicate'), ['', 'variants.0', 'optionGroups.0']);
+add(
+  'menu.availabilityPatch',
+  'vendor',
+  () =>
+    call('patch', '/food/vendor/availability', {
+      items: [{ itemId: 'mi_seekh', isAvailable: false, unavailableUntil: new Date(T0 + 7_200_000).toISOString() }],
+      options: [{ optionId: 'og_raita_1', isAvailable: false }],
+    }),
+  ['', 'items.0', 'options.0'],
+);
+add('home.todayPatch', 'home', () => call('patch', '/food/vendor/today', { items: [{ itemId: 'mi_qorma', portions: 20, cooking: true }] }), ['', 'items.0']);
+add('home.slotsPut', 'home', () => call('put', '/food/vendor/preorder-slots', [{ weekday: 5, slotStart: '13:00', cutoffMinutesBefore: 180, maxOrders: 15 }]), ['0']);
+add('home.weeklyPut', 'home', () => call('put', '/food/vendor/weekly-menu', [{ itemId: 'mi_pulao', days: [5] }]), ['0']);
+
 beforeAll(() => {
   jest.useFakeTimers({ doNotFake: ['setTimeout', 'setInterval', 'setImmediate', 'nextTick', 'queueMicrotask'] });
 });
@@ -113,6 +150,7 @@ it('answers every captured vendor and rider request with the real keys', async (
     if (c.as !== who) {
       await clearTokens();
       if (c.as === 'vendor') await authSignin({ email: 'restaurant@metromatrix.app', password: SEED_PASSWORD, portal: 'partner' });
+      else if (c.as === 'home') await authSignin({ email: 'homekitchen@metromatrix.app', password: SEED_PASSWORD, portal: 'partner' });
       else await authSignin({ username: 'biryani-bazaar.ali', password: SEED_PASSWORD, portal: 'partner' });
       who = c.as;
     }

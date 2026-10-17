@@ -5,9 +5,9 @@
 // fixture holds real responses; the parity test compares their keys).
 
 import type { MockDb } from '../mockDb';
-import { COMMUNITY_PLAN, LIVE_WINDOW_MS, activeRiders, isoNow, openState } from './foodLogic';
+import { COMMUNITY_PLAN, LIVE_WINDOW_MS, activeRiders, isItemAvailable, isoNow, kitchenToday, menuItemCount, openState, overrideOf } from './foodLogic';
 import { formatSlot } from '../../../../utils/healthTime';
-import type { MockFoodVendor, MockRider, MockVendorAccount } from './foodTypes';
+import type { MockFoodVendor, MockMenuCategory, MockMenuItem, MockOptionGroup, MockPreorderSlot, MockRider, MockVendorAccount } from './foodTypes';
 
 export const cuisineWire = (c: MockDb['food']['cuisines'][number]) => ({ id: c.id, name: c.name, slug: c.slug, icon: c.icon });
 
@@ -84,7 +84,7 @@ export const accountWire = (a: MockVendorAccount) => ({ ...a });
 export const planWire = (db: MockDb, v: MockFoodVendor) => ({
   ...COMMUNITY_PLAN,
   limits: { ...COMMUNITY_PLAN.limits },
-  usage: { brands: 1, branches: 1, riders: activeRiders(db, v.businessId), menu_items: 0, promotions_active: 0 },
+  usage: { brands: 1, branches: 1, riders: activeRiders(db, v.businessId), menu_items: menuItemCount(db, v.businessId), promotions_active: 0 },
   entitlements: { ...COMMUNITY_PLAN.entitlements },
   startedAt: v.planStartedAt,
   expiresAt: null,
@@ -112,3 +112,123 @@ export const riderMeWire = (db: MockDb, r: MockRider, v: MockFoodVendor, now: nu
 });
 
 export { isoNow };
+
+// ─── The menu ────────────────────────────────────────
+export const categoryWire = (db: MockDb, c: MockMenuCategory) => ({
+  id: c.id,
+  name: c.name,
+  sort: c.sort,
+  availableFrom: c.availableFrom,
+  availableTo: c.availableTo,
+  isActive: c.isActive,
+  itemCount: db.food.items.filter(i => i.categoryId === c.id).length,
+});
+
+export const categoriesWire = (db: MockDb, v: MockFoodVendor) =>
+  db.food.categories
+    .filter(c => c.businessId === v.businessId)
+    .sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name))
+    .map(c => categoryWire(db, c));
+
+export const itemWire = (i: MockMenuItem) => ({
+  id: i.id,
+  categoryId: i.categoryId,
+  name: i.name,
+  description: i.description,
+  photoUrl: i.photoUrl,
+  basePrice: i.basePrice,
+  tags: [...i.tags],
+  isDeal: i.isDeal,
+  serves: i.serves,
+  days: [...i.days].sort((a, b) => a - b),
+  isActive: i.isActive,
+  sort: i.sort,
+  sold30d: i.sold30d,
+  variants: [...i.variants].sort((a, b) => a.sort - b.sort || a.price - b.price).map(x => ({ id: x.id, name: x.name, price: x.price })),
+  optionGroups: [...i.links].sort((a, b) => a.sort - b.sort).map(l => ({ groupId: l.groupId, variantId: l.variantId, sort: l.sort })),
+});
+
+export const itemsWire = (db: MockDb, v: MockFoodVendor, categoryId?: string) =>
+  db.food.items
+    .filter(i => i.businessId === v.businessId && (!categoryId || i.categoryId === categoryId))
+    .sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name))
+    .map(itemWire);
+
+export const groupWire = (db: MockDb, g: MockOptionGroup) => ({
+  id: g.id,
+  name: g.name,
+  minSelect: g.minSelect,
+  maxSelect: g.maxSelect,
+  required: g.minSelect >= 1,
+  usedByItems: db.food.items.filter(i => i.links.some(l => l.groupId === g.id)).length,
+  options: [...g.options].sort((a, b) => a.sort - b.sort).map(o => ({ id: o.id, name: o.name, priceDelta: o.priceDelta, isDefault: o.isDefault, isActive: o.isActive })),
+});
+
+export const groupsWire = (db: MockDb, v: MockFoodVendor) =>
+  db.food.groups
+    .filter(g => g.businessId === v.businessId)
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map(g => groupWire(db, g));
+
+const categorySort = (db: MockDb, id: string) => db.food.categories.find(c => c.id === id)?.sort ?? 0;
+
+export const availabilityWire = (db: MockDb, v: MockFoodVendor, now: number) => ({
+  items: db.food.items
+    .filter(i => i.businessId === v.businessId)
+    .sort((a, b) => categorySort(db, a.categoryId) - categorySort(db, b.categoryId) || a.sort - b.sort || a.name.localeCompare(b.name))
+    .map(i => {
+      const o = overrideOf(i, v, now);
+      const until = o.unavailableUntil && Date.parse(o.unavailableUntil) > now ? o.unavailableUntil : null;
+      return {
+        itemId: i.id,
+        name: i.name,
+        category: db.food.categories.find(c => c.id === i.categoryId)?.name ?? '',
+        isAvailable: isItemAvailable(o, now),
+        unavailableUntil: until,
+        dailyLimit: o.dailyLimit,
+        remainingToday: o.remainingToday,
+      };
+    }),
+  options: db.food.groups
+    .filter(g => g.businessId === v.businessId)
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .flatMap(g => [...g.options].sort((a, b) => a.sort - b.sort).map(o => ({ optionId: o.id, name: o.name, group: g.name, isAvailable: o.available }))),
+});
+
+export const todayWire = (db: MockDb, v: MockFoodVendor, now: number) => {
+  const { date, weekday } = kitchenToday(v, now);
+  return {
+    date,
+    weekday,
+    items: db.food.items
+      .filter(i => i.businessId === v.businessId)
+      .sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name))
+      .map(i => {
+        const o = overrideOf(i, v, now);
+        const onDay = i.days.includes(weekday);
+        return {
+          itemId: i.id,
+          name: i.name,
+          onTodaysMenu: onDay,
+          cooking: i.isActive && o.isAvailable && onDay,
+          dailyLimit: o.dailyLimit,
+          remainingToday: o.remainingToday,
+          sold: o.dailyLimit !== null && o.remainingToday !== null ? o.dailyLimit - o.remainingToday : null,
+        };
+      }),
+  };
+};
+
+export const slotsWire = (db: MockDb, v: MockFoodVendor) =>
+  db.food.slots
+    .filter(s => s.businessId === v.businessId)
+    .sort((a, b) => a.weekday - b.weekday || a.slotStart.localeCompare(b.slotStart))
+    .map((s: MockPreorderSlot) => ({ id: s.id, weekday: s.weekday, slotStart: s.slotStart, cutoffMinutesBefore: s.cutoffMinutesBefore, maxOrders: s.maxOrders }));
+
+export const weeklyWire = (db: MockDb, v: MockFoodVendor) =>
+  db.food.items
+    .filter(i => i.businessId === v.businessId)
+    .sort((a, b) => a.sort - b.sort)
+    .map(i => ({ itemId: i.id, name: i.name, days: [...i.days].sort((a, b) => a - b) }));
+
+export { kitchenToday };

@@ -11,7 +11,7 @@
 import { ShopError } from '../shop/shopLogic';
 import type { MockBusiness, MockDb } from '../mockDb';
 import { addDays, dateInZone, formatSlot, zonedToIso } from '../../../../utils/healthTime';
-import type { MockFoodVendor, MockHoursRow, MockKitchenKind } from './foodTypes';
+import type { MockFoodVendor, MockHoursRow, MockItemOverride, MockKitchenKind, MockMenuItem } from './foodTypes';
 
 export class FoodError extends ShopError {}
 
@@ -226,6 +226,25 @@ const CHECKS: Check[] = [
     kinds: ['home_kitchen'],
     done: v => !!v.foodSafetyCheckedAt,
   },
+  {
+    key: 'menu',
+    label: 'At least one dish on the menu',
+    done: (v, db) => db.food.items.some(i => i.businessId === v.businessId && i.isActive && db.food.categories.some(c => c.id === i.categoryId && c.isActive)),
+  },
+  {
+    key: 'portions',
+    label: 'Today’s portions for at least one dish',
+    kinds: ['home_kitchen'],
+    applies: v => !v.preorderOnly,
+    done: (v, db) => db.food.items.some(i => i.businessId === v.businessId && i.override?.dailyLimit != null),
+  },
+  {
+    key: 'slots',
+    label: 'Pre-order slots',
+    kinds: ['home_kitchen'],
+    applies: v => v.preorderOnly,
+    done: (v, db) => db.food.slots.some(s => s.businessId === v.businessId),
+  },
 ];
 
 export const setupOf = (v: MockFoodVendor, db: MockDb) => {
@@ -395,3 +414,34 @@ export const foodSessionOf = (db: MockDb, b: MockBusiness, now: number) => {
   const v = ensureVendor(db, b, now);
   return { brandId: v.brandId, brandSlug: v.slug, branchStatus: v.status, isLive: v.status === 'active', setupComplete: setupOf(v, db).ready };
 };
+
+// ─── The menu ────────────────────────────────────────
+export const ITEM_TAGS = ['spicy', 'veg', 'bestseller', 'new', 'contains_nuts'] as const;
+export const EVERY_DAY = [0, 1, 2, 3, 4, 5, 6];
+
+/** The kitchen's local date and weekday (0 = Sunday). */
+export const kitchenToday = (v: Pick<MockFoodVendor, 'timezone'>, now: number) => {
+  const date = dateInZone(isoNow(now), v.timezone);
+  return { date, weekday: new Date(`${date}T00:00:00Z`).getUTCDay() };
+};
+
+/**
+ * A dish's switches for today: what is left resets to the day's portions
+ * the first time it is read on a new day (the API's nightly reset).
+ */
+export const overrideOf = (i: MockMenuItem, v: Pick<MockFoodVendor, 'timezone'>, now: number): MockItemOverride => {
+  const o = i.override ?? { isAvailable: true, unavailableUntil: null, dailyLimit: null, remainingToday: null, portionsDate: null };
+  const { date } = kitchenToday(v, now);
+  if (o.dailyLimit !== null && o.portionsDate !== date) {
+    o.remainingToday = o.dailyLimit;
+    o.portionsDate = date;
+  }
+  if (i.override) i.override = o;
+  return o;
+};
+
+/** On now: switched on, not off until a later time. */
+export const isItemAvailable = (o: MockItemOverride, now: number) =>
+  o.isAvailable && !(o.unavailableUntil && Date.parse(o.unavailableUntil) > now);
+
+export const menuItemCount = (db: MockDb, businessId: string) => db.food.items.filter(i => i.businessId === businessId).length;

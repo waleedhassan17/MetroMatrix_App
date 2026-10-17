@@ -7,7 +7,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ServiceScope } from '../theme';
 import type { FoodVendorStackParamList } from '../types';
 import { ROUTES } from '../navigations-maps/Base';
-import { FOOD_VENDOR_STACK_ROUTES, FOOD_VENDOR_TABS } from '../navigations-maps/FoodVendor';
+import { FOOD_VENDOR_HOME_TABS, FOOD_VENDOR_STACK_ROUTES, FOOD_VENDOR_TABS } from '../navigations-maps/FoodVendor';
 import { useAppSelector } from '../hooks/useReduxHooks';
 import { selectBusiness } from '../screens/Auth/authSlice';
 import { RouteTabs } from './RouteTabs';
@@ -15,7 +15,10 @@ import { foodVendorRootRoute } from './sessionGate';
 
 const Stack = createNativeStackNavigator<FoodVendorStackParamList>();
 
-const VendorTabs: React.FC = () => <RouteTabs id="FoodVendorTabs" routes={FOOD_VENDOR_TABS} />;
+const VendorTabs: React.FC = () => {
+  const homeKitchen = useAppSelector(selectBusiness)?.subType === 'home_kitchen';
+  return <RouteTabs id="FoodVendorTabs" routes={homeKitchen ? FOOD_VENDOR_HOME_TABS : FOOD_VENDOR_TABS} />;
+};
 
 const KitchenPartnerNavigator: React.FC = () => {
   const business = useAppSelector(selectBusiness);

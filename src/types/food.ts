@@ -264,3 +264,143 @@ export interface RiderHome {
     city: string | null;
   };
 }
+
+// ─── The vendor's menu (GET/POST /food/vendor/menu/…) ─────────────────────
+export type ItemTag = 'spicy' | 'veg' | 'bestseller' | 'new' | 'contains_nuts';
+
+export interface MenuCategory {
+  id: string;
+  name: string;
+  sort: number;
+  /** A daily window ("18:00"–"23:30", local), or both null for all day. */
+  availableFrom: string | null;
+  availableTo: string | null;
+  isActive: boolean;
+  itemCount: number;
+}
+
+export interface ItemVariant {
+  id: string;
+  name: string;
+  price: number;
+}
+
+/** An add-on group on a dish, in display order; `variantId` limits it to one size. */
+export interface ItemGroupLink {
+  groupId: string;
+  variantId: string | null;
+  sort: number;
+}
+
+export interface VendorMenuItem {
+  id: string;
+  categoryId: string;
+  name: string;
+  description: string | null;
+  photoUrl: string | null;
+  /** Rupees. With sizes, each size has its own price. */
+  basePrice: number;
+  tags: ItemTag[];
+  isDeal: boolean;
+  serves: number | null;
+  /** Weekdays it is on the menu (0 = Sunday). */
+  days: number[];
+  isActive: boolean;
+  sort: number;
+  sold30d: number;
+  variants: ItemVariant[];
+  optionGroups: ItemGroupLink[];
+}
+
+export interface MenuOption {
+  id: string;
+  name: string;
+  priceDelta: number;
+  isDefault: boolean;
+  isActive: boolean;
+}
+
+/** A reusable add-on group (the library): required when minSelect ≥ 1. */
+export interface OptionGroup {
+  id: string;
+  name: string;
+  minSelect: number;
+  maxSelect: number;
+  required: boolean;
+  usedByItems: number;
+  options: MenuOption[];
+}
+
+export interface MenuItemInput {
+  categoryId: string;
+  name: string;
+  description: string | null;
+  photoUrl: string | null;
+  basePrice: number;
+  tags: ItemTag[];
+  isDeal: boolean;
+  serves: number | null;
+  days: number[];
+  isActive: boolean;
+}
+
+export interface OptionGroupInput {
+  name: string;
+  minSelect: number;
+  maxSelect: number;
+  options: { id?: string; name: string; priceDelta: number; isDefault: boolean; isActive: boolean }[];
+}
+
+export interface AvailabilityItem {
+  itemId: string;
+  name: string;
+  category: string;
+  isAvailable: boolean;
+  /** Off until this time, then back on its own. */
+  unavailableUntil: string | null;
+  dailyLimit: number | null;
+  remainingToday: number | null;
+}
+
+export interface AvailabilityOption {
+  optionId: string;
+  name: string;
+  group: string;
+  isAvailable: boolean;
+}
+
+export interface MenuAvailability {
+  items: AvailabilityItem[];
+  options: AvailabilityOption[];
+}
+
+/** A home kitchen's day: which dishes are cooking and how many portions are left. */
+export interface TodayItem {
+  itemId: string;
+  name: string;
+  onTodaysMenu: boolean;
+  cooking: boolean;
+  dailyLimit: number | null;
+  remainingToday: number | null;
+  sold: number | null;
+}
+
+export interface TodayMenu {
+  date: string;
+  weekday: number;
+  items: TodayItem[];
+}
+
+export interface PreorderSlot {
+  id: string;
+  weekday: number;
+  slotStart: string;
+  cutoffMinutesBefore: number;
+  maxOrders: number;
+}
+
+export interface WeeklyMenuEntry {
+  itemId: string;
+  name: string;
+  days: number[];
+}

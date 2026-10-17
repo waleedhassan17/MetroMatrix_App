@@ -93,7 +93,7 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       DoctorProfileEdit: 'doctor/profile',
       // The Food vendor's app (its own stack): metromatrix://vendor/orders
       VendorTabs: {
-        screens: { OrdersTab: 'vendor/orders', MenuTab: 'vendor/menu', RidersTab: 'vendor/riders', MoreTab: 'vendor/more' },
+        screens: { TodayTab: 'vendor/today', OrdersTab: 'vendor/orders', MenuTab: 'vendor/menu', RidersTab: 'vendor/riders', MoreTab: 'vendor/more' },
       },
       VendorSetup: 'vendor/setup',
       VendorBrand: 'vendor/brand',
@@ -103,6 +103,12 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       VendorClosures: 'vendor/closures',
       VendorPlan: 'vendor/plan',
       VendorRiderDetail: 'vendor/riders/:id',
+      VendorMenuItem: 'vendor/menu/dish/:id?',
+      VendorCategories: 'vendor/menu/categories',
+      VendorOptionGroups: 'vendor/menu/add-ons',
+      VendorOptionGroup: 'vendor/menu/add-on/:id?',
+      VendorWeeklyMenu: 'vendor/weekly-menu',
+      VendorPreorderSlots: 'vendor/preorder-slots',
       // The rider's app: metromatrix://rider/deliveries
       RiderTabs: {
         screens: { DeliveriesTab: 'rider/deliveries', CashTab: 'rider/cash', RiderProfileTab: 'rider/profile' },
