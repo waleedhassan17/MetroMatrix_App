@@ -180,6 +180,7 @@ export const ROUTES = {
 
   // ── Dev only ──
   DESIGN_GALLERY: 'DesignGallery',
+  REALTIME_CHECK: 'RealtimeCheck',
 } as const;
 
 export type RouteName = (typeof ROUTES)[keyof typeof ROUTES];

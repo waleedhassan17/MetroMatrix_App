@@ -36,6 +36,9 @@ import { signOut } from '../../screens/Auth/authSlice';
 import { SplashScreen } from '../../screens/Onboarding/Splash/SplashScreen';
 import { resetAllState } from '../../store/resetAllState';
 import { setSessionExpiredHandler, setBusinessStatusStaleHandler } from '../../utils/authEvents';
+import { realtime } from '../../services/realtime/socketClient';
+import { setRealtimeStatus } from '../../store/realtimeSlice';
+import { useOrientationPolicy } from '../../hooks/useLayoutClass';
 
 // ─── Deep linking ─────────────────────────────────────
 // metromatrix://verify-success?token=…        → VerifySuccess (the email link)
@@ -98,6 +101,7 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       AddressBook: 'profile/addresses',
       AddressForm: 'profile/addresses/edit',
       Notifications: 'profile/notifications',
+      RealtimeCheck: 'dev/realtime',
       // Health: /health, metromatrix://health/doctor/:id,
       // metromatrix://health/appointment/:code (push taps too) …
       HealthApp: {
@@ -279,6 +283,19 @@ export const AppContainer: React.FC = () => {
     });
     return () => setBusinessStatusStaleHandler(null);
   }, [dispatch]);
+
+  // ─── Phones stay in portrait; tablets may turn (the vendor board's columns).
+  useOrientationPolicy();
+
+  // ─── The live connection (Food): its state feeds realtimeSlice, and it
+  // closes with the session — screens open it through hooks/useRealtime.
+  useEffect(
+    () => realtime.onStatus(status => dispatch(setRealtimeStatus({ status, at: new Date().toISOString() }))),
+    [dispatch],
+  );
+  useEffect(() => {
+    if (!auth.isAuthenticated) realtime.stop();
+  }, [auth.isAuthenticated]);
 
   // ─── Push taps: open what the push is about (an order, a return), through
   // the app's own deep links, once the role's app is mounted.

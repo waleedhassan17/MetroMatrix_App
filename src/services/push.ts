@@ -38,14 +38,43 @@ export const obtainPushToken = async (ask: boolean): Promise<string | null> => {
   }
   if (status !== 'granted') return null;
 
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'Updates',
-      importance: Notifications.AndroidImportance.DEFAULT,
-    });
-  }
+  if (Platform.OS === 'android') await ensureAndroidChannels(Notifications);
   const token = await Notifications.getExpoPushTokenAsync({ projectId: projectId() });
   return token.data;
+};
+
+/**
+ * Android notification channels. A channel's sound and importance are fixed
+ * when it is first created, so these never change once shipped — add a new
+ * id instead. `new-orders` carries the vendor's new-order chime (registered
+ * with the expo-notifications plugin in app.json; a build is needed for the
+ * custom sound — Expo Go plays the default one). The API names the channel
+ * in its push (`channelId`).
+ */
+export const ANDROID_CHANNELS = {
+  default: 'default',
+  newOrders: 'new-orders',
+  deliveries: 'deliveries',
+} as const;
+
+const ensureAndroidChannels = async (Notifications: typeof import('expo-notifications')) => {
+  await Notifications.setNotificationChannelAsync(ANDROID_CHANNELS.default, {
+    name: 'Updates',
+    importance: Notifications.AndroidImportance.DEFAULT,
+  });
+  await Notifications.setNotificationChannelAsync(ANDROID_CHANNELS.newOrders, {
+    name: 'New orders',
+    description: 'Rings for every new Food Court order until you open it.',
+    importance: Notifications.AndroidImportance.MAX,
+    sound: 'new_order.wav',
+    vibrationPattern: [0, 500, 300, 500],
+    lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+  });
+  await Notifications.setNotificationChannelAsync(ANDROID_CHANNELS.deliveries, {
+    name: 'Deliveries',
+    description: 'Orders your vendor offers you to deliver.',
+    importance: Notifications.AndroidImportance.HIGH,
+  });
 };
 
 export const pushPlatform = (): 'android' | 'ios' | 'web' =>

@@ -17,6 +17,7 @@ import { resetAllState } from './resetAllState';
 // ── Global slices ──
 import authReducer from '../screens/Auth/authSlice';
 import { preferencesSlice } from './preferencesSlice';
+import { realtimeSlice } from './realtimeSlice';
 
 // ── App-level slices ──
 import { appContainerSlice } from '../components/app-container/appContainerSlice';
@@ -142,6 +143,7 @@ const rootReducer = combineReducers({
   auth: persistReducer(authPersistConfig, authReducer),
   preferences: preferencesSlice.reducer,
   appContainer: appContainerSlice.reducer,
+  realtime: realtimeSlice.reducer,
   designGallery: designGallerySlice.reducer,
   roleSelection: roleSelectionSlice.reducer,
   providerSelection: providerSelectionSlice.reducer,

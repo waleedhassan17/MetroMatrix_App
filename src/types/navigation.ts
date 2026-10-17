@@ -195,6 +195,8 @@ export type CustomerStackParamList = {
   HealthApp: NavigatorScreenParams<HealthAppParamList> | undefined;
   ShopApp: NavigatorScreenParams<ShopAppParamList> | undefined;
   FoodApp: NavigatorScreenParams<FoodAppParamList> | undefined;
+  /** Dev builds only: the Food foundation check (/dev/realtime). */
+  RealtimeCheck: undefined;
 };
 
 /** The store partner's four tabs. */

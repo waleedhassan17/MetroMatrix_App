@@ -3,7 +3,7 @@
     "name": "MetroMatrix",
     "slug": "metromatrix",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "metromatrix",
     "userInterfaceStyle": "light",
@@ -27,12 +27,21 @@
         "RECORD_AUDIO",
         "MODIFY_AUDIO_SETTINGS",
         "READ_CALENDAR",
-        "WRITE_CALENDAR"
+        "WRITE_CALENDAR",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "VIBRATE"
       ]
     },
     "ios": {
       "bundleIdentifier": "com.metromatrix.app",
-      "supportsTablet": false
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "location"
+        ]
+      }
     },
     "web": {
       "favicon": "./assets/images/favicon.png",
@@ -52,7 +61,11 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "MetroMatrix uses your location to pin your business address on the map."
+          "locationWhenInUsePermission": "MetroMatrix uses your location to find food near you, to pin addresses on the map and, for riders, to share where you are with your vendor while you deliver.",
+          "locationAlwaysAndWhenInUsePermission": "Riders: MetroMatrix shares your location with your vendor while you are on duty, even when the app is closed, so customers can follow their order. It stops when you go off duty.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true,
+          "isIosBackgroundLocationEnabled": true
         }
       ],
       [
@@ -62,7 +75,14 @@
           "cameraPermission": "MetroMatrix needs the camera to photograph documents and health records."
         }
       ],
-      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "sounds": [
+            "./assets/sounds/new_order.wav"
+          ]
+        }
+      ],
       [
         "@react-native-google-signin/google-signin",
         {

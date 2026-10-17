@@ -18,6 +18,10 @@ import NotificationsScreen from '../screens/Account/Notifications/NotificationsS
 import HealthAppNavigator from '../navigators/HealthAppNavigator';
 import ShopAppNavigator from '../navigators/ShopAppNavigator';
 import FoodAppNavigator from '../navigators/FoodAppNavigator';
+import RealtimeCheckScreen from '../screens/Dev/RealtimeCheck/RealtimeCheckScreen';
+
+/** Dev builds only: the Food foundation check — live connection, rider location, order alert (/dev/realtime). */
+const DEV_ROUTES: IRoute[] = __DEV__ ? [{ title: ROUTES.REALTIME_CHECK, component: RealtimeCheckScreen }] : [];
 
 export const CUSTOMER_ROUTES: IRoute[] = [
   { title: ROUTES.CUSTOMER_HOME, component: CustomerHomeScreen },
@@ -31,4 +35,5 @@ export const CUSTOMER_ROUTES: IRoute[] = [
   { title: ROUTES.ADDRESS_BOOK, component: AddressBookScreen },
   { title: ROUTES.ADDRESS_FORM, component: AddressFormScreen },
   { title: ROUTES.NOTIFICATIONS, component: NotificationsScreen },
+  ...DEV_ROUTES,
 ];

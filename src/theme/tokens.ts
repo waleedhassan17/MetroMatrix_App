@@ -238,6 +238,10 @@ export const size = {
   progress: 4,
   timelineDot: 12,
   timelineLine: 2,
+  /** Food maps: a kitchen or drop-off pin, the rider's marker, the picker's centre pin. */
+  mapPin: 34,
+  mapRider: 40,
+  mapCentrePin: 44,
   pageDot: 8,
   pageDotActive: 24,
   /** Onboarding indicator pitch (dot centre to dot centre). */
@@ -380,6 +384,9 @@ export const buildElevation = (palette: Palette): Elevation => ({
 });
 
 // ─── Motion ─────────────────────────────────────────
+/** Layout classes by window width (dp): a tablet layout from `tablet` up (the vendor board, the menu manager). */
+export const breakpoints = { tablet: 768 } as const;
+
 export const motion = {
   /** Press feedback: 180 ms ease-out. */
   press: { duration: 180, scale: 0.97 },
@@ -399,6 +406,14 @@ export const motion = {
   ordersPoll: 30000,
   /** The doctor's Today queue refreshes this often while on screen. */
   queuePoll: 30000,
+  /** Food: a rider's marker glides to each new position over this long (jumps under calm motion). */
+  markerGlide: 900,
+  /** Food: with the live connection down this long, live screens fall back to polling. */
+  socketGrace: 10000,
+  /** Food: the vendor board's polling rhythm while the live connection is down. */
+  boardPoll: 15000,
+  /** Food: order tracking's polling rhythm while the live connection is down. */
+  trackingPoll: 10000,
   /** Sheets and step transitions. */
   sheet: { duration: 240 },
   /** Badges and pills arriving. */
