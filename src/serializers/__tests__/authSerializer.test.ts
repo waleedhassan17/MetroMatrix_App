@@ -143,6 +143,9 @@ describe('TOTP serializers', () => {
   it('reads a challenge; defaults enrolled to true', () => {
     expect(totpChallengeSerializer({ challengeToken: 'c' })).toEqual({ challengeToken: 'c', totpEnrolled: true });
     expect(totpChallengeSerializer({ challengeToken: 'c', totpEnrolled: false })?.totpEnrolled).toBe(false);
+    // The API's own words: an authenticator still to be set up.
+    expect(totpChallengeSerializer({ totpRequired: true, enrolmentRequired: true, challengeToken: 'c' })?.totpEnrolled).toBe(false);
+    expect(totpChallengeSerializer({ totpRequired: true, enrolmentRequired: false, challengeToken: 'c' })?.totpEnrolled).toBe(true);
     expect(totpChallengeSerializer({ user: fullUser })).toBeNull();
   });
 

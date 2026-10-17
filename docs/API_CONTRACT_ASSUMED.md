@@ -38,14 +38,14 @@ Base URL: `API_BASE_URL` (`src/config/env.ts`), e.g. `https://<heroku-app>.herok
 | `BusinessDocument` | `{ id, kind, url, publicId, mimeType, status: 'pending' \| 'accepted' \| 'rejected', reviewerNote \| null, uploadedAt }` | `businessSerializer` |
 | `Business` | `{ id, ownerId, serviceType, subType, name, phone, city, address, location: { lat, lng } \| null, details: Record<string,string>, status, documents[], requiredDocuments: DocumentKind[], missingDocuments: DocumentKind[], rejectionReason \| null, suspensionReason \| null, submittedAt \| null, reviewedAt \| null, createdAt, updatedAt }` | `businessSerializer` |
 | `AuthResult` | `{ user, business \| null, tokens }` | `authSerializer.authResultSerializer` |
-| `TotpChallenge` | `{ challengeToken, totpEnrolled: boolean }` | `authSerializer.totpChallengeSerializer` |
+| `TotpChallenge` | `{ totpRequired: true, enrolmentRequired: boolean, challengeToken }` (the real API's shape; the older `totpEnrolled` is still read) | `authSerializer.totpChallengeSerializer` |
 
 ## Auth (`/auth`)
 
 | Function | Method + path | Body | 2xx `data` | Notable errors |
 |---|---|---|---|---|
 | `authSignup` | `POST /auth/signup` | `{ name, email, phone, password, portal: 'customer'\|'partner', subType? (providers), acceptedTerms: true }` | `AuthResult` (user unverified; a verification LINK is emailed). Providers get `providerServiceType` / `providerSubType` from `subType`. | `EMAIL_TAKEN` 409, validation 400 |
-| `authSignin` | `POST /auth/signin` | `{ email, password, portal }` | customer/partner: `AuthResult`. **Staff accounts on the customer portal** (they sign in from the User sign-in, as in the FYP app): `TotpChallenge`, no tokens. | `INVALID_CREDENTIALS` 401, `WRONG_PORTAL` 403 `details: { portal }` |
+| `authSignin` | `POST /auth/signin` | `{ email, password, portal }` | customer/partner: `AuthResult`. **Staff** on the admin portal: `TotpChallenge`, no tokens. Staff sign in from the User sign-in, as in the FYP app: the customer portal answers `WRONG_PORTAL` with `accountType: 'super_admin'` (or `admin`), and the app sends the same credentials to the admin portal (`authThunks.signInAndOpen`). This is the real API's rule (MetroMatrix-API `API_AUTH.md`). | `INVALID_CREDENTIALS` 401, `WRONG_PORTAL` 403 `details: { accountType, portal }` (the portal that was tried; the app works out the right one from `accountType`) |
 | `authAdminTotp` | `POST /auth/admin/totp` | `{ challengeToken, code }` or `{ challengeToken, recoveryCode }` | `AuthResult` | `TOTP_INVALID` 401, `RECOVERY_CODE_USED` 401, `CHALLENGE_EXPIRED` 401 |
 | `adminTotpEnrol` | `POST /auth/admin/totp/enrol` | `{ challengeToken }` | `{ secret, otpauthUrl }` | `CHALLENGE_EXPIRED` |
 | `adminTotpConfirm` | `POST /auth/admin/totp/confirm` | `{ challengeToken, code }` | `AuthResult & { recoveryCodes: string[] }` | `TOTP_INVALID` |
@@ -149,8 +149,8 @@ Kitchens arrive nearest first. Search and the cuisine filter run on the device (
 
 ## Admin sign-in flow
 
-1. `POST /auth/signin` (from the User sign-in) returns `{ challengeToken, totpEnrolled }` for a staff account. **No tokens are issued.**
-2. If `totpEnrolled` is true, go to step 3. Otherwise go to the enrol branch below.
+1. `POST /auth/signin` with `portal: 'admin'` (the app retries there after the User sign-in's `WRONG_PORTAL`) returns `{ totpRequired, enrolmentRequired, challengeToken }` for a staff account. **No tokens are issued.**
+2. If `enrolmentRequired` is false, go to step 3. Otherwise go to the enrol branch below.
 3. `POST /auth/admin/totp` with a code or a recovery code returns `AuthResult`.
 
 Enrol branch:

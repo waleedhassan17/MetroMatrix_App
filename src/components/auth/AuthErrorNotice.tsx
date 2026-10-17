@@ -2,7 +2,8 @@
 // AuthErrorNotice — a server error, phrased for the person reading it
 // ═══════════════════════════════════════════════════════
 // WRONG_PORTAL shows the server's message plus a button to the portal the
-// account belongs to (QA 10). Offline gets its own title (QA 27); retrying
+// account belongs to (QA 10): the API names the account type (and the
+// portal that was tried); staff go to the User sign-in, as in the FYP. Offline gets its own title (QA 27); retrying
 // is simply submitting again.
 
 import React from 'react';
@@ -16,6 +17,14 @@ const PORTAL_LABEL: Record<Portal, string> = {
   admin: 'Sign in as a User',
 };
 
+const DOOR: Record<string, Portal> = { customer: 'customer', partner: 'partner', admin: 'customer', super_admin: 'customer' };
+
+/** `{ accountType, portal: tried }` from the API → where to sign in instead. */
+const rightPortal = (details: unknown): Portal | undefined => {
+  const d = (details ?? {}) as { accountType?: unknown; portal?: unknown };
+  return typeof d.accountType === 'string' ? DOOR[d.accountType] : (d.portal as Portal | undefined);
+};
+
 export const AuthErrorNotice: React.FC<{
   error: ServerError;
   fallbackTitle?: string;
@@ -25,7 +34,7 @@ export const AuthErrorNotice: React.FC<{
   if (error.code === 'NETWORK_ERROR') {
     return <InlineNotice tone="warning" message="You're offline. Check your connection, then try again." />;
   }
-  const portal = error.details?.portal as Portal | undefined;
+  const portal = rightPortal(error.details);
   if (error.code === 'WRONG_PORTAL' && portal && onGoToPortal && PORTAL_LABEL[portal]) {
     return (
       <InlineNotice

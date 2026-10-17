@@ -1,6 +1,9 @@
 // The dummy API, driven through the REAL network functions — every flow a
 // tester walks in the app, end to end, with no backend.
 
+import type { Dispatch } from '@reduxjs/toolkit';
+import { signInAndOpen } from '../../../../screens/Auth/shared/authThunks';
+import { setPendingTotp } from '../../../../screens/Auth/authSlice';
 import {
   authAdminTotp,
   authForgotPassword,
@@ -143,7 +146,7 @@ describe('sign-in rules', () => {
   it('a provider on the User sign-in is pointed to the provider sign-in', async () => {
     const err = await failure(authSignin({ email: 'doctor@metromatrix.app', password: SEED_PASSWORD, portal: 'customer' }));
     expect(err.code).toBe('WRONG_PORTAL');
-    expect(err.details).toEqual({ portal: 'partner' });
+    expect(err.details).toEqual({ accountType: 'partner', portal: 'customer' });
   });
 
   it('a wrong password is refused', async () => {
@@ -152,8 +155,10 @@ describe('sign-in rules', () => {
     );
   });
 
-  it('staff sign in on the User sign-in and get a TOTP step, no tokens', async () => {
-    const outcome = await authSignin({ email: 'admin@metromatrix.app', password: STAFF_PASSWORD, portal: 'customer' });
+  it('staff are told the admin portal is theirs, and get a TOTP step there, no tokens', async () => {
+    const wrong = await failure(authSignin({ email: 'admin@metromatrix.app', password: STAFF_PASSWORD, portal: 'customer' }));
+    expect(wrong).toMatchObject({ code: 'WRONG_PORTAL', details: { accountType: 'super_admin', portal: 'customer' } });
+    const outcome = await authSignin({ email: 'admin@metromatrix.app', password: STAFF_PASSWORD, portal: 'admin' });
     if (outcome.kind !== 'totp') throw new Error('expected a challenge');
     expect(outcome.challenge.totpEnrolled).toBe(true);
 
@@ -162,11 +167,23 @@ describe('sign-in rules', () => {
     expect(session.user.role).toBe('super_admin');
   });
 
+  it('the User sign-in takes staff on to the admin portal, as in the FYP (TOTP next)', async () => {
+    const actions: { type: string; payload?: unknown }[] = [];
+    const dispatch = ((action: { type: string; payload?: unknown }) => {
+      actions.push(action);
+      return action;
+    }) as unknown as Dispatch;
+    expect(await signInAndOpen(dispatch, 'customer', 'admin@metromatrix.app', STAFF_PASSWORD)).toBe('totp');
+    expect(actions.find(x => x.type === setPendingTotp.type)?.payload).toMatchObject({ enrolled: true, email: 'admin@metromatrix.app' });
+    // Anyone else on the wrong sign-in is still told where to go.
+    expect((await failure(signInAndOpen(dispatch, 'customer', 'doctor@metromatrix.app', SEED_PASSWORD))).code).toBe('WRONG_PORTAL');
+  });
+
   it('a recovery code works once', async () => {
-    const first = await authSignin({ email: 'admin@metromatrix.app', password: STAFF_PASSWORD, portal: 'customer' });
+    const first = await authSignin({ email: 'admin@metromatrix.app', password: STAFF_PASSWORD, portal: 'admin' });
     if (first.kind !== 'totp') throw new Error('expected a challenge');
     await authAdminTotp(first.challenge.challengeToken, { recoveryCode: 'MM7K-Q2PX' });
-    const second = await authSignin({ email: 'admin@metromatrix.app', password: STAFF_PASSWORD, portal: 'customer' });
+    const second = await authSignin({ email: 'admin@metromatrix.app', password: STAFF_PASSWORD, portal: 'admin' });
     if (second.kind !== 'totp') throw new Error('expected a challenge');
     expect((await failure(authAdminTotp(second.challenge.challengeToken, { recoveryCode: 'MM7K-Q2PX' }))).code).toBe(
       'RECOVERY_CODE_USED',
@@ -195,7 +212,7 @@ describe('sessions and admin decisions', () => {
   });
 
   it('an admin approves the pending kitchen and suspends the doctor', async () => {
-    const outcome = await authSignin({ email: 'admin@metromatrix.app', password: STAFF_PASSWORD, portal: 'customer' });
+    const outcome = await authSignin({ email: 'admin@metromatrix.app', password: STAFF_PASSWORD, portal: 'admin' });
     if (outcome.kind !== 'totp') throw new Error('expected a challenge');
     await authAdminTotp(outcome.challenge.challengeToken, { code: MOCK.TOTP_CODE });
 

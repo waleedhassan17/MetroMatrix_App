@@ -92,7 +92,9 @@ export const totpChallengeSerializer = (raw: unknown): TotpChallenge | null => {
   if (!isObject(raw)) return null;
   const challengeToken = str(raw.challengeToken);
   if (!challengeToken) return null;
-  return { challengeToken, totpEnrolled: bool(raw.totpEnrolled, true) };
+  // The API says whether an authenticator must be set up first (`enrolmentRequired`).
+  const enrolled = raw.enrolmentRequired !== undefined ? !bool(raw.enrolmentRequired) : bool(raw.totpEnrolled, true);
+  return { challengeToken, totpEnrolled: enrolled };
 };
 
 export const totpEnrolmentSerializer = (raw: unknown): TotpEnrolment | null => {

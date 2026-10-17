@@ -196,7 +196,7 @@ const styles = useStyles(makeStyles); // memoised on the active theme (mode + se
 The order matters. It lives in ONE pure function, `resolveGate()` in `src/navigators/sessionGate.ts`, which has its own unit test. BaseNavigator and AppContainer both call it:
 
 1. not authenticated → Onboarding (first launch only) + Role Selection, Provider Selection, SignIn/SignUp, ProviderSignIn/ProviderSignUp, ForgotPassword → ResetPasswordOTP → ResetPassword
-2. pending TOTP (staff sign in on the ordinary SignIn) → AdminTotp, or AdminTwoFactorEnrol on a first sign-in
+2. pending TOTP (staff sign in on the ordinary SignIn; the API answers `WRONG_PORTAL` there and `signInAndOpen` retries on the admin portal) → AdminTotp, or AdminTwoFactorEnrol on a first sign-in
 3. email not verified → EmailVerification (a link; VerifySuccess handles the deep link)
 4. customer whose profile is incomplete → CompleteProfile (3 steps)
 5. provider with no business, or a `draft` one → PersonalInfo (3 steps, resumes at the unfinished one)

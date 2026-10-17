@@ -220,23 +220,24 @@ route('POST', '/auth/signin', ({ db, body, now }) => {
   if (!user || !user.password || user.password !== body.password) {
     throw new MockError(401, 'INVALID_CREDENTIALS', 'Incorrect email or password.');
   }
+  // As the API does: the password first, then the portal. A wrong door is
+  // 403 WRONG_PORTAL naming the account type and the portal that was tried
+  // (the app sends staff on to the admin portal itself).
   const staff = user.role === 'admin' || user.role === 'super_admin';
+  const door = staff ? 'admin' : user.role === 'partner' ? 'partner' : 'customer';
+  if (body.portal !== door) {
+    const message =
+      door === 'admin'
+        ? 'This is an admin account. Sign in on the MetroMatrix admin console.'
+        : door === 'partner'
+          ? 'This is a service provider account. Sign in as a Service Provider.'
+          : 'This is a customer account. Sign in as a User.';
+    throw new MockError(403, 'WRONG_PORTAL', message, { accountType: user.role, portal: body.portal ?? null });
+  }
   if (staff) {
-    // Staff sign in through the User sign-in, as in the FYP app.
-    if (body.portal === 'partner') {
-      throw new MockError(403, 'WRONG_PORTAL', 'Staff accounts sign in from the User sign-in.', { portal: 'customer' });
-    }
     const challengeToken = `mock-challenge-${newId('c')}`;
     db.challenges[challengeToken] = { userId: user.id, expiresAt: now + 5 * 60 * 1000 };
-    return { challengeToken, totpEnrolled: user.totpEnrolled };
-  }
-  if (body.portal === 'customer' && user.role === 'partner') {
-    throw new MockError(403, 'WRONG_PORTAL', 'This is a service provider account. Sign in as a Service Provider.', {
-      portal: 'partner',
-    });
-  }
-  if (body.portal === 'partner' && user.role === 'customer') {
-    throw new MockError(403, 'WRONG_PORTAL', 'This is a customer account. Sign in as a User.', { portal: 'customer' });
+    return { totpRequired: true, enrolmentRequired: !user.totpEnrolled, challengeToken };
   }
   return authResult(db, user, now);
 });

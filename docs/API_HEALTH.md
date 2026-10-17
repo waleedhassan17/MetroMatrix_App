@@ -1,5 +1,5 @@
 <!--
-  A copy of MetroMatrix-API docs/API_HEALTH.md at chunk3/p8 (f616d61), for reading
+  A copy of MetroMatrix-API docs/API_HEALTH.md at chunk3/p9 (0b7cc77), for reading
   alongside the app. The backend repository is the source of truth: when it changes,
   copy it again, reconcile src/networks/health, src/serializers/health and
   src/models/health with the dummy API (src/networks/network/mock/health), refresh
@@ -660,7 +660,7 @@ What the Healthcare app reads beyond the first contract, each covered by
 
 | # | Addition |
 |---|---|
-| A1 | A doctor's business (`GET /businesses/me`, `GET /admin/businesses/:id`) carries `isListed` and `pmdcVerified`. Other businesses don't have the keys. |
+| A1 | A doctor's business (`GET /businesses/me`, `GET /admin/businesses/:id`, and the session's `BusinessSummary` from sign-in and `GET /auth/me`) carries `isListed` and `pmdcVerified`. Other businesses don't have the keys. |
 | A2 | `GET /health/doctors` takes `specialty` and `condition` slugs as well as ids. |
 | A3 | `DoctorCard.offersClinic`. |
 | A4 | `reviewSummary.distribution`, `GET /health/doctor/reviews/summary`, and `rating` on review lists. |
