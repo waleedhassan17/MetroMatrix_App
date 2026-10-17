@@ -10,14 +10,13 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useServiceNav } from '@hooks/useServiceNav';
 import { usePagedList } from '@hooks/usePagedList';
 import { listVendors } from '@networks/food/discoveryNetwork';
 import { RAILS, pointOfAddress } from '@models/food/discoveryModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
-import { AppText, Button, Card, Divider, EmptyState, IonIcon, InlineNotice, ListRow, MciIcon, Sheet, Skeleton } from '@custom/index';
+import { AppText, Button, Card, Divider, EmptyState, IonIcon, InlineNotice, ListRow, MciIcon, PageHeader, Sheet, Skeleton } from '@custom/index';
 import { VendorCard } from '@custom/food/VendorCard';
 import { CuisineRail, FoodHomeSkeleton, FoodSearchButton, FoodSection, VendorRail } from '@components/food/FoodParts';
 import type { VendorCard as VendorCardData } from '@/types';
@@ -27,16 +26,13 @@ import { closePointSheet, loadFoodHomeAsync, locateMeAsync, openPointSheet, poin
 
 type Nav = { navigate: (name: string, params?: object) => void };
 
-const makeStyles = ({ colors, space, gutter, size, radius }: Theme) =>
+const makeStyles = ({ colors, space, gutter, size }: Theme) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.canvas },
-    bar: { flexDirection: 'row', alignItems: 'center', gap: space.s12, paddingHorizontal: gutter, paddingTop: space.s8 },
-    back: { width: size.touch, height: size.touch, marginLeft: -space.s8, alignItems: 'center', justifyContent: 'center' },
-    where: { flex: 1, gap: space.s0 },
-    whereRow: { flexDirection: 'row', alignItems: 'center', gap: space.s4 },
-    pin: { width: size.control.sm, height: size.control.sm, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+    whereRow: { flexDirection: 'row', alignItems: 'center', gap: space.s8, minHeight: size.touch },
+    whereText: { flexShrink: 1 },
     list: { paddingBottom: space.s40 },
-    header: { gap: space.s24, paddingTop: space.s8, paddingBottom: space.s16 },
+    header: { gap: space.s24, paddingTop: space.s20, paddingBottom: space.s16 },
     padded: { paddingHorizontal: gutter, gap: space.s12 },
     row: { paddingBottom: space.s24 },
     footer: { paddingVertical: space.s16, alignItems: 'center' },
@@ -55,7 +51,6 @@ const FoodHomeContent: React.FC = () => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service, colors, size } = useTheme();
-  const insets = useSafeAreaInsets();
   const s = useAppSelector(selectFoodHome);
   const point = useAppSelector(selectFoodPoint);
   const book = useAppSelector(selectAddressBook);
@@ -155,32 +150,23 @@ const FoodHomeContent: React.FC = () => {
   );
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top }]}>
-      <View style={styles.bar}>
-        <Pressable onPress={back} style={styles.back} accessibilityRole="button" accessibilityLabel="Back" hitSlop={8}>
-          <IonIcon name="arrow-back" size="lg" color={colors.ink} />
-        </Pressable>
-        <View style={[styles.pin, { backgroundColor: service.accentSoft }]}>
-          <MciIcon name="map-marker" size="md" color={service.accent} />
-        </View>
+    <View style={styles.root}>
+      {/* The FYP's gradient page header, as on Shopping and Health. */}
+      <PageHeader title="Food Court" onBack={back} backLabel="Back to services">
         <Pressable
-          style={styles.where}
+          style={styles.whereRow}
           onPress={() => dispatch(openPointSheet())}
           accessibilityRole="button"
           accessibilityLabel={point ? `Delivering to ${point.label}. Change` : 'Choose where to deliver'}
         >
-          <AppText variant="title" accessibilityRole="header">
-            Food Court
+          <MciIcon name="map-marker" size="sm" color={colors.onScrim} />
+          <AppText variant="bodyStrong" tone="onScrim" numberOfLines={1} style={styles.whereText}>
+            {point ? `Delivering to ${point.label}` : 'Choose where to deliver'}
           </AppText>
-          <View style={styles.whereRow}>
-            <AppText variant="caption" tone="muted" numberOfLines={1}>
-              {point ? `Delivering to ${point.label}` : 'Choose where to deliver'}
-            </AppText>
-            <IonIcon name="chevron-down" size="sm" color={colors.inkMuted} />
-          </View>
+          <IonIcon name="chevron-down" size="sm" color={colors.onScrim} />
         </Pressable>
-      </View>
-      <FoodSearchButton onPress={() => navigation.navigate('FoodSearch')} />
+        <FoodSearchButton onPress={() => navigation.navigate('FoodSearch')} />
+      </PageHeader>
 
       <FlatList
         data={delivering ? all.rows : []}

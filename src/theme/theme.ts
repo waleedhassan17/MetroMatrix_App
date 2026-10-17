@@ -30,8 +30,9 @@ import { type, type TypeScale, MAX_FONT_SCALE, CLINICAL_FONT_SCALE } from './typ
  * module, never by a screen): `surface` is the white bar with a large title
  * in the content; `gradient` is the FYP's module-page header — the service's
  * deep accent sweeping toward ink under the status bar, a rounded bottom, and
- * a large white title. Shopping and Healthcare wear the gradient (the owner's
- * FYP headers); inside a store the bar turns white again, because a vendor's
+ * a large white title. Shopping, Healthcare and Food Court wear the gradient
+ * (the owner's FYP headers, one look across services); inside a store or a
+ * vendor's page the bar turns white again, because a vendor's
  * arbitrary colour behind a page title is where legibility goes wrong.
  */
 export interface HeaderStyle {
@@ -85,7 +86,7 @@ const TAB_BARS: Record<ServiceName, TabBarVariant> = {
   food: 'softPill',
 };
 
-const GRADIENT_HEADERS: ServiceName[] = ['shopping', 'healthcare'];
+const GRADIENT_HEADERS: ServiceName[] = ['shopping', 'healthcare', 'food'];
 
 /**
  * Health's touch targets stay at 48 and its text may scale to 150% (the

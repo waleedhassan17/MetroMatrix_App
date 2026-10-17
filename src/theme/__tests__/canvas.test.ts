@@ -30,9 +30,9 @@ describe('screen ground', () => {
     expect(storeTheme('#1C1917', '#FFFFFF').colors.canvas.toUpperCase()).toBe(WHITE);
   });
 
-  it('only Shopping and Health wear the gradient page header; inside a store it is white', () => {
+  it('every service wears the gradient page header (one look across services); inside a store it is white', () => {
     const tones = Object.fromEntries(SERVICE_NAMES.map(n => [n, getTheme(n).header.tone]));
-    expect(tones).toEqual({ shopping: 'gradient', healthcare: 'gradient', food: 'surface', neutral: 'surface' });
+    expect(tones).toEqual({ shopping: 'gradient', healthcare: 'gradient', food: 'gradient', neutral: 'surface' });
     expect(storeTheme('#C25100', '#FFFFFF').header.tone).toBe('surface');
   });
 

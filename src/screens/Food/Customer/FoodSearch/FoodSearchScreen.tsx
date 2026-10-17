@@ -8,13 +8,12 @@ import React, { useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { useDebouncedValue } from '@hooks/usePagedList';
 import { cardLine } from '@models/food/discoveryModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
-import { AppText, Card, Divider, EmptyState, IconButton, InlineNotice, IonIcon, ListRow, SegmentTabs, SkeletonLines, TextAction } from '@custom/index';
+import { AppText, Card, Divider, EmptyState, InlineNotice, IonIcon, ListRow, PageHeader, SegmentTabs, SkeletonLines, TextAction } from '@custom/index';
 import { VendorCard } from '@custom/food/VendorCard';
 import { FoodSearchField } from '@components/food/FoodParts';
 import type { FoodAppParamList } from '@/types';
@@ -33,9 +32,7 @@ const TABS: { key: FoodSearchTab; label: string }[] = [
 const makeStyles = ({ colors, space, gutter, size, radius }: Theme) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.canvas },
-    bar: { flexDirection: 'row', alignItems: 'center', paddingLeft: gutter - space.s8 },
-    grow: { flex: 1 },
-    body: { gap: space.s16, paddingBottom: space.s40 },
+    body: { gap: space.s16, paddingTop: space.s20, paddingBottom: space.s40 },
     padded: { paddingHorizontal: gutter, gap: space.s12 },
     recentHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     group: { marginHorizontal: gutter, gap: space.s8 },
@@ -56,7 +53,6 @@ const FoodSearchContent: React.FC<Props> = ({ route, navigation }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { size, colors } = useTheme();
-  const insets = useSafeAreaInsets();
   const point = useAppSelector(selectFoodPoint);
   const recent = useAppSelector(selectRecentFoodSearches);
   const s = useAppSelector(selectFoodSearch);
@@ -84,13 +80,11 @@ const FoodSearchContent: React.FC<Props> = ({ route, navigation }) => {
   const r = s.result;
   const showing = s.text.trim().length >= MIN_QUERY;
   return (
-    <View style={[styles.root, { paddingTop: insets.top }]}>
-      <View style={styles.bar}>
-        <IconButton icon="arrow-back" accessibilityLabel="Back" onPress={back} />
-        <View style={styles.grow}>
-          <FoodSearchField value={s.text} onChange={v => dispatch(setSearchText(v))} onSubmit={() => submit()} autoFocus />
-        </View>
-      </View>
+    <View style={styles.root}>
+      {/* The FYP's gradient page header, as on Shopping and Health. */}
+      <PageHeader title="Search" subtitle={point ? `Delivering to ${point.label}` : undefined} onBack={back}>
+        <FoodSearchField value={s.text} onChange={v => dispatch(setSearchText(v))} onSubmit={() => submit()} autoFocus />
+      </PageHeader>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.body}>
         {!point ? (
           <EmptyState icon="map-pin" title="Choose where to deliver first" body="Search shows the kitchens that deliver to you." />
