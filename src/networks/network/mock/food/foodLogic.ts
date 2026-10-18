@@ -11,7 +11,7 @@
 import { ShopError } from '../shop/shopLogic';
 import type { MockBusiness, MockDb } from '../mockDb';
 import { addDays, dateInZone, formatSlot, zonedToIso } from '../../../../utils/healthTime';
-import type { MockFoodVendor, MockHoursRow, MockItemOverride, MockKitchenKind, MockMenuItem } from './foodTypes';
+import type { MockFoodVendor, MockHoursRow, MockItemOverride, MockKitchenKind, MockMenuItem, MockPlanEntitlementKey, MockPlanLimitKey } from './foodTypes';
 
 export class FoodError extends ShopError {}
 
@@ -279,11 +279,43 @@ export const COMMUNITY_PLAN = {
 export const activeRiders = (db: MockDb, businessId: string, exceptId?: string) =>
   db.food.riders.filter(r => r.businessId === businessId && r.status === 'active' && r.id !== exceptId).length;
 
-/** 409 PLAN_LIMIT_REACHED {key, limit, used} when the plan has no room. */
-export const assertWithinPlan = (key: keyof typeof COMMUNITY_PLAN.limits, wanted: number) => {
-  const limit = COMMUNITY_PLAN.limits[key];
+/** The vendor's plan: Community, with staff overrides merged on top (limits and entitlements only). */
+export const planOf = (v: MockFoodVendor) => {
+  const o = v.planOverrides ?? {};
+  const limits = { ...COMMUNITY_PLAN.limits };
+  for (const k of Object.keys(limits) as MockPlanLimitKey[]) if (Number.isInteger(o.limits?.[k])) limits[k] = o.limits![k]!;
+  const entitlements = { ...COMMUNITY_PLAN.entitlements };
+  for (const k of Object.keys(entitlements) as MockPlanEntitlementKey[]) if (typeof o.entitlements?.[k] === 'boolean') entitlements[k] = o.entitlements![k]!;
+  return { ...COMMUNITY_PLAN, limits, entitlements };
+};
+
+const LIMIT_LABELS: Record<MockPlanLimitKey, string> = {
+  brands: 'brand',
+  branches: 'branch',
+  riders: 'active rider',
+  menu_items: 'menu item',
+  promotions_active: 'active promotion',
+};
+
+/** 409 PLAN_LIMIT_REACHED {key, limit, used, planKey} when the plan has no room. */
+export const assertWithinPlan = (v: MockFoodVendor, key: MockPlanLimitKey, wanted: number) => {
+  const plan = planOf(v);
+  const limit = plan.limits[key];
   if (wanted > limit) {
-    throw new FoodError(409, 'PLAN_LIMIT_REACHED', 'Your plan has no room for another one.', { key, limit, used: wanted - 1 });
+    throw new FoodError(409, 'PLAN_LIMIT_REACHED', `Your ${plan.label} plan allows ${limit} ${LIMIT_LABELS[key]}${limit === 1 ? '' : 's'}.`, {
+      key,
+      limit,
+      used: wanted - 1,
+      planKey: plan.planKey,
+    });
+  }
+};
+
+/** 409 PLAN_LIMIT_REACHED {entitlement} when the plan doesn't include it (every one is on in Community). */
+export const assertEntitled = (v: MockFoodVendor, key: MockPlanEntitlementKey) => {
+  const plan = planOf(v);
+  if (!plan.entitlements[key]) {
+    throw new FoodError(409, 'PLAN_LIMIT_REACHED', `Your ${plan.label} plan doesn't include ${key}.`, { entitlement: key, planKey: plan.planKey });
   }
 };
 

@@ -25,6 +25,7 @@ import type { Paged } from '../../types/payments';
 import { arr, bool, isObject, num, str, strOrNull } from '../serializerUtils';
 import { foodCuisinesSerializer } from './vendorSerializer';
 import { ITEM_TAGS } from './menuSerializer';
+import { foodHomeBannersSerializer, ratingSummarySerializer } from './reviewSerializer';
 
 const compact = <T>(xs: (T | null)[]): T[] => xs.filter((x): x is T => x !== null);
 const intOrNull = (v: unknown): number | null => (v === null || v === undefined || !Number.isFinite(Number(v)) ? null : Math.round(Number(v)));
@@ -86,6 +87,7 @@ export const foodHomeSerializer = (raw: unknown): FoodHome | null => {
   return {
     coverage: { delivering: bool(c.delivering), message: strOrNull(c.message), pickupNearby: Math.max(0, Math.round(num(c.pickupNearby))) },
     cuisines: foodCuisinesSerializer(raw.cuisines),
+    banners: foodHomeBannersSerializer(raw.banners),
     orderAgain: cards(raw.orderAgain),
     offers: cards(raw.offers),
     homeKitchens: cards(raw.homeKitchens),
@@ -167,6 +169,7 @@ export const vendorPageSerializer = (raw: unknown): VendorPage | null => {
     pickup: p ? { readyIn: etaSerializer(p.readyIn) } : null,
     acceptsCod: raw.acceptsCod !== false,
     deals: compact(arr(raw.deals).map(dealSerializer)),
+    ratingSummary: ratingSummarySerializer(raw.ratingSummary),
     menu: compact(arr(raw.menu).map(sectionSerializer)),
     popular: compact(arr(raw.popular).map(dishCardSerializer)),
   };

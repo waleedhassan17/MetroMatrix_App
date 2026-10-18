@@ -10,7 +10,7 @@
 
 import type { MockDb, MockUser } from '../mockDb';
 import type { ShopCtx, ShopKit } from '../shop/shopRoutes';
-import { FoodError, assertWithinPlan, invalid, isHhmm, isoNow, kitchenToday, nextId, openState, overrideOf, text } from './foodLogic';
+import { FoodError, assertEntitled, assertWithinPlan, invalid, isHhmm, isoNow, kitchenToday, nextId, openState, overrideOf, text } from './foodLogic';
 import { isVisible, unavailableReason } from './foodDiscovery';
 import {
   ACTIVE_STATUSES,
@@ -631,7 +631,7 @@ export function registerOrderRoutes(deps: OrderRouteDeps) {
       throw new FoodError(409, 'CONFLICT', `You already have a promotion with the code ${p.code}.`, { field: 'code' });
     if (running(p, now) && !alreadyCounted) {
       const used = db.food.promotions.filter(x => x.businessId === v.businessId && x.id !== p.id && running(x, now)).length;
-      assertWithinPlan('promotions_active', used + 1);
+      assertWithinPlan(v, 'promotions_active', used + 1);
     }
   };
 
@@ -649,6 +649,7 @@ export function registerOrderRoutes(deps: OrderRouteDeps) {
 
   route('POST', '/food/vendor/promotions', ctx => {
     const v = myVendor(ctx);
+    assertEntitled(v, 'promotions');
     const f = promotionFields(ctx.body, false);
     const p: MockPromotion = {
       id: nextId(ctx.db, 'pr'),

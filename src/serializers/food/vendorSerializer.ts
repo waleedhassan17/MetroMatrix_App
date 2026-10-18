@@ -17,6 +17,7 @@ import type {
   VendorBusy,
   VendorClosure,
   VendorLocation,
+  PlanOverrides,
   VendorPlan,
   VendorProfile,
   VendorSettings,
@@ -207,6 +208,15 @@ export const vendorPaymentAccountsSerializer = (raw: unknown): PaymentAccount[] 
 
 const counts = (raw: unknown): Record<string, number> =>
   isObject(raw) ? Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, Math.max(0, Math.round(num(v)))])) : {};
+const flags = (raw: unknown): Record<string, boolean> =>
+  isObject(raw) ? Object.fromEntries(Object.entries(raw).filter(([, v]) => typeof v === 'boolean').map(([k, v]) => [k, v as boolean])) : {};
+const overridesOf = (raw: unknown): PlanOverrides => {
+  if (!isObject(raw)) return {};
+  return {
+    ...(isObject(raw.limits) ? { limits: counts(raw.limits) } : null),
+    ...(isObject(raw.entitlements) ? { entitlements: flags(raw.entitlements) } : null),
+  };
+};
 
 /** The plan, in rupees (the API counts in minor units). */
 export const vendorPlanSerializer = (raw: unknown): VendorPlan | null => {
@@ -217,6 +227,8 @@ export const vendorPlanSerializer = (raw: unknown): VendorPlan | null => {
     price: Math.round(num(raw.priceMinorUnits) / 100),
     limits: counts(raw.limits),
     usage: counts(raw.usage),
+    entitlements: flags(raw.entitlements),
+    overrides: overridesOf(raw.overrides),
     startedAt: isoOrNull(raw.startedAt),
   };
 };

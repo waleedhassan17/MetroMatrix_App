@@ -10,6 +10,7 @@ import type { NavigatorScreenParams } from '@react-navigation/native';
 import type { DocumentKind } from './auth';
 import type { OrderSegment, ProductSort } from './shopping';
 import type { AppointmentSegment, ConsultKind } from './health';
+import type { AdminVendorStatus, KitchenKind } from './food';
 
 /** BaseNavigator: onboarding, sign-in and every session gate. */
 export type RootStackParamList = {
@@ -197,6 +198,10 @@ export type FoodAppParamList = {
   FoodFavourites: undefined;
   /** "I've paid": a transfer's reference for the kitchen. */
   PaymentProof: { foodOrderCode: string };
+  /** Rate an order once it arrived; `stars` when the order page's stars were tapped. */
+  FoodRateOrder: { code: string; stars?: number };
+  /** A kitchen's reviews (by vendor id); `slug` leads back to its page. */
+  FoodReviews: { id: string; name?: string; slug?: string };
 };
 
 export type CustomerStackParamList = {
@@ -288,6 +293,8 @@ export type FoodVendorStackParamList = {
   VendorPromotion: { id?: string } | undefined;
   /** One order (by id); `assign` opens the rider picker. */
   VendorOrder: { id: string; assign?: boolean };
+  VendorReviews: undefined;
+  VendorInsights: undefined;
   PaymentAccounts: undefined;
   Profile: undefined;
   ChangePassword: undefined;
@@ -348,6 +355,21 @@ export type AdminHealthStackParamList = {
   AppointmentLookup: { code?: string } | undefined;
 };
 
+/** The admin console's Food tab. */
+export type AdminFoodStackParamList = {
+  FoodOverview: undefined;
+  /** Filters set once by a link (the overview's food-safety notice). */
+  AdminFoodVendors: { type?: KitchenKind; status?: AdminVendorStatus } | undefined;
+  /** `featured` from the list row (the detail doesn't carry it). */
+  AdminFoodVendor: { id: string; name?: string; featured?: boolean };
+  AdminFoodOrders: { code?: string; vendorId?: string; name?: string } | undefined;
+  AdminFoodOrder: { id: string; code?: string };
+  AdminFoodReviews: { vendorId?: string; name?: string } | undefined;
+  AdminFoodCuisines: undefined;
+  AdminFoodBanners: undefined;
+  AdminFoodBannerForm: { id?: string } | undefined;
+};
+
 export type PartnerTabParamList = {
   HomeTab: undefined;
   ProfileTab: NavigatorScreenParams<AccountStackParamList> | undefined;
@@ -362,5 +384,6 @@ export type AdminTabParamList = {
   ApprovalsTab: NavigatorScreenParams<AdminStackParamList> | undefined;
   ShopAdminTab: NavigatorScreenParams<AdminShopStackParamList> | undefined;
   HealthAdminTab: NavigatorScreenParams<AdminHealthStackParamList> | undefined;
+  FoodAdminTab: NavigatorScreenParams<AdminFoodStackParamList> | undefined;
   ProfileTab: NavigatorScreenParams<AccountStackParamList> | undefined;
 };

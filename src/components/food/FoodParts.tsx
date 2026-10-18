@@ -43,7 +43,12 @@ const CUISINE_GLYPH: Record<string, MciName> = {
   'home-food': 'home-heart',
   beverage: 'cup',
   beverages: 'cup',
+  seafood: 'fish',
 };
+
+/** The icon keys staff can give a cuisine (each has its own glyph). */
+export const CUISINE_ICON_KEYS = ['pakistani', 'bbq', 'burger', 'pizza', 'chinese', 'biryani', 'dessert', 'bakery', 'cafe', 'healthy', 'breakfast', 'shawarma', 'ice_cream', 'home_food', 'beverage', 'seafood'];
+
 export const cuisineGlyph = (key: string | undefined): MciName => (key && CUISINE_GLYPH[key.trim().toLowerCase()]) || 'silverware-fork-knife';
 
 const makeStyles = ({ colors, space, size, radius, gutter, type }: Theme) =>

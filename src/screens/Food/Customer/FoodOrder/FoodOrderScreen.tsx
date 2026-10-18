@@ -4,9 +4,9 @@
 // Where the order is (the steps, the minutes left), the map with the
 // kitchen, your address and the kitchen's own rider moving, the rider to
 // call, how it's paid (a transfer's account and the receipt), what you
-// ordered, and what you can do now: cancel before the kitchen answers, or
-// order it again. Live over the socket; read again after reconnects, and
-// every few seconds while the connection is down.
+// ordered, and what you can do now: cancel before the kitchen answers,
+// order it again, or rate it once it arrived. Live over the socket; read
+// again after reconnects, and every few seconds while the connection is down.
 
 import React, { useCallback, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -37,6 +37,7 @@ import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Button, Card, Divider, IconButton, InlineNotice, IonIcon, ScreenShell, Sheet, SkeletonLines, StatusPill, StatusTimeline, TextAction, type TimelineStep } from '@custom/index';
 import { ChoiceLine } from '@custom/food/ChoiceLine';
 import { TransferCard } from '@custom/food/TransferCard';
+import { StarInput } from '@custom/food/StarInput';
 import { FoodMap } from '@custom/food/map/FoodMap';
 import type { FoodAppParamList, FoodOrder } from '@/types';
 import { cdn } from '@utils/cdn';
@@ -308,6 +309,16 @@ const FoodOrderContent: React.FC<Props> = ({ route, navigation }) => {
                 ) : null}
               </View>
             </View>
+          </Card>
+        ) : null}
+
+        {o.canReview ? (
+          <Card>
+            <AppText variant="title">How was your order?</AppText>
+            <AppText variant="small" tone="muted">
+              {`Rate the food${o.fulfilment === 'delivery' ? ' and the delivery' : ''}. It helps ${o.vendor.name}, and other customers.`}
+            </AppText>
+            <StarInput label="The food" value={0} onChange={n => navigation.navigate('FoodRateOrder', { code: o.code, stars: n })} />
           </Card>
         ) : null}
 

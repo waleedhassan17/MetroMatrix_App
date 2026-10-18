@@ -108,7 +108,7 @@ src/
     shopping/                catalogue, wishlist, cart, checkout, orders, returns, reviews; shopping/partner/ the store app's
     health/                  discovery, availability, appointments, family, records, prescriptions, reviews, video, symptom;
                              referenceIndex (specialty and condition slug ↔ id); health/doctor/ the doctor app's;
-                             admin/adminHealthNetwork the Health console
+                             admin/adminHealthNetwork the Health console, admin/adminFoodNetwork the Food console
   serializers/               defensive backend → app mapping, one file per domain (shopping/ and health/ per resource;
                              health/healthCommon holds every Health wire map); __tests__/fixtures/health/ real API responses
   models/                    validation + form schemas, one file per domain; shopping/ holds the ONE order-status map
@@ -140,15 +140,15 @@ src/
   navigations-maps/          Base.ts (ROUTES), Auth.ts (gate arrays), Customer.ts (the customer root stack), Admin/
                              Approvals/Account.ts, HealthPatient.ts / ShoppingCustomer.ts / FoodCustomer.ts (each service
                              app's tabs + the pages pushed over them), StorePartner.ts, DoctorPartner.ts and FoodVendor.ts
-                             (tabs + stack), Rider.ts, AdminShopping.ts, AdminHealth.ts, types.ts
+                             (tabs + stack), Rider.ts, AdminShopping.ts, AdminHealth.ts, AdminFood.ts, types.ts
   navigators/                sessionGate.ts (the ladder + doctorRootRoute + foodVendorRootRoute), BaseNavigator, CustomerNavigator
                              (root stack), Health/Shop/FoodAppNavigator (a service's stack over its tabs),
                              Store/Doctor/KitchenPartner (the Food vendor's app)/Rider/AdminNavigator,
                              RouteTabs (partner/staff tab mapper), ServiceTabs (service tab mapper → ServiceTabBar),
-                             stacks/ (AccountStack, AdminStack, AdminShopStack, AdminHealthStack)
+                             stacks/ (AccountStack, AdminStack, AdminShopStack, AdminHealthStack, AdminFoodStack)
   screens/<Area>/<Name>/     NameScreen.tsx + nameSlice.ts
                              Areas: Onboarding (+ Splash), RoleSelection, ProviderSelection, Auth, Partner,
-                             Admin (+ Admin/Shopping, Admin/Health), Customer, Account, Shopping/Customer, Shopping/Store,
+                             Admin (+ Admin/Shopping, Admin/Health, Admin/Food), Customer, Account, Shopping/Customer, Shopping/Store,
                              Health/Patient, Health/Doctor, Food/Vendor, Food/Rider, Dev
 scripts/check-design-tokens.js, capture-health-fixtures.js (real Health responses → the serializer fixture)
 docs/                        API_CONTRACT_ASSUMED.md, API_SHOPPING_ASSUMED.md, API_HEALTH.md (a copy of the backend's),
@@ -156,7 +156,7 @@ docs/                        API_CONTRACT_ASSUMED.md, API_SHOPPING_ASSUMED.md, A
 assets/images/               FYP icon + splash mark; services/ and health/ (card photos — sources in each CREDITS.md)
 ```
 
-Stateless screens have no slice. Their state is global (`auth`, `preferences`) or they only navigate. These are Rejected, Suspended, CustomerHome, ServicePreview, OrderPlaced, FoodOrderPlaced, Saved, StoreMore, BookingConfirmed, PrescriptionList, DoctorMore, VendorMore, RiderProfile (reads `riderHome`), and the tab lists HealthAppointments, ShopOrders and FoodOrders (they read `ordersSlice`, and share their lists with Orders via `Orders/OrdersLists.tsx`). Slices other screens read (`bag`, `foodBag`, `foodOrder`, `foodFavourites`, `saved`, `addressBook`, `orderDetail`, `notifications`, `family`, `appointmentDetail`) live beside the screen that owns them. BookAppointment is a sheet over DoctorProfile (`BookAppointmentSheet` + its slice), not a route.
+Stateless screens have no slice. Their state is global (`auth`, `preferences`) or they only navigate. These are Rejected, Suspended, CustomerHome, ServicePreview, OrderPlaced, FoodOrderPlaced, Saved, StoreMore, BookingConfirmed, PrescriptionList, DoctorMore, VendorMore, FoodReviews (a paged list), RiderProfile (reads `riderHome`), and the tab lists HealthAppointments, ShopOrders and FoodOrders (they read `ordersSlice`, and share their lists with Orders via `Orders/OrdersLists.tsx`). Slices other screens read (`bag`, `foodBag`, `foodOrder`, `foodFavourites`, `saved`, `addressBook`, `orderDetail`, `notifications`, `family`, `appointmentDetail`) live beside the screen that owns them. BookAppointment is a sheet over DoctorProfile (`BookAppointmentSheet` + its slice), not a route.
 
 ## How to add a screen
 
@@ -225,7 +225,8 @@ Once the gate is cleared, `AppContainer.renderNavigator()` mounts the navigator 
 - `customer` → `CustomerNavigator`: a root stack (`CustomerStack`) with the three-card home (no bottom bar; its side menu opens Orders, Profile, Saved, Addresses…) and one app per service: Health (Home · Appointments · Records · Profile), Shopping (Home · Bag · Saved · Orders), Food Court (Home · Orders · Profile)
 - approved `partner` → `Store`/`Doctor`/`KitchenPartnerNavigator`, chosen by `serviceType`. The store app is a stack over Today · Orders · Products · More. The doctor app is a stack over Today · Calendar · Patients · More; it opens on PracticeSetup until the doctor is listed (`doctorRootRoute(business)`). The Food vendor's app (`KitchenPartnerNavigator`, `navigations-maps/FoodVendor.ts`) is a stack over Orders · Menu · Riders · More (a home kitchen has Today first: portions, the weekly menu, pre-order slots); it opens on Kitchen setup until the kitchen is live (`foodVendorRootRoute(business)`, from the session's `business.food`).
 - `rider` → `RiderNavigator`: a stack over Deliveries · Cash · Profile, with each delivery pushed over them (`RiderOrder`: one big button per step, cash at the door). Going on duty asks for location after a plain explanation; the rider's location is shared only on duty or on a delivery (`services/location/riderLocation`, sent by `riderTransport`: the socket, else the REST batch).
-- `admin` / `super_admin` → `AdminNavigator` (Approvals · Shopping · Health · Profile). A doctor is approved only after staff check the PMDC number (Health → Doctor verification); the server answers `422 PMDC_NOT_VERIFIED` otherwise.
+- `admin` / `super_admin` → `AdminNavigator` (Approvals · Shopping · Health · Food · Profile). A doctor is approved only after staff check the PMDC number (Health → Doctor verification); the server answers `422 PMDC_NOT_VERIFIED` otherwise. A home kitchen goes live only after staff record a passed food-safety check (Food → Vendors).
+- Food Court reviews: one per order once it arrived (`FoodRateOrder`, from the order page); the vendor page shows the rating block and `FoodReviews`; the kitchen replies (`VendorReviews`) and reads `VendorInsights` (recorded sales). Staff hide reviews, feature and suspend vendors, change a vendor's plan, and run cuisines and the home's banners.
 
 ## API contract
 
@@ -248,7 +249,7 @@ When a real document arrives, reconcile it in one pass:
 - **Expo Go** (`npm start`): runs the whole app except native Google sign-in and push, against the dummy API. Seeded accounts and codes are in `docs/API_CONTRACT_ASSUMED.md` → "Mock mode" (doctors and patients in `docs/MOCK_HEALTH.md`). Video consultations open public meet.jit.si rooms in a WebView; on web they open in a new tab.
 - **Web** (`npm run web`):
   - Google sign-in uses Google Identity Services and needs `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`.
-  - Deep paths work, e.g. `/get-started`, `/sign-in`, `/provider/sign-in`, `/home/food`, `/shop`, `/shop/store/lawn-and-loom-7a1f3`, `/shop/product/p_l1`, `/orders/MM-24A7Q2`, `/store/orders/:id`, `/admin/shop`, `/health`, `/health/appointments`, `/health/doctor/:id`, `/health/appointment/:code`, `/shop/orders`, `/shop/bag`, `/profile/records`, `/doctor/appointments/:code`, `/admin/health`, `/vendor/orders`, `/vendor/menu`, `/vendor/menu/dish/:id`, `/vendor/today`, `/vendor/setup`, `/vendor/riders/:id`, `/rider/sign-in`, `/rider/deliveries`, `/food/vendor/:slug`, `/food/bag`, `/food/checkout`, `/food/order/:code`, `/food/saved`, `/vendor/deals`, `/vendor/orders/:id`, `/rider/deliveries/:id`, `/rider/cash`. The staff Profile tab is `/account`.
+  - Deep paths work, e.g. `/get-started`, `/sign-in`, `/provider/sign-in`, `/home/food`, `/shop`, `/shop/store/lawn-and-loom-7a1f3`, `/shop/product/p_l1`, `/orders/MM-24A7Q2`, `/store/orders/:id`, `/admin/shop`, `/health`, `/health/appointments`, `/health/doctor/:id`, `/health/appointment/:code`, `/shop/orders`, `/shop/bag`, `/profile/records`, `/doctor/appointments/:code`, `/admin/health`, `/vendor/orders`, `/vendor/menu`, `/vendor/menu/dish/:id`, `/vendor/today`, `/vendor/setup`, `/vendor/riders/:id`, `/rider/sign-in`, `/rider/deliveries`, `/food/vendor/:slug`, `/food/bag`, `/food/checkout`, `/food/order/:code`, `/food/saved`, `/vendor/deals`, `/vendor/orders/:id`, `/rider/deliveries/:id`, `/rider/cash`, `/food/order/:code/rate`, `/food/reviews/:id`, `/vendor/reviews`, `/vendor/insights`, `/admin/food` (+ `/vendors/:id`, `/orders/:id`, `/reviews`, `/cuisines`, `/banners`). The staff Profile tab is `/account`.
   - After adding new folders or `.web.tsx` files, restart Metro with `--clear` (its watcher can miss them). Don't start it with `CI=1`: that turns watch mode off and the browser keeps the old bundle.
   - Bottom sheets render as a `Modal` (`Sheet.web.tsx`), because `@gorhom/bottom-sheet` never presents in a browser.
   - `/dev/gallery` exists only in development builds.

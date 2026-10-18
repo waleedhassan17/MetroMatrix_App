@@ -6,7 +6,7 @@
 // for a vendor's own upload. Accounts (password Metro2026) are listed in
 // docs/MOCK_FOOD.md.
 
-import type { MockCuisine, MockFood, MockFoodVendor, MockHoursRow, MockRider } from './foodTypes';
+import type { MockFoodReview, MockCuisine, MockFood, MockFoodVendor, MockHoursRow, MockRider } from './foodTypes';
 import { seedMenus } from './foodMenuSeed';
 import { FOOD_IMG } from './foodImages';
 import { dateInZone } from '../../../../utils/healthTime';
@@ -482,6 +482,61 @@ const seedPromotions = () => [
   },
 ];
 
+/** A few earlier reviews (fictional customers), already part of the seeded ratings. */
+const seedReviews = (): MockFoodReview[] => [
+  {
+    id: 'frv_1',
+    orderId: null,
+    businessId: 'b_resto',
+    userId: 'u_customer',
+    foodRating: 5,
+    deliveryRating: 5,
+    tags: ['tasty', 'hot_and_fresh'],
+    text: 'The biryani was hot and the raita fresh. The rider called from the gate, as I asked.',
+    photos: [],
+    vendorReply: 'Thank you, Ayesha. See you again soon.',
+    repliedAt: iso(6 * DAY),
+    isHidden: false,
+    hiddenReason: null,
+    seeded: true,
+    createdAt: iso(7 * DAY),
+  },
+  {
+    id: 'frv_2',
+    orderId: null,
+    businessId: 'b_resto',
+    userId: 'u_shopper',
+    foodRating: 4,
+    deliveryRating: 3,
+    tags: ['good_portion', 'value_for_money'],
+    text: 'Generous portions. Took a little longer than the time shown.',
+    photos: [],
+    vendorReply: null,
+    repliedAt: null,
+    isHidden: false,
+    hiddenReason: null,
+    seeded: true,
+    createdAt: iso(3 * DAY),
+  },
+  {
+    id: 'frv_3',
+    orderId: null,
+    businessId: 'b_cloud',
+    userId: 'u_customer',
+    foodRating: 5,
+    deliveryRating: 4,
+    tags: ['tasty', 'well_packed'],
+    text: 'Best smash burger in Gulberg, packed so the fries stayed crisp.',
+    photos: [],
+    vendorReply: null,
+    repliedAt: null,
+    isHidden: false,
+    hiddenReason: null,
+    seeded: true,
+    createdAt: iso(2 * DAY),
+  },
+];
+
 const seedRiders = (): MockRider[] =>
   FOOD_SEED_RIDERS.map(r => ({
     id: r.riderId,
@@ -508,6 +563,8 @@ export const seedFood = (): MockFood => ({
   promotions: seedPromotions(),
   favourites: [],
   cash: [],
+  reviews: seedReviews(),
+  banners: [],
   idempotency: {},
   seq: 0,
 });

@@ -165,6 +165,13 @@ export interface VendorClosure {
 }
 
 export type PlanLimitKey = 'brands' | 'branches' | 'riders' | 'menu_items' | 'promotions_active' | (string & {});
+export type PlanEntitlementKey = 'riders' | 'promotions' | 'insights' | 'preorders' | (string & {});
+
+/** Staff changes on top of the plan (limits and entitlements only). */
+export interface PlanOverrides {
+  limits?: Partial<Record<PlanLimitKey, number>>;
+  entitlements?: Partial<Record<PlanEntitlementKey, boolean>>;
+}
 
 /** The vendor's plan: always the free Community plan, with what it allows and what is used. */
 export interface VendorPlan {
@@ -174,6 +181,9 @@ export interface VendorPlan {
   price: number;
   limits: Record<PlanLimitKey, number>;
   usage: Record<PlanLimitKey, number>;
+  /** What the plan includes (every one is on in Community). */
+  entitlements: Record<PlanEntitlementKey, boolean>;
+  overrides: PlanOverrides;
   startedAt: string | null;
 }
 
@@ -479,6 +489,8 @@ export interface VendorCard {
 export interface FoodHome {
   coverage: { delivering: boolean; message: string | null; pickupNearby: number };
   cuisines: FoodCuisine[];
+  /** Staff banners live now whose target still exists. */
+  banners: FoodHomeBanner[];
   orderAgain: VendorCard[];
   offers: VendorCard[];
   homeKitchens: VendorCard[];
@@ -556,6 +568,8 @@ export interface VendorPage extends VendorCard {
   pickup: { readyIn: EtaRange } | null;
   acceptsCod: boolean;
   deals: FoodDeal[];
+  /** null until the vendor has a rating. */
+  ratingSummary: FoodRatingSummary | null;
   menu: MenuSection[];
   popular: DishCard[];
 }
@@ -950,3 +964,204 @@ export interface PromotionInput {
   perUserLimit: number | null;
   firstOrderOnly: boolean;
 }
+
+// ─── Reviews, the kitchen's insights, home banners ─────────────────────────
+export type FoodReviewTag = 'tasty' | 'hot_and_fresh' | 'good_portion' | 'well_packed' | 'on_time' | 'polite_rider' | 'value_for_money';
+
+/** One customer's review of one order. */
+export interface FoodReview {
+  id: string;
+  /** The first name (staff see the full name); null on the customer's own copy. */
+  author: string | null;
+  foodRating: number;
+  /** Delivery orders only. */
+  deliveryRating: number | null;
+  tags: FoodReviewTag[];
+  text: string | null;
+  photos: string[];
+  vendorReply: string | null;
+  repliedAt: string | null;
+  createdAt: string;
+}
+
+/** The kitchen's own list: which order each review is about. */
+export interface VendorReview extends FoodReview {
+  orderCode: string | null;
+}
+
+export interface FoodReviewInput {
+  foodRating: number;
+  deliveryRating: number | null;
+  tags: FoodReviewTag[];
+  text: string;
+  photos: string[];
+}
+
+/** The vendor page's rating block. */
+export interface FoodRatingSummary {
+  ratingAvg: number;
+  ratingCount: number;
+  /** Visible reviews by stars, 5 to 1. */
+  distribution: Record<1 | 2 | 3 | 4 | 5, number>;
+  topTags: { tag: FoodReviewTag; count: number }[];
+  recent: FoodReview[];
+}
+
+export type FoodInsightsRange = 'today' | '7d' | '30d';
+
+/** The kitchen's numbers over branch-local days. Rates are 0–1, null with no data. */
+export interface FoodInsights {
+  range: { from: string; to: string; timezone: string };
+  /** "Recorded sales are the orders you marked delivered…" — the server's wording. */
+  note: string | null;
+  totals: { orders: number; completed: number; recordedSales: number; averageOrderValue: number };
+  days: { date: string; orders: number; completed: number; cancelled: number; recordedSales: number }[];
+  acceptanceRate: number | null;
+  autoRejected: number;
+  avgAcceptSeconds: number | null;
+  avgPrepMinutes: number | null;
+  onTimeRate: number | null;
+  cancelReasons: { status: FoodOrderStatus; reason: string; count: number }[];
+  topItems: { name: string; quantity: number; recordedSales: number }[];
+  repeatCustomers: { customers: number; repeat: number; rate: number | null };
+}
+
+export type FoodBannerTarget =
+  | { type: 'vendor'; id: string; slug: string; name: string }
+  | { type: 'cuisine'; id: string; slug: string; name: string }
+  | { type: 'search'; query: string };
+
+/** A staff banner on the Food home, with what it opens. */
+export interface FoodHomeBanner {
+  id: string;
+  imageUrl: string;
+  title: string;
+  subtitle: string | null;
+  target: FoodBannerTarget;
+}
+
+// ─── The staff console (/admin/food) ───────────────────────────────────────
+export interface AdminFoodOverview {
+  date: string;
+  activeVendors: Record<KitchenKind | 'total', number>;
+  ordersToday: number;
+  activeOrders: number;
+  acceptanceRateToday: number | null;
+  autoRejectsToday: number;
+  topCuisines: { slug: string; name: string; orders: number }[];
+  waiting: { approvals: number; foodSafetyChecks: number };
+}
+
+export type AdminVendorStatus = 'live' | 'draft' | 'paused' | 'suspended';
+
+export interface AdminFoodVendorQuery {
+  type?: KitchenKind;
+  status?: AdminVendorStatus;
+  city?: string;
+  q?: string;
+}
+
+export interface AdminFoodVendorRow {
+  id: string;
+  businessId: string;
+  name: string;
+  slug: string;
+  subType: KitchenKind;
+  subTypeLabel: string;
+  city: string | null;
+  businessStatus: string;
+  branchStatus: string;
+  isPaused: boolean;
+  isFeatured: boolean;
+  ratingAvg: number;
+  ratingCount: number;
+  orders30d: number;
+  wentLiveAt: string | null;
+  foodSafetyCheckedAt: string | null;
+  ownerEmail: string | null;
+  planKey: string;
+}
+
+export interface AdminFoodReview extends FoodReview {
+  vendorId: string | null;
+  orderCode: string | null;
+  isHidden: boolean;
+  hiddenReason: string | null;
+}
+
+/** Everything staff see about one vendor (read-only, except feature / suspend / plan). */
+export interface AdminFoodVendor {
+  id: string;
+  businessId: string;
+  subType: KitchenKind;
+  subTypeLabel: string;
+  businessStatus: string;
+  suspensionReason: string | null;
+  ownerEmail: string | null;
+  profile: VendorProfile | null;
+  settings: VendorSettings | null;
+  hours: HoursRange[];
+  feeBands: FeeBand[];
+  setup: VendorSetup | null;
+  plan: VendorPlan | null;
+  menu: { id: string; name: string; isActive: boolean; items: { id: string; name: string; basePrice: number; isActive: boolean }[] }[];
+  recentOrders: BoardCard[];
+  ratings: FoodRatingSummary | null;
+  /** Reviews of 2 stars or fewer. */
+  complaints: AdminFoodReview[];
+}
+
+export interface AdminFoodOrderRow extends BoardCard {
+  vendorId: string | null;
+}
+
+export interface AdminFoodOrderQuery {
+  code?: string;
+  vendorId?: string;
+  status?: FoodOrderStatus;
+}
+
+/** An order with every event, for disputes. */
+export interface AdminFoodOrder extends FoodOrder {
+  customer: { userId: string; name: string | null; email: string | null; phone: string | null };
+}
+
+export interface AdminFoodReviewQuery {
+  vendorId?: string;
+  hidden?: boolean;
+  maxRating?: number;
+}
+
+export interface AdminCuisine extends FoodCuisine {
+  sort: number;
+  isActive: boolean;
+  /** Vendors listing it; a cuisine in use can only be turned off. */
+  vendors: number;
+}
+
+export interface AdminCuisineInput {
+  name: string;
+  slug: string;
+  icon: string;
+  sort: number;
+}
+
+export type FoodBannerTargetType = 'vendor' | 'cuisine' | 'search';
+
+export interface AdminFoodBanner {
+  id: string;
+  imageUrl: string;
+  title: string;
+  subtitle: string | null;
+  targetType: FoodBannerTargetType;
+  targetId: string | null;
+  targetQuery: string | null;
+  /** null: every city. */
+  city: string | null;
+  startsAt: string;
+  endsAt: string | null;
+  sort: number;
+  isActive: boolean;
+}
+
+export type AdminFoodBannerInput = Omit<AdminFoodBanner, 'id'>;

@@ -112,6 +112,8 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       VendorPromotions: 'vendor/deals',
       VendorPromotion: 'vendor/deal/:id?',
       VendorOrder: 'vendor/orders/:id',
+      VendorReviews: 'vendor/reviews',
+      VendorInsights: 'vendor/insights',
       // The rider's app: metromatrix://rider/deliveries
       RiderTabs: {
         screens: { DeliveriesTab: 'rider/deliveries', CashTab: 'rider/cash', RiderProfileTab: 'rider/profile' },
@@ -212,6 +214,8 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
           FoodOrder: 'food/order/:code',
           FoodFavourites: 'food/saved',
           PaymentProof: 'food/order/:foodOrderCode/pay',
+          FoodRateOrder: 'food/order/:code/rate',
+          FoodReviews: 'food/reviews/:id',
         },
       },
       ApprovalsTab: {
@@ -239,6 +243,20 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
           DoctorVerification: 'admin/health/doctors',
           ReviewModeration: 'admin/health/reviews',
           AppointmentLookup: 'admin/health/appointments',
+        },
+      },
+      FoodAdminTab: {
+        initialRouteName: 'FoodOverview',
+        screens: {
+          FoodOverview: 'admin/food',
+          AdminFoodVendors: 'admin/food/vendors',
+          AdminFoodVendor: 'admin/food/vendors/:id',
+          AdminFoodOrders: 'admin/food/orders',
+          AdminFoodOrder: 'admin/food/orders/:id',
+          AdminFoodReviews: 'admin/food/reviews',
+          AdminFoodCuisines: 'admin/food/cuisines',
+          AdminFoodBanners: 'admin/food/banners',
+          AdminFoodBannerForm: 'admin/food/banners/edit',
         },
       },
       // Staff's Profile tab (the customer's Profile lives at /profile).

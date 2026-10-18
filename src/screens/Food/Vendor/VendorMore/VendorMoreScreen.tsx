@@ -39,6 +39,8 @@ const SECTIONS: { title: string; items: Item[] }[] = [
       { label: 'Kitchen setup', hint: 'The checklist customers need', icon: 'checkmark-done-outline', to: 'VendorSetup' },
       { label: 'Your brand', hint: 'Name, logo, cover, cuisines', icon: 'color-palette-outline', to: 'VendorBrand' },
       { label: 'Deals', hint: 'Offers you fund — one per order, the best one', icon: 'pricetag-outline', to: 'VendorPromotions' },
+      { label: 'Reviews', hint: 'What customers say, and your replies', icon: 'chatbox-ellipses-outline', to: 'VendorReviews' },
+      { label: 'Insights', hint: 'Recorded sales, acceptance, prep time', icon: 'stats-chart-outline', to: 'VendorInsights' },
       { label: 'Plan', hint: 'Community plan · no commission', icon: 'ribbon-outline', to: 'VendorPlan' },
     ],
   },

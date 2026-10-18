@@ -1,7 +1,8 @@
 // MetroMatrix — The customer's Food Court app: its own tabs (Home · Orders ·
 // Profile), in the FYP Home services bar's look, with browsing — vendor
 // lists, search, a vendor's page — and ordering — the bag, checkout, order
-// placed, an order live, the transfer's receipt — pushed over them.
+// placed, an order live, the transfer's receipt, rating it, a kitchen's
+// reviews — pushed over them.
 
 import type { IRoute, ITabRoute } from './types';
 import { ROUTES } from './Base';
@@ -18,6 +19,8 @@ import FoodOrderPlacedScreen from '../screens/Food/Customer/FoodOrderPlaced/Food
 import FoodOrderScreen from '../screens/Food/Customer/FoodOrder/FoodOrderScreen';
 import FoodFavouritesScreen from '../screens/Food/Customer/FoodFavourites/FoodFavouritesScreen';
 import PaymentProofScreen from '../screens/Shopping/Customer/PaymentProof/PaymentProofScreen';
+import FoodRateOrderScreen from '../screens/Food/Customer/FoodRateOrder/FoodRateOrderScreen';
+import FoodReviewsScreen from '../screens/Food/Customer/FoodReviews/FoodReviewsScreen';
 
 const AS_TAB = { asTab: true };
 
@@ -38,4 +41,6 @@ export const FOOD_STACK_ROUTES: IRoute[] = [
   { title: ROUTES.FOOD_ORDER, component: FoodOrderScreen },
   { title: ROUTES.FOOD_FAVOURITES, component: FoodFavouritesScreen },
   { title: ROUTES.PAYMENT_PROOF, component: PaymentProofScreen },
+  { title: ROUTES.FOOD_RATE_ORDER, component: FoodRateOrderScreen },
+  { title: ROUTES.FOOD_REVIEWS, component: FoodReviewsScreen },
 ];

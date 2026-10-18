@@ -68,6 +68,12 @@ export interface MockFoodVendor {
   priceLevel: number;
   ratingAvg: number;
   ratingCount: number;
+  /** Staff put it first in lists (admin "feature"). */
+  isFeatured?: boolean;
+  /** The ratings it came with (seeded vendors): new reviews are added to these. */
+  ratingSeed?: { avg: number; count: number };
+  /** Staff overrides on the Community plan's limits and entitlements. */
+  planOverrides?: MockPlanOverrides | null;
   // ── branch ──
   branchId: string;
   status: MockBranchStatus;
@@ -99,6 +105,13 @@ export interface MockFoodVendor {
   closures: MockClosure[];
   accounts: MockVendorAccount[];
   planStartedAt: string;
+}
+
+export type MockPlanLimitKey = 'brands' | 'branches' | 'riders' | 'menu_items' | 'promotions_active';
+export type MockPlanEntitlementKey = 'riders' | 'promotions' | 'insights' | 'preorders';
+export interface MockPlanOverrides {
+  limits?: Partial<Record<MockPlanLimitKey, number>>;
+  entitlements?: Partial<Record<MockPlanEntitlementKey, boolean>>;
 }
 
 export interface MockRider {
@@ -288,6 +301,43 @@ export interface MockFoodOrder {
   updatedAt: string;
 }
 
+/** One review per delivered or collected order. */
+export interface MockFoodReview {
+  id: string;
+  orderId: string | null;
+  businessId: string;
+  userId: string;
+  foodRating: number;
+  deliveryRating: number | null;
+  tags: string[];
+  text: string | null;
+  photos: string[];
+  vendorReply: string | null;
+  repliedAt: string | null;
+  isHidden: boolean;
+  hiddenReason: string | null;
+  /** Part of the vendor's seeded ratings already (not added again). */
+  seeded?: boolean;
+  createdAt: string;
+}
+
+/** A banner on the Food home: opens a vendor, a cuisine or a search. */
+export interface MockFoodBanner {
+  id: string;
+  imageUrl: string;
+  title: string;
+  subtitle: string | null;
+  targetType: 'vendor' | 'cuisine' | 'search';
+  targetId: string | null;
+  targetQuery: string | null;
+  city: string | null;
+  startsAt: string;
+  endsAt: string | null;
+  sort: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
 /** Cash a rider holds for their vendor: + collected at a door, − handed over. */
 export interface MockCashEntry {
   id: string;
@@ -312,6 +362,8 @@ export interface MockFood {
   promotions: MockPromotion[];
   favourites: { userId: string; businessId: string; savedAt: string }[];
   cash: MockCashEntry[];
+  reviews: MockFoodReview[];
+  banners: MockFoodBanner[];
   /** Checkout's Idempotency-Key → the order it placed. */
   idempotency: Record<string, string>;
   /** Ids for new rows. */

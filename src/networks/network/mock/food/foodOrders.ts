@@ -13,7 +13,7 @@ import type { MockDb, MockUser } from '../mockDb';
 import { addDays, formatDayShort, formatSlot, zonedToIso } from '../../../../utils/healthTime';
 import { formatPKR } from '../../../../utils/money';
 import { zoned } from '../health/healthWire';
-import { FoodError, isoNow, kitchenToday, nextId, openIntervals, overrideOf } from './foodLogic';
+import { FoodError, isoNow, kitchenToday, nextId, openIntervals, overrideOf, planOf } from './foodLogic';
 import { inWindow, isVisible, quote, unavailableReason, type Deal } from './foodDiscovery';
 import type {
   MockFoodCart,
@@ -341,6 +341,9 @@ export const scheduleCheck = (
   at: number,
   now: number,
 ): { issue: Issue | null; slot: SlotChoice | null } => {
+  // Scheduled orders are the plan's `preorders` entitlement (on in Community).
+  if (!planOf(v).entitlements.preorders)
+    return { issue: issue('SLOT_INVALID', 'This vendor isn’t taking scheduled orders.', { preorders: false }), slot: null };
   if (at > now + MAX_AHEAD_DAYS * 86_400_000)
     return {
       issue: issue('SLOT_INVALID', `You can schedule up to ${MAX_AHEAD_DAYS} days ahead.`),

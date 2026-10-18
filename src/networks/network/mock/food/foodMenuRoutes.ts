@@ -147,7 +147,7 @@ export function registerMenuRoutes(route: ShopKit['route'], myVendor: (ctx: Shop
     itemFields(b, true);
     const days = b.days !== undefined ? daysOf(b.days) : EVERY_DAY;
     const variants = b.variants !== undefined ? variantRows(b.variants) : [];
-    assertWithinPlan('menu_items', menuItemCount(ctx.db, v.businessId) + 1);
+    assertWithinPlan(v, 'menu_items', menuItemCount(ctx.db, v.businessId) + 1);
     const category = ownCategory(ctx, v, String(b.categoryId ?? ''));
     const siblings = ctx.db.food.items.filter(i => i.categoryId === category.id);
     const item: MockMenuItem = {
@@ -216,7 +216,7 @@ export function registerMenuRoutes(route: ShopKit['route'], myVendor: (ctx: Shop
   route('POST', '/food/vendor/menu/items/:id/duplicate', ctx => {
     const v = myVendor(ctx);
     const o = ownItem(ctx, v, dec(ctx.params[0]));
-    assertWithinPlan('menu_items', menuItemCount(ctx.db, v.businessId) + 1);
+    assertWithinPlan(v, 'menu_items', menuItemCount(ctx.db, v.businessId) + 1);
     const siblings = ctx.db.food.items.filter(i => i.categoryId === o.categoryId);
     const variants = o.variants.map(x => ({ ...x, id: nextId(ctx.db, 'iv') }));
     const map = new Map(o.variants.map((x, i) => [x.id, variants[i].id]));

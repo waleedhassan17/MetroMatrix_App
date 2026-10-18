@@ -107,7 +107,7 @@ export const cardOf = (db: MockDb, v: MockFoodVendor, q: Quote, deal: Deal | nul
   ratingAvg: v.ratingAvg,
   ratingCount: v.ratingCount,
   isHomeKitchen: v.kind === 'home_kitchen',
-  isFeatured: false,
+  isFeatured: !!v.isFeatured,
   isNew: !!v.wentLiveAt && now - Date.parse(v.wentLiveAt) < NEW_DAYS * 86_400_000,
   distanceKm: q.distanceKm,
   etaRange: { min: q.eta.min, max: q.eta.max, label: q.etaLabel },

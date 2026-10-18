@@ -27,11 +27,13 @@ While `src/config/env.ts` has no backend URL, the Food Court routes are answered
 | Live channel | the dummy socket (`mockRealtime` + `food/foodRealtime.ts`): `board.sync` to a kitchen on connect, `subscribe`/`unsubscribe { orderId }`, `order.new`, `order.updated`, `order.payment` |
 | Rider | `GET /food/rider/me`, `PATCH /food/rider/duty`, `GET /food/rider/orders?scope=active\|history` (+ `/:id`), `POST /:id/{accept,decline,arrived-branch,picked-up,arrived-customer,delivered}`, `POST /food/rider/location`, `GET /food/rider/cash` |
 | Riders on orders (vendor) | `POST /food/vendor/orders/:id/assign`, `GET /food/vendor/riders/suggest?orderId`, `GET /food/vendor/riders/live`, `GET /food/vendor/riders/:id/cash`, `POST /food/vendor/riders/:id/handover` |
-| Staff | `POST /admin/food/branches/:id/food-safety-check` |
+| Reviews | `POST /food/orders/:code/review`, `GET /food/vendors/:id/reviews`, the vendor page's `ratingSummary`; the kitchen's `GET /food/vendor/reviews?unreplied`, `POST /food/vendor/reviews/:id/reply` |
+| Insights | `GET /food/vendor/insights?range=today\|7d\|30d` (or `from`/`to`, at most 92 days) |
+| Staff | `GET /admin/food/overview`; vendors (`GET /admin/food/vendors?type&status&city&q`, `GET /:id`, `POST /:id/{feature,unfeature,suspend,reinstate}`, `GET/PATCH /:id/plan`); `POST /admin/food/branches/:id/food-safety-check`; orders (`GET /admin/food/orders?code&vendorId&status`, `GET /:id`); reviews (`GET /admin/food/reviews?vendorId&hidden&maxRating`, `POST /:id/{hide,unhide}`); cuisines (`GET/POST /admin/food/cuisines`, `PATCH/DELETE /:id`); banners (`GET/POST /admin/food/banners`, `PATCH/DELETE /:id`) and the live ones on `GET /food/home` |
 | Session | `business.food { brandId, brandSlug, branchStatus, isLive, setupComplete }` on a food vendor's `/auth/me` and sign-in |
 | Sign-in | `identifier` (an email, or a rider's username) on the partner portal |
 
-Each later backend phase (deliveries, reviews, admin) adds its routes here in the same change as the app screens that use them.
+Every route the backend has committed is here, through its P8 (`docs/API_FOOD.md`).
 
 ## The rules it enforces
 
@@ -53,7 +55,7 @@ Each later backend phase (deliveries, reviews, admin) adds its routes here in th
   - Riders sign in with the username on the partner portal.
   - Inactive or on leave: signed out, and rider routes answer `403 RIDER_INACTIVE`.
   - A reset ends every session.
-  - The plan allows 25 active riders.
+  - The plan allows 25 active riders (staff can change it; see Plan).
 - **Menu.**
   - A category's daily window is both times or neither, and it is refused while it still holds dishes (`409 CONFLICT`, `details.items`).
   - A dish has up to 10 sizes and 5 tags (spicy, veg, bestseller, new, contains_nuts). It is on chosen weekdays, and it counts against the plan's 1,000 dishes.
@@ -80,6 +82,19 @@ Each later backend phase (deliveries, reviews, admin) adds its routes here in th
 - **Riders on orders.** The kitchen gives a delivery only to its own rider who is active and on duty (`409 RIDER_NOT_AVAILABLE`), after accepting and before it leaves; it can give it to another before pickup. Suggestions: fewest deliveries, then nearest (live positions only). The rider's steps follow the API's machine (assigned → accepted → at the kitchen → picked up → at the customer → delivered, or handed back before pickup); picked up needs the order ready and moves it on the way. Delivered with cash records what was taken (≤ the total) on the rider's ledger; the kitchen's handover can't be more than they hold.
 - **Location.** Only on duty (`409 RIDER_NOT_AVAILABLE`) and only for their own orders (`409 RIDER_NOT_ASSIGNED`); the newest fix is their position, fanned out as `rider.location` to each order's room at most once every 4 s. A position is shown for two minutes; after that it isn't.
 - **The live channel** is the gateway's: a kitchen's owner joins `branch:{id}` and gets `board.sync` (its active orders) on connect; an active rider joins `rider:{userId}`; only an order's customer, kitchen or rider may `subscribe` to `order:{id}` (else `{ ok: false, code: 'NOT_FOUND' }`). After a write, `order.new` goes to the kitchen, `order.updated` carries the customer's view to the order's room and a board card to the kitchen, and `order.payment` goes to both. Events go out only when the write succeeds.
+- **Reviews.** One per order, once it was delivered or collected (`409 REVIEW_NOT_ALLOWED { status }`, then `REVIEW_EXISTS`). Food stars 1–5; delivery stars only on a delivery; tags from the seven; words up to 1,000; up to 4 photos. Others see the author's first name; staff see the full name. The kitchen replies (2–1,000 characters) and can edit the reply.
+- **Ratings.** The API averages the visible reviews. Seeded vendors arrive with ratings the dummy API has no reviews for, so their seeded average and count stand for those, and each new visible review is added to them. A hidden review leaves the rating, the page and every list at once.
+- **Insights.** Branch-local days in Pakistan. Recorded sales are the orders marked delivered or collected; the acceptance rate counts only the orders the kitchen had to answer; rates are 0–1, or null with no data.
+- **Staff.**
+  - Suspending needs an approved business and a reason (3–500 characters); the vendor leaves Food Court at once (its page answers 404, its banners stop showing). Reinstating needs a suspended one.
+  - Featuring puts `isFeatured` on the vendor's cards.
+  - A cuisine's link is 2–40 lowercase letters, digits or dashes and unique (`409 CONFLICT`); one any vendor lists can't be deleted (`409 CONFLICT { vendors }`), only turned off.
+  - A banner opens a vendor, a cuisine or a search, which must exist; it shows between its dates, in its city or everywhere, while its target is still on Food Court. The API takes only the staff member's own `banner` uploads; the dummy API takes any uploaded file.
+  - Orders are read-only, with every event and the customer's contact.
+- **Plan.** Community: 1 brand, 1 branch, 25 active riders, 1,000 dishes, 10 running deals, and riders, deals, insights and scheduled orders all included. Staff overrides (`PATCH /admin/food/vendors/:id/plan { overrides }`, `null` clears them) take effect at once:
+  - over a limit: `409 PLAN_LIMIT_REACHED { key, limit, used, planKey }`;
+  - a feature turned off: `409 PLAN_LIMIT_REACHED { entitlement }` (new riders, new deals, insights), or `400 SLOT_INVALID { preorders: false }` for a time;
+  - riders beyond a lowered limit become `plan_locked` (signed out, off duty): riders mid-delivery keep their seat, then the longest serving. Raising it brings them back first.
 - **All-or-nothing.** A write that fails part-way leaves the dummy database as it was.
 
 ## Seeded accounts (password `Metro2026`)
@@ -93,7 +108,7 @@ Each later backend phase (deliveries, reviews, admin) adds its routes here in th
 | `biryani-bazaar.ali` | Rider | Ali Raza, an active rider for Biryani Bazaar |
 | `biryani-bazaar.usman` | Rider | Usman Tariq, on leave (rider routes answer `RIDER_INACTIVE`) |
 
-Customers order as `customer@metromatrix.app` (Ayesha Khan, with a pinned home address in Gulberg). Biryani Bazaar has two deals: 10% off over Rs 500 (automatic) and Rs 150 off over Rs 1,500 with the code `BAZAAR150`; Slice Theory has free delivery.
+Customers order as `customer@metromatrix.app` (Ayesha Khan, with a pinned home address in Gulberg). Staff sign in as `admin@metromatrix.app` (password `Admin2026`, code `123456`) and use the Food tab. Biryani Bazaar and Smash Lab arrive with three fictional reviews (one with the kitchen's reply). Biryani Bazaar has two deals: 10% off over Rs 500 (automatic) and Rs 150 off over Rs 1,500 with the code `BAZAAR150`; Slice Theory has free delivery.
 
 Seeded names are fictional. The logos are generated initials that stand in for a vendor's own upload.
 
@@ -106,4 +121,6 @@ Seeded names are fictional. The logos are generated initials that stand in for a
 - `src/networks/network/mock/__tests__/mockFoodVendorFlows.test.ts`, `mockFoodMenuFlows.test.ts`, `mockFoodDiscoveryFlows.test.ts` and `mockFoodOrderFlows.test.ts`: the rules above, driven through the app's real Food networks.
 - `mockFoodRiderFlows.test.ts`: riders on orders (assignment, steps, cash and handover, handing back, location).
 - `mockFoodLive.test.ts`: the live channel (board sync, a new order, who may join an order's room, nothing from a failed write, the minute jobs).
+- `mockFoodReviewAdminFlows.test.ts`: reviews (once, after it arrived; replies; hidden reviews leave the rating), insights, and the staff console (feature, suspend, orders, cuisines in use, banners whose target is gone, plan overrides: seats, scheduled orders, insights).
+- `src/serializers/__tests__/foodReviewAdminRealResponses.test.ts`: the captured reviews, insights and staff-console responses through their serializers. `mockFoodOrderParity.test.ts` replays them too.
 - `src/serializers/__tests__/foodLiveSerializer.test.ts`: the socket's events through the live serializers.

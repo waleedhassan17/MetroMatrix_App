@@ -20,6 +20,7 @@ import {
   MAX_FEE_BANDS,
   MAX_RANGES_PER_DAY,
   activeRiders,
+  assertEntitled,
   assertWithinPlan,
   ensureVendor,
   invalid,
@@ -54,6 +55,8 @@ import { registerMenuRoutes } from './foodMenuRoutes';
 import { registerDiscoveryRoutes } from './foodDiscoveryRoutes';
 import { orderAgain, registerOrderRoutes } from './foodOrderRoutes';
 import { recordCod, registerRiderRoutes } from './foodRiderRoutes';
+import { canReview, registerReviewRoutes, reviewSummary } from './foodReviewRoutes';
+import { liveBanners, registerFoodAdminRoutes } from './foodAdminRoutes';
 import { dealsFor, settleFoodOrders } from './foodOrders';
 import { beginEmits, dropEmits, emitOrder, flushEmits, registerFoodRealtime } from './foodRealtime';
 import { isValidPkMobile, isValidPkPhone, normalizePkPhone } from '../../../../utils/phone';
@@ -456,7 +459,8 @@ export function registerFoodRoutes(kit: FoodKit) {
   route('POST', '/food/vendor/riders', ctx => {
     const v = myVendor(ctx);
     riderFields(ctx.body, true);
-    assertWithinPlan('riders', activeRiders(ctx.db, v.businessId) + 1);
+    assertEntitled(v, 'riders');
+    assertWithinPlan(v, 'riders', activeRiders(ctx.db, v.businessId) + 1);
     const fullName = text(ctx.body.fullName);
     const username = riderUsername(ctx.db, v.slug, fullName);
     const password = riderPassword();
@@ -532,7 +536,7 @@ export function registerFoodRoutes(kit: FoodKit) {
     const status = ctx.body.status;
     if (!(VENDOR_RIDER_STATUSES as readonly string[]).includes(status)) throw invalid('status', 'status must be one of active, inactive, on_leave');
     if (status !== r.status) {
-      if (status === 'active') assertWithinPlan('riders', activeRiders(ctx.db, v.businessId, r.id) + 1);
+      if (status === 'active') assertWithinPlan(v, 'riders', activeRiders(ctx.db, v.businessId, r.id) + 1);
       else if (r.activeOrderCount > 0) {
         throw new FoodError(409, 'INVALID_TRANSITION', 'This rider is on a delivery. Reassign or finish it first.', {
           from: r.status,
@@ -580,12 +584,16 @@ export function registerFoodRoutes(kit: FoodKit) {
   registerMenuRoutes(route, myVendor);
 
   // ── Discovery (customers, signed in or not) ──
-  registerDiscoveryRoutes(route, kit.optionalUser, { dealsFor, orderAgain });
+  registerDiscoveryRoutes(route, kit.optionalUser, { dealsFor, orderAgain, banners: liveBanners, ratingSummary: reviewSummary });
 
   // ── The bag, checkout, orders, the board, deals ──
-  registerOrderRoutes({ route, rawRoute, requireUser, myVendor, canReview: () => false, onDelivered: (db, o, _actor, now) => recordCod(db, o, now) });
+  registerOrderRoutes({ route, rawRoute, requireUser, myVendor, canReview: (db, o) => canReview(db, o), onDelivered: (db, o, _actor, now) => recordCod(db, o, now) });
+
+  // ── Reviews and insights ──
+  registerReviewRoutes({ route, requireUser, myVendor });
 
   // ── Staff ──
+  registerFoodAdminRoutes({ route, requireAdmin, revokeSessions });
   route('POST', '/admin/food/branches/:id/food-safety-check', ctx => {
     requireAdmin(ctx);
     const v = ctx.db.food.vendors.find(x => x.branchId === decodeURIComponent(ctx.params[0]));

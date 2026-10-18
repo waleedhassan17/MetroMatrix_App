@@ -179,6 +179,18 @@ export const ROUTES = {
   REVIEW_MODERATION: 'ReviewModeration',
   APPOINTMENT_LOOKUP: 'AppointmentLookup',
 
+  // ── Food: the admin console's tab (navigations-maps/AdminFood.ts) ──
+  FOOD_ADMIN_TAB: 'FoodAdminTab',
+  FOOD_OVERVIEW: 'FoodOverview',
+  ADMIN_FOOD_VENDORS: 'AdminFoodVendors',
+  ADMIN_FOOD_VENDOR: 'AdminFoodVendor',
+  ADMIN_FOOD_ORDERS: 'AdminFoodOrders',
+  ADMIN_FOOD_ORDER: 'AdminFoodOrder',
+  ADMIN_FOOD_REVIEWS: 'AdminFoodReviews',
+  ADMIN_FOOD_CUISINES: 'AdminFoodCuisines',
+  ADMIN_FOOD_BANNERS: 'AdminFoodBanners',
+  ADMIN_FOOD_BANNER_FORM: 'AdminFoodBannerForm',
+
   // ── Food: the vendor's app (navigations-maps/FoodVendor.ts) ──
   FOOD_VENDORS: 'FoodVendors',
   FOOD_SEARCH: 'FoodSearch',
@@ -188,6 +200,8 @@ export const ROUTES = {
   FOOD_ORDER_PLACED: 'FoodOrderPlaced',
   FOOD_ORDER: 'FoodOrder',
   FOOD_FAVOURITES: 'FoodFavourites',
+  FOOD_RATE_ORDER: 'FoodRateOrder',
+  FOOD_REVIEWS: 'FoodReviews',
   VENDOR_TABS: 'VendorTabs',
   MENU_TAB: 'MenuTab',
   RIDERS_TAB: 'RidersTab',
@@ -208,6 +222,8 @@ export const ROUTES = {
   VENDOR_PROMOTIONS: 'VendorPromotions',
   VENDOR_PROMOTION: 'VendorPromotion',
   VENDOR_ORDER: 'VendorOrder',
+  VENDOR_REVIEWS: 'VendorReviews',
+  VENDOR_INSIGHTS: 'VendorInsights',
 
   // ── Food: the rider's app (navigations-maps/Rider.ts) ──
   RIDER_TABS: 'RiderTabs',

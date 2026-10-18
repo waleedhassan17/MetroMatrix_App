@@ -49,6 +49,18 @@ import { foodBagSlice } from '../screens/Food/Customer/FoodBag/foodBagSlice';
 import { foodCheckoutSlice } from '../screens/Food/Customer/FoodCheckout/foodCheckoutSlice';
 import { foodOrderSlice } from '../screens/Food/Customer/FoodOrder/foodOrderSlice';
 import { foodFavouritesSlice } from '../screens/Food/Customer/FoodFavourites/foodFavouritesSlice';
+import { foodRateOrderSlice } from '../screens/Food/Customer/FoodRateOrder/foodRateOrderSlice';
+import { vendorReviewsSlice } from '../screens/Food/Vendor/VendorReviews/vendorReviewsSlice';
+import { vendorInsightsSlice } from '../screens/Food/Vendor/VendorInsights/vendorInsightsSlice';
+import { foodOverviewSlice } from '../screens/Admin/Food/FoodOverview/foodOverviewSlice';
+import { adminFoodVendorsSlice } from '../screens/Admin/Food/AdminFoodVendors/adminFoodVendorsSlice';
+import { adminFoodVendorSlice } from '../screens/Admin/Food/AdminFoodVendor/adminFoodVendorSlice';
+import { adminFoodOrdersSlice } from '../screens/Admin/Food/AdminFoodOrders/adminFoodOrdersSlice';
+import { adminFoodOrderSlice } from '../screens/Admin/Food/AdminFoodOrder/adminFoodOrderSlice';
+import { adminFoodReviewsSlice } from '../screens/Admin/Food/AdminFoodReviews/adminFoodReviewsSlice';
+import { adminFoodCuisinesSlice } from '../screens/Admin/Food/AdminFoodCuisines/adminFoodCuisinesSlice';
+import { adminFoodBannersSlice } from '../screens/Admin/Food/AdminFoodBanners/adminFoodBannersSlice';
+import { adminFoodBannerFormSlice } from '../screens/Admin/Food/AdminFoodBannerForm/adminFoodBannerFormSlice';
 import { vendorPromotionsSlice } from '../screens/Food/Vendor/VendorPromotions/vendorPromotionsSlice';
 import { vendorPromotionSlice } from '../screens/Food/Vendor/VendorPromotion/vendorPromotionSlice';
 import { vendorBoardSlice } from '../screens/Food/Vendor/VendorOrders/vendorBoardSlice';
@@ -204,6 +216,18 @@ const rootReducer = combineReducers({
   foodCheckout: foodCheckoutSlice.reducer,
   foodOrder: foodOrderSlice.reducer,
   foodFavourites: foodFavouritesSlice.reducer,
+  foodRateOrder: foodRateOrderSlice.reducer,
+  vendorReviews: vendorReviewsSlice.reducer,
+  vendorInsights: vendorInsightsSlice.reducer,
+  foodOverview: foodOverviewSlice.reducer,
+  adminFoodVendors: adminFoodVendorsSlice.reducer,
+  adminFoodVendor: adminFoodVendorSlice.reducer,
+  adminFoodOrders: adminFoodOrdersSlice.reducer,
+  adminFoodOrder: adminFoodOrderSlice.reducer,
+  adminFoodReviews: adminFoodReviewsSlice.reducer,
+  adminFoodCuisines: adminFoodCuisinesSlice.reducer,
+  adminFoodBanners: adminFoodBannersSlice.reducer,
+  adminFoodBannerForm: adminFoodBannerFormSlice.reducer,
   vendorPromotions: vendorPromotionsSlice.reducer,
   vendorPromotion: vendorPromotionSlice.reducer,
   vendorBoard: vendorBoardSlice.reducer,

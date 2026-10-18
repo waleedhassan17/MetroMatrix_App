@@ -1,0 +1,15 @@
+// MetroMatrix — Food vendor: reviews of the kitchen, and its replies.
+// TODO(API_FOOD): GET /food/vendor/reviews?unreplied, POST /food/vendor/reviews/:id/reply.
+
+import { api } from '../../network/apiHelpers';
+import { foodReviewSerializer, vendorReviewsPageSerializer } from '../../../serializers/food/reviewSerializer';
+import { pageParams, request } from '../../shopping/http';
+
+const enc = encodeURIComponent;
+
+/** `unreplied`: only reviews still waiting for a reply. */
+export const listMyReviews = (unreplied: boolean, page: number, pageSize: number) =>
+  request(() => api.get('/food/vendor/reviews', { params: { ...(unreplied ? { unreplied: 'true' } : null), ...pageParams(page, pageSize) } }), vendorReviewsPageSerializer);
+
+export const replyToReview = (id: string, reply: string) =>
+  request(() => api.post(`/food/vendor/reviews/${enc(id)}/reply`, { reply: reply.trim() }), foodReviewSerializer);

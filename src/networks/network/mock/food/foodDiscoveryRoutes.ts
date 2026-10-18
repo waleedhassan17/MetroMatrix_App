@@ -42,6 +42,10 @@ export interface DiscoveryHooks {
   dealsFor: DealsFor;
   /** Vendors this customer ordered from, most recent first (brand ids). */
   orderAgain: (db: MockDb, user: MockUser) => string[];
+  /** The live banners for the city (or everywhere). */
+  banners: (db: MockDb, city: string | null, now: number) => unknown[];
+  /** The vendor page's rating block. */
+  ratingSummary: (db: MockDb, v: MockFoodVendor) => unknown;
 }
 
 export function registerDiscoveryRoutes(route: ShopKit['route'], optionalUser: ShopKit['optionalUser'], hooks: DiscoveryHooks) {
@@ -65,7 +69,7 @@ export function registerDiscoveryRoutes(route: ShopKit['route'], optionalUser: S
         .filter(c => c.isActive)
         .sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name))
         .map(c => ({ id: c.id, name: c.name, slug: c.slug, icon: c.icon })),
-      banners: [],
+      banners: hooks.banners(ctx.db, list[0]?.v.city ?? null, ctx.now),
       orderAgain: again
         .map(id => list.find(c => c.card.id === id)?.card)
         .filter(Boolean)
@@ -128,7 +132,7 @@ export function registerDiscoveryRoutes(route: ShopKit['route'], optionalUser: S
       pickup: v.acceptsPickup ? { readyIn: { min: pickup.eta.min, max: pickup.eta.max, label: pickup.etaLabel } } : null,
       acceptsCod: v.acceptsCod,
       deals,
-      ratingSummary: null,
+      ratingSummary: hooks.ratingSummary(ctx.db, v),
       menu: menu.categories,
       popular: menu.popular,
     };

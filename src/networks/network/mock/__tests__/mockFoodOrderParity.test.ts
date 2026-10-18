@@ -1,15 +1,16 @@
 // The dummy Food API orders the way the real one does: the captured ordering
 // run (src/serializers/__tests__/fixtures/food/orders.json — bag, deals,
-// preview, checkout, the vendor's moves, the customer's orders) is replayed
+// preview, checkout, the vendor's moves, the customer's orders, reviews,
+// insights and the staff console) is replayed
 // against the dummy API, and every answer has the real keys, at the top and
 // in the nested objects the app reads. A key only one side has fails here
 // unless it is listed in KNOWN with the reason.
 
 import ordersReal from '../../../../serializers/__tests__/fixtures/food/orders.json';
-import { authSignin } from '../../../auth/authNetwork';
+import { authAdminTotp, authSignin } from '../../../auth/authNetwork';
 import { api } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
-import { SEED_PASSWORD } from '../mockConfig';
+import { MOCK, SEED_PASSWORD, STAFF_PASSWORD } from '../mockConfig';
 import { resetMockDb } from '../mockDb';
 
 type Body = { success: boolean; data?: any; error?: { code: string; details?: unknown } };
@@ -55,12 +56,13 @@ const diff = (name: string, realBody: Body, mockBody: Body, paths: string[]) => 
 /** Differences the dummy API keeps on purpose. Each says why; anything new fails the test. */
 const KNOWN: Record<string, string> = {
   'checkoutErr:error +details': 'The dummy API sends details: null on every error; the API leaves it out when there are none. The app reads both.',
+  'reviewErr:error +details': 'As checkoutErr.',
 };
 
 const ORDER = ['', 'vendor', 'vendor.location', 'items.0', 'totals', 'payment', 'eta', 'timestamps', 'events.0'];
 const ERROR = ['', 'error', 'error.details'];
 
-type As = 'customer' | 'vendor' | 'rider';
+type As = 'customer' | 'vendor' | 'rider' | 'admin';
 const steps: { fixture: string; as: As; run: (s: State) => Promise<Body>; paths: string[] }[] = [];
 const add = (fixture: string, as: As, run: (s: State) => Promise<Body>, paths: string[]) => steps.push({ fixture, as, run, paths });
 interface State {
@@ -70,6 +72,8 @@ interface State {
   transfer?: { code: string; id: string };
   pickup?: { code: string; id: string };
   rejected?: { code: string; id: string };
+  reviewId?: string;
+  cuisineId?: string;
 }
 
 const biryani = { vendorId: 'fb_resto', itemId: 'mi_chicken_biryani', variantId: 'mi_chicken_biryani_v1', optionIds: ['og_spice_1', 'og_raita_2'], quantity: 2, notes: 'Less spicy please' };
@@ -173,6 +177,53 @@ add('reorder', 'customer', s => call('post', `/food/orders/${s.rejected!.code}/r
 add('favouriteAdd', 'customer', () => call('post', '/food/favourites/fb_resto'), ['']);
 add('favourites', 'customer', () => call('get', '/food/favourites'), ['', 'items.0', 'items.0.openState']);
 
+// Reviews and the kitchen's insights.
+const REVIEW = { foodRating: 5, deliveryRating: 4, tags: ['tasty', 'on_time'], text: 'Hot and fresh, the raita was great.' };
+add('review', 'customer', s => call('post', `/food/orders/${s.code}/review`, REVIEW), ['']);
+add('reviewErr', 'customer', s => call('post', `/food/orders/${s.code}/review`, { foodRating: 5 }), ['', 'error']);
+add('vendorReviews', 'vendor', () => call('get', '/food/vendor/reviews'), ['', 'items.0']);
+add('reviewReply', 'vendor', s => call('post', `/food/vendor/reviews/${s.reviewId}/reply`, { reply: 'Thank you, see you again soon.' }), ['']);
+add('publicReviews', 'customer', () => call('get', '/food/vendors/fb_resto/reviews'), ['', 'items.0']);
+add('insights', 'vendor', () => call('get', '/food/vendor/insights'), ['', 'range', 'totals', 'days.0', 'cancelReasons.0', 'topItems.0', 'repeatCustomers']);
+
+// The staff console.
+add('adminOverview', 'admin', () => call('get', '/admin/food/overview'), ['', 'activeVendors', 'topCuisines.0', 'waiting']);
+add('adminVendors', 'admin', () => call('get', '/admin/food/vendors'), ['', 'items.0']);
+add('adminVendor', 'admin', () => call('get', '/admin/food/vendors/fb_resto'), [
+  '',
+  'profile',
+  'profile.branch',
+  'settings',
+  'hours.0',
+  'feeBands.0',
+  'setup',
+  'plan',
+  'menu.0',
+  'menu.0.items.0',
+  'recentOrders.0',
+  'ratings',
+  'ratings.recent.0',
+]);
+add('adminFeature', 'admin', () => call('post', '/admin/food/vendors/fb_resto/feature'), ['']);
+add('adminUnfeature', 'admin', () => call('post', '/admin/food/vendors/fb_resto/unfeature'), ['']);
+add('adminSuspend', 'admin', () => call('post', '/admin/food/vendors/fb_homek/suspend', { reason: 'Food safety complaint under review' }), ['']);
+add('adminReinstate', 'admin', () => call('post', '/admin/food/vendors/fb_homek/reinstate', { reason: 'Reviewed and cleared' }), ['']);
+add('adminOrders', 'admin', () => call('get', '/admin/food/orders'), ['', 'items.0', 'items.0.payment']);
+add('adminOrder', 'admin', s => call('get', `/admin/food/orders/${s.id}`), ['', 'customer', 'vendor', 'payment', 'totals']);
+add('adminReviews', 'admin', () => call('get', '/admin/food/reviews'), ['', 'items.0']);
+add('adminReviewHide', 'admin', s => call('post', `/admin/food/reviews/${s.reviewId}/hide`, { reason: 'Contains a phone number' }), ['']);
+add('adminReviewUnhide', 'admin', s => call('post', `/admin/food/reviews/${s.reviewId}/unhide`), ['']);
+add('adminCuisines', 'admin', () => call('get', '/admin/food/cuisines'), ['0']);
+add('adminCuisinePost', 'admin', () => call('post', '/admin/food/cuisines', { name: 'Seafood', slug: 'seafood', icon: 'seafood' }), ['']);
+add('adminCuisineDelete', 'admin', s => call('delete', `/admin/food/cuisines/${s.cuisineId}`), ['']);
+add('adminBanners', 'admin', () => call('get', '/admin/food/banners'), []);
+add('adminBannerPost', 'admin', () => call('post', '/admin/food/banners', { imageUrl: 'not-an-upload', title: 'Biryani week', targetType: 'search', targetQuery: 'biryani' }), [
+  ...ERROR,
+  'error.details.fields',
+]);
+add('homeWithBanner', 'customer', () => call('get', '/food/home?lat=31.5160&lng=74.3420'), ['', 'coverage']);
+add('adminPlan', 'admin', () => call('get', '/admin/food/vendors/fb_resto/plan'), ['', 'limits', 'usage', 'entitlements']);
+
 beforeAll(() => {
   jest.useFakeTimers({ doNotFake: ['setTimeout', 'setInterval', 'setImmediate', 'nextTick', 'queueMicrotask'] });
 });
@@ -190,6 +241,11 @@ it('answers every captured ordering request with the real keys', async () => {
       await clearTokens();
       if (c.as === 'customer') await authSignin({ email: 'customer@metromatrix.app', password: SEED_PASSWORD, portal: 'customer' });
       else if (c.as === 'rider') await authSignin({ username: 'biryani-bazaar.ali', password: SEED_PASSWORD, portal: 'partner' });
+      else if (c.as === 'admin') {
+        const outcome = await authSignin({ email: 'admin@metromatrix.app', password: STAFF_PASSWORD, portal: 'admin' });
+        if (outcome.kind !== 'totp') throw new Error('expected a challenge');
+        await authAdminTotp(outcome.challenge.challengeToken, { code: MOCK.TOTP_CODE });
+      }
       else await authSignin({ email: 'restaurant@metromatrix.app', password: SEED_PASSWORD, portal: 'partner' });
       who = c.as;
     }
@@ -200,6 +256,8 @@ it('answers every captured ordering request with the real keys', async () => {
     if (c.fixture === 'checkout') s.id = body.data.id;
     if (c.fixture === 'checkoutTransfer') s.transfer = { code: body.data.code, id: body.data.id };
     if (c.fixture === 'checkoutPickup') s.pickup = { code: body.data.code, id: body.data.id };
+    if (c.fixture === 'review') s.reviewId = body.data.id;
+    if (c.fixture === 'adminCuisinePost') s.cuisineId = body.data.id;
     expect([c.fixture, body.error?.code ?? 'ok']).toEqual([c.fixture, R[c.fixture].body.error?.code ?? 'ok']);
     found.push(...diff(c.fixture, R[c.fixture].body, body, c.paths));
   }

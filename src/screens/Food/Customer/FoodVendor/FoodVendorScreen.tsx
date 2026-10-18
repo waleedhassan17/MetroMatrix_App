@@ -23,6 +23,8 @@ import { ServiceScope, StoreBrandScope, useStyles, useTheme, type Theme } from '
 import { AppText, Button, Card, ChoiceChip, Divider, IconButton, IonIcon, InlineNotice, ListRow, Sheet, Skeleton, SkeletonLines, TextAction } from '@custom/index';
 import { MenuDishRow } from '@custom/food/MenuDishRow';
 import { BagBar } from '@custom/food/BagBar';
+import { FoodReviewItem } from '@custom/food/FoodReviewItem';
+import { RatingSummary } from '@custom/food/RatingSummary';
 import type { DishCard, FoodAppParamList, MenuSection, VendorPage } from '@/types';
 import { callNumber, navigateTo } from '@utils/maps';
 import { cdn } from '@utils/cdn';
@@ -223,6 +225,9 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
     </ScrollView>
   );
 
+  const reviewCount = page.ratingSummary ? page.ratingSummary.recent.length : 0;
+  const openReviews = () => navigation.navigate('FoodReviews', { id: page.id, name: page.name, slug: page.slug });
+
   const header = (
     <View>
       <View style={styles.cover}>
@@ -241,10 +246,15 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
               {page.tagline}
             </AppText>
           ) : null}
-          <View style={styles.rating}>
+          <Pressable
+            style={styles.rating}
+            onPress={reviewCount ? openReviews : undefined}
+            disabled={!reviewCount}
+            accessibilityRole={reviewCount ? 'link' : 'text'}
+            accessibilityHint={reviewCount ? 'Opens the reviews' : undefined}>
             <IonIcon name="star" size="sm" color={colors.star} />
             <AppText variant="small">{`${ratingLabel(page)} · ${cuisineLine(page)}${page.isHomeKitchen ? ' · Home kitchen' : ''}`}</AppText>
-          </View>
+          </Pressable>
         </View>
         <View style={styles.facts}>
           <View style={styles.fact}>
@@ -319,6 +329,14 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
               </Pressable>
             ))}
           </ScrollView>
+        ) : null}
+        {page.ratingSummary && reviewCount ? (
+          <View style={styles.padded}>
+            <AppText variant="sectionTitle">Ratings and reviews</AppText>
+            <RatingSummary summary={page.ratingSummary} />
+            {page.ratingSummary.recent[0] ? <FoodReviewItem review={page.ratingSummary.recent[0]} vendorName={page.name} /> : null}
+            <TextAction label="See all reviews" icon="chatbox-ellipses-outline" onPress={openReviews} />
+          </View>
         ) : null}
       </View>
       <View onLayout={(e: LayoutChangeEvent) => setTabsY(e.nativeEvent.layout.y)}>{page.menu.length > 1 ? tabs : null}</View>

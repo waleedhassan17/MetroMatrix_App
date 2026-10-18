@@ -5,7 +5,7 @@
 // fixture holds real responses; the parity test compares their keys).
 
 import type { MockDb } from '../mockDb';
-import { COMMUNITY_PLAN, LIVE_WINDOW_MS, activeRiders, isItemAvailable, isoNow, kitchenToday, menuItemCount, openState, overrideOf } from './foodLogic';
+import { LIVE_WINDOW_MS, planOf, activeRiders, isItemAvailable, isoNow, kitchenToday, menuItemCount, openState, overrideOf } from './foodLogic';
 import { formatSlot } from '../../../../utils/healthTime';
 import type { MockFoodVendor, MockMenuCategory, MockMenuItem, MockOptionGroup, MockPreorderSlot, MockRider, MockVendorAccount } from './foodTypes';
 
@@ -81,15 +81,21 @@ export const closuresWire = (v: MockFoodVendor, now: number) =>
 
 export const accountWire = (a: MockVendorAccount) => ({ ...a });
 
-export const planWire = (db: MockDb, v: MockFoodVendor) => ({
-  ...COMMUNITY_PLAN,
-  limits: { ...COMMUNITY_PLAN.limits },
-  usage: { brands: 1, branches: 1, riders: activeRiders(db, v.businessId), menu_items: menuItemCount(db, v.businessId), promotions_active: 0 },
-  entitlements: { ...COMMUNITY_PLAN.entitlements },
-  startedAt: v.planStartedAt,
-  expiresAt: null,
-  overrides: {},
-});
+export const planWire = (db: MockDb, v: MockFoodVendor) => {
+  const plan = planOf(v);
+  return {
+    planKey: plan.planKey,
+    label: plan.label,
+    priceMinorUnits: plan.priceMinorUnits,
+    currency: plan.currency,
+    limits: plan.limits,
+    usage: { brands: 1, branches: 1, riders: activeRiders(db, v.businessId), menu_items: menuItemCount(db, v.businessId), promotions_active: 0 },
+    entitlements: plan.entitlements,
+    startedAt: v.planStartedAt,
+    expiresAt: null,
+    overrides: v.planOverrides ?? {},
+  };
+};
 
 export const riderWire = (db: MockDb, r: MockRider, now: number) => ({
   id: r.id,
