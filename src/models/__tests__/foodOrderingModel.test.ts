@@ -174,7 +174,7 @@ describe('the kitchen’s board', () => {
     expect(nextVendorMove({ ...base, status: 'accepted' })).toBe('preparing');
     expect(nextVendorMove({ ...base, status: 'accepted', payment: { method: 'transfer', status: 'proof_submitted' } })).toBe('check-transfer');
     expect(nextVendorMove({ ...base, status: 'preparing' })).toBe('ready');
-    expect(nextVendorMove({ ...base, status: 'ready' })).toBe('handed-external');
+    expect(nextVendorMove({ ...base, status: 'ready' })).toBe('assign');
     expect(nextVendorMove({ ...base, status: 'ready', riderId: 'r1' })).toBeNull();
     expect(nextVendorMove({ ...base, status: 'ready', fulfilment: 'pickup' })).toBe('picked-up');
     expect(nextVendorMove({ ...base, status: 'on_the_way' })).toBe('delivered');

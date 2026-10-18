@@ -214,6 +214,7 @@ export const ROUTES = {
   DELIVERIES_TAB: 'DeliveriesTab',
   CASH_TAB: 'CashTab',
   RIDER_PROFILE_TAB: 'RiderProfileTab',
+  RIDER_ORDER: 'RiderOrder',
 
   // ── Dev only ──
   DESIGN_GALLERY: 'DesignGallery',

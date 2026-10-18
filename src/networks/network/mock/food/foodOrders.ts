@@ -1111,8 +1111,9 @@ export const riderCardOf = (db: MockDb, o: MockFoodOrder, now: number) => {
     phone: r.phone,
     vehicle: r.vehicle,
     step: o.riderStep ?? 'assigned',
-    locationLive: !!r.locationUpdatedAt && now - Date.parse(r.locationUpdatedAt) < 2 * MINUTE,
-    lastGeo: r.lastGeo ? { ...r.lastGeo } : null,
+    locationLive: !!r.locationUpdatedAt && now - Date.parse(r.locationUpdatedAt) <= 2 * MINUTE,
+    // The position only while it's live (the API's riderCard).
+    lastGeo: r.lastGeo && !!r.locationUpdatedAt && now - Date.parse(r.locationUpdatedAt) <= 2 * MINUTE ? { ...r.lastGeo } : null,
     at: r.locationUpdatedAt ?? o.updatedAt,
   };
 };

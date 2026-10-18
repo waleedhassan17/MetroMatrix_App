@@ -12,6 +12,7 @@ import RiderCashScreen from '../screens/Food/Rider/RiderCash/RiderCashScreen';
 import RiderProfileScreen from '../screens/Food/Rider/RiderProfile/RiderProfileScreen';
 import ChangePasswordScreen from '../screens/Account/ChangePassword/ChangePasswordScreen';
 import NotificationsScreen from '../screens/Account/Notifications/NotificationsScreen';
+import RiderOrderScreen from '../screens/Food/Rider/RiderOrder/RiderOrderScreen';
 
 export const RIDER_TABS: ITabRoute[] = [
   { title: ROUTES.DELIVERIES_TAB, component: RiderDeliveriesScreen, label: 'Deliveries', icon: 'bicycle-outline', iconActive: 'bicycle' },
@@ -20,6 +21,7 @@ export const RIDER_TABS: ITabRoute[] = [
 ];
 
 export const RIDER_STACK_ROUTES: IRoute[] = [
+  { title: ROUTES.RIDER_ORDER, component: RiderOrderScreen },
   { title: ROUTES.CHANGE_PASSWORD, component: ChangePasswordScreen },
   { title: ROUTES.NOTIFICATIONS, component: NotificationsScreen },
 ];

@@ -53,6 +53,7 @@ import type { MockFoodVendor, MockRider, MockRiderVehicle } from './foodTypes';
 import { registerMenuRoutes } from './foodMenuRoutes';
 import { registerDiscoveryRoutes } from './foodDiscoveryRoutes';
 import { orderAgain, registerOrderRoutes } from './foodOrderRoutes';
+import { recordCod, registerRiderRoutes } from './foodRiderRoutes';
 import { dealsFor, settleFoodOrders } from './foodOrders';
 import { beginEmits, dropEmits, emitOrder, flushEmits, registerFoodRealtime } from './foodRealtime';
 import { isValidPkMobile, isValidPkPhone, normalizePkPhone } from '../../../../utils/phone';
@@ -135,6 +136,27 @@ export function registerFoodRoutes(kit: FoodKit) {
     const r = ctx.db.food.riders.find(x => x.id === decodeURIComponent(id) && x.businessId === v.businessId);
     if (!r) throw notFound('Rider');
     return r;
+  };
+
+  const meRider = (ctx: ShopCtx) => {
+    const user = requireUser(ctx);
+    if (user.role !== 'rider') throw new FoodError(403, 'FORBIDDEN', 'Only riders can do this.');
+    const r = ctx.db.food.riders.find(x => x.userId === user.id);
+    if (!r || r.status !== 'active') {
+      throw new FoodError(
+        403,
+        'RIDER_INACTIVE',
+        r?.status === 'plan_locked'
+          ? "Your vendor's plan has no free rider seat for you right now. Ask them to free one."
+          : 'Your rider account is not active. Ask your vendor to reactivate it.',
+        { status: r?.status ?? null },
+      );
+    }
+    const b = ctx.db.businesses.find(x => x.id === r.businessId);
+    if (!b || b.status !== 'approved') {
+      throw new FoodError(403, b?.status === 'suspended' ? 'BUSINESS_SUSPENDED' : 'BUSINESS_NOT_APPROVED', 'Your vendor is not taking orders on MetroMatrix right now.');
+    }
+    return { rider: r, vendor: ensureVendor(ctx.db, b, ctx.now) };
   };
 
   // ── Reference ──
@@ -485,6 +507,9 @@ export function registerFoodRoutes(kit: FoodKit) {
     return { rider: riderWire(ctx.db, rider, ctx.now), credential: { username, password } };
   });
 
+  // Riders on orders (before /riders/:id, which would take /riders/suggest).
+  registerRiderRoutes({ route, myVendor, meRider });
+
   route('GET', '/food/vendor/riders/:id', ctx => riderWire(ctx.db, myRider(ctx, myVendor(ctx), ctx.params[0]), ctx.now));
 
   route('PATCH', '/food/vendor/riders/:id', ctx => {
@@ -545,26 +570,6 @@ export function registerFoodRoutes(kit: FoodKit) {
 
   // ── The rider's own view ──
   /** An active rider of an approved vendor (403 RIDER_INACTIVE / BUSINESS_SUSPENDED otherwise). */
-  const meRider = (ctx: ShopCtx) => {
-    const user = requireUser(ctx);
-    if (user.role !== 'rider') throw new FoodError(403, 'FORBIDDEN', 'Only riders can do this.');
-    const r = ctx.db.food.riders.find(x => x.userId === user.id);
-    if (!r || r.status !== 'active') {
-      throw new FoodError(
-        403,
-        'RIDER_INACTIVE',
-        r?.status === 'plan_locked'
-          ? "Your vendor's plan has no free rider seat for you right now. Ask them to free one."
-          : 'Your rider account is not active. Ask your vendor to reactivate it.',
-        { status: r?.status ?? null },
-      );
-    }
-    const b = ctx.db.businesses.find(x => x.id === r.businessId);
-    if (!b || b.status !== 'approved') {
-      throw new FoodError(403, b?.status === 'suspended' ? 'BUSINESS_SUSPENDED' : 'BUSINESS_NOT_APPROVED', 'Your vendor is not taking orders on MetroMatrix right now.');
-    }
-    return { rider: r, vendor: ensureVendor(ctx.db, b, ctx.now) };
-  };
 
   route('GET', '/food/rider/me', ctx => {
     const { rider, vendor } = meRider(ctx);
@@ -578,7 +583,7 @@ export function registerFoodRoutes(kit: FoodKit) {
   registerDiscoveryRoutes(route, kit.optionalUser, { dealsFor, orderAgain });
 
   // ── The bag, checkout, orders, the board, deals ──
-  registerOrderRoutes({ route, rawRoute, requireUser, myVendor, canReview: () => false, onDelivered: () => undefined });
+  registerOrderRoutes({ route, rawRoute, requireUser, myVendor, canReview: () => false, onDelivered: (db, o, _actor, now) => recordCod(db, o, now) });
 
   // ── Staff ──
   route('POST', '/admin/food/branches/:id/food-safety-check', ctx => {

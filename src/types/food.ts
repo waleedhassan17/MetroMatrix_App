@@ -221,6 +221,74 @@ export interface RiderHome {
   };
 }
 
+// ─── Riders on orders ──────────────────────────────────
+/** A delivery as the rider sees it: where to collect, where to drop, what to collect. */
+export interface RiderOrder {
+  id: string;
+  code: string;
+  status: FoodOrderStatus;
+  statusLabel: string;
+  riderStep: RiderStep | null;
+  /** The steps the rider can take now (the server's). */
+  nextSteps: RiderStep[];
+  pickup: { name: string; phone: string | null; addressLine: string | null; area: string | null; city: string | null; lat: number | null; lng: number | null };
+  drop: {
+    name: string | null;
+    phone: string | null;
+    line1: string | null;
+    area: string | null;
+    city: string | null;
+    landmark: string | null;
+    building: string | null;
+    floor: string | null;
+    riderInstructions: string | null;
+    lat: number | null;
+    lng: number | null;
+  } | null;
+  items: { name: string; variant: string | null; options: string[]; quantity: number }[];
+  itemCount: number;
+  cutlery: boolean;
+  note: string | null;
+  payment: { method: FoodPaymentMethod; status: FoodPaymentStatus };
+  total: number;
+  /** Cash to take at the door (0 when it's paid already). */
+  cashToCollect: number;
+  codCollected: number | null;
+  readyAt: string | null;
+  promisedAt: string | null;
+}
+
+/** Cash a rider holds for their vendor, and its entries (newest first). */
+export interface RiderCash {
+  riderId: string;
+  balance: number;
+  entries: { id: string; kind: 'cod_collected' | 'handover'; amount: number; orderCode: string | null; note: string | null; at: string }[];
+}
+
+/** A rider on the vendor's live list. */
+export interface LiveRider {
+  id: string;
+  fullName: string;
+  phone: string | null;
+  vehicle: string | null;
+  onDuty: boolean;
+  locationLive: boolean;
+  location: { lat: number; lng: number; at: string | null } | null;
+  lastSeenAt: string | null;
+  activeOrders: { id: string; code: string; status: FoodOrderStatus; riderStep: RiderStep | null }[];
+}
+
+/** Who to give an order to: fewest deliveries, then nearest. */
+export interface RiderSuggestion {
+  riderId: string;
+  fullName: string;
+  vehicle: string | null;
+  phone: string | null;
+  activeOrders: number;
+  locationLive: boolean;
+  distanceKm: number | null;
+}
+
 // ─── The vendor's menu (GET/POST /food/vendor/menu/…) ─────────────────────
 export type ItemTag = 'spicy' | 'veg' | 'bestseller' | 'new' | 'contains_nuts';
 

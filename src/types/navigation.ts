@@ -286,8 +286,8 @@ export type FoodVendorStackParamList = {
   VendorPromotions: undefined;
   /** A deal: edit one (`id`) or a new one. */
   VendorPromotion: { id?: string } | undefined;
-  /** One order (by id). */
-  VendorOrder: { id: string };
+  /** One order (by id); `assign` opens the rider picker. */
+  VendorOrder: { id: string; assign?: boolean };
   PaymentAccounts: undefined;
   Profile: undefined;
   ChangePassword: undefined;
@@ -304,6 +304,8 @@ export type RiderTabParamList = {
 /** The rider's app: the tabs, with the few tools pushed over them. */
 export type RiderStackParamList = {
   RiderTabs: NavigatorScreenParams<RiderTabParamList> | undefined;
+  /** One delivery (by order id). */
+  RiderOrder: { id: string };
   ChangePassword: undefined;
   Notifications: undefined;
 };

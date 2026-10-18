@@ -2,13 +2,14 @@
 // MetroMatrix — Food vendor: one rider
 // ═══════════════════════════════════════════════════════
 // Change their phone or vehicle; mark them active, on leave or inactive
-// (inactive signs them out); reset the password (shown once). Deliveries and
-// cash held arrive with the API's rider phase.
+// (inactive signs them out); reset the password (shown once); the cash they
+// hold for the kitchen, and recording what they hand over.
 
 import { createAppSlice } from '@store/createAppSlice';
-import { getRider, resetRiderPassword, setRiderStatus, updateRider } from '@networks/food/vendor/ridersNetwork';
+import type { PayloadAction } from '@reduxjs/toolkit';
+import { getRider, getRiderCashForVendor, recordHandover, resetRiderPassword, setRiderStatus, updateRider } from '@networks/food/vendor/ridersNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
-import type { FoodRider, RiderCredential, RiderInput } from '@/types';
+import type { FoodRider, RiderCash, RiderCredential, RiderInput } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { riderUpdated } from '../VendorRiders/vendorRidersSlice';
 
@@ -18,9 +19,28 @@ export interface RiderDetailSliceState {
   busy: 'status' | 'save' | 'reset' | null;
   credential: RiderCredential | null;
   error: ServerError;
+  cash: RiderCash | null;
+  /** The handover sheet: open, and the amount typed (rupees). */
+  handoverOpen: boolean;
+  handoverAmount: string;
+  handoverNote: string;
+  handing: boolean;
+  handoverError: ServerError;
 }
 
-const initialState: RiderDetailSliceState = { rider: null, status: 'idle', busy: null, credential: null, error: NO_ERROR };
+const initialState: RiderDetailSliceState = {
+  rider: null,
+  status: 'idle',
+  busy: null,
+  credential: null,
+  error: NO_ERROR,
+  cash: null,
+  handoverOpen: false,
+  handoverAmount: '',
+  handoverNote: '',
+  handing: false,
+  handoverError: NO_ERROR,
+};
 
 export const riderDetailSlice = createAppSlice({
   name: 'riderDetail',
@@ -29,6 +49,59 @@ export const riderDetailSlice = createAppSlice({
     clearRiderCredential: create.reducer(state => {
       state.credential = null;
     }),
+    openHandover: create.reducer((state, action: PayloadAction<boolean>) => {
+      state.handoverOpen = action.payload;
+      state.handoverError = NO_ERROR;
+      state.handoverAmount = action.payload && state.cash ? String(Math.max(0, state.cash.balance)) : '';
+      state.handoverNote = '';
+    }),
+    setHandoverAmount: create.reducer((state, action: PayloadAction<string>) => {
+      state.handoverAmount = action.payload.replace(/[^\d]/g, '').slice(0, 7);
+    }),
+    setHandoverNote: create.reducer((state, action: PayloadAction<string>) => {
+      state.handoverNote = action.payload.slice(0, 200);
+    }),
+    loadRiderCashAsync: create.asyncThunk(
+      async (id: string, { rejectWithValue }) => {
+        try {
+          return await getRiderCashForVendor(id);
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        pending: (state, action) => {
+          if (state.cash?.riderId !== action.meta.arg) state.cash = null;
+        },
+        fulfilled: (state, action) => {
+          state.cash = action.payload;
+        },
+      },
+    ),
+    recordHandoverAsync: create.asyncThunk(
+      async ({ id, amount, note }: { id: string; amount: number; note: string | null }, { rejectWithValue }) => {
+        try {
+          return await recordHandover(id, amount, note);
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        pending: state => {
+          state.handing = true;
+          state.handoverError = NO_ERROR;
+        },
+        fulfilled: (state, action) => {
+          state.handing = false;
+          state.handoverOpen = false;
+          state.cash = action.payload;
+        },
+        rejected: (state, action) => {
+          state.handing = false;
+          state.handoverError = readRejection(action, "The handover wasn't recorded.");
+        },
+      },
+    ),
     loadRiderAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
@@ -133,5 +206,16 @@ export const riderDetailSlice = createAppSlice({
   },
 });
 
-export const { clearRiderCredential, loadRiderAsync, setRiderStatusAsync, saveRiderAsync, resetRiderPasswordAsync } = riderDetailSlice.actions;
+export const {
+  clearRiderCredential,
+  openHandover,
+  setHandoverAmount,
+  setHandoverNote,
+  loadRiderCashAsync,
+  recordHandoverAsync,
+  loadRiderAsync,
+  setRiderStatusAsync,
+  saveRiderAsync,
+  resetRiderPasswordAsync,
+} = riderDetailSlice.actions;
 export const { selectRiderDetail } = riderDetailSlice.selectors;

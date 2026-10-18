@@ -507,6 +507,7 @@ export const seedFood = (): MockFood => ({
   orders: [],
   promotions: seedPromotions(),
   favourites: [],
+  cash: [],
   idempotency: {},
   seq: 0,
 });

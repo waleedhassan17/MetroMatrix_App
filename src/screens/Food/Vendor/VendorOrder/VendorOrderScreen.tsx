@@ -41,7 +41,16 @@ import { haptics } from '@utils/haptics';
 import { callNumber, navigateTo, openWhatsApp } from '@utils/maps';
 import { formatPKR } from '@utils/money';
 import { formatPkPhoneForDisplay } from '@utils/phone';
-import { loadVendorOrderAsync, selectVendorOrderEntry, selectVendorOrderUi, setReasonSheet, vendorOrderActAsync, type VendorOrderAct } from './vendorOrderSlice';
+import {
+  loadSuggestionsAsync,
+  loadVendorOrderAsync,
+  selectVendorOrderEntry,
+  selectVendorOrderUi,
+  setAssignOpen,
+  setReasonSheet,
+  vendorOrderActAsync,
+  type VendorOrderAct,
+} from './vendorOrderSlice';
 
 type Props = NativeStackScreenProps<FoodVendorStackParamList, 'VendorOrder'>;
 
@@ -70,7 +79,7 @@ const itemsLabel = (n: number) => `${n} ${n === 1 ? 'item' : 'items'}`;
 const MOVE_ORDER: FoodOrderStatus[] = ['preparing', 'ready', 'on_the_way', 'picked_up', 'delivered'];
 
 const VendorOrderContent: React.FC<Props> = ({ route }) => {
-  const { id } = route.params;
+  const { id, assign } = route.params;
   const { back } = useBack({ name: 'VendorTabs', params: { screen: 'OrdersTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
@@ -85,6 +94,20 @@ const VendorOrderContent: React.FC<Props> = ({ route }) => {
   }, [refetch]);
   // Any change to this order: read it again (the kitchen's socket gets board cards, not this view).
   useOrderChannel(o && !isEnded(o.status) ? o.id : null, { refetch });
+
+  const pickRider = useCallback(() => {
+    dispatch(setAssignOpen(true));
+    void dispatch(loadSuggestionsAsync(id));
+  }, [dispatch, id]);
+  // From the board's "Give to a rider": the picker, once the order is in.
+  const loaded = !!o;
+  const openedPicker = React.useRef(false);
+  useEffect(() => {
+    if (assign && loaded && !openedPicker.current) {
+      openedPicker.current = true;
+      pickRider();
+    }
+  }, [assign, loaded, pickRider]);
 
   const act = async (a: VendorOrderAct, done?: string) => {
     haptics.press();
@@ -105,7 +128,10 @@ const VendorOrderContent: React.FC<Props> = ({ route }) => {
 
   const left = o.status === 'placed' ? secondsLeft(o.acceptBy, now) : null;
   const pay = PAYMENT_STATUS[o.payment.status];
-  const moves = MOVE_ORDER.filter(s => o.actions.status.includes(s) && !(s === 'on_the_way' && o.rider));
+  const canAssign = o.fulfilment === 'delivery' && ['accepted', 'preparing', 'ready'].includes(o.status) && !o.handedToExternal;
+  // Handing to someone off the app lives in the rider picker, behind "Give to a rider".
+  const moves = MOVE_ORDER.filter(s => o.actions.status.includes(s) && !(s === 'on_the_way' && (o.rider || canAssign)));
+  const beforePickup = !o.rider || ['assigned', 'accepted_by_rider', 'arrived_at_branch'].includes(o.rider.step);
   const canAccept = o.actions.status.includes('accepted');
   const a = o.address;
 
@@ -183,8 +209,24 @@ const VendorOrderContent: React.FC<Props> = ({ route }) => {
             ))}
           </View>
         ) : null}
+        {canAssign && !o.rider ? <Button label="Give to a rider" leftIcon="bicycle-outline" variant={moves.length ? 'secondary' : 'primary'} onPress={pickRider} fullWidth /> : null}
         {o.rider ? (
-          <InlineNotice tone="info" message={`${o.rider.name}: ${riderStepLabel(o.rider.step).toLowerCase()}.`} />
+          <Card>
+            <View style={styles.head}>
+              <IonIcon name="bicycle-outline" size="lg" color={colors.inkMuted} />
+              <View style={styles.grow}>
+                <AppText variant="bodyStrong">{o.rider.name}</AppText>
+                <AppText variant="small" tone="muted">
+                  {riderStepLabel(o.rider.step, 'vendor')}
+                </AppText>
+                <AppText variant="caption" tone={o.rider.locationLive ? 'success' : 'muted'}>
+                  {o.rider.locationLive ? 'Location live' : 'No live location'}
+                </AppText>
+              </View>
+              {o.rider.phone ? <IconButton icon="call-outline" accessibilityLabel={`Call ${o.rider.name}`} onPress={() => callNumber(o.rider!.phone!)} /> : null}
+            </View>
+            {canAssign && beforePickup ? <TextAction label="Give to another rider" icon="swap-horizontal-outline" onPress={pickRider} /> : null}
+          </Card>
         ) : o.handedToExternal && !isEnded(o.status) ? (
           <InlineNotice tone="info" message="With your rider. Mark it delivered when it reaches the customer." />
         ) : null}
@@ -313,7 +355,7 @@ const VendorOrderContent: React.FC<Props> = ({ route }) => {
                 {e.kind === 'payment'
                   ? `Payment: ${PAYMENT_STATUS[e.to as keyof typeof PAYMENT_STATUS]?.vendorLabel ?? e.to}`
                   : e.kind === 'rider'
-                    ? riderStepLabel(e.to ?? '')
+                    ? riderStepLabel(e.to ?? '', 'vendor')
                     : (ORDER_STATUS[e.to as FoodOrderStatus]?.vendorLabel ?? e.to ?? '')}
                 {e.note && e.kind !== 'payment' ? ` · ${e.to === 'rejected' ? rejectReasonLabel(e.note) : e.note}` : ''}
               </AppText>
@@ -323,6 +365,34 @@ const VendorOrderContent: React.FC<Props> = ({ route }) => {
 
         {o.actions.status.includes('cancelled') ? <Button label="Cancel order" variant="destructive" onPress={() => dispatch(setReasonSheet('cancel'))} fullWidth /> : null}
       </View>
+
+      <Sheet visible={ui.assignOpen} onClose={() => dispatch(setAssignOpen(false))} title="Give to a rider" subtitle="Your riders on duty: fewest deliveries first, then nearest.">
+        {ui.actionError.message ? <InlineNotice message={ui.actionError.message} /> : null}
+        {ui.suggestStatus === 'loading' && !ui.suggestions.length ? <SkeletonLines lines={3} /> : null}
+        {ui.suggestStatus === 'succeeded' && !ui.suggestions.length ? (
+          <InlineNotice tone="info" message="None of your riders is on duty. Ask one to go on duty, or hand it to your own rider." />
+        ) : null}
+        {ui.suggestions.map(r => (
+          <ChoiceLine
+            key={r.riderId}
+            label={r.fullName}
+            price={null}
+            note={[
+              r.activeOrders ? `${r.activeOrders} ${r.activeOrders === 1 ? 'delivery' : 'deliveries'} now` : 'Free now',
+              r.distanceKm !== null ? `${r.distanceKm} km away` : r.locationLive ? null : 'No live location',
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+            selected={o.rider?.name === r.fullName}
+            multiple={false}
+            disabled={ui.acting !== null}
+            onPress={() => void act({ kind: 'assign', riderId: r.riderId }, `Given to ${r.fullName}`)}
+          />
+        ))}
+        {o.actions.status.includes('on_the_way') && !o.rider ? (
+          <Button label="Hand to someone not on the app" variant="secondary" onPress={() => void act({ kind: 'handed-external' }, 'Handed to your rider')} fullWidth />
+        ) : null}
+      </Sheet>
 
       <Sheet
         visible={!!ui.sheet}

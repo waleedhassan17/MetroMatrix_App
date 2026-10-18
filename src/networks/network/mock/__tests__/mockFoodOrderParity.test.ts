@@ -60,7 +60,7 @@ const KNOWN: Record<string, string> = {
 const ORDER = ['', 'vendor', 'vendor.location', 'items.0', 'totals', 'payment', 'eta', 'timestamps', 'events.0'];
 const ERROR = ['', 'error', 'error.details'];
 
-type As = 'customer' | 'vendor';
+type As = 'customer' | 'vendor' | 'rider';
 const steps: { fixture: string; as: As; run: (s: State) => Promise<Body>; paths: string[] }[] = [];
 const add = (fixture: string, as: As, run: (s: State) => Promise<Body>, paths: string[]) => steps.push({ fixture, as, run, paths });
 interface State {
@@ -123,6 +123,28 @@ add('accept', 'vendor', s => call('post', `/food/vendor/orders/${s.id}/accept`, 
 add('preparing', 'vendor', s => call('post', `/food/vendor/orders/${s.id}/preparing`), ['']);
 add('ready', 'vendor', s => call('post', `/food/vendor/orders/${s.id}/ready`), ['']);
 
+// The kitchen's own rider takes it.
+add('riderDuty', 'rider', () => call('patch', '/food/rider/duty', { onDuty: true }), ['']);
+add('ridersLive', 'vendor', () => call('get', '/food/vendor/riders/live'), ['', 'items.0']);
+add('ridersSuggest', 'vendor', s => call('get', `/food/vendor/riders/suggest?orderId=${s.id}`), ['', 'items.0']);
+add('assign', 'vendor', s => call('post', `/food/vendor/orders/${s.id}/assign`, { riderId: 'rd_ali' }), ['', 'rider', 'actions']);
+add('riderMe', 'rider', () => call('get', '/food/rider/me'), ['', 'rider', 'vendor']);
+add('riderOrders', 'rider', () => call('get', '/food/rider/orders'), ['', 'items.0', 'items.0.pickup', 'items.0.drop', 'items.0.items.0', 'items.0.payment']);
+add('riderOrder', 'rider', s => call('get', `/food/rider/orders/${s.id}`), ['']);
+add('riderAccept', 'rider', s => call('post', `/food/rider/orders/${s.id}/accept`), ['']);
+add('riderArrivedBranch', 'rider', s => call('post', `/food/rider/orders/${s.id}/arrived-branch`), ['']);
+add('riderPickedUp', 'rider', s => call('post', `/food/rider/orders/${s.id}/picked-up`), ['']);
+add('riderLocation', 'rider', () => call('post', '/food/rider/location', { points: [{ lat: 31.5125, lng: 74.343 }] }), ['']);
+add('trackingOnTheWay', 'customer', s => call('get', `/food/orders/${s.code}/tracking`), ['', 'rider', 'rider.lastGeo']);
+add('riderArrivedCustomer', 'rider', s => call('post', `/food/rider/orders/${s.id}/arrived-customer`), ['']);
+add('riderDeliveredErr', 'rider', s => call('post', `/food/rider/orders/${s.id}/delivered`, { codCollected: 9999999 }), [...ERROR, 'error.details.fields']);
+add('riderDelivered', 'rider', s => call('post', `/food/rider/orders/${s.id}/delivered`, {}), ['']);
+add('riderCash', 'rider', () => call('get', '/food/rider/cash'), ['', 'entries.0']);
+add('riderHistory', 'rider', () => call('get', '/food/rider/orders?scope=history'), ['', 'items.0']);
+add('vendorRiderCash', 'vendor', () => call('get', '/food/vendor/riders/rd_ali/cash'), ['', 'entries.0']);
+add('handover', 'vendor', () => call('post', '/food/vendor/riders/rd_ali/handover', { amount: 500, note: 'Evening handover' }), ['', 'entries.0']);
+add('orderDelivered', 'customer', s => call('get', `/food/orders/${s.code}`), ['', 'rider']);
+
 // A transfer: the receipt, the kitchen waits for the money, then confirms; then cancels.
 add('checkoutTransfer', 'customer', async () => (await refill(), place('transfer', 'key-2')), ['', 'payment', 'payment.accounts.0']);
 add('orderTransfer', 'customer', s => call('get', `/food/orders/${s.transfer!.code}`), ['', 'payment']);
@@ -167,6 +189,7 @@ it('answers every captured ordering request with the real keys', async () => {
     if (c.as !== who) {
       await clearTokens();
       if (c.as === 'customer') await authSignin({ email: 'customer@metromatrix.app', password: SEED_PASSWORD, portal: 'customer' });
+      else if (c.as === 'rider') await authSignin({ username: 'biryani-bazaar.ali', password: SEED_PASSWORD, portal: 'partner' });
       else await authSignin({ email: 'restaurant@metromatrix.app', password: SEED_PASSWORD, portal: 'partner' });
       who = c.as;
     }

@@ -16,6 +16,7 @@ import {
   foodTrackingSerializer,
   vendorFoodOrderSerializer,
 } from '../food/orderSerializer';
+import { liveRidersSerializer, riderCashSerializer, riderOrderSerializer, riderOrdersPageSerializer, riderSuggestionsSerializer } from '../food/riderSerializer';
 
 type Captured = Record<string, { status: number; body: { success: boolean; data?: any; error?: any } }>;
 const R = real as unknown as Captured;
@@ -201,5 +202,29 @@ describe('the kitchen', () => {
     const auto = foodPromotionSerializer(data('vendor.promotionPost'))!;
     expect(auto).toMatchObject({ kind: 'percent_off_order', value: 10, maxDiscount: 300, code: null, weekdays: [0, 1, 2, 3, 4, 5, 6] });
     expect(error('vendor.promotionErr').details.fields).toHaveProperty('title');
+  });
+});
+
+describe('riders on orders', () => {
+  it('reads a delivery as the rider sees it', () => {
+    const d = riderOrderSerializer(data('riderOrder'))!;
+    expect(d).toMatchObject({ code: 'FC-2E5MEX', status: 'ready', riderStep: 'assigned', nextSteps: ['accepted_by_rider', 'picked_up', 'declined'], itemCount: 3, cashToCollect: 2070, note: 'Gate 2' });
+    expect(d.pickup).toMatchObject({ name: 'Karachi Biryani House (demo)', lat: 31.5102 });
+    expect(d.drop).toMatchObject({ riderInstructions: 'Call on arrival', lat: 31.516 });
+    expect(d.items[0]).toEqual({ name: 'Chicken Biryani', variant: 'Single', options: ['Kachumber salad'], quantity: 3 });
+    expect(riderOrdersPageSerializer(data('riderOrders')).items[0].code).toBe('FC-2E5MEX');
+    const delivered = riderOrderSerializer(data('riderDelivered'))!;
+    expect(delivered).toMatchObject({ status: 'delivered', nextSteps: [], cashToCollect: 0, codCollected: 2070 });
+  });
+
+  it('reads the cash a rider holds, the kitchen’s live riders and suggestions', () => {
+    const cash = riderCashSerializer(data('riderCash'))!;
+    expect(cash.balance).toBe(5210);
+    expect(cash.entries[0]).toMatchObject({ kind: 'cod_collected', amount: 2070, orderCode: 'FC-2E5MEX' });
+    expect(cash.entries[1]).toMatchObject({ kind: 'handover', amount: -500, note: 'Evening handover' });
+    expect(riderCashSerializer(data('handover'))!.balance).toBe(4710);
+    expect(liveRidersSerializer(data('ridersLive'))[0]).toMatchObject({ fullName: 'Ali Raza', onDuty: true, locationLive: false, location: null, activeOrders: [] });
+    expect(riderSuggestionsSerializer(data('ridersSuggest'))[0]).toMatchObject({ fullName: 'Ali Raza', activeOrders: 0, distanceKm: null });
+    expect(vendorFoodOrderSerializer(data('assign'))!.rider).toMatchObject({ name: 'Ali Raza', step: 'assigned', locationLive: false, lastPosition: null });
   });
 });

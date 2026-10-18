@@ -88,7 +88,31 @@ export const RIDER_STEP: Record<string, string> = {
   declined: 'Finding another rider',
 };
 
-export const riderStepLabel = (s: RiderStep) => RIDER_STEP[s] ?? 'Rider assigned';
+/** The same steps as the kitchen says them. */
+export const RIDER_STEP_FOR_VENDOR: Record<string, string> = {
+  assigned: 'Given to the rider, not accepted yet',
+  accepted_by_rider: 'Rider heading to you',
+  arrived_at_branch: 'Rider at your kitchen',
+  picked_up: 'On the way to the customer',
+  arrived_at_customer: 'At the customer',
+  delivered: 'Delivered',
+  declined: 'Handed back',
+  unassigned: 'Taken back from the rider',
+};
+
+/** And as the rider says them. */
+export const RIDER_STEP_FOR_RIDER: Record<string, string> = {
+  assigned: 'New delivery',
+  accepted_by_rider: 'Heading to the kitchen',
+  arrived_at_branch: 'At the kitchen',
+  picked_up: 'On the way to the customer',
+  arrived_at_customer: 'At the customer',
+  delivered: 'Delivered',
+  declined: 'Handed back',
+};
+
+export const riderStepLabel = (s: RiderStep, audience: 'customer' | 'vendor' | 'rider' = 'customer') =>
+  (audience === 'vendor' ? RIDER_STEP_FOR_VENDOR : audience === 'rider' ? RIDER_STEP_FOR_RIDER : RIDER_STEP)[s] ?? (audience === 'rider' ? 'New delivery' : 'Rider assigned');
 
 /** What a rider's next tap is called, by the step it moves to. */
 export const RIDER_ACTION: Record<string, string> = {
@@ -137,12 +161,13 @@ export const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(
 export const pillTone = (t: Tone): 'neutral' | 'accent' | 'success' | 'warning' => (t === 'info' ? 'accent' : t);
 
 // ─── The kitchen's next move ──────────────────────────
-export type VendorMove = 'accept' | 'preparing' | 'ready' | 'handed-external' | 'picked-up' | 'delivered' | 'check-transfer';
+export type VendorMove = 'accept' | 'preparing' | 'ready' | 'assign' | 'handed-external' | 'picked-up' | 'delivered' | 'check-transfer';
 
 export const VENDOR_MOVE_LABEL: Record<VendorMove, string> = {
   accept: 'Accept',
   preparing: 'Start cooking',
   ready: 'Ready',
+  assign: 'Give to a rider',
   'handed-external': 'Handed to our rider',
   'picked-up': 'Collected',
   delivered: 'Delivered',
@@ -150,7 +175,13 @@ export const VENDOR_MOVE_LABEL: Record<VendorMove, string> = {
 };
 
 /** The one big button on a card; null when the kitchen is waiting on someone else. */
-export const nextVendorMove = (c: { status: FoodOrderStatus; fulfilment: FoodFulfilment; payment: { method: FoodPaymentMethod; status: FoodPaymentStatus }; riderId: string | null }): VendorMove | null => {
+export const nextVendorMove = (c: {
+  status: FoodOrderStatus;
+  fulfilment: FoodFulfilment;
+  payment: { method: FoodPaymentMethod; status: FoodPaymentStatus };
+  riderId: string | null;
+  handedToExternal?: boolean;
+}): VendorMove | null => {
   switch (c.status) {
     case 'placed':
       return 'accept';
@@ -159,7 +190,7 @@ export const nextVendorMove = (c: { status: FoodOrderStatus; fulfilment: FoodFul
     case 'preparing':
       return 'ready';
     case 'ready':
-      return c.fulfilment === 'pickup' ? 'picked-up' : c.riderId ? null : 'handed-external';
+      return c.fulfilment === 'pickup' ? 'picked-up' : c.riderId ? null : 'assign';
     case 'on_the_way':
       return c.riderId ? null : 'delivered';
     default:
@@ -240,3 +271,16 @@ export const VENDOR_STATUS_ACTION: Partial<Record<FoodOrderStatus, string>> = {
   delivered: 'Delivered',
   cancelled: 'Cancel order',
 };
+
+// ─── The rider's next step ────────────────────────────
+const RIDER_FLOW = ['accepted_by_rider', 'arrived_at_branch', 'picked_up', 'arrived_at_customer', 'delivered'];
+
+/** The one big button: the furthest-forward step the server allows next (null: waiting, e.g. for the kitchen). */
+export const primaryRiderStep = (next: string[]): string | null => RIDER_FLOW.find(s => next.includes(s)) ?? null;
+
+/** Picked up isn't offered until the kitchen marks the order ready. */
+export const waitingForKitchen = (o: { status: FoodOrderStatus; riderStep: string | null; nextSteps: string[] }) =>
+  (o.status === 'accepted' || o.status === 'preparing') && !o.nextSteps.includes('picked_up') && o.riderStep !== null && ['assigned', 'accepted_by_rider', 'arrived_at_branch'].includes(o.riderStep);
+
+/** Why a rider hands a delivery back (said to the kitchen). */
+export const RIDER_DECLINE_REASONS = ['I’m too far away', 'My vehicle has a problem', 'I already have too many deliveries', 'I’m going off duty'];

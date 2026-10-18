@@ -10,6 +10,8 @@
 //   • useVendorBoard — the kitchen's board: `board.sync` (sent on connect),
 //     `order.new`, `order.updated` (a card), `order.payment`; refetches
 //     after reconnects, polls every motion.boardPoll while down.
+//   • useRiderChannel — the rider's deliveries: any `order.updated` in their
+//     room reads them again.
 
 import { motion } from '@theme/tokens';
 import {
@@ -112,5 +114,16 @@ export const useVendorBoard = (h: VendorBoardHandlers, enabled = true) => {
   );
   useRealtimeResync(h.refetch, enabled);
   useLiveFallback(h.refetch, motion.boardPoll, enabled);
+  return useRealtimeStatus();
+};
+
+/**
+ * The rider's deliveries, live: any change to an order they carry (a new
+ * assignment, the kitchen marking it ready, a cancel) reads them again.
+ */
+export const useRiderChannel = (refetch: () => void, enabled = true) => {
+  useRealtimeEvent(REALTIME_EVENTS.orderUpdated, () => refetch(), enabled);
+  useRealtimeResync(refetch, enabled);
+  useLiveFallback(refetch, motion.trackingPoll, enabled);
   return useRealtimeStatus();
 };

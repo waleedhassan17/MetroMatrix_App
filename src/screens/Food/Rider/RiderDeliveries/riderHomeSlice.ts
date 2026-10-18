@@ -1,22 +1,29 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Food rider: who they are and whom they deliver for
+// MetroMatrix — Food rider: who they are, duty, their deliveries
 // ═══════════════════════════════════════════════════════
-// Read by Deliveries and Profile. Duty, deliveries, location and cash arrive
-// with the API's rider phase.
+// Read by Deliveries, the delivery page and Profile: the rider and the
+// vendor they deliver for, whether they're on duty (only then can they be
+// given deliveries and share where they are), and the deliveries they're
+// working now. History is a paged list (usePagedList).
 
 import { createAppSlice } from '@store/createAppSlice';
-import { getRiderHome } from '@networks/food/rider/riderNetwork';
+import { getRiderHome, listRiderOrders, setDuty } from '@networks/food/rider/riderNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
-import type { RiderHome } from '@/types';
+import type { RiderHome, RiderOrder } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 
 export interface RiderHomeSliceState {
   home: RiderHome | null;
   status: FormStatus;
   error: ServerError;
+  /** Deliveries being worked now (assigned, not yet delivered). */
+  active: RiderOrder[];
+  activeStatus: FormStatus;
+  dutyBusy: boolean;
+  dutyError: ServerError;
 }
 
-const initialState: RiderHomeSliceState = { home: null, status: 'idle', error: NO_ERROR };
+const initialState: RiderHomeSliceState = { home: null, status: 'idle', error: NO_ERROR, active: [], activeStatus: 'idle', dutyBusy: false, dutyError: NO_ERROR };
 
 export const riderHomeSlice = createAppSlice({
   name: 'riderHome',
@@ -45,11 +52,57 @@ export const riderHomeSlice = createAppSlice({
         },
       },
     ),
+
+    loadRiderDeliveriesAsync: create.asyncThunk(
+      async (_: void, { rejectWithValue }) => {
+        try {
+          return (await listRiderOrders('active', 1, 50)).items;
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        pending: state => {
+          if (state.activeStatus !== 'succeeded') state.activeStatus = 'loading';
+        },
+        fulfilled: (state, action) => {
+          state.activeStatus = 'succeeded';
+          state.active = action.payload;
+        },
+        rejected: state => {
+          state.activeStatus = 'failed';
+        },
+      },
+    ),
+
+    setDutyAsync: create.asyncThunk(
+      async (onDuty: boolean, { rejectWithValue }) => {
+        try {
+          return await setDuty(onDuty);
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        pending: state => {
+          state.dutyBusy = true;
+          state.dutyError = NO_ERROR;
+        },
+        fulfilled: (state, action) => {
+          state.dutyBusy = false;
+          if (state.home) state.home.rider.onDuty = action.payload;
+        },
+        rejected: (state, action) => {
+          state.dutyBusy = false;
+          state.dutyError = readRejection(action, "That didn't change.");
+        },
+      },
+    ),
   }),
   selectors: {
     selectRiderHome: state => state,
   },
 });
 
-export const { loadRiderHomeAsync } = riderHomeSlice.actions;
+export const { loadRiderHomeAsync, loadRiderDeliveriesAsync, setDutyAsync } = riderHomeSlice.actions;
 export const { selectRiderHome } = riderHomeSlice.selectors;

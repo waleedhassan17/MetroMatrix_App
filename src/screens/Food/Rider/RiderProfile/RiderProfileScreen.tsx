@@ -28,7 +28,7 @@ const RiderProfileScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const user = useAppSelector(selectUser);
-  const { home } = useAppSelector(selectRiderHome);
+  const { home, active } = useAppSelector(selectRiderHome);
   const { confirmSignOut } = useSignOut();
 
   useEffect(() => {
@@ -68,7 +68,13 @@ const RiderProfileScreen: React.FC = () => {
           <ListRow title="Notifications" leftIcon="notifications-outline" onPress={() => navigation.navigate('Notifications')} />
         </Card>
         <Card padded="horizontal">
-          <ListRow title="Sign out" leftIcon="log-out-outline" onPress={confirmSignOut} chevron={false} />
+          <ListRow
+            title="Sign out"
+            subtitle={active.length ? `Finish or hand back your ${active.length === 1 ? 'delivery' : `${active.length} deliveries`} first.` : undefined}
+            leftIcon="log-out-outline"
+            onPress={active.length ? () => navigation.navigate('RiderTabs', { screen: 'DeliveriesTab' }) : confirmSignOut}
+            chevron={false}
+          />
         </Card>
       </ScreenShell>
     </ServiceScope>

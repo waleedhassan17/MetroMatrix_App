@@ -51,10 +51,39 @@ const loadPlayer = (): AudioPlayer | null => {
   return player;
 };
 
+/** How often (and how many times) the web checks that playback began before pausing it. */
+const PAUSE_CHECK_MS = 100;
+const PAUSE_CHECKS = 10;
+
+/**
+ * Pause. A browser rejects a play() that is paused before it starts (and
+ * expo-audio doesn't catch that), so on the web: silent at once, paused once
+ * playback has begun — unless it's ringing again by then.
+ */
+const quiet = (p: AudioPlayer) => {
+  try {
+    // On the web `playing` turns true as soon as play() is called; the clock moving means it really began.
+    const begun = () => p.currentTime > 0;
+    if (Platform.OS !== 'web' || begun()) return p.pause();
+    p.volume = 0;
+    let checks = 0;
+    const timer = setInterval(() => {
+      checks += 1;
+      if (!begun() && checks < PAUSE_CHECKS) return;
+      clearInterval(timer);
+      if (state.ringing) return;
+      p.pause();
+    }, PAUSE_CHECK_MS);
+  } catch {
+    /* the player is gone (app backgrounded) — nothing to stop */
+  }
+};
+
 const play = () => {
   const p = loadPlayer();
   if (!p) return set({ blocked: Platform.OS === 'web' });
   try {
+    p.volume = 1;
     void p.seekTo(0).catch(() => undefined);
     p.play();
   } catch {
@@ -78,11 +107,7 @@ export const orderAlert = {
   stop() {
     if (!state.ringing) return;
     set({ ringing: false, blocked: false });
-    try {
-      player?.pause();
-    } catch {
-      /* the player is gone (app backgrounded) — nothing to stop */
-    }
+    if (player) quiet(player);
     if (Platform.OS !== 'web') Vibration.cancel();
   },
 
@@ -95,8 +120,10 @@ export const orderAlert = {
       // Prime the player inside the gesture so the next order can sound.
       const p = loadPlayer();
       try {
-        p?.play();
-        p?.pause();
+        if (p) {
+          p.play();
+          quiet(p);
+        }
       } catch {
         /* still blocked — the banner stays */
       }

@@ -320,3 +320,7 @@ export const validateRider = (r: RiderInput): ValidationErrors => {
   if (r.phone && !isValidPkMobile(r.phone)) e.phone = PK_MOBILE_MESSAGE;
   return e;
 };
+
+/** "12-C Main Boulevard, Gulberg III, Lahore": each part once (an address line often has the area in it already). */
+export const placeLine = (...parts: (string | null | undefined)[]) =>
+  parts.filter((p, i, all): p is string => !!p && !all.slice(0, i).some(q => q?.toLowerCase().includes(p.toLowerCase()))).join(', ');

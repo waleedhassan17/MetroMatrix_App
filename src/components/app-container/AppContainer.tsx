@@ -116,6 +116,7 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       RiderTabs: {
         screens: { DeliveriesTab: 'rider/deliveries', CashTab: 'rider/cash', RiderProfileTab: 'rider/profile' },
       },
+      RiderOrder: 'rider/deliveries/:id',
       // ── The customer app (the FYP's): the home and its pages on the root
       // stack; each service its own app with its own tabs. Every service app
       // has its tabs under a deep link (initialRouteName), so back from a

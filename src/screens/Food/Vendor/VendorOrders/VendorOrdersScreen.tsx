@@ -148,6 +148,10 @@ const VendorOrdersContent: React.FC = () => {
   const onMove = (c: BoardCard, move: VendorMove) => {
     if (move === 'accept') return void dispatch(openAccept(c.id));
     if (move === 'check-transfer') return open(c);
+    if (move === 'assign') {
+      dispatch(markOrderSeen(c.id));
+      return navigation.navigate('VendorOrder', { id: c.id, assign: true });
+    }
     haptics.press();
     void dispatch(moveOrderAsync({ id: c.id, move: move as BoardMove }));
   };

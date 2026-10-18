@@ -288,6 +288,17 @@ export interface MockFoodOrder {
   updatedAt: string;
 }
 
+/** Cash a rider holds for their vendor: + collected at a door, − handed over. */
+export interface MockCashEntry {
+  id: string;
+  riderId: string;
+  orderId: string | null;
+  kind: 'cod_collected' | 'handover';
+  amount: number;
+  note: string | null;
+  at: string;
+}
+
 export interface MockFood {
   cuisines: MockCuisine[];
   vendors: MockFoodVendor[];
@@ -300,6 +311,7 @@ export interface MockFood {
   orders: MockFoodOrder[];
   promotions: MockPromotion[];
   favourites: { userId: string; businessId: string; savedAt: string }[];
+  cash: MockCashEntry[];
   /** Checkout's Idempotency-Key → the order it placed. */
   idempotency: Record<string, string>;
   /** Ids for new rows. */

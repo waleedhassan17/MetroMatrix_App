@@ -9,8 +9,10 @@ import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { RIDER_VEHICLES, riderStatusLabel, riderVehicleLabel } from '@models/food/vendorModel';
 import { ServiceScope, useStyles, type Theme } from '@theme/index';
-import { AppText, Button, Card, ChoiceChip, InlineNotice, ListRow, ScreenShell, Sheet, SkeletonLines, StatusPill } from '@custom/index';
+import { AppText, Button, Card, ChoiceChip, InlineNotice, ListRow, ScreenShell, Sheet, SkeletonLines, StatusPill, TextField } from '@custom/index';
 import { CredentialCard } from '@custom/food/CredentialCard';
+import { CashLedger } from '@custom/food/CashLedger';
+import { formatPKR } from '@utils/money';
 import type { FoodRider, FoodVendorStackParamList } from '@/types';
 import { Alert } from '@utils/alert';
 import { callNumber, openWhatsApp } from '@utils/maps';
@@ -22,6 +24,11 @@ import {
   saveRiderAsync,
   selectRiderDetail,
   setRiderStatusAsync,
+  loadRiderCashAsync,
+  openHandover,
+  setHandoverAmount,
+  setHandoverNote,
+  recordHandoverAsync,
 } from './riderDetailSlice';
 
 type Props = NativeStackScreenProps<FoodVendorStackParamList, 'VendorRiderDetail'>;
@@ -61,6 +68,7 @@ const RiderDetailContent: React.FC<Props> = ({ route }) => {
 
   useEffect(() => {
     void dispatch(loadRiderAsync(id));
+    void dispatch(loadRiderCashAsync(id));
   }, [dispatch, id]);
 
   if (!r) {
@@ -128,6 +136,26 @@ const RiderDetailContent: React.FC<Props> = ({ route }) => {
         <ListRow title={r.username ?? 'No username'} subtitle="Username — riders sign in with it" leftIcon="person-outline" chevron={false} />
         <ListRow title="Reset password" subtitle="Signs them out and gives a new password" leftIcon="key-outline" onPress={reset} />
       </Card>
+
+      {s.cash ? (
+        <>
+          <CashLedger cash={s.cash} holder={r.fullName} vendor="you" />
+          {s.cash.balance > 0 ? <Button label="Record a handover" leftIcon="cash-outline" variant="secondary" onPress={() => dispatch(openHandover(true))} fullWidth /> : null}
+        </>
+      ) : null}
+
+      <Sheet visible={s.handoverOpen} onClose={() => dispatch(openHandover(false))} title={`Cash from ${r.fullName}`} subtitle={s.cash ? `They hold ${formatPKR(s.cash.balance)}.` : undefined}>
+        {s.handoverError.message ? <InlineNotice message={s.handoverError.message} /> : null}
+        <TextField label="Amount handed over (Rs)" value={s.handoverAmount} onChangeText={v => dispatch(setHandoverAmount(v))} keyboardType="number-pad" />
+        <TextField label="Note (optional)" value={s.handoverNote} onChangeText={v => dispatch(setHandoverNote(v))} placeholder="Evening handover" />
+        <Button
+          label="Record handover"
+          loading={s.handing}
+          disabled={!Number(s.handoverAmount) || (!!s.cash && Number(s.handoverAmount) > s.cash.balance)}
+          onPress={() => void dispatch(recordHandoverAsync({ id, amount: Number(s.handoverAmount), note: s.handoverNote.trim() || null }))}
+          fullWidth
+        />
+      </Sheet>
 
       <Sheet visible={!!s.credential} onClose={() => dispatch(clearRiderCredential())} title="New password" footer={<Button label="Done" variant="secondary" onPress={() => dispatch(clearRiderCredential())} fullWidth />}>
         {s.credential ? <CredentialCard riderName={r.fullName} credential={s.credential} /> : null}

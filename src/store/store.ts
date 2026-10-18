@@ -53,6 +53,8 @@ import { vendorPromotionsSlice } from '../screens/Food/Vendor/VendorPromotions/v
 import { vendorPromotionSlice } from '../screens/Food/Vendor/VendorPromotion/vendorPromotionSlice';
 import { vendorBoardSlice } from '../screens/Food/Vendor/VendorOrders/vendorBoardSlice';
 import { vendorOrderSlice } from '../screens/Food/Vendor/VendorOrder/vendorOrderSlice';
+import { riderOrderSlice } from '../screens/Food/Rider/RiderOrder/riderOrderSlice';
+import { riderCashSlice } from '../screens/Food/Rider/RiderCash/riderCashSlice';
 import { profileSlice } from '../screens/Account/Profile/profileSlice';
 import { changePasswordSlice } from '../screens/Account/ChangePassword/changePasswordSlice';
 import { adminTotpSlice } from '../screens/Admin/AdminTotp/adminTotpSlice';
@@ -206,6 +208,8 @@ const rootReducer = combineReducers({
   vendorPromotion: vendorPromotionSlice.reducer,
   vendorBoard: vendorBoardSlice.reducer,
   vendorOrder: vendorOrderSlice.reducer,
+  riderOrder: riderOrderSlice.reducer,
+  riderCash: riderCashSlice.reducer,
   profile: profileSlice.reducer,
   changePassword: changePasswordSlice.reducer,
   adminTotp: adminTotpSlice.reducer,

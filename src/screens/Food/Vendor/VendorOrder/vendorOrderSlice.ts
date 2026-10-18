@@ -7,8 +7,10 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
+import { suggestRiders } from '@networks/food/vendor/ridersNetwork';
 import {
   acceptOrder,
+  assignRider,
   cancelVendorOrder,
   confirmPayment,
   getVendorOrder,
@@ -21,11 +23,12 @@ import {
   startPreparing,
 } from '@networks/food/vendor/ordersNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
-import type { VendorFoodOrder } from '@/types';
+import type { RiderSuggestion, VendorFoodOrder } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 
 export type VendorOrderAct =
   | { kind: 'accept'; eta: number }
+  | { kind: 'assign'; riderId: string }
   | { kind: 'reject'; reason: string }
   | { kind: 'cancel'; reason: string }
   | { kind: 'preparing' }
@@ -50,15 +53,21 @@ export interface VendorOrderSliceState {
   acting: VendorOrderAct['kind'] | null;
   actionError: ServerError;
   sheet: ReasonSheet;
+  /** The rider picker: open, and its suggestions (fewest deliveries, then nearest). */
+  assignOpen: boolean;
+  suggestions: RiderSuggestion[];
+  suggestStatus: FormStatus;
 }
 
 const EMPTY: VendorOrderEntry = { order: null, status: 'idle', error: NO_ERROR };
-const initialState: VendorOrderSliceState = { byId: {}, acting: null, actionError: NO_ERROR, sheet: null };
+const initialState: VendorOrderSliceState = { byId: {}, acting: null, actionError: NO_ERROR, sheet: null, assignOpen: false, suggestions: [], suggestStatus: 'idle' };
 
 const run = (id: string, a: VendorOrderAct) => {
   switch (a.kind) {
     case 'accept':
       return acceptOrder(id, a.eta);
+    case 'assign':
+      return assignRider(id, a.riderId);
     case 'reject':
       return rejectOrder(id, a.reason);
     case 'cancel':
@@ -88,6 +97,33 @@ export const vendorOrderSlice = createAppSlice({
       state.sheet = action.payload;
       state.actionError = NO_ERROR;
     }),
+    setAssignOpen: create.reducer((state, action: PayloadAction<boolean>) => {
+      state.assignOpen = action.payload;
+      state.actionError = NO_ERROR;
+    }),
+
+    loadSuggestionsAsync: create.asyncThunk(
+      async (orderId: string, { rejectWithValue }) => {
+        try {
+          return await suggestRiders(orderId);
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        pending: state => {
+          state.suggestStatus = 'loading';
+        },
+        fulfilled: (state, action) => {
+          state.suggestStatus = 'succeeded';
+          state.suggestions = action.payload;
+        },
+        rejected: (state, action) => {
+          state.suggestStatus = 'failed';
+          state.actionError = readRejection(action, "Your riders didn't load.");
+        },
+      },
+    ),
 
     loadVendorOrderAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
@@ -130,6 +166,7 @@ export const vendorOrderSlice = createAppSlice({
         fulfilled: (state, action) => {
           state.acting = null;
           state.sheet = null;
+          state.assignOpen = false;
           state.byId[action.meta.arg.id] = { order: action.payload, status: 'succeeded', error: NO_ERROR };
         },
         rejected: (state, action) => {
@@ -145,5 +182,5 @@ export const vendorOrderSlice = createAppSlice({
   },
 });
 
-export const { setReasonSheet, loadVendorOrderAsync, vendorOrderActAsync } = vendorOrderSlice.actions;
+export const { setReasonSheet, setAssignOpen, loadSuggestionsAsync, loadVendorOrderAsync, vendorOrderActAsync } = vendorOrderSlice.actions;
 export const { selectVendorOrderEntry, selectVendorOrderUi } = vendorOrderSlice.selectors;
