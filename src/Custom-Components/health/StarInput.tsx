@@ -32,7 +32,7 @@ export const StarInput: React.FC<{ value: number; onChange: (n: number) => void;
           }}
           style={styles.star}
           accessibilityRole="button"
-          accessibilityState={{ selected: n <= value }}
+          aria-selected={n <= value}
           accessibilityLabel={`${label}: ${n} ${n === 1 ? 'star' : 'stars'}${words?.[n] ? `, ${words[n]}` : ''}`}>
           <IonIcon name={n <= value ? 'star' : 'star-outline'} size={size} color={n <= value ? colors.star : colors.lineStrong} />
         </Pressable>

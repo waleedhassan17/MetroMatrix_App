@@ -4,8 +4,7 @@
 // The home, vendor lists, a vendor's page with its menu, the dish sheet and
 // search → the app's shapes (types/food.ts). Defensive: a missing field is a
 // sensible default, never a crash.
-// TODO(API_FOOD): taken from the API's committed discovery routes; check
-// against docs/API_FOOD.md when it is published.
+// docs/API_FOOD.md §2 (VendorCard, VendorPage, ItemSheet) and §4.1.
 
 import type {
   DishCard,

@@ -1,6 +1,6 @@
 // MetroMatrix — Food vendor: the vendor's own riders. A new rider's username
 // and password come back once; after that only a reset issues a password.
-// TODO(API_FOOD): /food/vendor/riders (+ /:id, /:id/status,
+// docs/API_FOOD.md §4.3 Riders: /food/vendor/riders (+ /:id, /:id/status,
 // /:id/reset-password, /:id/credential, /suggest, /live, /:id/cash, /:id/handover).
 
 import { api } from '../../network/apiHelpers';

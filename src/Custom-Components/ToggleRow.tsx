@@ -28,7 +28,8 @@ export const ToggleRow: React.FC<ToggleRowProps> = ({ label, helper, value, onCh
       accessibilityRole="switch"
       accessibilityLabel={label}
       accessibilityHint={helper}
-      accessibilityState={{ checked: value, disabled: !!disabled }}
+      aria-checked={value}
+      aria-disabled={!!disabled}
       style={styles.root}>
       <View style={styles.text}>
         <AppText variant="bodyStrong" tone={disabled ? 'faint' : 'ink'}>

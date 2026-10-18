@@ -168,7 +168,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           style={styles.heart}
           hitSlop={4}
           accessibilityRole="button"
-          accessibilityState={{ selected: !!saved }}
+          aria-selected={!!saved}
           accessibilityLabel={saved ? `Remove ${product.name} from Saved` : `Save ${product.name}`}>
           <View style={styles.heartWell}>
             <IonIcon

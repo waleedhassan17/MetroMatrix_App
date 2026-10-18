@@ -197,7 +197,7 @@ const VendorBrandContent: React.FC<Props> = () => {
               key={hex}
               onPress={() => dispatch(setBrandField({ field: 'brandColor', value: hex }))}
               accessibilityRole="radio"
-              accessibilityState={{ checked: f.brandColor.toUpperCase() === hex.toUpperCase() }}
+              aria-checked={f.brandColor.toUpperCase() === hex.toUpperCase()}
               accessibilityLabel={`Brand colour ${hex}`}
               style={[styles.swatch, { backgroundColor: hex }, f.brandColor.toUpperCase() === hex.toUpperCase() && { borderColor: colors.ink }]}
             />

@@ -125,7 +125,7 @@ const WriteReviewContent: React.FC<Props> = ({ route }) => {
               style={styles.star}
               accessibilityRole="button"
               accessibilityLabel={`${n} ${n === 1 ? 'star' : 'stars'}, ${RATING_WORDS[n]}`}
-              accessibilityState={{ selected: s.rating === n }}>
+              aria-selected={s.rating === n}>
               <IonIcon name={n <= s.rating ? 'star' : 'star-outline'} size="xl" color={n <= s.rating ? colors.star : colors.lineStrong} />
             </Pressable>
           ))}

@@ -394,7 +394,7 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
               onPress={() => void dispatch(toggleFavouriteAsync({ vendorId: page.id, save: !saved }))}
               style={styles.round}
               accessibilityRole="button"
-              accessibilityState={{ selected: saved }}
+              aria-selected={saved}
               accessibilityLabel={saved ? `Remove ${page.name} from saved` : `Save ${page.name}`}
             >
               <IonIcon name={saved ? 'heart' : 'heart-outline'} size="md" color={saved ? colors.danger : colors.ink} />

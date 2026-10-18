@@ -2,7 +2,7 @@
 
 While `src/config/env.ts` has no backend URL, the Food Court routes are answered by `src/networks/network/mock/food/`. They follow the Food API's committed routes in MetroMatrix-API (`src/modules/food`), with the same bodies, statuses, error codes and shapes.
 
-`docs/API_FOOD.md` arrives with the backend's final phase. Until then, every Food network, serializer and mock file is marked `TODO(API_FOOD)`.
+`docs/API_FOOD.md` is a copy of the backend's contract (chunk4/p8). The parity tests replay real responses against the dummy API: the per-phase captures (`fixtures/food/vendor.json`, `menu.json`, `discovery.json`, `orders.json`) and the released API on its `seed:food` demo (`fixtures/food/p8.json`, made by `scripts/capture-food-fixtures.js`).
 
 ## What it covers so far
 
@@ -123,4 +123,17 @@ Seeded names are fictional. The logos are generated initials that stand in for a
 - `mockFoodLive.test.ts`: the live channel (board sync, a new order, who may join an order's room, nothing from a failed write, the minute jobs).
 - `mockFoodReviewAdminFlows.test.ts`: reviews (once, after it arrived; replies; hidden reviews leave the rating), insights, and the staff console (feature, suspend, orders, cuisines in use, banners whose target is gone, plan overrides: seats, scheduled orders, insights).
 - `src/serializers/__tests__/foodReviewAdminRealResponses.test.ts`: the captured reviews, insights and staff-console responses through their serializers. `mockFoodOrderParity.test.ts` replays them too.
+- `src/serializers/__tests__/foodP8RealResponses.test.ts`: the released API's run (`p8.json`) through every Food serializer, with the contract's rules checked in what came back (the total is subtotal − deal + the kitchen's delivery fee and nothing else; a plan change takes effect at once).
+
+## Refreshing the real capture
+
+When the backend's `docs/API_FOOD.md` changes: copy it to `docs/`, update the networks, serializers, models and the dummy API, then capture again from a local backend seeded with `npm run seed:food` (the run changes that database; re-seed afterwards):
+
+```bash
+BACKEND=~/MetroMatix-NestJS API=http://localhost:3000/api/v1 \
+  node scripts/capture-food-fixtures.js src/serializers/__tests__/fixtures/food/p8.json
+npm run gates
+```
+
+The parity tests fail on any key or error code the two disagree on. Run the capture while Smash Theory Burgers is open (it takes orders until 2 AM).
 - `src/serializers/__tests__/foodLiveSerializer.test.ts`: the socket's events through the live serializers.

@@ -1,5 +1,5 @@
 // MetroMatrix — Food vendor: the kitchen's numbers (recorded sales, never earnings).
-// TODO(API_FOOD): GET /food/vendor/insights?range=today|7d|30d.
+// docs/API_FOOD.md §4.3 Insights: GET /food/vendor/insights?range=today|7d|30d.
 
 import { api } from '../../network/apiHelpers';
 import { foodInsightsSerializer } from '../../../serializers/food/reviewSerializer';

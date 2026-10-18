@@ -78,7 +78,8 @@ export const ChoiceCard: React.FC<ChoiceCardProps> = ({
         onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel={`${title}. ${description}`}
-        accessibilityState={{ selected, expanded: trailing === 'expand' ? expanded : undefined }}
+        aria-selected={selected}
+        aria-expanded={trailing === 'expand' ? expanded : undefined}
         style={({ pressed }) => [styles.content, pressed && { opacity: opacity.pressed }]}>
         <View style={[styles.tile, { backgroundColor: iconBg }]}>{icon}</View>
         <View style={styles.text}>

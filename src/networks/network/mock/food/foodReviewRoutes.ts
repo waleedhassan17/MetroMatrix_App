@@ -8,7 +8,7 @@
 // insights: orders, recorded sales (money the vendor received directly),
 // acceptance, prep time, on time, top dishes, why orders ended, repeat
 // customers — over local days.
-// TODO(API_FOOD): mirrors the API's committed reviews and insights services.
+// Mirrors the API's reviews and insights services (docs/API_FOOD.md §4.2–4.3).
 
 import type { MockDb, MockUser } from '../mockDb';
 import type { ShopCtx, ShopKit } from '../shop/shopRoutes';

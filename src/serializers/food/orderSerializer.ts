@@ -3,8 +3,8 @@
 // ═══════════════════════════════════════════════════════
 // The bag, the preview, an order (customer and vendor views), tracking, the
 // vendor's board cards and promotions → the app's shapes (types/food.ts).
-// TODO(API_FOOD): taken from the API's committed cart, checkout, orders and
-// promotions routes; check against docs/API_FOOD.md when it is published.
+// docs/API_FOOD.md §2 (Cart, Preview, CustomerOrder, BoardCard, Tracking,
+// Slots), §3 and §4.2–4.3.
 
 import type {
   BoardCard,

@@ -1,8 +1,7 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Food rider serializers (vendor's Riders, the rider's app)
 // ═══════════════════════════════════════════════════════
-// TODO(API_FOOD): taken from the API's committed rider routes; check against
-// docs/API_FOOD.md when it is published.
+// docs/API_FOOD.md §2 RiderOrder, §4.3 Riders and §4.4.
 
 import type { FoodOrderStatus, FoodPaymentMethod, FoodPaymentStatus, FoodRider, LiveRider, RiderCash, RiderCredential, RiderHome, RiderOrder, RiderSuggestion } from '../../types/food';
 import type { Paged } from '../../types/payments';

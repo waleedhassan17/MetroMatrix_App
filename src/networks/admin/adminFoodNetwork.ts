@@ -1,7 +1,7 @@
 // MetroMatrix — Admin Food console.
 // MetroMatrix-API docs/API_FOOD.md §4.5. Every write is audited by the API.
 // Orders are read-only here (disputes); food approvals stay in the Chunk 1
-// queue (/admin/businesses). TODO(API_FOOD).
+// queue (/admin/businesses).
 
 import { api } from '../network/apiHelpers';
 import {

@@ -1,6 +1,6 @@
 // MetroMatrix — Food vendor: how the branch works — settings, opening hours,
 // delivery fee bands, closures and the accounts customers transfer to.
-// TODO(API_FOOD): /food/vendor/settings, /hours, /fee-bands, /closures,
+// docs/API_FOOD.md §4.3: /food/vendor/settings, /hours, /fee-bands, /closures,
 // /payment-accounts (the API names an account's fields accountTitle and
 // accountNumber; the app's PaymentAccount says title and number).
 

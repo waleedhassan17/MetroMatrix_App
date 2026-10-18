@@ -98,7 +98,7 @@ const InventoryContent: React.FC<Props> = ({ route }) => {
     return (
       <View style={styles.row}>
         {s.selecting ? (
-          <Pressable onPress={() => dispatch(toggleSelected(row.variantId))} accessibilityRole="checkbox" accessibilityState={{ checked: picked }} accessibilityLabel={`Select ${row.productName} ${row.variantLabel}`}>
+          <Pressable onPress={() => dispatch(toggleSelected(row.variantId))} accessibilityRole="checkbox" aria-checked={picked} accessibilityLabel={`Select ${row.productName} ${row.variantLabel}`}>
             <IonIcon name={picked ? 'checkbox' : 'square-outline'} size="lg" color={picked ? service.accent : colors.lineStrong} />
           </Pressable>
         ) : row.imageUrl ? (

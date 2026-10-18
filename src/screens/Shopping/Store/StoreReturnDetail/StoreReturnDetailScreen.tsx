@@ -123,7 +123,7 @@ const StoreReturnDetailContent: React.FC<Props> = ({ route }) => {
                 <Pressable
                   onPress={() => dispatch(toggleRestock(it.orderItemId))}
                   accessibilityRole="checkbox"
-                  accessibilityState={{ checked: !!s.restock[it.orderItemId] }}
+                  aria-checked={!!s.restock[it.orderItemId]}
                   accessibilityLabel={`Put ${it.name} back in stock`}>
                   <IonIcon name={s.restock[it.orderItemId] ? 'checkbox' : 'square-outline'} size="lg" color={s.restock[it.orderItemId] ? service.accent : colors.lineStrong} />
                 </Pressable>

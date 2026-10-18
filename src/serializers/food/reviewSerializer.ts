@@ -5,8 +5,8 @@
 // vendor page's rating block, the kitchen's insights and the staff banners
 // the Food home shows → the app's shapes (types/food.ts). Defensive: a
 // missing field is a sensible default, never a crash.
-// TODO(API_FOOD): docs/API_FOOD.md §2 Review, §4.2 review, §4.3 Reviews and
-// Insights, §4.1 home banners.
+// docs/API_FOOD.md §2 Review, §4.2 review, §4.3 Reviews and Insights, §4.1
+// home banners.
 
 import type {
   FoodBannerTarget,

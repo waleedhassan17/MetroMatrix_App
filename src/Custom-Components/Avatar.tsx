@@ -102,7 +102,7 @@ export const Avatar: React.FC<AvatarProps> = ({
       disabled={uploading}
       accessibilityRole="button"
       accessibilityLabel={editable ? 'Change profile photo' : name}
-      accessibilityState={{ busy: uploading }}>
+      aria-busy={uploading}>
       {body}
     </Pressable>
   );

@@ -1,5 +1,5 @@
 // MetroMatrix — Food vendor: reviews of the kitchen, and its replies.
-// TODO(API_FOOD): GET /food/vendor/reviews?unreplied, POST /food/vendor/reviews/:id/reply.
+// docs/API_FOOD.md §4.3 Reviews: GET /food/vendor/reviews?unreplied, POST /food/vendor/reviews/:id/reply.
 
 import { api } from '../../network/apiHelpers';
 import { foodReviewSerializer, vendorReviewsPageSerializer } from '../../../serializers/food/reviewSerializer';

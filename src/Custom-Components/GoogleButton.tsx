@@ -50,7 +50,8 @@ export const GoogleButton: React.FC<GoogleButtonProps> = ({
       disabled={inactive}
       accessibilityRole="button"
       accessibilityLabel={label === 'Google' ? 'Continue with Google' : label}
-      accessibilityState={{ disabled: inactive, busy: loading }}
+      aria-disabled={inactive}
+      aria-busy={loading}
       style={({ pressed }) => [
         styles.root,
         (pressed || disabled) && { opacity: disabled ? opacity.disabled : opacity.pressed },

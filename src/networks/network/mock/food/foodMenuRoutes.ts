@@ -4,7 +4,7 @@
 // Categories (with a daily window), dishes with sizes, the reusable add-on
 // group library, what is off and until when, and a home kitchen's day:
 // portions, the weekly menu and pre-order slots. As the API answers them.
-// TODO(API_FOOD): mirrors the API's committed menu routes.
+// Mirrors the API's menu routes (docs/API_FOOD.md §4.3 Menu).
 
 import type { ShopCtx, ShopKit } from '../shop/shopRoutes';
 import { EVERY_DAY, FoodError, ITEM_TAGS, assertWithinPlan, invalid, isoNow, kitchenToday, menuItemCount, nextId, notFound, overrideOf, text } from './foodLogic';

@@ -56,7 +56,8 @@ export const PaymentMethodPicker: React.FC<{
             onPress={() => o.available && onChange(o.method)}
             disabled={!o.available}
             accessibilityRole="radio"
-            accessibilityState={{ checked: selected, disabled: !o.available }}
+            aria-checked={selected}
+            aria-disabled={!o.available}
             accessibilityLabel={`${PAYMENT_METHOD_LABEL[o.method]}${o.reason ? `. ${o.reason}` : ''}`}
             style={[
               styles.option,

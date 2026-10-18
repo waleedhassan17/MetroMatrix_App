@@ -8,8 +8,8 @@ export type KitchenKind = Extract<SubType, 'restaurant' | 'home_kitchen' | 'clou
 
 // ═══════════════════════════════════════════════════════
 // Food Court vendors and riders (MetroMatrix-API, Food chunk)
-// TODO(API_FOOD): shapes from the Food API's committed routes; check them
-// against docs/API_FOOD.md when it is published.
+// The app's words for MetroMatrix-API docs/API_FOOD.md (reconciled at
+// chunk4/p8; the parity tests replay the released API's responses).
 // ═══════════════════════════════════════════════════════
 
 /** A cuisine from the API's reference list (`GET /food/cuisines`). */

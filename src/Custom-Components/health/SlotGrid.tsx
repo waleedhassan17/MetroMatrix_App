@@ -107,7 +107,7 @@ export const SlotGrid: React.FC<{
                     <Pressable
                       onPress={() => onSelect(s.startAt)}
                       accessibilityRole="button"
-                      accessibilityState={{ selected: on }}
+                      aria-selected={on}
                       accessibilityLabel={slotA11yLabel(s.startAt, timezone)}
                       style={[styles.pill, on && { backgroundColor: service.accent, borderColor: service.accent }]}>
                       <AppText variant="bodyStrong" tone={on ? 'onAccent' : 'ink'}>

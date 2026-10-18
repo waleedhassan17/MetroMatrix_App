@@ -46,7 +46,8 @@ export const ChoiceChip: React.FC<ChoiceChipProps> = ({ label, selected, disable
       accessibilityRole="button"
       accessibilityLabel={disabled ? `${label}, unavailable` : label}
       accessibilityHint={accessibilityHint}
-      accessibilityState={{ selected: !!selected, disabled: !!disabled }}
+      aria-selected={!!selected}
+      aria-disabled={!!disabled}
       style={({ pressed }) => [
         styles.root,
         selected && { backgroundColor: service.accent, borderColor: service.accent },

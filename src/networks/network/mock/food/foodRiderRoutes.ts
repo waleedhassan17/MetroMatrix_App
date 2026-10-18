@@ -7,8 +7,8 @@
 // their ledger) — or declines before pickup; the vendor takes the cash back
 // with a handover. GPS fixes come over the socket (`rider.location`) or the
 // REST batch and fan out to each order's room, at most once every 4 s.
-// TODO(API_FOOD): mirrors the API's committed rider-delivery, riders and
-// rider-location services.
+// Mirrors the API's rider-delivery, riders and rider-location services
+// (docs/API_FOOD.md §3 rider steps, §4.3 Riders, §4.4).
 
 import type { MockDb } from '../mockDb';
 import type { ShopCtx, ShopKit } from '../shop/shopRoutes';

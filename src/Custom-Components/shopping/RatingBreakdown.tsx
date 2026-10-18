@@ -46,7 +46,7 @@ export const RatingBreakdown: React.FC<{
               onPress={() => onSelect?.(on ? null : star)}
               disabled={!onSelect || n === 0}
               accessibilityRole={onSelect ? 'button' : undefined}
-              accessibilityState={{ selected: on }}
+              aria-selected={on}
               accessibilityLabel={`${star} stars, ${n} ${n === 1 ? 'review' : 'reviews'}${onSelect ? (on ? '. Showing these' : '. Show these') : ''}`}
               style={styles.bar}>
               <AppText variant="caption" tone={on ? 'accentDeep' : 'muted'}>

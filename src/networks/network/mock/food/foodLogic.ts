@@ -5,8 +5,7 @@
 // as the real one does: open now / opens next (overnight ranges, closures,
 // pause), the go-live checklist, the Community plan, brand-colour contrast,
 // payment-account numbers, and rider usernames and passwords.
-// TODO(API_FOOD): taken from the API's committed services; check against
-// docs/API_FOOD.md when it is published.
+// Taken from the API's services (docs/API_FOOD.md).
 
 import { ShopError } from '../shop/shopLogic';
 import type { MockBusiness, MockDb } from '../mockDb';

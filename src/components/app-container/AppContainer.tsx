@@ -352,12 +352,12 @@ export const AppContainer: React.FC = () => {
     if (!auth.isAuthenticated) realtime.stop();
   }, [auth.isAuthenticated]);
 
-  // ─── Push taps: open what the push is about (an order, a return), through
-  // the app's own deep links, once the role's app is mounted.
+  // ─── Push taps: open what the push is about (an order, a return, a
+  // delivery), through the app's own deep links, once the role's app is mounted.
   useEffect(() => {
-    if (gate !== 'customer' && gate !== 'partner') return;
+    if (gate !== 'customer' && gate !== 'partner' && gate !== 'rider') return;
     return onPushTap(data => {
-      const url = pushTapUrl(data, gate === 'partner');
+      const url = pushTapUrl(data, gate);
       if (url) void Linking.openURL(url);
     });
   }, [gate]);

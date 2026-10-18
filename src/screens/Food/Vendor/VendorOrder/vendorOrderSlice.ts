@@ -164,9 +164,13 @@ export const vendorOrderSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const kind = action.meta.arg.act.kind;
           state.acting = null;
-          state.sheet = null;
-          state.assignOpen = false;
+          // Only the sheet this move came from closes: a move that lands while
+          // another sheet is open (Ready finishing as the rider picker opens)
+          // leaves it open.
+          if (kind === 'reject' || kind === 'cancel' || kind === 'reject-payment') state.sheet = null;
+          if (kind === 'assign' || kind === 'handed-external') state.assignOpen = false;
           state.byId[action.meta.arg.id] = { order: action.payload, status: 'succeeded', error: NO_ERROR };
         },
         rejected: (state, action) => {

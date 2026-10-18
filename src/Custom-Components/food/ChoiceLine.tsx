@@ -45,7 +45,8 @@ export const ChoiceLine: React.FC<ChoiceLineProps> = ({ label, price, selected, 
       disabled={disabled}
       style={[styles.root, disabled && { opacity: opacity.disabled }]}
       accessibilityRole={multiple ? 'checkbox' : 'radio'}
-      accessibilityState={{ checked: selected, disabled: !!disabled }}
+      aria-checked={selected}
+      aria-disabled={!!disabled}
       accessibilityLabel={[label, price, note].filter(Boolean).join(', ')}
     >
       <View style={[styles.mark, multiple ? styles.square : styles.round, selected && { borderColor: service.accent, backgroundColor: multiple ? service.accent : undefined }]}>

@@ -5,8 +5,8 @@
 // /food/rider, staff under /admin/food. Bodies, statuses, error codes and
 // shapes are the API's (foodWire); the rules are foodLogic's. Writes are
 // all-or-nothing, like the shop's and Health's.
-// TODO(API_FOOD): mirrors the API's committed routes; reconcile with
-// docs/API_FOOD.md when it is published.
+// Mirrors the API's routes (docs/API_FOOD.md); the parity tests replay the
+// released API's responses against it.
 
 import type { MockDb, MockUser } from '../mockDb';
 import type { ShopCtx, ShopKit } from '../shop/shopRoutes';

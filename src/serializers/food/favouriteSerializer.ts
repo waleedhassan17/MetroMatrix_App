@@ -1,5 +1,5 @@
 // MetroMatrix — Food Court: saved kitchens → the app's shape.
-// TODO(API_FOOD): GET /food/favourites as committed.
+// docs/API_FOOD.md §4.2: GET /food/favourites.
 
 import type { FoodFavourite } from '../../types/food';
 import { arr, bool, isObject, num, str, strOrNull } from '../serializerUtils';

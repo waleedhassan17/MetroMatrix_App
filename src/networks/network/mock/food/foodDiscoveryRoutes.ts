@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════
 // GET /food/home, /food/vendors, /food/vendors/:slug, /food/items/:id and
 // /food/search, as the API answers them (foodDiscovery holds the rules).
-// TODO(API_FOOD): mirrors the API's committed discovery routes.
+// Mirrors the API's discovery routes (docs/API_FOOD.md §4.1).
 
 import type { MockDb, MockUser } from '../mockDb';
 import type { ShopCtx, ShopKit } from '../shop/shopRoutes';

@@ -155,6 +155,18 @@ describe('the live connection', () => {
     expect(sockets[0].connects).toBe(1);
   });
 
+  it('stops for good when the account is off (ACCOUNT_DISABLED)', async () => {
+    const { client, sockets, refresh, statuses } = setup();
+    client.acquire();
+    sockets[0].active = false;
+    sockets[0].fire('connect_error', Object.assign(new Error('ACCOUNT_DISABLED'), { data: { code: 'ACCOUNT_DISABLED' } }));
+    jest.advanceTimersByTime(BACKOFF_MS[BACKOFF_MS.length - 1] * 2);
+    await flush();
+    expect(statuses[statuses.length - 1]).toBe('idle');
+    expect(sockets[0].connects).toBe(1);
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
   it('delivers events to every listener, and lingers after the last holder leaves', async () => {
     const { client, sockets, statuses } = setup();
     const a = jest.fn();

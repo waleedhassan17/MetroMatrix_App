@@ -5,8 +5,8 @@
 // pre-order slots, their orders (/food/orders), and the vendor's board
 // (/food/vendor/orders) and deals (/food/vendor/promotions). Rules live in
 // foodOrders; the shapes and error codes are the API's.
-// TODO(API_FOOD): mirrors the API's committed cart, checkout, orders and
-// promotions controllers.
+// Mirrors the API's cart, checkout, orders and promotions controllers
+// (docs/API_FOOD.md §4.2–4.3).
 
 import type { MockDb, MockUser } from '../mockDb';
 import type { ShopCtx, ShopKit } from '../shop/shopRoutes';

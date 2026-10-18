@@ -3,8 +3,8 @@
 // ═══════════════════════════════════════════════════════
 // The Food API's vendor shapes → the app's (types/food.ts). Defensive: a
 // missing field becomes a sensible default, never a crash.
-// TODO(API_FOOD): taken from the API's committed routes; check against
-// docs/API_FOOD.md when it is published.
+// docs/API_FOOD.md §4.3 (setup, profile, settings, hours, zones, payment
+// accounts, plan).
 
 import type {
   FeeBand,

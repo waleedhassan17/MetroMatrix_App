@@ -1,12 +1,15 @@
 // The dummy Food API orders the way the real one does: the captured ordering
-// run (src/serializers/__tests__/fixtures/food/orders.json — bag, deals,
-// preview, checkout, the vendor's moves, the customer's orders, reviews,
-// insights and the staff console) is replayed
-// against the dummy API, and every answer has the real keys, at the top and
-// in the nested objects the app reads. A key only one side has fails here
-// unless it is listed in KNOWN with the reason.
+// runs are replayed against the dummy API — orders.json (the backend's P4–P7,
+// captured as each phase landed) and p8.json (the released API on its
+// `seed:food` demo, from scripts/capture-food-fixtures.js): the bag, deals,
+// preview, checkout, the vendor's moves, riders, the customer's orders,
+// reviews, insights and the staff console. Every answer has the real keys, at
+// the top and in the nested objects the app reads, and the same error code. A
+// key only one side has fails here unless it is listed in KNOWN with the
+// reason. A response one run didn't capture is compared in the other.
 
 import ordersReal from '../../../../serializers/__tests__/fixtures/food/orders.json';
+import p8Real from '../../../../serializers/__tests__/fixtures/food/p8.json';
 import { authAdminTotp, authSignin } from '../../../auth/authNetwork';
 import { api } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
@@ -14,7 +17,11 @@ import { MOCK, SEED_PASSWORD, STAFF_PASSWORD } from '../mockConfig';
 import { resetMockDb } from '../mockDb';
 
 type Body = { success: boolean; data?: any; error?: { code: string; details?: unknown } };
-const R = ordersReal as unknown as Record<string, { status: number; body: Body }>;
+type Captured = Record<string, { status: number; body: Body }>;
+const RUNS: { label: string; real: Captured; strict: boolean }[] = [
+  { label: 'P4–P7', real: ordersReal as unknown as Captured, strict: true },
+  { label: 'P8', real: p8Real as unknown as Captured, strict: true },
+];
 
 // Thursday 15 October 2026, 3 PM in Pakistan: Biryani Bazaar is open.
 const T0 = new Date('2026-10-15T10:00:00Z').getTime();
@@ -89,6 +96,7 @@ add('vendor.promotionErr', 'vendor', () => call('post', '/food/vendor/promotions
 // The bag.
 add('cartEmpty', 'customer', () => call('get', '/food/cart'), ['']);
 add('cartAddErr', 'customer', () => call('post', '/food/cart/items', { ...biryani, variantId: null }), ERROR);
+add('cartAddGroupErr', 'customer', () => call('post', '/food/cart/items', { ...biryani, optionIds: [] }), ERROR);
 add('cartAdd', 'customer', () => call('post', '/food/cart/items', biryani), ['', 'vendor', 'vendor.openState', 'lines.0', 'lines.0.variant', 'lines.0.options.0']);
 add('cartOtherVendorErr', 'customer', () => call('post', '/food/cart/items', { vendorId: 'fb_cloud', itemId: 'mi_classic_smash', variantId: 'mi_classic_smash_v1', optionIds: [], quantity: 1 }), [
   ...ERROR,
@@ -223,13 +231,24 @@ add('adminBannerPost', 'admin', () => call('post', '/admin/food/banners', { imag
 ]);
 add('homeWithBanner', 'customer', () => call('get', '/food/home?lat=31.5160&lng=74.3420'), ['', 'coverage']);
 add('adminPlan', 'admin', () => call('get', '/admin/food/vendors/fb_resto/plan'), ['', 'limits', 'usage', 'entitlements']);
+add('adminPlanPatch', 'admin', () => call('patch', '/admin/food/vendors/fb_resto/plan', { overrides: { limits: { riders: 1 }, entitlements: { insights: false } } }), [
+  '',
+  'limits',
+  'entitlements',
+  'overrides',
+  'overrides.limits',
+  'overrides.entitlements',
+]);
+add('insightsOffErr', 'vendor', () => call('get', '/food/vendor/insights'), ['', 'error', 'error.details']);
+add('adminPlanReset', 'admin', () => call('patch', '/admin/food/vendors/fb_resto/plan', { overrides: null }), ['', 'overrides']);
 
 beforeAll(() => {
   jest.useFakeTimers({ doNotFake: ['setTimeout', 'setInterval', 'setImmediate', 'nextTick', 'queueMicrotask'] });
 });
 afterAll(() => jest.useRealTimers());
 
-it('answers every captured ordering request with the real keys', async () => {
+/** Every step against a fresh dummy API; compared with `real` where it captured that response. */
+const replay = async ({ label, real, strict }: (typeof RUNS)[number]) => {
   jest.setSystemTime(T0);
   await resetMockDb();
   await clearTokens();
@@ -258,10 +277,18 @@ it('answers every captured ordering request with the real keys', async () => {
     if (c.fixture === 'checkoutPickup') s.pickup = { code: body.data.code, id: body.data.id };
     if (c.fixture === 'review') s.reviewId = body.data.id;
     if (c.fixture === 'adminCuisinePost') s.cuisineId = body.data.id;
-    expect([c.fixture, body.error?.code ?? 'ok']).toEqual([c.fixture, R[c.fixture].body.error?.code ?? 'ok']);
-    found.push(...diff(c.fixture, R[c.fixture].body, body, c.paths));
+    const r = real[c.fixture];
+    if (!r) continue;
+    expect([label, c.fixture, body.error?.code ?? 'ok']).toEqual([label, c.fixture, r.body.error?.code ?? 'ok']);
+    found.push(...diff(c.fixture, r.body, body, c.paths).filter(f => strict || !f.endsWith(' not captured')));
   }
-  const unexpected = found.filter(f => !KNOWN[f]);
-  const stale = Object.keys(KNOWN).filter(k => !found.includes(k));
-  expect({ unexpected, stale }).toEqual({ unexpected: [], stale: [] });
+  return found.map(f => ({ label, f }));
+};
+
+it('answers every captured ordering request with the real keys', async () => {
+  const found = [...(await replay(RUNS[0])), ...(await replay(RUNS[1]))];
+  const unexpected = found.filter(x => !KNOWN[x.f]).map(x => `${x.label} ${x.f}`);
+  const stale = Object.keys(KNOWN).filter(k => !found.some(x => x.f === k));
+  const uncovered = steps.filter(c => !RUNS.some(run => run.real[c.fixture])).map(c => c.fixture);
+  expect({ unexpected, stale, uncovered }).toEqual({ unexpected: [], stale: [], uncovered: [] });
 });

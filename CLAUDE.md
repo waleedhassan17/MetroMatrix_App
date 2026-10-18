@@ -16,7 +16,7 @@ Copy the FYP's UX, never its code paths, Firebase setup or per-role duplicate ne
 
 ## Backend switch (one file)
 
-`src/config/env.ts` → `BACKEND_URL` (or `EXPO_PUBLIC_API_URL`). While it is empty, `api` uses the dummy API (`src/networks/network/mock/`: `mockServer.ts` routes, `mockDb.ts` seeded accounts, `mockConfig.ts` rules, `mockFood.ts` catalogue, `shop/` the whole Shopping API with its seed and server rules, `health/` the whole Healthcare API with its seed and server rules, `food/` the Food API's routes as the backend commits them, see `docs/MOCK_FOOD.md`). The dummy API answers exactly what `docs/API_CONTRACT_ASSUMED.md` and `docs/API_SHOPPING_ASSUMED.md` specify, and for Health the real `docs/API_HEALTH.md` (see `docs/MOCK_HEALTH.md`), so nothing else changes when the real URL is set. When you add an endpoint, add its mock route in the same change. Shop, Health and Food writes are all-or-nothing (a failed request leaves the dummy DB as it was).
+`src/config/env.ts` → `BACKEND_URL` (or `EXPO_PUBLIC_API_URL`). While it is empty, `api` uses the dummy API (`src/networks/network/mock/`: `mockServer.ts` routes, `mockDb.ts` seeded accounts, `mockConfig.ts` rules, `shop/` the whole Shopping API with its seed and server rules, `health/` the whole Healthcare API with its seed and server rules, `food/` the whole Food API with its seed and server rules, see `docs/MOCK_FOOD.md`). The dummy API answers exactly what `docs/API_CONTRACT_ASSUMED.md` and `docs/API_SHOPPING_ASSUMED.md` specify, and for Health and Food the real `docs/API_HEALTH.md` and `docs/API_FOOD.md` (see `docs/MOCK_HEALTH.md`, `docs/MOCK_FOOD.md`), so nothing else changes when the real URL is set. When you add an endpoint, add its mock route in the same change. Shop, Health and Food writes are all-or-nothing (a failed request leaves the dummy DB as it was).
 
 ## Commands
 
@@ -149,10 +149,12 @@ src/
   screens/<Area>/<Name>/     NameScreen.tsx + nameSlice.ts
                              Areas: Onboarding (+ Splash), RoleSelection, ProviderSelection, Auth, Partner,
                              Admin (+ Admin/Shopping, Admin/Health, Admin/Food), Customer, Account, Shopping/Customer, Shopping/Store,
-                             Health/Patient, Health/Doctor, Food/Vendor, Food/Rider, Dev
-scripts/check-design-tokens.js, capture-health-fixtures.js (real Health responses → the serializer fixture)
-docs/                        API_CONTRACT_ASSUMED.md, API_SHOPPING_ASSUMED.md, API_HEALTH.md (a copy of the backend's),
-                             MOCK_HEALTH.md, MOCK_FOOD.md, MOCK_IMAGES.md, GOOGLE_SIGNIN.md
+                             Health/Patient, Health/Doctor, Food/Customer, Food/Vendor, Food/Rider, Dev
+scripts/check-design-tokens.js, capture-health-fixtures.js and capture-food-fixtures.js (real responses → the
+                             serializer fixtures)
+docs/                        API_CONTRACT_ASSUMED.md, API_SHOPPING_ASSUMED.md, API_HEALTH.md and API_FOOD.md (copies of
+                             the backend's), MOCK_HEALTH.md, MOCK_FOOD.md, MOCK_IMAGES.md, GOOGLE_SIGNIN.md,
+                             PLAY_BACKGROUND_LOCATION.md, FOOD_DEVICE_CHECKS.md
 assets/images/               FYP icon + splash mark; services/ and health/ (card photos — sources in each CREDITS.md)
 ```
 
@@ -238,7 +240,12 @@ Every network call is built from MetroMatrix-API `docs/API_AUTH.md` / `docs/API_
   - Networks map the app's input to the real bodies. When one screen needs several routes, `requestAll` (`networks/shopping/http.ts`) calls them together.
   - Values the API doesn't send yet are derived and marked `TODO(API_HEALTH)`.
   - When the backend's document changes: copy it, update the networks, serializers, models and the dummy API, refresh the fixture (`scripts/capture-health-fixtures.js`), and run the gates. The parity test fails on any key the two disagree on (`docs/MOCK_HEALTH.md`).
-- **Auth, Shopping and Food still run on assumed documents**: `docs/API_CONTRACT_ASSUMED.md` and `docs/API_SHOPPING_ASSUMED.md`. They follow NestJS conventions: `{ success, data }`, `VALIDATION_FAILED`, `page/pageSize`, integer rupees, `Idempotency-Key` on checkout and booking. The dummy API implements them. Every dependency is marked `TODO(API_AUTH)`, `TODO(API_FOOD)` or `TODO(API_SHOPPING)` (`grep -rn "TODO(API_" src`).
+- **Food Court is on the real contract** (`chunk4/p8`): `docs/API_FOOD.md` is a copy of the backend's. Paths are `/food` (discovery, customer), `/food/vendor`, `/food/rider` and `/admin/food`, plus the `/food` socket.io namespace (§5).
+  - The vendor id everywhere is the brand id; riders sign in with a username on the partner portal.
+  - Serializers map the wire to `types/food.ts` (`lastGeo` becomes `lastPosition`, `etaRange` becomes `eta`, minor units become rupees). Every limit in `models/food` is the API's own DTO limit.
+  - When the backend's document changes: copy it, update the networks, serializers, models and the dummy API, capture again (`scripts/capture-food-fixtures.js`, see `docs/MOCK_FOOD.md`), and run the gates. The parity tests fail on any key or error code the two disagree on.
+  - What the API doesn't send yet is marked `TODO(API_FOOD)` (today: `isFeatured` on a staff vendor's detail).
+- **Auth and Shopping still run on assumed documents**: `docs/API_CONTRACT_ASSUMED.md` and `docs/API_SHOPPING_ASSUMED.md`. They follow NestJS conventions: `{ success, data }`, `VALIDATION_FAILED`, `page/pageSize`, integer rupees, `Idempotency-Key` on checkout and booking. The dummy API implements them. Every dependency is marked `TODO(API_AUTH)` or `TODO(API_SHOPPING)` (`grep -rn "TODO(API_" src`).
 
 When a real document arrives, reconcile it in one pass:
 - update the networks, serializers and models (and the dummy API);

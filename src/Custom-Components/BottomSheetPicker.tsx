@@ -72,7 +72,7 @@ export function BottomSheetPicker<V extends string>({
                 onClose();
               }}
               accessibilityRole="radio"
-              accessibilityState={{ checked: selected }}
+              aria-checked={selected}
               accessibilityLabel={option.label}
               style={[styles.option, selected && { backgroundColor: service.accentSoft }]}>
               <View style={styles.optionText}>

@@ -1,8 +1,8 @@
 // MetroMatrix — Food rider: who they are, duty, their deliveries and steps,
 // their location (the REST batch; the socket is the live path) and cash.
-// TODO(API_FOOD): GET /food/rider/me; PATCH /food/rider/duty;
+// docs/API_FOOD.md §4.4: GET /food/rider/me; PATCH /food/rider/duty;
 // GET /food/rider/orders (+ /:id and its steps); POST /food/rider/location;
-// GET /food/rider/cash — as committed.
+// GET /food/rider/cash.
 
 import { api } from '../../network/apiHelpers';
 import { riderCashSerializer, riderHomeSerializer, riderOrderSerializer, riderOrdersPageSerializer } from '../../../serializers/food/riderSerializer';

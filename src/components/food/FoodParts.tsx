@@ -165,7 +165,7 @@ export const CuisineRail: React.FC<{ cuisines: FoodCuisine[]; selected?: string 
             onPress={() => onPress(c)}
             style={styles.cuisine}
             accessibilityRole="button"
-            accessibilityState={{ selected: on }}
+            aria-selected={on}
             accessibilityLabel={c.name}
           >
             <View style={[styles.cuisineTile, { backgroundColor: on ? service.accent : service.accentSoft }]}>

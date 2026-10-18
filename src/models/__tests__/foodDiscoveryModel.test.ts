@@ -103,6 +103,14 @@ describe('the dish sheet', () => {
     expect(chosenOptionIds(sh, s)).toEqual(['o_hot', 'o_raita', 'o_salad']);
   });
 
+  it('keeps a required pick-one choice when it is tapped again; an optional one can be cleared', () => {
+    const sh = sheet();
+    const s = initialSelection(sh);
+    expect(toggleOption(sh, s, 'g_spice', 'o_mild')).toBe(s);
+    const withRaita = toggleOption(sh, s, 'g_raita', 'o_raita');
+    expect(toggleOption(sh, withRaita, 'g_raita', 'o_raita').options.g_raita).toEqual([]);
+  });
+
   it('names the first unmet rule the way the API does', () => {
     const sh = sheet();
     const s = { ...initialSelection(sh), options: {} };

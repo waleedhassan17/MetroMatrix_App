@@ -94,7 +94,7 @@ const CategoryBrowseContent: React.FC<Props> = ({ route }) => {
                     key={c.id}
                     onPress={() => dispatch(selectTopCategory(c.id))}
                     accessibilityRole="tab"
-                    accessibilityState={{ selected: on }}
+                    aria-selected={on}
                     accessibilityLabel={c.name}
                     style={[
                       styles.top,

@@ -1,5 +1,5 @@
 // MetroMatrix — Food vendor: the order board and each order's moves.
-// TODO(API_FOOD): /food/vendor/orders (+ /:id and its actions) as committed.
+// docs/API_FOOD.md §4.3 Orders: /food/vendor/orders (+ /:id and its actions).
 
 import { api } from '../../network/apiHelpers';
 import { boardPageSerializer, vendorFoodOrderSerializer } from '../../../serializers/food/orderSerializer';

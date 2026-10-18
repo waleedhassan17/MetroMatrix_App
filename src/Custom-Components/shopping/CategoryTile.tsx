@@ -36,7 +36,7 @@ export const CategoryTile: React.FC<{ name: string; icon: string; onPress: () =>
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={name}
-      accessibilityState={{ selected: !!selected }}
+      aria-selected={!!selected}
       style={({ pressed }) => [styles.root, pressed && { opacity: opacity.pressed }]}>
       <View style={[styles.well, { backgroundColor: selected ? service.accent : service.accentSoft }]}>
         <IonIcon name={categoryIcon(icon)} size="lg" color={selected ? service.onAccent : service.accentDeep} />

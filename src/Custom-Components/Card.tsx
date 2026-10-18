@@ -55,7 +55,7 @@ export const Card: React.FC<CardProps> = ({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ selected: !!selected }}
+      aria-selected={!!selected}
       style={({ pressed }) => [frame, pressed && { backgroundColor: theme.colors.surfaceSunk }]}>
       {children}
     </Pressable>

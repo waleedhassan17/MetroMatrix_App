@@ -3,8 +3,8 @@
 // ═══════════════════════════════════════════════════════
 // One brand and one branch per food business (the API's design), its
 // riders, and the cuisine list. Stored as rows, sent through foodWire in the
-// API's shapes. TODO(API_FOOD): mirrors the API's committed vendor and rider
-// routes; reconcile with docs/API_FOOD.md when it is published.
+// API's shapes. Mirrors the API's vendor and rider routes
+// (docs/API_FOOD.md).
 
 export type MockKitchenKind = 'restaurant' | 'home_kitchen' | 'cloud_kitchen';
 export type MockBranchStatus = 'draft' | 'active' | 'suspended';

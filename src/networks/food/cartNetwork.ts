@@ -1,5 +1,5 @@
 // MetroMatrix — Food Court: the bag (one vendor at a time) and its preview.
-// TODO(API_FOOD): /food/cart (+ /items, /preview) as committed.
+// docs/API_FOOD.md §4.2: /food/cart (+ /items, /preview).
 
 import { api } from '../network/apiHelpers';
 import { foodCartSerializer, foodPreviewSerializer, foodSlotsSerializer } from '../../serializers/food/orderSerializer';

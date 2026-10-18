@@ -1,8 +1,7 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Food menu serializers (the vendor's own menu)
 // ═══════════════════════════════════════════════════════
-// TODO(API_FOOD): taken from the API's committed menu routes; check against
-// docs/API_FOOD.md when it is published.
+// docs/API_FOOD.md §4.3 Menu and Availability.
 
 import type {
   AvailabilityItem,

@@ -1,5 +1,5 @@
 // MetroMatrix — Food vendor: the menu (categories, dishes with sizes, the
-// reusable add-on groups). TODO(API_FOOD): /food/vendor/menu/… as committed.
+// reusable add-on groups). docs/API_FOOD.md §4.3 Menu.
 
 import { api } from '../../network/apiHelpers';
 import {

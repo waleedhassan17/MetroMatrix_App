@@ -55,7 +55,7 @@ export function SegmentTabs<K extends string>({
             key={option.key}
             onPress={() => onChange(option.key)}
             accessibilityRole="tab"
-            accessibilityState={{ selected }}
+            aria-selected={selected}
             accessibilityLabel={option.label}
             style={[styles.segment, selected && styles.selected]}>
             <AppText

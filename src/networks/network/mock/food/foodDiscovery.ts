@@ -7,8 +7,8 @@
 // distance, the fee band, minimum order, ETA at 22 km/h plus prep and a
 // 5-minute hand-over, shown as a 10-minute window), the open state, cards,
 // the recommended ranking, the customer menu and the dish sheet.
-// TODO(API_FOOD): ported from the API's committed discovery and menu-read
-// services; check against docs/API_FOOD.md when it is published.
+// Ported from the API's discovery and menu-read services (docs/API_FOOD.md
+// §2, §4.1).
 
 import type { MockDb } from '../mockDb';
 import { dateInZone, zoneOffsetMinutes } from '../../../../utils/healthTime';

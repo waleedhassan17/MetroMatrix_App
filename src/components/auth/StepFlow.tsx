@@ -122,7 +122,7 @@ export function OptionPills<V extends string>({
               key={o.value}
               onPress={() => onChange(o.value)}
               accessibilityRole="radio"
-              accessibilityState={{ selected: on }}
+              aria-selected={on}
               style={[
                 styles.pill,
                 {

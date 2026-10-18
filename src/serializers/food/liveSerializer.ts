@@ -5,7 +5,7 @@
 // order.updated (the customer's view to an order's room, a board card to the
 // kitchen), order.payment and rider.location. Events are hints — every
 // screen still reads the truth over REST — so anything malformed is null.
-// TODO(API_FOOD): taken from the API's committed gateway (food.gateway.ts).
+// docs/API_FOOD.md §5 (the gateway's events).
 
 import type { FoodBoardSync, FoodLiveBoardUpdate, FoodLiveCustomerUpdate, FoodLiveHead, FoodLivePayment, FoodOrderStatus, FoodRiderFix } from '../../types/food';
 import { arr, isObject, num, oneOf, str } from '../serializerUtils';

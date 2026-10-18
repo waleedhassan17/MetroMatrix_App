@@ -5,8 +5,8 @@
 // suspension — and the plan), orders for disputes (read-only), review
 // moderation, cuisines and the Food home's banners (and the live set the
 // home shows). Staff only.
-// TODO(API_FOOD): mirrors the API's committed admin-food, admin-food-plan
-// and food-banners services.
+// Mirrors the API's admin-food, admin-food-plan and food-banners services
+// (docs/API_FOOD.md §4.5).
 
 import type { MockDb } from '../mockDb';
 import type { ShopCtx, ShopKit } from '../shop/shopRoutes';

@@ -41,7 +41,7 @@ export const LocationRow: React.FC<{ location: PracticeLocation; selected: boole
       <Pressable
         onPress={onSelect}
         accessibilityRole="radio"
-        accessibilityState={{ selected }}
+        aria-selected={selected}
         accessibilityLabel={`${l.name}, ${where}, fee ${formatPKR(l.fee)}${l.availability.label ? `, ${l.availability.label}` : ''}`}
         style={styles.main}>
         <View style={[styles.well, { backgroundColor: selected ? colors.surface : service.accentSoft }]}>

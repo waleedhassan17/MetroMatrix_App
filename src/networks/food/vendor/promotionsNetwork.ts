@@ -1,5 +1,5 @@
 // MetroMatrix — Food vendor: deals (automatic, or with a code). One per order:
-// the best for the customer. TODO(API_FOOD): /food/vendor/promotions.
+// the best for the customer. docs/API_FOOD.md §4.3 Promotions.
 
 import { api } from '../../network/apiHelpers';
 import { foodPromotionSerializer, foodPromotionsSerializer } from '../../../serializers/food/orderSerializer';

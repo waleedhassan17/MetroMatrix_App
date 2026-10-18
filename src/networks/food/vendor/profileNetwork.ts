@@ -1,6 +1,6 @@
 // MetroMatrix — Food vendor: the brand (name, tagline, logo, cover, cuisines,
 // price level, colour) and the kitchen's live switches (pause, busy).
-// TODO(API_FOOD): GET/PATCH /food/vendor/profile; POST /food/vendor/pause,
+// docs/API_FOOD.md §4.3 Profile: GET/PATCH /food/vendor/profile; POST /food/vendor/pause,
 // /resume, /busy — each answers with the profile.
 
 import { api } from '../../network/apiHelpers';

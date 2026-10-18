@@ -1,5 +1,5 @@
 // MetroMatrix — Food Court: the customer's saved kitchens.
-// TODO(API_FOOD): GET /food/favourites, POST/DELETE /food/favourites/:vendorId.
+// docs/API_FOOD.md §4.2: GET /food/favourites, POST/DELETE /food/favourites/:vendorId.
 
 import { api } from '../network/apiHelpers';
 import { foodFavouritesSerializer } from '../../serializers/food/favouriteSerializer';

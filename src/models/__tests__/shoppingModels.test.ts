@@ -253,12 +253,12 @@ describe('variant picker', () => {
 
 describe('push taps', () => {
   it('opens the order for a customer and the store order or return for a store', () => {
-    expect(pushTapUrl({ groupCode: 'MM-24A7Q2', orderId: 'o_1' }, false)).toBe('metromatrix://orders/MM-24A7Q2');
-    expect(pushTapUrl({ productId: 'p_1' }, false)).toBe('metromatrix://shop/product/p_1');
-    expect(pushTapUrl({ groupCode: 'MM-1', orderId: 'o_1' }, true)).toBe('metromatrix://store/orders/o_1');
-    expect(pushTapUrl({ returnId: 'rt_1', orderId: 'o_1' }, true)).toBe('metromatrix://store/returns/rt_1');
-    expect(pushTapUrl({}, false)).toBeNull();
-    expect(pushTapUrl(null, true)).toBeNull();
+    expect(pushTapUrl({ groupCode: 'MM-24A7Q2', orderId: 'o_1' }, 'customer')).toBe('metromatrix://orders/MM-24A7Q2');
+    expect(pushTapUrl({ productId: 'p_1' }, 'customer')).toBe('metromatrix://shop/product/p_1');
+    expect(pushTapUrl({ groupCode: 'MM-1', orderId: 'o_1' }, 'partner')).toBe('metromatrix://store/orders/o_1');
+    expect(pushTapUrl({ returnId: 'rt_1', orderId: 'o_1' }, 'partner')).toBe('metromatrix://store/returns/rt_1');
+    expect(pushTapUrl({}, 'customer')).toBeNull();
+    expect(pushTapUrl(null, 'partner')).toBeNull();
   });
 });
 

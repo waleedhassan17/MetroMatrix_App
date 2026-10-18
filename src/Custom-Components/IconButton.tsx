@@ -44,7 +44,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ disabled: !!disabled }}
+      aria-disabled={!!disabled}
       style={({ pressed }) => [
         styles.root,
         pressed && { backgroundColor: colors.surfaceSunk },

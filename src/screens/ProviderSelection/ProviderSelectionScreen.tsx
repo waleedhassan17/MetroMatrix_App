@@ -118,7 +118,7 @@ const ProviderSelectionScreen: React.FC<Props> = ({ navigation }) => {
                         key={k.subType}
                         onPress={() => dispatch(chooseKitchen(k.subType))}
                         accessibilityRole="radio"
-                        accessibilityState={{ checked: on }}
+                        aria-checked={on}
                         accessibilityLabel={SUBTYPE_LABELS[k.subType].title}
                         style={[styles.subType, on && { borderColor: palette.accent, backgroundColor: palette.accentSoft }]}>
                         <View style={[styles.subTile, on && { backgroundColor: palette.accentLine }]}>

@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════
 // The overview, vendors (list and detail), orders for disputes, review
 // moderation, cuisines and banners → the app's shapes (types/food.ts).
-// TODO(API_FOOD): docs/API_FOOD.md §4.5.
+// docs/API_FOOD.md §4.5.
 
 import type {
   AdminCuisine,

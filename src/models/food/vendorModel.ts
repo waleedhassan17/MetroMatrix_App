@@ -4,7 +4,7 @@
 // The vendor app's forms: the brand, how the branch works, opening hours,
 // delivery fee bands, closures, the go-live checklist and riders. Limits
 // mirror the Food API's DTOs so a form never sends what the server refuses.
-// TODO(API_FOOD): check each limit against docs/API_FOOD.md.
+// Every limit is the API's own (food/vendor/dto/vendor.dto.ts).
 
 import type { FeeBand, HoursRange, KitchenKind, RiderInput, RiderStatus, VendorProfileInput, VendorSettings, VendorSetupKey } from '../../types/food';
 import { brandContrast } from '../shopping/storeModel';

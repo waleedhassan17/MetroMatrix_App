@@ -11,7 +11,7 @@
 //     rider; `order.payment` to the order and the branch.
 // Emits wait for the write to succeed, as the API's go out after the commit:
 // the route wrapper flushes them, or drops them when the write is rolled back.
-// TODO(API_FOOD): mirrors the API's committed gateway (realtime/food.gateway.ts).
+// Mirrors the API's gateway (docs/API_FOOD.md §5).
 
 import type { MockDb, MockUser } from '../mockDb';
 import { mockRealtime } from '../mockRealtime';

@@ -1,6 +1,6 @@
 // MetroMatrix — Food discovery: what a customer can order from where they
 // are. Signed in or not (the home adds "order again" when signed in).
-// TODO(API_FOOD): /food/{home,vendors,vendors/:slug,items/:id,search}.
+// docs/API_FOOD.md §4.1: /food/{home,vendors,vendors/:slug,items/:id,search}.
 
 import { api } from '../network/apiHelpers';
 import {

@@ -80,15 +80,33 @@ const ensureAndroidChannels = async (Notifications: typeof import('expo-notifica
 export const pushPlatform = (): 'android' | 'ios' | 'web' =>
   Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web';
 
+/** Who the push is for: the app that is mounted. */
+export type PushAudience = 'customer' | 'partner' | 'rider';
+
+/** Food Court pushes (docs/API_FOOD.md §7): `type` food.*, with `{ orderId, code }` or `{ reviewId }`. */
+const foodTapUrl = (s: (k: string) => string | null, audience: PushAudience): string | null => {
+  const enc = encodeURIComponent;
+  const type = s('type') ?? '';
+  if (audience === 'rider') return s('orderId') ? `metromatrix://rider/deliveries/${enc(s('orderId')!)}` : 'metromatrix://rider/deliveries';
+  if (audience === 'partner') {
+    if (type.startsWith('food.review.')) return 'metromatrix://vendor/reviews';
+    return s('orderId') ? `metromatrix://vendor/orders/${enc(s('orderId')!)}` : 'metromatrix://vendor/orders';
+  }
+  // The customer's order page is by code; a reply to their review lands on their Food orders.
+  return s('code') ? `metromatrix://food/order/${enc(s('code')!)}` : 'metromatrix://food/orders';
+};
+
 /**
  * Where a tapped push goes, as one of the app's own deep links (the
  * navigation container routes it). The API puts groupCode / orderId /
  * returnId / productId in the push's data, as it does for in-app
- * notifications. TODO(API_SHOPPING): confirm the push data keys.
+ * notifications, and the notification's `type`. TODO(API_SHOPPING): confirm
+ * the Shopping push data keys.
  */
-export const pushTapUrl = (data: Record<string, unknown> | null | undefined, isStore: boolean): string | null => {
+export const pushTapUrl = (data: Record<string, unknown> | null | undefined, audience: PushAudience): string | null => {
   const s = (k: string) => (typeof data?.[k] === 'string' && data[k] ? (data[k] as string) : null);
-  if (isStore) {
+  if ((s('type') ?? '').startsWith('food.') || audience === 'rider') return foodTapUrl(s, audience);
+  if (audience === 'partner') {
     // A doctor's appointment pushes carry appointmentCode (API_HEALTH §6); doctor routes take the code.
     const visit = s('appointmentCode') ?? s('appointmentId');
     if (visit) return `metromatrix://doctor/appointments/${encodeURIComponent(visit)}`;

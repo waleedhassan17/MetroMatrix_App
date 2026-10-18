@@ -134,7 +134,7 @@ const ShopCategoriesScreen: React.FC<Props> = () => {
                 onPress={() => dispatch(setCategorySheet({ icon }))}
                 style={[styles.iconWell, { backgroundColor: on ? service.accent : service.accentSoft }]}
                 accessibilityRole="radio"
-                accessibilityState={{ checked: on }}
+                aria-checked={on}
                 accessibilityLabel={icon.replace(/-outline$/, '').replace(/-/g, ' ')}>
                 <IonIcon name={icon} size="md" color={on ? service.onAccent : service.accentDeep} />
               </Pressable>

@@ -1,13 +1,16 @@
-// The dummy Food API answers in the real API's shapes: for each vendor and
-// rider response captured from MetroMatrix-API
-// (src/serializers/__tests__/fixtures/food/vendor.json), the dummy API's
-// answer to the same request has the same keys, at the top and in the nested
-// objects the app reads. A key only one side has fails here unless it is
-// listed in KNOWN with the reason.
+// The dummy Food API answers in the real API's shapes: for each vendor, rider,
+// menu and discovery response captured from MetroMatrix-API — vendor.json,
+// menu.json and discovery.json (the backend's P1–P3, as each landed) and
+// p8.json (the released API on its `seed:food` demo) — the dummy API's answer
+// to the same request has the same keys, at the top and in the nested objects
+// the app reads. A key only one side has fails here unless it is listed in
+// KNOWN with the reason. A response one run didn't capture is compared in the
+// other.
 
 import vendorReal from '../../../../serializers/__tests__/fixtures/food/vendor.json';
 import menuReal from '../../../../serializers/__tests__/fixtures/food/menu.json';
 import discoveryReal from '../../../../serializers/__tests__/fixtures/food/discovery.json';
+import p8Real from '../../../../serializers/__tests__/fixtures/food/p8.json';
 import { authSignin } from '../../../auth/authNetwork';
 import { api } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
@@ -15,7 +18,11 @@ import { SEED_PASSWORD } from '../mockConfig';
 import { getDb, resetMockDb } from '../mockDb';
 
 type Body = { success: boolean; data?: unknown; error?: { code: string; details?: unknown } };
-const R = { ...vendorReal, ...menuReal, ...discoveryReal } as unknown as Record<string, { status: number; body: Body }>;
+type Captured = Record<string, { status: number; body: Body }>;
+const RUNS: { label: string; real: Captured; strict: boolean }[] = [
+  { label: 'P1–P3', real: { ...vendorReal, ...menuReal, ...discoveryReal } as unknown as Captured, strict: true },
+  { label: 'P8', real: p8Real as unknown as Captured, strict: true },
+];
 
 // Thursday 15 October 2026, 3 PM in Pakistan.
 const T0 = new Date('2026-10-15T10:00:00Z').getTime();
@@ -166,10 +173,16 @@ beforeAll(() => {
 });
 afterAll(() => jest.useRealTimers());
 
-it('answers every captured vendor and rider request with the real keys', async () => {
+/** Every case against a fresh dummy API; compared with `real` where it captured that response. */
+const replay = async ({ label, real, strict }: (typeof RUNS)[number]) => {
   jest.setSystemTime(T0);
   await resetMockDb();
+  await clearTokens();
   const found: string[] = [];
+  const compare = (fixture: string, body: Body, paths: string[]) => {
+    const r = real[fixture];
+    if (r) found.push(...diff(fixture, r.body, body, paths).filter(f => strict || !f.endsWith(' not captured')));
+  };
   let who: string | null = null;
   for (const c of CASES) {
     if (c.as !== who) {
@@ -181,7 +194,7 @@ it('answers every captured vendor and rider request with the real keys', async (
           await clearTokens();
         }
         who = c.as;
-        found.push(...diff(c.fixture, R[c.fixture].body, await c.run(), c.paths));
+        compare(c.fixture, await c.run(), c.paths);
         continue;
       }
       if (c.as === 'vendor') await authSignin({ email: 'restaurant@metromatrix.app', password: SEED_PASSWORD, portal: 'partner' });
@@ -189,9 +202,15 @@ it('answers every captured vendor and rider request with the real keys', async (
       else await authSignin({ username: 'biryani-bazaar.ali', password: SEED_PASSWORD, portal: 'partner' });
       who = c.as;
     }
-    found.push(...diff(c.fixture, R[c.fixture].body, await c.run(), c.paths));
+    compare(c.fixture, await c.run(), c.paths);
   }
-  const unexpected = found.filter(f => !KNOWN[f]);
-  const stale = Object.keys(KNOWN).filter(k => !found.includes(k));
-  expect({ unexpected, stale }).toEqual({ unexpected: [], stale: [] });
+  return found.map(f => ({ label, f }));
+};
+
+it('answers every captured vendor, rider, menu and discovery request with the real keys', async () => {
+  const found = [...(await replay(RUNS[0])), ...(await replay(RUNS[1]))];
+  const unexpected = found.filter(x => !KNOWN[x.f]).map(x => `${x.label} ${x.f}`);
+  const stale = Object.keys(KNOWN).filter(k => !found.some(x => x.f === k));
+  const uncovered = CASES.filter(c => !RUNS.some(run => run.real[c.fixture])).map(c => c.fixture);
+  expect({ unexpected, stale, uncovered }).toEqual({ unexpected: [], stale: [], uncovered: [] });
 });

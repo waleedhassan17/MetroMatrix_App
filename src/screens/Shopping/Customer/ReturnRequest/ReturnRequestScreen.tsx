@@ -139,7 +139,7 @@ const ReturnRequestContent: React.FC<Props> = ({ route }) => {
                   onPress={() => dispatch(setReturnQuantity({ itemId: it.id, quantity: q ? 0 : it.returnableQuantity }))}
                   style={styles.check}
                   accessibilityRole="checkbox"
-                  accessibilityState={{ checked: q > 0 }}
+                  aria-checked={q > 0}
                   accessibilityLabel={`Return ${it.name}`}>
                   <IonIcon name={q ? 'checkbox' : 'square-outline'} size="lg" color={q ? service.accent : colors.lineStrong} />
                 </Pressable>

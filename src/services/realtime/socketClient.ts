@@ -26,6 +26,7 @@ import { getAccessToken, refreshTokens } from '../../networks/network/apiHelpers
 import {
   REALTIME_AUTH_CODES,
   REALTIME_AUTH_EXPIRED,
+  REALTIME_FATAL_CODES,
   REALTIME_JOIN,
   REALTIME_NAMESPACE,
   REALTIME_PATH,
@@ -231,6 +232,11 @@ export class RealtimeClient {
 
   private onConnectError = (err: unknown) => {
     if (!this.socket) return;
+    // The account is off: no retry can fix it (REST signs the user out).
+    if (REALTIME_FATAL_CODES.includes(codeOf(err))) {
+      this.stop();
+      return;
+    }
     this.setStatus('reconnecting');
     const auth = REALTIME_AUTH_CODES.includes(codeOf(err));
     if (auth || !this.socket.active) this.scheduleRetry(auth);

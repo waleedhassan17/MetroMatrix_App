@@ -42,7 +42,7 @@ export const TextAction: React.FC<{
       hitSlop={4}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
-      accessibilityState={{ disabled: !!disabled }}
+      aria-disabled={!!disabled}
       style={({ pressed }) => [styles.root, pressed && { opacity: opacity.pressed }]}>
       {icon ? <IonIcon name={icon} size="sm" color={color} /> : null}
       <AppText variant="small" style={{ color }}>

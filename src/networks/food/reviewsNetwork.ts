@@ -1,5 +1,5 @@
 // MetroMatrix — Food Court: rating an order, and a kitchen's reviews (customer).
-// TODO(API_FOOD): POST /food/orders/:code/review, GET /food/vendors/:id/reviews.
+// docs/API_FOOD.md §4.2 and §4.1: POST /food/orders/:code/review, GET /food/vendors/:id/reviews.
 
 import { api } from '../network/apiHelpers';
 import { foodReviewSerializer, foodReviewsPageSerializer } from '../../serializers/food/reviewSerializer';

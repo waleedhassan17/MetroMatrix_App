@@ -4,7 +4,7 @@
 // Dishes with sizes, reusable add-on groups, categories with a daily window,
 // what is off and until when, a home kitchen's portions, weekly menu and
 // pre-order slots. Limits mirror the Food API's DTOs.
-// TODO(API_FOOD): check each limit against docs/API_FOOD.md.
+// Every limit is the API's own (food/menu/dto/menu.dto.ts).
 
 import type { ItemTag, MenuItemInput, OptionGroup, OptionGroupInput, PreorderSlot, VendorMenuItem } from '../../types/food';
 import { formatPKR } from '../../utils/money';

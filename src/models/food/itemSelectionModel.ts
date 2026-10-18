@@ -56,6 +56,8 @@ export const toggleOption = (sheet: ItemSheet, s: Selection, groupId: string, op
   if (!g || !o || !o.available) return s;
   const now = s.options[groupId] ?? [];
   let next: string[];
+  // A required one-of-a-kind choice is a radio: tapping the chosen one keeps it.
+  if (now.includes(optionId) && g.maxSelect === 1 && g.minSelect >= 1) return s;
   if (now.includes(optionId)) next = now.filter(id => id !== optionId);
   else if (g.maxSelect === 1) next = [optionId];
   else if (now.length >= g.maxSelect) return s;

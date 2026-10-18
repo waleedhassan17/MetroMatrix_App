@@ -1,7 +1,7 @@
 // MetroMatrix — Food vendor: what can be ordered right now (dishes and add-ons
 // switched off, optionally until a time), and a home kitchen's day: today's
 // portions, the weekly menu and pre-order slots.
-// TODO(API_FOOD): /food/vendor/{availability,today,preorder-slots,weekly-menu}.
+// docs/API_FOOD.md §4.3 Availability: /food/vendor/{availability,today,preorder-slots,weekly-menu}.
 
 import { api } from '../../network/apiHelpers';
 import { menuAvailabilitySerializer, preorderSlotsSerializer, todayMenuSerializer, weeklyMenuSerializer } from '../../../serializers/food/menuSerializer';

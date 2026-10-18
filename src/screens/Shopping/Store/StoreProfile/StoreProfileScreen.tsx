@@ -125,7 +125,7 @@ const StoreProfileContent: React.FC<Props> = () => {
               key={hex}
               onPress={() => dispatch(setProfileField({ field: 'brandColor', value: hex }))}
               accessibilityRole="radio"
-              accessibilityState={{ checked: f.brandColor === hex }}
+              aria-checked={f.brandColor === hex}
               accessibilityLabel={`Brand colour ${hex}`}
               style={[styles.swatch, { backgroundColor: hex }, f.brandColor === hex && { borderColor: colors.ink }]}
             />

@@ -1,6 +1,6 @@
 // MetroMatrix — Food Court: placing an order and following it (customer).
-// TODO(API_FOOD): /food/checkout, /food/orders (+ /:code, /tracking, /cancel,
-// /payment-proof, /reorder) as committed.
+// docs/API_FOOD.md §4.2: /food/checkout, /food/orders (+ /:code, /tracking,
+// /cancel, /payment-proof, /reorder).
 
 import { api } from '../network/apiHelpers';
 import { foodCartSerializer, foodOrderSerializer, foodOrdersPageSerializer, foodTrackingSerializer } from '../../serializers/food/orderSerializer';

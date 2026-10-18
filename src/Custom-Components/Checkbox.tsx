@@ -37,7 +37,7 @@ export const Checkbox: React.FC<CheckboxProps> = ({ checked, onToggle, label, ac
     <Pressable
       onPress={() => onToggle(!checked)}
       accessibilityRole="checkbox"
-      accessibilityState={{ checked }}
+      aria-checked={checked}
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={error}
       style={styles.row}>

@@ -410,7 +410,7 @@ const FoodCheckoutContent: React.FC<Props> = ({ navigation }) => {
               onPress={() => dispatch(chooseFoodAddress(a.id))}
               style={styles.addressRow}
               accessibilityRole="radio"
-              accessibilityState={{ checked: a.id === address?.id }}
+              aria-checked={a.id === address?.id}
               accessibilityLabel={`${a.fullName}, ${formatAddress(a)}`}
             >
               <IonIcon name={a.id === address?.id ? 'radio-button-on' : 'radio-button-off'} size="md" color={a.id === address?.id ? service.accent : colors.lineStrong} />

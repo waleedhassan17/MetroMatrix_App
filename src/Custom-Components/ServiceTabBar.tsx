@@ -95,7 +95,7 @@ export const ServiceTabBar: React.FC<ServiceTabBarProps> = ({ items, activeIndex
             onPress={() => onPress(i)}
             onLongPress={onLongPress ? () => onLongPress(i) : undefined}
             accessibilityRole="tab"
-            accessibilityState={{ selected: focused }}
+            aria-selected={focused}
             accessibilityLabel={item.badge ? `${item.label}, ${item.badge}` : item.label}
             style={styles.item}>
             {variant === 'gradientPill' ? (

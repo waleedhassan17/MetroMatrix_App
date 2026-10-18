@@ -114,7 +114,7 @@ const AdminFoodCuisinesScreen: React.FC<Props> = () => {
                 onPress={() => dispatch(setCuisineSheet({ icon: key }))}
                 style={[styles.well, { backgroundColor: on ? service.accent : service.accentSoft }]}
                 accessibilityRole="radio"
-                accessibilityState={{ checked: on }}
+                aria-checked={on}
                 accessibilityLabel={key.replace(/_/g, ' ')}>
                 <MciIcon name={cuisineGlyph(key)} size="md" color={on ? service.onAccent : service.accentDeep} />
               </Pressable>

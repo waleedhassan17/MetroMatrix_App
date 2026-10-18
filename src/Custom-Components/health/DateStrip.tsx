@@ -68,7 +68,7 @@ export const DateStrip: React.FC<{
             key={d.date}
             onPress={() => onSelect(d.date)}
             accessibilityRole="button"
-            accessibilityState={{ selected: on }}
+            aria-selected={on}
             accessibilityLabel={`${chip.long}, ${none ? 'no times' : `${d.slotCount} ${d.slotCount === 1 ? 'time' : 'times'} free`}`}
             style={[styles.chip, none && styles.dim, on && { backgroundColor: service.accent, borderColor: service.accent }]}>
             <AppText variant="micro" tone={on ? 'onAccent' : none ? 'faint' : 'muted'}>

@@ -6,8 +6,8 @@
 // pay — in that order), the order's status and payment machines, the views
 // each side sees, and the jobs the API runs every minute (declining orders
 // not answered in time, cancelling unpaid transfers), run here on each
-// request. TODO(API_FOOD): ported from the API's committed promotions,
-// checkout, orders and views services.
+// request. Ported from the API's promotions, checkout,
+// orders and views services (docs/API_FOOD.md §3).
 
 import type { MockDb, MockUser } from '../mockDb';
 import { addDays, formatDayShort, formatSlot, zonedToIso } from '../../../../utils/healthTime';

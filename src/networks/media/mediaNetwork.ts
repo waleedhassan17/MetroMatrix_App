@@ -34,7 +34,7 @@ export type UploadPurpose =
   | 'health_record'
   | 'doctor_photo'
   | 'consult_attachment'
-  // Food (TODO(API_FOOD): food_branding for a brand's logo and cover, menu_item for dish photos)
+  // Food (docs/API_FOOD.md §1: food_branding for a brand's logo and cover, menu_item for dish photos)
   | 'food_logo'
   | 'food_cover'
   | 'menu_item';

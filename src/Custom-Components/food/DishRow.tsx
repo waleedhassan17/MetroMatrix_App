@@ -87,7 +87,8 @@ export const DishRow: React.FC<DishRowProps> = ({ name, price, photoUrl, detail,
         {...({ activeThumbColor: colors.surface } as object)}
         accessibilityRole="switch"
         accessibilityLabel={`${name} can be ordered`}
-        accessibilityState={{ checked: available, disabled: !!saving }}
+        aria-checked={available}
+        aria-disabled={!!saving}
       />
     </View>
   );
