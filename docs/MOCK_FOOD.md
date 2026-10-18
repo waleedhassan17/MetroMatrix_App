@@ -23,6 +23,8 @@ While `src/config/env.ts` has no backend URL, the Food Court routes are answered
 | Customer orders | `GET /food/orders?status=active\|past`, `GET /food/orders/:code` (+ `/tracking`), `POST /:code/cancel`, `/payment-proof`, `/reorder` |
 | The kitchen's board | `GET /food/vendor/orders?status=new\|active\|done\|<status>&scheduled`, `GET /:id`, `POST /:id/{accept,reject,preparing,ready,handed-external,picked-up,delivered,cancel}`, `POST /:id/payment/{confirm,reject}` |
 | Deals | `GET/POST /food/vendor/promotions`, `GET/PATCH/DELETE /:id`, `POST /:id/deactivate` |
+| Saved kitchens | `GET /food/favourites`, `POST/DELETE /food/favourites/:vendorId` |
+| Live channel | the dummy socket (`mockRealtime` + `food/foodRealtime.ts`): `board.sync` to a kitchen on connect, `subscribe`/`unsubscribe { orderId }`, `order.new`, `order.updated`, `order.payment` |
 | Rider | `GET /food/rider/me` |
 | Staff | `POST /admin/food/branches/:id/food-safety-check` |
 | Session | `business.food { brandId, brandSlug, branchStatus, isLive, setupComplete }` on a food vendor's `/auth/me` and sign-in |
@@ -73,7 +75,8 @@ Each later backend phase (deliveries, reviews, admin) adds its routes here in th
 - **Paying.** Cash on delivery (up to the kitchen's limit), pay at pick-up, or a transfer to the kitchen's own account within 10 minutes (then a receipt; the kitchen confirms or rejects it). MetroMatrix never holds the money.
 - **Checkout.** Needs an Idempotency-Key (`400 IDEMPOTENCY_KEY_REQUIRED`); the same key returns the same order. It takes the slot place, today's portions and the deal use, or nothing.
 - **The order.** The API's status machine and who may make each move (`409 INVALID_TRANSITION`): the customer cancels only before the kitchen answers; a transfer must be paid before cooking when the kitchen asks for that (`409 PAYMENT_NOT_CONFIRMED`); cash is settled when the food changes hands. A cancel or decline gives back today's portions and the deal use, and settles the payment.
-- **The minute jobs** run before every Food request: an order not answered by `acceptBy` (the kitchen's auto-reject minutes) is declined, and a transfer not paid by `payBy` is cancelled.
+- **The minute jobs** run before every Food request: an order not answered by `acceptBy` (the kitchen's auto-reject minutes) is declined, and a transfer not paid by `payBy` is cancelled. Both say so on the live channel.
+- **The live channel** is the gateway's: a kitchen's owner joins `branch:{id}` and gets `board.sync` (its active orders) on connect; an active rider joins `rider:{userId}`; only an order's customer, kitchen or rider may `subscribe` to `order:{id}` (else `{ ok: false, code: 'NOT_FOUND' }`). After a write, `order.new` goes to the kitchen, `order.updated` carries the customer's view to the order's room and a board card to the kitchen, and `order.payment` goes to both. Events go out only when the write succeeds.
 - **All-or-nothing.** A write that fails part-way leaves the dummy database as it was.
 
 ## Seeded accounts (password `Metro2026`)
@@ -98,3 +101,5 @@ Seeded names are fictional. The logos are generated initials that stand in for a
 - `foodDiscoveryRealResponses.test.ts` and `foodOrdersRealResponses.test.ts`: the discovery and ordering captures (`discovery.json`, `orders.json`).
 - `src/networks/network/mock/__tests__/mockFoodOrderParity.test.ts`: the captured ordering run (bag, deals, preview, checkout, the kitchen's moves, a transfer, cancels) replayed against the dummy API, key for key.
 - `src/networks/network/mock/__tests__/mockFoodVendorFlows.test.ts`, `mockFoodMenuFlows.test.ts`, `mockFoodDiscoveryFlows.test.ts` and `mockFoodOrderFlows.test.ts`: the rules above, driven through the app's real Food networks.
+- `mockFoodLive.test.ts`: the live channel (board sync, a new order, who may join an order's room, nothing from a failed write, the minute jobs).
+- `src/serializers/__tests__/foodLiveSerializer.test.ts`: the socket's events through the live serializers.

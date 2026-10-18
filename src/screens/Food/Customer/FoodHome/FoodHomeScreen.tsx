@@ -16,7 +16,7 @@ import { usePagedList } from '@hooks/usePagedList';
 import { listVendors } from '@networks/food/discoveryNetwork';
 import { RAILS, pointOfAddress } from '@models/food/discoveryModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
-import { AppText, Button, Card, Divider, EmptyState, IonIcon, InlineNotice, ListRow, MciIcon, PageHeader, Sheet, Skeleton } from '@custom/index';
+import { AppText, Button, Card, Divider, EmptyState, IconButton, IonIcon, InlineNotice, ListRow, MciIcon, PageHeader, Sheet, Skeleton } from '@custom/index';
 import { VendorCard } from '@custom/food/VendorCard';
 import { CuisineRail, FoodHomeSkeleton, FoodSearchButton, FoodSection, VendorRail } from '@components/food/FoodParts';
 import type { VendorCard as VendorCardData } from '@/types';
@@ -152,7 +152,12 @@ const FoodHomeContent: React.FC = () => {
   return (
     <View style={styles.root}>
       {/* The FYP's gradient page header, as on Shopping and Health. */}
-      <PageHeader title="Food Court" onBack={back} backLabel="Back to services">
+      <PageHeader
+        title="Food Court"
+        onBack={back}
+        backLabel="Back to services"
+        right={<IconButton icon="heart-outline" tone="onScrim" accessibilityLabel="Saved kitchens" onPress={() => navigation.navigate('FoodFavourites')} />}
+      >
         <Pressable
           style={styles.whereRow}
           onPress={() => dispatch(openPointSheet())}

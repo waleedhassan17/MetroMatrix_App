@@ -771,6 +771,53 @@ export interface FoodTracking {
   updatedAt: string | null;
 }
 
+/** A kitchen the customer saved. */
+export interface FoodFavourite {
+  id: string;
+  slug: string;
+  name: string;
+  logoUrl: string | null;
+  coverUrl: string | null;
+  ratingAvg: number;
+  ratingCount: number;
+  openState: { open: boolean; paused: boolean; label: string };
+  savedAt: string;
+}
+
+/** The kitchen's view of an order: the customer's contact and the moves it can make now. */
+export interface VendorFoodOrder extends FoodOrder {
+  customer: { name: string; phone: string | null };
+  actions: { status: FoodOrderStatus[]; payment: FoodPaymentStatus[] };
+}
+
+/** Live events (hints only: REST stays the truth). */
+export interface FoodLiveHead {
+  orderId: string;
+  code: string;
+  status: FoodOrderStatus;
+}
+export interface FoodLiveCustomerUpdate extends FoodLiveHead {
+  order: FoodOrder | null;
+}
+export interface FoodLiveBoardUpdate extends FoodLiveHead {
+  order: BoardCard | null;
+}
+export interface FoodLivePayment extends FoodLiveHead {
+  paymentStatus: FoodPaymentStatus;
+  paymentMethod: FoodPaymentMethod;
+}
+export interface FoodBoardSync {
+  at: string;
+  orders: BoardCard[];
+}
+export interface FoodRiderFix {
+  orderId: string;
+  lat: number;
+  lng: number;
+  heading: number | null;
+  at: string;
+}
+
 /** An order on the vendor's board. */
 export interface BoardCard {
   id: string;

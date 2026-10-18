@@ -10,7 +10,7 @@
 
 import type { MockDb, MockUser } from '../mockDb';
 import type { ShopCtx, ShopKit } from '../shop/shopRoutes';
-import { FoodError, assertWithinPlan, invalid, isHhmm, isoNow, kitchenToday, nextId, overrideOf, text } from './foodLogic';
+import { FoodError, assertWithinPlan, invalid, isHhmm, isoNow, kitchenToday, nextId, openState, overrideOf, text } from './foodLogic';
 import { isVisible, unavailableReason } from './foodDiscovery';
 import {
   ACTIVE_STATUSES,
@@ -38,6 +38,7 @@ import {
   type PlanInput,
 } from './foodOrders';
 import type { MockFoodCart, MockFoodOrder, MockFoodVendor, MockMenuItem, MockPromotion } from './foodTypes';
+import { emitOrder, type OrderChange } from './foodRealtime';
 
 const MINUTE = 60_000;
 const FULFILMENTS = ['delivery', 'pickup'];
@@ -305,6 +306,7 @@ export function registerOrderRoutes(deps: OrderRouteDeps) {
     if (!p.ok) throw planError(p);
     const order = placeOrder(ctx.db, user, p, input, ctx.now);
     ctx.db.food.idempotency[replayKey] = order.code;
+    emitOrder(ctx.db, order, 'new');
     ctx.setStatus(201);
     return customerView(ctx, order);
   });
@@ -344,6 +346,7 @@ export function registerOrderRoutes(deps: OrderRouteDeps) {
       patch: { cancelReason: reason ?? 'Cancelled by the customer' },
       message: o.status === 'placed' ? undefined : 'The restaurant has already accepted this order — call them to cancel.',
     });
+    emitOrder(ctx.db, o, 'updated');
     ctx.setStatus(200);
     return customerView(ctx, o);
   });
@@ -357,6 +360,7 @@ export function registerOrderRoutes(deps: OrderRouteDeps) {
     if (o.paymentMethod !== 'transfer') throw invalidTransition(o.paymentStatus, 'proof_submitted', [], 'This order isn’t paid by transfer.');
     if (['rejected', 'auto_rejected', 'cancelled'].includes(o.status)) throw invalidTransition(o.paymentStatus, 'proof_submitted', [], 'This order was cancelled.');
     movePayment(o, 'proof_submitted', 'customer', ctx.now, { note: paymentRef, patch: { paymentRef, paymentProofUrl: proofUrl ?? null, paymentRejectedReason: null } });
+    emitOrder(ctx.db, o, 'payment');
     ctx.setStatus(200);
     return customerView(ctx, o);
   });
@@ -420,12 +424,13 @@ export function registerOrderRoutes(deps: OrderRouteDeps) {
 
   route('GET', '/food/vendor/orders/:id', ctx => vendorOrderView(ctx.db, vendorOrder(ctx, myVendor(ctx)), ctx.now));
 
-  /** One vendor action: the order (theirs only), the move, then their detail view. */
-  const act = (action: string, work: (ctx: ShopCtx, o: MockFoodOrder, v: MockFoodVendor) => void) =>
+  /** One vendor action: the order (theirs only), the move, the live event, then their detail view. */
+  const act = (action: string, work: (ctx: ShopCtx, o: MockFoodOrder, v: MockFoodVendor) => void, change: OrderChange = 'updated') =>
     route('POST', `/food/vendor/orders/:id/${action}`, ctx => {
       const v = myVendor(ctx);
       const o = vendorOrder(ctx, v);
       work(ctx, o, v);
+      emitOrder(ctx.db, o, change);
       ctx.setStatus(200);
       return vendorOrderView(ctx.db, o, ctx.now);
     });
@@ -478,17 +483,69 @@ export function registerOrderRoutes(deps: OrderRouteDeps) {
     move(ctx.db, o, 'cancelled', 'vendor', ctx.now, { note: reason, patch: { cancelReason: reason } });
   });
 
-  act('payment/confirm', (ctx, o) => {
-    if (['rejected', 'auto_rejected', 'cancelled'].includes(o.status)) throw invalidTransition(o.paymentStatus, 'paid', [], 'This order was cancelled.');
-    movePayment(o, 'paid', 'vendor', ctx.now);
+  act(
+    'payment/confirm',
+    (ctx, o) => {
+      if (['rejected', 'auto_rejected', 'cancelled'].includes(o.status)) throw invalidTransition(o.paymentStatus, 'paid', [], 'This order was cancelled.');
+      movePayment(o, 'paid', 'vendor', ctx.now);
+    },
+    'payment',
+  );
+
+  act(
+    'payment/reject',
+    (ctx, o) => {
+      const reason = reasonOf(ctx.body);
+      movePayment(o, 'awaiting_transfer', 'vendor', ctx.now, {
+        note: reason,
+        patch: { paymentRejectedReason: reason, payBy: isoNow(ctx.now + TRANSFER_WINDOW_MINUTES * MINUTE) },
+      });
+    },
+    'payment',
+  );
+
+  // ── Saved kitchens ──
+  route('GET', '/food/favourites', ctx => {
+    const user = customer(ctx);
+    const items = ctx.db.food.favourites
+      .filter(f => f.userId === user.id)
+      .sort((a, b) => b.savedAt.localeCompare(a.savedAt))
+      .map(f => {
+        const v = ctx.db.food.vendors.find(x => x.businessId === f.businessId && isVisible(ctx.db, x));
+        if (!v) return null;
+        const o = openState(v, ctx.now);
+        return {
+          id: v.brandId,
+          slug: v.slug,
+          name: v.name,
+          logoUrl: v.logoUrl,
+          coverUrl: v.coverUrl,
+          ratingAvg: v.ratingAvg,
+          ratingCount: v.ratingCount,
+          openState: { open: o.open, paused: o.paused, label: o.label },
+          savedAt: f.savedAt,
+        };
+      })
+      .filter(Boolean);
+    return { items };
   });
 
-  act('payment/reject', (ctx, o) => {
-    const reason = reasonOf(ctx.body);
-    movePayment(o, 'awaiting_transfer', 'vendor', ctx.now, {
-      note: reason,
-      patch: { paymentRejectedReason: reason, payBy: isoNow(ctx.now + TRANSFER_WINDOW_MINUTES * MINUTE) },
-    });
+  route('POST', '/food/favourites/:vendorId', ctx => {
+    const user = customer(ctx);
+    const id = decodeURIComponent(ctx.params[0]);
+    const v = ctx.db.food.vendors.find(x => x.brandId === id && isVisible(ctx.db, x));
+    if (!v) throw new FoodError(404, 'NOT_FOUND', 'This vendor is not on Food Court.');
+    if (!ctx.db.food.favourites.some(f => f.userId === user.id && f.businessId === v.businessId)) ctx.db.food.favourites.push({ userId: user.id, businessId: v.businessId, savedAt: isoNow(ctx.now) });
+    ctx.setStatus(201);
+    return { vendorId: id, favourite: true };
+  });
+
+  route('DELETE', '/food/favourites/:vendorId', ctx => {
+    const user = customer(ctx);
+    const id = decodeURIComponent(ctx.params[0]);
+    const v = ctx.db.food.vendors.find(x => x.brandId === id);
+    ctx.db.food.favourites = ctx.db.food.favourites.filter(f => !(f.userId === user.id && v && f.businessId === v.businessId));
+    return { vendorId: id, favourite: false };
   });
 
   // ── The vendor's deals ──

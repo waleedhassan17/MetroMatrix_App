@@ -148,6 +148,8 @@ add('reject', 'vendor', async s => {
 add('boardDone', 'vendor', () => call('get', '/food/vendor/orders?status=done'), ['', 'items.0']);
 add('ordersPast', 'customer', () => call('get', '/food/orders?status=past'), ['', 'items.0']);
 add('reorder', 'customer', s => call('post', `/food/orders/${s.rejected!.code}/reorder`), ['', 'cart', 'cart.vendor', 'cart.lines.0']);
+add('favouriteAdd', 'customer', () => call('post', '/food/favourites/fb_resto'), ['']);
+add('favourites', 'customer', () => call('get', '/food/favourites'), ['', 'items.0', 'items.0.openState']);
 
 beforeAll(() => {
   jest.useFakeTimers({ doNotFake: ['setTimeout', 'setInterval', 'setImmediate', 'nextTick', 'queueMicrotask'] });

@@ -1,25 +1,45 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Food Court → Orders (a tab)
 // ═══════════════════════════════════════════════════════
-// Orders from the Food Court's vendors list here; with none yet, the way
-// back to the vendors.
+// Orders from the Food Court's kitchens: Active (on their way) or Past. An
+// order opens its live page. Stateless: the segment is in ordersSlice, and
+// the list is shared with the cross-service Orders screen (OrdersLists).
 
 import React from 'react';
+import { StyleSheet, View } from 'react-native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import { EmptyState, ScreenShell } from '@custom/index';
+import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
+import { useStyles, type Theme } from '@theme/index';
+import { ChoiceChip, ScreenShell } from '@custom/index';
 import type { FoodTabParamList } from '@/types';
+import { FOOD_SEGMENTS, FoodOrdersList } from '../Orders/OrdersLists';
+import { selectOrdersView, setFoodSegment } from '../Orders/ordersSlice';
 
 type Props = BottomTabScreenProps<FoodTabParamList, 'FoodOrdersTab'>;
 
-const FoodOrdersScreen: React.FC<Props> = ({ navigation }) => (
-  <ScreenShell title="Orders" subtitle="From the Food Court's vendors">
-    <EmptyState
-      icon="coffee"
-      title="No Food Court orders yet"
-      body="Orders you place show here, with each kitchen's delivery time."
-      action={{ label: 'Browse the Food Court', onPress: () => navigation.navigate('FoodHomeTab') }}
-    />
-  </ScreenShell>
-);
+const makeStyles = ({ space }: Theme) =>
+  StyleSheet.create({
+    chips: { flexDirection: 'row', gap: space.s8 },
+  });
+
+type Nav = { navigate: (name: string, params?: object) => void };
+
+const FoodOrdersScreen: React.FC<Props> = ({ navigation }) => {
+  const dispatch = useAppDispatch();
+  const styles = useStyles(makeStyles);
+  const v = useAppSelector(selectOrdersView);
+  // FoodOrder is pushed over the Food app's tabs (its stack, the tab's parent).
+  const stack = navigation.getParent() as unknown as Nav | undefined;
+  return (
+    <ScreenShell title="Orders" subtitle="From the Food Court's kitchens" scroll={false}>
+      <View style={styles.chips}>
+        {FOOD_SEGMENTS.map(sg => (
+          <ChoiceChip key={sg.key} label={sg.label} selected={v.food === sg.key} onPress={() => dispatch(setFoodSegment(sg.key))} />
+        ))}
+      </View>
+      <FoodOrdersList segment={v.food} onOpen={code => stack?.navigate('FoodOrder', { code })} onBrowse={() => navigation.navigate('FoodHomeTab')} />
+    </ScreenShell>
+  );
+};
 
 export default FoodOrdersScreen;

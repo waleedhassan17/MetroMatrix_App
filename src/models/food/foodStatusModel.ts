@@ -132,3 +132,111 @@ export const secondsLeft = (acceptBy: string | null, now: number) => (acceptBy ?
 
 /** "4:05" for a countdown. */
 export const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+
+/** StatusPill speaks 'accent' where this map says 'info'. */
+export const pillTone = (t: Tone): 'neutral' | 'accent' | 'success' | 'warning' => (t === 'info' ? 'accent' : t);
+
+// ─── The kitchen's next move ──────────────────────────
+export type VendorMove = 'accept' | 'preparing' | 'ready' | 'handed-external' | 'picked-up' | 'delivered' | 'check-transfer';
+
+export const VENDOR_MOVE_LABEL: Record<VendorMove, string> = {
+  accept: 'Accept',
+  preparing: 'Start cooking',
+  ready: 'Ready',
+  'handed-external': 'Handed to our rider',
+  'picked-up': 'Collected',
+  delivered: 'Delivered',
+  'check-transfer': 'Check the transfer',
+};
+
+/** The one big button on a card; null when the kitchen is waiting on someone else. */
+export const nextVendorMove = (c: { status: FoodOrderStatus; fulfilment: FoodFulfilment; payment: { method: FoodPaymentMethod; status: FoodPaymentStatus }; riderId: string | null }): VendorMove | null => {
+  switch (c.status) {
+    case 'placed':
+      return 'accept';
+    case 'accepted':
+      return c.payment.method === 'transfer' && c.payment.status === 'proof_submitted' ? 'check-transfer' : 'preparing';
+    case 'preparing':
+      return 'ready';
+    case 'ready':
+      return c.fulfilment === 'pickup' ? 'picked-up' : c.riderId ? null : 'handed-external';
+    case 'on_the_way':
+      return c.riderId ? null : 'delivered';
+    default:
+      return null;
+  }
+};
+
+/** "Just now", "4 min ago", "1 h 5 min ago". */
+export const agoLabel = (iso: string, now: number) => {
+  const m = Math.max(0, Math.floor((now - Date.parse(iso)) / 60_000));
+  if (m < 1) return 'Just now';
+  if (m < 60) return `${m} min ago`;
+  return `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ''} ago`;
+};
+
+/** How many orders sit in each board column. */
+export const columnCounts = (cards: { status: FoodOrderStatus }[]) => {
+  const out: Record<BoardColumn, number> = { new: 0, cooking: 0, ready: 0, out: 0 };
+  for (const c of cards) {
+    const col = columnOf(c.status);
+    if (col) out[col] += 1;
+  }
+  return out;
+};
+
+/** An order the kitchen just moved, as its board card (keeping what only the card knows). */
+export const cardOfOrder = (
+  o: {
+    id: string;
+    code: string;
+    status: FoodOrderStatus;
+    statusLabel: string;
+    fulfilment: FoodFulfilment;
+    scheduledFor: string | null;
+    placedAt: string;
+    acceptBy: string | null;
+    eta: { promisedAt: string | null };
+    totals: { total: number };
+    payment: { method: FoodPaymentMethod; status: FoodPaymentStatus };
+    items: { name: string; quantity: number }[];
+    customer: { name: string };
+    handedToExternal: boolean;
+  },
+  prev: { riderId: string | null } | undefined,
+) => ({
+  id: o.id,
+  code: o.code,
+  status: o.status,
+  statusLabel: o.statusLabel,
+  fulfilment: o.fulfilment,
+  scheduledFor: o.scheduledFor,
+  placedAt: o.placedAt,
+  acceptBy: o.acceptBy,
+  promisedAt: o.eta.promisedAt,
+  total: o.totals.total,
+  payment: { method: o.payment.method, status: o.payment.status },
+  itemCount: o.items.reduce((n, i) => n + i.quantity, 0),
+  itemsSummary: o.items.map(i => `${i.quantity}× ${i.name}`).join(', '),
+  customerName: o.customer.name,
+  riderId: prev?.riderId ?? null,
+  handedToExternal: o.handedToExternal,
+});
+
+/** Why a kitchen cancels an order it already accepted (said to the customer). */
+export const VENDOR_CANCEL_REASONS = ['An ingredient ran out', 'The kitchen has to close early', 'The customer asked to cancel', 'No rider is free to deliver it'];
+
+/** Why a transfer isn't confirmed (said to the customer, who has 10 more minutes). */
+export const PAYMENT_REJECT_REASONS = ['Not in our account yet', 'The amount doesn’t match', 'We can’t find that reference'];
+
+/** What each move on the kitchen's order page is called (by the status it moves to). */
+export const VENDOR_STATUS_ACTION: Partial<Record<FoodOrderStatus, string>> = {
+  accepted: 'Accept',
+  rejected: 'Decline',
+  preparing: 'Start cooking',
+  ready: 'Ready',
+  on_the_way: 'Handed to our rider',
+  picked_up: 'Collected',
+  delivered: 'Delivered',
+  cancelled: 'Cancel order',
+};

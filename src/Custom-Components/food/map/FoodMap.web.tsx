@@ -34,10 +34,29 @@ export type { FoodMapProps, MapPin, MapPoint } from './foodMapShared';
 
 type Projected = Record<string, { x: number; y: number }>;
 
+/** The app is in English: label places with their English (or Latin) name where the map has one. */
+const englishLabels = (m: maplibregl.Map) => {
+  for (const layer of m.getStyle().layers ?? []) {
+    if (layer.type !== 'symbol' || !m.getLayoutProperty(layer.id, 'text-field')) continue;
+    try {
+      m.setLayoutProperty(layer.id, 'text-field', ['coalesce', ['get', 'name:en'], ['get', 'name:latin'], ['get', 'name']]);
+    } catch {
+      /* a layer that can't take it keeps its own label */
+    }
+  }
+};
+
+/** The credit stays one tap away (the ⓘ button) instead of covering the map's foot. */
+const collapseAttribution = (host: HTMLElement) => {
+  host.querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show');
+};
+
 const makeStyles = ({ radius, colors, space, size }: Theme) =>
   StyleSheet.create({
     frame: { overflow: 'hidden', borderRadius: radius.lg, backgroundColor: colors.surfaceSunk },
-    canvas: { ...StyleSheet.absoluteFillObject },
+    // MapLibre's stylesheet makes its container `position: relative`, which
+    // beats an absolute fill: an explicit full size keeps it the frame's size.
+    canvas: { width: '100%', height: '100%' },
     pin: { position: 'absolute' },
     centre: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
     fallback: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.s8, padding: space.s16 },
@@ -86,7 +105,11 @@ export const FoodMap: React.FC<FoodMapProps> = ({ pins, rider, height, picker, i
     });
     map.current = m;
     m.on('move', reproject);
-    m.on('load', reproject);
+    m.on('load', () => {
+      englishLabels(m);
+      collapseAttribution(el);
+      reproject();
+    });
     m.on('error', e => {
       // Only a style that never loads means no map; a missing tile is not fatal.
       if (!m.isStyleLoaded()) setFailed(true);

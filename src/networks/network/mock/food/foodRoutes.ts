@@ -54,6 +54,7 @@ import { registerMenuRoutes } from './foodMenuRoutes';
 import { registerDiscoveryRoutes } from './foodDiscoveryRoutes';
 import { orderAgain, registerOrderRoutes } from './foodOrderRoutes';
 import { dealsFor, settleFoodOrders } from './foodOrders';
+import { beginEmits, dropEmits, emitOrder, flushEmits, registerFoodRealtime } from './foodRealtime';
 import { isValidPkMobile, isValidPkPhone, normalizePkPhone } from '../../../../utils/phone';
 
 export interface FoodKit extends ShopKit {
@@ -75,16 +76,32 @@ export function registerFoodRoutes(kit: FoodKit) {
   // Writes are all-or-nothing: a request that fails part-way leaves the
   // dummy database as it was.
   // The API's minute jobs (declining unanswered orders, cancelling unpaid
-  // transfers) run before every Food request instead.
+  // transfers) run before every Food request instead, and say so live.
+  const settle = (ctx: ShopCtx) => {
+    beginEmits();
+    for (const o of settleFoodOrders(ctx.db, ctx.now)) emitOrder(ctx.db, o, 'updated');
+    flushEmits();
+  };
+  // Live events go out only when the write succeeds (after the commit, as the API's).
   const route: ShopKit['route'] = (method, pattern, handler) =>
     kit.route(method, pattern, ctx => {
-      settleFoodOrders(ctx.db, ctx.now);
-      if (method === 'GET') return handler(ctx);
+      settle(ctx);
+      beginEmits();
+      if (method === 'GET') {
+        try {
+          return handler(ctx);
+        } finally {
+          flushEmits();
+        }
+      }
       const food = JSON.stringify(ctx.db.food);
       const users = JSON.stringify(ctx.db.users);
       try {
-        return handler(ctx);
+        const out = handler(ctx);
+        flushEmits();
+        return out;
       } catch (e) {
+        dropEmits();
         ctx.db.food = JSON.parse(food);
         ctx.db.users = JSON.parse(users);
         throw e;
@@ -92,9 +109,15 @@ export function registerFoodRoutes(kit: FoodKit) {
     });
   const rawRoute: ShopKit['route'] = (method, pattern, handler) =>
     kit.route(method, pattern, ctx => {
-      settleFoodOrders(ctx.db, ctx.now);
-      return handler(ctx);
+      settle(ctx);
+      beginEmits();
+      try {
+        return handler(ctx);
+      } finally {
+        flushEmits();
+      }
     });
+  registerFoodRealtime();
 
   /** The approved food partner's vendor row (403 for anyone else). */
   const myVendor = (ctx: ShopCtx): MockFoodVendor => {

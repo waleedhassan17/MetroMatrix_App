@@ -2,6 +2,7 @@
 
 import { bagBlocker, bagNotices, cleanCode, defaultPayment, fixOf, lineChoices, payChoices, validateCheckout, whenChoices } from '../food/bagModel';
 import { dealLabel, daysLine, emptyPromotionForm, formLabel, promotionForm, promotionInput, validatePromotion, whenLine } from '../food/promotionModel';
+import { agoLabel, cardOfOrder, columnCounts, nextVendorMove, pillTone } from '../food/foodStatusModel';
 import type { FoodPreview, FoodPromotion, FoodSlots } from '../../types/food';
 
 // Thursday 15 October 2026, 3:10 PM in Pakistan.
@@ -162,5 +163,55 @@ describe('deals', () => {
     expect(f).toMatchObject({ value: '10', maxDiscount: '300', withCode: false, withWindow: true, endsOn: '2026-10-31', perUserLimit: '1', usageLimit: '' });
     expect(formLabel(f)).toBe(p.label);
     expect(whenLine(p)).toBe('Fri, Sat · 18:00–02:00 · until Sat 31 Oct');
+  });
+});
+
+describe('the kitchen’s board', () => {
+  const base = { fulfilment: 'delivery' as const, payment: { method: 'cod' as const, status: 'cod_pending' as const }, riderId: null };
+
+  it('knows the next move for each order', () => {
+    expect(nextVendorMove({ ...base, status: 'placed' })).toBe('accept');
+    expect(nextVendorMove({ ...base, status: 'accepted' })).toBe('preparing');
+    expect(nextVendorMove({ ...base, status: 'accepted', payment: { method: 'transfer', status: 'proof_submitted' } })).toBe('check-transfer');
+    expect(nextVendorMove({ ...base, status: 'preparing' })).toBe('ready');
+    expect(nextVendorMove({ ...base, status: 'ready' })).toBe('handed-external');
+    expect(nextVendorMove({ ...base, status: 'ready', riderId: 'r1' })).toBeNull();
+    expect(nextVendorMove({ ...base, status: 'ready', fulfilment: 'pickup' })).toBe('picked-up');
+    expect(nextVendorMove({ ...base, status: 'on_the_way' })).toBe('delivered');
+    expect(nextVendorMove({ ...base, status: 'delivered' })).toBeNull();
+  });
+
+  it('counts the columns and says how long ago', () => {
+    expect(columnCounts([{ status: 'placed' }, { status: 'accepted' }, { status: 'preparing' }, { status: 'on_the_way' }, { status: 'delivered' }])).toEqual({ new: 1, cooking: 2, ready: 0, out: 1 });
+    expect(agoLabel('2026-10-15T10:09:40.000Z', NOW)).toBe('Just now');
+    expect(agoLabel('2026-10-15T10:06:00.000Z', NOW)).toBe('4 min ago');
+    expect(agoLabel('2026-10-15T09:05:00.000Z', NOW)).toBe('1 h 5 min ago');
+    expect(pillTone('info')).toBe('accent');
+  });
+
+  it('turns a moved order back into its card, keeping its rider', () => {
+    const c = cardOfOrder(
+      {
+        id: 'o1',
+        code: 'FC-ABC123',
+        status: 'accepted',
+        statusLabel: 'Accepted',
+        fulfilment: 'delivery',
+        scheduledFor: null,
+        placedAt: '2026-10-15T10:00:00.000Z',
+        acceptBy: null,
+        eta: { promisedAt: '2026-10-15T10:40:00.000Z' },
+        totals: { total: 1509 },
+        payment: { method: 'cod', status: 'cod_pending' },
+        items: [
+          { name: 'Classic Smash', quantity: 2 },
+          { name: 'Fries', quantity: 1 },
+        ],
+        customer: { name: 'Ayesha Khan' },
+        handedToExternal: false,
+      },
+      { riderId: 'r1' },
+    );
+    expect(c).toMatchObject({ itemCount: 3, itemsSummary: '2× Classic Smash, 1× Fries', customerName: 'Ayesha Khan', riderId: 'r1', promisedAt: '2026-10-15T10:40:00.000Z', total: 1509 });
   });
 });

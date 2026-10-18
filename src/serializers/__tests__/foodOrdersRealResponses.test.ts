@@ -14,6 +14,7 @@ import {
   foodPromotionSerializer,
   foodPromotionsSerializer,
   foodTrackingSerializer,
+  vendorFoodOrderSerializer,
 } from '../food/orderSerializer';
 
 type Captured = Record<string, { status: number; body: { success: boolean; data?: any; error?: any } }>;
@@ -176,6 +177,13 @@ describe('the kitchen', () => {
     expect(b.items[0]).toMatchObject({ status: 'placed', itemsSummary: '3× Chicken Biryani', customerName: 'Demo Patient', riderId: null, payment: { method: 'cod', status: 'cod_pending' } });
     expect(b.items[0].acceptBy).not.toBeNull();
     expect(boardPageSerializer(data('boardDone')).items[0].status).toBe('rejected');
+  });
+
+  it('reads the kitchen’s view: the customer’s contact and the moves it can make', () => {
+    const v = vendorFoodOrderSerializer(data('vendorOrder'))!;
+    expect(v.customer).toEqual({ name: 'Demo Patient', phone: '+923001234567' });
+    expect(v.actions).toEqual({ status: ['accepted', 'rejected'], payment: [] });
+    expect(vendorFoodOrderSerializer(data('accept'))!.actions.status).toEqual(['preparing', 'cancelled']);
   });
 
   it('reads the accept with the new ETA', () => {

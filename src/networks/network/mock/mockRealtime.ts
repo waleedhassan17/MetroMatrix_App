@@ -8,8 +8,10 @@
 //
 // The dummy Food API registers what the server does with a client's events
 // (`mockRealtime.handle('subscribe', …)` checks who may join an order's
-// room) and pushes events with `mockRealtime.emitToRoom(room, event, data)`
-// after a write. Every socket joins `user:<id>` on connect.
+// room), what happens on connect (`onConnect`: a vendor joins its branch's
+// room and gets `board.sync`), and pushes events with
+// `mockRealtime.emitToRoom(room, event, data, except?)` after a write.
+// Every socket joins `user:<id>` on connect.
 
 import type { SocketLike } from '../../../services/realtime/socketClient';
 import { getAccessToken } from '../../../utils/storageUtils';
@@ -24,6 +26,9 @@ export interface MockSocketCtx {
 
 /** What the server does with a client event; the return value is the ack. */
 export type MockSocketHandler = (ctx: MockSocketCtx, payload: any) => unknown | Promise<unknown>;
+
+/** Run when a socket connects: join rooms, send it a first message. */
+export type MockConnectHook = (ctx: MockSocketCtx & { emit: (event: string, payload: unknown) => void }) => void | Promise<void>;
 
 type Listener = (...args: any[]) => void;
 
@@ -75,6 +80,7 @@ class MockSocket implements SocketLike {
       this.connected = true;
       this.server.attach(this);
       this.fire('connect');
+      await this.server.connected(this);
     })();
   }
 
@@ -101,6 +107,7 @@ class MockSocket implements SocketLike {
 class MockRealtimeServer {
   private sockets = new Set<MockSocket>();
   private handlers = new Map<string, MockSocketHandler>();
+  private connectHooks: MockConnectHook[] = [];
 
   attach(s: MockSocket) {
     this.sockets.add(s);
@@ -119,6 +126,28 @@ class MockRealtimeServer {
     return this.handlers.has(event);
   }
 
+  getHandler(event: string): MockSocketHandler | undefined {
+    return this.handlers.get(event);
+  }
+
+  onConnect(hook: MockConnectHook) {
+    this.connectHooks.push(hook);
+  }
+
+  async connected(s: MockSocket) {
+    if (!this.connectHooks.length || !s.user) return;
+    const db = await getDb();
+    for (const hook of this.connectHooks) {
+      await hook({
+        db,
+        user: s.user,
+        join: room => s.rooms.add(room),
+        leave: room => s.rooms.delete(room),
+        emit: (event, payload) => setTimeout(() => s.connected && s.fire(event, payload), 0),
+      });
+    }
+  }
+
   async dispatch(s: MockSocket, event: string, payload: unknown): Promise<unknown> {
     const handler = this.handlers.get(event);
     if (!handler || !s.user) return { ok: false, code: 'UNKNOWN_EVENT' };
@@ -126,9 +155,9 @@ class MockRealtimeServer {
     return handler({ db, user: s.user, join: room => s.rooms.add(room), leave: room => s.rooms.delete(room) }, payload);
   }
 
-  /** Server → every socket in `room`, on the next turn of the loop (after the write's response). */
-  emitToRoom(room: string, event: string, payload: unknown) {
-    const targets = [...this.sockets].filter(s => s.rooms.has(room));
+  /** Server → every socket in `room` (but not in `except`), on the next turn of the loop (after the write's response). */
+  emitToRoom(room: string, event: string, payload: unknown, except?: string) {
+    const targets = [...this.sockets].filter(s => s.rooms.has(room) && !(except && s.rooms.has(except)));
     if (!targets.length) return;
     setTimeout(() => targets.forEach(s => s.connected && s.fire(event, payload)), 0);
   }

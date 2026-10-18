@@ -27,6 +27,7 @@ import type {
   FoodTotals,
   FoodTracking,
   FoodTransferAccount,
+  VendorFoodOrder,
   PromotionKind,
   PromotionState,
 } from '../../types/food';
@@ -317,6 +318,22 @@ export const foodOrderSerializer = (raw: unknown): FoodOrder | null => {
     canCancel: bool(raw.canCancel),
     canReview: bool(raw.canReview),
     canReorder: bool(raw.canReorder),
+  };
+};
+
+/** The kitchen's view: the order, the customer's contact, the moves it can make now. */
+export const vendorFoodOrderSerializer = (raw: unknown): VendorFoodOrder | null => {
+  const base = foodOrderSerializer(raw);
+  if (!base || !isObject(raw)) return null;
+  const c = isObject(raw.customer) ? raw.customer : {};
+  const a = isObject(raw.actions) ? raw.actions : {};
+  return {
+    ...base,
+    customer: { name: str(c.name, 'Customer'), phone: strOrNull(c.phone) },
+    actions: {
+      status: arr(a.status).filter((x): x is FoodOrderStatus => FOOD_ORDER_STATUSES.includes(x as FoodOrderStatus)),
+      payment: arr(a.payment).filter((x): x is FoodPaymentStatus => FOOD_PAYMENT_STATUSES.includes(x as FoodPaymentStatus)),
+    },
   };
 };
 

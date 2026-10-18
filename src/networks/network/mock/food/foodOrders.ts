@@ -1057,26 +1057,31 @@ export const move = (
   }
 };
 
-/** The API's minute jobs, run lazily: declining unanswered orders, cancelling unpaid transfers. */
-export const settleFoodOrders = (db: MockDb, now: number) => {
+/** The API's minute jobs, run lazily: declining unanswered orders, cancelling unpaid transfers. Returns the orders it moved. */
+export const settleFoodOrders = (db: MockDb, now: number): MockFoodOrder[] => {
+  const moved: MockFoodOrder[] = [];
   for (const o of db.food.orders) {
-    if (o.status === 'placed' && o.acceptBy && Date.parse(o.acceptBy) < now)
+    if (o.status === 'placed' && o.acceptBy && Date.parse(o.acceptBy) < now) {
       move(db, o, 'auto_rejected', 'system', now, {
         note: AUTO_REJECT_REASON,
         patch: { cancelReason: AUTO_REJECT_REASON },
       });
-    else if (
+      moved.push(o);
+    } else if (
       o.paymentMethod === 'transfer' &&
       o.paymentStatus === 'awaiting_transfer' &&
       (o.status === 'placed' || o.status === 'accepted') &&
       o.payBy &&
       Date.parse(o.payBy) < now
-    )
+    ) {
       move(db, o, 'cancelled', 'system', now, {
         note: UNPAID_REASON,
         patch: { cancelReason: UNPAID_REASON },
       });
+      moved.push(o);
+    }
   }
+  return moved;
 };
 
 const rs = (n: number) => formatPKR(n);

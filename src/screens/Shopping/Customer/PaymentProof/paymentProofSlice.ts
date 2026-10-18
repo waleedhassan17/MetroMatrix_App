@@ -1,13 +1,14 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — "I've paid": the transfer's transaction ID (+ screenshot)
 // ═══════════════════════════════════════════════════════
-// One flow for both services: a shop order's transfer to the store, or an
-// appointment's transfer to the doctor.
+// One flow for every service: a shop order's transfer to the store, an
+// appointment's transfer to the doctor, or a Food order's to the kitchen.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { submitPaymentProof } from '@networks/shopping/ordersNetwork';
 import { submitAppointmentPaymentProof } from '@networks/health/appointmentsNetwork';
+import { submitFoodPaymentProof } from '@networks/food/ordersNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import { normaliseTransactionId } from '@models/shopping/paymentProofModel';
 import type { LocalFile } from '@/types';
@@ -114,6 +115,31 @@ export const paymentProofSlice = createAppSlice({
         },
       },
     ),
+
+    // POST /food/orders/:code/payment-proof (the kitchen confirms it on its board).
+    submitFoodProofAsync: create.asyncThunk(
+      async ({ code, transactionId, imageUrl }: { code: string; transactionId: string; imageUrl: string | null }, { rejectWithValue }) => {
+        try {
+          return await submitFoodPaymentProof(code, { paymentRef: normaliseTransactionId(transactionId), proofUrl: imageUrl });
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        pending: state => {
+          state.status = 'loading';
+          state.touched = true;
+          state.error = NO_ERROR;
+        },
+        fulfilled: state => {
+          state.status = 'succeeded';
+        },
+        rejected: (state, action) => {
+          state.status = 'failed';
+          state.error = readRejection(action, "We couldn't send that. Check the ID and try again.");
+        },
+      },
+    ),
   }),
   selectors: {
     selectPaymentProof: state => state,
@@ -129,5 +155,6 @@ export const {
   addProofPhotoAsync,
   submitPaymentProofAsync,
   submitAppointmentProofAsync,
+  submitFoodProofAsync,
 } = paymentProofSlice.actions;
 export const { selectPaymentProof } = paymentProofSlice.selectors;

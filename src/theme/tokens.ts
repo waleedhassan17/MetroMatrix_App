@@ -242,6 +242,8 @@ export const size = {
   mapPin: 34,
   mapRider: 40,
   mapCentrePin: 44,
+  /** Food maps' heights: order tracking, the kitchen's order page. */
+  trackingMap: 220,
   pageDot: 8,
   pageDotActive: 24,
   /** Onboarding indicator pitch (dot centre to dot centre). */

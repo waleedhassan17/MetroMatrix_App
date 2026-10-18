@@ -68,7 +68,7 @@ export type ShopBrowseParamList = {
   AddressForm: { id?: string } | undefined;
   Notifications: undefined;
   /** "I've paid": a shop order's transfer, or an appointment's. */
-  PaymentProof: { orderId: string; groupCode: string } | { appointmentCode: string };
+  PaymentProof: { orderId: string; groupCode: string } | { appointmentCode: string } | { foodOrderCode: string };
 };
 
 /**
@@ -191,6 +191,12 @@ export type FoodAppParamList = {
   FoodCheckout: undefined;
   /** Straight after checkout: the order's code (its page reads the rest). */
   FoodOrderPlaced: { code: string };
+  /** One order, live. */
+  FoodOrder: { code: string };
+  /** The kitchens the customer saved. */
+  FoodFavourites: undefined;
+  /** "I've paid": a transfer's reference for the kitchen. */
+  PaymentProof: { foodOrderCode: string };
 };
 
 export type CustomerStackParamList = {
@@ -280,6 +286,8 @@ export type FoodVendorStackParamList = {
   VendorPromotions: undefined;
   /** A deal: edit one (`id`) or a new one. */
   VendorPromotion: { id?: string } | undefined;
+  /** One order (by id). */
+  VendorOrder: { id: string };
   PaymentAccounts: undefined;
   Profile: undefined;
   ChangePassword: undefined;

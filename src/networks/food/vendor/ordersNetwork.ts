@@ -2,7 +2,7 @@
 // TODO(API_FOOD): /food/vendor/orders (+ /:id and its actions) as committed.
 
 import { api } from '../../network/apiHelpers';
-import { boardPageSerializer, foodOrderSerializer } from '../../../serializers/food/orderSerializer';
+import { boardPageSerializer, vendorFoodOrderSerializer } from '../../../serializers/food/orderSerializer';
 import { request } from '../../shopping/http';
 
 const enc = encodeURIComponent;
@@ -11,9 +11,9 @@ const enc = encodeURIComponent;
 export const listBoard = (status: 'new' | 'active' | 'done', page = 1, pageSize = 50) =>
   request(() => api.get('/food/vendor/orders', { params: { status, page, pageSize } }), boardPageSerializer);
 
-export const getVendorOrder = (id: string) => request(() => api.get(`/food/vendor/orders/${enc(id)}`), foodOrderSerializer);
+export const getVendorOrder = (id: string) => request(() => api.get(`/food/vendor/orders/${enc(id)}`), vendorFoodOrderSerializer);
 
-const act = (id: string, action: string, body?: object) => request(() => api.post(`/food/vendor/orders/${enc(id)}/${action}`, body ?? {}), foodOrderSerializer);
+const act = (id: string, action: string, body?: object) => request(() => api.post(`/food/vendor/orders/${enc(id)}/${action}`, body ?? {}), vendorFoodOrderSerializer);
 
 /** placed → accepted, with the ETA in minutes (5–180). */
 export const acceptOrder = (id: string, etaMinutes: number) => act(id, 'accept', { etaMinutes });

@@ -14,10 +14,10 @@ import { useBack } from '@hooks/useBack';
 import { useServiceNav } from '@hooks/useServiceNav';
 import { APPOINTMENT_SEGMENTS } from '@models/health/appointmentStatusModel';
 import { PageHeaderScope, useStyles, type Theme } from '@theme/index';
-import { ChoiceChip, EmptyState, ScreenShell, SegmentTabs } from '@custom/index';
+import { ChoiceChip, ScreenShell, SegmentTabs } from '@custom/index';
 import type { CustomerStackParamList } from '@/types';
-import { Appointments, SHOP_SEGMENTS, ShopOrders } from './OrdersLists';
-import { selectOrdersView, setOrdersSegment, setOrdersService, setVisitsSegment, type OrdersService } from './ordersSlice';
+import { Appointments, FOOD_SEGMENTS, FoodOrdersList, SHOP_SEGMENTS, ShopOrders } from './OrdersLists';
+import { selectOrdersView, setFoodSegment, setOrdersSegment, setOrdersService, setVisitsSegment, type OrdersService } from './ordersSlice';
 
 type Props = NativeStackScreenProps<CustomerStackParamList, 'Orders'>;
 
@@ -42,7 +42,7 @@ const OrdersContent: React.FC<Props> = ({ route }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { back, canGoBack } = useBack({ name: 'CustomerHome' });
-  const { openShop, openHealth } = useServiceNav();
+  const { openShop, openHealth, openFood } = useServiceNav();
   const v = useAppSelector(selectOrdersView);
   const asked = route.params?.segment;
   const askedService = route.params?.service;
@@ -82,7 +82,14 @@ const OrdersContent: React.FC<Props> = ({ route }) => {
           <Appointments segment={v.visits} onOpen={code => openHealth('AppointmentDetail', { code })} onFind={() => openHealth()} />
         </>
       ) : (
-        <EmptyState icon="coffee" title="No Food Court orders yet" body="Orders from the Food Court's vendors will show here." />
+        <>
+          <View style={styles.chips}>
+            {FOOD_SEGMENTS.map(sg => (
+              <ChoiceChip key={sg.key} label={sg.label} selected={v.food === sg.key} onPress={() => dispatch(setFoodSegment(sg.key))} />
+            ))}
+          </View>
+          <FoodOrdersList segment={v.food} onOpen={code => openFood('FoodOrder', { code })} onBrowse={() => openFood()} />
+        </>
       )}
     </ScreenShell>
   );

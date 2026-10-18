@@ -111,6 +111,7 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       VendorPreorderSlots: 'vendor/preorder-slots',
       VendorPromotions: 'vendor/deals',
       VendorPromotion: 'vendor/deal/:id?',
+      VendorOrder: 'vendor/orders/:id',
       // The rider's app: metromatrix://rider/deliveries
       RiderTabs: {
         screens: { DeliveriesTab: 'rider/deliveries', CashTab: 'rider/cash', RiderProfileTab: 'rider/profile' },
@@ -207,6 +208,9 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
           FoodBag: 'food/bag',
           FoodCheckout: 'food/checkout',
           FoodOrderPlaced: 'food/placed/:code',
+          FoodOrder: 'food/order/:code',
+          FoodFavourites: 'food/saved',
+          PaymentProof: 'food/order/:foodOrderCode/pay',
         },
       },
       ApprovalsTab: {

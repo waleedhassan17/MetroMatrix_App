@@ -33,6 +33,7 @@ import { loadVendorPageAsync, selectVendorPage } from './foodVendorSlice';
 import { openItemSheetAsync } from './itemSheetSlice';
 import { ItemSheetView } from './ItemSheetView';
 import { addToFoodBagAsync, clearFoodBagErrors, dismissOtherVendor, loadFoodBagAsync, selectFoodBag } from '../FoodBag/foodBagSlice';
+import { loadFavouritesAsync, selectFoodFavourites, toggleFavouriteAsync } from '../FoodFavourites/foodFavouritesSlice';
 
 type Props = NativeStackScreenProps<FoodAppParamList, 'FoodVendor'>;
 
@@ -108,6 +109,7 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
   const point = useAppSelector(selectFoodPoint);
   const { page, status, error } = useAppSelector(st => selectVendorPage(st, slug));
   const bag = useAppSelector(selectFoodBag);
+  const favourites = useAppSelector(selectFoodFavourites);
   const [info, setInfo] = useState(false);
   const [active, setActive] = useState(0);
   const [tabsY, setTabsY] = useState(0);
@@ -127,6 +129,10 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
       void dispatch(loadFoodBagAsync());
     }, [dispatch]),
   );
+  const favouritesLoaded = favourites.status !== 'idle';
+  useEffect(() => {
+    if (!favouritesLoaded) void dispatch(loadFavouritesAsync());
+  }, [dispatch, favouritesLoaded]);
 
   // From search: open the dish's sheet once the page is in.
   const openedDish = useRef<string | null>(null);
@@ -196,6 +202,7 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
   }
 
   const blocked = blockedReasonOf(page);
+  const saved = favourites.savedIds.includes(page.id);
   const bagHere = bag.cart.vendor?.id === page.id && bag.cart.itemCount > 0;
 
   const addToBag = async (input: Parameters<typeof lineInput>[1], sel: Parameters<typeof lineInput>[2], replace = false) => {
@@ -361,9 +368,20 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
       {stuck && page.menu.length > 1 ? <View style={[styles.stickyTabs, { top: 0, paddingTop: insets.top }]}>{tabs}</View> : null}
       <View style={[styles.topButtons, { top: insets.top + space.s8 }]} pointerEvents="box-none">
         {stuck ? null : (
-          <Pressable onPress={back} style={styles.round} accessibilityRole="button" accessibilityLabel="Back">
-            <IonIcon name="arrow-back" size="md" color={colors.ink} />
-          </Pressable>
+          <>
+            <Pressable onPress={back} style={styles.round} accessibilityRole="button" accessibilityLabel="Back">
+              <IonIcon name="arrow-back" size="md" color={colors.ink} />
+            </Pressable>
+            <Pressable
+              onPress={() => void dispatch(toggleFavouriteAsync({ vendorId: page.id, save: !saved }))}
+              style={styles.round}
+              accessibilityRole="button"
+              accessibilityState={{ selected: saved }}
+              accessibilityLabel={saved ? `Remove ${page.name} from saved` : `Save ${page.name}`}
+            >
+              <IonIcon name={saved ? 'heart' : 'heart-outline'} size="md" color={saved ? colors.danger : colors.ink} />
+            </Pressable>
+          </>
         )}
       </View>
 

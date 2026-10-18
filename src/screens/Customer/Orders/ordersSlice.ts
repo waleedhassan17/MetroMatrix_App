@@ -1,19 +1,21 @@
-// MetroMatrix — Orders tab slice: which service, which Shop segment and which
-// Health list (Upcoming / Past) are showing.
+// MetroMatrix — Orders tab slice: which service, which Shop segment, which
+// Health list (Upcoming / Past) and which Food list (Active / Past) are showing.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import type { AppointmentSegment, OrderSegment } from '@/types';
 
 export type OrdersService = 'shop' | 'health' | 'food';
+export type FoodOrderSegment = 'active' | 'past';
 
 export interface OrdersSliceState {
   service: OrdersService;
   segment: OrderSegment;
   visits: AppointmentSegment;
+  food: FoodOrderSegment;
 }
 
-const initialState: OrdersSliceState = { service: 'shop', segment: 'active', visits: 'upcoming' };
+const initialState: OrdersSliceState = { service: 'shop', segment: 'active', visits: 'upcoming', food: 'active' };
 
 export const ordersSlice = createAppSlice({
   name: 'orders',
@@ -28,11 +30,14 @@ export const ordersSlice = createAppSlice({
     setVisitsSegment: create.reducer((state, action: PayloadAction<AppointmentSegment>) => {
       state.visits = action.payload;
     }),
+    setFoodSegment: create.reducer((state, action: PayloadAction<FoodOrderSegment>) => {
+      state.food = action.payload;
+    }),
   }),
   selectors: {
     selectOrdersView: state => state,
   },
 });
 
-export const { setOrdersService, setOrdersSegment, setVisitsSegment } = ordersSlice.actions;
+export const { setOrdersService, setOrdersSegment, setVisitsSegment, setFoodSegment } = ordersSlice.actions;
 export const { selectOrdersView } = ordersSlice.selectors;

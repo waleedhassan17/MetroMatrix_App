@@ -87,7 +87,10 @@ src/
   hooks/                     useAppDispatch / useAppSelector, useSignOut, usePagedList (+ useDebouncedValue), useShop (bag count, hearts, shop navigation),
                              useServiceNav (home ↔ service apps, tabs, leaving a service),
                              useHealth (Health navigation, banner targets), useBack, useCountdown, useNow, useBarStyle,
-                             useCalmMotion (reduce motion / screen reader: nothing moves by itself)
+                             useCalmMotion (reduce motion / screen reader: nothing moves by itself),
+                             useRealtime (the one live connection: events, rooms, resync, polling fallback),
+                             useFoodLive (useOrderChannel for one order, useVendorBoard for the kitchen's board),
+                             useLayoutClass (phone or tablet)
   networks/
     network/apiHelpers.ts    the axios client, refresh queue, AuthError, unwrap
     network/mock/            the dummy API (axios adapter + AsyncStorage DB) used while no backend URL is set
@@ -99,7 +102,7 @@ src/
                              2 riders) + foodMenuSeed (their menus), foodLogic (open state, go-live checklist, plan, rider
                              usernames, portions), foodDiscovery (quotes, cards), foodOrders (deals, the checkout planner,
                              the order and payment machines, the minute jobs), foodWire, foodRoutes + foodMenuRoutes +
-                             foodDiscoveryRoutes + foodOrderRoutes
+                             foodDiscoveryRoutes + foodOrderRoutes, foodRealtime (the gateway on the dummy socket)
     network/mock/mockRealtime the in-process stand-in for the Food socket (same surface as the real client)
     <domain>/<x>Network.ts   one function per endpoint (auth, users, media, businesses, admin, food, addresses, notifications)
     shopping/                catalogue, wishlist, cart, checkout, orders, returns, reviews; shopping/partner/ the store app's
@@ -153,7 +156,7 @@ docs/                        API_CONTRACT_ASSUMED.md, API_SHOPPING_ASSUMED.md, A
 assets/images/               FYP icon + splash mark; services/ and health/ (card photos — sources in each CREDITS.md)
 ```
 
-Stateless screens have no slice. Their state is global (`auth`, `preferences`) or they only navigate. These are Rejected, Suspended, CustomerHome, ServicePreview, OrderPlaced, FoodOrderPlaced, Saved, StoreMore, BookingConfirmed, PrescriptionList, DoctorMore, FoodOrders, VendorMore, VendorOrders (until its API phase), RiderCash, RiderProfile (reads `riderHome`), and the tab lists HealthAppointments and ShopOrders (they read `ordersSlice`, and share their lists with Orders via `Orders/OrdersLists.tsx`). Slices other screens read (`bag`, `foodBag`, `saved`, `addressBook`, `orderDetail`, `notifications`, `family`, `appointmentDetail`) live beside the screen that owns them. BookAppointment is a sheet over DoctorProfile (`BookAppointmentSheet` + its slice), not a route.
+Stateless screens have no slice. Their state is global (`auth`, `preferences`) or they only navigate. These are Rejected, Suspended, CustomerHome, ServicePreview, OrderPlaced, FoodOrderPlaced, Saved, StoreMore, BookingConfirmed, PrescriptionList, DoctorMore, VendorMore, RiderCash, RiderProfile (reads `riderHome`), and the tab lists HealthAppointments, ShopOrders and FoodOrders (they read `ordersSlice`, and share their lists with Orders via `Orders/OrdersLists.tsx`). Slices other screens read (`bag`, `foodBag`, `foodOrder`, `foodFavourites`, `saved`, `addressBook`, `orderDetail`, `notifications`, `family`, `appointmentDetail`) live beside the screen that owns them. BookAppointment is a sheet over DoctorProfile (`BookAppointmentSheet` + its slice), not a route.
 
 ## How to add a screen
 
@@ -197,6 +200,7 @@ const styles = useStyles(makeStyles); // memoised on the active theme (mode + se
 - Health copy: calm and plain, no exclamation marks; red only for emergencies (`appointmentStatusModel` never uses `danger`); appointment and payment wording only from `appointmentStatusModel`; every time through `healthTime` in the practice's timezone; "Recorded fees" (never earnings); the symptom checker names areas to discuss, never a diagnosis.
 - Shopping copy: "Bag" (never cart), "Recorded sales" (never revenue or income), money only through `formatPKR`, order/payment/return wording only from `orderStatusModel`, every remote image through `cdn()`.
 - Food copy: "bag" too (one kitchen at a time), money only through `formatPKR`, order/payment/rider wording only from `foodStatusModel`, totals only the server's (subtotal − the deal + the kitchen's delivery fee; there is no other fee). Say that customers pay the kitchen directly and that riders are the kitchen's own.
+- Food live screens (the customer's order, the kitchen's board and order page) go through `useOrderChannel` / `useVendorBoard`, never the socket. REST is the truth: events are hints, every reconnect reads again, and polling covers a dropped connection. The board rings (`services/orderAlert`) while a new order is unopened, keeps the screen awake, and shows four columns from tablet width (`useLayoutClass`).
 - Onboarding: everything on a slide, including the primary button, wears that slide's colour.
 - Platform-specific files (`X.web.tsx`) must never import `./X`; on web that path resolves to the file itself. Put shared code in a third module (see `sheetShared.ts`, `dateFieldShared.ts`).
 
@@ -244,7 +248,7 @@ When a real document arrives, reconcile it in one pass:
 - **Expo Go** (`npm start`): runs the whole app except native Google sign-in and push, against the dummy API. Seeded accounts and codes are in `docs/API_CONTRACT_ASSUMED.md` → "Mock mode" (doctors and patients in `docs/MOCK_HEALTH.md`). Video consultations open public meet.jit.si rooms in a WebView; on web they open in a new tab.
 - **Web** (`npm run web`):
   - Google sign-in uses Google Identity Services and needs `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`.
-  - Deep paths work, e.g. `/get-started`, `/sign-in`, `/provider/sign-in`, `/home/food`, `/shop`, `/shop/store/lawn-and-loom-7a1f3`, `/shop/product/p_l1`, `/orders/MM-24A7Q2`, `/store/orders/:id`, `/admin/shop`, `/health`, `/health/appointments`, `/health/doctor/:id`, `/health/appointment/:code`, `/shop/orders`, `/shop/bag`, `/profile/records`, `/doctor/appointments/:code`, `/admin/health`, `/vendor/orders`, `/vendor/menu`, `/vendor/menu/dish/:id`, `/vendor/today`, `/vendor/setup`, `/vendor/riders/:id`, `/rider/sign-in`, `/rider/deliveries`, `/food/vendor/:slug`, `/food/bag`, `/food/checkout`, `/vendor/deals`. The staff Profile tab is `/account`.
+  - Deep paths work, e.g. `/get-started`, `/sign-in`, `/provider/sign-in`, `/home/food`, `/shop`, `/shop/store/lawn-and-loom-7a1f3`, `/shop/product/p_l1`, `/orders/MM-24A7Q2`, `/store/orders/:id`, `/admin/shop`, `/health`, `/health/appointments`, `/health/doctor/:id`, `/health/appointment/:code`, `/shop/orders`, `/shop/bag`, `/profile/records`, `/doctor/appointments/:code`, `/admin/health`, `/vendor/orders`, `/vendor/menu`, `/vendor/menu/dish/:id`, `/vendor/today`, `/vendor/setup`, `/vendor/riders/:id`, `/rider/sign-in`, `/rider/deliveries`, `/food/vendor/:slug`, `/food/bag`, `/food/checkout`, `/food/order/:code`, `/food/saved`, `/vendor/deals`, `/vendor/orders/:id`. The staff Profile tab is `/account`.
   - After adding new folders or `.web.tsx` files, restart Metro with `--clear` (its watcher can miss them). Don't start it with `CI=1`: that turns watch mode off and the browser keeps the old bundle.
   - Bottom sheets render as a `Modal` (`Sheet.web.tsx`), because `@gorhom/bottom-sheet` never presents in a browser.
   - `/dev/gallery` exists only in development builds.

@@ -186,6 +186,8 @@ export const ROUTES = {
   FOOD_BAG: 'FoodBag',
   FOOD_CHECKOUT: 'FoodCheckout',
   FOOD_ORDER_PLACED: 'FoodOrderPlaced',
+  FOOD_ORDER: 'FoodOrder',
+  FOOD_FAVOURITES: 'FoodFavourites',
   VENDOR_TABS: 'VendorTabs',
   MENU_TAB: 'MenuTab',
   RIDERS_TAB: 'RidersTab',
@@ -205,6 +207,7 @@ export const ROUTES = {
   VENDOR_PREORDER_SLOTS: 'VendorPreorderSlots',
   VENDOR_PROMOTIONS: 'VendorPromotions',
   VENDOR_PROMOTION: 'VendorPromotion',
+  VENDOR_ORDER: 'VendorOrder',
 
   // ── Food: the rider's app (navigations-maps/Rider.ts) ──
   RIDER_TABS: 'RiderTabs',

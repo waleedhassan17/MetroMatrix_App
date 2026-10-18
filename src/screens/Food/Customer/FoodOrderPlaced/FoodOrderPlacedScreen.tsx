@@ -4,7 +4,7 @@
 // The order's code, that the kitchen is about to answer, when to expect it,
 // and how it's paid — for a transfer, the kitchen's own account and the
 // minutes left to send the money. Stateless: checkout left the order in its
-// slice; on a reload it points to the Orders tab instead.
+// slice; on a reload it still leads to the order's live page.
 
 import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -51,9 +51,11 @@ const FoodOrderPlacedContent: React.FC<Props> = ({ navigation, route }) => {
   const o = placed?.code === code ? placed : null;
   const items = o ? o.items.reduce((n, i) => n + i.quantity, 0) : 0;
 
-  const leave = (to: 'orders' | 'home') => {
+  // This page leaves the history: back from the order goes to the menus.
+  const follow = () => navigation.replace('FoodOrder', { code });
+  const home = () => {
     navigation.popToTop();
-    navigation.navigate('FoodTabs', { screen: to === 'orders' ? 'FoodOrdersTab' : 'FoodHomeTab' });
+    navigation.navigate('FoodTabs', { screen: 'FoodHomeTab' });
   };
 
   const when = o
@@ -104,13 +106,13 @@ const FoodOrderPlacedContent: React.FC<Props> = ({ navigation, route }) => {
             accounts={o.payment.accounts}
             status={o.payment.status}
             payBy={o.payment.payBy}
-            onSendReceipt={() => leave('orders')}
+            onSendReceipt={() => navigation.navigate('PaymentProof', { foodOrderCode: code })}
           />
         ) : null}
       </ScrollView>
       <StickyCTA>
-        <Button label="Follow your order" onPress={() => leave('orders')} fullWidth />
-        <Button label="Back to the Food Court" variant="ghost" onPress={() => leave('home')} fullWidth />
+        <Button label="Follow your order" onPress={follow} fullWidth />
+        <Button label="Back to the Food Court" variant="ghost" onPress={home} fullWidth />
       </StickyCTA>
     </View>
   );

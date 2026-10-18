@@ -79,15 +79,22 @@ export const RealtimeCheckScreen: React.FC<Props> = () => {
   useEffect(() => riderLocation.subscribe(setLoc), []);
   useEffect(() => {
     if (!USE_MOCK_API) return;
-    // Dummy API without the Food routes yet: answer the check's own events.
+    // The check's own room on the dummy socket; every other order goes to the Food routes' handler.
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { mockRealtime } = require('../../../networks/network/mock/mockRealtime') as typeof import('../../../networks/network/mock/mockRealtime');
-    if (!mockRealtime.hasHandler('subscribe')) {
-      mockRealtime.handle('subscribe', (ctx, payload: { orderId?: string }) => {
-        if (payload?.orderId !== 'dev-check') return { ok: false, code: 'NOT_FOUND' };
-        ctx.join('order:dev-check');
-        return { ok: true };
-      });
+    const real = mockRealtime.getHandler('subscribe');
+    if (!(real as { devCheck?: boolean } | undefined)?.devCheck) {
+      const handler = Object.assign(
+        (ctx: Parameters<NonNullable<typeof real>>[0], payload: { orderId?: string }) => {
+          if (payload?.orderId === 'dev-check') {
+            ctx.join('order:dev-check');
+            return { ok: true };
+          }
+          return real ? real(ctx, payload) : { ok: false, code: 'NOT_FOUND' };
+        },
+        { devCheck: true },
+      );
+      mockRealtime.handle('subscribe', handler);
     }
     if (!mockRealtime.hasHandler(REALTIME_SEND.riderLocation)) {
       mockRealtime.handle(REALTIME_SEND.riderLocation, (_ctx, payload: { fixes?: unknown[] }) => ({
