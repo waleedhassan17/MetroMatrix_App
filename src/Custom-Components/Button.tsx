@@ -90,7 +90,9 @@ export const Button: React.FC<ButtonProps> = ({
 
   const palette = {
     primary: greyed
-      ? { bg: colors.disabled, fg: colors.onBrand, border: colors.disabled }
+      ? onGradient
+        ? { bg: colors.onScrimTint, fg: colors.onScrimSoft, border: colors.onScrimLine }
+        : { bg: colors.disabled, fg: colors.onBrand, border: colors.disabled }
       : onGradient
         ? { bg: colors.surface, fg: service.accentDeep, border: colors.surface }
         : { bg: service.accent, fg: service.onAccent, border: service.accent },

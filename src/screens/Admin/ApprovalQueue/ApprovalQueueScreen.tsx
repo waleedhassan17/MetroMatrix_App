@@ -84,8 +84,8 @@ const ApprovalQueueScreen: React.FC<Props> = ({ navigation }) => {
       title="Approvals"
       subtitle="Partner applications waiting for a decision."
       refreshing={list.status === 'refreshing'}
-      onRefresh={() => dispatch(loadQueueAsync({ tab, mode: 'refresh' }))}>
-      <SegmentTabs options={TABS} value={tab} onChange={t => dispatch(setTab(t))} accessibilityLabel="Service" />
+      onRefresh={() => dispatch(loadQueueAsync({ tab, mode: 'refresh' }))}
+      headerContent={<SegmentTabs options={TABS} value={tab} onChange={t => dispatch(setTab(t))} accessibilityLabel="Service" />}>
 
       {list.status === 'failed' ? (
         <InlineNotice

@@ -55,8 +55,7 @@ const ShopReportsScreen: React.FC<Props> = () => {
   };
 
   return (
-    <ScreenShell title="Reported products" onBack={back} scroll={false}>
-      <SegmentTabs options={SEGMENTS} value={s.status} onChange={k => dispatch(setReportsStatus(k))} accessibilityLabel="Reports" />
+    <ScreenShell title="Reported products" onBack={back} scroll={false} headerContent={<SegmentTabs options={SEGMENTS} value={s.status} onChange={k => dispatch(setReportsStatus(k))} accessibilityLabel="Reports" />}>
       {s.error.message && !s.removing ? <InlineNotice message={s.error.message} /> : null}
       <FlatList
         data={list.rows}

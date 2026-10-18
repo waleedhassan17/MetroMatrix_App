@@ -4,7 +4,12 @@ import { createAppSlice } from '@store/createAppSlice';
 import { getFoodOverview } from '@networks/admin/adminFoodNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import type { AdminFoodOverview } from '@/types';
-import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import {
+  NO_ERROR,
+  readRejection,
+  type FormStatus,
+  type ServerError,
+} from '../../../Auth/shared/formStatus';
 
 export interface FoodOverviewSliceState {
   overview: AdminFoodOverview | null;

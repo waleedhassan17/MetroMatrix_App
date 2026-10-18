@@ -12,7 +12,8 @@ import { useBack } from '@hooks/useBack';
 import { formatAddress } from '@models/addressModel';
 import { ORDER_STATUS, PAYMENT_METHOD_LABEL, PAYMENT_STATUS } from '@models/shopping/orderStatusModel';
 import { useStyles, type Theme } from '@theme/index';
-import { AppText, Button, Card, InlineNotice, OrderTimeline, ScreenShell, SkeletonLines, StatusPill, StoreMark, TextField } from '@custom/index';
+import { AppText, Button, Card, EmptyState, InlineNotice, OrderTimeline, ScreenShell, SkeletonLines, StatusPill, StoreMark } from '@custom/index';
+import { SearchField } from '@components/shopping/ShopParts';
 import type { AdminShopStackParamList } from '@/types';
 import { formatDateTime } from '@utils/dates';
 import { formatPKR } from '@utils/money';
@@ -45,9 +46,17 @@ const OrderLookupScreen: React.FC<Props> = ({ route }) => {
   const find = () => s.code.length >= 4 && void dispatch(lookupOrderAsync(s.code));
 
   return (
-    <ScreenShell title="Find an order" onBack={back}>
-      <TextField label="Order code" value={s.code} onChangeText={t => dispatch(setLookupCode(t))} onSubmitEditing={find} autoCapitalize="characters" autoCorrect={false} placeholder="MM-24A7Q2" returnKeyType="search" />
-      <Button label="Find" onPress={find} disabled={s.code.length < 4} loading={s.status === 'loading'} fullWidth />
+    <ScreenShell
+      title="Find an order"
+      subtitle="Shopping · by the code on the receipt"
+      onBack={back}
+      headerContent={
+        <>
+          <SearchField value={s.code} onChange={t => dispatch(setLookupCode(t))} onSubmit={find} placeholder="Order code, e.g. MM-24A7Q2" />
+          <Button label="Find" onPress={find} disabled={s.code.length < 4} loading={s.status === 'loading'} fullWidth />
+        </>
+      }>
+      {s.status === 'idle' ? <EmptyState icon="search" title="Find any Shopping order" body="Type the MM- code from the shopper's receipt or email." /> : null}
       {s.status === 'failed' ? <InlineNotice message={s.error.message} /> : null}
       {s.status === 'loading' ? <SkeletonLines lines={6} /> : null}
       {g && s.result ? (

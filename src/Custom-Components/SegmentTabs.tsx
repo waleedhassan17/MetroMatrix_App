@@ -1,9 +1,12 @@
 // SegmentTabs — a sunk track with the selected segment raised on surface.
+// Inside the gradient page header the track is a white wash and the selected
+// segment white, with the accent's deep step on it.
 
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useStyles, type Theme } from '../theme';
 import { AppText } from './AppText';
+import { useOnGradient } from './headerInk';
 
 export interface SegmentOption<K extends string> {
   key: K;
@@ -37,6 +40,7 @@ const makeStyles = ({ colors, space, radius, size, elevation }: Theme) =>
       paddingHorizontal: space.s8,
     },
     selected: { backgroundColor: colors.surface, ...elevation.raised },
+    trackOnGradient: { backgroundColor: colors.onScrimTint, borderWidth: size.hairline, borderColor: colors.onScrimLine },
   });
 
 export function SegmentTabs<K extends string>({
@@ -46,8 +50,9 @@ export function SegmentTabs<K extends string>({
   accessibilityLabel,
 }: SegmentTabsProps<K>) {
   const styles = useStyles(makeStyles);
+  const onGradient = useOnGradient();
   return (
-    <View style={styles.track} accessibilityRole="tablist" accessibilityLabel={accessibilityLabel}>
+    <View style={[styles.track, onGradient && styles.trackOnGradient]} accessibilityRole="tablist" accessibilityLabel={accessibilityLabel}>
       {options.map(option => {
         const selected = option.key === value;
         return (
@@ -60,7 +65,7 @@ export function SegmentTabs<K extends string>({
             style={[styles.segment, selected && styles.selected]}>
             <AppText
               variant={selected ? 'bodyStrong' : 'label'}
-              tone={selected ? 'accent' : 'muted'}
+              tone={selected ? (onGradient ? 'accentDeep' : 'accent') : onGradient ? 'onScrim' : 'muted'}
               numberOfLines={1}>
               {option.label}
             </AppText>

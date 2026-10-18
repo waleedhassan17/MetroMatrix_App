@@ -22,14 +22,17 @@ export const adminFoodVendorsSlice = createAppSlice({
     setFoodVendorsType: create.reducer((state, action: PayloadAction<KitchenKind | null>) => {
       state.type = action.payload;
     }),
-    setFoodVendorsStatus: create.reducer((state, action: PayloadAction<AdminVendorStatus | null>) => {
-      state.status = action.payload;
-    }),
+    setFoodVendorsStatus: create.reducer(
+      (state, action: PayloadAction<AdminVendorStatus | null>) => {
+        state.status = action.payload;
+      },
+    ),
   }),
   selectors: {
     selectAdminFoodVendors: state => state,
   },
 });
 
-export const { setFoodVendorsQuery, setFoodVendorsType, setFoodVendorsStatus } = adminFoodVendorsSlice.actions;
+export const { setFoodVendorsQuery, setFoodVendorsType, setFoodVendorsStatus } =
+  adminFoodVendorsSlice.actions;
 export const { selectAdminFoodVendors } = adminFoodVendorsSlice.selectors;

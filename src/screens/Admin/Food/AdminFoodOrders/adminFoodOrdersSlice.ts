@@ -18,11 +18,16 @@ export const adminFoodOrdersSlice = createAppSlice({
   initialState,
   reducers: create => ({
     setFoodOrderCode: create.reducer((state, action: PayloadAction<string>) => {
-      state.code = action.payload.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 16);
+      state.code = action.payload
+        .toUpperCase()
+        .replace(/[^A-Z0-9-]/g, '')
+        .slice(0, 16);
     }),
-    setFoodOrdersVendor: create.reducer((state, action: PayloadAction<{ id: string; name: string | null } | null>) => {
-      state.vendor = action.payload;
-    }),
+    setFoodOrdersVendor: create.reducer(
+      (state, action: PayloadAction<{ id: string; name: string | null } | null>) => {
+        state.vendor = action.payload;
+      },
+    ),
     setFoodOrdersStatus: create.reducer((state, action: PayloadAction<FoodOrderStatus | null>) => {
       state.status = action.payload;
     }),
@@ -32,5 +37,6 @@ export const adminFoodOrdersSlice = createAppSlice({
   },
 });
 
-export const { setFoodOrderCode, setFoodOrdersVendor, setFoodOrdersStatus } = adminFoodOrdersSlice.actions;
+export const { setFoodOrderCode, setFoodOrdersVendor, setFoodOrdersStatus } =
+  adminFoodOrdersSlice.actions;
 export const { selectAdminFoodOrders } = adminFoodOrdersSlice.selectors;

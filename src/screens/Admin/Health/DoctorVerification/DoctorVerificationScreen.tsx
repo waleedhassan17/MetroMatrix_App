@@ -182,8 +182,7 @@ const DoctorVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   return (
-    <ScreenShell title="Doctor verification" subtitle="Check the PMDC number before approving" onBack={back} scroll={false}>
-      <SegmentTabs options={FILTERS} value={s.filter} onChange={k => dispatch(setVerificationFilter(k))} accessibilityLabel="Doctors" />
+    <ScreenShell title="Doctor verification" subtitle="Check the PMDC number before approving" onBack={back} scroll={false} headerContent={<SegmentTabs options={FILTERS} value={s.filter} onChange={k => dispatch(setVerificationFilter(k))} accessibilityLabel="Doctors" />}>
       {s.error.message && !s.verifying ? (
         <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadDoctorsForVerificationAsync(s.filter)) }} />
       ) : null}

@@ -11,10 +11,33 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { actorLabel } from '@models/food/adminFoodModel';
-import { ORDER_STATUS, PAYMENT_METHOD, PAYMENT_STATUS, orderStatusLabel, pillTone, rejectReasonLabel, riderStepLabel } from '@models/food/foodStatusModel';
+import {
+  ORDER_STATUS,
+  PAYMENT_METHOD,
+  PAYMENT_STATUS,
+  orderStatusLabel,
+  pillTone,
+  rejectReasonLabel,
+  riderStepLabel,
+} from '@models/food/foodStatusModel';
 import { useStyles, type Theme } from '@theme/index';
-import { AppText, Card, Divider, IconButton, InlineNotice, ScreenShell, SkeletonLines, StatusPill, TextAction } from '@custom/index';
-import type { AdminFoodStackParamList, FoodOrderEvent, FoodOrderStatus, FoodPaymentStatus } from '@/types';
+import {
+  AppText,
+  Card,
+  Divider,
+  IconButton,
+  InlineNotice,
+  ScreenShell,
+  SkeletonLines,
+  StatusPill,
+  TextAction,
+} from '@custom/index';
+import type {
+  AdminFoodStackParamList,
+  FoodOrderEvent,
+  FoodOrderStatus,
+  FoodPaymentStatus,
+} from '@/types';
 import { formatDateTime } from '@utils/dates';
 import { callNumber } from '@utils/maps';
 import { formatPKR } from '@utils/money';
@@ -25,7 +48,12 @@ type Props = NativeStackScreenProps<AdminFoodStackParamList, 'AdminFoodOrder'>;
 
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
-    row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.s12 },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: space.s12,
+    },
     grow: { flex: 1, gap: space.s4 },
     event: { gap: space.s4, paddingVertical: space.s8 },
   });
@@ -33,8 +61,10 @@ const makeStyles = ({ space }: Theme) =>
 /** One event in words. */
 const eventText = (e: FoodOrderEvent) => {
   if (e.kind === 'status' && e.to === 'placed') return 'Placed';
-  if (e.kind === 'status' && e.to && e.to in ORDER_STATUS) return ORDER_STATUS[e.to as FoodOrderStatus].label;
-  if (e.kind === 'payment' && e.to && e.to in PAYMENT_STATUS) return `Payment: ${PAYMENT_STATUS[e.to as FoodPaymentStatus].vendorLabel}`;
+  if (e.kind === 'status' && e.to && e.to in ORDER_STATUS)
+    return ORDER_STATUS[e.to as FoodOrderStatus].label;
+  if (e.kind === 'payment' && e.to && e.to in PAYMENT_STATUS)
+    return `Payment: ${PAYMENT_STATUS[e.to as FoodPaymentStatus].vendorLabel}`;
   if (e.kind === 'rider' && e.to) return `Rider: ${riderStepLabel(e.to, 'vendor')}`;
   return e.note ?? e.kind;
 };
@@ -53,27 +83,47 @@ const AdminFoodOrderScreen: React.FC<Props> = ({ route, navigation }) => {
   if (!o) {
     return (
       <ScreenShell title={code ?? 'Order'} onBack={back}>
-        {status === 'failed' ? <InlineNotice message={error.message} /> : <SkeletonLines lines={10} />}
+        {status === 'failed' ? (
+          <InlineNotice message={error.message} />
+        ) : (
+          <SkeletonLines lines={10} />
+        )}
       </ScreenShell>
     );
   }
 
   return (
-    <ScreenShell title={o.code} subtitle={o.vendor.name} onBack={back} refreshing={status === 'loading'} onRefresh={() => void dispatch(loadAdminFoodOrderAsync(id))}>
+    <ScreenShell
+      title={o.code}
+      subtitle={o.vendor.name}
+      onBack={back}
+      refreshing={status === 'loading'}
+      onRefresh={() => void dispatch(loadAdminFoodOrderAsync(id))}>
       <Card>
         <View style={styles.row}>
           <AppText variant="title" style={styles.grow}>
             {orderStatusLabel(o.status, o.fulfilment)}
           </AppText>
-          <StatusPill label={PAYMENT_STATUS[o.payment.status].vendorLabel} tone={pillTone(PAYMENT_STATUS[o.payment.status].tone)} />
+          <StatusPill
+            label={PAYMENT_STATUS[o.payment.status].vendorLabel}
+            tone={pillTone(PAYMENT_STATUS[o.payment.status].tone)}
+          />
         </View>
         <AppText variant="small" tone="muted">
-          {[o.fulfilment === 'pickup' ? 'Pick-up' : 'Delivery', PAYMENT_METHOD[o.payment.method].label, `placed ${formatDateTime(o.placedAt)}`].join(' · ')}
+          {[
+            o.fulfilment === 'pickup' ? 'Pick-up' : 'Delivery',
+            PAYMENT_METHOD[o.payment.method].label,
+            `placed ${formatDateTime(o.placedAt)}`,
+          ].join(' · ')}
         </AppText>
         {o.cancelReason ? (
-          <AppText variant="small">{`${o.cancelledBy ? `${actorLabel(o.cancelledBy)}: ` : ''}${o.status === 'rejected' ? rejectReasonLabel(o.cancelReason) : o.cancelReason}`}</AppText>
+          <AppText variant="small">{`${o.cancelledBy ? `${actorLabel(o.cancelledBy)}: ` : ''}${
+            o.status === 'rejected' ? rejectReasonLabel(o.cancelReason) : o.cancelReason
+          }`}</AppText>
         ) : null}
-        {o.scheduledFor ? <AppText variant="small">{`Scheduled for ${formatDateTime(o.scheduledFor)}`}</AppText> : null}
+        {o.scheduledFor ? (
+          <AppText variant="small">{`Scheduled for ${formatDateTime(o.scheduledFor)}`}</AppText>
+        ) : null}
       </Card>
 
       <Card>
@@ -81,21 +131,57 @@ const AdminFoodOrderScreen: React.FC<Props> = ({ route, navigation }) => {
           <View style={styles.grow}>
             <AppText variant="label">Vendor</AppText>
             <AppText variant="bodyStrong">{o.vendor.name}</AppText>
-            {o.vendor.phone ? <AppText variant="small" tone="muted">{formatPkPhoneForDisplay(o.vendor.phone)}</AppText> : null}
+            {o.vendor.phone ? (
+              <AppText variant="small" tone="muted">
+                {formatPkPhoneForDisplay(o.vendor.phone)}
+              </AppText>
+            ) : null}
           </View>
-          {o.vendor.phone ? <IconButton icon="call-outline" accessibilityLabel={`Call ${o.vendor.name}`} onPress={() => callNumber(o.vendor.phone!)} /> : null}
+          {o.vendor.phone ? (
+            <IconButton
+              icon="call-outline"
+              accessibilityLabel={`Call ${o.vendor.name}`}
+              onPress={() => callNumber(o.vendor.phone!)}
+            />
+          ) : null}
         </View>
-        <TextAction label="Open the vendor" icon="storefront-outline" onPress={() => navigation.navigate('AdminFoodVendor', { id: o.vendor.id, name: o.vendor.name })} />
+        <TextAction
+          label="Open the vendor"
+          icon="storefront-outline"
+          onPress={() =>
+            navigation.navigate('AdminFoodVendor', { id: o.vendor.id, name: o.vendor.name })
+          }
+        />
         <Divider />
         <View style={styles.row}>
           <View style={styles.grow}>
             <AppText variant="label">Customer</AppText>
-            <AppText variant="bodyStrong">{o.customer.name ?? o.address?.fullName ?? 'Customer'}</AppText>
-            {o.customer.email ? <AppText variant="small" tone="muted">{o.customer.email}</AppText> : null}
-            {o.customer.phone ? <AppText variant="small" tone="muted">{formatPkPhoneForDisplay(o.customer.phone)}</AppText> : null}
-            {o.address ? <AppText variant="small" tone="muted">{[o.address.line1, o.address.area, o.address.city].filter(Boolean).join(', ')}</AppText> : null}
+            <AppText variant="bodyStrong">
+              {o.customer.name ?? o.address?.fullName ?? 'Customer'}
+            </AppText>
+            {o.customer.email ? (
+              <AppText variant="small" tone="muted">
+                {o.customer.email}
+              </AppText>
+            ) : null}
+            {o.customer.phone ? (
+              <AppText variant="small" tone="muted">
+                {formatPkPhoneForDisplay(o.customer.phone)}
+              </AppText>
+            ) : null}
+            {o.address ? (
+              <AppText variant="small" tone="muted">
+                {[o.address.line1, o.address.area, o.address.city].filter(Boolean).join(', ')}
+              </AppText>
+            ) : null}
           </View>
-          {o.customer.phone ? <IconButton icon="call-outline" accessibilityLabel="Call the customer" onPress={() => callNumber(o.customer.phone!)} /> : null}
+          {o.customer.phone ? (
+            <IconButton
+              icon="call-outline"
+              accessibilityLabel="Call the customer"
+              onPress={() => callNumber(o.customer.phone!)}
+            />
+          ) : null}
         </View>
         {o.rider ? (
           <>
@@ -104,7 +190,12 @@ const AdminFoodOrderScreen: React.FC<Props> = ({ route, navigation }) => {
               <AppText variant="label">Vendor’s rider</AppText>
               <AppText variant="bodyStrong">{o.rider.name}</AppText>
               <AppText variant="small" tone="muted">
-                {[riderStepLabel(o.rider.step, 'vendor'), o.rider.phone ? formatPkPhoneForDisplay(o.rider.phone) : null].filter(Boolean).join(' · ')}
+                {[
+                  riderStepLabel(o.rider.step, 'vendor'),
+                  o.rider.phone ? formatPkPhoneForDisplay(o.rider.phone) : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
               </AppText>
             </View>
           </>
@@ -139,7 +230,7 @@ const AdminFoodOrderScreen: React.FC<Props> = ({ route, navigation }) => {
         {o.totals.discount ? (
           <View style={styles.row}>
             <AppText variant="small" tone="muted">
-              {o.deal?.code ? `Code ${o.deal.code}` : (o.deal?.title ?? 'Deal')}
+              {o.deal?.code ? `Code ${o.deal.code}` : o.deal?.title ?? 'Deal'}
             </AppText>
             <AppText variant="small">{`− ${formatPKR(o.totals.discount)}`}</AppText>
           </View>
@@ -149,16 +240,30 @@ const AdminFoodOrderScreen: React.FC<Props> = ({ route, navigation }) => {
             <AppText variant="small" tone="muted">
               Delivery (the vendor’s fee)
             </AppText>
-            <AppText variant="small">{o.totals.deliveryFee ? formatPKR(o.totals.deliveryFee) : 'Free'}</AppText>
+            <AppText variant="small">
+              {o.totals.deliveryFee ? formatPKR(o.totals.deliveryFee) : 'Free'}
+            </AppText>
           </View>
         ) : null}
         <View style={styles.row}>
           <AppText variant="bodyStrong">{`Paid to ${o.vendor.name}`}</AppText>
           <AppText variant="bodyStrong">{formatPKR(o.totals.total)}</AppText>
         </View>
-        {o.codCollected !== null ? <AppText variant="small" tone="muted">{`Cash taken: ${formatPKR(o.codCollected)}`}</AppText> : null}
-        {o.payment.reference ? <AppText variant="small" tone="muted">{`Transfer reference: ${o.payment.reference}`}</AppText> : null}
-        {o.payment.rejectedReason ? <AppText variant="small" tone="muted">{`Receipt not accepted: ${o.payment.rejectedReason}`}</AppText> : null}
+        {o.codCollected !== null ? (
+          <AppText variant="small" tone="muted">{`Cash taken: ${formatPKR(
+            o.codCollected,
+          )}`}</AppText>
+        ) : null}
+        {o.payment.reference ? (
+          <AppText
+            variant="small"
+            tone="muted">{`Transfer reference: ${o.payment.reference}`}</AppText>
+        ) : null}
+        {o.payment.rejectedReason ? (
+          <AppText
+            variant="small"
+            tone="muted">{`Receipt not accepted: ${o.payment.rejectedReason}`}</AppText>
+        ) : null}
       </Card>
 
       <Card>

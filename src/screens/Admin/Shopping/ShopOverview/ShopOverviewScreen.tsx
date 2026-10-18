@@ -6,26 +6,20 @@
 // banners, featured stores and order lookup.
 
 import React, { useCallback } from 'react';
-import { StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
-import { useStyles, type Theme } from '@theme/index';
-import { AppText, Card, Divider, InlineNotice, ListRow, ScreenShell, SkeletonLines } from '@custom/index';
+import { InlineNotice, ScreenShell } from '@custom/index';
+import { StatGrid, ToolSection, type AdminStat } from '@components/admin/AdminParts';
 import type { AdminShopStackParamList } from '@/types';
 import { loadShopOverviewAsync, selectShopOverview } from './shopOverviewSlice';
 
 type Props = NativeStackScreenProps<AdminShopStackParamList, 'ShopOverview'>;
 
-const makeStyles = ({ colors, space, size, radius }: Theme) =>
-  StyleSheet.create({
-    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s12 },
-    tile: { flexGrow: 1, flexBasis: '40%', padding: space.s16, gap: space.s4, borderRadius: radius.lg, borderWidth: size.hairline, borderColor: colors.line },
-  });
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 const ShopOverviewScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
-  const styles = useStyles(makeStyles);
   const s = useAppSelector(selectShopOverview);
   const o = s.overview;
 
@@ -35,46 +29,42 @@ const ShopOverviewScreen: React.FC<Props> = ({ navigation }) => {
     }, [dispatch]),
   );
 
-  const tiles: [string, number | undefined][] = [
-    ['Stores', o?.stores],
-    ['Live products', o?.activeProducts],
-    ['Open reports', o?.openReports],
-    ['Orders today', o?.ordersToday],
+  const stats: AdminStat[] = [
+    { key: 'stores', icon: 'storefront-outline', tint: 'violet', value: o?.stores ?? null, label: 'Stores', hint: 'Approved on Shopping', onPress: () => navigation.navigate('ShopStores') },
+    { key: 'products', icon: 'pricetags-outline', tint: 'blue', value: o?.activeProducts ?? null, label: 'Live products', hint: 'Shoppers can buy now' },
+    { key: 'orders', icon: 'receipt-outline', tint: 'accent', value: o?.ordersToday ?? null, label: 'Orders today', hint: 'Since midnight', onPress: () => navigation.navigate('OrderLookup') },
+    { key: 'reports', icon: 'flag-outline', tint: 'amber', value: o?.openReports ?? null, label: 'Open reports', hint: o ? (o.openReports ? 'Waiting for a decision' : 'Nothing waiting') : null, onPress: () => navigation.navigate('ShopReports') },
   ];
 
   return (
-    <ScreenShell eyebrow="Admin" title="Shopping">
+    <ScreenShell eyebrow="Admin" title="Shopping" subtitle="Stores, products and what shoppers report" refreshing={s.status === 'loading' && !!o} onRefresh={() => void dispatch(loadShopOverviewAsync())}>
       {s.error.message ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadShopOverviewAsync()) }} /> : null}
-      {!o ? (
-        <SkeletonLines lines={4} />
-      ) : (
-        <View style={styles.grid}>
-          {tiles.map(([label, n]) => (
-            <View key={label} style={styles.tile} accessible accessibilityLabel={`${label}: ${n ?? 0}`}>
-              <AppText variant="h1">{n ?? 0}</AppText>
-              <AppText variant="small" tone="muted">
-                {label}
-              </AppText>
-            </View>
-          ))}
-        </View>
-      )}
-      <Card padded="horizontal">
-        <ListRow
-          title="Reported products"
-          subtitle={o?.openReports ? `${o.openReports} waiting for a decision` : 'Nothing waiting'}
-          leftIcon="flag-outline"
-          onPress={() => navigation.navigate('ShopReports')}
+      <StatGrid stats={stats} />
+      {o?.openReports ? (
+        <ToolSection
+          title="Needs you"
+          tools={[
+            {
+              key: 'reports',
+              title: `${plural(o.openReports, 'reported product')} to review`,
+              subtitle: 'Keep it listed, or take it down',
+              icon: 'flag-outline',
+              tint: 'amber',
+              onPress: () => navigation.navigate('ShopReports'),
+            },
+          ]}
         />
-        <Divider />
-        <ListRow title="Categories" subtitle="The tree shoppers browse and stores file under" leftIcon="git-branch-outline" onPress={() => navigation.navigate('ShopCategories')} />
-        <Divider />
-        <ListRow title="Home banners" subtitle="What the Shopping home leads with" leftIcon="images-outline" onPress={() => navigation.navigate('ShopBanners')} />
-        <Divider />
-        <ListRow title="Stores" subtitle="Feature a store on the home" leftIcon="storefront-outline" onPress={() => navigation.navigate('ShopStores')} />
-        <Divider />
-        <ListRow title="Find an order" subtitle="By its MM- code" leftIcon="search-outline" onPress={() => navigation.navigate('OrderLookup')} />
-      </Card>
+      ) : null}
+      <ToolSection
+        title="Manage"
+        tools={[
+          { key: 'categories', title: 'Categories', subtitle: 'The tree shoppers browse and stores file under', icon: 'git-branch-outline', tint: 'violet', onPress: () => navigation.navigate('ShopCategories') },
+          { key: 'banners', title: 'Home banners', subtitle: 'What the Shopping home leads with', icon: 'images-outline', tint: 'rose', onPress: () => navigation.navigate('ShopBanners') },
+          { key: 'stores', title: 'Stores', subtitle: 'Feature a store on the home', icon: 'storefront-outline', tint: 'blue', onPress: () => navigation.navigate('ShopStores') },
+          { key: 'orders', title: 'Find an order', subtitle: 'By its MM- code', icon: 'search-outline', tint: 'amber', onPress: () => navigation.navigate('OrderLookup') },
+          { key: 'reports', title: 'Reported products', subtitle: 'What shoppers flagged', icon: 'flag-outline', tint: 'grey', onPress: () => navigation.navigate('ShopReports') },
+        ]}
+      />
     </ScreenShell>
   );
 };

@@ -16,7 +16,18 @@ import { usePagedList } from '@hooks/usePagedList';
 import { listAdminFoodReviews } from '@networks/admin/adminFoodNetwork';
 import { HIDE_REVIEW_REASONS, validateHideFoodReview } from '@models/food/adminFoodModel';
 import { useStyles, type Theme } from '@theme/index';
-import { Button, ChoiceChip, Divider, EmptyState, InlineNotice, ScreenShell, SegmentTabs, Sheet, SkeletonLines, TextField } from '@custom/index';
+import {
+  Button,
+  Card,
+  ChoiceChip,
+  EmptyState,
+  InlineNotice,
+  ScreenShell,
+  SegmentTabs,
+  Sheet,
+  SkeletonLines,
+  TextField,
+} from '@custom/index';
 import { FoodReviewItem } from '@custom/food/FoodReviewItem';
 import type { AdminFoodReview, AdminFoodStackParamList } from '@/types';
 import { haptics } from '@utils/haptics';
@@ -42,7 +53,7 @@ const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
     chipBar: { flexGrow: 0, flexShrink: 0 },
     chips: { gap: space.s8 },
-    list: { paddingBottom: space.s40 },
+    list: { gap: space.s12, paddingTop: space.s4, paddingBottom: space.s40 },
     actions: { flexDirection: 'row', gap: space.s12 },
     reasons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
   });
@@ -53,14 +64,22 @@ const AdminFoodReviewsScreen: React.FC<Props> = ({ route }) => {
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectAdminFoodReviews);
   const list = usePagedList(
-    (page, size) => listAdminFoodReviews({ hidden: s.hidden, maxRating: s.lowOnly ? 2 : undefined, vendorId: s.vendor?.id }, page, size),
+    (page, size) =>
+      listAdminFoodReviews(
+        { hidden: s.hidden, maxRating: s.lowOnly ? 2 : undefined, vendorId: s.vendor?.id },
+        page,
+        size,
+      ),
     `admin-food-reviews|${s.hidden}|${s.lowOnly}|${s.vendor?.id}`,
   );
   const reasonError = s.reasonTouched ? validateHideFoodReview(s.reason).reason : undefined;
   const hiding = list.rows.find(r => r.id === s.hiding) ?? null;
 
   useEffect(() => {
-    if (route.params?.vendorId) dispatch(setFoodReviewsVendor({ id: route.params.vendorId, name: route.params.name ?? null }));
+    if (route.params?.vendorId)
+      dispatch(
+        setFoodReviewsVendor({ id: route.params.vendorId, name: route.params.name ?? null }),
+      );
   }, [dispatch, route.params?.vendorId, route.params?.name]);
 
   const moderate = async (r: AdminFoodReview, hide: boolean) => {
@@ -69,21 +88,59 @@ const AdminFoodReviewsScreen: React.FC<Props> = ({ route }) => {
       haptics.warning();
       return;
     }
-    const res = await dispatch(moderateFoodReviewAsync({ id: r.id, hide, reason: hide ? s.reason : null }));
+    const res = await dispatch(
+      moderateFoodReviewAsync({ id: r.id, hide, reason: hide ? s.reason : null }),
+    );
     if (moderateFoodReviewAsync.fulfilled.match(res)) {
       haptics.success();
       list.setRows(rows => rows.filter(x => x.id !== r.id));
-      Toast.show({ type: 'success', text1: hide ? 'Review hidden' : 'Review back on the vendor’s page', text2: hide ? 'It no longer counts toward the rating.' : undefined });
+      Toast.show({
+        type: 'success',
+        text1: hide ? 'Review hidden' : 'Review back on the vendor’s page',
+        text2: hide ? 'It no longer counts toward the rating.' : undefined,
+      });
     } else haptics.warning();
   };
 
   return (
-    <ScreenShell title="Reviews" subtitle="Food Court" onBack={back} scroll={false}>
-      <SegmentTabs options={SEGMENTS} value={s.hidden ? 'hidden' : 'visible'} onChange={k => dispatch(setFoodReviewsHidden(k === 'hidden'))} accessibilityLabel="Reviews" />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipBar} contentContainerStyle={styles.chips}>
-        <ChoiceChip label="2 stars or fewer" selected={s.lowOnly} onPress={() => dispatch(setFoodReviewsLowOnly(!s.lowOnly))} />
-        {s.vendor ? <ChoiceChip label={`Only ${s.vendor.name ?? 'this vendor'}`} icon="close" selected onPress={() => dispatch(setFoodReviewsVendor(null))} /> : null}
-      </ScrollView>
+    <ScreenShell
+      title="Reviews"
+      subtitle={
+        s.vendor?.name
+          ? `${s.vendor.name} · Food Court`
+          : 'Food Court · what customers say about vendors'
+      }
+      onBack={back}
+      scroll={false}
+      headerContent={
+        <>
+          <SegmentTabs
+            options={SEGMENTS}
+            value={s.hidden ? 'hidden' : 'visible'}
+            onChange={k => dispatch(setFoodReviewsHidden(k === 'hidden'))}
+            accessibilityLabel="Reviews"
+          />
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.chipBar}
+            contentContainerStyle={styles.chips}>
+            <ChoiceChip
+              label="2 stars or fewer"
+              selected={s.lowOnly}
+              onPress={() => dispatch(setFoodReviewsLowOnly(!s.lowOnly))}
+            />
+            {s.vendor ? (
+              <ChoiceChip
+                label={s.vendor.name ?? 'This vendor'}
+                icon="close"
+                selected
+                onPress={() => dispatch(setFoodReviewsVendor(null))}
+              />
+            ) : null}
+          </ScrollView>
+        </>
+      }>
       {s.error.message && !s.hiding ? <InlineNotice message={s.error.message} /> : null}
       <FlatList
         data={list.rows}
@@ -92,31 +149,56 @@ const AdminFoodReviewsScreen: React.FC<Props> = ({ route }) => {
         onRefresh={list.refresh}
         refreshing={list.isRefreshing}
         onEndReached={list.loadMore}
-        ItemSeparatorComponent={Divider}
         renderItem={({ item: r }) => (
-          <FoodReviewItem
-            review={r}
-            vendorName="The vendor"
-            author={r.author ?? 'Customer'}
-            context={[r.orderCode ? `Order ${r.orderCode}` : null, r.isHidden && r.hiddenReason ? `Hidden: ${r.hiddenReason}` : null].filter(Boolean).join(' · ') || undefined}
-            footer={
-              <View style={styles.actions}>
-                {r.isHidden ? (
-                  <Button label="Unhide" variant="secondary" onPress={() => void moderate(r, false)} loading={s.busy === r.id} />
-                ) : (
-                  <Button label="Hide" variant="secondary" leftIcon="eye-off-outline" onPress={() => dispatch(openHideFoodReview(r.id))} />
-                )}
-              </View>
-            }
-          />
+          <Card padded="horizontal">
+            <FoodReviewItem
+              review={r}
+              vendorName="The vendor"
+              author={r.author ?? 'Customer'}
+              context={
+                [
+                  r.orderCode ? `Order ${r.orderCode}` : null,
+                  r.isHidden && r.hiddenReason ? `Hidden: ${r.hiddenReason}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ') || undefined
+              }
+              footer={
+                <View style={styles.actions}>
+                  {r.isHidden ? (
+                    <Button
+                      label="Unhide"
+                      variant="secondary"
+                      onPress={() => void moderate(r, false)}
+                      loading={s.busy === r.id}
+                    />
+                  ) : (
+                    <Button
+                      label="Hide"
+                      variant="secondary"
+                      leftIcon="eye-off-outline"
+                      onPress={() => dispatch(openHideFoodReview(r.id))}
+                    />
+                  )}
+                </View>
+              }
+            />
+          </Card>
         )}
         ListEmptyComponent={
           list.isLoading ? (
             <SkeletonLines lines={6} />
           ) : list.error ? (
-            <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
+            <InlineNotice
+              message={list.error}
+              action={{ label: 'Try again', onPress: list.reload }}
+            />
           ) : (
-            <EmptyState icon="message-square" title={s.hidden ? 'Nothing hidden' : 'No reviews here'} body="Customers' reviews of vendors show here." />
+            <EmptyState
+              icon="message-square"
+              title={s.hidden ? 'Nothing hidden' : 'No reviews here'}
+              body="Customers' reviews of vendors show here."
+            />
           )
         }
       />
@@ -125,13 +207,34 @@ const AdminFoodReviewsScreen: React.FC<Props> = ({ route }) => {
         onClose={() => dispatch(openHideFoodReview(null))}
         title="Hide this review?"
         subtitle="It leaves the vendor's page and rating at once. The vendor isn't told who hid it."
-        footer={<Button label="Hide review" variant="destructive" loading={!!s.busy} onPress={() => hiding && void moderate(hiding, true)} fullWidth />}>
+        footer={
+          <Button
+            label="Hide review"
+            variant="destructive"
+            loading={!!s.busy}
+            onPress={() => hiding && void moderate(hiding, true)}
+            fullWidth
+          />
+        }>
         <View style={styles.reasons}>
           {HIDE_REVIEW_REASONS.map(reason => (
-            <ChoiceChip key={reason} label={reason} selected={s.reason === reason} onPress={() => dispatch(setFoodHideReason(reason))} />
+            <ChoiceChip
+              key={reason}
+              label={reason}
+              selected={s.reason === reason}
+              onPress={() => dispatch(setFoodHideReason(reason))}
+            />
           ))}
         </View>
-        <TextField label="Reason" value={s.reason} onChangeText={t => dispatch(setFoodHideReason(t))} multiline placeholder="Why it breaks the rules" error={reasonError} helper="Kept with the review for other staff." />
+        <TextField
+          label="Reason"
+          value={s.reason}
+          onChangeText={t => dispatch(setFoodHideReason(t))}
+          multiline
+          placeholder="Why it breaks the rules"
+          error={reasonError}
+          helper="Kept with the review for other staff."
+        />
         {s.error.message ? <InlineNotice message={s.error.message} /> : null}
       </Sheet>
     </ScreenShell>

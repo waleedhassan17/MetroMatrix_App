@@ -13,18 +13,43 @@ import { useBack } from '@hooks/useBack';
 import { validateCuisine } from '@models/food/adminFoodModel';
 import { CUISINE_ICON_KEYS, cuisineGlyph } from '@components/food/FoodParts';
 import { useStyles, useTheme, type Theme } from '@theme/index';
-import { AppText, Button, Card, Divider, InlineNotice, MciIcon, ScreenShell, Sheet, SkeletonLines, TextAction, TextField } from '@custom/index';
+import {
+  AppText,
+  Button,
+  Card,
+  Divider,
+  InlineNotice,
+  MciIcon,
+  ScreenShell,
+  Sheet,
+  SkeletonLines,
+  TextAction,
+  TextField,
+} from '@custom/index';
 import type { AdminCuisine, AdminFoodStackParamList } from '@/types';
 import { Alert } from '@utils/alert';
 import { haptics } from '@utils/haptics';
-import { changeCuisineAsync, loadAdminCuisinesAsync, markCuisineSubmitted, openCuisineSheet, selectAdminFoodCuisines, setCuisineSheet } from './adminFoodCuisinesSlice';
+import {
+  changeCuisineAsync,
+  loadAdminCuisinesAsync,
+  markCuisineSubmitted,
+  openCuisineSheet,
+  selectAdminFoodCuisines,
+  setCuisineSheet,
+} from './adminFoodCuisinesSlice';
 
 type Props = NativeStackScreenProps<AdminFoodStackParamList, 'AdminFoodCuisines'>;
 
 const makeStyles = ({ space, size, radius }: Theme) =>
   StyleSheet.create({
     row: { flexDirection: 'row', alignItems: 'center', gap: space.s12, paddingVertical: space.s8 },
-    well: { width: size.touch, height: size.touch, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+    well: {
+      width: size.touch,
+      height: size.touch,
+      borderRadius: radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     grow: { flex: 1, gap: space.s4 },
     actions: { flexDirection: 'row', gap: space.s16 },
     icons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
@@ -37,7 +62,15 @@ const AdminFoodCuisinesScreen: React.FC<Props> = () => {
   const { service } = useTheme();
   const s = useAppSelector(selectAdminFoodCuisines);
   const sheet = s.sheet;
-  const errors = sheet && s.submitted ? validateCuisine({ name: sheet.name, slug: sheet.slug, icon: sheet.icon, sort: Number(sheet.sort) }) : {};
+  const errors =
+    sheet && s.submitted
+      ? validateCuisine({
+          name: sheet.name,
+          slug: sheet.slug,
+          icon: sheet.icon,
+          sort: Number(sheet.sort),
+        })
+      : {};
 
   useEffect(() => {
     void dispatch(loadAdminCuisinesAsync());
@@ -46,20 +79,50 @@ const AdminFoodCuisinesScreen: React.FC<Props> = () => {
   const save = () => {
     if (!sheet) return;
     dispatch(markCuisineSubmitted());
-    if (Object.keys(validateCuisine({ name: sheet.name, slug: sheet.slug, icon: sheet.icon, sort: Number(sheet.sort) })).length) return haptics.warning();
+    if (
+      Object.keys(
+        validateCuisine({
+          name: sheet.name,
+          slug: sheet.slug,
+          icon: sheet.icon,
+          sort: Number(sheet.sort),
+        }),
+      ).length
+    )
+      return haptics.warning();
     void dispatch(changeCuisineAsync({ kind: 'save', sheet }));
   };
 
   const remove = (c: AdminCuisine) =>
     c.vendors
-      ? Alert.alert(`${c.name} is in use`, `${c.vendors} ${c.vendors === 1 ? 'vendor lists' : 'vendors list'} it. Turn it off instead: it leaves the home, and vendors keep their other cuisines.`)
+      ? Alert.alert(
+          `${c.name} is in use`,
+          `${c.vendors} ${
+            c.vendors === 1 ? 'vendor lists' : 'vendors list'
+          } it. Turn it off instead: it leaves the home, and vendors keep their other cuisines.`,
+        )
       : Alert.alert(`Delete ${c.name}?`, 'No vendor lists it.', [
           { text: 'Keep it', style: 'cancel' },
-          { text: 'Delete', style: 'destructive', onPress: () => void dispatch(changeCuisineAsync({ kind: 'delete', id: c.id })) },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => void dispatch(changeCuisineAsync({ kind: 'delete', id: c.id })),
+          },
         ]);
 
   return (
-    <ScreenShell title="Cuisines" subtitle="Food Court" onBack={back} footer={<Button label="New cuisine" leftIcon="add" onPress={() => dispatch(openCuisineSheet('new'))} fullWidth />}>
+    <ScreenShell
+      title="Cuisines"
+      subtitle="Food Court"
+      onBack={back}
+      footer={
+        <Button
+          label="New cuisine"
+          leftIcon="add"
+          onPress={() => dispatch(openCuisineSheet('new'))}
+          fullWidth
+        />
+      }>
       {s.error.message && !sheet ? <InlineNotice message={s.error.message} /> : null}
       {s.status === 'loading' && !s.cuisines.length ? <SkeletonLines lines={8} /> : null}
       {s.cuisines.length ? (
@@ -69,16 +132,29 @@ const AdminFoodCuisinesScreen: React.FC<Props> = () => {
               {i > 0 ? <Divider /> : null}
               <View style={styles.row}>
                 <View style={[styles.well, { backgroundColor: service.accentSoft }]}>
-                  <MciIcon name={cuisineGlyph(c.icon || c.slug)} size="md" color={service.accentDeep} />
+                  <MciIcon
+                    name={cuisineGlyph(c.icon || c.slug)}
+                    size="md"
+                    color={service.accentDeep}
+                  />
                 </View>
                 <View style={styles.grow}>
                   <AppText variant="bodyStrong">{`${c.name}${c.isActive ? '' : ' (off)'}`}</AppText>
                   <AppText variant="caption" tone="muted">
-                    {`${c.slug} · ${c.vendors} ${c.vendors === 1 ? 'vendor' : 'vendors'} · order ${c.sort}`}
+                    {`${c.slug} · ${c.vendors} ${c.vendors === 1 ? 'vendor' : 'vendors'} · order ${
+                      c.sort
+                    }`}
                   </AppText>
                   <View style={styles.actions}>
                     <TextAction label="Edit" onPress={() => dispatch(openCuisineSheet(c))} />
-                    <TextAction label={c.isActive ? 'Turn off' : 'Turn on'} onPress={() => void dispatch(changeCuisineAsync({ kind: 'active', id: c.id, isActive: !c.isActive }))} />
+                    <TextAction
+                      label={c.isActive ? 'Turn off' : 'Turn on'}
+                      onPress={() =>
+                        void dispatch(
+                          changeCuisineAsync({ kind: 'active', id: c.id, isActive: !c.isActive }),
+                        )
+                      }
+                    />
                     <TextAction label="Delete" tone="danger" onPress={() => remove(c)} />
                   </View>
                 </View>
@@ -93,16 +169,39 @@ const AdminFoodCuisinesScreen: React.FC<Props> = () => {
         onClose={() => dispatch(openCuisineSheet(null))}
         title={sheet?.id ? 'Edit cuisine' : 'New cuisine'}
         footer={<Button label="Save" loading={s.busy} onPress={save} fullWidth />}>
-        <TextField label="Name" value={sheet?.name ?? ''} onChangeText={t => dispatch(setCuisineSheet({ name: t.slice(0, 60) }))} placeholder="Seafood" error={errors.name} />
+        <TextField
+          label="Name"
+          value={sheet?.name ?? ''}
+          onChangeText={t => dispatch(setCuisineSheet({ name: t.slice(0, 60) }))}
+          placeholder="Seafood"
+          error={errors.name}
+        />
         <TextField
           label="Link"
           value={sheet?.slug ?? ''}
-          onChangeText={t => dispatch(setCuisineSheet({ slug: t.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 40) }))}
+          onChangeText={t =>
+            dispatch(
+              setCuisineSheet({
+                slug: t
+                  .toLowerCase()
+                  .replace(/[^a-z0-9-]/g, '')
+                  .slice(0, 40),
+              }),
+            )
+          }
           autoCapitalize="none"
           helper="In the app's links, e.g. /food/restaurants?cuisine=seafood"
           error={errors.slug}
         />
-        <TextField label="Order on the home" value={sheet?.sort ?? ''} onChangeText={t => dispatch(setCuisineSheet({ sort: t.replace(/[^0-9]/g, '').slice(0, 3) }))} keyboardType="number-pad" error={errors.sort} />
+        <TextField
+          label="Order on the home"
+          value={sheet?.sort ?? ''}
+          onChangeText={t =>
+            dispatch(setCuisineSheet({ sort: t.replace(/[^0-9]/g, '').slice(0, 3) }))
+          }
+          keyboardType="number-pad"
+          error={errors.sort}
+        />
         <AppText variant="label">Icon</AppText>
         <View style={styles.icons}>
           {CUISINE_ICON_KEYS.map(key => {
@@ -116,7 +215,11 @@ const AdminFoodCuisinesScreen: React.FC<Props> = () => {
                 accessibilityRole="radio"
                 aria-checked={on}
                 accessibilityLabel={key.replace(/_/g, ' ')}>
-                <MciIcon name={cuisineGlyph(key)} size="md" color={on ? service.onAccent : service.accentDeep} />
+                <MciIcon
+                  name={cuisineGlyph(key)}
+                  size="md"
+                  color={on ? service.onAccent : service.accentDeep}
+                />
               </Pressable>
             );
           })}

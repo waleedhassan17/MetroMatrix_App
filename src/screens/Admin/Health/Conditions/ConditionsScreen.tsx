@@ -15,8 +15,8 @@ import { useStyles, type Theme } from '@theme/index';
 import {
   AppText,
   Button,
+  Card,
   ChoiceChip,
-  Divider,
   EmptyState,
   InlineNotice,
   ListRow,
@@ -47,7 +47,7 @@ type Props = NativeStackScreenProps<AdminHealthStackParamList, 'Conditions'>;
 
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
-    list: { paddingBottom: space.s40 },
+    list: { gap: space.s12, paddingTop: space.s4, paddingBottom: space.s40 },
     state: { paddingTop: space.s16 },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
   });
@@ -90,25 +90,27 @@ const ConditionsScreen: React.FC<Props> = () => {
   return (
     <ScreenShell
       title="Conditions"
+      subtitle="What patients type, and the specialty it leads to"
       onBack={back}
       scroll={false}
+      headerContent={<SearchField value={s.query} onChange={t => dispatch(setConditionQuery(t))} placeholder="Find a condition or another name for it" />}
       footer={<Button label="New condition" leftIcon="add" onPress={() => dispatch(openConditionSheet(conditionForm(null)))} fullWidth />}>
-      <SearchField value={s.query} onChange={t => dispatch(setConditionQuery(t))} placeholder="Find a condition or another name for it" />
       {s.error.message && !s.sheet ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadConditionsAsync(s.query)) }} /> : null}
       <FlatList
         data={s.list}
         keyExtractor={c => c.id}
         contentContainerStyle={styles.list}
         keyboardShouldPersistTaps="handled"
-        ItemSeparatorComponent={Divider}
         renderItem={({ item: c }) => (
-          <ListRow
-            title={c.name}
-            subtitle={subtitle(c)}
-            right={c.isCommon ? <StatusPill label="Common" tone="accent" /> : undefined}
-            onPress={() => dispatch(openConditionSheet(conditionForm(c)))}
-            accessibilityHint="Edit this condition"
-          />
+          <Card padded="horizontal">
+            <ListRow
+              title={c.name}
+              subtitle={subtitle(c)}
+              right={c.isCommon ? <StatusPill label="Common" tone="accent" /> : undefined}
+              onPress={() => dispatch(openConditionSheet(conditionForm(c)))}
+              accessibilityHint="Edit this condition"
+            />
+          </Card>
         )}
         ListEmptyComponent={
           <View style={styles.state}>

@@ -8,10 +8,21 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getAdminFoodVendor, recordFoodSafetyCheck, setVendorFeatured, setVendorPlanOverrides, setVendorSuspended } from '@networks/admin/adminFoodNetwork';
+import {
+  getAdminFoodVendor,
+  recordFoodSafetyCheck,
+  setVendorFeatured,
+  setVendorPlanOverrides,
+  setVendorSuspended,
+} from '@networks/admin/adminFoodNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import type { AdminFoodVendor, PlanOverrides } from '@/types';
-import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import {
+  NO_ERROR,
+  readRejection,
+  type FormStatus,
+  type ServerError,
+} from '../../../Auth/shared/formStatus';
 
 export type AdminVendorSheet = 'suspend' | 'reinstate' | 'safety' | 'plan';
 
@@ -67,22 +78,31 @@ export const adminFoodVendorSlice = createAppSlice({
   name: 'adminFoodVendor',
   initialState,
   reducers: create => ({
-    seedFeatured: create.reducer((state, action: PayloadAction<{ id: string; featured: boolean }>) => {
-      state.featured[action.payload.id] ??= action.payload.featured;
-    }),
-    openVendorSheet: create.reducer((state, action: PayloadAction<{ sheet: AdminVendorSheet | null; vendor?: AdminFoodVendor }>) => {
-      state.sheet = action.payload.sheet;
-      state.reason = '';
-      state.note = '';
-      state.safetyOutcome = 'passed';
-      state.touched = false;
-      state.error = NO_ERROR;
-      const plan = action.payload.vendor?.plan;
-      if (action.payload.sheet === 'plan' && plan) {
-        state.limits = Object.fromEntries(Object.entries(plan.overrides.limits ?? {}).map(([k, v]) => [k, String(v)]));
-        state.entitlements = { ...plan.entitlements };
-      }
-    }),
+    seedFeatured: create.reducer(
+      (state, action: PayloadAction<{ id: string; featured: boolean }>) => {
+        state.featured[action.payload.id] ??= action.payload.featured;
+      },
+    ),
+    openVendorSheet: create.reducer(
+      (
+        state,
+        action: PayloadAction<{ sheet: AdminVendorSheet | null; vendor?: AdminFoodVendor }>,
+      ) => {
+        state.sheet = action.payload.sheet;
+        state.reason = '';
+        state.note = '';
+        state.safetyOutcome = 'passed';
+        state.touched = false;
+        state.error = NO_ERROR;
+        const plan = action.payload.vendor?.plan;
+        if (action.payload.sheet === 'plan' && plan) {
+          state.limits = Object.fromEntries(
+            Object.entries(plan.overrides.limits ?? {}).map(([k, v]) => [k, String(v)]),
+          );
+          state.entitlements = { ...plan.entitlements };
+        }
+      },
+    ),
     setVendorReason: create.reducer((state, action: PayloadAction<string>) => {
       state.reason = action.payload.slice(0, 500);
     }),
@@ -95,9 +115,11 @@ export const adminFoodVendorSlice = createAppSlice({
     setPlanLimit: create.reducer((state, action: PayloadAction<{ key: string; value: string }>) => {
       state.limits[action.payload.key] = action.payload.value.replace(/[^0-9]/g, '').slice(0, 5);
     }),
-    setPlanEntitlement: create.reducer((state, action: PayloadAction<{ key: string; on: boolean }>) => {
-      state.entitlements[action.payload.key] = action.payload.on;
-    }),
+    setPlanEntitlement: create.reducer(
+      (state, action: PayloadAction<{ key: string; on: boolean }>) => {
+        state.entitlements[action.payload.key] = action.payload.on;
+      },
+    ),
     touchVendorSheet: create.reducer(state => {
       state.touched = true;
     }),
@@ -117,7 +139,11 @@ export const adminFoodVendorSlice = createAppSlice({
           e.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          state.byId[action.meta.arg] = { vendor: action.payload, status: 'succeeded', error: NO_ERROR };
+          state.byId[action.meta.arg] = {
+            vendor: action.payload,
+            status: 'succeeded',
+            error: NO_ERROR,
+          };
         },
         rejected: (state, action) => {
           const e = (state.byId[action.meta.arg] ??= { ...EMPTY });
@@ -131,9 +157,11 @@ export const adminFoodVendorSlice = createAppSlice({
       async ({ id, move }: { id: string; move: Move }, { rejectWithValue }) => {
         try {
           let featured: boolean | undefined;
-          if (move.kind === 'feature') featured = (await setVendorFeatured(id, move.featured)).isFeatured;
+          if (move.kind === 'feature')
+            featured = (await setVendorFeatured(id, move.featured)).isFeatured;
           else if (move.kind === 'suspend') await setVendorSuspended(id, move.suspend, move.reason);
-          else if (move.kind === 'safety') await recordFoodSafetyCheck(move.branchId, move.outcome, move.note);
+          else if (move.kind === 'safety')
+            await recordFoodSafetyCheck(move.branchId, move.outcome, move.note);
           else await setVendorPlanOverrides(id, move.overrides);
           return { vendor: await getAdminFoodVendor(id), featured };
         } catch (e) {
@@ -149,8 +177,13 @@ export const adminFoodVendorSlice = createAppSlice({
           state.busy = null;
           // Only the sheet that made this move closes (a toggle never closes one).
           if (action.meta.arg.move.kind !== 'feature') state.sheet = null;
-          state.byId[action.meta.arg.id] = { vendor: action.payload.vendor, status: 'succeeded', error: NO_ERROR };
-          if (action.payload.featured !== undefined) state.featured[action.meta.arg.id] = action.payload.featured;
+          state.byId[action.meta.arg.id] = {
+            vendor: action.payload.vendor,
+            status: 'succeeded',
+            error: NO_ERROR,
+          };
+          if (action.payload.featured !== undefined)
+            state.featured[action.meta.arg.id] = action.payload.featured;
         },
         rejected: (state, action) => {
           state.busy = null;
@@ -177,4 +210,5 @@ export const {
   loadAdminFoodVendorAsync,
   moveVendorAsync,
 } = adminFoodVendorSlice.actions;
-export const { selectAdminFoodVendorUi, selectAdminFoodVendorEntry } = adminFoodVendorSlice.selectors;
+export const { selectAdminFoodVendorUi, selectAdminFoodVendorEntry } =
+  adminFoodVendorSlice.selectors;

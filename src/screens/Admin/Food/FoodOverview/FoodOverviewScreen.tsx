@@ -10,24 +10,27 @@ import React, { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import dayjs from 'dayjs';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { percentLabel } from '@models/food/insightsModel';
 import { useStyles, type Theme } from '@theme/index';
-import { AppText, Card, Divider, InlineNotice, ListRow, ProgressBar, ScreenShell, SkeletonLines } from '@custom/index';
+import { AppText, Card, InlineNotice, ProgressBar, ScreenShell } from '@custom/index';
+import { SectionHead, StatGrid, ToolSection, type AdminStat } from '@components/admin/AdminParts';
 import type { AdminFoodStackParamList } from '@/types';
 import { loadFoodOverviewAsync, selectFoodOverview } from './foodOverviewSlice';
 
 type Props = NativeStackScreenProps<AdminFoodStackParamList, 'FoodOverview'>;
 
+type Nav = Props['navigation'] & {
+  getParent: () => { navigate: (name: string, params?: object) => void } | undefined;
+};
+
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
-type Nav = Props['navigation'] & { getParent: () => { navigate: (name: string, params?: object) => void } | undefined };
-
-const makeStyles = ({ colors, space, size, radius }: Theme) =>
+const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
-    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s12 },
-    tile: { flexGrow: 1, flexBasis: '40%', padding: space.s16, gap: space.s4, borderRadius: radius.lg, borderWidth: size.hairline, borderColor: colors.line },
-    bar: { gap: space.s4, paddingVertical: space.s8 },
+    section: { gap: space.s8 },
+    bar: { gap: space.s4, paddingVertical: space.s4 },
     barHead: { flexDirection: 'row', justifyContent: 'space-between', gap: space.s8 },
   });
 
@@ -43,88 +46,158 @@ const FoodOverviewScreen: React.FC<Props> = ({ navigation }) => {
     }, [dispatch]),
   );
 
-  const tiles: [string, string][] = o
-    ? [
-        ['Live vendors', String(o.activeVendors.total)],
-        ['Orders today', String(o.ordersToday)],
-        ['On their way now', String(o.activeOrders)],
-        ['Accepted today', percentLabel(o.acceptanceRateToday)],
-      ]
-    : [];
+  const kitchens = o ? o.activeVendors.cloud_kitchen + o.activeVendors.home_kitchen : 0;
+  const stats: AdminStat[] = [
+    {
+      key: 'vendors',
+      icon: 'storefront-outline',
+      tint: 'violet',
+      value: o?.activeVendors.total ?? null,
+      label: 'Live vendors',
+      hint: o
+        ? `${plural(o.activeVendors.restaurant, 'restaurant')} · ${plural(kitchens, 'kitchen')}`
+        : null,
+      onPress: () => navigation.navigate('AdminFoodVendors', { status: 'live' }),
+    },
+    {
+      key: 'orders',
+      icon: 'receipt-outline',
+      tint: 'blue',
+      value: o?.ordersToday ?? null,
+      label: 'Orders today',
+      hint: 'Since midnight',
+      onPress: () => navigation.navigate('AdminFoodOrders'),
+    },
+    {
+      key: 'active',
+      icon: 'bicycle-outline',
+      tint: 'accent',
+      value: o?.activeOrders ?? null,
+      label: 'On their way now',
+      hint: 'Accepted, cooking or out',
+    },
+    {
+      key: 'accepted',
+      icon: 'checkmark-done-outline',
+      tint: 'amber',
+      value: o ? percentLabel(o.acceptanceRateToday) : null,
+      label: 'Accepted today',
+      hint: !o
+        ? null
+        : o.acceptanceRateToday === null
+        ? 'No orders yet today'
+        : o.autoRejectsToday
+        ? `${plural(o.autoRejectsToday, 'order')} not answered`
+        : 'Every order answered',
+    },
+  ];
+  const needs = [
+    o?.waiting.foodSafetyChecks
+      ? {
+          key: 'safety',
+          title: `${plural(o.waiting.foodSafetyChecks, 'home kitchen')} to check`,
+          subtitle: 'Food safety, before it can go live',
+          icon: 'shield-checkmark-outline' as const,
+          tint: 'amber' as const,
+          onPress: () =>
+            navigation.navigate('AdminFoodVendors', { type: 'home_kitchen', status: 'draft' }),
+        }
+      : null,
+    o?.waiting.approvals
+      ? {
+          key: 'approvals',
+          title: `${plural(o.waiting.approvals, 'application')} to approve`,
+          subtitle: 'Food businesses, in the Approvals tab',
+          icon: 'hourglass-outline' as const,
+          tint: 'blue' as const,
+          onPress: () => (navigation as Nav).getParent()?.navigate('ApprovalsTab'),
+        }
+      : null,
+  ].filter(<T,>(x: T | null): x is T => x !== null);
   const most = Math.max(1, ...(o?.topCuisines.map(c => c.orders) ?? []));
 
   return (
-    <ScreenShell eyebrow="Admin" title="Food Court" refreshing={s.status === 'loading' && !!o} onRefresh={() => void dispatch(loadFoodOverviewAsync())}>
-      {s.error.message ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadFoodOverviewAsync()) }} /> : null}
-      {o?.waiting.foodSafetyChecks ? (
+    <ScreenShell
+      eyebrow="Admin"
+      title="Food Court"
+      subtitle={o ? dayjs(o.date).format('dddd, D MMMM') : 'Today on Food Court'}
+      refreshing={s.status === 'loading' && !!o}
+      onRefresh={() => void dispatch(loadFoodOverviewAsync())}>
+      {s.error.message ? (
         <InlineNotice
-          tone="warning"
-          title={`${o.waiting.foodSafetyChecks} home ${o.waiting.foodSafetyChecks === 1 ? 'kitchen needs' : 'kitchens need'} a food-safety check`}
-          message="They can't go live until staff record the check."
-          action={{ label: 'See them', onPress: () => navigation.navigate('AdminFoodVendors', { type: 'home_kitchen', status: 'draft' }) }}
+          message={s.error.message}
+          action={{ label: 'Try again', onPress: () => void dispatch(loadFoodOverviewAsync()) }}
         />
       ) : null}
-      {o?.waiting.approvals ? (
-        <InlineNotice
-          tone="info"
-          title={`${o.waiting.approvals} food ${o.waiting.approvals === 1 ? 'business is' : 'businesses are'} waiting for approval`}
-          message="Approvals are in the Approvals tab."
-          action={{ label: 'Open approvals', onPress: () => (navigation as Nav).getParent()?.navigate('ApprovalsTab') }}
-        />
-      ) : null}
-      {!o ? (
-        s.error.message ? null : <SkeletonLines lines={4} />
-      ) : (
-        <>
-          <View style={styles.grid}>
-            {tiles.map(([label, value]) => (
-              <View key={label} style={styles.tile} accessible accessibilityLabel={`${label}: ${value}`}>
-                <AppText variant="h1">{value}</AppText>
-                <AppText variant="small" tone="muted">
-                  {label}
-                </AppText>
+      <StatGrid stats={stats} />
+      {needs.length ? <ToolSection title="Needs you" tools={needs} /> : null}
+      <ToolSection
+        title="Manage"
+        tools={[
+          {
+            key: 'vendors',
+            title: 'Vendors',
+            subtitle: 'Feature, suspend, food-safety checks, plans',
+            icon: 'storefront-outline',
+            tint: 'violet',
+            onPress: () => navigation.navigate('AdminFoodVendors'),
+          },
+          {
+            key: 'orders',
+            title: 'Find an order',
+            subtitle: 'By its FC- code, for a dispute',
+            icon: 'search-outline',
+            tint: 'blue',
+            onPress: () => navigation.navigate('AdminFoodOrders'),
+          },
+          {
+            key: 'reviews',
+            title: 'Reviews',
+            subtitle: 'Hide a review that breaks the rules',
+            icon: 'chatbox-ellipses-outline',
+            tint: 'rose',
+            onPress: () => navigation.navigate('AdminFoodReviews'),
+          },
+          {
+            key: 'cuisines',
+            title: 'Cuisines',
+            subtitle: 'What customers browse, and in what order',
+            icon: 'restaurant-outline',
+            tint: 'amber',
+            onPress: () => navigation.navigate('AdminFoodCuisines'),
+          },
+          {
+            key: 'banners',
+            title: 'Home banners',
+            subtitle: 'What the Food Court home leads with',
+            icon: 'images-outline',
+            tint: 'grey',
+            onPress: () => navigation.navigate('AdminFoodBanners'),
+          },
+        ]}
+      />
+      {o?.topCuisines.length ? (
+        <View style={styles.section}>
+          <SectionHead title="Busiest cuisines this week" />
+          <Card>
+            {o.topCuisines.map(c => (
+              <View key={c.slug} style={styles.bar}>
+                <View style={styles.barHead}>
+                  <AppText variant="body">{c.name}</AppText>
+                  <AppText variant="bodyStrong">{plural(c.orders, 'order')}</AppText>
+                </View>
+                <ProgressBar
+                  progress={c.orders / most}
+                  accessibilityLabel={`${c.name}: ${c.orders} orders`}
+                />
               </View>
             ))}
-          </View>
-          <AppText variant="small" tone="muted">
-            {[
-              plural(o.activeVendors.restaurant, 'restaurant'),
-              plural(o.activeVendors.cloud_kitchen, 'cloud kitchen'),
-              plural(o.activeVendors.home_kitchen, 'home kitchen'),
-              o.autoRejectsToday ? `${plural(o.autoRejectsToday, 'order')} nobody answered today` : null,
-            ]
-              .filter(Boolean)
-              .join(' · ')}
-          </AppText>
-        </>
-      )}
-      <Card padded="horizontal">
-        <ListRow title="Vendors" subtitle="Feature, suspend, food-safety checks, plans" leftIcon="storefront-outline" onPress={() => navigation.navigate('AdminFoodVendors')} />
-        <Divider />
-        <ListRow title="Find an order" subtitle="By its FC- code, for a dispute" leftIcon="search-outline" onPress={() => navigation.navigate('AdminFoodOrders')} />
-        <Divider />
-        <ListRow title="Reviews" subtitle="Hide a review that breaks the rules" leftIcon="chatbox-ellipses-outline" onPress={() => navigation.navigate('AdminFoodReviews')} />
-        <Divider />
-        <ListRow title="Cuisines" subtitle="What customers browse, and in what order" leftIcon="restaurant-outline" onPress={() => navigation.navigate('AdminFoodCuisines')} />
-        <Divider />
-        <ListRow title="Home banners" subtitle="What the Food Court home leads with" leftIcon="images-outline" onPress={() => navigation.navigate('AdminFoodBanners')} />
-      </Card>
-      {o?.topCuisines.length ? (
-        <Card>
-          <AppText variant="title">Busiest cuisines this week</AppText>
-          {o.topCuisines.map(c => (
-            <View key={c.slug} style={styles.bar}>
-              <View style={styles.barHead}>
-                <AppText variant="body">{c.name}</AppText>
-                <AppText variant="bodyStrong">{c.orders}</AppText>
-              </View>
-              <ProgressBar progress={c.orders / most} accessibilityLabel={`${c.name}: ${c.orders} orders`} />
-            </View>
-          ))}
-        </Card>
+          </Card>
+        </View>
       ) : null}
       <AppText variant="caption" tone="muted">
-        MetroMatrix takes no commission. Vendors deliver with their own riders, and customers pay them directly.
+        MetroMatrix takes no commission. Vendors deliver with their own riders, and customers pay
+        them directly.
       </AppText>
     </ScreenShell>
   );

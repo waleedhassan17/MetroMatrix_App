@@ -19,7 +19,16 @@ export interface AdminFoodReviewsSliceState {
   error: ServerError;
 }
 
-const initialState: AdminFoodReviewsSliceState = { hidden: false, lowOnly: false, vendor: null, hiding: null, reason: '', reasonTouched: false, busy: null, error: NO_ERROR };
+const initialState: AdminFoodReviewsSliceState = {
+  hidden: false,
+  lowOnly: false,
+  vendor: null,
+  hiding: null,
+  reason: '',
+  reasonTouched: false,
+  busy: null,
+  error: NO_ERROR,
+};
 
 export const adminFoodReviewsSlice = createAppSlice({
   name: 'adminFoodReviews',
@@ -32,9 +41,11 @@ export const adminFoodReviewsSlice = createAppSlice({
     setFoodReviewsLowOnly: create.reducer((state, action: PayloadAction<boolean>) => {
       state.lowOnly = action.payload;
     }),
-    setFoodReviewsVendor: create.reducer((state, action: PayloadAction<{ id: string; name: string | null } | null>) => {
-      state.vendor = action.payload;
-    }),
+    setFoodReviewsVendor: create.reducer(
+      (state, action: PayloadAction<{ id: string; name: string | null } | null>) => {
+        state.vendor = action.payload;
+      },
+    ),
     openHideFoodReview: create.reducer((state, action: PayloadAction<string | null>) => {
       state.hiding = action.payload;
       state.reason = '';
@@ -48,7 +59,10 @@ export const adminFoodReviewsSlice = createAppSlice({
       state.reasonTouched = true;
     }),
     moderateFoodReviewAsync: create.asyncThunk(
-      async ({ id, hide, reason }: { id: string; hide: boolean; reason: string | null }, { rejectWithValue }) => {
+      async (
+        { id, hide, reason }: { id: string; hide: boolean; reason: string | null },
+        { rejectWithValue },
+      ) => {
         try {
           return await setFoodReviewHidden(id, hide, hide ? reason : null);
         } catch (e) {
@@ -76,6 +90,13 @@ export const adminFoodReviewsSlice = createAppSlice({
   },
 });
 
-export const { setFoodReviewsHidden, setFoodReviewsLowOnly, setFoodReviewsVendor, openHideFoodReview, setFoodHideReason, touchFoodHideReason, moderateFoodReviewAsync } =
-  adminFoodReviewsSlice.actions;
+export const {
+  setFoodReviewsHidden,
+  setFoodReviewsLowOnly,
+  setFoodReviewsVendor,
+  openHideFoodReview,
+  setFoodHideReason,
+  touchFoodHideReason,
+  moderateFoodReviewAsync,
+} = adminFoodReviewsSlice.actions;
 export const { selectAdminFoodReviews } = adminFoodReviewsSlice.selectors;

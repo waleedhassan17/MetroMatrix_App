@@ -4,7 +4,12 @@ import { createAppSlice } from '@store/createAppSlice';
 import { getAdminFoodOrder } from '@networks/admin/adminFoodNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import type { AdminFoodOrder } from '@/types';
-import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import {
+  NO_ERROR,
+  readRejection,
+  type FormStatus,
+  type ServerError,
+} from '../../../Auth/shared/formStatus';
 
 export interface AdminFoodOrderEntry {
   order: AdminFoodOrder | null;
@@ -38,7 +43,11 @@ export const adminFoodOrderSlice = createAppSlice({
           e.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          state.byId[action.meta.arg] = { order: action.payload, status: 'succeeded', error: NO_ERROR };
+          state.byId[action.meta.arg] = {
+            order: action.payload,
+            status: 'succeeded',
+            error: NO_ERROR,
+          };
         },
         rejected: (state, action) => {
           const e = (state.byId[action.meta.arg] ??= { ...EMPTY });

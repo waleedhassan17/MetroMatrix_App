@@ -21,7 +21,8 @@ import {
 } from '@models/health/appointmentStatusModel';
 import { REASON_TAGS } from '@models/health/bookingModel';
 import { useStyles, type Theme } from '@theme/index';
-import { AppText, Button, Card, Divider, InlineNotice, ScreenShell, SkeletonLines, StatusPill, StatusTimeline, TextAction, TextField } from '@custom/index';
+import { AppText, Button, Card, Divider, EmptyState, InlineNotice, ScreenShell, SkeletonLines, StatusPill, StatusTimeline, TextAction } from '@custom/index';
+import { SearchField } from '@components/shopping/ShopParts';
 import type { AdminHealthStackParamList } from '@/types';
 import { formatTimeRange, formatWhen, formatLongDate } from '@utils/healthTime';
 import { formatPKR } from '@utils/money';
@@ -72,18 +73,17 @@ const AppointmentLookupScreen: React.FC<Props> = ({ navigation, route }) => {
   const reasons = a ? [...a.reasonTags.map(t => REASON_TAGS.find(x => x.key === t)?.label ?? t), a.reason].filter(Boolean).join(' · ') : '';
 
   return (
-    <ScreenShell title="Find an appointment" onBack={back}>
-      <TextField
-        label="Appointment code"
-        value={s.code}
-        onChangeText={t => dispatch(setAppointmentLookupCode(t))}
-        onSubmitEditing={find}
-        autoCapitalize="characters"
-        autoCorrect={false}
-        placeholder="HC-7K2M9P"
-        returnKeyType="search"
-      />
-      <Button label="Find" onPress={find} disabled={s.code.length < 4} loading={s.status === 'loading'} fullWidth />
+    <ScreenShell
+      title="Find an appointment"
+      subtitle="Health · by the code on the booking"
+      onBack={back}
+      headerContent={
+        <>
+          <SearchField value={s.code} onChange={t => dispatch(setAppointmentLookupCode(t))} onSubmit={find} placeholder="Appointment code, e.g. HC-7K2M9P" />
+          <Button label="Find" onPress={find} disabled={s.code.length < 4} loading={s.status === 'loading'} fullWidth />
+        </>
+      }>
+      {s.status === 'idle' ? <EmptyState icon="search" title="Find any appointment" body="Type the HC- code from the patient's booking." /> : null}
       {s.status === 'failed' ? <InlineNotice message={s.error.message} /> : null}
       {s.status === 'loading' ? <SkeletonLines lines={6} /> : null}
       {a ? (

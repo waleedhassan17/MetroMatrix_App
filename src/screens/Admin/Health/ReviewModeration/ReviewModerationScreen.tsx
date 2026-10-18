@@ -14,7 +14,7 @@ import { useBack } from '@hooks/useBack';
 import { usePagedList } from '@hooks/usePagedList';
 import { listReviewsForModeration } from '@networks/admin/adminHealthNetwork';
 import { useStyles, type Theme } from '@theme/index';
-import { AppText, Button, ChoiceChip, Divider, DoctorReviewItem, EmptyState, InlineNotice, ScreenShell, SegmentTabs, Sheet, SkeletonLines, TextField } from '@custom/index';
+import { AppText, Button, Card, ChoiceChip, DoctorReviewItem, EmptyState, InlineNotice, ScreenShell, SegmentTabs, Sheet, SkeletonLines, TextField } from '@custom/index';
 import { validateHideReason } from '@models/health/adminHealthModel';
 import type { AdminHealthStackParamList, DoctorReview } from '@/types';
 import { haptics } from '@utils/haptics';
@@ -32,8 +32,8 @@ const REASONS = ['Abusive language', 'Shares personal details', 'Not about the v
 
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
-    list: { paddingBottom: space.s40 },
-    about: { paddingTop: space.s12 },
+    list: { gap: space.s12, paddingTop: space.s4, paddingBottom: space.s40 },
+    about: { paddingTop: space.s4 },
     actions: { flexDirection: 'row', gap: space.s12 },
     reasons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
   });
@@ -63,8 +63,12 @@ const ReviewModerationScreen: React.FC<Props> = () => {
   const hiding = list.rows.find(r => r.id === s.hiding) ?? null;
 
   return (
-    <ScreenShell title="Reviews" onBack={back} scroll={false}>
-      <SegmentTabs options={SEGMENTS} value={s.hidden ? 'hidden' : 'visible'} onChange={k => dispatch(setShowHidden(k === 'hidden'))} accessibilityLabel="Reviews" />
+    <ScreenShell
+      title="Reviews"
+      subtitle="Health · what patients say about doctors"
+      onBack={back}
+      scroll={false}
+      headerContent={<SegmentTabs options={SEGMENTS} value={s.hidden ? 'hidden' : 'visible'} onChange={k => dispatch(setShowHidden(k === 'hidden'))} accessibilityLabel="Reviews" />}>
       {s.error.message && !s.hiding ? <InlineNotice message={s.error.message} /> : null}
       <FlatList
         data={list.rows}
@@ -73,9 +77,8 @@ const ReviewModerationScreen: React.FC<Props> = () => {
         onRefresh={list.refresh}
         refreshing={list.isRefreshing}
         onEndReached={list.loadMore}
-        ItemSeparatorComponent={Divider}
         renderItem={({ item: r }) => (
-          <View>
+          <Card>
             {r.doctorName ? (
               <AppText variant="caption" tone="muted" style={styles.about}>
                 About {r.doctorName}
@@ -94,7 +97,7 @@ const ReviewModerationScreen: React.FC<Props> = () => {
                 </View>
               }
             />
-          </View>
+          </Card>
         )}
         ListEmptyComponent={
           list.isLoading ? (

@@ -7,6 +7,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../../theme';
 import { AppText } from '../AppText';
 import { IonIcon, type IonName } from '../Icon';
+import { useOnGradient } from '../headerInk';
 
 export interface ChoiceChipProps {
   label: string;
@@ -32,6 +33,8 @@ const makeStyles = ({ colors, radius, space, size }: Theme) =>
       borderColor: colors.line,
       backgroundColor: colors.surface,
     },
+    onGradient: { backgroundColor: colors.onScrimTint, borderColor: colors.onScrimLine },
+    selectedOnGradient: { backgroundColor: colors.surface, borderColor: colors.surface },
     struck: { textDecorationLine: 'line-through' },
     dot: { width: size.icon.md, height: size.icon.md, borderRadius: radius.pill, borderWidth: size.hairline, borderColor: colors.lineStrong },
   });
@@ -39,6 +42,9 @@ const makeStyles = ({ colors, radius, space, size }: Theme) =>
 export const ChoiceChip: React.FC<ChoiceChipProps> = ({ label, selected, disabled, onPress, icon, swatch, accessibilityHint }) => {
   const styles = useStyles(makeStyles);
   const { service, colors, opacity } = useTheme();
+  // Inside the gradient page header: a white wash, and white when chosen.
+  const onGradient = useOnGradient();
+  const ink = selected ? (onGradient ? service.accentDeep : service.onAccent) : onGradient ? colors.onScrim : colors.inkMuted;
   return (
     <Pressable
       onPress={onPress}
@@ -50,15 +56,16 @@ export const ChoiceChip: React.FC<ChoiceChipProps> = ({ label, selected, disable
       aria-disabled={!!disabled}
       style={({ pressed }) => [
         styles.root,
-        selected && { backgroundColor: service.accent, borderColor: service.accent },
+        onGradient && styles.onGradient,
+        selected && (onGradient ? styles.selectedOnGradient : { backgroundColor: service.accent, borderColor: service.accent }),
         disabled && { backgroundColor: colors.surfaceSunk, borderColor: colors.lineSoft },
         pressed && { opacity: opacity.pressed },
       ]}>
       {swatch ? <View style={[styles.dot, { backgroundColor: swatch }]} /> : null}
-      {icon ? <IonIcon name={icon} size="sm" color={selected ? service.onAccent : colors.inkMuted} /> : null}
+      {icon ? <IonIcon name={icon} size="sm" color={ink} /> : null}
       <AppText
         variant="small"
-        tone={selected ? 'onAccent' : disabled ? 'faint' : 'ink'}
+        tone={selected ? (onGradient ? 'accentDeep' : 'onAccent') : disabled ? 'faint' : onGradient ? 'onScrim' : 'ink'}
         style={disabled ? styles.struck : undefined}
         numberOfLines={1}>
         {label}

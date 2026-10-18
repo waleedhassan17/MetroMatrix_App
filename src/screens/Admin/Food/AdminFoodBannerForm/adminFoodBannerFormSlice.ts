@@ -7,11 +7,29 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { createFoodBanner, deleteFoodBanner, listAdminCuisines, listAdminFoodVendors, updateFoodBanner } from '@networks/admin/adminFoodNetwork';
+import {
+  createFoodBanner,
+  deleteFoodBanner,
+  listAdminCuisines,
+  listAdminFoodVendors,
+  updateFoodBanner,
+} from '@networks/admin/adminFoodNetwork';
 import { uploadImage } from '@networks/media/mediaNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
-import type { AdminCuisine, AdminFoodBanner, AdminFoodBannerInput, AdminFoodVendorRow, FoodBannerTargetType, LocalFile } from '@/types';
-import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import type {
+  AdminCuisine,
+  AdminFoodBanner,
+  AdminFoodBannerInput,
+  AdminFoodVendorRow,
+  FoodBannerTargetType,
+  LocalFile,
+} from '@/types';
+import {
+  NO_ERROR,
+  readRejection,
+  type FormStatus,
+  type ServerError,
+} from '../../../Auth/shared/formStatus';
 
 export interface FoodBannerForm {
   imageUrl: string;
@@ -102,17 +120,28 @@ export const adminFoodBannerFormSlice = createAppSlice({
   name: 'adminFoodBannerForm',
   initialState,
   reducers: create => ({
-    startFoodBannerForm: create.reducer((state, action: PayloadAction<{ id: string | null; form: FoodBannerForm }>) => ({
-      ...initialState,
-      vendors: state.vendors,
-      cuisines: state.cuisines,
-      id: action.payload.id,
-      form: action.payload.form,
-    })),
-    setFoodBannerField: create.reducer((state, action: PayloadAction<{ field: keyof FoodBannerForm; value: FoodBannerForm[keyof FoodBannerForm] }>) => {
-      (state.form as unknown as Record<string, unknown>)[action.payload.field] = action.payload.value;
-      if (action.payload.field === 'targetType') state.form.targetId = '';
-    }),
+    startFoodBannerForm: create.reducer(
+      (state, action: PayloadAction<{ id: string | null; form: FoodBannerForm }>) => ({
+        ...initialState,
+        vendors: state.vendors,
+        cuisines: state.cuisines,
+        id: action.payload.id,
+        form: action.payload.form,
+      }),
+    ),
+    setFoodBannerField: create.reducer(
+      (
+        state,
+        action: PayloadAction<{
+          field: keyof FoodBannerForm;
+          value: FoodBannerForm[keyof FoodBannerForm];
+        }>,
+      ) => {
+        (state.form as unknown as Record<string, unknown>)[action.payload.field] =
+          action.payload.value;
+        if (action.payload.field === 'targetType') state.form.targetId = '';
+      },
+    ),
     markFoodBannerSubmitted: create.reducer(state => {
       state.submitted = true;
     }),
@@ -120,7 +149,10 @@ export const adminFoodBannerFormSlice = createAppSlice({
     loadFoodBannerChoicesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [vendors, cuisines] = await Promise.all([listAdminFoodVendors({ status: 'live' }, 1, 100), listAdminCuisines()]);
+          const [vendors, cuisines] = await Promise.all([
+            listAdminFoodVendors({ status: 'live' }, 1, 100),
+            listAdminCuisines(),
+          ]);
           return { vendors: vendors.items, cuisines: cuisines.filter(c => c.isActive) };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -162,7 +194,10 @@ export const adminFoodBannerFormSlice = createAppSlice({
     ),
 
     saveFoodBannerAsync: create.asyncThunk(
-      async ({ id, input }: { id: string | null; input: AdminFoodBannerInput }, { rejectWithValue }) => {
+      async (
+        { id, input }: { id: string | null; input: AdminFoodBannerInput },
+        { rejectWithValue },
+      ) => {
         try {
           return id ? await updateFoodBanner(id, input) : await createFoodBanner(input);
         } catch (e) {

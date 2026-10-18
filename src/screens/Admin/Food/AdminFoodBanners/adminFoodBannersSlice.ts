@@ -5,7 +5,12 @@ import { createAppSlice } from '@store/createAppSlice';
 import { listAdminFoodBanners, updateFoodBanner } from '@networks/admin/adminFoodNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import type { AdminFoodBanner } from '@/types';
-import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import {
+  NO_ERROR,
+  readRejection,
+  type FormStatus,
+  type ServerError,
+} from '../../../Auth/shared/formStatus';
 
 export interface AdminFoodBannersSliceState {
   banners: AdminFoodBanner[];
@@ -14,9 +19,16 @@ export interface AdminFoodBannersSliceState {
   error: ServerError;
 }
 
-const initialState: AdminFoodBannersSliceState = { banners: [], status: 'idle', busy: false, error: NO_ERROR };
+const initialState: AdminFoodBannersSliceState = {
+  banners: [],
+  status: 'idle',
+  busy: false,
+  error: NO_ERROR,
+};
 
-type Change = { kind: 'toggle'; banner: AdminFoodBanner } | { kind: 'order'; banners: AdminFoodBanner[] };
+type Change =
+  | { kind: 'toggle'; banner: AdminFoodBanner }
+  | { kind: 'order'; banners: AdminFoodBanner[] };
 
 export const adminFoodBannersSlice = createAppSlice({
   name: 'adminFoodBanners',
@@ -48,9 +60,11 @@ export const adminFoodBannersSlice = createAppSlice({
     changeFoodBannersAsync: create.asyncThunk(
       async (change: Change, { rejectWithValue }) => {
         try {
-          if (change.kind === 'toggle') await updateFoodBanner(change.banner.id, { isActive: !change.banner.isActive });
+          if (change.kind === 'toggle')
+            await updateFoodBanner(change.banner.id, { isActive: !change.banner.isActive });
           else {
-            for (const [i, b] of change.banners.entries()) if (b.sort !== i * 10) await updateFoodBanner(b.id, { sort: i * 10 });
+            for (const [i, b] of change.banners.entries())
+              if (b.sort !== i * 10) await updateFoodBanner(b.id, { sort: i * 10 });
           }
           return await listAdminFoodBanners();
         } catch (e) {

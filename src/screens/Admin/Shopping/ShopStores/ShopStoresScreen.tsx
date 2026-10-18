@@ -10,7 +10,8 @@ import { useBack } from '@hooks/useBack';
 import { useDebouncedValue, usePagedList } from '@hooks/usePagedList';
 import { listAdminStores } from '@networks/admin/adminShopNetwork';
 import { useStyles, type Theme } from '@theme/index';
-import { AppText, Divider, EmptyState, InlineNotice, ScreenShell, SkeletonLines, StoreMark, TextField, ToggleRow } from '@custom/index';
+import { Card, EmptyState, InlineNotice, ScreenShell, SkeletonLines, StoreMark, ToggleRow } from '@custom/index';
+import { SearchField } from '@components/shopping/ShopParts';
 import type { AdminShopStackParamList } from '@/types';
 import { selectShopStores, setFeaturedAsync, setStoresQuery } from './shopStoresSlice';
 
@@ -18,9 +19,9 @@ type Props = NativeStackScreenProps<AdminShopStackParamList, 'ShopStores'>;
 
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
-    row: { flexDirection: 'row', alignItems: 'center', gap: space.s12, paddingVertical: space.s8 },
+    row: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
     grow: { flex: 1 },
-    list: { paddingBottom: space.s40 },
+    list: { gap: space.s12, paddingTop: space.s4, paddingBottom: space.s40 },
   });
 
 const ShopStoresScreen: React.FC<Props> = () => {
@@ -37,30 +38,30 @@ const ShopStoresScreen: React.FC<Props> = () => {
   };
 
   return (
-    <ScreenShell title="Stores" subtitle="Featured stores lead the Shopping home." onBack={back} scroll={false}>
-      <TextField label="Search" value={s.query} onChangeText={t => dispatch(setStoresQuery(t))} icon="search" placeholder="Store or city" clearable />
+    <ScreenShell
+      title="Stores"
+      subtitle={list.isLoading ? 'Featured stores lead the Shopping home' : `${list.total} stores · featured ones lead the Shopping home`}
+      onBack={back}
+      scroll={false}
+      headerContent={<SearchField value={s.query} onChange={t => dispatch(setStoresQuery(t))} placeholder="Store or city" />}>
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
       <FlatList
         data={list.rows}
         keyExtractor={st => st.id}
         contentContainerStyle={styles.list}
-        ItemSeparatorComponent={Divider}
         onEndReached={list.loadMore}
         renderItem={({ item: st }) => (
-          <View style={styles.row}>
-            <StoreMark store={st} small />
-            <View style={styles.grow}>
-              <ToggleRow label={st.name} helper={`${st.city} · ${st.productCount} products${st.isPaused ? ' · paused' : ''}`} value={st.isFeatured} onChange={v => void toggle(st.id, v)} disabled={s.busy === st.id} />
+          <Card>
+            <View style={styles.row}>
+              <StoreMark store={st} small />
+              <View style={styles.grow}>
+                <ToggleRow label={st.name} helper={`${st.city} · ${st.productCount} products${st.isPaused ? ' · paused' : ''}`} value={st.isFeatured} onChange={v => void toggle(st.id, v)} disabled={s.busy === st.id} />
+              </View>
             </View>
-          </View>
+          </Card>
         )}
         ListEmptyComponent={
           list.isLoading ? <SkeletonLines lines={5} /> : list.error ? <InlineNotice message={list.error} /> : <EmptyState icon="shopping-bag" title="No stores match" body="Try another name or city." />
-        }
-        ListHeaderComponent={
-          <AppText variant="caption" tone="muted">
-            {list.total} stores
-          </AppText>
         }
       />
     </ScreenShell>
