@@ -107,6 +107,19 @@ const VendorTodayScreen: React.FC = () => {
             action={{ label: 'Use these', onPress: () => dispatch(applyPortions(suggested)) }}
           />
         ) : null}
+        {s.tiffin?.plans.some(p => p.count) ? (
+          <Card onPress={() => navigation.navigate('GrowthTiffin')} accessibilityLabel="Tomorrow's tiffins">
+            <View style={styles.gap}>
+              <AppText variant="title">{`Tiffins tomorrow: ${s.tiffin.plans.reduce((n, p) => n + p.count, 0)}`}</AppText>
+              <AppText variant="small" tone="muted">
+                {s.tiffin.plans
+                  .filter(p => p.count)
+                  .map(p => `${p.name}: ${p.count} (${p.dishes.join(', ')})`)
+                  .join(' · ')}
+              </AppText>
+            </View>
+          </Card>
+        ) : null}
         {evening && t?.items.some(i => i.onTodaysMenu && i.cooking) ? (
           <Card>
             <View style={styles.gap}>

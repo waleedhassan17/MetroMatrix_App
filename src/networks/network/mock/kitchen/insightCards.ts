@@ -7,6 +7,7 @@
 // TODO(API_KITCHEN): docs/API_KITCHEN_ASSUMED.md §3.8.
 
 import type { MockDb } from '../mockDb';
+import { dayOf } from './tiffinLogic';
 import { addDays } from '../../../../utils/healthTime';
 import { formatPKR } from '../../../../utils/money';
 import { formatQty } from '../../../../utils/units';
@@ -274,6 +275,26 @@ export const summaryWire = (db: MockDb, businessId: string, now: number) => {
     waste: {
       weekCost: waste.reduce((n, w) => n + w.cost, 0),
       mealsRescued: mealsRescued(db, businessId, weekAgo),
+    },
+    growth: growthSummary(db, businessId, today, now),
+  };
+};
+
+/** Tiffin and catering at a glance (5B). */
+const growthSummary = (db: MockDb, businessId: string, today: string, now: number) => {
+  const subs = (k(db).tiffinSubs ?? []).filter(s => s.businessId === businessId);
+  const tomorrow = addDays(today, 1);
+  const requests = (k(db).catering ?? []).filter(r => r.businessId === businessId);
+  return {
+    tiffin: {
+      plans: (k(db).tiffinPlans ?? []).filter(p => p.businessId === businessId && p.isActive).length,
+      active: subs.filter(s => s.status === 'active').length,
+      pending: subs.filter(s => s.status === 'pending').length,
+      tomorrow: subs.filter(s => ['active', 'paused'].includes(s.status) && ['upcoming', 'ordered'].includes(dayOf(db, s, tomorrow, now).state)).length,
+    },
+    catering: {
+      new: requests.filter(r => r.status === 'requested').length,
+      upcoming: requests.filter(r => ['accepted', 'confirmed'].includes(r.status) && r.date >= today).length,
     },
   };
 };

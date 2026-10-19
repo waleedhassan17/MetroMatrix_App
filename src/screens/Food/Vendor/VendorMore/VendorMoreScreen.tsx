@@ -47,6 +47,8 @@ const SECTIONS: { title: string; items: Item[] }[] = [
       { label: 'Deals', hint: 'Offers you fund — one per order, the best one', icon: 'pricetag-outline', to: 'VendorPromotions' },
       { label: 'Reviews', hint: 'What customers say, and your replies', icon: 'chatbox-ellipses-outline', to: 'VendorReviews' },
       { label: 'Insights', hint: 'Recorded sales, acceptance, prep time', icon: 'stats-chart-outline', to: 'VendorInsights' },
+      { label: 'Tiffin plans', hint: 'Meals on set days, paid by the week or month', icon: 'calendar-outline', to: 'GrowthTiffin' },
+      { label: 'Catering', hint: 'Dawat requests, quotes and events', icon: 'people-outline', to: 'GrowthCatering' },
       { label: 'Plan', hint: 'Community plan · no commission', icon: 'ribbon-outline', to: 'VendorPlan' },
     ],
   },

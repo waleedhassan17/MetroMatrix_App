@@ -65,6 +65,7 @@ export const PAYMENT_METHOD: Record<FoodPaymentMethod, { label: string; hint: st
   cod: { label: 'Cash on delivery', hint: 'Pay the rider when your food arrives' },
   transfer: { label: 'Bank or wallet transfer', hint: 'Send it to the kitchen’s own account, then add the receipt' },
   pay_at_pickup: { label: 'Pay at pickup', hint: 'Pay at the counter when you collect' },
+  tiffin_plan: { label: 'Tiffin plan', hint: 'Paid with your tiffin period, directly to the kitchen' },
 };
 
 export const PAYMENT_STATUS: Record<FoodPaymentStatus, { label: string; vendorLabel: string; tone: Tone }> = {

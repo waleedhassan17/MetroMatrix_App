@@ -905,6 +905,18 @@ minutes from now if later, for two hours (ending by 1:30 AM):
   "waste": {
     "weekCost": 2100,
     "mealsRescued": 12
+  },
+  "growth": {
+    "tiffin": {
+      "plans": 0,
+      "active": 0,
+      "pending": 0,
+      "tomorrow": 0
+    },
+    "catering": {
+      "new": 0,
+      "upcoming": 0
+    }
   }
 }
 ```
@@ -963,6 +975,616 @@ The board's kitchen side, read with every board read:
 ```
 
 ---
+
+### 2.9 Tiffin (5B)
+
+A plan, as the kitchen and customers see it. `days` are ISO weekdays (1 Monday … 7 Sunday);
+`price` is per period (a week, or four weeks); `perMeal` is what one meal works out at; the
+`rotation` says what is cooked on each day (dishes from the menu, or a note). `nextStart` is the
+earliest day a new subscription can start. Lists of plans (`GET /food/vendor/tiffin/plans`,
+`GET /food/tiffin/plans?vendor=`) are `{ items: [plan] }`; creating or editing one answers the
+plan.
+
+<!-- contract: tiffinPlan -->
+```json
+{
+  "id": "tp_nani_lunch",
+  "vendor": {
+    "id": "fb_nani",
+    "slug": "nani-ki-handi",
+    "name": "Nani ki Handi",
+    "logoUrl": "https://placehold.co/256x256/7C2D12/FFFFFF/png?text=NH",
+    "isHomeKitchen": true
+  },
+  "name": "Office lunch tiffin",
+  "description": "Home-cooked lunch on weekdays, in a steel tiffin you keep. Roti and salad with every meal.",
+  "meal": "lunch",
+  "days": [
+    1
+  ],
+  "period": "week",
+  "price": 2300,
+  "perMeal": 460,
+  "mealsPerPeriod": 5,
+  "mode": "delivery",
+  "window": {
+    "from": "12:30",
+    "to": "13:30",
+    "label": "12:30 PM – 1:30 PM"
+  },
+  "capacity": 25,
+  "subscribers": 1,
+  "seatsLeft": 24,
+  "skipCutoffHours": 14,
+  "rotation": [
+    {
+      "weekday": 1,
+      "dishes": [
+        {
+          "itemId": "mi_nani_daal",
+          "name": "Daal chawal with achaar",
+          "photoUrl": "https://images.unsplash.com/photo-1588644525273-f37b60d78512"
+        }
+      ],
+      "note": null
+    }
+  ],
+  "photoUrl": "https://images.unsplash.com/photo-1588644525273-f37b60d78512",
+  "isActive": true,
+  "nextStart": "2026-10-16"
+}
+```
+
+A subscription, as the customer sees it (`POST /food/tiffin/plans/:id/subscribe` answers it
+`pending`, with no period yet). `period` is the current one and its payment: a transfer to the
+kitchen's own account, or cash with the first delivery. `credit` is the meals skipped in the
+period before, taken off this one. Lists are `{ items: [subscription] }`; the period's receipt
+answers the subscription.
+
+<!-- contract: tiffinSubscription -->
+```json
+{
+  "code": "TF-2UPUXR",
+  "status": "active",
+  "plan": {
+    "id": "tp_nani_lunch",
+    "name": "Office lunch tiffin",
+    "meal": "lunch",
+    "days": [
+      1
+    ],
+    "period": "week",
+    "price": 2300,
+    "perMeal": 460,
+    "mode": "delivery",
+    "window": {
+      "from": "12:30",
+      "to": "13:30",
+      "label": "12:30 PM – 1:30 PM"
+    },
+    "skipCutoffHours": 14
+  },
+  "vendor": {
+    "id": "fb_nani",
+    "slug": "nani-ki-handi",
+    "name": "Nani ki Handi",
+    "logoUrl": "https://placehold.co/256x256/7C2D12/FFFFFF/png?text=NH",
+    "phone": "+923001110010"
+  },
+  "startDate": "2026-10-16",
+  "endDate": null,
+  "nextDelivery": {
+    "date": "2026-10-16",
+    "dishes": [
+      "Chicken pulao"
+    ],
+    "cutoffAt": "2026-10-15T17:30:00.000Z"
+  },
+  "address": {
+    "line1": "House 12, Main Boulevard",
+    "area": "Gulberg III",
+    "city": "Lahore",
+    "lat": 31.516,
+    "lng": 74.342
+  },
+  "paymentMethod": "transfer",
+  "period": {
+    "id": "tpd_ygf",
+    "from": "2026-10-16",
+    "to": "2026-10-22",
+    "meals": 5,
+    "credit": 0,
+    "amount": 2300,
+    "payment": {
+      "method": "transfer",
+      "status": "awaiting_transfer",
+      "payBy": "2026-10-16T18:59:00.000Z",
+      "accounts": [
+        {
+          "kind": "easypaisa",
+          "accountTitle": "Shazia Parveen",
+          "accountNumber": "+923001110010",
+          "bankName": null
+        }
+      ],
+      "reference": null,
+      "proofUrl": null,
+      "rejectedReason": null
+    }
+  },
+  "pausedFrom": null,
+  "pausedUntil": null,
+  "declineReason": null,
+  "endReason": null,
+  "canPause": true,
+  "canResume": false,
+  "canCancel": true,
+  "createdAt": "2026-10-15T10:00:00.000Z"
+}
+```
+
+The kitchen's view adds `customer`; approving opens the first period:
+
+<!-- contract: tiffinApprove -->
+```json
+{
+  "code": "TF-2UPUXR",
+  "status": "active",
+  "plan": {
+    "id": "tp_nani_lunch",
+    "name": "Office lunch tiffin",
+    "meal": "lunch",
+    "days": [
+      1
+    ],
+    "period": "week",
+    "price": 2300,
+    "perMeal": 460,
+    "mode": "delivery",
+    "window": {
+      "from": "12:30",
+      "to": "13:30",
+      "label": "12:30 PM – 1:30 PM"
+    },
+    "skipCutoffHours": 14
+  },
+  "vendor": {
+    "id": "fb_nani",
+    "slug": "nani-ki-handi",
+    "name": "Nani ki Handi",
+    "logoUrl": "https://placehold.co/256x256/7C2D12/FFFFFF/png?text=NH",
+    "phone": "+923001110010"
+  },
+  "customer": {
+    "name": "Ayesha Khan",
+    "phone": "+923001234567"
+  },
+  "startDate": "2026-10-16",
+  "endDate": null,
+  "nextDelivery": {
+    "date": "2026-10-16",
+    "dishes": [
+      "Chicken pulao"
+    ],
+    "cutoffAt": "2026-10-15T17:30:00.000Z"
+  },
+  "address": {
+    "line1": "House 12, Main Boulevard",
+    "area": "Gulberg III",
+    "city": "Lahore",
+    "lat": 31.516,
+    "lng": 74.342
+  },
+  "paymentMethod": "transfer",
+  "period": {
+    "id": "tpd_ygf",
+    "from": "2026-10-16",
+    "to": "2026-10-22",
+    "meals": 5,
+    "credit": 0,
+    "amount": 2300,
+    "payment": {
+      "method": "transfer",
+      "status": "awaiting_transfer",
+      "payBy": "2026-10-16T18:59:00.000Z",
+      "accounts": [
+        {
+          "kind": "easypaisa",
+          "accountTitle": "Shazia Parveen",
+          "accountNumber": "+923001110010",
+          "bankName": null
+        }
+      ],
+      "reference": null,
+      "proofUrl": null,
+      "rejectedReason": null
+    }
+  },
+  "pausedFrom": null,
+  "pausedUntil": null,
+  "declineReason": null,
+  "endReason": null,
+  "canPause": true,
+  "canResume": false,
+  "canCancel": false,
+  "createdAt": "2026-10-15T10:00:00.000Z"
+}
+```
+
+The kitchen's inbox (`GET /food/vendor/tiffin/subscriptions?status=pending|active|paused|ended`)
+and a plan's subscribers (`GET /food/vendor/tiffin/plans/:id/subscribers`) carry counts:
+
+<!-- contract: tiffinInbox -->
+```json
+{
+  "counts": {
+    "pending": 1,
+    "active": 1,
+    "paused": 0,
+    "toCheck": 0
+  },
+  "items": []
+}
+```
+
+The month calendar has every day of the month with its `state` (`before_start | off | pending |
+upcoming | skipped | paused | ordered | delivered | cancelled | ended | none`), the dishes, the
+cut-off, and whether it can be skipped or un-skipped now (one day shown):
+
+<!-- contract: tiffinCalendar -->
+```json
+{
+  "month": "2026-10",
+  "days": [
+    {
+      "date": "2026-10-19",
+      "state": "skipped",
+      "dishes": [
+        "Daal chawal with achaar"
+      ],
+      "cutoffAt": "2026-10-18T17:30:00.000Z",
+      "canSkip": false,
+      "canUnskip": true,
+      "orderCode": null
+    }
+  ]
+}
+```
+
+Skipping or un-skipping answers the day:
+
+<!-- contract: tiffinSkip -->
+```json
+{
+  "date": "2026-10-19",
+  "state": "skipped",
+  "dishes": [
+    "Daal chawal with achaar"
+  ],
+  "cutoffAt": "2026-10-18T17:30:00.000Z",
+  "canSkip": false,
+  "canUnskip": true,
+  "orderCode": null
+}
+```
+
+After the day's cut-off:
+
+<!-- contract: tiffinSkipClosed -->
+```json
+{
+  "error": {
+    "code": "TIFFIN_SKIP_CLOSED",
+    "message": "The kitchen has started on this day. Changes closed at the cut-off.",
+    "details": {
+      "cutoffAt": "2026-10-15T17:30:00.000Z"
+    }
+  }
+}
+```
+
+Tomorrow's tiffins for the kitchen, per plan:
+
+<!-- contract: tiffinTomorrow -->
+```json
+{
+  "date": "2026-10-16",
+  "plans": [
+    {
+      "planId": "tp_nani_lunch",
+      "name": "Office lunch tiffin",
+      "meal": "lunch",
+      "window": "12:30 PM – 1:30 PM",
+      "dishes": [
+        "Chicken pulao"
+      ],
+      "count": 2,
+      "skipped": 0,
+      "paused": 0,
+      "cutoffAt": "2026-10-15T17:30:00.000Z",
+      "deliveries": [
+        {
+          "code": "TF-HMZ4K2",
+          "customerName": "Hamza Qureshi",
+          "area": "Gulberg III",
+          "state": "ordered",
+          "orderCode": "FC-76Z22Z"
+        }
+      ]
+    }
+  ]
+}
+```
+
+At the cut-off each day becomes an ordinary board card: accepted, scheduled for the window, paid
+by the plan (`payment.method: "tiffin_plan"`), with `origin.kind: "tiffin"`:
+
+<!-- contract: tiffinBoard -->
+```json
+{
+  "items": [
+    {
+      "id": "fo_hk6",
+      "code": "FC-76Z22Z",
+      "status": "accepted",
+      "statusLabel": "Accepted",
+      "fulfilment": "delivery",
+      "scheduledFor": "2026-10-16T07:30:00.000Z",
+      "placedAt": "2026-10-15T19:00:00.000Z",
+      "acceptBy": null,
+      "promisedAt": "2026-10-16T08:30:00.000Z",
+      "total": 460,
+      "payment": {
+        "method": "tiffin_plan",
+        "status": "paid"
+      },
+      "itemCount": 1,
+      "itemsSummary": "1× Chicken pulao",
+      "customerName": "Hamza Qureshi",
+      "riderId": null,
+      "handedToExternal": false,
+      "packedPhotoUrl": null,
+      "origin": {
+        "kind": "tiffin",
+        "ref": "TF-HMZ4K2"
+      }
+    }
+  ],
+  "total": 2,
+  "page": 1,
+  "pageSize": 20
+}
+```
+
+### 2.10 Catering (5B)
+
+What a kitchen takes, and its menu to choose from (`GET /food/catering/vendors/:id`, by brand id
+or slug):
+
+<!-- contract: cateringVendor -->
+```json
+{
+  "vendorId": "fb_resto",
+  "open": true,
+  "minGuests": 20,
+  "leadDays": 2,
+  "earliestDate": "2026-10-17",
+  "modes": [
+    "delivery"
+  ],
+  "menu": [
+    {
+      "itemId": "mi_chicken_biryani",
+      "name": "Chicken Biryani",
+      "price": 650,
+      "photoUrl": "https://images.unsplash.com/photo-1559528896-c5310744cce8"
+    }
+  ]
+}
+```
+
+A request as the customer sent it:
+
+<!-- contract: cateringRequest -->
+```json
+{
+  "code": "CT-WGG77A",
+  "status": "requested",
+  "vendor": {
+    "id": "fb_resto",
+    "slug": "biryani-bazaar",
+    "name": "Biryani Bazaar",
+    "logoUrl": "https://placehold.co/256x256/B45309/FFFFFF/png?text=BB",
+    "phone": "+923001110001"
+  },
+  "date": "2026-10-31",
+  "time": "19:30",
+  "startsAt": "2026-10-31T14:30:00.000Z",
+  "guests": 60,
+  "eventType": "aqiqah",
+  "dishes": [
+    {
+      "itemId": "mi_chicken_biryani",
+      "name": "Chicken Biryani",
+      "qty": 60
+    }
+  ],
+  "budget": 45000,
+  "mode": "delivery",
+  "address": {
+    "line1": "House 12, Main Boulevard",
+    "area": "Gulberg III",
+    "city": "Lahore",
+    "lat": 31.516,
+    "lng": 74.342
+  },
+  "notes": "Please include raita.",
+  "quotes": [],
+  "acceptedVersion": null,
+  "advance": null,
+  "balance": null,
+  "declineReason": null,
+  "cancelReason": null,
+  "canAccept": false,
+  "canCancel": true,
+  "canQuote": false,
+  "createdAt": "2026-10-15T10:00:00.000Z",
+  "updatedAt": "2026-10-15T10:00:00.000Z"
+}
+```
+
+Each quote is a version, with `state` `current | outdated | expired | accepted`. Once one is
+accepted, `advance` is what to transfer to the kitchen's own account and `balance` what is left for
+the day. The kitchen's view adds `customer`; every move answers the request (lists are
+`{ items: [request] }`).
+
+<!-- contract: cateringAccept -->
+```json
+{
+  "code": "CT-WGG77A",
+  "status": "accepted",
+  "vendor": {
+    "id": "fb_resto",
+    "slug": "biryani-bazaar",
+    "name": "Biryani Bazaar",
+    "logoUrl": "https://placehold.co/256x256/B45309/FFFFFF/png?text=BB",
+    "phone": "+923001110001"
+  },
+  "date": "2026-10-31",
+  "time": "19:30",
+  "startsAt": "2026-10-31T14:30:00.000Z",
+  "guests": 60,
+  "eventType": "aqiqah",
+  "dishes": [
+    {
+      "itemId": "mi_chicken_biryani",
+      "name": "Chicken Biryani",
+      "qty": 60
+    }
+  ],
+  "budget": 45000,
+  "mode": "delivery",
+  "address": {
+    "line1": "House 12, Main Boulevard",
+    "area": "Gulberg III",
+    "city": "Lahore",
+    "lat": 31.516,
+    "lng": 74.342
+  },
+  "notes": "Please include raita.",
+  "quotes": [
+    {
+      "version": 1,
+      "lines": [
+        {
+          "itemId": "mi_chicken_biryani",
+          "name": "Chicken Biryani",
+          "qty": 60,
+          "unitPrice": 520,
+          "total": 31200
+        }
+      ],
+      "subtotal": 37800,
+      "deliveryFee": 1500,
+      "total": 39300,
+      "advancePct": 30,
+      "advance": 11790,
+      "validUntil": "2026-10-22T18:59:00.000Z",
+      "notes": "Raita included.",
+      "createdAt": "2026-10-15T10:00:00.000Z",
+      "state": "outdated"
+    }
+  ],
+  "acceptedVersion": 2,
+  "advance": {
+    "amount": 11070,
+    "status": "awaiting_transfer",
+    "payBy": "2026-10-17T10:00:00.000Z",
+    "accounts": [
+      {
+        "kind": "jazzcash",
+        "accountTitle": "Imran Qureshi",
+        "accountNumber": "+923001110001",
+        "bankName": null
+      }
+    ],
+    "reference": null,
+    "proofUrl": null,
+    "rejectedReason": null
+  },
+  "balance": 25830,
+  "declineReason": null,
+  "cancelReason": null,
+  "canAccept": false,
+  "canCancel": true,
+  "canQuote": false,
+  "createdAt": "2026-10-15T10:00:00.000Z",
+  "updatedAt": "2026-10-15T10:00:00.000Z"
+}
+```
+
+Accepting a quote a newer one has replaced:
+
+<!-- contract: quoteOutdated -->
+```json
+{
+  "error": {
+    "code": "QUOTE_OUTDATED",
+    "message": "Biryani Bazaar has sent a newer quote. Look at version 2.",
+    "details": {
+      "latest": 2
+    }
+  }
+}
+```
+
+The kitchen's inbox (`?status=new|quoted|confirmed|past`), its calendar of events and its catering
+settings:
+
+<!-- contract: cateringInbox -->
+```json
+{
+  "counts": {
+    "new": 1,
+    "quoted": 1,
+    "confirmed": 0,
+    "past": 0
+  },
+  "items": []
+}
+```
+
+<!-- contract: cateringCalendar -->
+```json
+{
+  "month": "2026-10",
+  "days": [
+    {
+      "date": "2026-10-31",
+      "events": [
+        {
+          "code": "CT-WGG77A",
+          "time": "19:30",
+          "guests": 60,
+          "eventType": "aqiqah",
+          "status": "confirmed",
+          "customerName": "Ayesha Khan"
+        }
+      ]
+    }
+  ]
+}
+```
+
+<!-- contract: cateringSettings -->
+```json
+{
+  "open": true,
+  "minGuests": 20,
+  "leadDays": 2
+}
+```
+
 
 ## 3. Rules
 
@@ -1080,6 +1702,56 @@ The vendor's own profile `branch` shows both (§5).
 - At most five are sent.
 
 ---
+
+### 3.9 Tiffin
+
+- **A plan.** `name` 3–60 characters; `meal` `breakfast | lunch | dinner`; `days` 1–7 weekdays;
+  `period` `week | month` (a month is four weeks, so every period has the same meals); `price`
+  ≥ Rs 100 a period; `capacity` 1–500 (never under the subscribers it has); `skipCutoffHours`
+  2–48; a `rotation` entry per day: up to four dishes from the kitchen's menu, or a note. Up to 6
+  active plans (`409 TIFFIN_PLAN_LIMIT`). A plan with subscribers can't be deleted
+  (`409 TIFFIN_HAS_SUBSCRIBERS`); without any it is deleted, or deactivated if it had some once.
+- **Subscribing** needs an `Idempotency-Key`. The start is a plan day within 30 days whose
+  cut-off hasn't passed. Delivery plans need a pinned address (`422 ADDRESS_LOCATION_REQUIRED`).
+  Payment is `transfer` (needs a kitchen account, else `422 PAYMENT_METHOD_UNAVAILABLE`) or
+  `cash`. One subscription a person per plan (`409 TIFFIN_ALREADY_SUBSCRIBED`); a full plan
+  answers `409 TIFFIN_FULL`. It starts `pending`.
+- **The kitchen** approves (`active`; a start whose cut-off passed while it waited moves to the
+  next open day; the first period opens) or declines with a reason. It can pause, resume and end
+  a subscription; the customer can pause, resume and cancel.
+- **Periods.** Each period's amount is the plan's price less `credit`: the meals skipped in the
+  period before, at `perMeal`. A transfer is due by the end of the period's first day
+  (`awaiting_transfer`, then `proof_submitted`, then `paid` when the kitchen confirms); cash is
+  `unpaid` until the kitchen confirms it. A new period opens when one ends.
+- **Days.** A day can be skipped (or un-skipped) until its cut-off: `skipCutoffHours` before the
+  window starts. After that, `409 TIFFIN_SKIP_CLOSED { cutoffAt }`. Pausing starts at the first
+  day still open, and lasts until resumed or until `until`.
+- **At the cut-off** each day becomes an order on the kitchen's board: `accepted`, scheduled for
+  the window's start, promised for its end, `payment.method: "tiffin_plan"` (status `paid`), the
+  rotation's dishes, `origin { kind: "tiffin", ref: code }`. It is taken from stock like any
+  accepted order and moves along the board as usual.
+- **Ending** (customer cancel or kitchen end) keeps the days already closed; unpaid periods after
+  them are void.
+
+### 3.10 Catering
+
+- **A request**: a date at least `leadDays` ahead (and within 180 days), a time, `guests` from the
+  kitchen's `minGuests` to 2,000, an `eventType` (`mehndi | baraat | walima | birthday | aqiqah |
+  milad | quran_khwani | office | family | other`), 1–20 dishes (from the menu, or named), an
+  optional budget, and `mode` `delivery | pickup | on_site` (an address unless pickup:
+  `422 ADDRESS_REQUIRED`). A kitchen not taking requests answers `409 CATERING_CLOSED`.
+- **Quotes.** The kitchen sends lines (menu dishes or named lines, `qty × unitPrice`), a delivery
+  fee, `advancePct` 0–100 and `validUntil` (before the event). Each quote is a new version; the
+  request is `quoted`.
+- **Accepting.** Only the latest version, before it expires: else `409 QUOTE_OUTDATED { latest }`
+  or `409 QUOTE_EXPIRED { validUntil }`. With an advance the request is `accepted` and the advance
+  is due within 48 hours (a transfer to the kitchen's own account, then the receipt); without one
+  it is `confirmed` at once.
+- **The advance.** The kitchen confirms it (`confirmed`) or rejects the receipt with a reason (back
+  to awaiting). The balance is settled with the kitchen on the day.
+- **Declining and cancelling.** The kitchen declines a request it can't take (with a reason); the
+  customer cancels before paying the advance. A confirmed event is `completed` once its day has
+  passed.
 
 ## 4. Endpoints
 
@@ -1235,44 +1907,48 @@ photo:
 
 | Method | Path | Notes |
 |---|---|---|
-| CRUD | `/plans` | `name`, `meal: breakfast\|lunch\|dinner`, `days`, `period: week\|month`, `price`, `mode: delivery\|pickup`, `window`, `capacity`, `skipCutoffHours`, `rotation [{ weekday, itemIds \| note }]` |
-| GET | `/plans/:id/subscribers` | |
-| POST | `/subscriptions/:code/{approve,decline,pause,end}` | |
-| POST | `/periods/:id/payment/{confirm,reject}` | period payments |
-| GET | `/tomorrow` | |
+| GET, POST | `/plans` | `{ name, description?, meal, days, period, price, mode, window { from, to }, capacity, skipCutoffHours, rotation [{ weekday, itemIds, note }], photoUrl? }` (§3.9) |
+| GET, PATCH, DELETE | `/plans/:id` | DELETE answers `{ removed, deactivated }` |
+| GET | `/plans/:id/subscribers` | `{ counts, items }` |
+| GET | `/subscriptions?status=pending\|active\|paused\|ended` | `{ counts { pending, active, paused, toCheck }, items }` |
+| POST | `/subscriptions/:code/{approve,decline,pause,resume,end}` | decline `{ reason }`; pause `{ until? }`; end `{ reason? }` |
+| POST | `/periods/:id/payment/{confirm,reject}` | reject `{ reason }` |
+| GET | `/tomorrow` | §2.9 |
 
 **Tiffin, for customers** (`/food/tiffin`):
 
 | Method | Path | Notes |
 |---|---|---|
-| GET | `/plans?vendor`, `/plans/:id` | |
-| POST | `/plans/:id/subscribe` | Idempotency-Key; `{ startDate, addressId?, paymentMethod }` |
+| GET | `/plans?vendor=`, `/plans/:id` | `vendor`: brand id or slug |
+| POST | `/plans/:id/subscribe` | Idempotency-Key; `{ startDate, addressId?, paymentMethod: transfer\|cash }` |
 | GET | `/subscriptions`, `/subscriptions/:code` | |
-| GET | `/subscriptions/:code/calendar?month` | |
+| GET | `/subscriptions/:code/calendar?month=YYYY-MM` | |
 | POST | `/subscriptions/:code/days/:date/{skip,unskip}` | `409 TIFFIN_SKIP_CLOSED { cutoffAt }` |
-| POST | `/subscriptions/:code/pause`, `/subscriptions/:code/cancel` | |
-| POST | `/periods/:id/payment-proof` | |
+| POST | `/subscriptions/:code/{pause,resume,cancel}` | pause `{ until? }` |
+| POST | `/periods/:id/payment-proof` | `{ transactionId, imageUrl? }` |
 
-At the skip cut-off, the next day's tiffins become scheduled orders (`origin.kind: "tiffin"`,
+At the cut-off, the next day's tiffins become scheduled orders (`origin.kind: "tiffin"`,
 payment `tiffin_plan`).
 
 **Catering, for customers** (`/food/catering`):
 
 | Method | Path | Notes |
 |---|---|---|
-| POST | `/requests` | `{ vendorId, date, time, guests, eventType, dishes [{ itemId \| name, qty }], budget?, mode: delivery\|pickup\|on_site, notes? }` |
+| GET | `/vendors/:id` | what the kitchen takes, its menu (§2.10) |
+| POST | `/requests` | `{ vendorId, date, time, guests, eventType, dishes [{ itemId \| name, qty }], budget?, mode, addressId?, notes? }` |
 | GET | `/requests`, `/requests/:code` | |
 | POST | `/requests/:code/quotes/:version/accept` | `409 QUOTE_OUTDATED`, `409 QUOTE_EXPIRED` |
-| POST | `/requests/:code/advance-proof`, `/requests/:code/cancel` | |
+| POST | `/requests/:code/advance-proof`, `/requests/:code/cancel` | proof `{ transactionId, imageUrl? }` |
 
 **Catering, for the kitchen** (`/food/vendor/catering`):
 
 | Method | Path | Notes |
 |---|---|---|
-| GET | `/requests?status`, `/requests/:code` | |
+| GET, PATCH | `/settings` | `{ open, minGuests, leadDays }` |
+| GET | `/requests?status=new\|quoted\|confirmed\|past`, `/requests/:code` | |
 | POST | `/requests/:code/quotes` | `{ lines [{ itemId? \| name, qty, unitPrice }], deliveryFee, advancePct, validUntil, notes? }` → version n |
-| POST | `/requests/:code/{decline,advance/confirm,advance/reject}` | |
-| GET | `/calendar?month` | |
+| POST | `/requests/:code/{decline,advance/confirm,advance/reject}` | decline and reject `{ reason }` |
+| GET | `/calendar?month=YYYY-MM` | |
 
 **Everything else in 5B:**
 
@@ -1344,7 +2020,7 @@ capture carries one**: it has shipped then, and is reconciled.
 | Checkout body | `source { kind: link\|qr, slug }` | the storefront link or QR it came through (5B) |
 | `RiderOrder` | `dropOrder { position, of }` | a batched delivery (5B) |
 | `VendorCard` | `badges[]` | `signature, hygiene_verified, hygiene_self_declared, home_kitchen, bachat_today` (5B), `under_600, high_protein` (5C) |
-| `VendorPage` | `story`, `hygiene`, `signatureItemIds`, `tiffinPlans`, `cateringOpen` | 5B |
+| `VendorPage` | `story`, `hygiene`, `signatureItemIds`, `tiffinPlans [{ id, name, meal, days, period, price, perMeal, window, seatsLeft, photoUrl }]`, `catering { open, minGuests, leadDays }` | 5B |
 | Dish (menu card, item sheet, search) | `nutrition`, `descriptionUr`, `isSignature` | 5B–5C |
 | `GET /food/search` | `?nutrition=under_600\|high_protein` | 5C |
 | Payment method | `tiffin_plan` | an order a tiffin period paid for (5B) |
@@ -1366,7 +2042,13 @@ capture carries one**: it has shipped then, and is reconciled.
 | `SURPLUS_LIMIT` | 409 / 422 | `max` (`held`) |
 | `TOO_EARLY`, `CANCEL_NOT_ALLOWED` | 409 | |
 | `TIFFIN_SKIP_CLOSED` | 409 | `cutoffAt` (5B) |
-| `QUOTE_OUTDATED`, `QUOTE_EXPIRED` | 409 | `currentVersion` (5B) |
+| `TIFFIN_FULL` | 409 | `capacity` (5B) |
+| `TIFFIN_ALREADY_SUBSCRIBED`, `TIFFIN_HAS_SUBSCRIBERS` | 409 | (`subscribers`) (5B) |
+| `TIFFIN_PLAN_LIMIT` | 409 | `max` (5B) |
+| `QUOTE_OUTDATED` | 409 | `latest` (5B) |
+| `QUOTE_EXPIRED` | 409 | `validUntil` (5B) |
+| `CATERING_CLOSED` | 409 | (5B) |
+| `ADDRESS_REQUIRED`, `ADDRESS_LOCATION_REQUIRED` | 422 | (5B) |
 | `RAMADAN_NOT_ACTIVE` | 409 | `event` (5B) |
 | `AI_UNAVAILABLE`, `AI_QUOTA_REACHED`, `CLIP_TOO_LONG` | 503 / 429 / 413 | `docs/AI_ASSUMED.md`, `docs/VOICE_ASSUMED.md` |
 
@@ -1398,8 +2080,11 @@ For customers:
 - Unpaid Bachat Box transfers lapse at `payBy`.
 - Reservations are marked `no_show` an hour after the window.
 - From 5B:
-  - the next day's tiffins become scheduled orders at the cut-off;
-  - catering quotes expire;
+  - a tiffin day becomes a scheduled order at its cut-off;
+  - a paused subscription resumes after its last paused day, and a new period opens when one
+    ends;
+  - quotes past `validUntil` read as `expired`, and a confirmed event as `completed` once its day
+    has passed (worked out when read, not stored);
   - experiments end.
 
 ## 9. Demo data (the dummy API)
@@ -1416,7 +2101,11 @@ For customers:
 The other demo kitchens:
 - **Smash Lab** (`cloudkitchen@`) requires a packing photo.
 - **Ammi ka Khana** (`homekitchen@`) is a home kitchen.
-- **Nani ki Handi** (`nani@`) has 9 days of history, so it is still learning.
+- **Nani ki Handi** (`nani@`) has 9 days of history, so it is still learning. It offers two
+  tiffin plans (a weekday office lunch, a monthly dinner); Hamza (`hamza@`) has had the lunch for a
+  week.
+- **Biryani Bazaar** takes catering: Hamza has asked it to cater his sister's mehndi and it has
+  sent a first quote.
 
 City prices cover Lahore, Karachi and Islamabad for 8 weeks.
 

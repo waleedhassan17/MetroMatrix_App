@@ -77,7 +77,8 @@ describe('the preview', () => {
     expect(p.minOrder).toBe(500);
     expect(p.freeDeliveryOver).toBe(2500);
     expect(p.distanceKm).toBe(0.7);
-    expect(p.payment.available).toEqual({ cod: true, transfer: true, pay_at_pickup: false });
+    // `tiffin_plan` pays tiffin days only (Kitchen Intelligence): checkout never offers it.
+    expect(p.payment.available).toEqual({ cod: true, transfer: true, pay_at_pickup: false, tiffin_plan: false });
     expect(p.payment.codLimit).toBe(5000);
   });
 

@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════
 
 import type { SubType } from './auth';
-import type { PauseReason } from './kitchen';
+import type { PauseReason, TiffinPlanCard } from './kitchen';
 
 export type KitchenKind = Extract<SubType, 'restaurant' | 'home_kitchen' | 'cloud_kitchen'>;
 
@@ -576,6 +576,9 @@ export interface VendorPage extends VendorCard {
   ratingSummary: FoodRatingSummary | null;
   menu: MenuSection[];
   popular: DishCard[];
+  /** Kitchen Intelligence's additions (docs/API_KITCHEN_ASSUMED.md §5; TODO(API_KITCHEN)). */
+  tiffinPlans: TiffinPlanCard[];
+  catering: { open: boolean; minGuests: number; leadDays: number } | null;
 }
 
 export interface SheetOption {
@@ -632,7 +635,8 @@ export interface FoodSearchResult {
 // ─── Ordering: the bag, checkout, orders (customer and vendor) ─────────────
 export type FoodFulfilment = 'delivery' | 'pickup';
 /** Customers always pay the vendor directly. */
-export type FoodPaymentMethod = 'cod' | 'transfer' | 'pay_at_pickup';
+/** `tiffin_plan`: a tiffin day, paid with its period (Kitchen Intelligence; TODO(API_KITCHEN)). */
+export type FoodPaymentMethod = 'cod' | 'transfer' | 'pay_at_pickup' | 'tiffin_plan';
 export type FoodOrderStatus = 'placed' | 'accepted' | 'preparing' | 'ready' | 'on_the_way' | 'delivered' | 'picked_up' | 'rejected' | 'auto_rejected' | 'cancelled';
 export type FoodPaymentStatus = 'cod_pending' | 'unpaid' | 'awaiting_transfer' | 'proof_submitted' | 'paid' | 'void' | 'refund_due' | 'refunded';
 /** Where an assigned rider is with an order. */

@@ -248,12 +248,26 @@ export const ROUTES = {
   /** A home kitchen's Menu and Riders, pushed from More (they are tabs for the others). */
   VENDOR_MENU_PAGE: 'VendorMenuPage',
   VENDOR_RIDERS_PAGE: 'VendorRidersPage',
+  // Growth (5B): tiffin and catering
+  GROWTH_TIFFIN: 'GrowthTiffin',
+  GROWTH_TIFFIN_PLAN_FORM: 'GrowthTiffinPlanForm',
+  GROWTH_TIFFIN_SUBSCRIBERS: 'GrowthTiffinSubscribers',
+  GROWTH_CATERING: 'GrowthCatering',
+  GROWTH_CATERING_REQUEST: 'GrowthCateringRequest',
+  GROWTH_QUOTE: 'GrowthQuote',
 
   // ── Food: Bachat Box for customers (navigations-maps/FoodCustomer.ts) ──
   FOOD_SURPLUS_LIST: 'FoodSurplusList',
   FOOD_SURPLUS: 'FoodSurplus',
   FOOD_SURPLUS_RESERVED: 'FoodSurplusReserved',
   FOOD_SURPLUS_RESERVATIONS: 'FoodSurplusReservations',
+  // Tiffin and catering for customers (5B)
+  FOOD_TIFFIN_PLAN: 'FoodTiffinPlan',
+  FOOD_TIFFINS: 'FoodTiffins',
+  FOOD_TIFFIN: 'FoodTiffin',
+  FOOD_CATERING_FORM: 'FoodCateringForm',
+  FOOD_CATERING_REQUESTS: 'FoodCateringRequests',
+  FOOD_CATERING_REQUEST: 'FoodCateringRequest',
 
   // ── Food: the rider's app (navigations-maps/Rider.ts) ──
   RIDER_TABS: 'RiderTabs',

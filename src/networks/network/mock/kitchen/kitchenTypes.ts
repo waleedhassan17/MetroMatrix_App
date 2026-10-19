@@ -240,6 +240,138 @@ export interface MockAlias {
   key: string;
 }
 
+// ── Growth (5B): tiffin and catering ──
+export type MockMeal = 'breakfast' | 'lunch' | 'dinner';
+
+/** A tiffin plan: the same meal on set weekdays, paid per period. */
+export interface MockTiffinPlan {
+  id: string;
+  businessId: string;
+  name: string;
+  description: string | null;
+  meal: MockMeal;
+  /** ISO weekdays it is delivered (1 Monday … 7 Sunday). */
+  days: number[];
+  period: 'week' | 'month';
+  /** Rupees per period. */
+  price: number;
+  mode: 'delivery' | 'pickup';
+  /** "HH:mm", kitchen time. */
+  windowFrom: string;
+  windowTo: string;
+  capacity: number;
+  /** A day can be skipped until this many hours before its window. */
+  skipCutoffHours: number;
+  /** What is cooked on each weekday: dishes from the menu, or a note ("Daal, roti and salad"). */
+  rotation: { weekday: number; itemIds: string[]; note: string | null }[];
+  photoUrl: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export type MockTiffinStatus = 'pending' | 'active' | 'paused' | 'declined' | 'ended' | 'cancelled';
+
+export interface MockTiffinSub {
+  id: string;
+  code: string;
+  planId: string;
+  businessId: string;
+  userId: string;
+  status: MockTiffinStatus;
+  startDate: string;
+  /** The last delivery day once ended or cancelled. */
+  endDate: string | null;
+  address: Record<string, unknown> | null;
+  paymentMethod: 'transfer' | 'cash';
+  /** Paused from this day (inclusive) until resumed, or until `pausedUntil` (inclusive). */
+  pausedFrom: string | null;
+  pausedUntil: string | null;
+  declineReason: string | null;
+  endReason: string | null;
+  createdAt: string;
+  approvedAt: string | null;
+}
+
+/** One paid period of a subscription (a week, or four weeks). */
+export interface MockTiffinPeriod {
+  id: string;
+  subId: string;
+  businessId: string;
+  from: string;
+  to: string;
+  meals: number;
+  /** Meals skipped in the period before, taken off this one. */
+  credit: number;
+  amount: number;
+  paymentStatus: 'unpaid' | 'awaiting_transfer' | 'proof_submitted' | 'paid' | 'void';
+  payBy: string | null;
+  paymentRef: string | null;
+  paymentProofUrl: string | null;
+  paymentRejectedReason: string | null;
+  createdAt: string;
+}
+
+/** A day of a subscription that is no longer just "upcoming": skipped, or its order made. */
+export interface MockTiffinDay {
+  subId: string;
+  date: string;
+  state: 'skipped' | 'ordered';
+  orderId: string | null;
+  at: string;
+}
+
+export type MockCateringStatus = 'requested' | 'quoted' | 'accepted' | 'confirmed' | 'declined' | 'cancelled' | 'completed';
+
+export interface MockCateringQuote {
+  version: number;
+  lines: { itemId: string | null; name: string; qty: number; unitPrice: number; total: number }[];
+  subtotal: number;
+  deliveryFee: number;
+  total: number;
+  advancePct: number;
+  advance: number;
+  validUntil: string;
+  notes: string | null;
+  createdAt: string;
+}
+
+export interface MockCateringRequest {
+  id: string;
+  code: string;
+  businessId: string;
+  userId: string;
+  status: MockCateringStatus;
+  /** Kitchen-local date and "HH:mm". */
+  date: string;
+  time: string;
+  guests: number;
+  eventType: string;
+  dishes: { itemId: string | null; name: string; qty: number }[];
+  budget: number | null;
+  mode: 'delivery' | 'pickup' | 'on_site';
+  address: Record<string, unknown> | null;
+  notes: string | null;
+  quotes: MockCateringQuote[];
+  acceptedVersion: number | null;
+  advanceStatus: 'none' | 'awaiting_transfer' | 'proof_submitted' | 'paid';
+  advanceRef: string | null;
+  advanceProofUrl: string | null;
+  advanceRejectedReason: string | null;
+  declineReason: string | null;
+  cancelReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Whether a kitchen takes catering requests, and its limits. */
+export interface MockCateringSettings {
+  businessId: string;
+  open: boolean;
+  minGuests: number;
+  /** Days ahead an event can be asked for, at least. */
+  leadDays: number;
+}
+
 export interface MockKitchen {
   ingredients: MockIngredient[];
   batches: MockBatch[];
@@ -269,7 +401,13 @@ export interface MockKitchen {
   priceRefs: { key: string; name: string; city: string; week: string; costPerBase: number }[];
   /** Voice stand-in: the next demo phrase per context. */
   voiceCursor: Record<string, number>;
-  /** Reserve's Idempotency-Key → the reservation it made. */
+  /** Reserve's and subscribe's Idempotency-Key → what it made. */
   idempotency: Record<string, string>;
+  tiffinPlans: MockTiffinPlan[];
+  tiffinSubs: MockTiffinSub[];
+  tiffinPeriods: MockTiffinPeriod[];
+  tiffinDays: MockTiffinDay[];
+  catering: MockCateringRequest[];
+  cateringSettings: MockCateringSettings[];
   seq: number;
 }

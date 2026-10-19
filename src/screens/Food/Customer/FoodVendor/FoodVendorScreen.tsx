@@ -20,7 +20,8 @@ import { useBack } from '@hooks/useBack';
 import { categoryWindowLabel } from '@models/food/menuModel';
 import { cuisineLine, distanceLabel, feeLabel, ratingLabel } from '@models/food/discoveryModel';
 import { ServiceScope, StoreBrandScope, useStyles, useTheme, type Theme } from '@theme/index';
-import { AppText, Button, Card, ChoiceChip, Divider, IconButton, IonIcon, InlineNotice, ListRow, Sheet, Skeleton, SkeletonLines, TextAction } from '@custom/index';
+import { AppText, Button, Card, ChoiceChip, Divider, IconButton, IonIcon, InlineNotice, ListRow, Sheet, Skeleton, SkeletonLines, TextAction, TiffinPlanCard } from '@custom/index';
+import { planCardData } from '@models/kitchen/tiffinModel';
 import { MenuDishRow } from '@custom/food/MenuDishRow';
 import { BagBar } from '@custom/food/BagBar';
 import { FoodReviewItem } from '@custom/food/FoodReviewItem';
@@ -61,6 +62,8 @@ const makeStyles = ({ colors, space, size, radius, gutter, elevation }: Theme) =
     padded: { paddingHorizontal: gutter, gap: space.s8 },
     facts: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8, paddingHorizontal: gutter },
     fact: { flexDirection: 'row', alignItems: 'center', gap: space.s4, paddingHorizontal: space.s12, paddingVertical: space.s8, borderRadius: radius.pill, backgroundColor: colors.surfaceSunk },
+    dawatRow: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
+    dawat: { flex: 1, gap: space.s4, minWidth: 0 },
     rating: { flexDirection: 'row', alignItems: 'center', gap: space.s4 },
     rail: { paddingHorizontal: gutter, gap: space.s12 },
     popular: { width: size.railCard, gap: space.s4 },
@@ -297,6 +300,38 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
             <AppText variant="small" tone="accentDeep">{`Free delivery on orders over ${formatPKR(page.freeDeliveryOver)}`}</AppText>
           ) : null}
         </View>
+        {/* Tiffin plans and catering (Kitchen Intelligence, 5B) */}
+        {page.tiffinPlans.length ? (
+          <View style={styles.padded}>
+            <AppText variant="sectionTitle">Tiffin plans</AppText>
+            <AppText variant="small" tone="muted">
+              The same meal on set days, paid to the kitchen by the week or month
+            </AppText>
+          </View>
+        ) : null}
+        {page.tiffinPlans.length ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
+            {page.tiffinPlans.map(t => (
+              <TiffinPlanCard key={t.id} plan={planCardData(t, page.name)} rail onPress={() => navigation.navigate('FoodTiffinPlan', { id: t.id })} />
+            ))}
+          </ScrollView>
+        ) : null}
+        {page.catering?.open ? (
+          <View style={styles.padded}>
+            <Card onPress={() => navigation.navigate('FoodCateringForm', { slug: page.slug, name: page.name })} accessibilityLabel={`Plan a dawat with ${page.name}`}>
+              <View style={styles.dawatRow}>
+                <IonIcon name="people-outline" size="md" color={colors.inkMuted} />
+                <View style={styles.dawat}>
+                  <AppText variant="title">Plan a dawat</AppText>
+                  <AppText variant="small" tone="muted">
+                    {`Catering from ${page.catering.minGuests} guests, ${page.catering.leadDays} days ahead. Ask for a quote.`}
+                  </AppText>
+                </View>
+                <IonIcon name="chevron-forward" size="md" color={colors.inkMuted} />
+              </View>
+            </Card>
+          </View>
+        ) : null}
         {page.deals.length ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
             {page.deals.map(d => (

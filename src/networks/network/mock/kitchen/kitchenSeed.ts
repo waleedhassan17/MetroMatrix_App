@@ -15,7 +15,7 @@
 // Karahi over the food-cost target and five dishes without a recipe card.
 
 import type { BaseUnit, CustomUnit } from '../../../../utils/units';
-import { addDays, dateInZone, weekStart, zonedToIso } from '../../../../utils/healthTime';
+import { addDays, dateInZone, isoWeekday, weekStart, zonedToIso } from '../../../../utils/healthTime';
 import { FOOD_IMG } from '../food/foodImages';
 import type {
   MockAlias,
@@ -549,6 +549,167 @@ const seedSales = (dishes: SeedDish[], today: string): MockDailySale[] => {
 export const ingredientId = (short: string, key: string) => `ing_${short}_${key}`;
 
 /**
+ * Tiffin and catering (5B): Nani ki Handi's weekday office lunch and its
+ * monthly dinner; Hamza has had the lunch tiffin for a week (this week
+ * paid); he has also asked Biryani Bazaar to cater his sister's mehndi,
+ * and it has sent a first quote. Ayesha has neither, for the walks.
+ */
+const seedGrowth = (now: number, today: string): Pick<MockKitchen, 'tiffinPlans' | 'tiffinSubs' | 'tiffinPeriods' | 'tiffinDays' | 'catering' | 'cateringSettings'> => {
+  const at = new Date(now).toISOString();
+  const lunch = {
+    id: 'tp_nani_lunch',
+    businessId: 'b_nani',
+    name: 'Office lunch tiffin',
+    description: 'Home-cooked lunch on weekdays, in a steel tiffin you keep. Roti and salad with every meal.',
+    meal: 'lunch' as const,
+    days: [1, 2, 3, 4, 5],
+    period: 'week' as const,
+    price: 2300,
+    mode: 'delivery' as const,
+    windowFrom: '12:30',
+    windowTo: '13:30',
+    capacity: 25,
+    skipCutoffHours: 14,
+    rotation: [
+      { weekday: 1, itemIds: ['mi_nani_daal'], note: null },
+      { weekday: 2, itemIds: ['mi_nani_qorma'], note: null },
+      { weekday: 3, itemIds: ['mi_nani_daal'], note: null },
+      { weekday: 4, itemIds: [], note: 'Aloo gosht with 2 roti' },
+      { weekday: 5, itemIds: ['mi_nani_pulao'], note: null },
+    ],
+    photoUrl: FOOD_IMG.thali,
+    isActive: true,
+    createdAt: iso(60 * DAY),
+  };
+  const dinner = {
+    id: 'tp_nani_dinner',
+    businessId: 'b_nani',
+    name: 'Ghar ka khana, dinner',
+    description: 'Dinner six days a week, the way Nani makes it. Four weeks at a time.',
+    meal: 'dinner' as const,
+    days: [1, 2, 3, 4, 5, 6],
+    period: 'month' as const,
+    price: 10800,
+    mode: 'delivery' as const,
+    windowFrom: '19:30',
+    windowTo: '20:30',
+    capacity: 15,
+    skipCutoffHours: 6,
+    rotation: [
+      { weekday: 1, itemIds: ['mi_nani_qorma'], note: null },
+      { weekday: 2, itemIds: ['mi_nani_daal'], note: null },
+      { weekday: 3, itemIds: ['mi_nani_qorma'], note: null },
+      { weekday: 4, itemIds: ['mi_nani_daal'], note: null },
+      { weekday: 5, itemIds: ['mi_nani_pulao'], note: null },
+      { weekday: 6, itemIds: [], note: 'Sabzi, daal and roti' },
+    ],
+    photoUrl: FOOD_IMG.curry,
+    isActive: true,
+    createdAt: iso(5 * DAY),
+  };
+  // Hamza's lunch tiffin: started last Monday (or today, if today is Monday), this week paid.
+  const start = addDays(today, -(isoWeekday(today) - 1));
+  const sub = {
+    id: 'ts_seed_hamza',
+    code: 'TF-HMZ4K2',
+    planId: lunch.id,
+    businessId: lunch.businessId,
+    userId: 'u_shopper',
+    status: 'active' as const,
+    startDate: start,
+    endDate: null,
+    address: { label: 'work', fullName: 'Hamza Qureshi', phone: '+923451234567', city: 'Lahore', area: 'Gulberg III', line1: 'Office 4, Siddiq Trade Centre, Main Boulevard', landmark: null, lat: 31.5137, lng: 74.3502 },
+    paymentMethod: 'transfer' as const,
+    pausedFrom: null,
+    pausedUntil: null,
+    declineReason: null,
+    endReason: null,
+    createdAt: iso(9 * DAY),
+    approvedAt: iso(8 * DAY),
+  };
+  const period = {
+    id: 'tpd_seed_hamza_1',
+    subId: sub.id,
+    businessId: sub.businessId,
+    from: start,
+    to: addDays(start, 6),
+    meals: 5,
+    credit: 0,
+    amount: 2300,
+    paymentStatus: 'paid' as const,
+    payBy: null,
+    paymentRef: 'TID55120934',
+    paymentProofUrl: null,
+    paymentRejectedReason: null,
+    createdAt: iso(8 * DAY),
+  };
+  const mehndi = addDays(today, 12);
+  const catering = {
+    id: 'ct_seed_hamza',
+    code: 'CT-MHD7Q4',
+    businessId: 'b_resto',
+    userId: 'u_shopper',
+    status: 'quoted' as const,
+    date: mehndi,
+    time: '20:00',
+    guests: 80,
+    eventType: 'mehndi',
+    dishes: [
+      { itemId: 'mi_chicken_biryani', name: 'Chicken Biryani', qty: 80 },
+      { itemId: 'mi_seekh', name: 'Seekh Kebab (4 pcs)', qty: 40 },
+      { itemId: null, name: 'Kheer', qty: 80 },
+    ],
+    budget: 70000,
+    mode: 'delivery' as const,
+    address: { label: 'home', fullName: 'Hamza Qureshi', phone: '+923451234567', city: 'Lahore', area: 'DHA Phase 5', line1: 'House 88, Street 9, DHA Phase 5', landmark: null, lat: 31.4697, lng: 74.4089 },
+    notes: 'Outdoor, about 80 guests. Please send serving staff if you can.',
+    quotes: [
+      {
+        version: 1,
+        lines: [
+          { itemId: 'mi_chicken_biryani', name: 'Chicken Biryani', qty: 80, unitPrice: 520, total: 41600 },
+          { itemId: 'mi_seekh', name: 'Seekh Kebab (4 pcs)', qty: 40, unitPrice: 480, total: 19200 },
+          { itemId: null, name: 'Kheer (bowl)', qty: 80, unitPrice: 120, total: 9600 },
+        ],
+        subtotal: 70400,
+        deliveryFee: 2500,
+        total: 72900,
+        advancePct: 30,
+        advance: 21870,
+        validUntil: zonedToIso(addDays(today, 5), '23:59', TZ),
+        notes: 'Two serving staff included. Disposable plates extra if needed.',
+        createdAt: iso(DAY),
+      },
+    ],
+    acceptedVersion: null,
+    advanceStatus: 'none' as const,
+    advanceRef: null,
+    advanceProofUrl: null,
+    advanceRejectedReason: null,
+    declineReason: null,
+    cancelReason: null,
+    createdAt: iso(2 * DAY),
+    updatedAt: iso(DAY),
+  };
+  return {
+    tiffinPlans: [lunch, dinner],
+    tiffinSubs: [sub],
+    tiffinPeriods: [period],
+    // Its weekdays so far were delivered (the seed has no orders for them).
+    tiffinDays: Array.from({ length: Math.max(0, isoWeekday(today) - 1) }, (_, n) => addDays(start, n))
+      .filter(d => lunch.days.includes(isoWeekday(d)))
+      .map(date => ({ subId: sub.id, date, state: 'ordered' as const, orderId: null, at })),
+    catering: [catering],
+    cateringSettings: [
+      { businessId: 'b_resto', open: true, minGuests: 20, leadDays: 2 },
+      { businessId: 'b_homek', open: false, minGuests: 10, leadDays: 3 },
+      { businessId: 'b_nani', open: true, minGuests: 10, leadDays: 3 },
+      { businessId: 'b_cloud', open: false, minGuests: 25, leadDays: 2 },
+    ],
+  };
+};
+
+/**
  * Two Bachat Boxes up for tonight when the dummy database is made, so the
  * customer's rail has something to show: pickup 9 to 11 PM (or, later in the
  * evening, from 15 minutes on, until 1:30 AM at the latest).
@@ -576,7 +737,7 @@ const seedBoxes = (now: number, today: string): MockKitchen['boxes'] => {
   });
   return [
     box('sb_seed_resto', 'b_resto', 'Chef’s mix box', 'Some of today’s biryani, karahi and naan', 'biryani', 1200, 450, 4),
-    box('sb_seed_homek', 'b_homek', 'Tonight’s handi box', 'Today’s salan with roti or rice', 'curry', 800, 300, 2),
+    box('sb_seed_nani', 'b_nani', 'Tonight’s handi box', 'Today’s salan with roti or rice', 'curry', 800, 300, 2),
   ];
 };
 
@@ -721,6 +882,7 @@ export const seedKitchen = (dishes: SeedDish[], now: number = Date.now()): MockK
     ],
     donations: [{ id: 'dn_seed1', businessId: 'b_resto', at: iso(3 * DAY), meals: 12, to: 'Edhi centre, Gulberg', note: null }],
     boxes: seedBoxes(now, today),
+    ...seedGrowth(now, today),
     reservations: [],
     pauses: [],
     orders: [],

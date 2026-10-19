@@ -64,6 +64,16 @@ export const insightCardSerializer = (raw: unknown): InsightCard | null => {
 
 export const insightCardsSerializer = (raw: unknown): InsightCard[] => list(isObject(raw) ? raw.items : raw, insightCardSerializer).slice(0, 5);
 
+const growthSerializer = (raw: unknown): KitchenSummary['growth'] => {
+  const g = isObject(raw) ? raw : {};
+  const t = isObject(g.tiffin) ? g.tiffin : {};
+  const c = isObject(g.catering) ? g.catering : {};
+  return {
+    tiffin: { plans: count(t.plans), active: count(t.active), pending: count(t.pending), tomorrow: count(t.tomorrow) },
+    catering: { new: count(c.new), upcoming: count(c.upcoming) },
+  };
+};
+
 export const kitchenSummarySerializer = (raw: unknown): KitchenSummary | null => {
   if (!isObject(raw)) return null;
   const s = isObject(raw.stock) ? raw.stock : {};
@@ -78,6 +88,7 @@ export const kitchenSummarySerializer = (raw: unknown): KitchenSummary | null =>
     purchases: { weekTotal: count(p.weekTotal), weekCount: count(p.weekCount) },
     forecast: { date: dateOrNull(f.date) ?? '', dishes: count(f.dishes), orders: count(f.orders), learning: bool(f.learning) },
     waste: { weekCost: count(w.weekCost), mealsRescued: count(w.mealsRescued) },
+    growth: growthSerializer(raw.growth),
   };
 };
 

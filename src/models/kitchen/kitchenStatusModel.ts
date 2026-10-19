@@ -9,6 +9,14 @@
 
 import type {
   BoxStatus,
+  CateringMode,
+  CateringStatus,
+  EventType,
+  Meal,
+  QuoteState,
+  TiffinDayState,
+  TiffinPayMethod,
+  TiffinStatus,
   IngredientCategory,
   InsightSeverity,
   MovementKind,
@@ -132,3 +140,87 @@ export const BOX_PAYMENT_STATUS: Partial<Record<FoodPaymentStatus, { label: stri
 };
 
 export const boxPaymentStatus = (s: FoodPaymentStatus) => BOX_PAYMENT_STATUS[s] ?? { label: 'Payment', vendorLabel: 'Payment', tone: 'neutral' as KitchenTone };
+
+// ── Tiffin (5B) ──
+export const MEAL_LABEL: Record<Meal, string> = { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner' };
+
+export const WEEKDAY_SHORT = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+export const WEEKDAY_LONG = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+export const TIFFIN_STATUS: Record<TiffinStatus, { label: string; vendorLabel: string; tone: KitchenTone }> = {
+  pending: { label: 'Waiting for the kitchen', vendorLabel: 'To approve', tone: 'warning' },
+  active: { label: 'Active', vendorLabel: 'Active', tone: 'success' },
+  paused: { label: 'Paused', vendorLabel: 'Paused', tone: 'neutral' },
+  declined: { label: 'Not accepted', vendorLabel: 'Declined', tone: 'neutral' },
+  ended: { label: 'Ended', vendorLabel: 'Ended', tone: 'neutral' },
+  cancelled: { label: 'Cancelled', vendorLabel: 'Cancelled', tone: 'neutral' },
+};
+
+export const TIFFIN_DAY: Record<TiffinDayState, { label: string; tone: KitchenTone }> = {
+  before_start: { label: 'Before your start', tone: 'neutral' },
+  off: { label: 'No delivery', tone: 'neutral' },
+  pending: { label: 'Once approved', tone: 'neutral' },
+  upcoming: { label: 'Coming', tone: 'accent' },
+  skipped: { label: 'Skipped', tone: 'neutral' },
+  paused: { label: 'Paused', tone: 'neutral' },
+  ordered: { label: 'Being made', tone: 'accent' },
+  delivered: { label: 'Delivered', tone: 'success' },
+  cancelled: { label: 'Didn’t go out', tone: 'warning' },
+  ended: { label: 'Ended', tone: 'neutral' },
+  none: { label: 'No delivery', tone: 'neutral' },
+};
+
+export const TIFFIN_PAY: Record<TiffinPayMethod, { label: string; hint: string }> = {
+  transfer: { label: 'Bank or wallet transfer', hint: 'Each period, send it to the kitchen’s own account and share the receipt.' },
+  cash: { label: 'Cash', hint: 'Pay the kitchen in cash with the first delivery of each period.' },
+};
+
+// ── Catering (5B) ──
+export const EVENT_TYPE_LABEL: Record<EventType, string> = {
+  mehndi: 'Mehndi',
+  baraat: 'Baraat',
+  walima: 'Walima',
+  birthday: 'Birthday',
+  aqiqah: 'Aqiqah',
+  milad: 'Milad',
+  quran_khwani: 'Quran khwani',
+  office: 'Office event',
+  family: 'Family dinner',
+  other: 'Something else',
+};
+
+export const EVENT_TYPES = Object.keys(EVENT_TYPE_LABEL) as EventType[];
+
+export const CATERING_MODE: Record<CateringMode, { label: string; hint: string }> = {
+  delivery: { label: 'Delivered', hint: 'The kitchen brings it to the venue.' },
+  pickup: { label: 'Collected', hint: 'You collect it from the kitchen.' },
+  on_site: { label: 'Cooked on site', hint: 'The kitchen cooks and serves at the venue.' },
+};
+
+export const CATERING_STATUS: Record<CateringStatus, { label: string; vendorLabel: string; tone: KitchenTone }> = {
+  requested: { label: 'Waiting for a quote', vendorLabel: 'New', tone: 'warning' },
+  quoted: { label: 'Quote to look at', vendorLabel: 'Quoted', tone: 'accent' },
+  accepted: { label: 'Advance to pay', vendorLabel: 'Accepted, advance due', tone: 'warning' },
+  confirmed: { label: 'Confirmed', vendorLabel: 'Confirmed', tone: 'success' },
+  declined: { label: 'The kitchen can’t take it', vendorLabel: 'Declined', tone: 'neutral' },
+  cancelled: { label: 'Cancelled', vendorLabel: 'Cancelled', tone: 'neutral' },
+  completed: { label: 'Done', vendorLabel: 'Done', tone: 'neutral' },
+};
+
+export const QUOTE_STATE: Record<QuoteState, { label: string; tone: KitchenTone }> = {
+  current: { label: 'Latest', tone: 'accent' },
+  outdated: { label: 'Replaced by a newer quote', tone: 'neutral' },
+  expired: { label: 'Expired', tone: 'neutral' },
+  accepted: { label: 'Accepted', tone: 'success' },
+};
+
+/** A tiffin period's payment, to the customer and the kitchen (paid to the kitchen directly). */
+export const TIFFIN_PERIOD_PAYMENT: Partial<Record<FoodPaymentStatus, { label: string; vendorLabel: string; tone: KitchenTone }>> = {
+  unpaid: { label: 'Cash with the first delivery', vendorLabel: 'Cash to collect', tone: 'neutral' },
+  awaiting_transfer: { label: 'Transfer due', vendorLabel: 'Waiting for transfer', tone: 'warning' },
+  proof_submitted: { label: 'Receipt sent, waiting for the kitchen', vendorLabel: 'Check the transfer', tone: 'warning' },
+  paid: { label: 'Paid', vendorLabel: 'Paid', tone: 'success' },
+  void: { label: 'Nothing to pay', vendorLabel: 'Nothing to pay', tone: 'neutral' },
+};
+
+export const tiffinPaymentStatus = (s: FoodPaymentStatus) => TIFFIN_PERIOD_PAYMENT[s] ?? { label: 'Payment', vendorLabel: 'Payment', tone: 'neutral' as KitchenTone };

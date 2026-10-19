@@ -80,6 +80,26 @@ const tiles = (s: KitchenSummary, go: (name: string, params?: object) => void): 
     hint: `wasted this week · ${s.waste.mealsRescued} ${s.waste.mealsRescued === 1 ? 'meal' : 'meals'} rescued`,
     onPress: () => go('KitchenWaste'),
   },
+  {
+    key: 'tiffin',
+    icon: 'calendar-outline',
+    tint: 'amber',
+    label: 'Tiffin',
+    value: s.growth.tiffin.plans ? `${s.growth.tiffin.active}` : 'Start one',
+    hint: s.growth.tiffin.plans
+      ? `subscribers · ${s.growth.tiffin.tomorrow} tomorrow${s.growth.tiffin.pending ? ` · ${s.growth.tiffin.pending} to approve` : ''}`
+      : 'weekly or monthly meals, paid ahead',
+    onPress: () => go('GrowthTiffin'),
+  },
+  {
+    key: 'catering',
+    icon: 'people-outline',
+    tint: 'violet',
+    label: 'Catering',
+    value: s.growth.catering.new ? `${s.growth.catering.new} new` : `${s.growth.catering.upcoming}`,
+    hint: s.growth.catering.new ? `requests to quote · ${s.growth.catering.upcoming} coming up` : 'events coming up',
+    onPress: () => go('GrowthCatering'),
+  },
 ];
 
 const KitchenHubScreen: React.FC = () => (

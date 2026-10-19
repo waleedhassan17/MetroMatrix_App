@@ -412,6 +412,10 @@ const extraVendors = (): MockFoodVendor[] => [
     phone: '+923001110010',
     hours: Array.from({ length: 6 }, (_, i) => ({ weekday: i + 1, opensAt: '12:00', closesAt: '21:00' })),
     feeBands: [{ fromKm: 0, toKm: 5, fee: 100, minOrder: 500 }],
+    // Tiffin periods and Bachat Boxes can be paid to it directly (Kitchen Intelligence).
+    accounts: [
+      { id: 'va_nani_ep', kind: 'easypaisa', accountTitle: 'Shazia Parveen', accountNumber: '+923001110010', bankName: null, isActive: true, createdAt: iso(30 * DAY) },
+    ],
   }),
 ];
 

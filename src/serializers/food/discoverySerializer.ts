@@ -25,6 +25,7 @@ import { arr, bool, isObject, num, str, strOrNull } from '../serializerUtils';
 import { foodCuisinesSerializer } from './vendorSerializer';
 import { ITEM_TAGS } from './menuSerializer';
 import { foodHomeBannersSerializer, ratingSummarySerializer } from './reviewSerializer';
+import { tiffinPlanCardSerializer } from '../kitchen/growthSerializer';
 
 const compact = <T>(xs: (T | null)[]): T[] => xs.filter((x): x is T => x !== null);
 const intOrNull = (v: unknown): number | null => (v === null || v === undefined || !Number.isFinite(Number(v)) ? null : Math.round(Number(v)));
@@ -171,6 +172,11 @@ export const vendorPageSerializer = (raw: unknown): VendorPage | null => {
     ratingSummary: ratingSummarySerializer(raw.ratingSummary),
     menu: compact(arr(raw.menu).map(sectionSerializer)),
     popular: compact(arr(raw.popular).map(dishCardSerializer)),
+    // Kitchen Intelligence's additions (TODO(API_KITCHEN)).
+    tiffinPlans: compact(arr(raw.tiffinPlans).map(tiffinPlanCardSerializer)),
+    catering: isObject(raw.catering)
+      ? { open: bool(raw.catering.open), minGuests: Math.max(0, Math.round(num(raw.catering.minGuests))), leadDays: Math.max(0, Math.round(num(raw.catering.leadDays))) }
+      : null,
   };
 };
 

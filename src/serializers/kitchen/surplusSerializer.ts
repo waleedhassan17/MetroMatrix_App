@@ -12,26 +12,18 @@ import type {
   SurplusReservation,
   SurplusSuggestion,
 } from '../../types/kitchen';
-import type { FoodPaymentStatus, FoodTransferAccount } from '../../types/food';
 import { arr, bool, enumList, isObject, num, oneOf, str, strOrNull } from '../serializerUtils';
-import { count, list, numOrNull } from './kitchenCommon';
+import { PAY_STATUSES, count, list, numOrNull, transferAccountSerializer } from './kitchenCommon';
 
 const BOX_STATUSES: readonly BoxStatus[] = ['live', 'sold_out', 'ended', 'cancelled'];
 const RES_STATUSES: readonly ReservationStatus[] = ['reserved', 'collected', 'no_show', 'cancelled'];
 const METHODS: readonly BoxPaymentMethod[] = ['pay_at_pickup', 'transfer'];
-const PAY_STATUSES: readonly FoodPaymentStatus[] = ['cod_pending', 'unpaid', 'awaiting_transfer', 'proof_submitted', 'paid', 'void', 'refund_due', 'refunded'];
-const ACCOUNT_KINDS = ['raast', 'jazzcash', 'easypaisa', 'bank'] as const;
 
 const point = (raw: unknown) => {
   const p = isObject(raw) ? raw : {};
   return { addressLine: strOrNull(p.addressLine), area: strOrNull(p.area), city: strOrNull(p.city), lat: numOrNull(p.lat), lng: numOrNull(p.lng) };
 };
 
-// The Food order's own account words (types/food FoodTransferAccount).
-const accountSerializer = (raw: unknown): FoodTransferAccount | null =>
-  isObject(raw) && str(raw.accountNumber)
-    ? { kind: oneOf(raw.kind, ACCOUNT_KINDS, 'bank'), title: str(raw.accountTitle), number: str(raw.accountNumber), bankName: strOrNull(raw.bankName) }
-    : null;
 
 export const surplusBoxSerializer = (raw: unknown): SurplusBox | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
@@ -75,7 +67,7 @@ export const reservationSerializer = (raw: unknown): SurplusReservation | null =
       method: oneOf(pay.method, METHODS, 'pay_at_pickup'),
       status: oneOf(pay.status, PAY_STATUSES, 'unpaid'),
       payBy: strOrNull(pay.payBy),
-      accounts: Array.isArray(pay.accounts) ? list(pay.accounts, accountSerializer) : null,
+      accounts: Array.isArray(pay.accounts) ? list(pay.accounts, transferAccountSerializer) : null,
       reference: strOrNull(pay.reference),
       proofUrl: strOrNull(pay.proofUrl),
       rejectedReason: strOrNull(pay.rejectedReason),

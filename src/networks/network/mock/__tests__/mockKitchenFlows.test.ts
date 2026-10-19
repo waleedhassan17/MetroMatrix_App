@@ -25,6 +25,18 @@ import { getAiUsage, scanReceipt } from '../../../kitchen/kitchenAiNetwork';
 import { getKitchenHub, snoozeInsightCard } from '../../../kitchen/insightsCardsNetwork';
 import { interpretVoice } from '../../../ai/voiceNetwork';
 import { listSurplusNearby, reserveSurplus } from '../../../food/surplusNetwork';
+import { listBoard } from '../../../food/vendor/ordersNetwork';
+import {
+  createTiffinPlan,
+  getMyTiffin,
+  getTiffinCalendar,
+  getTiffinTomorrow,
+  listTiffinSubscriptions,
+  moveSubscriber,
+  skipTiffinDay,
+  subscribeTiffin,
+} from '../../../foodGrowth/tiffinNetwork';
+import { acceptQuote, confirmAdvance, getMyCatering, requestCatering, sendQuote, submitAdvanceProof } from '../../../foodGrowth/cateringNetwork';
 import { api, AuthError } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import { MOCK, SEED_PASSWORD, STAFF_PASSWORD } from '../mockConfig';
@@ -322,6 +334,133 @@ describe('Bachat Box', () => {
 
   it('refuses a box that isn’t a saving', async () => {
     expect((await failure(createBox({ ...box(), price: 1100 }))).code).toBe('VALIDATION_FAILED');
+  });
+});
+
+describe('tiffin', () => {
+  const asNani = () => as('nani@metromatrix.app');
+
+  it('puts a new plan on the kitchen’s page (QA 25)', async () => {
+    await asNani();
+    const p = await createTiffinPlan({
+      name: 'Breakfast paratha box',
+      meal: 'breakfast',
+      days: [1, 2, 3, 4, 5, 6],
+      period: 'week',
+      price: 1800,
+      mode: 'pickup',
+      window: { from: '08:00', to: '09:30' },
+      capacity: 10,
+      skipCutoffHours: 10,
+      rotation: [1, 2, 3, 4, 5, 6].map(weekday => ({ weekday, itemIds: [], note: 'Aloo paratha, omelette and chai' })),
+    });
+    expect(p).toMatchObject({ perMeal: 300, mealsPerPeriod: 6, seatsLeft: 10 });
+    await asCustomer();
+    const page = await getVendorPage('nani-ki-handi', GULBERG);
+    expect(page.tiffinPlans.map(x => x.name)).toEqual(expect.arrayContaining(['Office lunch tiffin', 'Breakfast paratha box']));
+    expect(page.catering).toMatchObject({ open: true });
+  });
+
+  it('starts pending, is approved, and the calendar shows the deliveries (QA 26)', async () => {
+    await asCustomer();
+    const s = await subscribeTiffin('tp_nani_lunch', { startDate: '2026-10-16', addressId: 'ad_customer_home', paymentMethod: 'transfer' }, key());
+    expect(s).toMatchObject({ status: 'pending', period: null });
+    await as('nani@metromatrix.app');
+    expect((await listTiffinSubscriptions('pending')).items.map(x => x.code)).toContain(s.code);
+    const a = await moveSubscriber(s.code, { kind: 'approve' });
+    expect(a).toMatchObject({ status: 'active', period: { from: '2026-10-16', to: '2026-10-22', amount: 2300, payment: { status: 'awaiting_transfer' } } });
+    await asCustomer();
+    const cal = await getTiffinCalendar(s.code, '2026-10');
+    const state = (d: string) => cal.days.find(x => x.date === d)!.state;
+    expect([state('2026-10-15'), state('2026-10-16'), state('2026-10-17'), state('2026-10-19')]).toEqual(['before_start', 'upcoming', 'off', 'upcoming']);
+    expect(cal.days.find(x => x.date === '2026-10-16')!.dishes).toEqual(['Chicken pulao']);
+  });
+
+  it('skips a day before its cut-off, not after, and takes it off the next period (QA 27)', async () => {
+    await asCustomer();
+    const s = await subscribeTiffin('tp_nani_lunch', { startDate: '2026-10-16', addressId: 'ad_customer_home', paymentMethod: 'cash' }, key());
+    await as('nani@metromatrix.app');
+    await moveSubscriber(s.code, { kind: 'approve' });
+    await asCustomer();
+    expect(await skipTiffinDay(s.code, '2026-10-19', true)).toMatchObject({ state: 'skipped', canUnskip: true });
+    // Thursday 11 PM: Friday's cut-off (10:30 PM) has passed.
+    jest.setSystemTime(T0 + 8 * 60 * MINUTE);
+    const err = await failure(skipTiffinDay(s.code, '2026-10-16', true));
+    expect(err.code).toBe('TIFFIN_SKIP_CLOSED');
+    expect(err.details).toMatchObject({ cutoffAt: '2026-10-15T17:30:00.000Z' });
+    const day = (await getTiffinCalendar(s.code, '2026-10')).days.find(x => x.date === '2026-10-16')!;
+    expect(day).toMatchObject({ canSkip: false, state: 'ordered' });
+    // The next week's period is Rs 460 less for the skipped Monday.
+    jest.setSystemTime(Date.parse('2026-10-23T03:00:00Z'));
+    expect((await getMyTiffin(s.code)).period).toMatchObject({ from: '2026-10-23', credit: 1, amount: 1840 });
+  });
+
+  it('makes tomorrow’s tiffins scheduled orders on the board at the cut-off (QA 28)', async () => {
+    await asCustomer();
+    const s = await subscribeTiffin('tp_nani_lunch', { startDate: '2026-10-16', addressId: 'ad_customer_home', paymentMethod: 'transfer' }, key());
+    await as('nani@metromatrix.app');
+    await moveSubscriber(s.code, { kind: 'approve' });
+    expect((await getTiffinTomorrow()).plans[0]).toMatchObject({ name: 'Office lunch tiffin', count: 2, dishes: ['Chicken pulao'] });
+    const before = (await listBoard('active')).items.filter(c => c.origin.kind === 'tiffin');
+    expect(before).toHaveLength(0);
+    jest.setSystemTime(T0 + 8 * 60 * MINUTE);
+    const cards = (await listBoard('active')).items.filter(c => c.origin.kind === 'tiffin');
+    expect(cards.map(c => c.origin.ref).sort()).toEqual([s.code, 'TF-HMZ4K2'].sort());
+    expect(cards[0]).toMatchObject({ status: 'accepted', scheduledFor: '2026-10-16T07:30:00.000Z', payment: { method: 'tiffin_plan', status: 'paid' } });
+  });
+});
+
+describe('catering', () => {
+  const request = () =>
+    requestCatering({
+      vendorId: 'fb_resto',
+      date: '2026-10-31',
+      time: '19:30',
+      guests: 60,
+      eventType: 'aqiqah',
+      dishes: [{ itemId: 'mi_chicken_biryani', qty: 60 }, { name: 'Zarda', qty: 60 }],
+      budget: 45000,
+      mode: 'delivery',
+      addressId: 'ad_customer_home',
+    });
+  const quote = (unitPrice: number) => ({
+    lines: [
+      { itemId: 'mi_chicken_biryani', qty: 60, unitPrice },
+      { name: 'Zarda', qty: 60, unitPrice: 110 },
+    ],
+    deliveryFee: 1500,
+    advancePct: 30,
+    validUntil: '2026-10-22T18:59:00.000Z',
+  });
+
+  it('goes request → quote → accept → advance → confirmed, and keeps every version (QA 29, 31)', async () => {
+    await asCustomer();
+    const r = await request();
+    expect(r).toMatchObject({ status: 'requested', canAccept: false });
+    await asVendor();
+    const q = await sendQuote(r.code, quote(520));
+    expect(q).toMatchObject({ status: 'quoted', quotes: [{ version: 1, total: 39300, advance: 11790, state: 'current' }] });
+    await asCustomer();
+    const a = await acceptQuote(r.code, 1);
+    expect(a).toMatchObject({ status: 'accepted', acceptedVersion: 1, advance: { amount: 11790, status: 'awaiting_transfer' }, balance: 27510 });
+    expect((await submitAdvanceProof(r.code, { transactionId: 'IBFT-77120', imageUrl: null })).advance).toMatchObject({ status: 'proof_submitted', reference: 'IBFT-77120' });
+    await asVendor();
+    expect(await confirmAdvance(r.code)).toMatchObject({ status: 'confirmed', advance: { status: 'paid' } });
+  });
+
+  it('refuses an outdated quote and an expired one (QA 30)', async () => {
+    await asCustomer();
+    const r = await request();
+    await asVendor();
+    await sendQuote(r.code, quote(520));
+    await sendQuote(r.code, quote(480));
+    await asCustomer();
+    const outdated = await failure(acceptQuote(r.code, 1));
+    expect(outdated.code).toBe('QUOTE_OUTDATED');
+    expect(outdated.details).toMatchObject({ latest: 2 });
+    expect((await getMyCatering(r.code)).quotes.map(x => x.state)).toEqual(['outdated', 'current']);
+    jest.setSystemTime(Date.parse('2026-10-23T00:00:00Z'));
+    expect((await failure(acceptQuote(r.code, 2))).code).toBe('QUOTE_EXPIRED');
   });
 });
 

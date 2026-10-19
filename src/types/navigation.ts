@@ -70,7 +70,13 @@ export type ShopBrowseParamList = {
   AddressForm: { id?: string } | undefined;
   Notifications: undefined;
   /** "I've paid": a shop order's transfer, or an appointment's. */
-  PaymentProof: { orderId: string; groupCode: string } | { appointmentCode: string } | { foodOrderCode: string } | { surplusCode: string };
+  PaymentProof:
+    | { orderId: string; groupCode: string }
+    | { appointmentCode: string }
+    | { foodOrderCode: string }
+    | { surplusCode: string }
+    | { tiffinPeriodId: string; tiffinCode: string }
+    | { cateringCode: string };
 };
 
 /**
@@ -198,7 +204,7 @@ export type FoodAppParamList = {
   /** The kitchens the customer saved. */
   FoodFavourites: undefined;
   /** "I've paid": a transfer's reference for the kitchen (an order, or a Bachat Box reservation). */
-  PaymentProof: { foodOrderCode: string } | { surplusCode: string };
+  PaymentProof: { foodOrderCode: string } | { surplusCode: string } | { tiffinPeriodId: string; tiffinCode: string } | { cateringCode: string };
   /** Rate an order once it arrived; `stars` when the order page's stars were tapped. */
   FoodRateOrder: { code: string; stars?: number };
   /** A kitchen's reviews (by vendor id); `slug` leads back to its page. */
@@ -209,6 +215,15 @@ export type FoodAppParamList = {
   /** A reservation's pickup code; `fresh` straight after reserving. */
   FoodSurplusReserved: { code: string; fresh?: boolean };
   FoodSurplusReservations: undefined;
+  // ── Tiffin and catering (5B) ──
+  FoodTiffinPlan: { id: string };
+  FoodTiffins: undefined;
+  /** A subscription; `fresh` straight after requesting it. */
+  FoodTiffin: { code: string; fresh?: boolean };
+  /** "Plan a dawat" with a kitchen (by slug; its name while it loads). */
+  FoodCateringForm: { slug: string; name?: string };
+  FoodCateringRequests: undefined;
+  FoodCateringRequest: { code: string; fresh?: boolean };
 };
 
 export type CustomerStackParamList = {
@@ -331,6 +346,16 @@ export type FoodVendorStackParamList = {
   KitchenBox: { id: string };
   KitchenDonations: undefined;
   KitchenSettings: undefined;
+  // ── Growth (5B) ──
+  GrowthTiffin: undefined;
+  /** Edit a plan (`id`) or a new one. */
+  GrowthTiffinPlanForm: { id?: string } | undefined;
+  /** Subscriptions: one plan's, or all; `status` opens on a tab ("pending" from a card). */
+  GrowthTiffinSubscribers: { planId?: string; status?: 'pending' | 'active' | 'paused' | 'ended' } | undefined;
+  GrowthCatering: { status?: 'new' | 'quoted' | 'confirmed' | 'past' } | undefined;
+  GrowthCateringRequest: { code: string };
+  /** A new quote (version) for a request. */
+  GrowthQuote: { code: string };
   PaymentAccounts: undefined;
   Profile: undefined;
   ChangePassword: undefined;

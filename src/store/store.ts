@@ -199,6 +199,18 @@ import { foodSurplusSlice } from '../screens/Food/Customer/FoodSurplus/foodSurpl
 import { surplusReservedSlice } from '../screens/Food/Customer/FoodSurplusReserved/surplusReservedSlice';
 import { surplusReservationsSlice } from '../screens/Food/Customer/FoodSurplusReservations/surplusReservationsSlice';
 import { surplusListSlice } from '../screens/Food/Customer/FoodSurplusList/surplusListSlice';
+import { tiffinPlansSlice } from '../screens/Food/Growth/TiffinPlans/tiffinPlansSlice';
+import { tiffinPlanFormSlice } from '../screens/Food/Growth/TiffinPlanForm/tiffinPlanFormSlice';
+import { tiffinSubscribersSlice } from '../screens/Food/Growth/TiffinSubscribers/tiffinSubscribersSlice';
+import { cateringSlice } from '../screens/Food/Growth/Catering/cateringSlice';
+import { cateringRequestSlice } from '../screens/Food/Growth/CateringRequest/cateringRequestSlice';
+import { quoteBuilderSlice } from '../screens/Food/Growth/QuoteBuilder/quoteBuilderSlice';
+import { foodTiffinPlanSlice } from '../screens/Food/Customer/FoodTiffinPlan/foodTiffinPlanSlice';
+import { foodTiffinsSlice } from '../screens/Food/Customer/FoodTiffins/foodTiffinsSlice';
+import { foodTiffinSlice } from '../screens/Food/Customer/FoodTiffin/foodTiffinSlice';
+import { foodCateringFormSlice } from '../screens/Food/Customer/FoodCateringForm/foodCateringFormSlice';
+import { foodCateringRequestsSlice } from '../screens/Food/Customer/FoodCateringRequests/foodCateringRequestsSlice';
+import { foodCateringRequestSlice } from '../screens/Food/Customer/FoodCateringRequest/foodCateringRequestSlice';
 
 // `auth` is persisted through its OWN persistReducer so that exactly one
 // field reaches disk. The session (user, business, tokens) is never
@@ -390,6 +402,18 @@ const rootReducer = combineReducers({
   surplusReserved: surplusReservedSlice.reducer,
   surplusReservations: surplusReservationsSlice.reducer,
   surplusList: surplusListSlice.reducer,
+  tiffinPlans: tiffinPlansSlice.reducer,
+  tiffinPlanForm: tiffinPlanFormSlice.reducer,
+  tiffinSubscribers: tiffinSubscribersSlice.reducer,
+  catering: cateringSlice.reducer,
+  cateringRequest: cateringRequestSlice.reducer,
+  quoteBuilder: quoteBuilderSlice.reducer,
+  foodTiffinPlan: foodTiffinPlanSlice.reducer,
+  foodTiffins: foodTiffinsSlice.reducer,
+  foodTiffin: foodTiffinSlice.reducer,
+  foodCateringForm: foodCateringFormSlice.reducer,
+  foodCateringRequests: foodCateringRequestsSlice.reducer,
+  foodCateringRequest: foodCateringRequestSlice.reducer,
 });
 
 type RootReducerState = ReturnType<typeof rootReducer>;

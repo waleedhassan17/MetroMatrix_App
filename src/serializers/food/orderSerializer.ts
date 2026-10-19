@@ -36,7 +36,7 @@ import { arr, bool, isObject, num, oneOf, str, strOrNull } from '../serializerUt
 
 export const FOOD_ORDER_STATUSES: readonly FoodOrderStatus[] = ['placed', 'accepted', 'preparing', 'ready', 'on_the_way', 'delivered', 'picked_up', 'rejected', 'auto_rejected', 'cancelled'];
 export const FOOD_PAYMENT_STATUSES: readonly FoodPaymentStatus[] = ['cod_pending', 'unpaid', 'awaiting_transfer', 'proof_submitted', 'paid', 'void', 'refund_due', 'refunded'];
-export const FOOD_PAYMENT_METHODS: readonly FoodPaymentMethod[] = ['cod', 'transfer', 'pay_at_pickup'];
+export const FOOD_PAYMENT_METHODS: readonly FoodPaymentMethod[] = ['cod', 'transfer', 'pay_at_pickup', 'tiffin_plan'];
 const FULFILMENTS: readonly FoodFulfilment[] = ['delivery', 'pickup'];
 const PROMOTION_KINDS: readonly PromotionKind[] = ['percent_off_order', 'percent_off_items', 'flat_off', 'free_delivery'];
 const PROMOTION_STATES: readonly PromotionState[] = ['live', 'scheduled', 'ended', 'inactive'];
@@ -176,7 +176,7 @@ export const foodPreviewSerializer = (raw: unknown): FoodPreview | null => {
     eta: isObject(raw.eta) ? etaSerializer(raw.eta) : null,
     payment: {
       method: p.method ? oneOf(p.method, FOOD_PAYMENT_METHODS, 'cod') : null,
-      available: { cod: bool(av.cod), transfer: bool(av.transfer), pay_at_pickup: bool(av.pay_at_pickup) },
+      available: { cod: bool(av.cod), transfer: bool(av.transfer), pay_at_pickup: bool(av.pay_at_pickup), tiffin_plan: false },
       codLimit: money(p.codLimit),
       accounts: compact(arr(p.accounts).map(accountSerializer)),
     },

@@ -264,7 +264,8 @@ export interface MockFoodOrder {
   /** The kitchen day its portions were taken from (they go back on a cancel that day). */
   portionDate: string | null;
   status: 'placed' | 'accepted' | 'preparing' | 'ready' | 'on_the_way' | 'delivered' | 'picked_up' | 'rejected' | 'auto_rejected' | 'cancelled';
-  paymentMethod: 'cod' | 'transfer' | 'pay_at_pickup';
+  /** `tiffin_plan`: a tiffin day, paid with its period (Kitchen Intelligence, TODO(API_KITCHEN)). */
+  paymentMethod: 'cod' | 'transfer' | 'pay_at_pickup' | 'tiffin_plan';
   paymentStatus: 'cod_pending' | 'unpaid' | 'awaiting_transfer' | 'proof_submitted' | 'paid' | 'void' | 'refund_due' | 'refunded';
   payBy: string | null;
   accounts: { kind: string; accountTitle: string; accountNumber: string; bankName: string | null }[] | null;

@@ -2,8 +2,8 @@
 // Profile), in the FYP Home services bar's look, with browsing — vendor
 // lists, search, a vendor's page — and ordering — the bag, checkout, order
 // placed, an order live, the transfer's receipt, rating it, a kitchen's
-// reviews — and Bachat Box (tonight's surplus, reserved for pickup) pushed
-// over them.
+// reviews — Bachat Box (tonight's surplus, reserved for pickup), tiffin
+// plans and dawat (catering) requests pushed over them.
 
 import type { IRoute, ITabRoute } from './types';
 import { ROUTES } from './Base';
@@ -26,6 +26,12 @@ import FoodSurplusListScreen from '../screens/Food/Customer/FoodSurplusList/Food
 import FoodSurplusScreen from '../screens/Food/Customer/FoodSurplus/FoodSurplusScreen';
 import FoodSurplusReservedScreen from '../screens/Food/Customer/FoodSurplusReserved/FoodSurplusReservedScreen';
 import FoodSurplusReservationsScreen from '../screens/Food/Customer/FoodSurplusReservations/FoodSurplusReservationsScreen';
+import FoodTiffinPlanScreen from '../screens/Food/Customer/FoodTiffinPlan/FoodTiffinPlanScreen';
+import FoodTiffinsScreen from '../screens/Food/Customer/FoodTiffins/FoodTiffinsScreen';
+import FoodTiffinScreen from '../screens/Food/Customer/FoodTiffin/FoodTiffinScreen';
+import FoodCateringFormScreen from '../screens/Food/Customer/FoodCateringForm/FoodCateringFormScreen';
+import FoodCateringRequestsScreen from '../screens/Food/Customer/FoodCateringRequests/FoodCateringRequestsScreen';
+import FoodCateringRequestScreen from '../screens/Food/Customer/FoodCateringRequest/FoodCateringRequestScreen';
 
 const AS_TAB = { asTab: true };
 
@@ -53,4 +59,11 @@ export const FOOD_STACK_ROUTES: IRoute[] = [
   { title: ROUTES.FOOD_SURPLUS, component: FoodSurplusScreen },
   { title: ROUTES.FOOD_SURPLUS_RESERVED, component: FoodSurplusReservedScreen },
   { title: ROUTES.FOOD_SURPLUS_RESERVATIONS, component: FoodSurplusReservationsScreen },
+  // Tiffin and catering (5B)
+  { title: ROUTES.FOOD_TIFFIN_PLAN, component: FoodTiffinPlanScreen },
+  { title: ROUTES.FOOD_TIFFINS, component: FoodTiffinsScreen },
+  { title: ROUTES.FOOD_TIFFIN, component: FoodTiffinScreen },
+  { title: ROUTES.FOOD_CATERING_FORM, component: FoodCateringFormScreen },
+  { title: ROUTES.FOOD_CATERING_REQUESTS, component: FoodCateringRequestsScreen },
+  { title: ROUTES.FOOD_CATERING_REQUEST, component: FoodCateringRequestScreen },
 ];

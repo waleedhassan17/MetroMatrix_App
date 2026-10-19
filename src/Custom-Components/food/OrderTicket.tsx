@@ -17,7 +17,7 @@ import {
   type VendorMove,
 } from '../../models/food/foodStatusModel';
 import type { BoardCard } from '../../types/food';
-import { formatSlot } from '../../utils/healthTime';
+import { originLabel, scheduledLabel } from '../../models/kitchen/boardModel';
 import { formatPKR } from '../../utils/money';
 import { AppText } from '../AppText';
 import { Button } from '../Button';
@@ -102,11 +102,11 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({
             </AppText>
           )}
         </View>
-        {card.scheduledFor ? (
-          <StatusPill
-            label={`For ${formatSlot(card.scheduledFor, 'Asia/Karachi')}`}
-            tone="accent"
-          />
+        {card.scheduledFor || originLabel(card) ? (
+          <View style={styles.left}>
+            {card.scheduledFor ? <StatusPill label={scheduledLabel(card.scheduledFor, now, 'Asia/Karachi')} tone="accent" /> : null}
+            {originLabel(card) ? <StatusPill label={originLabel(card)!} /> : null}
+          </View>
         ) : null}
         <AppText variant="body" numberOfLines={3}>
           {card.itemsSummary}

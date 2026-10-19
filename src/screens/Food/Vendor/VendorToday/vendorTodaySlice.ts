@@ -10,9 +10,10 @@ import { createSelector, type PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { getToday, setToday } from '@networks/food/vendor/availabilityNetwork';
 import { getForecast } from '@networks/kitchen/forecastNetwork';
+import { getTiffinTomorrow } from '@networks/foodGrowth/tiffinNetwork';
 import { suggestedPortions } from '@models/kitchen/forecastModel';
 import { toRejectedValue } from '@networks/network/apiHelpers';
-import type { Forecast, TodayMenu } from '@/types';
+import type { Forecast, TiffinTomorrow, TodayMenu } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { menuChanged } from '../VendorMenu/vendorMenuSlice';
 
@@ -29,9 +30,11 @@ export interface VendorTodaySliceState {
   error: ServerError;
   /** Today's forecast (null when the kitchen side is unavailable). */
   forecast: Forecast | null;
+  /** Tomorrow's tiffins (null without any, or when unavailable). */
+  tiffin: TiffinTomorrow | null;
 }
 
-const initialState: VendorTodaySliceState = { today: null, edits: {}, status: 'idle', saving: false, error: NO_ERROR, forecast: null };
+const initialState: VendorTodaySliceState = { today: null, edits: {}, status: 'idle', saving: false, error: NO_ERROR, forecast: null, tiffin: null };
 
 export const vendorTodaySlice = createAppSlice({
   name: 'vendorToday',
@@ -61,8 +64,8 @@ export const vendorTodaySlice = createAppSlice({
       async (_: void, { rejectWithValue }) => {
         try {
           const today = await getToday();
-          const forecast = today ? await getForecast(today.date).catch(() => null) : null;
-          return { today, forecast };
+          const [forecast, tiffin] = await Promise.all([today ? getForecast(today.date).catch(() => null) : null, getTiffinTomorrow().catch(() => null)]);
+          return { today, forecast, tiffin };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -76,6 +79,7 @@ export const vendorTodaySlice = createAppSlice({
           state.status = 'succeeded';
           state.today = action.payload.today;
           state.forecast = action.payload.forecast;
+          state.tiffin = action.payload.tiffin;
           state.edits = {};
         },
         rejected: (state, action) => {

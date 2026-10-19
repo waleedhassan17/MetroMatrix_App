@@ -142,6 +142,7 @@ const UNAVAILABLE: Record<FoodPaymentMethod, string> = {
   cod: 'Not for this order',
   transfer: 'This kitchen hasn’t added an account',
   pay_at_pickup: 'For pick-up orders',
+  tiffin_plan: 'For tiffin plans',
 };
 
 /** The ways to pay this order, in the order a customer expects them. */

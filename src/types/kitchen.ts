@@ -249,6 +249,8 @@ export interface InsightCard {
 
 export interface KitchenSummary {
   date: string;
+  /** Tiffin and catering at a glance (5B). */
+  growth: { tiffin: { plans: number; active: number; pending: number; tomorrow: number }; catering: { new: number; upcoming: number } };
   stock: { total: number; low: number; negative: number; expiring: number };
   recipes: { avgFoodCostPct: number | null; targetFoodCostPct: number; missing: number; overTarget: number };
   purchases: { weekTotal: number; weekCount: number };
@@ -502,4 +504,260 @@ export interface VoiceResult {
   action: VoiceAction | null;
   alternatives: { transcript: string; action: VoiceAction }[];
   heard: 'audio' | 'text';
+}
+
+// ── Growth (5B): tiffin ──
+export type Meal = 'breakfast' | 'lunch' | 'dinner';
+export type TiffinPeriodKind = 'week' | 'month';
+export type TiffinMode = 'delivery' | 'pickup';
+
+/** "HH:mm" in kitchen time, and the words ("12:30 PM – 1:30 PM"). */
+export interface TiffinWindow {
+  from: string;
+  to: string;
+  label: string;
+}
+
+export interface TiffinPlan {
+  id: string;
+  vendor: { id: string; slug: string; name: string; logoUrl: string | null; isHomeKitchen: boolean };
+  name: string;
+  description: string | null;
+  meal: Meal;
+  /** ISO weekdays (1 Monday … 7 Sunday). */
+  days: number[];
+  period: TiffinPeriodKind;
+  /** Rupees per period. */
+  price: number;
+  perMeal: number;
+  mealsPerPeriod: number;
+  mode: TiffinMode;
+  window: TiffinWindow;
+  capacity: number;
+  subscribers: number;
+  seatsLeft: number;
+  skipCutoffHours: number;
+  rotation: { weekday: number; dishes: { itemId: string; name: string; photoUrl: string | null }[]; note: string | null }[];
+  photoUrl: string | null;
+  isActive: boolean;
+  /** The earliest day a new subscription can start. */
+  nextStart: string | null;
+}
+
+/** A plan on the vendor page. */
+export interface TiffinPlanCard {
+  id: string;
+  name: string;
+  meal: Meal;
+  days: number[];
+  period: TiffinPeriodKind;
+  price: number;
+  perMeal: number;
+  window: string;
+  seatsLeft: number;
+  photoUrl: string | null;
+}
+
+export interface TiffinPlanInput {
+  name: string;
+  description?: string | null;
+  meal: Meal;
+  days: number[];
+  period: TiffinPeriodKind;
+  price: number;
+  mode: TiffinMode;
+  window: { from: string; to: string };
+  capacity: number;
+  skipCutoffHours: number;
+  rotation: { weekday: number; itemIds: string[]; note: string | null }[];
+  photoUrl?: string | null;
+  isActive?: boolean;
+}
+
+export type TiffinStatus = 'pending' | 'active' | 'paused' | 'declined' | 'ended' | 'cancelled';
+export type TiffinPayMethod = 'transfer' | 'cash';
+
+export interface TransferPayment<M extends string = string> {
+  method: M;
+  status: FoodPaymentStatus;
+  payBy: string | null;
+  accounts: FoodTransferAccount[] | null;
+  reference: string | null;
+  proofUrl: string | null;
+  rejectedReason: string | null;
+}
+
+export interface TiffinPeriod {
+  id: string;
+  from: string;
+  to: string;
+  meals: number;
+  /** Meals skipped in the period before, taken off this one. */
+  credit: number;
+  amount: number;
+  payment: TransferPayment<TiffinPayMethod>;
+}
+
+export interface TiffinSubscription {
+  code: string;
+  status: TiffinStatus;
+  plan: { id: string; name: string; meal: Meal; days: number[]; period: TiffinPeriodKind; price: number; perMeal: number; mode: TiffinMode; window: TiffinWindow; skipCutoffHours: number };
+  vendor: { id: string; slug: string; name: string; logoUrl: string | null; phone: string | null };
+  /** The kitchen's view only. */
+  customer: { name: string; phone: string | null } | null;
+  startDate: string;
+  endDate: string | null;
+  nextDelivery: { date: string; dishes: string[]; cutoffAt: string | null } | null;
+  address: { line1: string | null; area: string | null; city: string | null; lat: number | null; lng: number | null } | null;
+  paymentMethod: TiffinPayMethod;
+  period: TiffinPeriod | null;
+  pausedFrom: string | null;
+  pausedUntil: string | null;
+  declineReason: string | null;
+  endReason: string | null;
+  canPause: boolean;
+  canResume: boolean;
+  canCancel: boolean;
+  createdAt: string;
+}
+
+export interface TiffinInbox {
+  counts: { pending: number; active: number; paused: number; toCheck: number };
+  items: TiffinSubscription[];
+}
+
+export type TiffinDayState = 'before_start' | 'off' | 'pending' | 'upcoming' | 'skipped' | 'paused' | 'ordered' | 'delivered' | 'cancelled' | 'ended' | 'none';
+
+export interface TiffinDay {
+  date: string;
+  state: TiffinDayState;
+  dishes: string[];
+  cutoffAt: string | null;
+  canSkip: boolean;
+  canUnskip: boolean;
+  orderCode: string | null;
+}
+
+export interface TiffinCalendar {
+  month: string;
+  days: TiffinDay[];
+}
+
+export interface TiffinTomorrow {
+  date: string;
+  plans: {
+    planId: string;
+    name: string;
+    meal: Meal;
+    window: string;
+    dishes: string[];
+    count: number;
+    skipped: number;
+    paused: number;
+    cutoffAt: string;
+    deliveries: { code: string; customerName: string; area: string | null; state: TiffinDayState; orderCode: string | null }[];
+  }[];
+}
+
+// ── Growth (5B): catering ──
+export type EventType = 'mehndi' | 'baraat' | 'walima' | 'birthday' | 'aqiqah' | 'milad' | 'quran_khwani' | 'office' | 'family' | 'other';
+export type CateringMode = 'delivery' | 'pickup' | 'on_site';
+export type CateringStatus = 'requested' | 'quoted' | 'accepted' | 'confirmed' | 'declined' | 'cancelled' | 'completed';
+export type QuoteState = 'current' | 'outdated' | 'expired' | 'accepted';
+
+export interface QuoteLine {
+  itemId: string | null;
+  name: string;
+  qty: number;
+  unitPrice: number;
+  total: number;
+}
+
+export interface CateringQuote {
+  version: number;
+  lines: QuoteLine[];
+  subtotal: number;
+  deliveryFee: number;
+  total: number;
+  advancePct: number;
+  advance: number;
+  validUntil: string;
+  notes: string | null;
+  createdAt: string;
+  state: QuoteState;
+}
+
+export interface CateringRequest {
+  code: string;
+  status: CateringStatus;
+  vendor: { id: string; slug: string; name: string; logoUrl: string | null; phone: string | null };
+  customer: { name: string; phone: string | null } | null;
+  date: string;
+  time: string;
+  startsAt: string;
+  guests: number;
+  eventType: EventType;
+  dishes: { itemId: string | null; name: string; qty: number }[];
+  budget: number | null;
+  mode: CateringMode;
+  address: { line1: string | null; area: string | null; city: string | null; lat: number | null; lng: number | null } | null;
+  notes: string | null;
+  quotes: CateringQuote[];
+  acceptedVersion: number | null;
+  advance: (Omit<TransferPayment, 'method'> & { amount: number }) | null;
+  balance: number | null;
+  declineReason: string | null;
+  cancelReason: string | null;
+  canAccept: boolean;
+  canCancel: boolean;
+  canQuote: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CateringVendor {
+  vendorId: string;
+  open: boolean;
+  minGuests: number;
+  leadDays: number;
+  earliestDate: string;
+  modes: CateringMode[];
+  menu: { itemId: string; name: string; price: number; photoUrl: string | null }[];
+}
+
+export interface CateringRequestInput {
+  vendorId: string;
+  date: string;
+  time: string;
+  guests: number;
+  eventType: EventType;
+  dishes: { itemId?: string | null; name?: string; qty: number }[];
+  budget?: number | null;
+  mode: CateringMode;
+  addressId?: string | null;
+  notes?: string | null;
+}
+
+export interface QuoteInput {
+  lines: { itemId?: string | null; name?: string; qty: number; unitPrice: number }[];
+  deliveryFee: number;
+  advancePct: number;
+  validUntil: string;
+  notes?: string | null;
+}
+
+export interface CateringInbox {
+  counts: { new: number; quoted: number; confirmed: number; past: number };
+  items: CateringRequest[];
+}
+
+export interface CateringCalendar {
+  month: string;
+  days: { date: string; events: { code: string; time: string; guests: number; eventType: EventType; status: CateringStatus; customerName: string }[] }[];
+}
+
+export interface CateringSettings {
+  open: boolean;
+  minGuests: number;
+  leadDays: number;
 }

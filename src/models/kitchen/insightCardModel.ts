@@ -63,8 +63,8 @@ const TARGETS: Record<InsightActionKind, (p: InsightCard['action']['params']) =>
   open_demand: () => ({ screen: ROUTES.KITCHEN_TAB }),
   open_experiment: () => ({ screen: ROUTES.KITCHEN_TAB }),
   open_review_insights: () => ({ screen: ROUTES.KITCHEN_TAB }),
-  open_tiffin: () => ({ screen: ROUTES.KITCHEN_TAB }),
-  open_catering: () => ({ screen: ROUTES.KITCHEN_TAB }),
+  open_tiffin: p => ({ screen: ROUTES.GROWTH_TIFFIN_SUBSCRIBERS, params: { status: str(p.status) ?? 'pending' } }),
+  open_catering: p => (str(p.code) ? { screen: ROUTES.GROWTH_CATERING_REQUEST, params: { code: str(p.code) } } : { screen: ROUTES.GROWTH_CATERING }),
 };
 
 /** Lets later milestones point an action at their own screen (Assistant, Tiffin, Demand map …). */

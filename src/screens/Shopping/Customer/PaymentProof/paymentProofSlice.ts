@@ -10,6 +10,8 @@ import { submitPaymentProof } from '@networks/shopping/ordersNetwork';
 import { submitAppointmentPaymentProof } from '@networks/health/appointmentsNetwork';
 import { submitFoodPaymentProof } from '@networks/food/ordersNetwork';
 import { submitReservationProof } from '@networks/food/surplusNetwork';
+import { submitTiffinProof } from '@networks/foodGrowth/tiffinNetwork';
+import { submitAdvanceProof } from '@networks/foodGrowth/cateringNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import { normaliseTransactionId } from '@models/shopping/paymentProofModel';
 import type { LocalFile } from '@/types';
@@ -166,6 +168,54 @@ export const paymentProofSlice = createAppSlice({
         },
       },
     ),
+    // POST /food/tiffin/periods/:id/payment-proof (a tiffin period; TODO(API_KITCHEN)).
+    submitTiffinProofAsync: create.asyncThunk(
+      async ({ periodId, transactionId, imageUrl }: { periodId: string; transactionId: string; imageUrl: string | null }, { rejectWithValue }) => {
+        try {
+          return await submitTiffinProof(periodId, { transactionId: normaliseTransactionId(transactionId), imageUrl });
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        pending: state => {
+          state.status = 'loading';
+          state.touched = true;
+          state.error = NO_ERROR;
+        },
+        fulfilled: state => {
+          state.status = 'succeeded';
+        },
+        rejected: (state, action) => {
+          state.status = 'failed';
+          state.error = readRejection(action, "We couldn't send that. Check the ID and try again.");
+        },
+      },
+    ),
+    // POST /food/catering/requests/:code/advance-proof (a dawat's advance; TODO(API_KITCHEN)).
+    submitAdvanceProofAsync: create.asyncThunk(
+      async ({ code, transactionId, imageUrl }: { code: string; transactionId: string; imageUrl: string | null }, { rejectWithValue }) => {
+        try {
+          return await submitAdvanceProof(code, { transactionId: normaliseTransactionId(transactionId), imageUrl });
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        pending: state => {
+          state.status = 'loading';
+          state.touched = true;
+          state.error = NO_ERROR;
+        },
+        fulfilled: state => {
+          state.status = 'succeeded';
+        },
+        rejected: (state, action) => {
+          state.status = 'failed';
+          state.error = readRejection(action, "We couldn't send that. Check the ID and try again.");
+        },
+      },
+    ),
   }),
   selectors: {
     selectPaymentProof: state => state,
@@ -183,5 +233,7 @@ export const {
   submitAppointmentProofAsync,
   submitFoodProofAsync,
   submitSurplusProofAsync,
+  submitTiffinProofAsync,
+  submitAdvanceProofAsync,
 } = paymentProofSlice.actions;
 export const { selectPaymentProof } = paymentProofSlice.selectors;

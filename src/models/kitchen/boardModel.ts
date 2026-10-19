@@ -10,7 +10,7 @@ import type { BoardCard, VendorBranch } from '../../types/food';
 import type { BoardHints, PauseReason } from '../../types/kitchen';
 import { ETA_CHOICES } from '../food/foodStatusModel';
 import { PAUSE_REASON_LABEL } from './kitchenStatusModel';
-import { formatSlot } from '../../utils/healthTime';
+import { addDays, dateInZone, formatDayShort, formatSlot } from '../../utils/healthTime';
 
 /** Fewer servings than this left of a dish's recipe: the ticket says so. */
 export const LOW_SERVINGS = 3;
@@ -61,3 +61,15 @@ export const pausedNote = (b: Pick<VendorBranch, 'pauseReason' | 'resumeAt' | 'p
   const seen = b.pauseMessage ? `Customers see: “${b.pauseMessage}”` : b.resumeAt ? 'Until then, your kitchen is hidden from lists.' : 'Your kitchen is hidden from lists until you resume.';
   return `${pauseLine(b, timezone)}. ${seen}`;
 };
+
+/** "For 12:30 PM" today, "For tomorrow, 12:30 PM", "For Fri 16 Oct, 12:30 PM". */
+export const scheduledLabel = (iso: string, now: number, timezone: string) => {
+  const day = dateInZone(iso, timezone);
+  const today = dateInZone(new Date(now).toISOString(), timezone);
+  const time = formatSlot(iso, timezone);
+  return day === today ? `For ${time}` : day === addDays(today, 1) ? `For tomorrow, ${time}` : `For ${formatDayShort(day)}, ${time}`;
+};
+
+/** Where an order came from, when it isn't the app: "Tiffin TF-2UPUXR", "Catering", "From your link". */
+export const originLabel = (o: Pick<BoardCard, 'origin'>) =>
+  o.origin.kind === 'tiffin' ? `Tiffin${o.origin.ref ? ` ${o.origin.ref}` : ''}` : o.origin.kind === 'catering' ? 'Catering' : o.origin.kind === 'link' ? 'From your link' : o.origin.kind === 'qr' ? 'From your QR' : null;

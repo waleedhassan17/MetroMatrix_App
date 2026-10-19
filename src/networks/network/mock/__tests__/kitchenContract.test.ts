@@ -102,6 +102,89 @@ const run = async () => {
   await call('adminQuota', 'put', '/admin/kitchen/ai/quotas/b_resto', { limit: 1 });
   await as('restaurant@metromatrix.app');
   await call('quotaReached', 'post', '/food/vendor/ai/receipt-scan', { imageUrl: 'https://res.cloudinary.com/demo/receipt.jpg' });
+
+  // ── Tiffin (5B): Thursday 15 Oct, 3 PM in Lahore ──
+  jest.setSystemTime(T0);
+  await as('nani@metromatrix.app');
+  await call('tiffinPlans', 'get', '/food/vendor/tiffin/plans');
+  await call('tiffinPlanCreate', 'post', '/food/vendor/tiffin/plans', {
+    name: 'Breakfast paratha box',
+    meal: 'breakfast',
+    days: [1, 2, 3, 4, 5, 6],
+    period: 'week',
+    price: 1800,
+    mode: 'pickup',
+    window: { from: '08:00', to: '09:30' },
+    capacity: 10,
+    skipCutoffHours: 10,
+    rotation: [1, 2, 3, 4, 5, 6].map(weekday => ({ weekday, itemIds: [], note: 'Aloo paratha, omelette and chai' })),
+  });
+  await as('customer@metromatrix.app', 'customer');
+  await call('tiffinPlansPublic', 'get', '/food/tiffin/plans?vendor=nani-ki-handi');
+  await call('tiffinPlan', 'get', '/food/tiffin/plans/tp_nani_lunch');
+  const sub = await call('tiffinSubscribe', 'post', '/food/tiffin/plans/tp_nani_lunch/subscribe', { startDate: '2026-10-16', addressId: 'ad_customer_home', paymentMethod: 'transfer' }, { 'Idempotency-Key': 'doc-tf-1' });
+  await as('nani@metromatrix.app');
+  await call('tiffinInbox', 'get', '/food/vendor/tiffin/subscriptions?status=pending');
+  await call('tiffinApprove', 'post', `/food/vendor/tiffin/subscriptions/${sub.code}/approve`);
+  await call('tiffinSubscribers', 'get', '/food/vendor/tiffin/plans/tp_nani_lunch/subscribers');
+  await as('customer@metromatrix.app', 'customer');
+  await call('tiffinSubscription', 'get', `/food/tiffin/subscriptions/${sub.code}`);
+  await call('tiffinSkip', 'post', `/food/tiffin/subscriptions/${sub.code}/days/2026-10-19/skip`);
+  await call('tiffinCalendar', 'get', `/food/tiffin/subscriptions/${sub.code}/calendar?month=2026-10`);
+  const period = (out.tiffinSubscription?.data as { period: { id: string } }).period;
+  await call('tiffinProof', 'post', `/food/tiffin/periods/${period.id}/payment-proof`, { transactionId: 'RAAST-40912', imageUrl: null });
+  await call('tiffinSubscriptions', 'get', '/food/tiffin/subscriptions');
+  // 11 PM: Friday's cut-off (10:30 PM) has passed; its order is on the board.
+  jest.setSystemTime(T0 + 8 * 3600e3);
+  await call('tiffinSkipClosed', 'post', `/food/tiffin/subscriptions/${sub.code}/days/2026-10-16/skip`);
+  await as('nani@metromatrix.app');
+  await call('tiffinTomorrow', 'get', '/food/vendor/tiffin/tomorrow');
+  await call('tiffinBoard', 'get', '/food/vendor/orders?bucket=active');
+  await call('tiffinPeriodConfirm', 'post', `/food/vendor/tiffin/periods/${period.id}/payment/confirm`);
+
+  // ── Catering (5B) ──
+  jest.setSystemTime(T0);
+  await as('customer@metromatrix.app', 'customer');
+  await call('cateringVendor', 'get', '/food/catering/vendors/biryani-bazaar');
+  const req = await call('cateringRequest', 'post', '/food/catering/requests', {
+    vendorId: 'fb_resto',
+    date: '2026-10-31',
+    time: '19:30',
+    guests: 60,
+    eventType: 'aqiqah',
+    dishes: [
+      { itemId: 'mi_chicken_biryani', qty: 60 },
+      { name: 'Zarda', qty: 60 },
+    ],
+    budget: 45000,
+    mode: 'delivery',
+    addressId: 'ad_customer_home',
+    notes: 'Please include raita.',
+  });
+  await as('restaurant@metromatrix.app');
+  await call('cateringInbox', 'get', '/food/vendor/catering/requests?status=new');
+  const quote = (version: number, unitPrice: number) => ({
+    lines: [
+      { itemId: 'mi_chicken_biryani', qty: 60, unitPrice },
+      { name: 'Zarda', qty: 60, unitPrice: 110 },
+    ],
+    deliveryFee: 1500,
+    advancePct: 30,
+    validUntil: '2026-10-22T18:59:00.000Z',
+    notes: version === 1 ? 'Raita included.' : 'Raita included; biryani at the bulk rate.',
+  });
+  await call('cateringQuote', 'post', `/food/vendor/catering/requests/${req.code}/quotes`, quote(1, 520));
+  await call('cateringQuote2', 'post', `/food/vendor/catering/requests/${req.code}/quotes`, quote(2, 480));
+  await as('customer@metromatrix.app', 'customer');
+  await call('quoteOutdated', 'post', `/food/catering/requests/${req.code}/quotes/1/accept`);
+  await call('cateringAccept', 'post', `/food/catering/requests/${req.code}/quotes/2/accept`);
+  await call('cateringProof', 'post', `/food/catering/requests/${req.code}/advance-proof`, { transactionId: 'IBFT-77120', imageUrl: null });
+  await call('cateringRequests', 'get', '/food/catering/requests');
+  await as('restaurant@metromatrix.app');
+  await call('cateringConfirm', 'post', `/food/vendor/catering/requests/${req.code}/advance/confirm`);
+  await call('cateringCalendar', 'get', '/food/vendor/catering/calendar?month=2026-10');
+  await call('cateringSettings', 'get', '/food/vendor/catering/settings');
+  if (process.env.DUMP_CONTRACT) fs.writeFileSync(process.env.DUMP_CONTRACT, JSON.stringify(out, null, 2));
 };
 
 
@@ -138,6 +221,9 @@ it('documents every request the dummy kitchen API answers, with the same keys', 
   const mismatched = Object.keys(docs).flatMap(name => (name in out ? diff(name, docs[name], answer(name)) : [`${name}: never requested`]));
   // Requests run only to set up the next step (Food's own pause and resume carry the additions of §3.7).
   const SETUP = ['readyWithPhoto', 'pause', 'resume', 'boxPaymentConfirm', 'collect', 'boxes', 'proof', 'reservations', 'ingredientCreate', 'forecastAdjust'];
+  // Same shapes as a documented example (a plan, a subscription, a request, or a list of them).
+  SETUP.push('tiffinPlans', 'tiffinPlanCreate', 'tiffinPlansPublic', 'tiffinSubscribe', 'tiffinSubscribers', 'tiffinProof', 'tiffinSubscriptions', 'tiffinPeriodConfirm');
+  SETUP.push('cateringQuote', 'cateringQuote2', 'cateringProof', 'cateringRequests', 'cateringConfirm');
   const undocumented = Object.keys(out).filter(name => !(name in docs) && !SETUP.includes(name));
   expect({ mismatched, undocumented }).toEqual({ mismatched: [], undocumented: [] });
 });
