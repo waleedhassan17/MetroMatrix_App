@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════
 // TODO(API_AUTH): paths and bodies per docs/API_CONTRACT_ASSUMED.md.
 
-import { api, unwrap, setTokens, toAuthError, AuthError } from '../network/apiHelpers';
+import { api, unwrap, setTokens, toAuthError, AuthError, AUTH_PATHS } from '../network/apiHelpers';
 import { clearIntentionalSignOut } from '../../utils/authEvents';
 import {
   businessPageSerializer,
@@ -99,11 +99,17 @@ export const reinstateBusiness = async (id: string): Promise<Business> => {
 };
 
 // ─── TOTP enrolment (first admin sign-in) ────────────
-// Both run on the sign-in challenge token: the admin has no session yet.
+// Both run on the sign-in challenge token: the admin has no session yet. The
+// API reads it as the bearer (POST /admin/me/totp/*); the dummy API reads it
+// from the body, which the API ignores.
+
+const asChallenge = (challengeToken: string) => ({ headers: { Authorization: `Bearer ${challengeToken}` } });
 
 export const adminTotpEnrol = async (challengeToken: string): Promise<TotpEnrolment> => {
   try {
-    const enrolment = totpEnrolmentSerializer(unwrap(await api.post('/auth/admin/totp/enrol', { challengeToken })));
+    const enrolment = totpEnrolmentSerializer(
+      unwrap(await api.post(AUTH_PATHS.adminTotpEnrol, { challengeToken }, asChallenge(challengeToken))),
+    );
     if (!enrolment) throw malformed();
     return enrolment;
   } catch (e) {
@@ -121,8 +127,9 @@ export const adminTotpConfirm = async (
   code: string,
 ): Promise<{ result: AuthResult; recoveryCodes: string[] }> => {
   try {
-    const body = unwrap(await api.post('/auth/admin/totp/confirm', { challengeToken, code }));
-    const result = authResultSerializer(body);
+    const body = unwrap(await api.post(AUTH_PATHS.adminTotpConfirm, { challengeToken, code }, asChallenge(challengeToken)));
+    // The API nests the session: { recoveryCodes, auth: AuthResult }.
+    const result = authResultSerializer(body?.auth ?? body);
     if (!result) throw malformed();
     await setTokens(result.tokens.accessToken, result.tokens.refreshToken);
     clearIntentionalSignOut();

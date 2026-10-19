@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════
 // TODO(API_AUTH): paths per docs/API_CONTRACT_ASSUMED.md.
 
-import { api, unwrap, toAuthError } from '../network/apiHelpers';
+import { api, unwrap, toAuthError, forMock } from '../network/apiHelpers';
 import { userSerializer } from '../../serializers/authSerializer';
 import type { Gender, User } from '../../types/auth';
 
@@ -14,9 +14,11 @@ export interface UpdateMePayload {
   avatarUrl?: string | null;
 }
 
-export const updateMe = async (patch: UpdateMePayload): Promise<User> => {
+/** The API calls the name `displayName`; the dummy API still reads `name`. */
+export const updateMe = async ({ name, ...rest }: UpdateMePayload): Promise<User> => {
   try {
-    const response = await api.patch('/users/me', patch);
+    const named = name === undefined ? {} : forMock<object>({ displayName: name.trim() }, { name });
+    const response = await api.patch('/users/me', { ...rest, ...named });
     const body = unwrap(response);
     return userSerializer(body?.user ?? body);
   } catch (e) {

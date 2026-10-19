@@ -88,11 +88,17 @@ export const authResultSerializer = (raw: unknown): AuthResult | null => {
   return { ...session, tokens };
 };
 
+/**
+ * The API says `{ totpRequired, enrolmentRequired, challengeToken }`;
+ * `totpEnrolled` (the dummy API) is read too.
+ */
 export const totpChallengeSerializer = (raw: unknown): TotpChallenge | null => {
   if (!isObject(raw)) return null;
   const challengeToken = str(raw.challengeToken);
   if (!challengeToken) return null;
-  return { challengeToken, totpEnrolled: bool(raw.totpEnrolled, true) };
+  const totpEnrolled =
+    raw.totpEnrolled !== undefined ? bool(raw.totpEnrolled, true) : !bool(raw.enrolmentRequired, false);
+  return { challengeToken, totpEnrolled };
 };
 
 export const totpEnrolmentSerializer = (raw: unknown): TotpEnrolment | null => {

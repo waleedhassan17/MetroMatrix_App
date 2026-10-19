@@ -20,7 +20,7 @@ const valid: SignUpData = {
   name: 'Ayesha Khan',
   phone: '3124890176',
   email: 'ayesha@example.com',
-  password: 'metro2026',
+  password: 'Metro2026',
 };
 
 describe('validateSignIn', () => {
@@ -43,14 +43,15 @@ describe('validatePassword (policy identical to the API)', () => {
     ['', 'Password is required'],
     ['abc123', 'Use at least 8 characters'],
     ['a1'.repeat(37), 'Use 72 characters or fewer'],
-    ['12345678', 'Add at least one letter'],
-    ['abcdefgh', 'Add at least one number'],
+    ['12345678', 'Add at least one lower-case letter'],
+    ['abcdefg1', 'Add at least one capital letter'],
+    ['Abcdefgh', 'Add at least one number'],
   ])('%p → %p', (password, message) => {
     expect(validatePassword(password)).toBe(message);
   });
-  it('accepts 8 characters with a letter and a number, and exactly 72', () => {
-    expect(validatePassword('abcdefg1')).toBeUndefined();
-    expect(validatePassword('a1'.repeat(36))).toBeUndefined();
+  it('accepts 8 characters with lower, upper and a number, and exactly 72', () => {
+    expect(validatePassword('Abcdefg1')).toBeUndefined();
+    expect(validatePassword('A' + 'a1'.repeat(35) + 'a')).toBeUndefined();
   });
 });
 
@@ -73,7 +74,7 @@ describe('validateSignUp (the FYP four fields)', () => {
   it('validates the email and applies the password policy', () => {
     expect(validateSignUp({ ...valid, email: 'nope' }).email).toBe('Enter a valid email address');
     expect(validateSignUp({ ...valid, password: 'short1' }).password).toBe('Use at least 8 characters');
-    expect(validateSignUp({ ...valid, password: 'lettersonly' }).password).toBe('Add at least one number');
+    expect(validateSignUp({ ...valid, password: 'Lettersonly' }).password).toBe('Add at least one number');
   });
 });
 
@@ -127,21 +128,21 @@ describe('validateOtp', () => {
 
 describe('validateNewPassword / validateChangePassword', () => {
   it('applies policy and confirmation', () => {
-    expect(validateNewPassword({ password: 'metro2026', confirmPassword: 'metro2026' })).toEqual({});
+    expect(validateNewPassword({ password: 'Metro2026', confirmPassword: 'Metro2026' })).toEqual({});
     expect(validateNewPassword({ password: 'metro', confirmPassword: 'metro' }).password).toBeDefined();
-    expect(validateNewPassword({ password: 'metro2026', confirmPassword: 'x' }).confirmPassword).toBe(
+    expect(validateNewPassword({ password: 'Metro2026', confirmPassword: 'x' }).confirmPassword).toBe(
       'Passwords do not match',
     );
   });
 
   it('requires the current password unless setting a first one (Google-only)', () => {
-    const data = { currentPassword: '', password: 'metro2026', confirmPassword: 'metro2026' };
+    const data = { currentPassword: '', password: 'Metro2026', confirmPassword: 'Metro2026' };
     expect(validateChangePassword(data, true).currentPassword).toBe('Current password is required');
     expect(validateChangePassword(data, false)).toEqual({});
   });
 
   it('refuses reusing the current password', () => {
-    const data = { currentPassword: 'metro2026', password: 'metro2026', confirmPassword: 'metro2026' };
+    const data = { currentPassword: 'Metro2026', password: 'Metro2026', confirmPassword: 'Metro2026' };
     expect(validateChangePassword(data, true).password).toBeDefined();
   });
 });
@@ -168,7 +169,7 @@ describe('getPasswordStrength', () => {
   it.each([
     ['', 'weak'],
     ['abcdefgh', 'weak'],
-    ['abcdefg1', 'fair'],
+    ['abcdefg1', 'weak'],
     ['Abcdefg1', 'strong'],
     ['Abcdefgh123!', 'excellent'],
   ])('%p is %p', (password, level) => {

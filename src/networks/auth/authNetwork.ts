@@ -5,7 +5,8 @@
 // and on failure throw an AuthError carrying the server's code + details.
 // Functions that open a session store the token pair HERE (FinMatrix
 // convention), so a slice never touches storage.
-// TODO(API_AUTH): paths and bodies per docs/API_CONTRACT_ASSUMED.md.
+// Paths and bodies per MetroMatrix_Backend docs/API_AUTH.md; `forMock` keeps
+// the dummy API (assumed contract) working until it is brought in line.
 
 import {
   api,
@@ -14,6 +15,7 @@ import {
   clearTokens,
   refreshTokens,
   toAuthError,
+  forMock,
   AuthError,
   AUTH_PATHS,
 } from '../network/apiHelpers';
@@ -26,13 +28,15 @@ import {
   userSerializer,
   type SessionPayload,
 } from '../../serializers/authSerializer';
+import { isObject } from '../../serializers/serializerUtils';
+import { SUBTYPE_SERVICE } from '../../models/businessModel';
 import type { AuthResult, Portal, SubType, TotpChallenge, User } from '../../types/auth';
 
 // ─── Types ────────────────────────────────────────────
 export interface SignupPayload {
   name: string;
   email: string;
-  /** Canonical +92…. */
+  /** Canonical +92…, or '' when none was given (the field is then omitted). */
   phone: string;
   password: string;
   portal: Extract<Portal, 'customer' | 'partner'>;
@@ -71,21 +75,39 @@ const openSession = async (result: AuthResult | null): Promise<AuthResult> => {
 };
 
 // ─── Sign up / sign in ───────────────────────────────
+/**
+ * The API takes `displayName` and `role` (`customer` | `partner`); `phone` is
+ * optional, so a blank one is left out rather than sent as ''.
+ */
 export const authSignup = async (payload: SignupPayload): Promise<AuthResult> => {
   try {
+    const name = payload.name.trim();
+    const phone = payload.phone.trim();
     const response = await api.post(AUTH_PATHS.signup, {
-      name: payload.name.trim(),
+      displayName: name,
       email: payload.email.trim().toLowerCase(),
-      phone: payload.phone,
+      ...(phone ? { phone } : null),
       password: payload.password,
-      portal: payload.portal,
-      ...(payload.subType ? { subType: payload.subType } : null),
-      acceptedTerms: true,
+      role: payload.portal,
+      ...forMock({}, { name, portal: payload.portal, subType: payload.subType, acceptedTerms: true }),
     });
-    return await openSession(authResultSerializer(unwrap(response)));
+    return await openSession(withPickedSubType(authResultSerializer(unwrap(response)), payload.subType));
   } catch (e) {
     throw toAuthError(e);
   }
+};
+
+/**
+ * The API doesn't keep the type picked on Provider Selection: it arrives with
+ * the business (POST /businesses). Until then PersonalInfo reads it from the
+ * user, so the pick is carried onto the new session here.
+ */
+const withPickedSubType = (result: AuthResult | null, subType?: SubType): AuthResult | null => {
+  if (!result || !subType || result.user.providerSubType) return result;
+  return {
+    ...result,
+    user: { ...result.user, providerSubType: subType, providerServiceType: SUBTYPE_SERVICE[subType] },
+  };
 };
 
 /**
@@ -124,32 +146,37 @@ export const authAdminTotp = async (
 /** Exchange a Google ID token (never an access token) for a session. */
 export const authGoogle = async (idToken: string): Promise<AuthResult> => {
   try {
-    const response = await api.post(AUTH_PATHS.google, { idToken, portal: 'customer' });
+    // Google is the customer portal only; the API takes no `portal` here.
+    const response = await api.post(AUTH_PATHS.google, { idToken });
     return await openSession(authResultSerializer(unwrap(response)));
   } catch (e) {
     throw toAuthError(e);
   }
 };
 
-// ─── Email verification (a link, as in the FYP app) ──
+// ─── Email verification ──────────────────────────────
+// The API emails a 6-digit code (POST /auth/verify-email { otp }); it has no
+// link and no status endpoint. The dummy API still models the FYP's link.
+
 /**
- * Has the user opened the link we emailed? Polled by "I Verified My Email".
- * TODO(API_AUTH): confirm the path and response shape.
+ * Is the address verified yet? Polled by "I Verified My Email". The API's
+ * answer is the account itself (GET /auth/me → user.isEmailVerified).
  */
 export const authVerificationStatus = async (): Promise<boolean> => {
   try {
-    const response = await api.get('/auth/verification-status');
+    const response = await api.get(forMock('/auth/me', '/auth/verification-status'));
     const body = unwrap(response);
-    return body?.isEmailVerified === true || body?.verified === true;
+    const source = body?.user ?? body;
+    return source?.isEmailVerified === true || source?.verified === true;
   } catch (e) {
     throw toAuthError(e);
   }
 };
 
-/** The deep link's token: metromatrix://verify-success?token=… */
-export const authVerifyEmail = async (token: string): Promise<User> => {
+/** The emailed 6-digit code (the dummy API: the deep link's token). */
+export const authVerifyEmail = async (code: string): Promise<User> => {
   try {
-    const response = await api.post(AUTH_PATHS.verifyEmail, { token });
+    const response = await api.post(AUTH_PATHS.verifyEmail, forMock({ otp: code.trim() }, { token: code }));
     const body = unwrap(response);
     return userSerializer(body?.user ?? body);
   } catch (e) {
@@ -157,15 +184,22 @@ export const authVerifyEmail = async (token: string): Promise<User> => {
   }
 };
 
-/** Resolves to the seconds until another resend is allowed. */
+/**
+ * Resolves to the seconds until another resend is allowed. The API's cooldown
+ * (429 RESEND_COOLDOWN, `details.retryAfter`) is reported as the app's
+ * RESEND_TOO_SOON.
+ */
 export const authResendVerification = async (): Promise<number> => {
   try {
     const response = await api.post('/auth/resend-verification');
     return retryAfterSerializer(unwrap(response));
   } catch (e) {
-    throw toAuthError(e);
+    throw asResendTooSoon(toAuthError(e));
   }
 };
+
+const asResendTooSoon = (e: AuthError): AuthError =>
+  e.code === 'RESEND_COOLDOWN' ? new AuthError(e.message, 'RESEND_TOO_SOON', e.status, e.details) : e;
 
 // ─── Session ─────────────────────────────────────────
 /**
@@ -216,7 +250,10 @@ export const authForgotPassword = async (email: string): Promise<number> => {
 
 export const authVerifyResetOtp = async (email: string, code: string): Promise<string> => {
   try {
-    const response = await api.post(AUTH_PATHS.verifyResetOtp, { email: email.trim().toLowerCase(), code });
+    const response = await api.post(AUTH_PATHS.verifyResetOtp, {
+      email: email.trim().toLowerCase(),
+      ...forMock<{ otp: string } | { code: string }>({ otp: code.trim() }, { code }),
+    });
     const resetToken = unwrap(response)?.resetToken;
     if (typeof resetToken !== 'string' || !resetToken) throw malformed();
     return resetToken;
@@ -234,7 +271,11 @@ export const authResetPassword = async (resetToken: string, password: string): P
 };
 
 // ─── Account ─────────────────────────────────────────
-/** `currentPassword` is omitted for Google-only accounts setting a first one. */
+/**
+ * `currentPassword` is omitted for Google-only accounts setting a first one.
+ * The API answers `{ changed: true }`, not the user, so the account is re-read
+ * (its `hasPassword` may have just turned true).
+ */
 export const authChangePassword = async (payload: {
   currentPassword?: string;
   newPassword: string;
@@ -242,7 +283,8 @@ export const authChangePassword = async (payload: {
   try {
     const response = await api.post('/auth/change-password', payload);
     const body = unwrap(response);
-    return userSerializer(body?.user ?? body);
+    if (isObject(body?.user)) return userSerializer(body.user);
+    return (await authMe()).user;
   } catch (e) {
     throw toAuthError(e);
   }

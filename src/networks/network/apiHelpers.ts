@@ -20,23 +20,35 @@ export { API_BASE_URL };
 // network files keep importing everything they need from the shared client.
 export { setTokens, getAccessToken, getRefreshToken, clearTokens };
 
+/**
+ * The dummy API (./mock) still speaks the assumed contract
+ * (docs/API_CONTRACT_ASSUMED.md); the real backend is the source of truth.
+ * Where they differ, a network function takes the backend's shape and asks
+ * for the mock's only while the dummy API is on. Delete each use once the
+ * mock is brought in line.
+ */
+export const forMock = <T>(real: T, mock: T): T => (USE_MOCK_API ? mock : real);
+
 // ─── Auth paths the client itself must know about ───
-// TODO(API_AUTH): confirm every path against MetroMatrix-API docs/API_AUTH.md.
+// Per MetroMatrix_Backend docs/API_AUTH.md §4.1 and §4.4.
 export const AUTH_PATHS = {
   signin: '/auth/signin',
   signup: '/auth/signup',
   google: '/auth/google',
   adminTotp: '/auth/admin/totp',
-  refresh: '/auth/refresh',
+  refresh: forMock('/auth/refresh-token', '/auth/refresh'),
   logout: '/auth/logout',
   verifyEmail: '/auth/verify-email',
   forgotPassword: '/auth/forgot-password',
-  verifyResetOtp: '/auth/verify-reset-otp',
+  verifyResetOtp: forMock('/auth/verify-otp', '/auth/verify-reset-otp'),
   resetPassword: '/auth/reset-password',
+  // First admin sign-in: authenticated by the sign-in challenge, not a session.
+  adminTotpEnrol: forMock('/admin/me/totp/enrol', '/auth/admin/totp/enrol'),
+  adminTotpConfirm: forMock('/admin/me/totp/confirm', '/auth/admin/totp/confirm'),
 } as const;
 
 // A 401 from these IS the real answer (wrong password, bad OTP, dead refresh
-// token). Refreshing on them would loop or mask the error.
+// token, expired admin challenge). Refreshing on them would loop or mask the error.
 const NO_REFRESH_PATHS: string[] = [
   AUTH_PATHS.signin,
   AUTH_PATHS.signup,
@@ -46,6 +58,8 @@ const NO_REFRESH_PATHS: string[] = [
   AUTH_PATHS.forgotPassword,
   AUTH_PATHS.verifyResetOtp,
   AUTH_PATHS.resetPassword,
+  AUTH_PATHS.adminTotpEnrol,
+  AUTH_PATHS.adminTotpConfirm,
 ];
 
 // ─── Axios Instances ────────────────────────────────
@@ -130,7 +144,7 @@ export const refreshTokens = async (): Promise<string> => {
     // interceptors it is serving.
     const { data } = await refreshClient.post(AUTH_PATHS.refresh, { refreshToken });
     const body = unwrapBody<any>(data);
-    // TODO(API_AUTH): confirm whether the pair is top-level or under `tokens`.
+    // The API answers a bare TokenPair; `tokens` is tolerated too.
     const pair = body?.tokens ?? body;
     if (!pair?.accessToken || !pair?.refreshToken) {
       throw new Error('No token in refresh response');
