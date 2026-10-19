@@ -25,6 +25,8 @@ import {
   setCategoryField,
   setCategoryWindowed,
 } from './vendorCategoriesSlice';
+import { menuPlace } from '@models/food/vendorModel';
+import { selectBusiness } from '../../../Auth/authSlice';
 
 const makeStyles = ({ space, size }: Theme) =>
   StyleSheet.create({
@@ -36,7 +38,7 @@ const makeStyles = ({ space, size }: Theme) =>
   });
 
 const VendorCategoriesScreen: React.FC = () => {
-  const { back } = useBack({ name: 'VendorTabs', params: { screen: 'MenuTab' } });
+  const { back } = useBack(menuPlace(useAppSelector(selectBusiness)?.subType === 'home_kitchen'));
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectVendorCategories);

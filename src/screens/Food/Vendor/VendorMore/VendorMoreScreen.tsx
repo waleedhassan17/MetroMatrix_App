@@ -27,6 +27,12 @@ const MENU_ITEMS: Item[] = [
   { label: 'Add-on groups', hint: 'Spice level, toppings, drinks…', icon: 'options-outline', to: 'VendorOptionGroups' },
 ];
 
+/** A home kitchen's Menu and Riders aren't tabs: they open from here. */
+const HOME_KITCHEN_PAGES: Item[] = [
+  { label: 'Menu', hint: 'Your dishes, and what can be ordered now', icon: 'book-outline', to: 'VendorMenuPage' },
+  { label: 'Riders', hint: 'Your own delivery riders', icon: 'bicycle-outline', to: 'VendorRidersPage' },
+];
+
 const HOME_KITCHEN_ITEMS: Item[] = [
   { label: 'Weekly menu', hint: 'The days you cook each dish', icon: 'calendar-outline', to: 'VendorWeeklyMenu' },
   { label: 'Pre-order slots', hint: 'When customers can order ahead for', icon: 'time-outline', to: 'VendorPreorderSlots' },
@@ -48,6 +54,7 @@ const SECTIONS: { title: string; items: Item[] }[] = [
     title: 'How you work',
     items: [
       { label: 'Kitchen settings', hint: 'Delivery, pick-up, cash, address', icon: 'options-outline', to: 'VendorSettings' },
+      { label: 'Costs, stock and the board', hint: 'Food-cost target, selling out by stock, packing photo, spoken orders', icon: 'flame-outline', to: 'KitchenSettings' },
       { label: 'Opening hours', hint: 'When customers can order', icon: 'time-outline', to: 'VendorHours' },
       { label: 'Delivery zones', hint: 'Fees and minimum order by distance', icon: 'navigate-circle-outline', to: 'VendorZones' },
       { label: 'Closed days', hint: 'Holidays and days off', icon: 'calendar-clear-outline', to: 'VendorClosures' },
@@ -70,7 +77,7 @@ const VendorMoreScreen: React.FC = () => {
   const kind = business?.subType === 'home_kitchen' || business?.subType === 'cloud_kitchen' ? business.subType : 'restaurant';
   const sections = [
     SECTIONS[0],
-    { title: 'Your menu', items: kind === 'home_kitchen' ? [...MENU_ITEMS, ...HOME_KITCHEN_ITEMS] : MENU_ITEMS },
+    { title: 'Your menu', items: kind === 'home_kitchen' ? [...HOME_KITCHEN_PAGES, ...MENU_ITEMS, ...HOME_KITCHEN_ITEMS] : MENU_ITEMS },
     ...SECTIONS.slice(1),
   ];
   return (

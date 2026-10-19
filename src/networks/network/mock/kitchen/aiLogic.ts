@@ -41,6 +41,14 @@ const nextMonthStart = (now: number) => {
   return zonedToIso(next, '00:00', TZ);
 };
 
+/**
+ * Test switches for walks (the dummy API only): `globalThis.__MM_MOCK__ =
+ * { aiOff: true }` turns the assistant off, `{ aiUsedUp: true }` uses up
+ * every limit, without signing in as staff. The staff console's switch and
+ * quotas (PATCH /admin/kitchen/ai/…) are the real way.
+ */
+const devSwitch = (name: 'aiOff' | 'aiUsedUp') => !!(globalThis as { __MM_MOCK__?: Record<string, boolean> }).__MM_MOCK__?.[name];
+
 export const limitOf = (db: MockDb, ownerId: string, kind: 'vendor' | 'customer') =>
   db.kitchen.aiLimits[ownerId] ?? (kind === 'vendor' ? VENDOR_MONTHLY_ACTIONS : CUSTOMER_MONTHLY_ACTIONS);
 
@@ -56,10 +64,10 @@ const voiceToday = (db: MockDb, ownerId: string, now: number) => {
 
 export const usageWire = (db: MockDb, ownerId: string, kind: 'vendor' | 'customer', now: number) => {
   const limit = limitOf(db, ownerId, kind);
-  const used = usedThisMonth(db, ownerId, now);
-  const clips = voiceToday(db, ownerId, now);
+  const used = devSwitch('aiUsedUp') ? limit : usedThisMonth(db, ownerId, now);
+  const clips = devSwitch('aiUsedUp') ? VOICE_DAILY_CLIPS : voiceToday(db, ownerId, now);
   return {
-    enabled: db.kitchen.aiEnabled,
+    enabled: db.kitchen.aiEnabled && !devSwitch('aiOff'),
     limit,
     used,
     left: Math.max(0, limit - used),
@@ -70,7 +78,7 @@ export const usageWire = (db: MockDb, ownerId: string, kind: 'vendor' | 'custome
 
 /** Refuses when the assistant is off or this owner's limit is used; else lets the action run. */
 export const aiGate = (db: MockDb, ownerId: string, kind: 'vendor' | 'customer', feature: AiFeature, now: number) => {
-  if (!db.kitchen.aiEnabled) {
+  if (!db.kitchen.aiEnabled || devSwitch('aiOff')) {
     throw new KitchenError(503, 'AI_UNAVAILABLE', 'The assistant is off right now. You can do this by hand below.', { feature });
   }
   const u = usageWire(db, ownerId, kind, now);

@@ -277,7 +277,11 @@ export const SETUP_ROUTE: Record<string, SetupTarget | null> = {
   slots: { name: 'VendorPreorderSlots' },
 };
 
-export const setupRoute = (key: VendorSetupKey): SetupTarget | null => SETUP_ROUTE[key] ?? null;
+/** The menu and the riders: tabs, except for a home kitchen (Today · Orders · Kitchen · More), where they are pages. */
+export const menuPlace = (homeKitchen: boolean): SetupTarget => (homeKitchen ? { name: 'VendorMenuPage' } : { name: 'VendorTabs', params: { screen: 'MenuTab' } });
+export const ridersPlace = (homeKitchen: boolean): SetupTarget => (homeKitchen ? { name: 'VendorRidersPage' } : { name: 'VendorTabs', params: { screen: 'RidersTab' } });
+
+export const setupRoute = (key: VendorSetupKey, homeKitchen = false): SetupTarget | null => (key === 'menu' ? menuPlace(homeKitchen) : (SETUP_ROUTE[key] ?? null));
 
 /** Short names for the checklist rows (the API's own label is the fallback for a step the app doesn't know yet). */
 export const SETUP_TITLE: Record<string, string> = {

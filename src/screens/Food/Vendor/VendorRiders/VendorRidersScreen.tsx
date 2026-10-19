@@ -33,13 +33,14 @@ const makeStyles = ({ space }: Theme) =>
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
   });
 
-const VendorRidersScreen: React.FC = () => (
+/** `onBack`: shown when Riders is a page (a home kitchen opens it from More), not a tab. */
+const VendorRidersScreen: React.FC<{ onBack?: () => void }> = ({ onBack }) => (
   <ServiceScope service="food">
-    <VendorRidersContent />
+    <VendorRidersContent onBack={onBack} />
   </ServiceScope>
 );
 
-const VendorRidersContent: React.FC = () => {
+const VendorRidersContent: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const navigation = useNavigation<Nav>();
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
@@ -67,6 +68,7 @@ const VendorRidersContent: React.FC = () => {
   return (
     <ScreenShell
       title="Riders"
+      onBack={onBack}
       subtitle={s.riders.length ? `${onDuty} of ${s.riders.length} on duty` : 'Your own delivery riders'}
       footer={<Button label="Add a rider" leftIcon="person-add-outline" onPress={() => dispatch(openAddRider())} fullWidth />}
       refreshing={s.status === 'loading' && !!s.riders.length}

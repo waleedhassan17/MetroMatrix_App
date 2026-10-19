@@ -52,6 +52,8 @@ import {
   toggleItemTag,
   uploadItemPhotoAsync,
 } from './vendorMenuItemSlice';
+import { menuPlace } from '@models/food/vendorModel';
+import { selectBusiness } from '../../../Auth/authSlice';
 
 type Props = NativeStackScreenProps<FoodVendorStackParamList, 'VendorMenuItem'>;
 
@@ -83,7 +85,7 @@ const VendorMenuItemScreen: React.FC<Props> = props => (
 const VendorMenuItemContent: React.FC<Props> = ({ route, navigation }) => {
   const id = route.params?.id;
   const categoryId = route.params?.categoryId;
-  const { back } = useBack({ name: 'VendorTabs', params: { screen: 'MenuTab' } });
+  const { back } = useBack(menuPlace(useAppSelector(selectBusiness)?.subType === 'home_kitchen'));
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { colors, size } = useTheme();

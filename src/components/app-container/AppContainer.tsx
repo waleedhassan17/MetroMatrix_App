@@ -93,7 +93,7 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       DoctorProfileEdit: 'doctor/profile',
       // The Food vendor's app (its own stack): metromatrix://vendor/orders
       VendorTabs: {
-        screens: { TodayTab: 'vendor/today', OrdersTab: 'vendor/orders', MenuTab: 'vendor/menu', RidersTab: 'vendor/riders', MoreTab: 'vendor/more' },
+        screens: { TodayTab: 'vendor/today', OrdersTab: 'vendor/orders', MenuTab: 'vendor/menu', KitchenTab: 'vendor/kitchen', RidersTab: 'vendor/riders', MoreTab: 'vendor/more' },
       },
       VendorSetup: 'vendor/setup',
       VendorBrand: 'vendor/brand',
@@ -114,6 +114,20 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       VendorOrder: 'vendor/orders/:id',
       VendorReviews: 'vendor/reviews',
       VendorInsights: 'vendor/insights',
+      VendorMenuPage: 'vendor/my-menu',
+      VendorRidersPage: 'vendor/my-riders',
+      KitchenStock: 'vendor/kitchen/stock',
+      KitchenStockTake: 'vendor/kitchen/stock/count',
+      KitchenIngredient: 'vendor/kitchen/stock/:id',
+      KitchenIngredientForm: 'vendor/kitchen/ingredient/:id?',
+      KitchenRecipes: 'vendor/kitchen/recipes',
+      KitchenRecipe: 'vendor/kitchen/recipes/:itemId',
+      KitchenSettings: 'vendor/kitchen/settings',
+      KitchenPurchases: 'vendor/kitchen/purchases',
+      KitchenPurchaseForm: 'vendor/kitchen/purchases/new',
+      KitchenPurchase: 'vendor/kitchen/purchases/:id',
+      KitchenSuppliers: 'vendor/kitchen/suppliers',
+      KitchenPriceWatch: 'vendor/kitchen/prices',
       // The rider's app: metromatrix://rider/deliveries
       RiderTabs: {
         screens: { DeliveriesTab: 'rider/deliveries', CashTab: 'rider/cash', RiderProfileTab: 'rider/profile' },

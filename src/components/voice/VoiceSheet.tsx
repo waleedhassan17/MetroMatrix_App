@@ -3,6 +3,7 @@
 
 import React, { useState } from 'react';
 import { IconButton, Sheet } from '../../Custom-Components';
+import { OnGradientContext } from '../../Custom-Components/headerInk';
 import { VoiceEntry, type VoiceEntryProps } from './VoiceEntry';
 
 export const VoiceSheetButton: React.FC<VoiceEntryProps & { title?: string }> = ({ title = 'Speak', onConfirm, ...rest }) => {
@@ -10,6 +11,8 @@ export const VoiceSheetButton: React.FC<VoiceEntryProps & { title?: string }> = 
   return (
     <>
       <IconButton icon="mic-outline" onPress={() => setOpen(true)} accessibilityLabel="Speak instead of tapping" />
+      {/* The button sits on the gradient header; its sheet is an ordinary white surface. */}
+      <OnGradientContext.Provider value={false}>
       <Sheet visible={open} onClose={() => setOpen(false)} title={title}>
         <VoiceEntry
           {...rest}
@@ -20,6 +23,7 @@ export const VoiceSheetButton: React.FC<VoiceEntryProps & { title?: string }> = 
           }}
         />
       </Sheet>
+      </OnGradientContext.Provider>
     </>
   );
 };

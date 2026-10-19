@@ -77,7 +77,7 @@ const VendorTodayScreen: React.FC = () => {
         {!t ? (
           s.status === 'failed' ? null : <SkeletonLines lines={8} />
         ) : !t.items.length ? (
-          <EmptyState icon="book-open" title="Add your dishes first" body="Put your dishes on the menu, then set how many plates you cook each day." action={{ label: 'Open the menu', onPress: () => navigation.navigate('MenuTab') }} />
+          <EmptyState icon="book-open" title="Add your dishes first" body="Put your dishes on the menu, then set how many plates you cook each day." action={{ label: 'Open the menu', onPress: () => navigation.navigate('VendorMenuPage') }} />
         ) : (
           <>
             <AppText variant="sectionTitle">Cooking today</AppText>

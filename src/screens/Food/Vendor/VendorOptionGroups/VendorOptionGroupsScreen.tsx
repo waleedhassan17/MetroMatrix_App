@@ -13,6 +13,8 @@ import { AppText, Button, Card, Divider, EmptyState, InlineNotice, ScreenShell, 
 import { formatPKR } from '@utils/money';
 import { haptics } from '@utils/haptics';
 import { loadOptionGroupsAsync, selectVendorOptionGroups, setOptionAvailableAsync } from './vendorOptionGroupsSlice';
+import { menuPlace } from '@models/food/vendorModel';
+import { selectBusiness } from '../../../Auth/authSlice';
 
 type Nav = { navigate: (name: string, params?: object) => void };
 
@@ -25,7 +27,7 @@ const makeStyles = ({ space }: Theme) =>
 
 const VendorOptionGroupsScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
-  const { back } = useBack({ name: 'VendorTabs', params: { screen: 'MenuTab' } });
+  const { back } = useBack(menuPlace(useAppSelector(selectBusiness)?.subType === 'home_kitchen'));
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectVendorOptionGroups);

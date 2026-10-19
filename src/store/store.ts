@@ -176,6 +176,19 @@ import { vendorWeeklyMenuSlice } from '../screens/Food/Vendor/VendorWeeklyMenu/v
 import { vendorPreorderSlotsSlice } from '../screens/Food/Vendor/VendorPreorderSlots/vendorPreorderSlotsSlice';
 // Food (rider)
 import { riderHomeSlice } from '../screens/Food/Rider/RiderDeliveries/riderHomeSlice';
+import { recipesAndCostsSlice } from '../screens/Food/Kitchen/RecipesAndCosts/recipesAndCostsSlice';
+import { recipeEditorSlice } from '../screens/Food/Kitchen/RecipeEditor/recipeEditorSlice';
+import { kitchenSettingsSlice } from '../screens/Food/Kitchen/KitchenSettings/kitchenSettingsSlice';
+import { purchasesSlice } from '../screens/Food/Kitchen/Purchases/purchasesSlice';
+import { purchaseSlice } from '../screens/Food/Kitchen/Purchase/purchaseSlice';
+import { purchaseFormSlice } from '../screens/Food/Kitchen/PurchaseForm/purchaseFormSlice';
+import { suppliersSlice } from '../screens/Food/Kitchen/Suppliers/suppliersSlice';
+import { priceWatchSlice } from '../screens/Food/Kitchen/PriceWatch/priceWatchSlice';
+import { kitchenHubSlice } from '../screens/Food/Kitchen/KitchenHub/kitchenHubSlice';
+import { stockSlice } from '../screens/Food/Kitchen/Stock/stockSlice';
+import { stockTakeSlice } from '../screens/Food/Kitchen/StockTake/stockTakeSlice';
+import { ingredientSlice } from '../screens/Food/Kitchen/Ingredient/ingredientSlice';
+import { ingredientFormSlice } from '../screens/Food/Kitchen/IngredientForm/ingredientFormSlice';
 
 // `auth` is persisted through its OWN persistReducer so that exactly one
 // field reaches disk. The session (user, business, tokens) is never
@@ -344,6 +357,19 @@ const rootReducer = combineReducers({
   vendorPreorderSlots: vendorPreorderSlotsSlice.reducer,
   // Food (rider)
   riderHome: riderHomeSlice.reducer,
+  recipesAndCosts: recipesAndCostsSlice.reducer,
+  recipeEditor: recipeEditorSlice.reducer,
+  kitchenSettings: kitchenSettingsSlice.reducer,
+  purchases: purchasesSlice.reducer,
+  purchase: purchaseSlice.reducer,
+  purchaseForm: purchaseFormSlice.reducer,
+  suppliers: suppliersSlice.reducer,
+  priceWatch: priceWatchSlice.reducer,
+  kitchenHub: kitchenHubSlice.reducer,
+  stock: stockSlice.reducer,
+  stockTake: stockTakeSlice.reducer,
+  ingredient: ingredientSlice.reducer,
+  ingredientForm: ingredientFormSlice.reducer,
 });
 
 type RootReducerState = ReturnType<typeof rootReducer>;

@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — The Food vendor's app (restaurant, home or cloud kitchen)
 // ═══════════════════════════════════════════════════════
-// Orders · Menu · Riders · More at the root of a stack (a home kitchen has
-// Today first); every tool pushes over the tabs. Until the kitchen is live the
+// Orders · Menu · Kitchen · Riders · More at the root of a stack (a home
+// kitchen: Today · Orders · Kitchen · More); every tool pushes over the tabs. Until the kitchen is live the
 // stack opens on Kitchen setup instead (sessionGate.foodVendorRootRoute).
 
 import type { IRoute, ITabRoute } from './types';
@@ -34,20 +34,45 @@ import VendorInsightsScreen from '../screens/Food/Vendor/VendorInsights/VendorIn
 import VendorOrderScreen from '../screens/Food/Vendor/VendorOrder/VendorOrderScreen';
 import PaymentAccountsScreen from '../screens/Shopping/Store/PaymentAccounts/PaymentAccountsScreen';
 import ProfileScreen from '../screens/Account/Profile/ProfileScreen';
+import { VendorMenuPageScreen, VendorRidersPageScreen } from '../screens/Food/Vendor/VendorPages/VendorPagesScreen';
+// Kitchen Intelligence (Chunk 5)
+import KitchenHubScreen from '../screens/Food/Kitchen/KitchenHub/KitchenHubScreen';
+import StockScreen from '../screens/Food/Kitchen/Stock/StockScreen';
+import StockTakeScreen from '../screens/Food/Kitchen/StockTake/StockTakeScreen';
+import IngredientScreen from '../screens/Food/Kitchen/Ingredient/IngredientScreen';
+import IngredientFormScreen from '../screens/Food/Kitchen/IngredientForm/IngredientFormScreen';
+import RecipesAndCostsScreen from '../screens/Food/Kitchen/RecipesAndCosts/RecipesAndCostsScreen';
+import RecipeEditorScreen from '../screens/Food/Kitchen/RecipeEditor/RecipeEditorScreen';
+import KitchenSettingsScreen from '../screens/Food/Kitchen/KitchenSettings/KitchenSettingsScreen';
+import PurchasesScreen from '../screens/Food/Kitchen/Purchases/PurchasesScreen';
+import PurchaseScreen from '../screens/Food/Kitchen/Purchase/PurchaseScreen';
+import PurchaseFormScreen from '../screens/Food/Kitchen/PurchaseForm/PurchaseFormScreen';
+import SuppliersScreen from '../screens/Food/Kitchen/Suppliers/SuppliersScreen';
+import PriceWatchScreen from '../screens/Food/Kitchen/PriceWatch/PriceWatchScreen';
 import ChangePasswordScreen from '../screens/Account/ChangePassword/ChangePasswordScreen';
 import NotificationsScreen from '../screens/Account/Notifications/NotificationsScreen';
 
+const ORDERS: ITabRoute = { title: ROUTES.ORDERS_TAB, component: VendorOrdersScreen, label: 'Orders', icon: 'receipt-outline', iconActive: 'receipt' };
+const KITCHEN: ITabRoute = { title: ROUTES.KITCHEN_TAB, component: KitchenHubScreen, label: 'Kitchen', icon: 'flame-outline', iconActive: 'flame' };
+const MORE: ITabRoute = { title: ROUTES.MORE_TAB, component: VendorMoreScreen, label: 'More', icon: 'grid-outline', iconActive: 'grid' };
+
 export const FOOD_VENDOR_TABS: ITabRoute[] = [
-  { title: ROUTES.ORDERS_TAB, component: VendorOrdersScreen, label: 'Orders', icon: 'receipt-outline', iconActive: 'receipt' },
+  ORDERS,
   { title: ROUTES.MENU_TAB, component: VendorMenuScreen, label: 'Menu', icon: 'book-outline', iconActive: 'book' },
+  KITCHEN,
   { title: ROUTES.RIDERS_TAB, component: VendorRidersScreen, label: 'Riders', icon: 'bicycle-outline', iconActive: 'bicycle' },
-  { title: ROUTES.MORE_TAB, component: VendorMoreScreen, label: 'More', icon: 'grid-outline', iconActive: 'grid' },
+  MORE,
 ];
 
-/** A home kitchen's day comes first: what is cooking and how many plates. */
+/**
+ * A home kitchen's day comes first: what is cooking and how many plates.
+ * Its Menu and Riders open from More (VendorMenuPage, VendorRidersPage).
+ */
 export const FOOD_VENDOR_HOME_TABS: ITabRoute[] = [
   { title: ROUTES.TODAY_TAB, component: VendorTodayScreen, label: 'Today', icon: 'today-outline', iconActive: 'today' },
-  ...FOOD_VENDOR_TABS,
+  ORDERS,
+  KITCHEN,
+  MORE,
 ];
 
 /** Pushed over the tabs (the tabs, or Kitchen setup, are the stack's first screen). */
@@ -71,6 +96,21 @@ export const FOOD_VENDOR_STACK_ROUTES: IRoute[] = [
   { title: ROUTES.VENDOR_REVIEWS, component: VendorReviewsScreen },
   { title: ROUTES.VENDOR_INSIGHTS, component: VendorInsightsScreen },
   { title: ROUTES.VENDOR_ORDER, component: VendorOrderScreen },
+  { title: ROUTES.VENDOR_MENU_PAGE, component: VendorMenuPageScreen },
+  { title: ROUTES.VENDOR_RIDERS_PAGE, component: VendorRidersPageScreen },
+  // ── Kitchen ──
+  { title: ROUTES.KITCHEN_STOCK, component: StockScreen },
+  { title: ROUTES.KITCHEN_STOCK_TAKE, component: StockTakeScreen },
+  { title: ROUTES.KITCHEN_INGREDIENT, component: IngredientScreen },
+  { title: ROUTES.KITCHEN_INGREDIENT_FORM, component: IngredientFormScreen },
+  { title: ROUTES.KITCHEN_RECIPES, component: RecipesAndCostsScreen },
+  { title: ROUTES.KITCHEN_RECIPE, component: RecipeEditorScreen },
+  { title: ROUTES.KITCHEN_SETTINGS, component: KitchenSettingsScreen },
+  { title: ROUTES.KITCHEN_PURCHASES, component: PurchasesScreen },
+  { title: ROUTES.KITCHEN_PURCHASE, component: PurchaseScreen },
+  { title: ROUTES.KITCHEN_PURCHASE_FORM, component: PurchaseFormScreen },
+  { title: ROUTES.KITCHEN_SUPPLIERS, component: SuppliersScreen },
+  { title: ROUTES.KITCHEN_PRICE_WATCH, component: PriceWatchScreen },
   { title: ROUTES.PAYMENT_ACCOUNTS, component: PaymentAccountsScreen },
   { title: ROUTES.PROFILE, component: ProfileScreen },
   { title: ROUTES.CHANGE_PASSWORD, component: ChangePasswordScreen },

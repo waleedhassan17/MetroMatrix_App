@@ -41,7 +41,8 @@ const detailOf = (i: VendorMenuItem) =>
 /** When an "off for" choice ends, from now (tomorrow starts at midnight in Pakistan). */
 const untilFromNow = (choice: OffFor) => offUntil(choice, Date.now(), zonedToIso(addDays(todayInZone(PKT), 1), '00:00', PKT));
 
-const VendorMenuScreen: React.FC = () => {
+/** `onBack`: shown when the menu is a page (a home kitchen opens it from More), not a tab. */
+const VendorMenuScreen: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const navigation = useNavigation<Nav>();
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
@@ -72,6 +73,7 @@ const VendorMenuScreen: React.FC = () => {
     <ServiceScope service="food">
       <ScreenShell
         title="Menu"
+        onBack={onBack}
         subtitle={s.items.length ? `${s.items.length} dishes${offCount ? ` · ${offCount} off now` : ''}` : 'What customers can order'}
         refreshing={s.status === 'loading' && !!s.items.length}
         onRefresh={() => void dispatch(loadVendorMenuAsync())}

@@ -96,3 +96,18 @@ export const purchaseInput = (lines: DraftLine[], source: PurchaseSource, more: 
 });
 
 export const draftTotal = (lines: DraftLine[]) => lines.reduce((n, l) => n + (parseRupees(l.total) ?? 0), 0);
+
+/**
+ * A confirmed spoken purchase → the purchase itself. Names the kitchen
+ * doesn't stock become new ingredients counted the way they were said
+ * (kilos → grams, litres → millilitres, dozens → pieces).
+ */
+export const purchaseFromVoice = (lines: VoiceQtyLine[]): PurchaseInput => ({
+  source: 'voice',
+  lines: lines.map(l => ({
+    ...(l.ingredientId ? { ingredientId: l.ingredientId } : { newIngredient: { name: l.name, category: 'other' as IngredientCategory, baseUnit: UNITS[l.unit].base } }),
+    qty: l.qty,
+    unit: l.unit,
+    total: l.total ?? 0,
+  })),
+});

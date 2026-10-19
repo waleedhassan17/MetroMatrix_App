@@ -30,6 +30,8 @@ import {
   setHandoverNote,
   recordHandoverAsync,
 } from './riderDetailSlice';
+import { ridersPlace } from '@models/food/vendorModel';
+import { selectBusiness } from '../../../Auth/authSlice';
 
 type Props = NativeStackScreenProps<FoodVendorStackParamList, 'VendorRiderDetail'>;
 
@@ -60,7 +62,7 @@ const RiderDetailScreen: React.FC<Props> = props => (
 
 const RiderDetailContent: React.FC<Props> = ({ route }) => {
   const { id } = route.params;
-  const { back } = useBack({ name: 'VendorTabs', params: { screen: 'RidersTab' } });
+  const { back } = useBack(ridersPlace(useAppSelector(selectBusiness)?.subType === 'home_kitchen'));
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectRiderDetail);

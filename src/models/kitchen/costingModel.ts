@@ -7,6 +7,7 @@
 // the card; the saved recipe's cost (the server's) replaces this one.
 
 import type { Cost, RecipeInput } from '../../types/kitchen';
+import { typedToBase, unitOfKey } from './stockModel';
 import type { ValidationErrors } from '../authModel';
 import { formatPKR } from '../../utils/money';
 
@@ -59,3 +60,72 @@ export const TARGET_RANGE = { min: 10, max: 80 } as const;
 
 export const validateTarget = (pct: number): ValidationErrors =>
   Number.isInteger(pct) && pct >= TARGET_RANGE.min && pct <= TARGET_RANGE.max ? {} : { targetFoodCostPct: `Pick ${TARGET_RANGE.min}% to ${TARGET_RANGE.max}%` };
+
+/** A recipe line as the editor holds it: what was typed, in which unit. */
+export interface DraftLine {
+  key: string;
+  ingredientId: string;
+  amount: string;
+  unitKey: string;
+}
+
+export interface RecipeDraft {
+  yield: string;
+  lines: DraftLine[];
+  packaging: DraftLine[];
+  /** optionId → its lines (per serving). */
+  addOns: Record<string, DraftLine[]>;
+  signatureOn: boolean;
+  creatorName: string;
+}
+
+/** An ingredient as the editor needs it: how it is counted and what it costs. */
+export interface CostedIngredient {
+  id: string;
+  name: string;
+  baseUnit: 'g' | 'ml' | 'pc';
+  dozens: boolean;
+  customUnits: { name: string; base: number }[];
+  costPerBase: number;
+}
+
+/** A draft line in base units (null while its amount isn't a number). */
+export const baseOfLine = (l: DraftLine, byId: Record<string, CostedIngredient>): number | null => {
+  const i = byId[l.ingredientId];
+  if (!i) return null;
+  return typedToBase(l.amount, unitOfKey(i, l.unitKey).unit);
+};
+
+const costLines = (lines: DraftLine[], byId: Record<string, CostedIngredient>): CostLine[] =>
+  lines.map(l => ({ ingredientId: l.ingredientId, qty: baseOfLine(l, byId) ?? 0, costPerBase: byId[l.ingredientId]?.costPerBase ?? 0 }));
+
+/** The card's live cost while editing. */
+export const draftCost = (d: RecipeDraft, byId: Record<string, CostedIngredient>, sellPrice: number, targetPct: number) => {
+  const servings = Math.max(1, Math.round(Number(d.yield) || 1));
+  return costCard(toMake(costLines(d.lines, byId), costLines(d.packaging, byId), servings), sellPrice, targetPct);
+};
+
+/** One line's cost per serving, worded ("Rs 93", "under Rs 1"). */
+export const draftLineCost = (l: DraftLine, byId: Record<string, CostedIngredient>, servings: number) =>
+  lineCostLabel(lineCost({ ingredientId: l.ingredientId, qty: baseOfLine(l, byId) ?? 0, costPerBase: byId[l.ingredientId]?.costPerBase ?? 0 }, servings));
+
+/** The draft → the API's body (base units). Lines with no amount are reported by key. */
+export const recipeInputOf = (d: RecipeDraft, byId: Record<string, CostedIngredient>): { input: RecipeInput; lineErrors: Record<string, string> } => {
+  const lineErrors: Record<string, string> = {};
+  const toLines = (xs: DraftLine[]) =>
+    xs.map(l => {
+      const qty = baseOfLine(l, byId);
+      if (!qty || qty <= 0) lineErrors[l.key] = 'Enter how much';
+      return { ingredientId: l.ingredientId, qty: qty ?? 0 };
+    });
+  const input: RecipeInput = {
+    yield: Math.round(Number(d.yield) || 0),
+    lines: toLines(d.lines),
+    packaging: toLines(d.packaging),
+    addOns: Object.entries(d.addOns)
+      .filter(([, lines]) => lines.length)
+      .map(([optionId, lines]) => ({ optionId, lines: toLines(lines) })),
+    signature: { on: d.signatureOn, creatorName: d.signatureOn ? d.creatorName.trim() : null },
+  };
+  return { input, lineErrors };
+};

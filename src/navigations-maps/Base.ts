@@ -245,6 +245,9 @@ export const ROUTES = {
   KITCHEN_BOX: 'KitchenBox',
   KITCHEN_DONATIONS: 'KitchenDonations',
   KITCHEN_SETTINGS: 'KitchenSettings',
+  /** A home kitchen's Menu and Riders, pushed from More (they are tabs for the others). */
+  VENDOR_MENU_PAGE: 'VendorMenuPage',
+  VENDOR_RIDERS_PAGE: 'VendorRidersPage',
 
   // ── Food: Bachat Box for customers (navigations-maps/FoodCustomer.ts) ──
   FOOD_SURPLUS_LIST: 'FoodSurplusList',

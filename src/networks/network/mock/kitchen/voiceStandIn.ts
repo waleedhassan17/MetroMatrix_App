@@ -504,8 +504,13 @@ export const VOICE_TEST_PHRASES: VoicePhrase[] = [
   { context: 'pantry', text: 'two kilos of tomatoes, use in 3 days', expect: { kind: 'pantry.add', lines: [{ key: 'tomato', base: 2000, expiresInDays: 3 }] } },
 ];
 
-/** What a recording "said" in the dummy API: the context's phrases in turn. */
+/** What a recording "said" in the dummy API: the context's phrases in turn, Urdu script first (what a cook most often says). */
 export const DEMO_PHRASES: Record<VoiceContext, string[]> = VOICE_CONTEXTS.reduce(
-  (acc, c) => ({ ...acc, [c]: VOICE_TEST_PHRASES.filter(p => p.context === c).map(p => p.text) }),
+  (acc, c) => ({
+    ...acc,
+    [c]: VOICE_TEST_PHRASES.filter(p => p.context === c)
+      .map(p => p.text)
+      .sort((a, b) => Number(!URDU.test(a)) - Number(!URDU.test(b))),
+  }),
   {} as Record<VoiceContext, string[]>,
 );

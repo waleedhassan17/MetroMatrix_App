@@ -111,7 +111,7 @@ const VendorSetupContent: React.FC<Props> = ({ navigation }) => {
           </View>
           <Card padded="horizontal">
             {setup.items.map((item, i) => {
-              const to = setupRoute(item.key);
+              const to = setupRoute(item.key, business?.subType === 'home_kitchen');
               return (
                 <View key={item.key}>
                   {i > 0 ? <Divider /> : null}

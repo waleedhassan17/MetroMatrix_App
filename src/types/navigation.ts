@@ -11,6 +11,7 @@ import type { DocumentKind } from './auth';
 import type { OrderSegment, ProductSort } from './shopping';
 import type { AppointmentSegment, ConsultKind } from './health';
 import type { AdminVendorStatus, KitchenKind } from './food';
+import type { VoiceQtyLine } from './kitchen';
 
 /** BaseNavigator: onboarding, sign-in and every session gate. */
 export type RootStackParamList = {
@@ -265,6 +266,7 @@ export type FoodVendorTabParamList = {
   TodayTab: undefined;
   OrdersTab: undefined;
   MenuTab: undefined;
+  KitchenTab: undefined;
   RidersTab: undefined;
   MoreTab: undefined;
 };
@@ -295,6 +297,34 @@ export type FoodVendorStackParamList = {
   VendorOrder: { id: string; assign?: boolean };
   VendorReviews: undefined;
   VendorInsights: undefined;
+  /** A home kitchen's Menu and Riders (tabs for the others). */
+  VendorMenuPage: undefined;
+  VendorRidersPage: undefined;
+  // ── Kitchen Intelligence ──
+  /** Stock; `segment` opens on one (from a hub tile or a card). */
+  KitchenStock: { segment?: 'all' | 'low' | 'expiring' | 'negative' } | undefined;
+  /** A count; `ingredientIds` are listed first (a "below zero" card). */
+  KitchenStockTake: { ingredientIds?: string[] } | undefined;
+  KitchenIngredient: { id: string };
+  /** Edit an ingredient (`id`) or add one (optionally named). */
+  KitchenIngredientForm: { id?: string; name?: string } | undefined;
+  KitchenRecipes: { needsRecipe?: boolean } | undefined;
+  /** A dish's recipe card, for one size (default: its first). */
+  KitchenRecipe: { itemId: string; variantId?: string | null };
+  KitchenPurchases: undefined;
+  KitchenPurchase: { id: string };
+  /** A new purchase; `draft` carries spoken lines to check (Edit on a voice card). */
+  KitchenPurchaseForm: { scan?: boolean; draft?: VoiceQtyLine[] } | undefined;
+  KitchenSuppliers: undefined;
+  KitchenPriceWatch: undefined;
+  KitchenForecast: { date?: string; tab?: 'forecast' | 'prep' | 'shopping' } | undefined;
+  KitchenWaste: undefined;
+  KitchenWasteForm: undefined;
+  /** A new Bachat Box; `suggest` fills it from the end-of-day suggestion. */
+  KitchenBoxForm: { suggest?: boolean } | undefined;
+  KitchenBox: { id: string };
+  KitchenDonations: undefined;
+  KitchenSettings: undefined;
   PaymentAccounts: undefined;
   Profile: undefined;
   ChangePassword: undefined;
