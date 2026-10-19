@@ -49,6 +49,12 @@ import PurchaseScreen from '../screens/Food/Kitchen/Purchase/PurchaseScreen';
 import PurchaseFormScreen from '../screens/Food/Kitchen/PurchaseForm/PurchaseFormScreen';
 import SuppliersScreen from '../screens/Food/Kitchen/Suppliers/SuppliersScreen';
 import PriceWatchScreen from '../screens/Food/Kitchen/PriceWatch/PriceWatchScreen';
+import ForecastAndPrepScreen from '../screens/Food/Kitchen/ForecastAndPrep/ForecastAndPrepScreen';
+import WasteAndSurplusScreen from '../screens/Food/Kitchen/WasteAndSurplus/WasteAndSurplusScreen';
+import WasteFormScreen from '../screens/Food/Kitchen/WasteForm/WasteFormScreen';
+import BoxFormScreen from '../screens/Food/Kitchen/BoxForm/BoxFormScreen';
+import BoxScreen from '../screens/Food/Kitchen/Box/BoxScreen';
+import DonationsScreen from '../screens/Food/Kitchen/Donations/DonationsScreen';
 import ChangePasswordScreen from '../screens/Account/ChangePassword/ChangePasswordScreen';
 import NotificationsScreen from '../screens/Account/Notifications/NotificationsScreen';
 
@@ -111,6 +117,12 @@ export const FOOD_VENDOR_STACK_ROUTES: IRoute[] = [
   { title: ROUTES.KITCHEN_PURCHASE_FORM, component: PurchaseFormScreen },
   { title: ROUTES.KITCHEN_SUPPLIERS, component: SuppliersScreen },
   { title: ROUTES.KITCHEN_PRICE_WATCH, component: PriceWatchScreen },
+  { title: ROUTES.KITCHEN_FORECAST, component: ForecastAndPrepScreen },
+  { title: ROUTES.KITCHEN_WASTE, component: WasteAndSurplusScreen },
+  { title: ROUTES.KITCHEN_WASTE_FORM, component: WasteFormScreen },
+  { title: ROUTES.KITCHEN_BOX_FORM, component: BoxFormScreen },
+  { title: ROUTES.KITCHEN_BOX, component: BoxScreen },
+  { title: ROUTES.KITCHEN_DONATIONS, component: DonationsScreen },
   { title: ROUTES.PAYMENT_ACCOUNTS, component: PaymentAccountsScreen },
   { title: ROUTES.PROFILE, component: ProfileScreen },
   { title: ROUTES.CHANGE_PASSWORD, component: ChangePasswordScreen },

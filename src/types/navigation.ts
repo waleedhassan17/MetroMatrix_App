@@ -70,7 +70,7 @@ export type ShopBrowseParamList = {
   AddressForm: { id?: string } | undefined;
   Notifications: undefined;
   /** "I've paid": a shop order's transfer, or an appointment's. */
-  PaymentProof: { orderId: string; groupCode: string } | { appointmentCode: string } | { foodOrderCode: string };
+  PaymentProof: { orderId: string; groupCode: string } | { appointmentCode: string } | { foodOrderCode: string } | { surplusCode: string };
 };
 
 /**
@@ -197,12 +197,18 @@ export type FoodAppParamList = {
   FoodOrder: { code: string };
   /** The kitchens the customer saved. */
   FoodFavourites: undefined;
-  /** "I've paid": a transfer's reference for the kitchen. */
-  PaymentProof: { foodOrderCode: string };
+  /** "I've paid": a transfer's reference for the kitchen (an order, or a Bachat Box reservation). */
+  PaymentProof: { foodOrderCode: string } | { surplusCode: string };
   /** Rate an order once it arrived; `stars` when the order page's stars were tapped. */
   FoodRateOrder: { code: string; stars?: number };
   /** A kitchen's reviews (by vendor id); `slug` leads back to its page. */
   FoodReviews: { id: string; name?: string; slug?: string };
+  // ── Bachat Box (Kitchen Intelligence) ──
+  FoodSurplusList: undefined;
+  FoodSurplus: { id: string };
+  /** A reservation's pickup code; `fresh` straight after reserving. */
+  FoodSurplusReserved: { code: string; fresh?: boolean };
+  FoodSurplusReservations: undefined;
 };
 
 export type CustomerStackParamList = {
@@ -293,8 +299,8 @@ export type FoodVendorStackParamList = {
   VendorPromotions: undefined;
   /** A deal: edit one (`id`) or a new one. */
   VendorPromotion: { id?: string } | undefined;
-  /** One order (by id); `assign` opens the rider picker. */
-  VendorOrder: { id: string; assign?: boolean };
+  /** One order (by id); `assign` opens the rider picker; `packing` opens on the packing photo (asked for before Ready). */
+  VendorOrder: { id: string; assign?: boolean; packing?: boolean };
   VendorReviews: undefined;
   VendorInsights: undefined;
   /** A home kitchen's Menu and Riders (tabs for the others). */

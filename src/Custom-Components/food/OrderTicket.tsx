@@ -54,6 +54,8 @@ export interface OrderTicketProps {
   onOpen: () => void;
   onMove: (move: VendorMove) => void;
   onDecline?: () => void;
+  /** The kitchen's note from stock ("Recipe stock low: Karahi, 2 left"). */
+  note?: { label: string; tone: 'warning' | 'danger' } | null;
 }
 
 export const OrderTicket: React.FC<OrderTicketProps> = ({
@@ -63,6 +65,7 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({
   onOpen,
   onMove,
   onDecline,
+  note,
 }) => {
   const styles = useStyles(makeStyles);
   const { colors, service } = useTheme();
@@ -79,7 +82,7 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({
         accessibilityRole="button"
         accessibilityLabel={`Order ${card.code}, ${card.itemsSummary}, ${formatPKR(card.total)}${
           left !== null ? `, ${clock(left)} to answer` : ''
-        }`}>
+        }${note ? `. ${note.label}` : ''}`}>
         <View style={styles.row}>
           <View style={styles.left}>
             <IonIcon
@@ -108,6 +111,14 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({
         <AppText variant="body" numberOfLines={3}>
           {card.itemsSummary}
         </AppText>
+        {note ? (
+          <View style={styles.left}>
+            <IonIcon name={note.tone === 'danger' ? 'alert-circle-outline' : 'trending-down-outline'} size="sm" color={note.tone === 'danger' ? colors.danger : colors.warning} />
+            <AppText variant="small" tone={note.tone}>
+              {note.label}
+            </AppText>
+          </View>
+        ) : null}
         <View style={styles.row}>
           <AppText variant="small" tone="muted" numberOfLines={1} style={styles.grow}>
             {card.customerName ?? 'Customer'}

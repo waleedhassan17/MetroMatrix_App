@@ -32,9 +32,11 @@ export interface TransferCardProps {
   reference?: string | null;
   rejectedReason?: string | null;
   onSendReceipt?: () => void;
+  /** What lapses without the transfer: an order, or a Bachat Box reservation. */
+  holds?: 'order' | 'reservation';
 }
 
-export const TransferCard: React.FC<TransferCardProps> = ({ vendorName, amount, accounts, status, payBy, reference, rejectedReason, onSendReceipt }) => {
+export const TransferCard: React.FC<TransferCardProps> = ({ vendorName, amount, accounts, status, payBy, reference, rejectedReason, onSendReceipt, holds = 'order' }) => {
   const styles = useStyles(makeStyles);
   const left = useCountdown(payBy ? Date.parse(payBy) : 0);
   const owed = status === 'awaiting_transfer';
@@ -45,7 +47,7 @@ export const TransferCard: React.FC<TransferCardProps> = ({ vendorName, amount, 
         <AppText variant="small" tone={owed && left > 0 && left < 180 ? 'warning' : 'muted'}>
           {owed
             ? payBy && left > 0
-              ? `${clock(left)} left. Pay the kitchen directly, then send the receipt — or the order is cancelled.`
+              ? `${clock(left)} left. Pay the kitchen directly, then send the receipt — or the ${holds} is cancelled.`
               : 'Pay the kitchen directly, then send the receipt.'
             : status === 'proof_submitted'
               ? `${vendorName} is checking transfer ${reference ?? ''}.`.replace(' .', '.')

@@ -15,7 +15,8 @@
 // Karahi over the food-cost target and five dishes without a recipe card.
 
 import type { BaseUnit, CustomUnit } from '../../../../utils/units';
-import { addDays, dateInZone, weekStart } from '../../../../utils/healthTime';
+import { addDays, dateInZone, weekStart, zonedToIso } from '../../../../utils/healthTime';
+import { FOOD_IMG } from '../food/foodImages';
 import type {
   MockAlias,
   MockBatch,
@@ -547,6 +548,38 @@ const seedSales = (dishes: SeedDish[], today: string): MockDailySale[] => {
 
 export const ingredientId = (short: string, key: string) => `ing_${short}_${key}`;
 
+/**
+ * Two Bachat Boxes up for tonight when the dummy database is made, so the
+ * customer's rail has something to show: pickup 9 to 11 PM (or, later in the
+ * evening, from 15 minutes on, until 1:30 AM at the latest).
+ */
+const seedBoxes = (now: number, today: string): MockKitchen['boxes'] => {
+  const nine = Date.parse(zonedToIso(today, '21:00', TZ));
+  const latest = Date.parse(zonedToIso(addDays(today, 1), '01:30', TZ));
+  const from = Math.max(nine, Math.ceil((now + 15 * 60_000) / (15 * 60_000)) * 15 * 60_000);
+  const to = Math.min(from + 2 * 3_600_000, latest);
+  if (to - from < 30 * 60_000) return [];
+  const at = new Date(now).toISOString();
+  const box = (id: string, businessId: string, title: string, contentsHint: string, photo: keyof typeof FOOD_IMG, value: number, price: number, quantity: number) => ({
+    id,
+    businessId,
+    title,
+    contentsHint,
+    photoUrl: FOOD_IMG[photo],
+    value,
+    price,
+    quantity,
+    pickupFrom: new Date(from).toISOString(),
+    pickupTo: new Date(to).toISOString(),
+    status: 'live' as const,
+    createdAt: at,
+  });
+  return [
+    box('sb_seed_resto', 'b_resto', 'Chef’s mix box', 'Some of today’s biryani, karahi and naan', 'biryani', 1200, 450, 4),
+    box('sb_seed_homek', 'b_homek', 'Tonight’s handi box', 'Today’s salan with roti or rice', 'curry', 800, 300, 2),
+  ];
+};
+
 export const seedKitchen = (dishes: SeedDish[], now: number = Date.now()): MockKitchen => {
   const today = dateInZone(new Date(now).toISOString(), TZ);
   const ingredients: MockIngredient[] = [];
@@ -687,7 +720,7 @@ export const seedKitchen = (dishes: SeedDish[], now: number = Date.now()): MockK
       },
     ],
     donations: [{ id: 'dn_seed1', businessId: 'b_resto', at: iso(3 * DAY), meals: 12, to: 'Edhi centre, Gulberg', note: null }],
-    boxes: [],
+    boxes: seedBoxes(now, today),
     reservations: [],
     pauses: [],
     orders: [],

@@ -113,7 +113,8 @@ export function registerSurplusRoutes(kit: KitchenKit) {
     const items = itemsOf(ctx.db, v.businessId);
     // A home kitchen's leftover portions; a restaurant's mix of the day's popular dishes.
     const left = items.filter(i => i.override?.portionsDate === today && (i.override.remainingToday ?? 0) > 0);
-    const from = Math.max(ctx.now + 15 * MINUTE, Date.parse(zonedToIso(today, '21:00', v.timezone)));
+    // On a quarter hour, at least 15 minutes from now (the form offers quarter hours too).
+    const from = Math.max(Math.ceil((ctx.now + 15 * MINUTE) / (15 * MINUTE)) * 15 * MINUTE, Date.parse(zonedToIso(today, '21:00', v.timezone)));
     const to = Math.min(from + 2 * HOUR, Date.parse(zonedToIso(addDays(today, 1), '01:30', v.timezone)));
     if (left.length) {
       const value = left.reduce((n, i) => n + (i.override!.remainingToday ?? 0) * i.basePrice, 0);

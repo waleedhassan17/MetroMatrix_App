@@ -126,7 +126,8 @@ describe('forecasts', () => {
   });
 
   it('starts with tomorrow and only shows accuracy it can measure (QA 13)', () => {
-    expect(forecastDates('2026-10-19')[0]).toBe('2026-10-20');
+    expect(forecastDates('2026-10-19').slice(0, 2)).toEqual(['2026-10-19', '2026-10-20']);
+    expect(forecastDates('2026-10-19')).toHaveLength(8);
     expect(dayLabel('2026-10-20', '2026-10-19')).toBe('Tomorrow');
     expect(accuracyBadge({ days: 7, accuracyPct: 86, learning: false, note: '' })).toBe('Last 7 days: 86% accurate');
     expect(accuracyBadge({ days: 7, accuracyPct: null, learning: true, note: '' })).toBeNull();

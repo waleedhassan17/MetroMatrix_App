@@ -9,6 +9,7 @@ import { createAppSlice } from '@store/createAppSlice';
 import { submitPaymentProof } from '@networks/shopping/ordersNetwork';
 import { submitAppointmentPaymentProof } from '@networks/health/appointmentsNetwork';
 import { submitFoodPaymentProof } from '@networks/food/ordersNetwork';
+import { submitReservationProof } from '@networks/food/surplusNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import { normaliseTransactionId } from '@models/shopping/paymentProofModel';
 import type { LocalFile } from '@/types';
@@ -140,6 +141,31 @@ export const paymentProofSlice = createAppSlice({
         },
       },
     ),
+
+    // POST /food/surplus/reservations/:code/payment-proof (a Bachat Box; TODO(API_KITCHEN)).
+    submitSurplusProofAsync: create.asyncThunk(
+      async ({ code, transactionId, imageUrl }: { code: string; transactionId: string; imageUrl: string | null }, { rejectWithValue }) => {
+        try {
+          return await submitReservationProof(code, { transactionId: normaliseTransactionId(transactionId), imageUrl });
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        pending: state => {
+          state.status = 'loading';
+          state.touched = true;
+          state.error = NO_ERROR;
+        },
+        fulfilled: state => {
+          state.status = 'succeeded';
+        },
+        rejected: (state, action) => {
+          state.status = 'failed';
+          state.error = readRejection(action, "We couldn't send that. Check the ID and try again.");
+        },
+      },
+    ),
   }),
   selectors: {
     selectPaymentProof: state => state,
@@ -156,5 +182,6 @@ export const {
   submitPaymentProofAsync,
   submitAppointmentProofAsync,
   submitFoodProofAsync,
+  submitSurplusProofAsync,
 } = paymentProofSlice.actions;
 export const { selectPaymentProof } = paymentProofSlice.selectors;

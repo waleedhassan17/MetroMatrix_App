@@ -3,13 +3,16 @@
 // ═══════════════════════════════════════════════════════
 // What is cooking today and how many plates: setting portions resets what is
 // left; a dish switched off is off for today only. Changes collect locally
-// and go up together.
+// and go up together. The kitchen's forecast for today (TODO(API_KITCHEN))
+// offers its numbers as portions in one tap; spoken portions land the same way.
 
-import type { PayloadAction } from '@reduxjs/toolkit';
+import { createSelector, type PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { getToday, setToday } from '@networks/food/vendor/availabilityNetwork';
+import { getForecast } from '@networks/kitchen/forecastNetwork';
+import { suggestedPortions } from '@models/kitchen/forecastModel';
 import { toRejectedValue } from '@networks/network/apiHelpers';
-import type { TodayMenu } from '@/types';
+import type { Forecast, TodayMenu } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { menuChanged } from '../VendorMenu/vendorMenuSlice';
 
@@ -24,9 +27,11 @@ export interface VendorTodaySliceState {
   status: FormStatus;
   saving: boolean;
   error: ServerError;
+  /** Today's forecast (null when the kitchen side is unavailable). */
+  forecast: Forecast | null;
 }
 
-const initialState: VendorTodaySliceState = { today: null, edits: {}, status: 'idle', saving: false, error: NO_ERROR };
+const initialState: VendorTodaySliceState = { today: null, edits: {}, status: 'idle', saving: false, error: NO_ERROR, forecast: null };
 
 export const vendorTodaySlice = createAppSlice({
   name: 'vendorToday',
@@ -43,10 +48,21 @@ export const vendorTodaySlice = createAppSlice({
     discardToday: create.reducer(state => {
       state.edits = {};
     }),
+    /** The forecast's numbers (or spoken ones) as today's portions, cooking each: saved with "Save today". */
+    applyPortions: create.reducer((state, action: PayloadAction<{ itemId: string; portions: number }[]>) => {
+      for (const { itemId, portions } of action.payload) {
+        const row = state.today?.items.find(i => i.itemId === itemId && i.onTodaysMenu);
+        if (!row) continue;
+        if (row.dailyLimit === portions && row.cooking) delete state.edits[itemId];
+        else state.edits[itemId] = { portions, cooking: true };
+      }
+    }),
     loadTodayAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await getToday();
+          const today = await getToday();
+          const forecast = today ? await getForecast(today.date).catch(() => null) : null;
+          return { today, forecast };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -58,7 +74,8 @@ export const vendorTodaySlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.status = 'succeeded';
-          state.today = action.payload;
+          state.today = action.payload.today;
+          state.forecast = action.payload.forecast;
           state.edits = {};
         },
         rejected: (state, action) => {
@@ -100,5 +117,11 @@ export const vendorTodaySlice = createAppSlice({
   },
 });
 
-export const { editToday, discardToday, loadTodayAsync, saveTodayAsync } = vendorTodaySlice.actions;
+export const { editToday, discardToday, applyPortions, loadTodayAsync, saveTodayAsync } = vendorTodaySlice.actions;
 export const { selectVendorToday } = vendorTodaySlice.selectors;
+
+/** The forecast's portions that differ from today's (what the banner offers). */
+export const selectSuggestedPortions = createSelector(
+  [(state: { vendorToday: VendorTodaySliceState }) => state.vendorToday.today, (state: { vendorToday: VendorTodaySliceState }) => state.vendorToday.forecast],
+  (today, forecast) => (today && forecast ? suggestedPortions(today, forecast) : []),
+);

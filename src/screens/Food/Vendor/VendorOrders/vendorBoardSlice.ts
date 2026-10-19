@@ -12,9 +12,12 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { acceptOrder, handedExternal, listBoard, markCollected, markDelivered, markReady, rejectOrder, startPreparing } from '@networks/food/vendor/ordersNetwork';
 import { getVendorProfile, pauseOrders, resumeOrders, setBusy } from '@networks/food/vendor/profileNetwork';
+import { setAvailability } from '@networks/food/vendor/availabilityNetwork';
+import { getBoardHints } from '@networks/kitchen/costingNetwork';
+import { getAnnouncement } from '@networks/kitchen/packingNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import { cardOfOrder, columnOf, isEnded, type BoardColumn } from '@models/food/foodStatusModel';
-import type { BoardCard, FoodLiveBoardUpdate, VendorProfile } from '@/types';
+import type { BoardCard, BoardHints, FoodLiveBoardUpdate, PauseReason, VendorProfile } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 
 export type BoardMove = 'preparing' | 'ready' | 'handed-external' | 'picked-up' | 'delivered';
@@ -36,6 +39,12 @@ export interface VendorBoardSliceState {
   /** The kitchen's switches. */
   profile: VendorProfile | null;
   switching: boolean;
+  /** The kitchen's side (TODO(API_KITCHEN)): dishes low or out by stock, the usual prep time, the packing-photo rule. */
+  hints: BoardHints | null;
+  /** The pause sheet (a private reason, and when it lifts by itself). */
+  pauseOpen: boolean;
+  /** New orders already spoken out loud. */
+  announced: string[];
 }
 
 const initialState: VendorBoardSliceState = {
@@ -50,6 +59,9 @@ const initialState: VendorBoardSliceState = {
   seen: [],
   profile: null,
   switching: false,
+  hints: null,
+  pauseOpen: false,
+  announced: [],
 };
 
 const byAge = (a: BoardCard, b: BoardCard) => a.placedAt.localeCompare(b.placedAt) || a.id.localeCompare(b.id);
@@ -86,6 +98,10 @@ export const vendorBoardSlice = createAppSlice({
       state.rejectFor = null;
       state.actionError = NO_ERROR;
     }),
+    openPause: create.reducer((state, action: PayloadAction<boolean>) => {
+      state.pauseOpen = action.payload;
+      state.actionError = NO_ERROR;
+    }),
     openReject: create.reducer((state, action: PayloadAction<string | null>) => {
       if (action.payload && !state.seen.includes(action.payload)) state.seen.push(action.payload);
       state.rejectFor = action.payload;
@@ -107,9 +123,11 @@ export const vendorBoardSlice = createAppSlice({
     }),
 
     loadBoardAsync: create.asyncThunk(
-      async (_: void, { rejectWithValue }) => {
+      async (_: void, { dispatch, rejectWithValue }) => {
         try {
           const [fresh, active] = await Promise.all([listBoard('new'), listBoard('active')]);
+          // Every board read reads the kitchen's side too.
+          void dispatch(loadBoardHintsAsync());
           return [...fresh.items, ...active.items];
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -131,10 +149,71 @@ export const vendorBoardSlice = createAppSlice({
       },
     ),
 
-    acceptOrderAsync: create.asyncThunk(
-      async ({ id, eta }: { id: string; eta: number }, { rejectWithValue }) => {
+    /** Soft: without it the board still works, just without the kitchen's notes. */
+    loadBoardHintsAsync: create.asyncThunk(
+      async (_: void, { rejectWithValue }) => {
         try {
-          return await acceptOrder(id, eta);
+          return await getBoardHints();
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        fulfilled: (state, action) => {
+          state.hints = action.payload;
+        },
+      },
+    ),
+
+    /** "Biryani khatam": the dish is off the menu now. */
+    soldOutDishAsync: create.asyncThunk(
+      async (itemId: string, { dispatch, rejectWithValue }) => {
+        try {
+          await setAvailability({ items: [{ itemId, isAvailable: false }] });
+          void dispatch(loadBoardHintsAsync());
+          return itemId;
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        pending: state => {
+          state.switching = true;
+          state.actionError = NO_ERROR;
+        },
+        fulfilled: state => {
+          state.switching = false;
+        },
+        rejected: (state, action) => {
+          state.switching = false;
+          state.actionError = readRejection(action, "The dish didn't switch off.");
+        },
+      },
+    ),
+
+    /** What to say out loud for a new order (spoken by the screen, after the chime). */
+    announceOrderAsync: create.asyncThunk(
+      async ({ id, language }: { id: string; language: 'ur' | 'en' }, { rejectWithValue }) => {
+        try {
+          return await getAnnouncement(id, language);
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        pending: (state, action) => {
+          if (!state.announced.includes(action.meta.arg.id)) state.announced.push(action.meta.arg.id);
+        },
+      },
+    ),
+
+    acceptOrderAsync: create.asyncThunk(
+      async ({ id, eta }: { id: string; eta: number }, { dispatch, rejectWithValue }) => {
+        try {
+          const o = await acceptOrder(id, eta);
+          // Accepting takes its recipes from stock: the tickets' stock notes change.
+          void dispatch(loadBoardHintsAsync());
+          return o;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -157,9 +236,11 @@ export const vendorBoardSlice = createAppSlice({
     ),
 
     rejectOrderAsync: create.asyncThunk(
-      async ({ id, reason }: { id: string; reason: string }, { rejectWithValue }) => {
+      async ({ id, reason }: { id: string; reason: string }, { dispatch, rejectWithValue }) => {
         try {
-          return await rejectOrder(id, reason);
+          const o = await rejectOrder(id, reason);
+          void dispatch(loadBoardHintsAsync());
+          return o;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -221,11 +302,11 @@ export const vendorBoardSlice = createAppSlice({
       },
     ),
     switchKitchenAsync: create.asyncThunk(
-      async (to: { pause: string | null } | { resume: true } | { busy: number }, { rejectWithValue }) => {
+      async (to: { pause: string | null; reason?: PauseReason | null; resumeAt?: string | null } | { resume: true } | { busy: number }, { rejectWithValue }) => {
         try {
           if ('resume' in to) return await resumeOrders();
           if ('busy' in to) return await setBusy(to.busy, to.busy ? new Date(Date.now() + 60 * 60_000).toISOString() : null);
-          return await pauseOrders(to.pause);
+          return await pauseOrders(to.pause, { reason: to.reason, resumeAt: to.resumeAt });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -237,6 +318,7 @@ export const vendorBoardSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.switching = false;
+          state.pauseOpen = false;
           state.profile = action.payload;
         },
         rejected: (state, action) => {
@@ -260,6 +342,7 @@ export const {
   markOrderSeen,
   openAccept,
   openReject,
+  openPause,
   boardSynced,
   boardNewOrder,
   boardOrderUpdated,
@@ -269,5 +352,8 @@ export const {
   moveOrderAsync,
   loadKitchenAsync,
   switchKitchenAsync,
+  loadBoardHintsAsync,
+  soldOutDishAsync,
+  announceOrderAsync,
 } = vendorBoardSlice.actions;
 export const { selectVendorBoard, selectNewOrderCount, selectUnseenCount } = vendorBoardSlice.selectors;

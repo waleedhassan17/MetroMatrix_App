@@ -189,6 +189,16 @@ import { stockSlice } from '../screens/Food/Kitchen/Stock/stockSlice';
 import { stockTakeSlice } from '../screens/Food/Kitchen/StockTake/stockTakeSlice';
 import { ingredientSlice } from '../screens/Food/Kitchen/Ingredient/ingredientSlice';
 import { ingredientFormSlice } from '../screens/Food/Kitchen/IngredientForm/ingredientFormSlice';
+import { forecastAndPrepSlice } from '../screens/Food/Kitchen/ForecastAndPrep/forecastAndPrepSlice';
+import { wasteAndSurplusSlice } from '../screens/Food/Kitchen/WasteAndSurplus/wasteAndSurplusSlice';
+import { wasteFormSlice } from '../screens/Food/Kitchen/WasteForm/wasteFormSlice';
+import { boxFormSlice } from '../screens/Food/Kitchen/BoxForm/boxFormSlice';
+import { boxSlice } from '../screens/Food/Kitchen/Box/boxSlice';
+import { donationsSlice } from '../screens/Food/Kitchen/Donations/donationsSlice';
+import { foodSurplusSlice } from '../screens/Food/Customer/FoodSurplus/foodSurplusSlice';
+import { surplusReservedSlice } from '../screens/Food/Customer/FoodSurplusReserved/surplusReservedSlice';
+import { surplusReservationsSlice } from '../screens/Food/Customer/FoodSurplusReservations/surplusReservationsSlice';
+import { surplusListSlice } from '../screens/Food/Customer/FoodSurplusList/surplusListSlice';
 
 // `auth` is persisted through its OWN persistReducer so that exactly one
 // field reaches disk. The session (user, business, tokens) is never
@@ -370,6 +380,16 @@ const rootReducer = combineReducers({
   stockTake: stockTakeSlice.reducer,
   ingredient: ingredientSlice.reducer,
   ingredientForm: ingredientFormSlice.reducer,
+  forecastAndPrep: forecastAndPrepSlice.reducer,
+  wasteAndSurplus: wasteAndSurplusSlice.reducer,
+  wasteForm: wasteFormSlice.reducer,
+  boxForm: boxFormSlice.reducer,
+  kitchenBox: boxSlice.reducer,
+  donations: donationsSlice.reducer,
+  foodSurplus: foodSurplusSlice.reducer,
+  surplusReserved: surplusReservedSlice.reducer,
+  surplusReservations: surplusReservationsSlice.reducer,
+  surplusList: surplusListSlice.reducer,
 });
 
 type RootReducerState = ReturnType<typeof rootReducer>;

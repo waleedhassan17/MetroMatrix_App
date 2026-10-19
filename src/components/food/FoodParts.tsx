@@ -14,7 +14,9 @@ import { Skeleton } from '../../Custom-Components/Skeleton';
 import { TextAction } from '../../Custom-Components/TextAction';
 import { VendorCard } from '../../Custom-Components/food/VendorCard';
 import { useOnGradient } from '../../Custom-Components/headerInk';
+import { SurplusCard } from '../../Custom-Components/kitchen/SurplusCard';
 import type { FoodCuisine, VendorCard as VendorCardData } from '../../types/food';
+import type { SurplusCard as SurplusCardData } from '../../types/kitchen';
 
 // ─── Cuisine glyphs (the Food API's icon keys, and slugs) ─
 const CUISINE_GLYPH: Record<string, MciName> = {
@@ -188,6 +190,18 @@ export const VendorRail: React.FC<{ vendors: VendorCardData[]; onOpen: (v: Vendo
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
       {vendors.map(v => (
         <VendorCard key={v.id} vendor={v} compact onPress={() => onOpen(v)} />
+      ))}
+    </ScrollView>
+  );
+};
+
+/** Bachat Boxes near the customer, side by side (Kitchen Intelligence). */
+export const SurplusRail: React.FC<{ boxes: SurplusCardData[]; onOpen: (b: SurplusCardData) => void }> = ({ boxes, onOpen }) => {
+  const styles = useStyles(makeStyles);
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
+      {boxes.map(b => (
+        <SurplusCard key={b.id} card={b} rail onPress={() => onOpen(b)} />
       ))}
     </ScrollView>
   );

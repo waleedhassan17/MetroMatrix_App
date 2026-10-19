@@ -2,21 +2,26 @@
 // MetroMatrix — Food vendor (home kitchen): Today
 // ═══════════════════════════════════════════════════════
 // The day's dishes: cooking or not, and how many plates. Dishes not on
-// today's menu are listed below, with the weekly menu a tap away.
+// today's menu are listed below, with the weekly menu a tap away. The
+// kitchen's forecast offers today's portions in one tap; "aaj 20 biryani"
+// sets them by voice; in the evening, leftovers go up as a Bachat Box.
 
 import React, { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { DAY_LONG } from '@models/food/menuModel';
+import { portionsLine } from '@models/kitchen/forecastModel';
+import { VoiceSheetButton } from '@components/voice/VoiceSheet';
 import { ServiceScope, useStyles, type Theme } from '@theme/index';
 import { AppText, Button, Card, Divider, EmptyState, InlineNotice, ScreenShell, SkeletonLines, TextAction, ToggleRow } from '@custom/index';
 import { PortionStepper } from '@custom/food/PortionStepper';
-import { formatDayFull } from '@utils/healthTime';
+import { formatDayFull, hourOfDay } from '@utils/healthTime';
+import { useNow } from '@hooks/useNow';
 import Toast from 'react-native-toast-message';
 import { haptics } from '@utils/haptics';
 import { selectBusiness } from '../../../Auth/authSlice';
-import { discardToday, editToday, loadTodayAsync, saveTodayAsync, selectVendorToday } from './vendorTodaySlice';
+import { applyPortions, discardToday, editToday, loadTodayAsync, saveTodayAsync, selectSuggestedPortions, selectVendorToday } from './vendorTodaySlice';
 
 type Nav = { navigate: (name: string, params?: object) => void };
 
@@ -24,6 +29,7 @@ const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
     dish: { gap: space.s4, paddingVertical: space.s8 },
     links: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space.s16 },
+    gap: { gap: space.s8 },
     footer: { gap: space.s4, alignItems: 'center' },
   });
 
@@ -33,7 +39,11 @@ const VendorTodayScreen: React.FC = () => {
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectVendorToday);
   const business = useAppSelector(selectBusiness);
+  const suggested = useAppSelector(selectSuggestedPortions);
   const t = s.today;
+  const now = useNow(60_000);
+  /** From 5 PM: leftovers can go up as a Bachat Box for tonight. */
+  const evening = hourOfDay(new Date(now).toISOString(), 'Asia/Karachi') >= 17;
 
   useFocusEffect(
     useCallback(() => {
@@ -60,6 +70,25 @@ const VendorTodayScreen: React.FC = () => {
         subtitle={t ? `${DAY_LONG[t.weekday]}, ${formatDayFull(t.date)}` : business?.name}
         refreshing={s.status === 'loading' && !!t}
         onRefresh={() => void dispatch(loadTodayAsync())}
+        headerRight={
+          <VoiceSheetButton
+            context="today"
+            title="Speak today’s portions"
+            busy={s.saving}
+            onConfirm={async a => {
+              if (a.kind !== 'portions.set') return false;
+              dispatch(applyPortions(a.lines.map(l => ({ itemId: l.itemId, portions: l.portions }))));
+              const r = await dispatch(saveTodayAsync());
+              if (saveTodayAsync.fulfilled.match(r)) {
+                haptics.success();
+                Toast.show({ type: 'success', text1: 'Today saved', text2: portionsLine(a.lines) });
+                return true;
+              }
+              haptics.warning();
+              return false;
+            }}
+          />
+        }
         footer={
           dirty ? (
             <View style={styles.footer}>
@@ -70,6 +99,25 @@ const VendorTodayScreen: React.FC = () => {
         }
       >
         {s.error.message ? <InlineNotice message={s.error.message} /> : null}
+        {suggested.length && !dirty ? (
+          <InlineNotice
+            tone="info"
+            title="Suggested portions for today"
+            message={`From your usual orders: ${portionsLine(suggested)}.`}
+            action={{ label: 'Use these', onPress: () => dispatch(applyPortions(suggested)) }}
+          />
+        ) : null}
+        {evening && t?.items.some(i => i.onTodaysMenu && i.cooking) ? (
+          <Card>
+            <View style={styles.gap}>
+              <AppText variant="title">Food left tonight?</AppText>
+              <AppText variant="small" tone="muted">
+                Put it up as a Bachat Box: sold for pickup at a lower price instead of thrown away.
+              </AppText>
+              <TextAction label="Make a Bachat Box" onPress={() => navigation.navigate('KitchenBoxForm', { suggest: true })} />
+            </View>
+          </Card>
+        ) : null}
         <View style={styles.links}>
           <TextAction label="Weekly menu" icon="calendar-outline" onPress={() => navigation.navigate('VendorWeeklyMenu')} />
           <TextAction label="Pre-order slots" icon="time-outline" onPress={() => navigation.navigate('VendorPreorderSlots')} />

@@ -22,8 +22,11 @@ import {
   rejectPayment,
   startPreparing,
 } from '@networks/food/vendor/ordersNetwork';
+import { getKitchenSettings } from '@networks/kitchen/costingNetwork';
+import { attachPackingPhoto } from '@networks/kitchen/packingNetwork';
+import { uploadImage } from '@networks/media/mediaNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
-import type { RiderSuggestion, VendorFoodOrder } from '@/types';
+import type { LocalFile, PackingPhotoRule, PackingResult, RiderSuggestion, VendorFoodOrder } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 
 export type VendorOrderAct =
@@ -57,10 +60,27 @@ export interface VendorOrderSliceState {
   assignOpen: boolean;
   suggestions: RiderSuggestion[];
   suggestStatus: FormStatus;
+  /** The kitchen's packing-photo rule (TODO(API_KITCHEN)), and the photo being taken. */
+  packingRule: PackingPhotoRule | null;
+  packingUploading: boolean;
+  packingCheck: PackingResult['check'];
+  packingError: ServerError;
 }
 
 const EMPTY: VendorOrderEntry = { order: null, status: 'idle', error: NO_ERROR };
-const initialState: VendorOrderSliceState = { byId: {}, acting: null, actionError: NO_ERROR, sheet: null, assignOpen: false, suggestions: [], suggestStatus: 'idle' };
+const initialState: VendorOrderSliceState = {
+  byId: {},
+  acting: null,
+  actionError: NO_ERROR,
+  sheet: null,
+  assignOpen: false,
+  suggestions: [],
+  suggestStatus: 'idle',
+  packingRule: null,
+  packingUploading: false,
+  packingCheck: null,
+  packingError: NO_ERROR,
+};
 
 const run = (id: string, a: VendorOrderAct) => {
   switch (a.kind) {
@@ -121,6 +141,52 @@ export const vendorOrderSlice = createAppSlice({
         rejected: (state, action) => {
           state.suggestStatus = 'failed';
           state.actionError = readRejection(action, "Your riders didn't load.");
+        },
+      },
+    ),
+
+    /** Soft: without it there is simply no packing step. */
+    loadPackingRuleAsync: create.asyncThunk(
+      async (_: void, { rejectWithValue }) => {
+        try {
+          return (await getKitchenSettings())?.packingPhoto ?? 'off';
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        fulfilled: (state, action) => {
+          state.packingRule = action.payload;
+        },
+      },
+    ),
+
+    /** The photo of the packed order: uploaded, attached, then the order read again. */
+    packingPhotoAsync: create.asyncThunk(
+      async ({ id, file }: { id: string; file: LocalFile }, { rejectWithValue }) => {
+        try {
+          const uploaded = await uploadImage(file, 'food_packing');
+          const result = await attachPackingPhoto(id, uploaded.url);
+          const order = await getVendorOrder(id);
+          return { result, order };
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        pending: state => {
+          state.packingUploading = true;
+          state.packingCheck = null;
+          state.packingError = NO_ERROR;
+        },
+        fulfilled: (state, action) => {
+          state.packingUploading = false;
+          state.packingCheck = action.payload.result?.check ?? null;
+          state.byId[action.meta.arg.id] = { order: action.payload.order, status: 'succeeded', error: NO_ERROR };
+        },
+        rejected: (state, action) => {
+          state.packingUploading = false;
+          state.packingError = readRejection(action, "The photo didn't upload.");
         },
       },
     ),
@@ -186,5 +252,5 @@ export const vendorOrderSlice = createAppSlice({
   },
 });
 
-export const { setReasonSheet, setAssignOpen, loadSuggestionsAsync, loadVendorOrderAsync, vendorOrderActAsync } = vendorOrderSlice.actions;
+export const { setReasonSheet, setAssignOpen, loadSuggestionsAsync, loadPackingRuleAsync, packingPhotoAsync, loadVendorOrderAsync, vendorOrderActAsync } = vendorOrderSlice.actions;
 export const { selectVendorOrderEntry, selectVendorOrderUi } = vendorOrderSlice.selectors;

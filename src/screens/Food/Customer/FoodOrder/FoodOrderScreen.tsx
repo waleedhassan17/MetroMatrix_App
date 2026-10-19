@@ -8,8 +8,8 @@
 // order it again, or rate it once it arrived. Live over the socket; read
 // again after reconnects, and every few seconds while the connection is down.
 
-import React, { useCallback, useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
@@ -34,7 +34,7 @@ import {
   secondsLeft,
 } from '@models/food/foodStatusModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
-import { AppText, Button, Card, Divider, IconButton, InlineNotice, IonIcon, ScreenShell, Sheet, SkeletonLines, StatusPill, StatusTimeline, TextAction, type TimelineStep } from '@custom/index';
+import { AppText, Button, Card, Divider, IconButton, ImageViewer, InlineNotice, IonIcon, ScreenShell, Sheet, SkeletonLines, StatusPill, StatusTimeline, TextAction, type TimelineStep } from '@custom/index';
 import { ChoiceLine } from '@custom/food/ChoiceLine';
 import { TransferCard } from '@custom/food/TransferCard';
 import { StarInput } from '@custom/food/StarInput';
@@ -63,6 +63,7 @@ const makeStyles = ({ colors, space, size, radius, gutter }: Theme) =>
     map: { borderRadius: radius.lg, overflow: 'hidden' },
     riderBadge: { width: size.avatar.md, height: size.avatar.md, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
     actions: { gap: space.s8 },
+    packed: { width: size.avatar.lg * 2, aspectRatio: 1, borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.surfaceSunk },
   });
 
 const FoodOrderScreen: React.FC<Props> = props => (
@@ -92,6 +93,7 @@ const FoodOrderContent: React.FC<Props> = ({ route, navigation }) => {
   const { order: o, tracking, status, error } = useAppSelector(st => selectFoodOrderEntry(st, code));
   const ui = useAppSelector(selectFoodOrderUi);
   const now = useNow(1000);
+  const [viewing, setViewing] = useState(false);
 
   const refetch = useCallback(() => void dispatch(loadFoodOrderAsync(code)), [dispatch, code]);
   useEffect(() => {
@@ -216,6 +218,24 @@ const FoodOrderContent: React.FC<Props> = ({ route, navigation }) => {
           </Card>
         ) : live && o.handedToExternal ? (
           <InlineNotice tone="info" message={`${o.vendor.name}’s own rider has your order.`} />
+        ) : null}
+
+        {/* How it was packed (the kitchen's photo; Kitchen Intelligence) */}
+        {o.packedPhotoUrl ? (
+          <Card>
+            <View style={styles.head}>
+              <Pressable onPress={() => setViewing(true)} style={styles.packed} accessibilityRole="imagebutton" accessibilityLabel="Your order, packed. Open the photo">
+                <Image source={{ uri: cdn(o.packedPhotoUrl, { w: size.avatar.lg * 2, h: size.avatar.lg * 2 }) ?? o.packedPhotoUrl }} style={styles.fill} contentFit="cover" />
+              </Pressable>
+              <View style={styles.grow}>
+                <AppText variant="bodyStrong">How it was packed</AppText>
+                <AppText variant="small" tone="muted">
+                  {`${o.vendor.name} took this photo of your order before it left.`}
+                </AppText>
+                <TextAction label="See the photo" onPress={() => setViewing(true)} />
+              </View>
+            </View>
+          </Card>
         ) : null}
 
         {/* Paying the kitchen */}
@@ -344,6 +364,7 @@ const FoodOrderContent: React.FC<Props> = ({ route, navigation }) => {
         ))}
         <Button label="Keep my order" variant="secondary" onPress={() => dispatch(setCancelSheet(false))} fullWidth />
       </Sheet>
+      <ImageViewer visible={viewing} uri={o.packedPhotoUrl} title={`Order ${o.code}, packed`} onClose={() => setViewing(false)} />
     </ScreenShell>
   );
 };

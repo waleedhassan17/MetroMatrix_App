@@ -36,7 +36,9 @@ export const DateStrip: React.FC<{
   selected: string | null;
   onSelect: (date: string) => void;
   loading?: boolean;
-}> = ({ days, selected, onSelect, loading }) => {
+  /** Days that aren't about free times (the kitchen's forecast): the chip's last line and what a screen reader says. */
+  describe?: (d: DayAvailability) => { sub: string; label: string };
+}> = ({ days, selected, onSelect, loading, describe }) => {
   const styles = useStyles(makeStyles);
   const { service, size, space } = useTheme();
   const ref = useRef<ScrollView>(null);
@@ -62,14 +64,15 @@ export const DateStrip: React.FC<{
       {days.map(d => {
         const chip = formatDayChip(d.date);
         const on = d.date === selected;
-        const none = d.slotCount === 0;
+        const own = describe?.(d);
+        const none = !own && d.slotCount === 0;
         return (
           <Pressable
             key={d.date}
             onPress={() => onSelect(d.date)}
             accessibilityRole="button"
             aria-selected={on}
-            accessibilityLabel={`${chip.long}, ${none ? 'no times' : `${d.slotCount} ${d.slotCount === 1 ? 'time' : 'times'} free`}`}
+            accessibilityLabel={own ? `${chip.long}, ${own.label}` : `${chip.long}, ${none ? 'no times' : `${d.slotCount} ${d.slotCount === 1 ? 'time' : 'times'} free`}`}
             style={[styles.chip, none && styles.dim, on && { backgroundColor: service.accent, borderColor: service.accent }]}>
             <AppText variant="micro" tone={on ? 'onAccent' : none ? 'faint' : 'muted'}>
               {chip.weekday.toUpperCase()}
@@ -78,7 +81,7 @@ export const DateStrip: React.FC<{
               {chip.day}
             </AppText>
             <AppText variant="micro" tone={on ? 'onAccent' : 'faint'}>
-              {none ? 'No slots' : chip.month}
+              {own ? own.sub : none ? 'No slots' : chip.month}
             </AppText>
           </Pressable>
         );

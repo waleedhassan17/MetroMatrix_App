@@ -5,10 +5,13 @@
 // customer (call, WhatsApp, directions to the drop-off), each dish with its
 // choices and note, cutlery, the money and how it's paid — a transfer's
 // reference to check against the kitchen's own account — and the moves the
-// server allows now. Live: read again whenever the order changes.
+// server allows now. Live: read again whenever the order changes. When the
+// kitchen asks for a packing photo (Kitchen settings), "Ready" waits for it;
+// the assistant's look at it is advice only (TODO(API_KITCHEN)).
 
 import React, { useCallback, useEffect } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
@@ -41,9 +44,12 @@ import { haptics } from '@utils/haptics';
 import { callNumber, navigateTo, openWhatsApp } from '@utils/maps';
 import { formatPKR } from '@utils/money';
 import { formatPkPhoneForDisplay } from '@utils/phone';
+import { pickImageFromLibrary, takePhoto } from '@utils/pickers';
 import {
+  loadPackingRuleAsync,
   loadSuggestionsAsync,
   loadVendorOrderAsync,
+  packingPhotoAsync,
   selectVendorOrderEntry,
   selectVendorOrderUi,
   setAssignOpen,
@@ -56,7 +62,7 @@ type Props = NativeStackScreenProps<FoodVendorStackParamList, 'VendorOrder'>;
 
 const TZ = 'Asia/Karachi';
 
-const makeStyles = ({ space, gutter }: Theme) =>
+const makeStyles = ({ space, gutter, radius, colors, size }: Theme) =>
   StyleSheet.create({
     content: { paddingHorizontal: gutter, paddingTop: space.s16, paddingBottom: space.s40, gap: space.s16 },
     row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.s12 },
@@ -65,6 +71,8 @@ const makeStyles = ({ space, gutter }: Theme) =>
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
     actions: { gap: space.s8 },
     event: { flexDirection: 'row', gap: space.s12 },
+    links: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space.s16 },
+    packed: { width: '100%', aspectRatio: size.railPhotoAspect, borderRadius: radius.md, backgroundColor: colors.surfaceSunk },
   });
 
 const VendorOrderScreen: React.FC<Props> = props => (
@@ -91,7 +99,8 @@ const VendorOrderContent: React.FC<Props> = ({ route }) => {
   const refetch = useCallback(() => void dispatch(loadVendorOrderAsync(id)), [dispatch, id]);
   useEffect(() => {
     refetch();
-  }, [refetch]);
+    void dispatch(loadPackingRuleAsync());
+  }, [refetch, dispatch]);
   // Any change to this order: read it again (the kitchen's socket gets board cards, not this view).
   useOrderChannel(o && !isEnded(o.status) ? o.id : null, { refetch });
 
@@ -134,6 +143,21 @@ const VendorOrderContent: React.FC<Props> = ({ route }) => {
   const beforePickup = !o.rider || ['assigned', 'accepted_by_rider', 'arrived_at_branch'].includes(o.rider.step);
   const canAccept = o.actions.status.includes('accepted');
   const a = o.address;
+  // The packing photo: asked for before Ready (required), or offered (optional).
+  const packingOn = ui.packingRule === 'optional' || ui.packingRule === 'required';
+  const beforeLeaving = ['accepted', 'preparing', 'ready'].includes(o.status);
+  const photoFirst = ui.packingRule === 'required' && !o.packedPhotoUrl && o.actions.status.includes('ready');
+  const showPacking = (packingOn && beforeLeaving) || !!o.packedPhotoUrl;
+  const shownMoves = photoFirst ? moves.filter(m => m !== 'ready') : moves;
+  const addPacking = async (how: 'camera' | 'library') => {
+    const file = how === 'camera' ? await takePhoto() : await pickImageFromLibrary();
+    if (!file) return;
+    const r = await dispatch(packingPhotoAsync({ id, file }));
+    if (packingPhotoAsync.fulfilled.match(r)) {
+      haptics.success();
+      Toast.show({ type: 'success', text1: 'Packing photo added', text2: 'The customer sees it on their order.' });
+    } else haptics.warning();
+  };
 
   return (
     <ScreenShell title={`Order ${o.code}`} subtitle={ORDER_STATUS[o.status].vendorLabel} onBack={back} scroll padded={false} refreshing={status === 'loading'} onRefresh={refetch}>
@@ -181,10 +205,49 @@ const VendorOrderContent: React.FC<Props> = ({ route }) => {
           </Card>
         ) : null}
 
+        {/* The packing photo */}
+        {showPacking ? (
+          <Card>
+            <AppText variant="title">Packing photo</AppText>
+            <AppText variant="small" tone="muted">
+              {ui.packingRule === 'required' && !o.packedPhotoUrl
+                ? 'Take it before you mark the order ready. The customer sees it on their order.'
+                : 'The customer sees it on their order.'}
+            </AppText>
+            {o.packedPhotoUrl ? <Image source={{ uri: o.packedPhotoUrl }} style={styles.packed} contentFit="cover" accessibilityLabel={`Order ${o.code}, packed`} /> : null}
+            {ui.packingCheck ? (
+              <AppText variant="small" tone={ui.packingCheck.ok ? 'success' : 'warning'}>
+                {ui.packingCheck.note}
+              </AppText>
+            ) : null}
+            {ui.packingError.message ? <InlineNotice message={ui.packingError.message} /> : null}
+            {beforeLeaving ? (
+              photoFirst || !o.packedPhotoUrl ? (
+                <>
+                  <Button
+                    label="Take the packing photo"
+                    leftIcon="camera-outline"
+                    variant={photoFirst ? 'primary' : 'secondary'}
+                    loading={ui.packingUploading}
+                    onPress={() => void addPacking('camera')}
+                    fullWidth
+                  />
+                  <TextAction label="From your photos" icon="image-outline" onPress={() => void addPacking('library')} disabled={ui.packingUploading} />
+                </>
+              ) : (
+                <View style={styles.links}>
+                  <TextAction label="Retake" icon="camera-outline" onPress={() => void addPacking('camera')} disabled={ui.packingUploading} />
+                  <TextAction label="From your photos" icon="image-outline" onPress={() => void addPacking('library')} disabled={ui.packingUploading} />
+                </View>
+              )
+            ) : null}
+          </Card>
+        ) : null}
+
         {/* The next moves */}
-        {moves.length ? (
+        {shownMoves.length ? (
           <View style={styles.actions}>
-            {moves.map((m, i) => (
+            {shownMoves.map((m, i) => (
               <Button
                 key={m}
                 label={VENDOR_STATUS_ACTION[m] ?? m}

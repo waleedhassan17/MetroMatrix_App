@@ -861,7 +861,11 @@ What customers browse:
 }
 ```
 
-The end-of-day suggestion (`null` before 5 PM, kitchen time):
+The end-of-day suggestion (`null` before 5 PM, kitchen time). From 5 PM it
+is a filled-in box to check: a home kitchen's leftover portions
+(`basis: "portions_left"`), else a mix of the day's popular dishes
+(`basis: "end_of_day"`); pickup starts on a quarter hour, at 9 PM or 15
+minutes from now if later, for two hours (ending by 1:30 AM):
 
 <!-- contract: suggestion -->
 ```json

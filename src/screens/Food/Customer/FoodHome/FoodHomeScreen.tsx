@@ -18,7 +18,7 @@ import { RAILS, pointOfAddress } from '@models/food/discoveryModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Button, Card, Divider, EmptyState, IconButton, IonIcon, InlineNotice, ListRow, MciIcon, PageHeader, Sheet, Skeleton } from '@custom/index';
 import { VendorCard } from '@custom/food/VendorCard';
-import { CuisineRail, FoodHomeSkeleton, FoodSearchButton, FoodSection, VendorRail } from '@components/food/FoodParts';
+import { CuisineRail, FoodHomeSkeleton, FoodSearchButton, FoodSection, SurplusRail, VendorRail } from '@components/food/FoodParts';
 import type { VendorCard as VendorCardData } from '@/types';
 import { selectFoodPoint, setFoodPoint } from '@store/preferencesSlice';
 import { loadAddressesAsync, selectAddressBook } from '../../../Account/AddressBook/addressBookSlice';
@@ -87,6 +87,13 @@ const FoodHomeContent: React.FC = () => {
     all.refresh();
   };
 
+  // Bachat Boxes are for pickup: they show even where nobody delivers.
+  const surplusRail = s.surplus.length ? (
+    <FoodSection title="Bachat Box near you" subtitle="Tonight’s food at a lower price, for pickup" onSeeAll={() => navigation.navigate('FoodSurplusList')}>
+      <SurplusRail boxes={s.surplus} onOpen={x => navigation.navigate('FoodSurplus', { id: x.id })} />
+    </FoodSection>
+  ) : null;
+
   const rails = useMemo(() => (home ? RAILS.map(r => ({ ...r, vendors: home[r.key] })).filter(r => r.vendors.length) : []), [home]);
 
   const header = (
@@ -103,22 +110,25 @@ const FoodHomeContent: React.FC = () => {
       ) : !home || s.builtFor !== key ? (
         <FoodHomeSkeleton />
       ) : !home.coverage.delivering ? (
-        <View style={styles.padded}>
-          <EmptyState
-            icon="map"
-            title="Not delivering here yet"
-            body={
-              home.coverage.pickupNearby
-                ? `No kitchen delivers to ${point.label} yet. ${home.coverage.pickupNearby} nearby ${home.coverage.pickupNearby === 1 ? 'is' : 'are'} open for pick-up.`
-                : `No kitchen delivers to ${point.label} yet. Try another address.`
-            }
-            action={
-              home.coverage.pickupNearby
-                ? { label: 'See pick-up places', onPress: () => navigation.navigate('FoodVendors', { pickup: true, title: 'Pick-up near you' }) }
-                : { label: 'Change address', onPress: () => dispatch(openPointSheet()) }
-            }
-          />
-        </View>
+        <>
+          <View style={styles.padded}>
+            <EmptyState
+              icon="map"
+              title="Not delivering here yet"
+              body={
+                home.coverage.pickupNearby
+                  ? `No kitchen delivers to ${point.label} yet. ${home.coverage.pickupNearby} nearby ${home.coverage.pickupNearby === 1 ? 'is' : 'are'} open for pick-up.`
+                  : `No kitchen delivers to ${point.label} yet. Try another address.`
+              }
+              action={
+                home.coverage.pickupNearby
+                  ? { label: 'See pick-up places', onPress: () => navigation.navigate('FoodVendors', { pickup: true, title: 'Pick-up near you' }) }
+                  : { label: 'Change address', onPress: () => dispatch(openPointSheet()) }
+              }
+            />
+          </View>
+          {surplusRail}
+        </>
       ) : (
         <>
           {home.cuisines.length ? (
@@ -126,6 +136,7 @@ const FoodHomeContent: React.FC = () => {
               <CuisineRail cuisines={home.cuisines} onPress={c => navigation.navigate('FoodVendors', { cuisine: c.slug, title: c.name })} />
             </FoodSection>
           ) : null}
+          {surplusRail}
           {rails.map(r => (
             <FoodSection
               key={r.key}

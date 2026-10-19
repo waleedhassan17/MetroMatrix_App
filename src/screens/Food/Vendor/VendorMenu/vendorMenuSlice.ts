@@ -9,8 +9,9 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { listMenuCategories, listMenuItems } from '@networks/food/vendor/menuNetwork';
 import { getAvailability, setAvailability } from '@networks/food/vendor/availabilityNetwork';
+import { getBoardHints } from '@networks/kitchen/costingNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
-import type { AvailabilityItem, MenuCategory, VendorMenuItem } from '@/types';
+import type { AvailabilityItem, BoardHints, MenuCategory, VendorMenuItem } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 
 export interface VendorMenuSliceState {
@@ -26,6 +27,8 @@ export interface VendorMenuSliceState {
   saving: string[];
   /** Bumped by the editors so the tab reloads when it is next in view. */
   stale: boolean;
+  /** Dishes low on stock or out of it by their recipes (TODO(API_KITCHEN); null when the kitchen side is unavailable). */
+  stock: BoardHints | null;
 }
 
 const initialState: VendorMenuSliceState = {
@@ -37,6 +40,7 @@ const initialState: VendorMenuSliceState = {
   offItemId: null,
   saving: [],
   stale: false,
+  stock: null,
 };
 
 const byId = (rows: AvailabilityItem[]) => Object.fromEntries(rows.map(r => [r.itemId, r]));
@@ -58,8 +62,8 @@ export const vendorMenuSlice = createAppSlice({
     loadVendorMenuAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [categories, items, availability] = await Promise.all([listMenuCategories(), listMenuItems(), getAvailability()]);
-          return { categories, items, availability };
+          const [categories, items, availability, stock] = await Promise.all([listMenuCategories(), listMenuItems(), getAvailability(), getBoardHints().catch(() => null)]);
+          return { categories, items, availability, stock };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -75,6 +79,7 @@ export const vendorMenuSlice = createAppSlice({
           state.categories = action.payload.categories;
           state.items = action.payload.items;
           state.availability = byId(action.payload.availability.items);
+          state.stock = action.payload.stock;
         },
         rejected: (state, action) => {
           state.status = 'failed';

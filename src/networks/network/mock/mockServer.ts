@@ -867,3 +867,31 @@ export const mockAdapter: AxiosAdapter = async config => {
     response,
   );
 };
+
+/**
+ * Walk tooling, development builds only. The dummy database lives in each
+ * browser, so a web walk stands in for "another phone" here: a second
+ * customer reserving the last Bachat Box, or an order arriving on the
+ * board that is open in this page — sent as an ordinary request with that
+ * person's own token. Never in a release.
+ */
+if (__DEV__) {
+  (globalThis as { __MM_MOCK_DB__?: unknown }).__MM_MOCK_DB__ = {
+    get: getDb,
+    save: saveDb,
+    request: async (method: string, url: string, body?: unknown, token?: string | null, headers: Record<string, string> = {}) => {
+      const config = {
+        method,
+        url,
+        data: body === undefined ? undefined : JSON.stringify(body),
+        headers: new AxiosHeaders({ ...headers, ...(token ? { Authorization: `Bearer ${token}` } : null) }),
+      } as unknown as InternalAxiosRequestConfig;
+      try {
+        return { status: 200, body: (await mockAdapter(config)).data };
+      } catch (e) {
+        const r = (e as AxiosError).response;
+        return { status: r?.status ?? 0, body: r?.data ?? null };
+      }
+    },
+  };
+}

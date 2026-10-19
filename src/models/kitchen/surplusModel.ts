@@ -8,6 +8,7 @@
 import type { SurplusBoxInput, SurplusSuggestion } from '../../types/kitchen';
 import type { ValidationErrors } from '../authModel';
 import { parseRupees } from '../../utils/money';
+import { addDays, formatSlot, todayInZone, zonedToIso } from '../../utils/healthTime';
 
 export const MIN_DISCOUNT = 0.2;
 export const MAX_BOX_QUANTITY = 50;
@@ -80,3 +81,27 @@ export const normalizeCode = (raw: string) => {
 };
 
 export const isPickupCode = (raw: string) => /^BB-[A-Z2-9]{6}$/.test(normalizeCode(raw));
+
+const QUARTER = 15 * 60_000;
+
+/**
+ * The times a pickup window can start or end: every 15 minutes from now
+ * until 2 AM (Bachat Boxes are tonight's food; the API refuses later).
+ */
+export const pickupTimes = (now: number, timezone: string) => {
+  const lastEnd = Date.parse(zonedToIso(addDays(todayInZone(timezone, now), 1), '02:00', timezone));
+  const out: { iso: string; label: string }[] = [];
+  for (let t = Math.ceil(now / QUARTER) * QUARTER; t <= lastEnd; t += QUARTER) {
+    const iso = new Date(t).toISOString();
+    out.push({ iso, label: formatSlot(iso, timezone) });
+  }
+  return out;
+};
+
+/** A new start keeps the window's length (two hours by default), never past 2 AM. */
+export const withPickupFrom = (f: BoxForm, fromIso: string, timezone: string, now: number): BoxForm => {
+  const length = Math.max(MIN_WINDOW_MINUTES * 60_000, Date.parse(f.pickupTo) - Date.parse(f.pickupFrom)) || 2 * 3_600_000;
+  const times = pickupTimes(now, timezone);
+  const last = times.length ? Date.parse(times[times.length - 1].iso) : Date.parse(fromIso) + length;
+  return { ...f, pickupFrom: fromIso, pickupTo: new Date(Math.min(Date.parse(fromIso) + length, last)).toISOString() };
+};

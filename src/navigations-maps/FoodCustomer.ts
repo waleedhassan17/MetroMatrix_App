@@ -2,7 +2,8 @@
 // Profile), in the FYP Home services bar's look, with browsing — vendor
 // lists, search, a vendor's page — and ordering — the bag, checkout, order
 // placed, an order live, the transfer's receipt, rating it, a kitchen's
-// reviews — pushed over them.
+// reviews — and Bachat Box (tonight's surplus, reserved for pickup) pushed
+// over them.
 
 import type { IRoute, ITabRoute } from './types';
 import { ROUTES } from './Base';
@@ -21,6 +22,10 @@ import FoodFavouritesScreen from '../screens/Food/Customer/FoodFavourites/FoodFa
 import PaymentProofScreen from '../screens/Shopping/Customer/PaymentProof/PaymentProofScreen';
 import FoodRateOrderScreen from '../screens/Food/Customer/FoodRateOrder/FoodRateOrderScreen';
 import FoodReviewsScreen from '../screens/Food/Customer/FoodReviews/FoodReviewsScreen';
+import FoodSurplusListScreen from '../screens/Food/Customer/FoodSurplusList/FoodSurplusListScreen';
+import FoodSurplusScreen from '../screens/Food/Customer/FoodSurplus/FoodSurplusScreen';
+import FoodSurplusReservedScreen from '../screens/Food/Customer/FoodSurplusReserved/FoodSurplusReservedScreen';
+import FoodSurplusReservationsScreen from '../screens/Food/Customer/FoodSurplusReservations/FoodSurplusReservationsScreen';
 
 const AS_TAB = { asTab: true };
 
@@ -43,4 +48,9 @@ export const FOOD_STACK_ROUTES: IRoute[] = [
   { title: ROUTES.PAYMENT_PROOF, component: PaymentProofScreen },
   { title: ROUTES.FOOD_RATE_ORDER, component: FoodRateOrderScreen },
   { title: ROUTES.FOOD_REVIEWS, component: FoodReviewsScreen },
+  // Bachat Box (Kitchen Intelligence)
+  { title: ROUTES.FOOD_SURPLUS_LIST, component: FoodSurplusListScreen },
+  { title: ROUTES.FOOD_SURPLUS, component: FoodSurplusScreen },
+  { title: ROUTES.FOOD_SURPLUS_RESERVED, component: FoodSurplusReservedScreen },
+  { title: ROUTES.FOOD_SURPLUS_RESERVATIONS, component: FoodSurplusReservationsScreen },
 ];

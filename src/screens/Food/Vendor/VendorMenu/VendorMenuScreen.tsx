@@ -10,6 +10,7 @@ import { StyleSheet, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { OFF_CHOICES, categoryWindowLabel, daysLabel, itemPriceLabel, offUntil, type OffFor } from '@models/food/menuModel';
+import { menuStockNote } from '@models/kitchen/boardModel';
 import { ServiceScope, useStyles, type Theme } from '@theme/index';
 import { AppText, Button, Card, Divider, EmptyState, InlineNotice, ListRow, ScreenShell, Sheet, SkeletonLines, TextAction } from '@custom/index';
 import { DishRow } from '@custom/food/DishRow';
@@ -123,7 +124,7 @@ const VendorMenuScreen: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             name={i.name}
                             price={itemPriceLabel(i)}
                             photoUrl={i.photoUrl}
-                            detail={detailOf(i)}
+                            detail={[menuStockNote(i.id, s.stock), detailOf(i)].filter(Boolean).join(' · ')}
                             available={available}
                             hidden={!i.isActive}
                             offLabel={!available ? (a?.unavailableUntil ? `Off until ${formatSlot(a.unavailableUntil, PKT)}` : 'Off until you switch it on') : null}

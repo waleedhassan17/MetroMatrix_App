@@ -128,6 +128,12 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       KitchenPurchase: 'vendor/kitchen/purchases/:id',
       KitchenSuppliers: 'vendor/kitchen/suppliers',
       KitchenPriceWatch: 'vendor/kitchen/prices',
+      KitchenForecast: 'vendor/kitchen/forecast',
+      KitchenWaste: 'vendor/kitchen/waste',
+      KitchenWasteForm: 'vendor/kitchen/waste/new',
+      KitchenBoxForm: 'vendor/kitchen/bachat-box/new',
+      KitchenBox: 'vendor/kitchen/bachat-box/:id',
+      KitchenDonations: 'vendor/kitchen/donations',
       // The rider's app: metromatrix://rider/deliveries
       RiderTabs: {
         screens: { DeliveriesTab: 'rider/deliveries', CashTab: 'rider/cash', RiderProfileTab: 'rider/profile' },
@@ -230,6 +236,10 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
           PaymentProof: 'food/order/:foodOrderCode/pay',
           FoodRateOrder: 'food/order/:code/rate',
           FoodReviews: 'food/reviews/:id',
+          FoodSurplusList: 'food/bachat-box',
+          FoodSurplusReservations: 'food/bachat-box/reservations',
+          FoodSurplusReserved: 'food/bachat-box/reservations/:code',
+          FoodSurplus: 'food/bachat-box/:id',
         },
       },
       ApprovalsTab: {

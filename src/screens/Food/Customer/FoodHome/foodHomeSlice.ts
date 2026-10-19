@@ -5,17 +5,21 @@
 // top rated, fastest, home kitchens…), or "not delivering here yet" with the
 // pick-up places nearby. The point itself is a device preference
 // (preferences.foodPoint); the list under the rails is paged by the screen.
+// Bachat Boxes nearby (tonight's surplus, for pickup) ride along; without
+// them the home is the same (TODO(API_KITCHEN)).
 
 import { createAppSlice } from '@store/createAppSlice';
 import { getFoodHome } from '@networks/food/discoveryNetwork';
+import { listSurplusNearby } from '@networks/food/surplusNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import { currentPoint } from '../../../../services/location';
 import { setFoodPoint } from '@store/preferencesSlice';
-import type { FoodHome } from '@/types';
+import type { FoodHome, SurplusCard } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 
 export interface FoodHomeSliceState {
   home: FoodHome | null;
+  surplus: SurplusCard[];
   /** "lat,lng" the home was built for. */
   builtFor: string | null;
   status: FormStatus;
@@ -28,6 +32,7 @@ export interface FoodHomeSliceState {
 
 const initialState: FoodHomeSliceState = {
   home: null,
+  surplus: [],
   builtFor: null,
   status: 'idle',
   refreshing: false,
@@ -53,7 +58,8 @@ export const foodHomeSlice = createAppSlice({
     loadFoodHomeAsync: create.asyncThunk(
       async ({ lat, lng }: { lat: number; lng: number; refresh?: boolean }, { rejectWithValue }) => {
         try {
-          return await getFoodHome(lat, lng);
+          const [home, surplus] = await Promise.all([getFoodHome(lat, lng), listSurplusNearby({ lat, lng }).catch(() => [] as SurplusCard[])]);
+          return { home, surplus };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -71,7 +77,8 @@ export const foodHomeSlice = createAppSlice({
         fulfilled: (state, action) => {
           state.status = 'succeeded';
           state.refreshing = false;
-          state.home = action.payload;
+          state.home = action.payload.home;
+          state.surplus = action.payload.surplus;
           state.builtFor = pointKey(action.meta.arg);
         },
         rejected: (state, action) => {

@@ -125,6 +125,9 @@ export const unavailableLabel = (reason: string | null, from?: string | null): s
       return from ? `Served from ${time12(from)}` : 'Not served right now';
     case 'not_today':
       return 'Not on today’s menu';
+    case 'ingredients':
+      // The kitchen ran out of what it is made with (Kitchen Intelligence: TODO(API_KITCHEN)).
+      return 'Sold out for now';
     default:
       return 'Not available right now';
   }

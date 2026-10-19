@@ -22,6 +22,12 @@ export interface RecipeLineRowProps {
   /** "Packaging", "Add-on: Raita". */
   tag?: string | null;
   error?: string | null;
+  /** After the cost: "a serving" on a recipe card; "" where the cost stands alone (waste). */
+  costSuffix?: string;
+  /** The unit can't change (a cooked dish counts in servings). */
+  unitFixed?: boolean;
+  /** "Change the ingredient", or "Change the dish". */
+  nameHint?: string;
 }
 
 const makeStyles = ({ space, size, radius, colors, type }: Theme) =>
@@ -48,13 +54,27 @@ const makeStyles = ({ space, size, radius, colors, type }: Theme) =>
     cost: { flex: 1, textAlign: 'right' },
   });
 
-export const RecipeLineRow: React.FC<RecipeLineRowProps> = ({ name, amount, unitLabel, costLabel, onAmountChange, onUnitPress, onNamePress, onRemove, tag, error }) => {
+export const RecipeLineRow: React.FC<RecipeLineRowProps> = ({
+  name,
+  amount,
+  unitLabel,
+  costLabel,
+  onAmountChange,
+  onUnitPress,
+  onNamePress,
+  onRemove,
+  tag,
+  error,
+  costSuffix = 'a serving',
+  unitFixed,
+  nameHint = 'Change the ingredient',
+}) => {
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   return (
     <View style={styles.root}>
       <View style={styles.head}>
-        <Pressable onPress={onNamePress} style={styles.name} accessibilityRole="button" accessibilityLabel={`${name}. Change the ingredient`}>
+        <Pressable onPress={onNamePress} style={styles.name} accessibilityRole="button" accessibilityLabel={`${name}. ${nameHint}`}>
           <AppText variant="bodyStrong" numberOfLines={2} style={styles.nameText}>
             {name}
           </AppText>
@@ -73,12 +93,18 @@ export const RecipeLineRow: React.FC<RecipeLineRowProps> = ({ name, amount, unit
           style={[styles.amount, error ? styles.amountError : null]}
           accessibilityLabel={`${name} amount in ${unitLabel}`}
         />
-        <Pressable onPress={onUnitPress} style={styles.unit} accessibilityRole="button" accessibilityLabel={`Unit: ${unitLabel}. Change the unit`}>
-          <AppText variant="label">{unitLabel}</AppText>
-          <IonIcon name="chevron-down" size="sm" color={colors.inkMuted} />
-        </Pressable>
+        {unitFixed ? (
+          <View style={styles.unit}>
+            <AppText variant="label">{unitLabel}</AppText>
+          </View>
+        ) : (
+          <Pressable onPress={onUnitPress} style={styles.unit} accessibilityRole="button" accessibilityLabel={`Unit: ${unitLabel}. Change the unit`}>
+            <AppText variant="label">{unitLabel}</AppText>
+            <IonIcon name="chevron-down" size="sm" color={colors.inkMuted} />
+          </Pressable>
+        )}
         <AppText variant="caption" tone={error ? 'danger' : 'muted'} style={styles.cost}>
-          {error ?? `${costLabel} a serving`}
+          {error ?? (costLabel ? `${costLabel}${costSuffix ? ` ${costSuffix}` : ''}` : '')}
         </AppText>
       </View>
     </View>

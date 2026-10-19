@@ -62,6 +62,24 @@ const tiles = (s: KitchenSummary, go: (name: string, params?: object) => void): 
     hint: `spent this week · ${s.purchases.weekCount} ${s.purchases.weekCount === 1 ? 'purchase' : 'purchases'}`,
     onPress: () => go('KitchenPurchases'),
   },
+  {
+    key: 'forecast',
+    icon: 'clipboard-outline',
+    tint: 'blue',
+    label: 'Forecast and prep',
+    value: s.forecast.learning ? 'Learning' : `${s.forecast.dishes}`,
+    hint: s.forecast.learning ? `about ${s.forecast.dishes} dishes tomorrow, ranges still wide` : `dishes expected tomorrow · about ${s.forecast.orders} orders`,
+    onPress: () => go('KitchenForecast'),
+  },
+  {
+    key: 'waste',
+    icon: 'leaf-outline',
+    tint: 'rose',
+    label: 'Waste and Bachat Box',
+    value: formatPKR(s.waste.weekCost),
+    hint: `wasted this week · ${s.waste.mealsRescued} ${s.waste.mealsRescued === 1 ? 'meal' : 'meals'} rescued`,
+    onPress: () => go('KitchenWaste'),
+  },
 ];
 
 const KitchenHubScreen: React.FC = () => (

@@ -5,9 +5,14 @@
 // columns side by side from tablet width. A new order rings (and vibrates)
 // until it is opened or answered, and shows the time left to answer; one
 // tap accepts it with a time, or declines it with a reason. The kitchen's
-// switches — busy (+15 min for an hour), pause — sit on top. Live over the
-// socket; read again after reconnects and every few seconds while it's down.
-// The screen stays awake while the board is open.
+// switches — busy (+15 min for an hour), pause (with a private reason and
+// when it lifts by itself) — sit on top. Live over the socket; read again
+// after reconnects and every few seconds while it's down. The screen stays
+// awake while the board is open. The kitchen's side (TODO(API_KITCHEN)):
+// a new order is spoken out loud after the chime (Settings: Urdu, English
+// or off), the mic in the header answers orders by voice, tickets say when
+// stock runs low, the usual prep time is offered first, and "Ready" waits
+// for a packing photo when the kitchen asks for one.
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
@@ -18,17 +23,23 @@ import { useNow } from '@hooks/useNow';
 import { useLayoutClass } from '@hooks/useLayoutClass';
 import { useVendorBoard } from '@hooks/useFoodLive';
 import { BOARD_COLUMNS, ETA_CHOICES, REJECT_REASONS, columnCounts, columnOf, type BoardColumn, type VendorMove } from '@models/food/foodStatusModel';
+import { needsPackingPhoto, pausedNote, resumeAtOf, suggestedEta, ticketStockNote } from '@models/kitchen/boardModel';
+import { PAUSE_DURATIONS, PAUSE_REASONS, PAUSE_REASON_LABEL } from '@models/kitchen/kitchenStatusModel';
+import { VoiceSheetButton } from '@components/voice/VoiceSheet';
+import { selectAnnounce } from '@store/preferencesSlice';
+import { announce } from '@/services/announcer';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Button, ChoiceChip, EmptyState, InlineNotice, ScreenShell, Sheet, SkeletonLines } from '@custom/index';
 import { ChoiceLine } from '@custom/food/ChoiceLine';
 import { OrderTicket } from '@custom/food/OrderTicket';
-import type { BoardCard } from '@/types';
+import type { BoardCard, PauseReason, VoiceAction } from '@/types';
 import { orderAlert, type OrderAlertState } from '@/services/orderAlert';
 import { formatSlot } from '@utils/healthTime';
 import { haptics } from '@utils/haptics';
 import { selectBusiness } from '../../../Auth/authSlice';
 import {
   acceptOrderAsync,
+  announceOrderAsync,
   boardNewOrder,
   boardOrderUpdated,
   boardSynced,
@@ -37,8 +48,10 @@ import {
   markOrderSeen,
   moveOrderAsync,
   openAccept,
+  openPause,
   openReject,
   rejectOrderAsync,
+  soldOutDishAsync,
   selectUnseenCount,
   selectVendorBoard,
   setBoardColumn,
@@ -69,12 +82,6 @@ const VendorOrdersScreen: React.FC = () => (
   </ServiceScope>
 );
 
-/** The time quoted at checkout, snapped to the nearest chip. */
-const defaultEta = (c: BoardCard) => {
-  const quoted = c.promisedAt ? Math.round((Date.parse(c.promisedAt) - Date.parse(c.placedAt)) / 60_000) : 30;
-  return ETA_CHOICES.reduce((best, m) => (Math.abs(m - quoted) < Math.abs(best - quoted) ? m : best), ETA_CHOICES[0]);
-};
-
 const VendorOrdersContent: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const dispatch = useAppDispatch();
@@ -87,6 +94,9 @@ const VendorOrdersContent: React.FC = () => {
   const layout = useLayoutClass();
   const now = useNow(1000);
   const [alert, setAlert] = useState<OrderAlertState>(orderAlert.state);
+  const spoken = useAppSelector(selectAnnounce);
+  const [pauseReason, setPauseReason] = useState<PauseReason | null>(null);
+  const [pauseFor, setPauseFor] = useState<number | null>(PAUSE_DURATIONS[1].minutes);
 
   const refetch = useCallback(() => void dispatch(loadBoardAsync()), [dispatch]);
   useFocusEffect(
@@ -103,6 +113,12 @@ const VendorOrdersContent: React.FC = () => {
       onNew: c => {
         dispatch(boardNewOrder(c));
         dispatch(setBoardColumn('new'));
+        // Said out loud after the chime's first ring, once per order.
+        if (spoken !== 'off' && c.status === 'placed' && !b.announced.includes(c.id)) {
+          void dispatch(announceOrderAsync({ id: c.id, language: spoken })).then(r => {
+            if (announceOrderAsync.fulfilled.match(r) && r.payload) void announce(r.payload);
+          });
+        }
       },
       onUpdate: u => dispatch(boardOrderUpdated(u)),
       onPayment: refetch,
@@ -147,6 +163,11 @@ const VendorOrdersContent: React.FC = () => {
   };
   const onMove = (c: BoardCard, move: VendorMove) => {
     if (move === 'accept') return void dispatch(openAccept(c.id));
+    // The kitchen asks for a packing photo first: the order page takes it, then marks it ready.
+    if (move === 'ready' && needsPackingPhoto(c, b.hints?.packingPhoto)) {
+      dispatch(markOrderSeen(c.id));
+      return navigation.navigate('VendorOrder', { id: c.id, packing: true });
+    }
     if (move === 'check-transfer') return open(c);
     if (move === 'assign') {
       dispatch(markOrderSeen(c.id));
@@ -156,7 +177,16 @@ const VendorOrdersContent: React.FC = () => {
     void dispatch(moveOrderAsync({ id: c.id, move: move as BoardMove }));
   };
   const ticket = (c: BoardCard) => (
-    <OrderTicket key={c.id} card={c} now={now} busy={b.busyId === c.id} onOpen={() => open(c)} onMove={m => onMove(c, m)} onDecline={() => dispatch(openReject(c.id))} />
+    <OrderTicket
+      key={c.id}
+      card={c}
+      now={now}
+      busy={b.busyId === c.id}
+      note={ticketStockNote(c, b.hints)}
+      onOpen={() => open(c)}
+      onMove={m => onMove(c, m)}
+      onDecline={() => dispatch(openReject(c.id))}
+    />
   );
   const inColumn = (col: BoardColumn) => b.cards.filter(c => columnOf(c.status) === col);
 
@@ -166,14 +196,69 @@ const VendorOrdersContent: React.FC = () => {
   const acceptCard = b.cards.find(c => c.id === b.acceptFor) ?? null;
   const rejectCard = b.cards.find(c => c.id === b.rejectFor) ?? null;
 
+  /** A confirmed spoken command → the board's own moves. True when it went through. */
+  const runSpoken = async (a: VoiceAction): Promise<boolean> => {
+    haptics.press();
+    switch (a.kind) {
+      case 'order.accept': {
+        dispatch(markOrderSeen(a.orderId));
+        const card = b.cards.find(c => c.id === a.orderId);
+        const r = await dispatch(acceptOrderAsync({ id: a.orderId, eta: a.etaMinutes ?? (card ? suggestedEta(card, b.hints) : 30) }));
+        return acceptOrderAsync.fulfilled.match(r);
+      }
+      case 'order.reject': {
+        dispatch(markOrderSeen(a.orderId));
+        const r = await dispatch(rejectOrderAsync({ id: a.orderId, reason: a.reason }));
+        return rejectOrderAsync.fulfilled.match(r);
+      }
+      case 'order.ready': {
+        const card = b.cards.find(c => c.id === a.orderId);
+        if (card && needsPackingPhoto(card, b.hints?.packingPhoto)) {
+          navigation.navigate('VendorOrder', { id: card.id, packing: true });
+          return true;
+        }
+        const r = await dispatch(moveOrderAsync({ id: a.orderId, move: 'ready' }));
+        return moveOrderAsync.fulfilled.match(r);
+      }
+      case 'item.unavailable': {
+        const r = await dispatch(soldOutDishAsync(a.itemId));
+        return soldOutDishAsync.fulfilled.match(r);
+      }
+      case 'vendor.busy': {
+        const r = await dispatch(switchKitchenAsync({ busy: a.extraMinutes }));
+        return switchKitchenAsync.fulfilled.match(r);
+      }
+      default:
+        return false;
+    }
+  };
+
+  const acceptEta = acceptCard ? suggestedEta(acceptCard, b.hints) : null;
+
   return (
-    <ScreenShell title="Orders" subtitle={profile?.branch.openState.label ?? business?.name} scroll={false}>
+    <ScreenShell
+      title="Orders"
+      subtitle={profile?.branch.openState.label ?? business?.name}
+      scroll={false}
+      headerRight={
+        <VoiceSheetButton
+          context="board"
+          title="Speak to the board"
+          busy={b.busyId !== null || b.switching}
+          onConfirm={async a => {
+            const ok = await runSpoken(a);
+            if (ok) haptics.success();
+            else haptics.warning();
+            return ok;
+          }}
+        />
+      }>
       {alert.blocked ? <InlineNotice tone="warning" message="Your browser is holding back the new-order sound." action={{ label: 'Turn on order sound', onPress: () => orderAlert.unlock() }} /> : null}
       {paused ? (
         <InlineNotice
           tone="warning"
           title="Paused: customers can’t order"
-          message={profile?.branch.pauseMessage ?? 'Your kitchen is hidden from lists until you resume.'}
+          message={profile ? pausedNote(profile.branch, 'Asia/Karachi') : 'Your kitchen is hidden from lists until you resume.'}
           action={{ label: 'Resume orders', onPress: () => void dispatch(switchKitchenAsync({ resume: true })) }}
         />
       ) : (
@@ -183,7 +268,7 @@ const VendorOrdersContent: React.FC = () => {
             selected={busy}
             onPress={() => void dispatch(switchKitchenAsync({ busy: busy ? 0 : 15 }))}
           />
-          <ChoiceChip label="Pause orders" selected={false} onPress={() => void dispatch(switchKitchenAsync({ pause: null }))} />
+          <ChoiceChip label="Pause orders" selected={false} onPress={() => dispatch(openPause(true))} />
         </View>
       )}
       {b.actionError.message && !b.acceptFor && !b.rejectFor ? <InlineNotice message={b.actionError.message} /> : null}
@@ -269,7 +354,7 @@ const VendorOrdersContent: React.FC = () => {
                 <ChoiceChip
                   key={m}
                   label={`${m} min`}
-                  selected={m === defaultEta(acceptCard)}
+                  selected={m === acceptEta}
                   onPress={() => {
                     haptics.success();
                     void dispatch(acceptOrderAsync({ id: acceptCard.id, eta: m }));
@@ -278,7 +363,7 @@ const VendorOrdersContent: React.FC = () => {
               ))}
             </View>
             <AppText variant="small" tone="muted">
-              The customer sees this time. Tap one to accept.
+              {b.hints?.prepHint ? `${b.hints.prepHint.label}. The customer sees the time you pick. Tap one to accept.` : 'The customer sees this time. Tap one to accept.'}
             </AppText>
           </>
         ) : null}
@@ -298,6 +383,37 @@ const VendorOrdersContent: React.FC = () => {
           />
         ))}
         <Button label="Keep the order" variant="secondary" onPress={() => dispatch(openReject(null))} fullWidth />
+      </Sheet>
+
+      <Sheet
+        visible={b.pauseOpen}
+        onClose={() => dispatch(openPause(false))}
+        title="Pause new orders?"
+        subtitle="Customers can’t order until it lifts. Orders already in carry on."
+        footer={
+          <Button
+            label={pauseFor === null ? 'Pause until I resume' : `Pause for ${PAUSE_DURATIONS.find(d => d.minutes === pauseFor)?.label ?? `${pauseFor} min`}`}
+            loading={b.switching}
+            onPress={() => {
+              haptics.press();
+              void dispatch(switchKitchenAsync({ pause: null, reason: pauseReason, resumeAt: resumeAtOf(pauseFor, Date.now()) }));
+            }}
+            fullWidth
+          />
+        }>
+        {b.actionError.message ? <InlineNotice message={b.actionError.message} /> : null}
+        <AppText variant="bodyStrong">Why (only you see this)</AppText>
+        <View style={[styles.etas, { marginBottom: space.s16 }]}>
+          {PAUSE_REASONS.map(r => (
+            <ChoiceChip key={r} label={PAUSE_REASON_LABEL[r]} selected={pauseReason === r} onPress={() => setPauseReason(pauseReason === r ? null : r)} />
+          ))}
+        </View>
+        <AppText variant="bodyStrong">For how long</AppText>
+        <View style={styles.etas}>
+          {PAUSE_DURATIONS.map(d => (
+            <ChoiceChip key={d.label} label={d.label} selected={pauseFor === d.minutes} onPress={() => setPauseFor(d.minutes)} />
+          ))}
+        </View>
       </Sheet>
     </ScreenShell>
   );

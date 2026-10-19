@@ -5,7 +5,8 @@
 // optionally its screenshot. The store checks it against its own account,
 // then ships; the doctor checks theirs, then confirms the appointment; the
 // kitchen checks, then cooks. One screen for every service: `appointmentCode`
-// in the params means a doctor, `foodOrderCode` a kitchen.
+// in the params means a doctor, `foodOrderCode` a kitchen, `surplusCode` a
+// kitchen's Bachat Box (it checks, then hands the box over).
 
 import React, { useEffect } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -31,15 +32,17 @@ import {
   submitAppointmentProofAsync,
   submitFoodProofAsync,
   submitPaymentProofAsync,
+  submitSurplusProofAsync,
   touchTransactionId,
 } from './paymentProofSlice';
 import { loadFoodOrderAsync, selectFoodOrderEntry } from '../../../Food/Customer/FoodOrder/foodOrderSlice';
 import { selectAppointmentEntry } from '../../../Health/Patient/AppointmentDetail/appointmentDetailSlice';
+import { loadReservationAsync, selectReservation } from '../../../Food/Customer/FoodSurplusReserved/surplusReservedSlice';
 
 type Props = NativeStackScreenProps<OrdersStackParamList, 'PaymentProof'>;
 
 const PaymentProofScreen: React.FC<Props> = props => (
-  <ServiceScope service={'appointmentCode' in props.route.params ? 'healthcare' : 'foodOrderCode' in props.route.params ? 'food' : 'shopping'}>
+  <ServiceScope service={'appointmentCode' in props.route.params ? 'healthcare' : 'foodOrderCode' in props.route.params || 'surplusCode' in props.route.params ? 'food' : 'shopping'}>
     <PaymentProofContent {...props} />
   </ServiceScope>
 );
@@ -48,6 +51,7 @@ const PaymentProofContent: React.FC<Props> = ({ route }) => {
   const p = route.params;
   const appointmentCode = 'appointmentCode' in p ? p.appointmentCode : null;
   const foodOrderCode = 'foodOrderCode' in p ? p.foodOrderCode : null;
+  const surplusCode = 'surplusCode' in p ? p.surplusCode : null;
   const orderId = 'orderId' in p ? p.orderId : null;
   const groupCode = 'groupCode' in p ? p.groupCode : '';
   const { back } = useBack(
@@ -55,18 +59,21 @@ const PaymentProofContent: React.FC<Props> = ({ route }) => {
       ? { name: 'AppointmentDetail', params: { code: appointmentCode } }
       : foodOrderCode
         ? { name: 'FoodOrder', params: { code: foodOrderCode } }
-        : { name: 'OrderDetail', params: { groupCode } },
+        : surplusCode
+          ? { name: 'FoodSurplusReserved', params: { code: surplusCode } }
+          : { name: 'OrderDetail', params: { groupCode } },
   );
   const dispatch = useAppDispatch();
   const s = useAppSelector(selectPaymentProof);
   const order = useAppSelector(st => selectOrderGroup(st, groupCode)).group?.orders.find(o => o.id === orderId) ?? null;
   const appointment = useAppSelector(st => (appointmentCode ? selectAppointmentEntry(st, appointmentCode).appointment : null));
   const foodOrder = useAppSelector(st => (foodOrderCode ? selectFoodOrderEntry(st, foodOrderCode).order : null));
-  const payee = appointmentCode ? 'the doctor' : foodOrderCode ? 'the kitchen' : 'the store';
+  const reservation = useAppSelector(st => (surplusCode ? selectReservation(st, surplusCode) : null));
+  const payee = appointmentCode ? 'the doctor' : foodOrderCode || surplusCode ? 'the kitchen' : 'the store';
 
   useEffect(() => {
-    dispatch(startPaymentProof(appointmentCode ?? foodOrderCode ?? orderId ?? ''));
-  }, [dispatch, orderId, appointmentCode, foodOrderCode]);
+    dispatch(startPaymentProof(appointmentCode ?? foodOrderCode ?? surplusCode ?? orderId ?? ''));
+  }, [dispatch, orderId, appointmentCode, foodOrderCode, surplusCode]);
 
   const error = validatePaymentProof(s.transactionId).transactionId;
   const busy = uploading(s.photos);
@@ -87,9 +94,17 @@ const PaymentProofContent: React.FC<Props> = ({ route }) => {
       ? await dispatch(submitAppointmentProofAsync({ code: appointmentCode, transactionId: s.transactionId, imageUrl }))
       : foodOrderCode
         ? await dispatch(submitFoodProofAsync({ code: foodOrderCode, transactionId: s.transactionId, imageUrl }))
-        : await dispatch(submitPaymentProofAsync({ orderId: orderId ?? '', transactionId: s.transactionId, imageUrl }));
-    if (submitPaymentProofAsync.fulfilled.match(r) || submitAppointmentProofAsync.fulfilled.match(r) || submitFoodProofAsync.fulfilled.match(r)) {
+        : surplusCode
+          ? await dispatch(submitSurplusProofAsync({ code: surplusCode, transactionId: s.transactionId, imageUrl }))
+          : await dispatch(submitPaymentProofAsync({ orderId: orderId ?? '', transactionId: s.transactionId, imageUrl }));
+    if (
+      submitPaymentProofAsync.fulfilled.match(r) ||
+      submitAppointmentProofAsync.fulfilled.match(r) ||
+      submitFoodProofAsync.fulfilled.match(r) ||
+      submitSurplusProofAsync.fulfilled.match(r)
+    ) {
       if (foodOrderCode) void dispatch(loadFoodOrderAsync(foodOrderCode));
+      if (surplusCode) void dispatch(loadReservationAsync(surplusCode));
       haptics.success();
       Toast.show({ type: 'success', text1: `Sent to ${payee}`, text2: 'They’ll confirm once they see it in their account.' });
       back();
@@ -100,7 +115,9 @@ const PaymentProofContent: React.FC<Props> = ({ route }) => {
     ? `${appointment.doctor.name} · ${formatPKR(appointment.payment.amount)}`
     : foodOrder
       ? `${foodOrder.vendor.name} · ${formatPKR(foodOrder.totals.total)}`
-      : order
+      : reservation
+        ? `${reservation.vendor.name} · ${formatPKR(reservation.total)}`
+        : order
         ? `${order.store.name} · ${formatPKR(order.total)}`
         : undefined;
   const rejected = appointment
@@ -109,7 +126,9 @@ const PaymentProofContent: React.FC<Props> = ({ route }) => {
       : null
     : foodOrder
       ? foodOrder.payment.rejectedReason
-      : order?.paymentStatus === 'proof_rejected'
+      : reservation
+        ? reservation.payment.rejectedReason
+        : order?.paymentStatus === 'proof_rejected'
         ? order.paymentProof?.rejectionReason
         : null;
 
@@ -141,6 +160,8 @@ const PaymentProofContent: React.FC<Props> = ({ route }) => {
           ? 'MetroMatrix never holds your money: you paid the doctor directly. They check their own account, then confirm your appointment.'
           : foodOrderCode
             ? 'MetroMatrix never holds your money: you paid the kitchen directly. They check their own account, then start cooking.'
+            : surplusCode
+              ? 'MetroMatrix never holds your money: you paid the kitchen directly. They check their own account, then hand your box over.'
             : 'MetroMatrix never holds your money: you paid the store directly. They check their own account, then ship.'}
       </AppText>
     </ScreenShell>

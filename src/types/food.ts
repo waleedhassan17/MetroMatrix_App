@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════
 
 import type { SubType } from './auth';
+import type { PauseReason } from './kitchen';
 
 export type KitchenKind = Extract<SubType, 'restaurant' | 'home_kitchen' | 'cloud_kitchen'>;
 
@@ -74,6 +75,9 @@ export interface VendorBranch {
   foodSafetyCheckedAt: string | null;
   isPaused: boolean;
   pauseMessage: string | null;
+  /** Why the kitchen paused (only the kitchen sees it) and when the pause lifts by itself. TODO(API_KITCHEN): an addition. */
+  pauseReason: PauseReason | null;
+  resumeAt: string | null;
   busy: VendorBusy | null;
   openState: OpenState;
 }

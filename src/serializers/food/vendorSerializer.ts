@@ -25,9 +25,12 @@ import type {
   VendorSetupItem,
 } from '../../types/food';
 import type { PaymentAccount, PaymentAccountKind } from '../../types/payments';
+import type { PauseReason } from '../../types/kitchen';
 import { arr, bool, isObject, num, oneOf, str, strOrNull } from '../serializerUtils';
 
 export const KITCHEN_KINDS: readonly KitchenKind[] = ['restaurant', 'home_kitchen', 'cloud_kitchen'];
+/** TODO(API_KITCHEN): the pause body's `reason` (docs/API_KITCHEN_ASSUMED.md, additions). */
+const PAUSE_REASONS: readonly PauseReason[] = ['gas', 'electricity', 'weather', 'staff', 'stock', 'other'];
 const ACCOUNT_KINDS: readonly PaymentAccountKind[] = ['raast', 'jazzcash', 'easypaisa', 'bank'];
 
 const compact = <T>(xs: (T | null)[]): T[] => xs.filter((x): x is T => x !== null);
@@ -100,6 +103,8 @@ const branchSerializer = (raw: unknown): VendorBranch => {
     foodSafetyCheckedAt: isoOrNull(r.foodSafetyCheckedAt),
     isPaused: bool(r.isPaused),
     pauseMessage: strOrNull(r.pauseMessage),
+    pauseReason: r.pauseReason ? oneOf(r.pauseReason, PAUSE_REASONS, 'other') : null,
+    resumeAt: isoOrNull(r.resumeAt),
     busy: busySerializer(r.busy),
     openState: openStateSerializer(r.openState),
   };
