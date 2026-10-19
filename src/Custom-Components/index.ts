@@ -40,3 +40,4 @@ export * from './PhotoStrip';
 export * from './TextAction';
 export * from './shopping';
 export * from './health';
+export * from './kitchen';

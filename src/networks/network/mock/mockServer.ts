@@ -26,6 +26,7 @@ import { registerShopRoutes } from './shop/shopRoutes';
 import { registerHealthRoutes } from './health/healthRoutes';
 import { registerFoodRoutes } from './food/foodRoutes';
 import { foodSessionOf } from './food/foodLogic';
+import { registerKitchen } from './kitchen/kitchenIndex';
 
 // ─── Plumbing ────────────────────────────────────────
 // One error type for every route; the shop routes throw the same class.
@@ -497,8 +498,20 @@ const UPLOAD_PURPOSES = [
   'medical_note',
   'food_branding',
   'menu_item',
+  // Kitchen Intelligence (docs/API_KITCHEN_ASSUMED.md §1.4, docs/VOICE_ASSUMED.md §2).
+  'voice_clip',
+  'kitchen_receipt',
+  'food_packing',
+  'food_surplus',
+  'food_story',
+  'hygiene_evidence',
 ];
 const PRIVATE_PURPOSES = ['health_record', 'medical_note'];
+/** What each purpose may upload (images and PDFs unless named). */
+const PURPOSE_FORMATS: Record<string, string> = {
+  voice_clip: 'm4a,aac,mp4,webm,ogg,wav,mp3',
+  food_story: 'jpg,jpeg,png,webp,heic,mp4,mov',
+};
 
 route('POST', '/media/sign-upload', ctx => {
   const user = requireUser(ctx);
@@ -513,7 +526,7 @@ route('POST', '/media/sign-upload', ctx => {
     folder,
     publicIdPrefix: `${folder}/`,
     uploadUrl: 'mock://upload',
-    allowedFormats: 'jpg,jpeg,png,webp,heic,pdf',
+    allowedFormats: PURPOSE_FORMATS[purpose] ?? 'jpg,jpeg,png,webp,heic,pdf',
     maxBytes: 15_000_000,
     ...(PRIVATE_PURPOSES.includes(purpose) ? { type: 'authenticated' } : {}),
   };
@@ -743,7 +756,7 @@ registerHealthRoutes({
 });
 
 // ── Food Court (vendors, riders, admin) — see ./food/ ──
-registerFoodRoutes({
+const foodKit = registerFoodRoutes({
   route,
   requireUser,
   optionalUser: ctx => {
@@ -754,6 +767,17 @@ registerFoodRoutes({
   requirePartnerBusiness: ctx => requirePartnerBusiness(ctx),
   requireAdmin,
   revokeSessions,
+});
+
+// ── Kitchen Intelligence (assumed contract, Chunk 5) — see ./kitchen/ ──
+registerKitchen(foodKit, {
+  requireUser,
+  optionalUser: ctx => {
+    const session = ctx.token ? ctx.db.access[ctx.token] : undefined;
+    if (!session || session.expiresAt < ctx.now) return null;
+    return ctx.db.users.find(u => u.id === session.userId) ?? null;
+  },
+  requireAdmin,
 });
 
 // ─── The adapter ─────────────────────────────────────

@@ -19,6 +19,7 @@ import { useStyles, useTheme, type Theme } from '../../../theme';
 import { useCalmMotion } from '../../../hooks/useCalmMotion';
 import { directionsUrl } from '../../../utils/maps';
 import {
+  CELL_MAX_OPACITY,
   CentrePin,
   FIT_PADDING,
   PinView,
@@ -27,10 +28,32 @@ import {
   boundsOf,
   useGlidingPoint,
   type FoodMapProps,
+  type MapCell,
   type MapPoint,
 } from './foodMapShared';
 
-export type { FoodMapProps, MapPin, MapPoint } from './foodMapShared';
+export type { FoodMapProps, MapCell, MapPin, MapPoint } from './foodMapShared';
+
+/** The demand map's cells as GeoJSON boxes. */
+const cellsGeoJson = (cells: MapCell[]) => ({
+  type: 'FeatureCollection' as const,
+  features: cells.map(c => ({
+    type: 'Feature' as const,
+    properties: { id: c.id, strength: c.strength, outlined: c.outlined },
+    geometry: {
+      type: 'Polygon' as const,
+      coordinates: [
+        [
+          [c.sw.lng, c.sw.lat],
+          [c.ne.lng, c.sw.lat],
+          [c.ne.lng, c.ne.lat],
+          [c.sw.lng, c.ne.lat],
+          [c.sw.lng, c.sw.lat],
+        ],
+      ],
+    },
+  })),
+});
 
 type Projected = Record<string, { x: number; y: number }>;
 
@@ -64,9 +87,10 @@ const makeStyles = ({ radius, colors, space, size }: Theme) =>
     lift: { marginBottom: size.mapCentrePin },
   });
 
-export const FoodMap: React.FC<FoodMapProps> = ({ pins, rider, height, picker, interactive = true, accessibilityLabel }) => {
+export const FoodMap: React.FC<FoodMapProps> = ({ pins, cells, view, rider, height, picker, interactive = true, accessibilityLabel }) => {
   const styles = useStyles(makeStyles);
-  const { size } = useTheme();
+  const { size, service } = useTheme();
+  const [loaded, setLoaded] = useState(false);
   const calm = useCalmMotion();
   const host = useRef<View>(null);
   const map = useRef<maplibregl.Map | null>(null);
@@ -92,12 +116,12 @@ export const FoodMap: React.FC<FoodMapProps> = ({ pins, rider, height, picker, i
   useEffect(() => {
     const el = host.current as unknown as HTMLElement | null;
     if (!el) return;
-    const centre: MapPoint = picker?.initial ?? pins[0]?.at ?? rider ?? { lat: 31.5204, lng: 74.3587 };
+    const centre: MapPoint = picker?.initial ?? view?.center ?? pins[0]?.at ?? rider ?? { lat: 31.5204, lng: 74.3587 };
     const m = new maplibregl.Map({
       container: el,
       style: WEB_MAP_STYLE,
       center: [centre.lng, centre.lat],
-      zoom: POINT_ZOOM,
+      zoom: view?.zoom ?? POINT_ZOOM,
       interactive,
       attributionControl: { compact: true },
       dragRotate: false,
@@ -109,6 +133,7 @@ export const FoodMap: React.FC<FoodMapProps> = ({ pins, rider, height, picker, i
       englishLabels(m);
       collapseAttribution(el);
       reproject();
+      setLoaded(true);
     });
     m.on('error', e => {
       // Only a style that never loads means no map; a missing tile is not fatal.
@@ -146,6 +171,22 @@ export const FoodMap: React.FC<FoodMapProps> = ({ pins, rider, height, picker, i
   }, [pinKey, !!rider]);
 
   useEffect(reproject, [shownRider?.lat, shownRider?.lng]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The demand map's cells: one GeoJSON source, a fill by strength and an outline where marked.
+  const cellKey = (cells ?? []).map(c => `${c.id}:${c.strength}:${c.outlined}`).join('|');
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !loaded) return;
+    const data = cellsGeoJson(cells ?? []);
+    const source = m.getSource('cells') as maplibregl.GeoJSONSource | undefined;
+    if (source) source.setData(data);
+    else {
+      m.addSource('cells', { type: 'geojson', data });
+      m.addLayer({ id: 'cells-fill', type: 'fill', source: 'cells', paint: { 'fill-color': service.accent, 'fill-opacity': ['*', ['get', 'strength'], CELL_MAX_OPACITY] } });
+      m.addLayer({ id: 'cells-line', type: 'line', source: 'cells', filter: ['==', ['get', 'outlined'], true], paint: { 'line-color': service.accentDeep, 'line-width': size.focusBorder } });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cellKey, loaded]);
 
   if (failed) {
     const target = pins.find(p => p.kind === 'drop') ?? pins[0];

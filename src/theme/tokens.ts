@@ -345,6 +345,23 @@ export const size = {
   spotlightCard: 272,
   /** The white ring round a portrait on a coloured card. */
   portraitRing: 2,
+  // ── Kitchen Intelligence ──
+  /** The mic: the round button (and its compact header size), its progress ring's stroke. */
+  voiceButton: 64,
+  voiceButtonSmall: 44,
+  voiceRing: 3,
+  /** A stock row's level bar, and a forecast's range bar. */
+  stockBar: 6,
+  forecastBar: 14,
+  /** Charts: the menu quadrant (and its dots), the hour curve, the demand map. */
+  quadrant: 260,
+  quadrantDot: 12,
+  hourCurve: 140,
+  heatmap: 320,
+  /** Rail cards: a Bachat Box, a tiffin plan, a recipe idea. */
+  surplusCard: 264,
+  tiffinCard: 280,
+  recipeCard: 288,
 } as const;
 
 export const opacity = {

@@ -14,6 +14,7 @@ import type { MockDb } from '../mockDb';
 import { dateInZone, zoneOffsetMinutes } from '../../../../utils/healthTime';
 import { isoNow, openState, overrideOf } from './foodLogic';
 import type { MockFoodVendor, MockMenuItem } from './foodTypes';
+import { foodHooks } from './foodHooks';
 
 export const PICKUP_REACH_KM = 25;
 export const RIDE_KMH = 22;
@@ -118,6 +119,7 @@ export const cardOf = (db: MockDb, v: MockFoodVendor, q: Quote, deal: Deal | nul
   fulfilment: { delivery: v.acceptsDelivery, pickup: v.acceptsPickup },
   preorderOnly: v.preorderOnly,
   openState: { open: q.open.open, paused: q.open.paused, label: q.open.label, opensAt: q.open.opensAt },
+  ...foodHooks.cardExtras(db, v, now),
 });
 
 export type Card = ReturnType<typeof cardOf>;
@@ -209,7 +211,7 @@ export const unavailableReason = (db: MockDb, v: MockFoodVendor, i: MockMenuItem
   if (!i.days.includes(weekday)) return 'not_today';
   if (!inWindow(c.availableFrom, c.availableTo, localMinutes(at, v.timezone))) return 'outside_hours';
   if (o.remainingToday !== null && o.remainingToday <= 0) return 'sold_out';
-  return null;
+  return foodHooks.itemBlocked(db, v, i, now);
 };
 
 export const fromPrice = (i: Pick<MockMenuItem, 'basePrice' | 'variants'>) => (i.variants.length ? Math.min(...i.variants.map(v => v.price)) : i.basePrice);
@@ -235,6 +237,7 @@ const dishCard = (db: MockDb, v: MockFoodVendor, i: MockMenuItem, now: number) =
     remainingToday: remaining,
     remainingLabel: remaining !== null && remaining > 0 && remaining <= LOW_PORTIONS ? `${remaining} left today` : null,
     sold30d: i.sold30d,
+    ...foodHooks.itemExtras(db, v, i, now),
   };
 };
 
@@ -306,5 +309,6 @@ export const itemSheet = (db: MockDb, v: MockFoodVendor, i: MockMenuItem, now: n
           .filter(o => o.isActive)
           .map(o => ({ id: o.id, name: o.name, priceDelta: o.priceDelta, isDefault: o.isDefault, available: o.available })),
       })),
+    ...foodHooks.itemExtras(db, v, i, now),
   };
 };

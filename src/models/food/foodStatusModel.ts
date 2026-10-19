@@ -233,6 +233,8 @@ export const cardOfOrder = (
     items: { name: string; quantity: number }[];
     customer: { name: string };
     handedToExternal: boolean;
+    packedPhotoUrl?: string | null;
+    origin?: { kind: 'app' | 'link' | 'qr' | 'tiffin' | 'catering'; ref: string | null };
   },
   prev: { riderId: string | null } | undefined,
 ) => ({
@@ -252,6 +254,8 @@ export const cardOfOrder = (
   customerName: o.customer.name,
   riderId: prev?.riderId ?? null,
   handedToExternal: o.handedToExternal,
+  packedPhotoUrl: o.packedPhotoUrl ?? null,
+  origin: o.origin ?? { kind: 'app' as const, ref: null },
 });
 
 /** Why a kitchen cancels an order it already accepted (said to the customer). */

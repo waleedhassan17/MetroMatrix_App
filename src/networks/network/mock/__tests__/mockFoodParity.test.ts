@@ -16,6 +16,7 @@ import { api } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import { SEED_PASSWORD } from '../mockConfig';
 import { getDb, resetMockDb } from '../mockDb';
+import { isAddition, shippedAdditions } from '../kitchen/foodAdditions';
 
 type Body = { success: boolean; data?: unknown; error?: { code: string; details?: unknown } };
 type Captured = Record<string, { status: number; body: Body }>;
@@ -209,7 +210,9 @@ const replay = async ({ label, real, strict }: (typeof RUNS)[number]) => {
 
 it('answers every captured vendor, rider, menu and discovery request with the real keys', async () => {
   const found = [...(await replay(RUNS[0])), ...(await replay(RUNS[1]))];
-  const unexpected = found.filter(x => !KNOWN[x.f]).map(x => `${x.label} ${x.f}`);
+  // Keys the assumed kitchen API adds (../kitchen/foodAdditions) are compared once the backend ships them.
+  const unexpected = found.filter(x => !KNOWN[x.f] && !isAddition(x.f)).map(x => `${x.label} ${x.f}`);
+  expect(shippedAdditions(RUNS.map(r => r.real))).toEqual([]);
   const stale = Object.keys(KNOWN).filter(k => !found.some(x => x.f === k));
   const uncovered = CASES.filter(c => !RUNS.some(run => run.real[c.fixture])).map(c => c.fixture);
   expect({ unexpected, stale, uncovered }).toEqual({ unexpected: [], stale: [], uncovered: [] });

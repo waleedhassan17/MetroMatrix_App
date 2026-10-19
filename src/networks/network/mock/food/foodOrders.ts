@@ -22,6 +22,7 @@ import type {
   MockMenuItem,
   MockPromotion,
 } from './foodTypes';
+import { foodHooks } from './foodHooks';
 
 export const TRANSFER_WINDOW_MINUTES = 10;
 /** A scheduled order is at least this far ahead (or prep time, if longer), at most a week. */
@@ -1018,6 +1019,7 @@ export const move = (
   const from = o.status;
   const allowed = allowedMoves(o, actor);
   if (!allowed.includes(to)) throw invalidTransition(from, to, allowed, opts.message);
+  foodHooks.beforeMove(db, o, to, actor, now);
   Object.assign(o, opts.patch ?? {});
   o.status = to;
   const stamp = STAMP[to];
@@ -1058,6 +1060,7 @@ export const move = (
     if (pay) movePayment(o, pay, actor, now);
     if (o.riderId) releaseRider(db, o.riderId);
   }
+  foodHooks.afterMove(db, o, from, to, actor, now);
 };
 
 /** The API's minute jobs, run lazily: declining unanswered orders, cancelling unpaid transfers. Returns the orders it moved. */
@@ -1214,6 +1217,7 @@ export const orderView = (
     canCancel: viewer === 'customer' && o.status === 'placed',
     canReview: viewer === 'customer' && canReview,
     canReorder: viewer === 'customer' && ended,
+    ...foodHooks.orderExtras(db, o, viewer),
   };
 };
 
@@ -1273,6 +1277,7 @@ export const boardView = (db: MockDb, o: MockFoodOrder) => ({
   customerName: customerOf(db, o).name,
   riderId: o.riderId,
   handedToExternal: o.handedToExternal,
+  ...foodHooks.boardExtras(db, o),
 });
 
 export const VENDOR_BUCKETS: Record<string, Status[]> = {
@@ -1507,5 +1512,6 @@ export const placeOrder = (
   };
   db.food.orders.push(order);
   db.food.carts = db.food.carts.filter(c => c.userId !== user.id);
+  foodHooks.onPlaced(db, order, input, now);
   return order;
 };

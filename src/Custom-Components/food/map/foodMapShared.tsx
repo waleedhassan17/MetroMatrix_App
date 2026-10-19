@@ -36,9 +36,23 @@ export interface MapPin {
   label: string;
 }
 
+/** A shaded box on the map (the demand map's grid cells): how strongly to fill it, and whether to outline it. */
+export interface MapCell {
+  id: string;
+  sw: MapPoint;
+  ne: MapPoint;
+  /** 0–1. */
+  strength: number;
+  outlined: boolean;
+}
+
 export interface FoodMapProps {
   /** Fixed pins: the kitchen, the drop-off. */
   pins: MapPin[];
+  /** Shaded boxes over the map (the demand map). */
+  cells?: MapCell[];
+  /** Where to look when there is no pin to fit (an area overview). */
+  view?: { center: MapPoint; zoom: number };
   /** The moving rider; null hides the marker. */
   rider?: (MapPoint & { heading?: number | null }) | null;
   height: number;
@@ -48,6 +62,15 @@ export interface FoodMapProps {
   interactive?: boolean;
   accessibilityLabel: string;
 }
+
+/** A cell's fill: the scope's accent at up to this opacity (the strongest cells). */
+export const CELL_MAX_OPACITY = 0.55;
+
+/** "#RRGGBB" + an opacity → "#RRGGBBAA" (react-native-maps fills take alpha in the colour). */
+export const withAlpha = (hex: string, opacity: number) =>
+  `${hex.slice(0, 7)}${Math.round(Math.max(0, Math.min(1, opacity)) * 255)
+    .toString(16)
+    .padStart(2, '0')}`;
 
 /** OpenFreeMap's light style: free, no key (the FYP's tile source). */
 export const WEB_MAP_STYLE = 'https://tiles.openfreemap.org/styles/positron';

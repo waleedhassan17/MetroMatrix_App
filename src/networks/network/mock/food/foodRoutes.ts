@@ -59,6 +59,7 @@ import { canReview, registerReviewRoutes, reviewSummary } from './foodReviewRout
 import { liveBanners, registerFoodAdminRoutes } from './foodAdminRoutes';
 import { dealsFor, settleFoodOrders } from './foodOrders';
 import { beginEmits, dropEmits, emitOrder, flushEmits, registerFoodRealtime } from './foodRealtime';
+import { foodHooks } from './foodHooks';
 import { isValidPkMobile, isValidPkPhone, normalizePkPhone } from '../../../../utils/phone';
 
 export interface FoodKit extends ShopKit {
@@ -81,9 +82,11 @@ export function registerFoodRoutes(kit: FoodKit) {
   // dummy database as it was.
   // The API's minute jobs (declining unanswered orders, cancelling unpaid
   // transfers) run before every Food request instead, and say so live.
+  // The kitchen's own jobs (../kitchen/, through foodHooks) run with them.
   const settle = (ctx: ShopCtx) => {
     beginEmits();
     for (const o of settleFoodOrders(ctx.db, ctx.now)) emitOrder(ctx.db, o, 'updated');
+    for (const o of foodHooks.settle(ctx.db, ctx.now)) emitOrder(ctx.db, o, 'updated');
     flushEmits();
   };
   // Live events go out only when the write succeeds (after the commit, as the API's).
@@ -100,6 +103,8 @@ export function registerFoodRoutes(kit: FoodKit) {
       }
       const food = JSON.stringify(ctx.db.food);
       const users = JSON.stringify(ctx.db.users);
+      // Kitchen rows change with Food writes (stock deducted on accept).
+      const kitchen = JSON.stringify(ctx.db.kitchen ?? null);
       try {
         const out = handler(ctx);
         flushEmits();
@@ -108,6 +113,7 @@ export function registerFoodRoutes(kit: FoodKit) {
         dropEmits();
         ctx.db.food = JSON.parse(food);
         ctx.db.users = JSON.parse(users);
+        ctx.db.kitchen = JSON.parse(kitchen);
         throw e;
       }
     });
@@ -235,6 +241,7 @@ export function registerFoodRoutes(kit: FoodKit) {
     if (message.length > 200) throw invalid('message', 'message must be at most 200 characters');
     v.isPaused = true;
     v.pauseMessage = message || null;
+    foodHooks.onPause(ctx.db, v, ctx.body, ctx.now);
     return profileWire(ctx.db, v, ctx.now);
   });
 
@@ -242,6 +249,7 @@ export function registerFoodRoutes(kit: FoodKit) {
     const v = myVendor(ctx);
     v.isPaused = false;
     v.pauseMessage = null;
+    foodHooks.onResume(ctx.db, v, ctx.now);
     return profileWire(ctx.db, v, ctx.now);
   });
 
@@ -604,4 +612,9 @@ export function registerFoodRoutes(kit: FoodKit) {
     v.foodSafetyCheckedAt = outcome === 'passed' ? isoNow(ctx.now) : null;
     return { branchId: v.branchId, outcome, foodSafetyCheckedAt: v.foodSafetyCheckedAt, setup: setupOf(v, ctx.db) };
   });
+
+  // The kitchen's routes (../kitchen/) use the same wrapper and guards.
+  return { route, rawRoute, myVendor, meRider };
 }
+
+export type FoodRouteKit = ReturnType<typeof registerFoodRoutes>;

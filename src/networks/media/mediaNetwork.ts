@@ -37,7 +37,14 @@ export type UploadPurpose =
   // Food (docs/API_FOOD.md §1: food_branding for a brand's logo and cover, menu_item for dish photos)
   | 'food_logo'
   | 'food_cover'
-  | 'menu_item';
+  | 'menu_item'
+  // Kitchen Intelligence (docs/API_KITCHEN_ASSUMED.md §1.4; TODO(API_KITCHEN))
+  | 'voice_clip'
+  | 'kitchen_receipt'
+  | 'food_packing'
+  | 'food_surplus'
+  | 'food_story'
+  | 'hygiene_evidence';
 
 /** The app's purposes → the API's (one store branding folder; doctors' note files are `medical_note`). */
 const API_PURPOSE: Record<UploadPurpose, string> = {
@@ -56,6 +63,12 @@ const API_PURPOSE: Record<UploadPurpose, string> = {
   food_logo: 'food_branding',
   food_cover: 'food_branding',
   menu_item: 'menu_item',
+  voice_clip: 'voice_clip',
+  kitchen_receipt: 'kitchen_receipt',
+  food_packing: 'food_packing',
+  food_surplus: 'food_surplus',
+  food_story: 'food_story',
+  hygiene_evidence: 'hygiene_evidence',
 };
 
 export const signUpload = async (purpose: UploadPurpose): Promise<SignedUpload> => {

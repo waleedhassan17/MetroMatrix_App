@@ -837,6 +837,15 @@ export interface FoodOrder {
   canCancel: boolean;
   canReview: boolean;
   canReorder: boolean;
+  /** Kitchen Intelligence's additions (docs/API_KITCHEN_ASSUMED.md §5; TODO(API_KITCHEN)). */
+  packedPhotoUrl: string | null;
+  origin: FoodOrderOrigin;
+}
+
+/** Where an order came from: the app, the kitchen's own link or QR, a tiffin plan, a catering event. */
+export interface FoodOrderOrigin {
+  kind: 'app' | 'link' | 'qr' | 'tiffin' | 'catering';
+  ref: string | null;
 }
 
 /** The live view of an order on its way. */
@@ -918,6 +927,9 @@ export interface BoardCard {
   customerName: string | null;
   riderId: string | null;
   handedToExternal: boolean;
+  /** Kitchen Intelligence's additions (TODO(API_KITCHEN)). */
+  packedPhotoUrl: string | null;
+  origin: FoodOrderOrigin;
 }
 
 export type PromotionKind = 'percent_off_order' | 'percent_off_items' | 'flat_off' | 'free_delivery';

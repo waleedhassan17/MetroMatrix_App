@@ -17,6 +17,8 @@ import { HEALTH_SEED_USERS, migrateHealth, seedHealth } from './health/healthSee
 import type { MockHealth } from './health/healthTypes';
 import { FOOD_SEED_RIDERS, FOOD_SEED_USERS, seedFood } from './food/foodSeed';
 import type { MockFood } from './food/foodTypes';
+import { seedKitchen } from './kitchen/kitchenSeed';
+import type { MockKitchen } from './kitchen/kitchenTypes';
 
 export interface MockUser {
   id: string;
@@ -101,6 +103,8 @@ export interface MockDb {
   health: MockHealth;
   /** Food Court (vendors, riders …) — see ./food/. */
   food: MockFood;
+  /** Kitchen Intelligence (stock, recipes, forecasts, Bachat Box …) — see ./kitchen/. */
+  kitchen: MockKitchen;
 }
 
 export const newId = (prefix: string) =>
@@ -162,7 +166,7 @@ const seedBusiness = (
 });
 
 /** The accounts a tester can sign in with straight away (all: Metro2026). */
-export const seedDb = (): MockDb => ({
+export const seedDb = (): MockDb => withKitchen({
   users: [
     baseUser({ id: 'u_customer', email: 'customer@metromatrix.app', name: 'Ayesha Khan', role: 'customer' }),
     baseUser({
@@ -369,7 +373,14 @@ export const seedDb = (): MockDb => ({
   shop: seedShop(),
   health: seedHealth(),
   food: seedFood(),
+  kitchen: null as unknown as MockKitchen,
 });
+
+/** The kitchen's history is built from the Food seed's dishes. */
+function withKitchen(db: MockDb): MockDb {
+  db.kitchen = seedKitchen(db.food.items.map(i => ({ id: i.id, businessId: i.businessId, sold30d: i.sold30d, days: i.days })));
+  return db;
+}
 
 /**
  * Old installs saved a DB from before a feature existed. Fill in anything
@@ -388,6 +399,8 @@ const ensureCollections = (loaded: Partial<MockDb>): MockDb => {
   migrateHealth(out.health);
   if (!loaded.food) out.food = seed.food;
   else for (const k of Object.keys(seed.food) as (keyof MockFood)[]) if (out.food[k] === undefined) (out.food as any)[k] = seed.food[k];
+  if (!loaded.kitchen) out.kitchen = seed.kitchen;
+  else for (const k of Object.keys(seed.kitchen) as (keyof MockKitchen)[]) if (out.kitchen[k] === undefined) (out.kitchen as any)[k] = seed.kitchen[k];
   // Businesses saved before doctors could be listed: the seed's own doctors keep their state.
   for (const b of out.businesses) {
     const s = seed.businesses.find(x => x.id === b.id);

@@ -21,6 +21,7 @@ import {
   type Point,
 } from './foodDiscovery';
 import type { MockFoodVendor } from './foodTypes';
+import { foodHooks } from './foodHooks';
 
 const bool = (v: unknown) => v === 'true' || v === true;
 
@@ -135,6 +136,7 @@ export function registerDiscoveryRoutes(route: ShopKit['route'], optionalUser: S
       ratingSummary: hooks.ratingSummary(ctx.db, v),
       menu: menu.categories,
       popular: menu.popular,
+      ...foodHooks.pageExtras(ctx.db, v, ctx.now),
     };
   });
 
@@ -149,7 +151,8 @@ export function registerDiscoveryRoutes(route: ShopKit['route'], optionalUser: S
     const text = String(ctx.query.q ?? '').trim();
     if (!text) throw invalid('q', 'q should not be empty');
     const at = pointOf(ctx.query)!;
-    const list = candidates(ctx.db, at, { q: text }, ctx.now, hooks.dealsFor);
+    const list = candidates(ctx.db, at, { q: text }, ctx.now, hooks.dealsFor).filter(c => foodHooks.searchFilter(ctx.db, c.v, null, ctx.query));
+    foodHooks.onSearch(ctx.db, { text, cuisine: null, lat: at.lat, lng: at.lng, foundOpen: list.some(c => c.q.open.open) }, ctx.now);
     if (!list.length) return { vendors: [], dishes: [] };
     const needle = text.toLowerCase();
     const ordered = [...list].sort((a, b) => Number(b.q.open.open) - Number(a.q.open.open) || (a.q.distanceKm ?? 0) - (b.q.distanceKm ?? 0));
@@ -157,6 +160,7 @@ export function registerDiscoveryRoutes(route: ShopKit['route'], optionalUser: S
       ctx.db.food.items
         .filter(i => i.businessId === c.v.businessId && i.isActive && i.name.toLowerCase().includes(needle))
         .filter(i => ctx.db.food.categories.some(cat => cat.id === i.categoryId && cat.isActive))
+        .filter(i => foodHooks.searchFilter(ctx.db, c.v, i, ctx.query))
         .sort((a, b) => b.sold30d - a.sold30d || a.name.localeCompare(b.name));
     return {
       vendors: ordered.filter(c => !dishesOf(c).length || c.card.name.toLowerCase().includes(needle)).map(c => c.card),
@@ -166,7 +170,7 @@ export function registerDiscoveryRoutes(route: ShopKit['route'], optionalUser: S
           vendor: c.card,
           items: dishesOf(c)
             .slice(0, 5)
-            .map(i => ({ id: i.id, name: i.name, photoUrl: i.photoUrl, fromPrice: i.variants.length ? Math.min(...i.variants.map(x => x.price)) : i.basePrice, tags: [...i.tags] })),
+            .map(i => ({ id: i.id, name: i.name, photoUrl: i.photoUrl, fromPrice: i.variants.length ? Math.min(...i.variants.map(x => x.price)) : i.basePrice, tags: [...i.tags], ...foodHooks.itemExtras(ctx.db, c.v, i, ctx.now) })),
         })),
     };
   });

@@ -7,20 +7,22 @@
 
 import React, { useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
-import MapView, { Marker, type Region } from 'react-native-maps';
-import { useStyles, type Theme } from '../../../theme';
+import MapView, { Marker, Polygon, type Region } from 'react-native-maps';
+import { useStyles, useTheme, type Theme } from '../../../theme';
 import {
+  CELL_MAX_OPACITY,
   CentrePin,
   FIT_PADDING,
   PinView,
   POINT_ZOOM,
   boundsOf,
   useGlidingPoint,
+  withAlpha,
   type FoodMapProps,
   type MapPoint,
 } from './foodMapShared';
 
-export type { FoodMapProps, MapPin, MapPoint } from './foodMapShared';
+export type { FoodMapProps, MapCell, MapPin, MapPoint } from './foodMapShared';
 
 /** A latitude span that reads as street level (react-native-maps works in deltas, not zoom). */
 const deltaForZoom = (zoom: number) => 360 / 2 ** zoom;
@@ -31,14 +33,15 @@ const makeStyles = ({ radius, colors }: Theme) =>
     centre: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
   });
 
-export const FoodMap: React.FC<FoodMapProps> = ({ pins, rider, height, picker, interactive = true, accessibilityLabel }) => {
+export const FoodMap: React.FC<FoodMapProps> = ({ pins, cells, view, rider, height, picker, interactive = true, accessibilityLabel }) => {
   const styles = useStyles(makeStyles);
+  const { service, size } = useTheme();
   const map = useRef<MapView>(null);
   const shownRider = useGlidingPoint(rider ?? null);
 
   const initial: Region = useMemo(() => {
-    const centre: MapPoint = picker?.initial ?? pins[0]?.at ?? rider ?? { lat: 31.5204, lng: 74.3587 };
-    const d = deltaForZoom(POINT_ZOOM);
+    const centre: MapPoint = picker?.initial ?? view?.center ?? pins[0]?.at ?? rider ?? { lat: 31.5204, lng: 74.3587 };
+    const d = deltaForZoom(view?.zoom ?? POINT_ZOOM);
     return { latitude: centre.lat, longitude: centre.lng, latitudeDelta: d, longitudeDelta: d };
     // The first frame only; later changes fit or pan below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -72,6 +75,20 @@ export const FoodMap: React.FC<FoodMapProps> = ({ pins, rider, height, picker, i
         showsPointsOfInterest={false}
         onRegionChangeComplete={r => picker?.onCenterChange({ lat: r.latitude, lng: r.longitude })}
       >
+        {(cells ?? []).map(c => (
+          <Polygon
+            key={c.id}
+            coordinates={[
+              { latitude: c.sw.lat, longitude: c.sw.lng },
+              { latitude: c.sw.lat, longitude: c.ne.lng },
+              { latitude: c.ne.lat, longitude: c.ne.lng },
+              { latitude: c.ne.lat, longitude: c.sw.lng },
+            ]}
+            fillColor={withAlpha(service.accent, c.strength * CELL_MAX_OPACITY)}
+            strokeColor={c.outlined ? service.accentDeep : withAlpha(service.accent, 0)}
+            strokeWidth={c.outlined ? size.focusBorder : 0}
+          />
+        ))}
         {pins.map(p => (
           <Marker key={p.id} coordinate={{ latitude: p.at.lat, longitude: p.at.lng }} title={p.label} tracksViewChanges={false}>
             <PinView kind={p.kind} />

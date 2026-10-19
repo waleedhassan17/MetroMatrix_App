@@ -225,6 +225,33 @@ export const ROUTES = {
   VENDOR_REVIEWS: 'VendorReviews',
   VENDOR_INSIGHTS: 'VendorInsights',
 
+  // ── Food: the vendor's Kitchen (Kitchen Intelligence, navigations-maps/FoodVendor.ts) ──
+  KITCHEN_TAB: 'KitchenTab',
+  KITCHEN_STOCK: 'KitchenStock',
+  KITCHEN_STOCK_TAKE: 'KitchenStockTake',
+  KITCHEN_INGREDIENT: 'KitchenIngredient',
+  KITCHEN_INGREDIENT_FORM: 'KitchenIngredientForm',
+  KITCHEN_RECIPES: 'KitchenRecipes',
+  KITCHEN_RECIPE: 'KitchenRecipe',
+  KITCHEN_PURCHASES: 'KitchenPurchases',
+  KITCHEN_PURCHASE: 'KitchenPurchase',
+  KITCHEN_PURCHASE_FORM: 'KitchenPurchaseForm',
+  KITCHEN_SUPPLIERS: 'KitchenSuppliers',
+  KITCHEN_PRICE_WATCH: 'KitchenPriceWatch',
+  KITCHEN_FORECAST: 'KitchenForecast',
+  KITCHEN_WASTE: 'KitchenWaste',
+  KITCHEN_WASTE_FORM: 'KitchenWasteForm',
+  KITCHEN_BOX_FORM: 'KitchenBoxForm',
+  KITCHEN_BOX: 'KitchenBox',
+  KITCHEN_DONATIONS: 'KitchenDonations',
+  KITCHEN_SETTINGS: 'KitchenSettings',
+
+  // ── Food: Bachat Box for customers (navigations-maps/FoodCustomer.ts) ──
+  FOOD_SURPLUS_LIST: 'FoodSurplusList',
+  FOOD_SURPLUS: 'FoodSurplus',
+  FOOD_SURPLUS_RESERVED: 'FoodSurplusReserved',
+  FOOD_SURPLUS_RESERVATIONS: 'FoodSurplusReservations',
+
   // ── Food: the rider's app (navigations-maps/Rider.ts) ──
   RIDER_TABS: 'RiderTabs',
   DELIVERIES_TAB: 'DeliveriesTab',

@@ -6,16 +6,22 @@
 import { api } from '../../network/apiHelpers';
 import { foodCuisinesSerializer, vendorProfileSerializer } from '../../../serializers/food/vendorSerializer';
 import type { VendorProfileInput } from '../../../types/food';
-import { request } from '../../shopping/http';
+import type { PauseReason } from '../../../types/kitchen';
+import { clean, request } from '../../shopping/http';
 
 export const getVendorProfile = () => request(() => api.get('/food/vendor/profile'), vendorProfileSerializer);
 
 export const updateVendorProfile = (input: VendorProfileInput) =>
   request(() => api.patch('/food/vendor/profile', input), vendorProfileSerializer);
 
-/** Hidden from lists while paused; the vendor's own link shows the message. */
-export const pauseOrders = (message: string | null) =>
-  request(() => api.post('/food/vendor/pause', message ? { message } : {}), vendorProfileSerializer);
+/**
+ * Hidden from lists while paused; the vendor's own link shows the message.
+ * `reason` (never shown to customers) and `resumeAt` (the pause lifts by
+ * itself) are Kitchen Intelligence's additions (docs/API_KITCHEN_ASSUMED.md §5;
+ * TODO(API_KITCHEN)).
+ */
+export const pauseOrders = (message: string | null, more: { reason?: PauseReason | null; resumeAt?: string | null } = {}) =>
+  request(() => api.post('/food/vendor/pause', clean({ message, reason: more.reason, resumeAt: more.resumeAt })), vendorProfileSerializer);
 
 export const resumeOrders = () => request(() => api.post('/food/vendor/resume'), vendorProfileSerializer);
 

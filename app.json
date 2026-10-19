@@ -72,7 +72,7 @@
         "expo-image-picker",
         {
           "photosPermission": "MetroMatrix needs your photos to upload documents, health records and pictures.",
-          "cameraPermission": "MetroMatrix needs the camera to photograph documents and health records."
+          "cameraPermission": "MetroMatrix needs the camera to photograph documents, health records, receipts and packed orders."
         }
       ],
       [
@@ -93,15 +93,15 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "MetroMatrix uses the camera for video consultations with your doctor.",
-          "microphonePermission": "MetroMatrix uses the microphone for video consultations with your doctor.",
+          "cameraPermission": "MetroMatrix uses the camera for video consultations, receipts and packed orders.",
+          "microphonePermission": "MetroMatrix uses the microphone for video consultations and for voice entry, only while you hold the mic button.",
           "recordAudioAndroid": true
         }
       ],
       [
         "expo-audio",
         {
-          "microphonePermission": "MetroMatrix uses the microphone for video consultations with your doctor."
+          "microphonePermission": "MetroMatrix uses the microphone for video consultations and for voice entry, only while you hold the mic button."
         }
       ],
       [

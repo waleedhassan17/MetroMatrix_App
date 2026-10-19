@@ -8,6 +8,7 @@ import type { MockDb } from '../mockDb';
 import { LIVE_WINDOW_MS, planOf, activeRiders, isItemAvailable, isoNow, kitchenToday, menuItemCount, openState, overrideOf } from './foodLogic';
 import { formatSlot } from '../../../../utils/healthTime';
 import type { MockFoodVendor, MockMenuCategory, MockMenuItem, MockOptionGroup, MockPreorderSlot, MockRider, MockVendorAccount } from './foodTypes';
+import { foodHooks } from './foodHooks';
 
 export const cuisineWire = (c: MockDb['food']['cuisines'][number]) => ({ id: c.id, name: c.name, slug: c.slug, icon: c.icon });
 
@@ -48,6 +49,7 @@ export const profileWire = (db: MockDb, v: MockFoodVendor, now: number) => {
           }
         : null,
       openState: openState(v, now),
+      ...foodHooks.branchExtras(db, v, now),
     },
   };
 };

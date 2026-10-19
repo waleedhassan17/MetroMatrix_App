@@ -227,6 +227,14 @@ export const foodOrdersPageSerializer = (raw: unknown) => pageOf(raw, foodOrderS
 
 const TIMESTAMPS = ['acceptedAt', 'preparingAt', 'readyAt', 'pickedUpAt', 'deliveredAt', 'cancelledAt'] as const;
 
+const ORIGINS = ['app', 'link', 'qr', 'tiffin', 'catering'] as const;
+
+/** Kitchen Intelligence's additions to an order (absent from the released API: the app's defaults). TODO(API_KITCHEN). */
+const kitchenExtras = (raw: Record<string, unknown>): Pick<FoodOrder, 'packedPhotoUrl' | 'origin'> => {
+  const o = isObject(raw.origin) ? raw.origin : {};
+  return { packedPhotoUrl: strOrNull(raw.packedPhotoUrl), origin: { kind: oneOf(o.kind, ORIGINS, 'app'), ref: strOrNull(o.ref) } };
+};
+
 export const foodOrderSerializer = (raw: unknown): FoodOrder | null => {
   if (!isObject(raw) || !str(raw.code)) return null;
   const v = isObject(raw.vendor) ? raw.vendor : {};
@@ -318,6 +326,7 @@ export const foodOrderSerializer = (raw: unknown): FoodOrder | null => {
     canCancel: bool(raw.canCancel),
     canReview: bool(raw.canReview),
     canReorder: bool(raw.canReorder),
+    ...kitchenExtras(raw),
   };
 };
 
@@ -375,6 +384,7 @@ export const boardCardSerializer = (raw: unknown): BoardCard | null => {
     customerName: strOrNull(raw.customerName),
     riderId: strOrNull(raw.riderId),
     handedToExternal: bool(raw.handedToExternal),
+    ...kitchenExtras(raw),
   };
 };
 

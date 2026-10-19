@@ -21,6 +21,7 @@ import { realtimeSlice } from './realtimeSlice';
 
 // ── App-level slices ──
 import { appContainerSlice } from '../components/app-container/appContainerSlice';
+import { voiceSlice } from '../components/voice/voiceSlice';
 
 // ── Per-screen slices ──
 // (register each screen's slice here — see CLAUDE.md "How to add a screen")
@@ -191,6 +192,7 @@ const rootReducer = combineReducers({
   preferences: preferencesSlice.reducer,
   appContainer: appContainerSlice.reducer,
   realtime: realtimeSlice.reducer,
+  voice: voiceSlice.reducer,
   designGallery: designGallerySlice.reducer,
   roleSelection: roleSelectionSlice.reducer,
   providerSelection: providerSelectionSlice.reducer,

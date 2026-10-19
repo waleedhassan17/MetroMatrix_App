@@ -18,6 +18,7 @@ import { STATUS_LABEL, invalidTransition, move, vendorOrderView } from './foodOr
 import { distanceKm } from './foodDiscovery';
 import { emitOrder, rooms } from './foodRealtime';
 import type { MockFoodOrder, MockFoodVendor, MockRider } from './foodTypes';
+import { foodHooks } from './foodHooks';
 
 const MINUTE = 60_000;
 /** A position is live for two minutes (FinMatrix's presence rule). */
@@ -79,6 +80,7 @@ export const riderOrderView = (db: MockDb, o: MockFoodOrder) => {
     codCollected: o.codCollected,
     readyAt: o.readyAt,
     promisedAt: o.promisedAt,
+    ...foodHooks.riderExtras(db, o),
   };
 };
 

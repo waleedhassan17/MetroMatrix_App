@@ -9,6 +9,7 @@ import { createAppSlice } from './createAppSlice';
 import type { ServiceName } from '../theme/services';
 import { resetAllState } from './resetAllState';
 import type { FoodPoint } from '../types/food';
+import type { VoiceLanguage } from '../types/kitchen';
 
 /** Recent Shopping searches kept on the device. */
 export const MAX_RECENT_SEARCHES = 10;
@@ -25,7 +26,15 @@ export interface PreferencesSliceState {
   /** Food Court: where to deliver (a saved address or where the customer is). */
   foodPoint?: FoodPoint | null;
   recentFoodSearches?: string[];
+  /** Voice entry: the language last picked on the mic's chip. */
+  voiceLanguage?: VoiceLanguage;
+  /** The microphone was explained before the first recording on this device. */
+  micExplained?: boolean;
+  /** The kitchen board speaks new orders (this device's speaker). */
+  announce?: AnnounceLanguage;
 }
+
+export type AnnounceLanguage = 'off' | 'ur' | 'en';
 
 const initialState: PreferencesSliceState = {
   // Food first: the flagship service, and the first one onboarding shows.
@@ -83,6 +92,15 @@ export const preferencesSlice = createAppSlice({
     clearRecentFoodSearches: create.reducer(state => {
       state.recentFoodSearches = [];
     }),
+    setVoiceLanguage: create.reducer((state, action: PayloadAction<VoiceLanguage>) => {
+      state.voiceLanguage = action.payload;
+    }),
+    setMicExplained: create.reducer(state => {
+      state.micExplained = true;
+    }),
+    setAnnounce: create.reducer((state, action: PayloadAction<AnnounceLanguage>) => {
+      state.announce = action.payload;
+    }),
   }),
 
   // The device keeps its settings across accounts; a person's searches go with them.
@@ -103,6 +121,9 @@ export const preferencesSlice = createAppSlice({
     selectRecentHealthSearches: state => state.recentHealthSearches ?? [],
     selectFoodPoint: state => state.foodPoint ?? null,
     selectRecentFoodSearches: state => state.recentFoodSearches ?? [],
+    selectVoiceLanguage: state => state.voiceLanguage ?? 'auto',
+    selectMicExplained: state => !!state.micExplained,
+    selectAnnounce: state => state.announce ?? 'off',
   },
 });
 
@@ -118,6 +139,9 @@ export const {
   setFoodPoint,
   addRecentFoodSearch,
   clearRecentFoodSearches,
+  setVoiceLanguage,
+  setMicExplained,
+  setAnnounce,
 } = preferencesSlice.actions;
 
 export const {
@@ -127,4 +151,7 @@ export const {
   selectRecentHealthSearches,
   selectFoodPoint,
   selectRecentFoodSearches,
+  selectVoiceLanguage,
+  selectMicExplained,
+  selectAnnounce,
 } = preferencesSlice.selectors;
