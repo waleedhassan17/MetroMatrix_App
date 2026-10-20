@@ -161,6 +161,14 @@ const linkingFor = (customer: boolean): LinkingOptions<ReactNavigation.RootParam
       GrowthMenuInsights: 'vendor/menu-insights',
       GrowthExperiment: 'vendor/menu-insights/tests/:id',
       GrowthStory: 'vendor/story',
+      KitchenAssistant: 'vendor/assistant',
+      KitchenAiDescriptions: 'vendor/assistant/descriptions',
+      KitchenAiSpecials: 'vendor/assistant/specials',
+      KitchenAiCombos: 'vendor/assistant/combos',
+      KitchenAiPhotoCheck: 'vendor/assistant/photo',
+      KitchenReviewInsights: 'vendor/reviews/themes',
+      KitchenReviewTheme: 'vendor/reviews/themes/:theme',
+      KitchenNutrition: 'vendor/nutrition',
       // The rider's app: metromatrix://rider/deliveries
       RiderTabs: {
         screens: { DeliveriesTab: 'rider/deliveries', CashTab: 'rider/cash', RiderProfileTab: 'rider/profile' },

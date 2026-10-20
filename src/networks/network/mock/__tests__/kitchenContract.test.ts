@@ -102,6 +102,11 @@ const run = async () => {
   await call('adminQuota', 'put', '/admin/kitchen/ai/quotas/b_resto', { limit: 1 });
   await as('restaurant@metromatrix.app');
   await call('quotaReached', 'post', '/food/vendor/ai/receipt-scan', { imageUrl: 'https://res.cloudinary.com/demo/receipt.jpg' });
+  // Back to the plan's limit for the rest of the run.
+  await clearTokens();
+  const o2 = await authSignin({ email: 'admin@metromatrix.app', password: STAFF_PASSWORD, portal: 'admin' });
+  if (o2.kind === 'totp') await authAdminTotp(o2.challenge.challengeToken, { code: MOCK.TOTP_CODE });
+  await api.put('/admin/kitchen/ai/quotas/b_resto', { limit: null });
 
   // ── Tiffin (5B): Thursday 15 Oct, 3 PM in Lahore ──
   jest.setSystemTime(T0);
@@ -222,6 +227,18 @@ const run = async () => {
   await as('restaurant@metromatrix.app');
   await call('experimentDone', 'get', `/food/vendor/experiments/${ex.id}`);
   await call('experimentKeep', 'post', `/food/vendor/experiments/${ex.id}/keep`);
+  // ── The assistant (5C): drafts, review themes, nutrition ──
+  await as('restaurant@metromatrix.app');
+  await call('descriptions', 'post', '/food/vendor/ai/descriptions', { itemIds: ['mi_chicken_biryani', 'mi_naan'] });
+  await call('saveUrdu', 'patch', '/food/vendor/menu/items/mi_naan', { description: 'Fresh naan from the tandoor.', descriptionUr: 'تنور سے تازہ نان۔' });
+  await call('specials', 'post', '/food/vendor/ai/specials', {});
+  await call('combos', 'post', '/food/vendor/ai/combos');
+  await call('photoCheck', 'post', '/food/vendor/ai/photo-check', { imageUrl: 'https://res.cloudinary.com/demo/kebab.jpg', itemId: 'mi_seekh' });
+  await call('reviewInsights', 'get', '/food/vendor/reviews/insights');
+  await call('reviewsByTheme', 'get', '/food/vendor/reviews?theme=late');
+  await call('nutrition', 'get', '/food/vendor/nutrition');
+  await call('nutritionHide', 'patch', '/food/vendor/nutrition/mi_kheer', { hidden: true });
+  await call('nutritionFoods', 'get', '/food/vendor/kitchen/nutrition-foods?q=plum');
   // In Ramadan: the kitchen turns it on, and it shows in "Iftar near you".
   jest.setSystemTime(new Date('2027-02-12T08:00:00Z').getTime());
   await as('restaurant@metromatrix.app');
@@ -269,6 +286,7 @@ it('documents every request the dummy kitchen API answers, with the same keys', 
   SETUP.push('tiffinPlans', 'tiffinPlanCreate', 'tiffinPlansPublic', 'tiffinSubscribe', 'tiffinSubscribers', 'tiffinProof', 'tiffinSubscriptions', 'tiffinPeriodConfirm');
   SETUP.push('cateringQuote', 'cateringQuote2', 'cateringProof', 'cateringRequests', 'cateringConfirm');
   SETUP.push('experiments', 'storyPut', 'hygieneItem', 'hygieneQueue', 'hygieneVerify', 'experimentKeep', 'tiffinNearby', 'story', 'iftar');
+  SETUP.push('saveUrdu', 'reviewsByTheme');
   const undocumented = Object.keys(out).filter(name => !(name in docs) && !SETUP.includes(name));
   expect({ mismatched, undocumented }).toEqual({ mismatched: [], undocumented: [] });
 });

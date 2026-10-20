@@ -23,6 +23,8 @@ import { closeItemSheet, markTried, pickOption, pickVariant, selectItemSheet, se
 
 const makeStyles = ({ colors, space, size, radius }: Theme) =>
   StyleSheet.create({
+    // Urdu reads right to left.
+    urdu: { writingDirection: 'rtl', textAlign: 'right' },
     photo: { width: '100%', aspectRatio: size.vendorPhotoAspect, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.surfaceSunk },
     fill: { ...StyleSheet.absoluteFillObject },
     head: { gap: space.s4 },
@@ -106,6 +108,11 @@ export const ItemSheetView: React.FC<ItemSheetViewProps> = ({ onAdd, adding, add
             {sheet.description ? (
               <AppText variant="body" tone="muted">
                 {sheet.description}
+              </AppText>
+            ) : null}
+            {sheet.descriptionUr ? (
+              <AppText variant="body" tone="muted" style={styles.urdu} accessibilityLanguage="ur">
+                {sheet.descriptionUr}
               </AppText>
             ) : null}
             {sheet.tags.length || sheet.serves ? (

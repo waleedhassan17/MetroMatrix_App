@@ -10,6 +10,7 @@ import type { ShopCtx, ShopKit } from '../shop/shopRoutes';
 import { EVERY_DAY, FoodError, ITEM_TAGS, assertWithinPlan, invalid, isoNow, kitchenToday, menuItemCount, nextId, notFound, overrideOf, text } from './foodLogic';
 import { availabilityWire, categoriesWire, categoryWire, groupWire, groupsWire, itemWire, itemsWire, slotsWire, todayWire, weeklyWire } from './foodWire';
 import type { MockFoodVendor, MockItemTag, MockMenuItem, MockOptionGroup } from './foodTypes';
+import { foodHooks } from './foodHooks';
 
 const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
 const isInt = (v: unknown) => typeof v === 'number' && Number.isInteger(v);
@@ -171,6 +172,7 @@ export function registerMenuRoutes(route: ShopKit['route'], myVendor: (ctx: Shop
     };
     writeVariants(ctx, item, variants);
     ctx.db.food.items.push(item);
+    foodHooks.onItemSaved(ctx.db, item, b);
     ctx.setStatus(201);
     return itemWire(item);
   });
@@ -202,6 +204,7 @@ export function registerMenuRoutes(route: ShopKit['route'], myVendor: (ctx: Shop
     if (b.serves !== undefined) i.serves = b.serves;
     if (b.days !== undefined) i.days = daysOf(b.days);
     if (typeof b.isActive === 'boolean') i.isActive = b.isActive;
+    foodHooks.onItemSaved(ctx.db, i, b);
     return itemWire(i);
   });
 

@@ -62,6 +62,14 @@ import TiffinSubscribersScreen from '../screens/Food/Growth/TiffinSubscribers/Ti
 import CateringScreen from '../screens/Food/Growth/Catering/CateringScreen';
 import CateringRequestScreen from '../screens/Food/Growth/CateringRequest/CateringRequestScreen';
 import QuoteBuilderScreen from '../screens/Food/Growth/QuoteBuilder/QuoteBuilderScreen';
+import AssistantScreen from '../screens/Food/Kitchen/Assistant/AssistantScreen';
+import AiDescriptionsScreen from '../screens/Food/Kitchen/AiDescriptions/AiDescriptionsScreen';
+import AiSpecialsScreen from '../screens/Food/Kitchen/AiSpecials/AiSpecialsScreen';
+import AiCombosScreen from '../screens/Food/Kitchen/AiCombos/AiCombosScreen';
+import AiPhotoCheckScreen from '../screens/Food/Kitchen/AiPhotoCheck/AiPhotoCheckScreen';
+import ReviewInsightsScreen from '../screens/Food/Kitchen/ReviewInsights/ReviewInsightsScreen';
+import ReviewThemeScreen from '../screens/Food/Kitchen/ReviewTheme/ReviewThemeScreen';
+import NutritionVendorScreen from '../screens/Food/Kitchen/NutritionVendor/NutritionVendorScreen';
 import RamadanModeScreen from '../screens/Food/Growth/RamadanMode/RamadanModeScreen';
 import StorefrontScreen from '../screens/Food/Growth/Storefront/StorefrontScreen';
 import DemandMapScreen from '../screens/Food/Growth/DemandMap/DemandMapScreen';
@@ -149,6 +157,15 @@ export const FOOD_VENDOR_STACK_ROUTES: IRoute[] = [
   { title: ROUTES.GROWTH_MENU_INSIGHTS, component: MenuInsightsScreen },
   { title: ROUTES.GROWTH_EXPERIMENT, component: MenuExperimentScreen },
   { title: ROUTES.GROWTH_STORY, component: StoryAndHygieneScreen },
+  // ── The assistant (5C) ──
+  { title: ROUTES.KITCHEN_ASSISTANT, component: AssistantScreen },
+  { title: ROUTES.KITCHEN_AI_DESCRIPTIONS, component: AiDescriptionsScreen },
+  { title: ROUTES.KITCHEN_AI_SPECIALS, component: AiSpecialsScreen },
+  { title: ROUTES.KITCHEN_AI_COMBOS, component: AiCombosScreen },
+  { title: ROUTES.KITCHEN_AI_PHOTO_CHECK, component: AiPhotoCheckScreen },
+  { title: ROUTES.KITCHEN_REVIEW_INSIGHTS, component: ReviewInsightsScreen },
+  { title: ROUTES.KITCHEN_REVIEW_THEME, component: ReviewThemeScreen },
+  { title: ROUTES.KITCHEN_NUTRITION, component: NutritionVendorScreen },
   { title: ROUTES.PAYMENT_ACCOUNTS, component: PaymentAccountsScreen },
   { title: ROUTES.PROFILE, component: ProfileScreen },
   { title: ROUTES.CHANGE_PASSWORD, component: ChangePasswordScreen },

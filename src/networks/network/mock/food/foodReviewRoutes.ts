@@ -16,6 +16,7 @@ import { addDays, dateInZone } from '../../../../utils/healthTime';
 import { FoodError, assertEntitled, invalid, isoNow, kitchenToday, nextId, text } from './foodLogic';
 import { isVisible } from './foodDiscovery';
 import type { MockFoodOrder, MockFoodReview, MockFoodVendor } from './foodTypes';
+import { foodHooks } from './foodHooks';
 
 export const FOOD_REVIEW_TAGS = ['tasty', 'hot_and_fresh', 'good_portion', 'well_packed', 'on_time', 'polite_rider', 'value_for_money'];
 
@@ -145,7 +146,8 @@ export function registerReviewRoutes({ route, requireUser, myVendor }: ReviewRou
     const v = myVendor(ctx);
     const unreplied = ctx.query.unreplied;
     if (unreplied !== undefined && unreplied !== 'true' && unreplied !== 'false') throw invalid('unreplied', 'unreplied must be one of the following values: true, false');
-    const rows = visibleOf(ctx.db, v.businessId).filter(r => (unreplied === 'true' ? r.vendorReply === null : unreplied === 'false' ? r.vendorReply !== null : true));
+    const extra = foodHooks.vendorReviewFilter(ctx.db, v, ctx.query, ctx.now);
+    const rows = visibleOf(ctx.db, v.businessId).filter(r => (unreplied === 'true' ? r.vendorReply === null : unreplied === 'false' ? r.vendorReply !== null : true) && extra(r));
     return paged(
       rows.map(r => ({ ...reviewView(r, firstName(nameOf(ctx.db, r.userId))), orderCode: r.orderId ? (ctx.db.food.orders.find(o => o.id === r.orderId)?.code ?? null) : null })),
       ctx.query,

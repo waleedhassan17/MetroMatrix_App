@@ -17,6 +17,7 @@
 import type { BaseUnit, CustomUnit } from '../../../../utils/units';
 import { addDays, dateInZone, isoWeekday, weekStart, zonedToIso } from '../../../../utils/healthTime';
 import { FOOD_IMG } from '../food/foodImages';
+import type { MockFoodReview } from '../food/foodTypes';
 import type {
   MockSearchLog,
   MockAlias,
@@ -260,6 +261,8 @@ interface StockSeed {
   expiring?: [qty: number, inDays: number];
   /** What this kitchen pays, vs the canonical price (1.25 = a quarter more). */
   paid?: number;
+  /** Its own name, not yet matched to a nutrition food (the nutrition screen's "unmapped" list). */
+  ownName?: string;
 }
 
 interface RecipeSeed {
@@ -332,8 +335,8 @@ export const KITCHENS: KitchenSeed[] = [
       { key: 'mint', onHand: 300, par: 300 },
       { key: 'cucumber', onHand: 3000, par: 2000 },
       { key: 'lemon', onHand: 40, par: 30 },
-      { key: 'aloo_bukhara', onHand: 800, par: 500 },
-      { key: 'biryani_masala', onHand: 1200, par: 800 },
+      { key: 'aloo_bukhara', onHand: 800, par: 500, ownName: 'Aloo bukhara (dried plums)' },
+      { key: 'biryani_masala', onHand: 1200, par: 800, ownName: 'House biryani masala' },
       { key: 'red_chilli', onHand: 900, par: 500 },
       { key: 'black_pepper', onHand: 400, par: 200 },
       { key: 'salt', onHand: 5000, par: 2000 },
@@ -855,14 +858,14 @@ export const seedKitchen = (dishes: SeedDish[], now: number = Date.now()): MockK
       ingredients.push({
         id: ingId,
         businessId: k.businessId,
-        name: c.name,
+        name: s.ownName ?? c.name,
         category: c.category,
         baseUnit: c.base,
         dozens: !!c.dozens,
         customUnits: c.custom ?? [],
         parLevel: s.par ?? null,
         priceRefKey: s.key,
-        nutritionFoodId: c.category === 'packaging' ? null : nutritionFoodId(s.key),
+        nutritionFoodId: c.category === 'packaging' || s.ownName ? null : nutritionFoodId(s.key),
         deficit: s.onHand < 0 ? -s.onHand : 0,
         createdAt: iso(90 * DAY),
         updatedAt: iso(DAY),
@@ -989,4 +992,66 @@ export const seedKitchen = (dishes: SeedDish[], now: number = Date.now()): MockK
     idempotency: {},
     seq: 0,
   };
+};
+
+// ── Earlier reviews of Biryani Bazaar (review themes, 5C) ──
+/** What customers wrote over eight weeks: mostly happy, a run of late and cold deliveries this week. */
+const REVIEW_LINES: [rating: number, tags: string[], text: string][] = [
+  [5, ['tasty', 'hot_and_fresh'], 'Biryani was hot and full of flavour. The raita was fresh too.'],
+  [5, ['tasty'], 'Best biryani in Gulberg, the meat falls off the bone.'],
+  [4, ['good_portion'], 'Generous portions, enough for two of us.'],
+  [2, [], 'Took almost an hour and arrived late. The food was good once it came.'],
+  [3, [], 'The karahi arrived cold, we had to heat it again.'],
+  [5, ['well_packed', 'on_time'], 'Packed well, nothing spilled, and on time.'],
+  [4, ['value_for_money'], 'Good value for the price. Will order again.'],
+  [2, [], 'Too spicy for the kids even on mild.'],
+  [3, [], 'Waited 70 minutes. Please tell us when it will be late.'],
+  [4, ['tasty', 'hot_and_fresh'], 'Seekh kebabs were fresh off the grill, very tasty.'],
+  [3, [], 'The gravy leaked into the bag, the box was not sealed.'],
+  [5, ['tasty', 'good_portion'], 'Delicious and filling. The malai boti is the best thing on the menu.'],
+  [2, [], 'Small portion of chicken in the biryani this time, mostly rice.'],
+  [4, ['on_time'], 'Came on time and the rider was polite.'],
+  [3, [], 'Food was lukewarm when it reached us.'],
+];
+
+/** One week each, newest first: how many reviews and which lines (this week leans late and cold). */
+const REVIEW_WEEKS: number[][] = [
+  [3, 4, 8, 14, 0, 2],
+  [0, 5, 11, 6],
+  [1, 9, 2, 6],
+  [11, 12, 0],
+  [13, 5, 1, 7],
+  [0, 10, 6],
+  [3, 2, 9],
+  [1, 4, 5],
+];
+
+export const seedReviewHistory = (now: number = Date.now()): MockFoodReview[] => {
+  const out: MockFoodReview[] = [];
+  REVIEW_WEEKS.forEach((lines, w) => {
+    lines.forEach((line, n) => {
+      const [rating, tags, text] = REVIEW_LINES[line];
+      // Spread over the week, never in the future.
+      const at = now - (w * 7 + n) * DAY - (3 + n * 2) * 3_600_000;
+      out.push({
+        id: `frv_h${w}_${n}`,
+        orderId: null,
+        businessId: 'b_resto',
+        userId: `u_guest_${(w * 5 + n) % 11}`,
+        foodRating: rating,
+        deliveryRating: rating <= 3 ? 2 : 5,
+        tags,
+        text,
+        photos: [],
+        vendorReply: w > 1 && rating >= 4 ? 'Thank you, see you again soon.' : null,
+        repliedAt: w > 1 && rating >= 4 ? new Date(at + DAY).toISOString() : null,
+        isHidden: false,
+        hiddenReason: null,
+        // Already part of the kitchen's seeded ratings (312): not counted again.
+        seeded: true,
+        createdAt: new Date(at).toISOString(),
+      });
+    });
+  });
+  return out;
 };

@@ -17,7 +17,7 @@ import { HEALTH_SEED_USERS, migrateHealth, seedHealth } from './health/healthSee
 import type { MockHealth } from './health/healthTypes';
 import { FOOD_SEED_RIDERS, FOOD_SEED_USERS, seedFood } from './food/foodSeed';
 import type { MockFood } from './food/foodTypes';
-import { seedKitchen } from './kitchen/kitchenSeed';
+import { seedKitchen, seedReviewHistory } from './kitchen/kitchenSeed';
 import type { MockKitchen } from './kitchen/kitchenTypes';
 
 export interface MockUser {
@@ -379,6 +379,8 @@ export const seedDb = (): MockDb => withKitchen({
 /** The kitchen's history is built from the Food seed's dishes. */
 function withKitchen(db: MockDb): MockDb {
   db.kitchen = seedKitchen(db.food.items.map(i => ({ id: i.id, businessId: i.businessId, sold30d: i.sold30d, days: i.days })));
+  // Earlier reviews the assistant's review themes read (already in the seeded ratings).
+  db.food.reviews.push(...seedReviewHistory());
   return db;
 }
 

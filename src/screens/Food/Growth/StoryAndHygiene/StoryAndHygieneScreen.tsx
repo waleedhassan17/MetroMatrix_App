@@ -118,6 +118,7 @@ const StoryAndHygieneContent: React.FC<Props> = ({ route }) => {
             onChangeText={v => dispatch(setStoryField({ text: v }))}
             placeholder="How you started, what you cook, what makes it yours"
             multiline
+            numberOfLines={6}
             maxLength={STORY_MAX}
             helper={`${f.text.trim().length} of ${STORY_MAX}`}
             error={f.text && errors.text ? errors.text : undefined}

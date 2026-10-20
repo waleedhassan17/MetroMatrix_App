@@ -950,9 +950,11 @@ action (§3.8):
       "title": "4 kg chicken (curry cut) expires tomorrow",
       "why": "Milk and Coriander too. Use them before they go to waste.",
       "action": {
-        "kind": "create_surplus",
-        "label": "Make a Bachat Box",
-        "params": {}
+        "kind": "make_special",
+        "label": "Make a special",
+        "params": {
+          "ingredientIds": ["ing_bb_chicken", "ing_bb_milk", "ing_bb_coriander"]
+        }
       }
     }
   ],
@@ -2090,7 +2092,7 @@ The vendor's own profile `branch` shows both (§5).
 
 | `kind` | When | Action (`action.kind`) |
 |---|---|---|
-| `expiring_stock` | stock expires today (critical) or tomorrow (warning) | `create_surplus` (5C: `make_special`) |
+| `expiring_stock` | stock expires today (critical) or tomorrow (warning) | `make_special` while the assistant is on (its ingredients as `ingredientIds`), else `create_surplus` |
 | `negative_stock` | an ingredient is below zero | `stock_take` `{ ingredientIds }` |
 | `running_low` | ingredients under their par level | `add_purchase` |
 | `price_rise` | the latest price is ≥ 15% over what the kitchen paid before | `open_recipe` `{ itemId }` (the dish it hurts most) |
@@ -2417,10 +2419,130 @@ payment `tiffin_plan`).
 
 The assistant's routes are in `docs/AI_ASSUMED.md`.
 
-Vendor nutrition:
-- `GET /food/vendor/nutrition`: per dish `kcal, protein, carbs, fat, method: recipe\|ai_estimate,
-  confidence, hidden`, plus the `unmapped` ingredients with suggestions;
-- `PATCH /food/vendor/nutrition/:itemId { hidden }`.
+Vendor nutrition (`GET /food/vendor/nutrition`). Per dish as it is sold (its recipe card ÷ its
+yield): `method: recipe` from mapped ingredients (`confidence` falls 0.12 for each unmapped one,
+named in `missing`); a dish without a card gets `ai_estimate` from its name (counted once, as an
+assistant action), or `none` while the assistant is off or used up. `unmapped` lists ingredients
+without a nutrition food, the dishes they are in, and up to three suggestions:
+
+<!-- contract: nutrition -->
+```json
+{
+  "counts": {
+    "recipe": 10,
+    "estimate": 5,
+    "none": 0,
+    "hidden": 0
+  },
+  "items": [
+    {
+      "itemId": "mi_chicken_biryani",
+      "name": "Chicken Biryani",
+      "hidden": false,
+      "kcal": 973,
+      "protein": 43,
+      "carbs": 118,
+      "fat": 35,
+      "method": "recipe",
+      "confidence": 0.83,
+      "missing": [
+        "House biryani masala"
+      ]
+    },
+    {
+      "itemId": "mi_beef_biryani",
+      "name": "Beef Biryani",
+      "hidden": false,
+      "kcal": 1058,
+      "protein": 46,
+      "carbs": 115,
+      "fat": 44,
+      "method": "recipe",
+      "confidence": 0.71,
+      "missing": [
+        "Aloo bukhara (dried plums)",
+        "House biryani masala"
+      ]
+    }
+  ],
+  "unmapped": [
+    {
+      "ingredientId": "ing_bb_biryani_masala",
+      "name": "House biryani masala",
+      "usedIn": [
+        "Chicken Biryani",
+        "Beef Biryani"
+      ],
+      "suggestions": [
+        {
+          "foodId": "nf_biryani_masala",
+          "name": "Biryani masala",
+          "per": "g100"
+        },
+        {
+          "foodId": "nf_garam_masala",
+          "name": "Garam masala",
+          "per": "g100"
+        }
+      ]
+    },
+    {
+      "ingredientId": "ing_bb_aloo_bukhara",
+      "name": "Aloo bukhara (dried plums)",
+      "usedIn": [
+        "Beef Biryani"
+      ],
+      "suggestions": [
+        {
+          "foodId": "nf_aloo_bukhara",
+          "name": "Aloo bukhara (dried plums)",
+          "per": "g100"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Hiding a dish's numbers from customers (`PATCH /food/vendor/nutrition/:itemId { hidden }`) answers
+its row:
+
+<!-- contract: nutritionHide -->
+```json
+{
+  "itemId": "mi_kheer",
+  "name": "Kheer",
+  "hidden": true,
+  "kcal": 330,
+  "protein": 8,
+  "carbs": 48,
+  "fat": 12,
+  "method": "ai_estimate",
+  "confidence": 0.55,
+  "missing": []
+}
+```
+
+Mapping an ingredient is the ordinary ingredient edit (`PATCH /food/vendor/kitchen/ingredients/:id
+{ nutritionFoodId }`), from `GET /food/vendor/kitchen/nutrition-foods?q=`:
+
+<!-- contract: nutritionFoods -->
+```json
+{
+  "items": [
+    {
+      "id": "nf_aloo_bukhara",
+      "name": "Aloo bukhara (dried plums)",
+      "per": "g100",
+      "kcal": 240,
+      "protein": 2,
+      "carbs": 64,
+      "fat": 0.4
+    }
+  ]
+}
+```
+
 
 Customers (`/my-kitchen`):
 
@@ -2475,7 +2597,8 @@ capture carries one**: it has shipped then, and is reconciled.
 | Dish (menu card, item sheet, search) | `nutrition`, `descriptionUr`, `isSignature` | 5B–5C |
 | `GET /food/search` | `?nutrition=under_600\|high_protein` | 5C |
 | Payment method | `tiffin_plan` | an order a tiffin period paid for (5B) |
-| `GET /food/vendor/reviews` | `?theme=` | 5C |
+| `GET /food/vendor/reviews` | `?theme=`, `?week=` (a Monday) | a review theme's reviews (5C) |
+| Dish body (`POST`/`PATCH /food/vendor/menu/items`) | `descriptionUr` | the Urdu description beside the English one (5C) |
 
 ---
 

@@ -16,7 +16,7 @@ import { HYGIENE_STATUS } from '@models/kitchen/kitchenStatusModel';
 import { selectBusiness } from '@screens/Auth/authSlice';
 import { ServiceScope, useStyles, type Theme } from '@theme/index';
 import { AppText, Card, InlineNotice, InsightCard, ProgressBar, ScreenShell, SkeletonLines } from '@custom/index';
-import { IconWell, SectionHead, StatGrid, type AdminStat } from '@components/admin/AdminParts';
+import { IconWell, SectionHead, StatGrid, ToolSection, type AdminStat } from '@components/admin/AdminParts';
 import { formatLongDate } from '@utils/healthTime';
 import { formatPKR } from '@utils/money';
 import type { KitchenSummary } from '@/types';
@@ -181,7 +181,7 @@ const KitchenHubContent: React.FC = () => {
   const note = usageNote(s.usage);
 
   const meter = s.usage ? (
-    <Card>
+    <Card onPress={() => go('KitchenAssistant')} accessibilityLabel={`${usageLine(s.usage)}. Opens the assistant.`}>
       <View style={styles.meter}>
         <View style={styles.meterHead}>
           <IconWell icon="sparkles-outline" tint="accent" />
@@ -225,6 +225,14 @@ const KitchenHubContent: React.FC = () => {
       <StatGrid stats={tiles(s.summary, go)} />
       <SectionHead title="Grow" />
       <StatGrid stats={growTiles(s.summary, go, cloud)} />
+      <ToolSection
+        title="Assistant"
+        tools={[
+          { key: 'assistant', title: 'Assistant', subtitle: 'Descriptions, specials, combos, photo tips', icon: 'sparkles-outline', tint: 'violet', value: s.usage ? `${s.usage.left} left` : undefined, onPress: () => go('KitchenAssistant') },
+          { key: 'reviews', title: 'What reviews say', subtitle: 'The week’s themes, good and bad', icon: 'chatbubbles-outline', tint: 'rose', onPress: () => go('KitchenReviewInsights') },
+          { key: 'nutrition', title: 'Nutrition', subtitle: 'Calories and macros per dish', icon: 'nutrition-outline', tint: 'blue', onPress: () => go('KitchenNutrition') },
+        ]}
+      />
     </View>
   ) : null;
 

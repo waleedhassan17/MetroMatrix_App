@@ -212,6 +212,13 @@ import { menuInsightsSlice } from '../screens/Food/Growth/MenuInsights/menuInsig
 import { menuExperimentSlice } from '../screens/Food/Growth/MenuExperiment/menuExperimentSlice';
 import { storyAndHygieneSlice } from '../screens/Food/Growth/StoryAndHygiene/storyAndHygieneSlice';
 import { publicStoreSlice } from '../screens/Food/Customer/PublicStore/publicStoreSlice';
+import { assistantSlice } from '../screens/Food/Kitchen/Assistant/assistantSlice';
+import { aiDescriptionsSlice } from '../screens/Food/Kitchen/AiDescriptions/aiDescriptionsSlice';
+import { aiSpecialsSlice } from '../screens/Food/Kitchen/AiSpecials/aiSpecialsSlice';
+import { aiCombosSlice } from '../screens/Food/Kitchen/AiCombos/aiCombosSlice';
+import { aiPhotoCheckSlice } from '../screens/Food/Kitchen/AiPhotoCheck/aiPhotoCheckSlice';
+import { reviewInsightsSlice } from '../screens/Food/Kitchen/ReviewInsights/reviewInsightsSlice';
+import { nutritionVendorSlice } from '../screens/Food/Kitchen/NutritionVendor/nutritionVendorSlice';
 import { foodTiffinPlanSlice } from '../screens/Food/Customer/FoodTiffinPlan/foodTiffinPlanSlice';
 import { foodTiffinsSlice } from '../screens/Food/Customer/FoodTiffins/foodTiffinsSlice';
 import { foodTiffinSlice } from '../screens/Food/Customer/FoodTiffin/foodTiffinSlice';
@@ -422,6 +429,13 @@ const rootReducer = combineReducers({
   menuExperiment: menuExperimentSlice.reducer,
   storyAndHygiene: storyAndHygieneSlice.reducer,
   publicStore: publicStoreSlice.reducer,
+  assistant: assistantSlice.reducer,
+  aiDescriptions: aiDescriptionsSlice.reducer,
+  aiSpecials: aiSpecialsSlice.reducer,
+  aiCombos: aiCombosSlice.reducer,
+  aiPhotoCheck: aiPhotoCheckSlice.reducer,
+  reviewInsights: reviewInsightsSlice.reducer,
+  nutritionVendor: nutritionVendorSlice.reducer,
   foodTiffinPlan: foodTiffinPlanSlice.reducer,
   foodTiffins: foodTiffinsSlice.reducer,
   foodTiffin: foodTiffinSlice.reducer,

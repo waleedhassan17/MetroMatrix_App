@@ -9,7 +9,7 @@
 // Every key a hook adds to a Food shape is listed in ../kitchen/foodAdditions.ts.
 
 import type { MockDb } from '../mockDb';
-import type { MockFoodOrder, MockFoodVendor, MockMenuItem } from './foodTypes';
+import type { MockFoodOrder, MockFoodReview, MockFoodVendor, MockMenuItem } from './foodTypes';
 
 type Extras = Record<string, unknown>;
 
@@ -45,6 +45,10 @@ export interface FoodHooks {
   searchFilter: (db: MockDb, v: MockFoodVendor, i: MockMenuItem | null, query: Record<string, unknown>) => boolean;
   /** The kitchen's minute jobs; returns orders whose change should go out live. */
   settle: (db: MockDb, now: number) => MockFoodOrder[];
+  /** A dish was created or edited: keys the kitchen keeps for it (`descriptionUr`); may refuse (throw). */
+  onItemSaved: (db: MockDb, i: MockMenuItem, body: Record<string, unknown>) => void;
+  /** Filters the kitchen adds to its own reviews list (`theme`, `week`); may refuse (throw). */
+  vendorReviewFilter: (db: MockDb, v: MockFoodVendor, query: Record<string, string>, now: number) => (r: MockFoodReview) => boolean;
 }
 
 const none = (): Extras => ({});
@@ -66,6 +70,8 @@ const DEFAULTS: FoodHooks = {
   onSearch: () => undefined,
   searchFilter: () => true,
   settle: () => [],
+  onItemSaved: () => undefined,
+  vendorReviewFilter: () => () => true,
 };
 
 export const foodHooks: FoodHooks = { ...DEFAULTS };

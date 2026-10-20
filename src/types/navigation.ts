@@ -349,6 +349,16 @@ export type FoodVendorStackParamList = {
   KitchenBox: { id: string };
   KitchenDonations: undefined;
   KitchenSettings: undefined;
+  // ── The assistant (5C) ──
+  KitchenAssistant: undefined;
+  KitchenAiDescriptions: undefined;
+  /** From an expiring-stock card: those ingredients. */
+  KitchenAiSpecials: { ingredientIds?: string[] } | undefined;
+  KitchenAiCombos: undefined;
+  KitchenAiPhotoCheck: { itemId?: string } | undefined;
+  KitchenReviewInsights: undefined;
+  KitchenReviewTheme: { theme: string; label?: string; week?: string };
+  KitchenNutrition: undefined;
   // ── Growth (5B) ──
   GrowthTiffin: undefined;
   /** Edit a plan (`id`) or a new one. */

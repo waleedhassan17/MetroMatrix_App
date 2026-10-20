@@ -63,6 +63,14 @@ const SECTIONS: { title: string; items: Item[] }[] = [
     ],
   },
   {
+    title: 'Assistant',
+    items: [
+      { label: 'Assistant', hint: 'Descriptions, specials, combos, photo tips', icon: 'sparkles-outline', to: 'KitchenAssistant' },
+      { label: 'What reviews say', hint: 'The week’s themes, good and bad', icon: 'chatbubbles-outline', to: 'KitchenReviewInsights' },
+      { label: 'Nutrition', hint: 'Calories and macros per dish, from your recipe cards', icon: 'nutrition-outline', to: 'KitchenNutrition' },
+    ],
+  },
+  {
     title: 'How you work',
     items: [
       { label: 'Kitchen settings', hint: 'Delivery, pick-up, cash, address', icon: 'options-outline', to: 'VendorSettings' },

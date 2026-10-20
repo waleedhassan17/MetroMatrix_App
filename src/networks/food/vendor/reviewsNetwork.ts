@@ -11,5 +11,9 @@ const enc = encodeURIComponent;
 export const listMyReviews = (unreplied: boolean, page: number, pageSize: number) =>
   request(() => api.get('/food/vendor/reviews', { params: { ...(unreplied ? { unreplied: 'true' } : null), ...pageParams(page, pageSize) } }), vendorReviewsPageSerializer);
 
+/** A review theme's reviews (`theme`, `week`: Kitchen Intelligence's additions, TODO(API_KITCHEN)). */
+export const listReviewsByTheme = (theme: string, week: string | null, page: number, pageSize: number) =>
+  request(() => api.get('/food/vendor/reviews', { params: { theme, ...(week ? { week } : null), ...pageParams(page, pageSize) } }), vendorReviewsPageSerializer);
+
 export const replyToReview = (id: string, reply: string) =>
   request(() => api.post(`/food/vendor/reviews/${enc(id)}/reply`, { reply: reply.trim() }), foodReviewSerializer);

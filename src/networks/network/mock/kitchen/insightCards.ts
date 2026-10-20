@@ -68,7 +68,7 @@ export const addCardSource = (s: CardSource) => {
 };
 
 /** Expiring stock offers this action (a special from it once the assistant is on: 5C). */
-let expiringAction: (ingredientIds: string[]) => InsightCard['action'] = () => ({ kind: 'create_surplus', label: 'Make a Bachat Box', params: {} });
+let expiringAction: (ingredientIds: string[], db: MockDb) => InsightCard['action'] = () => ({ kind: 'create_surplus', label: 'Make a Bachat Box', params: {} });
 export const setExpiringAction = (f: typeof expiringAction) => {
   expiringAction = f;
 };
@@ -94,7 +94,7 @@ export const allCards = (db: MockDb, businessId: string, now: number): InsightCa
       severity: when === 'today' ? 'critical' : 'warning',
       title: `${qty(first.i, first.e!.qty)} ${first.i.name.toLowerCase()} expires ${when}`,
       why: expiring.length > 1 ? `${list(expiring.slice(1, 3).map(x => x.i.name))} too. Use them before they go to waste.` : 'Use it before it goes to waste.',
-      action: expiringAction(expiring.map(x => x.i.id)),
+      action: expiringAction(expiring.map(x => x.i.id), db),
     });
   }
 

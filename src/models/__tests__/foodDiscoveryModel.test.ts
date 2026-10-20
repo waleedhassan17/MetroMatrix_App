@@ -17,6 +17,7 @@ const sheet = (over: Partial<ItemSheet> = {}): ItemSheet => ({
   id: 'mi_1',
   name: 'Chicken Biryani',
   description: null,
+  descriptionUr: null,
   photoUrl: null,
   tags: [],
   isDeal: false,

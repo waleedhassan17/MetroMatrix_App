@@ -956,3 +956,114 @@ export interface BatchSuggestion {
 
 /** A vendor card's badges (docs/API_KITCHEN_ASSUMED.md §3.13). */
 export type VendorBadge = 'signature' | 'hygiene_verified' | 'hygiene_self_declared' | 'home_kitchen' | 'bachat_today' | 'under_600' | 'high_protein';
+
+// ── The assistant (5C): drafts, review themes, nutrition ──
+export interface DescriptionDraft {
+  itemId: string;
+  name: string;
+  /** What the menu says now. */
+  current: { en: string | null; ur: string | null };
+  en: string;
+  ur: string;
+}
+
+export interface DraftCategory {
+  id: string;
+  name: string;
+}
+
+export interface SpecialIdea {
+  id: string;
+  title: string;
+  description: string;
+  uses: string[];
+  usesExpiring: string[];
+  /** A serving's ingredients (base units): its recipe card once created. */
+  lines: { ingredientId: string; qty: number }[];
+  suggestedPrice: number;
+  cost: Cost;
+}
+
+export interface ComboIdea {
+  id: string;
+  itemIds: string[];
+  names: string[];
+  /** Orders in the last 30 days with both. */
+  orderedTogether: number;
+  regularPrice: number;
+  bundlePrice: number;
+  /** null until both dishes have a recipe card. */
+  cost: Cost | null;
+}
+
+export type PhotoVerdict = 'good' | 'ok' | 'retake';
+export type PhotoTipKind = 'light' | 'framing' | 'background' | 'focus';
+
+export interface PhotoCheck {
+  imageUrl: string;
+  score: number;
+  verdict: PhotoVerdict;
+  tips: { kind: PhotoTipKind; text: string }[];
+}
+
+export type ReviewThemeKey = 'taste' | 'fresh' | 'portion' | 'packing' | 'value' | 'late' | 'cold' | 'spice' | 'small' | 'spill';
+
+export interface ReviewTheme {
+  key: ReviewThemeKey;
+  label: string;
+  tone: 'positive' | 'negative';
+  count: number;
+  /** Anonymised lines from the reviews. */
+  snippets: string[];
+}
+
+export interface ReviewInsights {
+  /** The Monday. */
+  week: string;
+  from: string;
+  to: string;
+  reviewCount: number;
+  weeks: { week: string; count: number }[];
+  themes: ReviewTheme[];
+}
+
+export type NutritionMethod = 'recipe' | 'ai_estimate' | 'none';
+
+export interface DishNutrition {
+  itemId: string;
+  name: string;
+  kcal: number | null;
+  protein: number | null;
+  carbs: number | null;
+  fat: number | null;
+  method: NutritionMethod;
+  /** 0–1. */
+  confidence: number;
+  /** Not shown to customers. */
+  hidden: boolean;
+  /** Ingredients on its card without a nutrition food. */
+  missing: string[];
+}
+
+export interface UnmappedIngredient {
+  ingredientId: string;
+  name: string;
+  usedIn: string[];
+  suggestions: { foodId: string; name: string; per: NutritionFood['per'] }[];
+}
+
+export interface VendorNutrition {
+  counts: { recipe: number; estimate: number; none: number; hidden: number };
+  items: DishNutrition[];
+  unmapped: UnmappedIngredient[];
+}
+
+export interface NutritionFood {
+  id: string;
+  name: string;
+  per: 'g100' | 'ml100' | 'piece';
+  kcal: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}

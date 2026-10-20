@@ -229,6 +229,7 @@ export const itemSheetSerializer = (raw: unknown): ItemSheet | null => {
     id: str(raw.id),
     name: str(raw.name),
     description: strOrNull(raw.description),
+    descriptionUr: strOrNull(raw.descriptionUr),
     photoUrl: strOrNull(raw.photoUrl),
     tags: tags(raw.tags),
     isDeal: bool(raw.isDeal),

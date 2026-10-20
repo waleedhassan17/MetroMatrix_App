@@ -48,6 +48,13 @@ import { listVendors } from '../../../food/discoveryNetwork';
 import { getRiderOrder, setDuty } from '../../../food/rider/riderNetwork';
 import { assignRider } from '../../../food/vendor/ordersNetwork';
 import { ramadanSwitch } from '../../../../models/kitchen/reachModel';
+import { checkPhoto, draftDescriptions, getReviewInsights, saveDescription, suggestCombos, suggestSpecials } from '../../../kitchen/kitchenAiNetwork';
+import { getVendorNutrition, mapIngredientNutrition, setNutritionHidden } from '../../../kitchen/nutritionNetwork';
+import { createMenuItem, getMenuItem } from '../../../food/vendor/menuNetwork';
+import { getItemSheet } from '../../../food/discoveryNetwork';
+import { listReviewsByTheme } from '../../../food/vendor/reviewsNetwork';
+import { comboItemInput, specialItemInput, specialRecipe } from '../../../../models/kitchen/assistantModel';
+import { isUrduScript } from '../../../../utils/script';
 import { api, AuthError } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import { MOCK, SEED_PASSWORD, STAFF_PASSWORD } from '../mockConfig';
@@ -619,6 +626,88 @@ describe('batching', () => {
     const rb = await getRiderOrder(b.id);
     expect([ra.dropOrder, rb.dropOrder].map(d => d?.of)).toEqual([2, 2]);
     expect([ra.dropOrder?.position, rb.dropOrder?.position].sort()).toEqual([1, 2]);
+  });
+});
+
+describe('the assistant’s drafts (5C)', () => {
+  it('drafts English and Urdu descriptions, and changes nothing until one is saved (QA 40)', async () => {
+    const [naan] = await draftDescriptions(['mi_naan']);
+    expect(naan.en).toMatch(/^Naan: /);
+    expect(isUrduScript(naan.ur)).toBe(true);
+    expect((await getMenuItem('mi_naan')).description).toBe(naan.current.en);
+    expect((await getAiUsage()).used).toBe(1);
+    await saveDescription('mi_naan', { description: naan.en, descriptionUr: naan.ur });
+    await asCustomer();
+    const sheet = await getItemSheet('mi_naan');
+    expect(sheet).toMatchObject({ description: naan.en, descriptionUr: naan.ur });
+  });
+
+  it('suggests specials from expiring stock and adds one as a hidden dish with its recipe card (QA 41)', async () => {
+    const { items, category } = await suggestSpecials();
+    const tikka = items.find(i => i.title === 'Chicken tikka plate')!;
+    expect(tikka.usesExpiring).toContain('Chicken (curry cut)');
+    expect(tikka.cost.foodCostPct).toBeLessThanOrEqual(40);
+    const dish = await createMenuItem(specialItemInput(tikka, category!.id, tikka.suggestedPrice), []);
+    expect(dish).toMatchObject({ name: 'Chicken tikka plate', isActive: false, basePrice: tikka.suggestedPrice });
+    expect((await saveRecipe(dish.id, null, specialRecipe(tikka))).cost?.toMake).toBe(tikka.cost.toMake);
+    await asCustomer();
+    const page = await getVendorPage('biryani-bazaar', GULBERG);
+    expect(page.menu.flatMap(m => m.items).some(i => i.id === dish.id)).toBe(false);
+  });
+
+  it('pairs dishes ordered together into a deal at the bundle price (QA 42)', async () => {
+    const { items, category } = await suggestCombos();
+    const first = items[0];
+    expect(first.itemIds).toHaveLength(2);
+    expect(first.bundlePrice).toBeLessThan(first.regularPrice);
+    expect(first.cost?.keep).toBe(first.bundlePrice - first.cost!.toMake);
+    expect(category?.name).toBe('Deals');
+    const deal = await createMenuItem(comboItemInput(first, category!.id, first.bundlePrice), []);
+    expect(deal).toMatchObject({ isDeal: true, isActive: true, basePrice: first.bundlePrice, name: first.names.join(' + ') });
+  });
+
+  it('reads a week of reviews for themes, and lists the reviews behind one (QA 43)', async () => {
+    const r = await getReviewInsights();
+    const late = r.themes.find(t => t.key === 'late')!;
+    expect(late).toMatchObject({ tone: 'negative' });
+    expect(late.count).toBeGreaterThan(1);
+    expect(late.snippets.every(x => !/\d{7,}/.test(x))).toBe(true);
+    expect(r.weeks).toHaveLength(8);
+    const behind = await listReviewsByTheme('late', r.week, 1, 20);
+    expect(behind.items).toHaveLength(late.count);
+    // Reading the same week again is free.
+    const used = (await getAiUsage()).used;
+    await getReviewInsights(r.week);
+    expect((await getAiUsage()).used).toBe(used);
+  });
+
+  it('works out nutrition from recipe cards, says how, and lists what to match (QA 44)', async () => {
+    const n = await getVendorNutrition();
+    const biryani = n.items.find(i => i.itemId === 'mi_chicken_biryani')!;
+    expect(biryani).toMatchObject({ method: 'recipe', missing: ['House biryani masala'] });
+    expect(biryani.confidence).toBeLessThan(0.95);
+    expect(n.items.some(i => i.method === 'ai_estimate')).toBe(true);
+    const masala = n.unmapped.find(u => u.name === 'House biryani masala')!;
+    expect(masala.usedIn).toContain('Chicken Biryani');
+    expect(masala.suggestions[0]).toMatchObject({ name: 'Biryani masala' });
+    await mapIngredientNutrition(masala.ingredientId, masala.suggestions[0].foodId);
+    const after = await getVendorNutrition();
+    expect(after.unmapped.some(u => u.ingredientId === masala.ingredientId)).toBe(false);
+    expect(after.items.find(i => i.itemId === 'mi_chicken_biryani')).toMatchObject({ missing: [], confidence: 0.95 });
+    expect((await setNutritionHidden('mi_chicken_biryani', true)).hidden).toBe(true);
+  });
+
+  it('checks a photo, and goes quiet when staff switch the assistant off', async () => {
+    const c = await checkPhoto('https://res.cloudinary.com/demo/kebab.jpg', 'mi_seekh');
+    expect(c.score).toBeGreaterThanOrEqual(55);
+    expect(c.tips.length).toBeGreaterThan(0);
+    await asStaff();
+    await api.patch('/admin/kitchen/ai/settings', { enabled: false });
+    await asVendor();
+    expect((await failure(suggestSpecials())).code).toBe('AI_UNAVAILABLE');
+    // The expiring-stock card falls back to a Bachat Box.
+    const hub = await getKitchenHub();
+    expect(hub.cards.find(x => x.kind === 'expiring_stock')?.action.kind).toBe('create_surplus');
   });
 });
 

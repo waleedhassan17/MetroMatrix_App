@@ -19,7 +19,7 @@ import { EXPERIMENT_DAY_CHOICES, canTestPrice, changeLine, priceBounds, progress
 import { EXPERIMENT_STATUS, QUADRANT, QUADRANT_ORDER } from '@models/kitchen/kitchenStatusModel';
 import { ServiceScope, useStyles, type Theme } from '@theme/index';
 import { AppText, Button, Card, ChoiceChip, InlineNotice, ListRow, QuadrantChart, ScreenShell, Sheet, SkeletonLines, StatusPill, TextField } from '@custom/index';
-import { RowCard, SectionHead } from '@components/admin/AdminParts';
+import { RowCard, SectionHead, ToolSection } from '@components/admin/AdminParts';
 import type { FoodVendorStackParamList, LocalFile, MenuInsightItem } from '@/types';
 import { pickImageFromLibrary } from '@utils/pickers';
 import { formatPKR } from '@utils/money';
@@ -123,6 +123,13 @@ const MenuInsightsContent: React.FC<Props> = ({ navigation, route }) => {
             </View>
           </Card>
 
+          <ToolSection
+            title="Also"
+            tools={[
+              { key: 'combos', title: 'Combo ideas', subtitle: 'Dishes ordered together, as one deal', icon: 'git-merge-outline', tint: 'amber', onPress: () => navigation.navigate('KitchenAiCombos') },
+              { key: 'reviews', title: 'What reviews say', subtitle: 'The week’s themes, good and bad', icon: 'chatbubbles-outline', tint: 'rose', onPress: () => navigation.navigate('KitchenReviewInsights') },
+            ]}
+          />
           {QUADRANT_ORDER.map(q => {
             const group = items.filter(i => i.quadrant === q);
             if (!group.length) return null;

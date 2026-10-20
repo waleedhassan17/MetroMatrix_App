@@ -245,6 +245,15 @@ export const ROUTES = {
   KITCHEN_BOX: 'KitchenBox',
   KITCHEN_DONATIONS: 'KitchenDonations',
   KITCHEN_SETTINGS: 'KitchenSettings',
+  // The assistant (5C)
+  KITCHEN_ASSISTANT: 'KitchenAssistant',
+  KITCHEN_AI_DESCRIPTIONS: 'KitchenAiDescriptions',
+  KITCHEN_AI_SPECIALS: 'KitchenAiSpecials',
+  KITCHEN_AI_COMBOS: 'KitchenAiCombos',
+  KITCHEN_AI_PHOTO_CHECK: 'KitchenAiPhotoCheck',
+  KITCHEN_REVIEW_INSIGHTS: 'KitchenReviewInsights',
+  KITCHEN_REVIEW_THEME: 'KitchenReviewTheme',
+  KITCHEN_NUTRITION: 'KitchenNutrition',
   /** A home kitchen's Menu and Riders, pushed from More (they are tabs for the others). */
   VENDOR_MENU_PAGE: 'VendorMenuPage',
   VENDOR_RIDERS_PAGE: 'VendorRidersPage',

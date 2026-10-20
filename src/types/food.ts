@@ -614,6 +614,8 @@ export interface ItemSheet {
   id: string;
   name: string;
   description: string | null;
+  /** The Urdu description beside the English one (Kitchen Intelligence, TODO(API_KITCHEN)). */
+  descriptionUr: string | null;
   photoUrl: string | null;
   tags: ItemTag[];
   isDeal: boolean;

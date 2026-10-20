@@ -23,9 +23,13 @@ import { settleTiffin } from './tiffinLogic';
 import { cateringSettingsOf, registerCateringRoutes } from './cateringRoutes';
 import { registerGrowthRoutes } from './growthRoutes';
 import { badgesOf, continueSales, dropOrderOf, ramadanSettingsOf, ramadanState, settleExperiments, signatureItemIds } from './growthLogic';
-import { addCardSource } from './insightCards';
+import { addCardSource, setExpiringAction } from './insightCards';
+import type { InsightCard } from './insightCards';
+import { assistantHooks, registerAssistantRoutes } from './assistantRoutes';
 import { formatPKR } from '../../../../utils/money';
 import type { MockPauseInfo } from './kitchenTypes';
+
+type InsightCardAction = InsightCard['action'];
 
 export const PAUSE_REASONS: NonNullable<MockPauseInfo['reason']>[] = ['gas', 'electricity', 'weather', 'staff', 'stock', 'other'];
 /** A pause lifts by itself at most this far ahead. */
@@ -165,8 +169,24 @@ export function registerKitchen(food: FoodRouteKit, kit: Pick<ShopKit, 'requireU
       pageExtras: (db, v, now) => pageExtras(db, v, now),
       cardExtras: (db, v, now) => (db.kitchen ? { badges: badgesOf(db, v, now) } : {}),
       riderExtras: (db, o) => (db.kitchen ? { dropOrder: dropOrderOf(db, o) } : {}),
+      // A dish's Urdu description and whether it is a signature recipe (5C).
+      itemExtras: (db, v, i) =>
+        db.kitchen
+          ? {
+              descriptionUr: (k(db).itemTexts ?? []).find(t => t.itemId === i.id)?.descriptionUr ?? null,
+              isSignature: k(db).recipes.some(r => r.itemId === i.id && r.signature?.on),
+            }
+          : {},
+      onItemSaved: assistantHooks.onItemSaved,
+      vendorReviewFilter: assistantHooks.vendorReviewFilter,
       settle,
     });
+    // Expiring stock: a special from it while the assistant is on, else a Bachat Box.
+    setExpiringAction((ingredientIds, db): InsightCardAction =>
+      db.kitchen?.aiEnabled
+        ? { kind: 'make_special', label: 'Make a special', params: { ingredientIds } }
+        : { kind: 'create_surplus', label: 'Make a Bachat Box', params: {} },
+    );
   }
   const deps = { route: food.route, myVendor: food.myVendor, ...kit };
   registerKitchenRoutes(deps);
@@ -174,4 +194,5 @@ export function registerKitchen(food: FoodRouteKit, kit: Pick<ShopKit, 'requireU
   registerTiffinRoutes(deps);
   registerCateringRoutes(deps);
   registerGrowthRoutes(deps);
+  registerAssistantRoutes(deps);
 }

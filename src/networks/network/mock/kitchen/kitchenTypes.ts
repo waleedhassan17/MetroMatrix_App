@@ -482,5 +482,12 @@ export interface MockKitchen {
   hygiene: MockHygiene[];
   /** The last day the demo kitchens' everyday sales were filled in (they keep selling as the clock moves). */
   salesThrough: Record<string, string>;
+  // The assistant (5C)
+  /** A dish's Urdu description (Food's dish keeps the English one). */
+  itemTexts?: { itemId: string; descriptionUr: string | null }[];
+  /** Dishes whose nutrition the kitchen hides from customers. */
+  nutritionHidden?: string[];
+  /** Drafts already counted (`review_insights:<business>:<week>`, `nutrition_estimate:<item>`), so a view doesn't count twice. */
+  aiCounted?: string[];
   seq: number;
 }
