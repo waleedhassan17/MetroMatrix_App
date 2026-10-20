@@ -47,9 +47,19 @@ const SECTIONS: { title: string; items: Item[] }[] = [
       { label: 'Deals', hint: 'Offers you fund — one per order, the best one', icon: 'pricetag-outline', to: 'VendorPromotions' },
       { label: 'Reviews', hint: 'What customers say, and your replies', icon: 'chatbox-ellipses-outline', to: 'VendorReviews' },
       { label: 'Insights', hint: 'Recorded sales, acceptance, prep time', icon: 'stats-chart-outline', to: 'VendorInsights' },
+      { label: 'Plan', hint: 'Community plan · no commission', icon: 'ribbon-outline', to: 'VendorPlan' },
+    ],
+  },
+  {
+    title: 'Grow',
+    items: [
+      { label: 'Your link and QR', hint: 'Your own page to share, and the orders it brings', icon: 'qr-code-outline', to: 'GrowthStorefront' },
       { label: 'Tiffin plans', hint: 'Meals on set days, paid by the week or month', icon: 'calendar-outline', to: 'GrowthTiffin' },
       { label: 'Catering', hint: 'Dawat requests, quotes and events', icon: 'people-outline', to: 'GrowthCatering' },
-      { label: 'Plan', hint: 'Community plan · no commission', icon: 'ribbon-outline', to: 'VendorPlan' },
+      { label: 'Menu insights', hint: 'What sells, what earns, and testing a change', icon: 'analytics-outline', to: 'GrowthMenuInsights' },
+      { label: 'Demand nearby', hint: 'What people near you search for and don’t find', icon: 'map-outline', to: 'GrowthDemand' },
+      { label: 'Story and hygiene', hint: 'Who cooks, and your hygiene checklist', icon: 'shield-checkmark-outline', to: 'GrowthStory' },
+      { label: 'Ramadan mode', hint: 'Sehri and iftar hours', icon: 'moon-outline', to: 'GrowthRamadan' },
     ],
   },
   {

@@ -18,6 +18,7 @@ import type { BaseUnit, CustomUnit } from '../../../../utils/units';
 import { addDays, dateInZone, isoWeekday, weekStart, zonedToIso } from '../../../../utils/healthTime';
 import { FOOD_IMG } from '../food/foodImages';
 import type {
+  MockSearchLog,
   MockAlias,
   MockBatch,
   MockDailySale,
@@ -300,7 +301,7 @@ const RAITA_ADDONS = [
   { optionId: 'og_drink_1', lines: [['soft_drink', 1]] as [string, number][] },
 ];
 
-const KITCHENS: KitchenSeed[] = [
+export const KITCHENS: KitchenSeed[] = [
   {
     businessId: 'b_resto',
     short: 'bb',
@@ -516,7 +517,7 @@ export interface SeedDish {
 }
 
 // A small seeded random generator (mulberry32), so every install sees the same history.
-const rng = (seed: number) => () => {
+export const rng = (seed: number) => () => {
   let t = (seed += 0x6d2b79f5);
   t = Math.imul(t ^ (t >>> 15), t | 1);
   t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
@@ -524,7 +525,7 @@ const rng = (seed: number) => () => {
 };
 
 // Fridays and weekends sell more; Mondays least.
-const WEEKDAY_FACTOR = [1.2, 0.8, 0.9, 0.95, 1.0, 1.3, 1.35];
+export const WEEKDAY_FACTOR = [1.2, 0.8, 0.9, 0.95, 1.0, 1.3, 1.35];
 
 const seedSales = (dishes: SeedDish[], today: string): MockDailySale[] => {
   const out: MockDailySale[] = [];
@@ -547,6 +548,96 @@ const seedSales = (dishes: SeedDish[], today: string): MockDailySale[] => {
 };
 
 export const ingredientId = (short: string, key: string) => `ing_${short}_${key}`;
+
+// ── Growth (5B): Ramadan, anonymous searches, story, hygiene ──
+/** Lahore neighbourhoods people search from, and how often each one finds an open kitchen late at night. */
+const AREAS: { name: string; lat: number; lng: number; weight: number; lateGap: number }[] = [
+  { name: 'Gulberg', lat: 31.5154, lng: 74.3422, weight: 5, lateGap: 0.2 },
+  { name: 'Johar Town', lat: 31.4697, lng: 74.2728, weight: 4, lateGap: 0.6 },
+  { name: 'DHA Phase 5', lat: 31.4627, lng: 74.4089, weight: 4, lateGap: 0.7 },
+  { name: 'Model Town', lat: 31.4834, lng: 74.3255, weight: 3, lateGap: 0.4 },
+  { name: 'Garden Town', lat: 31.5004, lng: 74.3178, weight: 2, lateGap: 0.3 },
+  { name: 'Wapda Town', lat: 31.4352, lng: 74.2671, weight: 2, lateGap: 0.8 },
+];
+
+/** What people search for, its cuisine, and how often nothing open answers it. */
+const QUERIES: [string, string | null, number][] = [
+  ['biryani', 'biryani', 0.05],
+  ['karahi', 'karahi', 0.1],
+  ['burger', 'burgers', 0.05],
+  ['pizza', 'pizza', 0.1],
+  ['nihari', 'pakistani', 0.55],
+  ['haleem', 'pakistani', 0.6],
+  ['paratha roll', 'rolls', 0.25],
+  ['shawarma', 'shawarma', 0.2],
+  ['chinese', 'chinese', 0.3],
+  ['salad', 'healthy', 0.45],
+  ['halwa puri', 'breakfast', 0.7],
+  ['daal chawal', 'home-food', 0.35],
+  ['kulfi', 'desserts', 0.5],
+  ['sushi', null, 0.9],
+];
+
+/** An hour of the day, weighted to lunch, dinner and late night. */
+const HOURS = [0, 0, 1, 1, 2, 8, 9, 10, 12, 13, 13, 14, 15, 17, 19, 20, 20, 21, 21, 22, 22, 23, 23, 23];
+
+const seedSearches = (now: number): MockSearchLog[] => {
+  const random = rng(14481019);
+  const pick = <T,>(xs: T[]) => xs[Math.floor(random() * xs.length)];
+  const areas = AREAS.flatMap(a => Array.from({ length: a.weight }, () => a));
+  const out: MockSearchLog[] = [];
+  for (let n = 0; n < 2400; n++) {
+    const a = pick(areas);
+    const [text, cuisine, gap] = pick(QUERIES);
+    const hour = pick(HOURS);
+    const late = hour >= 23 || hour <= 2;
+    const at = now - Math.floor(random() * 30) * DAY - Math.floor(random() * 3_600_000);
+    out.push({
+      at: new Date(at).toISOString(),
+      // Scattered over the neighbourhood (about a kilometre and a half).
+      lat: Math.round((a.lat + (random() - 0.5) * 0.028) * 10_000) / 10_000,
+      lng: Math.round((a.lng + (random() - 0.5) * 0.028) * 10_000) / 10_000,
+      hour,
+      cuisine,
+      text,
+      foundOpen: random() > Math.min(0.95, gap + (late ? a.lateGap : 0)),
+    });
+  }
+  return out;
+};
+
+const seedGrowthMore = (now: number, today: string): Pick<MockKitchen, 'calendarEvents' | 'ramadan' | 'searches' | 'experiments' | 'stories' | 'hygiene' | 'salesThrough'> => {
+  const allDone = (done: boolean) => HYGIENE_KEYS.map(key => ({ key, done, evidenceUrl: null }));
+  return {
+    // Approximate dates (the moon decides); staff correct them in the console.
+    calendarEvents: [
+      { id: 'ev_ramadan_1448', kind: 'ramadan', name: 'Ramadan 1448', startsOn: '2027-02-08', endsOn: '2027-03-09' },
+      { id: 'ev_eid_1448', kind: 'eid', name: 'Eid ul-Fitr', startsOn: '2027-03-10', endsOn: '2027-03-12' },
+    ],
+    ramadan: [],
+    searches: seedSearches(now),
+    experiments: [],
+    stories: [
+      {
+        businessId: 'b_nani',
+        cookName: 'Shazia Parveen',
+        text: 'I started cooking for my neighbours when my children left for university. Everything is made the way my mother made it: slow, in a clay handi, with spices I grind myself.',
+        photoUrls: [FOOD_IMG.curry, FOOD_IMG.thali],
+        videoUrl: null,
+        updatedAt: iso(20 * DAY),
+      },
+    ],
+    hygiene: [
+      { businessId: 'b_resto', status: 'verified', note: null, items: allDone(true), requestedAt: iso(40 * DAY), reviewedAt: iso(38 * DAY) },
+      { businessId: 'b_nani', status: 'self_declared', note: null, items: allDone(true), requestedAt: null, reviewedAt: null },
+    ],
+    // The demo kitchens' everyday sales are filled in to yesterday (and go on as the clock moves).
+    salesThrough: Object.fromEntries(KITCHENS.map(k => [k.businessId, addDays(today, -1)])),
+  };
+};
+
+/** The hygiene checklist a kitchen fills in before asking staff to verify it. */
+export const HYGIENE_KEYS = ['clean_kitchen', 'water', 'storage', 'hands', 'pests', 'medical'];
 
 /**
  * Tiffin and catering (5B): Nani ki Handi's weekday office lunch and its
@@ -883,6 +974,7 @@ export const seedKitchen = (dishes: SeedDish[], now: number = Date.now()): MockK
     donations: [{ id: 'dn_seed1', businessId: 'b_resto', at: iso(3 * DAY), meals: 12, to: 'Edhi centre, Gulberg', note: null }],
     boxes: seedBoxes(now, today),
     ...seedGrowth(now, today),
+    ...seedGrowthMore(now, today),
     reservations: [],
     pauses: [],
     orders: [],

@@ -60,8 +60,8 @@ const TARGETS: Record<InsightActionKind, (p: InsightCard['action']['params']) =>
   create_surplus: () => ({ screen: ROUTES.KITCHEN_BOX_FORM, params: { suggest: true } }),
   // 5C: today's specials from expiring stock (until then, a Bachat Box).
   make_special: () => ({ screen: ROUTES.KITCHEN_BOX_FORM, params: { suggest: true } }),
-  open_demand: () => ({ screen: ROUTES.KITCHEN_TAB }),
-  open_experiment: () => ({ screen: ROUTES.KITCHEN_TAB }),
+  open_demand: () => ({ screen: ROUTES.GROWTH_DEMAND }),
+  open_experiment: p => (str(p.experimentId) ? { screen: ROUTES.GROWTH_EXPERIMENT, params: { id: str(p.experimentId) } } : { screen: ROUTES.GROWTH_MENU_INSIGHTS }),
   open_review_insights: () => ({ screen: ROUTES.KITCHEN_TAB }),
   open_tiffin: p => ({ screen: ROUTES.GROWTH_TIFFIN_SUBSCRIBERS, params: { status: str(p.status) ?? 'pending' } }),
   open_catering: p => (str(p.code) ? { screen: ROUTES.GROWTH_CATERING_REQUEST, params: { code: str(p.code) } } : { screen: ROUTES.GROWTH_CATERING }),

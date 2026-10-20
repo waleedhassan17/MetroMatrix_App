@@ -15,12 +15,14 @@ import type { MockFoodOrder, MockFoodVendor } from '../food/foodTypes';
 import { installFoodHooks } from '../food/foodHooks';
 import type { FoodRouteKit } from '../food/foodRoutes';
 import type { ShopKit } from '../shop/shopRoutes';
-import { HOUR, afterMove, beforeMove, invalid, isoNow, itemBlocked, k, orderKitchenOf } from './kitchenLogic';
+import { HOUR, afterMove, beforeMove, invalid, isoNow, itemBlocked, k, orderKitchenOf, todayOf, vendorOf } from './kitchenLogic';
 import { registerKitchenRoutes } from './kitchenRoutes';
 import { registerSurplusRoutes, settleSurplus } from './surplusRoutes';
 import { planCardWire, registerTiffinRoutes } from './tiffinRoutes';
 import { settleTiffin } from './tiffinLogic';
 import { cateringSettingsOf, registerCateringRoutes } from './cateringRoutes';
+import { registerGrowthRoutes } from './growthRoutes';
+import { badgesOf, continueSales, dropOrderOf, ramadanSettingsOf, ramadanState, settleExperiments, signatureItemIds } from './growthLogic';
 import { addCardSource } from './insightCards';
 import { formatPKR } from '../../../../utils/money';
 import type { MockPauseInfo } from './kitchenTypes';
@@ -66,17 +68,28 @@ const settle = (db: MockDb, now: number): MockFoodOrder[] => {
     k(db).pauses = k(db).pauses.filter(x => x !== p);
   }
   settleSurplus(db, now);
+  // The demo kitchens keep selling as the clock moves; finished experiments wait for a decision.
+  continueSales(db, now);
+  settleExperiments(db, now);
   // Tiffin days past their cut-off become orders on the board.
   return settleTiffin(db, now);
 };
 
-/** The vendor page: tiffin plans on offer, and whether it takes catering (with its limits). */
-const pageExtras = (db: MockDb, v: MockFoodVendor) => {
+/** The vendor page: tiffin plans, catering, the kitchen's story, hygiene, signature dishes, Ramadan hours. */
+const pageExtras = (db: MockDb, v: MockFoodVendor, now: number) => {
   if (!db.kitchen) return {};
   const c = cateringSettingsOf(db, v.businessId);
+  const story = (k(db).stories ?? []).find(x => x.businessId === v.businessId);
+  const h = (k(db).hygiene ?? []).find(x => x.businessId === v.businessId);
+  const today = todayOf(v, now);
+  const r = ramadanState(db, today).state === 'active' ? ramadanSettingsOf(db, v.businessId) : null;
   return {
     tiffinPlans: k(db).tiffinPlans.filter(p => p.businessId === v.businessId && p.isActive).map(p => planCardWire(db, p)),
     catering: { open: c.open, minGuests: c.minGuests, leadDays: c.leadDays },
+    story: story ? { text: story.text, cookName: story.cookName, photoUrls: story.photoUrls, videoUrl: story.videoUrl } : null,
+    hygiene: { status: h && h.status !== 'none' ? (h.status === 'pending' || h.status === 'rejected' ? 'self_declared' : h.status) : 'none', checkedAt: h?.status === 'verified' ? h.reviewedAt : null },
+    signatureItemIds: signatureItemIds(db, v.businessId),
+    ramadan: r?.enabled ? { sehri: { from: r.sehriFrom, to: r.sehriTo }, iftar: { from: r.iftarFrom, to: r.iftarTo }, iftarPreorderOnly: r.iftarPreorderOnly } : null,
   };
 };
 
@@ -117,6 +130,20 @@ export function registerKitchen(food: FoodRouteKit, kit: Pick<ShopKit, 'requireU
         })),
       ];
     });
+    // A menu test that has finished and waits for the kitchen's decision (5B).
+    addCardSource((db, businessId) =>
+      (k(db).experiments ?? [])
+        .filter(e => e.businessId === businessId && e.status === 'done')
+        .slice(0, 1)
+        .map(e => ({
+          id: `experiment_result:${e.id}`,
+          kind: 'experiment_result',
+          severity: 'info' as const,
+          title: `${db.food.items.find(i => i.id === e.itemId)?.name ?? 'A dish'}: the test has a result`,
+          why: 'See how orders went, then keep the change, adjust it or go back.',
+          action: { kind: 'open_experiment' as const, label: 'See the result', params: { experimentId: e.id } },
+        })),
+    );
     installFoodHooks({
       itemBlocked: (db, v, i) => itemBlocked(db, v, i),
       beforeMove: (db, o, to) => beforeMove(db, o, to),
@@ -124,7 +151,8 @@ export function registerKitchen(food: FoodRouteKit, kit: Pick<ShopKit, 'requireU
       onPlaced: (db, o, body) => {
         if (!db.kitchen) return;
         const src = body.source as { kind?: unknown; slug?: unknown } | undefined;
-        if (src && (src.kind === 'link' || src.kind === 'qr')) orderKitchenOf(db, o.id).origin = { kind: src.kind, ref: typeof src.slug === 'string' ? src.slug : null };
+        // Counted only for the kitchen whose link or QR it came through.
+        if (src && (src.kind === 'link' || src.kind === 'qr') && src.slug === vendorOf(db, o.businessId).slug) orderKitchenOf(db, o.id).origin = { kind: src.kind, ref: src.slug };
       },
       orderExtras: (db, o) => orderExtras(db, o),
       boardExtras: (db, o) => orderExtras(db, o),
@@ -134,7 +162,9 @@ export function registerKitchen(food: FoodRouteKit, kit: Pick<ShopKit, 'requireU
         const p = v.isPaused ? pauseOf(db, v.businessId) : null;
         return { pauseReason: p?.reason ?? null, resumeAt: p?.resumeAt ?? null };
       },
-      pageExtras: (db, v) => pageExtras(db, v),
+      pageExtras: (db, v, now) => pageExtras(db, v, now),
+      cardExtras: (db, v, now) => (db.kitchen ? { badges: badgesOf(db, v, now) } : {}),
+      riderExtras: (db, o) => (db.kitchen ? { dropOrder: dropOrderOf(db, o) } : {}),
       settle,
     });
   }
@@ -143,4 +173,5 @@ export function registerKitchen(food: FoodRouteKit, kit: Pick<ShopKit, 'requireU
   registerSurplusRoutes(deps);
   registerTiffinRoutes(deps);
   registerCateringRoutes(deps);
+  registerGrowthRoutes(deps);
 }

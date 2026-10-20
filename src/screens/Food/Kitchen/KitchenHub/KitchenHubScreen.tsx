@@ -12,6 +12,8 @@ import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useLayoutClass } from '@hooks/useLayoutClass';
 import { cardTarget } from '@models/kitchen/insightCardModel';
 import { usageFill, usageLine, usageNote } from '@models/kitchen/aiModel';
+import { HYGIENE_STATUS } from '@models/kitchen/kitchenStatusModel';
+import { selectBusiness } from '@screens/Auth/authSlice';
 import { ServiceScope, useStyles, type Theme } from '@theme/index';
 import { AppText, Card, InlineNotice, InsightCard, ProgressBar, ScreenShell, SkeletonLines } from '@custom/index';
 import { IconWell, SectionHead, StatGrid, type AdminStat } from '@components/admin/AdminParts';
@@ -80,27 +82,80 @@ const tiles = (s: KitchenSummary, go: (name: string, params?: object) => void): 
     hint: `wasted this week · ${s.waste.mealsRescued} ${s.waste.mealsRescued === 1 ? 'meal' : 'meals'} rescued`,
     onPress: () => go('KitchenWaste'),
   },
-  {
-    key: 'tiffin',
-    icon: 'calendar-outline',
-    tint: 'amber',
-    label: 'Tiffin',
-    value: s.growth.tiffin.plans ? `${s.growth.tiffin.active}` : 'Start one',
-    hint: s.growth.tiffin.plans
-      ? `subscribers · ${s.growth.tiffin.tomorrow} tomorrow${s.growth.tiffin.pending ? ` · ${s.growth.tiffin.pending} to approve` : ''}`
-      : 'weekly or monthly meals, paid ahead',
-    onPress: () => go('GrowthTiffin'),
-  },
-  {
-    key: 'catering',
-    icon: 'people-outline',
-    tint: 'violet',
-    label: 'Catering',
-    value: s.growth.catering.new ? `${s.growth.catering.new} new` : `${s.growth.catering.upcoming}`,
-    hint: s.growth.catering.new ? `requests to quote · ${s.growth.catering.upcoming} coming up` : 'events coming up',
-    onPress: () => go('GrowthCatering'),
-  },
 ];
+
+/** Reaching customers (5B), each with its live number. Cloud kitchens see demand first. */
+const growTiles = (s: KitchenSummary, go: (name: string, params?: object) => void, cloud: boolean): AdminStat[] => {
+  const g = s.growth;
+  const tiles: AdminStat[] = [
+    {
+      key: 'tiffin',
+      icon: 'calendar-outline',
+      tint: 'amber',
+      label: 'Tiffin',
+      value: s.growth.tiffin.plans ? `${s.growth.tiffin.active}` : 'Start one',
+      hint: s.growth.tiffin.plans
+        ? `subscribers · ${s.growth.tiffin.tomorrow} tomorrow${s.growth.tiffin.pending ? ` · ${s.growth.tiffin.pending} to approve` : ''}`
+        : 'weekly or monthly meals, paid ahead',
+      onPress: () => go('GrowthTiffin'),
+    },
+    {
+      key: 'catering',
+      icon: 'people-outline',
+      tint: 'violet',
+      label: 'Catering',
+      value: s.growth.catering.new ? `${s.growth.catering.new} new` : `${s.growth.catering.upcoming}`,
+      hint: s.growth.catering.new ? `requests to quote · ${s.growth.catering.upcoming} coming up` : 'events coming up',
+      onPress: () => go('GrowthCatering'),
+    },
+    {
+      key: 'storefront',
+      icon: 'qr-code-outline',
+      tint: 'blue',
+      label: 'Your link and QR',
+      value: `${g.storefront.brought}`,
+      hint: 'orders you brought this month',
+      onPress: () => go('GrowthStorefront'),
+    },
+    {
+      key: 'demand',
+      icon: 'map-outline',
+      tint: 'rose',
+      label: 'Demand nearby',
+      value: g.demand.unmet.toLocaleString('en-US'),
+      hint: 'searches nearby found nothing open · 30 days',
+      onPress: () => go('GrowthDemand'),
+    },
+    {
+      key: 'menu',
+      icon: 'analytics-outline',
+      tint: 'violet',
+      label: 'Menu insights',
+      value: g.experiments.results ? `${g.experiments.results} to decide` : g.experiments.running ? `${g.experiments.running} testing` : 'See dishes',
+      hint: g.experiments.results ? 'tests with a result' : 'what sells, what earns, and tests',
+      onPress: () => go('GrowthMenuInsights'),
+    },
+    {
+      key: 'story',
+      icon: 'shield-checkmark-outline',
+      tint: 'amber',
+      label: 'Story and hygiene',
+      value: HYGIENE_STATUS[g.hygiene].vendorLabel,
+      hint: 'what customers read about you',
+      onPress: () => go('GrowthStory'),
+    },
+    {
+      key: 'ramadan',
+      icon: 'moon-outline',
+      tint: 'blue',
+      label: 'Ramadan mode',
+      value: g.ramadan.enabled ? 'On' : g.ramadan.state === 'none' ? 'Later' : 'Off',
+      hint: g.ramadan.state === 'none' ? 'opens a month before Ramadan' : 'sehri and iftar hours',
+      onPress: () => go('GrowthRamadan'),
+    },
+  ];
+  return cloud ? [...tiles.filter(t => t.key === 'demand'), ...tiles.filter(t => t.key !== 'demand')] : tiles;
+};
 
 const KitchenHubScreen: React.FC = () => (
   <ServiceScope service="food">
@@ -114,6 +169,7 @@ const KitchenHubContent: React.FC = () => {
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectKitchenHub);
   const tablet = useLayoutClass() === 'tablet';
+  const cloud = useAppSelector(selectBusiness)?.subType === 'cloud_kitchen';
 
   useFocusEffect(
     useCallback(() => {
@@ -167,6 +223,8 @@ const KitchenHubContent: React.FC = () => {
     <View style={styles.stack}>
       <SectionHead title="Your kitchen" />
       <StatGrid stats={tiles(s.summary, go)} />
+      <SectionHead title="Grow" />
+      <StatGrid stats={growTiles(s.summary, go, cloud)} />
     </View>
   ) : null;
 

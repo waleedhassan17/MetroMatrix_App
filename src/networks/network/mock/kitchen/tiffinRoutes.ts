@@ -11,7 +11,7 @@
 import type { MockDb, MockUser } from '../mockDb';
 import type { ShopCtx } from '../shop/shopRoutes';
 import type { MockFoodVendor } from '../food/foodTypes';
-import { isVisible } from '../food/foodDiscovery';
+import { distanceKm, isVisible } from '../food/foodDiscovery';
 import { addDays, isoWeekday } from '../../../../utils/healthTime';
 import type { MockMeal, MockTiffinPeriod, MockTiffinPlan, MockTiffinSub } from './kitchenTypes';
 import { DATE, KitchenError, invalid, isInt, isoNow, k, nextId, notFound, text, todayOf, vendorOf } from './kitchenLogic';
@@ -184,8 +184,24 @@ export function registerTiffinRoutes(kit: KitchenKit) {
     const key = text(ctx.query.vendor);
     const v = key ? ctx.db.food.vendors.find(x => (x.brandId === key || x.slug === key) && isVisible(ctx.db, x)) : undefined;
     if (key && !v) throw new KitchenError(404, 'NOT_FOUND', 'This vendor is not on Food Court.');
-    const plans = k(ctx.db).tiffinPlans.filter(p => p.isActive && (!v || p.businessId === v.businessId) && ctx.db.food.vendors.some(x => x.businessId === p.businessId && isVisible(ctx.db, x)));
-    return { items: plans.map(p => planWire(ctx.db, p, ctx.now)) };
+    // Near a point (the home's "Home-cooked tiffins"): kitchens whose delivery reaches it, nearest first.
+    const lat = Number(ctx.query.lat);
+    const lng = Number(ctx.query.lng);
+    const at = ctx.query.lat !== undefined && Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+    const reach = (businessId: string) => {
+      const x = ctx.db.food.vendors.find(y => y.businessId === businessId && isVisible(ctx.db, y));
+      if (!x) return null;
+      if (!at) return 0;
+      if (x.lat === null || x.lng === null) return null;
+      const d = distanceKm(at, { lat: x.lat, lng: x.lng });
+      return d <= (x.maxRadiusKm ?? 5) ? d : null;
+    };
+    const plans = k(ctx.db)
+      .tiffinPlans.filter(p => p.isActive && (!v || p.businessId === v.businessId))
+      .map(p => ({ p, d: reach(p.businessId) }))
+      .filter((x): x is { p: MockTiffinPlan; d: number } => x.d !== null)
+      .sort((a, b) => a.d - b.d);
+    return { items: plans.map(x => planWire(ctx.db, x.p, ctx.now)) };
   });
 
   route('GET', '/food/tiffin/plans/:id', ctx => {

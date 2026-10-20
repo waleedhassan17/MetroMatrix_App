@@ -611,7 +611,9 @@ products.forEach((p, pi) => {
 });
 
 // ─── Coupons ──────────────────────────────────────────
-const coupons: MockCoupon[] = [
+// Built when the shop is seeded (not when this file loads), so a code's
+// window is right for the seeding clock: tests set theirs after import.
+const seedCoupons = (): MockCoupon[] => [
   {
     id: 'cp_lawn10', storeId: 's_lawn', code: 'LAWN10', type: 'percent', value: 10, minOrder: 3000, maxDiscount: 500,
     startsAt: ago(10 * DAY), endsAt: ahead(30 * DAY), usageLimit: 100, perCustomerLimit: 1, usedCount: 14, usedBy: {}, isActive: true,
@@ -856,7 +858,7 @@ export const seedShop = (): MockShop =>
       orders,
       groups,
       returns,
-      coupons,
+      coupons: seedCoupons(),
       movements: [],
       banners,
       reports: [

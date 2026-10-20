@@ -184,6 +184,50 @@ const run = async () => {
   await call('cateringConfirm', 'post', `/food/vendor/catering/requests/${req.code}/advance/confirm`);
   await call('cateringCalendar', 'get', '/food/vendor/catering/calendar?month=2026-10');
   await call('cateringSettings', 'get', '/food/vendor/catering/settings');
+
+  // ── Growth (5B): Ramadan, storefront, demand, menu insights, experiments, story, hygiene, batching ──
+  jest.setSystemTime(T0);
+  await as('restaurant@metromatrix.app');
+  await call('ramadan', 'get', '/food/vendor/ramadan');
+  await call('ramadanClosed', 'put', '/food/vendor/ramadan', { enabled: true });
+  await call('storefront', 'get', '/food/vendor/storefront');
+  await call('demand', 'get', '/food/vendor/demand');
+  await call('menuInsights', 'get', '/food/vendor/menu-insights');
+  const ex = await call('experimentStart', 'post', '/food/vendor/experiments', { itemId: 'mi_seekh', change: { kind: 'price', price: 990 }, days: 3 });
+  await call('experiments', 'get', '/food/vendor/experiments');
+  await call('story', 'get', '/food/vendor/story');
+  await call('storyPut', 'put', '/food/vendor/story', { text: 'Three brothers from Gujranwala, cooking biryani the way our father did since 1998.', cookName: 'Imran Qureshi', photoUrls: ['https://res.cloudinary.com/demo/kitchen.jpg'] });
+  // Two deliveries to the same street: the second rides with the first.
+  await as('customer@metromatrix.app', 'customer');
+  await clearFoodCart();
+  await addToFoodCart({ vendorId: 'fb_resto', itemId: 'mi_naan', variantId: null, optionIds: [], quantity: 10, notes: null }, true);
+  const second = await placeFoodOrder({ addressId: 'ad_customer_home', paymentMethod: 'cod', promoCode: null, cutlery: false, note: null, building: null, floor: null, riderInstructions: null }, 'k2');
+  await as('restaurant@metromatrix.app');
+  await api.post(`/food/vendor/orders/${second.id}/accept`, { etaMinutes: 25 });
+  await call('batch', 'get', `/food/vendor/orders/${second.id}/batch-suggestions`);
+  await as('nani@metromatrix.app');
+  await call('hygiene', 'get', '/food/vendor/hygiene');
+  await call('hygieneItem', 'put', '/food/vendor/hygiene/items/water', { done: true, evidenceUrl: 'https://res.cloudinary.com/demo/filter.jpg' });
+  await call('hygieneRequest', 'post', '/food/vendor/hygiene/request-verification');
+  await clearTokens();
+  const staff = await authSignin({ email: 'admin@metromatrix.app', password: STAFF_PASSWORD, portal: 'admin' });
+  if (staff.kind === 'totp') await authAdminTotp(staff.challenge.challengeToken, { code: MOCK.TOTP_CODE });
+  await call('hygieneQueue', 'get', '/admin/kitchen/hygiene?status=pending');
+  await call('hygieneVerify', 'post', '/admin/kitchen/hygiene/b_nani/verify');
+  await as('customer@metromatrix.app', 'customer');
+  await call('iftar', 'get', '/food/ramadan/iftar?lat=31.5102&lng=74.3441');
+  await call('tiffinNearby', 'get', '/food/tiffin/plans?lat=31.5102&lng=74.3441');
+  // Four days on: the price test has finished, with a result.
+  jest.setSystemTime(T0 + 4 * 86_400_000);
+  await as('restaurant@metromatrix.app');
+  await call('experimentDone', 'get', `/food/vendor/experiments/${ex.id}`);
+  await call('experimentKeep', 'post', `/food/vendor/experiments/${ex.id}/keep`);
+  // In Ramadan: the kitchen turns it on, and it shows in "Iftar near you".
+  jest.setSystemTime(new Date('2027-02-12T08:00:00Z').getTime());
+  await as('restaurant@metromatrix.app');
+  await call('ramadanOn', 'put', '/food/vendor/ramadan', { enabled: true, iftar: { from: '17:45', to: '19:15' } });
+  await as('customer@metromatrix.app', 'customer');
+  await call('iftarOpen', 'get', '/food/ramadan/iftar?lat=31.5102&lng=74.3441');
   if (process.env.DUMP_CONTRACT) fs.writeFileSync(process.env.DUMP_CONTRACT, JSON.stringify(out, null, 2));
 };
 
@@ -224,6 +268,7 @@ it('documents every request the dummy kitchen API answers, with the same keys', 
   // Same shapes as a documented example (a plan, a subscription, a request, or a list of them).
   SETUP.push('tiffinPlans', 'tiffinPlanCreate', 'tiffinPlansPublic', 'tiffinSubscribe', 'tiffinSubscribers', 'tiffinProof', 'tiffinSubscriptions', 'tiffinPeriodConfirm');
   SETUP.push('cateringQuote', 'cateringQuote2', 'cateringProof', 'cateringRequests', 'cateringConfirm');
+  SETUP.push('experiments', 'storyPut', 'hygieneItem', 'hygieneQueue', 'hygieneVerify', 'experimentKeep', 'tiffinNearby', 'story', 'iftar');
   const undocumented = Object.keys(out).filter(name => !(name in docs) && !SETUP.includes(name));
   expect({ mismatched, undocumented }).toEqual({ mismatched: [], undocumented: [] });
 });

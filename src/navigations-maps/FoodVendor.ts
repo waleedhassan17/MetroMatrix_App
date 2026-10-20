@@ -62,6 +62,12 @@ import TiffinSubscribersScreen from '../screens/Food/Growth/TiffinSubscribers/Ti
 import CateringScreen from '../screens/Food/Growth/Catering/CateringScreen';
 import CateringRequestScreen from '../screens/Food/Growth/CateringRequest/CateringRequestScreen';
 import QuoteBuilderScreen from '../screens/Food/Growth/QuoteBuilder/QuoteBuilderScreen';
+import RamadanModeScreen from '../screens/Food/Growth/RamadanMode/RamadanModeScreen';
+import StorefrontScreen from '../screens/Food/Growth/Storefront/StorefrontScreen';
+import DemandMapScreen from '../screens/Food/Growth/DemandMap/DemandMapScreen';
+import MenuInsightsScreen from '../screens/Food/Growth/MenuInsights/MenuInsightsScreen';
+import MenuExperimentScreen from '../screens/Food/Growth/MenuExperiment/MenuExperimentScreen';
+import StoryAndHygieneScreen from '../screens/Food/Growth/StoryAndHygiene/StoryAndHygieneScreen';
 import ChangePasswordScreen from '../screens/Account/ChangePassword/ChangePasswordScreen';
 import NotificationsScreen from '../screens/Account/Notifications/NotificationsScreen';
 
@@ -137,6 +143,12 @@ export const FOOD_VENDOR_STACK_ROUTES: IRoute[] = [
   { title: ROUTES.GROWTH_CATERING, component: CateringScreen },
   { title: ROUTES.GROWTH_CATERING_REQUEST, component: CateringRequestScreen },
   { title: ROUTES.GROWTH_QUOTE, component: QuoteBuilderScreen },
+  { title: ROUTES.GROWTH_RAMADAN, component: RamadanModeScreen },
+  { title: ROUTES.GROWTH_STOREFRONT, component: StorefrontScreen },
+  { title: ROUTES.GROWTH_DEMAND, component: DemandMapScreen },
+  { title: ROUTES.GROWTH_MENU_INSIGHTS, component: MenuInsightsScreen },
+  { title: ROUTES.GROWTH_EXPERIMENT, component: MenuExperimentScreen },
+  { title: ROUTES.GROWTH_STORY, component: StoryAndHygieneScreen },
   { title: ROUTES.PAYMENT_ACCOUNTS, component: PaymentAccountsScreen },
   { title: ROUTES.PROFILE, component: ProfileScreen },
   { title: ROUTES.CHANGE_PASSWORD, component: ChangePasswordScreen },

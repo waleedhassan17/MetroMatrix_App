@@ -13,7 +13,16 @@ const enc = encodeURIComponent;
 
 /** One Idempotency-Key per attempt: a retry can never place the order twice. */
 export const placeFoodOrder = (input: FoodCheckoutInput, idempotencyKey: string) =>
-  request(() => api.post('/food/checkout', orderDetails(input), { headers: { 'Idempotency-Key': idempotencyKey } }), foodOrderSerializer);
+  request(
+    () =>
+      api.post(
+        '/food/checkout',
+        // The kitchen's own link or QR it came through (TODO(API_KITCHEN): docs/API_KITCHEN_ASSUMED.md §5).
+        { ...orderDetails(input), ...(input.source ? { source: { kind: input.source.kind, slug: input.source.slug } } : null) },
+        { headers: { 'Idempotency-Key': idempotencyKey } },
+      ),
+    foodOrderSerializer,
+  );
 
 export const listFoodOrders = (status: 'active' | 'past', page: number, pageSize: number) =>
   request(() => api.get('/food/orders', { params: { status, page, pageSize } }), foodOrdersPageSerializer);

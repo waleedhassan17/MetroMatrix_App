@@ -8,6 +8,11 @@
 // wrong now (stock below zero, food cost over target).
 
 import type {
+  ExperimentStatus,
+  ExperimentVerdict,
+  HygieneStatus,
+  Quadrant,
+  RamadanState,
   BoxStatus,
   CateringMode,
   CateringStatus,
@@ -224,3 +229,44 @@ export const TIFFIN_PERIOD_PAYMENT: Partial<Record<FoodPaymentStatus, { label: s
 };
 
 export const tiffinPaymentStatus = (s: FoodPaymentStatus) => TIFFIN_PERIOD_PAYMENT[s] ?? { label: 'Payment', vendorLabel: 'Payment', tone: 'neutral' as KitchenTone };
+
+// ── Reaching customers (5B) ──
+export const RAMADAN_STATE: Record<RamadanState, { label: string; tone: KitchenTone }> = {
+  active: { label: 'Ramadan now', tone: 'accent' },
+  upcoming: { label: 'Coming up', tone: 'neutral' },
+  none: { label: 'Not now', tone: 'neutral' },
+};
+
+/** Menu insights' four groups, in plain words (never "plowhorse" or "dog"). */
+export const QUADRANT: Record<Quadrant, { label: string; hint: string; tone: KitchenTone }> = {
+  star: { label: 'Sells and earns', hint: 'Many order it, and it earns well.', tone: 'success' },
+  plowhorse: { label: 'Sells, earns little', hint: 'Many order it, but you keep little on each.', tone: 'warning' },
+  puzzle: { label: 'Earns, sells little', hint: 'You keep a lot on each, but few order it.', tone: 'accent' },
+  dog: { label: 'Sells little, earns little', hint: 'Few order it, and it earns little.', tone: 'neutral' },
+  unknown: { label: 'No recipe card', hint: 'Add its recipe card to see what it earns.', tone: 'neutral' },
+};
+
+export const QUADRANT_ORDER: Quadrant[] = ['star', 'plowhorse', 'puzzle', 'dog', 'unknown'];
+
+export const EXPERIMENT_STATUS: Record<ExperimentStatus, { label: string; tone: KitchenTone }> = {
+  running: { label: 'Running', tone: 'accent' },
+  done: { label: 'Result ready', tone: 'warning' },
+  kept: { label: 'Kept', tone: 'success' },
+  adjusted: { label: 'Adjusted', tone: 'success' },
+  dropped: { label: 'Went back', tone: 'neutral' },
+  stopped: { label: 'Stopped early', tone: 'neutral' },
+};
+
+export const VERDICT: Record<ExperimentVerdict, { label: string; hint: string; tone: KitchenTone }> = {
+  keep: { label: 'Keep it', hint: 'Sales held up or grew with the change.', tone: 'success' },
+  adjust: { label: 'Adjust it', hint: 'About the same as before. Try a smaller change.', tone: 'warning' },
+  drop: { label: 'Go back', hint: 'Fewer orders than before. The old one did better.', tone: 'neutral' },
+};
+
+export const HYGIENE_STATUS: Record<HygieneStatus, { label: string; vendorLabel: string; tone: KitchenTone }> = {
+  none: { label: 'Not declared', vendorLabel: 'Tick the checklist', tone: 'neutral' },
+  self_declared: { label: 'Hygiene self-declared', vendorLabel: 'Self-declared', tone: 'neutral' },
+  pending: { label: 'Hygiene self-declared', vendorLabel: 'Verification requested', tone: 'warning' },
+  verified: { label: 'Hygiene verified', vendorLabel: 'Verified by MetroMatrix', tone: 'success' },
+  rejected: { label: 'Hygiene self-declared', vendorLabel: 'Needs another look', tone: 'warning' },
+};

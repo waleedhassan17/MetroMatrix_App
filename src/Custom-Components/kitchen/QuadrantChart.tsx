@@ -10,6 +10,7 @@ import { AppText } from '../AppText';
 import { ListRow } from '../ListRow';
 import { useChartWidth } from '../shopping/charts/chartShared';
 import { useScreenReader } from './kitchenShared';
+import { QUADRANT } from '../../models/kitchen/kitchenStatusModel';
 
 export type Quadrant = 'star' | 'plowhorse' | 'puzzle' | 'dog';
 
@@ -23,13 +24,13 @@ export interface QuadrantPoint {
   quadrant: Quadrant;
 }
 
+/** The corners' plain words (the ONE map: kitchenStatusModel). */
 export const QUADRANT_LABEL: Record<Quadrant, string> = {
-  star: 'Popular and profitable',
-  plowhorse: 'Popular, low margin',
-  puzzle: 'Profitable, rarely ordered',
-  dog: 'Rarely ordered, low margin',
+  star: QUADRANT.star.label,
+  plowhorse: QUADRANT.plowhorse.label,
+  puzzle: QUADRANT.puzzle.label,
+  dog: QUADRANT.dog.label,
 };
-
 const makeStyles = ({ space, size }: Theme) =>
   StyleSheet.create({
     root: { gap: space.s8 },
@@ -60,7 +61,9 @@ export const QuadrantChart: React.FC<{ points: QuadrantPoint[]; onPress: (id: st
   }
 
   const x = (v: number) => pad + v * (width - pad * 2);
-  const y = (v: number) => h - pad - v * (h - pad * 2);
+  // Room above and below for the corner words, so no dot sits on them.
+  const padY = space.s32;
+  const y = (v: number) => h - padY - v * (h - padY * 2);
   const dot = size.quadrantDot;
   return (
     <View style={styles.root}>

@@ -9,6 +9,7 @@ import { Image } from 'expo-image';
 import { useStyles, useTheme, type Theme } from '../../theme';
 import { AppText } from '../AppText';
 import { IonIcon } from '../Icon';
+import { BadgeRow } from '../kitchen/BadgeRow';
 import { cdn } from '../../utils/cdn';
 import { cardLine, closedLabel, cuisineLine, ratingLabel } from '../../models/food/discoveryModel';
 import type { VendorCard as VendorCardData } from '../../types/food';
@@ -124,6 +125,8 @@ export const VendorCard: React.FC<VendorCardProps> = ({ vendor: v, onPress, comp
         <AppText variant="small" tone="muted" numberOfLines={1}>
           {cardLine(v, pickup)}
         </AppText>
+        {/* Kitchen Intelligence's badges (the photo already says "Home kitchen"). */}
+        {!compact ? <BadgeRow badges={(v.badges ?? []).filter(b => b !== 'home_kitchen').slice(0, 3)} /> : null}
       </View>
     </Pressable>
   );

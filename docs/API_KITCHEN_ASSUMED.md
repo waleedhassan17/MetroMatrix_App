@@ -916,6 +916,21 @@ minutes from now if later, for two hours (ending by 1:30 AM):
     "catering": {
       "new": 0,
       "upcoming": 0
+    },
+    "storefront": {
+      "brought": 0
+    },
+    "demand": {
+      "unmet": 612
+    },
+    "experiments": {
+      "running": 0,
+      "results": 0
+    },
+    "hygiene": "verified",
+    "ramadan": {
+      "state": "none",
+      "enabled": false
     }
   }
 }
@@ -1586,6 +1601,394 @@ settings:
 ```
 
 
+### 2.11 Ramadan (5B)
+
+The event comes from the staff calendar (`/admin/kitchen/calendar-events`). A kitchen can turn
+Ramadan mode on from 30 days before the first fast (`opensOn`) to the last.
+
+<!-- contract: ramadan -->
+```json
+{
+  "event": {
+    "name": "Ramadan 1448",
+    "startsOn": "2027-02-08",
+    "endsOn": "2027-03-09"
+  },
+  "state": "none",
+  "opensOn": "2027-01-09",
+  "enabled": false,
+  "sehri": {
+    "from": "02:30",
+    "to": "04:30",
+    "label": "2:30 AM – 4:30 AM"
+  },
+  "iftar": {
+    "from": "17:30",
+    "to": "19:00",
+    "label": "5:30 PM – 7:00 PM"
+  },
+  "iftarPreorderOnly": true
+}
+```
+
+Turned on in Ramadan (`PUT` answers the same shape):
+
+<!-- contract: ramadanOn -->
+```json
+{
+  "event": {
+    "name": "Ramadan 1448",
+    "startsOn": "2027-02-08",
+    "endsOn": "2027-03-09"
+  },
+  "state": "active",
+  "opensOn": "2027-01-09",
+  "enabled": true,
+  "sehri": {
+    "from": "02:30",
+    "to": "04:30",
+    "label": "2:30 AM – 4:30 AM"
+  },
+  "iftar": {
+    "from": "17:45",
+    "to": "19:15",
+    "label": "5:45 PM – 7:15 PM"
+  },
+  "iftarPreorderOnly": true
+}
+```
+
+Outside that window:
+
+<!-- contract: ramadanClosed -->
+```json
+{
+  "error": {
+    "code": "RAMADAN_NOT_ACTIVE",
+    "message": "Ramadan mode opens on 2027-01-09, a month before the first fast.",
+    "details": {
+      "event": {
+        "name": "Ramadan 1448",
+        "startsOn": "2027-02-08"
+      },
+      "opensOn": "2027-01-09"
+    }
+  }
+}
+```
+
+"Iftar near you" (`GET /food/ramadan/iftar?lat&lng`): kitchens within 10 km with Ramadan mode
+on, nearest first. Outside Ramadan `items` is empty and `state` says why.
+
+<!-- contract: iftarOpen -->
+```json
+{
+  "state": "active",
+  "event": {
+    "name": "Ramadan 1448",
+    "startsOn": "2027-02-08",
+    "endsOn": "2027-03-09"
+  },
+  "items": [
+    {
+      "vendorId": "fb_resto",
+      "slug": "biryani-bazaar",
+      "name": "Biryani Bazaar",
+      "logoUrl": "https://placehold.co/256x256/B45309/FFFFFF/png?text=BB",
+      "coverUrl": "https://images.unsplash.com/photo-1559528896-c5310744cce8",
+      "distanceKm": 0,
+      "iftar": {
+        "from": "17:45",
+        "to": "19:15",
+        "label": "5:45 PM – 7:15 PM"
+      },
+      "preorderOnly": true
+    }
+  ]
+}
+```
+
+### 2.12 Storefront and demand (5B)
+
+<!-- contract: storefront -->
+```json
+{
+  "url": "https://metromatrix.app/s/biryani-bazaar",
+  "qrUrl": "https://metromatrix.app/s/biryani-bazaar?via=qr",
+  "slug": "biryani-bazaar",
+  "name": "Biryani Bazaar",
+  "shareText": "Order from Biryani Bazaar on Food Court: https://metromatrix.app/s/biryani-bazaar\nYou pay the kitchen directly; no commission is taken.",
+  "stats": {
+    "month": "2026-10",
+    "link": 0,
+    "qr": 0,
+    "app": 1,
+    "tiffin": 0
+  }
+}
+```
+
+`stats` counts this month's orders by where they came from (`origin.kind`, §5).
+
+<!-- contract: demand -->
+```json
+{
+  "city": "Lahore",
+  "center": {
+    "lat": 31.5102,
+    "lng": 74.3441
+  },
+  "radiusKm": 8,
+  "minCount": 10,
+  "total": 1593,
+  "hidden": 97,
+  "cells": [
+    {
+      "geohash": "ttsg7c",
+      "sw": {
+        "lat": 31.51428,
+        "lng": 74.34448
+      },
+      "ne": {
+        "lat": 31.51978,
+        "lng": 74.35547
+      },
+      "searches": 53,
+      "unmetShare": 0.23
+    },
+    {
+      "geohash": "ttsg5z",
+      "sw": {
+        "lat": 31.5033,
+        "lng": 74.34448
+      },
+      "ne": {
+        "lat": 31.50879,
+        "lng": 74.35547
+      },
+      "searches": 52,
+      "unmetShare": 0.44
+    }
+  ],
+  "topUnmet": [
+    {
+      "query": "sushi",
+      "searches": 116,
+      "unmetShare": 0.91,
+      "hour": 22
+    },
+    {
+      "query": "halwa puri",
+      "searches": 118,
+      "unmetShare": 0.75,
+      "hour": 0
+    }
+  ],
+  "hourCurve": {
+    "area": [0.77, 0.7, 0.28, 0, 0, 0, 0, 0, 0.4, 0.35, 0.39, 0, 0.34, 0.66, 0.33, 0.3, 0, 0.38, 0, 0.37, 0.7, 0.73, 0.81, 1],
+    "own": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+  }
+}
+```
+
+### 2.13 Menu insights and experiments (5B)
+
+<!-- contract: menuInsights -->
+```json
+{
+  "range": "30d",
+  "medians": {
+    "sold": 174,
+    "keep": 431.5
+  },
+  "items": [
+    {
+      "itemId": "mi_chicken_biryani",
+      "name": "Chicken Biryani",
+      "photoUrl": "https://images.unsplash.com/photo-1559528896-c5310744cce8",
+      "price": 650,
+      "hasSizes": true,
+      "sold": 449,
+      "keep": 424,
+      "keepPct": 65,
+      "popularity": 1,
+      "profit": 0.38,
+      "quadrant": "plowhorse",
+      "suggestion": {
+        "kind": "price",
+        "text": "Popular but earns little. Look at its recipe card for savings.",
+        "price": null
+      },
+      "experimentRunning": false
+    },
+    {
+      "itemId": "mi_seekh",
+      "name": "Seekh Kebab (4 pcs)",
+      "photoUrl": "https://images.unsplash.com/photo-1626323109697-df55d20f06a8",
+      "price": 900,
+      "hasSizes": false,
+      "sold": 237,
+      "keep": 593,
+      "keepPct": 66,
+      "popularity": 0.53,
+      "profit": 0.53,
+      "quadrant": "star",
+      "suggestion": {
+        "kind": "keep",
+        "text": "Sells well and earns well. Keep it where people see it first.",
+        "price": null
+      },
+      "experimentRunning": false
+    }
+  ]
+}
+```
+
+<!-- contract: experimentStart -->
+```json
+{
+  "id": "ex_12bj",
+  "itemId": "mi_seekh",
+  "itemName": "Seekh Kebab (4 pcs)",
+  "change": {
+    "kind": "price",
+    "price": 990,
+    "oldPrice": 900
+  },
+  "days": 3,
+  "startedAt": "2026-10-15T10:00:00.000Z",
+  "endsAt": "2026-10-18T10:00:00.000Z",
+  "status": "running",
+  "progress": {
+    "daysIn": 0,
+    "days": 3
+  },
+  "result": null,
+  "decidedAt": null
+}
+```
+
+When it ends:
+
+<!-- contract: experimentDone -->
+```json
+{
+  "id": "ex_12bj",
+  "itemId": "mi_seekh",
+  "itemName": "Seekh Kebab (4 pcs)",
+  "change": {
+    "kind": "price",
+    "price": 990,
+    "oldPrice": 900
+  },
+  "days": 3,
+  "startedAt": "2026-10-15T10:00:00.000Z",
+  "endsAt": "2026-10-18T10:00:00.000Z",
+  "status": "done",
+  "progress": {
+    "daysIn": 3,
+    "days": 3
+  },
+  "result": {
+    "verdict": "keep",
+    "before": {
+      "perDay": 7,
+      "salesPerDay": 6300
+    },
+    "during": {
+      "perDay": 7.3,
+      "salesPerDay": 7227
+    }
+  },
+  "decidedAt": null
+}
+```
+
+### 2.14 Story, hygiene, batching (5B)
+
+<!-- contract: storyPut -->
+```json
+{
+  "text": "Three brothers from Gujranwala, cooking biryani the way our father did since 1998.",
+  "cookName": "Imran Qureshi",
+  "photoUrls": [
+    "https://res.cloudinary.com/demo/kitchen.jpg"
+  ],
+  "videoUrl": null,
+  "updatedAt": "2026-10-15T10:00:00.000Z"
+}
+```
+
+<!-- contract: hygiene -->
+```json
+{
+  "status": "self_declared",
+  "note": null,
+  "items": [
+    {
+      "key": "clean_kitchen",
+      "label": "Kitchen and counters cleaned every day",
+      "done": true,
+      "evidenceUrl": null
+    },
+    {
+      "key": "water",
+      "label": "Filtered or boiled water for cooking",
+      "done": true,
+      "evidenceUrl": null
+    }
+  ],
+  "requestedAt": null,
+  "reviewedAt": null,
+  "canRequest": true
+}
+```
+
+After `POST /food/vendor/hygiene/request-verification`:
+
+<!-- contract: hygieneRequest -->
+```json
+{
+  "status": "pending",
+  "note": null,
+  "items": [
+    {
+      "key": "clean_kitchen",
+      "label": "Kitchen and counters cleaned every day",
+      "done": true,
+      "evidenceUrl": null
+    },
+    {
+      "key": "water",
+      "label": "Filtered or boiled water for cooking",
+      "done": true,
+      "evidenceUrl": "https://res.cloudinary.com/demo/filter.jpg"
+    }
+  ],
+  "requestedAt": "2026-10-15T10:00:00.000Z",
+  "reviewedAt": null,
+  "canRequest": false
+}
+```
+
+Orders that could ride with this one (`GET /food/vendor/orders/:id/batch-suggestions`):
+
+<!-- contract: batch -->
+```json
+{
+  "items": [
+    {
+      "orderId": "fo_2w2dv",
+      "code": "FC-Y9H2X6",
+      "extraKm": 0,
+      "sameDirection": true,
+      "readyAt": "2026-10-15T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+
 ## 3. Rules
 
 ### 3.1 Stock moves first-expiring first
@@ -1752,6 +2155,54 @@ The vendor's own profile `branch` shows both (§5).
 - **Declining and cancelling.** The kitchen declines a request it can't take (with a reason); the
   customer cancels before paying the advance. A confirmed event is `completed` once its day has
   passed.
+
+### 3.11 Ramadan
+
+- `state` is `active` from `startsOn` to `endsOn`, `upcoming` from `opensOn` (30 days before),
+  else `none`. `PUT` outside `upcoming | active` answers `409 RAMADAN_NOT_ACTIVE { event,
+  opensOn }`.
+- Windows are kitchen-local `HH:MM`, `from` before `to`. With `iftarPreorderOnly` the kitchen
+  takes orders for the iftar window only as scheduled orders (Food's `scheduledFor`).
+- The vendor page carries `ramadan { sehri, iftar, iftarPreorderOnly }` while it is on, else `null` (§5).
+
+### 3.12 Demand, menu insights, experiments
+
+- **Demand** is built from anonymous searches (geohash-6 cell, hour, cuisine, whether an open
+  kitchen was found), the last 30 days, within 8 km of the kitchen. A cell with fewer than
+  `minCount` (10) searches is never sent; `hidden` counts the searches left out. No search is
+  ever tied to a person. `unmetShare` is the share of searches that found no open kitchen.
+  `hourCurve.area` is the area's searches by kitchen-local hour; `own` is this kitchen's orders.
+- **Menu insights** compare the last 30 days. `popularity` and `profit` are 0–1 against the
+  menu's best; a dish is a `star` (sold and `keep` both at or above the menu's medians), a
+  `plowhorse` (sells, earns little), a `puzzle` (earns, sells little), a `dog` (neither), or
+  `unknown` without a recipe card (`keep` is null).
+- **Experiments**: one change to one dish, for 3–14 days: a new price (dishes without sizes,
+  within 40% of today's; with sizes `422 EXPERIMENT_NOT_SUPPORTED`) or a new photo. One at a time
+  per dish (`409 EXPERIMENT_RUNNING`), three at a time per kitchen (`409 EXPERIMENT_LIMIT { max }`).
+  The change applies at once (the menu shows it). At the end `result` compares the same number of
+  days before and during: for a price, sales per day (`salesPerDay`, orders × price) up 3% or more
+  is `keep`, within 3% `adjust`, else `drop`; for a photo, orders per day up 5% is `keep`, within
+  5% `adjust`, else `drop`. The kitchen settles it with `keep`, `adjust { price }` (prices only,
+  within 40% of the old one) or `drop` (the old price or photo comes back); `stop` ends a running
+  test early, also putting the old one back.
+
+### 3.13 Story, hygiene, badges, batching
+
+- **Story**: 20–600 characters, a cook's name (2–60), up to 6 photos and one short video,
+  uploaded with the purpose `food_story`; checklist evidence uses `hygiene_evidence`.
+- **Hygiene**: the kitchen ticks the six checklist items (a photo is optional evidence); with all
+  six it is `self_declared` (before that `none`). `request-verification` needs all six
+  (`422 HYGIENE_INCOMPLETE { missing }`) and makes it `pending`; staff verify it, or reject it with
+  a note (`rejected`, which can be requested again). The vendor page shows only `status` and
+  `checkedAt`.
+- **Badges** on vendor cards: `signature` (a dish the kitchen marks as its signature on its recipe card; staff can remove it), `hygiene_verified`,
+  `hygiene_self_declared` (also while `pending`), `home_kitchen`, `bachat_today` (a Bachat Box
+  open today).
+- **Batching**: the kitchen's other delivery orders that are accepted, preparing or ready, with no
+  rider yet (or this order's rider), whose drop is within 3 km of this one's (`extraKm`).
+  `sameDirection` when the two drops lie within 45° of each other as seen from the kitchen; those
+  come first, then the nearest. A rider carrying two or more of the kitchen's orders gets
+  `dropOrder { position, of }` on each, nearest the kitchen first.
 
 ## 4. Endpoints
 
@@ -1955,12 +2406,12 @@ payment `tiffin_plan`).
 | Area | Routes |
 |---|---|
 | Ramadan | `GET/PUT /food/vendor/ramadan` (`{ enabled, sehri { from, to }, iftar { from, to }, iftarPreorderOnly }`; `409 RAMADAN_NOT_ACTIVE` outside an event or 30 days before it); `GET /food/ramadan/iftar?lat&lng` |
-| Storefront | `GET /food/vendor/storefront` → `{ url, slug, shareText, stats { month, link, qr, app } }`; checkout's `source` (§5) counts orders by channel |
-| Demand | `GET /food/vendor/demand?cuisine&hour` → `{ city, minCount, cells [{ geohash, sw, ne, searches, unmetShare }], topUnmet [{ query, hour, unmetShare, searches }], hourCurve { area[24], own[24] } }`; cells under `minCount` (10) are never sent |
+| Storefront | `GET /food/vendor/storefront` → `{ url, qrUrl, slug, name, shareText, stats { month, link, qr, app, tiffin } }` (§2.12); checkout's `source` (§5) counts orders by channel |
+| Demand | `GET /food/vendor/demand?cuisine&hour` → `{ city, center, radiusKm, minCount, total, hidden, cells [{ geohash, sw, ne, searches, unmetShare }], topUnmet [{ query, searches, unmetShare, hour }], hourCurve { area[24], own[24] } }`; cells under `minCount` (10) are never sent |
 | Menu insights | `GET /food/vendor/menu-insights?range=30d` → items with `popularity`, `profit` (0–1 against the menu), `quadrant: star\|plowhorse\|puzzle\|dog`, `suggestion` |
 | Experiments | `GET/POST /food/vendor/experiments` (`{ itemId, change: { kind: price, price } \| { kind: photo, photoUrl }, days (3–14) }`), `GET /experiments/:id` (progress, `result { verdict: keep\|adjust\|drop, before, during }`), `POST /experiments/:id/{keep,adjust,drop}` |
 | Story and hygiene | `GET/PUT /food/vendor/story` (`{ text, cookName, photoUrls ≤ 6, videoUrl? }`); `GET /food/vendor/hygiene` (`{ status: self_declared\|pending\|verified\|rejected, note, items [{ key, label, done, evidenceUrl }] }`), `PUT /hygiene/items/:key`, `POST /hygiene/request-verification` |
-| Batching | `GET /food/vendor/orders/:id/batch-suggestions` → `[{ orderId, code, extraKm, sameDirection, readyAt }]`; rider orders carry `dropOrder` (§5) |
+| Batching | `GET /food/vendor/orders/:id/batch-suggestions` → `{ items [{ orderId, code, extraKm, sameDirection, readyAt }] }`; rider orders carry `dropOrder` (§5) |
 
 ### 4.7 The assistant, nutrition, My Kitchen (5C)
 
@@ -1990,7 +2441,7 @@ Customers (`/my-kitchen`):
 | GET / POST / PATCH | `/nutrition-foods` (+ CSV import) | per 100 g / 100 ml / piece |
 | GET / POST / DELETE | `/aliases` | `{ word, language: ur\|roman_ur\|en, key }` |
 | GET / POST / PATCH / DELETE | `/calendar-events` | `{ kind: ramadan\|eid\|holiday, name, startsOn, endsOn, city? }` |
-| GET | `/hygiene?status=pending`; POST `/hygiene/:vendorId/{verify,reject} { note }` | |
+| GET | `/hygiene?status=pending\|verified\|rejected`; POST `/hygiene/:businessId/{verify,reject} { note }` | a note (3–300) is required to reject |
 | GET | `/signatures`; POST `/signatures/:itemId/{approve,remove} { note }` | |
 | GET | `/demand?city&cuisine&hour` | platform-wide, the same anonymity rule |
 | GET | `/lookup?code` | a tiffin (`TF-`) or catering (`CT-`) code |
@@ -2020,7 +2471,7 @@ capture carries one**: it has shipped then, and is reconciled.
 | Checkout body | `source { kind: link\|qr, slug }` | the storefront link or QR it came through (5B) |
 | `RiderOrder` | `dropOrder { position, of }` | a batched delivery (5B) |
 | `VendorCard` | `badges[]` | `signature, hygiene_verified, hygiene_self_declared, home_kitchen, bachat_today` (5B), `under_600, high_protein` (5C) |
-| `VendorPage` | `story`, `hygiene`, `signatureItemIds`, `tiffinPlans [{ id, name, meal, days, period, price, perMeal, window, seatsLeft, photoUrl }]`, `catering { open, minGuests, leadDays }` | 5B |
+| `VendorPage` | `story`, `hygiene { status, checkedAt }`, `signatureItemIds`, `ramadan`, `tiffinPlans [{ id, name, meal, days, period, price, perMeal, window, seatsLeft, photoUrl }]`, `catering { open, minGuests, leadDays }` | 5B |
 | Dish (menu card, item sheet, search) | `nutrition`, `descriptionUr`, `isSignature` | 5B–5C |
 | `GET /food/search` | `?nutrition=under_600\|high_protein` | 5C |
 | Payment method | `tiffin_plan` | an order a tiffin period paid for (5B) |
@@ -2049,7 +2500,11 @@ capture carries one**: it has shipped then, and is reconciled.
 | `QUOTE_EXPIRED` | 409 | `validUntil` (5B) |
 | `CATERING_CLOSED` | 409 | (5B) |
 | `ADDRESS_REQUIRED`, `ADDRESS_LOCATION_REQUIRED` | 422 | (5B) |
-| `RAMADAN_NOT_ACTIVE` | 409 | `event` (5B) |
+| `RAMADAN_NOT_ACTIVE` | 409 | `event`, `opensOn` (5B) |
+| `EXPERIMENT_RUNNING` | 409 | (5B) |
+| `EXPERIMENT_LIMIT` | 409 | `max` (5B) |
+| `EXPERIMENT_NOT_SUPPORTED` | 422 | (5B) |
+| `HYGIENE_INCOMPLETE` | 422 | `missing` (5B) |
 | `AI_UNAVAILABLE`, `AI_QUOTA_REACHED`, `CLIP_TOO_LONG` | 503 / 429 / 413 | `docs/AI_ASSUMED.md`, `docs/VOICE_ASSUMED.md` |
 
 Reused codes:
@@ -2108,6 +2563,18 @@ The other demo kitchens:
   sent a first quote.
 
 City prices cover Lahore, Karachi and Islamabad for 8 weeks.
+
+Reaching customers (5B):
+- **Ramadan 1448** is on the staff calendar from 8 February to 9 March 2027 (approximate, editable
+  by staff), with Eid ul-Fitr after it; kitchens can turn Ramadan mode on from 9 January.
+- **2,400 anonymous searches** over the last 30 days across nine Lahore neighbourhoods. Halwa puri,
+  haleem and sushi go unfound most often, mostly late at night.
+- The demo kitchens keep selling in the dummy API as its clock moves, so a menu test reports a
+  result when it ends (a price change moves orders by about −1.3× its size; a new photo adds about
+  12%).
+- **Nani ki Handi** has a story (Shazia Parveen) and a self-declared hygiene checklist, ready to
+  ask for verification; **Biryani Bazaar** is verified.
+- A kitchen's link is `https://metromatrix.app/s/<slug>`, and its QR adds `?via=qr`.
 
 ## 10. When the real document arrives
 

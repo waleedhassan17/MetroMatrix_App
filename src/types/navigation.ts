@@ -16,6 +16,8 @@ import type { VoiceQtyLine } from './kitchen';
 /** BaseNavigator: onboarding, sign-in and every session gate. */
 export type RootStackParamList = {
   Onboarding: undefined;
+  /** A kitchen's own page from its link or QR (`via: 'qr'` from a scan). */
+  PublicStore: { slug: string; via?: 'qr' | 'link' };
   RoleSelection: undefined;
   ProviderSelection: undefined;
   SignIn: { email?: string } | undefined;
@@ -194,7 +196,8 @@ export type FoodAppParamList = {
   FoodVendors: { title?: string; cuisine?: string; rail?: string; pickup?: boolean } | undefined;
   FoodSearch: { q?: string } | undefined;
   /** A vendor's page (by slug); `dish` opens that dish's sheet. */
-  FoodVendor: { slug: string; dish?: string };
+  /** `via`: opened from the kitchen's own link or QR (/s/:slug while signed in). */
+  FoodVendor: { slug: string; dish?: string; via?: 'qr' | 'link' };
   FoodBag: undefined;
   FoodCheckout: undefined;
   /** Straight after checkout: the order's code (its page reads the rest). */
@@ -356,6 +359,14 @@ export type FoodVendorStackParamList = {
   GrowthCateringRequest: { code: string };
   /** A new quote (version) for a request. */
   GrowthQuote: { code: string };
+  GrowthRamadan: undefined;
+  GrowthStorefront: undefined;
+  GrowthDemand: undefined;
+  /** `itemId` opens that dish's sheet. */
+  GrowthMenuInsights: { itemId?: string } | undefined;
+  GrowthExperiment: { id: string };
+  /** `focus: 'hygiene'` puts the checklist first. */
+  GrowthStory: { focus?: 'story' | 'hygiene' } | undefined;
   PaymentAccounts: undefined;
   Profile: undefined;
   ChangePassword: undefined;

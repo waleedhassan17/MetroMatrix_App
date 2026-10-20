@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════
 
 import type { SubType } from './auth';
-import type { PauseReason, TiffinPlanCard } from './kitchen';
+import type { HygieneStatus, KitchenStory, PauseReason, StoreSource, TiffinPlanCard, VendorBadge } from './kitchen';
 
 export type KitchenKind = Extract<SubType, 'restaurant' | 'home_kitchen' | 'cloud_kitchen'>;
 
@@ -270,6 +270,8 @@ export interface RiderOrder {
   codCollected: number | null;
   readyAt: string | null;
   promisedAt: string | null;
+  /** On a run of two or more of the kitchen's orders (§5; TODO(API_KITCHEN)). */
+  dropOrder: { position: number; of: number } | null;
 }
 
 /** Cash a rider holds for their vendor, and its entries (newest first). */
@@ -488,6 +490,8 @@ export interface VendorCard {
   fulfilment: { delivery: boolean; pickup: boolean };
   preorderOnly: boolean;
   openState: { open: boolean; paused: boolean; label: string; opensAt: string | null };
+  /** Kitchen Intelligence's addition (§5; TODO(API_KITCHEN)). */
+  badges: VendorBadge[];
 }
 
 export interface FoodHome {
@@ -579,6 +583,11 @@ export interface VendorPage extends VendorCard {
   /** Kitchen Intelligence's additions (docs/API_KITCHEN_ASSUMED.md §5; TODO(API_KITCHEN)). */
   tiffinPlans: TiffinPlanCard[];
   catering: { open: boolean; minGuests: number; leadDays: number } | null;
+  story: Omit<KitchenStory, 'updatedAt'> | null;
+  hygiene: { status: HygieneStatus; checkedAt: string | null };
+  signatureItemIds: string[];
+  /** While the kitchen keeps Ramadan hours. */
+  ramadan: { sehri: { from: string; to: string }; iftar: { from: string; to: string }; iftarPreorderOnly: boolean } | null;
 }
 
 export interface SheetOption {
@@ -751,6 +760,8 @@ export interface FoodCheckoutInput {
   building: string | null;
   floor: string | null;
   riderInstructions: string | null;
+  /** The kitchen's own link or QR the order came through (§5; TODO(API_KITCHEN)). */
+  source?: StoreSource | null;
 }
 
 export interface FoodOrderSummary {

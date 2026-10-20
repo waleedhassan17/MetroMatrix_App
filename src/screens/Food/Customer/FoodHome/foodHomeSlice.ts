@@ -5,21 +5,27 @@
 // top rated, fastest, home kitchens…), or "not delivering here yet" with the
 // pick-up places nearby. The point itself is a device preference
 // (preferences.foodPoint); the list under the rails is paged by the screen.
-// Bachat Boxes nearby (tonight's surplus, for pickup) ride along; without
+// Bachat Boxes nearby (tonight's surplus, for pickup), home-cooked tiffin
+// plans and, in Ramadan, kitchens keeping iftar hours ride along; without
 // them the home is the same (TODO(API_KITCHEN)).
 
 import { createAppSlice } from '@store/createAppSlice';
 import { getFoodHome } from '@networks/food/discoveryNetwork';
 import { listSurplusNearby } from '@networks/food/surplusNetwork';
+import { listTiffinPlansNear } from '@networks/foodGrowth/tiffinNetwork';
+import { listIftarNearby } from '@networks/foodGrowth/ramadanNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import { currentPoint } from '../../../../services/location';
 import { setFoodPoint } from '@store/preferencesSlice';
-import type { FoodHome, SurplusCard } from '@/types';
+import type { FoodHome, IftarKitchen, SurplusCard, TiffinPlan } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 
 export interface FoodHomeSliceState {
   home: FoodHome | null;
   surplus: SurplusCard[];
+  tiffins: TiffinPlan[];
+  /** Kitchens keeping iftar hours nearby (in Ramadan only). */
+  iftar: IftarKitchen[];
   /** "lat,lng" the home was built for. */
   builtFor: string | null;
   status: FormStatus;
@@ -33,6 +39,8 @@ export interface FoodHomeSliceState {
 const initialState: FoodHomeSliceState = {
   home: null,
   surplus: [],
+  tiffins: [],
+  iftar: [],
   builtFor: null,
   status: 'idle',
   refreshing: false,
@@ -58,8 +66,16 @@ export const foodHomeSlice = createAppSlice({
     loadFoodHomeAsync: create.asyncThunk(
       async ({ lat, lng }: { lat: number; lng: number; refresh?: boolean }, { rejectWithValue }) => {
         try {
-          const [home, surplus] = await Promise.all([getFoodHome(lat, lng), listSurplusNearby({ lat, lng }).catch(() => [] as SurplusCard[])]);
-          return { home, surplus };
+          // The extras never hold the home back: a failure is an empty rail.
+          const [home, surplus, tiffins, iftar] = await Promise.all([
+            getFoodHome(lat, lng),
+            listSurplusNearby({ lat, lng }).catch(() => [] as SurplusCard[]),
+            listTiffinPlansNear({ lat, lng }).catch(() => [] as TiffinPlan[]),
+            listIftarNearby({ lat, lng })
+              .then(r => (r.state === 'active' ? r.items : []))
+              .catch(() => [] as IftarKitchen[]),
+          ]);
+          return { home, surplus, tiffins, iftar };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -79,6 +95,8 @@ export const foodHomeSlice = createAppSlice({
           state.refreshing = false;
           state.home = action.payload.home;
           state.surplus = action.payload.surplus;
+          state.tiffins = action.payload.tiffins;
+          state.iftar = action.payload.iftar;
           state.builtFor = pointKey(action.meta.arg);
         },
         rejected: (state, action) => {

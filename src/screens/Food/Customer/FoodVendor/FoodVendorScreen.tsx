@@ -8,7 +8,7 @@
 // opens its sheet. The fee is the vendor's own: MetroMatrix takes nothing.
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, SectionList, StyleSheet, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ViewToken } from 'react-native';
+import { Linking, Pressable, ScrollView, SectionList, StyleSheet, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ViewToken } from 'react-native';
 import { Image } from 'expo-image';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -20,8 +20,11 @@ import { useBack } from '@hooks/useBack';
 import { categoryWindowLabel } from '@models/food/menuModel';
 import { cuisineLine, distanceLabel, feeLabel, ratingLabel } from '@models/food/discoveryModel';
 import { ServiceScope, StoreBrandScope, useStyles, useTheme, type Theme } from '@theme/index';
-import { AppText, Button, Card, ChoiceChip, Divider, IconButton, IonIcon, InlineNotice, ListRow, Sheet, Skeleton, SkeletonLines, TextAction, TiffinPlanCard } from '@custom/index';
+import { AppText, BadgeRow, Button, Card, ChoiceChip, Divider, IconButton, IonIcon, InlineNotice, ListRow, Sheet, Skeleton, SkeletonLines, TextAction, TiffinPlanCard } from '@custom/index';
 import { planCardData } from '@models/kitchen/tiffinModel';
+import { windowText } from '@models/kitchen/reachModel';
+import { HYGIENE_STATUS } from '@models/kitchen/kitchenStatusModel';
+import { formatOn } from '@utils/healthTime';
 import { MenuDishRow } from '@custom/food/MenuDishRow';
 import { BagBar } from '@custom/food/BagBar';
 import { FoodReviewItem } from '@custom/food/FoodReviewItem';
@@ -31,7 +34,7 @@ import { callNumber, navigateTo } from '@utils/maps';
 import { cdn } from '@utils/cdn';
 import { formatPKR } from '@utils/money';
 import { formatPkPhoneForDisplay } from '@utils/phone';
-import { selectFoodPoint } from '@store/preferencesSlice';
+import { selectFoodPoint, setStoreSource } from '@store/preferencesSlice';
 import { loadVendorPageAsync, selectVendorPage } from './foodVendorSlice';
 import { openItemSheetAsync } from './itemSheetSlice';
 import { ItemSheetView } from './ItemSheetView';
@@ -105,9 +108,13 @@ const blockedReasonOf = (p: VendorPage): string | null => {
 };
 
 const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
-  const { slug, dish } = route.params;
+  const { slug, dish, via } = route.params;
   const { back } = useBack({ name: 'FoodTabs' });
   const dispatch = useAppDispatch();
+  // Opened from the kitchen's own link or QR: the order that follows counts as one it brought.
+  useEffect(() => {
+    if (via) dispatch(setStoreSource({ kind: via, slug, at: Date.now(), opened: true }));
+  }, [dispatch, via, slug]);
   const styles = useStyles(makeStyles);
   const { colors, size, space, gutter } = useTheme();
   const insets = useSafeAreaInsets();
@@ -229,6 +236,7 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
   );
 
   const reviewCount = page.ratingSummary ? page.ratingSummary.recent.length : 0;
+  const signature = page.signatureItemIds.length ? page.menu.flatMap(m => m.items).filter((d, i, all) => page.signatureItemIds.includes(d.id) && all.findIndex(x => x.id === d.id) === i) : [];
   const openReviews = () => navigation.navigate('FoodReviews', { id: page.id, name: page.name, slug: page.slug });
 
   const header = (
@@ -258,6 +266,7 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
             <IonIcon name="star" size="sm" color={colors.star} />
             <AppText variant="small">{`${ratingLabel(page)} · ${cuisineLine(page)}${page.isHomeKitchen ? ' · Home kitchen' : ''}`}</AppText>
           </Pressable>
+          <BadgeRow badges={page.badges.filter(b => b !== 'home_kitchen')} />
         </View>
         <View style={styles.facts}>
           <View style={styles.fact}>
@@ -299,6 +308,18 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
           {page.freeDeliveryOver && page.delivery?.available && page.delivery.fee > 0 ? (
             <AppText variant="small" tone="accentDeep">{`Free delivery on orders over ${formatPKR(page.freeDeliveryOver)}`}</AppText>
           ) : null}
+          {page.ramadan ? (
+            <Card>
+              <View style={styles.dawatRow}>
+                <IonIcon name="moon-outline" size="md" color={colors.inkMuted} />
+                <View style={styles.dawat}>
+                  <AppText variant="title">Ramadan hours</AppText>
+                  <AppText variant="small">{`Sehri ${windowText(page.ramadan.sehri)}`}</AppText>
+                  <AppText variant="small">{`Iftar ${windowText(page.ramadan.iftar)}${page.ramadan.iftarPreorderOnly ? ' · order ahead' : ''}`}</AppText>
+                </View>
+              </View>
+            </Card>
+          ) : null}
         </View>
         {/* Tiffin plans and catering (Kitchen Intelligence, 5B) */}
         {page.tiffinPlans.length ? (
@@ -339,6 +360,35 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
             ))}
           </ScrollView>
         ) : null}
+        {signature.length ? (
+          <View style={styles.padded}>
+            <AppText variant="sectionTitle">Signature dishes</AppText>
+            <AppText variant="small" tone="muted">
+              The kitchen’s own recipes
+            </AppText>
+          </View>
+        ) : null}
+        {signature.length ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
+            {signature.map(d => (
+              <Pressable key={d.id} style={styles.popular} onPress={() => void dispatch(openItemSheetAsync(d.id))} accessibilityRole="button" accessibilityLabel={`Signature dish: ${d.name}, ${formatPKR(d.fromPrice)}`}>
+                <View style={styles.popularPhoto}>
+                  {d.photoUrl ? (
+                    <Image source={{ uri: cdn(d.photoUrl, { w: size.railCard, h: size.railCard }) ?? undefined }} style={styles.fill} contentFit="cover" />
+                  ) : (
+                    <IonIcon name="ribbon-outline" size="lg" color={colors.inkFaint} />
+                  )}
+                </View>
+                <AppText variant="small" numberOfLines={2}>
+                  {d.name}
+                </AppText>
+                <AppText variant="small" tone="accentDeep">
+                  {d.hasVariants ? `from ${formatPKR(d.fromPrice)}` : formatPKR(d.fromPrice)}
+                </AppText>
+              </Pressable>
+            ))}
+          </ScrollView>
+        ) : null}
         {page.popular.length ? (
           <View style={styles.padded}>
             <AppText variant="sectionTitle">Popular</AppText>
@@ -371,6 +421,41 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
             <RatingSummary summary={page.ratingSummary} />
             {page.ratingSummary.recent[0] ? <FoodReviewItem review={page.ratingSummary.recent[0]} vendorName={page.name} /> : null}
             <TextAction label="See all reviews" icon="chatbox-ellipses-outline" onPress={openReviews} />
+          </View>
+        ) : null}
+        {page.story || page.hygiene.status !== 'none' ? (
+          <View style={styles.padded}>
+            <AppText variant="sectionTitle">{page.story ? 'Our story' : 'Hygiene'}</AppText>
+            {page.story ? (
+              <>
+                {page.story.cookName ? <AppText variant="bodyStrong">{`Cooked by ${page.story.cookName}`}</AppText> : null}
+                <AppText variant="body">{page.story.text}</AppText>
+              </>
+            ) : null}
+          </View>
+        ) : null}
+        {page.story?.photoUrls.length ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
+            {page.story.photoUrls.map((u, n) => (
+              <View key={u} style={styles.popularPhoto}>
+                <Image source={{ uri: cdn(u, { w: size.railCard, h: size.railCard }) ?? undefined }} style={styles.fill} contentFit="cover" accessibilityLabel={`${page.name}: kitchen photo ${n + 1}`} />
+              </View>
+            ))}
+          </ScrollView>
+        ) : null}
+        {page.story?.videoUrl || page.hygiene.status !== 'none' ? (
+          <View style={styles.padded}>
+            {page.story?.videoUrl ? <TextAction label="Watch the kitchen’s video" icon="play-circle-outline" onPress={() => void Linking.openURL(page.story!.videoUrl!)} /> : null}
+            {page.hygiene.status !== 'none' ? (
+              <View style={styles.fact}>
+                <IonIcon name={page.hygiene.status === 'verified' ? 'shield-checkmark-outline' : 'shield-outline'} size="sm" color={colors.inkMuted} />
+                <AppText variant="small" tone="muted">
+                  {page.hygiene.status === 'verified'
+                    ? `${HYGIENE_STATUS.verified.label} by MetroMatrix${page.hygiene.checkedAt ? ` · checked ${formatOn(page.hygiene.checkedAt)}` : ''}`
+                    : `${HYGIENE_STATUS.self_declared.label} by the kitchen`}
+                </AppText>
+              </View>
+            ) : null}
           </View>
         ) : null}
       </View>

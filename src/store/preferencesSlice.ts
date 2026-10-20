@@ -9,7 +9,7 @@ import { createAppSlice } from './createAppSlice';
 import type { ServiceName } from '../theme/services';
 import { resetAllState } from './resetAllState';
 import type { FoodPoint } from '../types/food';
-import type { VoiceLanguage } from '../types/kitchen';
+import type { StoreSource, VoiceLanguage } from '../types/kitchen';
 
 /** Recent Shopping searches kept on the device. */
 export const MAX_RECENT_SEARCHES = 10;
@@ -32,6 +32,11 @@ export interface PreferencesSliceState {
   micExplained?: boolean;
   /** The kitchen board speaks new orders (this device's speaker). */
   announce?: AnnounceLanguage;
+  /**
+   * The kitchen's own link or QR this device came through, and when. Sent
+   * with the next order from that kitchen (signing in on the way keeps it).
+   */
+  storeSource?: (StoreSource & { at: number; opened?: boolean }) | null;
 }
 
 export type AnnounceLanguage = 'off' | 'ur' | 'en';
@@ -101,6 +106,13 @@ export const preferencesSlice = createAppSlice({
     setAnnounce: create.reducer((state, action: PayloadAction<AnnounceLanguage>) => {
       state.announce = action.payload;
     }),
+    setStoreSource: create.reducer((state, action: PayloadAction<(StoreSource & { at: number; opened?: boolean }) | null>) => {
+      state.storeSource = action.payload;
+    }),
+    /** The kitchen's page was opened for it (after signing in): once is enough. */
+    markStoreSourceOpened: create.reducer(state => {
+      if (state.storeSource) state.storeSource.opened = true;
+    }),
   }),
 
   // The device keeps its settings across accounts; a person's searches go with them.
@@ -124,6 +136,7 @@ export const preferencesSlice = createAppSlice({
     selectVoiceLanguage: state => state.voiceLanguage ?? 'auto',
     selectMicExplained: state => !!state.micExplained,
     selectAnnounce: state => state.announce ?? 'off',
+    selectStoreSource: state => state.storeSource ?? null,
   },
 });
 
@@ -142,6 +155,8 @@ export const {
   setVoiceLanguage,
   setMicExplained,
   setAnnounce,
+  setStoreSource,
+  markStoreSourceOpened,
 } = preferencesSlice.actions;
 
 export const {
@@ -154,4 +169,5 @@ export const {
   selectVoiceLanguage,
   selectMicExplained,
   selectAnnounce,
+  selectStoreSource,
 } = preferencesSlice.selectors;

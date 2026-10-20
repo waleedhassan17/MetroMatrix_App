@@ -16,6 +16,7 @@ import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { useRiderChannel } from '@hooks/useFoodLive';
 import { RIDER_ACTION, RIDER_DECLINE_REASONS, primaryRiderStep, riderStepLabel, waitingForKitchen } from '@models/food/foodStatusModel';
+import { dropOrderLabel } from '@models/kitchen/reachModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Button, Card, Divider, IconButton, InlineNotice, IonIcon, ScreenShell, Sheet, SkeletonLines, TextField } from '@custom/index';
 import { ChoiceLine } from '@custom/food/ChoiceLine';
@@ -142,7 +143,7 @@ const RiderOrderContent: React.FC<Props> = ({ route }) => {
   return (
     <ScreenShell
       title={o.code}
-      subtitle={active ? riderStepLabel(o.riderStep ?? 'assigned', 'rider') : o.statusLabel}
+      subtitle={active ? [riderStepLabel(o.riderStep ?? 'assigned', 'rider'), dropOrderLabel(o.dropOrder)].filter(Boolean).join(' · ') : o.statusLabel}
       onBack={back}
       scroll
       padded={false}
@@ -161,6 +162,13 @@ const RiderOrderContent: React.FC<Props> = ({ route }) => {
         {ui.actionError.message && !ui.sheet ? <InlineNotice message={ui.actionError.message} /> : null}
         {waiting ? <InlineNotice tone="info" message={`${o.pickup.name} is still cooking. Picked up opens once they mark it ready.`} /> : null}
         {active && me.mode === 'denied' ? <InlineNotice tone="warning" message="Location is off for MetroMatrix: the customer can’t see you coming." /> : null}
+        {active && o.dropOrder ? (
+          <InlineNotice
+            tone="info"
+            title={dropOrderLabel(o.dropOrder)!}
+            message={`You carry ${o.dropOrder.of} orders from ${o.pickup.name}. ${o.dropOrder.position === 1 ? 'Drop this one first.' : `Drop this one after the ${o.dropOrder.position === 2 ? 'first' : `first ${o.dropOrder.position - 1}`}.`}`}
+          />
+        ) : null}
 
         {o.cashToCollect > 0 ? (
           <View style={[styles.cash, { backgroundColor: service.accentSoft }]}>

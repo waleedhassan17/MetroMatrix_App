@@ -86,7 +86,8 @@ const orderDetails = (b: Record<string, any>, paymentRequired: boolean): PlanInp
   const riderInstructions = optText(b, 'riderInstructions', 200);
   if ((paymentRequired || has(b, 'paymentMethod')) && !PAYMENT_METHODS.includes(b.paymentMethod))
     throw invalid('paymentMethod', `paymentMethod must be one of the following values: ${PAYMENT_METHODS.join(', ')}`);
-  return { addressId: b.addressId, promoCode, paymentMethod: b.paymentMethod, cutlery: b.cutlery, note, building, floor, riderInstructions };
+  // `source` is Kitchen Intelligence's addition (foodHooks.onPlaced reads it).
+  return { addressId: b.addressId, promoCode, paymentMethod: b.paymentMethod, cutlery: b.cutlery, note, building, floor, riderInstructions, ...(has(b, 'source') ? { source: b.source } : null) };
 };
 
 const reasonOf = (b: Record<string, any>) => {

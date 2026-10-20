@@ -205,6 +205,13 @@ import { tiffinSubscribersSlice } from '../screens/Food/Growth/TiffinSubscribers
 import { cateringSlice } from '../screens/Food/Growth/Catering/cateringSlice';
 import { cateringRequestSlice } from '../screens/Food/Growth/CateringRequest/cateringRequestSlice';
 import { quoteBuilderSlice } from '../screens/Food/Growth/QuoteBuilder/quoteBuilderSlice';
+import { ramadanModeSlice } from '../screens/Food/Growth/RamadanMode/ramadanModeSlice';
+import { storefrontSlice } from '../screens/Food/Growth/Storefront/storefrontSlice';
+import { demandMapSlice } from '../screens/Food/Growth/DemandMap/demandMapSlice';
+import { menuInsightsSlice } from '../screens/Food/Growth/MenuInsights/menuInsightsSlice';
+import { menuExperimentSlice } from '../screens/Food/Growth/MenuExperiment/menuExperimentSlice';
+import { storyAndHygieneSlice } from '../screens/Food/Growth/StoryAndHygiene/storyAndHygieneSlice';
+import { publicStoreSlice } from '../screens/Food/Customer/PublicStore/publicStoreSlice';
 import { foodTiffinPlanSlice } from '../screens/Food/Customer/FoodTiffinPlan/foodTiffinPlanSlice';
 import { foodTiffinsSlice } from '../screens/Food/Customer/FoodTiffins/foodTiffinsSlice';
 import { foodTiffinSlice } from '../screens/Food/Customer/FoodTiffin/foodTiffinSlice';
@@ -408,6 +415,13 @@ const rootReducer = combineReducers({
   catering: cateringSlice.reducer,
   cateringRequest: cateringRequestSlice.reducer,
   quoteBuilder: quoteBuilderSlice.reducer,
+  ramadanMode: ramadanModeSlice.reducer,
+  storefront: storefrontSlice.reducer,
+  demandMap: demandMapSlice.reducer,
+  menuInsights: menuInsightsSlice.reducer,
+  menuExperiment: menuExperimentSlice.reducer,
+  storyAndHygiene: storyAndHygieneSlice.reducer,
+  publicStore: publicStoreSlice.reducer,
   foodTiffinPlan: foodTiffinPlanSlice.reducer,
   foodTiffins: foodTiffinsSlice.reducer,
   foodTiffin: foodTiffinSlice.reducer,

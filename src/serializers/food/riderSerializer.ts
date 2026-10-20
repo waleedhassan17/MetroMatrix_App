@@ -105,12 +105,14 @@ export const riderOrderSerializer = (raw: unknown): RiderOrder | null => {
     itemCount: Math.max(0, Math.round(num(raw.itemCount))),
     cutlery: bool(raw.cutlery),
     note: strOrNull(raw.note),
-    payment: { method: (['cod', 'transfer', 'pay_at_pickup'].includes(String(pay.method)) ? pay.method : 'cod') as FoodPaymentMethod, status: str(pay.status, 'cod_pending') as FoodPaymentStatus },
+    payment: { method: (['cod', 'transfer', 'pay_at_pickup', 'tiffin_plan'].includes(String(pay.method)) ? pay.method : 'cod') as FoodPaymentMethod, status: str(pay.status, 'cod_pending') as FoodPaymentStatus },
     total: Math.max(0, Math.round(num(raw.total))),
     cashToCollect: Math.max(0, Math.round(num(raw.cashToCollect))),
     codCollected: numOrNull(raw.codCollected),
     readyAt: isoOrNull(raw.readyAt),
     promisedAt: isoOrNull(raw.promisedAt),
+    // Kitchen Intelligence's addition (TODO(API_KITCHEN)).
+    dropOrder: isObject(raw.dropOrder) && num(raw.dropOrder.of) >= 2 ? { position: Math.max(1, Math.round(num(raw.dropOrder.position, 1))), of: Math.round(num(raw.dropOrder.of)) } : null,
   };
 };
 

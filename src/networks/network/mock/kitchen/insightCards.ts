@@ -8,6 +8,7 @@
 
 import type { MockDb } from '../mockDb';
 import { dayOf } from './tiffinLogic';
+import { demandWire, ramadanState, storefrontWire } from './growthLogic';
 import { addDays } from '../../../../utils/healthTime';
 import { formatPKR } from '../../../../utils/money';
 import { formatQty } from '../../../../utils/units';
@@ -282,6 +283,8 @@ export const summaryWire = (db: MockDb, businessId: string, now: number) => {
 
 /** Tiffin and catering at a glance (5B). */
 const growthSummary = (db: MockDb, businessId: string, today: string, now: number) => {
+  const v = vendorOf(db, businessId);
+  const experiments = (k(db).experiments ?? []).filter(e => e.businessId === businessId);
   const subs = (k(db).tiffinSubs ?? []).filter(s => s.businessId === businessId);
   const tomorrow = addDays(today, 1);
   const requests = (k(db).catering ?? []).filter(r => r.businessId === businessId);
@@ -296,6 +299,16 @@ const growthSummary = (db: MockDb, businessId: string, today: string, now: numbe
       new: requests.filter(r => r.status === 'requested').length,
       upcoming: requests.filter(r => ['accepted', 'confirmed'].includes(r.status) && r.date >= today).length,
     },
+    // Reaching customers (5B, §2.11–2.14).
+    storefront: { brought: (({ link, qr }) => link + qr)(storefrontWire(db, v, now).stats) },
+    demand: { unmet: (d => d.cells.reduce((n, c) => n + Math.round(c.searches * c.unmetShare), 0))(demandWire(db, v, { cuisine: null, hour: null }, now)) },
+    experiments: {
+      running: experiments.filter(e => e.status === 'running').length,
+      results: experiments.filter(e => e.status === 'done').length,
+    },
+    // Read without making a row (a GET writes nothing).
+    hygiene: (k(db).hygiene ?? []).find(h => h.businessId === businessId)?.status ?? 'none',
+    ramadan: { state: ramadanState(db, today).state, enabled: (k(db).ramadan ?? []).find(r => r.businessId === businessId)?.enabled ?? false },
   };
 };
 

@@ -29,6 +29,16 @@ export const pickImageFromLibrary = async (options: { square?: boolean } = {}): 
   return fromImageAsset(result.assets[0], `photo_${Date.now()}.jpg`);
 };
 
+/** A short video (a kitchen's story): up to a minute, from the library. */
+export const pickVideoFromLibrary = async (): Promise<LocalFile | null> => {
+  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (!permission.granted) return null;
+  const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['videos'], videoMaxDuration: 60, quality: 0.7 });
+  if (result.canceled || !result.assets?.[0]) return null;
+  const a = result.assets[0];
+  return { ...fromImageAsset(a, `video_${Date.now()}.mp4`), mimeType: a.mimeType ?? 'video/mp4' };
+};
+
 export const takePhoto = async (): Promise<LocalFile | null> => {
   const permission = await ImagePicker.requestCameraPermissionsAsync();
   if (!permission.granted) return null;

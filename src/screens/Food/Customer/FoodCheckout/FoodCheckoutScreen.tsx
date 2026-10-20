@@ -25,7 +25,8 @@ import type { FoodAppParamList, FoodIssue, FoodPaymentMethod } from '@/types';
 import { haptics } from '@utils/haptics';
 import { formatPKR } from '@utils/money';
 import { formatPkPhoneForDisplay } from '@utils/phone';
-import { selectFoodPoint } from '@store/preferencesSlice';
+import { selectFoodPoint, selectStoreSource, setStoreSource } from '@store/preferencesSlice';
+import { storeSourceFor } from '@models/kitchen/reachModel';
 import { EMPTY_FOOD_CART } from '@serializers/food/orderSerializer';
 import { loadAddressesAsync, selectAddressBook } from '../../../Account/AddressBook/addressBookSlice';
 import { loadFoodBagAsync, selectFoodBag, setFoodBag, setFoodBagModeAsync } from '../FoodBag/foodBagSlice';
@@ -102,6 +103,7 @@ const FoodCheckoutContent: React.FC<Props> = ({ navigation }) => {
   const bag = useAppSelector(selectFoodBag);
   const book = useAppSelector(selectAddressBook);
   const point = useAppSelector(selectFoodPoint);
+  const storeSource = useAppSelector(selectStoreSource);
   const vendor = bag.cart.vendor;
   const page = useAppSelector(st => (vendor ? selectVendorPage(st, vendor.slug).page : null));
   const delivery = (bag.cart.fulfilment ?? 'delivery') === 'delivery';
@@ -183,9 +185,12 @@ const FoodCheckoutContent: React.FC<Props> = ({ navigation }) => {
   const place = async () => {
     if (!canPlace || !preview) return;
     haptics.press();
-    const r = await dispatch(placeFoodOrderAsync({ input, key: c.idempotencyKey }));
+    // Came through the kitchen's own link or QR: the order says so (it counts as theirs).
+    const source = storeSourceFor(storeSource, vendor?.slug, Date.now());
+    const r = await dispatch(placeFoodOrderAsync({ input: { ...input, source }, key: c.idempotencyKey }));
     if (placeFoodOrderAsync.fulfilled.match(r)) {
       haptics.success();
+      if (source) dispatch(setStoreSource(null));
       dispatch(setFoodBag(EMPTY_FOOD_CART));
       dispatch(newFoodCheckoutKey());
       // The bag and checkout leave the history: back from "Order placed"

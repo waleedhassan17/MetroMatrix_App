@@ -23,6 +23,7 @@ export const FOOD_ADDITIONS: Record<string, string> = {
   signatureItemIds: 'vendor page: dishes marked as signature recipes',
   tiffinPlans: 'vendor page: tiffin plans on offer',
   catering: 'vendor page: whether it takes catering requests, the fewest guests and days ahead',
+  ramadan: 'vendor page: sehri and iftar hours while Ramadan mode is on',
   // Dishes (menu card, item sheet, search) (5C).
   nutrition: 'dish: estimated calories and macros',
   descriptionUr: 'dish: the Urdu description',

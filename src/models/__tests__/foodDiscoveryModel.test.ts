@@ -130,6 +130,7 @@ describe('the dish sheet', () => {
 });
 
 const card = (over: Partial<VendorCard> = {}): VendorCard => ({
+  badges: [],
   id: 'fb',
   slug: 'biryani-bazaar',
   name: 'Biryani Bazaar',

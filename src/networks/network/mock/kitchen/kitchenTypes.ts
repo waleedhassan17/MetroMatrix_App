@@ -372,6 +372,71 @@ export interface MockCateringSettings {
   leadDays: number;
 }
 
+// ── Growth (5B): Ramadan, demand, experiments, story, hygiene ──
+/** A date that changes what kitchens offer (Ramadan; staff can correct the dates). */
+export interface MockCalendarEvent {
+  id: string;
+  kind: 'ramadan' | 'eid' | 'other';
+  name: string;
+  startsOn: string;
+  endsOn: string;
+}
+
+export interface MockRamadanSettings {
+  businessId: string;
+  enabled: boolean;
+  sehriFrom: string;
+  sehriTo: string;
+  iftarFrom: string;
+  iftarTo: string;
+  iftarPreorderOnly: boolean;
+}
+
+/** One anonymous search: where (to about a kilometre), when, what, and whether an open kitchen matched. */
+export interface MockSearchLog {
+  at: string;
+  lat: number;
+  lng: number;
+  hour: number;
+  cuisine: string | null;
+  text: string;
+  foundOpen: boolean;
+}
+
+export type MockExperimentChange = { kind: 'price'; price: number; oldPrice: number } | { kind: 'photo'; photoUrl: string; oldPhotoUrl: string | null };
+
+export interface MockExperiment {
+  id: string;
+  businessId: string;
+  itemId: string;
+  change: MockExperimentChange;
+  days: number;
+  startedAt: string;
+  endsAt: string;
+  status: 'running' | 'done' | 'kept' | 'adjusted' | 'dropped' | 'stopped';
+  decidedAt: string | null;
+}
+
+export interface MockStory {
+  businessId: string;
+  text: string;
+  cookName: string;
+  photoUrls: string[];
+  videoUrl: string | null;
+  updatedAt: string;
+}
+
+export type MockHygieneStatus = 'none' | 'self_declared' | 'pending' | 'verified' | 'rejected';
+
+export interface MockHygiene {
+  businessId: string;
+  status: MockHygieneStatus;
+  note: string | null;
+  items: { key: string; done: boolean; evidenceUrl: string | null }[];
+  requestedAt: string | null;
+  reviewedAt: string | null;
+}
+
 export interface MockKitchen {
   ingredients: MockIngredient[];
   batches: MockBatch[];
@@ -409,5 +474,13 @@ export interface MockKitchen {
   tiffinDays: MockTiffinDay[];
   catering: MockCateringRequest[];
   cateringSettings: MockCateringSettings[];
+  calendarEvents: MockCalendarEvent[];
+  ramadan: MockRamadanSettings[];
+  searches: MockSearchLog[];
+  experiments: MockExperiment[];
+  stories: MockStory[];
+  hygiene: MockHygiene[];
+  /** The last day the demo kitchens' everyday sales were filled in (they keep selling as the clock moves). */
+  salesThrough: Record<string, string>;
   seq: number;
 }

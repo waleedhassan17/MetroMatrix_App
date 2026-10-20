@@ -53,6 +53,9 @@ export const getTiffinTomorrow = () => request(() => api.get('/food/vendor/tiffi
 /** `vendor`: the kitchen's brand id or slug. */
 export const listTiffinPlans = (vendor?: string) => request(() => api.get('/food/tiffin/plans', { params: clean({ vendor }) }), tiffinPlansSerializer);
 
+/** Plans whose kitchen reaches the point, nearest first (the Food home's "Home-cooked tiffins"). */
+export const listTiffinPlansNear = (point: { lat: number; lng: number }) => request(() => api.get('/food/tiffin/plans', { params: point }), tiffinPlansSerializer);
+
 export const getTiffinPlan = (id: string) => request(() => api.get(`/food/tiffin/plans/${enc(id)}`), tiffinPlanSerializer);
 
 /** `idempotencyKey`: one per attempt, reused for its retries — a retry never subscribes twice. */

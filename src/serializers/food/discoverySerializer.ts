@@ -21,6 +21,7 @@ import type {
   VendorPage,
 } from '../../types/food';
 import type { Paged } from '../../types/payments';
+import type { HygieneStatus, VendorBadge } from '../../types/kitchen';
 import { arr, bool, isObject, num, str, strOrNull } from '../serializerUtils';
 import { foodCuisinesSerializer } from './vendorSerializer';
 import { ITEM_TAGS } from './menuSerializer';
@@ -46,6 +47,10 @@ const etaSerializer = (raw: unknown): EtaRange => {
   const max = Math.max(min, Math.round(num(r.max, min)));
   return { min, max, label: str(r.label, `${min}–${max} min`) };
 };
+
+const VENDOR_BADGES: readonly VendorBadge[] = ['signature', 'hygiene_verified', 'hygiene_self_declared', 'home_kitchen', 'bachat_today', 'under_600', 'high_protein'];
+const HYGIENE: readonly HygieneStatus[] = ['none', 'self_declared', 'pending', 'verified', 'rejected'];
+const hhmmPair = (v: unknown) => (isObject(v) && str(v.from) && str(v.to) ? { from: str(v.from), to: str(v.to) } : null);
 
 export const vendorCardSerializer = (raw: unknown): VendorCard | null => {
   if (!isObject(raw) || !str(raw.id) || !str(raw.slug)) return null;
@@ -76,6 +81,8 @@ export const vendorCardSerializer = (raw: unknown): VendorCard | null => {
     fulfilment: { delivery: f.delivery !== false, pickup: bool(f.pickup) },
     preorderOnly: bool(raw.preorderOnly),
     openState: { open: bool(o.open), paused: bool(o.paused), label: str(o.label, bool(o.open) ? 'Open' : 'Closed'), opensAt: isoOrNull(o.opensAt) },
+    // Kitchen Intelligence's addition (TODO(API_KITCHEN)).
+    badges: arr(raw.badges).filter((b): b is VendorBadge => VENDOR_BADGES.includes(b as VendorBadge)),
   };
 };
 
@@ -177,6 +184,21 @@ export const vendorPageSerializer = (raw: unknown): VendorPage | null => {
     catering: isObject(raw.catering)
       ? { open: bool(raw.catering.open), minGuests: Math.max(0, Math.round(num(raw.catering.minGuests))), leadDays: Math.max(0, Math.round(num(raw.catering.leadDays))) }
       : null,
+    story:
+      isObject(raw.story) && str(raw.story.text)
+        ? { text: str(raw.story.text), cookName: str(raw.story.cookName), photoUrls: arr(raw.story.photoUrls).map(u => str(u)).filter(Boolean), videoUrl: strOrNull(raw.story.videoUrl) }
+        : null,
+    hygiene: {
+      status: isObject(raw.hygiene) && HYGIENE.includes(raw.hygiene.status as HygieneStatus) ? (raw.hygiene.status as HygieneStatus) : 'none',
+      checkedAt: isObject(raw.hygiene) ? isoOrNull(raw.hygiene.checkedAt) : null,
+    },
+    signatureItemIds: arr(raw.signatureItemIds).map(x => str(x)).filter(Boolean),
+    ramadan: (() => {
+      const r = isObject(raw.ramadan) ? raw.ramadan : null;
+      const sehri = r ? hhmmPair(r.sehri) : null;
+      const iftar = r ? hhmmPair(r.iftar) : null;
+      return r && sehri && iftar ? { sehri, iftar, iftarPreorderOnly: bool(r.iftarPreorderOnly) } : null;
+    })(),
   };
 };
 

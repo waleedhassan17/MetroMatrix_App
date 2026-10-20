@@ -250,7 +250,17 @@ export interface InsightCard {
 export interface KitchenSummary {
   date: string;
   /** Tiffin and catering at a glance (5B). */
-  growth: { tiffin: { plans: number; active: number; pending: number; tomorrow: number }; catering: { new: number; upcoming: number } };
+  growth: {
+    tiffin: { plans: number; active: number; pending: number; tomorrow: number };
+    catering: { new: number; upcoming: number };
+    /** This month's orders through the kitchen's own link or QR. */
+    storefront: { brought: number };
+    /** Searches nearby in the last 30 days that found nothing open. */
+    demand: { unmet: number };
+    experiments: { running: number; results: number };
+    hygiene: HygieneStatus;
+    ramadan: { state: RamadanState; enabled: boolean };
+  };
   stock: { total: number; low: number; negative: number; expiring: number };
   recipes: { avgFoodCostPct: number | null; targetFoodCostPct: number; missing: number; overTarget: number };
   purchases: { weekTotal: number; weekCount: number };
@@ -761,3 +771,188 @@ export interface CateringSettings {
   minGuests: number;
   leadDays: number;
 }
+
+// ── Growth (5B): Ramadan ──
+export type RamadanState = 'active' | 'upcoming' | 'none';
+
+/** Kitchen-local "HH:MM" times, and "5:30 PM – 7:00 PM". */
+export interface TimeWindow {
+  from: string;
+  to: string;
+  label: string;
+}
+
+export interface RamadanEvent {
+  name: string;
+  startsOn: string;
+  endsOn: string;
+}
+
+export interface RamadanSettings {
+  event: RamadanEvent | null;
+  state: RamadanState;
+  /** The first day the kitchen can turn it on (30 days before the first fast). */
+  opensOn: string | null;
+  enabled: boolean;
+  sehri: TimeWindow;
+  iftar: TimeWindow;
+  iftarPreorderOnly: boolean;
+}
+
+export interface RamadanInput {
+  enabled?: boolean;
+  sehri?: { from: string; to: string };
+  iftar?: { from: string; to: string };
+  iftarPreorderOnly?: boolean;
+}
+
+export interface IftarKitchen {
+  vendorId: string;
+  slug: string;
+  name: string;
+  logoUrl: string | null;
+  coverUrl: string | null;
+  distanceKm: number | null;
+  iftar: TimeWindow;
+  preorderOnly: boolean;
+}
+
+export interface IftarNearby {
+  state: RamadanState;
+  event: RamadanEvent | null;
+  items: IftarKitchen[];
+}
+
+// ── Growth (5B): storefront ──
+export interface Storefront {
+  url: string;
+  qrUrl: string;
+  slug: string;
+  name: string;
+  shareText: string;
+  /** This month's orders by where they came from. */
+  stats: { month: string; link: number; qr: number; app: number; tiffin: number };
+}
+
+/** The kitchen's link or QR a signed-out visitor came through (kept until checkout). */
+export interface StoreSource {
+  kind: 'link' | 'qr';
+  slug: string;
+}
+
+// ── Growth (5B): demand ──
+export interface DemandCell {
+  geohash: string;
+  sw: { lat: number; lng: number };
+  ne: { lat: number; lng: number };
+  searches: number;
+  /** 0–1: the share that found no open kitchen. */
+  unmetShare: number;
+}
+
+export interface DemandMap {
+  city: string | null;
+  /** The kitchen, where the map opens. */
+  center: { lat: number; lng: number } | null;
+  radiusKm: number;
+  /** Cells with fewer searches are never sent. */
+  minCount: number;
+  total: number;
+  /** Searches in cells too small to show. */
+  hidden: number;
+  cells: DemandCell[];
+  topUnmet: { query: string; searches: number; unmetShare: number; hour: number }[];
+  /** 24 values 0–1 by kitchen-local hour. */
+  hourCurve: { area: number[]; own: number[] };
+}
+
+// ── Growth (5B): menu insights and experiments ──
+export type Quadrant = 'star' | 'plowhorse' | 'puzzle' | 'dog' | 'unknown';
+export type SuggestionKind = 'keep' | 'price' | 'photo' | 'drop' | 'recipe';
+
+export interface MenuInsightItem {
+  itemId: string;
+  name: string;
+  photoUrl: string | null;
+  price: number;
+  hasSizes: boolean;
+  sold: number;
+  /** Rupees kept per serving; null without a recipe card. */
+  keep: number | null;
+  keepPct: number | null;
+  /** 0–1 against the menu's best. */
+  popularity: number;
+  profit: number | null;
+  quadrant: Quadrant;
+  suggestion: { kind: SuggestionKind; text: string; price: number | null };
+  experimentRunning: boolean;
+}
+
+export interface MenuInsights {
+  range: string;
+  medians: { sold: number; keep: number };
+  items: MenuInsightItem[];
+}
+
+export type ExperimentStatus = 'running' | 'done' | 'kept' | 'adjusted' | 'dropped' | 'stopped';
+export type ExperimentVerdict = 'keep' | 'adjust' | 'drop';
+export type ExperimentChange = { kind: 'price'; price: number; oldPrice: number } | { kind: 'photo'; photoUrl: string; oldPhotoUrl: string | null };
+
+export interface Experiment {
+  id: string;
+  itemId: string;
+  itemName: string;
+  change: ExperimentChange;
+  days: number;
+  startedAt: string;
+  endsAt: string;
+  status: ExperimentStatus;
+  progress: { daysIn: number; days: number };
+  result: { verdict: ExperimentVerdict | null; before: { perDay: number; salesPerDay: number }; during: { perDay: number; salesPerDay: number } } | null;
+  decidedAt: string | null;
+}
+
+export interface ExperimentInput {
+  itemId: string;
+  change: { kind: 'price'; price: number } | { kind: 'photo'; photoUrl: string };
+  days: number;
+}
+
+// ── Growth (5B): story, hygiene, batching ──
+export interface KitchenStory {
+  text: string;
+  cookName: string;
+  photoUrls: string[];
+  videoUrl: string | null;
+  updatedAt: string | null;
+}
+
+export type HygieneStatus = 'none' | 'self_declared' | 'pending' | 'verified' | 'rejected';
+
+export interface HygieneItem {
+  key: string;
+  label: string;
+  done: boolean;
+  evidenceUrl: string | null;
+}
+
+export interface Hygiene {
+  status: HygieneStatus;
+  /** Staff's note on a rejection. */
+  note: string | null;
+  items: HygieneItem[];
+  requestedAt: string | null;
+  reviewedAt: string | null;
+  canRequest: boolean;
+}
+
+export interface BatchSuggestion {
+  orderId: string;
+  code: string;
+  extraKm: number;
+  sameDirection: boolean;
+  readyAt: string | null;
+}
+
+/** A vendor card's badges (docs/API_KITCHEN_ASSUMED.md §3.13). */
+export type VendorBadge = 'signature' | 'hygiene_verified' | 'hygiene_self_declared' | 'home_kitchen' | 'bachat_today' | 'under_600' | 'high_protein';

@@ -255,6 +255,13 @@ export const ROUTES = {
   GROWTH_CATERING: 'GrowthCatering',
   GROWTH_CATERING_REQUEST: 'GrowthCateringRequest',
   GROWTH_QUOTE: 'GrowthQuote',
+  // Growth (5B): reaching customers
+  GROWTH_RAMADAN: 'GrowthRamadan',
+  GROWTH_STOREFRONT: 'GrowthStorefront',
+  GROWTH_DEMAND: 'GrowthDemand',
+  GROWTH_MENU_INSIGHTS: 'GrowthMenuInsights',
+  GROWTH_EXPERIMENT: 'GrowthExperiment',
+  GROWTH_STORY: 'GrowthStory',
 
   // ── Food: Bachat Box for customers (navigations-maps/FoodCustomer.ts) ──
   FOOD_SURPLUS_LIST: 'FoodSurplusList',
@@ -268,6 +275,8 @@ export const ROUTES = {
   FOOD_CATERING_FORM: 'FoodCateringForm',
   FOOD_CATERING_REQUESTS: 'FoodCateringRequests',
   FOOD_CATERING_REQUEST: 'FoodCateringRequest',
+  /** A kitchen's own page (its link or QR, /s/:slug), signed out; signed in, the link opens FoodVendor. */
+  PUBLIC_STORE: 'PublicStore',
 
   // ── Food: the rider's app (navigations-maps/Rider.ts) ──
   RIDER_TABS: 'RiderTabs',

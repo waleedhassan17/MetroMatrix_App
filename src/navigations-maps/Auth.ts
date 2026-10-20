@@ -36,6 +36,7 @@ import AdminTotpScreen from '../screens/Admin/AdminTotp/AdminTotpScreen';
 import AdminTwoFactorEnrolScreen from '../screens/Admin/AdminTwoFactorEnrol/AdminTwoFactorEnrolScreen';
 import DesignGalleryScreen from '../screens/Dev/DesignGallery/DesignGalleryScreen';
 import RiderSignInScreen from '../screens/Auth/RiderSignIn/RiderSignInScreen';
+import PublicStoreScreen from '../screens/Food/Customer/PublicStore/PublicStoreScreen';
 
 /** Shown once per install, before Role Selection. */
 export const ONBOARDING_ROUTE: IRoute = {
@@ -67,6 +68,8 @@ export const UNAUTHENTICATED_ROUTES: IRoute[] = [
   { title: ROUTES.RESET_PASSWORD, component: ResetPasswordScreen },
   // The email link can open the app signed out (another device, a reinstall).
   { title: ROUTES.VERIFY_SUCCESS, component: VerifySuccessScreen },
+  // A kitchen's own link or QR, read before signing in (Food Court, 5B).
+  { title: ROUTES.PUBLIC_STORE, component: PublicStoreScreen },
   ...DEV_ROUTES,
 ];
 

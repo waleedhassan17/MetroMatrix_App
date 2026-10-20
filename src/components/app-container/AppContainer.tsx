@@ -6,9 +6,9 @@
 // navigation container + deep linking, the status bar, the native-splash
 // release, the push pre-prompt, and toast notifications.
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Linking, View, StyleSheet, StatusBar } from 'react-native';
-import { NavigationContainer, type LinkingOptions } from '@react-navigation/native';
+import { NavigationContainer, getStateFromPath, type LinkingOptions } from '@react-navigation/native';
 import * as NativeSplash from 'expo-splash-screen';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
@@ -48,8 +48,21 @@ import { useOrientationPolicy } from '../../hooks/useLayoutClass';
 // metromatrix://orders/:groupCode               → an order
 // The same config gives the web build readable paths. Each root navigator
 // owns different routes; a path only resolves while its navigator is mounted.
-const linking: LinkingOptions<ReactNavigation.RootParamList> = {
+/** `customer`: a customer is signed in (a kitchen's link then opens its Food page). */
+const linkingFor = (customer: boolean): LinkingOptions<ReactNavigation.RootParamList> => ({
   prefixes: ['metromatrix://'],
+  // A kitchen's own link or QR (/s/:slug): signed out it is PublicStore; a
+  // signed-in customer gets the kitchen's page in the Food app, marked `via`
+  // so the order counts as one the kitchen brought. (One route name per
+  // path: the same screen in two stacks breaks the swap after sign-in.)
+  getStateFromPath: (path, options) => {
+    const m = /^\/?s\/([^/?#]+)\/?(?:\?(.*))?$/.exec(path);
+    if (m && customer) {
+      const via = /(^|&)via=qr(&|$)/.test(m[2] ?? '') ? 'qr' : 'link';
+      return getStateFromPath(`food/vendor/${m[1]}?via=${via}`, options);
+    }
+    return getStateFromPath(path, options);
+  },
   config: {
     screens: {
       // No screen claims '/': the gate's first route (Onboarding on a fresh
@@ -61,6 +74,8 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       SignUp: 'sign-up',
       ProviderSignIn: 'provider/sign-in',
       RiderSignIn: 'rider/sign-in',
+      // A kitchen's own link or QR (signed out: its public page; signed in: its Food page).
+      PublicStore: 's/:slug',
       ProviderSignUp: 'provider/sign-up',
       ForgotPassword: 'forgot-password',
       ResetPasswordOTP: 'reset-password',
@@ -140,6 +155,12 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       GrowthCatering: 'vendor/catering',
       GrowthCateringRequest: 'vendor/catering/:code',
       GrowthQuote: 'vendor/catering/:code/quote',
+      GrowthRamadan: 'vendor/ramadan',
+      GrowthStorefront: 'vendor/storefront',
+      GrowthDemand: 'vendor/demand',
+      GrowthMenuInsights: 'vendor/menu-insights',
+      GrowthExperiment: 'vendor/menu-insights/tests/:id',
+      GrowthStory: 'vendor/story',
       // The rider's app: metromatrix://rider/deliveries
       RiderTabs: {
         screens: { DeliveriesTab: 'rider/deliveries', CashTab: 'rider/cash', RiderProfileTab: 'rider/profile' },
@@ -303,7 +324,7 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       },
     },
   } as LinkingOptions<ReactNavigation.RootParamList>['config'],
-};
+});
 
 export const AppContainer: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -313,6 +334,8 @@ export const AppContainer: React.FC = () => {
   const theme = useTheme();
   const styles = useStyles(makeStyles);
   const gate = resolveGate(auth);
+  const customer = gate === 'customer';
+  const linking = useMemo(() => linkingFor(customer), [customer]);
 
   // ─── Session restore on cold start: stored token → GET /auth/me refreshes
   // the user and the app opens on their view; missing/invalid token →

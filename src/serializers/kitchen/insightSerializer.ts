@@ -4,6 +4,8 @@
 
 import type {
   AiUsage,
+  HygieneStatus,
+  RamadanState,
   Announcement,
   BoardHints,
   InsightActionKind,
@@ -71,8 +73,16 @@ const growthSerializer = (raw: unknown): KitchenSummary['growth'] => {
   return {
     tiffin: { plans: count(t.plans), active: count(t.active), pending: count(t.pending), tomorrow: count(t.tomorrow) },
     catering: { new: count(c.new), upcoming: count(c.upcoming) },
+    storefront: { brought: count(isObject(g.storefront) ? g.storefront.brought : 0) },
+    demand: { unmet: count(isObject(g.demand) ? g.demand.unmet : 0) },
+    experiments: { running: count(isObject(g.experiments) ? g.experiments.running : 0), results: count(isObject(g.experiments) ? g.experiments.results : 0) },
+    hygiene: oneOf(g.hygiene, HYGIENE_STATUSES, 'none'),
+    ramadan: { state: oneOf(isObject(g.ramadan) ? g.ramadan.state : null, RAMADAN_STATES, 'none'), enabled: bool(isObject(g.ramadan) ? g.ramadan.enabled : false) },
   };
 };
+
+const HYGIENE_STATUSES: readonly HygieneStatus[] = ['none', 'self_declared', 'pending', 'verified', 'rejected'];
+const RAMADAN_STATES: readonly RamadanState[] = ['active', 'upcoming', 'none'];
 
 export const kitchenSummarySerializer = (raw: unknown): KitchenSummary | null => {
   if (!isObject(raw)) return null;

@@ -15,6 +15,7 @@ import { useRiderChannel } from '@hooks/useFoodLive';
 import { usePagedList } from '@hooks/usePagedList';
 import { listRiderOrders } from '@networks/food/rider/riderNetwork';
 import { placeLine, riderVehicleLabel } from '@models/food/vendorModel';
+import { dropOrderLabel } from '@models/kitchen/reachModel';
 import { riderStepLabel } from '@models/food/foodStatusModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Avatar, Button, Card, ChoiceChip, Divider, EmptyState, InlineNotice, IonIcon, ListRow, ScreenShell, Sheet, SkeletonLines, StatusPill, ToggleRow } from '@custom/index';
@@ -51,9 +52,12 @@ const DeliveryCard: React.FC<{ o: RiderOrder; onPress: () => void }> = ({ o, onP
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   return (
-    <Card onPress={onPress} accessibilityLabel={`Delivery ${o.code}, ${riderStepLabel(o.riderStep ?? 'assigned', 'rider')}, from ${o.pickup.name} to ${o.drop?.area ?? 'the customer'}`}>
+    <Card
+      onPress={onPress}
+      accessibilityLabel={`Delivery ${o.code}, ${riderStepLabel(o.riderStep ?? 'assigned', 'rider')}${o.dropOrder ? `, ${dropOrderLabel(o.dropOrder)}` : ''}, from ${o.pickup.name} to ${o.drop?.area ?? 'the customer'}`}>
       <View style={styles.row}>
         <AppText variant="title">{o.code}</AppText>
+        {o.dropOrder ? <StatusPill label={dropOrderLabel(o.dropOrder)!} tone="neutral" /> : null}
         <StatusPill label={o.status === 'ready' && (o.riderStep === 'assigned' || o.riderStep === 'accepted_by_rider' || o.riderStep === 'arrived_at_branch') ? 'Ready to collect' : riderStepLabel(o.riderStep ?? 'assigned', 'rider')} tone="accent" />
       </View>
       <View style={styles.route}>

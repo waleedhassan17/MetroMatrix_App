@@ -25,8 +25,9 @@ import {
 import { getKitchenSettings } from '@networks/kitchen/costingNetwork';
 import { attachPackingPhoto } from '@networks/kitchen/packingNetwork';
 import { uploadImage } from '@networks/media/mediaNetwork';
+import { getBatchSuggestions } from '@networks/foodGrowth/batchingNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
-import type { LocalFile, PackingPhotoRule, PackingResult, RiderSuggestion, VendorFoodOrder } from '@/types';
+import type { BatchSuggestion, LocalFile, PackingPhotoRule, PackingResult, RiderSuggestion, VendorFoodOrder } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 
 export type VendorOrderAct =
@@ -60,6 +61,9 @@ export interface VendorOrderSliceState {
   assignOpen: boolean;
   suggestions: RiderSuggestion[];
   suggestStatus: FormStatus;
+  /** Orders that could ride with this one (TODO(API_KITCHEN)), and the ones picked to go too. */
+  batch: BatchSuggestion[];
+  together: string[];
   /** The kitchen's packing-photo rule (TODO(API_KITCHEN)), and the photo being taken. */
   packingRule: PackingPhotoRule | null;
   packingUploading: boolean;
@@ -76,6 +80,8 @@ const initialState: VendorOrderSliceState = {
   assignOpen: false,
   suggestions: [],
   suggestStatus: 'idle',
+  batch: [],
+  together: [],
   packingRule: null,
   packingUploading: false,
   packingCheck: null,
@@ -120,12 +126,18 @@ export const vendorOrderSlice = createAppSlice({
     setAssignOpen: create.reducer((state, action: PayloadAction<boolean>) => {
       state.assignOpen = action.payload;
       state.actionError = NO_ERROR;
+      if (action.payload) state.together = [];
+    }),
+    toggleTogether: create.reducer((state, action: PayloadAction<string>) => {
+      state.together = state.together.includes(action.payload) ? state.together.filter(x => x !== action.payload) : [...state.together, action.payload];
     }),
 
+    /** The riders, and (softly) the orders going the same way. */
     loadSuggestionsAsync: create.asyncThunk(
       async (orderId: string, { rejectWithValue }) => {
         try {
-          return await suggestRiders(orderId);
+          const [riders, batch] = await Promise.all([suggestRiders(orderId), getBatchSuggestions(orderId).catch(() => [] as BatchSuggestion[])]);
+          return { riders, batch };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -136,11 +148,33 @@ export const vendorOrderSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.suggestStatus = 'succeeded';
-          state.suggestions = action.payload;
+          state.suggestions = action.payload.riders;
+          state.batch = action.payload.batch;
+          state.together = state.together.filter(x => action.payload.batch.some(b => b.orderId === x));
         },
         rejected: (state, action) => {
           state.suggestStatus = 'failed';
           state.actionError = readRejection(action, "Your riders didn't load.");
+        },
+      },
+    ),
+
+    /** The orders picked to ride along go to the same rider (after this one). */
+    assignTogetherAsync: create.asyncThunk(
+      async ({ orderIds, riderId }: { orderIds: string[]; riderId: string }, { rejectWithValue }) => {
+        try {
+          for (const orderId of orderIds) await assignRider(orderId, riderId);
+          return orderIds.length;
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        fulfilled: state => {
+          state.together = [];
+        },
+        rejected: (state, action) => {
+          state.actionError = readRejection(action, "The other order didn't go to the rider.");
         },
       },
     ),
@@ -252,5 +286,5 @@ export const vendorOrderSlice = createAppSlice({
   },
 });
 
-export const { setReasonSheet, setAssignOpen, loadSuggestionsAsync, loadPackingRuleAsync, packingPhotoAsync, loadVendorOrderAsync, vendorOrderActAsync } = vendorOrderSlice.actions;
+export const { setReasonSheet, setAssignOpen, toggleTogether, loadSuggestionsAsync, assignTogetherAsync, loadPackingRuleAsync, packingPhotoAsync, loadVendorOrderAsync, vendorOrderActAsync } = vendorOrderSlice.actions;
 export const { selectVendorOrderEntry, selectVendorOrderUi } = vendorOrderSlice.selectors;

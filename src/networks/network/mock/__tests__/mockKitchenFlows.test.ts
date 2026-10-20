@@ -37,6 +37,17 @@ import {
   subscribeTiffin,
 } from '../../../foodGrowth/tiffinNetwork';
 import { acceptQuote, confirmAdvance, getMyCatering, requestCatering, sendQuote, submitAdvanceProof } from '../../../foodGrowth/cateringNetwork';
+import { getRamadan, listIftarNearby, updateRamadan } from '../../../foodGrowth/ramadanNetwork';
+import { getStorefront } from '../../../foodGrowth/storefrontNetwork';
+import { getDemand } from '../../../foodGrowth/demandNetwork';
+import { decideExperiment, getExperiment, getMenuInsights, startExperiment } from '../../../foodGrowth/experimentsNetwork';
+import { getHygiene, requestHygieneVerification, saveStory, setHygieneItem } from '../../../foodGrowth/storyNetwork';
+import { getBatchSuggestions } from '../../../foodGrowth/batchingNetwork';
+import { listHygieneQueue, verifyHygiene } from '../../../admin/adminKitchenNetwork';
+import { listVendors } from '../../../food/discoveryNetwork';
+import { getRiderOrder, setDuty } from '../../../food/rider/riderNetwork';
+import { assignRider } from '../../../food/vendor/ordersNetwork';
+import { ramadanSwitch } from '../../../../models/kitchen/reachModel';
 import { api, AuthError } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import { MOCK, SEED_PASSWORD, STAFF_PASSWORD } from '../mockConfig';
@@ -461,6 +472,153 @@ describe('catering', () => {
     expect((await getMyCatering(r.code)).quotes.map(x => x.state)).toEqual(['outdated', 'current']);
     jest.setSystemTime(Date.parse('2026-10-23T00:00:00Z'));
     expect((await failure(acceptQuote(r.code, 2))).code).toBe('QUOTE_EXPIRED');
+  });
+});
+
+describe('Ramadan', () => {
+  it('keeps the switch off outside the event and the month before it, with the reason (QA 32)', async () => {
+    const r = await getRamadan();
+    expect(r).toMatchObject({ state: 'none', enabled: false, opensOn: '2027-01-09', event: { name: 'Ramadan 1448', startsOn: '2027-02-08' } });
+    expect(ramadanSwitch(r)).toEqual({ disabled: true, reason: 'Ramadan mode opens on Sat 9 Jan, a month before the first fast (Mon 8 Feb).' });
+    const e = await failure(updateRamadan({ enabled: true }));
+    expect(e.code).toBe('RAMADAN_NOT_ACTIVE');
+    expect(e.details).toMatchObject({ opensOn: '2027-01-09' });
+  });
+
+  it('turns on in Ramadan, shows the hours on the page and in "Iftar near you"', async () => {
+    jest.setSystemTime(Date.parse('2027-02-12T08:00:00Z'));
+    await asVendor();
+    expect(ramadanSwitch(await getRamadan()).disabled).toBe(false);
+    const on = await updateRamadan({ enabled: true, iftar: { from: '17:45', to: '19:15' } });
+    expect(on).toMatchObject({ state: 'active', enabled: true, iftar: { label: '5:45 PM – 7:15 PM' } });
+    await asCustomer();
+    expect((await getVendorPage('biryani-bazaar', GULBERG)).ramadan).toMatchObject({ iftar: { from: '17:45', to: '19:15' }, iftarPreorderOnly: true });
+    const near = await listIftarNearby(GULBERG);
+    expect(near.state).toBe('active');
+    expect(near.items.map(i => i.slug)).toEqual(['biryani-bazaar']);
+  });
+});
+
+describe('the storefront', () => {
+  it('gives the kitchen its link and QR, and counts the orders they bring (QA 33, 34)', async () => {
+    const before = await getStorefront();
+    expect(before).toMatchObject({ url: 'https://metromatrix.app/s/biryani-bazaar', qrUrl: 'https://metromatrix.app/s/biryani-bazaar?via=qr', slug: 'biryani-bazaar' });
+    expect(before.shareText).toContain(before.url);
+    const viaLink = async (source: FoodCheckoutInput['source']) => {
+      await asCustomer();
+      await clearFoodCart();
+      await addToFoodCart({ vendorId: 'fb_resto', itemId: 'mi_naan', variantId: null, optionIds: [], quantity: 10, notes: null }, true);
+      return placeFoodOrder({ ...checkout, source }, key());
+    };
+    await viaLink({ kind: 'link', slug: 'biryani-bazaar' });
+    await viaLink({ kind: 'qr', slug: 'biryani-bazaar' });
+    // Another kitchen's link isn't this one's to count.
+    await viaLink({ kind: 'link', slug: 'smash-lab' });
+    await asVendor();
+    const after = await getStorefront();
+    expect(after.stats.link - before.stats.link).toBe(1);
+    expect(after.stats.qr - before.stats.qr).toBe(1);
+    expect(after.stats.app - before.stats.app).toBe(1);
+  });
+});
+
+describe('demand', () => {
+  it('sends only cells with enough searches, and says how many it held back (QA 35)', async () => {
+    const d = await getDemand();
+    expect(d.minCount).toBe(10);
+    expect(d.cells.length).toBeGreaterThan(5);
+    expect(d.cells.every(c => c.searches >= 10)).toBe(true);
+    expect(d.hidden).toBeGreaterThan(0);
+    expect(d.hourCurve.area).toHaveLength(24);
+    expect(d.topUnmet[0].unmetShare).toBeGreaterThan(0.5);
+    const late = await getDemand({ hour: 23 });
+    expect(late.total).toBeLessThan(d.total);
+  });
+});
+
+describe('menu insights and experiments', () => {
+  it('puts each dish in a group with a suggestion (QA 36)', async () => {
+    const m = await getMenuInsights();
+    const seekh = m.items.find(i => i.itemId === 'mi_seekh')!;
+    expect(seekh).toMatchObject({ quadrant: 'star', suggestion: { kind: 'keep' } });
+    const naan = m.items.find(i => i.itemId === 'mi_naan')!;
+    expect(naan).toMatchObject({ quadrant: 'plowhorse', suggestion: { kind: 'price', price: 70, text: expect.stringContaining('Rs 70') } });
+    expect(m.items.some(i => i.quadrant === 'unknown' && i.keep === null)).toBe(true);
+  });
+
+  it('tests a price, reports a result at the end, and keeps or goes back (QA 37)', async () => {
+    const e = await startExperiment({ itemId: 'mi_seekh', change: { kind: 'price', price: 990 }, days: 3 });
+    expect(e).toMatchObject({ status: 'running', change: { oldPrice: 900, price: 990 }, result: null });
+    expect((await getMenuInsights()).items.find(i => i.itemId === 'mi_seekh')).toMatchObject({ price: 990, experimentRunning: true });
+    expect((await failure(startExperiment({ itemId: 'mi_seekh', change: { kind: 'price', price: 950 }, days: 3 }))).code).toBe('EXPERIMENT_RUNNING');
+    expect((await failure(startExperiment({ itemId: 'mi_chicken_biryani', change: { kind: 'price', price: 700 }, days: 3 }))).code).toBe('EXPERIMENT_NOT_SUPPORTED');
+    expect((await failure(decideExperiment(e.id, { kind: 'keep' }))).code).toBe('INVALID_TRANSITION');
+    jest.setSystemTime(T0 + 4 * 86_400_000);
+    await asVendor();
+    const done = await getExperiment(e.id);
+    expect(done.status).toBe('done');
+    expect(done.result).toMatchObject({ verdict: expect.stringMatching(/keep|adjust|drop/), before: { perDay: expect.any(Number) }, during: { perDay: expect.any(Number) } });
+    expect((await decideExperiment(e.id, { kind: 'drop' })).status).toBe('dropped');
+    expect((await getMenuInsights()).items.find(i => i.itemId === 'mi_seekh')).toMatchObject({ price: 900, experimentRunning: false });
+  });
+});
+
+describe('story and hygiene', () => {
+  it('shows the verified badge only after staff verify the checklist (QA 38)', async () => {
+    await as('nani@metromatrix.app');
+    await saveStory({ text: 'Nani has cooked for the whole street since 1985; now she cooks for you.', cookName: 'Nasreen Begum', photoUrls: [], videoUrl: null });
+    const h = await getHygiene();
+    expect(h.status).toBe('self_declared');
+    await setHygieneItem('water', { done: true, evidenceUrl: 'https://res.cloudinary.com/demo/filter.jpg' });
+    expect((await requestHygieneVerification()).status).toBe('pending');
+    const badges = async () => {
+      await asCustomer();
+      const page = await getVendorPage('nani-ki-handi', GULBERG);
+      const card = (await listVendors({ lat: GULBERG.lat, lng: GULBERG.lng, homeKitchen: true }, 1, 20)).items.find(v => v.slug === 'nani-ki-handi');
+      return { page: page.hygiene.status, card: card?.badges ?? [], story: page.story?.cookName };
+    };
+    const pending = await badges();
+    expect(pending.page).toBe('self_declared');
+    expect(pending.card).not.toContain('hygiene_verified');
+    expect(pending.story).toBe('Nasreen Begum');
+    await asStaff();
+    expect((await listHygieneQueue()).map(x => x.businessId)).toContain('b_nani');
+    expect((await verifyHygiene('b_nani')).status).toBe('verified');
+    const verified = await badges();
+    expect(verified.page).toBe('verified');
+    expect(verified.card).toContain('hygiene_verified');
+  });
+
+  it('won’t ask for verification before every item is ticked', async () => {
+    await as('nani@metromatrix.app');
+    await setHygieneItem('pests', { done: false });
+    const e = await failure(requestHygieneVerification());
+    expect(e.code).toBe('HYGIENE_INCOMPLETE');
+    expect((await getHygiene()).status).toBe('none');
+  });
+});
+
+describe('batching', () => {
+  it('suggests a second order going the same way, and the rider sees the drop order (QA 39)', async () => {
+    const a = await orderBiryani(1);
+    const b = await orderBiryani(1);
+    await asVendor();
+    await acceptOrder(a.id, 20);
+    await acceptOrder(b.id, 20);
+    const s = await getBatchSuggestions(a.id);
+    expect(s[0]).toMatchObject({ orderId: b.id, sameDirection: true, extraKm: 0 });
+    await clearTokens();
+    await authSignin({ username: 'biryani-bazaar.ali', password: SEED_PASSWORD, portal: 'partner' });
+    await setDuty(true);
+    await asVendor();
+    await assignRider(a.id, 'rd_ali');
+    await assignRider(b.id, 'rd_ali');
+    await clearTokens();
+    await authSignin({ username: 'biryani-bazaar.ali', password: SEED_PASSWORD, portal: 'partner' });
+    const ra = await getRiderOrder(a.id);
+    const rb = await getRiderOrder(b.id);
+    expect([ra.dropOrder, rb.dropOrder].map(d => d?.of)).toEqual([2, 2]);
+    expect([ra.dropOrder?.position, rb.dropOrder?.position].sort()).toEqual([1, 2]);
   });
 });
 

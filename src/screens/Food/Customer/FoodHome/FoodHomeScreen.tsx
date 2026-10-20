@@ -8,7 +8,7 @@
 // commission, so the fee shown is the vendor's own.
 
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useServiceNav } from '@hooks/useServiceNav';
@@ -16,7 +16,8 @@ import { usePagedList } from '@hooks/usePagedList';
 import { listVendors } from '@networks/food/discoveryNetwork';
 import { RAILS, pointOfAddress } from '@models/food/discoveryModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
-import { AppText, Button, Card, Divider, EmptyState, IconButton, IonIcon, InlineNotice, ListRow, MciIcon, PageHeader, Sheet, Skeleton } from '@custom/index';
+import { AppText, Button, Card, Divider, EmptyState, IconButton, IonIcon, InlineNotice, ListRow, MciIcon, PageHeader, Sheet, Skeleton, TiffinPlanCard } from '@custom/index';
+import { planCardData } from '@models/kitchen/tiffinModel';
 import { VendorCard } from '@custom/food/VendorCard';
 import { CuisineRail, FoodHomeSkeleton, FoodSearchButton, FoodSection, SurplusRail, VendorRail } from '@components/food/FoodParts';
 import type { VendorCard as VendorCardData } from '@/types';
@@ -36,6 +37,7 @@ const makeStyles = ({ colors, space, gutter, size }: Theme) =>
     padded: { paddingHorizontal: gutter, gap: space.s12 },
     row: { paddingBottom: space.s24 },
     footer: { paddingVertical: space.s16, alignItems: 'center' },
+    rail: { paddingHorizontal: gutter, gap: space.s16 },
   });
 
 const FoodHomeScreen: React.FC = () => (
@@ -94,6 +96,36 @@ const FoodHomeContent: React.FC = () => {
     </FoodSection>
   ) : null;
 
+  const tiffinRail = s.tiffins.length ? (
+    <FoodSection title="Home-cooked tiffins" subtitle="The same meal on set days, paid to the kitchen by the week or month">
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
+        {s.tiffins.slice(0, 8).map(t => (
+          <TiffinPlanCard key={t.id} plan={planCardData(t)} rail onPress={() => navigation.navigate('FoodTiffinPlan', { id: t.id })} />
+        ))}
+      </ScrollView>
+    </FoodSection>
+  ) : null;
+
+  const iftarRail = s.iftar.length ? (
+    <FoodSection title="Iftar near you" subtitle="Kitchens keeping Ramadan hours">
+      <View style={styles.padded}>
+        <Card padded="horizontal">
+          {s.iftar.slice(0, 6).map((k, n) => (
+            <View key={k.vendorId}>
+              {n ? <Divider /> : null}
+              <ListRow
+                title={k.name}
+                subtitle={`Iftar ${k.iftar.label}${k.preorderOnly ? ' · order ahead' : ''}${k.distanceKm !== null ? ` · ${k.distanceKm} km` : ''}`}
+                leftIcon="moon-outline"
+                onPress={() => navigation.navigate('FoodVendor', { slug: k.slug })}
+              />
+            </View>
+          ))}
+        </Card>
+      </View>
+    </FoodSection>
+  ) : null;
+
   const rails = useMemo(() => (home ? RAILS.map(r => ({ ...r, vendors: home[r.key] })).filter(r => r.vendors.length) : []), [home]);
 
   const header = (
@@ -136,7 +168,9 @@ const FoodHomeContent: React.FC = () => {
               <CuisineRail cuisines={home.cuisines} onPress={c => navigation.navigate('FoodVendors', { cuisine: c.slug, title: c.name })} />
             </FoodSection>
           ) : null}
+          {iftarRail}
           {surplusRail}
+          {tiffinRail}
           {rails.map(r => (
             <FoodSection
               key={r.key}

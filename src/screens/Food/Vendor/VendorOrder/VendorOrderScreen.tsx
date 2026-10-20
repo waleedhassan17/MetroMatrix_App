@@ -36,7 +36,8 @@ import {
   secondsLeft,
 } from '@models/food/foodStatusModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
-import { AppText, Button, Card, ChoiceChip, Divider, IconButton, InlineNotice, IonIcon, ScreenShell, Sheet, SkeletonLines, StatusPill, TextAction } from '@custom/index';
+import { AppText, Button, Card, Checkbox, ChoiceChip, Divider, IconButton, InlineNotice, IonIcon, ScreenShell, Sheet, SkeletonLines, StatusPill, TextAction } from '@custom/index';
+import { batchLine } from '@models/kitchen/reachModel';
 import { ChoiceLine } from '@custom/food/ChoiceLine';
 import type { FoodOrderStatus, FoodVendorStackParamList } from '@/types';
 import { formatSlot } from '@utils/healthTime';
@@ -53,6 +54,8 @@ import {
   selectVendorOrderEntry,
   selectVendorOrderUi,
   setAssignOpen,
+  toggleTogether,
+  assignTogetherAsync,
   setReasonSheet,
   vendorOrderActAsync,
   type VendorOrderAct,
@@ -69,6 +72,7 @@ const makeStyles = ({ space, gutter, radius, colors, size }: Theme) =>
     head: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
     grow: { flex: 1, gap: space.s4 },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
+    together: { gap: space.s8, paddingBottom: space.s8 },
     actions: { gap: space.s8 },
     event: { flexDirection: 'row', gap: space.s12 },
     links: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space.s16 },
@@ -125,6 +129,15 @@ const VendorOrderContent: React.FC<Props> = ({ route }) => {
       haptics.success();
       if (done) Toast.show({ type: 'success', text1: done });
     } else haptics.warning();
+  };
+
+  /** This order to the rider, then any picked to ride with it. */
+  const giveTo = async (riderId: string, name: string) => {
+    const along = ui.together;
+    await act({ kind: 'assign', riderId }, along.length ? undefined : `Given to ${name}`);
+    if (!along.length) return;
+    const r = await dispatch(assignTogetherAsync({ orderIds: along, riderId }));
+    if (assignTogetherAsync.fulfilled.match(r)) Toast.show({ type: 'success', text1: `${along.length + 1} orders given to ${name}`, text2: 'They see the drops in order.' });
   };
 
   if (!o) {
@@ -435,6 +448,23 @@ const VendorOrderContent: React.FC<Props> = ({ route }) => {
         {ui.suggestStatus === 'succeeded' && !ui.suggestions.length ? (
           <InlineNotice tone="info" message="None of your riders is on duty. Ask one to go on duty, or hand it to your own rider." />
         ) : null}
+        {ui.batch.length ? (
+          <View style={styles.together}>
+            <AppText variant="label">Ride together</AppText>
+            <AppText variant="small" tone="muted">
+              These orders are going the same way. Pick them to give them to the same rider.
+            </AppText>
+            {ui.batch.slice(0, 3).map(b => (
+              <Checkbox
+                key={b.orderId}
+                checked={ui.together.includes(b.orderId)}
+                onToggle={() => dispatch(toggleTogether(b.orderId))}
+                label={`${b.code} · ${batchLine(b)}`}
+                accessibilityLabel={`Also give ${b.code} to the same rider: ${batchLine(b)}`}
+              />
+            ))}
+          </View>
+        ) : null}
         {ui.suggestions.map(r => (
           <ChoiceLine
             key={r.riderId}
@@ -449,7 +479,7 @@ const VendorOrderContent: React.FC<Props> = ({ route }) => {
             selected={o.rider?.name === r.fullName}
             multiple={false}
             disabled={ui.acting !== null}
-            onPress={() => void act({ kind: 'assign', riderId: r.riderId }, `Given to ${r.fullName}`)}
+            onPress={() => void giveTo(r.riderId, r.fullName)}
           />
         ))}
         {o.actions.status.includes('on_the_way') && !o.rider ? (

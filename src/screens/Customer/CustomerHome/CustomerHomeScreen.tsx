@@ -20,7 +20,8 @@ import { useSignOut } from '@hooks/useSignOut';
 import { useServiceNav } from '@hooks/useServiceNav';
 import { APP_VERSION } from '@/services/appInfo';
 import { SUPPORT_EMAIL } from '@/config/env';
-import { setLastService } from '@store/preferencesSlice';
+import { markStoreSourceOpened, selectStoreSource, setLastService } from '@store/preferencesSlice';
+import { storeToOpen } from '@models/kitchen/reachModel';
 import { useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, LiveDot } from '@custom/index';
 import { ServiceCard, type ServiceCardData } from '@components/home/ServiceCard';
@@ -85,6 +86,22 @@ const CustomerHomeScreen: React.FC<Props> = ({ navigation }) => {
   const { confirmSignOut } = useSignOut();
   const [menuOpen, setMenuOpen] = useState(false);
   const svc = useServiceNav();
+
+  // Came through a kitchen's link or QR before signing in: its page opens
+  // once, when the home is first shown (the navigator is ready by then).
+  const storeSource = useAppSelector(selectStoreSource);
+  useFocusEffect(
+    useCallback(() => {
+      const slug = storeToOpen(storeSource, Date.now());
+      if (!slug) return;
+      // Marked inside the timer: marking changes this effect, and its cleanup would cancel the jump.
+      const t = setTimeout(() => {
+        dispatch(markStoreSourceOpened());
+        svc.openFood('FoodVendor', { slug });
+      }, 0);
+      return () => clearTimeout(t);
+    }, [storeSource, dispatch, svc]),
+  );
 
   const menu: SideMenuSection[] = [
     {
