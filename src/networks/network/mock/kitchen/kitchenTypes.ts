@@ -489,5 +489,46 @@ export interface MockKitchen {
   nutritionHidden?: string[];
   /** Drafts already counted (`review_insights:<business>:<week>`, `nutrition_estimate:<item>`), so a view doesn't count twice. */
   aiCounted?: string[];
+  // My Kitchen (5C): the customer's own; never shown to a kitchen.
+  pantry?: MockPantryItem[];
+  pantryReminders?: MockPantryReminders[];
+  nutritionSettings?: MockNutritionSettings[];
   seq: number;
+}
+
+// ── My Kitchen (5C) ──
+export interface MockPantryItem {
+  id: string;
+  userId: string;
+  name: string;
+  /** The canonical ingredient (aliases), or null when unknown. */
+  key: string | null;
+  /** Base units. */
+  qty: number;
+  unit: BaseUnit;
+  expiresOn: string | null;
+  addedAt: string;
+  source: 'manual' | 'voice' | 'shopping';
+  /** in the kitchen, used up, or thrown away. */
+  status: 'in' | 'used' | 'thrown';
+  doneAt: string | null;
+  /** Used before it expired (counted as saved from waste). */
+  savedFromWaste: boolean;
+}
+
+export interface MockPantryReminders {
+  userId: string;
+  enabled: boolean;
+  time: string;
+  daysBefore: number;
+}
+
+export interface MockNutritionSettings {
+  userId: string;
+  enabled: boolean;
+  showCalories: boolean;
+  goal: 'eat_better' | 'maintain' | 'lose' | 'gain';
+  metrics: { sex: 'female' | 'male'; age: number; heightCm: number; weightKg: number; activity: 'low' | 'moderate' | 'high' } | null;
+  manualTargetKcal: number | null;
+  updatedAt: string;
 }

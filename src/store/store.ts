@@ -219,6 +219,12 @@ import { aiCombosSlice } from '../screens/Food/Kitchen/AiCombos/aiCombosSlice';
 import { aiPhotoCheckSlice } from '../screens/Food/Kitchen/AiPhotoCheck/aiPhotoCheckSlice';
 import { reviewInsightsSlice } from '../screens/Food/Kitchen/ReviewInsights/reviewInsightsSlice';
 import { nutritionVendorSlice } from '../screens/Food/Kitchen/NutritionVendor/nutritionVendorSlice';
+import { pantrySlice } from '../screens/MyKitchen/Pantry/pantrySlice';
+import { recipeIdeasSlice } from '../screens/MyKitchen/RecipeIdeas/recipeIdeasSlice';
+import { homeRecipeSlice } from '../screens/MyKitchen/HomeRecipe/homeRecipeSlice';
+import { missingItemsSlice } from '../screens/MyKitchen/MissingItems/missingItemsSlice';
+import { nutritionSettingsSlice } from '../screens/MyKitchen/NutritionSettings/nutritionSettingsSlice';
+import { nutritionSummarySlice } from '../screens/MyKitchen/NutritionSummary/nutritionSummarySlice';
 import { foodTiffinPlanSlice } from '../screens/Food/Customer/FoodTiffinPlan/foodTiffinPlanSlice';
 import { foodTiffinsSlice } from '../screens/Food/Customer/FoodTiffins/foodTiffinsSlice';
 import { foodTiffinSlice } from '../screens/Food/Customer/FoodTiffin/foodTiffinSlice';
@@ -436,6 +442,12 @@ const rootReducer = combineReducers({
   aiPhotoCheck: aiPhotoCheckSlice.reducer,
   reviewInsights: reviewInsightsSlice.reducer,
   nutritionVendor: nutritionVendorSlice.reducer,
+  pantry: pantrySlice.reducer,
+  recipeIdeas: recipeIdeasSlice.reducer,
+  homeRecipe: homeRecipeSlice.reducer,
+  missingItems: missingItemsSlice.reducer,
+  nutritionSettings: nutritionSettingsSlice.reducer,
+  nutritionSummary: nutritionSummarySlice.reducer,
   foodTiffinPlan: foodTiffinPlanSlice.reducer,
   foodTiffins: foodTiffinsSlice.reducer,
   foodTiffin: foodTiffinSlice.reducer,

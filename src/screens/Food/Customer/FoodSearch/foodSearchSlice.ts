@@ -22,9 +22,11 @@ export interface FoodSearchSliceState {
   result: FoodSearchResult | null;
   status: FormStatus;
   error: ServerError;
+  /** Healthy filter (for people who turned calories on). */
+  nutrition: 'under_600' | 'high_protein' | null;
 }
 
-const initialState: FoodSearchSliceState = { text: '', tab: 'restaurants', query: '', result: null, status: 'idle', error: NO_ERROR };
+const initialState: FoodSearchSliceState = { text: '', tab: 'restaurants', query: '', result: null, status: 'idle', error: NO_ERROR, nutrition: null };
 
 export const MIN_QUERY = 2;
 
@@ -43,10 +45,13 @@ export const foodSearchSlice = createAppSlice({
     setSearchTab: create.reducer((state, action: PayloadAction<FoodSearchTab>) => {
       state.tab = action.payload;
     }),
+    setSearchNutrition: create.reducer((state, action: PayloadAction<FoodSearchSliceState['nutrition']>) => {
+      state.nutrition = action.payload;
+    }),
     searchFoodAsync: create.asyncThunk(
-      async ({ q, lat, lng, remember }: { q: string; lat: number; lng: number; remember?: boolean }, { dispatch, rejectWithValue }) => {
+      async ({ q, lat, lng, remember, nutrition }: { q: string; lat: number; lng: number; remember?: boolean; nutrition?: FoodSearchSliceState['nutrition'] }, { dispatch, rejectWithValue }) => {
         try {
-          const result = await searchFood(q, lat, lng);
+          const result = await searchFood(q, lat, lng, nutrition);
           if (remember) dispatch(addRecentFoodSearch(q));
           return result;
         } catch (e) {
@@ -81,5 +86,5 @@ export const foodSearchSlice = createAppSlice({
   },
 });
 
-export const { setSearchText, setSearchTab, searchFoodAsync } = foodSearchSlice.actions;
+export const { setSearchText, setSearchTab, searchFoodAsync, setSearchNutrition } = foodSearchSlice.actions;
 export const { selectFoodSearch } = foodSearchSlice.selectors;

@@ -20,6 +20,8 @@ import { cdn } from '@utils/cdn';
 import { formatPKR } from '@utils/money';
 import { haptics } from '@utils/haptics';
 import { closeItemSheet, markTried, pickOption, pickVariant, selectItemSheet, setLineNote, setLineQuantity } from './itemSheetSlice';
+import { NutritionBlock } from '@custom/kitchen/NutritionBlock';
+import { selectShowCalories } from '../../../MyKitchen/NutritionSettings/nutritionSettingsSlice';
 
 const makeStyles = ({ colors, space, size, radius }: Theme) =>
   StyleSheet.create({
@@ -50,6 +52,7 @@ export const ItemSheetView: React.FC<ItemSheetViewProps> = ({ onAdd, adding, add
   const styles = useStyles(makeStyles);
   const { size } = useTheme();
   const s = useAppSelector(selectItemSheet);
+  const showCalories = useAppSelector(selectShowCalories);
   const sheet = s.sheet;
   const sel = s.selection;
   const open = s.itemId !== null;
@@ -129,6 +132,8 @@ export const ItemSheetView: React.FC<ItemSheetViewProps> = ({ onAdd, adding, add
                 ))}
               </View>
             ) : null}
+            {/* Only for people who turned calories on (Nutrition settings). */}
+            {showCalories && sheet.nutrition ? <NutritionBlock facts={sheet.nutrition} /> : null}
           </View>
           {why || blockedReason ? <InlineNotice tone="warning" message={why ?? blockedReason!} /> : null}
           {addError ? <InlineNotice message={addError} /> : null}

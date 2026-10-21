@@ -18,6 +18,8 @@ import { RAILS, pointOfAddress } from '@models/food/discoveryModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Button, Card, Divider, EmptyState, IconButton, IonIcon, InlineNotice, ListRow, MciIcon, PageHeader, Sheet, Skeleton, TiffinPlanCard } from '@custom/index';
 import { planCardData } from '@models/kitchen/tiffinModel';
+import { formatPKR } from '@utils/money';
+import { loadNutritionSettingsAsync, selectNutritionSettings } from '../../../MyKitchen/NutritionSettings/nutritionSettingsSlice';
 import { VendorCard } from '@custom/food/VendorCard';
 import { CuisineRail, FoodHomeSkeleton, FoodSearchButton, FoodSection, SurplusRail, VendorRail } from '@components/food/FoodParts';
 import type { VendorCard as VendorCardData } from '@/types';
@@ -38,6 +40,9 @@ const makeStyles = ({ colors, space, gutter, size }: Theme) =>
     row: { paddingBottom: space.s24 },
     footer: { paddingVertical: space.s16, alignItems: 'center' },
     rail: { paddingHorizontal: gutter, gap: space.s16 },
+    tile: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
+    tileText: { flex: 1, minWidth: 0, gap: space.s4 },
+    pick: { width: size.railCard, gap: space.s4 },
   });
 
 const FoodHomeScreen: React.FC = () => (
@@ -69,6 +74,13 @@ const FoodHomeContent: React.FC = () => {
     const pick = pinned.find(a => a.isDefault) ?? pinned[0];
     if (pick) dispatch(setFoodPoint(pointOfAddress(pick)));
   }, [point, book.status, book.addresses, dispatch]);
+
+  // Calories (and healthy picks) only for people who turned them on.
+  const nutrition = useAppSelector(selectNutritionSettings);
+  const showCalories = !!nutrition.settings?.showCalories;
+  useEffect(() => {
+    if (nutrition.status === 'idle') void dispatch(loadNutritionSettingsAsync());
+  }, [dispatch, nutrition.status]);
 
   const key = point ? pointKey(point) : '';
   useEffect(() => {
@@ -105,6 +117,47 @@ const FoodHomeContent: React.FC = () => {
       </ScrollView>
     </FoodSection>
   ) : null;
+
+  const myKitchen = (
+    <View style={styles.padded}>
+      <Card onPress={() => navigation.navigate('MyKitchen')} accessibilityLabel="My Kitchen: cook what you have, get what's missing">
+        <View style={styles.tile}>
+          <IonIcon name="basket-outline" size="lg" color={service.accentDeep} />
+          <View style={styles.tileText}>
+            <AppText variant="title">My Kitchen</AppText>
+            <AppText variant="small" tone="muted">
+              Cook what you have, and get what’s missing
+            </AppText>
+          </View>
+          <IonIcon name="chevron-forward" size="md" color={colors.inkMuted} />
+        </View>
+      </Card>
+    </View>
+  );
+
+  const healthyRail =
+    showCalories && s.healthy.length ? (
+      <FoodSection title="Healthy picks" subtitle="Under 600 kcal, or high in protein (estimated, per person)">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
+          {s.healthy.map(h => (
+            <Card key={h.itemId} onPress={() => navigation.navigate('FoodVendor', { slug: h.vendor.slug, dish: h.itemId })} accessibilityLabel={`${h.name} from ${h.vendor.name}, ${h.kcal} kcal, ${h.protein} grams protein`}>
+              <View style={styles.pick}>
+                <AppText variant="bodyStrong" numberOfLines={2}>
+                  {h.name}
+                </AppText>
+                <AppText variant="small" tone="muted" numberOfLines={1}>
+                  {h.vendor.name}
+                </AppText>
+                <AppText variant="small">{`${h.kcal.toLocaleString('en-US')} kcal · ${h.protein} g protein`}</AppText>
+                <AppText variant="small" tone="accentDeep">
+                  {formatPKR(h.price)}
+                </AppText>
+              </View>
+            </Card>
+          ))}
+        </ScrollView>
+      </FoodSection>
+    ) : null;
 
   const iftarRail = s.iftar.length ? (
     <FoodSection title="Iftar near you" subtitle="Kitchens keeping Ramadan hours">
@@ -168,6 +221,8 @@ const FoodHomeContent: React.FC = () => {
               <CuisineRail cuisines={home.cuisines} onPress={c => navigation.navigate('FoodVendors', { cuisine: c.slug, title: c.name })} />
             </FoodSection>
           ) : null}
+          {myKitchen}
+          {healthyRail}
           {iftarRail}
           {surplusRail}
           {tiffinRail}

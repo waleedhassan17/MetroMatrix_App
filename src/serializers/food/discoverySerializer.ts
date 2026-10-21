@@ -27,6 +27,7 @@ import { foodCuisinesSerializer } from './vendorSerializer';
 import { ITEM_TAGS } from './menuSerializer';
 import { foodHomeBannersSerializer, ratingSummarySerializer } from './reviewSerializer';
 import { tiffinPlanCardSerializer } from '../kitchen/growthSerializer';
+import { dishFactsSerializer } from '../myKitchen/myKitchenSerializer';
 
 const compact = <T>(xs: (T | null)[]): T[] => xs.filter((x): x is T => x !== null);
 const intOrNull = (v: unknown): number | null => (v === null || v === undefined || !Number.isFinite(Number(v)) ? null : Math.round(Number(v)));
@@ -132,6 +133,7 @@ export const dishCardSerializer = (raw: unknown): DishCard | null => {
     remainingToday: intOrNull(raw.remainingToday),
     remainingLabel: strOrNull(raw.remainingLabel),
     sold30d: Math.max(0, Math.round(num(raw.sold30d))),
+    nutrition: dishFactsSerializer(raw.nutrition),
   };
 };
 
@@ -248,12 +250,13 @@ export const itemSheetSerializer = (raw: unknown): ItemSheet | null => {
       ),
     ),
     groups: compact(arr(raw.groups).map(groupSerializer)),
+    nutrition: dishFactsSerializer(raw.nutrition),
   };
 };
 
 const dishHitSerializer = (raw: unknown): DishHit | null =>
   isObject(raw) && str(raw.id)
-    ? { id: str(raw.id), name: str(raw.name), photoUrl: strOrNull(raw.photoUrl), fromPrice: Math.max(0, Math.round(num(raw.fromPrice))), tags: tags(raw.tags) }
+    ? { id: str(raw.id), name: str(raw.name), photoUrl: strOrNull(raw.photoUrl), fromPrice: Math.max(0, Math.round(num(raw.fromPrice))), tags: tags(raw.tags), nutrition: dishFactsSerializer(raw.nutrition) }
     : null;
 
 export const foodSearchSerializer = (raw: unknown): FoodSearchResult => {

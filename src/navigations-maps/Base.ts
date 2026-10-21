@@ -284,6 +284,13 @@ export const ROUTES = {
   FOOD_CATERING_FORM: 'FoodCateringForm',
   FOOD_CATERING_REQUESTS: 'FoodCateringRequests',
   FOOD_CATERING_REQUEST: 'FoodCateringRequest',
+  // My Kitchen and the customer's nutrition (5C)
+  MY_KITCHEN: 'MyKitchen',
+  MY_KITCHEN_RECIPES: 'MyKitchenRecipes',
+  MY_KITCHEN_RECIPE: 'MyKitchenRecipe',
+  MY_KITCHEN_MISSING: 'MyKitchenMissing',
+  NUTRITION_SETTINGS: 'NutritionSettings',
+  NUTRITION_SUMMARY: 'NutritionSummary',
   /** A kitchen's own page (its link or QR, /s/:slug), signed out; signed in, the link opens FoodVendor. */
   PUBLIC_STORE: 'PublicStore',
 

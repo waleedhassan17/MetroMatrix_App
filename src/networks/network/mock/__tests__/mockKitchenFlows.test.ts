@@ -55,6 +55,12 @@ import { getItemSheet } from '../../../food/discoveryNetwork';
 import { listReviewsByTheme } from '../../../food/vendor/reviewsNetwork';
 import { comboItemInput, specialItemInput, specialRecipe } from '../../../../models/kitchen/assistantModel';
 import { isUrduScript } from '../../../../utils/script';
+import { addToPantry, listPantry } from '../../../myKitchen/pantryNetwork';
+import { getHomeRecipe, getMissingItems, suggestHomeRecipes } from '../../../myKitchen/recipesNetwork';
+import { deleteNutritionData, getNutritionSettings, getNutritionSummary, listHealthyPicks, saveNutritionSettings } from '../../../myKitchen/nutritionNetwork';
+import { searchFood } from '../../../food/discoveryNetwork';
+import { addToCart as addToShopCart, getCart as getShopCart } from '../../../shopping/cartNetwork';
+import { handedExternal, markDelivered } from '../../../food/vendor/ordersNetwork';
 import { api, AuthError } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import { MOCK, SEED_PASSWORD, STAFF_PASSWORD } from '../mockConfig';
@@ -708,6 +714,89 @@ describe('the assistant’s drafts (5C)', () => {
     // The expiring-stock card falls back to a Bachat Box.
     const hub = await getKitchenHub();
     expect(hub.cards.find(x => x.kind === 'expiring_stock')?.action.kind).toBe('create_surplus');
+  });
+});
+
+describe('My Kitchen and nutrition (5C)', () => {
+  it('keeps calories off until the customer opts in; works out a target; deletes it all (QA 45, 46)', async () => {
+    await asCustomer();
+    expect(await getNutritionSettings()).toMatchObject({ enabled: false, showCalories: false, targetKcal: null });
+    // Turning calories on without nutrition on keeps them off.
+    expect((await saveNutritionSettings({ showCalories: true })).showCalories).toBe(false);
+    const on = await saveNutritionSettings({ enabled: true, showCalories: true, goal: 'maintain', metrics: { sex: 'female', age: 31, heightCm: 163, weightKg: 62, activity: 'moderate' } });
+    expect(on).toMatchObject({ enabled: true, showCalories: true, targetKcal: 1920 });
+    expect((await saveNutritionSettings({ manualTargetKcal: 1800 })).targetKcal).toBe(1800);
+    const gone = await deleteNutritionData();
+    expect(gone).toMatchObject({ enabled: false, showCalories: false, metrics: null, manualTargetKcal: null, targetKcal: null });
+    expect((await failure(getNutritionSummary())).code).toBe('NUTRITION_OFF');
+  });
+
+  it('filters search and healthy picks to dishes that qualify, per person (QA 47)', async () => {
+    await asCustomer();
+    const r = await searchFood('chicken', GULBERG.lat, GULBERG.lng, 'under_600');
+    const dishes = r.dishes.flatMap(d => d.items);
+    expect(dishes.length).toBeGreaterThan(0);
+    expect(dishes.every(d => d.nutrition && d.nutrition.kcal < 600)).toBe(true);
+    const all = await searchFood('chicken', GULBERG.lat, GULBERG.lng);
+    expect(all.dishes.flatMap(d => d.items).length).toBeGreaterThan(dishes.length);
+    const picks = await listHealthyPicks(GULBERG);
+    expect(picks.length).toBeGreaterThan(0);
+    expect(picks.every(p => p.kcal < 600 || (p.tags.includes('high_protein') && p.kcal <= 800))).toBe(true);
+    expect(picks.some(p => /drink|naan|lassi/i.test(p.name))).toBe(false);
+  });
+
+  it('adds up only the Food Court food the customer ordered, plainly (QA 48)', async () => {
+    const o = await orderBiryani(1);
+    await asVendor();
+    await acceptOrder(o.id, 20);
+    await startPreparing(o.id);
+    await markReady(o.id);
+    await handedExternal(o.id);
+    await markDelivered(o.id, o.totals.total);
+    await asCustomer();
+    await saveNutritionSettings({ enabled: true });
+    const w = await getNutritionSummary();
+    expect(w.days).toHaveLength(7);
+    const today = w.days[w.days.length - 1];
+    expect(today).toMatchObject({ orders: 1 });
+    expect(today.kcal).toBeGreaterThan(500);
+    expect(w.topDishes[0]).toMatchObject({ name: 'Chicken Biryani', count: 1 });
+  });
+
+  it('adds what was said to the pantry only on confirm, with its expiry (QA 49)', async () => {
+    await asCustomer();
+    const before = (await listPantry('all')).items.length;
+    const v = await interpretVoice({ context: 'pantry', language: 'auto', text: 'do kilo aloo, expiry agle hafte' });
+    expect(v.action?.kind).toBe('pantry.add');
+    expect((await listPantry('all')).items).toHaveLength(before);
+    const lines = v.action!.kind === 'pantry.add' ? v.action!.lines : [];
+    const added = await addToPantry(lines.map(l => ({ name: l.name, key: l.key, qty: l.qty, unit: l.unit, expiresOn: l.expiresOn })), 'voice');
+    expect(added[0]).toMatchObject({ key: 'potato', qty: 2000, unit: 'g', source: 'voice', expiresOn: '2026-10-22' });
+  });
+
+  it('suggests recipes using what expires first, with what is missing, priced from Shopping (QA 50, 51, 52)', async () => {
+    await asCustomer();
+    const ideas = await suggestHomeRecipes({ language: 'en', servings: 4 });
+    expect(ideas[0].usesExpiring.length).toBeGreaterThan(0);
+    const keema = ideas.find(i => i.id === 'rc_aloo_keema')!;
+    expect(keema.have).toContain('Potato');
+    expect(keema.missing).toContain('Ginger garlic paste');
+    const missing = await getMissingItems('rc_aloo_keema', 4);
+    const onions = missing.find(m => m.key === 'ginger_garlic')!;
+    expect(onions.options[0]).toMatchObject({ store: { name: 'Daily Basket' }, pricePerUnit: { per: 'kg' } });
+    const potato = await getMissingItems('rc_aloo_paratha', 4);
+    const atta = potato.find(m => m.key === 'atta')!;
+    expect(atta.options[0].pricePerUnit.amount).toBe(155);
+    await addToShopCart(atta.options[0].variantId!, atta.options[0].packsNeeded);
+    expect((await getShopCart()).groups.flatMap(g => g.lines).some(l => l.productId === atta.options[0].productId)).toBe(true);
+    // "Order it nearby" searches Food Court for the dish's own word.
+    expect(keema.searchTerm).toBe('keema');
+    const pulao = await getHomeRecipe('rc_chicken_pulao', 'ur', null);
+    expect(pulao.searchTerm).toBe('pulao');
+    const nearby = await searchFood(pulao.searchTerm, GULBERG.lat, GULBERG.lng);
+    expect(nearby.dishes.flatMap(d => d.items).some(i => /pulao/i.test(i.name))).toBe(true);
+    // One set of ideas is one assistant action.
+    expect((await getDb()).kitchen.aiUses.filter(u => u.feature === 'recipe_suggestions')).toHaveLength(1);
   });
 });
 

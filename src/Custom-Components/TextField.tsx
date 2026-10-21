@@ -69,6 +69,8 @@ const makeStyles = ({ colors, space, radius, size, type, elevation }: Theme) =>
     multiline: { alignItems: 'flex-start', paddingVertical: space.s12 },
     input: {
       flex: 1,
+      // Web: an input keeps the browser's default width unless it may shrink (two fields side by side).
+      minWidth: 0,
       ...type.input,
       color: colors.ink,
       paddingVertical: space.s12,

@@ -32,6 +32,12 @@ import FoodTiffinScreen from '../screens/Food/Customer/FoodTiffin/FoodTiffinScre
 import FoodCateringFormScreen from '../screens/Food/Customer/FoodCateringForm/FoodCateringFormScreen';
 import FoodCateringRequestsScreen from '../screens/Food/Customer/FoodCateringRequests/FoodCateringRequestsScreen';
 import FoodCateringRequestScreen from '../screens/Food/Customer/FoodCateringRequest/FoodCateringRequestScreen';
+import PantryScreen from '../screens/MyKitchen/Pantry/PantryScreen';
+import RecipeIdeasScreen from '../screens/MyKitchen/RecipeIdeas/RecipeIdeasScreen';
+import HomeRecipeScreen from '../screens/MyKitchen/HomeRecipe/HomeRecipeScreen';
+import MissingItemsScreen from '../screens/MyKitchen/MissingItems/MissingItemsScreen';
+import NutritionSettingsScreen from '../screens/MyKitchen/NutritionSettings/NutritionSettingsScreen';
+import NutritionSummaryScreen from '../screens/MyKitchen/NutritionSummary/NutritionSummaryScreen';
 
 const AS_TAB = { asTab: true };
 
@@ -66,4 +72,11 @@ export const FOOD_STACK_ROUTES: IRoute[] = [
   { title: ROUTES.FOOD_CATERING_FORM, component: FoodCateringFormScreen },
   { title: ROUTES.FOOD_CATERING_REQUESTS, component: FoodCateringRequestsScreen },
   { title: ROUTES.FOOD_CATERING_REQUEST, component: FoodCateringRequestScreen },
+  // My Kitchen and the customer's nutrition (5C)
+  { title: ROUTES.MY_KITCHEN, component: PantryScreen },
+  { title: ROUTES.MY_KITCHEN_RECIPES, component: RecipeIdeasScreen },
+  { title: ROUTES.MY_KITCHEN_RECIPE, component: HomeRecipeScreen },
+  { title: ROUTES.MY_KITCHEN_MISSING, component: MissingItemsScreen },
+  { title: ROUTES.NUTRITION_SETTINGS, component: NutritionSettingsScreen },
+  { title: ROUTES.NUTRITION_SUMMARY, component: NutritionSummaryScreen },
 ];

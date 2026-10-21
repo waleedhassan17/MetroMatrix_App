@@ -8,6 +8,7 @@
 import type { VoiceAction, VoiceContext, VoiceLanguage, VoiceResult } from '../../types/kitchen';
 import { formatIn } from '../../utils/units';
 import { formatPKR } from '../../utils/money';
+import { formatDayShort } from '../../utils/healthTime';
 import { rejectReasonLabel } from '../food/foodStatusModel';
 import { WASTE_REASON_LABEL } from './kitchenStatusModel';
 
@@ -61,7 +62,7 @@ export const actionTitle = (a: VoiceAction): string => {
     case 'search':
       return `Search for “${a.query}”`;
     case 'pantry.add':
-      return `Add to your pantry: ${lines(a.lines)}`;
+      return `Add to your pantry: ${a.lines.map(l => `${lines([l])}${l.expiresOn ? ` · use by ${formatDayShort(l.expiresOn)}` : ''}`).join(', ')}`;
   }
 };
 

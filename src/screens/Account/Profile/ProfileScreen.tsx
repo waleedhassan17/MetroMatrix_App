@@ -315,6 +315,14 @@ const ProfileContent: React.FC<Props> = ({ navigation }) => {
       ]
     : [];
 
+  // Food Court: the customer's own kitchen and nutrition (Kitchen Intelligence, 5C).
+  const food: MenuItem[] = isCustomer
+    ? [
+        { key: 'mykitchen', title: 'My Kitchen', subtitle: 'What’s at home, recipes, what to buy', icon: 'basket-outline', tint: 'blue', onPress: () => svc.openFood('MyKitchen') },
+        { key: 'nutrition', title: 'Nutrition', subtitle: 'Off unless you turn it on; only you see it', icon: 'nutrition-outline', tint: 'rose', onPress: () => svc.openFood('NutritionSettings') },
+      ]
+    : [];
+
   const hero = (
     <View style={styles.hero}>
       <View style={styles.avatar}>
@@ -369,6 +377,7 @@ const ProfileContent: React.FC<Props> = ({ navigation }) => {
       <MenuSection title="Account" items={account} />
       <MenuSection title="Shopping" items={shopping} />
       <MenuSection title="Health" items={health} />
+      <MenuSection title="Food Court" items={food} />
       <Pressable
         onPress={confirmSignOut}
         accessibilityRole="button"

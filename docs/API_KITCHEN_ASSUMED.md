@@ -1991,6 +1991,456 @@ Orders that could ride with this one (`GET /food/vendor/orders/:id/batch-suggest
 ```
 
 
+### 2.15 My Kitchen (5C)
+
+The customer's own kitchen. None of it ever reaches a kitchen on Food Court. The pantry, in base
+units; `state` is `use_soon` within 3 days of `expiresOn` and `expired` after it:
+
+<!-- contract: pantry -->
+```json
+{
+  "counts": {
+    "all": 9,
+    "use_soon": 1,
+    "expired": 5
+  },
+  "items": [
+    {
+      "id": "pn_seed_9",
+      "name": "Coriander",
+      "key": "coriander",
+      "qty": 100,
+      "unit": "g",
+      "expiresOn": "2026-10-14",
+      "state": "expired",
+      "source": "manual",
+      "addedAt": "2026-10-11T10:00:00.000Z"
+    },
+    {
+      "id": "pn_seed_8",
+      "name": "Beef mince",
+      "key": "beef_mince",
+      "qty": 500,
+      "unit": "g",
+      "expiresOn": "2026-10-16",
+      "state": "expired",
+      "source": "manual",
+      "addedAt": "2026-10-11T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+Adding lines (a form, a voice draft, a receipt). `unit` is one people use (`kg`, `pao`, `dozen` …);
+`key` is matched from the name when not sent; without `expiresOn` fresh food gets a usual shelf
+life (meat 2 days, dairy 4, vegetables 7):
+
+<!-- contract: pantryAdd -->
+```json
+{
+  "items": [
+    {
+      "id": "pn_18l0",
+      "name": "aloo",
+      "key": "potato",
+      "qty": 2000,
+      "unit": "g",
+      "expiresOn": "2026-10-22",
+      "state": "use_soon",
+      "source": "voice",
+      "addedAt": "2026-10-19T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+Using something up (`{}` for all of it, or `{ qty, unit }`). Used within its last 3 days, it counts
+as saved from waste:
+
+<!-- contract: pantryUse -->
+```json
+{
+  "item": null,
+  "usedUp": true,
+  "savedFromWaste": false
+}
+```
+
+<!-- contract: pantryStats -->
+```json
+{
+  "month": "2026-10",
+  "used": 3,
+  "savedFromWaste": 2,
+  "wasted": 0,
+  "inKitchen": 9
+}
+```
+
+Grocery lines from the person's Shopping orders of the last 45 days (`GET
+/my-kitchen/pantry/shopping-orders`), then adding them (`POST /my-kitchen/pantry/from-shopping-order
+{ orderId, lineIds }`: each pack's net quantity × how many):
+
+<!-- contract: pantryOrders -->
+```json
+{
+  "items": [
+    {
+      "orderId": "o_rtk9ae",
+      "code": "MM-IJR6GK-1",
+      "storeName": "Daily Basket",
+      "placedAt": "2026-10-19T10:00:00.000Z",
+      "status": "placed",
+      "lines": [
+        {
+          "lineId": "oi_ruwlpt",
+          "name": "Tomatoes (1 kg)",
+          "quantity": 1,
+          "netQuantity": {
+            "qty": 1000,
+            "unit": "g"
+          },
+          "alreadyAdded": false
+        }
+      ]
+    }
+  ]
+}
+```
+
+<!-- contract: pantryFromOrder -->
+```json
+{
+  "items": [
+    {
+      "id": "pn_19du",
+      "name": "Tomatoes (1 kg)",
+      "key": "tomato",
+      "qty": 1000,
+      "unit": "g",
+      "expiresOn": "2026-10-26",
+      "state": "fresh",
+      "source": "shopping",
+      "addedAt": "2026-10-19T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+Recipe ideas (an assistant action, 30 a month for customers): recipes that use what is in the
+pantry, those using what expires soonest first, then the fewest missing:
+
+<!-- contract: recipeSuggest -->
+```json
+{
+  "language": "en",
+  "items": [
+    {
+      "id": "rc_aloo_bhujia",
+      "title": "Aloo ki bhujia",
+      "searchTerm": "bhujia",
+      "minutes": 25,
+      "servings": 4,
+      "have": [
+        "Potato",
+        "Onion"
+      ],
+      "missing": [
+        "Red chilli powder",
+        "Cooking oil"
+      ],
+      "usesExpiring": [
+        "Potato"
+      ],
+      "nutrition": {
+        "kcal": 299,
+        "protein": 5,
+        "carbs": 42,
+        "fat": 13
+      }
+    },
+    {
+      "id": "rc_aloo_paratha",
+      "title": "Aloo paratha with dahi",
+      "minutes": 35,
+      "servings": 4,
+      "have": [
+        "Potato"
+      ],
+      "missing": [
+        "Atta (wholewheat flour)",
+        "Green chilli"
+      ],
+      "usesExpiring": [
+        "Potato"
+      ],
+      "nutrition": {
+        "kcal": 768,
+        "protein": 23,
+        "carbs": 117,
+        "fat": 27
+      }
+    }
+  ]
+}
+```
+
+A recipe in the language asked for, scaled to `servings`:
+
+<!-- contract: homeRecipe -->
+```json
+{
+  "id": "rc_aloo_keema",
+  "title": "آلو قیمہ",
+  "searchTerm": "keema",
+  "language": "ur",
+  "minutes": 40,
+  "servings": 4,
+  "ingredients": [
+    {
+      "key": "beef_mince",
+      "name": "قیمہ",
+      "qty": 500,
+      "unit": "g",
+      "have": false,
+      "usesExpiring": false
+    },
+    {
+      "key": "potato",
+      "name": "آلو",
+      "qty": 400,
+      "unit": "g",
+      "have": true,
+      "usesExpiring": true
+    }
+  ],
+  "steps": [
+    "پیاز کو تیل میں سنہری ہونے تک بھونیں۔",
+    "ادرک لہسن اور قیمہ ڈال کر بھونیں۔"
+  ],
+  "nutrition": {
+    "kcal": 570,
+    "protein": 25,
+    "carbs": 28,
+    "fat": 40
+  }
+}
+```
+
+Its missing items from Shopping's grocers, cheapest per kilo, litre or piece first
+(`packsNeeded` covers the recipe):
+
+<!-- contract: missingItems -->
+```json
+{
+  "items": [
+    {
+      "key": "beef_mince",
+      "name": "Beef mince",
+      "need": {
+        "qty": 500,
+        "unit": "g"
+      },
+      "options": [
+        {
+          "productId": "p_g20",
+          "variantId": "p_g20_v0",
+          "name": "Beef mince (500 g)",
+          "store": {
+            "id": "s_basket",
+            "name": "Daily Basket"
+          },
+          "price": 650,
+          "netQuantity": {
+            "qty": 500,
+            "unit": "g"
+          },
+          "pricePerUnit": {
+            "amount": 1300,
+            "per": "kg"
+          },
+          "packsNeeded": 1,
+          "inStock": true
+        }
+      ]
+    },
+    {
+      "key": "ginger_garlic",
+      "name": "Ginger garlic paste",
+      "need": {
+        "qty": 30,
+        "unit": "g"
+      },
+      "options": [
+        {
+          "productId": "p_g24",
+          "variantId": "p_g24_v0",
+          "name": "Ginger garlic paste (300 g)",
+          "store": {
+            "id": "s_basket",
+            "name": "Daily Basket"
+          },
+          "price": 240,
+          "netQuantity": {
+            "qty": 300,
+            "unit": "g"
+          },
+          "pricePerUnit": {
+            "amount": 800,
+            "per": "kg"
+          },
+          "packsNeeded": 1,
+          "inStock": true
+        }
+      ]
+    }
+  ]
+}
+```
+
+Nutrition settings. Off by default; `showCalories` is off until the person turns it on, and
+off whenever nutrition is. `targetKcal` is the person's own number, else worked out from their
+metrics and goal (Mifflin–St Jeor × activity, −400 to lose, +300 to gain):
+
+<!-- contract: nutritionOff -->
+```json
+{
+  "enabled": false,
+  "showCalories": false,
+  "goal": "eat_better",
+  "metrics": null,
+  "manualTargetKcal": null,
+  "targetKcal": null,
+  "updatedAt": null
+}
+```
+
+<!-- contract: nutritionOn -->
+```json
+{
+  "enabled": true,
+  "showCalories": true,
+  "goal": "maintain",
+  "metrics": {
+    "sex": "female",
+    "age": 31,
+    "heightCm": 163,
+    "weightKg": 62,
+    "activity": "moderate"
+  },
+  "manualTargetKcal": null,
+  "targetKcal": 1920,
+  "updatedAt": "2026-10-19T10:00:00.000Z"
+}
+```
+
+The last `days` days of the person's delivered or collected Food Court orders (`409 NUTRITION_OFF`
+while nutrition is off). `uncounted` dishes have no numbers (hidden by their kitchen, or never
+worked out):
+
+<!-- contract: nutritionSummary -->
+```json
+{
+  "from": "2026-10-13",
+  "to": "2026-10-19",
+  "scope": "food_court_orders",
+  "days": [
+    {
+      "date": "2026-10-13",
+      "kcal": 0,
+      "protein": 0,
+      "carbs": 0,
+      "fat": 0,
+      "orders": 0
+    },
+    {
+      "date": "2026-10-14",
+      "kcal": 0,
+      "protein": 0,
+      "carbs": 0,
+      "fat": 0,
+      "orders": 0
+    }
+  ],
+  "averageOnOrderDays": {
+    "kcal": 0,
+    "protein": 0,
+    "carbs": 0,
+    "fat": 0
+  },
+  "topDishes": [],
+  "uncounted": 0,
+  "targetKcal": 1920
+}
+```
+
+`DELETE /my-kitchen/nutrition` removes the settings and metrics (the summary is worked out, never
+stored):
+
+<!-- contract: nutritionDelete -->
+```json
+{
+  "deleted": true,
+  "settings": {
+    "enabled": false,
+    "showCalories": false,
+    "goal": "eat_better",
+    "metrics": null,
+    "manualTargetKcal": null,
+    "targetKcal": null,
+    "updatedAt": null
+  }
+}
+```
+
+Healthy picks nearby (`GET /food/healthy-picks?lat&lng`): meals under 600 kcal a person, or high
+in protein (25 g or more, at least a fifth of the calories) at up to 800 kcal a person, from open
+kitchens and only dishes that can be ordered now (empty when none are):
+
+<!-- contract: healthyPicks -->
+```json
+{
+  "items": [
+    {
+      "itemId": "mi_tikka",
+      "name": "Chicken Tikka (leg)",
+      "photoUrl": "https://images.unsplash.com/photo-1773419808002-bab9e1f840a0",
+      "price": 550,
+      "kcal": 494,
+      "protein": 49,
+      "serves": 1,
+      "tags": [
+        "under_600",
+        "high_protein"
+      ],
+      "vendor": {
+        "id": "fb_resto",
+        "slug": "biryani-bazaar",
+        "name": "Biryani Bazaar"
+      }
+    },
+    {
+      "itemId": "mi_malai",
+      "name": "Malai Boti",
+      "photoUrl": null,
+      "price": 980,
+      "kcal": 538,
+      "protein": 61,
+      "serves": 1,
+      "tags": [
+        "under_600",
+        "high_protein"
+      ],
+      "vendor": {
+        "id": "fb_resto",
+        "slug": "biryani-bazaar",
+        "name": "Biryani Bazaar"
+      }
+    }
+  ]
+}
+```
+
 ## 3. Rules
 
 ### 3.1 Stock moves first-expiring first
@@ -2548,9 +2998,13 @@ Customers (`/my-kitchen`):
 
 | Area | Routes |
 |---|---|
-| Pantry | `GET /pantry?segment=all\|use_soon\|expired`, `POST /pantry { lines }`, `PATCH/DELETE /pantry/:id`, `POST /pantry/:id/use`, `POST /pantry/from-shopping-order { orderId, lineIds }`, `GET/PUT /pantry/reminders`, `GET /stats?month` |
-| Recipes | `POST /recipes/suggest { language: ur\|en, maxMinutes?, servings? }`, `GET /recipes/:id`, `GET /recipes/:id/missing-items` (Shopping products with `pricePerUnit`) |
-| Nutrition | `GET/PUT /nutrition/settings` (`{ enabled, showCalories (default false), goal, metrics?, manualTargetKcal? }` → computed `targetKcal`), `DELETE /nutrition` (all of it), `GET /nutrition/summary?days=7` (ordered Food Court food only) |
+| Pantry | `GET /pantry?segment=all\|use_soon\|expired`, `POST /pantry { lines [{ name, key?, qty, unit, expiresOn? }] (1–30), source? }`, `PATCH /pantry/:id { qty, unit, expiresOn }`, `DELETE /pantry/:id` (thrown away), `POST /pantry/:id/use { qty?, unit? }`, `GET /pantry/shopping-orders`, `POST /pantry/from-shopping-order { orderId, lineIds }`, `GET/PUT /pantry/reminders { enabled, time, daysBefore (0–3) }`, `GET /stats?month` (§2.15) |
+| Recipes | `POST /recipes/suggest { language: ur\|en, maxMinutes? (5–240), servings? (1–20) }`, `GET /recipes/:id?language&servings`, `GET /recipes/:id/missing-items?servings` (Shopping's grocery packs with `pricePerUnit`) |
+| Nutrition | `GET/PUT /nutrition/settings` (`{ enabled, showCalories, goal: eat_better\|maintain\|lose\|gain, metrics { sex, age, heightCm, weightKg, activity: low\|moderate\|high } \| null, manualTargetKcal (1,000–5,000) \| null }` → computed `targetKcal`), `DELETE /nutrition` (all of it), `GET /nutrition/summary?days=7` (1–30; ordered Food Court food only) |
+| Food | `GET /food/healthy-picks?lat&lng`; search's `?nutrition=under_600\|high_protein` (per person) |
+
+Groceries are Shopping products with a `netQuantity { qty, unit }` and the ingredient they are
+(an assumed Shopping addition, `TODO(API_SHOPPING)`); the dummy API's are Daily Basket's.
 
 ### 4.8 Staff (`/admin/kitchen`)
 
@@ -2594,7 +3048,7 @@ capture carries one**: it has shipped then, and is reconciled.
 | `RiderOrder` | `dropOrder { position, of }` | a batched delivery (5B) |
 | `VendorCard` | `badges[]` | `signature, hygiene_verified, hygiene_self_declared, home_kitchen, bachat_today` (5B), `under_600, high_protein` (5C) |
 | `VendorPage` | `story`, `hygiene { status, checkedAt }`, `signatureItemIds`, `ramadan`, `tiffinPlans [{ id, name, meal, days, period, price, perMeal, window, seatsLeft, photoUrl }]`, `catering { open, minGuests, leadDays }` | 5B |
-| Dish (menu card, item sheet, search) | `nutrition`, `descriptionUr`, `isSignature` | 5B–5C |
+| Dish (menu card, item sheet, search) | `nutrition { kcal, protein, carbs, fat, method, serves }` (per order as sold, for `serves` people; null when the kitchen hides it or it was never worked out), `descriptionUr`, `isSignature` | 5B–5C |
 | `GET /food/search` | `?nutrition=under_600\|high_protein` | 5C |
 | Payment method | `tiffin_plan` | an order a tiffin period paid for (5B) |
 | `GET /food/vendor/reviews` | `?theme=`, `?week=` (a Monday) | a review theme's reviews (5C) |
@@ -2624,6 +3078,8 @@ capture carries one**: it has shipped then, and is reconciled.
 | `CATERING_CLOSED` | 409 | (5B) |
 | `ADDRESS_REQUIRED`, `ADDRESS_LOCATION_REQUIRED` | 422 | (5B) |
 | `RAMADAN_NOT_ACTIVE` | 409 | `event`, `opensOn` (5B) |
+| `NUTRITION_OFF` | 409 | (5C) |
+| `PANTRY_FULL` | 409 | `max` (5C) |
 | `EXPERIMENT_RUNNING` | 409 | (5B) |
 | `EXPERIMENT_LIMIT` | 409 | `max` (5B) |
 | `EXPERIMENT_NOT_SUPPORTED` | 422 | (5B) |
@@ -2698,6 +3154,14 @@ Reaching customers (5B):
 - **Nani ki Handi** has a story (Shazia Parveen) and a self-declared hygiene checklist, ready to
   ask for verification; **Biryani Bazaar** is verified.
 - A kitchen's link is `https://metromatrix.app/s/<slug>`, and its QR adds `?via=qr`.
+
+My Kitchen (5C):
+- **Ayesha** (`customer@`) has nine things in her kitchen at home (tomatoes, yoghurt, milk and beef
+  mince to use soon, coriander gone off) and two used this month before they expired.
+- **Daily Basket** (`basket@metromatrix.app`, password `Metro2026`) is a fictional Lahore grocer
+  in Shopping with 24 staples, each with its net quantity, for "Get missing items".
+- Biryani Bazaar's house biryani masala and aloo bukhara aren't matched to nutrition foods yet (the
+  kitchen's nutrition screen lists them); about 30 earlier reviews feed its review themes.
 
 ## 10. When the real document arrives
 

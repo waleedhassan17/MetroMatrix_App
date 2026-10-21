@@ -99,6 +99,12 @@ export interface MockProduct {
   trending: number;
   createdAt: string;
   updatedAt: string;
+  /**
+   * Groceries (Daily Basket): what one unit holds, and the kitchen ingredient
+   * it is. Kitchen Intelligence's price compare reads them (TODO(API_SHOPPING)).
+   */
+  netQuantity?: { qty: number; unit: 'g' | 'ml' | 'pc' };
+  ingredientKey?: string;
 }
 
 export interface MockReview {

@@ -47,4 +47,6 @@ export const getVendorPage = (slug: string, at: { lat: number; lng: number } | n
 
 export const getItemSheet = (id: string) => request(() => api.get(`/food/items/${encodeURIComponent(id)}`), itemSheetSerializer);
 
-export const searchFood = (q: string, lat: number, lng: number) => request(() => api.get('/food/search', { params: { q, ...point(lat, lng) } }), foodSearchSerializer);
+/** `nutrition`: only dishes under 600 kcal or high in protein (Kitchen Intelligence, TODO(API_KITCHEN)). */
+export const searchFood = (q: string, lat: number, lng: number, nutrition?: 'under_600' | 'high_protein' | null) =>
+  request(() => api.get('/food/search', { params: { q, ...point(lat, lng), ...(nutrition ? { nutrition } : null) } }), foodSearchSerializer);

@@ -62,6 +62,29 @@ All are published under the [Unsplash License](https://unsplash.com/license): fr
 | `PB1` | Power banks | https://images.unsplash.com/photo-1566554738544-d962991c3fee | `p_v13` |
 | `PB2` | Power banks | https://images.unsplash.com/photo-1706275399494-fb26bbc5da63 | `p_v14` |
 | `SW1` | Smartwatches | https://images.unsplash.com/photo-1461141346587-763ab02bced9 | `p_v15` |
+| `G1` | Potatoes | https://images.unsplash.com/photo-1518977676601-b53f82aba655 | `p_g1`, `p_g2` |
+| `G2` | Red onions | https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb | `p_g3`, `p_g4` |
+| `G3` | Tomatoes | https://images.unsplash.com/photo-1582284540020-8acbe03f4924 | `p_g5` |
+| `G4` | Green chillies | https://images.unsplash.com/photo-1576763595295-c0371a32af78 | `p_g6` |
+| `G5` | Fresh coriander | https://images.unsplash.com/photo-1767156969831-0beee76fa958 | `p_g7` |
+| `G6` | Fresh mint | https://images.unsplash.com/photo-1618130070080-91f4d55a2383 | `p_g8` |
+| `G7` | Lemons | https://images.unsplash.com/photo-1590502593747-42a996133562 | `p_g9` |
+| `G8` | Cucumbers | https://images.unsplash.com/photo-1449300079323-02e209d9d3a6 | `p_g10` |
+| `G9` | Raw rice grains | https://images.unsplash.com/photo-1586201375761-83865001e31c | `p_g11` |
+| `G10` | Flour | https://images.unsplash.com/photo-1627735483792-233bf632619b | `p_g12` |
+| `G11` | Red lentils | https://images.unsplash.com/photo-1672660589379-891ab59588a8 | `p_g13` |
+| `G12` | Oil in a glass bottle | https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5 | `p_g14` |
+| `G13` | Butter in a jar (ghee stand-in) | https://images.unsplash.com/photo-1573812461383-e5f8b759d12e | `p_g15` |
+| `G14` | A glass of milk | https://images.unsplash.com/photo-1517448931760-9bf4414148c5 | `p_g16` |
+| `G15` | Bowl of plain yoghurt | https://images.unsplash.com/photo-1571212515416-fef01fc43637 | `p_g17` |
+| `G16` | Brown eggs in a tray | https://images.unsplash.com/photo-1506976785307-8732e854ad03 | `p_g18` |
+| `G17` | Raw chicken | https://images.unsplash.com/photo-1587593810167-a84920ea0781 | `p_g19` |
+| `G18` | Raw beef (mince stand-in) | https://images.unsplash.com/photo-1783632666621-48b8a8b5ce88 | `p_g20` |
+| `G19` | Granulated sugar | https://images.unsplash.com/photo-1673791031202-ebc0eea03bf2 | `p_g21` |
+| `G20` | Red chilli powder on a spoon | https://images.unsplash.com/photo-1577563717655-919fc57789b4 | `p_g22` |
+| `G21` | Whole spices | https://images.unsplash.com/photo-1581600140682-d4e68c8cde32 | `p_g23` |
+| `G22` | Ginger, garlic and onions | https://images.unsplash.com/photo-1567752458426-b62144165409 | `p_g24` |
+| `G23` | Vegetables on grocery shelves | https://images.unsplash.com/photo-1542838132-92c53300491e | Daily Basket cover |
 
 # Health: demo doctors and banners
 

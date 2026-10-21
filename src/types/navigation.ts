@@ -227,6 +227,13 @@ export type FoodAppParamList = {
   FoodCateringForm: { slug: string; name?: string };
   FoodCateringRequests: undefined;
   FoodCateringRequest: { code: string; fresh?: boolean };
+  // ── My Kitchen and nutrition (5C) ──
+  MyKitchen: undefined;
+  MyKitchenRecipes: undefined;
+  MyKitchenRecipe: { id: string; language?: 'en' | 'ur'; servings?: number | null };
+  MyKitchenMissing: { id: string; title?: string; servings?: number | null };
+  NutritionSettings: undefined;
+  NutritionSummary: undefined;
 };
 
 export type CustomerStackParamList = {

@@ -4,3 +4,4 @@ export * from './food';
 export * from './shopping';
 export * from './health';
 export * from './kitchen';
+export * from './myKitchen';

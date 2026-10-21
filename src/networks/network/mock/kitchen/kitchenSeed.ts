@@ -32,6 +32,7 @@ import type {
   MockRecipe,
   MockRecipeLine,
   MockSupplier,
+  MockPantryItem,
 } from './kitchenTypes';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -990,8 +991,41 @@ export const seedKitchen = (dishes: SeedDish[], now: number = Date.now()): MockK
     priceRefs: seedPriceRefs(today),
     voiceCursor: {},
     idempotency: {},
+    pantry: seedPantry(today),
     seq: 0,
   };
+};
+
+/** Ayesha's kitchen at home (My Kitchen): a few things to use soon, one gone off, two used this month. */
+const seedPantry = (today: string): MockPantryItem[] => {
+  const row = (id: string, name: string, key: string, qty: number, unit: BaseUnit, expiresIn: number | null, extra: Partial<MockPantryItem> = {}): MockPantryItem => ({
+    id,
+    userId: 'u_customer',
+    name,
+    key,
+    qty,
+    unit,
+    expiresOn: expiresIn === null ? null : addDays(today, expiresIn),
+    addedAt: iso(4 * DAY),
+    source: 'manual',
+    status: 'in',
+    doneAt: null,
+    savedFromWaste: false,
+    ...extra,
+  });
+  return [
+    row('pn_seed_1', 'Potatoes', 'potato', 2000, 'g', 6),
+    row('pn_seed_2', 'Onions', 'onion', 1000, 'g', 10),
+    row('pn_seed_3', 'Tomatoes', 'tomato', 1000, 'g', 2),
+    row('pn_seed_4', 'Yoghurt', 'yoghurt', 500, 'g', 1),
+    row('pn_seed_5', 'Milk', 'milk', 1000, 'ml', 1),
+    row('pn_seed_6', 'Eggs', 'egg', 6, 'pc', 8),
+    row('pn_seed_7', 'Basmati rice', 'rice', 5000, 'g', null),
+    row('pn_seed_8', 'Beef mince', 'beef_mince', 500, 'g', 1),
+    row('pn_seed_9', 'Coriander', 'coriander', 100, 'g', -1),
+    row('pn_seed_10', 'Lemons', 'lemon', 250, 'g', 3, { status: 'used', doneAt: iso(2 * DAY), savedFromWaste: true }),
+    row('pn_seed_11', 'Bread', 'flour', 400, 'g', -2, { status: 'used', doneAt: iso(5 * DAY), savedFromWaste: true }),
+  ];
 };
 
 // ── Earlier reviews of Biryani Bazaar (review themes, 5C) ──

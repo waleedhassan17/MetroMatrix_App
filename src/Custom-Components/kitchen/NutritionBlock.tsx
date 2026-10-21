@@ -13,12 +13,16 @@ export interface NutritionFacts {
   carbs: number;
   fat: number;
   method: 'recipe' | 'ai_estimate';
+  /** People the dish as sold is for. */
+  serves?: number;
 }
 
 const METHOD: Record<NutritionFacts['method'], string> = {
-  recipe: 'Estimated from the kitchen’s recipe',
-  ai_estimate: 'Estimated by the assistant from the dish',
+  recipe: 'Estimated from the kitchen’s recipe, not measured',
+  ai_estimate: 'Estimated by the assistant from the dish, not measured',
 };
+
+const grouped = (x: number) => x.toLocaleString('en-US');
 
 const makeStyles = ({ space, radius, colors }: Theme) =>
   StyleSheet.create({
@@ -37,19 +41,20 @@ export const NutritionBlock: React.FC<{ facts: NutritionFacts }> = ({ facts }) =
       </AppText>
     </View>
   );
+  const whole = facts.serves && facts.serves > 1 ? `The whole dish, for ${facts.serves}. ` : '';
   return (
     <View
       style={styles.root}
       accessible
-      accessibilityLabel={`About ${facts.kcal} calories, ${facts.protein} grams protein, ${facts.carbs} grams carbs, ${facts.fat} grams fat. ${METHOD[facts.method]}.`}>
+      accessibilityLabel={`About ${facts.kcal} calories, ${facts.protein} grams protein, ${facts.carbs} grams carbs, ${facts.fat} grams fat. ${whole}${METHOD[facts.method]}.`}>
       <View style={styles.row}>
-        {cell(`${facts.kcal}`, 'kcal')}
+        {cell(grouped(facts.kcal), 'kcal')}
         {cell(`${facts.protein} g`, 'protein')}
         {cell(`${facts.carbs} g`, 'carbs')}
         {cell(`${facts.fat} g`, 'fat')}
       </View>
       <AppText variant="caption" tone="muted" align="center">
-        {METHOD[facts.method]}. Estimated, not measured.
+        {`${whole}${METHOD[facts.method]}.`}
       </AppText>
     </View>
   );

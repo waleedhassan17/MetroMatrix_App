@@ -4,6 +4,7 @@
 
 import type { SubType } from './auth';
 import type { HygieneStatus, KitchenStory, PauseReason, StoreSource, TiffinPlanCard, VendorBadge } from './kitchen';
+import type { DishFacts } from './myKitchen';
 
 export type KitchenKind = Extract<SubType, 'restaurant' | 'home_kitchen' | 'cloud_kitchen'>;
 
@@ -547,6 +548,8 @@ export interface DishCard {
   /** "6 left today" when few remain. */
   remainingLabel: string | null;
   sold30d: number;
+  /** Per order as sold; shown only when the customer turned calories on (Kitchen Intelligence, TODO(API_KITCHEN)). */
+  nutrition: DishFacts | null;
 }
 
 export interface MenuSection {
@@ -628,6 +631,7 @@ export interface ItemSheet {
   remainingToday: number | null;
   variants: { id: string; name: string; price: number; groupIds: string[] }[];
   groups: SheetGroup[];
+  nutrition: DishFacts | null;
 }
 
 export interface DishHit {
@@ -636,6 +640,7 @@ export interface DishHit {
   photoUrl: string | null;
   fromPrice: number;
   tags: ItemTag[];
+  nutrition: DishFacts | null;
 }
 
 export interface FoodSearchResult {

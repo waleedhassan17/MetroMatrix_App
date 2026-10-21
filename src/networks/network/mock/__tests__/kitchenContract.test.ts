@@ -15,6 +15,9 @@ import { MOCK, SEED_PASSWORD, STAFF_PASSWORD } from '../mockConfig';
 import { resetMockDb } from '../mockDb';
 import { addToFoodCart, clearFoodCart } from '../../../food/cartNetwork';
 import { placeFoodOrder } from '../../../food/ordersNetwork';
+import { addToCart, getCart, removeCartLine } from '../../../shopping/cartNetwork';
+import { placeOrder } from '../../../shopping/checkoutNetwork';
+import { listAddresses } from '../../../addresses/addressesNetwork';
 
 const DOCS = ['API_KITCHEN_ASSUMED.md', 'AI_ASSUMED.md', 'VOICE_ASSUMED.md'].map(f => path.join(__dirname, '../../../../../docs', f));
 const T0 = new Date('2026-10-15T10:00:00Z').getTime();
@@ -29,6 +32,9 @@ const call = async (name: string, method: 'get' | 'post' | 'put' | 'patch' | 'de
     out[name] = (e as { response?: { data?: { error?: unknown } } }).response?.data ?? {};
     return null;
   }
+};
+const clearShopCart = async () => {
+  for (const l of (await getCart()).groups.flatMap(g => g.lines)) await removeCartLine(l.id);
 };
 const as = async (email: string, portal: 'customer' | 'partner' = 'partner') => {
   await clearTokens();
@@ -239,6 +245,30 @@ const run = async () => {
   await call('nutrition', 'get', '/food/vendor/nutrition');
   await call('nutritionHide', 'patch', '/food/vendor/nutrition/mi_kheer', { hidden: true });
   await call('nutritionFoods', 'get', '/food/vendor/kitchen/nutrition-foods?q=plum');
+  // ── My Kitchen (5C): the customer's pantry, recipes, nutrition ──
+  await as('customer@metromatrix.app', 'customer');
+  await call('pantry', 'get', '/my-kitchen/pantry?segment=all');
+  await call('pantryAdd', 'post', '/my-kitchen/pantry', { source: 'voice', lines: [{ name: 'aloo', key: 'potato', qty: 2, unit: 'kg', expiresOn: '2026-10-22' }] });
+  await call('pantryUse', 'post', '/my-kitchen/pantry/pn_seed_4/use', {});
+  await call('pantryStats', 'get', '/my-kitchen/stats');
+  await call('pantryReminders', 'get', '/my-kitchen/pantry/reminders');
+  // A grocery order to add from.
+  await clearShopCart();
+  await addToCart('p_g5_v0', 1);
+  const home = (await listAddresses()).find(x => x.city === 'Lahore')!;
+  const grocery = await placeOrder({ addressId: home.id, stores: [{ storeId: 's_basket', paymentMethod: 'cod', couponCode: null, note: null }] }, 'kc-groceries');
+  void grocery;
+  await call('pantryOrders', 'get', '/my-kitchen/pantry/shopping-orders');
+  const ord = (out.pantryOrders.data as { items: { orderId: string; lines: { lineId: string }[] }[] }).items[0];
+  await call('pantryFromOrder', 'post', '/my-kitchen/pantry/from-shopping-order', { orderId: ord.orderId, lineIds: ord.lines.map(l => l.lineId) });
+  await call('recipeSuggest', 'post', '/my-kitchen/recipes/suggest', { language: 'en', maxMinutes: 45, servings: 4 });
+  await call('homeRecipe', 'get', '/my-kitchen/recipes/rc_aloo_keema?language=ur&servings=4');
+  await call('missingItems', 'get', '/my-kitchen/recipes/rc_aloo_keema/missing-items?servings=4');
+  await call('nutritionOff', 'get', '/my-kitchen/nutrition/settings');
+  await call('nutritionOn', 'put', '/my-kitchen/nutrition/settings', { enabled: true, showCalories: true, goal: 'maintain', metrics: { sex: 'female', age: 31, heightCm: 163, weightKg: 62, activity: 'moderate' } });
+  await call('nutritionSummary', 'get', '/my-kitchen/nutrition/summary?days=7');
+  await call('healthyPicks', 'get', '/food/healthy-picks?lat=31.5102&lng=74.3441');
+  await call('nutritionDelete', 'delete', '/my-kitchen/nutrition');
   // In Ramadan: the kitchen turns it on, and it shows in "Iftar near you".
   jest.setSystemTime(new Date('2027-02-12T08:00:00Z').getTime());
   await as('restaurant@metromatrix.app');
@@ -286,7 +316,7 @@ it('documents every request the dummy kitchen API answers, with the same keys', 
   SETUP.push('tiffinPlans', 'tiffinPlanCreate', 'tiffinPlansPublic', 'tiffinSubscribe', 'tiffinSubscribers', 'tiffinProof', 'tiffinSubscriptions', 'tiffinPeriodConfirm');
   SETUP.push('cateringQuote', 'cateringQuote2', 'cateringProof', 'cateringRequests', 'cateringConfirm');
   SETUP.push('experiments', 'storyPut', 'hygieneItem', 'hygieneQueue', 'hygieneVerify', 'experimentKeep', 'tiffinNearby', 'story', 'iftar');
-  SETUP.push('saveUrdu', 'reviewsByTheme');
+  SETUP.push('saveUrdu', 'reviewsByTheme', 'pantryReminders');
   const undocumented = Object.keys(out).filter(name => !(name in docs) && !SETUP.includes(name));
   expect({ mismatched, undocumented }).toEqual({ mismatched: [], undocumented: [] });
 });

@@ -281,6 +281,13 @@ const linkingFor = (customer: boolean): LinkingOptions<ReactNavigation.RootParam
           FoodCateringRequests: 'food/dawat',
           FoodCateringRequest: 'food/dawat/:code',
           FoodCateringForm: 'food/vendor/:slug/dawat',
+          // My Kitchen (a pantry reminder's tap: metromatrix://mykitchen/pantry)
+          MyKitchen: { path: 'food/my-kitchen', alias: ['mykitchen/pantry'] },
+          MyKitchenRecipes: 'food/my-kitchen/recipes',
+          MyKitchenRecipe: 'food/my-kitchen/recipes/:id',
+          MyKitchenMissing: 'food/my-kitchen/recipes/:id/missing',
+          NutritionSettings: 'food/nutrition',
+          NutritionSummary: 'food/nutrition/week',
         },
       },
       ApprovalsTab: {

@@ -84,6 +84,30 @@ const IMG = {
   PB1: '1566554738544-d962991c3fee',
   PB2: '1706275399494-fb26bbc5da63',
   SW1: '1461141346587-763ab02bced9',
+  // Daily Basket's groceries (one photo per ingredient) and its cover.
+  G1: '1518977676601-b53f82aba655',
+  G2: '1618512496248-a07fe83aa8cb',
+  G3: '1582284540020-8acbe03f4924',
+  G4: '1576763595295-c0371a32af78',
+  G5: '1767156969831-0beee76fa958',
+  G6: '1618130070080-91f4d55a2383',
+  G7: '1590502593747-42a996133562',
+  G8: '1449300079323-02e209d9d3a6',
+  G9: '1586201375761-83865001e31c',
+  G10: '1627735483792-233bf632619b',
+  G11: '1672660589379-891ab59588a8',
+  G12: '1474979266404-7eaacbcd87c5',
+  G13: '1573812461383-e5f8b759d12e',
+  G14: '1517448931760-9bf4414148c5',
+  G15: '1571212515416-fef01fc43637',
+  G16: '1506976785307-8732e854ad03',
+  G17: '1587593810167-a84920ea0781',
+  G18: '1783632666621-48b8a8b5ce88',
+  G19: '1673791031202-ebc0eea03bf2',
+  G20: '1577563717655-919fc57789b4',
+  G21: '1581600140682-d4e68c8cde32',
+  G22: '1567752458426-b62144165409',
+  G23: '1542838132-92c53300491e',
 } as const;
 
 const img = (k: keyof typeof IMG) => ({ url: unsplash(IMG[k]), publicId: `mock/${k}` });
@@ -201,6 +225,39 @@ const stores: MockStore[] = [
     ],
     createdAt: ago(60 * DAY),
   },
+  {
+    // A fictional grocer: the staples My Kitchen's "Get missing items" compares (Kitchen Intelligence, 5C).
+    id: 's_basket',
+    slug: 'daily-basket-4d2b8',
+    ownerId: 'u_basket',
+    name: 'Daily Basket',
+    tagline: 'Groceries and kitchen staples, delivered in Lahore',
+    about: 'Daily Basket stocks what a Pakistani kitchen runs on: atta, daal, rice, fresh vegetables, dairy and masalas, packed the morning it ships.',
+    logoUrl: null,
+    coverUrl: unsplash(IMG.G23),
+    brandColor: '#2F6B3B',
+    onBrandColor: '#FFFFFF',
+    city: 'Lahore',
+    socials: { instagram: null, facebook: null, tiktok: null, website: null },
+    phone: '+924235790011',
+    whatsapp: '+923004445566',
+    isFeatured: false,
+    isPaused: false,
+    pauseMessage: null,
+    settings: {
+      shippingFee: 150,
+      freeShippingOver: 3000,
+      nationwide: false,
+      deliveryCities: ['Lahore'],
+      dispatchMinDays: 0,
+      dispatchMaxDays: 1,
+      returnWindowDays: 1,
+      codEnabled: true,
+      codLimit: 20000,
+    },
+    paymentAccounts: [{ id: 'pa_basket_raast', kind: 'raast', title: 'Daily Basket', number: '03004445566', bankName: null, isActive: true }],
+    createdAt: ago(200 * DAY),
+  },
 ];
 
 // ─── Categories ───────────────────────────────────────
@@ -218,6 +275,7 @@ const categories: MockCategory[] = [
   { id: 'cat_t_audio', name: 'Audio', slug: 'audio', icon: 'headset-outline', parentId: 'cat_tech', position: 0 },
   { id: 'cat_t_wear', name: 'Wearables', slug: 'wearables', icon: 'watch-outline', parentId: 'cat_tech', position: 1 },
   { id: 'cat_t_acc', name: 'Phone accessories', slug: 'phone-accessories', icon: 'phone-portrait-outline', parentId: 'cat_tech', position: 2 },
+  { id: 'cat_grocery', name: 'Groceries', slug: 'groceries', icon: 'basket-outline', parentId: null, position: 3 },
 ];
 
 const collections: MockCollection[] = [
@@ -571,6 +629,83 @@ const products: MockProduct[] = [
   }),
 ];
 
+/** Daily Basket's staples: one size each, with what a unit holds and the ingredient it is. */
+const GROCERIES: [id: string, name: string, key: string, qty: number, unit: 'g' | 'ml' | 'pc', price: number, description: string][] = [
+  ['p_g1', 'Potatoes (1 kg)', 'potato', 1000, 'g', 120, 'Fresh potatoes from Okara, washed and graded.'],
+  ['p_g2', 'Potatoes (5 kg)', 'potato', 5000, 'g', 540, 'A 5 kg sack of fresh potatoes.'],
+  ['p_g3', 'Onions (1 kg)', 'onion', 1000, 'g', 160, 'Red onions, dry-skinned and firm.'],
+  ['p_g4', 'Onions (5 kg)', 'onion', 5000, 'g', 720, 'A 5 kg sack of red onions.'],
+  ['p_g5', 'Tomatoes (1 kg)', 'tomato', 1000, 'g', 220, 'Ripe tomatoes for salan and salad.'],
+  ['p_g6', 'Green chillies (250 g)', 'green_chilli', 250, 'g', 70, 'Fresh hari mirch.'],
+  ['p_g7', 'Coriander (bunch, 100 g)', 'coriander', 100, 'g', 40, 'A bunch of fresh dhaniya.'],
+  ['p_g8', 'Mint (bunch, 100 g)', 'mint', 100, 'g', 40, 'A bunch of fresh podina.'],
+  ['p_g9', 'Lemons (500 g)', 'lemon', 500, 'g', 180, 'Juicy desi lemons.'],
+  ['p_g10', 'Cucumbers (1 kg)', 'cucumber', 1000, 'g', 140, 'Crisp cucumbers.'],
+  ['p_g11', 'Basmati rice (5 kg)', 'rice', 5000, 'g', 2350, 'Aged super kernel basmati.'],
+  ['p_g12', 'Chakki atta (10 kg)', 'atta', 10000, 'g', 1550, 'Stone-ground whole wheat flour.'],
+  ['p_g13', 'Masoor daal (1 kg)', 'masoor_daal', 1000, 'g', 380, 'Split red lentils.'],
+  ['p_g14', 'Cooking oil (3 L)', 'oil', 3000, 'ml', 1620, 'Canola cooking oil, 3 litre bottle.'],
+  ['p_g15', 'Desi ghee (1 kg)', 'ghee', 1000, 'g', 2600, 'Pure desi ghee.'],
+  ['p_g16', 'Fresh milk (1 L)', 'milk', 1000, 'ml', 220, 'Pasteurised full-cream milk.'],
+  ['p_g17', 'Yoghurt (1 kg)', 'yoghurt', 1000, 'g', 260, 'Set dahi, made daily.'],
+  ['p_g18', 'Eggs (dozen)', 'egg', 12, 'pc', 380, 'Farm eggs, a dozen.'],
+  ['p_g19', 'Chicken, curry cut (1 kg)', 'chicken', 1000, 'g', 780, 'Fresh chicken, cut for curry.'],
+  ['p_g20', 'Beef mince (500 g)', 'beef_mince', 500, 'g', 650, 'Fresh beef qeema.'],
+  ['p_g21', 'Sugar (1 kg)', 'sugar', 1000, 'g', 165, 'Refined white sugar.'],
+  ['p_g22', 'Red chilli powder (200 g)', 'red_chilli', 200, 'g', 260, 'Kutti lal mirch powder.'],
+  ['p_g23', 'Garam masala (100 g)', 'garam_masala', 100, 'g', 290, 'Whole-spice garam masala, ground.'],
+  ['p_g24', 'Ginger garlic paste (300 g)', 'ginger_garlic', 300, 'g', 240, 'Fresh adrak lehsan paste.'],
+];
+
+/** One photo per ingredient: every pack size of it shares it. */
+const GROCERY_IMG: Record<string, keyof typeof IMG> = {
+  potato: 'G1',
+  onion: 'G2',
+  tomato: 'G3',
+  green_chilli: 'G4',
+  coriander: 'G5',
+  mint: 'G6',
+  lemon: 'G7',
+  cucumber: 'G8',
+  rice: 'G9',
+  atta: 'G10',
+  masoor_daal: 'G11',
+  oil: 'G12',
+  ghee: 'G13',
+  milk: 'G14',
+  yoghurt: 'G15',
+  egg: 'G16',
+  chicken: 'G17',
+  beef_mince: 'G18',
+  sugar: 'G19',
+  red_chilli: 'G20',
+  garam_masala: 'G21',
+  ginger_garlic: 'G22',
+};
+
+const groceryProducts = (): MockProduct[] =>
+  GROCERIES.map(([id, name, key, qty, unit, price, description], n) => ({
+    id,
+    storeId: 's_basket',
+    name,
+    description,
+    categoryId: 'cat_grocery',
+    collectionId: null,
+    price,
+    salePrice: null,
+    status: 'active',
+    images: GROCERY_IMG[key] ? [img(GROCERY_IMG[key])] : [],
+    option1: null,
+    option2: null,
+    variants: [{ id: `${id}_v0`, option1: null, option2: null, sku: `DB-${id.slice(3).padStart(3, '0')}`, stock: 40 + (n % 5) * 10, priceDelta: 0 }],
+    removed: false,
+    trending: 10,
+    createdAt: ago(90 * DAY),
+    updatedAt: ago(5 * DAY),
+    netQuantity: { qty, unit },
+    ingredientKey: key,
+  }));
+
 // ─── Reviews ──────────────────────────────────────────
 const NAMES = ['Mahnoor S.', 'Ali R.', 'Fatima Z.', 'Hamza K.', 'Zara A.', 'Usman T.', 'Sana M.', 'Bilal H.', 'Iqra N.'];
 const REVIEW_TEXT: [number, string | null, string][] = [
@@ -850,7 +985,7 @@ export const seedShop = (): MockShop =>
       stores,
       categories,
       collections,
-      products,
+      products: [...products, ...groceryProducts()],
       reviews,
       cart: [],
       wishlist: { u_customer: ['p_l4', 'p_v1', 'p_b7'] },
@@ -878,6 +1013,7 @@ export const SHOP_SEED_USERS = [
   { id: 'u_store', email: 'store@metromatrix.app', name: 'Mariam Aslam', storeId: 's_lawn', businessId: 'b_store', city: 'Lahore' },
   { id: 'u_urban', email: 'urban@metromatrix.app', name: 'Faisal Siddiqui', storeId: 's_urban', businessId: 'b_urban', city: 'Karachi' },
   { id: 'u_volt', email: 'volt@metromatrix.app', name: 'Zain Ahmed', storeId: 's_volt', businessId: 'b_volt', city: 'Lahore' },
+  { id: 'u_basket', email: 'basket@metromatrix.app', name: 'Tariq Mehmood', storeId: 's_basket', businessId: 'b_basket', city: 'Lahore' },
 ] as const;
 
 export const SHOP_SEED_SHOPPER = { id: 'u_shopper', email: 'hamza@metromatrix.app', name: 'Hamza Qureshi' } as const;

@@ -12,15 +12,17 @@ import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { useDebouncedValue } from '@hooks/usePagedList';
 import { cardLine } from '@models/food/discoveryModel';
+import { dishFactsLine } from '@models/myKitchen/nutritionModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
-import { AppText, Card, Divider, EmptyState, InlineNotice, IonIcon, ListRow, PageHeader, SegmentTabs, SkeletonLines, TextAction } from '@custom/index';
+import { AppText, Card, ChoiceChip, Divider, EmptyState, InlineNotice, IonIcon, ListRow, PageHeader, SegmentTabs, SkeletonLines, TextAction } from '@custom/index';
 import { VendorCard } from '@custom/food/VendorCard';
 import { FoodSearchField } from '@components/food/FoodParts';
 import type { FoodAppParamList } from '@/types';
 import { cdn } from '@utils/cdn';
 import { formatPKR } from '@utils/money';
 import { clearRecentFoodSearches, selectFoodPoint, selectRecentFoodSearches } from '@store/preferencesSlice';
-import { MIN_QUERY, searchFoodAsync, selectFoodSearch, setSearchTab, setSearchText, type FoodSearchTab } from './foodSearchSlice';
+import { selectShowCalories } from '../../../MyKitchen/NutritionSettings/nutritionSettingsSlice';
+import { MIN_QUERY, searchFoodAsync, selectFoodSearch, setSearchNutrition, setSearchTab, setSearchText, type FoodSearchTab } from './foodSearchSlice';
 
 type Props = NativeStackScreenProps<FoodAppParamList, 'FoodSearch'>;
 
@@ -31,6 +33,7 @@ const TABS: { key: FoodSearchTab; label: string }[] = [
 
 const makeStyles = ({ colors, space, gutter, size, radius }: Theme) =>
   StyleSheet.create({
+    filters: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
     root: { flex: 1, backgroundColor: colors.canvas },
     body: { gap: space.s16, paddingTop: space.s20, paddingBottom: space.s40 },
     padded: { paddingHorizontal: gutter, gap: space.s12 },
@@ -62,14 +65,17 @@ const FoodSearchContent: React.FC<Props> = ({ route, navigation }) => {
     if (route.params?.q) dispatch(setSearchText(route.params.q));
   }, [dispatch, route.params?.q]);
 
+  // Healthy filters only for people who turned calories on.
+  const showCalories = useAppSelector(selectShowCalories);
+  const nutrition = showCalories ? s.nutrition : null;
   useEffect(() => {
-    if (point && typed.length >= MIN_QUERY) void dispatch(searchFoodAsync({ q: typed, lat: point.lat, lng: point.lng }));
-  }, [dispatch, typed, point]);
+    if (point && typed.length >= MIN_QUERY) void dispatch(searchFoodAsync({ q: typed, lat: point.lat, lng: point.lng, nutrition }));
+  }, [dispatch, typed, point, nutrition]);
 
   const submit = (q = s.text.trim()) => {
     if (!point || q.length < MIN_QUERY) return;
     dispatch(setSearchText(q));
-    void dispatch(searchFoodAsync({ q, lat: point.lat, lng: point.lng, remember: true }));
+    void dispatch(searchFoodAsync({ q, lat: point.lat, lng: point.lng, remember: true, nutrition }));
   };
 
   const open = (slug: string, dish?: string) => {
@@ -84,6 +90,12 @@ const FoodSearchContent: React.FC<Props> = ({ route, navigation }) => {
       {/* The FYP's gradient page header, as on Shopping and Health. */}
       <PageHeader title="Search" subtitle={point ? `Delivering to ${point.label}` : undefined} onBack={back}>
         <FoodSearchField value={s.text} onChange={v => dispatch(setSearchText(v))} onSubmit={() => submit()} autoFocus />
+        {showCalories ? (
+          <View style={styles.filters}>
+            <ChoiceChip label="Under 600 kcal" selected={s.nutrition === 'under_600'} onPress={() => dispatch(setSearchNutrition(s.nutrition === 'under_600' ? null : 'under_600'))} />
+            <ChoiceChip label="High protein" selected={s.nutrition === 'high_protein'} onPress={() => dispatch(setSearchNutrition(s.nutrition === 'high_protein' ? null : 'high_protein'))} />
+          </View>
+        ) : null}
       </PageHeader>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.body}>
         {!point ? (
@@ -159,6 +171,11 @@ const FoodSearchContent: React.FC<Props> = ({ route, navigation }) => {
                             <AppText variant="small" tone="accentDeep">
                               {formatPKR(d.fromPrice)}
                             </AppText>
+                            {showCalories && d.nutrition ? (
+                              <AppText variant="small" tone="muted">
+                                {dishFactsLine(d.nutrition)}
+                              </AppText>
+                            ) : null}
                           </View>
                         </Pressable>
                       </View>

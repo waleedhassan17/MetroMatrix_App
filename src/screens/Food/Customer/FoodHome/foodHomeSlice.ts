@@ -14,10 +14,11 @@ import { getFoodHome } from '@networks/food/discoveryNetwork';
 import { listSurplusNearby } from '@networks/food/surplusNetwork';
 import { listTiffinPlansNear } from '@networks/foodGrowth/tiffinNetwork';
 import { listIftarNearby } from '@networks/foodGrowth/ramadanNetwork';
+import { listHealthyPicks } from '@networks/myKitchen/nutritionNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import { currentPoint } from '../../../../services/location';
 import { setFoodPoint } from '@store/preferencesSlice';
-import type { FoodHome, IftarKitchen, SurplusCard, TiffinPlan } from '@/types';
+import type { FoodHome, HealthyPick, IftarKitchen, SurplusCard, TiffinPlan } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 
 export interface FoodHomeSliceState {
@@ -26,6 +27,8 @@ export interface FoodHomeSliceState {
   tiffins: TiffinPlan[];
   /** Kitchens keeping iftar hours nearby (in Ramadan only). */
   iftar: IftarKitchen[];
+  /** Meals under 600 kcal or high in protein (shown only to people who turned calories on). */
+  healthy: HealthyPick[];
   /** "lat,lng" the home was built for. */
   builtFor: string | null;
   status: FormStatus;
@@ -41,6 +44,7 @@ const initialState: FoodHomeSliceState = {
   surplus: [],
   tiffins: [],
   iftar: [],
+  healthy: [],
   builtFor: null,
   status: 'idle',
   refreshing: false,
@@ -67,15 +71,16 @@ export const foodHomeSlice = createAppSlice({
       async ({ lat, lng }: { lat: number; lng: number; refresh?: boolean }, { rejectWithValue }) => {
         try {
           // The extras never hold the home back: a failure is an empty rail.
-          const [home, surplus, tiffins, iftar] = await Promise.all([
+          const [home, surplus, tiffins, iftar, healthy] = await Promise.all([
             getFoodHome(lat, lng),
             listSurplusNearby({ lat, lng }).catch(() => [] as SurplusCard[]),
             listTiffinPlansNear({ lat, lng }).catch(() => [] as TiffinPlan[]),
             listIftarNearby({ lat, lng })
               .then(r => (r.state === 'active' ? r.items : []))
               .catch(() => [] as IftarKitchen[]),
+            listHealthyPicks({ lat, lng }).catch(() => [] as HealthyPick[]),
           ]);
-          return { home, surplus, tiffins, iftar };
+          return { home, surplus, tiffins, iftar, healthy };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -97,6 +102,7 @@ export const foodHomeSlice = createAppSlice({
           state.surplus = action.payload.surplus;
           state.tiffins = action.payload.tiffins;
           state.iftar = action.payload.iftar;
+          state.healthy = action.payload.healthy;
           state.builtFor = pointKey(action.meta.arg);
         },
         rejected: (state, action) => {

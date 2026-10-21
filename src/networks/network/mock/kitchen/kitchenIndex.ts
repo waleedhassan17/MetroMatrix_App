@@ -26,6 +26,8 @@ import { badgesOf, continueSales, dropOrderOf, ramadanSettingsOf, ramadanState, 
 import { addCardSource, setExpiringAction } from './insightCards';
 import type { InsightCard } from './insightCards';
 import { assistantHooks, registerAssistantRoutes } from './assistantRoutes';
+import { nutritionSearchFilter, registerMyKitchenRoutes } from './myKitchenRoutes';
+import { dishNutritionFor } from './myKitchenLogic';
 import { formatPKR } from '../../../../utils/money';
 import type { MockPauseInfo } from './kitchenTypes';
 
@@ -175,9 +177,12 @@ export function registerKitchen(food: FoodRouteKit, kit: Pick<ShopKit, 'requireU
           ? {
               descriptionUr: (k(db).itemTexts ?? []).find(t => t.itemId === i.id)?.descriptionUr ?? null,
               isSignature: k(db).recipes.some(r => r.itemId === i.id && r.signature?.on),
+              // For customers who turned calories on (the app shows it only then).
+              nutrition: dishNutritionFor(db, v, i.id),
             }
           : {},
       onItemSaved: assistantHooks.onItemSaved,
+      searchFilter: (db, v, i, query) => (db.kitchen ? nutritionSearchFilter(db, v, i, query) : true),
       vendorReviewFilter: assistantHooks.vendorReviewFilter,
       settle,
     });
@@ -195,4 +200,5 @@ export function registerKitchen(food: FoodRouteKit, kit: Pick<ShopKit, 'requireU
   registerCateringRoutes(deps);
   registerGrowthRoutes(deps);
   registerAssistantRoutes(deps);
+  registerMyKitchenRoutes(deps);
 }

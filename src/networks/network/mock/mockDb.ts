@@ -327,11 +327,11 @@ export const seedDb = (): MockDb => withKitchen({
         ownerId: u.id,
         serviceType: 'shopping',
         subType: 'store',
-        name: { s_lawn: 'Lawn & Loom', s_urban: 'Urban Thread', s_volt: 'Volt Gadgets' }[u.storeId],
+        name: { s_lawn: 'Lawn & Loom', s_urban: 'Urban Thread', s_volt: 'Volt Gadgets', s_basket: 'Daily Basket' }[u.storeId],
         city: u.city,
         status: 'approved',
         reviewedAt: iso(60 * DAY),
-        details: { storeCategory: u.storeId === 's_volt' ? 'Electronics' : 'Fashion', experience: '5', briefDescription: 'Seeded demo store.' },
+        details: { storeCategory: u.storeId === 's_volt' ? 'Electronics' : u.storeId === 's_basket' ? 'Groceries' : 'Fashion', experience: '5', briefDescription: 'Seeded demo store.' },
       }),
     ),
     ...HEALTH_SEED_USERS.map(u =>
