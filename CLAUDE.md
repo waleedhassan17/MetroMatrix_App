@@ -10,13 +10,15 @@ MetroMatrix is a zero-commission community marketplace with three services: **Sh
 The app follows the **FinMatrix app architecture exactly**. Its **look and flows follow the owner's MetroMatrix FYP app** (`~/MetroMatrix/Waleed-MetroMatrix`):
 - white, light-only screens in the platform system font, with the FYP icon, splash and onboarding (Health keeps the FYP's pale clinical blue);
 - Role Selection → (Provider Selection) → sign in / sign up → email link → profile steps;
-- the FYP's three-card user home, with no bottom bar; each service opens its own app with its own bottom tabs, as in the FYP. The app is in English: no Urdu text or language switch. Food is branded **Food Court**: a platform for food vendors. Unlike Foodpanda, MetroMatrix takes **no commission** and runs **no rider fleet**. Vendors deliver with their own riders through MetroMatrix's delivery app. Delivery details (time, fee, area) are fine to show; never imply MetroMatrix's own couriers or a cut of the order.
+- the FYP's three-card user home, with no bottom bar; each service opens its own app with its own bottom tabs, as in the FYP. The app is in English: no Urdu UI copy and no language switch. Urdu appears only as content: speech and its transcript, assistant-drafted dish descriptions, spoken announcements, and recipes when Urdu is picked (Chunk 5's owner decision). Food is branded **Food Court**: a platform for food vendors. Unlike Foodpanda, MetroMatrix takes **no commission** and runs **no rider fleet**. Vendors deliver with their own riders through MetroMatrix's delivery app. Delivery details (time, fee, area) are fine to show; never imply MetroMatrix's own couriers or a cut of the order.
+
+Food Court vendors also get **Kitchen Intelligence** (Chunk 5): stock, recipes and costs, purchases, forecast and prep, waste and the Bachat Box, tiffin and catering, Ramadan, the storefront and QR, demand and menu insights, and a voice and AI assistant whose results are always drafts. Customers get the Bachat Box, tiffins, catering, My Kitchen (pantry, recipes, groceries from Shopping) and opt-in nutrition. Staff get the console's Kitchen tools.
 
 Copy the FYP's UX, never its code paths, Firebase setup or per-role duplicate network files. There is no Facebook login.
 
 ## Backend switch (one file)
 
-`src/config/env.ts` → `BACKEND_URL` (or `EXPO_PUBLIC_API_URL`). While it is empty, `api` uses the dummy API (`src/networks/network/mock/`: `mockServer.ts` routes, `mockDb.ts` seeded accounts, `mockConfig.ts` rules, `shop/` the whole Shopping API with its seed and server rules, `health/` the whole Healthcare API with its seed and server rules, `food/` the whole Food API with its seed and server rules, see `docs/MOCK_FOOD.md`). The dummy API answers exactly what `docs/API_CONTRACT_ASSUMED.md` and `docs/API_SHOPPING_ASSUMED.md` specify, and for Health and Food the real `docs/API_HEALTH.md` and `docs/API_FOOD.md` (see `docs/MOCK_HEALTH.md`, `docs/MOCK_FOOD.md`), so nothing else changes when the real URL is set. When you add an endpoint, add its mock route in the same change. Shop, Health and Food writes are all-or-nothing (a failed request leaves the dummy DB as it was).
+`src/config/env.ts` → `BACKEND_URL` (or `EXPO_PUBLIC_API_URL`). While it is empty, `api` uses the dummy API (`src/networks/network/mock/`: `mockServer.ts` routes, `mockDb.ts` seeded accounts, `mockConfig.ts` rules, `shop/` the whole Shopping API with its seed and server rules, `health/` the whole Healthcare API with its seed and server rules, `food/` the whole Food API with its seed and server rules, see `docs/MOCK_FOOD.md`; `kitchen/` Kitchen Intelligence on its assumed contract, see `docs/MOCK_KITCHEN.md`). The dummy API answers exactly what `docs/API_CONTRACT_ASSUMED.md` and `docs/API_SHOPPING_ASSUMED.md` specify, for Health and Food the real `docs/API_HEALTH.md` and `docs/API_FOOD.md` (see `docs/MOCK_HEALTH.md`, `docs/MOCK_FOOD.md`), and for Kitchen Intelligence `docs/API_KITCHEN_ASSUMED.md`, `docs/AI_ASSUMED.md` and `docs/VOICE_ASSUMED.md`, so nothing else changes when the real URL is set. When you add an endpoint, add its mock route in the same change. Shop, Health, Food and Kitchen writes are all-or-nothing (a failed request leaves the dummy DB as it was).
 
 ## Commands
 
@@ -103,38 +105,62 @@ src/
                              usernames, portions), foodDiscovery (quotes, cards), foodOrders (deals, the checkout planner,
                              the order and payment machines, the minute jobs), foodWire, foodRoutes + foodMenuRoutes +
                              foodDiscoveryRoutes + foodOrderRoutes, foodRealtime (the gateway on the dummy socket)
+    network/mock/kitchen/    the dummy Kitchen Intelligence API (docs/MOCK_KITCHEN.md): kitchenSeed (4 demo kitchens' stock,
+                             recipes and 10 weeks of sales; city prices, nutrition foods, words), kitchenLogic (FIFO, costing,
+                             auto sell-out), forecastLogic, insightCards, tiffin/growth/ai/assistant/myKitchen logic,
+                             voiceStandIn + aiStandIns (no network), one routes file per area (+ adminKitchenRoutes),
+                             foodAdditions (the keys added to API_FOOD shapes), kitchenIndex (registers it, Food's hooks)
     network/mock/mockRealtime the in-process stand-in for the Food socket (same surface as the real client)
     <domain>/<x>Network.ts   one function per endpoint (auth, users, media, businesses, admin, food, addresses, notifications)
     shopping/                catalogue, wishlist, cart, checkout, orders, returns, reviews; shopping/partner/ the store app's
     health/                  discovery, availability, appointments, family, records, prescriptions, reviews, video, symptom;
                              referenceIndex (specialty and condition slug ↔ id); health/doctor/ the doctor app's;
-                             admin/adminHealthNetwork the Health console, admin/adminFoodNetwork the Food console
+                             admin/adminHealthNetwork the Health console, admin/adminFoodNetwork the Food console,
+                             admin/adminKitchenNetwork its Kitchen tools
+    kitchen/, foodGrowth/    the vendor's Kitchen (stock, recipes, costing, purchases, forecast, waste, surplus, packing,
+                             kitchenAi, insightsCards) and growth (tiffin, catering, ramadan, storefront, demand,
+                             experiments, story, batching); ai/voiceNetwork (voice → a proposed action, never a write)
+    myKitchen/               the customer's pantry, recipes and nutrition
   serializers/               defensive backend → app mapping, one file per domain (shopping/ and health/ per resource;
-                             health/healthCommon holds every Health wire map); __tests__/fixtures/health/ real API responses
+                             health/healthCommon holds every Health wire map); __tests__/fixtures/health/ real API responses;
+                             kitchen/ (kitchenCommon the shared readers), myKitchen/, ai/
   models/                    validation + form schemas, one file per domain; shopping/ holds the ONE order-status map
                              (orderStatusModel), filters, variant matrix/picker, product/coupon/return/review/store rules;
                              health/ holds the ONE appointment-status map (appointmentStatusModel), booking, family, record,
                              prescription (dose patterns), availability (overlaps), review, doctor profile, filter, emergency
-                             and admin rules
-  types/                     shared types (navigation param lists, auth/business, shopping, health, payments)
+                             and admin rules; kitchen/ holds the ONE Chunk 5 status map (kitchenStatusModel: Bachat Box,
+                             tiffin, catering, hygiene, experiments), costing (the live cost mirror), forecast, voice (an
+                             action in plain words), ai (quota wording), insight cards, board, reach, assistant, admin;
+                             myKitchen/ pantry and nutrition
+  types/                     shared types (navigation param lists, auth/business, shopping, health, payments, food,
+                             kitchen, myKitchen, kitchenAdmin)
   utils/                     storageUtils, authEvents, phone, alert (web-safe), haptics, pickers, formErrors,
                              money (formatPKR — the only way money is shown), cdn (image sizing), dates, ids,
-                             healthTime (every Health time, shown in the practice's timezone), maps, prescriptionHtml
+                             healthTime (every Health time, shown in the practice's timezone), maps, prescriptionHtml,
+                             units (base units g/ml/pc, "7.5 kg", "2 dozen", custom units), script (Urdu script → RTL),
+                             storeCardHtml (the printable QR card)
   services/                  device/SDK adapters: googleAuth(.web), push (+ push-tap routing), location, calendar,
-                             prescriptionPdf (expo-print + sharing; the print dialog on web)
+                             prescriptionPdf (expo-print + sharing; the print dialog on web), voice/recorder(.web)
+                             (expo-audio, MediaRecorder on web, 30 s), announcer (expo-speech, else ttsUrl, else the ring),
+                             orderAlert, storefront/ (QR to a file and the share sheet), csvFile (pick a CSV, read its text)
   theme/                     tokens, services, typography, ThemeProvider/useTheme, StoreBrandScope — the ONLY place raw values live
   Custom-Components/         the design-system components (tokens only); barrel: @custom/index; shopping/ (ProductCard,
                              VariantSheet, FilterSheet, CartStoreGroup, charts/ …); health/ (DoctorCard, DateStrip, SlotGrid,
                              AppointmentCard, PrescriptionSheet, EmergencyBanner, and the home's CareCard, PhotoTile,
                              DoctorSpotlightCard, NextVisitCard, ConcernTile …); PageHeader (the FYP gradient header);
-                             ServiceTabBar (the FYP per-service bottom bars); PhotoBannerCarousel (Shopping's and Health's banners)
+                             ServiceTabBar (the FYP per-service bottom bars); PhotoBannerCarousel (Shopping's and Health's banners);
+                             kitchen/ (VoiceButton, VoiceResultCard, InsightCard, StockLevelBar, CostBreakdown, ForecastBar,
+                             PrepList, SurplusCard, TiffinPlanCard, QuoteCard, DemandHeatmap, QuadrantChart, HourCurve,
+                             NutritionBlock, PantryItemRow, RecipeSuggestionCard, BadgeRow …; DesignGallery's KitchenStories)
   components/app-container/  AppContainer, appContainerSlice (bootstrap/refresh/push), OfflineGate, PushPrePrompt
   components/auth/           AuthChrome (frame/header/tabs/badge), AuthFields, ChoiceCard, StepFlow, AuthErrorNotice, GoogleSignInButton(.web)
   components/brand/          BrandMark, BrandWordmark (splash, onboarding)
   components/home/           ServiceCard + serviceCatalog (the customer home's three cards)
   components/food/           FoodParts (search, promos, cuisines, kitchen cards)
   components/shopping/       ShopParts (top bar + Bag, banners, product grid, SearchField), StoreParts, ReviewItem
-  components/admin/          AdminParts (the staff console's stat tiles, tool menus and list cards)
+  components/admin/          AdminParts (the staff console's stat tiles, tool menus and list cards), CsvImport (pick or
+                             paste, the server's dry run, import only when every row is fine)
+  components/voice/          VoiceEntry (mic + confirm card + type instead) and VoiceSheet (a header mic opening it)
   components/health/         HealthParts (sections, rows, the trust list, banner calls to action, the appointment-action
                              hook), healthPhotos (the Health home's bundled photos)
   components/shared/         ErrorBoundary
@@ -149,17 +175,20 @@ src/
                              stacks/ (AccountStack, AdminStack, AdminShopStack, AdminHealthStack, AdminFoodStack)
   screens/<Area>/<Name>/     NameScreen.tsx + nameSlice.ts
                              Areas: Onboarding (+ Splash), RoleSelection, ProviderSelection, Auth, Partner,
-                             Admin (+ Admin/Shopping, Admin/Health, Admin/Food), Customer, Account, Shopping/Customer, Shopping/Store,
-                             Health/Patient, Health/Doctor, Food/Customer, Food/Vendor, Food/Rider, Dev
+                             Admin (+ Admin/Shopping, Admin/Health, Admin/Food, Admin/Kitchen), Customer, Account, Shopping/Customer,
+                             Shopping/Store, Health/Patient, Health/Doctor, Food/Customer, Food/Vendor, Food/Kitchen (the
+                             vendor's Kitchen tab and the assistant), Food/Growth, Food/Rider, MyKitchen (the customer's
+                             pantry, recipes and nutrition, in the Food app's stack), Dev
 scripts/check-design-tokens.js, capture-health-fixtures.js and capture-food-fixtures.js (real responses → the
                              serializer fixtures)
 docs/                        API_CONTRACT_ASSUMED.md, API_SHOPPING_ASSUMED.md, API_HEALTH.md and API_FOOD.md (copies of
                              the backend's), MOCK_HEALTH.md, MOCK_FOOD.md, MOCK_IMAGES.md, GOOGLE_SIGNIN.md,
-                             PLAY_BACKGROUND_LOCATION.md, FOOD_DEVICE_CHECKS.md
+                             PLAY_BACKGROUND_LOCATION.md, FOOD_DEVICE_CHECKS.md; API_KITCHEN_ASSUMED.md, AI_ASSUMED.md,
+                             VOICE_ASSUMED.md (Chunk 5's assumed contract), MOCK_KITCHEN.md, KITCHEN_DEVICE_CHECKS.md
 assets/images/               FYP icon + splash mark; services/ and health/ (card photos — sources in each CREDITS.md)
 ```
 
-Stateless screens have no slice. Their state is global (`auth`, `preferences`) or they only navigate. These are Rejected, Suspended, CustomerHome, ServicePreview, OrderPlaced, FoodOrderPlaced, Saved, StoreMore, BookingConfirmed, PrescriptionList, DoctorMore, VendorMore, FoodReviews (a paged list), RiderProfile (reads `riderHome`), and the tab lists HealthAppointments, ShopOrders and FoodOrders (they read `ordersSlice`, and share their lists with Orders via `Orders/OrdersLists.tsx`). Slices other screens read (`bag`, `foodBag`, `foodOrder`, `foodFavourites`, `saved`, `addressBook`, `orderDetail`, `notifications`, `family`, `appointmentDetail`) live beside the screen that owns them. BookAppointment is a sheet over DoctorProfile (`BookAppointmentSheet` + its slice), not a route.
+Stateless screens have no slice. Their state is global (`auth`, `preferences`) or they only navigate. These are Rejected, Suspended, CustomerHome, ServicePreview, OrderPlaced, FoodOrderPlaced, Saved, StoreMore, BookingConfirmed, PrescriptionList, DoctorMore, VendorMore, FoodReviews (a paged list), RiderProfile (reads `riderHome`), and the tab lists HealthAppointments, ShopOrders and FoodOrders (they read `ordersSlice`, and share their lists with Orders via `Orders/OrdersLists.tsx`). Slices other screens read (`bag`, `foodBag`, `foodOrder`, `foodFavourites`, `saved`, `addressBook`, `orderDetail`, `notifications`, `family`, `appointmentDetail`) live beside the screen that owns them. BookAppointment is a sheet over DoctorProfile (`BookAppointmentSheet` + its slice), not a route. AdminKitchenHygieneReview reads `adminKitchenHygiene` (beside AdminKitchenHygiene).
 
 ## How to add a screen
 
@@ -206,6 +235,15 @@ const styles = useStyles(makeStyles); // memoised on the active theme (mode + se
 - Shopping copy: "Bag" (never cart), "Recorded sales" (never revenue or income), money only through `formatPKR`, order/payment/return wording only from `orderStatusModel`, every remote image through `cdn()`.
 - Food copy: "bag" too (one kitchen at a time), money only through `formatPKR`, order/payment/rider wording only from `foodStatusModel`, totals only the server's (subtotal − the deal + the kitchen's delivery fee; there is no other fee). Say that customers pay the kitchen directly and that riders are the kitchen's own.
 - Food live screens (the customer's order, the kitchen's board and order page) go through `useOrderChannel` / `useVendorBoard`, never the socket. REST is the truth: events are hints, every reconnect reads again, and polling covers a dropped connection. The board rings (`services/orderAlert`) while a new order is unopened, keeps the screen awake, and shows four columns from tablet width (`useLayoutClass`).
+- Kitchen copy (Chunk 5):
+  - Costs say "Cost to make" and "You keep" (never profit or margin, never revenue); money only through `formatPKR`; quantities only through `utils/units` (`formatQty`).
+  - Every number the app works out is "estimated" (forecasts, calories, a dish's numbers), and every assistant result is a draft: voice proposes an action in plain words (`voiceModel`), and nothing is written until the cook taps Confirm, which calls the ordinary endpoint.
+  - `AI_UNAVAILABLE` and `AI_QUOTA_REACHED` are never fatal: the screen shows the manual path inline, with the reset date (`aiModel`).
+  - Bachat Box, tiffin, catering, hygiene and experiment wording only from `kitchenStatusModel`.
+  - Urdu content reads right to left (`utils/script`) and carries `accessibilityLanguage="ur"`.
+  - The demand map never shows an area under 10 searches and never ties a search to a person.
+  - Nutrition is off until the customer turns it on, kitchens never see it, its wording never praises or blames, and "Delete my nutrition data" removes all of it.
+  - Insight cards are the `InlineNotice` look (a tinted icon well, no side strip), at most five, ranked by severity.
 - Onboarding: everything on a slide, including the primary button, wears that slide's colour.
 - Platform-specific files (`X.web.tsx`) must never import `./X`; on web that path resolves to the file itself. Put shared code in a third module (see `sheetShared.ts`, `dateFieldShared.ts`).
 
@@ -228,10 +266,10 @@ The splash plays on every launch as an overlay in AppContainer. It lifts only on
 
 Once the gate is cleared, `AppContainer.renderNavigator()` mounts the navigator for the role:
 - `customer` → `CustomerNavigator`: a root stack (`CustomerStack`) with the three-card home (no bottom bar; its side menu opens Orders, Profile, Saved, Addresses…) and one app per service: Health (Home · Appointments · Records · Profile), Shopping (Home · Bag · Saved · Orders), Food Court (Home · Orders · Profile)
-- approved `partner` → `Store`/`Doctor`/`KitchenPartnerNavigator`, chosen by `serviceType`. The store app is a stack over Today · Orders · Products · More. The doctor app is a stack over Today · Calendar · Patients · More; it opens on PracticeSetup until the doctor is listed (`doctorRootRoute(business)`). The Food vendor's app (`KitchenPartnerNavigator`, `navigations-maps/FoodVendor.ts`) is a stack over Orders · Menu · Riders · More (a home kitchen has Today first: portions, the weekly menu, pre-order slots); it opens on Kitchen setup until the kitchen is live (`foodVendorRootRoute(business)`, from the session's `business.food`).
+- approved `partner` → `Store`/`Doctor`/`KitchenPartnerNavigator`, chosen by `serviceType`. The store app is a stack over Today · Orders · Products · More. The doctor app is a stack over Today · Calendar · Patients · More; it opens on PracticeSetup until the doctor is listed (`doctorRootRoute(business)`). The Food vendor's app (`KitchenPartnerNavigator`, `navigations-maps/FoodVendor.ts`) is a stack over Orders · Menu · Kitchen · Riders · More (a home kitchen has Today · Orders · Kitchen · More, with Menu and Riders in More; Today holds portions, the weekly menu and pre-order slots); it opens on Kitchen setup until the kitchen is live (`foodVendorRootRoute(business)`, from the session's `business.food`). The Kitchen tab is the hub of Chunk 5's tools (stock, recipes and costs, purchases, forecast and prep, waste and Bachat Box, growth, the assistant).
 - `rider` → `RiderNavigator`: a stack over Deliveries · Cash · Profile, with each delivery pushed over them (`RiderOrder`: one big button per step, cash at the door). Going on duty asks for location after a plain explanation; the rider's location is shared only on duty or on a delivery (`services/location/riderLocation`, sent by `riderTransport`: the socket, else the REST batch).
 - `admin` / `super_admin` → `AdminNavigator` (Approvals · Shopping · Health · Food · Profile). A doctor is approved only after staff check the PMDC number (Health → Doctor verification); the server answers `422 PMDC_NOT_VERIFIED` otherwise. A home kitchen goes live only after staff record a passed food-safety check (Food → Vendors).
-- Food Court reviews: one per order once it arrived (`FoodRateOrder`, from the order page); the vendor page shows the rating block and `FoodReviews`; the kitchen replies (`VendorReviews`) and reads `VendorInsights` (recorded sales). Staff hide reviews, feature and suspend vendors, change a vendor's plan, and run cuisines and the home's banners.
+- Food Court reviews: one per order once it arrived (`FoodRateOrder`, from the order page); the vendor page shows the rating block and `FoodReviews`; the kitchen replies (`VendorReviews`) and reads `VendorInsights` (recorded sales). Staff hide reviews, feature and suspend vendors, change a vendor's plan, and run cuisines and the home's banners. The Food tab's Kitchen tools (`Admin/Kitchen`, on the overview) run the assistant (use, the switch, limits), city prices and nutrition foods (CSV with a dry run), the words voice understands, the calendar (Ramadan's dates), hygiene checks, signature dishes, the city demand map and a tiffin or catering code lookup.
 
 ## API contract
 
@@ -250,6 +288,13 @@ Every network call is built from MetroMatrix-API `docs/API_AUTH.md` / `docs/API_
   - What the API doesn't send yet is marked `TODO(API_FOOD)` (today: `isFeatured` on a staff vendor's detail).
 - **Auth and Shopping still run on assumed documents**: `docs/API_CONTRACT_ASSUMED.md` and `docs/API_SHOPPING_ASSUMED.md`. They follow NestJS conventions: `{ success, data }`, `VALIDATION_FAILED`, `page/pageSize`, integer rupees, `Idempotency-Key` on checkout and booking. The dummy API implements them. Every dependency is marked `TODO(API_AUTH)` or `TODO(API_SHOPPING)` (`grep -rn "TODO(API_" src`).
 
+- **Kitchen Intelligence runs on an assumed contract** (Chunk 5, owner's decision 2026-10-19): `docs/API_KITCHEN_ASSUMED.md`, `docs/AI_ASSUMED.md` and `docs/VOICE_ASSUMED.md`, written in API_FOOD's conventions (whole rupees; quantities in base units g/ml/pc; branch-local dates; `Idempotency-Key` on reservations and subscriptions). No backend module exists yet.
+  - Paths: `/food/vendor/kitchen`, `/food/vendor/{surplus,tiffin,catering,ramadan,storefront,demand,menu-insights,experiments,story,hygiene,ai,nutrition}`, `/food/{surplus,tiffin,catering,ramadan}`, `/ai/voice/interpret`, `/my-kitchen`, `/admin/kitchen`.
+  - Voice never writes: it answers a proposed action, and the app's Confirm calls the ordinary endpoint.
+  - Keys added to API_FOOD shapes live in one list (`mock/kitchen/foodAdditions.ts`, doc §5); the Food parity tests leave them out and assert they're absent from the real capture.
+  - `kitchenContract.test.ts` keeps the three documents and the dummy API one thing: every `<!-- contract: name -->` example has the answer's keys, and every request it runs is documented. Add an example whenever you add a route.
+  - Dependencies are marked `TODO(API_KITCHEN)`, `TODO(API_AI)` or `TODO(API_VOICE)`; Daily Basket's grocery `netQuantity` is `TODO(API_SHOPPING)`.
+
 When a real document arrives, reconcile it in one pass:
 - update the networks, serializers and models (and the dummy API);
 - leave screens and slices alone.
@@ -259,7 +304,7 @@ When a real document arrives, reconcile it in one pass:
 - **Expo Go** (`npm start`): runs the whole app except native Google sign-in and push, against the dummy API. Seeded accounts and codes are in `docs/API_CONTRACT_ASSUMED.md` → "Mock mode" (doctors and patients in `docs/MOCK_HEALTH.md`). Video consultations open public meet.jit.si rooms in a WebView; on web they open in a new tab.
 - **Web** (`npm run web`):
   - Google sign-in uses Google Identity Services and needs `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`.
-  - Deep paths work, e.g. `/get-started`, `/sign-in`, `/provider/sign-in`, `/home/food`, `/shop`, `/shop/store/lawn-and-loom-7a1f3`, `/shop/product/p_l1`, `/orders/MM-24A7Q2`, `/store/orders/:id`, `/admin/shop`, `/health`, `/health/appointments`, `/health/doctor/:id`, `/health/appointment/:code`, `/shop/orders`, `/shop/bag`, `/profile/records`, `/doctor/appointments/:code`, `/admin/health`, `/vendor/orders`, `/vendor/menu`, `/vendor/menu/dish/:id`, `/vendor/today`, `/vendor/setup`, `/vendor/riders/:id`, `/rider/sign-in`, `/rider/deliveries`, `/food/vendor/:slug`, `/food/bag`, `/food/checkout`, `/food/order/:code`, `/food/saved`, `/vendor/deals`, `/vendor/orders/:id`, `/rider/deliveries/:id`, `/rider/cash`, `/food/order/:code/rate`, `/food/reviews/:id`, `/vendor/reviews`, `/vendor/insights`, `/admin/food` (+ `/vendors/:id`, `/orders/:id`, `/reviews`, `/cuisines`, `/banners`). The staff Profile tab is `/account`.
+  - Deep paths work, e.g. `/get-started`, `/sign-in`, `/provider/sign-in`, `/home/food`, `/shop`, `/shop/store/lawn-and-loom-7a1f3`, `/shop/product/p_l1`, `/orders/MM-24A7Q2`, `/store/orders/:id`, `/admin/shop`, `/health`, `/health/appointments`, `/health/doctor/:id`, `/health/appointment/:code`, `/shop/orders`, `/shop/bag`, `/profile/records`, `/doctor/appointments/:code`, `/admin/health`, `/vendor/orders`, `/vendor/menu`, `/vendor/menu/dish/:id`, `/vendor/today`, `/vendor/setup`, `/vendor/riders/:id`, `/rider/sign-in`, `/rider/deliveries`, `/food/vendor/:slug`, `/food/bag`, `/food/checkout`, `/food/order/:code`, `/food/saved`, `/vendor/deals`, `/vendor/orders/:id`, `/rider/deliveries/:id`, `/rider/cash`, `/food/order/:code/rate`, `/food/reviews/:id`, `/vendor/reviews`, `/vendor/insights`, `/admin/food` (+ `/vendors/:id`, `/orders/:id`, `/reviews`, `/cuisines`, `/banners`, `/kitchen/{assistant,prices,nutrition,words,calendar,hygiene,signatures,demand,lookup}`), and Chunk 5's `/vendor/kitchen` (+ `/stock`, `/recipes/:itemId`, `/purchases`, `/forecast`, `/waste`, `/settings`), `/vendor/assistant`, `/food/bachat-box`, `/food/tiffins`, `/food/my-kitchen` (+ `/recipes`), `/food/nutrition` (+ `/week`), `/s/:slug` (a kitchen's link: the public page signed out). The staff Profile tab is `/account`.
   - After adding new folders or `.web.tsx` files, restart Metro with `--clear` (its watcher can miss them). Don't start it with `CI=1`: that turns watch mode off and the browser keeps the old bundle.
   - Bottom sheets render as a `Modal` (`Sheet.web.tsx`), because `@gorhom/bottom-sheet` never presents in a browser.
   - `/dev/gallery` exists only in development builds.

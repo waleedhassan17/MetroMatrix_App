@@ -178,7 +178,7 @@ Bazaar's stock; Today uses Ammi ka Khana's menu.
 ```json
 {
   "orderId": "fo_29zun",
-  "text": "New order, F C - Y 6 3 3 D M. 2 Chicken Biryani. Delivery.",
+  "text": "New order, F C Y 6 3 3 D M. 2 Chicken Biryani. Delivery.",
   "language": "en",
   "ttsUrl": null
 }

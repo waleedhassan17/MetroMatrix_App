@@ -635,7 +635,7 @@ const seedGrowthMore = (now: number, today: string): Pick<MockKitchen, 'calendar
     hygiene: [
       { businessId: 'b_resto', status: 'verified', note: null, items: allDone(true), requestedAt: iso(40 * DAY), reviewedAt: iso(38 * DAY) },
       { businessId: 'b_nani', status: 'self_declared', note: null, items: allDone(true), requestedAt: null, reviewedAt: null },
-      // The newer home kitchen asked staff to check it two days ago (the console's queue).
+      // Ammi ka Khana asked staff to check its checklist two days ago (the console's queue).
       { businessId: 'b_homek', status: 'pending', note: null, items: allDone(true), requestedAt: iso(2 * DAY), reviewedAt: null },
     ],
     // The demo kitchens' everyday sales are filled in to yesterday (and go on as the clock moves).

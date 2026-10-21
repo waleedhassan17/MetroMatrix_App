@@ -137,3 +137,32 @@ describe('brand gradient and helpers', () => {
     expect(mix('not-a-colour', '#FFFFFF', 0.5)).toBe('not-a-colour');
   });
 });
+
+// Kitchen Intelligence (Chunk 5, QA 53): light only, so the dark-mode row is
+// this check. Every chart mark and bar carries meaning, so each reaches the
+// non-text bar against what it sits on.
+describe('Kitchen Intelligence charts and bars', () => {
+  const food = SERVICE_PALETTES.light.food;
+
+  it('a stock level bar shows on its track in every state', () => {
+    for (const fg of [p.success, p.warning, p.danger, p.inkMuted, food.accent]) expect(contrastRatio(fg, p.surfaceSunk)).toBeGreaterThanOrEqual(AA_LARGE);
+  });
+
+  it('a forecast’s expected mark and the cook’s own number stand out from the range band', () => {
+    expect(contrastRatio(food.accent, food.accentSoft)).toBeGreaterThanOrEqual(AA_LARGE);
+    expect(contrastRatio(food.accent, p.surfaceSunk)).toBeGreaterThanOrEqual(AA_LARGE);
+    expect(contrastRatio(p.ink, food.accentSoft)).toBeGreaterThanOrEqual(AA_LARGE);
+  });
+
+  it('the hour curve’s kitchen line reads over the area it is drawn on', () => {
+    expect(contrastRatio(food.accentDeep, food.accentSoft)).toBeGreaterThanOrEqual(AA_LARGE);
+    expect(contrastRatio(food.accentDeep, p.surface)).toBeGreaterThanOrEqual(AA_LARGE);
+  });
+
+  it('the demand map’s "most found nothing" outline and the quadrant dots read on white', () => {
+    for (const s of [food, SERVICE_PALETTES.light.neutral]) {
+      expect(contrastRatio(s.accentDeep, p.surface)).toBeGreaterThanOrEqual(AA_LARGE);
+      expect(contrastRatio(s.accent, p.surface)).toBeGreaterThanOrEqual(AA_LARGE);
+    }
+  });
+});

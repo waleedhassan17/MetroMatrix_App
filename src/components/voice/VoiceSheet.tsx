@@ -10,7 +10,8 @@ export const VoiceSheetButton: React.FC<VoiceEntryProps & { title?: string }> = 
   const [open, setOpen] = useState(false);
   return (
     <>
-      <IconButton icon="mic-outline" onPress={() => setOpen(true)} accessibilityLabel="Speak instead of tapping" />
+      {/* Screen readers hear what can be said here (the sheet's title), not just "mic". */}
+      <IconButton icon="mic-outline" onPress={() => setOpen(true)} accessibilityLabel={title === 'Speak' ? 'Speak instead of tapping' : title} />
       {/* The button sits on the gradient header; its sheet is an ordinary white surface. */}
       <OnGradientContext.Provider value={false}>
       <Sheet visible={open} onClose={() => setOpen(false)} title={title}>

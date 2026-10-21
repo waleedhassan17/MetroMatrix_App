@@ -718,9 +718,10 @@ export function registerKitchenRoutes(kit: KitchenKit) {
     if (language !== 'ur' && language !== 'en') throw invalid('language', 'language must be ur or en');
     const items = o.items.map(i => `${i.quantity} ${i.name}`);
     const when = o.scheduledFor ? formatSlot(o.scheduledFor, v.timezone) : null;
+    // The code letter by letter, without its dash (a voice would say "dash").
     const text_ =
       language === 'en'
-        ? `New order, ${o.code.split('').join(' ')}. ${items.join(', ')}. ${o.fulfilment === 'delivery' ? 'Delivery' : 'Pickup'}${when ? ` at ${when}` : ''}.`
+        ? `New order, ${o.code.replace(/-/g, '').split('').join(' ')}. ${items.join(', ')}. ${o.fulfilment === 'delivery' ? 'Delivery' : 'Pickup'}${when ? ` at ${when}` : ''}.`
         : `نیا آرڈر، ${o.code}۔ ${items.join('، ')}۔ ${o.fulfilment === 'delivery' ? 'ڈیلیوری' : 'پک اپ'}${when ? `، ${when}` : ''}۔`;
     // TODO(API_VOICE): the API's recorded clip for phones without an Urdu voice.
     return { orderId: o.id, text: text_, language, ttsUrl: null };
