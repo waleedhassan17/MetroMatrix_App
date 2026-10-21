@@ -5,3 +5,4 @@ export * from './shopping';
 export * from './health';
 export * from './kitchen';
 export * from './myKitchen';
+export * from './kitchenAdmin';

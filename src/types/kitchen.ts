@@ -195,7 +195,8 @@ export interface Recipe {
   addOns: { optionId: string; optionName: string; groupName: string; lines: RecipeLine[] }[];
   options: { optionId: string; name: string; groupName: string }[];
   packaging: RecipeLine[];
-  signature: { on: boolean; creatorName: string | null };
+  /** `removedNote`: staff took the signature label off, and why (while it stays off). */
+  signature: { on: boolean; creatorName: string | null; removedNote: string | null };
   cost: Cost | null;
   servingsLeft: number | null;
   targetFoodCostPct: number;

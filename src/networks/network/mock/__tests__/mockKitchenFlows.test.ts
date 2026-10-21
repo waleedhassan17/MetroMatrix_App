@@ -22,7 +22,7 @@ import { getWasteSummary, logDonation, logWaste } from '../../../kitchen/wasteNe
 import { collectReservation, createBox, getBox } from '../../../kitchen/surplusNetwork';
 import { attachPackingPhoto, getAnnouncement } from '../../../kitchen/packingNetwork';
 import { getAiUsage, scanReceipt } from '../../../kitchen/kitchenAiNetwork';
-import { getKitchenHub, snoozeInsightCard } from '../../../kitchen/insightsCardsNetwork';
+import { getKitchenHub, listInsightCards, snoozeInsightCard } from '../../../kitchen/insightsCardsNetwork';
 import { interpretVoice } from '../../../ai/voiceNetwork';
 import { listSurplusNearby, reserveSurplus } from '../../../food/surplusNetwork';
 import { listBoard } from '../../../food/vendor/ordersNetwork';
@@ -43,7 +43,26 @@ import { getDemand } from '../../../foodGrowth/demandNetwork';
 import { decideExperiment, getExperiment, getMenuInsights, startExperiment } from '../../../foodGrowth/experimentsNetwork';
 import { getHygiene, requestHygieneVerification, saveStory, setHygieneItem } from '../../../foodGrowth/storyNetwork';
 import { getBatchSuggestions } from '../../../foodGrowth/batchingNetwork';
-import { listHygieneQueue, verifyHygiene } from '../../../admin/adminKitchenNetwork';
+import {
+  approveSignature,
+  createAlias,
+  createCalendarEvent,
+  getAiUsageReport,
+  getPlatformDemand,
+  getReferencePrices,
+  importNutritionFoods,
+  importReferencePrices,
+  listHygieneQueue,
+  listSignatures,
+  lookupGrowthCode,
+  rejectHygiene,
+  removeSignature,
+  setAiQuota,
+  updateCalendarEvent,
+  updateNutritionFood,
+  listNutritionFoods,
+  verifyHygiene,
+} from '../../../admin/adminKitchenNetwork';
 import { listVendors } from '../../../food/discoveryNetwork';
 import { getRiderOrder, setDuty } from '../../../food/rider/riderNetwork';
 import { assignRider } from '../../../food/vendor/ordersNetwork';
@@ -836,4 +855,111 @@ it('keeps the kitchen rows when a Food write fails part-way', async () => {
   const before = JSON.stringify(db.kitchen.ingredients);
   await failure(acceptOrder('fo_missing', 20));
   expect(JSON.stringify((await getDb()).kitchen.ingredients)).toBe(before);
+});
+
+describe('the staff console (5C)', () => {
+  it('shows the assistant’s use and changes a kitchen’s monthly limit', async () => {
+    await asStaff();
+    const r = await getAiUsageReport();
+    expect(r.totals.actions).toBeGreaterThan(50);
+    expect(r.byFeature.map(f => f.feature)).toContain('voice');
+    const resto = r.byOwner.find(o => o.ownerId === 'b_resto')!;
+    expect(resto).toMatchObject({ kind: 'kitchen', name: 'Biryani Bazaar', limit: 300, override: null });
+    await setAiQuota('b_resto', 1000);
+    expect((await getAiUsageReport()).byOwner.find(o => o.ownerId === 'b_resto')).toMatchObject({ limit: 1000, override: 1000 });
+    await asVendor();
+    expect((await getAiUsage()).limit).toBe(1000);
+  });
+
+  it('imports city prices only from a clean file, all or nothing', async () => {
+    await asStaff();
+    const bad = 'key,city,week,price\ntomato,Lahore,2026-10-12,250\nshimla,Lahore,2026-10-12,300\nonion,Lahore,2026-10-13,150';
+    const dry = await importReferencePrices(bad, true);
+    expect(dry).toMatchObject({ dryRun: true, rows: 3, valid: 1, imported: 0 });
+    expect(dry.errors.map(e => [e.row, e.field])).toEqual([[3, 'key'], [4, 'week']]);
+    const before = JSON.stringify((await getDb()).kitchen.priceRefs);
+    expect((await failure(importReferencePrices(bad, false))).code).toBe('CSV_HAS_ERRORS');
+    expect(JSON.stringify((await getDb()).kitchen.priceRefs)).toBe(before);
+    expect((await importReferencePrices('key,city,week,price\ntomato,Lahore,2026-10-12,250', false)).imported).toBe(1);
+    expect((await getReferencePrices({ city: 'Lahore', q: 'tomato' })).items.find(i => i.key === 'tomato')).toMatchObject({ price: 250, unit: 'kg' });
+  });
+
+  it('corrects a nutrition food, and a dry run says what an import would change', async () => {
+    await asStaff();
+    const ghee = (await listNutritionFoods({ q: 'ghee' })).items[0];
+    expect(ghee.usedBy).toBeGreaterThan(0);
+    const dry = await importNutritionFoods(`key,name,per,kcal,protein,carbs,fat\n${ghee.key},${ghee.name},g100,${ghee.kcal},${ghee.protein},${ghee.carbs},${ghee.fat}\nkhoya,Khoya,g100,421,14.6,25,30`, true);
+    expect(dry.preview.map(p => p.change)).toEqual(['same', 'new']);
+    await updateNutritionFood(ghee.id, { kcal: ghee.kcal + 100 });
+    expect((await listNutritionFoods({ q: 'ghee' })).items[0].kcal).toBe(ghee.kcal + 100);
+  });
+
+  it('teaches voice a new word, and refuses one that already means something', async () => {
+    await asStaff();
+    await createAlias({ word: 'Tomatar', language: 'roman_ur', key: 'tomato' });
+    expect((await failure(createAlias({ word: 'tomatar', language: 'roman_ur', key: 'onion' }))).code).toBe('ALIAS_EXISTS');
+    await asVendor();
+    const v = await interpretVoice({ context: 'purchases', language: 'auto', text: '3 kilo tomatar 600 rupay' });
+    expect(v.action).toMatchObject({ kind: 'purchase.add' });
+    expect(JSON.stringify(v.action)).toMatch(/Tomato/);
+  });
+
+  it('moves Ramadan, and never lets two Ramadans overlap', async () => {
+    await asStaff();
+    expect((await failure(createCalendarEvent({ kind: 'ramadan', name: 'Ramadan again', startsOn: '2027-02-20', endsOn: '2027-03-01' }))).code).toBe('EVENT_OVERLAP');
+    expect(await updateCalendarEvent('ev_ramadan_1448', { startsOn: '2027-02-09', endsOn: '2027-03-10' })).toMatchObject({ startsOn: '2027-02-09', days: 30, state: 'upcoming' });
+    expect((await failure(createCalendarEvent({ kind: 'other', name: 'Too long', startsOn: '2027-01-01', endsOn: '2027-03-01' }))).code).toBe('VALIDATION_FAILED');
+  });
+
+  it('sends a hygiene check back with a note, then verifies it', async () => {
+    await asStaff();
+    expect((await listHygieneQueue('pending')).map(h => h.businessId)).toContain('b_homek');
+    expect((await failure(rejectHygiene('b_homek', 'no'))).code).toBe('VALIDATION_FAILED');
+    expect(await rejectHygiene('b_homek', 'The storage photo does not show the fridge.')).toMatchObject({ status: 'rejected', note: 'The storage photo does not show the fridge.' });
+    expect((await listHygieneQueue('rejected')).map(h => h.businessId)).toContain('b_homek');
+    expect((await failure(verifyHygiene('b_homek'))).code).toBe('INVALID_TRANSITION');
+  });
+
+  it('keeps a signature dish, or takes the label off and tells the kitchen why', async () => {
+    await asStaff();
+    const fresh = await listSignatures('new');
+    expect(fresh.items.map(d => d.itemId)).toEqual(expect.arrayContaining(['mi_chicken_biryani', 'mi_seekh']));
+    expect((await approveSignature('mi_chicken_biryani')).status).toBe('approved');
+    expect((await failure(removeSignature('mi_seekh', 'no'))).code).toBe('VALIDATION_FAILED');
+    expect(await removeSignature('mi_seekh', 'Another kitchen sells this seekh under its own name.')).toMatchObject({ status: 'removed' });
+    expect((await listSignatures('new')).counts).toMatchObject({ new: fresh.counts.new - 2, approved: 1, removed: 1 });
+    // The kitchen reads the note on the recipe, where the label is turned on.
+    await asVendor();
+    expect((await getRecipe('mi_seekh')).signature).toEqual({ on: false, creatorName: 'Imran Qureshi', removedNote: 'Another kitchen sells this seekh under its own name.' });
+    // And on the hub when there's room (cards are ranked; this one is info).
+    const cards = await listInsightCards();
+    if (cards.length < 5) expect(cards.find(c => c.kind === 'signature_removed')).toMatchObject({ action: { kind: 'open_recipe' } });
+  });
+
+  it('shows a city’s demand without any area too small to be anonymous', async () => {
+    await asStaff();
+    const d = await getPlatformDemand({ city: 'Lahore' });
+    expect(d.cities).toEqual(['Lahore', 'Karachi', 'Islamabad']);
+    expect(d.cells.length).toBeGreaterThan(0);
+    expect(d.cells.every(c => c.searches >= d.minCount)).toBe(true);
+    expect(d.total).toBeGreaterThan(d.hidden);
+    expect(d.hourCurve.own.every(x => x === 0)).toBe(true);
+  });
+
+  it('looks up a tiffin or catering code as its kitchen sees it', async () => {
+    await asStaff();
+    const t = await lookupGrowthCode('tf-hmz4k2');
+    expect(t.kind === 'tiffin' && t.tiffin).toMatchObject({ code: 'TF-HMZ4K2', customer: { name: 'Hamza Qureshi' } });
+    const c = await lookupGrowthCode('CT-MHD7Q4');
+    expect(c.kind === 'catering' && c.catering.guests).toBe(80);
+    expect((await failure(lookupGrowthCode('TF-NOPE00'))).code).toBe('NOT_FOUND');
+    expect((await failure(lookupGrowthCode('FC-NBNWXT'))).code).toBe('VALIDATION_FAILED');
+  });
+
+  it('is staff only', async () => {
+    await asVendor();
+    expect((await failure(getAiUsageReport())).status).toBe(403);
+    await asCustomer();
+    expect((await failure(listSignatures('new'))).status).toBe(403);
+  });
 });

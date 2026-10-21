@@ -1,7 +1,10 @@
-// MetroMatrix — Admin Food overview slice.
+// MetroMatrix — Admin Food overview slice. The Food API's overview, and
+// what the Kitchen tools have waiting (hygiene checks, new signature
+// dishes), which the assumed kitchen contract serves on its own routes.
 
 import { createAppSlice } from '@store/createAppSlice';
 import { getFoodOverview } from '@networks/admin/adminFoodNetwork';
+import { listHygieneQueue, listSignatures } from '@networks/admin/adminKitchenNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import type { AdminFoodOverview } from '@/types';
 import {
@@ -15,9 +18,11 @@ export interface FoodOverviewSliceState {
   overview: AdminFoodOverview | null;
   status: FormStatus;
   error: ServerError;
+  /** The Kitchen tools' waiting work; null until read (a failure leaves it null, quietly). */
+  kitchen: { hygiene: number; signatures: number } | null;
 }
 
-const initialState: FoodOverviewSliceState = { overview: null, status: 'idle', error: NO_ERROR };
+const initialState: FoodOverviewSliceState = { overview: null, status: 'idle', error: NO_ERROR, kitchen: null };
 
 export const foodOverviewSlice = createAppSlice({
   name: 'foodOverview',
@@ -46,11 +51,28 @@ export const foodOverviewSlice = createAppSlice({
         },
       },
     ),
+
+    // TODO(API_KITCHEN): one overview route would serve these counts.
+    loadKitchenWaitingAsync: create.asyncThunk(
+      async (_: void, { rejectWithValue }) => {
+        try {
+          const [hygiene, signatures] = await Promise.all([listHygieneQueue('pending'), listSignatures('new')]);
+          return { hygiene: hygiene.length, signatures: signatures.counts.new };
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        fulfilled: (state, action) => {
+          state.kitchen = action.payload;
+        },
+      },
+    ),
   }),
   selectors: {
     selectFoodOverview: state => state,
   },
 });
 
-export const { loadFoodOverviewAsync } = foodOverviewSlice.actions;
+export const { loadFoodOverviewAsync, loadKitchenWaitingAsync } = foodOverviewSlice.actions;
 export const { selectFoodOverview } = foodOverviewSlice.selectors;

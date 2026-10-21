@@ -62,6 +62,15 @@ import { adminFoodReviewsSlice } from '../screens/Admin/Food/AdminFoodReviews/ad
 import { adminFoodCuisinesSlice } from '../screens/Admin/Food/AdminFoodCuisines/adminFoodCuisinesSlice';
 import { adminFoodBannersSlice } from '../screens/Admin/Food/AdminFoodBanners/adminFoodBannersSlice';
 import { adminFoodBannerFormSlice } from '../screens/Admin/Food/AdminFoodBannerForm/adminFoodBannerFormSlice';
+import { adminKitchenAiSlice } from '../screens/Admin/Kitchen/AdminKitchenAi/adminKitchenAiSlice';
+import { adminKitchenPricesSlice } from '../screens/Admin/Kitchen/AdminKitchenPrices/adminKitchenPricesSlice';
+import { adminKitchenNutritionSlice } from '../screens/Admin/Kitchen/AdminKitchenNutrition/adminKitchenNutritionSlice';
+import { adminKitchenAliasesSlice } from '../screens/Admin/Kitchen/AdminKitchenAliases/adminKitchenAliasesSlice';
+import { adminKitchenCalendarSlice } from '../screens/Admin/Kitchen/AdminKitchenCalendar/adminKitchenCalendarSlice';
+import { adminKitchenHygieneSlice } from '../screens/Admin/Kitchen/AdminKitchenHygiene/adminKitchenHygieneSlice';
+import { adminKitchenSignaturesSlice } from '../screens/Admin/Kitchen/AdminKitchenSignatures/adminKitchenSignaturesSlice';
+import { adminKitchenDemandSlice } from '../screens/Admin/Kitchen/AdminKitchenDemand/adminKitchenDemandSlice';
+import { adminKitchenLookupSlice } from '../screens/Admin/Kitchen/AdminKitchenLookup/adminKitchenLookupSlice';
 import { vendorPromotionsSlice } from '../screens/Food/Vendor/VendorPromotions/vendorPromotionsSlice';
 import { vendorPromotionSlice } from '../screens/Food/Vendor/VendorPromotion/vendorPromotionSlice';
 import { vendorBoardSlice } from '../screens/Food/Vendor/VendorOrders/vendorBoardSlice';
@@ -285,6 +294,15 @@ const rootReducer = combineReducers({
   adminFoodCuisines: adminFoodCuisinesSlice.reducer,
   adminFoodBanners: adminFoodBannersSlice.reducer,
   adminFoodBannerForm: adminFoodBannerFormSlice.reducer,
+  adminKitchenAi: adminKitchenAiSlice.reducer,
+  adminKitchenPrices: adminKitchenPricesSlice.reducer,
+  adminKitchenNutrition: adminKitchenNutritionSlice.reducer,
+  adminKitchenAliases: adminKitchenAliasesSlice.reducer,
+  adminKitchenCalendar: adminKitchenCalendarSlice.reducer,
+  adminKitchenHygiene: adminKitchenHygieneSlice.reducer,
+  adminKitchenSignatures: adminKitchenSignaturesSlice.reducer,
+  adminKitchenDemand: adminKitchenDemandSlice.reducer,
+  adminKitchenLookup: adminKitchenLookupSlice.reducer,
   vendorPromotions: vendorPromotionsSlice.reducer,
   vendorPromotion: vendorPromotionSlice.reducer,
   vendorBoard: vendorBoardSlice.reducer,

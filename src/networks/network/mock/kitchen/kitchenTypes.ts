@@ -437,6 +437,15 @@ export interface MockHygiene {
   reviewedAt: string | null;
 }
 
+/** Staff looked at a signature dish: kept it, or took the label off with a note. */
+export interface MockSignatureReview {
+  itemId: string;
+  businessId: string;
+  status: 'approved' | 'removed';
+  note: string | null;
+  at: string;
+}
+
 export interface MockKitchen {
   ingredients: MockIngredient[];
   batches: MockBatch[];
@@ -489,6 +498,8 @@ export interface MockKitchen {
   nutritionHidden?: string[];
   /** Drafts already counted (`review_insights:<business>:<week>`, `nutrition_estimate:<item>`), so a view doesn't count twice. */
   aiCounted?: string[];
+  /** Staff's reviews of signature dishes (5C console). */
+  signatureReviews?: MockSignatureReview[];
   // My Kitchen (5C): the customer's own; never shown to a kitchen.
   pantry?: MockPantryItem[];
   pantryReminders?: MockPantryReminders[];

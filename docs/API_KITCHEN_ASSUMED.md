@@ -399,7 +399,8 @@ dish without sizes, or for one card that every size shares.
   ],
   "signature": {
     "on": true,
-    "creatorName": "Imran Qureshi"
+    "creatorName": "Imran Qureshi",
+    "removedNote": null
   },
   "cost": {
     "toMake": 226,
@@ -3008,19 +3009,567 @@ Groceries are Shopping products with a `netQuantity { qty, unit }` and the ingre
 
 ### 4.8 Staff (`/admin/kitchen`)
 
+Staff only (`admin`, `super_admin`); anyone else gets `403 FORBIDDEN`. Every list is the whole
+platform's.
+
 | Method | Path | Notes |
 |---|---|---|
 | PATCH | `/ai/settings` | `{ enabled }`: the assistant's switch for everyone |
 | PUT | `/ai/quotas/:ownerId` | `{ limit \| null }`: a kitchen's (business id) or customer's monthly actions; `null` = the plan's |
-| GET | `/ai/usage?from&to` | by feature and business: actions, failures, latency (5C console) |
-| GET / POST | `/reference-prices?dryRun=true` | CSV `key,city,week,pricePerKg`: preview with row errors, then import |
-| GET / POST / PATCH | `/nutrition-foods` (+ CSV import) | per 100 g / 100 ml / piece |
-| GET / POST / DELETE | `/aliases` | `{ word, language: ur\|roman_ur\|en, key }` |
-| GET / POST / PATCH / DELETE | `/calendar-events` | `{ kind: ramadan\|eid\|holiday, name, startsOn, endsOn, city? }` |
-| GET | `/hygiene?status=pending\|verified\|rejected`; POST `/hygiene/:businessId/{verify,reject} { note }` | a note (3–300) is required to reject |
-| GET | `/signatures`; POST `/signatures/:itemId/{approve,remove} { note }` | |
-| GET | `/demand?city&cuisine&hour` | platform-wide, the same anonymity rule |
-| GET | `/lookup?code` | a tiffin (`TF-`) or catering (`CT-`) code |
+| GET | `/ai/usage?from&to` | by feature and by kitchen or customer (dates in Pakistan time; the last 30 days by default, up to 93) |
+| GET | `/reference-prices?city&q` | the city's latest week, per kg, litre or piece, with the change over four weeks |
+| POST | `/reference-prices?dryRun=true` | `{ csv }` with the columns `key,city,week,price`: the dry run checks every row; without `dryRun` it imports, all or nothing |
+| GET / POST / PATCH | `/nutrition-foods?q&page&pageSize`, `/nutrition-foods/:id` | per 100 g (`g100`), 100 ml (`ml100`) or piece; `usedBy` counts the kitchens' ingredients mapped to it |
+| POST | `/nutrition-foods/import?dryRun=true` | `{ csv }` with `key,name,per,kcal,protein,carbs,fat`; adds new keys, updates the rest |
+| GET | `/ingredient-keys?q` | the ingredients an alias can point at (up to 50) |
+| GET / POST / DELETE | `/aliases?q`, `/aliases/:id` | `{ word, language: ur\|roman_ur\|en, key }`: what voice and receipts understand |
+| GET / POST / PATCH / DELETE | `/calendar-events`, `/calendar-events/:id` | `{ kind: ramadan\|eid\|other, name, startsOn, endsOn }` (up to 40 days); Ramadan events never overlap |
+| GET | `/hygiene?status=pending\|verified\|rejected`; POST `/hygiene/:businessId/{verify,reject} { note }` | a note (3–300) is required to reject (§2.13) |
+| GET | `/signatures?status=new\|approved\|removed`; POST `/signatures/:itemId/{approve,remove} { note }` | removing needs a note (3–300), which the kitchen sees, and turns the label off |
+| GET | `/demand?city&cuisine&hour` | a city's searches (30 km), under the same anonymity rule as a kitchen's map |
+| GET | `/lookup?code` | a tiffin (`TF-`) or catering (`CT-`) code, as its kitchen sees it |
+
+Rules:
+
+- **CSV.** UTF-8, the first row names the columns (in any order), up to 2,000 rows. A dry run
+  answers every problem by row (the first 50) and imports nothing. An import with any problem is
+  refused whole with `422 CSV_HAS_ERRORS { errors }`, so a file is never half imported. A price is
+  rupees per kg, litre or piece, for the week starting on its Monday.
+- **Aliases.** Roman Urdu and English words are kept in lower case. The same word in the same
+  language means one thing: `409 ALIAS_EXISTS { key }`.
+- **Calendar.** Kitchens' Ramadan mode follows the Ramadan event (§3.9). Its dates are approximate
+  until the moon is sighted, so staff move them here.
+- **Signatures.** A new signature dish (or one changed since it was approved) is `new` until staff
+  look at it. Taking the label off turns it off on every size of the dish; the kitchen reads the
+  note on the recipe (`signature.removedNote`, while the label stays off) and as an insight card
+  (`signature_removed`) for two weeks. Turning it on again makes it `new` again.
+
+The assistant's use (`GET /ai/usage`):
+
+<!-- contract: adminAiUsage -->
+```json
+{
+  "from": "2026-09-20",
+  "to": "2026-10-19",
+  "enabled": true,
+  "totals": {
+    "actions": 228,
+    "failures": 4,
+    "avgMs": 1208,
+    "failureRate": 0.02,
+    "p50Ms": 932,
+    "p95Ms": 2893
+  },
+  "byFeature": [
+    {
+      "feature": "voice",
+      "actions": 139,
+      "failures": 2,
+      "avgMs": 807
+    }
+  ],
+  "byOwner": [
+    {
+      "ownerId": "b_resto",
+      "kind": "kitchen",
+      "name": "Biryani Bazaar",
+      "actions": 106,
+      "failures": 1,
+      "avgMs": 1000,
+      "usedThisMonth": 12,
+      "limit": 300,
+      "override": null
+    }
+  ]
+}
+```
+
+The city price list (`GET /reference-prices?city=Lahore&q=tom`), a dry run, and an import refused:
+
+<!-- contract: adminPrices -->
+```json
+{
+  "city": "Lahore",
+  "cities": [
+    "Islamabad",
+    "Karachi",
+    "Lahore"
+  ],
+  "week": "2026-10-12",
+  "items": [
+    {
+      "key": "tomato",
+      "name": "Tomato",
+      "price": 171,
+      "unit": "kg",
+      "changePct": 22
+    }
+  ]
+}
+```
+
+<!-- contract: adminPricePreview -->
+```json
+{
+  "dryRun": true,
+  "rows": 3,
+  "valid": 1,
+  "errors": [
+    {
+      "row": 3,
+      "field": "week",
+      "message": "The Monday the week starts, as YYYY-MM-DD"
+    },
+    {
+      "row": 4,
+      "field": "key",
+      "message": "No ingredient \"shimla\""
+    }
+  ],
+  "preview": [
+    {
+      "row": 2,
+      "key": "tomato",
+      "name": "Tomato",
+      "city": "Lahore",
+      "week": "2026-10-19",
+      "price": 190,
+      "unit": "kg",
+      "previous": null
+    },
+    {
+      "row": 3,
+      "key": "onion",
+      "name": "Onion",
+      "city": "Lahore",
+      "week": "2026-10-20",
+      "price": 150,
+      "unit": "kg",
+      "previous": null
+    }
+  ],
+  "imported": 0
+}
+```
+
+<!-- contract: adminPriceRefused -->
+```json
+{
+  "error": {
+    "code": "CSV_HAS_ERRORS",
+    "message": "2 rows have problems. Fix them and try again; nothing was imported.",
+    "details": {
+      "errors": [
+        {
+          "row": 3,
+          "field": "week",
+          "message": "The Monday the week starts, as YYYY-MM-DD"
+        },
+        {
+          "row": 4,
+          "field": "key",
+          "message": "No ingredient \"shimla\""
+        }
+      ]
+    }
+  }
+}
+```
+
+Nutrition foods, a new one, and an import's dry run (`change: new | update | same`):
+
+<!-- contract: adminFoods -->
+```json
+{
+  "items": [
+    {
+      "id": "nf_tomato",
+      "key": "tomato",
+      "name": "Tomato",
+      "per": "g100",
+      "kcal": 18,
+      "protein": 0.9,
+      "carbs": 3.9,
+      "fat": 0.2,
+      "usedBy": 3,
+      "updatedAt": "2026-08-16T10:00:00.000Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "pageSize": 30
+}
+```
+
+<!-- contract: adminFoodCreate -->
+```json
+{
+  "id": "nf_1aw9",
+  "key": "shimla_mirch",
+  "name": "Shimla mirch (capsicum)",
+  "per": "g100",
+  "kcal": 20,
+  "protein": 0.9,
+  "carbs": 4.6,
+  "fat": 0.2,
+  "usedBy": 0,
+  "updatedAt": "2026-10-19T10:00:00.000Z"
+}
+```
+
+<!-- contract: adminFoodImport -->
+```json
+{
+  "dryRun": true,
+  "rows": 2,
+  "valid": 2,
+  "errors": [],
+  "preview": [
+    {
+      "row": 2,
+      "key": "shimla_mirch",
+      "name": "Shimla mirch (capsicum)",
+      "per": "g100",
+      "kcal": 21,
+      "protein": 0.9,
+      "carbs": 4.6,
+      "fat": 0.2,
+      "change": "same"
+    },
+    {
+      "row": 3,
+      "key": "khoya",
+      "name": "Khoya",
+      "per": "g100",
+      "kcal": 421,
+      "protein": 14.6,
+      "carbs": 25,
+      "fat": 30,
+      "change": "new"
+    }
+  ],
+  "imported": 0
+}
+```
+
+Aliases (`GET /aliases?q=tamatar`), the keys they point at, a new one, and a word that already
+means something:
+
+<!-- contract: adminAliases -->
+```json
+{
+  "items": [
+    {
+      "id": "al_1",
+      "word": "tamatar",
+      "language": "roman_ur",
+      "key": "tomato",
+      "keyName": "Tomato"
+    }
+  ],
+  "total": 1
+}
+```
+
+<!-- contract: adminKeys -->
+```json
+{
+  "items": [
+    {
+      "key": "tomato",
+      "name": "Tomato"
+    }
+  ]
+}
+```
+
+<!-- contract: adminAliasCreate -->
+```json
+{
+  "id": "al_1bk1",
+  "word": "tomatar",
+  "language": "roman_ur",
+  "key": "tomato",
+  "keyName": "Tomato"
+}
+```
+
+<!-- contract: adminAliasExists -->
+```json
+{
+  "error": {
+    "code": "ALIAS_EXISTS",
+    "message": "“tomatar” already means Tomato.",
+    "details": {
+      "key": "tomato"
+    }
+  }
+}
+```
+
+Calendar events, a new one, and a Ramadan that overlaps another:
+
+<!-- contract: adminEvents -->
+```json
+{
+  "items": [
+    {
+      "id": "ev_ramadan_1448",
+      "kind": "ramadan",
+      "name": "Ramadan 1448",
+      "startsOn": "2027-02-08",
+      "endsOn": "2027-03-09",
+      "days": 30,
+      "state": "upcoming"
+    }
+  ]
+}
+```
+
+<!-- contract: adminEventCreate -->
+```json
+{
+  "id": "ev_1cbo",
+  "kind": "other",
+  "name": "Basant",
+  "startsOn": "2027-02-05",
+  "endsOn": "2027-02-06",
+  "days": 2,
+  "state": "upcoming"
+}
+```
+
+<!-- contract: adminEventOverlap -->
+```json
+{
+  "error": {
+    "code": "EVENT_OVERLAP",
+    "message": "It overlaps Ramadan 1448.",
+    "details": {
+      "id": "ev_ramadan_1448"
+    }
+  }
+}
+```
+
+Signature dishes (`?status=new`, with the counts of each) and one taken off:
+
+<!-- contract: adminSignatures -->
+```json
+{
+  "items": [
+    {
+      "itemId": "mi_chicken_biryani",
+      "name": "Chicken Biryani",
+      "photoUrl": "https://images.unsplash.com/photo-1559528896-c5310744cce8",
+      "vendor": {
+        "id": "fb_resto",
+        "name": "Biryani Bazaar",
+        "slug": "biryani-bazaar"
+      },
+      "creatorName": "Imran Qureshi",
+      "status": "new",
+      "note": null,
+      "reviewedAt": null
+    }
+  ],
+  "counts": {
+    "new": 4,
+    "approved": 0,
+    "removed": 0
+  }
+}
+```
+
+<!-- contract: adminSignatureRemove -->
+```json
+{
+  "itemId": "mi_seekh",
+  "name": "Seekh Kebab (4 pcs)",
+  "photoUrl": "https://images.unsplash.com/photo-1626323109697-df55d20f06a8",
+  "vendor": {
+    "id": "fb_resto",
+    "name": "Biryani Bazaar",
+    "slug": "biryani-bazaar"
+  },
+  "creatorName": "Imran Qureshi",
+  "status": "removed",
+  "note": "The same seekh is sold next door; a signature dish should be your own.",
+  "reviewedAt": "2026-10-19T10:00:00.000Z"
+}
+```
+
+The platform's demand map (`GET /demand?city=Lahore`; `hourCurve` has the area only):
+
+<!-- contract: adminDemand -->
+```json
+{
+  "city": "Lahore",
+  "cities": [
+    "Lahore",
+    "Karachi",
+    "Islamabad"
+  ],
+  "center": {
+    "lat": 31.5204,
+    "lng": 74.3587
+  },
+  "radiusKm": 30,
+  "minCount": 10,
+  "total": 2064,
+  "hidden": 159,
+  "cells": [
+    {
+      "geohash": "ttsg5h",
+      "sw": {
+        "lat": 31.48682,
+        "lng": 74.31152
+      },
+      "ne": {
+        "lat": 31.49231,
+        "lng": 74.32251
+      },
+      "searches": 45,
+      "unmetShare": 0.38
+    }
+  ],
+  "topUnmet": [
+    {
+      "query": "sushi",
+      "searches": 159,
+      "unmetShare": 0.91,
+      "hour": 22
+    }
+  ],
+  "hourCurve": {
+    "area": [
+      0.76,
+      0.74,
+      0.31,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0.39,
+      0.42,
+      0.44,
+      0,
+      0.41,
+      0.71,
+      0.37,
+      0.37,
+      0,
+      0.38,
+      0,
+      0.41,
+      0.81,
+      0.73,
+      0.82,
+      1
+    ]
+  }
+}
+```
+
+A code looked up (`GET /lookup?code=TF-HMZ4K2`); a catering code answers `{ kind: "catering",
+tiffin: null, catering }` with the request as its kitchen sees it (§3.6):
+
+<!-- contract: adminLookup -->
+```json
+{
+  "kind": "tiffin",
+  "tiffin": {
+    "code": "TF-HMZ4K2",
+    "status": "active",
+    "plan": {
+      "id": "tp_nani_lunch",
+      "name": "Office lunch tiffin",
+      "meal": "lunch",
+      "days": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "period": "week",
+      "price": 2300,
+      "perMeal": 460,
+      "mode": "delivery",
+      "window": {
+        "from": "12:30",
+        "to": "13:30",
+        "label": "12:30 PM – 1:30 PM"
+      },
+      "skipCutoffHours": 14
+    },
+    "vendor": {
+      "id": "fb_nani",
+      "slug": "nani-ki-handi",
+      "name": "Nani ki Handi",
+      "logoUrl": "https://placehold.co/256x256/7C2D12/FFFFFF/png?text=NH",
+      "phone": "+923001110010"
+    },
+    "customer": {
+      "name": "Hamza Qureshi",
+      "phone": "+923451234567"
+    },
+    "startDate": "2026-10-12",
+    "endDate": null,
+    "nextDelivery": {
+      "date": "2026-10-19",
+      "dishes": [
+        "Daal chawal with achaar"
+      ],
+      "cutoffAt": "2026-10-18T17:30:00.000Z"
+    },
+    "address": {
+      "line1": "Office 4, Siddiq Trade Centre, Main Boulevard",
+      "area": "Gulberg III",
+      "city": "Lahore",
+      "lat": 31.5137,
+      "lng": 74.3502
+    },
+    "paymentMethod": "transfer",
+    "period": {
+      "id": "tpd_17h5",
+      "from": "2026-10-19",
+      "to": "2026-10-25",
+      "meals": 5,
+      "credit": 0,
+      "amount": 2300,
+      "payment": {
+        "method": "transfer",
+        "status": "awaiting_transfer",
+        "payBy": "2026-10-19T18:59:00.000Z",
+        "accounts": [
+          {
+            "kind": "easypaisa",
+            "accountTitle": "Shazia Parveen",
+            "accountNumber": "+923001110010",
+            "bankName": null
+          }
+        ],
+        "reference": null,
+        "proofUrl": null,
+        "rejectedReason": null
+      }
+    },
+    "pausedFrom": null,
+    "pausedUntil": null,
+    "declineReason": null,
+    "endReason": null,
+    "canPause": true,
+    "canResume": false,
+    "canCancel": false,
+    "createdAt": "2026-10-06T10:00:00.000Z"
+  },
+  "catering": null
+}
+```
+
+A kitchen's monthly limit raised or lowered (`PUT /ai/quotas/b_resto { limit: 1 }`):
 
 <!-- contract: adminQuota -->
 ```json
@@ -3029,6 +3578,7 @@ Groceries are Shopping products with a `netQuantity { qty, unit }` and the ingre
   "limit": 1
 }
 ```
+
 
 ---
 
@@ -3084,6 +3634,10 @@ capture carries one**: it has shipped then, and is reconciled.
 | `EXPERIMENT_LIMIT` | 409 | `max` (5B) |
 | `EXPERIMENT_NOT_SUPPORTED` | 422 | (5B) |
 | `HYGIENE_INCOMPLETE` | 422 | `missing` (5B) |
+| `CSV_HAS_ERRORS` | 422 | `errors [{ row, field, message }]` (5C staff) |
+| `NUTRITION_FOOD_EXISTS` | 409 | `key` (5C staff) |
+| `ALIAS_EXISTS` | 409 | `key` (5C staff) |
+| `EVENT_OVERLAP` | 409 | `id` (5C staff) |
 | `AI_UNAVAILABLE`, `AI_QUOTA_REACHED`, `CLIP_TOO_LONG` | 503 / 429 / 413 | `docs/AI_ASSUMED.md`, `docs/VOICE_ASSUMED.md` |
 
 Reused codes:

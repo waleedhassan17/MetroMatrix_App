@@ -190,6 +190,17 @@ export const ROUTES = {
   ADMIN_FOOD_CUISINES: 'AdminFoodCuisines',
   ADMIN_FOOD_BANNERS: 'AdminFoodBanners',
   ADMIN_FOOD_BANNER_FORM: 'AdminFoodBannerForm',
+  // The console's Kitchen tools (5C)
+  ADMIN_KITCHEN_AI: 'AdminKitchenAi',
+  ADMIN_KITCHEN_PRICES: 'AdminKitchenPrices',
+  ADMIN_KITCHEN_NUTRITION: 'AdminKitchenNutrition',
+  ADMIN_KITCHEN_ALIASES: 'AdminKitchenAliases',
+  ADMIN_KITCHEN_CALENDAR: 'AdminKitchenCalendar',
+  ADMIN_KITCHEN_HYGIENE: 'AdminKitchenHygiene',
+  ADMIN_KITCHEN_HYGIENE_REVIEW: 'AdminKitchenHygieneReview',
+  ADMIN_KITCHEN_SIGNATURES: 'AdminKitchenSignatures',
+  ADMIN_KITCHEN_DEMAND: 'AdminKitchenDemand',
+  ADMIN_KITCHEN_LOOKUP: 'AdminKitchenLookup',
 
   // ── Food: the vendor's app (navigations-maps/FoodVendor.ts) ──
   FOOD_VENDORS: 'FoodVendors',

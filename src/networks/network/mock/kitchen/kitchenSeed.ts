@@ -36,6 +36,7 @@ import type {
 } from './kitchenTypes';
 
 const DAY = 24 * 60 * 60 * 1000;
+const HOUR = 60 * 60 * 1000;
 const TZ = 'Asia/Karachi';
 const iso = (msAgo = 0) => new Date(Date.now() - msAgo).toISOString();
 
@@ -634,6 +635,8 @@ const seedGrowthMore = (now: number, today: string): Pick<MockKitchen, 'calendar
     hygiene: [
       { businessId: 'b_resto', status: 'verified', note: null, items: allDone(true), requestedAt: iso(40 * DAY), reviewedAt: iso(38 * DAY) },
       { businessId: 'b_nani', status: 'self_declared', note: null, items: allDone(true), requestedAt: null, reviewedAt: null },
+      // The newer home kitchen asked staff to check it two days ago (the console's queue).
+      { businessId: 'b_homek', status: 'pending', note: null, items: allDone(true), requestedAt: iso(2 * DAY), reviewedAt: null },
     ],
     // The demo kitchens' everyday sales are filled in to yesterday (and go on as the clock moves).
     salesThrough: Object.fromEntries(KITCHENS.map(k => [k.businessId, addDays(today, -1)])),
@@ -983,7 +986,7 @@ export const seedKitchen = (dishes: SeedDish[], now: number = Date.now()): MockK
     pauses: [],
     orders: [],
     snoozed: {},
-    aiUses: [],
+    aiUses: seedAiUses(now),
     aiLimits: {},
     aiEnabled: true,
     nutritionFoods: seedNutritionFoods(),
@@ -994,6 +997,39 @@ export const seedKitchen = (dishes: SeedDish[], now: number = Date.now()): MockK
     pantry: seedPantry(today),
     seq: 0,
   };
+};
+
+/**
+ * The assistant's use over the last days of the previous month (the staff
+ * console's numbers), so this month's limits start untouched: voice on the
+ * busy kitchens' boards, drafts and checks, a few slow or failed calls.
+ */
+const seedAiUses = (now: number): MockKitchen['aiUses'] => {
+  const random = rng(20261021);
+  const monthStart = Date.parse(`${new Date(now + 5 * HOUR).toISOString().slice(0, 7)}-01T00:00:00+05:00`);
+  const mix: [owner: string, feature: string, perDay: number][] = [
+    ['b_resto', 'voice', 9],
+    ['b_resto', 'receipt_scan', 1],
+    ['b_resto', 'descriptions', 1],
+    ['b_cloud', 'voice', 5],
+    ['b_cloud', 'packing_check', 3],
+    ['b_cloud', 'photo_check', 1],
+    ['b_nani', 'voice', 2],
+    ['b_nani', 'specials', 1],
+    ['b_homek', 'nutrition_estimate', 1],
+  ];
+  const out: MockKitchen['aiUses'] = [];
+  for (let day = 1; day <= 9; day++) {
+    for (const [ownerId, feature, perDay] of mix) {
+      const n = Math.round(perDay * (0.6 + random() * 0.8));
+      for (let i = 0; i < n; i++) {
+        const ok = random() > 0.04;
+        const base = feature === 'voice' ? 650 : feature === 'receipt_scan' || feature === 'packing_check' ? 1900 : 1200;
+        out.push({ ownerId, feature, at: new Date(monthStart - day * DAY + (10 + random() * 11) * HOUR).toISOString(), ok, ms: Math.round(base * (0.6 + random() * (ok ? 1.2 : 3))) });
+      }
+    }
+  }
+  return out.sort((a, b) => a.at.localeCompare(b.at));
 };
 
 /** Ayesha's kitchen at home (My Kitchen): a few things to use soon, one gone off, two used this month. */

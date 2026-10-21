@@ -2,6 +2,7 @@
 // storefront, demand, menu insights and experiments, story, hygiene, batching.
 // docs/API_KITCHEN_ASSUMED.md §2.11–2.14 (TODO(API_KITCHEN): an assumed contract).
 
+import type { HygieneReview } from '../../types/kitchenAdmin';
 import type {
   BatchSuggestion,
   DemandCell,
@@ -223,10 +224,6 @@ const batchSerializer = (raw: unknown): BatchSuggestion | null =>
 export const batchSuggestionsSerializer = (raw: unknown): BatchSuggestion[] => list(isObject(raw) ? raw.items : raw, batchSerializer);
 
 // ── Staff: the hygiene queue ──
-export interface HygieneReview extends Hygiene {
-  businessId: string;
-  vendor: { id: string; name: string; slug: string; isHomeKitchen: boolean } | null;
-}
 
 const hygieneReviewSerializer = (raw: unknown): HygieneReview | null => {
   if (!isObject(raw) || !str(raw.businessId)) return null;

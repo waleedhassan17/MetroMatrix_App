@@ -148,6 +148,9 @@ const optionsOf = (db: MockDb, item: MockMenuItem) =>
 export const recipeWire = (db: MockDb, item: MockMenuItem, variantId: string | null) => {
   const r = recipeFor(db, item.businessId, item.id, variantId);
   const exact = r && r.variantId === variantId ? r : null;
+  // Staff took the signature label off (5C console): their note, while it stays off.
+  const review = [...(k(db).signatureReviews ?? [])].reverse().find(x => x.itemId === item.id);
+  const removedNote = exact && !exact.signature.on && review?.status === 'removed' ? review.note : null;
   const yieldN = Math.max(1, exact?.yield ?? 1);
   const options = optionsOf(db, item);
   return {
@@ -165,7 +168,7 @@ export const recipeWire = (db: MockDb, item: MockMenuItem, variantId: string | n
     }),
     options,
     packaging: (exact?.packaging ?? []).map(l => lineWire(db, l, l.qty)),
-    signature: { on: exact?.signature.on ?? false, creatorName: exact?.signature.creatorName ?? null },
+    signature: { on: exact?.signature.on ?? false, creatorName: exact?.signature.creatorName ?? null, removedNote },
     cost: exact ? recipeCost(db, exact, item) : null,
     servingsLeft: servingsLeft(db, exact),
     targetFoodCostPct: settingsOf(db, item.businessId).targetFoodCostPct,

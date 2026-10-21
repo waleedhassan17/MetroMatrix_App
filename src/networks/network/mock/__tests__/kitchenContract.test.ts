@@ -269,6 +269,37 @@ const run = async () => {
   await call('nutritionSummary', 'get', '/my-kitchen/nutrition/summary?days=7');
   await call('healthyPicks', 'get', '/food/healthy-picks?lat=31.5102&lng=74.3441');
   await call('nutritionDelete', 'delete', '/my-kitchen/nutrition');
+  // ── The staff console's Kitchen tools (5C) ──
+  await clearTokens();
+  const admin = await authSignin({ email: 'admin@metromatrix.app', password: STAFF_PASSWORD, portal: 'admin' });
+  if (admin.kind === 'totp') await authAdminTotp(admin.challenge.challengeToken, { code: MOCK.TOTP_CODE });
+  await call('adminAiUsage', 'get', '/admin/kitchen/ai/usage');
+  await call('adminAiSwitch', 'patch', '/admin/kitchen/ai/settings', { enabled: true });
+  await call('adminPrices', 'get', '/admin/kitchen/reference-prices?city=Lahore&q=tom');
+  const prices = 'key,city,week,price\ntomato,Lahore,2026-10-19,190\nonion,Lahore,2026-10-20,150\nshimla,Lahore,2026-10-19,300';
+  await call('adminPricePreview', 'post', '/admin/kitchen/reference-prices?dryRun=true', { csv: prices });
+  await call('adminPriceRefused', 'post', '/admin/kitchen/reference-prices', { csv: prices });
+  await call('adminPriceImport', 'post', '/admin/kitchen/reference-prices', { csv: 'key,city,week,price\ntomato,Lahore,2026-10-19,190' });
+  await call('adminFoods', 'get', '/admin/kitchen/nutrition-foods?q=tomato');
+  const food = await call('adminFoodCreate', 'post', '/admin/kitchen/nutrition-foods', { key: 'shimla_mirch', name: 'Shimla mirch (capsicum)', per: 'g100', kcal: 20, protein: 0.9, carbs: 4.6, fat: 0.2 });
+  await call('adminFoodEdit', 'patch', `/admin/kitchen/nutrition-foods/${food.id}`, { kcal: 21 });
+  await call('adminFoodImport', 'post', '/admin/kitchen/nutrition-foods/import?dryRun=true', { csv: 'key,name,per,kcal,protein,carbs,fat\nshimla_mirch,Shimla mirch (capsicum),g100,21,0.9,4.6,0.2\nkhoya,Khoya,g100,421,14.6,25,30' });
+  await call('adminKeys', 'get', '/admin/kitchen/ingredient-keys?q=tom');
+  await call('adminAliases', 'get', '/admin/kitchen/aliases?q=tamatar');
+  const alias = await call('adminAliasCreate', 'post', '/admin/kitchen/aliases', { word: 'Tomatar', language: 'roman_ur', key: 'tomato' });
+  await call('adminAliasExists', 'post', '/admin/kitchen/aliases', { word: 'tomatar', language: 'roman_ur', key: 'onion' });
+  await call('adminAliasDelete', 'delete', `/admin/kitchen/aliases/${alias.id}`);
+  await call('adminEvents', 'get', '/admin/kitchen/calendar-events');
+  const event = await call('adminEventCreate', 'post', '/admin/kitchen/calendar-events', { kind: 'other', name: 'Basant', startsOn: '2027-02-05', endsOn: '2027-02-06' });
+  await call('adminEventOverlap', 'post', '/admin/kitchen/calendar-events', { kind: 'ramadan', name: 'Ramadan (corrected)', startsOn: '2027-02-09', endsOn: '2027-03-10' });
+  await call('adminEventEdit', 'patch', '/admin/kitchen/calendar-events/ev_ramadan_1448', { startsOn: '2027-02-09', endsOn: '2027-03-10' });
+  await call('adminEventDelete', 'delete', `/admin/kitchen/calendar-events/${event.id}`);
+  await call('adminSignatures', 'get', '/admin/kitchen/signatures?status=new');
+  await call('adminSignatureApprove', 'post', '/admin/kitchen/signatures/mi_chicken_biryani/approve', {});
+  await call('adminSignatureRemove', 'post', '/admin/kitchen/signatures/mi_seekh/remove', { note: 'The same seekh is sold next door; a signature dish should be your own.' });
+  await call('adminDemand', 'get', '/admin/kitchen/demand?city=Lahore');
+  await call('adminLookup', 'get', '/admin/kitchen/lookup?code=TF-HMZ4K2');
+  await call('adminLookupCatering', 'get', '/admin/kitchen/lookup?code=ct-mhd7q4');
   // In Ramadan: the kitchen turns it on, and it shows in "Iftar near you".
   jest.setSystemTime(new Date('2027-02-12T08:00:00Z').getTime());
   await as('restaurant@metromatrix.app');
@@ -317,6 +348,8 @@ it('documents every request the dummy kitchen API answers, with the same keys', 
   SETUP.push('cateringQuote', 'cateringQuote2', 'cateringProof', 'cateringRequests', 'cateringConfirm');
   SETUP.push('experiments', 'storyPut', 'hygieneItem', 'hygieneQueue', 'hygieneVerify', 'experimentKeep', 'tiffinNearby', 'story', 'iftar');
   SETUP.push('saveUrdu', 'reviewsByTheme', 'pantryReminders');
+  // Staff: the same shapes as a documented answer (an import, a food, an event, a signature, a lookup).
+  SETUP.push('adminAiSwitch', 'adminPriceImport', 'adminFoodEdit', 'adminAliasDelete', 'adminEventEdit', 'adminEventDelete', 'adminSignatureApprove', 'adminLookupCatering');
   const undocumented = Object.keys(out).filter(name => !(name in docs) && !SETUP.includes(name));
   expect({ mismatched, undocumented }).toEqual({ mismatched: [], undocumented: [] });
 });

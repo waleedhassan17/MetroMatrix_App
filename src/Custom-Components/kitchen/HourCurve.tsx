@@ -20,7 +20,8 @@ const makeStyles = ({ space }: Theme) =>
     key: { flexDirection: 'row', alignItems: 'center', gap: space.s8 },
   });
 
-export const HourCurve: React.FC<{ area: number[]; own: number[]; areaLabel?: string; ownLabel?: string }> = ({ area, own, areaLabel = 'People searching nearby', ownLabel = 'Your orders' }) => {
+/** `own` is the kitchen's line; without it (the staff's city map) only the area shows. */
+export const HourCurve: React.FC<{ area: number[]; own?: number[]; areaLabel?: string; ownLabel?: string }> = ({ area, own, areaLabel = 'People searching nearby', ownLabel = 'Your orders' }) => {
   const styles = useStyles(makeStyles);
   const { size, service, space, radius } = useTheme();
   const { width, onLayout } = useChartWidth();
@@ -32,15 +33,17 @@ export const HourCurve: React.FC<{ area: number[]; own: number[]; areaLabel?: st
     return xs.map((v, i) => ({ x: pad + step * i, y: h - pad - (v / max) * (h - pad * 2) }));
   };
   const a = width ? scale(area) : [];
-  const o = width ? scale(own) : [];
-  const label = `${areaLabel} peaks at ${hourLabel(peakOf(area))}; ${ownLabel.toLowerCase()} peak at ${hourLabel(peakOf(own))}.`;
+  const o = width && own ? scale(own) : [];
+  const label = own
+    ? `${areaLabel} peaks at ${hourLabel(peakOf(area))}; ${ownLabel.toLowerCase()} peak at ${hourLabel(peakOf(own))}.`
+    : `${areaLabel} peaks at ${hourLabel(peakOf(area))}.`;
   return (
     <View style={styles.root}>
       <View onLayout={onLayout} style={{ height: h }} accessible accessibilityRole="image" accessibilityLabel={label}>
         {width ? (
           <Svg width={width} height={h}>
             <Path d={areaPath(a, h)} fill={service.accentSoft} />
-            <Path d={linePath(o)} stroke={service.accentDeep} strokeWidth={size.focusBorder} fill="none" strokeLinejoin="round" strokeLinecap="round" />
+            {own ? <Path d={linePath(o)} stroke={service.accentDeep} strokeWidth={size.focusBorder} fill="none" strokeLinejoin="round" strokeLinecap="round" /> : null}
           </Svg>
         ) : null}
       </View>
@@ -58,12 +61,14 @@ export const HourCurve: React.FC<{ area: number[]; own: number[]; areaLabel?: st
             {areaLabel}
           </AppText>
         </View>
-        <View style={styles.key}>
-          <View style={{ width: space.s12, height: size.focusBorder, backgroundColor: service.accentDeep }} />
-          <AppText variant="caption" tone="muted">
-            {ownLabel}
-          </AppText>
-        </View>
+        {own ? (
+          <View style={styles.key}>
+            <View style={{ width: space.s12, height: size.focusBorder, backgroundColor: service.accentDeep }} />
+            <AppText variant="caption" tone="muted">
+              {ownLabel}
+            </AppText>
+          </View>
+        ) : null}
       </View>
     </View>
   );

@@ -15,7 +15,7 @@ import type { MockDb } from '../mockDb';
 import type { MockFoodOrder, MockFoodVendor } from '../food/foodTypes';
 import { distanceKm } from '../food/foodDiscovery';
 import { addDays, dateInZone, hourOfDay } from '../../../../utils/healthTime';
-import type { MockExperiment, MockHygiene, MockRamadanSettings } from './kitchenTypes';
+import type { MockExperiment, MockHygiene, MockRamadanSettings, MockSearchLog } from './kitchenTypes';
 import { defaultVariantOf, isoNow, itemsOf, k, recipeCost, recipeFor, todayOf, vendorOf } from './kitchenLogic';
 import { HYGIENE_KEYS, KITCHENS, WEEKDAY_FACTOR } from './kitchenSeed';
 
@@ -97,10 +97,8 @@ export const ramadanSettingsOf = (db: MockDb, businessId: string): MockRamadanSe
 export const MIN_CELL_SEARCHES = 10;
 export const DEMAND_RADIUS_KM = 8;
 
-export const demandWire = (db: MockDb, v: MockFoodVendor, q: { cuisine: string | null; hour: number | null }, now: number) => {
-  const since = now - 30 * DAY;
-  const near = (k(db).searches ?? []).filter(s => Date.parse(s.at) >= since && v.lat !== null && v.lng !== null && distanceKm({ lat: s.lat, lng: s.lng }, { lat: v.lat, lng: v.lng }) <= DEMAND_RADIUS_KM);
-  const picked = near.filter(s => (!q.cuisine || s.cuisine === q.cuisine) && (q.hour === null || s.hour === q.hour));
+/** Cells and the most-missed searches over some searches (cells under MIN_CELL_SEARCHES are never sent). */
+export const demandParts = (picked: MockSearchLog[]) => {
   const cells = new Map<string, { searches: number; unmet: number }>();
   for (const s of picked) {
     const h = geohash(s.lat, s.lng);
@@ -119,18 +117,7 @@ export const demandWire = (db: MockDb, v: MockFoodVendor, q: { cuisine: string |
     }
     queries.set(s.text, x);
   }
-  const areaHours = Array(24).fill(0) as number[];
-  for (const s of near.filter(s => !q.cuisine || s.cuisine === q.cuisine)) areaHours[s.hour] += 1;
-  const ownHours = Array(24).fill(0) as number[];
-  for (const o of db.food.orders.filter(o => o.businessId === v.businessId && Date.parse(o.placedAt) >= since)) ownHours[Math.floor(hourOfDay(o.placedAt, v.timezone))] += 1;
-  const norm = (xs: number[]) => {
-    const max = Math.max(...xs);
-    return xs.map(x => (max ? Math.round((x / max) * 100) / 100 : 0));
-  };
   return {
-    city: v.city,
-    center: v.lat !== null && v.lng !== null ? { lat: v.lat, lng: v.lng } : null,
-    radiusKm: DEMAND_RADIUS_KM,
     minCount: MIN_CELL_SEARCHES,
     total: picked.length,
     hidden: [...cells.values()].filter(c => c.searches < MIN_CELL_SEARCHES).reduce((n, c) => n + c.searches, 0),
@@ -143,7 +130,34 @@ export const demandWire = (db: MockDb, v: MockFoodVendor, q: { cuisine: string |
       .sort((a, b) => b[1].unmet - a[1].unmet)
       .slice(0, 5)
       .map(([query, x]) => ({ query, searches: x.searches, unmetShare: Math.round((x.unmet / x.searches) * 100) / 100, hour: x.hours.indexOf(Math.max(...x.hours)) })),
-    hourCurve: { area: norm(areaHours), own: norm(ownHours) },
+  };
+};
+
+/** Each hour's share of the busiest hour (0 to 1). */
+export const normHours = (xs: number[]) => {
+  const max = Math.max(...xs);
+  return xs.map(x => (max ? Math.round((x / max) * 100) / 100 : 0));
+};
+
+export const demandWire = (db: MockDb, v: MockFoodVendor, q: { cuisine: string | null; hour: number | null }, now: number) => {
+  const since = now - 30 * DAY;
+  const near = (k(db).searches ?? []).filter(s => Date.parse(s.at) >= since && v.lat !== null && v.lng !== null && distanceKm({ lat: s.lat, lng: s.lng }, { lat: v.lat, lng: v.lng }) <= DEMAND_RADIUS_KM);
+  const picked = near.filter(s => (!q.cuisine || s.cuisine === q.cuisine) && (q.hour === null || s.hour === q.hour));
+  const { minCount, total, hidden, cells, topUnmet } = demandParts(picked);
+  const areaHours = Array(24).fill(0) as number[];
+  for (const s of near.filter(s => !q.cuisine || s.cuisine === q.cuisine)) areaHours[s.hour] += 1;
+  const ownHours = Array(24).fill(0) as number[];
+  for (const o of db.food.orders.filter(o => o.businessId === v.businessId && Date.parse(o.placedAt) >= since)) ownHours[Math.floor(hourOfDay(o.placedAt, v.timezone))] += 1;
+  return {
+    city: v.city,
+    center: v.lat !== null && v.lng !== null ? { lat: v.lat, lng: v.lng } : null,
+    radiusKm: DEMAND_RADIUS_KM,
+    minCount,
+    total,
+    hidden,
+    cells,
+    topUnmet,
+    hourCurve: { area: normHours(areaHours), own: normHours(ownHours) },
   };
 };
 

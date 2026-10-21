@@ -203,6 +203,9 @@ const RecipeEditorContent: React.FC<Props> = ({ navigation, route }) => {
 
       <Card>
         <ToggleRow label="Signature recipe" helper="Shown on your page as the cook’s own" value={d.signatureOn} onChange={on => dispatch(setSignature({ on }))} />
+        {r.signature.removedNote && !d.signatureOn ? (
+          <InlineNotice tone="info" title="MetroMatrix took the signature label off" message={`${r.signature.removedNote} Turn it on again once that’s sorted, and staff will look again.`} />
+        ) : null}
         {d.signatureOn ? (
           <TextField
             label="Created by"

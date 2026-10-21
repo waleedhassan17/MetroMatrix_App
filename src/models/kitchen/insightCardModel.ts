@@ -26,6 +26,7 @@ const KIND_ICON: Record<string, IonName> = {
   review_theme: 'chatbubbles-outline',
   tiffin_pending: 'calendar-outline',
   catering_new: 'people-outline',
+  signature_removed: 'ribbon-outline',
 };
 
 const SEVERITY_ICON: Record<InsightSeverity, IonName> = {

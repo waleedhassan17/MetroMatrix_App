@@ -27,6 +27,7 @@ import { addCardSource, setExpiringAction } from './insightCards';
 import type { InsightCard } from './insightCards';
 import { assistantHooks, registerAssistantRoutes } from './assistantRoutes';
 import { nutritionSearchFilter, registerMyKitchenRoutes } from './myKitchenRoutes';
+import { registerAdminKitchenRoutes } from './adminKitchenRoutes';
 import { dishNutritionFor } from './myKitchenLogic';
 import { formatPKR } from '../../../../utils/money';
 import type { MockPauseInfo } from './kitchenTypes';
@@ -136,6 +137,21 @@ export function registerKitchen(food: FoodRouteKit, kit: Pick<ShopKit, 'requireU
         })),
       ];
     });
+    // Staff took a signature label off in the last two weeks, with their note (5C).
+    addCardSource((db, businessId, now) =>
+      (k(db).signatureReviews ?? [])
+        .filter(r => r.businessId === businessId && r.status === 'removed' && now - Date.parse(r.at) < 14 * 86_400_000)
+        .filter(r => !k(db).recipes.some(x => x.itemId === r.itemId && x.signature?.on))
+        .slice(-2)
+        .map(r => ({
+          id: `signature_removed:${r.itemId}`,
+          kind: 'signature_removed',
+          severity: 'info' as const,
+          title: `MetroMatrix took the signature label off ${db.food.items.find(i => i.id === r.itemId)?.name ?? 'a dish'}`,
+          why: r.note ?? 'The dish stays on your menu without it.',
+          action: { kind: 'open_recipe' as const, label: 'Open the recipe', params: { itemId: r.itemId } },
+        })),
+    );
     // A menu test that has finished and waits for the kitchen's decision (5B).
     addCardSource((db, businessId) =>
       (k(db).experiments ?? [])
@@ -201,4 +217,5 @@ export function registerKitchen(food: FoodRouteKit, kit: Pick<ShopKit, 'requireU
   registerGrowthRoutes(deps);
   registerAssistantRoutes(deps);
   registerMyKitchenRoutes(deps);
+  registerAdminKitchenRoutes(deps);
 }

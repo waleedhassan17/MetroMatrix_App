@@ -457,6 +457,17 @@ export type AdminFoodStackParamList = {
   AdminFoodCuisines: undefined;
   AdminFoodBanners: undefined;
   AdminFoodBannerForm: { id?: string } | undefined;
+  // The Kitchen tools (5C)
+  AdminKitchenAi: undefined;
+  AdminKitchenPrices: undefined;
+  AdminKitchenNutrition: undefined;
+  AdminKitchenAliases: undefined;
+  AdminKitchenCalendar: undefined;
+  AdminKitchenHygiene: { status?: 'pending' | 'verified' | 'rejected' } | undefined;
+  AdminKitchenHygieneReview: { businessId: string; name?: string };
+  AdminKitchenSignatures: undefined;
+  AdminKitchenDemand: undefined;
+  AdminKitchenLookup: { code?: string } | undefined;
 };
 
 export type PartnerTabParamList = {

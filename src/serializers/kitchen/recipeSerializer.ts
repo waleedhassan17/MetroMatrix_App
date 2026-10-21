@@ -66,7 +66,9 @@ export const recipeSerializer = (raw: unknown): Recipe | null => {
     ),
     options: list(raw.options, o => (isObject(o) && str(o.optionId) ? { optionId: str(o.optionId), name: str(o.name), groupName: str(o.groupName) } : null)),
     packaging: list(raw.packaging, lineSerializer),
-    signature: isObject(raw.signature) ? { on: bool(raw.signature.on), creatorName: strOrNull(raw.signature.creatorName) } : { on: false, creatorName: null },
+    signature: isObject(raw.signature)
+      ? { on: bool(raw.signature.on), creatorName: strOrNull(raw.signature.creatorName), removedNote: strOrNull(raw.signature.removedNote) }
+      : { on: false, creatorName: null, removedNote: null },
     cost: costSerializer(raw.cost),
     servingsLeft: intOrNull(raw.servingsLeft),
     targetFoodCostPct: count(raw.targetFoodCostPct) || 40,
