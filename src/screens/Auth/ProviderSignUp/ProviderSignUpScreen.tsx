@@ -15,6 +15,7 @@ import { Button, InlineNotice } from '@custom/index';
 import { AuthHeader, AuthScreen, AuthTabs, ProviderBadge } from '@components/auth/AuthChrome';
 import { SignUpFields, TermsLine } from '@components/auth/AuthFields';
 import { AuthErrorNotice } from '@components/auth/AuthErrorNotice';
+import { SignupsPausedNotice, useSignupsOpen } from '@components/platform/SignupsPausedNotice';
 import type { RootStackParamList } from '@/types';
 import { selectProviderSubType } from '../../ProviderSelection/providerSelectionSlice';
 import { selectProviderSignUp, setField, signUpAsync, touch, touchAll } from './providerSignUpSlice';
@@ -29,7 +30,8 @@ const ProviderSignUpScreen: React.FC<Props> = ({ navigation }) => {
   const errors = validateSignUp(form.values);
   const shown = visibleErrors(errors, form.touched);
   const loading = form.status === 'loading';
-  const complete = Object.values(form.values).every(v => v.trim().length > 0) && !!subType;
+  const open = useSignupsOpen('partner');
+  const complete = Object.values(form.values).every(v => v.trim().length > 0) && !!subType && open;
 
   const submit = async () => {
     if (!complete || loading || !subType) return;
@@ -58,6 +60,7 @@ const ProviderSignUpScreen: React.FC<Props> = ({ navigation }) => {
           action={{ label: 'Choose your service', onPress: () => navigation.navigate('ProviderSelection') }}
         />
       ) : null}
+      <SignupsPausedNotice role="partner" />
       <AuthErrorNotice
         error={form.error}
         onGoToPortal={() => navigation.navigate('ProviderSignIn', { email: form.values.email.trim() })}

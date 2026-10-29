@@ -4,6 +4,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ServiceScope } from '../theme';
+import { ServicePausedGate } from '../components/platform/ServicePausedGate';
 import type { StorePartnerStackParamList } from '../types';
 import { ROUTES } from '../navigations-maps/Base';
 import { STORE_PARTNER_STACK_ROUTES, STORE_PARTNER_TABS } from '../navigations-maps/StorePartner';
@@ -15,6 +16,7 @@ const StoreTabs: React.FC = () => <RouteTabs id="StorePartnerTabs" routes={STORE
 
 const StorePartnerNavigator: React.FC = () => (
   <ServiceScope service="shopping">
+      <ServicePausedGate service="shopping">
     <Stack.Navigator id="StorePartnerStack" screenOptions={{ headerShown: false }}>
       <Stack.Screen name={ROUTES.STORE_TABS} component={StoreTabs} />
       {STORE_PARTNER_STACK_ROUTES.map(route => (
@@ -27,7 +29,8 @@ const StorePartnerNavigator: React.FC = () => (
         />
       ))}
     </Stack.Navigator>
-  </ServiceScope>
+  </ServicePausedGate>
+    </ServiceScope>
 );
 
 export default StorePartnerNavigator;

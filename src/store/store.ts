@@ -18,6 +18,7 @@ import { resetAllState } from './resetAllState';
 import authReducer from '../screens/Auth/authSlice';
 import { preferencesSlice } from './preferencesSlice';
 import { realtimeSlice } from './realtimeSlice';
+import { platformConfigSlice } from './platformConfigSlice';
 
 // ── App-level slices ──
 import { appContainerSlice } from '../components/app-container/appContainerSlice';
@@ -256,6 +257,7 @@ const rootReducer = combineReducers({
   preferences: preferencesSlice.reducer,
   appContainer: appContainerSlice.reducer,
   realtime: realtimeSlice.reducer,
+  platformConfig: platformConfigSlice.reducer,
   voice: voiceSlice.reducer,
   designGallery: designGallerySlice.reducer,
   roleSelection: roleSelectionSlice.reducer,
@@ -487,7 +489,10 @@ type RootReducerState = ReturnType<typeof rootReducer>;
 // `auth` is passed through as well, but it is NOT a survivor: authSlice
 // handles RESET_ALL_STATE itself (back to signed-out, keeping
 // hasSeenOnboarding) — passing it through also keeps its `_persist` marker.
-const SHELL_SLICES = ['appContainer', 'preferences', 'auth'] as const;
+//
+// `platformConfig` describes the platform (GET /config), not the account: a
+// sign-out must not forget that the platform is in maintenance.
+const SHELL_SLICES = ['appContainer', 'preferences', 'auth', 'platformConfig'] as const;
 
 // Applied at the root so a slice added later is account-scoped by default —
 // nobody has to remember to add it to a reset list.

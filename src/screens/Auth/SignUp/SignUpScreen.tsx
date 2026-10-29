@@ -12,6 +12,7 @@ import { Button } from '@custom/index';
 import { AuthHeader, AuthScreen, AuthTabs } from '@components/auth/AuthChrome';
 import { SignUpFields, SocialSignIn, TermsLine } from '@components/auth/AuthFields';
 import { AuthErrorNotice } from '@components/auth/AuthErrorNotice';
+import { SignupsPausedNotice, useSignupsOpen } from '@components/platform/SignupsPausedNotice';
 import type { RootStackParamList } from '@/types';
 import { googleSignUpAsync, selectSignUp, setField, showError, signUpAsync, touch, touchAll } from './signUpSlice';
 
@@ -25,7 +26,8 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
   const shown = visibleErrors(errors, form.touched);
   const loading = form.status === 'loading';
   const busy = loading || form.googleStatus === 'loading';
-  const complete = Object.values(form.values).every(v => v.trim().length > 0);
+  const open = useSignupsOpen('customer');
+  const complete = Object.values(form.values).every(v => v.trim().length > 0) && open;
 
   const submit = async () => {
     if (!complete || busy) return;
@@ -43,6 +45,7 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
     <AuthScreen onBack={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate('RoleSelection'))}>
       <AuthHeader title="Get Started" subtitle="Create your account to get started" />
       <AuthTabs value="signup" onChange={() => navigation.navigate('SignIn')} disabled={busy} />
+      <SignupsPausedNotice role="customer" />
       <AuthErrorNotice
         error={form.error}
         onGoToPortal={portal =>

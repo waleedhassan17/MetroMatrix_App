@@ -4,6 +4,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ServiceScope } from '../theme';
+import { ServicePausedGate } from '../components/platform/ServicePausedGate';
 import type { RiderStackParamList } from '../types';
 import { ROUTES } from '../navigations-maps/Base';
 import { RIDER_STACK_ROUTES, RIDER_TABS } from '../navigations-maps/Rider';
@@ -15,6 +16,7 @@ const RiderTabs: React.FC = () => <RouteTabs id="RiderTabs" routes={RIDER_TABS} 
 
 const RiderNavigator: React.FC = () => (
   <ServiceScope service="food">
+      <ServicePausedGate service="food">
     <Stack.Navigator id="RiderStack" initialRouteName={ROUTES.RIDER_TABS} screenOptions={{ headerShown: false }}>
       <Stack.Screen name={ROUTES.RIDER_TABS} component={RiderTabs} />
       {RIDER_STACK_ROUTES.map(route => (
@@ -27,7 +29,8 @@ const RiderNavigator: React.FC = () => (
         />
       ))}
     </Stack.Navigator>
-  </ServiceScope>
+  </ServicePausedGate>
+    </ServiceScope>
 );
 
 export default RiderNavigator;

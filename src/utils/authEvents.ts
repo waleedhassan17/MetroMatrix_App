@@ -66,3 +66,25 @@ export const setBusinessStatusStaleHandler = (h: BusinessStatusStaleHandler | nu
 export const emitBusinessStatusStale = () => {
   businessStatusStaleHandler?.();
 };
+
+// ─── Platform notices (the server's switches, mid-session) ───────────────
+// 503 MAINTENANCE, 503 SERVICE_PAUSED and 403 SIGNUPS_PAUSED from any
+// request: the handler (AppContainer) records them in platformConfigSlice,
+// which shows the matching screen at once instead of a failed request.
+
+export type PlatformNotice =
+  | { kind: 'maintenance'; message: string }
+  | { kind: 'service_paused'; service: 'shopping' | 'healthcare' | 'food' | 'kitchen' }
+  | { kind: 'signups_paused'; role: 'customer' | 'partner' };
+
+type PlatformNoticeHandler = (notice: PlatformNotice) => void;
+
+let platformNoticeHandler: PlatformNoticeHandler | null = null;
+
+export const setPlatformNoticeHandler = (h: PlatformNoticeHandler | null) => {
+  platformNoticeHandler = h;
+};
+
+export const emitPlatformNotice = (notice: PlatformNotice) => {
+  platformNoticeHandler?.(notice);
+};

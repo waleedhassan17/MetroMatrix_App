@@ -31,12 +31,24 @@ import {
   selectNetworkIsDown,
 } from './appContainerSlice';
 import { OfflineGate } from './OfflineGate';
+import { MaintenanceGate } from './MaintenanceGate';
+import {
+  loadPlatformConfig,
+  maintenanceReported,
+  selectMaintenance,
+  servicePausedReported,
+  signupsPausedReported,
+} from '../../store/platformConfigSlice';
 import { PushPrePrompt } from './PushPrePrompt';
 import { onPushTap, pushTapUrl } from '../../services/push';
 import { signOut } from '../../screens/Auth/authSlice';
 import { SplashScreen } from '../../screens/Onboarding/Splash/SplashScreen';
 import { resetAllState } from '../../store/resetAllState';
-import { setSessionExpiredHandler, setBusinessStatusStaleHandler } from '../../utils/authEvents';
+import {
+  setSessionExpiredHandler,
+  setBusinessStatusStaleHandler,
+  setPlatformNoticeHandler,
+} from '../../utils/authEvents';
 import { realtime } from '../../services/realtime/socketClient';
 import { setRealtimeStatus } from '../../store/realtimeSlice';
 import { useOrientationPolicy } from '../../hooks/useLayoutClass';
@@ -355,6 +367,7 @@ export const AppContainer: React.FC = () => {
   const dispatch = useAppDispatch();
   const isAppReady = useAppSelector(selectIsAppReady);
   const networkIsDown = useAppSelector(selectNetworkIsDown);
+  const maintenance = useAppSelector(selectMaintenance);
   const auth = useAppSelector(state => state.auth);
   const theme = useTheme();
   const styles = useStyles(makeStyles);
@@ -367,6 +380,21 @@ export const AppContainer: React.FC = () => {
   // Role Selection. Sets isAppReady when done.
   useEffect(() => {
     dispatch(bootstrapSession());
+    // The platform's switches (GET /config): sign-ups, services, maintenance.
+    // Best effort and in parallel: the server enforces them either way.
+    dispatch(loadPlatformConfig());
+  }, [dispatch]);
+
+  // ─── Platform-notice bridge: a request refused because of a switch flipped
+  // after boot (maintenance, a paused service, paused sign-ups) is recorded
+  // so the matching screen shows at once.
+  useEffect(() => {
+    setPlatformNoticeHandler(notice => {
+      if (notice.kind === 'maintenance') dispatch(maintenanceReported({ message: notice.message }));
+      else if (notice.kind === 'service_paused') dispatch(servicePausedReported({ service: notice.service }));
+      else dispatch(signupsPausedReported({ role: notice.role }));
+    });
+    return () => setPlatformNoticeHandler(null);
   }, [dispatch]);
 
   // ─── Splash: the native splash is held from App.tsx until the JS splash
@@ -473,6 +501,8 @@ export const AppContainer: React.FC = () => {
   };
 
   const offline = networkIsDown && !auth.isAuthenticated;
+  // Admins keep their console in maintenance; the server lets them through.
+  const inMaintenance = maintenance.enabled && gate !== 'admin';
 
   return (
     <View style={styles.container}>
@@ -481,7 +511,9 @@ export const AppContainer: React.FC = () => {
         backgroundColor={theme.colors.canvas}
         translucent
       />
-      {!isAppReady ? null : offline ? (
+      {!isAppReady ? null : inMaintenance ? (
+        <MaintenanceGate />
+      ) : offline ? (
         <OfflineGate />
       ) : (
         <NavigationContainer linking={linking} theme={navigationTheme(theme)}>

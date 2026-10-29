@@ -34,6 +34,10 @@ export const AuthErrorNotice: React.FC<{
   if (error.code === 'NETWORK_ERROR') {
     return <InlineNotice tone="warning" message="You're offline. Check your connection, then try again." />;
   }
+  // Sign-ups paused: SignupsPausedNotice already says so on the screen.
+  if (error.code === 'SIGNUPS_PAUSED') {
+    return <InlineNotice tone="info" title="Sign-ups are paused" message={error.message} />;
+  }
   const portal = rightPortal(error.details);
   if (error.code === 'WRONG_PORTAL' && portal && onGoToPortal && PORTAL_LABEL[portal]) {
     return (

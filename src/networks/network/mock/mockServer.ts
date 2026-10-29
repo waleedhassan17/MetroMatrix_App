@@ -27,6 +27,7 @@ import { registerHealthRoutes } from './health/healthRoutes';
 import { registerFoodRoutes } from './food/foodRoutes';
 import { foodSessionOf } from './food/foodLogic';
 import { registerKitchen } from './kitchen/kitchenIndex';
+import { applySettings, platformGate, publicConfig } from './platformMock';
 
 // ─── Plumbing ────────────────────────────────────────
 // One error type for every route; the shop routes throw the same class.
@@ -180,6 +181,22 @@ const route = (method: string, pattern: string, handler: Handler) => {
   const re = new RegExp(`^${pattern.replace(/:[a-zA-Z]+/g, '([^/]+)')}$`);
   routes.push([method, re, handler]);
 };
+
+// ── The platform's switches (docs: MetroMatrix API ADMIN_API.md §5) ──
+route('GET', '/config', ({ db }) => publicConfig(db.platform));
+route('GET', '/admin/settings', ctx => {
+  requireAdmin(ctx);
+  return { values: ctx.db.platform, schema: [], lastChanged: {} };
+});
+route('PATCH', '/admin/settings', ctx => {
+  requireAdmin(ctx);
+  // Step-up, as on the real API: any six digits stand in for the code here.
+  if (!/^\d{6}$/.test(String(ctx.body.totpCode ?? ''))) {
+    throw new MockError(403, 'STEP_UP_REQUIRED', 'Enter a code from your authenticator app to confirm.');
+  }
+  ctx.db.platform = applySettings(ctx.db.platform, ctx.body.values);
+  return { values: ctx.db.platform, schema: [], lastChanged: {} };
+});
 
 // ── Auth ──
 route('POST', '/auth/signup', ({ db, body, now }) => {
@@ -835,6 +852,10 @@ export const mockAdapter: AxiosAdapter = async config => {
       .map(([, re, handler]) => ({ handler, params: re.exec(path) }))
       .find(r => r.params);
     if (!match) throw new MockError(404, 'NOT_FOUND', `The dummy API has no route for ${method} ${path}.`);
+    const token = bearer(config);
+    const session = token ? db.access[token] : undefined;
+    const caller = session ? db.users.find(u => u.id === session.userId) : undefined;
+    platformGate(db.platform, method, path, parseBody(config.data), caller?.role ?? null);
     const result = await match.handler({
       db,
       body: parseBody(config.data),

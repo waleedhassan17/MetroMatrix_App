@@ -5,6 +5,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ServiceScope } from '../theme';
+import { ServicePausedGate } from '../components/platform/ServicePausedGate';
 import type { DoctorPartnerStackParamList } from '../types';
 import { ROUTES } from '../navigations-maps/Base';
 import { DOCTOR_PARTNER_STACK_ROUTES, DOCTOR_PARTNER_TABS } from '../navigations-maps/DoctorPartner';
@@ -21,6 +22,7 @@ const DoctorPartnerNavigator: React.FC = () => {
   const business = useAppSelector(selectBusiness);
   return (
     <ServiceScope service="healthcare">
+      <ServicePausedGate service="healthcare">
       <Stack.Navigator id="DoctorPartnerStack" initialRouteName={doctorRootRoute(business)} screenOptions={{ headerShown: false }}>
         <Stack.Screen name={ROUTES.DOCTOR_TABS} component={DoctorTabs} />
         {DOCTOR_PARTNER_STACK_ROUTES.map(route => (
@@ -33,6 +35,7 @@ const DoctorPartnerNavigator: React.FC = () => {
           />
         ))}
       </Stack.Navigator>
+    </ServicePausedGate>
     </ServiceScope>
   );
 };

@@ -5,6 +5,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ServiceScope } from '../theme';
+import { CustomerServiceGate } from '../components/platform/ServicePausedGate';
 import type { HealthAppParamList } from '../types';
 import { ROUTES } from '../navigations-maps/Base';
 import { HEALTH_APP_ROUTES, HEALTH_TABS } from '../navigations-maps/HealthPatient';
@@ -16,6 +17,7 @@ const HealthTabs: React.FC = () => <ServiceTabs id="HealthTabs" routes={HEALTH_T
 
 const HealthAppNavigator: React.FC = () => (
   <ServiceScope service="healthcare">
+      <CustomerServiceGate service="healthcare">
     <Stack.Navigator id="HealthStack" initialRouteName={ROUTES.HEALTH_TABS as 'HealthTabs'} screenOptions={{ headerShown: false }}>
       <Stack.Screen name={ROUTES.HEALTH_TABS as 'HealthTabs'} component={HealthTabs} />
       {HEALTH_APP_ROUTES.map(route => (
@@ -28,7 +30,8 @@ const HealthAppNavigator: React.FC = () => (
         />
       ))}
     </Stack.Navigator>
-  </ServiceScope>
+  </CustomerServiceGate>
+    </ServiceScope>
 );
 
 export default HealthAppNavigator;

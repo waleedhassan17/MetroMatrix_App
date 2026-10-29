@@ -5,6 +5,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ServiceScope } from '../theme';
+import { ServicePausedGate } from '../components/platform/ServicePausedGate';
 import type { FoodVendorStackParamList } from '../types';
 import { ROUTES } from '../navigations-maps/Base';
 import { FOOD_VENDOR_HOME_TABS, FOOD_VENDOR_STACK_ROUTES, FOOD_VENDOR_TABS } from '../navigations-maps/FoodVendor';
@@ -24,6 +25,7 @@ const KitchenPartnerNavigator: React.FC = () => {
   const business = useAppSelector(selectBusiness);
   return (
     <ServiceScope service="food">
+      <ServicePausedGate service="food">
       <Stack.Navigator id="FoodVendorStack" initialRouteName={foodVendorRootRoute(business)} screenOptions={{ headerShown: false }}>
         <Stack.Screen name={ROUTES.VENDOR_TABS} component={VendorTabs} />
         {FOOD_VENDOR_STACK_ROUTES.map(route => (
@@ -36,6 +38,7 @@ const KitchenPartnerNavigator: React.FC = () => {
           />
         ))}
       </Stack.Navigator>
+    </ServicePausedGate>
     </ServiceScope>
   );
 };

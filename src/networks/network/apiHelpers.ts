@@ -12,6 +12,7 @@ import {
   emitSessionExpired,
   emitBusinessStatusStale,
   isIntentionalSignOut,
+  emitPlatformNotice,
 } from '../../utils/authEvents';
 
 export { API_BASE_URL };
@@ -165,6 +166,11 @@ api.interceptors.response.use(
       emitBusinessStatusStale();
     }
 
+    // ── The platform's switches (GET /config), flipped mid-session ──
+    // The handler (AppContainer) records them, and the app shows the
+    // maintenance, service-paused or sign-ups-paused screen at once.
+    reportPlatformNotice(status, error);
+
     // The user just signed out on purpose: a 401 on a request still in flight
     // is expected. Refreshing would fail (its token was revoked), and a late
     // failure could clear the tokens of a sign-in made moments later.
@@ -199,6 +205,24 @@ api.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+
+const PAUSABLE = ['shopping', 'healthcare', 'food', 'kitchen'] as const;
+
+const reportPlatformNotice = (status: number | undefined, error: AxiosError) => {
+  const body = error.response?.data as
+    | { error?: { code?: string; message?: string; details?: Record<string, unknown> } }
+    | undefined;
+  const code = body?.error?.code;
+  const details = body?.error?.details ?? {};
+  const service = PAUSABLE.find(s => s === details.service);
+  if (status === 503 && code === 'MAINTENANCE') {
+    emitPlatformNotice({ kind: 'maintenance', message: String(details.message ?? body?.error?.message ?? '') });
+  } else if (status === 503 && code === 'SERVICE_PAUSED' && service) {
+    emitPlatformNotice({ kind: 'service_paused', service });
+  } else if (status === 403 && code === 'SIGNUPS_PAUSED' && (details.role === 'customer' || details.role === 'partner')) {
+    emitPlatformNotice({ kind: 'signups_paused', role: details.role });
+  }
+};
 
 // ─── Error Extractor ────────────────────────────────
 export const extractErrorMessage = (error: any): string => {

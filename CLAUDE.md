@@ -74,6 +74,19 @@ Set environment in `.env.local`; see `.env.example`. `src/config/env.ts` is the 
    - decorative background shapes on any screen: watermark glyphs, faint circles or "bubbles", ambient glows (the owner asked for clean white screens)
 9. **Every phase ends** with its acceptance commands run, then a commit `chunk1/pN: <summary>` (later chunks use their own prefix).
 
+## Platform switches (GET /config)
+
+The super admin can pause sign-ups, a service, AI, or put the platform in maintenance (MetroMatrix API
+`docs/ADMIN_API.md` §5). The server enforces every switch; the app only explains it:
+- `store/platformConfigSlice.ts` (a shell slice: survives sign-out) is loaded at boot by AppContainer
+  (`networks/config/configNetwork.ts` → `serializers/platformConfigSerializer.ts`; anything missing reads as open);
+- the axios client reports 503 `MAINTENANCE`, 503 `SERVICE_PAUSED` and 403 `SIGNUPS_PAUSED` from any request through
+  `utils/authEvents.ts` (`emitPlatformNotice`), so a switch flipped mid-session shows at once;
+- `MaintenanceGate` replaces every navigator but the admin's; each service app (customer, partner, rider) renders through
+  `components/platform/ServicePausedGate.tsx`; the sign-up screens show `SignupsPausedNotice` and disable Create Account;
+- the dummy API has the same switches, routes (`GET /config`, `GET`/`PATCH /admin/settings`) and refusals
+  (`network/mock/platformMock.ts`).
+
 ## Folder map
 
 ```

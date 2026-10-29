@@ -14,6 +14,7 @@ import { MOCK, SEED_PASSWORD, STAFF_PASSWORD } from './mockConfig';
 import { SHOP_SEED_SHOPPER, SHOP_SEED_USERS, seedShop } from './shop/shopSeed';
 import type { MockShop } from './shop/shopTypes';
 import { HEALTH_SEED_USERS, migrateHealth, seedHealth } from './health/healthSeed';
+import { DEFAULT_PLATFORM, type PlatformSettings } from './platformMock';
 import type { MockHealth } from './health/healthTypes';
 import { FOOD_SEED_RIDERS, FOOD_SEED_USERS, seedFood } from './food/foodSeed';
 import type { MockFood } from './food/foodTypes';
@@ -105,6 +106,8 @@ export interface MockDb {
   food: MockFood;
   /** Kitchen Intelligence (stock, recipes, forecasts, Bachat Box …) — see ./kitchen/. */
   kitchen: MockKitchen;
+  /** The platform's switches (GET /config, PATCH /admin/settings) — see ./platformMock. */
+  platform: PlatformSettings;
 }
 
 export const newId = (prefix: string) =>
@@ -374,6 +377,7 @@ export const seedDb = (): MockDb => withKitchen({
   health: seedHealth(),
   food: seedFood(),
   kitchen: null as unknown as MockKitchen,
+  platform: { ...DEFAULT_PLATFORM },
 });
 
 /** The kitchen's history is built from the Food seed's dishes. */
@@ -399,6 +403,7 @@ const ensureCollections = (loaded: Partial<MockDb>): MockDb => {
   if (!loaded.health) out.health = seed.health;
   else for (const k of Object.keys(seed.health) as (keyof MockHealth)[]) if (out.health[k] === undefined) (out.health as any)[k] = seed.health[k];
   migrateHealth(out.health);
+  out.platform = { ...DEFAULT_PLATFORM, ...(loaded.platform ?? {}) };
   if (!loaded.food) out.food = seed.food;
   else for (const k of Object.keys(seed.food) as (keyof MockFood)[]) if (out.food[k] === undefined) (out.food as any)[k] = seed.food[k];
   if (!loaded.kitchen) out.kitchen = seed.kitchen;
