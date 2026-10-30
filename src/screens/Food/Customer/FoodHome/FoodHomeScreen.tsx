@@ -27,7 +27,6 @@ import { selectFoodPoint, setFoodPoint } from '@store/preferencesSlice';
 import { loadAddressesAsync, selectAddressBook } from '../../../Account/AddressBook/addressBookSlice';
 import { closePointSheet, loadFoodHomeAsync, locateMeAsync, openPointSheet, pointKey, selectFoodHome } from './foodHomeSlice';
 import { vendorCardsPageSerializer } from '@serializers/food/discoverySerializer';
-import { required } from '@networks/network/apiHelpers';
 
 type Nav = { navigate: (name: string, params?: object) => void };
 
@@ -91,10 +90,10 @@ const FoodHomeContent: React.FC = () => {
 
   const delivering = !!home?.coverage.delivering && s.builtFor === key;
   const fetchPage = useCallback(
-    (page: number, pageSize: number) => getVendorsAPI({ lat: point?.lat ?? 0, lng: point?.lng ?? 0, sort: 'recommended' }, page, pageSize).then(raw => required(vendorCardsPageSerializer(raw))),
+    (page: number, pageSize: number) => getVendorsAPI({ lat: point?.lat ?? 0, lng: point?.lng ?? 0, sort: 'recommended' }, page, pageSize),
     [point?.lat, point?.lng],
   );
-  const all = usePagedList(fetchPage, `food-home:${key}`, { enabled: delivering, keyOf: v => v.id });
+  const all = usePagedList(fetchPage, vendorCardsPageSerializer, `food-home:${key}`, { enabled: delivering, keyOf: v => v.id });
 
   const open = (v: VendorCardData) => navigation.navigate('FoodVendor', { slug: v.slug });
   const refresh = () => {

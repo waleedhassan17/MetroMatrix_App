@@ -53,22 +53,8 @@ export function usePagedList<P extends Paged<unknown>, T = RowOf<P>>(
   fetchPage: (page: number, pageSize: number) => Promise<unknown>,
   serialize: (payload: unknown) => P | null,
   key: string,
-  options?: PagedOptions<T>,
-): PagedList<T, P & Paged<T>>;
-/** TODO(net/p6): a network that still serializes its pages; removed once every network is thin. */
-export function usePagedList<P extends Paged<unknown>, T = RowOf<P>>(
-  fetchPage: (page: number, pageSize: number) => Promise<P>,
-  key: string,
-  options?: PagedOptions<T>,
-): PagedList<T, P & Paged<T>>;
-export function usePagedList<P extends Paged<unknown>, T = RowOf<P>>(
-  fetchPage: (page: number, pageSize: number) => Promise<unknown>,
-  ...rest: [(payload: unknown) => P | null, string, PagedOptions<T>?] | [string, PagedOptions<T>?]
+  options: PagedOptions<T> = {},
 ): PagedList<T, P & Paged<T>> {
-  const [serialize, key, options = {}] =
-    typeof rest[0] === 'function'
-      ? (rest as [(payload: unknown) => P | null, string, PagedOptions<T>?])
-      : [(payload: unknown) => payload as P, ...(rest as [string, PagedOptions<T>?])];
   const { enabled = true, keyOf, pageSize = LIST_PAGE_SIZE } = options;
   const [rows, setRowsState] = useState<T[]>([]);
   const [first, setFirst] = useState<(P & Paged<T>) | null>(null);

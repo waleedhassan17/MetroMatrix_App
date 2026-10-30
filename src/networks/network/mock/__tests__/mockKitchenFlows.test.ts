@@ -129,7 +129,7 @@ const failure = async (p: Promise<unknown>): Promise<ApiError> => {
   throw new Error('expected the call to fail');
 };
 
-const as = async (email: string, portal: 'customer' | 'partner' = 'partner') => {
+const as = async (email: string, _portal: 'customer' | 'partner' = 'partner') => {
   await clearTokens();
   await signInAs(email);
 };

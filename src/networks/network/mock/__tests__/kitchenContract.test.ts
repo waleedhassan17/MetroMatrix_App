@@ -41,7 +41,7 @@ const call = async (name: string, method: 'get' | 'post' | 'put' | 'patch' | 'de
 const clearShopCart = async () => {
   for (const l of (required(cartSerializer(await getCartAPI()))).groups.flatMap(g => g.lines)) await removeCartLineAPI(l.id);
 };
-const as = async (email: string, portal: 'customer' | 'partner' = 'partner') => {
+const as = async (email: string, _portal: 'customer' | 'partner' = 'partner') => {
   await clearTokens();
   await signInAs(email);
 };

@@ -19,7 +19,6 @@ import type { FoodAppParamList, VendorListQuery } from '@/types';
 import { selectFoodPoint } from '@store/preferencesSlice';
 import { selectFoodVendors, setVendorSort, startVendorList, toggleVendorFilter } from './foodVendorsSlice';
 import { vendorCardsPageSerializer } from '@serializers/food/discoverySerializer';
-import { required } from '@networks/network/apiHelpers';
 
 type Props = NativeStackScreenProps<FoodAppParamList, 'FoodVendors'>;
 
@@ -62,10 +61,10 @@ const FoodVendorsContent: React.FC<Props> = ({ route, navigation }) => {
   const query = point ? listQuery(point, { cuisine: params.cuisine }, s.sort, s.filters) : null;
   const key = JSON.stringify(query);
   const fetchPage = useCallback(
-    (page: number, pageSize: number) => getVendorsAPI(JSON.parse(key) as VendorListQuery, page, pageSize).then(raw => required(vendorCardsPageSerializer(raw))),
+    (page: number, pageSize: number) => getVendorsAPI(JSON.parse(key) as VendorListQuery, page, pageSize),
     [key],
   );
-  const list = usePagedList(fetchPage, `food-vendors:${key}`, { enabled: !!query, keyOf: v => v.id });
+  const list = usePagedList(fetchPage, vendorCardsPageSerializer, `food-vendors:${key}`, { enabled: !!query, keyOf: v => v.id });
 
   return (
     <ScreenShell title={params.title ?? 'Restaurants'} subtitle={point ? (pickup ? `Pick-up near ${point.label}` : `Delivering to ${point.label}`) : undefined} onBack={back} scroll={false} padded={false}>

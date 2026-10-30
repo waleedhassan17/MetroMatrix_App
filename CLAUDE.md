@@ -43,11 +43,16 @@ Set environment in `.env.local`; see `.env.example`. `src/config/env.ts` is the 
 
 ## Non-negotiable rules
 
-1. **The data path is fixed.**
-   - The path is: `XScreen.tsx` → co-located `xSlice.ts` (built with `createAppSlice`, thunks via `create.asyncThunk`) → `src/networks/<domain>/<x>Network.ts` → `src/serializers/<domain>Serializer.ts`.
+1. **The data path is fixed, and it is FinMatrix's: Network → Serializer → State.**
+   - The path is: `XScreen.tsx` → co-located `xSlice.ts` (built with `createAppSlice`, thunks via `create.asyncThunk`) → a network function in `src/networks/<domain>/<x>Network.ts` → the serializer in `src/serializers/<domain>/…`, applied by the slice right after the call: `return required(cartSerializer(await getCartAPI()))`.
+   - **Network functions are thin**, as in FinMatrix: `export const getCartAPI = async (…): Promise<unknown> => { try { const response = await api.get(…); return response.data; } catch (e) { throw toApiError(e); } }`. One request per function, named `<verb><Entity>[ById]API` (lists are `get…`, never `list…`), the raw `{ success, data }` body back, an `ApiError` on failure. A network may map the app's input to the API's body (a private `xBody` helper), but never serializes, never fans out and never caches.
+   - **Serializers** that a slice calls on a network result take the envelope: they are wrapped with `fromResponse` (`serializers/serializerUtils.ts`), which opens `{ success, data }` and passes any further arguments through. Several answers read together are joined by a composite serializer over `bodiesOf({ a, b })`.
+   - When one screen needs several routes, the thunk calls the thin functions together (`Promise.all`) and one composite serializer joins them. Compositions several slices share live beside them in `screens/<Area>/shared/` (`healthReads.ts`, `practiceReads.ts`, `taxonomyWrites.ts`, `authThunks.ts`).
+   - The one network that serializes is the session layer, `auth/authNetwork.ts` (as FinMatrix's auth network): it stores tokens and answers the session.
    - Validation lives in `src/models/<domain>Model.ts` as pure functions returning `{ field: message }`.
    - Screens never import axios, never call networks directly, and never shape API data.
-   - The one exception, as in FinMatrix: a server-paged list hands its network function to `usePagedList` (`src/hooks/usePagedList.ts`), which receives serialized `Paged<T>` pages. Filters and search text still live in the screen's slice.
+   - The one exception, as in FinMatrix: a server-paged list hands `usePagedList` (`src/hooks/usePagedList.ts`) its network function and the page's serializer: `usePagedList((page, size) => getStoresAPI(q, page, size), storeSummaryPageSerializer, key)`. Filters and search text still live in the screen's slice.
+   - `src/networks/__tests__/architecture.test.ts` enforces all of this from the sources.
 2. **The folder root is `src/`**, with aliases defined identically in `tsconfig.json` and `babel.config.js`: `@`, `@screens`, `@components`, `@custom`, `@store`, `@networks`, `@models`, `@serializers`, `@hooks`, `@theme`, `@utils`, `@navigators`, `@assets`.
 3. **Navigation.**
    - Routes are `IRoute[]` arrays in `src/navigations-maps/*.ts`. Navigators are dumb mappers.
@@ -55,12 +60,12 @@ Set environment in `.env.local`; see `.env.example`. `src/config/env.ts` is the 
    - `BaseNavigator` holds the session-gate branches.
    - Route names (`navigations-maps/Base.ts` `ROUTES`) never change once shipped. Add new names; never rename one.
 4. **Tokens are stored only in `expo-secure-store`**, via `src/utils/storageUtils.ts` (with a `localStorage` fallback on web). `redux-persist` persists only `preferences` and `auth.hasSeenOnboarding`.
-5. **There is one axios client**, `src/networks/network/apiHelpers.ts`. It provides:
-   - the bearer interceptor
-   - the single-flight refresh queue
-   - `AuthError` carrying the backend `code`, `status` and `details`
-   - envelope unwrapping (`unwrap`)
-   - `extractErrorMessage`
+5. **There is one main network file**, as in FinMatrix: `src/networks/network/apiHelpers.ts` ("API Infrastructure"), the only file in `networks/network/` besides the dummy API's test fixtures. In FinMatrix's section order it holds:
+   - the base URL and the one axios client
+   - the bearer interceptor, and the single-flight refresh queue with the session-ending rules (only `REFRESH_INVALID`, `REFRESH_REUSED`, `TOKEN_REVOKED` and `ACCOUNT_DISABLED` end a session)
+   - the error codes (`ERROR_CODES`, `errorCopy`, `fieldErrors`), `extractErrorMessage`, `extractErrorCode`
+   - FinMatrix's `ApiError` / `toApiError`, carrying the backend `code`, `status` and `details`; `required(value)` (a serializer's result, else `BAD_RESPONSE`)
+   - query helpers (`clean`, `pageParams`) and the Cloudinary upload (FinMatrix's `postMultipart` spot; `services/mediaUpload.ts` signs and uploads)
 
    Thunks pass errors through `rejectWithValue(toRejectedValue(e))`, because RTK drops custom error fields.
 6. **Root reset.**
@@ -109,7 +114,7 @@ src/
                              useFoodLive (useOrderChannel for one order, useVendorBoard for the kitchen's board),
                              useLayoutClass (phone or tablet)
   networks/
-    network/apiHelpers.ts    the axios client, refresh queue, AuthError, unwrap
+    network/apiHelpers.ts    the main network file: the axios client, refresh queue and session rules, error codes, ApiError, query helpers, upload
     network/mock/            the dummy API, test fixtures only (axios adapter + AsyncStorage DB; testing.ts installs it
                              and signs in with signInAs): no auth, users, media, business, approval or platform routes
     network/mock/shop/       the dummy Shopping API: shopTypes, shopSeed (3 stores, 52 products, orders), shopLogic (rules), shopRoutes
@@ -127,7 +132,7 @@ src/
                              voiceStandIn + aiStandIns (no network), one routes file per area (+ adminKitchenRoutes),
                              foodAdditions (the keys added to API_FOOD shapes), kitchenIndex (registers it, Food's hooks)
     network/mock/mockRealtime the in-process stand-in for the Food socket in tests (same surface as the real client)
-    <domain>/<x>Network.ts   one function per endpoint (auth, users, media, businesses, admin, food, addresses, notifications)
+    <domain>/<x>Network.ts   one thin `xxxAPI` function per endpoint: the raw body back (auth/authNetwork.ts is the session layer)
     shopping/                catalogue, wishlist, cart, checkout, orders, returns, reviews; shopping/partner/ the store app's
     health/                  discovery, availability, appointments, family, records, prescriptions, reviews, video, symptom;
                              referenceIndex (specialty and condition slug ↔ id); health/doctor/ the doctor app's;
@@ -158,7 +163,8 @@ src/
   services/                  device/SDK adapters: googleAuth(.web), push (+ push-tap routing), location, calendar,
                              prescriptionPdf (expo-print + sharing; the print dialog on web), voice/recorder(.web)
                              (expo-audio, MediaRecorder on web, 30 s), announcer (expo-speech, else ttsUrl, else the ring),
-                             orderAlert, storefront/ (QR to a file and the share sheet), csvFile (pick a CSV, read its text)
+                             orderAlert, storefront/ (QR to a file and the share sheet), csvFile (pick a CSV, read its text),
+                             mediaUpload (sign, then upload straight to Cloudinary)
   theme/                     tokens, services, typography, ThemeProvider/useTheme, StoreBrandScope — the ONLY place raw values live
   Custom-Components/         the design-system components (tokens only); barrel: @custom/index; shopping/ (ProductCard,
                              VariantSheet, FilterSheet, CartStoreGroup, charts/ …); health/ (DoctorCard, DateStrip, SlotGrid,
@@ -210,7 +216,7 @@ Stateless screens have no slice. Their state is global (`auth`, `preferences`) o
 
 1. Create `src/screens/<Area>/<Name>/<Name>Screen.tsx` and `<name>Slice.ts`.
    - Build the slice with `createAppSlice`, with state, reducers, thunks and `selectors` in one place.
-   - A thunk calls a network function and returns serialized data. On failure it returns `rejectWithValue(toRejectedValue(e))`.
+   - A thunk calls a thin `xxxAPI` network function and serializes right after it (`required(xSerializer(await getXAPI()))`). On failure it returns `rejectWithValue(toRejectedValue(e))`.
    - Form validation calls `src/models/<domain>Model.ts`.
 2. Register the slice in `src/store/store.ts` under "Per-screen slices" (`<name>: <name>Slice.reducer`).
 3. Add the route name to `ROUTES` in `src/navigations-maps/Base.ts` and its params to `RootStackParamList` (`src/types/navigation.ts`), or to the relevant navigator's param list.
@@ -294,7 +300,7 @@ Every network call is built from MetroMatrix-API `docs/API_AUTH.md` / `docs/API_
 - **Healthcare is on the real contract** (`health/sync-1`). Paths are `/health`, `/health/doctor` (appointments by **code**) and `/admin/health`; uploads go through `/media/sign-upload`.
   - `docs/API_HEALTH.md` is a copy of the backend's; the backend repository is the source of truth.
   - Serializers map the wire to the app's own words in `types/health.ts`: offset times become UTC, icon keys become glyphs, `booked`/`in_consultation` become `confirmed`/`in_progress`, `unpaid` becomes `pay_at_visit`. Every map lives in `serializers/health/healthCommon.ts`.
-  - Networks map the app's input to the real bodies. When one screen needs several routes, `requestAll` (`networks/shopping/http.ts`) calls them together.
+  - Networks map the app's input to the real bodies. When one screen needs several routes, the thunk (or a `screens/Health/*/shared` composition) calls the thin functions together.
   - Values the API doesn't send yet are derived and marked `TODO(API_HEALTH)`.
   - When the backend's document changes: copy it, update the networks, serializers, models and the dummy API, refresh the fixture (`scripts/capture-health-fixtures.js`), and run the gates. The parity test fails on any key the two disagree on (`docs/MOCK_HEALTH.md`).
 - **Food Court is on the real contract** (`chunk4/p8`): `docs/API_FOOD.md` is a copy of the backend's. Paths are `/food` (discovery, customer), `/food/vendor`, `/food/rider` and `/admin/food`, plus the `/food` socket.io namespace (§5).
@@ -302,7 +308,7 @@ Every network call is built from MetroMatrix-API `docs/API_AUTH.md` / `docs/API_
   - Serializers map the wire to `types/food.ts` (`lastGeo` becomes `lastPosition`, `etaRange` becomes `eta`, minor units become rupees). Every limit in `models/food` is the API's own DTO limit.
   - When the backend's document changes: copy it, update the networks, serializers, models and the dummy API, capture again (`scripts/capture-food-fixtures.js`, see `docs/MOCK_FOOD.md`), and run the gates. The parity tests fail on any key or error code the two disagree on.
   - What the API doesn't send yet is marked `TODO(API_FOOD)` (today: `isFeatured` on a staff vendor's detail).
-- **Auth is on the real contract** (merged from the `ammar` branch, 2026-10-30): `docs/AUTH_CONTRACT.md` (the same file is in the backend) and `docs/openapi.json` (a copy of the backend's `openapi.json`, `npm run openapi:export` there). `src/networks/__tests__/contract.test.ts` checks every auth, users, media, business and approval request against it; copy the file again when the API changes. Error codes the app branches on live in `networks/network/errorCodes.ts`; only `REFRESH_INVALID`, `REFRESH_REUSED`, `TOKEN_REVOKED` and `ACCOUNT_DISABLED` end a session (`networks/network/sessionRefresh.ts`). Riders sign in on the partner portal with `identifier` (their username).
+- **Auth is on the real contract** (merged from the `ammar` branch, 2026-10-30): `docs/AUTH_CONTRACT.md` (the same file is in the backend) and `docs/openapi.json` (a copy of the backend's `openapi.json`, `npm run openapi:export` there). `src/networks/__tests__/contract.test.ts` checks every auth, users, media, business and approval request against it; copy the file again when the API changes. Error codes the app branches on live in the main network file (`ERROR_CODES` in `networks/network/apiHelpers.ts`), with the rule that only `REFRESH_INVALID`, `REFRESH_REUSED`, `TOKEN_REVOKED` and `ACCOUNT_DISABLED` end a session. Riders sign in on the partner portal with `identifier` (their username).
 - **Shopping still runs on an assumed document**: `docs/API_SHOPPING_ASSUMED.md` (NestJS conventions: `{ success, data }`, `VALIDATION_FAILED`, `page/pageSize`, integer rupees, `Idempotency-Key` on checkout and booking). The app now calls the real API for it too, so reconcile it with the backend's `API_SHOPPING.md`. Every dependency is marked `TODO(API_SHOPPING)` (`grep -rn "TODO(API_" src`).
 
 - **Kitchen Intelligence runs on an assumed contract** (Chunk 5, owner's decision 2026-10-19): `docs/API_KITCHEN_ASSUMED.md`, `docs/AI_ASSUMED.md` and `docs/VOICE_ASSUMED.md`, written in API_FOOD's conventions (whole rupees; quantities in base units g/ml/pc; branch-local dates; `Idempotency-Key` on reservations and subscriptions). No backend module exists yet.
