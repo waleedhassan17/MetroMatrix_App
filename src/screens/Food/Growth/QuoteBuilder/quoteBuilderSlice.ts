@@ -5,12 +5,13 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { getCateringRequest, sendQuote } from '@networks/foodGrowth/cateringNetwork';
-import { listMenuItems } from '@networks/food/vendor/menuNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getMenuItemsAPI } from '@networks/food/vendor/menuNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { draftFromRequest, newDishKey, type QuoteDraft } from '@models/kitchen/cateringModel';
 import type { CateringRequest, QuoteInput, VendorMenuItem } from '@/types';
 import type { ValidationErrors } from '@models/authModel';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { vendorMenuItemsSerializer } from '@serializers/food/menuSerializer';
 
 export interface QuoteBuilderSliceState {
   code: string | null;
@@ -58,7 +59,7 @@ export const quoteBuilderSlice = createAppSlice({
     loadQuoteBuilderAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          const [request, menu] = await Promise.all([getCateringRequest(code), listMenuItems()]);
+          const [request, menu] = await Promise.all([getCateringRequest(code), getMenuItemsAPI().then(raw => required(vendorMenuItemsSerializer(raw)))]);
           return { request, menu: menu.filter(i => i.isActive).map(i => ({ id: i.id, name: i.name, basePrice: i.basePrice })) };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

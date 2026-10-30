@@ -9,11 +9,12 @@ import { FlatList, StyleSheet } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useBack } from '@hooks/useBack';
 import { usePagedList } from '@hooks/usePagedList';
-import { listKitchenReviews } from '@networks/food/reviewsNetwork';
+import { getKitchenReviewsAPI } from '@networks/food/reviewsNetwork';
 import { ServiceScope, useStyles, type Theme } from '@theme/index';
 import { AppText, Divider, EmptyState, InlineNotice, ScreenShell, SkeletonLines } from '@custom/index';
 import { FoodReviewItem } from '@custom/food/FoodReviewItem';
 import type { FoodAppParamList } from '@/types';
+import { foodReviewsPageSerializer } from '@serializers/food/reviewSerializer';
 
 type Props = NativeStackScreenProps<FoodAppParamList, 'FoodReviews'>;
 
@@ -32,7 +33,7 @@ const FoodReviewsContent: React.FC<Props> = ({ route }) => {
   const { id, name, slug } = route.params;
   const { back } = useBack(slug ? { name: 'FoodVendor', params: { slug } } : { name: 'FoodTabs' });
   const styles = useStyles(makeStyles);
-  const list = usePagedList((page, size) => listKitchenReviews(id, page, size), `food-reviews|${id}`);
+  const list = usePagedList((page, size) => getKitchenReviewsAPI(id, page, size), foodReviewsPageSerializer, `food-reviews|${id}`);
   const vendorName = name ?? 'The kitchen';
 
   return (

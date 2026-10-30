@@ -1,9 +1,17 @@
-// MetroMatrix — Food vendor: the kitchen's numbers (recorded sales, never earnings).
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Food Vendor Insights Network (API_FOOD.md)
+// ═══════════════════════════════════════════════════════
+// The kitchen's numbers (recorded sales, never earnings).
 // docs/API_FOOD.md §4.3 Insights: GET /food/vendor/insights?range=today|7d|30d.
 
-import { api } from '../../network/apiHelpers';
-import { foodInsightsSerializer } from '../../../serializers/food/reviewSerializer';
+import { api, toApiError } from '../../network/apiHelpers';
 import type { FoodInsightsRange } from '../../../types/food';
-import { request } from '../../shopping/http';
 
-export const getFoodInsights = (range: FoodInsightsRange) => request(() => api.get('/food/vendor/insights', { params: { range } }), foodInsightsSerializer);
+export const getFoodInsightsAPI = async (range: FoodInsightsRange): Promise<unknown> => {
+  try {
+    const response = await api.get('/food/vendor/insights', { params: { range } });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

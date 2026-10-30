@@ -3,9 +3,9 @@
 // dishes), which the assumed kitchen contract serves on its own routes.
 
 import { createAppSlice } from '@store/createAppSlice';
-import { getFoodOverview } from '@networks/admin/adminFoodNetwork';
+import { getFoodOverviewAPI } from '@networks/admin/adminFoodNetwork';
 import { listHygieneQueue, listSignatures } from '@networks/admin/adminKitchenNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { AdminFoodOverview } from '@/types';
 import {
   NO_ERROR,
@@ -13,6 +13,7 @@ import {
   type FormStatus,
   type ServerError,
 } from '../../../Auth/shared/formStatus';
+import { adminFoodOverviewSerializer } from '@serializers/food/adminFoodSerializer';
 
 export interface FoodOverviewSliceState {
   overview: AdminFoodOverview | null;
@@ -31,7 +32,7 @@ export const foodOverviewSlice = createAppSlice({
     loadFoodOverviewAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await getFoodOverview();
+          return required(adminFoodOverviewSerializer(await getFoodOverviewAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

@@ -10,7 +10,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { useDebouncedValue, usePagedList } from '@hooks/usePagedList';
-import { listAdminFoodOrders } from '@networks/admin/adminFoodNetwork';
+import { getAdminFoodOrdersAPI } from '@networks/admin/adminFoodNetwork';
 import {
   ORDER_STATUS,
   PAYMENT_METHOD,
@@ -31,6 +31,7 @@ import {
   setFoodOrdersStatus,
   setFoodOrdersVendor,
 } from './adminFoodOrdersSlice';
+import { adminFoodOrdersPageSerializer } from '@serializers/food/adminFoodSerializer';
 
 type Props = NativeStackScreenProps<AdminFoodStackParamList, 'AdminFoodOrders'>;
 
@@ -61,11 +62,8 @@ const AdminFoodOrdersScreen: React.FC<Props> = ({ navigation, route }) => {
   const searching = code.length >= 4 ? code : '';
   const list = usePagedList(
     (page, size) =>
-      listAdminFoodOrders(
-        { code: searching || undefined, vendorId: s.vendor?.id, status: s.status ?? undefined },
-        page,
-        size,
-      ),
+      getAdminFoodOrdersAPI({ code: searching || undefined, vendorId: s.vendor?.id, status: s.status ?? undefined }, page, size),
+    adminFoodOrdersPageSerializer,
     `admin-food-orders|${searching}|${s.vendor?.id}|${s.status}`,
   );
 

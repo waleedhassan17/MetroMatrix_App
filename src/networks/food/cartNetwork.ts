@@ -1,46 +1,86 @@
-// MetroMatrix — Food Court: the bag (one vendor at a time) and its preview.
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Food Cart Network (API_FOOD.md)
+// ═══════════════════════════════════════════════════════
+// The bag (one vendor at a time) and its preview.
 // docs/API_FOOD.md §4.2: /food/cart (+ /items, /preview).
 
-import { api } from '../network/apiHelpers';
-import { foodCartSerializer, foodPreviewSerializer, foodSlotsSerializer } from '../../serializers/food/orderSerializer';
+import { api, toApiError } from '../network/apiHelpers';
 import type { FoodCheckoutInput, FoodFulfilment } from '../../types/food';
-import { request } from '../shopping/http';
 
 const enc = encodeURIComponent;
 
-export const getFoodCart = () => request(() => api.get('/food/cart'), foodCartSerializer);
+export const getFoodCartAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get('/food/cart');
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** A vendor's pre-order slots for the next week, with places left (vendor id or slug). */
-export const getVendorSlots = (vendor: string) => request(() => api.get(`/food/vendors/${enc(vendor)}/slots`), foodSlotsSerializer);
+export const getVendorSlotsAPI = async (vendor: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`/food/vendors/${enc(vendor)}/slots`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const clearFoodCart = () => request(() => api.delete('/food/cart'), () => true);
+export const clearFoodCartAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.delete('/food/cart');
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** Delivery or pick-up, and when (null: as soon as possible). */
-export const setFoodCartMode = (input: { fulfilment?: FoodFulfilment; scheduledFor?: string | null }) =>
-  request(() => api.patch('/food/cart', input), foodCartSerializer);
+export const setFoodCartModeAPI = async (input: { fulfilment?: FoodFulfilment; scheduledFor?: string | null }): Promise<unknown> => {
+  try {
+    const response = await api.patch('/food/cart', input);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /**
  * Add a dish. Another vendor's dishes in the bag → 409 CART_OTHER_VENDOR
  * (details.currentVendor); `replace` starts a new bag instead.
  */
-export const addToFoodCart = (
-  input: { vendorId: string; itemId: string; variantId: string | null; optionIds: string[]; quantity: number; notes: string | null },
-  replace = false,
-) =>
-  request(
-    () =>
-      api.post(
+export const addToFoodCartAPI = async (input: { vendorId: string; itemId: string; variantId: string | null; optionIds: string[]; quantity: number; notes: string | null }, replace = false): Promise<unknown> => {
+  try {
+    const response = await api.post(
         '/food/cart/items',
         { vendorId: input.vendorId, itemId: input.itemId, variantId: input.variantId, optionIds: input.optionIds, quantity: input.quantity, ...(input.notes ? { notes: input.notes } : null) },
         { params: replace ? { replace: 'true' } : undefined },
-      ),
-    foodCartSerializer,
-  );
+      );
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const updateFoodCartLine = (lineId: string, input: { quantity?: number; notes?: string | null }) =>
-  request(() => api.patch(`/food/cart/items/${enc(lineId)}`, input), foodCartSerializer);
+export const updateFoodCartLineAPI = async (lineId: string, input: { quantity?: number; notes?: string | null }): Promise<unknown> => {
+  try {
+    const response = await api.patch(`/food/cart/items/${enc(lineId)}`, input);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const removeFoodCartLine = (lineId: string) => request(() => api.delete(`/food/cart/items/${enc(lineId)}`), foodCartSerializer);
+export const removeFoodCartLineAPI = async (lineId: string): Promise<unknown> => {
+  try {
+    const response = await api.delete(`/food/cart/items/${enc(lineId)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 const orderDetails = (input: Partial<FoodCheckoutInput>) => ({
   ...(input.addressId ? { addressId: input.addressId } : null),
@@ -54,6 +94,13 @@ const orderDetails = (input: Partial<FoodCheckoutInput>) => ({
 });
 
 /** Totals exactly as checkout would charge them, with every issue to fix. */
-export const previewFoodCart = (input: Partial<FoodCheckoutInput>) => request(() => api.post('/food/cart/preview', orderDetails(input)), foodPreviewSerializer);
+export const previewFoodCartAPI = async (input: Partial<FoodCheckoutInput>): Promise<unknown> => {
+  try {
+    const response = await api.post('/food/cart/preview', orderDetails(input));
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 export { orderDetails };

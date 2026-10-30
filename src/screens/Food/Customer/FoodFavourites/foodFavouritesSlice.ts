@@ -6,10 +6,11 @@
 // the server says no).
 
 import { createAppSlice } from '@store/createAppSlice';
-import { addFavourite, listFavourites, removeFavourite } from '@networks/food/favouritesNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { addFavouriteAPI, getFavouritesAPI, removeFavouriteAPI } from '@networks/food/favouritesNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { FoodFavourite } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { foodFavouritesSerializer, favouritedSerializer, unfavouritedSerializer } from '@serializers/food/favouriteSerializer';
 
 export interface FoodFavouritesSliceState {
   items: FoodFavourite[];
@@ -28,7 +29,7 @@ export const foodFavouritesSlice = createAppSlice({
     loadFavouritesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await listFavourites();
+          return required(foodFavouritesSerializer(await getFavouritesAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -53,7 +54,7 @@ export const foodFavouritesSlice = createAppSlice({
     toggleFavouriteAsync: create.asyncThunk(
       async ({ vendorId, save }: { vendorId: string; save: boolean }, { rejectWithValue }) => {
         try {
-          return save ? await addFavourite(vendorId) : await removeFavourite(vendorId);
+          return save ? required(favouritedSerializer(await addFavouriteAPI(vendorId))) : required(unfavouritedSerializer(await removeFavouriteAPI(vendorId)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

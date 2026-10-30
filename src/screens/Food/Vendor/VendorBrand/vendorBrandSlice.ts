@@ -6,12 +6,13 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getCuisines, getVendorProfile, updateVendorProfile } from '@networks/food/vendor/profileNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getCuisinesAPI, getVendorProfileAPI, updateVendorProfileAPI } from '@networks/food/vendor/profileNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { brandPatch, MAX_CUISINES, type VendorBrandForm } from '@models/food/vendorModel';
 import type { FoodCuisine, LocalFile, VendorProfile } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { upload } from '../../../Shopping/Customer/shared/photoUploads';
+import { vendorProfileSerializer, foodCuisinesSerializer } from '@serializers/food/vendorSerializer';
 
 export interface VendorBrandSliceState {
   profile: VendorProfile | null;
@@ -65,7 +66,7 @@ export const vendorBrandSlice = createAppSlice({
     loadVendorBrandAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [profile, cuisines] = await Promise.all([getVendorProfile(), getCuisines()]);
+          const [profile, cuisines] = await Promise.all([getVendorProfileAPI().then(raw => required(vendorProfileSerializer(raw))), getCuisinesAPI().then(raw => required(foodCuisinesSerializer(raw)))]);
           return { profile, cuisines };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -115,7 +116,7 @@ export const vendorBrandSlice = createAppSlice({
     saveVendorBrandAsync: create.asyncThunk(
       async (form: VendorBrandForm, { rejectWithValue }) => {
         try {
-          return await updateVendorProfile(brandPatch(form));
+          return required(vendorProfileSerializer(await updateVendorProfileAPI(brandPatch(form))));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

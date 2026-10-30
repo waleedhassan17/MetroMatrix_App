@@ -12,16 +12,17 @@ import {
   updateDoctorPaymentAccount,
 } from '@networks/health/doctor/practiceNetwork';
 import {
-  createVendorPaymentAccount,
-  deleteVendorPaymentAccount,
-  listVendorPaymentAccounts,
-  updateVendorPaymentAccount,
+  createVendorPaymentAccountAPI,
+  deleteVendorPaymentAccountAPI,
+  getVendorPaymentAccountsAPI,
+  updateVendorPaymentAccountAPI,
 } from '@networks/food/vendor/settingsNetwork';
 import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { normaliseAccountNumber } from '@models/shopping/storeModel';
 import type { PaymentAccount, PaymentAccountInput } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { paymentAccountListSerializer, paymentAccountSerializer } from '@serializers/shopping/partnerSerializer';
+import { vendorPaymentAccountSerializer, vendorPaymentAccountsSerializer } from '@serializers/food/vendorSerializer';
 
 export interface PaymentAccountsSliceState {
   accounts: PaymentAccount[];
@@ -48,7 +49,16 @@ const STORE = {
   },
 };
 const DOCTOR = { list: listDoctorPaymentAccounts, create: createDoctorPaymentAccount, update: updateDoctorPaymentAccount, remove: deleteDoctorPaymentAccount };
-const FOOD = { list: listVendorPaymentAccounts, create: createVendorPaymentAccount, update: updateVendorPaymentAccount, remove: deleteVendorPaymentAccount };
+const FOOD = {
+  list: async () => required(vendorPaymentAccountsSerializer(await getVendorPaymentAccountsAPI())),
+  create: async (input: PaymentAccountInput) => required(vendorPaymentAccountSerializer(await createVendorPaymentAccountAPI(input))),
+  update: async (id: string, input: PaymentAccountInput) =>
+    required(vendorPaymentAccountSerializer(await updateVendorPaymentAccountAPI(id, input))),
+  remove: async (id: string) => {
+    await deleteVendorPaymentAccountAPI(id);
+    return true as const;
+  },
+};
 const apiFor = (getState: () => unknown) => {
   const service = (getState() as PartnerState).auth.business?.serviceType;
   return service === 'healthcare' ? DOCTOR : service === 'food' ? FOOD : STORE;

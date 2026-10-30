@@ -38,7 +38,7 @@ const rate = (v: unknown): number | null => (v === null || v === undefined || !N
 const kind = (v: unknown): KitchenKind => oneOf(v, KITCHEN_KINDS, 'restaurant');
 const BANNER_TARGETS: readonly FoodBannerTargetType[] = ['vendor', 'cuisine', 'search'];
 
-export const adminFoodOverviewSerializer = (raw: unknown): AdminFoodOverview | null => {
+export const adminFoodOverviewSerializer = fromResponse((raw: unknown): AdminFoodOverview | null => {
   if (!isObject(raw)) return null;
   const a = isObject(raw.activeVendors) ? raw.activeVendors : {};
   const w = isObject(raw.waiting) ? raw.waiting : {};
@@ -52,7 +52,7 @@ export const adminFoodOverviewSerializer = (raw: unknown): AdminFoodOverview | n
     topCuisines: compact(arr(raw.topCuisines).map(c => (isObject(c) && str(c.slug) ? { slug: str(c.slug), name: str(c.name), orders: count(c.orders) } : null))),
     waiting: { approvals: count(w.approvals), foodSafetyChecks: count(w.foodSafetyChecks) },
   };
-};
+});
 
 export const adminFoodVendorRowSerializer = (raw: unknown): AdminFoodVendorRow | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
@@ -78,7 +78,7 @@ export const adminFoodVendorRowSerializer = (raw: unknown): AdminFoodVendorRow |
   };
 };
 
-export const adminFoodVendorsPageSerializer = (raw: unknown): Paged<AdminFoodVendorRow> => paged(raw, adminFoodVendorRowSerializer);
+export const adminFoodVendorsPageSerializer = fromResponse((raw: unknown): Paged<AdminFoodVendorRow> => paged(raw, adminFoodVendorRowSerializer));
 
 export const adminFoodReviewSerializer = (raw: unknown): AdminFoodReview | null => {
   const r = foodReviewSerializer(raw);
@@ -86,9 +86,9 @@ export const adminFoodReviewSerializer = (raw: unknown): AdminFoodReview | null 
   return { ...r, vendorId: strOrNull(raw.vendorId), orderCode: strOrNull(raw.orderCode), isHidden: bool(raw.isHidden), hiddenReason: strOrNull(raw.hiddenReason) };
 };
 
-export const adminFoodReviewsPageSerializer = (raw: unknown): Paged<AdminFoodReview> => paged(raw, adminFoodReviewSerializer);
+export const adminFoodReviewsPageSerializer = fromResponse((raw: unknown): Paged<AdminFoodReview> => paged(raw, adminFoodReviewSerializer));
 
-export const adminFoodVendorSerializer = (raw: unknown): AdminFoodVendor | null => {
+export const adminFoodVendorSerializer = fromResponse((raw: unknown): AdminFoodVendor | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
   return {
     id: str(raw.id),
@@ -124,24 +124,24 @@ export const adminFoodVendorSerializer = (raw: unknown): AdminFoodVendor | null 
     ratings: ratingSummarySerializer(raw.ratings),
     complaints: compact(arr(raw.complaints).map(adminFoodReviewSerializer)),
   };
-};
+});
 
 /** The vendor after feature / unfeature (only what changed). */
-export const adminFeaturedSerializer = (raw: unknown): { id: string; isFeatured: boolean } | null =>
-  isObject(raw) && str(raw.id) ? { id: str(raw.id), isFeatured: bool(raw.isFeatured) } : null;
+export const adminFeaturedSerializer = fromResponse((raw: unknown): { id: string; isFeatured: boolean } | null =>
+  isObject(raw) && str(raw.id) ? { id: str(raw.id), isFeatured: bool(raw.isFeatured) } : null);
 
 /** The vendor after suspend / reinstate. */
-export const adminSuspensionSerializer = (raw: unknown): { id: string; businessStatus: string; suspensionReason: string | null } | null =>
-  isObject(raw) && str(raw.id) ? { id: str(raw.id), businessStatus: str(raw.businessStatus), suspensionReason: strOrNull(raw.suspensionReason) } : null;
+export const adminSuspensionSerializer = fromResponse((raw: unknown): { id: string; businessStatus: string; suspensionReason: string | null } | null =>
+  isObject(raw) && str(raw.id) ? { id: str(raw.id), businessStatus: str(raw.businessStatus), suspensionReason: strOrNull(raw.suspensionReason) } : null);
 
 export const adminFoodOrderRowSerializer = (raw: unknown): AdminFoodOrderRow | null => {
   const card = boardCardSerializer(raw);
   return card && isObject(raw) ? { ...card, vendorId: strOrNull(raw.vendorId) } : null;
 };
 
-export const adminFoodOrdersPageSerializer = (raw: unknown): Paged<AdminFoodOrderRow> => paged(raw, adminFoodOrderRowSerializer);
+export const adminFoodOrdersPageSerializer = fromResponse((raw: unknown): Paged<AdminFoodOrderRow> => paged(raw, adminFoodOrderRowSerializer));
 
-export const adminFoodOrderSerializer = (raw: unknown): AdminFoodOrder | null => {
+export const adminFoodOrderSerializer = fromResponse((raw: unknown): AdminFoodOrder | null => {
   const o = foodOrderSerializer(raw);
   if (!o || !isObject(raw)) return null;
   const c = isObject(raw.customer) ? raw.customer : {};
@@ -150,13 +150,13 @@ export const adminFoodOrderSerializer = (raw: unknown): AdminFoodOrder | null =>
     codCollected: raw.codCollected === null || raw.codCollected === undefined ? null : count(raw.codCollected),
     customer: { userId: str(c.userId), name: strOrNull(c.name), email: strOrNull(c.email), phone: strOrNull(c.phone) },
   };
-};
+});
 
 /** The review after hide / unhide. */
-export const adminHiddenSerializer = (raw: unknown): { id: string; isHidden: boolean; hiddenReason: string | null } | null =>
-  isObject(raw) && str(raw.id) ? { id: str(raw.id), isHidden: bool(raw.isHidden), hiddenReason: strOrNull(raw.hiddenReason) } : null;
+export const adminHiddenSerializer = fromResponse((raw: unknown): { id: string; isHidden: boolean; hiddenReason: string | null } | null =>
+  isObject(raw) && str(raw.id) ? { id: str(raw.id), isHidden: bool(raw.isHidden), hiddenReason: strOrNull(raw.hiddenReason) } : null);
 
-export const adminCuisineSerializer = (raw: unknown): AdminCuisine | null => {
+export const adminCuisineSerializer = fromResponse((raw: unknown): AdminCuisine | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
   return {
     id: str(raw.id),
@@ -167,11 +167,11 @@ export const adminCuisineSerializer = (raw: unknown): AdminCuisine | null => {
     isActive: raw.isActive !== false,
     vendors: count(raw.vendors),
   };
-};
+});
 
-export const adminCuisinesSerializer = (raw: unknown): AdminCuisine[] => compact(arr(raw).map(adminCuisineSerializer));
+export const adminCuisinesSerializer = fromResponse((raw: unknown): AdminCuisine[] => compact(arr(raw).map(adminCuisineSerializer)));
 
-export const adminFoodBannerSerializer = (raw: unknown): AdminFoodBanner | null => {
+export const adminFoodBannerSerializer = fromResponse((raw: unknown): AdminFoodBanner | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
   return {
     id: str(raw.id),
@@ -187,9 +187,9 @@ export const adminFoodBannerSerializer = (raw: unknown): AdminFoodBanner | null 
     sort: count(raw.sort),
     isActive: raw.isActive !== false,
   };
-};
+});
 
-export const adminFoodBannersSerializer = (raw: unknown): AdminFoodBanner[] => compact(arr(raw).map(adminFoodBannerSerializer));
+export const adminFoodBannersSerializer = fromResponse((raw: unknown): AdminFoodBanner[] => compact(arr(raw).map(adminFoodBannerSerializer)));
 
 /** The food-safety check's recorded outcome. */
 export const foodSafetyOutcomeSerializer = fromResponse(raw => (isObject(raw) && str(raw.outcome) ? str(raw.outcome) : null));

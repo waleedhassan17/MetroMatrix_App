@@ -5,11 +5,12 @@
 // live re-reads the session so the app knows (business.food.isLive).
 
 import { createAppSlice } from '@store/createAppSlice';
-import { getVendorSetup, goLive } from '@networks/food/vendor/setupNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getVendorSetupAPI, goLiveAPI } from '@networks/food/vendor/setupNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { VendorSetup } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { refreshSession } from '../../../../components/app-container/appContainerSlice';
+import { vendorSetupSerializer } from '@serializers/food/vendorSerializer';
 
 export interface VendorSetupSliceState {
   setup: VendorSetup | null;
@@ -27,7 +28,7 @@ export const vendorSetupSlice = createAppSlice({
     loadVendorSetupAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await getVendorSetup();
+          return required(vendorSetupSerializer(await getVendorSetupAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -50,9 +51,9 @@ export const vendorSetupSlice = createAppSlice({
     goLiveAsync: create.asyncThunk(
       async (_: void, { dispatch, rejectWithValue }) => {
         try {
-          await goLive();
+          await goLiveAPI();
           await dispatch(refreshSession());
-          return await getVendorSetup();
+          return required(vendorSetupSerializer(await getVendorSetupAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

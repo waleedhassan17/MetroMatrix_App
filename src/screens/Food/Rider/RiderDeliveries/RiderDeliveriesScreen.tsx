@@ -13,7 +13,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useRiderChannel } from '@hooks/useFoodLive';
 import { usePagedList } from '@hooks/usePagedList';
-import { listRiderOrders } from '@networks/food/rider/riderNetwork';
+import { getRiderOrdersAPI } from '@networks/food/rider/riderNetwork';
 import { placeLine, riderVehicleLabel } from '@models/food/vendorModel';
 import { dropOrderLabel } from '@models/kitchen/reachModel';
 import { riderStepLabel } from '@models/food/foodStatusModel';
@@ -26,6 +26,7 @@ import { callNumber } from '@utils/maps';
 import { formatPKR } from '@utils/money';
 import { formatPkPhoneForDisplay } from '@utils/phone';
 import { loadRiderDeliveriesAsync, loadRiderHomeAsync, selectRiderHome, setDutyAsync } from './riderHomeSlice';
+import { riderOrdersPageSerializer } from '@serializers/food/riderSerializer';
 
 type Nav = { navigate: (name: string, params?: object) => void };
 
@@ -105,7 +106,7 @@ const RiderDeliveriesContent: React.FC = () => {
     }, [dispatch, refetch]),
   );
   useRiderChannel(refetch);
-  const history = usePagedList((page, size) => listRiderOrders('history', page, size), 'rider-history', { enabled: segment === 'history' });
+  const history = usePagedList((page, size) => getRiderOrdersAPI('history', page, size), riderOrdersPageSerializer, 'rider-history', { enabled: segment === 'history' });
 
   // Fixes go over the live connection, else the REST batch.
   useEffect(() => {

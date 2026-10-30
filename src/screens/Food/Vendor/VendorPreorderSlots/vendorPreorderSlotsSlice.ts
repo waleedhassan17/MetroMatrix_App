@@ -6,10 +6,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getPreorderSlots, savePreorderSlots } from '@networks/food/vendor/availabilityNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getPreorderSlotsAPI, savePreorderSlotsAPI } from '@networks/food/vendor/availabilityNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { slotRow, slotsInput, type SlotRow } from '@models/food/menuModel';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { preorderSlotsSerializer } from '@serializers/food/menuSerializer';
 
 export interface VendorPreorderSlotsSliceState {
   rows: SlotRow[];
@@ -43,7 +44,7 @@ export const vendorPreorderSlotsSlice = createAppSlice({
     loadPreorderSlotsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return (await getPreorderSlots()).map(slotRow);
+          return (required(preorderSlotsSerializer(await getPreorderSlotsAPI()))).map(slotRow);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -68,7 +69,7 @@ export const vendorPreorderSlotsSlice = createAppSlice({
     savePreorderSlotsAsync: create.asyncThunk(
       async (rows: SlotRow[], { rejectWithValue }) => {
         try {
-          return (await savePreorderSlots(slotsInput(rows))).map(slotRow);
+          return (required(preorderSlotsSerializer(await savePreorderSlotsAPI(slotsInput(rows))))).map(slotRow);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

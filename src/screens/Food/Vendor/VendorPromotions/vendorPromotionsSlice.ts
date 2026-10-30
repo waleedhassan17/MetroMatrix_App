@@ -5,10 +5,11 @@
 // starting later, ended, off) and how often it has been used.
 
 import { createAppSlice } from '@store/createAppSlice';
-import { listPromotions } from '@networks/food/vendor/promotionsNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getPromotionsAPI } from '@networks/food/vendor/promotionsNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { FoodPromotion } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { foodPromotionsSerializer } from '@serializers/food/orderSerializer';
 
 export interface VendorPromotionsSliceState {
   items: FoodPromotion[];
@@ -25,7 +26,7 @@ export const vendorPromotionsSlice = createAppSlice({
     loadPromotionsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await listPromotions();
+          return required(foodPromotionsSerializer(await getPromotionsAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

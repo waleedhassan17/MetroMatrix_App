@@ -4,12 +4,13 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { suggestCombos } from '@networks/kitchen/kitchenAiNetwork';
-import { createMenuItem } from '@networks/food/vendor/menuNetwork';
+import { createMenuItemAPI } from '@networks/food/vendor/menuNetwork';
 import { getKitchenSettings } from '@networks/kitchen/costingNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { comboItemInput } from '@models/kitchen/assistantModel';
 import type { ComboIdea, DraftCategory } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { vendorMenuItemSerializer } from '@serializers/food/menuSerializer';
 
 export interface AiCombosSliceState {
   ideas: ComboIdea[];
@@ -65,7 +66,7 @@ export const aiCombosSlice = createAppSlice({
     createComboAsync: create.asyncThunk(
       async ({ idea, categoryId, price }: { idea: ComboIdea; categoryId: string; price: number }, { rejectWithValue }) => {
         try {
-          return await createMenuItem(comboItemInput(idea, categoryId, price), []);
+          return required(vendorMenuItemSerializer(await createMenuItemAPI(comboItemInput(idea, categoryId, price), [])));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

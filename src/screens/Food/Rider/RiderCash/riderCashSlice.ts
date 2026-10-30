@@ -5,10 +5,11 @@
 // off (the vendor records it). Newest first.
 
 import { createAppSlice } from '@store/createAppSlice';
-import { getRiderCash } from '@networks/food/rider/riderNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getRiderCashAPI } from '@networks/food/rider/riderNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { RiderCash } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { riderCashSerializer } from '@serializers/food/riderSerializer';
 
 export interface RiderCashSliceState {
   cash: RiderCash | null;
@@ -25,7 +26,7 @@ export const riderCashSlice = createAppSlice({
     loadRiderCashAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await getRiderCash();
+          return required(riderCashSerializer(await getRiderCashAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

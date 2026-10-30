@@ -7,11 +7,12 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { createRider, listRiders } from '@networks/food/vendor/ridersNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { createRiderAPI, getRidersAPI } from '@networks/food/vendor/ridersNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { normalizePkPhone } from '@utils/phone';
 import type { FoodRider, RiderCredential, RiderInput } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { foodRidersSerializer, createdRiderSerializer } from '@serializers/food/riderSerializer';
 
 export interface VendorRidersSliceState {
   riders: FoodRider[];
@@ -64,7 +65,7 @@ export const vendorRidersSlice = createAppSlice({
     loadRidersAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await listRiders();
+          return required(foodRidersSerializer(await getRidersAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -87,11 +88,11 @@ export const vendorRidersSlice = createAppSlice({
     createRiderAsync: create.asyncThunk(
       async (input: RiderInput, { rejectWithValue }) => {
         try {
-          return await createRider({
+          return required(createdRiderSerializer(await createRiderAPI({
             fullName: input.fullName.trim(),
             phone: input.phone ? (normalizePkPhone(input.phone) ?? null) : null,
             vehicle: input.vehicle,
-          });
+          })));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

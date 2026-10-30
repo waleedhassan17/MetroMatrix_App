@@ -10,15 +10,17 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { acceptOrder, handedExternal, listBoard, markCollected, markDelivered, markReady, rejectOrder, startPreparing } from '@networks/food/vendor/ordersNetwork';
-import { getVendorProfile, pauseOrders, resumeOrders, setBusy } from '@networks/food/vendor/profileNetwork';
-import { setAvailability } from '@networks/food/vendor/availabilityNetwork';
+import { acceptOrderAPI, handedExternalAPI, getBoardAPI, markCollectedAPI, markDeliveredAPI, markReadyAPI, rejectOrderAPI, startPreparingAPI } from '@networks/food/vendor/ordersNetwork';
+import { getVendorProfileAPI, pauseOrdersAPI, resumeOrdersAPI, setBusyAPI } from '@networks/food/vendor/profileNetwork';
+import { setAvailabilityAPI } from '@networks/food/vendor/availabilityNetwork';
 import { getBoardHints } from '@networks/kitchen/costingNetwork';
 import { getAnnouncement } from '@networks/kitchen/packingNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { cardOfOrder, columnOf, isEnded, type BoardColumn } from '@models/food/foodStatusModel';
 import type { BoardCard, BoardHints, FoodLiveBoardUpdate, PauseReason, VendorProfile } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { vendorFoodOrderSerializer, boardPageSerializer } from '@serializers/food/orderSerializer';
+import { vendorProfileSerializer } from '@serializers/food/vendorSerializer';
 
 export type BoardMove = 'preparing' | 'ready' | 'handed-external' | 'picked-up' | 'delivered';
 
@@ -74,12 +76,15 @@ const upsert = (state: VendorBoardSliceState, card: BoardCard) => {
   if (state.rejectFor === card.id && card.status !== 'placed') state.rejectFor = null;
 };
 
-const MOVES: Record<BoardMove, (id: string) => ReturnType<typeof startPreparing>> = {
-  preparing: startPreparing,
-  ready: markReady,
-  'handed-external': handedExternal,
-  'picked-up': markCollected,
-  delivered: id => markDelivered(id, null),
+type VendorOrderMove = (id: string) => Promise<NonNullable<ReturnType<typeof vendorFoodOrderSerializer>>>;
+
+/** Each card move: its thin call, then the order serialized. */
+const MOVES: Record<BoardMove, VendorOrderMove> = {
+  preparing: async id => required(vendorFoodOrderSerializer(await startPreparingAPI(id))),
+  ready: async id => required(vendorFoodOrderSerializer(await markReadyAPI(id))),
+  'handed-external': async id => required(vendorFoodOrderSerializer(await handedExternalAPI(id))),
+  'picked-up': async id => required(vendorFoodOrderSerializer(await markCollectedAPI(id))),
+  delivered: async id => required(vendorFoodOrderSerializer(await markDeliveredAPI(id, null))),
 };
 
 export const vendorBoardSlice = createAppSlice({
@@ -125,7 +130,7 @@ export const vendorBoardSlice = createAppSlice({
     loadBoardAsync: create.asyncThunk(
       async (_: void, { dispatch, rejectWithValue }) => {
         try {
-          const [fresh, active] = await Promise.all([listBoard('new'), listBoard('active')]);
+          const [fresh, active] = await Promise.all([getBoardAPI('new').then(raw => required(boardPageSerializer(raw))), getBoardAPI('active').then(raw => required(boardPageSerializer(raw)))]);
           // Every board read reads the kitchen's side too.
           void dispatch(loadBoardHintsAsync());
           return [...fresh.items, ...active.items];
@@ -169,7 +174,7 @@ export const vendorBoardSlice = createAppSlice({
     soldOutDishAsync: create.asyncThunk(
       async (itemId: string, { dispatch, rejectWithValue }) => {
         try {
-          await setAvailability({ items: [{ itemId, isAvailable: false }] });
+          await setAvailabilityAPI({ items: [{ itemId, isAvailable: false }] });
           void dispatch(loadBoardHintsAsync());
           return itemId;
         } catch (e) {
@@ -210,7 +215,7 @@ export const vendorBoardSlice = createAppSlice({
     acceptOrderAsync: create.asyncThunk(
       async ({ id, eta }: { id: string; eta: number }, { dispatch, rejectWithValue }) => {
         try {
-          const o = await acceptOrder(id, eta);
+          const o = required(vendorFoodOrderSerializer(await acceptOrderAPI(id, eta)));
           // Accepting takes its recipes from stock: the tickets' stock notes change.
           void dispatch(loadBoardHintsAsync());
           return o;
@@ -238,7 +243,7 @@ export const vendorBoardSlice = createAppSlice({
     rejectOrderAsync: create.asyncThunk(
       async ({ id, reason }: { id: string; reason: string }, { dispatch, rejectWithValue }) => {
         try {
-          const o = await rejectOrder(id, reason);
+          const o = required(vendorFoodOrderSerializer(await rejectOrderAPI(id, reason)));
           void dispatch(loadBoardHintsAsync());
           return o;
         } catch (e) {
@@ -290,7 +295,7 @@ export const vendorBoardSlice = createAppSlice({
     loadKitchenAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await getVendorProfile();
+          return required(vendorProfileSerializer(await getVendorProfileAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -304,9 +309,9 @@ export const vendorBoardSlice = createAppSlice({
     switchKitchenAsync: create.asyncThunk(
       async (to: { pause: string | null; reason?: PauseReason | null; resumeAt?: string | null } | { resume: true } | { busy: number }, { rejectWithValue }) => {
         try {
-          if ('resume' in to) return await resumeOrders();
-          if ('busy' in to) return await setBusy(to.busy, to.busy ? new Date(Date.now() + 60 * 60_000).toISOString() : null);
-          return await pauseOrders(to.pause, { reason: to.reason, resumeAt: to.resumeAt });
+          if ('resume' in to) return required(vendorProfileSerializer(await resumeOrdersAPI()));
+          if ('busy' in to) return required(vendorProfileSerializer(await setBusyAPI(to.busy, to.busy ? new Date(Date.now() + 60 * 60_000).toISOString() : null)));
+          return required(vendorProfileSerializer(await pauseOrdersAPI(to.pause, { reason: to.reason, resumeAt: to.resumeAt })));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

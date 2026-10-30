@@ -7,12 +7,13 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { listMenuCategories, listMenuItems } from '@networks/food/vendor/menuNetwork';
-import { getAvailability, setAvailability } from '@networks/food/vendor/availabilityNetwork';
+import { getMenuCategoriesAPI, getMenuItemsAPI } from '@networks/food/vendor/menuNetwork';
+import { getAvailabilityAPI, setAvailabilityAPI } from '@networks/food/vendor/availabilityNetwork';
 import { getBoardHints } from '@networks/kitchen/costingNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { AvailabilityItem, BoardHints, MenuCategory, VendorMenuItem } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { menuCategoriesSerializer, vendorMenuItemsSerializer, menuAvailabilitySerializer } from '@serializers/food/menuSerializer';
 
 export interface VendorMenuSliceState {
   categories: MenuCategory[];
@@ -62,7 +63,7 @@ export const vendorMenuSlice = createAppSlice({
     loadVendorMenuAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [categories, items, availability, stock] = await Promise.all([listMenuCategories(), listMenuItems(), getAvailability(), getBoardHints().catch(() => null)]);
+          const [categories, items, availability, stock] = await Promise.all([getMenuCategoriesAPI().then(raw => required(menuCategoriesSerializer(raw))), getMenuItemsAPI().then(raw => required(vendorMenuItemsSerializer(raw))), getAvailabilityAPI().then(raw => required(menuAvailabilitySerializer(raw))), getBoardHints().catch(() => null)]);
           return { categories, items, availability, stock };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -91,7 +92,7 @@ export const vendorMenuSlice = createAppSlice({
     setDishAvailableAsync: create.asyncThunk(
       async (input: { itemId: string; isAvailable: boolean; until: string | null }, { rejectWithValue }) => {
         try {
-          return await setAvailability({ items: [{ itemId: input.itemId, isAvailable: input.isAvailable, ...(input.isAvailable ? null : { unavailableUntil: input.until }) }] });
+          return required(menuAvailabilitySerializer(await setAvailabilityAPI({ items: [{ itemId: input.itemId, isAvailable: input.isAvailable, ...(input.isAvailable ? null : { unavailableUntil: input.until }) }] })));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

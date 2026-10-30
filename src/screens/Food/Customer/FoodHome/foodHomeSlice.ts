@@ -10,16 +10,18 @@
 // them the home is the same (TODO(API_KITCHEN)).
 
 import { createAppSlice } from '@store/createAppSlice';
-import { getFoodHome } from '@networks/food/discoveryNetwork';
-import { listSurplusNearby } from '@networks/food/surplusNetwork';
+import { getFoodHomeAPI } from '@networks/food/discoveryNetwork';
+import { getSurplusNearbyAPI } from '@networks/food/surplusNetwork';
 import { listTiffinPlansNear } from '@networks/foodGrowth/tiffinNetwork';
 import { listIftarNearby } from '@networks/foodGrowth/ramadanNetwork';
 import { listHealthyPicks } from '@networks/myKitchen/nutritionNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { currentPoint } from '../../../../services/location';
 import { setFoodPoint } from '@store/preferencesSlice';
 import type { FoodHome, HealthyPick, IftarKitchen, SurplusCard, TiffinPlan } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { foodHomeSerializer } from '@serializers/food/discoverySerializer';
+import { surplusCardsSerializer } from '@serializers/kitchen/surplusSerializer';
 
 export interface FoodHomeSliceState {
   home: FoodHome | null;
@@ -72,8 +74,8 @@ export const foodHomeSlice = createAppSlice({
         try {
           // The extras never hold the home back: a failure is an empty rail.
           const [home, surplus, tiffins, iftar, healthy] = await Promise.all([
-            getFoodHome(lat, lng),
-            listSurplusNearby({ lat, lng }).catch(() => [] as SurplusCard[]),
+            getFoodHomeAPI(lat, lng).then(raw => required(foodHomeSerializer(raw))),
+            getSurplusNearbyAPI({ lat, lng }).then(raw => required(surplusCardsSerializer(raw))).catch(() => [] as SurplusCard[]),
             listTiffinPlansNear({ lat, lng }).catch(() => [] as TiffinPlan[]),
             listIftarNearby({ lat, lng })
               .then(r => (r.state === 'active' ? r.items : []))

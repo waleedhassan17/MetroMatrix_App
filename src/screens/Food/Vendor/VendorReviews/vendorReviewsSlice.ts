@@ -3,10 +3,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { replyToReview } from '@networks/food/vendor/reviewsNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { replyToReviewAPI } from '@networks/food/vendor/reviewsNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { MAX_REPLY } from '@models/food/reviewModel';
 import { NO_ERROR, readRejection, type ServerError } from '../../../Auth/shared/formStatus';
+import { foodReviewSerializer } from '@serializers/food/reviewSerializer';
 
 export interface VendorReviewsSliceState {
   unreplied: boolean;
@@ -43,7 +44,7 @@ export const vendorReviewsSlice = createAppSlice({
     sendReplyAsync: create.asyncThunk(
       async ({ id, reply }: { id: string; reply: string }, { rejectWithValue }) => {
         try {
-          return await replyToReview(id, reply);
+          return required(foodReviewSerializer(await replyToReviewAPI(id, reply)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

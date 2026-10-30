@@ -1,27 +1,28 @@
-// MetroMatrix — Food discovery: what a customer can order from where they
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Food Discovery Network (API_FOOD.md)
+// ═══════════════════════════════════════════════════════
+// What a customer can order from where they
 // are. Signed in or not (the home adds "order again" when signed in).
 // docs/API_FOOD.md §4.1: /food/{home,vendors,vendors/:slug,items/:id,search}.
 
-import { api } from '../network/apiHelpers';
-import {
-  foodHomeSerializer,
-  foodSearchSerializer,
-  itemSheetSerializer,
-  vendorCardsPageSerializer,
-  vendorPageSerializer,
-} from '../../serializers/food/discoverySerializer';
+import { api, toApiError } from '../network/apiHelpers';
 import type { VendorListQuery } from '../../types/food';
-import { request } from '../shopping/http';
 
 const point = (lat: number, lng: number) => ({ lat: Number(lat.toFixed(6)), lng: Number(lng.toFixed(6)) });
 
-export const getFoodHome = (lat: number, lng: number) => request(() => api.get('/food/home', { params: point(lat, lng) }), foodHomeSerializer);
+export const getFoodHomeAPI = async (lat: number, lng: number): Promise<unknown> => {
+  try {
+    const response = await api.get('/food/home', { params: point(lat, lng) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** Vendors that deliver to the point (or, with `pickup`, that can be collected from), open ones first. */
-export const listVendors = (q: VendorListQuery, page: number, pageSize: number) =>
-  request(
-    () =>
-      api.get('/food/vendors', {
+export const getVendorsAPI = async (q: VendorListQuery, page: number, pageSize: number): Promise<unknown> => {
+  try {
+    const response = await api.get('/food/vendors', {
         params: {
           ...point(q.lat, q.lng),
           ...(q.q ? { q: q.q } : null),
@@ -37,16 +38,38 @@ export const listVendors = (q: VendorListQuery, page: number, pageSize: number) 
           page,
           pageSize,
         },
-      }),
-    vendorCardsPageSerializer,
-  );
+      });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** A vendor's page; with a point it carries the delivery fee, ETA and zone for it. */
-export const getVendorPage = (slug: string, at: { lat: number; lng: number } | null) =>
-  request(() => api.get(`/food/vendors/${encodeURIComponent(slug)}`, { params: at ? point(at.lat, at.lng) : undefined }), vendorPageSerializer);
+export const getVendorPageAPI = async (slug: string, at: { lat: number; lng: number } | null): Promise<unknown> => {
+  try {
+    const response = await api.get(`/food/vendors/${encodeURIComponent(slug)}`, { params: at ? point(at.lat, at.lng) : undefined });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getItemSheet = (id: string) => request(() => api.get(`/food/items/${encodeURIComponent(id)}`), itemSheetSerializer);
+export const getItemSheetAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`/food/items/${encodeURIComponent(id)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** `nutrition`: only dishes under 600 kcal or high in protein (Kitchen Intelligence, TODO(API_KITCHEN)). */
-export const searchFood = (q: string, lat: number, lng: number, nutrition?: 'under_600' | 'high_protein' | null) =>
-  request(() => api.get('/food/search', { params: { q, ...point(lat, lng), ...(nutrition ? { nutrition } : null) } }), foodSearchSerializer);
+export const searchFoodAPI = async (q: string, lat: number, lng: number, nutrition?: 'under_600' | 'high_protein' | null): Promise<unknown> => {
+  try {
+    const response = await api.get('/food/search', { params: { q, ...point(lat, lng), ...(nutrition ? { nutrition } : null) } });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

@@ -1,10 +1,11 @@
 // MetroMatrix — Food Court: the customer's Bachat Box reservations, newest first.
 
 import { createAppSlice } from '@store/createAppSlice';
-import { listMyReservations } from '@networks/food/surplusNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getMyReservationsAPI } from '@networks/food/surplusNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { SurplusReservation } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { reservationsSerializer } from '@serializers/kitchen/surplusSerializer';
 
 export interface SurplusReservationsSliceState {
   items: SurplusReservation[];
@@ -21,7 +22,7 @@ export const surplusReservationsSlice = createAppSlice({
     loadMyReservationsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await listMyReservations();
+          return required(reservationsSerializer(await getMyReservationsAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

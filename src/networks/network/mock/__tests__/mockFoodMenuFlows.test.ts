@@ -5,25 +5,27 @@
 // and the menu step of the go-live checklist.
 
 import {
-  createMenuCategory,
-  createMenuItem,
-  createOptionGroup,
-  deleteMenuCategory,
-  deleteMenuItem,
-  deleteOptionGroup,
-  duplicateMenuItem,
-  getMenuItem,
-  listMenuItems,
-  saveItemGroups,
-  saveItemVariants,
+  createMenuCategoryAPI,
+  createMenuItemAPI,
+  createOptionGroupAPI,
+  deleteMenuCategoryAPI,
+  deleteMenuItemAPI,
+  deleteOptionGroupAPI,
+  duplicateMenuItemAPI,
+  getMenuItemAPI,
+  getMenuItemsAPI,
+  saveItemGroupsAPI,
+  saveItemVariantsAPI,
 } from '../../../food/vendor/menuNetwork';
-import { getAvailability, getPreorderSlots, getToday, savePreorderSlots, saveWeeklyMenu, setAvailability, setToday } from '../../../food/vendor/availabilityNetwork';
-import { getVendorSetup } from '../../../food/vendor/setupNetwork';
-import { getVendorPlan } from '../../../food/vendor/planNetwork';
-import { ApiError } from '../../apiHelpers';
+import { getAvailabilityAPI, getPreorderSlotsAPI, getTodayAPI, savePreorderSlotsAPI, saveWeeklyMenuAPI, setAvailabilityAPI, setTodayAPI } from '../../../food/vendor/availabilityNetwork';
+import { getVendorSetupAPI } from '../../../food/vendor/setupNetwork';
+import { getVendorPlanAPI } from '../../../food/vendor/planNetwork';
+import { ApiError, required } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import { getDb, resetMockDb } from '../mockDb';
 import { signInAs, installDummyApi } from '../testing';
+import { vendorPlanSerializer, vendorSetupSerializer } from '../../../../serializers/food/vendorSerializer';
+import { menuCategorySerializer, optionGroupSerializer, vendorMenuItemSerializer, vendorMenuItemsSerializer, menuAvailabilitySerializer, todayMenuSerializer, weeklyMenuSerializer, preorderSlotsSerializer } from '../../../../serializers/food/menuSerializer';
 
 installDummyApi();
 
@@ -60,9 +62,9 @@ beforeEach(async () => {
 describe('dishes and add-ons', () => {
   it('adds a dish with sizes and add-on groups, and counts it on the plan', async () => {
     await signIn('cloudkitchen@metromatrix.app');
-    const before = (await getVendorPlan()).usage.menu_items;
-    const c = await createMenuCategory({ name: 'Wraps', availableFrom: null, availableTo: null });
-    const g = await createOptionGroup({
+    const before = (required(vendorPlanSerializer(await getVendorPlanAPI()))).usage.menu_items;
+    const c = required(menuCategorySerializer(await createMenuCategoryAPI({ name: 'Wraps', availableFrom: null, availableTo: null })));
+    const g = required(optionGroupSerializer(await createOptionGroupAPI({
       name: 'Choose a sauce',
       minSelect: 1,
       maxSelect: 1,
@@ -70,45 +72,45 @@ describe('dishes and add-ons', () => {
         { name: 'Garlic', priceDelta: 0, isDefault: true, isActive: true },
         { name: 'Chilli', priceDelta: 30, isDefault: false, isActive: true },
       ],
-    });
+    })));
     expect(g).toMatchObject({ required: true, usedByItems: 0 });
-    let item = await createMenuItem({ ...dish, categoryId: c.id, name: 'Chicken wrap', basePrice: 550, tags: ['spicy'] }, [
+    let item = required(vendorMenuItemSerializer(await createMenuItemAPI({ ...dish, categoryId: c.id, name: 'Chicken wrap', basePrice: 550, tags: ['spicy'] }, [
       { name: 'Regular', price: 550 },
       { name: 'Large', price: 750 },
-    ]);
-    item = await saveItemGroups(item.id, [{ groupId: g.id }]);
+    ])));
+    item = required(vendorMenuItemSerializer(await saveItemGroupsAPI(item.id, [{ groupId: g.id }])));
     expect(item.variants.map(v => v.name)).toEqual(['Regular', 'Large']);
     expect(item.optionGroups).toEqual([{ groupId: g.id, variantId: null, sort: 0 }]);
     // Sizes keep their ids when edited; a dropped size is gone.
-    item = await saveItemVariants(item.id, [{ id: item.variants[1].id, name: 'Large', price: 790 }]);
+    item = required(vendorMenuItemSerializer(await saveItemVariantsAPI(item.id, [{ id: item.variants[1].id, name: 'Large', price: 790 }])));
     expect(item.variants).toEqual([expect.objectContaining({ name: 'Large', price: 790 })]);
-    expect((await getVendorPlan()).usage.menu_items).toBe(before + 1);
+    expect((required(vendorPlanSerializer(await getVendorPlanAPI()))).usage.menu_items).toBe(before + 1);
   });
 
   it('refuses an impossible add-on rule and an unknown tag', async () => {
     await signIn('restaurant@metromatrix.app');
-    const e = await failure(createOptionGroup({ name: 'Bad', minSelect: 2, maxSelect: 1, options: [{ name: 'A', priceDelta: 0, isDefault: false, isActive: true }] }));
+    const e = await failure(createOptionGroupAPI({ name: 'Bad', minSelect: 2, maxSelect: 1, options: [{ name: 'A', priceDelta: 0, isDefault: false, isActive: true }] }).then(raw => required(optionGroupSerializer(raw))));
     expect(e.code).toBe('VALIDATION_FAILED');
     expect(e.details?.fields).toHaveProperty('minSelect');
-    const t = await failure(createMenuItem({ ...dish, categoryId: 'mc_resto_biryani', name: 'Odd', basePrice: 100, tags: ['halal' as never] }, []));
+    const t = await failure(createMenuItemAPI({ ...dish, categoryId: 'mc_resto_biryani', name: 'Odd', basePrice: 100, tags: ['halal' as never] }, []).then(raw => required(vendorMenuItemSerializer(raw))));
     expect(t.details?.fields).toHaveProperty('tags');
   });
 
   it('keeps a category while it has dishes; a copy starts hidden; deleting a group takes it off dishes', async () => {
     await signIn('restaurant@metromatrix.app');
-    const e = await failure(deleteMenuCategory('mc_resto_breads'));
+    const e = await failure(deleteMenuCategoryAPI('mc_resto_breads').then(() => true as const));
     expect(e.code).toBe('CONFLICT');
     expect(e.details?.items).toBe(2);
-    const copy = await duplicateMenuItem('mi_chicken_biryani');
+    const copy = required(vendorMenuItemSerializer(await duplicateMenuItemAPI('mi_chicken_biryani')));
     expect(copy).toMatchObject({ name: 'Chicken Biryani (copy)', isActive: false });
     expect(copy.variants).toHaveLength(3);
     expect(copy.optionGroups.map(l => l.groupId)).toEqual(['og_spice', 'og_raita', 'og_drink']);
-    await deleteOptionGroup('og_drink');
-    expect((await getMenuItem('mi_chicken_biryani')).optionGroups.map(l => l.groupId)).toEqual(['og_spice', 'og_raita']);
-    await deleteMenuItem('mi_naan');
-    await deleteMenuItem('mi_roghni');
-    await deleteMenuCategory('mc_resto_breads');
-    expect((await listMenuItems()).some(i => i.categoryId === 'mc_resto_breads')).toBe(false);
+    await deleteOptionGroupAPI('og_drink');
+    expect((required(vendorMenuItemSerializer(await getMenuItemAPI('mi_chicken_biryani')))).optionGroups.map(l => l.groupId)).toEqual(['og_spice', 'og_raita']);
+    await deleteMenuItemAPI('mi_naan');
+    await deleteMenuItemAPI('mi_roghni');
+    await deleteMenuCategoryAPI('mc_resto_breads');
+    expect((required(vendorMenuItemsSerializer(await getMenuItemsAPI()))).some(i => i.categoryId === 'mc_resto_breads')).toBe(false);
   });
 });
 
@@ -116,18 +118,18 @@ describe('what can be ordered now', () => {
   it('switches a dish off until a time; it comes back on its own', async () => {
     await signIn('restaurant@metromatrix.app');
     const until = new Date(T0 + 2 * HOUR).toISOString();
-    const a = await setAvailability({ items: [{ itemId: 'mi_seekh', isAvailable: false, unavailableUntil: until }], options: [{ optionId: 'og_raita_1', isAvailable: false }] });
+    const a = required(menuAvailabilitySerializer(await setAvailabilityAPI({ items: [{ itemId: 'mi_seekh', isAvailable: false, unavailableUntil: until }], options: [{ optionId: 'og_raita_1', isAvailable: false }] })));
     expect(a.items.find(i => i.itemId === 'mi_seekh')).toMatchObject({ isAvailable: false, unavailableUntil: until });
     expect(a.options.find(o => o.optionId === 'og_raita_1')?.isAvailable).toBe(false);
     jest.setSystemTime(T0 + 2 * HOUR + 1);
-    expect((await getAvailability()).items.find(i => i.itemId === 'mi_seekh')).toMatchObject({ isAvailable: true, unavailableUntil: null });
+    expect((required(menuAvailabilitySerializer(await getAvailabilityAPI()))).items.find(i => i.itemId === 'mi_seekh')).toMatchObject({ isAvailable: true, unavailableUntil: null });
   });
 
   it('switches a dish off until the vendor switches it back', async () => {
     await signIn('restaurant@metromatrix.app');
-    await setAvailability({ items: [{ itemId: 'mi_soft', isAvailable: false }] });
+    await setAvailabilityAPI({ items: [{ itemId: 'mi_soft', isAvailable: false }] });
     jest.setSystemTime(T0 + 48 * HOUR);
-    expect((await getAvailability()).items.find(i => i.itemId === 'mi_soft')?.isAvailable).toBe(false);
+    expect((required(menuAvailabilitySerializer(await getAvailabilityAPI()))).items.find(i => i.itemId === 'mi_soft')?.isAvailable).toBe(false);
   });
 });
 
@@ -135,43 +137,43 @@ describe("a home kitchen's day", () => {
   it('sets portions (what is left resets) and takes a dish off for today', async () => {
     await signIn('homekitchen@metromatrix.app');
     // Thursday: qorma and aloo keema are on; daal (Mon/Wed/Fri) is not.
-    const t = await getToday();
+    const t = required(todayMenuSerializer(await getTodayAPI()));
     expect(t.weekday).toBe(4);
     expect(t.items.find(i => i.itemId === 'mi_daal')?.onTodaysMenu).toBe(false);
-    const after = await setToday([
+    const after = required(todayMenuSerializer(await setTodayAPI([
       { itemId: 'mi_qorma', portions: 30 },
       { itemId: 'mi_aloo_keema', cooking: false },
-    ]);
+    ])));
     expect(after.items.find(i => i.itemId === 'mi_qorma')).toMatchObject({ dailyLimit: 30, remainingToday: 30, sold: 0 });
     expect(after.items.find(i => i.itemId === 'mi_aloo_keema')?.cooking).toBe(false);
   });
 
   it('resets what is left to the day’s portions on a new day', async () => {
     await signIn('homekitchen@metromatrix.app');
-    await setToday([{ itemId: 'mi_qorma', portions: 20 }]);
+    await setTodayAPI([{ itemId: 'mi_qorma', portions: 20 }]);
     const db = await getDb();
     db.food.items.find(i => i.id === 'mi_qorma')!.override!.remainingToday = 3;
-    expect((await getToday()).items.find(i => i.itemId === 'mi_qorma')).toMatchObject({ remainingToday: 3, sold: 17 });
+    expect((required(todayMenuSerializer(await getTodayAPI()))).items.find(i => i.itemId === 'mi_qorma')).toMatchObject({ remainingToday: 3, sold: 17 });
     jest.setSystemTime(T0 + 24 * HOUR);
-    expect((await getToday()).items.find(i => i.itemId === 'mi_qorma')).toMatchObject({ dailyLimit: 20, remainingToday: 20, sold: 0 });
+    expect((required(todayMenuSerializer(await getTodayAPI()))).items.find(i => i.itemId === 'mi_qorma')).toMatchObject({ dailyLimit: 20, remainingToday: 20, sold: 0 });
   });
 
   it('saves the weekly menu and pre-order slots; slots are for home kitchens only', async () => {
     await signIn('homekitchen@metromatrix.app');
-    const week = await saveWeeklyMenu([{ itemId: 'mi_pulao', days: [5, 0] }]);
+    const week = required(weeklyMenuSerializer(await saveWeeklyMenuAPI([{ itemId: 'mi_pulao', days: [5, 0] }])));
     expect(week.find(e => e.itemId === 'mi_pulao')?.days).toEqual([0, 5]);
-    expect((await failure(savePreorderSlots([{ weekday: 5, slotStart: '13:00', cutoffMinutesBefore: 180, maxOrders: 10 }, { weekday: 5, slotStart: '13:00', cutoffMinutesBefore: 60, maxOrders: 5 }]))).message).toBe(
+    expect((await failure(savePreorderSlotsAPI([{ weekday: 5, slotStart: '13:00', cutoffMinutesBefore: 180, maxOrders: 10 }, { weekday: 5, slotStart: '13:00', cutoffMinutesBefore: 60, maxOrders: 5 }]).then(raw => required(preorderSlotsSerializer(raw))))).message).toBe(
       'Two slots at the same time.',
     );
-    await savePreorderSlots([{ weekday: 5, slotStart: '13:00', cutoffMinutesBefore: 180, maxOrders: 10 }]);
-    expect(await getPreorderSlots()).toEqual([expect.objectContaining({ weekday: 5, slotStart: '13:00', maxOrders: 10 })]);
+    await savePreorderSlotsAPI([{ weekday: 5, slotStart: '13:00', cutoffMinutesBefore: 180, maxOrders: 10 }]);
+    expect(required(preorderSlotsSerializer(await getPreorderSlotsAPI()))).toEqual([expect.objectContaining({ weekday: 5, slotStart: '13:00', maxOrders: 10 })]);
     await signIn('restaurant@metromatrix.app');
-    expect((await failure(savePreorderSlots([]))).message).toBe('Pre-order slots are for home kitchens.');
+    expect((await failure(savePreorderSlotsAPI([]).then(raw => required(preorderSlotsSerializer(raw))))).message).toBe('Pre-order slots are for home kitchens.');
   });
 
   it('puts the menu and portions on the checklist', async () => {
     await signIn('homekitchen@metromatrix.app');
-    const s = await getVendorSetup();
+    const s = required(vendorSetupSerializer(await getVendorSetupAPI()));
     expect(s.items.find(i => i.key === 'menu')).toMatchObject({ required: true, done: true });
     expect(s.items.find(i => i.key === 'portions')).toMatchObject({ required: true, done: true });
     expect(s.items.find(i => i.key === 'slots')).toMatchObject({ required: false });

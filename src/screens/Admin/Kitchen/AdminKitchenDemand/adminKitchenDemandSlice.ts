@@ -7,8 +7,8 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { getPlatformDemand } from '@networks/admin/adminKitchenNetwork';
-import { listAdminCuisines } from '@networks/admin/adminFoodNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getAdminCuisinesAPI } from '@networks/admin/adminFoodNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { AdminCuisine, AdminDemandMap } from '@/types';
 import {
   NO_ERROR,
@@ -16,6 +16,7 @@ import {
   type FormStatus,
   type ServerError,
 } from '../../../Auth/shared/formStatus';
+import { adminCuisinesSerializer } from '@serializers/food/adminFoodSerializer';
 
 export interface DemandFilter {
   city: string;
@@ -53,7 +54,7 @@ export const adminKitchenDemandSlice = createAppSlice({
         try {
           const [data, cuisines] = await Promise.all([
             getPlatformDemand({ city: input.city, cuisine: input.cuisine, hour: input.hour }),
-            input.withCuisines ? listAdminCuisines() : Promise.resolve(null),
+            input.withCuisines ? getAdminCuisinesAPI().then(raw => required(adminCuisinesSerializer(raw))) : Promise.resolve(null),
           ]);
           return { data, cuisines };
         } catch (e) {

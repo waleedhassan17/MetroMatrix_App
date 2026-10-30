@@ -1,9 +1,10 @@
 // MetroMatrix — Food vendor plan: the free Community plan and what's used of it.
 import { createAppSlice } from '@store/createAppSlice';
-import { getVendorPlan } from '@networks/food/vendor/planNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getVendorPlanAPI } from '@networks/food/vendor/planNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { VendorPlan } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { vendorPlanSerializer } from '@serializers/food/vendorSerializer';
 
 export interface VendorPlanSliceState {
   plan: VendorPlan | null;
@@ -20,7 +21,7 @@ export const vendorPlanSlice = createAppSlice({
     loadVendorPlanAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await getVendorPlan();
+          return required(vendorPlanSerializer(await getVendorPlanAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

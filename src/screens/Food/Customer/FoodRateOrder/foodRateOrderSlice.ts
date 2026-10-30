@@ -4,11 +4,12 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { reviewFoodOrder } from '@networks/food/reviewsNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { reviewFoodOrderAPI } from '@networks/food/reviewsNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { FoodReviewInput, FoodReviewTag, LocalFile } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { pendingPhoto, photoFailed, photoProgress, photoUploaded, upload, type FormPhoto } from '../../../Shopping/Customer/shared/photoUploads';
+import { foodReviewSerializer } from '@serializers/food/reviewSerializer';
 
 export interface FoodRateOrderSliceState {
   code: string | null;
@@ -89,7 +90,7 @@ export const foodRateOrderSlice = createAppSlice({
     submitFoodRatingAsync: create.asyncThunk(
       async ({ code, input }: { code: string; input: FoodReviewInput }, { rejectWithValue }) => {
         try {
-          return await reviewFoodOrder(code, input);
+          return required(foodReviewSerializer(await reviewFoodOrderAPI(code, input)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

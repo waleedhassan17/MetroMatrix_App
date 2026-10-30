@@ -13,7 +13,7 @@ import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { usePagedList } from '@hooks/usePagedList';
-import { listAdminFoodReviews } from '@networks/admin/adminFoodNetwork';
+import { getAdminFoodReviewsAPI } from '@networks/admin/adminFoodNetwork';
 import { HIDE_REVIEW_REASONS, validateHideFoodReview } from '@models/food/adminFoodModel';
 import { useStyles, type Theme } from '@theme/index';
 import {
@@ -41,6 +41,7 @@ import {
   setFoodReviewsVendor,
   touchFoodHideReason,
 } from './adminFoodReviewsSlice';
+import { adminFoodReviewsPageSerializer } from '@serializers/food/adminFoodSerializer';
 
 type Props = NativeStackScreenProps<AdminFoodStackParamList, 'AdminFoodReviews'>;
 
@@ -65,11 +66,8 @@ const AdminFoodReviewsScreen: React.FC<Props> = ({ route }) => {
   const s = useAppSelector(selectAdminFoodReviews);
   const list = usePagedList(
     (page, size) =>
-      listAdminFoodReviews(
-        { hidden: s.hidden, maxRating: s.lowOnly ? 2 : undefined, vendorId: s.vendor?.id },
-        page,
-        size,
-      ),
+      getAdminFoodReviewsAPI({ hidden: s.hidden, maxRating: s.lowOnly ? 2 : undefined, vendorId: s.vendor?.id }, page, size),
+    adminFoodReviewsPageSerializer,
     `admin-food-reviews|${s.hidden}|${s.lowOnly}|${s.vendor?.id}`,
   );
   const reasonError = s.reasonTouched ? validateHideFoodReview(s.reason).reason : undefined;

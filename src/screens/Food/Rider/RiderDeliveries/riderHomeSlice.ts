@@ -7,10 +7,11 @@
 // working now. History is a paged list (usePagedList).
 
 import { createAppSlice } from '@store/createAppSlice';
-import { getRiderHome, listRiderOrders, setDuty } from '@networks/food/rider/riderNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getRiderHomeAPI, getRiderOrdersAPI, setDutyAPI } from '@networks/food/rider/riderNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { RiderHome, RiderOrder } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { riderHomeSerializer, riderOrdersPageSerializer, riderDutySerializer } from '@serializers/food/riderSerializer';
 
 export interface RiderHomeSliceState {
   home: RiderHome | null;
@@ -32,7 +33,7 @@ export const riderHomeSlice = createAppSlice({
     loadRiderHomeAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await getRiderHome();
+          return required(riderHomeSerializer(await getRiderHomeAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -56,7 +57,7 @@ export const riderHomeSlice = createAppSlice({
     loadRiderDeliveriesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return (await listRiderOrders('active', 1, 50)).items;
+          return (required(riderOrdersPageSerializer(await getRiderOrdersAPI('active', 1, 50)))).items;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -78,7 +79,7 @@ export const riderHomeSlice = createAppSlice({
     setDutyAsync: create.asyncThunk(
       async (onDuty: boolean, { rejectWithValue }) => {
         try {
-          return await setDuty(onDuty);
+          return required(riderDutySerializer(await setDutyAPI(onDuty)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

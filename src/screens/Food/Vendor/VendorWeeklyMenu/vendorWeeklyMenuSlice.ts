@@ -5,12 +5,13 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { listMenuItems } from '@networks/food/vendor/menuNetwork';
-import { saveWeeklyMenu } from '@networks/food/vendor/availabilityNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getMenuItemsAPI } from '@networks/food/vendor/menuNetwork';
+import { saveWeeklyMenuAPI } from '@networks/food/vendor/availabilityNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { WeeklyMenuEntry } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { menuChanged } from '../VendorMenu/vendorMenuSlice';
+import { vendorMenuItemsSerializer, weeklyMenuSerializer } from '@serializers/food/menuSerializer';
 
 export interface VendorWeeklyMenuSliceState {
   saved: WeeklyMenuEntry[];
@@ -39,7 +40,7 @@ export const vendorWeeklyMenuSlice = createAppSlice({
     loadWeeklyMenuAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return (await listMenuItems()).map(i => ({ itemId: i.id, name: i.name, days: i.days }));
+          return (required(vendorMenuItemsSerializer(await getMenuItemsAPI()))).map(i => ({ itemId: i.id, name: i.name, days: i.days }));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -65,7 +66,7 @@ export const vendorWeeklyMenuSlice = createAppSlice({
         const { saved, days } = (getState() as { vendorWeeklyMenu: VendorWeeklyMenuSliceState }).vendorWeeklyMenu;
         const changed = saved.filter(r => JSON.stringify(r.days) !== JSON.stringify(days[r.itemId])).map(r => ({ itemId: r.itemId, days: days[r.itemId] }));
         try {
-          const out = changed.length ? await saveWeeklyMenu(changed) : saved;
+          const out = changed.length ? required(weeklyMenuSerializer(await saveWeeklyMenuAPI(changed))) : saved;
           dispatch(menuChanged());
           return out;
         } catch (e) {

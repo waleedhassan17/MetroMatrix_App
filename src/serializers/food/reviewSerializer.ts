@@ -19,7 +19,7 @@ import type {
   VendorReview,
 } from '../../types/food';
 import type { Paged } from '../../types/payments';
-import { arr, enumList, isObject, num, oneOf, str, strOrNull } from '../serializerUtils';
+import { arr, enumList, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { paged } from '../shopping/common';
 import { FOOD_ORDER_STATUSES } from './orderSerializer';
 
@@ -31,7 +31,7 @@ const stars = (v: unknown) => Math.max(1, Math.min(5, Math.round(num(v, 5))));
 const rate = (v: unknown): number | null => (v === null || v === undefined || !Number.isFinite(Number(v)) ? null : Math.max(0, Math.min(1, Number(v))));
 const numOrNull = (v: unknown): number | null => (v === null || v === undefined || !Number.isFinite(Number(v)) ? null : Number(v));
 
-export const foodReviewSerializer = (raw: unknown): FoodReview | null => {
+export const foodReviewSerializer = fromResponse((raw: unknown): FoodReview | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
   return {
     id: str(raw.id),
@@ -45,16 +45,16 @@ export const foodReviewSerializer = (raw: unknown): FoodReview | null => {
     repliedAt: strOrNull(raw.repliedAt),
     createdAt: str(raw.createdAt),
   };
-};
+});
 
-export const foodReviewsPageSerializer = (raw: unknown): Paged<FoodReview> => paged(raw, foodReviewSerializer);
+export const foodReviewsPageSerializer = fromResponse((raw: unknown): Paged<FoodReview> => paged(raw, foodReviewSerializer));
 
 export const vendorReviewSerializer = (raw: unknown): VendorReview | null => {
   const r = foodReviewSerializer(raw);
   return r && isObject(raw) ? { ...r, orderCode: strOrNull(raw.orderCode) } : null;
 };
 
-export const vendorReviewsPageSerializer = (raw: unknown): Paged<VendorReview> => paged(raw, vendorReviewSerializer);
+export const vendorReviewsPageSerializer = fromResponse((raw: unknown): Paged<VendorReview> => paged(raw, vendorReviewSerializer));
 
 /** The vendor page's rating block; null when the API sends none (no reviews yet). */
 export const ratingSummarySerializer = (raw: unknown): FoodRatingSummary | null => {
@@ -74,7 +74,7 @@ export const ratingSummarySerializer = (raw: unknown): FoodRatingSummary | null 
   };
 };
 
-export const foodInsightsSerializer = (raw: unknown): FoodInsights | null => {
+export const foodInsightsSerializer = fromResponse((raw: unknown): FoodInsights | null => {
   if (!isObject(raw)) return null;
   const range = isObject(raw.range) ? raw.range : {};
   const t = isObject(raw.totals) ? raw.totals : {};
@@ -104,7 +104,7 @@ export const foodInsightsSerializer = (raw: unknown): FoodInsights | null => {
     topItems: compact(arr(raw.topItems).map(i => (isObject(i) && str(i.name) ? { name: str(i.name), quantity: count(i.quantity), recordedSales: count(i.recordedSales) } : null))),
     repeatCustomers: { customers: count(rc.customers), repeat: count(rc.repeat), rate: rate(rc.rate) },
   };
-};
+});
 
 const bannerTargetSerializer = (raw: unknown): FoodBannerTarget | null => {
   if (!isObject(raw)) return null;

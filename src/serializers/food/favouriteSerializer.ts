@@ -20,10 +20,13 @@ export const foodFavouriteSerializer = (raw: unknown): FoodFavourite | null => {
   };
 };
 
-export const foodFavouritesSerializer = (raw: unknown): FoodFavourite[] =>
+export const foodFavouritesSerializer = fromResponse((raw: unknown): FoodFavourite[] =>
   arr(isObject(raw) ? raw.items : raw)
     .map(foodFavouriteSerializer)
-    .filter((f): f is FoodFavourite => f !== null);
+    .filter((f): f is FoodFavourite => f !== null));
 
 /** Removing a favourite: true once it is gone. */
 export const unfavouritedSerializer = fromResponse(raw => (isObject(raw) ? raw.favourite === false : null));
+
+/** Saving a favourite: true once it is saved. */
+export const favouritedSerializer = fromResponse(raw => (isObject(raw) ? raw.favourite === true : null));

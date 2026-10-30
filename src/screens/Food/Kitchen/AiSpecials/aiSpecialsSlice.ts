@@ -4,13 +4,14 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { suggestSpecials } from '@networks/kitchen/kitchenAiNetwork';
-import { createMenuItem, listMenuCategories } from '@networks/food/vendor/menuNetwork';
+import { createMenuItemAPI, getMenuCategoriesAPI } from '@networks/food/vendor/menuNetwork';
 import { saveRecipe } from '@networks/kitchen/recipesNetwork';
 import { getKitchenSettings } from '@networks/kitchen/costingNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { specialItemInput, specialRecipe } from '@models/kitchen/assistantModel';
 import type { DraftCategory, MenuCategory, SpecialIdea } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { menuCategoriesSerializer, vendorMenuItemSerializer } from '@serializers/food/menuSerializer';
 
 export interface AiSpecialsSliceState {
   ideas: SpecialIdea[];
@@ -56,7 +57,7 @@ export const aiSpecialsSlice = createAppSlice({
     suggestSpecialsAsync: create.asyncThunk(
       async (ingredientIds: string[] | undefined, { rejectWithValue }) => {
         try {
-          const [ideas, categories, settings] = await Promise.all([suggestSpecials(ingredientIds), listMenuCategories(), getKitchenSettings()]);
+          const [ideas, categories, settings] = await Promise.all([suggestSpecials(ingredientIds), getMenuCategoriesAPI().then(raw => required(menuCategoriesSerializer(raw))), getKitchenSettings()]);
           return { ...ideas, categories, targetPct: settings.targetFoodCostPct };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -88,7 +89,7 @@ export const aiSpecialsSlice = createAppSlice({
     createSpecialAsync: create.asyncThunk(
       async ({ idea, categoryId, price }: { idea: SpecialIdea; categoryId: string; price: number }, { rejectWithValue }) => {
         try {
-          const item = await createMenuItem(specialItemInput(idea, categoryId, price), []);
+          const item = required(vendorMenuItemSerializer(await createMenuItemAPI(specialItemInput(idea, categoryId, price), [])));
           await saveRecipe(item.id, null, specialRecipe(idea));
           return item;
         } catch (e) {

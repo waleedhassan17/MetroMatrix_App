@@ -1,81 +1,204 @@
-// MetroMatrix — Admin Food console.
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Admin Food Network (API_FOOD.md)
+// ═══════════════════════════════════════════════════════
 // MetroMatrix-API docs/API_FOOD.md §4.5. Every write is audited by the API.
 // Orders are read-only here (disputes); food approvals stay in the Chunk 1
 // queue (/admin/businesses).
 
-import { api } from '../network/apiHelpers';
-import { adminCuisineSerializer, adminCuisinesSerializer, adminFeaturedSerializer, adminFoodBannerSerializer, adminFoodBannersSerializer, adminFoodOrderSerializer, adminFoodOrdersPageSerializer, adminFoodOverviewSerializer, adminFoodReviewsPageSerializer, adminFoodVendorSerializer, adminFoodVendorsPageSerializer, adminHiddenSerializer, adminSuspensionSerializer, foodSafetyOutcomeSerializer } from '../../serializers/food/adminFoodSerializer';
-import { vendorPlanSerializer } from '../../serializers/food/vendorSerializer';
-import { isObject, str } from '../../serializers/serializerUtils';
+import { api, toApiError, clean, pageParams } from '../network/apiHelpers';
 import type { AdminCuisineInput, AdminFoodBannerInput, AdminFoodOrderQuery, AdminFoodReviewQuery, AdminFoodVendorQuery, PlanOverrides } from '../../types/food';
-import { ack, clean, pageParams, request } from '../shopping/http';
 
 const A = '/admin/food';
 const enc = encodeURIComponent;
 
-export const getFoodOverview = () => request(() => api.get(`${A}/overview`), adminFoodOverviewSerializer);
+export const getFoodOverviewAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get(`${A}/overview`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listAdminFoodVendors = (query: AdminFoodVendorQuery, page: number, pageSize: number) =>
-  request(() => api.get(`${A}/vendors`, { params: clean({ ...query, q: query.q?.trim(), ...pageParams(page, pageSize) }) }), adminFoodVendorsPageSerializer);
+export const getAdminFoodVendorsAPI = async (query: AdminFoodVendorQuery, page: number, pageSize: number): Promise<unknown> => {
+  try {
+    const response = await api.get(`${A}/vendors`, { params: clean({ ...query, q: query.q?.trim(), ...pageParams(page, pageSize) }) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getAdminFoodVendor = (id: string) => request(() => api.get(`${A}/vendors/${enc(id)}`), adminFoodVendorSerializer);
+export const getAdminFoodVendorAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`${A}/vendors/${enc(id)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const setVendorFeatured = (id: string, featured: boolean) =>
-  request(() => api.post(`${A}/vendors/${enc(id)}/${featured ? 'feature' : 'unfeature'}`), adminFeaturedSerializer);
+export const setVendorFeaturedAPI = async (id: string, featured: boolean): Promise<unknown> => {
+  try {
+    const response = await api.post(`${A}/vendors/${enc(id)}/${featured ? 'feature' : 'unfeature'}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** The business suspension: hidden at once; the owner and customers with an active order are told. */
-export const setVendorSuspended = (id: string, suspended: boolean, reason: string) =>
-  request(() => api.post(`${A}/vendors/${enc(id)}/${suspended ? 'suspend' : 'reinstate'}`, { reason: reason.trim() }), adminSuspensionSerializer);
+export const setVendorSuspendedAPI = async (id: string, suspended: boolean, reason: string): Promise<unknown> => {
+  try {
+    const response = await api.post(`${A}/vendors/${enc(id)}/${suspended ? 'suspend' : 'reinstate'}`, { reason: reason.trim() });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getAdminVendorPlan = (id: string) => request(() => api.get(`${A}/vendors/${enc(id)}/plan`), vendorPlanSerializer);
+export const getAdminVendorPlanAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`${A}/vendors/${enc(id)}/plan`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** Takes effect at once; riders beyond a lowered limit are locked out (one mid-delivery keeps the seat). null: back to the plan as it is. */
-export const setVendorPlanOverrides = (id: string, overrides: PlanOverrides | null) =>
-  request(() => api.patch(`${A}/vendors/${enc(id)}/plan`, { overrides }), vendorPlanSerializer);
+export const setVendorPlanOverridesAPI = async (id: string, overrides: PlanOverrides | null): Promise<unknown> => {
+  try {
+    const response = await api.patch(`${A}/vendors/${enc(id)}/plan`, { overrides });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** Home kitchens: required before they can go live. */
-export const recordFoodSafetyCheck = (branchId: string, outcome: 'passed' | 'failed', note: string) =>
-  request(() => api.post(`${A}/branches/${enc(branchId)}/food-safety-check`, { outcome, note: note.trim() }), foodSafetyOutcomeSerializer);
+export const recordFoodSafetyCheckAPI = async (branchId: string, outcome: 'passed' | 'failed', note: string): Promise<unknown> => {
+  try {
+    const response = await api.post(`${A}/branches/${enc(branchId)}/food-safety-check`, { outcome, note: note.trim() });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listAdminFoodOrders = (query: AdminFoodOrderQuery, page: number, pageSize: number) =>
-  request(() => api.get(`${A}/orders`, { params: clean({ ...query, code: query.code?.trim().toUpperCase(), ...pageParams(page, pageSize) }) }), adminFoodOrdersPageSerializer);
+export const getAdminFoodOrdersAPI = async (query: AdminFoodOrderQuery, page: number, pageSize: number): Promise<unknown> => {
+  try {
+    const response = await api.get(`${A}/orders`, { params: clean({ ...query, code: query.code?.trim().toUpperCase(), ...pageParams(page, pageSize) }) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getAdminFoodOrder = (id: string) => request(() => api.get(`${A}/orders/${enc(id)}`), adminFoodOrderSerializer);
+export const getAdminFoodOrderAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`${A}/orders/${enc(id)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listAdminFoodReviews = (query: AdminFoodReviewQuery, page: number, pageSize: number) =>
-  request(
-    () =>
-      api.get(`${A}/reviews`, {
+export const getAdminFoodReviewsAPI = async (query: AdminFoodReviewQuery, page: number, pageSize: number): Promise<unknown> => {
+  try {
+    const response = await api.get(`${A}/reviews`, {
         params: clean({ vendorId: query.vendorId, hidden: query.hidden === undefined ? undefined : String(query.hidden), maxRating: query.maxRating, ...pageParams(page, pageSize) }),
-      }),
-    adminFoodReviewsPageSerializer,
-  );
+      });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** Hidden reviews leave every rating and list. */
-export const setFoodReviewHidden = (id: string, hidden: boolean, reason: string | null) =>
-  request(() => api.post(`${A}/reviews/${enc(id)}/${hidden ? 'hide' : 'unhide'}`, hidden ? { reason: reason?.trim() } : {}), adminHiddenSerializer);
+export const setFoodReviewHiddenAPI = async (id: string, hidden: boolean, reason: string | null): Promise<unknown> => {
+  try {
+    const response = await api.post(`${A}/reviews/${enc(id)}/${hidden ? 'hide' : 'unhide'}`, hidden ? { reason: reason?.trim() } : {});
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listAdminCuisines = () => request(() => api.get(`${A}/cuisines`), adminCuisinesSerializer);
+export const getAdminCuisinesAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get(`${A}/cuisines`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const createCuisine = (input: AdminCuisineInput) =>
-  request(() => api.post(`${A}/cuisines`, { name: input.name.trim(), slug: input.slug, icon: input.icon || input.slug, sort: input.sort }), adminCuisineSerializer);
+export const createCuisineAPI = async (input: AdminCuisineInput): Promise<unknown> => {
+  try {
+    const response = await api.post(`${A}/cuisines`, { name: input.name.trim(), slug: input.slug, icon: input.icon || input.slug, sort: input.sort });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const updateCuisine = (id: string, input: Partial<AdminCuisineInput> & { isActive?: boolean }) =>
-  request(() => api.patch(`${A}/cuisines/${enc(id)}`, input), adminCuisineSerializer);
+export const updateCuisineAPI = async (id: string, input: Partial<AdminCuisineInput> & { isActive?: boolean }): Promise<unknown> => {
+  try {
+    const response = await api.patch(`${A}/cuisines/${enc(id)}`, input);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** Only a cuisine no vendor uses (409 CONFLICT otherwise: turn it off instead). */
-export const deleteCuisine = (id: string) => request(() => api.delete(`${A}/cuisines/${enc(id)}`), ack);
+export const deleteCuisineAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.delete(`${A}/cuisines/${enc(id)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listAdminFoodBanners = () => request(() => api.get(`${A}/banners`), adminFoodBannersSerializer);
+export const getAdminFoodBannersAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get(`${A}/banners`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 const bannerBody = (b: Partial<AdminFoodBannerInput>) => ({
   ...b,
   ...(b.targetType === 'search' ? { targetId: null } : b.targetType ? { targetQuery: null } : null),
 });
 
-export const createFoodBanner = (input: AdminFoodBannerInput) => request(() => api.post(`${A}/banners`, bannerBody(input)), adminFoodBannerSerializer);
+export const createFoodBannerAPI = async (input: AdminFoodBannerInput): Promise<unknown> => {
+  try {
+    const response = await api.post(`${A}/banners`, bannerBody(input));
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const updateFoodBanner = (id: string, input: Partial<AdminFoodBannerInput>) =>
-  request(() => api.patch(`${A}/banners/${enc(id)}`, bannerBody(input)), adminFoodBannerSerializer);
+export const updateFoodBannerAPI = async (id: string, input: Partial<AdminFoodBannerInput>): Promise<unknown> => {
+  try {
+    const response = await api.patch(`${A}/banners/${enc(id)}`, bannerBody(input));
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const deleteFoodBanner = (id: string) => request(() => api.delete(`${A}/banners/${enc(id)}`), ack);
+export const deleteFoodBannerAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.delete(`${A}/banners/${enc(id)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

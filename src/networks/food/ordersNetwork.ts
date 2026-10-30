@@ -1,46 +1,83 @@
-// MetroMatrix — Food Court: placing an order and following it (customer).
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Food Orders Network (API_FOOD.md)
+// ═══════════════════════════════════════════════════════
+// Placing an order and following it (customer).
 // docs/API_FOOD.md §4.2: /food/checkout, /food/orders (+ /:code, /tracking,
 // /cancel, /payment-proof, /reorder).
 
-import { api } from '../network/apiHelpers';
-import { foodCartSerializer, foodOrderSerializer, foodOrdersPageSerializer, foodTrackingSerializer, reorderSerializer } from '../../serializers/food/orderSerializer';
-import { isObject } from '../../serializers/serializerUtils';
+import { api, toApiError } from '../network/apiHelpers';
 import type { FoodCheckoutInput } from '../../types/food';
-import { request } from '../shopping/http';
 import { orderDetails } from './cartNetwork';
 
 const enc = encodeURIComponent;
 
 /** One Idempotency-Key per attempt: a retry can never place the order twice. */
-export const placeFoodOrder = (input: FoodCheckoutInput, idempotencyKey: string) =>
-  request(
-    () =>
-      api.post(
+export const placeFoodOrderAPI = async (input: FoodCheckoutInput, idempotencyKey: string): Promise<unknown> => {
+  try {
+    const response = await api.post(
         '/food/checkout',
         // The kitchen's own link or QR it came through (TODO(API_KITCHEN): docs/API_KITCHEN_ASSUMED.md §5).
         { ...orderDetails(input), ...(input.source ? { source: { kind: input.source.kind, slug: input.source.slug } } : null) },
         { headers: { 'Idempotency-Key': idempotencyKey } },
-      ),
-    foodOrderSerializer,
-  );
+      );
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listFoodOrders = (status: 'active' | 'past', page: number, pageSize: number) =>
-  request(() => api.get('/food/orders', { params: { status, page, pageSize } }), foodOrdersPageSerializer);
+export const getFoodOrdersAPI = async (status: 'active' | 'past', page: number, pageSize: number): Promise<unknown> => {
+  try {
+    const response = await api.get('/food/orders', { params: { status, page, pageSize } });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getFoodOrder = (code: string) => request(() => api.get(`/food/orders/${enc(code)}`), foodOrderSerializer);
+export const getFoodOrderAPI = async (code: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`/food/orders/${enc(code)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getFoodTracking = (code: string) => request(() => api.get(`/food/orders/${enc(code)}/tracking`), foodTrackingSerializer);
+export const getFoodTrackingAPI = async (code: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`/food/orders/${enc(code)}/tracking`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** Only while the vendor hasn't answered yet. */
-export const cancelFoodOrder = (code: string, reason: string | null) =>
-  request(() => api.post(`/food/orders/${enc(code)}/cancel`, reason ? { reason } : {}), foodOrderSerializer);
+export const cancelFoodOrderAPI = async (code: string, reason: string | null): Promise<unknown> => {
+  try {
+    const response = await api.post(`/food/orders/${enc(code)}/cancel`, reason ? { reason } : {});
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const submitFoodPaymentProof = (code: string, input: { paymentRef: string; proofUrl: string | null }) =>
-  request(() => api.post(`/food/orders/${enc(code)}/payment-proof`, input), foodOrderSerializer);
+export const submitFoodPaymentProofAPI = async (code: string, input: { paymentRef: string; proofUrl: string | null }): Promise<unknown> => {
+  try {
+    const response = await api.post(`/food/orders/${enc(code)}/payment-proof`, input);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** Back into the bag; dishes that are gone are dropped, new prices said. */
-export const reorderFood = (code: string) =>
-  request(
-    () => api.post(`/food/orders/${enc(code)}/reorder`),
-    reorderSerializer,
-  );
+export const reorderFoodAPI = async (code: string): Promise<unknown> => {
+  try {
+    const response = await api.post(`/food/orders/${enc(code)}/reorder`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

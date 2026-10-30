@@ -19,7 +19,7 @@ import type {
   VendorMenuItem,
   WeeklyMenuEntry,
 } from '../../types/food';
-import { arr, bool, isObject, num, str, strOrNull } from '../serializerUtils';
+import { arr, bool, isObject, num, str, strOrNull, fromResponse } from '../serializerUtils';
 
 export const ITEM_TAGS: readonly ItemTag[] = ['spicy', 'veg', 'bestseller', 'new', 'contains_nuts'];
 
@@ -36,7 +36,7 @@ const isoOrNull = (v: unknown): string | null => {
 const weekdays = (v: unknown): number[] =>
   [...new Set(arr(v).map(d => Math.round(num(d, -1))).filter(d => d >= 0 && d <= 6))].sort((a, b) => a - b);
 
-export const menuCategorySerializer = (raw: unknown): MenuCategory | null => {
+export const menuCategorySerializer = fromResponse((raw: unknown): MenuCategory | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
   const from = hhmm(raw.availableFrom);
   const to = hhmm(raw.availableTo);
@@ -49,10 +49,10 @@ export const menuCategorySerializer = (raw: unknown): MenuCategory | null => {
     isActive: raw.isActive !== false,
     itemCount: Math.max(0, Math.round(num(raw.itemCount))),
   };
-};
+});
 
-export const menuCategoriesSerializer = (raw: unknown): MenuCategory[] =>
-  compact(arr(raw).map(menuCategorySerializer)).sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name));
+export const menuCategoriesSerializer = fromResponse((raw: unknown): MenuCategory[] =>
+  compact(arr(raw).map(menuCategorySerializer)).sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name)));
 
 const variantSerializer = (raw: unknown): ItemVariant | null =>
   isObject(raw) && str(raw.id) ? { id: str(raw.id), name: str(raw.name), price: Math.max(0, Math.round(num(raw.price))) } : null;
@@ -60,7 +60,7 @@ const variantSerializer = (raw: unknown): ItemVariant | null =>
 const linkSerializer = (raw: unknown): ItemGroupLink | null =>
   isObject(raw) && str(raw.groupId) ? { groupId: str(raw.groupId), variantId: strOrNull(raw.variantId), sort: num(raw.sort) } : null;
 
-export const vendorMenuItemSerializer = (raw: unknown): VendorMenuItem | null => {
+export const vendorMenuItemSerializer = fromResponse((raw: unknown): VendorMenuItem | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
   const days = weekdays(raw.days);
   return {
@@ -80,16 +80,16 @@ export const vendorMenuItemSerializer = (raw: unknown): VendorMenuItem | null =>
     variants: compact(arr(raw.variants).map(variantSerializer)),
     optionGroups: compact(arr(raw.optionGroups).map(linkSerializer)).sort((a, b) => a.sort - b.sort),
   };
-};
+});
 
-export const vendorMenuItemsSerializer = (raw: unknown): VendorMenuItem[] => compact(arr(raw).map(vendorMenuItemSerializer));
+export const vendorMenuItemsSerializer = fromResponse((raw: unknown): VendorMenuItem[] => compact(arr(raw).map(vendorMenuItemSerializer)));
 
 const optionSerializer = (raw: unknown): MenuOption | null =>
   isObject(raw) && str(raw.id)
     ? { id: str(raw.id), name: str(raw.name), priceDelta: Math.round(num(raw.priceDelta)), isDefault: bool(raw.isDefault), isActive: raw.isActive !== false }
     : null;
 
-export const optionGroupSerializer = (raw: unknown): OptionGroup | null => {
+export const optionGroupSerializer = fromResponse((raw: unknown): OptionGroup | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
   const minSelect = Math.max(0, Math.round(num(raw.minSelect)));
   return {
@@ -101,9 +101,9 @@ export const optionGroupSerializer = (raw: unknown): OptionGroup | null => {
     usedByItems: Math.max(0, Math.round(num(raw.usedByItems))),
     options: compact(arr(raw.options).map(optionSerializer)),
   };
-};
+});
 
-export const optionGroupsSerializer = (raw: unknown): OptionGroup[] => compact(arr(raw).map(optionGroupSerializer));
+export const optionGroupsSerializer = fromResponse((raw: unknown): OptionGroup[] => compact(arr(raw).map(optionGroupSerializer)));
 
 const availabilityItemSerializer = (raw: unknown): AvailabilityItem | null =>
   isObject(raw) && str(raw.itemId)
@@ -123,10 +123,10 @@ const availabilityOptionSerializer = (raw: unknown): AvailabilityOption | null =
     ? { optionId: str(raw.optionId), name: str(raw.name), group: str(raw.group), isAvailable: raw.isAvailable !== false }
     : null;
 
-export const menuAvailabilitySerializer = (raw: unknown): MenuAvailability => {
+export const menuAvailabilitySerializer = fromResponse((raw: unknown): MenuAvailability => {
   const r = isObject(raw) ? raw : {};
   return { items: compact(arr(r.items).map(availabilityItemSerializer)), options: compact(arr(r.options).map(availabilityOptionSerializer)) };
-};
+});
 
 const todayItemSerializer = (raw: unknown): TodayItem | null =>
   isObject(raw) && str(raw.itemId)
@@ -141,10 +141,10 @@ const todayItemSerializer = (raw: unknown): TodayItem | null =>
       }
     : null;
 
-export const todayMenuSerializer = (raw: unknown): TodayMenu | null => {
+export const todayMenuSerializer = fromResponse((raw: unknown): TodayMenu | null => {
   if (!isObject(raw) || !str(raw.date)) return null;
   return { date: str(raw.date), weekday: Math.round(num(raw.weekday)), items: compact(arr(raw.items).map(todayItemSerializer)) };
-};
+});
 
 const slotSerializer = (raw: unknown): PreorderSlot | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
@@ -159,8 +159,8 @@ const slotSerializer = (raw: unknown): PreorderSlot | null => {
   };
 };
 
-export const preorderSlotsSerializer = (raw: unknown): PreorderSlot[] =>
-  compact(arr(raw).map(slotSerializer)).sort((a, b) => a.weekday - b.weekday || a.slotStart.localeCompare(b.slotStart));
+export const preorderSlotsSerializer = fromResponse((raw: unknown): PreorderSlot[] =>
+  compact(arr(raw).map(slotSerializer)).sort((a, b) => a.weekday - b.weekday || a.slotStart.localeCompare(b.slotStart)));
 
-export const weeklyMenuSerializer = (raw: unknown): WeeklyMenuEntry[] =>
-  compact(arr(raw).map(r => (isObject(r) && str(r.itemId) ? { itemId: str(r.itemId), name: str(r.name), days: weekdays(r.days) } : null)));
+export const weeklyMenuSerializer = fromResponse((raw: unknown): WeeklyMenuEntry[] =>
+  compact(arr(raw).map(r => (isObject(r) && str(r.itemId) ? { itemId: str(r.itemId), name: str(r.name), days: weekdays(r.days) } : null))));

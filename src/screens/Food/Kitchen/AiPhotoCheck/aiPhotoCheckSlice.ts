@@ -5,11 +5,12 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { checkPhoto } from '@networks/kitchen/kitchenAiNetwork';
-import { listMenuItems, updateMenuItem } from '@networks/food/vendor/menuNetwork';
+import { getMenuItemsAPI, updateMenuItemAPI } from '@networks/food/vendor/menuNetwork';
 import { uploadImage } from '@/services/mediaUpload';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { LocalFile, PhotoCheck, VendorMenuItem } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { vendorMenuItemsSerializer, vendorMenuItemSerializer } from '@serializers/food/menuSerializer';
 
 export interface AiPhotoCheckSliceState {
   items: VendorMenuItem[];
@@ -35,7 +36,7 @@ export const aiPhotoCheckSlice = createAppSlice({
     loadPhotoDishesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await listMenuItems();
+          return required(vendorMenuItemsSerializer(await getMenuItemsAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -84,7 +85,7 @@ export const aiPhotoCheckSlice = createAppSlice({
     applyPhotoAsync: create.asyncThunk(
       async ({ itemId, photoUrl }: { itemId: string; photoUrl: string }, { rejectWithValue }) => {
         try {
-          return await updateMenuItem(itemId, { photoUrl });
+          return required(vendorMenuItemSerializer(await updateMenuItemAPI(itemId, { photoUrl })));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

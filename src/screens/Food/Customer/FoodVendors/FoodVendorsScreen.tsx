@@ -10,7 +10,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { usePagedList } from '@hooks/usePagedList';
-import { listVendors } from '@networks/food/discoveryNetwork';
+import { getVendorsAPI } from '@networks/food/discoveryNetwork';
 import { FILTERS, SORTS, filtersOf, listQuery, railList, type FoodRail } from '@models/food/discoveryModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { ChoiceChip, EmptyState, InlineNotice, ScreenShell, Skeleton } from '@custom/index';
@@ -18,6 +18,8 @@ import { VendorCard } from '@custom/food/VendorCard';
 import type { FoodAppParamList, VendorListQuery } from '@/types';
 import { selectFoodPoint } from '@store/preferencesSlice';
 import { selectFoodVendors, setVendorSort, startVendorList, toggleVendorFilter } from './foodVendorsSlice';
+import { vendorCardsPageSerializer } from '@serializers/food/discoverySerializer';
+import { required } from '@networks/network/apiHelpers';
 
 type Props = NativeStackScreenProps<FoodAppParamList, 'FoodVendors'>;
 
@@ -60,7 +62,7 @@ const FoodVendorsContent: React.FC<Props> = ({ route, navigation }) => {
   const query = point ? listQuery(point, { cuisine: params.cuisine }, s.sort, s.filters) : null;
   const key = JSON.stringify(query);
   const fetchPage = useCallback(
-    (page: number, pageSize: number) => listVendors(JSON.parse(key) as VendorListQuery, page, pageSize),
+    (page: number, pageSize: number) => getVendorsAPI(JSON.parse(key) as VendorListQuery, page, pageSize).then(raw => required(vendorCardsPageSerializer(raw))),
     [key],
   );
   const list = usePagedList(fetchPage, `food-vendors:${key}`, { enabled: !!query, keyOf: v => v.id });

@@ -8,8 +8,8 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { submitPaymentProofAPI } from '@networks/shopping/ordersNetwork';
 import { submitAppointmentPaymentProof } from '@networks/health/appointmentsNetwork';
-import { submitFoodPaymentProof } from '@networks/food/ordersNetwork';
-import { submitReservationProof } from '@networks/food/surplusNetwork';
+import { submitFoodPaymentProofAPI } from '@networks/food/ordersNetwork';
+import { submitReservationProofAPI } from '@networks/food/surplusNetwork';
 import { submitTiffinProof } from '@networks/foodGrowth/tiffinNetwork';
 import { submitAdvanceProof } from '@networks/foodGrowth/cateringNetwork';
 import { toRejectedValue, required } from '@networks/network/apiHelpers';
@@ -18,6 +18,8 @@ import type { LocalFile } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { pendingPhoto, photoFailed, photoKey, photoProgress, photoUploaded, upload, type FormPhoto } from '../shared/photoUploads';
 import { orderGroupSerializer } from '@serializers/shopping/orderSerializer';
+import { foodOrderSerializer } from '@serializers/food/orderSerializer';
+import { reservationSerializer } from '@serializers/kitchen/surplusSerializer';
 
 export interface PaymentProofSliceState {
   /** The order or appointment being paid for. */
@@ -124,7 +126,7 @@ export const paymentProofSlice = createAppSlice({
     submitFoodProofAsync: create.asyncThunk(
       async ({ code, transactionId, imageUrl }: { code: string; transactionId: string; imageUrl: string | null }, { rejectWithValue }) => {
         try {
-          return await submitFoodPaymentProof(code, { paymentRef: normaliseTransactionId(transactionId), proofUrl: imageUrl });
+          return required(foodOrderSerializer(await submitFoodPaymentProofAPI(code, { paymentRef: normaliseTransactionId(transactionId), proofUrl: imageUrl })));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -149,7 +151,7 @@ export const paymentProofSlice = createAppSlice({
     submitSurplusProofAsync: create.asyncThunk(
       async ({ code, transactionId, imageUrl }: { code: string; transactionId: string; imageUrl: string | null }, { rejectWithValue }) => {
         try {
-          return await submitReservationProof(code, { transactionId: normaliseTransactionId(transactionId), imageUrl });
+          return required(reservationSerializer(await submitReservationProofAPI(code, { transactionId: normaliseTransactionId(transactionId), imageUrl })));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

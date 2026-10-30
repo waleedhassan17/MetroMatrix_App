@@ -3,13 +3,14 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { listMenuItems } from '@networks/food/vendor/menuNetwork';
+import { getMenuItemsAPI } from '@networks/food/vendor/menuNetwork';
 import { createTiffinPlan, deleteTiffinPlan, getMyTiffinPlan, updateTiffinPlan } from '@networks/foodGrowth/tiffinNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { MEAL_WINDOWS, emptyPlanForm, formFromPlan, type TiffinPlanForm } from '@models/kitchen/tiffinModel';
 import type { Meal, TiffinPlan, TiffinPlanInput, VendorMenuItem } from '@/types';
 import type { ValidationErrors } from '@models/authModel';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { vendorMenuItemsSerializer } from '@serializers/food/menuSerializer';
 
 export interface TiffinPlanFormSliceState {
   planId: string | null;
@@ -70,7 +71,7 @@ export const tiffinPlanFormSlice = createAppSlice({
     loadPlanFormAsync: create.asyncThunk(
       async (id: string | null, { rejectWithValue }) => {
         try {
-          const [menu, plan] = await Promise.all([listMenuItems(), id ? getMyTiffinPlan(id) : Promise.resolve(null)]);
+          const [menu, plan] = await Promise.all([getMenuItemsAPI().then(raw => required(vendorMenuItemsSerializer(raw))), id ? getMyTiffinPlan(id) : Promise.resolve(null)]);
           return { menu: menu.filter(i => i.isActive).map(i => ({ id: i.id, name: i.name, basePrice: i.basePrice })), plan };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

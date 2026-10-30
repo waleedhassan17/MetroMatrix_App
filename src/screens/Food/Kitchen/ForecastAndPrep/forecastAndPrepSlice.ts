@@ -6,12 +6,13 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { adjustForecast, getForecast, getForecastAccuracy, getPrepSheet, getShoppingList } from '@networks/kitchen/forecastNetwork';
-import { setToday } from '@networks/food/vendor/availabilityNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { setTodayAPI } from '@networks/food/vendor/availabilityNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { plannedOf } from '@models/kitchen/forecastModel';
 import type { Forecast, ForecastAccuracy, PrepSheet, ShoppingList } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { menuChanged } from '../../Vendor/VendorMenu/vendorMenuSlice';
+import { todayMenuSerializer } from '@serializers/food/menuSerializer';
 
 export type ForecastTab = 'forecast' | 'prep' | 'shopping';
 
@@ -178,7 +179,7 @@ export const forecastAndPrepSlice = createAppSlice({
       async (date: string, { getState, dispatch, rejectWithValue }) => {
         const f = (getState() as { forecastAndPrep: ForecastAndPrepSliceState }).forecastAndPrep.forecast[date]?.data;
         try {
-          const out = await setToday((f?.items ?? []).map(i => ({ itemId: i.itemId, portions: plannedOf(i), cooking: true })));
+          const out = required(todayMenuSerializer(await setTodayAPI((f?.items ?? []).map(i => ({ itemId: i.itemId, portions: plannedOf(i), cooking: true })))));
           dispatch(menuChanged());
           return out;
         } catch (e) {

@@ -45,7 +45,7 @@ export const foodCuisineSerializer = (raw: unknown): FoodCuisine | null => {
   return { id: str(raw.id), name: str(raw.name), slug: str(raw.slug), icon: str(raw.icon, str(raw.slug)) };
 };
 
-export const foodCuisinesSerializer = (raw: unknown): FoodCuisine[] => compact(arr(raw).map(foodCuisineSerializer));
+export const foodCuisinesSerializer = fromResponse((raw: unknown): FoodCuisine[] => compact(arr(raw).map(foodCuisineSerializer)));
 
 /** The session's `business.food` (vendors only). */
 export const foodVendorSessionSerializer = (raw: unknown): FoodVendorSession | null => {
@@ -64,7 +64,7 @@ const setupItemSerializer = (raw: unknown): VendorSetupItem | null => {
   return { key: str(raw.key), label: str(raw.label, str(raw.key)), required: raw.required !== false, done: bool(raw.done) };
 };
 
-export const vendorSetupSerializer = (raw: unknown): VendorSetup | null => {
+export const vendorSetupSerializer = fromResponse((raw: unknown): VendorSetup | null => {
   if (!isObject(raw)) return null;
   const items = compact(arr(raw.items).map(setupItemSerializer));
   return {
@@ -75,7 +75,7 @@ export const vendorSetupSerializer = (raw: unknown): VendorSetup | null => {
     ready: bool(raw.ready),
     isLive: bool(raw.isLive),
   };
-};
+});
 
 export const openStateSerializer = (raw: unknown): OpenState => {
   const r = isObject(raw) ? raw : {};
@@ -110,7 +110,7 @@ const branchSerializer = (raw: unknown): VendorBranch => {
   };
 };
 
-export const vendorProfileSerializer = (raw: unknown): VendorProfile | null => {
+export const vendorProfileSerializer = fromResponse((raw: unknown): VendorProfile | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
   return {
     id: str(raw.id),
@@ -130,7 +130,7 @@ export const vendorProfileSerializer = (raw: unknown): VendorProfile | null => {
     ratingCount: Math.max(0, Math.round(num(raw.ratingCount))),
     branch: branchSerializer(raw.branch),
   };
-};
+});
 
 const locationSerializer = (raw: unknown): VendorLocation => {
   const r = isObject(raw) ? raw : {};
@@ -145,7 +145,7 @@ const locationSerializer = (raw: unknown): VendorLocation => {
   };
 };
 
-export const vendorSettingsSerializer = (raw: unknown): VendorSettings | null => {
+export const vendorSettingsSerializer = fromResponse((raw: unknown): VendorSettings | null => {
   if (!isObject(raw)) return null;
   return {
     acceptsDelivery: bool(raw.acceptsDelivery),
@@ -160,7 +160,7 @@ export const vendorSettingsSerializer = (raw: unknown): VendorSettings | null =>
     preorderOnly: bool(raw.preorderOnly),
     location: locationSerializer(raw.location),
   };
-};
+});
 
 const HHMM = /^([01]\d|2[0-3]):[0-5]\d$|^24:00$/;
 
@@ -173,8 +173,8 @@ const hoursRangeSerializer = (raw: unknown): HoursRange | null => {
   return { weekday, opensAt, closesAt, overnight: raw.overnight !== undefined ? bool(raw.overnight) : closesAt <= opensAt };
 };
 
-export const hoursSerializer = (raw: unknown): HoursRange[] =>
-  compact(arr(raw).map(hoursRangeSerializer)).sort((a, b) => a.weekday - b.weekday || a.opensAt.localeCompare(b.opensAt));
+export const hoursSerializer = fromResponse((raw: unknown): HoursRange[] =>
+  compact(arr(raw).map(hoursRangeSerializer)).sort((a, b) => a.weekday - b.weekday || a.opensAt.localeCompare(b.opensAt)));
 
 const feeBandSerializer = (raw: unknown): FeeBand | null => {
   if (!isObject(raw)) return null;
@@ -183,7 +183,7 @@ const feeBandSerializer = (raw: unknown): FeeBand | null => {
   return { fromKm: Math.max(0, num(raw.fromKm)), toKm, fee: Math.max(0, Math.round(num(raw.fee))), minOrder: Math.max(0, Math.round(num(raw.minOrder))) };
 };
 
-export const feeBandsSerializer = (raw: unknown): FeeBand[] => compact(arr(raw).map(feeBandSerializer)).sort((a, b) => a.fromKm - b.fromKm);
+export const feeBandsSerializer = fromResponse((raw: unknown): FeeBand[] => compact(arr(raw).map(feeBandSerializer)).sort((a, b) => a.fromKm - b.fromKm));
 
 const closureSerializer = (raw: unknown): VendorClosure | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
@@ -193,11 +193,11 @@ const closureSerializer = (raw: unknown): VendorClosure | null => {
   return { id: str(raw.id), startsAt, endsAt, reason: strOrNull(raw.reason) };
 };
 
-export const closuresSerializer = (raw: unknown): VendorClosure[] =>
-  compact(arr(raw).map(closureSerializer)).sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+export const closuresSerializer = fromResponse((raw: unknown): VendorClosure[] =>
+  compact(arr(raw).map(closureSerializer)).sort((a, b) => a.startsAt.localeCompare(b.startsAt)));
 
 /** The API's `{ accountTitle, accountNumber }` → the app's PaymentAccount (shared with stores and doctors). */
-export const vendorPaymentAccountSerializer = (raw: unknown): PaymentAccount | null => {
+export const vendorPaymentAccountSerializer = fromResponse((raw: unknown): PaymentAccount | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
   return {
     id: str(raw.id),
@@ -207,9 +207,9 @@ export const vendorPaymentAccountSerializer = (raw: unknown): PaymentAccount | n
     bankName: strOrNull(raw.bankName),
     isActive: raw.isActive !== false,
   };
-};
+});
 
-export const vendorPaymentAccountsSerializer = (raw: unknown): PaymentAccount[] => compact(arr(raw).map(vendorPaymentAccountSerializer));
+export const vendorPaymentAccountsSerializer = fromResponse((raw: unknown): PaymentAccount[] => compact(arr(raw).map(vendorPaymentAccountSerializer)));
 
 const counts = (raw: unknown): Record<string, number> =>
   isObject(raw) ? Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, Math.max(0, Math.round(num(v)))])) : {};
@@ -224,7 +224,7 @@ const overridesOf = (raw: unknown): PlanOverrides => {
 };
 
 /** The plan, in rupees (the API counts in minor units). */
-export const vendorPlanSerializer = (raw: unknown): VendorPlan | null => {
+export const vendorPlanSerializer = fromResponse((raw: unknown): VendorPlan | null => {
   if (!isObject(raw)) return null;
   return {
     key: str(raw.planKey, 'community'),
@@ -236,7 +236,7 @@ export const vendorPlanSerializer = (raw: unknown): VendorPlan | null => {
     overrides: overridesOf(raw.overrides),
     startedAt: isoOrNull(raw.startedAt),
   };
-};
+});
 
 /** One closure, as POST answers it. */
 export const closureResponseSerializer = fromResponse(raw => closuresSerializer([raw])[0] ?? null);

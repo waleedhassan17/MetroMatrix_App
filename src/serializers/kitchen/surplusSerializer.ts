@@ -48,7 +48,7 @@ export const surplusBoxSerializer = (raw: unknown): SurplusBox | null => {
 
 export const surplusBoxesSerializer = (raw: unknown): SurplusBox[] => list(isObject(raw) ? raw.items : raw, surplusBoxSerializer);
 
-export const reservationSerializer = (raw: unknown): SurplusReservation | null => {
+export const reservationSerializer = fromResponse((raw: unknown): SurplusReservation | null => {
   if (!isObject(raw) || !str(raw.code)) return null;
   const box = isObject(raw.box) ? raw.box : {};
   const v = isObject(raw.vendor) ? raw.vendor : {};
@@ -77,9 +77,9 @@ export const reservationSerializer = (raw: unknown): SurplusReservation | null =
     reservedAt: str(raw.reservedAt),
     collectedAt: strOrNull(raw.collectedAt),
   };
-};
+});
 
-export const reservationsSerializer = (raw: unknown): SurplusReservation[] => list(isObject(raw) ? raw.items : raw, reservationSerializer);
+export const reservationsSerializer = fromResponse((raw: unknown): SurplusReservation[] => list(isObject(raw) ? raw.items : raw, reservationSerializer));
 
 export const surplusBoxDetailSerializer = (raw: unknown): SurplusBoxDetail | null => {
   const b = surplusBoxSerializer(raw);
@@ -120,9 +120,9 @@ export const surplusCardSerializer = (raw: unknown): SurplusCard | null => {
   };
 };
 
-export const surplusCardsSerializer = (raw: unknown): SurplusCard[] => list(isObject(raw) ? raw.items : raw, surplusCardSerializer);
+export const surplusCardsSerializer = fromResponse((raw: unknown): SurplusCard[] => list(isObject(raw) ? raw.items : raw, surplusCardSerializer));
 
-export const surplusDetailSerializer = (raw: unknown): SurplusDetail | null => {
+export const surplusDetailSerializer = fromResponse((raw: unknown): SurplusDetail | null => {
   const c = surplusCardSerializer(raw);
   if (!c || !isObject(raw)) return null;
   const methods = enumList(raw.paymentMethods, METHODS);
@@ -134,7 +134,7 @@ export const surplusDetailSerializer = (raw: unknown): SurplusDetail | null => {
     maxPerCustomer: Math.max(1, count(raw.maxPerCustomer) || 2),
     myReservations: arr(raw.myReservations).map(x => str(x)).filter(Boolean),
   };
-};
+});
 
 export { num };
 

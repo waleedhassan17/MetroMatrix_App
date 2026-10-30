@@ -6,11 +6,12 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { addClosure, getClosures, removeClosure } from '@networks/food/vendor/settingsNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { addClosureAPI, getClosuresAPI, removeClosureAPI } from '@networks/food/vendor/settingsNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { VendorClosure } from '@/types';
 import { PKT, addDays, zonedToIso } from '@utils/healthTime';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { closuresSerializer } from '@serializers/food/vendorSerializer';
 
 export interface ClosureForm {
   /** YYYY-MM-DD, the first and the last day closed. */
@@ -65,7 +66,7 @@ export const vendorClosuresSlice = createAppSlice({
     loadClosuresAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await getClosures();
+          return required(closuresSerializer(await getClosuresAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -89,12 +90,12 @@ export const vendorClosuresSlice = createAppSlice({
       async (form: ClosureForm, { rejectWithValue }) => {
         try {
           // Whole days in Pakistan time: from the first day's midnight to the day after the last.
-          await addClosure({
+          await addClosureAPI({
             startsAt: zonedToIso(form.from, '00:00', PKT),
             endsAt: zonedToIso(addDays(form.to, 1), '00:00', PKT),
             reason: form.reason.trim() || null,
           });
-          return await getClosures();
+          return required(closuresSerializer(await getClosuresAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -118,7 +119,7 @@ export const vendorClosuresSlice = createAppSlice({
     removeClosureAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          await removeClosure(id);
+          await removeClosureAPI(id);
           return id;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

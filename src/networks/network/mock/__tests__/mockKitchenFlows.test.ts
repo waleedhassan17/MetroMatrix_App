@@ -7,11 +7,11 @@
 // learning; waste; Bachat Box (one box can't be sold twice); voice that only
 // proposes; the assistant's switch and quota; a pause that lifts by itself.
 
-import { addToFoodCart, clearFoodCart } from '../../../food/cartNetwork';
-import { getFoodOrder, placeFoodOrder } from '../../../food/ordersNetwork';
-import { acceptOrder, markReady, rejectOrder, startPreparing } from '../../../food/vendor/ordersNetwork';
-import { getVendorPage } from '../../../food/discoveryNetwork';
-import { getVendorProfile, pauseOrders } from '../../../food/vendor/profileNetwork';
+import { addToFoodCartAPI, clearFoodCartAPI } from '../../../food/cartNetwork';
+import { getFoodOrderAPI, placeFoodOrderAPI } from '../../../food/ordersNetwork';
+import { acceptOrderAPI, markReadyAPI, rejectOrderAPI, startPreparingAPI } from '../../../food/vendor/ordersNetwork';
+import { getVendorPageAPI } from '../../../food/discoveryNetwork';
+import { getVendorProfileAPI, pauseOrdersAPI } from '../../../food/vendor/profileNetwork';
 import { getIngredient, listStock, recordStockTake } from '../../../kitchen/stockNetwork';
 import { createPurchase, getPriceWatch, listPurchases } from '../../../kitchen/purchasesNetwork';
 import { getRecipe, listRecipes, saveRecipe } from '../../../kitchen/recipesNetwork';
@@ -23,8 +23,8 @@ import { attachPackingPhoto, getAnnouncement } from '../../../kitchen/packingNet
 import { getAiUsage, scanReceipt } from '../../../kitchen/kitchenAiNetwork';
 import { getKitchenHub, listInsightCards, snoozeInsightCard } from '../../../kitchen/insightsCardsNetwork';
 import { interpretVoice } from '../../../ai/voiceNetwork';
-import { listSurplusNearby, reserveSurplus } from '../../../food/surplusNetwork';
-import { listBoard } from '../../../food/vendor/ordersNetwork';
+import { getSurplusNearbyAPI, reserveSurplusAPI } from '../../../food/surplusNetwork';
+import { getBoardAPI } from '../../../food/vendor/ordersNetwork';
 import {
   createTiffinPlan,
   getMyTiffin,
@@ -62,29 +62,36 @@ import {
   listNutritionFoods,
   verifyHygiene,
 } from '../../../admin/adminKitchenNetwork';
-import { listVendors } from '../../../food/discoveryNetwork';
-import { getRiderOrder, setDuty } from '../../../food/rider/riderNetwork';
-import { assignRider } from '../../../food/vendor/ordersNetwork';
+import { getVendorsAPI } from '../../../food/discoveryNetwork';
+import { getRiderOrderAPI, setDutyAPI } from '../../../food/rider/riderNetwork';
+import { assignRiderAPI } from '../../../food/vendor/ordersNetwork';
 import { ramadanSwitch } from '../../../../models/kitchen/reachModel';
 import { checkPhoto, draftDescriptions, getReviewInsights, saveDescription, suggestCombos, suggestSpecials } from '../../../kitchen/kitchenAiNetwork';
 import { getVendorNutrition, mapIngredientNutrition, setNutritionHidden } from '../../../kitchen/nutritionNetwork';
-import { createMenuItem, getMenuItem } from '../../../food/vendor/menuNetwork';
-import { getItemSheet } from '../../../food/discoveryNetwork';
-import { listReviewsByTheme } from '../../../food/vendor/reviewsNetwork';
+import { createMenuItemAPI, getMenuItemAPI } from '../../../food/vendor/menuNetwork';
+import { getItemSheetAPI } from '../../../food/discoveryNetwork';
+import { getReviewsByThemeAPI } from '../../../food/vendor/reviewsNetwork';
 import { comboItemInput, specialItemInput, specialRecipe } from '../../../../models/kitchen/assistantModel';
 import { isUrduScript } from '../../../../utils/script';
 import { addToPantry, listPantry } from '../../../myKitchen/pantryNetwork';
 import { getHomeRecipe, getMissingItems, suggestHomeRecipes } from '../../../myKitchen/recipesNetwork';
 import { deleteNutritionData, getNutritionSettings, getNutritionSummary, listHealthyPicks, saveNutritionSettings } from '../../../myKitchen/nutritionNetwork';
-import { searchFood } from '../../../food/discoveryNetwork';
+import { searchFoodAPI } from '../../../food/discoveryNetwork';
 import { addToCartAPI as addToShopCart, getCartAPI as getShopCart } from '../../../shopping/cartNetwork';
-import { handedExternal, markDelivered } from '../../../food/vendor/ordersNetwork';
+import { handedExternalAPI, markDeliveredAPI } from '../../../food/vendor/ordersNetwork';
 import { api, ApiError, required } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import { getDb, resetMockDb } from '../mockDb';
 import type { FoodCheckoutInput } from '../../../../types/food';
 import { signInAs, installDummyApi } from '../testing';
 import { cartSerializer } from '../../../../serializers/shopping/cartSerializer';
+import { foodOrderSerializer, vendorFoodOrderSerializer, boardPageSerializer } from '../../../../serializers/food/orderSerializer';
+import { vendorPageSerializer, vendorCardsPageSerializer, itemSheetSerializer, foodSearchSerializer } from '../../../../serializers/food/discoverySerializer';
+import { vendorProfileSerializer } from '../../../../serializers/food/vendorSerializer';
+import { surplusCardsSerializer, reservationSerializer } from '../../../../serializers/kitchen/surplusSerializer';
+import { riderOrderSerializer } from '../../../../serializers/food/riderSerializer';
+import { vendorMenuItemSerializer } from '../../../../serializers/food/menuSerializer';
+import { vendorReviewsPageSerializer } from '../../../../serializers/food/reviewSerializer';
 
 installDummyApi();
 
@@ -120,9 +127,9 @@ const key = () => `kitchen-key-${++keyN}`;
 /** A customer orders `quantity` Single chicken biryanis from Biryani Bazaar. */
 const orderBiryani = async (quantity = 2) => {
   await asCustomer();
-  await clearFoodCart();
-  await addToFoodCart({ vendorId: 'fb_resto', itemId: 'mi_chicken_biryani', variantId: 'mi_chicken_biryani_v1', optionIds: ['og_spice_1'], quantity, notes: null }, true);
-  return placeFoodOrder(checkout, key());
+  await clearFoodCartAPI();
+  await addToFoodCartAPI({ vendorId: 'fb_resto', itemId: 'mi_chicken_biryani', variantId: 'mi_chicken_biryani_v1', optionIds: ['og_spice_1'], quantity, notes: null }, true);
+  return required(foodOrderSerializer(await placeFoodOrderAPI(checkout, key())));
 };
 
 const onHand = async (id: string) => (await getIngredient(id)).onHand;
@@ -165,12 +172,12 @@ describe('stock', () => {
     const o1 = await orderBiryani(2);
     await asVendor();
     const before = await onHand('ing_bb_chicken');
-    await acceptOrder(o1.id, 20);
+    await acceptOrderAPI(o1.id, 20);
     // Two Single biryanis: 150 g of chicken each.
     expect(await onHand('ing_bb_chicken')).toBe(before - 300);
     const o2 = await orderBiryani(1);
     await asVendor();
-    await rejectOrder(o2.id, 'too_busy');
+    await rejectOrderAPI(o2.id, 'too_busy');
     expect(await onHand('ing_bb_chicken')).toBe(before - 300);
     const detail = await getIngredient('ing_bb_chicken');
     expect(detail.movements.find(m => m.kind === 'usage' && m.orderCode === o1.code)?.qty).toBe(-300);
@@ -181,14 +188,14 @@ describe('stock', () => {
     jest.setSystemTime(T0 + 4 * 60 * MINUTE);
     const hints = await getBoardHints();
     expect(hints.soldOutByStock.map(x => x.itemId)).toContain('mi_malai');
-    const page = await getVendorPage('biryani-bazaar', GULBERG);
+    const page = required(vendorPageSerializer(await getVendorPageAPI('biryani-bazaar', GULBERG)));
     const malai = page.menu.flatMap(c => c.items).find(i => i.id === 'mi_malai')!;
     expect(malai).toMatchObject({ available: false, unavailableReason: 'ingredients' });
     const p = await createPurchase({ source: 'voice', supplierName: 'Gulberg Cash & Carry', lines: [{ ingredientId: 'ing_bb_cream', qty: 2, unit: 'kg', total: 1800 }] });
     expect(p.lines[0]).toMatchObject({ qty: 2000, total: 1800, costPerBase: 0.9 });
     expect(await onHand('ing_bb_cream')).toBe(1800);
     expect((await getBoardHints()).soldOutByStock.map(x => x.itemId)).not.toContain('mi_malai');
-    const after = (await getVendorPage('biryani-bazaar', GULBERG)).menu.flatMap(c => c.items).find(i => i.id === 'mi_malai')!;
+    const after = (required(vendorPageSerializer(await getVendorPageAPI('biryani-bazaar', GULBERG)))).menu.flatMap(c => c.items).find(i => i.id === 'mi_malai')!;
     expect(after.available).toBe(true);
   });
 
@@ -310,14 +317,14 @@ describe('the board', () => {
     await updateKitchenSettings({ packingPhoto: 'required' });
     const o = await orderBiryani(1);
     await asVendor();
-    await acceptOrder(o.id, 15);
-    await startPreparing(o.id);
-    expect((await failure(markReady(o.id))).code).toBe('PACKING_PHOTO_REQUIRED');
+    await acceptOrderAPI(o.id, 15);
+    await startPreparingAPI(o.id);
+    expect((await failure(markReadyAPI(o.id).then(raw => required(vendorFoodOrderSerializer(raw))))).code).toBe('PACKING_PHOTO_REQUIRED');
     const r = await attachPackingPhoto(o.id, 'https://res.cloudinary.com/demo/packed.jpg');
     expect(r.check?.note).toBeTruthy();
-    await markReady(o.id);
+    await markReadyAPI(o.id);
     await asCustomer();
-    expect((await getFoodOrder(o.code)).packedPhotoUrl).toBe('https://res.cloudinary.com/demo/packed.jpg');
+    expect((required(foodOrderSerializer(await getFoodOrderAPI(o.code)))).packedPhotoUrl).toBe('https://res.cloudinary.com/demo/packed.jpg');
   });
 
   it('speaks a new order in Urdu or English', async () => {
@@ -332,7 +339,7 @@ describe('the board', () => {
 
   it('pauses for a private reason and resumes by itself (QA 19)', async () => {
     const at = new Date(T0 + 30 * MINUTE).toISOString();
-    const p = await pauseOrders(null, { reason: 'gas', resumeAt: at });
+    const p = required(vendorProfileSerializer(await pauseOrdersAPI(null, { reason: 'gas', resumeAt: at })));
     expect(p.branch.isPaused).toBe(true);
     const raw = (await api.get('/food/vendor/profile')).data.data;
     expect(raw.branch).toMatchObject({ pauseReason: 'gas', resumeAt: at });
@@ -341,7 +348,7 @@ describe('the board', () => {
     expect(JSON.stringify(page)).not.toContain('gas');
     jest.setSystemTime(T0 + 31 * MINUTE);
     await asVendor();
-    expect((await getVendorProfile()).branch.isPaused).toBe(false);
+    expect((required(vendorProfileSerializer(await getVendorProfileAPI()))).branch.isPaused).toBe(false);
   });
 });
 
@@ -359,14 +366,14 @@ describe('Bachat Box', () => {
   it('shows a new box nearby, and the last one goes to one customer only (QA 22, 23)', async () => {
     const b = await createBox(box());
     await asCustomer();
-    const near = await listSurplusNearby(GULBERG);
+    const near = required(surplusCardsSerializer(await getSurplusNearbyAPI(GULBERG)));
     expect(near.map(x => x.id)).toContain(b.id);
-    const r1 = await reserveSurplus(b.id, { quantity: 1, paymentMethod: 'pay_at_pickup' }, 'race-1');
+    const r1 = required(reservationSerializer(await reserveSurplusAPI(b.id, { quantity: 1, paymentMethod: 'pay_at_pickup' }, 'race-1')));
     expect(r1.code).toMatch(/^BB-[A-Z2-9]{6}$/);
     // A retry with the same key replays; it never reserves twice.
-    expect((await reserveSurplus(b.id, { quantity: 1, paymentMethod: 'pay_at_pickup' }, 'race-1')).code).toBe(r1.code);
+    expect((required(reservationSerializer(await reserveSurplusAPI(b.id, { quantity: 1, paymentMethod: 'pay_at_pickup' }, 'race-1')))).code).toBe(r1.code);
     await asCustomer('hamza@metromatrix.app');
-    const err = await failure(reserveSurplus(b.id, { quantity: 1, paymentMethod: 'pay_at_pickup' }, 'race-2'));
+    const err = await failure(reserveSurplusAPI(b.id, { quantity: 1, paymentMethod: 'pay_at_pickup' }, 'race-2').then(raw => required(reservationSerializer(raw))));
     expect(err.code).toBe('SURPLUS_SOLD_OUT');
     expect(err.details).toMatchObject({ left: 0 });
     await asVendor();
@@ -399,7 +406,7 @@ describe('tiffin', () => {
     });
     expect(p).toMatchObject({ perMeal: 300, mealsPerPeriod: 6, seatsLeft: 10 });
     await asCustomer();
-    const page = await getVendorPage('nani-ki-handi', GULBERG);
+    const page = required(vendorPageSerializer(await getVendorPageAPI('nani-ki-handi', GULBERG)));
     expect(page.tiffinPlans.map(x => x.name)).toEqual(expect.arrayContaining(['Office lunch tiffin', 'Breakfast paratha box']));
     expect(page.catering).toMatchObject({ open: true });
   });
@@ -444,10 +451,10 @@ describe('tiffin', () => {
     await as('nani@metromatrix.app');
     await moveSubscriber(s.code, { kind: 'approve' });
     expect((await getTiffinTomorrow()).plans[0]).toMatchObject({ name: 'Office lunch tiffin', count: 2, dishes: ['Chicken pulao'] });
-    const before = (await listBoard('active')).items.filter(c => c.origin.kind === 'tiffin');
+    const before = (required(boardPageSerializer(await getBoardAPI('active')))).items.filter(c => c.origin.kind === 'tiffin');
     expect(before).toHaveLength(0);
     jest.setSystemTime(T0 + 8 * 60 * MINUTE);
-    const cards = (await listBoard('active')).items.filter(c => c.origin.kind === 'tiffin');
+    const cards = (required(boardPageSerializer(await getBoardAPI('active')))).items.filter(c => c.origin.kind === 'tiffin');
     expect(cards.map(c => c.origin.ref).sort()).toEqual([s.code, 'TF-HMZ4K2'].sort());
     expect(cards[0]).toMatchObject({ status: 'accepted', scheduledFor: '2026-10-16T07:30:00.000Z', payment: { method: 'tiffin_plan', status: 'paid' } });
   });
@@ -524,7 +531,7 @@ describe('Ramadan', () => {
     const on = await updateRamadan({ enabled: true, iftar: { from: '17:45', to: '19:15' } });
     expect(on).toMatchObject({ state: 'active', enabled: true, iftar: { label: '5:45 PM – 7:15 PM' } });
     await asCustomer();
-    expect((await getVendorPage('biryani-bazaar', GULBERG)).ramadan).toMatchObject({ iftar: { from: '17:45', to: '19:15' }, iftarPreorderOnly: true });
+    expect((required(vendorPageSerializer(await getVendorPageAPI('biryani-bazaar', GULBERG)))).ramadan).toMatchObject({ iftar: { from: '17:45', to: '19:15' }, iftarPreorderOnly: true });
     const near = await listIftarNearby(GULBERG);
     expect(near.state).toBe('active');
     expect(near.items.map(i => i.slug)).toEqual(['biryani-bazaar']);
@@ -538,9 +545,9 @@ describe('the storefront', () => {
     expect(before.shareText).toContain(before.url);
     const viaLink = async (source: FoodCheckoutInput['source']) => {
       await asCustomer();
-      await clearFoodCart();
-      await addToFoodCart({ vendorId: 'fb_resto', itemId: 'mi_naan', variantId: null, optionIds: [], quantity: 10, notes: null }, true);
-      return placeFoodOrder({ ...checkout, source }, key());
+      await clearFoodCartAPI();
+      await addToFoodCartAPI({ vendorId: 'fb_resto', itemId: 'mi_naan', variantId: null, optionIds: [], quantity: 10, notes: null }, true);
+      return required(foodOrderSerializer(await placeFoodOrderAPI({ ...checkout, source }, key())));
     };
     await viaLink({ kind: 'link', slug: 'biryani-bazaar' });
     await viaLink({ kind: 'qr', slug: 'biryani-bazaar' });
@@ -605,8 +612,8 @@ describe('story and hygiene', () => {
     expect((await requestHygieneVerification()).status).toBe('pending');
     const badges = async () => {
       await asCustomer();
-      const page = await getVendorPage('nani-ki-handi', GULBERG);
-      const card = (await listVendors({ lat: GULBERG.lat, lng: GULBERG.lng, homeKitchen: true }, 1, 20)).items.find(v => v.slug === 'nani-ki-handi');
+      const page = required(vendorPageSerializer(await getVendorPageAPI('nani-ki-handi', GULBERG)));
+      const card = (required(vendorCardsPageSerializer(await getVendorsAPI({ lat: GULBERG.lat, lng: GULBERG.lng, homeKitchen: true }, 1, 20)))).items.find(v => v.slug === 'nani-ki-handi');
       return { page: page.hygiene.status, card: card?.badges ?? [], story: page.story?.cookName };
     };
     const pending = await badges();
@@ -635,20 +642,20 @@ describe('batching', () => {
     const a = await orderBiryani(1);
     const b = await orderBiryani(1);
     await asVendor();
-    await acceptOrder(a.id, 20);
-    await acceptOrder(b.id, 20);
+    await acceptOrderAPI(a.id, 20);
+    await acceptOrderAPI(b.id, 20);
     const s = await getBatchSuggestions(a.id);
     expect(s[0]).toMatchObject({ orderId: b.id, sameDirection: true, extraKm: 0 });
     await clearTokens();
     await signInAs('biryani-bazaar.ali');
-    await setDuty(true);
+    await setDutyAPI(true);
     await asVendor();
-    await assignRider(a.id, 'rd_ali');
-    await assignRider(b.id, 'rd_ali');
+    await assignRiderAPI(a.id, 'rd_ali');
+    await assignRiderAPI(b.id, 'rd_ali');
     await clearTokens();
     await signInAs('biryani-bazaar.ali');
-    const ra = await getRiderOrder(a.id);
-    const rb = await getRiderOrder(b.id);
+    const ra = required(riderOrderSerializer(await getRiderOrderAPI(a.id)));
+    const rb = required(riderOrderSerializer(await getRiderOrderAPI(b.id)));
     expect([ra.dropOrder, rb.dropOrder].map(d => d?.of)).toEqual([2, 2]);
     expect([ra.dropOrder?.position, rb.dropOrder?.position].sort()).toEqual([1, 2]);
   });
@@ -659,11 +666,11 @@ describe('the assistant’s drafts (5C)', () => {
     const [naan] = await draftDescriptions(['mi_naan']);
     expect(naan.en).toMatch(/^Naan: /);
     expect(isUrduScript(naan.ur)).toBe(true);
-    expect((await getMenuItem('mi_naan')).description).toBe(naan.current.en);
+    expect((required(vendorMenuItemSerializer(await getMenuItemAPI('mi_naan')))).description).toBe(naan.current.en);
     expect((await getAiUsage()).used).toBe(1);
     await saveDescription('mi_naan', { description: naan.en, descriptionUr: naan.ur });
     await asCustomer();
-    const sheet = await getItemSheet('mi_naan');
+    const sheet = required(itemSheetSerializer(await getItemSheetAPI('mi_naan')));
     expect(sheet).toMatchObject({ description: naan.en, descriptionUr: naan.ur });
   });
 
@@ -672,11 +679,11 @@ describe('the assistant’s drafts (5C)', () => {
     const tikka = items.find(i => i.title === 'Chicken tikka plate')!;
     expect(tikka.usesExpiring).toContain('Chicken (curry cut)');
     expect(tikka.cost.foodCostPct).toBeLessThanOrEqual(40);
-    const dish = await createMenuItem(specialItemInput(tikka, category!.id, tikka.suggestedPrice), []);
+    const dish = required(vendorMenuItemSerializer(await createMenuItemAPI(specialItemInput(tikka, category!.id, tikka.suggestedPrice), [])));
     expect(dish).toMatchObject({ name: 'Chicken tikka plate', isActive: false, basePrice: tikka.suggestedPrice });
     expect((await saveRecipe(dish.id, null, specialRecipe(tikka))).cost?.toMake).toBe(tikka.cost.toMake);
     await asCustomer();
-    const page = await getVendorPage('biryani-bazaar', GULBERG);
+    const page = required(vendorPageSerializer(await getVendorPageAPI('biryani-bazaar', GULBERG)));
     expect(page.menu.flatMap(m => m.items).some(i => i.id === dish.id)).toBe(false);
   });
 
@@ -687,7 +694,7 @@ describe('the assistant’s drafts (5C)', () => {
     expect(first.bundlePrice).toBeLessThan(first.regularPrice);
     expect(first.cost?.keep).toBe(first.bundlePrice - first.cost!.toMake);
     expect(category?.name).toBe('Deals');
-    const deal = await createMenuItem(comboItemInput(first, category!.id, first.bundlePrice), []);
+    const deal = required(vendorMenuItemSerializer(await createMenuItemAPI(comboItemInput(first, category!.id, first.bundlePrice), [])));
     expect(deal).toMatchObject({ isDeal: true, isActive: true, basePrice: first.bundlePrice, name: first.names.join(' + ') });
   });
 
@@ -698,7 +705,7 @@ describe('the assistant’s drafts (5C)', () => {
     expect(late.count).toBeGreaterThan(1);
     expect(late.snippets.every(x => !/\d{7,}/.test(x))).toBe(true);
     expect(r.weeks).toHaveLength(8);
-    const behind = await listReviewsByTheme('late', r.week, 1, 20);
+    const behind = required(vendorReviewsPageSerializer(await getReviewsByThemeAPI('late', r.week, 1, 20)));
     expect(behind.items).toHaveLength(late.count);
     // Reading the same week again is free.
     const used = (await getAiUsage()).used;
@@ -752,11 +759,11 @@ describe('My Kitchen and nutrition (5C)', () => {
 
   it('filters search and healthy picks to dishes that qualify, per person (QA 47)', async () => {
     await asCustomer();
-    const r = await searchFood('chicken', GULBERG.lat, GULBERG.lng, 'under_600');
+    const r = required(foodSearchSerializer(await searchFoodAPI('chicken', GULBERG.lat, GULBERG.lng, 'under_600')));
     const dishes = r.dishes.flatMap(d => d.items);
     expect(dishes.length).toBeGreaterThan(0);
     expect(dishes.every(d => d.nutrition && d.nutrition.kcal < 600)).toBe(true);
-    const all = await searchFood('chicken', GULBERG.lat, GULBERG.lng);
+    const all = required(foodSearchSerializer(await searchFoodAPI('chicken', GULBERG.lat, GULBERG.lng)));
     expect(all.dishes.flatMap(d => d.items).length).toBeGreaterThan(dishes.length);
     const picks = await listHealthyPicks(GULBERG);
     expect(picks.length).toBeGreaterThan(0);
@@ -767,11 +774,11 @@ describe('My Kitchen and nutrition (5C)', () => {
   it('adds up only the Food Court food the customer ordered, plainly (QA 48)', async () => {
     const o = await orderBiryani(1);
     await asVendor();
-    await acceptOrder(o.id, 20);
-    await startPreparing(o.id);
-    await markReady(o.id);
-    await handedExternal(o.id);
-    await markDelivered(o.id, o.totals.total);
+    await acceptOrderAPI(o.id, 20);
+    await startPreparingAPI(o.id);
+    await markReadyAPI(o.id);
+    await handedExternalAPI(o.id);
+    await markDeliveredAPI(o.id, o.totals.total);
     await asCustomer();
     await saveNutritionSettings({ enabled: true });
     const w = await getNutritionSummary();
@@ -812,7 +819,7 @@ describe('My Kitchen and nutrition (5C)', () => {
     expect(keema.searchTerm).toBe('keema');
     const pulao = await getHomeRecipe('rc_chicken_pulao', 'ur', null);
     expect(pulao.searchTerm).toBe('pulao');
-    const nearby = await searchFood(pulao.searchTerm, GULBERG.lat, GULBERG.lng);
+    const nearby = required(foodSearchSerializer(await searchFoodAPI(pulao.searchTerm, GULBERG.lat, GULBERG.lng)));
     expect(nearby.dishes.flatMap(d => d.items).some(i => /pulao/i.test(i.name))).toBe(true);
     // One set of ideas is one assistant action.
     expect((await getDb()).kitchen.aiUses.filter(u => u.feature === 'recipe_suggestions')).toHaveLength(1);
@@ -853,7 +860,7 @@ describe('voice and the assistant', () => {
 it('keeps the kitchen rows when a Food write fails part-way', async () => {
   const db = await getDb();
   const before = JSON.stringify(db.kitchen.ingredients);
-  await failure(acceptOrder('fo_missing', 20));
+  await failure(acceptOrderAPI('fo_missing', 20).then(raw => required(vendorFoodOrderSerializer(raw))));
   expect(JSON.stringify((await getDb()).kitchen.ingredients)).toBe(before);
 });
 

@@ -12,7 +12,7 @@ const isoOrNull = (v: unknown): string | null => {
   return s && !Number.isNaN(Date.parse(s)) ? new Date(s).toISOString() : null;
 };
 
-export const foodRiderSerializer = (raw: unknown): FoodRider | null => {
+export const foodRiderSerializer = fromResponse((raw: unknown): FoodRider | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
   const geo = isObject(raw.lastGeo) && Number.isFinite(Number(raw.lastGeo.lat)) && Number.isFinite(Number(raw.lastGeo.lng)) ? raw.lastGeo : null;
   return {
@@ -29,25 +29,25 @@ export const foodRiderSerializer = (raw: unknown): FoodRider | null => {
     locationLive: bool(raw.locationLive),
     createdAt: isoOrNull(raw.createdAt) ?? new Date(0).toISOString(),
   };
-};
+});
 
-export const foodRidersSerializer = (raw: unknown): FoodRider[] =>
+export const foodRidersSerializer = fromResponse((raw: unknown): FoodRider[] =>
   arr(raw)
     .map(foodRiderSerializer)
-    .filter((r): r is FoodRider => r !== null);
+    .filter((r): r is FoodRider => r !== null));
 
-export const riderCredentialSerializer = (raw: unknown): RiderCredential | null =>
-  isObject(raw) && str(raw.username) && str(raw.password) ? { username: str(raw.username), password: str(raw.password) } : null;
+export const riderCredentialSerializer = fromResponse((raw: unknown): RiderCredential | null =>
+  isObject(raw) && str(raw.username) && str(raw.password) ? { username: str(raw.username), password: str(raw.password) } : null);
 
 /** `POST /food/vendor/riders` → the rider and their one-time credential. */
-export const createdRiderSerializer = (raw: unknown): { rider: FoodRider; credential: RiderCredential } | null => {
+export const createdRiderSerializer = fromResponse((raw: unknown): { rider: FoodRider; credential: RiderCredential } | null => {
   if (!isObject(raw)) return null;
   const rider = foodRiderSerializer(raw.rider);
   const credential = riderCredentialSerializer(raw.credential);
   return rider && credential ? { rider, credential } : null;
-};
+});
 
-export const riderHomeSerializer = (raw: unknown): RiderHome | null => {
+export const riderHomeSerializer = fromResponse((raw: unknown): RiderHome | null => {
   if (!isObject(raw)) return null;
   const rider = foodRiderSerializer(raw.rider);
   if (!rider) return null;
@@ -64,14 +64,14 @@ export const riderHomeSerializer = (raw: unknown): RiderHome | null => {
       city: strOrNull(v.city),
     },
   };
-};
+});
 
 // ─── Riders on orders ─────────────────────────────────
 const numOrNull = (v: unknown): number | null => (v === null || v === undefined || v === '' || !Number.isFinite(Number(v)) ? null : Number(v));
 const ORDER_STATUSES: readonly FoodOrderStatus[] = ['placed', 'accepted', 'preparing', 'ready', 'on_the_way', 'delivered', 'picked_up', 'rejected', 'auto_rejected', 'cancelled'];
 const statusOf = (v: unknown): FoodOrderStatus => (ORDER_STATUSES.includes(v as FoodOrderStatus) ? (v as FoodOrderStatus) : 'placed');
 
-export const riderOrderSerializer = (raw: unknown): RiderOrder | null => {
+export const riderOrderSerializer = fromResponse((raw: unknown): RiderOrder | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
   const p = isObject(raw.pickup) ? raw.pickup : {};
   const d = isObject(raw.drop) ? raw.drop : null;
@@ -114,9 +114,9 @@ export const riderOrderSerializer = (raw: unknown): RiderOrder | null => {
     // Kitchen Intelligence's addition (TODO(API_KITCHEN)).
     dropOrder: isObject(raw.dropOrder) && num(raw.dropOrder.of) >= 2 ? { position: Math.max(1, Math.round(num(raw.dropOrder.position, 1))), of: Math.round(num(raw.dropOrder.of)) } : null,
   };
-};
+});
 
-export const riderOrdersPageSerializer = (raw: unknown): Paged<RiderOrder> => {
+export const riderOrdersPageSerializer = fromResponse((raw: unknown): Paged<RiderOrder> => {
   const r = isObject(raw) ? raw : {};
   return {
     items: arr(r.items)
@@ -126,9 +126,9 @@ export const riderOrdersPageSerializer = (raw: unknown): Paged<RiderOrder> => {
     page: Math.max(1, Math.round(num(r.page, 1))),
     pageSize: Math.max(1, Math.round(num(r.pageSize, 20))),
   };
-};
+});
 
-export const riderCashSerializer = (raw: unknown): RiderCash | null =>
+export const riderCashSerializer = fromResponse((raw: unknown): RiderCash | null =>
   isObject(raw)
     ? {
         riderId: str(raw.riderId),
@@ -141,9 +141,9 @@ export const riderCashSerializer = (raw: unknown): RiderCash | null =>
           )
           .filter((e): e is NonNullable<typeof e> => e !== null),
       }
-    : null;
+    : null);
 
-export const liveRidersSerializer = (raw: unknown): LiveRider[] =>
+export const liveRidersSerializer = fromResponse((raw: unknown): LiveRider[] =>
   arr(isObject(raw) ? raw.items : raw)
     .map(r => {
       if (!isObject(r) || !str(r.id)) return null;
@@ -162,9 +162,9 @@ export const liveRidersSerializer = (raw: unknown): LiveRider[] =>
           .filter((o): o is NonNullable<typeof o> => o !== null),
       };
     })
-    .filter((r): r is LiveRider => r !== null);
+    .filter((r): r is LiveRider => r !== null));
 
-export const riderSuggestionsSerializer = (raw: unknown): RiderSuggestion[] =>
+export const riderSuggestionsSerializer = fromResponse((raw: unknown): RiderSuggestion[] =>
   arr(isObject(raw) ? raw.items : raw)
     .map(r =>
       isObject(r) && str(r.riderId)
@@ -179,7 +179,7 @@ export const riderSuggestionsSerializer = (raw: unknown): RiderSuggestion[] =>
           }
         : null,
     )
-    .filter((r): r is RiderSuggestion => r !== null);
+    .filter((r): r is RiderSuggestion => r !== null));
 
 /** The rider's duty switch, as the server now has it. */
 export const riderDutySerializer = fromResponse(raw => (isObject(raw) && typeof raw.onDuty === 'boolean' ? raw.onDuty : null));

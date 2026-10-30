@@ -3,9 +3,10 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { setFoodReviewHidden } from '@networks/admin/adminFoodNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { setFoodReviewHiddenAPI } from '@networks/admin/adminFoodNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { NO_ERROR, readRejection, type ServerError } from '../../../Auth/shared/formStatus';
+import { adminHiddenSerializer } from '@serializers/food/adminFoodSerializer';
 
 export interface AdminFoodReviewsSliceState {
   hidden: boolean;
@@ -64,7 +65,7 @@ export const adminFoodReviewsSlice = createAppSlice({
         { rejectWithValue },
       ) => {
         try {
-          return await setFoodReviewHidden(id, hide, hide ? reason : null);
+          return required(adminHiddenSerializer(await setFoodReviewHiddenAPI(id, hide, hide ? reason : null)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

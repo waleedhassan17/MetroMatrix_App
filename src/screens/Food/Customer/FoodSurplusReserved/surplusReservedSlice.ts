@@ -3,10 +3,11 @@
 // kitchen collects it, confirms a transfer, or marks a no-show.
 
 import { createAppSlice } from '@store/createAppSlice';
-import { cancelReservation, getReservation } from '@networks/food/surplusNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { cancelReservationAPI, getReservationAPI } from '@networks/food/surplusNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { SurplusReservation } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { reservationSerializer } from '@serializers/kitchen/surplusSerializer';
 
 export interface SurplusReservedSliceState {
   byCode: Record<string, SurplusReservation>;
@@ -25,7 +26,7 @@ export const surplusReservedSlice = createAppSlice({
     loadReservationAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return await getReservation(code);
+          return required(reservationSerializer(await getReservationAPI(code)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -48,7 +49,7 @@ export const surplusReservedSlice = createAppSlice({
     cancelReservationAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return await cancelReservation(code);
+          return required(reservationSerializer(await cancelReservationAPI(code)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

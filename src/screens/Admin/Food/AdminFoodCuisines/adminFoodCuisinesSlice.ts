@@ -7,12 +7,12 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import {
-  createCuisine,
-  deleteCuisine,
-  listAdminCuisines,
-  updateCuisine,
+  createCuisineAPI,
+  deleteCuisineAPI,
+  getAdminCuisinesAPI,
+  updateCuisineAPI,
 } from '@networks/admin/adminFoodNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { cuisineSlug } from '@models/food/adminFoodModel';
 import type { AdminCuisine, AdminCuisineInput } from '@/types';
 import {
@@ -21,6 +21,7 @@ import {
   type FormStatus,
   type ServerError,
 } from '../../../Auth/shared/formStatus';
+import { adminCuisinesSerializer } from '@serializers/food/adminFoodSerializer';
 
 export interface CuisineSheet extends Omit<AdminCuisineInput, 'sort'> {
   /** '' for a new one. */
@@ -99,7 +100,7 @@ export const adminFoodCuisinesSlice = createAppSlice({
     loadAdminCuisinesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await listAdminCuisines();
+          return required(adminCuisinesSerializer(await getAdminCuisinesAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -130,12 +131,12 @@ export const adminFoodCuisinesSlice = createAppSlice({
               icon: change.sheet.icon,
               sort: Number(change.sheet.sort),
             };
-            if (change.sheet.id) await updateCuisine(change.sheet.id, input);
-            else await createCuisine(input);
+            if (change.sheet.id) await updateCuisineAPI(change.sheet.id, input);
+            else await createCuisineAPI(input);
           } else if (change.kind === 'active')
-            await updateCuisine(change.id, { isActive: change.isActive });
-          else await deleteCuisine(change.id);
-          return await listAdminCuisines();
+            await updateCuisineAPI(change.id, { isActive: change.isActive });
+          else await deleteCuisineAPI(change.id);
+          return required(adminCuisinesSerializer(await getAdminCuisinesAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

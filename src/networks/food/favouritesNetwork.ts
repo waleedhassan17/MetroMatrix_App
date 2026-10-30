@@ -1,14 +1,33 @@
-// MetroMatrix — Food Court: the customer's saved kitchens.
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Food Favourites Network (API_FOOD.md)
+// ═══════════════════════════════════════════════════════
+// The customer's saved kitchens.
 // docs/API_FOOD.md §4.2: GET /food/favourites, POST/DELETE /food/favourites/:vendorId.
 
-import { api } from '../network/apiHelpers';
-import { foodFavouritesSerializer, unfavouritedSerializer } from '../../serializers/food/favouriteSerializer';
-import { isObject } from '../../serializers/serializerUtils';
-import { request } from '../shopping/http';
+import { api, toApiError } from '../network/apiHelpers';
 
 const enc = encodeURIComponent;
-const saved = (raw: unknown) => (isObject(raw) ? raw.favourite === true : null);
-
-export const listFavourites = () => request(() => api.get('/food/favourites'), foodFavouritesSerializer);
-export const addFavourite = (vendorId: string) => request(() => api.post(`/food/favourites/${enc(vendorId)}`), saved);
-export const removeFavourite = (vendorId: string) => request(() => api.delete(`/food/favourites/${enc(vendorId)}`), unfavouritedSerializer);
+export const getFavouritesAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get('/food/favourites');
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const addFavouriteAPI = async (vendorId: string): Promise<unknown> => {
+  try {
+    const response = await api.post(`/food/favourites/${enc(vendorId)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const removeFavouriteAPI = async (vendorId: string): Promise<unknown> => {
+  try {
+    const response = await api.delete(`/food/favourites/${enc(vendorId)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

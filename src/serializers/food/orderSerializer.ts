@@ -107,7 +107,7 @@ const cartLineSerializer = (raw: unknown): FoodCartLine | null => {
   };
 };
 
-export const foodCartSerializer = (raw: unknown): FoodCart | null => {
+export const foodCartSerializer = fromResponse((raw: unknown): FoodCart | null => {
   if (!isObject(raw)) return null;
   const lines = compact(arr(raw.lines).map(cartLineSerializer));
   return {
@@ -121,11 +121,11 @@ export const foodCartSerializer = (raw: unknown): FoodCart | null => {
     warnings: issues(raw.warnings),
     issues: issues(raw.issues),
   };
-};
+});
 
 export const EMPTY_FOOD_CART: FoodCart = { empty: true, vendor: null, fulfilment: null, scheduledFor: null, lines: [], itemCount: 0, subtotal: 0, warnings: [], issues: [] };
 
-export const foodSlotsSerializer = (raw: unknown): FoodSlots => {
+export const foodSlotsSerializer = fromResponse((raw: unknown): FoodSlots => {
   const r = isObject(raw) ? raw : {};
   return {
     timezone: str(r.timezone, 'Asia/Karachi'),
@@ -142,7 +142,7 @@ export const foodSlotsSerializer = (raw: unknown): FoodSlots => {
       }),
     ),
   };
-};
+});
 
 const totalsSerializer = (raw: unknown): FoodTotals => {
   const t = isObject(raw) ? raw : {};
@@ -154,7 +154,7 @@ const accountSerializer = (raw: unknown): FoodTransferAccount | null =>
     ? { kind: str(raw.kind, 'bank'), title: str(raw.accountTitle ?? raw.title), number: str(raw.accountNumber ?? raw.number), bankName: strOrNull(raw.bankName) }
     : null;
 
-export const foodPreviewSerializer = (raw: unknown): FoodPreview | null => {
+export const foodPreviewSerializer = fromResponse((raw: unknown): FoodPreview | null => {
   if (!isObject(raw)) return null;
   const p = isObject(raw.payment) ? raw.payment : {};
   const av = isObject(p.available) ? p.available : {};
@@ -181,7 +181,7 @@ export const foodPreviewSerializer = (raw: unknown): FoodPreview | null => {
       accounts: compact(arr(p.accounts).map(accountSerializer)),
     },
   };
-};
+});
 
 const riderSerializer = (raw: unknown): FoodOrderRider | null =>
   isObject(raw) && str(raw.name)
@@ -223,7 +223,7 @@ const pageOf = <T>(raw: unknown, row: (x: unknown) => T | null): Paged<T> => {
   };
 };
 
-export const foodOrdersPageSerializer = (raw: unknown) => pageOf(raw, foodOrderSummarySerializer);
+export const foodOrdersPageSerializer = fromResponse((raw: unknown) => pageOf(raw, foodOrderSummarySerializer));
 
 const TIMESTAMPS = ['acceptedAt', 'preparingAt', 'readyAt', 'pickedUpAt', 'deliveredAt', 'cancelledAt'] as const;
 
@@ -235,7 +235,7 @@ const kitchenExtras = (raw: Record<string, unknown>): Pick<FoodOrder, 'packedPho
   return { packedPhotoUrl: strOrNull(raw.packedPhotoUrl), origin: { kind: oneOf(o.kind, ORIGINS, 'app'), ref: strOrNull(o.ref) } };
 };
 
-export const foodOrderSerializer = (raw: unknown): FoodOrder | null => {
+export const foodOrderSerializer = fromResponse((raw: unknown): FoodOrder | null => {
   if (!isObject(raw) || !str(raw.code)) return null;
   const v = isObject(raw.vendor) ? raw.vendor : {};
   const loc = isObject(v.location) ? v.location : {};
@@ -328,10 +328,10 @@ export const foodOrderSerializer = (raw: unknown): FoodOrder | null => {
     canReorder: bool(raw.canReorder),
     ...kitchenExtras(raw),
   };
-};
+});
 
 /** The kitchen's view: the order, the customer's contact, the moves it can make now. */
-export const vendorFoodOrderSerializer = (raw: unknown): VendorFoodOrder | null => {
+export const vendorFoodOrderSerializer = fromResponse((raw: unknown): VendorFoodOrder | null => {
   const base = foodOrderSerializer(raw);
   if (!base || !isObject(raw)) return null;
   const c = isObject(raw.customer) ? raw.customer : {};
@@ -344,9 +344,9 @@ export const vendorFoodOrderSerializer = (raw: unknown): VendorFoodOrder | null 
       payment: arr(a.payment).filter((x): x is FoodPaymentStatus => FOOD_PAYMENT_STATUSES.includes(x as FoodPaymentStatus)),
     },
   };
-};
+});
 
-export const foodTrackingSerializer = (raw: unknown): FoodTracking | null => {
+export const foodTrackingSerializer = fromResponse((raw: unknown): FoodTracking | null => {
   if (!isObject(raw) || !str(raw.code)) return null;
   const eta = isObject(raw.eta) ? raw.eta : {};
   const b = isObject(raw.branch) ? raw.branch : {};
@@ -362,7 +362,7 @@ export const foodTrackingSerializer = (raw: unknown): FoodTracking | null => {
     handedToExternal: bool(raw.handedToExternal),
     updatedAt: isoOrNull(raw.updatedAt),
   };
-};
+});
 
 export const boardCardSerializer = (raw: unknown): BoardCard | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
@@ -388,9 +388,9 @@ export const boardCardSerializer = (raw: unknown): BoardCard | null => {
   };
 };
 
-export const boardPageSerializer = (raw: unknown) => pageOf(raw, boardCardSerializer);
+export const boardPageSerializer = fromResponse((raw: unknown) => pageOf(raw, boardCardSerializer));
 
-export const foodPromotionSerializer = (raw: unknown): FoodPromotion | null => {
+export const foodPromotionSerializer = fromResponse((raw: unknown): FoodPromotion | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
   const days = arr(raw.weekdays).map(d => Math.round(num(d, -1))).filter(d => d >= 0 && d <= 6);
   return {
@@ -415,10 +415,10 @@ export const foodPromotionSerializer = (raw: unknown): FoodPromotion | null => {
     state: oneOf(raw.state, PROMOTION_STATES, 'live'),
     label: str(raw.label, str(raw.title)),
   };
-};
+});
 
-export const foodPromotionsSerializer = (raw: unknown): FoodPromotion[] =>
-  compact(arr(isObject(raw) ? raw.items : raw).map(foodPromotionSerializer));
+export const foodPromotionsSerializer = fromResponse((raw: unknown): FoodPromotion[] =>
+  compact(arr(isObject(raw) ? raw.items : raw).map(foodPromotionSerializer)));
 
 /** A reorder: the bag again, and how many dishes were dropped or repriced. */
 export const reorderSerializer = fromResponse(raw => {

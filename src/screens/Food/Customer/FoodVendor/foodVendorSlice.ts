@@ -5,10 +5,11 @@
 // going back and forth doesn't reload it.
 
 import { createAppSlice } from '@store/createAppSlice';
-import { getVendorPage } from '@networks/food/discoveryNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getVendorPageAPI } from '@networks/food/discoveryNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { VendorPage } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { vendorPageSerializer } from '@serializers/food/discoverySerializer';
 
 export interface VendorPageEntry {
   page: VendorPage | null;
@@ -30,7 +31,7 @@ export const foodVendorSlice = createAppSlice({
     loadVendorPageAsync: create.asyncThunk(
       async ({ slug, at }: { slug: string; at: { lat: number; lng: number } | null }, { rejectWithValue }) => {
         try {
-          return await getVendorPage(slug, at);
+          return required(vendorPageSerializer(await getVendorPageAPI(slug, at)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

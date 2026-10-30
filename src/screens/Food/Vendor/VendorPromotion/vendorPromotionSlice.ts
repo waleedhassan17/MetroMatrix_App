@@ -8,12 +8,14 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { createPromotion, deactivatePromotion, deletePromotion, getPromotion, updatePromotion } from '@networks/food/vendor/promotionsNetwork';
-import { listMenuItems } from '@networks/food/vendor/menuNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { createPromotionAPI, deactivatePromotionAPI, deletePromotionAPI, getPromotionAPI, updatePromotionAPI } from '@networks/food/vendor/promotionsNetwork';
+import { getMenuItemsAPI } from '@networks/food/vendor/menuNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { emptyPromotionForm, promotionForm, promotionInput, type PromotionForm } from '@models/food/promotionModel';
 import type { FoodPromotion, PromotionKind, VendorMenuItem } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { foodPromotionSerializer } from '@serializers/food/orderSerializer';
+import { vendorMenuItemsSerializer } from '@serializers/food/menuSerializer';
 
 type TextField = 'title' | 'value' | 'minOrder' | 'maxDiscount' | 'code' | 'timeFrom' | 'timeTo' | 'endsOn' | 'usageLimit' | 'perUserLimit';
 
@@ -65,7 +67,7 @@ export const vendorPromotionSlice = createAppSlice({
     loadPromotionAsync: create.asyncThunk(
       async (id: string | undefined, { rejectWithValue }) => {
         try {
-          const [promotion, items] = await Promise.all([id ? getPromotion(id) : Promise.resolve(null), listMenuItems()]);
+          const [promotion, items] = await Promise.all([id ? getPromotionAPI(id).then(raw => required(foodPromotionSerializer(raw))) : Promise.resolve(null), getMenuItemsAPI().then(raw => required(vendorMenuItemsSerializer(raw)))]);
           return { promotion, dishes: items.map(i => ({ id: i.id, name: i.name })) };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -93,7 +95,7 @@ export const vendorPromotionSlice = createAppSlice({
         const { promotion, form } = (getState() as { vendorPromotion: VendorPromotionSliceState }).vendorPromotion;
         if (!form) return rejectWithValue({ message: 'Nothing to save.', code: null, details: null });
         try {
-          return promotion ? await updatePromotion(promotion.id, promotionInput(form)) : await createPromotion(promotionInput(form));
+          return promotion ? required(foodPromotionSerializer(await updatePromotionAPI(promotion.id, promotionInput(form)))) : required(foodPromotionSerializer(await createPromotionAPI(promotionInput(form))));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -120,7 +122,7 @@ export const vendorPromotionSlice = createAppSlice({
     deactivatePromotionAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return await deactivatePromotion(id);
+          return required(foodPromotionSerializer(await deactivatePromotionAPI(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -145,7 +147,7 @@ export const vendorPromotionSlice = createAppSlice({
     deletePromotionAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          await deletePromotion(id);
+          await deletePromotionAPI(id);
           return id;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

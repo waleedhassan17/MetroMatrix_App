@@ -13,12 +13,13 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { newUuid } from '@utils/ids';
-import { previewFoodCart } from '@networks/food/cartNetwork';
-import { placeFoodOrder } from '@networks/food/ordersNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { previewFoodCartAPI } from '@networks/food/cartNetwork';
+import { placeFoodOrderAPI } from '@networks/food/ordersNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { MAX_BUILDING, MAX_FLOOR, MAX_KITCHEN_NOTE, MAX_RIDER_NOTE, cleanCode } from '@models/food/bagModel';
 import type { FoodCheckoutInput, FoodOrder, FoodPaymentMethod, FoodPreview } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { foodPreviewSerializer, foodOrderSerializer } from '@serializers/food/orderSerializer';
 
 export interface FoodCheckoutSliceState {
   addressId: string | null;
@@ -119,7 +120,7 @@ export const foodCheckoutSlice = createAppSlice({
     previewFoodCheckoutAsync: create.asyncThunk(
       async (input: Partial<FoodCheckoutInput>, { rejectWithValue }) => {
         try {
-          return await previewFoodCart(input);
+          return required(foodPreviewSerializer(await previewFoodCartAPI(input)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -143,7 +144,7 @@ export const foodCheckoutSlice = createAppSlice({
     placeFoodOrderAsync: create.asyncThunk(
       async ({ input, key }: { input: FoodCheckoutInput; key: string }, { rejectWithValue }) => {
         try {
-          return await placeFoodOrder(input, key);
+          return required(foodOrderSerializer(await placeFoodOrderAPI(input, key)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

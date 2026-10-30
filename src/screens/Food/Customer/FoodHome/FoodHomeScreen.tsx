@@ -13,7 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useServiceNav } from '@hooks/useServiceNav';
 import { usePagedList } from '@hooks/usePagedList';
-import { listVendors } from '@networks/food/discoveryNetwork';
+import { getVendorsAPI } from '@networks/food/discoveryNetwork';
 import { RAILS, pointOfAddress } from '@models/food/discoveryModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Button, Card, Divider, EmptyState, IconButton, IonIcon, InlineNotice, ListRow, MciIcon, PageHeader, Sheet, Skeleton, TiffinPlanCard } from '@custom/index';
@@ -26,6 +26,8 @@ import type { VendorCard as VendorCardData } from '@/types';
 import { selectFoodPoint, setFoodPoint } from '@store/preferencesSlice';
 import { loadAddressesAsync, selectAddressBook } from '../../../Account/AddressBook/addressBookSlice';
 import { closePointSheet, loadFoodHomeAsync, locateMeAsync, openPointSheet, pointKey, selectFoodHome } from './foodHomeSlice';
+import { vendorCardsPageSerializer } from '@serializers/food/discoverySerializer';
+import { required } from '@networks/network/apiHelpers';
 
 type Nav = { navigate: (name: string, params?: object) => void };
 
@@ -89,7 +91,7 @@ const FoodHomeContent: React.FC = () => {
 
   const delivering = !!home?.coverage.delivering && s.builtFor === key;
   const fetchPage = useCallback(
-    (page: number, pageSize: number) => listVendors({ lat: point?.lat ?? 0, lng: point?.lng ?? 0, sort: 'recommended' }, page, pageSize),
+    (page: number, pageSize: number) => getVendorsAPI({ lat: point?.lat ?? 0, lng: point?.lng ?? 0, sort: 'recommended' }, page, pageSize).then(raw => required(vendorCardsPageSerializer(raw))),
     [point?.lat, point?.lng],
   );
   const all = usePagedList(fetchPage, `food-home:${key}`, { enabled: delivering, keyOf: v => v.id });

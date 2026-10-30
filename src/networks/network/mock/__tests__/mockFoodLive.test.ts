@@ -4,15 +4,17 @@
 // customer the new view and the kitchen a card; a failed write sends
 // nothing; the minute jobs say what they did.
 
-import { addToFoodCart } from '../../../food/cartNetwork';
-import { placeFoodOrder } from '../../../food/ordersNetwork';
-import { acceptOrder } from '../../../food/vendor/ordersNetwork';
+import { addToFoodCartAPI } from '../../../food/cartNetwork';
+import { placeFoodOrderAPI } from '../../../food/ordersNetwork';
+import { acceptOrderAPI } from '../../../food/vendor/ordersNetwork';
 import { clearTokens } from '../../../../utils/storageUtils';
 import { getDb, resetMockDb } from '../mockDb';
 import { createMockSocket } from '../mockRealtime';
-import { getItemSheet } from '../../../food/discoveryNetwork';
+import { getItemSheetAPI } from '../../../food/discoveryNetwork';
 import type { SocketLike } from '../../../../services/realtime/socketClient';
 import { signInAs, installDummyApi } from '../testing';
+import { foodOrderSerializer, vendorFoodOrderSerializer } from '../../../../serializers/food/orderSerializer';
+import { required } from '../../apiHelpers';
 
 installDummyApi();
 
@@ -44,11 +46,8 @@ const listen = async () => {
 };
 
 const order = async () => {
-  await addToFoodCart({ vendorId: 'fb_cloud', itemId: 'mi_classic_smash', variantId: 'mi_classic_smash_v1', optionIds: [], quantity: 1, notes: null });
-  return placeFoodOrder(
-    { addressId: 'ad_customer_home', paymentMethod: 'cod', promoCode: null, cutlery: false, note: null, building: null, floor: null, riderInstructions: null },
-    `k-${Math.random()}`,
-  );
+  await addToFoodCartAPI({ vendorId: 'fb_cloud', itemId: 'mi_classic_smash', variantId: 'mi_classic_smash_v1', optionIds: [], quantity: 1, notes: null });
+  return required(foodOrderSerializer(await placeFoodOrderAPI({ addressId: 'ad_customer_home', paymentMethod: 'cod', promoCode: null, cutlery: false, note: null, building: null, floor: null, riderInstructions: null }, `k-${Math.random()}`)));
 };
 
 let sockets: SocketLike[] = [];
@@ -94,11 +93,11 @@ it('lets only the order’s customer into its room, and tells them each move', a
 
   // A refused move says nothing.
   await asVendor();
-  await expect(acceptOrder(o.id, 2)).rejects.toMatchObject({ code: 'VALIDATION_FAILED' });
+  await expect(acceptOrderAPI(o.id, 2).then(raw => required(vendorFoodOrderSerializer(raw)))).rejects.toMatchObject({ code: 'VALIDATION_FAILED' });
   await new Promise(r => setTimeout(r, 30));
   expect(customer.heard.filter(h => h.event === 'order.updated')).toHaveLength(0);
 
-  await acceptOrder(o.id, 20);
+  await acceptOrderAPI(o.id, 20);
   await until(() => customer.heard.some(h => h.event === 'order.updated'));
   const toCustomer = customer.heard.find(h => h.event === 'order.updated')!.payload;
   expect(toCustomer).toMatchObject({ orderId: o.id, code: o.code, status: 'accepted' });
@@ -116,7 +115,7 @@ it('says when an order wasn’t answered in time', async () => {
   await customer.s.emitWithAck('subscribe', { orderId: o.id }, 1000);
   jest.setSystemTime(Date.now() + 6 * 60_000);
   // Any Food request runs the minute jobs.
-  await getItemSheet('mi_classic_smash');
+  await getItemSheetAPI('mi_classic_smash');
   await until(() => customer.heard.some(h => h.event === 'order.updated'));
   expect(customer.heard.find(h => h.event === 'order.updated')!.payload).toMatchObject({ status: 'auto_rejected' });
   expect((await getDb()).food.orders.find(x => x.id === o.id)!.status).toBe('auto_rejected');

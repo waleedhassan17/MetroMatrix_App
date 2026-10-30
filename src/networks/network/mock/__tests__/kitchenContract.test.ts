@@ -11,8 +11,8 @@ import path from 'path';
 import { api, required } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import { resetMockDb } from '../mockDb';
-import { addToFoodCart, clearFoodCart } from '../../../food/cartNetwork';
-import { placeFoodOrder } from '../../../food/ordersNetwork';
+import { addToFoodCartAPI, clearFoodCartAPI } from '../../../food/cartNetwork';
+import { placeFoodOrderAPI } from '../../../food/ordersNetwork';
 import { addToCartAPI, getCartAPI, removeCartLineAPI } from '../../../shopping/cartNetwork';
 import { placeOrderAPI } from '../../../shopping/checkoutNetwork';
 import { getAddressesAPI } from '../../../addresses/addressesNetwork';
@@ -20,6 +20,7 @@ import { signInAs, installDummyApi } from '../testing';
 import { addressListSerializer } from '../../../../serializers/addressSerializer';
 import { cartSerializer } from '../../../../serializers/shopping/cartSerializer';
 import { orderGroupSerializer } from '../../../../serializers/shopping/orderSerializer';
+import { foodOrderSerializer } from '../../../../serializers/food/orderSerializer';
 
 installDummyApi();
 
@@ -83,9 +84,9 @@ const run = async () => {
   await call('resume', 'post', '/food/vendor/resume');
   // An order to show the packing photo and the announcement on.
   await as('customer@metromatrix.app', 'customer');
-  await clearFoodCart();
-  await addToFoodCart({ vendorId: 'fb_resto', itemId: 'mi_chicken_biryani', variantId: 'mi_chicken_biryani_v1', optionIds: ['og_spice_1'], quantity: 2, notes: null }, true);
-  const order = await placeFoodOrder({ addressId: 'ad_customer_home', paymentMethod: 'cod', promoCode: null, cutlery: false, note: null, building: null, floor: null, riderInstructions: null }, 'k1');
+  await clearFoodCartAPI();
+  await addToFoodCartAPI({ vendorId: 'fb_resto', itemId: 'mi_chicken_biryani', variantId: 'mi_chicken_biryani_v1', optionIds: ['og_spice_1'], quantity: 2, notes: null }, true);
+  const order = required(foodOrderSerializer(await placeFoodOrderAPI({ addressId: 'ad_customer_home', paymentMethod: 'cod', promoCode: null, cutlery: false, note: null, building: null, floor: null, riderInstructions: null }, 'k1')));
   await call('surplusNearby', 'get', '/food/surplus?lat=31.5102&lng=74.3441');
   await call('surplusDetail', 'get', `/food/surplus/${box.id}?lat=31.5102&lng=74.3441`);
   const res = await call('reserve', 'post', `/food/surplus/${box.id}/reserve`, { quantity: 1, paymentMethod: 'transfer' }, { 'Idempotency-Key': 'doc-1' });
@@ -212,9 +213,9 @@ const run = async () => {
   await call('storyPut', 'put', '/food/vendor/story', { text: 'Three brothers from Gujranwala, cooking biryani the way our father did since 1998.', cookName: 'Imran Qureshi', photoUrls: ['https://res.cloudinary.com/demo/kitchen.jpg'] });
   // Two deliveries to the same street: the second rides with the first.
   await as('customer@metromatrix.app', 'customer');
-  await clearFoodCart();
-  await addToFoodCart({ vendorId: 'fb_resto', itemId: 'mi_naan', variantId: null, optionIds: [], quantity: 10, notes: null }, true);
-  const second = await placeFoodOrder({ addressId: 'ad_customer_home', paymentMethod: 'cod', promoCode: null, cutlery: false, note: null, building: null, floor: null, riderInstructions: null }, 'k2');
+  await clearFoodCartAPI();
+  await addToFoodCartAPI({ vendorId: 'fb_resto', itemId: 'mi_naan', variantId: null, optionIds: [], quantity: 10, notes: null }, true);
+  const second = required(foodOrderSerializer(await placeFoodOrderAPI({ addressId: 'ad_customer_home', paymentMethod: 'cod', promoCode: null, cutlery: false, note: null, building: null, floor: null, riderInstructions: null }, 'k2')));
   await as('restaurant@metromatrix.app');
   await api.post(`/food/vendor/orders/${second.id}/accept`, { etaMinutes: 25 });
   await call('batch', 'get', `/food/vendor/orders/${second.id}/batch-suggestions`);

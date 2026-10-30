@@ -6,11 +6,12 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getHours, saveHours } from '@networks/food/vendor/settingsNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getHoursAPI, saveHoursAPI } from '@networks/food/vendor/settingsNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { MAX_RANGES_PER_DAY } from '@models/food/vendorModel';
 import type { HoursRange } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { hoursSerializer } from '@serializers/food/vendorSerializer';
 
 export type HoursRow = Pick<HoursRange, 'weekday' | 'opensAt' | 'closesAt'>;
 
@@ -69,7 +70,7 @@ export const vendorHoursSlice = createAppSlice({
     loadHoursAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await getHours();
+          return required(hoursSerializer(await getHoursAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -94,7 +95,7 @@ export const vendorHoursSlice = createAppSlice({
     saveHoursAsync: create.asyncThunk(
       async (ranges: HoursRow[], { rejectWithValue }) => {
         try {
-          return await saveHours(ranges);
+          return required(hoursSerializer(await saveHoursAPI(ranges)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

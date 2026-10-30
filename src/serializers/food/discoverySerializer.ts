@@ -22,7 +22,7 @@ import type {
 } from '../../types/food';
 import type { Paged } from '../../types/payments';
 import type { HygieneStatus, VendorBadge } from '../../types/kitchen';
-import { arr, bool, isObject, num, str, strOrNull } from '../serializerUtils';
+import { arr, bool, isObject, num, str, strOrNull, fromResponse } from '../serializerUtils';
 import { foodCuisinesSerializer } from './vendorSerializer';
 import { ITEM_TAGS } from './menuSerializer';
 import { foodHomeBannersSerializer, ratingSummarySerializer } from './reviewSerializer';
@@ -89,7 +89,7 @@ export const vendorCardSerializer = (raw: unknown): VendorCard | null => {
 
 const cards = (raw: unknown): VendorCard[] => compact(arr(raw).map(vendorCardSerializer));
 
-export const foodHomeSerializer = (raw: unknown): FoodHome | null => {
+export const foodHomeSerializer = fromResponse((raw: unknown): FoodHome | null => {
   if (!isObject(raw)) return null;
   const c = isObject(raw.coverage) ? raw.coverage : {};
   return {
@@ -104,15 +104,15 @@ export const foodHomeSerializer = (raw: unknown): FoodHome | null => {
     newOnFoodCourt: cards(raw.newOnFoodCourt),
     freeDelivery: cards(raw.freeDelivery),
   };
-};
+});
 
-export const vendorCardsPageSerializer = (raw: unknown): Paged<VendorCard> => {
+export const vendorCardsPageSerializer = fromResponse((raw: unknown): Paged<VendorCard> => {
   const r = isObject(raw) ? raw : {};
   const page = Math.max(1, Math.round(num(r.page, 1)));
   const pageSize = Math.max(1, Math.round(num(r.pageSize, 20)));
   const total = Math.max(0, Math.round(num(r.total)));
   return { items: cards(r.items), page, pageSize, total };
-};
+});
 
 export const dishCardSerializer = (raw: unknown): DishCard | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
@@ -154,7 +154,7 @@ const sectionSerializer = (raw: unknown): MenuSection | null => {
 const dealSerializer = (raw: unknown): FoodDeal | null =>
   isObject(raw) && str(raw.id) ? { id: str(raw.id), title: str(raw.title), label: str(raw.label, str(raw.title)), freeDelivery: bool(raw.freeDelivery) } : null;
 
-export const vendorPageSerializer = (raw: unknown): VendorPage | null => {
+export const vendorPageSerializer = fromResponse((raw: unknown): VendorPage | null => {
   const card = vendorCardSerializer(raw);
   if (!card || !isObject(raw)) return null;
   const loc = isObject(raw.location) ? raw.location : {};
@@ -202,7 +202,7 @@ export const vendorPageSerializer = (raw: unknown): VendorPage | null => {
       return r && sehri && iftar ? { sehri, iftar, iftarPreorderOnly: bool(r.iftarPreorderOnly) } : null;
     })(),
   };
-};
+});
 
 const groupSerializer = (raw: unknown): SheetGroup | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
@@ -224,7 +224,7 @@ const groupSerializer = (raw: unknown): SheetGroup | null => {
   };
 };
 
-export const itemSheetSerializer = (raw: unknown): ItemSheet | null => {
+export const itemSheetSerializer = fromResponse((raw: unknown): ItemSheet | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
   const cat = isObject(raw.category) ? raw.category : {};
   return {
@@ -252,14 +252,14 @@ export const itemSheetSerializer = (raw: unknown): ItemSheet | null => {
     groups: compact(arr(raw.groups).map(groupSerializer)),
     nutrition: dishFactsSerializer(raw.nutrition),
   };
-};
+});
 
 const dishHitSerializer = (raw: unknown): DishHit | null =>
   isObject(raw) && str(raw.id)
     ? { id: str(raw.id), name: str(raw.name), photoUrl: strOrNull(raw.photoUrl), fromPrice: Math.max(0, Math.round(num(raw.fromPrice))), tags: tags(raw.tags), nutrition: dishFactsSerializer(raw.nutrition) }
     : null;
 
-export const foodSearchSerializer = (raw: unknown): FoodSearchResult => {
+export const foodSearchSerializer = fromResponse((raw: unknown): FoodSearchResult => {
   const r = isObject(raw) ? raw : {};
   return {
     vendors: cards(r.vendors),
@@ -272,4 +272,4 @@ export const foodSearchSerializer = (raw: unknown): FoodSearchResult => {
       }),
     ),
   };
-};
+});

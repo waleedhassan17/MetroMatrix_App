@@ -9,22 +9,23 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import {
-  createMenuItem,
-  deleteMenuItem,
-  duplicateMenuItem,
-  getMenuItem,
-  listMenuCategories,
-  listOptionGroups,
-  saveItemGroups,
-  saveItemVariants,
-  updateMenuItem,
+  createMenuItemAPI,
+  deleteMenuItemAPI,
+  duplicateMenuItemAPI,
+  getMenuItemAPI,
+  getMenuCategoriesAPI,
+  getOptionGroupsAPI,
+  saveItemGroupsAPI,
+  saveItemVariantsAPI,
+  updateMenuItemAPI,
 } from '@networks/food/vendor/menuNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { emptyItemForm, itemForm, itemInput, variantsInput, type ItemForm } from '@models/food/menuModel';
 import type { ItemTag, LocalFile, MenuCategory, OptionGroup, VendorMenuItem } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { upload } from '../../../Shopping/Customer/shared/photoUploads';
 import { menuChanged } from '../VendorMenu/vendorMenuSlice';
+import { vendorMenuItemSerializer, menuCategoriesSerializer, optionGroupsSerializer } from '@serializers/food/menuSerializer';
 
 export interface VendorMenuItemSliceState {
   /** The dish being edited (null for a new one). */
@@ -102,7 +103,7 @@ export const vendorMenuItemSlice = createAppSlice({
     loadMenuItemAsync: create.asyncThunk(
       async ({ id, categoryId }: { id?: string; categoryId?: string }, { rejectWithValue }) => {
         try {
-          const [item, categories, groups] = await Promise.all([id ? getMenuItem(id) : Promise.resolve(null), listMenuCategories(), listOptionGroups()]);
+          const [item, categories, groups] = await Promise.all([id ? getMenuItemAPI(id).then(raw => required(vendorMenuItemSerializer(raw))) : Promise.resolve(null), getMenuCategoriesAPI().then(raw => required(menuCategoriesSerializer(raw))), getOptionGroupsAPI().then(raw => required(optionGroupsSerializer(raw)))]);
           return { item, categories, groups, categoryId: categoryId ?? null };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -158,16 +159,16 @@ export const vendorMenuItemSlice = createAppSlice({
           const sizes = variantsInput(form);
           let saved: VendorMenuItem;
           if (!item) {
-            saved = await createMenuItem(input, sizes.map(({ name, price }) => ({ name, price })));
-            if (form.groupIds.length) saved = await saveItemGroups(saved.id, form.groupIds.map(groupId => ({ groupId })));
+            saved = required(vendorMenuItemSerializer(await createMenuItemAPI(input, sizes.map(({ name, price }) => ({ name, price })))));
+            if (form.groupIds.length) saved = required(vendorMenuItemSerializer(await saveItemGroupsAPI(saved.id, form.groupIds.map(groupId => ({ groupId })))));
           } else {
-            saved = await updateMenuItem(item.id, input);
+            saved = required(vendorMenuItemSerializer(await updateMenuItemAPI(item.id, input)));
             const before = item.variants.map(v => ({ id: v.id, name: v.name, price: v.price }));
-            if (!sameJson(before, sizes)) saved = await saveItemVariants(item.id, sizes);
+            if (!sameJson(before, sizes)) saved = required(vendorMenuItemSerializer(await saveItemVariantsAPI(item.id, sizes)));
             const allSizes = item.optionGroups.filter(l => !l.variantId).map(l => l.groupId);
             if (!sameJson(allSizes, form.groupIds)) {
               const perSize = saved.optionGroups.filter(l => l.variantId).map(l => ({ groupId: l.groupId, variantId: l.variantId! }));
-              saved = await saveItemGroups(item.id, [...form.groupIds.map(groupId => ({ groupId })), ...perSize]);
+              saved = required(vendorMenuItemSerializer(await saveItemGroupsAPI(item.id, [...form.groupIds.map(groupId => ({ groupId })), ...perSize])));
             }
           }
           dispatch(menuChanged());
@@ -196,7 +197,7 @@ export const vendorMenuItemSlice = createAppSlice({
     deleteMenuItemAsync: create.asyncThunk(
       async (id: string, { dispatch, rejectWithValue }) => {
         try {
-          await deleteMenuItem(id);
+          await deleteMenuItemAPI(id);
           dispatch(menuChanged());
           return id;
         } catch (e) {
@@ -220,7 +221,7 @@ export const vendorMenuItemSlice = createAppSlice({
     duplicateMenuItemAsync: create.asyncThunk(
       async (id: string, { dispatch, rejectWithValue }) => {
         try {
-          const copy = await duplicateMenuItem(id);
+          const copy = required(vendorMenuItemSerializer(await duplicateMenuItemAPI(id)));
           dispatch(menuChanged());
           return copy;
         } catch (e) {

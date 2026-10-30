@@ -7,11 +7,12 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getItemSheet } from '@networks/food/discoveryNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getItemSheetAPI } from '@networks/food/discoveryNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { MAX_NOTE, MAX_QUANTITY, chooseVariant, initialSelection, toggleOption, type Selection } from '@models/food/itemSelectionModel';
 import type { ItemSheet } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { itemSheetSerializer } from '@serializers/food/discoverySerializer';
 
 export interface ItemSheetSliceState {
   /** The dish whose sheet is open (null: closed). */
@@ -49,7 +50,7 @@ export const itemSheetSlice = createAppSlice({
     openItemSheetAsync: create.asyncThunk(
       async (itemId: string, { rejectWithValue }) => {
         try {
-          return await getItemSheet(itemId);
+          return required(itemSheetSerializer(await getItemSheetAPI(itemId)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

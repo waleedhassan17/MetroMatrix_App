@@ -12,7 +12,7 @@ import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { usePagedList } from '@hooks/usePagedList';
-import { listMyReviews } from '@networks/food/vendor/reviewsNetwork';
+import { getMyReviewsAPI } from '@networks/food/vendor/reviewsNetwork';
 import { validateReply } from '@models/food/reviewModel';
 import { selectBusiness } from '../../../Auth/authSlice';
 import { ServiceScope, useStyles, type Theme } from '@theme/index';
@@ -21,6 +21,7 @@ import { FoodReviewItem } from '@custom/food/FoodReviewItem';
 import type { FoodVendorStackParamList, VendorReview } from '@/types';
 import { haptics } from '@utils/haptics';
 import { openReply, selectVendorReviews, sendReplyAsync, setReply, setUnrepliedOnly, touchReply } from './vendorReviewsSlice';
+import { vendorReviewsPageSerializer } from '@serializers/food/reviewSerializer';
 
 type Props = NativeStackScreenProps<FoodVendorStackParamList, 'VendorReviews'>;
 
@@ -47,7 +48,7 @@ const VendorReviewsContent: React.FC<Props> = () => {
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectVendorReviews);
   const business = useAppSelector(selectBusiness);
-  const list = usePagedList((page, size) => listMyReviews(s.unreplied, page, size), `vendor-reviews|${s.unreplied}`);
+  const list = usePagedList((page, size) => getMyReviewsAPI(s.unreplied, page, size), vendorReviewsPageSerializer, `vendor-reviews|${s.unreplied}`);
   const replyError = s.replyTouched ? validateReply(s.reply).reply : undefined;
   const replying = list.rows.find(r => r.id === s.replying) ?? null;
   const name = business?.name ?? 'Your kitchen';

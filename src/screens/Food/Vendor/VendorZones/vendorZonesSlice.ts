@@ -7,10 +7,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getFeeBands, getVendorSettings, saveFeeBands } from '@networks/food/vendor/settingsNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getFeeBandsAPI, getVendorSettingsAPI, saveFeeBandsAPI } from '@networks/food/vendor/settingsNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { MAX_FEE_BANDS, bandsFromForm, feeBandForm, type FeeBandForm } from '@models/food/vendorModel';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { feeBandsSerializer, vendorSettingsSerializer } from '@serializers/food/vendorSerializer';
 
 export interface VendorZonesSliceState {
   rows: FeeBandForm[];
@@ -61,7 +62,7 @@ export const vendorZonesSlice = createAppSlice({
     loadZonesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [bands, settings] = await Promise.all([getFeeBands(), getVendorSettings()]);
+          const [bands, settings] = await Promise.all([getFeeBandsAPI().then(raw => required(feeBandsSerializer(raw))), getVendorSettingsAPI().then(raw => required(vendorSettingsSerializer(raw)))]);
           return { bands, settings };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -91,7 +92,7 @@ export const vendorZonesSlice = createAppSlice({
     saveZonesAsync: create.asyncThunk(
       async (rows: FeeBandForm[], { rejectWithValue }) => {
         try {
-          return await saveFeeBands(bandsFromForm(rows));
+          return required(feeBandsSerializer(await saveFeeBandsAPI(bandsFromForm(rows))));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

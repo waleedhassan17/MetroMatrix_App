@@ -8,14 +8,15 @@
 
 import { createSelector, type PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getToday, setToday } from '@networks/food/vendor/availabilityNetwork';
+import { getTodayAPI, setTodayAPI } from '@networks/food/vendor/availabilityNetwork';
 import { getForecast } from '@networks/kitchen/forecastNetwork';
 import { getTiffinTomorrow } from '@networks/foodGrowth/tiffinNetwork';
 import { suggestedPortions } from '@models/kitchen/forecastModel';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { Forecast, TiffinTomorrow, TodayMenu } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { menuChanged } from '../VendorMenu/vendorMenuSlice';
+import { todayMenuSerializer } from '@serializers/food/menuSerializer';
 
 export interface TodayEdit {
   portions?: number | null;
@@ -63,7 +64,7 @@ export const vendorTodaySlice = createAppSlice({
     loadTodayAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const today = await getToday();
+          const today = required(todayMenuSerializer(await getTodayAPI()));
           const [forecast, tiffin] = await Promise.all([today ? getForecast(today.date).catch(() => null) : null, getTiffinTomorrow().catch(() => null)]);
           return { today, forecast, tiffin };
         } catch (e) {
@@ -92,7 +93,7 @@ export const vendorTodaySlice = createAppSlice({
       async (_: void, { getState, dispatch, rejectWithValue }) => {
         const { edits } = (getState() as { vendorToday: VendorTodaySliceState }).vendorToday;
         try {
-          const out = await setToday(Object.entries(edits).map(([itemId, e]) => ({ itemId, ...e })));
+          const out = required(todayMenuSerializer(await setTodayAPI(Object.entries(edits).map(([itemId, e]) => ({ itemId, ...e })))));
           dispatch(menuChanged());
           return out;
         } catch (e) {

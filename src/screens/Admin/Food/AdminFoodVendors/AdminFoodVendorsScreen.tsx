@@ -11,7 +11,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { useDebouncedValue, usePagedList } from '@hooks/usePagedList';
-import { listAdminFoodVendors } from '@networks/admin/adminFoodNetwork';
+import { getAdminFoodVendorsAPI } from '@networks/admin/adminFoodNetwork';
 import { VENDOR_STATUS_FILTERS, vendorStanding } from '@models/food/adminFoodModel';
 import { KITCHEN_KIND_NAME } from '@models/food/vendorModel';
 import { ServiceScope, useStyles, type Theme } from '@theme/index';
@@ -32,6 +32,7 @@ import {
   setFoodVendorsStatus,
   setFoodVendorsType,
 } from './adminFoodVendorsSlice';
+import { adminFoodVendorsPageSerializer } from '@serializers/food/adminFoodSerializer';
 
 type Props = NativeStackScreenProps<AdminFoodStackParamList, 'AdminFoodVendors'>;
 
@@ -57,11 +58,8 @@ const AdminFoodVendorsScreen: React.FC<Props> = ({ navigation, route }) => {
   const q = useDebouncedValue(s.query.trim());
   const list = usePagedList(
     (page, size) =>
-      listAdminFoodVendors(
-        { q: q || undefined, type: s.type ?? undefined, status: s.status ?? undefined },
-        page,
-        size,
-      ),
+      getAdminFoodVendorsAPI({ q: q || undefined, type: s.type ?? undefined, status: s.status ?? undefined }, page, size),
+    adminFoodVendorsPageSerializer,
     `admin-food-vendors|${q}|${s.type}|${s.status}`,
   );
 

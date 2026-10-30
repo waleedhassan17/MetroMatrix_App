@@ -6,12 +6,13 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { createMenuCategory, deleteMenuCategory, listMenuCategories, reorderMenuCategories, updateMenuCategory } from '@networks/food/vendor/menuNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { createMenuCategoryAPI, deleteMenuCategoryAPI, getMenuCategoriesAPI, reorderMenuCategoriesAPI, updateMenuCategoryAPI } from '@networks/food/vendor/menuNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { CategoryForm } from '@models/food/menuModel';
 import type { MenuCategory } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { menuChanged } from '../VendorMenu/vendorMenuSlice';
+import { menuCategoriesSerializer } from '@serializers/food/menuSerializer';
 
 export interface CategorySheet {
   /** null: a new category. */
@@ -70,7 +71,7 @@ export const vendorCategoriesSlice = createAppSlice({
     loadCategoriesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await listMenuCategories();
+          return required(menuCategoriesSerializer(await getMenuCategoriesAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -96,10 +97,10 @@ export const vendorCategoriesSlice = createAppSlice({
           const window = sheet.windowed
             ? { availableFrom: sheet.form.availableFrom.trim(), availableTo: sheet.form.availableTo.trim() }
             : { availableFrom: null, availableTo: null };
-          if (sheet.id) await updateMenuCategory(sheet.id, { name: sheet.form.name.trim(), ...window, isActive: sheet.isActive });
-          else await createMenuCategory({ name: sheet.form.name.trim(), ...window });
+          if (sheet.id) await updateMenuCategoryAPI(sheet.id, { name: sheet.form.name.trim(), ...window, isActive: sheet.isActive });
+          else await createMenuCategoryAPI({ name: sheet.form.name.trim(), ...window });
           dispatch(menuChanged());
-          return await listMenuCategories();
+          return required(menuCategoriesSerializer(await getMenuCategoriesAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -123,9 +124,9 @@ export const vendorCategoriesSlice = createAppSlice({
     deleteCategoryAsync: create.asyncThunk(
       async (id: string, { dispatch, rejectWithValue }) => {
         try {
-          await deleteMenuCategory(id);
+          await deleteMenuCategoryAPI(id);
           dispatch(menuChanged());
-          return await listMenuCategories();
+          return required(menuCategoriesSerializer(await getMenuCategoriesAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -155,7 +156,7 @@ export const vendorCategoriesSlice = createAppSlice({
         if (i < 0 || j < 0 || j >= list.length) return null;
         [list[i], list[j]] = [list[j], list[i]];
         try {
-          const out = await reorderMenuCategories(list);
+          const out = required(menuCategoriesSerializer(await reorderMenuCategoriesAPI(list)));
           dispatch(menuChanged());
           return out;
         } catch (e) {
