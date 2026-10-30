@@ -1,8 +1,10 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Forgot Password slice (step 1 of the FYP's three screens)
 // ═══════════════════════════════════════════════════════
-// POST /auth/forgot-password always answers 200 — it never reveals whether
-// an account exists — and carries the resend cooldown the OTP screen starts.
+// POST /auth/forgot-password always answers 200 { delivered } — it never
+// reveals whether an account exists — and has no cooldown of its own: the app
+// waits RESEND_SECONDS before the OTP screen offers "Resend code", which
+// calls it again. Its throttle (429 RATE_LIMITED) restarts the wait.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
@@ -10,6 +12,7 @@ import { authForgotPassword } from '@networks/auth/authNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import { retryAfterSerializer } from '@serializers/authSerializer';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
+import { ERROR_CODES } from '@networks/network/errorCodes';
 
 export interface ForgotPasswordSliceState {
   email: string;
@@ -27,6 +30,9 @@ const initialState: ForgotPasswordSliceState = {
   error: NO_ERROR,
   resendAvailableAt: 0,
 };
+
+/** The client's own wait between reset codes. */
+export const RESEND_SECONDS = 60;
 
 const cooldownFrom = (seconds: number) => Date.now() + seconds * 1000;
 
@@ -47,7 +53,8 @@ export const forgotPasswordSlice = createAppSlice({
     requestCodeAsync: create.asyncThunk(
       async (email: string, { rejectWithValue }) => {
         try {
-          return await authForgotPassword(email);
+          await authForgotPassword(email);
+          return true;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -57,15 +64,15 @@ export const forgotPasswordSlice = createAppSlice({
           state.status = 'loading';
           state.error = NO_ERROR;
         },
-        fulfilled: (state, action) => {
+        fulfilled: state => {
           state.status = 'succeeded';
-          state.resendAvailableAt = cooldownFrom(action.payload);
+          state.resendAvailableAt = cooldownFrom(RESEND_SECONDS);
         },
         rejected: (state, action) => {
           state.status = 'failed';
           state.error = readRejection(action, "We couldn't send the code. Try again.");
-          if (state.error.code === 'RESEND_TOO_SOON') {
-            state.resendAvailableAt = cooldownFrom(retryAfterSerializer(state.error.details));
+          if (state.error.code === ERROR_CODES.RATE_LIMITED) {
+            state.resendAvailableAt = cooldownFrom(retryAfterSerializer(state.error.details, RESEND_SECONDS));
           }
         },
       },

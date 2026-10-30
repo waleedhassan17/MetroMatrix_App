@@ -2,7 +2,7 @@
 // MetroMatrix — Business review slice (admin decision)
 // ═══════════════════════════════════════════════════════
 // Load one application, then approve / reject (reason + per-document notes)
-// / suspend (reason) / reinstate. Each decision drops the row from the
+// / suspend (reason) / reinstate (reason). Each decision drops the row from the
 // approval queue so the list is right when the admin goes back.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
@@ -21,11 +21,13 @@ import { removeFromQueue } from '../ApprovalQueue/approvalQueueSlice';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../Auth/shared/formStatus';
 
 export type Decision = 'approve' | 'reject' | 'suspend' | 'reinstate';
+/** The decisions that need a reason, each in its own sheet. */
+export type ReasonSheet = Exclude<Decision, 'approve'>;
 
 export interface BusinessReviewSliceState {
   business: BusinessWithOwner | null;
   loadStatus: FormStatus;
-  sheet: 'reject' | 'suspend' | null;
+  sheet: ReasonSheet | null;
   reason: string;
   reasonTouched: boolean;
   documentNotes: Record<string, string>;
@@ -57,7 +59,7 @@ export const businessReviewSlice = createAppSlice({
   name: 'businessReview',
   initialState,
   reducers: create => ({
-    openSheet: create.reducer((state, action: PayloadAction<'reject' | 'suspend' | null>) => {
+    openSheet: create.reducer((state, action: PayloadAction<ReasonSheet | null>) => {
       state.sheet = action.payload;
       state.reason = '';
       state.reasonTouched = false;
@@ -118,7 +120,7 @@ export const businessReviewSlice = createAppSlice({
                   })
                 : args.decision === 'suspend'
                   ? await suspendBusiness(args.id, (args.reason ?? '').trim())
-                  : await reinstateBusiness(args.id);
+                  : await reinstateBusiness(args.id, (args.reason ?? '').trim());
           dispatch(removeFromQueue(args.id));
           return business;
         } catch (e) {

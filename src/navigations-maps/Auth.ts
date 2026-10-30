@@ -14,6 +14,7 @@
 
 import type { IRoute } from './types';
 import { ROUTES } from './Base';
+import type { Gate } from '../navigators/sessionGate';
 
 import OnboardingScreen from '../screens/Onboarding/OnboardingScreen';
 import RoleSelectionScreen from '../screens/RoleSelection/RoleSelectionScreen';
@@ -97,9 +98,14 @@ export const COMPLETE_PROFILE_ROUTES: IRoute[] = [
   },
 ];
 
-/** ── 5. Provider with no application, or a draft ── */
+/**
+ * ── 5. Provider with no application, or a draft ──
+ * Provider Selection is here for a provider whose service isn't known yet
+ * (sessionGate.partnerSetupInitialRoute); it then continues to Personal Info.
+ */
 export const PARTNER_SETUP_ROUTES: IRoute[] = [
   { title: ROUTES.PERSONAL_INFO, component: PersonalInfoScreen, options: { animation: 'none' } },
+  { title: ROUTES.PROVIDER_SELECTION, component: ProviderSelectionScreen, options: { animation: 'none' } },
 ];
 
 /** ── 6. Submitted, awaiting approval ── */
@@ -121,3 +127,21 @@ export const REJECTED_ROUTES: IRoute[] = [
 export const SUSPENDED_ROUTES: IRoute[] = [
   { title: ROUTES.SUSPENDED, component: SuspendedScreen, options: { animation: 'none' } },
 ];
+
+const GATE_BRANCHES: Partial<Record<Gate, IRoute[]>> = {
+  totp: ADMIN_TOTP_ROUTES,
+  verify: EMAIL_VERIFY_ROUTES,
+  completeProfile: COMPLETE_PROFILE_ROUTES,
+  partnerSetup: PARTNER_SETUP_ROUTES,
+  pending: PENDING_ROUTES,
+  rejected: REJECTED_ROUTES,
+  suspended: SUSPENDED_ROUTES,
+};
+
+/**
+ * The routes BaseNavigator mounts for a gate: the whole stack, so Back can
+ * only move within the branch. Any other gate (a role app's, which
+ * BaseNavigator never shows) falls back to the signed-out branch.
+ */
+export const gateRoutes = (gate: Gate, hasSeenOnboarding: boolean): IRoute[] =>
+  GATE_BRANCHES[gate] ?? [...(!hasSeenOnboarding ? [ONBOARDING_ROUTE] : []), ...UNAUTHENTICATED_ROUTES];

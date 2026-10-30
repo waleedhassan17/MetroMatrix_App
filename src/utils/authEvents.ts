@@ -13,7 +13,11 @@
 // Welcome instead of sitting on dead screens whose every request 401s until
 // the next cold start.
 
-type SessionExpiredHandler = () => void;
+// Only a definitive failure ends a session (networks/network/sessionRefresh.ts);
+// `reason` is the server's code (REFRESH_REUSED, ACCOUNT_DISABLED, …) so the
+// handler can say why.
+
+type SessionExpiredHandler = (reason: string) => void;
 
 let handler: SessionExpiredHandler | null = null;
 
@@ -21,9 +25,9 @@ export const setSessionExpiredHandler = (h: SessionExpiredHandler | null) => {
   handler = h;
 };
 
-export const emitSessionExpired = () => {
+export const emitSessionExpired = (reason = 'SESSION_ENDED') => {
   if (isIntentionalSignOut()) return;
-  handler?.();
+  handler?.(reason);
 };
 
 // ─── Intentional sign-out ────────────────────────────────────────────────

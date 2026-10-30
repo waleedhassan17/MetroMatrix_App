@@ -1,15 +1,17 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Runtime environment
 // ═══════════════════════════════════════════════════════
-// The one module that reads process.env, and THE ONE FILE TO EDIT when the
-// backend is ready.
+// The one module that reads process.env.
 //
-// ★ CONNECTING THE REAL BACKEND ★
-// Put its base URL in BACKEND_URL below (or set EXPO_PUBLIC_API_URL in
-// .env.local). That is the whole switch: every network function then talks
-// to it. While both are empty the app runs on the dummy API in
-// src/networks/network/mock/ — same endpoints, same responses, same errors
-// (see docs/API_CONTRACT_ASSUMED.md → "Mock mode").
+// ★ CONNECTING THE BACKEND ★
+// Set EXPO_PUBLIC_API_URL (in .env.local, or per build profile in eas.json).
+// Every network function then talks to it. A build with no URL does NOT fall
+// back to anything: it shows the configuration-error screen and sends nothing.
+//
+// The dummy API in src/networks/network/mock/ runs only in a development
+// build that asks for it with EXPO_PUBLIC_USE_MOCK_API=1 (see
+// docs/API_CONTRACT_ASSUMED.md → "Mock mode"). A release build can never
+// reach it: the `__DEV__ &&` folds to false there and Metro drops the mock.
 //
 // On a physical device use the machine's LAN address, not localhost, since
 // localhost there resolves to the phone itself:
@@ -19,13 +21,14 @@
 // Expo inlines EXPO_PUBLIC_* at build time, so each value must stay a static
 // read of process.env.EXPO_PUBLIC_<NAME> rather than a computed key.
 
-/** ← Your backend, e.g. 'https://metromatrix-api.herokuapp.com/api/v1'. Empty = dummy API. */
-const BACKEND_URL = '';
+/** The backend, e.g. 'https://api.metromatrix.app/api/v1'. Empty in a build with no URL. */
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL?.trim() || '';
 
-export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL?.trim() || BACKEND_URL;
+/** Development only, and only when asked for: requests are answered by the dummy API. */
+export const USE_MOCK_API = __DEV__ && process.env.EXPO_PUBLIC_USE_MOCK_API === '1';
 
-/** True while no backend is configured: requests are answered by the dummy API. */
-export const USE_MOCK_API = !API_BASE_URL;
+/** Not the dummy API and no backend URL: the app cannot work and says so (ConfigErrorScreen). */
+export const CONFIG_ERROR = !USE_MOCK_API && !API_BASE_URL;
 
 /** axios needs a base URL even in mock mode. Nothing is ever sent here. */
 export const MOCK_BASE_URL = 'https://mock.metromatrix.local/api/v1';
@@ -35,6 +38,5 @@ export const MOCK_BASE_URL = 'https://mock.metromatrix.local/api/v1';
 // See docs/GOOGLE_SIGNIN.md.
 export const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?.trim() || '';
 
-// Where providers whose account is paused can reach a human.
-// TODO: confirm the real support address before release.
-export const SUPPORT_EMAIL = 'support@metromatrix.app';
+/** Where people whose account is paused, or whose build is misconfigured, can reach a human. */
+export const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL?.trim() || 'support@metromatrix.app';

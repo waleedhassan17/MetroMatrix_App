@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Auth & business domain types
 // ═══════════════════════════════════════════════════════
-// App-side shapes, produced ONLY by serializers. TODO(API_AUTH): mirrors
-// docs/API_CONTRACT_ASSUMED.md until MetroMatrix-API docs/API_AUTH.md is
-// available.
+// App-side shapes, produced ONLY by serializers, which map the API's wire
+// names (MetroMatrix_Backend docs/API_AUTH.md, businesses.service.ts) onto
+// these. docs/API_CONTRACT_ASSUMED.md lists both sides.
 
 export type UserRole = 'customer' | 'partner' | 'rider' | 'admin' | 'super_admin';
 export type Portal = 'customer' | 'partner' | 'admin';
@@ -12,14 +12,36 @@ export type SubType = 'store' | 'doctor' | 'restaurant' | 'home_kitchen' | 'clou
 export type BusinessStatus = 'draft' | 'pending_approval' | 'approved' | 'rejected' | 'suspended';
 export type AuthProvider = 'password' | 'google';
 
-/** Verification documents — the FYP's list, mapped to MetroMatrix's sub-types. */
+/**
+ * Verification documents, by the API's names (MetroMatrix_Backend
+ * businesses/business-types.ts DOCUMENT_KINDS). Which ones each sub-type needs
+ * is in businessModel.DOCUMENT_REQUIREMENTS.
+ */
 export type DocumentKind =
-  | 'cnic'
-  | 'medical_license'
+  | 'cnic_front'
+  | 'cnic_back'
+  | 'pmdc_certificate'
   | 'degree_certificate'
-  | 'business_license'
-  | 'food_license'
+  | 'ntn_certificate'
+  | 'shop_photo'
+  | 'pfa_licence'
+  | 'storefront_photo'
   | 'kitchen_photo';
+
+/**
+ * One rule a business's documents must meet (the API's DocumentRequirement):
+ * at least `min` of one kind, or one of any of several kinds.
+ */
+export type DocumentRequirement = { kind: DocumentKind; min?: number } | { anyOf: DocumentKind[] };
+
+/** How one requirement stands against the documents on file (the API's RequirementStatus). */
+export interface RequirementStatus {
+  kind?: DocumentKind;
+  anyOf?: DocumentKind[];
+  min: number;
+  have: number;
+  satisfied: boolean;
+}
 
 export type Gender = 'male' | 'female' | 'other';
 
@@ -38,8 +60,13 @@ export interface User {
   hasPassword: boolean;
   providers: AuthProvider[];
   createdAt: string;
-  /** Customers: CompleteProfile has been finished (or skipped past). */
+  /** Customers: CompleteProfile has been finished. Always true for other roles. */
   profileComplete: boolean;
+  /**
+   * Customers who signed up before CompleteProfile existed: the gate asks
+   * once and offers "Skip for now" (remembered on the device).
+   */
+  profileSkippable: boolean;
   dateOfBirth: string | null;
   gender: Gender | null;
   streetAddress: string | null;
@@ -74,14 +101,18 @@ export interface Business {
   name: string;
   phone: string;
   city: string;
+  /** The API's `addressLine`. */
   address: string;
+  /** The API's `lat` / `lng`; null when no pin was dropped. */
   location: GeoPoint | null;
-  /** Sub-type specific fields (specialty, cuisine, …) — see businessModel. */
-  details: Record<string, string>;
+  /** Doctors only: the PMDC registration number (required before submitting). */
+  pmdcNumber: string | null;
   status: BusinessStatus;
   documents: BusinessDocument[];
-  requiredDocuments: DocumentKind[];
-  missingDocuments: DocumentKind[];
+  /** Each rule and how it stands (the API's `requiredDocuments`). */
+  requiredDocuments: RequirementStatus[];
+  /** Unmet rules, by key: a kind, or an any-of group written `a|b` (the API's `missingDocuments`). */
+  missingDocuments: string[];
   rejectionReason: string | null;
   suspensionReason: string | null;
   submittedAt: string | null;
@@ -148,8 +179,11 @@ export interface TotpChallenge {
 export interface TotpEnrolment {
   secret: string;
   otpauthUrl: string;
+  /** The API's PNG of the same URI (the app draws its own QR from otpauthUrl). */
+  qrDataUrl: string | null;
 }
 
+/** POST /media/sign-upload: every field but the file and api_key is signed. */
 export interface SignedUpload {
   cloudName: string;
   apiKey: string;
@@ -157,6 +191,12 @@ export interface SignedUpload {
   signature: string;
   folder: string;
   uploadUrl: string;
+  /** Signed: sent as `allowed_formats` (e.g. "jpg,jpeg,png,webp,heic,pdf"). */
+  allowedFormats: string;
+  /** Checked on the device before uploading; 0 = no limit known. */
+  maxBytes: number;
+  /** Signed when present: sent as `type` (private uploads). */
+  type: 'authenticated' | null;
 }
 
 export interface UploadedFile {

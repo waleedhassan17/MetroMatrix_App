@@ -8,7 +8,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Linking, View, StyleSheet, StatusBar } from 'react-native';
-import { NavigationContainer, type LinkingOptions } from '@react-navigation/native';
+import { NavigationContainer, getStateFromPath, type LinkingOptions } from '@react-navigation/native';
 import * as NativeSplash from 'expo-splash-screen';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
@@ -21,7 +21,8 @@ import StorePartnerNavigator from '../../navigators/StorePartnerNavigator';
 import DoctorPartnerNavigator from '../../navigators/DoctorPartnerNavigator';
 import KitchenPartnerNavigator from '../../navigators/KitchenPartnerNavigator';
 import AdminNavigator from '../../navigators/AdminNavigator';
-import { resolveGate, isGateCleared } from '../../navigators/sessionGate';
+import { gateInputOf, resolveGate, isGateCleared, partnerAppFor } from '../../navigators/sessionGate';
+import { selectSkippedProfile } from '../../store/preferencesSlice';
 
 import {
   bootstrapSession,
@@ -30,6 +31,10 @@ import {
   selectNetworkIsDown,
 } from './appContainerSlice';
 import { OfflineGate } from './OfflineGate';
+import { ConfigErrorScreen } from './ConfigErrorScreen';
+import { CONFIG_ERROR } from '../../config/env';
+import { rewriteVerifyPath } from '../../navigators/linkingPaths';
+import { sessionEndedCopy } from './sessionEndedCopy';
 import { PushPrePrompt } from './PushPrePrompt';
 import { onPushTap, pushTapUrl } from '../../services/push';
 import { signOut } from '../../screens/Auth/authSlice';
@@ -38,7 +43,9 @@ import { resetAllState } from '../../store/resetAllState';
 import { setSessionExpiredHandler, setBusinessStatusStaleHandler } from '../../utils/authEvents';
 
 // ─── Deep linking ─────────────────────────────────────
-// metromatrix://verify-success?token=…        → VerifySuccess (the email link)
+// metromatrix://verify-email?token=…           → VerifySuccess (the email's app link)
+// metromatrix://verify-email?verified=1        → VerifySuccess (from the API's web page)
+// metromatrix://verify-success?…               → the same (older links; rewritten below)
 // metromatrix://reset-password?email=…        → ResetPasswordOTP
 // metromatrix://shop/store/:slug, shop/product/:id → a store, a product
 // metromatrix://orders/:groupCode               → an order
@@ -46,6 +53,7 @@ import { setSessionExpiredHandler, setBusinessStatusStaleHandler } from '../../u
 // owns different routes; a path only resolves while its navigator is mounted.
 const linking: LinkingOptions<ReactNavigation.RootParamList> = {
   prefixes: ['metromatrix://'],
+  getStateFromPath: (path, options) => getStateFromPath(rewriteVerifyPath(path), options),
   config: {
     screens: {
       // No screen claims '/': the gate's first route (Onboarding on a fresh
@@ -60,8 +68,9 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       ForgotPassword: 'forgot-password',
       ResetPasswordOTP: 'reset-password',
       ResetPassword: 'reset-password/new',
-      EmailVerification: 'verify-email',
-      VerifySuccess: 'verify-success',
+      // The waiting screen; the link handler owns /verify-email.
+      EmailVerification: 'check-email',
+      VerifySuccess: 'verify-email',
       CompleteProfile: 'complete-profile',
       PersonalInfo: 'provider/personal-info',
       ProviderApprovalPending: 'provider/pending',
@@ -210,14 +219,19 @@ const linking: LinkingOptions<ReactNavigation.RootParamList> = {
   } as LinkingOptions<ReactNavigation.RootParamList>['config'],
 };
 
-export const AppContainer: React.FC = () => {
+// A build with no backend URL renders nothing but the configuration error: no
+// bootstrap, no navigator, no request (CONFIG_ERROR is a build-time constant).
+export const AppContainer: React.FC = () => (CONFIG_ERROR ? <ConfigErrorScreen /> : <AppShell />);
+
+const AppShell: React.FC = () => {
   const dispatch = useAppDispatch();
   const isAppReady = useAppSelector(selectIsAppReady);
   const networkIsDown = useAppSelector(selectNetworkIsDown);
   const auth = useAppSelector(state => state.auth);
   const theme = useTheme();
   const styles = useStyles(makeStyles);
-  const gate = resolveGate(auth);
+  const skippedProfile = useAppSelector(selectSkippedProfile);
+  const gate = resolveGate(gateInputOf(auth, skippedProfile));
 
   // ─── Session restore on cold start: stored token → GET /auth/me refreshes
   // the user and the app opens on their view; missing/invalid token →
@@ -256,11 +270,13 @@ export const AppContainer: React.FC = () => {
   // has already cleared the stored tokens; this resets the store so the
   // navigator switches back to Role Selection instead of leaving the user on
   // authenticated screens whose every request fails.
+  // Only a definitive failure gets here (sessionRefresh.ts): offline or a
+  // server error never signs anyone out.
   useEffect(() => {
-    setSessionExpiredHandler(() => {
+    setSessionExpiredHandler(reason => {
       dispatch(resetAllState());
       dispatch(signOut());
-      Toast.show({ type: 'info', text1: 'Session expired', text2: 'Please sign in again.' });
+      Toast.show({ type: 'info', ...sessionEndedCopy(reason) });
     });
     return () => setSessionExpiredHandler(null);
   }, [dispatch]);
@@ -299,10 +315,10 @@ export const AppContainer: React.FC = () => {
         return <CustomerNavigator key="customer" />;
       case 'partner':
         // Approved partner: the app for the business's service.
-        switch (auth.business?.serviceType) {
-          case 'healthcare':
+        switch (partnerAppFor(auth.business)) {
+          case 'doctor':
             return <DoctorPartnerNavigator key="partner-doctor" />;
-          case 'food':
+          case 'kitchen':
             return <KitchenPartnerNavigator key="partner-kitchen" />;
           default:
             return <StorePartnerNavigator key="partner-store" />;

@@ -1,22 +1,25 @@
 import {
   BUSINESS_FORM_SCHEMA,
   DOCUMENT_LABELS,
-  REQUIRED_DOCUMENTS,
+  DOCUMENT_REQUIREMENTS,
   SERVICE_SUBTYPES,
   SUBTYPE_SERVICE,
   allDetailFields,
   businessProfileToPayload,
   businessToProfileForm,
   cleanDocumentNotes,
+  documentSlots,
   emptyBusinessProfile,
+  evaluateDocuments,
   isProfileComplete,
   missingDocuments,
   providerTypeLabel,
+  requirementLabel,
   validateBusinessProfile,
   validateDecisionReason,
   type BusinessProfileForm,
 } from '../businessModel';
-import type { Business, SubType } from '../../types/auth';
+import type { Business, BusinessDocument, DocumentKind, SubType } from '../../types/auth';
 
 const SUB_TYPES: SubType[] = ['store', 'doctor', 'restaurant', 'home_kitchen', 'cloud_kitchen'];
 
@@ -25,16 +28,20 @@ const filled = (overrides: Partial<BusinessProfileForm> = {}): BusinessProfileFo
   city: 'Lahore',
   address: '12 Main Boulevard, Gulberg',
   location: null,
-  details: {
-    cuisine: 'BBQ',
-    dailyCapacity: '20',
-    specialty: 'Dermatologist',
-    pmdcNumber: '12345-P',
-    storeCategory: 'Grocery',
-    experience: '6',
-    briefDescription: 'Fresh food made to order every single day.',
-  },
+  details: { pmdcNumber: '12345-P' },
   ...overrides,
+});
+
+let seq = 0;
+const doc = (kind: DocumentKind, status: BusinessDocument['status'] = 'pending'): BusinessDocument => ({
+  id: `d${++seq}`,
+  kind,
+  url: `https://res.cloudinary.com/x/${kind}.jpg`,
+  publicId: kind,
+  mimeType: 'image/jpeg',
+  status,
+  reviewerNote: null,
+  uploadedAt: '',
 });
 
 describe('services and sub-types (Provider Selection)', () => {
@@ -57,49 +64,89 @@ describe('services and sub-types (Provider Selection)', () => {
   });
 });
 
-describe('REQUIRED_DOCUMENTS (the FYP list)', () => {
-  it.each(SUB_TYPES)('%s requires the CNIC, each document labelled', sub => {
-    expect(REQUIRED_DOCUMENTS[sub][0]).toBe('cnic');
-    for (const kind of REQUIRED_DOCUMENTS[sub]) expect(DOCUMENT_LABELS[kind].label).toBeTruthy();
+describe("DOCUMENT_REQUIREMENTS (the API's required-documents.ts)", () => {
+  it.each(SUB_TYPES)('%s requires both sides of the CNIC, each kind labelled', sub => {
+    expect(DOCUMENT_REQUIREMENTS[sub].slice(0, 2)).toEqual([{ kind: 'cnic_front' }, { kind: 'cnic_back' }]);
+    for (const r of DOCUMENT_REQUIREMENTS[sub]) {
+      for (const kind of 'anyOf' in r ? r.anyOf : [r.kind]) expect(DOCUMENT_LABELS[kind].label).toBeTruthy();
+    }
   });
 
-  it('doctors upload a medical license and degree; vendors a business license', () => {
-    expect(REQUIRED_DOCUMENTS.doctor).toEqual(['cnic', 'medical_license', 'degree_certificate']);
-    expect(REQUIRED_DOCUMENTS.store).toEqual(['cnic', 'business_license']);
-    expect(REQUIRED_DOCUMENTS.home_kitchen).toEqual(['cnic', 'kitchen_photo']);
-    expect(DOCUMENT_LABELS.cnic.label).toBe('National ID Card (CNIC)');
+  it('matches the API per sub-type', () => {
+    expect(DOCUMENT_REQUIREMENTS.doctor.slice(2)).toEqual([{ kind: 'pmdc_certificate' }, { kind: 'degree_certificate' }]);
+    expect(DOCUMENT_REQUIREMENTS.store.slice(2)).toEqual([{ anyOf: ['ntn_certificate', 'shop_photo'] }]);
+    expect(DOCUMENT_REQUIREMENTS.restaurant.slice(2)).toEqual([{ kind: 'pfa_licence' }, { kind: 'storefront_photo' }]);
+    expect(DOCUMENT_REQUIREMENTS.cloud_kitchen.slice(2)).toEqual([{ kind: 'pfa_licence' }]);
+    expect(DOCUMENT_REQUIREMENTS.home_kitchen.slice(2)).toEqual([{ kind: 'kitchen_photo', min: 2 }]);
+  });
+
+  it('labels a requirement key, any-of included', () => {
+    expect(requirementLabel('cnic_front')).toBe('CNIC (front)');
+    expect(requirementLabel('ntn_certificate|shop_photo')).toBe('NTN certificate or Shop photo');
   });
 });
 
-describe('missingDocuments', () => {
-  it('lists required kinds without a standing upload', () => {
-    expect(missingDocuments('doctor', [{ kind: 'cnic', status: 'pending' }])).toEqual([
-      'medical_license',
-      'degree_certificate',
-    ]);
+describe('evaluateDocuments / missingDocuments', () => {
+  it('lists the keys of requirements not yet met, as the API names them', () => {
+    expect(missingDocuments('doctor', [doc('cnic_front')])).toEqual(['cnic_back', 'pmdc_certificate', 'degree_certificate']);
+    expect(missingDocuments('store', [doc('cnic_front'), doc('cnic_back')])).toEqual(['ntn_certificate|shop_photo']);
   });
-  it('counts rejected uploads as missing and ignores extras', () => {
+
+  it('either kind meets an any-of', () => {
+    expect(missingDocuments('store', [doc('cnic_front'), doc('cnic_back'), doc('shop_photo')])).toEqual([]);
+  });
+
+  it('counts copies against a minimum, and rejected ones not at all', () => {
+    const one = [doc('cnic_front'), doc('cnic_back'), doc('kitchen_photo'), doc('kitchen_photo', 'rejected')];
+    const { requirements, missing } = evaluateDocuments('home_kitchen', one);
+    expect(missing).toEqual(['kitchen_photo']);
+    expect(requirements[2]).toEqual({ kind: 'kitchen_photo', min: 2, have: 1, satisfied: false });
+    expect(missingDocuments('home_kitchen', [...one, doc('kitchen_photo')])).toEqual([]);
+  });
+
+  it('ignores kinds the sub-type does not need', () => {
     expect(
-      missingDocuments('home_kitchen', [
-        { kind: 'cnic', status: 'rejected' },
-        { kind: 'kitchen_photo', status: 'accepted' },
-        { kind: 'medical_license', status: 'pending' },
-      ]),
-    ).toEqual(['cnic']);
+      missingDocuments('cloud_kitchen', [doc('cnic_front', 'rejected'), doc('cnic_back'), doc('pfa_licence'), doc('pmdc_certificate')]),
+    ).toEqual(['cnic_front']);
   });
 });
 
-describe('BUSINESS_FORM_SCHEMA (PersonalInfo step 2)', () => {
-  it('doctors: specialty first, then PMDC no., experience, description', () => {
-    expect(allDetailFields('doctor').map(d => d.key)).toEqual(['specialty', 'pmdcNumber', 'experience', 'briefDescription']);
+describe('documentSlots (PersonalInfo step 3 tiles)', () => {
+  it('a minimum of two is two tiles, filled in order', () => {
+    const photo = doc('kitchen_photo');
+    const slots = documentSlots('home_kitchen', [photo]);
+    expect(slots.map(x => x.key)).toEqual(['cnic_front', 'cnic_back', 'kitchen_photo', 'kitchen_photo#2']);
+    expect(slots.map(x => x.label).slice(2)).toEqual(['Kitchen photo 1', 'Kitchen photo 2']);
+    expect(slots[2].doc).toBe(photo);
+    expect(slots[3].doc).toBeNull();
+    expect(slots.every(x => x.requirement === x.key.split('#')[0])).toBe(true);
+  });
+
+  it('an any-of is one tile offering both kinds', () => {
+    const shop = doc('shop_photo');
+    const slot = documentSlots('store', [shop])[2];
+    expect(slot).toMatchObject({ key: 'ntn_certificate|shop_photo', kinds: ['ntn_certificate', 'shop_photo'], doc: shop });
+    expect(slot.label).toBe('NTN certificate or Shop photo');
+  });
+
+  it('a standing document fills the tile before a rejected one', () => {
+    const rejected = doc('cnic_front', 'rejected');
+    const fresh = doc('cnic_front');
+    expect(documentSlots('doctor', [rejected, fresh])[0].doc).toBe(fresh);
+    expect(documentSlots('doctor', [rejected])[0].doc).toBe(rejected);
+  });
+});
+
+describe('BUSINESS_FORM_SCHEMA (PersonalInfo step 2: only what the API stores)', () => {
+  it('doctors add their PMDC number after the address', () => {
+    expect(allDetailFields('doctor').map(d => d.key)).toEqual(['pmdcNumber']);
     expect(BUSINESS_FORM_SCHEMA.doctor.nameLabel).toBe('Professional/Clinic Name');
   });
-  it('home kitchens show kitchen fields', () => {
-    expect(allDetailFields('home_kitchen').map(d => d.key)).toEqual(['cuisine', 'dailyCapacity', 'experience', 'briefDescription']);
-    expect(BUSINESS_FORM_SCHEMA.home_kitchen.nameLabel).toBe('Kitchen Name');
+  it.each(['store', 'restaurant', 'home_kitchen', 'cloud_kitchen'] as SubType[])('%s asks only name, city and address', sub => {
+    expect(allDetailFields(sub)).toEqual([]);
   });
-  it('vendors pick a category and name their business', () => {
-    expect(allDetailFields('store').map(d => d.key)).toEqual(['storeCategory', 'experience', 'briefDescription']);
+  it('names the business per sub-type', () => {
+    expect(BUSINESS_FORM_SCHEMA.home_kitchen.nameLabel).toBe('Kitchen Name');
     expect(BUSINESS_FORM_SCHEMA.store.nameLabel).toBe('Business Name');
   });
 });
@@ -111,20 +158,15 @@ describe('validateBusinessProfile', () => {
 
   it('reports every core field on an empty form', () => {
     const errors = validateBusinessProfile('restaurant', emptyBusinessProfile());
-    expect(Object.keys(errors).sort()).toEqual(['address', 'briefDescription', 'city', 'cuisine', 'experience', 'name']);
+    expect(Object.keys(errors).sort()).toEqual(['address', 'city', 'name']);
     expect(errors.name).toBe('Restaurant Name is required');
   });
 
-  it('checks numbers and the description length', () => {
-    expect(validateBusinessProfile('home_kitchen', filled({ details: { ...filled().details, dailyCapacity: 'ten' } })).dailyCapacity).toBe(
-      'Enter a whole number',
-    );
-    expect(validateBusinessProfile('home_kitchen', filled({ details: { ...filled().details, dailyCapacity: '0' } })).dailyCapacity).toBe(
-      'Enter at least 1',
-    );
-    expect(validateBusinessProfile('doctor', filled({ details: { ...filled().details, briefDescription: 'Short' } })).briefDescription).toBe(
-      'Write at least 20 characters',
-    );
+  it("a doctor needs a PMDC number in the API's format", () => {
+    expect(validateBusinessProfile('doctor', filled({ details: {} })).pmdcNumber).toBe('PMDC Registration Number is required');
+    expect(validateBusinessProfile('doctor', filled({ details: { pmdcNumber: '12 34' } })).pmdcNumber).toMatch(/e\.g\. 12345-P/);
+    expect(validateBusinessProfile('doctor', filled({ details: { pmdcNumber: '12345-p' } }))).toEqual({});
+    expect(validateBusinessProfile('store', filled({ details: {} }))).toEqual({});
   });
 
   it('asks for a real address', () => {
@@ -133,15 +175,25 @@ describe('validateBusinessProfile', () => {
 });
 
 describe('payload and form mapping', () => {
-  it("uses the provider's phone and only the sub-type's detail keys", () => {
-    const payload = businessProfileToPayload('food', 'restaurant', filled(), '+924235761234');
-    expect(payload.phone).toBe('+924235761234');
-    expect(payload.details).toEqual({
-      cuisine: 'BBQ',
-      experience: '6',
-      briefDescription: 'Fresh food made to order every single day.',
+  it("sends the API's CreateBusinessDto: addressLine, no PMDC for a non-doctor", () => {
+    expect(businessProfileToPayload('food', 'restaurant', filled(), '+924235761234')).toEqual({
+      serviceType: 'food',
+      subType: 'restaurant',
+      name: 'Karahi House',
+      phone: '+924235761234',
+      city: 'Lahore',
+      addressLine: '12 Main Boulevard, Gulberg',
     });
-    expect(payload.serviceType).toBe('food');
+  });
+
+  it('a doctor sends the PMDC number upper-cased, and a pin as lat / lng to 6 places', () => {
+    const payload = businessProfileToPayload(
+      'healthcare',
+      'doctor',
+      filled({ details: { pmdcNumber: ' 12345-p ' }, location: { lat: 31.5203696123, lng: 74.3587473987 } }),
+      '+923001234567',
+    );
+    expect(payload).toMatchObject({ pmdcNumber: '12345-P', lat: 31.52037, lng: 74.358747 });
   });
 
   it('round-trips a saved business into the form', () => {
@@ -150,14 +202,14 @@ describe('payload and form mapping', () => {
       city: 'Karachi',
       address: 'Block 5, Clifton',
       location: { lat: 1, lng: 2 },
-      details: { storeCategory: 'Fashion' },
+      pmdcNumber: '777-P',
     } as unknown as Business;
     expect(businessToProfileForm(business)).toEqual({
       name: 'Shop',
       city: 'Karachi',
       address: 'Block 5, Clifton',
       location: { lat: 1, lng: 2 },
-      details: { storeCategory: 'Fashion' },
+      details: { pmdcNumber: '777-P' },
     });
   });
 
@@ -175,7 +227,10 @@ describe('admin decisions', () => {
     expect(validateDecisionReason('The PMDC certificate has expired.')).toEqual({});
   });
 
-  it('sends only non-empty, trimmed document notes', () => {
-    expect(cleanDocumentNotes({ d1: '  Blurry  ', d2: '   ', d3: '' })).toEqual({ d1: 'Blurry' });
+  it("sends the API's [{ documentId, note }]: trimmed, 2–500 characters", () => {
+    expect(cleanDocumentNotes({ d1: '  Blurry  ', d2: '   ', d3: '', d4: 'x', d5: 'y'.repeat(600) })).toEqual([
+      { documentId: 'd1', note: 'Blurry' },
+      { documentId: 'd5', note: 'y'.repeat(500) },
+    ]);
   });
 });

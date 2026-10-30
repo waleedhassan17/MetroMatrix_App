@@ -8,7 +8,7 @@
 // exactly as they will be in production.
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { REQUIRED_DOCUMENTS } from '../../../models/businessModel';
+import { DOCUMENT_REQUIREMENTS } from '../../../models/businessModel';
 import type { DocumentKind, ServiceType, SubType } from '../../../types/auth';
 import { MOCK, SEED_PASSWORD, STAFF_PASSWORD } from './mockConfig';
 import { SHOP_SEED_SHOPPER, SHOP_SEED_USERS, seedShop } from './shop/shopSeed';
@@ -47,10 +47,9 @@ export interface MockDocument {
   kind: DocumentKind;
   url: string;
   publicId: string;
-  mimeType: string;
   status: 'pending' | 'accepted' | 'rejected';
-  reviewerNote: string | null;
-  uploadedAt: string;
+  reviewNote: string | null;
+  createdAt: string;
 }
 
 export interface MockBusiness {
@@ -61,8 +60,15 @@ export interface MockBusiness {
   name: string;
   phone: string;
   city: string;
-  address: string;
-  location: { lat: number; lng: number } | null;
+  addressLine: string;
+  lat: number | null;
+  lng: number | null;
+  /** Doctors only. */
+  pmdcNumber: string | null;
+  /**
+   * Mock-only demo data the shopping and healthcare mocks read (specialty,
+   * description). The API's business has no such fields and never sends this.
+   */
   details: Record<string, string>;
   status: 'draft' | 'pending_approval' | 'approved' | 'rejected' | 'suspended';
   documents: MockDocument[];
@@ -83,7 +89,7 @@ export interface MockDb {
   users: MockUser[];
   businesses: MockBusiness[];
   /** accessToken → session */
-  access: Record<string, { userId: string; expiresAt: number }>;
+  access: Record<string, { userId: string; expiresAt: number; refreshToken?: string }>;
   /** refreshToken → userId */
   refresh: Record<string, string>;
   /** email → pending password reset */
@@ -130,21 +136,28 @@ const placeholderDoc = (kind: DocumentKind, status: MockDocument['status'] = 'ac
   kind,
   url: `https://placehold.co/900x600/png?text=${encodeURIComponent(kind.replace(/_/g, ' '))}`,
   publicId: `mock/${kind}`,
-  mimeType: 'image/png',
   status,
-  reviewerNote: note,
-  uploadedAt: iso(3 * DAY),
+  reviewNote: note,
+  createdAt: iso(3 * DAY),
 });
+
+/** One accepted document per required copy (an either-or takes its first kind). */
+const completeDocuments = (subType: SubType): MockDocument[] =>
+  DOCUMENT_REQUIREMENTS[subType].flatMap(r =>
+    'anyOf' in r ? [placeholderDoc(r.anyOf[0])] : Array.from({ length: r.min ?? 1 }, () => placeholderDoc(r.kind)),
+  );
 
 const seedBusiness = (
   over: Partial<MockBusiness> & Pick<MockBusiness, 'id' | 'ownerId' | 'serviceType' | 'subType' | 'name' | 'status'>,
 ): MockBusiness => ({
   phone: '+923001234567',
   city: 'Lahore',
-  address: '45 MM Alam Road, Gulberg',
-  location: null,
+  addressLine: '45 MM Alam Road, Gulberg',
+  lat: null,
+  lng: null,
+  pmdcNumber: null,
   details: {},
-  documents: REQUIRED_DOCUMENTS[over.subType].map(kind => placeholderDoc(kind)),
+  documents: completeDocuments(over.subType),
   rejectionReason: null,
   suspensionReason: null,
   submittedAt: iso(2 * DAY),
@@ -245,9 +258,9 @@ export const seedDb = (): MockDb => ({
       reviewedAt: iso(DAY),
       isListed: true,
       pmdcVerified: true,
+      pmdcNumber: '45821-P',
       details: {
         specialty: 'Cardiologist',
-        pmdcNumber: '45821-P',
         experience: '12',
         briefDescription: 'Consultant cardiologist with twelve years of practice in Lahore.',
       },
@@ -274,15 +287,16 @@ export const seedDb = (): MockDb => ({
       name: 'Usman Electronics',
       status: 'rejected',
       reviewedAt: iso(DAY),
-      rejectionReason: 'The business licence has expired. Upload the renewed licence and resubmit.',
+      rejectionReason: 'The NTN certificate is unreadable. Upload a clear copy and resubmit.',
       details: {
         storeCategory: 'Electronics',
         experience: '8',
         briefDescription: 'Phones, accessories and home electronics with warranty.',
       },
       documents: [
-        placeholderDoc('cnic'),
-        placeholderDoc('business_license', 'rejected', 'This licence expired in March 2026.'),
+        placeholderDoc('cnic_front'),
+        placeholderDoc('cnic_back'),
+        placeholderDoc('ntn_certificate', 'rejected', 'The certificate number cannot be read.'),
       ],
     }),
     ...SHOP_SEED_USERS.map(u =>
@@ -310,7 +324,8 @@ export const seedDb = (): MockDb => ({
         submittedAt: iso(u.status === 'approved' ? 32 * DAY : 2 * DAY),
         isListed: u.listed,
         pmdcVerified: u.status === 'approved',
-        details: { specialty: u.specialty, pmdcNumber: u.pmdc, experience: '8', briefDescription: 'Seeded demo doctor.' },
+        pmdcNumber: u.pmdc,
+        details: { specialty: u.specialty, experience: '8', briefDescription: 'Seeded demo doctor.' },
       }),
     ),
   ],
@@ -328,6 +343,36 @@ export const seedDb = (): MockDb => ({
  * missing from the seed — new collections, and seed accounts that weren't
  * there yet — without touching what the tester created.
  */
+const KNOWN_KINDS = new Set<string>(
+  Object.values(DOCUMENT_REQUIREMENTS).flatMap(rs => rs.flatMap(r => ('anyOf' in r ? r.anyOf : [r.kind]))),
+);
+
+/**
+ * Businesses saved before the API's names (address, location, details.pmdcNumber,
+ * kinds like `cnic`): renamed in place, and documents of kinds the API doesn't
+ * have are dropped. A seed business gets its seed documents back.
+ */
+const upgradeBusiness = (b: MockBusiness, seed: MockBusiness | undefined) => {
+  const old = b as MockBusiness & { address?: string; location?: { lat: number; lng: number } | null };
+  if (old.addressLine === undefined) old.addressLine = old.address ?? '';
+  if (old.lat === undefined) old.lat = old.location?.lat ?? null;
+  if (old.lng === undefined) old.lng = old.location?.lng ?? null;
+  delete old.address;
+  delete old.location;
+  if (b.pmdcNumber === undefined) b.pmdcNumber = b.subType === 'doctor' ? b.details?.pmdcNumber ?? null : null;
+  b.details = b.details ?? {};
+  const stale = b.documents.some(d => !KNOWN_KINDS.has(d.kind) || (d as { uploadedAt?: string }).uploadedAt);
+  if (!stale) return;
+  b.documents = seed
+    ? seed.documents
+    : b.documents
+        .filter(d => KNOWN_KINDS.has(d.kind))
+        .map(d => {
+          const o = d as MockDocument & { reviewerNote?: string | null; uploadedAt?: string; mimeType?: string };
+          return { id: o.id, kind: o.kind, url: o.url, publicId: o.publicId, status: o.status, reviewNote: o.reviewNote ?? o.reviewerNote ?? null, createdAt: o.createdAt ?? o.uploadedAt ?? iso() };
+        });
+};
+
 const ensureCollections = (loaded: Partial<MockDb>): MockDb => {
   const seed = seedDb();
   const out = { ...seed, ...loaded } as MockDb;
@@ -342,6 +387,7 @@ const ensureCollections = (loaded: Partial<MockDb>): MockDb => {
     const s = seed.businesses.find(x => x.id === b.id);
     if (s && b.isListed === undefined) b.isListed = s.isListed;
     if (s && b.pmdcVerified === undefined) b.pmdcVerified = s.pmdcVerified;
+    upgradeBusiness(b, s);
   }
   return out;
 };

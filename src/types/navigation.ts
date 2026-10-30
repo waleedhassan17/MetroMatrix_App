@@ -26,8 +26,12 @@ export type RootStackParamList = {
   /** The reset token stays in the OTP slice — never in a route param (a web URL). */
   ResetPassword: { email: string; userType?: AuthUserType };
   EmailVerification: undefined;
-  /** Deep link metromatrix://verify-success?token=… */
-  VerifySuccess: { token?: string } | undefined;
+  /**
+   * Deep links metromatrix://verify-email?token=… (the email's app link) and
+   * ?verified=1 (the API's web page, which already spent the token). Query
+   * values arrive as strings.
+   */
+  VerifySuccess: { token?: string; verified?: string | boolean } | undefined;
   CompleteProfile: undefined;
   /** `step` jumps to a step; `highlight` marks documents the server said are missing. */
   PersonalInfo: { step?: 1 | 2 | 3; highlight?: DocumentKind[] } | undefined;

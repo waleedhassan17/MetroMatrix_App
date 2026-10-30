@@ -13,37 +13,44 @@ const doc = (kind: string, status = 'pending', extra: Record<string, unknown> = 
   url: `https://res.cloudinary.com/x/${kind}.jpg`,
   publicId: `x/${kind}`,
   status,
+  reviewNote: null,
+  createdAt: '2026-10-01T00:00:00Z',
   ...extra,
 });
 
+// The API's BusinessDetail (businesses.service.ts), without the requirement lists.
 const rawBusiness = {
   id: 'b1',
-  ownerId: 'u1',
   serviceType: 'healthcare',
   subType: 'doctor',
   name: 'Dr. Ayesha Clinic',
+  slug: 'dr-ayesha-clinic',
   phone: '+924235761234',
   city: 'Lahore',
-  address: '12 Main Boulevard, Gulberg',
-  location: { lat: 31.5, lng: 74.35 },
-  details: { specialty: 'Dermatology', pmdcNumber: '12345-P', junk: 7 },
+  addressLine: '12 Main Boulevard, Gulberg',
+  lat: 31.5,
+  lng: 74.35,
+  pmdcNumber: '12345-P',
   status: 'draft',
-  documents: [doc('cnic')],
+  documents: [doc('cnic_front')],
   createdAt: '2026-10-01T00:00:00Z',
   updatedAt: '2026-10-02T00:00:00Z',
 };
 
 describe('documentSerializer', () => {
-  it('maps a document and infers a PDF mime type from the URL', () => {
-    expect(documentSerializer(doc('medical_license', 'rejected', { url: 'https://x/a.PDF', note: 'Blurry' }))).toMatchObject({
-      kind: 'medical_license',
+  it("maps the API's DocumentView and infers a PDF mime type from the URL", () => {
+    expect(
+      documentSerializer(doc('pmdc_certificate', 'rejected', { url: 'https://x/a.PDF', reviewNote: 'Blurry' })),
+    ).toMatchObject({
+      kind: 'pmdc_certificate',
       status: 'rejected',
       mimeType: 'application/pdf',
       reviewerNote: 'Blurry',
+      uploadedAt: '2026-10-01T00:00:00Z',
     });
   });
 
-  it.each([null, {}, { kind: 'cnic' }, { url: 'https://x' }, { kind: 'passport', url: 'https://x' }])(
+  it.each([null, {}, { kind: 'cnic_front' }, { url: 'https://x' }, { kind: 'cnic', url: 'https://x' }])(
     'returns null for %p',
     raw => {
       expect(documentSerializer(raw)).toBeNull();
@@ -51,33 +58,60 @@ describe('documentSerializer', () => {
   );
 
   it('defaults an unknown status to pending', () => {
-    expect(documentSerializer(doc('cnic', 'weird'))?.status).toBe('pending');
+    expect(documentSerializer(doc('cnic_back', 'weird'))?.status).toBe('pending');
   });
 });
 
 describe('businessSerializer', () => {
-  it('maps a full business, keeping only string details', () => {
+  it("maps the API's names: addressLine, lat / lng, pmdcNumber", () => {
     const b = businessSerializer(rawBusiness)!;
     expect(b.subType).toBe('doctor');
+    expect(b.address).toBe('12 Main Boulevard, Gulberg');
     expect(b.location).toEqual({ lat: 31.5, lng: 74.35 });
-    expect(b.details).toEqual({ specialty: 'Dermatology', pmdcNumber: '12345-P', junk: '7' });
+    expect(b.pmdcNumber).toBe('12345-P');
     expect(b.documents).toHaveLength(1);
   });
 
-  it('computes required and missing documents when the server omits them', () => {
+  it('keeps a PMDC number for doctors only, and reads no pin from null coordinates', () => {
+    const b = businessSerializer({ ...rawBusiness, subType: 'store', serviceType: 'shopping', lat: null, lng: null })!;
+    expect(b.pmdcNumber).toBeNull();
+    expect(b.location).toBeNull();
+  });
+
+  it('evaluates the requirements on the device when the server omits them', () => {
     const b = businessSerializer(rawBusiness)!;
-    expect(b.requiredDocuments).toEqual(['cnic', 'medical_license', 'degree_certificate']);
-    expect(b.missingDocuments).toEqual(['medical_license', 'degree_certificate']);
+    expect(b.requiredDocuments).toEqual([
+      { kind: 'cnic_front', min: 1, have: 1, satisfied: true },
+      { kind: 'cnic_back', min: 1, have: 0, satisfied: false },
+      { kind: 'pmdc_certificate', min: 1, have: 0, satisfied: false },
+      { kind: 'degree_certificate', min: 1, have: 0, satisfied: false },
+    ]);
+    expect(b.missingDocuments).toEqual(['cnic_back', 'pmdc_certificate', 'degree_certificate']);
   });
 
   it('counts a rejected document as missing', () => {
-    const b = businessSerializer({ ...rawBusiness, documents: [doc('cnic', 'rejected'), doc('medical_license')] })!;
-    expect(b.missingDocuments).toContain('cnic');
+    const b = businessSerializer({ ...rawBusiness, documents: [doc('cnic_front', 'rejected')] })!;
+    expect(b.missingDocuments).toContain('cnic_front');
   });
 
-  it("prefers the server's lists when present", () => {
-    const b = businessSerializer({ ...rawBusiness, missingDocuments: ['degree_certificate', 'nonsense'] })!;
-    expect(b.missingDocuments).toEqual(['degree_certificate']);
+  it("prefers the server's lists when present, any-of keys included", () => {
+    const b = businessSerializer({
+      ...rawBusiness,
+      subType: 'store',
+      requiredDocuments: [
+        { anyOf: ['ntn_certificate', 'shop_photo'], min: 1, have: 0, satisfied: false },
+        { kind: 'passport', min: 1, have: 0, satisfied: false },
+      ],
+      missingDocuments: ['ntn_certificate|shop_photo', '', 3],
+    })!;
+    expect(b.requiredDocuments).toEqual([{ anyOf: ['ntn_certificate', 'shop_photo'], min: 1, have: 0, satisfied: false }]);
+    expect(b.missingDocuments).toEqual(['ntn_certificate|shop_photo']);
+  });
+
+  it('still reads the older names (address, location)', () => {
+    const b = businessSerializer({ subType: 'store', address: 'Old Road', location: { lat: 1, lng: 2 } })!;
+    expect(b.address).toBe('Old Road');
+    expect(b.location).toEqual({ lat: 1, lng: 2 });
   });
 
   it('derives serviceType from subType when missing or invalid', () => {
@@ -93,39 +127,43 @@ describe('businessSerializer', () => {
     const b = businessSerializer({
       subType: 'store',
       documents: 'nope',
-      location: { lat: 'x' },
-      details: null,
+      lat: 'x',
+      requiredDocuments: 'nope',
       status: 'flying',
       name: 12,
     })!;
     expect(b.documents).toEqual([]);
     expect(b.location).toBeNull();
-    expect(b.details).toEqual({});
+    expect(b.requiredDocuments).toHaveLength(3);
     expect(b.status).toBe('draft');
     expect(b.name).toBe('12');
   });
 });
 
 describe('admin serializers', () => {
-  it('attaches an owner, defaulting missing owner fields', () => {
-    const b = businessWithOwnerSerializer({ ...rawBusiness, owner: { id: 'u1', name: 'Ayesha', email: 'a@x.com' } })!;
+  it("attaches the API's owner (displayName), defaulting missing fields", () => {
+    const b = businessWithOwnerSerializer({ ...rawBusiness, owner: { id: 'u1', displayName: 'Ayesha', email: 'a@x.com' } })!;
     expect(b.owner).toEqual({ id: 'u1', name: 'Ayesha', email: 'a@x.com', phone: null });
     expect(businessWithOwnerSerializer({ ...rawBusiness, owner: null })?.owner.name).toBe('');
   });
 
-  it('reads a page and skips malformed rows', () => {
+  it("reads the API's Paged list and skips malformed rows", () => {
     const page = businessPageSerializer({
       items: [
-        { id: 'b1', subType: 'store', name: 'Shop', submittedAt: '2026-10-10', owner: { name: 'A', email: 'a@x' } },
+        { id: 'b1', subType: 'store', name: 'Shop', submittedAt: '2026-10-10', owner: { displayName: 'A', email: 'a@x' } },
         { id: '', subType: 'store' },
         { id: 'b3', subType: 'unknown' },
         'junk',
       ],
-      nextCursor: 'c2',
+      total: 45,
+      page: 2,
+      pageSize: 20,
     });
     expect(page.items.map(i => i.id)).toEqual(['b1']);
     expect(page.items[0].serviceType).toBe('shopping');
-    expect(page.nextCursor).toBe('c2');
+    expect(page.items[0].owner.name).toBe('A');
+    expect(page.nextCursor).toBe('3');
+    expect(businessPageSerializer({ items: [], total: 45, page: 3, pageSize: 20 }).nextCursor).toBeNull();
   });
 
   it('accepts a bare array page and a missing cursor', () => {
@@ -139,13 +177,13 @@ describe('admin serializers', () => {
     const info = businessStatusSerializer({
       status: 'rejected',
       rejectionReason: 'PMDC expired',
-      documents: [{ id: 'd1', kind: 'medical_license', status: 'rejected', reviewerNote: 'Expired in 2024' }, 'x'],
+      documents: [{ id: 'd1', kind: 'pmdc_certificate', status: 'rejected', reviewNote: 'Expired in 2024' }, 'x', { kind: 'cnic' }],
     });
     expect(info).toEqual({
       status: 'rejected',
       rejectionReason: 'PMDC expired',
       suspensionReason: null,
-      documents: [{ id: 'd1', kind: 'medical_license', status: 'rejected', reviewerNote: 'Expired in 2024' }],
+      documents: [{ id: 'd1', kind: 'pmdc_certificate', status: 'rejected', reviewerNote: 'Expired in 2024' }],
     });
     expect(businessStatusSerializer({ status: 'gone' })).toBeNull();
   });

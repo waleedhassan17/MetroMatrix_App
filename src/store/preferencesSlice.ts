@@ -21,6 +21,13 @@ export interface PreferencesSliceState {
   recentSearches: string[];
   /** Recent Health searches ("acne", a doctor's name), newest first. Cleared on sign-out. */
   recentHealthSearches: string[];
+  /**
+   * Accounts (by user id) that tapped "Skip for now" on Complete Profile.
+   * Only honoured while the server says the profile is skippable (customers
+   * from before Complete Profile existed). Kept across sign-outs: the
+   * choice was made on this device for that account.
+   */
+  skippedProfile: Record<string, true>;
 }
 
 const initialState: PreferencesSliceState = {
@@ -29,6 +36,7 @@ const initialState: PreferencesSliceState = {
   pushPromptSeen: false,
   recentSearches: [],
   recentHealthSearches: [],
+  skippedProfile: {},
 };
 
 export const preferencesSlice = createAppSlice({
@@ -67,6 +75,9 @@ export const preferencesSlice = createAppSlice({
     clearRecentHealthSearches: create.reducer(state => {
       state.recentHealthSearches = [];
     }),
+    skipProfile: create.reducer((state, action: PayloadAction<string>) => {
+      state.skippedProfile = { ...(state.skippedProfile ?? {}), [action.payload]: true };
+    }),
   }),
 
   // The device keeps its settings across accounts; a person's searches go with them.
@@ -82,6 +93,7 @@ export const preferencesSlice = createAppSlice({
     selectPushPromptSeen: state => state.pushPromptSeen,
     selectRecentSearches: state => state.recentSearches ?? [],
     selectRecentHealthSearches: state => state.recentHealthSearches ?? [],
+    selectSkippedProfile: state => state.skippedProfile ?? {},
   },
 });
 
@@ -94,6 +106,13 @@ export const {
   addRecentHealthSearch,
   removeRecentHealthSearch,
   clearRecentHealthSearches,
+  skipProfile,
 } = preferencesSlice.actions;
 
-export const { selectLastService, selectPushPromptSeen, selectRecentSearches, selectRecentHealthSearches } = preferencesSlice.selectors;
+export const {
+  selectLastService,
+  selectPushPromptSeen,
+  selectRecentSearches,
+  selectRecentHealthSearches,
+  selectSkippedProfile,
+} = preferencesSlice.selectors;

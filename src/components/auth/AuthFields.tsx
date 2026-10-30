@@ -143,7 +143,7 @@ export const SignUpFields: React.FC<{
         onBlur={() => onBlur('password')}
         error={errors.password}
         placeholder="Enter your password"
-        helper="At least 8 characters, with a letter and a number."
+        helper="8–72 characters, with an upper-case letter, a lower-case letter and a number."
         autoComplete="new-password"
         textContentType="newPassword"
         returnKeyType="go"

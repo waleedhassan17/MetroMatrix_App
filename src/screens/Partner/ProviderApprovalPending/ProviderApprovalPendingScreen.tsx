@@ -5,7 +5,7 @@
 // what happens next, Check Now / Contact Support, and the review timeline.
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, Linking, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, Animated, AppState, Easing, Linking, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import dayjs from 'dayjs';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
@@ -147,7 +147,14 @@ const PendingContent: React.FC<{ business: Business }> = ({ business }) => {
     useCallback(() => {
       dispatch(checkStatusAsync({ manual: false }));
       const id = setInterval(() => dispatch(checkStatusAsync({ manual: false })), POLL_INTERVAL_MS);
-      return () => clearInterval(id);
+      // Back from the email app or the background: check at once, not at the next tick.
+      const sub = AppState.addEventListener('change', next => {
+        if (next === 'active') dispatch(checkStatusAsync({ manual: false }));
+      });
+      return () => {
+        clearInterval(id);
+        sub.remove();
+      };
     }, [dispatch]),
   );
 

@@ -4,9 +4,10 @@
 // The ONE axios client. Every network function in src/networks/** goes
 // through `api`; nothing else in the app imports axios.
 
-import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import { API_BASE_URL, MOCK_BASE_URL, USE_MOCK_API } from '../../config/env';
-import { mockAdapter } from './mock/mockServer';
+import axios, { AxiosAdapter, AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import { API_BASE_URL, CONFIG_ERROR, MOCK_BASE_URL, USE_MOCK_API } from '../../config/env';
+import { NO_REFRESH_TOKEN, isDefinitiveSessionFailure, sessionEndReason } from './sessionRefresh';
+import { ERROR_CODES } from './errorCodes';
 import { setTokens, getAccessToken, getRefreshToken, clearTokens } from '../../utils/storageUtils';
 import {
   emitSessionExpired,
@@ -20,15 +21,6 @@ export { API_BASE_URL };
 // network files keep importing everything they need from the shared client.
 export { setTokens, getAccessToken, getRefreshToken, clearTokens };
 
-/**
- * The dummy API (./mock) still speaks the assumed contract
- * (docs/API_CONTRACT_ASSUMED.md); the real backend is the source of truth.
- * Where they differ, a network function takes the backend's shape and asks
- * for the mock's only while the dummy API is on. Delete each use once the
- * mock is brought in line.
- */
-export const forMock = <T>(real: T, mock: T): T => (USE_MOCK_API ? mock : real);
-
 // ─── Auth paths the client itself must know about ───
 // Per MetroMatrix_Backend docs/API_AUTH.md §4.1 and §4.4.
 export const AUTH_PATHS = {
@@ -36,15 +28,15 @@ export const AUTH_PATHS = {
   signup: '/auth/signup',
   google: '/auth/google',
   adminTotp: '/auth/admin/totp',
-  refresh: forMock('/auth/refresh-token', '/auth/refresh'),
+  refresh: '/auth/refresh-token',
   logout: '/auth/logout',
   verifyEmail: '/auth/verify-email',
   forgotPassword: '/auth/forgot-password',
-  verifyResetOtp: forMock('/auth/verify-otp', '/auth/verify-reset-otp'),
+  verifyResetOtp: '/auth/verify-otp',
   resetPassword: '/auth/reset-password',
   // First admin sign-in: authenticated by the sign-in challenge, not a session.
-  adminTotpEnrol: forMock('/admin/me/totp/enrol', '/auth/admin/totp/enrol'),
-  adminTotpConfirm: forMock('/admin/me/totp/confirm', '/auth/admin/totp/confirm'),
+  adminTotpEnrol: '/admin/me/totp/enrol',
+  adminTotpConfirm: '/admin/me/totp/confirm',
 } as const;
 
 // A 401 from these IS the real answer (wrong password, bad OTP, dead refresh
@@ -63,14 +55,28 @@ const NO_REFRESH_PATHS: string[] = [
 ];
 
 // ─── Axios Instances ────────────────────────────────
-// With no backend configured (src/config/env.ts), both clients are answered
-// by the dummy API (./mock/mockServer.ts) instead of the network. Nothing
-// else in the app knows or cares which one is behind them.
+// Which adapter answers (src/config/env.ts):
+//   • a dev build with EXPO_PUBLIC_USE_MOCK_API=1 → the dummy API
+//     (./mock/mockServer.ts). Required, not imported, behind `__DEV__ &&`, so
+//     a release bundle doesn't contain it at all.
+//   • no backend URL → every request fails with CONFIG_ERROR and nothing
+//     goes on the network (AppContainer shows ConfigErrorScreen).
+//   • otherwise the network.
+const configErrorAdapter: AxiosAdapter = () =>
+  Promise.reject(new AuthError('This build has no server address. Reinstall the app or contact support.', CONFIG_ERROR_CODE));
+
+let adapter: AxiosAdapter | undefined;
+if (__DEV__ && USE_MOCK_API) {
+  adapter = require('./mock/mockServer').mockAdapter as AxiosAdapter;
+} else if (CONFIG_ERROR) {
+  adapter = configErrorAdapter;
+}
+
 const clientConfig = {
   baseURL: USE_MOCK_API ? MOCK_BASE_URL : API_BASE_URL,
   timeout: 30000,
   headers: { 'Content-Type': 'application/json' },
-  ...(USE_MOCK_API ? { adapter: mockAdapter } : null),
+  ...(adapter ? { adapter } : null),
 };
 
 export const api = axios.create(clientConfig);
@@ -98,8 +104,8 @@ api.interceptors.request.use(
 );
 
 // ─── Envelope unwrapping ────────────────────────────
-// The API wraps payloads as { data: … }; tolerate a bare body too.
-// TODO(API_AUTH): confirm the envelope shape.
+// The API wraps payloads as { success: true, data, message? }
+// (MetroMatrix_Backend response-envelope.interceptor.ts); a bare body is tolerated.
 export const unwrapBody = <T = any>(body: any): T => (body?.data ?? body) as T;
 export const unwrap = <T = any>(response: AxiosResponse): T => unwrapBody<T>(response.data);
 
@@ -123,9 +129,10 @@ const processQueue = (error: unknown, token: string | null = null) => {
 
 /**
  * Swap the stored refresh token for a new pair. Resolves to the new access
- * token; rejects when the session cannot be refreshed. Never clears tokens
- * itself — the 401 path below decides that, so a proactive caller can try a
- * refresh without risking the session.
+ * token; rejects when the session cannot be refreshed (with NO_REFRESH_TOKEN
+ * when none is stored). Never clears tokens itself — the 401 path below (and
+ * bootstrapSession) decide that with isDefinitiveSessionFailure, so a
+ * proactive caller can try a refresh without risking the session.
  */
 export const refreshTokens = async (): Promise<string> => {
   if (isRefreshing) {
@@ -138,15 +145,14 @@ export const refreshTokens = async (): Promise<string> => {
   try {
     const refreshToken = await getRefreshToken();
     if (!refreshToken) {
-      throw new Error('No refresh token');
+      throw new AuthError('Please sign in again.', NO_REFRESH_TOKEN, 401);
     }
     // refreshClient, not `api`: the refresh call must not pass through the
     // interceptors it is serving.
     const { data } = await refreshClient.post(AUTH_PATHS.refresh, { refreshToken });
-    const body = unwrapBody<any>(data);
-    // The API answers a bare TokenPair; `tokens` is tolerated too.
-    const pair = body?.tokens ?? body;
-    if (!pair?.accessToken || !pair?.refreshToken) {
+    // The API answers a bare TokenPair: { accessToken, refreshToken, expiresIn }.
+    const pair = unwrapBody<any>(data);
+    if (typeof pair?.accessToken !== 'string' || typeof pair?.refreshToken !== 'string') {
       throw new Error('No token in refresh response');
     }
     await setTokens(pair.accessToken, pair.refreshToken);
@@ -175,8 +181,21 @@ api.interceptors.response.use(
     // Redux only learns the business status at sign-in / cold start. The
     // handler (AppContainer) re-fetches /auth/me and the navigator routes to
     // the Suspended gate.
-    if (status === 403 && extractErrorCode(error) === 'BUSINESS_SUSPENDED') {
+    if (status === 403 && extractErrorCode(error) === ERROR_CODES.BUSINESS_SUSPENDED) {
       emitBusinessStatusStale();
+    }
+
+    // ── Account disabled mid-session: definitive, whichever request hears it ──
+    // (Not on the sign-in routes: there is no session there to end.)
+    if (
+      status === 403 &&
+      !isAuthRoute &&
+      extractErrorCode(error) === ERROR_CODES.ACCOUNT_DISABLED &&
+      !isIntentionalSignOut()
+    ) {
+      await clearTokens();
+      emitSessionExpired(ERROR_CODES.ACCOUNT_DISABLED);
+      return Promise.reject(error);
     }
 
     // The user just signed out on purpose: a 401 on a request still in flight
@@ -192,22 +211,27 @@ api.interceptors.response.use(
       // this tells the request that runs the refresh apart from the ones that
       // queue behind it. Only the leader clears tokens and announces expiry.
       const leadsRefresh = !isRefreshing;
+      let token: string;
       try {
-        const token = await refreshTokens();
-        originalRequest.headers.Authorization = `Bearer ${token}`;
-        return api(originalRequest);
-      } catch {
-        if (leadsRefresh) {
+        token = await refreshTokens();
+      } catch (refreshError) {
+        // Only the server saying "this session is over" ends it
+        // (sessionRefresh.ts). Offline, a 5xx or a 429 fails this request
+        // alone: the tokens stay and the next request tries again.
+        if (leadsRefresh && isDefinitiveSessionFailure(refreshError)) {
           await clearTokens();
           // Tell the app the session is gone so it resets and returns to
           // Welcome (handler registered in AppContainer). Skipped for the
           // logout endpoint itself — that flow already resets the store.
           if (!url.includes(AUTH_PATHS.logout)) {
-            emitSessionExpired();
+            emitSessionExpired(sessionEndReason(refreshError));
           }
         }
-        return Promise.reject(error);
+        // The caller sees why: REFRESH_REUSED, offline, 503 … not the stale 401.
+        return Promise.reject(refreshError);
       }
+      originalRequest.headers.Authorization = `Bearer ${token}`;
+      return api(originalRequest);
     }
 
     return Promise.reject(error);
@@ -248,7 +272,10 @@ export const extractErrorMessage = (error: any): string => {
 
 // ─── Error Code Extractor ───────────────────────────
 /** Code set on an AuthError when the request never got a response. */
-export const NETWORK_ERROR = 'NETWORK_ERROR';
+export const NETWORK_ERROR = ERROR_CODES.NETWORK_ERROR;
+
+/** Code set on every request from a build with no backend URL. */
+export const CONFIG_ERROR_CODE = ERROR_CODES.CONFIG_ERROR;
 
 export const extractErrorCode = (error: any): string | undefined => {
   if (error instanceof AuthError) return error.code;
@@ -283,6 +310,23 @@ export class AuthError extends Error {
   }
 }
 
+/**
+ * A 429's wait: the body's `details.retryAfter` when the API sets one
+ * (RESEND_COOLDOWN, TOTP lockout), else the throttler's `Retry-After` header
+ * (seconds), carried into `details.retryAfter` so screens read one place.
+ */
+const withRetryAfter = (
+  error: unknown,
+  details: Record<string, unknown> | undefined,
+): Record<string, unknown> | undefined => {
+  if (!axios.isAxiosError(error) || error.response?.status !== 429) return details;
+  if (details && details.retryAfter !== undefined) return details;
+  const headers = error.response.headers as Record<string, unknown> | undefined;
+  const raw = headers?.['retry-after'] ?? headers?.['Retry-After'];
+  const seconds = Number(raw);
+  return Number.isFinite(seconds) && seconds >= 0 ? { ...(details ?? {}), retryAfter: Math.ceil(seconds) } : details;
+};
+
 /** Wrap any caught error, keeping the readable message, code, status and details. */
 export const toAuthError = (error: any): AuthError => {
   if (error instanceof AuthError) return error;
@@ -292,7 +336,7 @@ export const toAuthError = (error: any): AuthError => {
     extractErrorMessage(error),
     extractErrorCode(error),
     isAxios ? error.response?.status : undefined,
-    data?.error?.details ?? data?.details,
+    withRetryAfter(error, data?.error?.details ?? data?.details),
   );
 };
 

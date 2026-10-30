@@ -1,20 +1,29 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Provider (business) model
 // ═══════════════════════════════════════════════════════
-// Provider Selection's choices, the professional fields PersonalInfo shows
-// for each sub-type, and the documents each must upload — the FYP app's
-// provider-info flow, mapped onto MetroMatrix's services:
+// Provider Selection's choices, the fields PersonalInfo asks for, and the
+// documents each sub-type must upload — the FYP app's provider-info flow on
+// MetroMatrix's API (MetroMatrix_Backend businesses/: business.dto.ts and
+// required-documents.ts). PersonalInfo asks only for what the API stores:
+// name, city, address (+ map pin), and the PMDC number for doctors. A
+// doctor's specialty, fees and the rest are set later in Practice setup.
 //
-//   Doctor (healthcare)  specialty, clinic name, PMDC no., experience, about
-//                        docs: CNIC, medical licence, degree certificate
-//   Food                 restaurant / home kitchen / cloud kitchen
-//                        cuisine (+ daily capacity for home kitchens)
-//                        docs: CNIC + food licence (home kitchen: kitchen photo)
-//   Vendor (shopping)    category, store name, experience, about
-//                        docs: CNIC, business licence
-// TODO(API_AUTH): confirm REQUIRED_DOCUMENTS and the `details` keys.
+//   Doctor        CNIC front + back, PMDC certificate, degree certificate
+//   Vendor        CNIC front + back, NTN certificate OR a shop photo
+//   Restaurant    CNIC front + back, PFA licence, storefront photo
+//   Cloud kitchen CNIC front + back, PFA licence
+//   Home kitchen  CNIC front + back, 2 kitchen photos
 
-import type { Business, BusinessDocument, DocumentKind, GeoPoint, ServiceType, SubType } from '../types/auth';
+import type {
+  Business,
+  BusinessDocument,
+  DocumentKind,
+  DocumentRequirement,
+  GeoPoint,
+  RequirementStatus,
+  ServiceType,
+  SubType,
+} from '../types/auth';
 import type { ValidationErrors } from './authModel';
 
 // ─── Services and sub-types ──────────────────────────
@@ -63,27 +72,106 @@ export const providerTypeLabel = (subType: SubType | null | undefined): string =
   subType ? SUBTYPE_LABELS[subType].title : 'Service Provider';
 
 // ─── Documents ───────────────────────────────────────
-export const REQUIRED_DOCUMENTS: Record<SubType, DocumentKind[]> = {
-  doctor: ['cnic', 'medical_license', 'degree_certificate'],
-  store: ['cnic', 'business_license'],
-  restaurant: ['cnic', 'food_license'],
-  cloud_kitchen: ['cnic', 'food_license'],
-  home_kitchen: ['cnic', 'kitchen_photo'],
+/** The API's rules (required-documents.ts REQUIRED_DOCUMENTS), word for word. */
+export const DOCUMENT_REQUIREMENTS: Record<SubType, DocumentRequirement[]> = {
+  store: [{ kind: 'cnic_front' }, { kind: 'cnic_back' }, { anyOf: ['ntn_certificate', 'shop_photo'] }],
+  doctor: [{ kind: 'cnic_front' }, { kind: 'cnic_back' }, { kind: 'pmdc_certificate' }, { kind: 'degree_certificate' }],
+  restaurant: [{ kind: 'cnic_front' }, { kind: 'cnic_back' }, { kind: 'pfa_licence' }, { kind: 'storefront_photo' }],
+  cloud_kitchen: [{ kind: 'cnic_front' }, { kind: 'cnic_back' }, { kind: 'pfa_licence' }],
+  home_kitchen: [{ kind: 'cnic_front' }, { kind: 'cnic_back' }, { kind: 'kitchen_photo', min: 2 }],
 };
 
 export const DOCUMENT_LABELS: Record<DocumentKind, { label: string; hint: string }> = {
-  cnic: { label: 'National ID Card (CNIC)', hint: 'Both sides of your CNIC in one clear photo or PDF.' },
-  medical_license: { label: 'Medical License', hint: 'Your current PMDC registration certificate.' },
-  degree_certificate: { label: 'Degree Certificate', hint: 'MBBS, BDS or equivalent.' },
-  business_license: { label: 'Business License', hint: 'Trade licence or NTN certificate for your store.' },
-  food_license: { label: 'Food Authority License', hint: 'Your provincial food authority licence.' },
-  kitchen_photo: { label: 'Kitchen Photo', hint: 'A clear photo of the kitchen you cook in.' },
+  cnic_front: { label: 'CNIC (front)', hint: 'The front of your CNIC, every corner visible.' },
+  cnic_back: { label: 'CNIC (back)', hint: 'The back of your CNIC, every corner visible.' },
+  pmdc_certificate: { label: 'PMDC certificate', hint: 'Your current PMDC registration certificate.' },
+  degree_certificate: { label: 'Degree certificate', hint: 'MBBS, BDS or equivalent.' },
+  ntn_certificate: { label: 'NTN certificate', hint: 'Your store’s National Tax Number certificate.' },
+  shop_photo: { label: 'Shop photo', hint: 'A clear photo of your shop with its sign.' },
+  pfa_licence: { label: 'PFA licence', hint: 'Your Punjab Food Authority (or provincial) licence.' },
+  storefront_photo: { label: 'Storefront photo', hint: 'The front of the restaurant, sign visible.' },
+  kitchen_photo: { label: 'Kitchen photo', hint: 'A clear photo of the kitchen you cook in.' },
 };
 
-/** Required kinds with no uploaded document that is still standing. */
-export const missingDocuments = (subType: SubType, documents: Pick<BusinessDocument, 'kind' | 'status'>[]): DocumentKind[] => {
-  const present = new Set(documents.filter(d => d.status !== 'rejected').map(d => d.kind));
-  return REQUIRED_DOCUMENTS[subType].filter(kind => !present.has(kind));
+/** A requirement as the API names it in `missing`: the kind, or `a|b` for any-of. */
+export const requirementKey = (r: DocumentRequirement): string => ('anyOf' in r ? r.anyOf.join('|') : r.kind);
+
+const kindsOf = (r: DocumentRequirement): DocumentKind[] => ('anyOf' in r ? r.anyOf : [r.kind]);
+
+/** "CNIC (front)", or "NTN certificate or Shop photo" for an any-of key. */
+export const requirementLabel = (key: string): string =>
+  key
+    .split('|')
+    .map(k => DOCUMENT_LABELS[k as DocumentKind]?.label ?? k)
+    .join(' or ');
+
+/**
+ * The API's evaluateDocuments, on the device: each rule and how it stands,
+ * and the keys of those not yet met. A rejected document doesn't count.
+ */
+export const evaluateDocuments = (
+  subType: SubType,
+  documents: Pick<BusinessDocument, 'kind' | 'status'>[],
+): { requirements: RequirementStatus[]; missing: string[] } => {
+  const counts = new Map<DocumentKind, number>();
+  for (const d of documents) {
+    if (d.status !== 'rejected') counts.set(d.kind, (counts.get(d.kind) ?? 0) + 1);
+  }
+  const rules = DOCUMENT_REQUIREMENTS[subType];
+  const requirements = rules.map(r => {
+    const min = 'anyOf' in r ? 1 : (r.min ?? 1);
+    const have = kindsOf(r).reduce((n, k) => n + (counts.get(k) ?? 0), 0);
+    return { ...('anyOf' in r ? { anyOf: r.anyOf } : { kind: r.kind }), min, have, satisfied: have >= min };
+  });
+  return { requirements, missing: rules.filter((_, i) => !requirements[i].satisfied).map(requirementKey) };
+};
+
+/** Requirement keys with no standing document yet. */
+export const missingDocuments = (subType: SubType, documents: Pick<BusinessDocument, 'kind' | 'status'>[]): string[] =>
+  evaluateDocuments(subType, documents).missing;
+
+/**
+ * One upload tile. "At least 2 kitchen photos" is two slots; "NTN certificate
+ * or shop photo" is one slot offering both kinds (the first is the default).
+ */
+export interface DocumentSlot {
+  /** Stable per slot: `kitchen_photo`, `kitchen_photo#2`, `ntn_certificate|shop_photo`. */
+  key: string;
+  /** The requirement this slot helps meet (the API's `missing` key). */
+  requirement: string;
+  kinds: DocumentKind[];
+  label: string;
+  hint: string;
+  /** The document filling it, if any (a rejected one shows so it can be replaced). */
+  doc: BusinessDocument | null;
+}
+
+/** The tiles PersonalInfo shows, each filled with the document that meets it. */
+export const documentSlots = (subType: SubType, documents: BusinessDocument[]): DocumentSlot[] => {
+  // Standing documents first, so a replacement fills the slot over a rejected one.
+  const pool = [...documents].sort((a, b) => Number(a.status === 'rejected') - Number(b.status === 'rejected'));
+  const take = (kinds: DocumentKind[]): BusinessDocument | null => {
+    const i = pool.findIndex(d => kinds.includes(d.kind));
+    return i === -1 ? null : pool.splice(i, 1)[0];
+  };
+  const slots: DocumentSlot[] = [];
+  for (const r of DOCUMENT_REQUIREMENTS[subType]) {
+    const kinds = kindsOf(r);
+    const requirement = requirementKey(r);
+    const count = 'anyOf' in r ? 1 : (r.min ?? 1);
+    for (let n = 1; n <= count; n++) {
+      const first = DOCUMENT_LABELS[kinds[0]];
+      slots.push({
+        key: n === 1 ? requirement : `${requirement}#${n}`,
+        requirement,
+        kinds,
+        label: kinds.length > 1 ? requirementLabel(requirement) : count > 1 ? `${first.label} ${n}` : first.label,
+        hint: kinds.length > 1 ? 'Either one is enough.' : first.hint,
+        doc: take(kinds),
+      });
+    }
+  }
+  return slots;
 };
 
 // ─── Pickers ─────────────────────────────────────────
@@ -121,14 +209,10 @@ export const SPECIALTIES = options([
 export const CUISINES = options(['Pakistani', 'BBQ', 'Chinese', 'Fast Food', 'Desi Home Food', 'Bakery', 'Healthy', 'Other']);
 
 // ─── Professional info (PersonalInfo step 2) ─────────
-export type DetailKey =
-  | 'storeCategory'
-  | 'specialty'
-  | 'pmdcNumber'
-  | 'cuisine'
-  | 'dailyCapacity'
-  | 'experience'
-  | 'briefDescription';
+// Only what the API stores. (The FYP form also asked for specialty, category,
+// cuisine, experience, a description and daily capacity; the API has nowhere
+// to keep them, so they are not asked for here. Decision: Waleed, 30 Oct.)
+export type DetailKey = 'pmdcNumber';
 
 export interface DetailFieldSpec {
   key: DetailKey;
@@ -151,94 +235,54 @@ export interface BusinessFormSchema {
   details: DetailFieldSpec[];
 }
 
-const experience: DetailFieldSpec = {
-  key: 'experience',
-  label: 'Experience',
-  kind: 'number',
-  placeholder: '5',
-  helper: 'Years in this work.',
-  required: true,
-};
-
-const about: DetailFieldSpec = {
-  key: 'briefDescription',
-  label: 'Brief Description',
-  kind: 'multiline',
-  placeholder: 'Tell us about your services...',
-  required: true,
-};
-
-const cuisine: DetailFieldSpec = {
-  key: 'cuisine',
-  label: 'Cuisine',
-  kind: 'picker',
-  placeholder: 'Choose a cuisine',
-  options: CUISINES,
-  required: true,
-};
+/** The API's PMDC rule (business.dto.ts), after trimming and upper-casing. */
+export const PMDC_PATTERN = /^[A-Z0-9][A-Z0-9-]{2,19}$/;
 
 export const BUSINESS_FORM_SCHEMA: Record<SubType, BusinessFormSchema> = {
   doctor: {
     nameLabel: 'Professional/Clinic Name',
     namePlaceholder: 'Your practice name',
     addressLabel: 'Clinic address',
-    lead: [
-      { key: 'specialty', label: 'Specialty', kind: 'picker', placeholder: 'Select your specialty', options: SPECIALTIES, required: true },
-    ],
+    lead: [],
     details: [
       {
         key: 'pmdcNumber',
         label: 'PMDC Registration Number',
         kind: 'text',
         placeholder: '12345-P',
-        helper: 'As printed on your medical license.',
+        helper: 'As printed on your PMDC certificate.',
         required: true,
       },
-      experience,
-      about,
     ],
   },
   store: {
     nameLabel: 'Business Name',
     namePlaceholder: 'Your store name',
     addressLabel: 'Store address',
-    lead: [
-      { key: 'storeCategory', label: 'Category', kind: 'picker', placeholder: 'Select a category', options: STORE_CATEGORIES, required: true },
-    ],
-    details: [experience, about],
+    lead: [],
+    details: [],
   },
   restaurant: {
     nameLabel: 'Restaurant Name',
     namePlaceholder: 'Karahi House',
     addressLabel: 'Restaurant address',
-    lead: [cuisine],
-    details: [experience, about],
+    lead: [],
+    details: [],
   },
   home_kitchen: {
     nameLabel: 'Kitchen Name',
     namePlaceholder: "Ammi's Kitchen",
     addressLabel: 'Pickup area',
     addressHelper: 'Your area and street. Customers see only the area until they order.',
-    lead: [cuisine],
-    details: [
-      {
-        key: 'dailyCapacity',
-        label: 'Meals you can cook a day',
-        kind: 'number',
-        placeholder: '20',
-        helper: 'Orders stop for the day when you reach it.',
-        required: true,
-      },
-      experience,
-      about,
-    ],
+    lead: [],
+    details: [],
   },
   cloud_kitchen: {
     nameLabel: 'Kitchen Name',
     namePlaceholder: 'Late Night Bites',
     addressLabel: 'Kitchen address',
-    lead: [cuisine],
-    details: [experience, about],
+    lead: [],
+    details: [],
   },
 };
 
@@ -278,38 +322,37 @@ export const validateBusinessProfile = (subType: SubType, form: BusinessProfileF
     const value = (form.details[field.key] ?? '').trim();
     if (field.required && !value) {
       errors[field.key] = `${field.label} is required`;
-    } else if (field.kind === 'number' && value && !/^\d{1,4}$/.test(value)) {
-      errors[field.key] = 'Enter a whole number';
-    } else if (field.key === 'dailyCapacity' && value && Number(value) < 1) {
-      errors[field.key] = 'Enter at least 1';
-    } else if (field.key === 'briefDescription' && value && value.length < 20) {
-      errors[field.key] = 'Write at least 20 characters';
+    } else if (field.key === 'pmdcNumber' && value && !PMDC_PATTERN.test(value.toUpperCase())) {
+      errors[field.key] = 'Enter your PMDC registration number, e.g. 12345-P';
     }
   }
   return errors;
 };
 
-/** Form → the create/PATCH body. The business phone is the provider's own. */
+/** The API keeps 6 decimal places of a coordinate (about 10 cm). */
+const coord = (n: number) => Math.round(n * 1e6) / 1e6;
+
+/**
+ * Form → the API's CreateBusinessDto / UpdateBusinessDto:
+ * `{ serviceType, subType, name, phone, city, addressLine, lat?, lng?, pmdcNumber? }`.
+ * The business phone is the provider's own; the PMDC number is sent for doctors only.
+ */
 export const businessProfileToPayload = (
   serviceType: ServiceType,
   subType: SubType,
   form: BusinessProfileForm,
   phone: string,
 ) => {
-  const details: Record<string, string> = {};
-  for (const field of allDetailFields(subType)) {
-    const value = form.details[field.key]?.trim();
-    if (value) details[field.key] = value;
-  }
+  const pmdc = form.details.pmdcNumber?.trim().toUpperCase();
   return {
     serviceType,
     subType,
     name: form.name.trim(),
     phone,
     city: form.city,
-    address: form.address.trim(),
-    location: form.location,
-    details,
+    addressLine: form.address.trim(),
+    ...(form.location ? { lat: coord(form.location.lat), lng: coord(form.location.lng) } : null),
+    ...(subType === 'doctor' && pmdc ? { pmdcNumber: pmdc } : null),
   };
 };
 
@@ -319,7 +362,7 @@ export const businessToProfileForm = (business: Business): BusinessProfileForm =
   city: business.city,
   address: business.address,
   location: business.location,
-  details: { ...business.details },
+  details: business.pmdcNumber ? { pmdcNumber: business.pmdcNumber } : {},
 });
 
 /** Has the provider saved their professional info (so setup can resume past it)? */
@@ -338,10 +381,11 @@ export const validateDecisionReason = (reason: string): ValidationErrors => {
   return errors;
 };
 
-/** Only notes with text are sent: { [documentId]: note }. */
-export const cleanDocumentNotes = (notes: Record<string, string>): Record<string, string> =>
-  Object.fromEntries(
-    Object.entries(notes)
-      .map(([id, note]) => [id, note.trim()] as const)
-      .filter(([, note]) => note.length > 0),
-  );
+/**
+ * The API's reject body: only notes with text, as
+ * `[{ documentId, note }]` (RejectBusinessDto.documentNotes, note 2–500).
+ */
+export const cleanDocumentNotes = (notes: Record<string, string>): { documentId: string; note: string }[] =>
+  Object.entries(notes)
+    .map(([documentId, note]) => ({ documentId, note: note.trim().slice(0, 500) }))
+    .filter(n => n.note.length >= 2);

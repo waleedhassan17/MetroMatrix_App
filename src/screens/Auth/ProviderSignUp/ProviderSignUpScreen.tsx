@@ -29,7 +29,8 @@ const ProviderSignUpScreen: React.FC<Props> = ({ navigation }) => {
   const errors = validateSignUp(form.values);
   const shown = visibleErrors(errors, form.touched);
   const loading = form.status === 'loading';
-  const complete = Object.values(form.values).every(v => v.trim().length > 0) && !!subType;
+  // The mobile is optional here (the API's SignupDto); Personal Info asks for it.
+  const complete = (['name', 'email', 'password'] as const).every(f => form.values[f].trim().length > 0) && !!subType;
 
   const submit = async () => {
     if (!complete || loading || !subType) return;
@@ -61,6 +62,7 @@ const ProviderSignUpScreen: React.FC<Props> = ({ navigation }) => {
       <AuthErrorNotice
         error={form.error}
         onGoToPortal={() => navigation.navigate('ProviderSignIn', { email: form.values.email.trim() })}
+        onSignInInstead={() => navigation.navigate('ProviderSignIn', { email: form.values.email.trim() })}
       />
       <SignUpFields
         values={form.values}

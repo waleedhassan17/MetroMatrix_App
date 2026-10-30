@@ -9,6 +9,6 @@ module.exports = {
   // Redux Toolkit ships ESM (and pulls immer's legacy-esm build); Expo and RN
   // packages ship untranspiled TS/ESM. Let Babel transform all of them.
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|@reduxjs/toolkit|immer|redux|reselect|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|expo-.*|react-navigation|@react-navigation/.*|redux-persist|@gorhom/.*)/)',
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|@reduxjs/toolkit|immer|redux|react-redux|reselect|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|expo-.*|react-navigation|@react-navigation/.*|redux-persist|@gorhom/.*)/)',
   ],
 };

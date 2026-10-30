@@ -1,3 +1,8 @@
+// The dummy API is opt-in (src/config/env.ts): the suites run against it, as
+// a dev build with EXPO_PUBLIC_USE_MOCK_API=1 does. Tests that need the other
+// modes set the env and re-require in jest.isolateModules.
+process.env.EXPO_PUBLIC_USE_MOCK_API = '1';
+
 // Native modules have no implementation under Jest. Mock the two storage
 // backends the infra layer touches so networks/slices/storageUtils can be
 // required (and exercised) from plain unit tests.

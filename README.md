@@ -18,19 +18,15 @@ npm run web                       # browser
 npm run gates                     # tsc + design-token gate + eslint + jest
 ```
 
-No backend is needed: until one is configured, every request is answered by the **dummy API** inside the network layer (`src/networks/network/mock/`), with the same endpoints, responses and errors the real API will have.
+## Connecting the backend
 
-## Connecting the real backend (one line)
+Copy [.env.example](.env.example) to `.env.local` and set `EXPO_PUBLIC_API_URL` (including `/api/v1`), then `npm run start:clear`. Release builds take the URL from their profile in [eas.json](eas.json) (`development`, `preview`, `production`; replace the placeholder hosts before building).
 
-Open [src/config/env.ts](src/config/env.ts) and set `BACKEND_URL`:
-
-```ts
-const BACKEND_URL = 'https://your-api.example.com/api/v1';
-```
-
-Or set `EXPO_PUBLIC_API_URL` in `.env.local`. That is the whole switch. The networks, serializers, slices and screens don't change.
+A build with no URL doesn't fall back to anything. It shows a configuration-error screen and sends no requests.
 
 ## Trying it on the dummy API
+
+For a development build only, `EXPO_PUBLIC_USE_MOCK_API=1` in `.env.local` answers every request from the **dummy API** in the network layer (`src/networks/network/mock/`) instead of a backend. Release builds ignore the flag and don't contain the dummy API.
 
 | Try | How |
 |---|---|

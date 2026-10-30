@@ -51,8 +51,7 @@ const ForgotPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
     }
     const email = s.email.trim();
     const r = await dispatch(requestCodeAsync(email));
-    // RESEND_TOO_SOON: a code is already on its way — go and type it.
-    if (requestCodeAsync.fulfilled.match(r) || (r.payload as { code?: string } | undefined)?.code === 'RESEND_TOO_SOON') {
+    if (requestCodeAsync.fulfilled.match(r)) {
       navigation.navigate('ResetPasswordOTP', { email, userType });
     } else haptics.warning();
   };
@@ -67,7 +66,7 @@ const ForgotPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
         title="Forgot Password?"
         subtitle="Enter your email address and we'll send you a 6-digit code to reset your password."
       />
-      {s.error.message && s.error.code !== 'RESEND_TOO_SOON' ? <InlineNotice message={s.error.message} /> : null}
+      {s.error.message ? <InlineNotice message={s.error.message} /> : null}
       <TextField
         label="Email"
         mode="email"

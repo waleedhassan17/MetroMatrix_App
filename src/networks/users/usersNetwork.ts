@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Users Network
 // ═══════════════════════════════════════════════════════
-// TODO(API_AUTH): paths per docs/API_CONTRACT_ASSUMED.md.
+// Paths and bodies per MetroMatrix_Backend users.controller.ts / docs/API_AUTH.md §4.2.
 
-import { api, unwrap, toAuthError, forMock } from '../network/apiHelpers';
+import { api, unwrap, toAuthError } from '../network/apiHelpers';
 import { userSerializer } from '../../serializers/authSerializer';
 import type { Gender, User } from '../../types/auth';
 
@@ -14,10 +14,10 @@ export interface UpdateMePayload {
   avatarUrl?: string | null;
 }
 
-/** The API calls the name `displayName`; the dummy API still reads `name`. */
+/** PATCH /users/me: the API calls the name `displayName`; answers the user. */
 export const updateMe = async ({ name, ...rest }: UpdateMePayload): Promise<User> => {
   try {
-    const named = name === undefined ? {} : forMock<object>({ displayName: name.trim() }, { name });
+    const named = name === undefined ? {} : { displayName: name.trim() };
     const response = await api.patch('/users/me', { ...rest, ...named });
     const body = unwrap(response);
     return userSerializer(body?.user ?? body);
@@ -47,25 +47,29 @@ export const completeProfile = async (payload: CompleteProfilePayload): Promise<
   }
 };
 
+/** PUT /users/me/devices: register (or refresh) this install's Expo push token. */
 export const registerDevice = async (token: string, platform: 'android' | 'ios' | 'web'): Promise<void> => {
   try {
-    await api.post('/users/me/devices', { token, platform });
+    await api.put('/users/me/devices', { expoPushToken: token, platform });
   } catch (e) {
     throw toAuthError(e);
   }
 };
 
 /**
- * Best-effort, during sign-out: storage is already cleared, so the caller
- * passes the access token it captured. Never throws.
+ * DELETE /users/me/devices/:token → `{ removed }` (false when it was already
+ * gone). Best-effort, during sign-out: storage is already cleared, so the
+ * caller passes the access token it captured. Never throws.
  */
-export const unregisterDevice = async (token: string, accessToken: string | null): Promise<void> => {
+export const unregisterDevice = async (token: string, accessToken: string | null): Promise<boolean> => {
   try {
-    await api.delete(`/users/me/devices/${encodeURIComponent(token)}`, {
+    const response = await api.delete(`/users/me/devices/${encodeURIComponent(token)}`, {
       timeout: 8000,
       headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
     });
+    return unwrap(response)?.removed === true;
   } catch {
     // A stale device row only costs the server one undelivered push.
+    return false;
   }
 };

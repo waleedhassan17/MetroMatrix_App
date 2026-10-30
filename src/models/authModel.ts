@@ -87,7 +87,7 @@ export const validateSignIn = (data: SignInData): ValidationErrors => {
 // ─── Sign Up (the FYP's four fields) ─────────────────
 export interface SignUpData {
   name: string;
-  /** National part only (the field shows +92). */
+  /** National part only (the field shows +92). Optional, as in the API's SignupDto. */
   phone: string;
   email: string;
   password: string;
@@ -99,7 +99,7 @@ export const validateSignUp = (data: SignUpData): ValidationErrors => {
   if (!data.name.trim()) errors.name = 'Full name is required';
   else if (data.name.trim().length < 2) errors.name = 'Name must be at least 2 characters';
 
-  const phone = validatePhone(data.phone, true);
+  const phone = validatePhone(data.phone, false);
   if (phone) errors.phone = phone;
 
   const email = validateEmail(data.email);

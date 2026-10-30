@@ -138,13 +138,21 @@ const authPersistConfig = {
   whitelist: ['hasSeenOnboarding'],
 };
 
+// Same pattern for the provider's pick: only `pending` reaches disk, so a new
+// provider who restarts before PersonalInfo still has the type they chose.
+const providerSelectionPersistConfig = {
+  key: 'providerSelection',
+  storage: AsyncStorage,
+  whitelist: ['pending'],
+};
+
 const rootReducer = combineReducers({
   auth: persistReducer(authPersistConfig, authReducer),
   preferences: preferencesSlice.reducer,
   appContainer: appContainerSlice.reducer,
   designGallery: designGallerySlice.reducer,
   roleSelection: roleSelectionSlice.reducer,
-  providerSelection: providerSelectionSlice.reducer,
+  providerSelection: persistReducer(providerSelectionPersistConfig, providerSelectionSlice.reducer),
   signIn: signInSlice.reducer,
   signUp: signUpSlice.reducer,
   providerSignIn: providerSignInSlice.reducer,
@@ -261,7 +269,8 @@ type RootReducerState = ReturnType<typeof rootReducer>;
 // `auth` is passed through as well, but it is NOT a survivor: authSlice
 // handles RESET_ALL_STATE itself (back to signed-out, keeping
 // hasSeenOnboarding) — passing it through also keeps its `_persist` marker.
-const SHELL_SLICES = ['appContainer', 'preferences', 'auth'] as const;
+// `providerSelection` is the same: it clears itself on reset.
+const SHELL_SLICES = ['appContainer', 'preferences', 'auth', 'providerSelection'] as const;
 
 // Applied at the root so a slice added later is account-scoped by default —
 // nobody has to remember to add it to a reset list.

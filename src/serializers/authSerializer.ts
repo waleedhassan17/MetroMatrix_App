@@ -4,7 +4,7 @@
 // Defensive backend → app mapping for the session (FinMatrix convention):
 // every auth response — signup, signin, Google, TOTP, /auth/me — funnels
 // through here, so a renamed or missing field degrades in one place.
-// TODO(API_AUTH): field names per docs/API_CONTRACT_ASSUMED.md.
+// Field names per MetroMatrix_Backend auth-result.ts (AuthUser).
 
 import type {
   AuthProvider,
@@ -31,23 +31,26 @@ const GENDERS: readonly Gender[] = ['male', 'female', 'other'];
 export const userSerializer = (raw: unknown): User => {
   const r = isObject(raw) ? raw : {};
   const providers = enumList(r.providers, PROVIDERS);
+  const role: UserRole = USER_ROLES.includes(r.role) ? (r.role as UserRole) : 'customer';
   return {
     id: str(r.id ?? r._id),
     email: str(r.email),
-    name: str(r.name ?? r.displayName ?? r.fullName),
+    // The API's field is `displayName`; `name` is the app's (and the mock's).
+    name: str(r.displayName ?? r.name ?? r.fullName),
     phone: strOrNull(r.phone),
-    role: USER_ROLES.includes(r.role) ? (r.role as UserRole) : 'customer',
+    role,
     avatarUrl: strOrNull(r.avatarUrl ?? r.photoURL),
-    // Default true, as FinMatrix does: the server sends `false` explicitly
-    // for an unverified account, and a missing flag must not trap a verified
-    // user on the verify screen.
-    isEmailVerified: bool(r.isEmailVerified ?? r.emailVerified, true),
+    // Verified only when the server says exactly `true`: a missing or odd
+    // value must never let an unverified account past the verify gate.
+    isEmailVerified: r.isEmailVerified === true,
     hasPassword: bool(r.hasPassword, !providers.length || providers.includes('password')),
     providers: providers.length ? providers : ['password'],
     createdAt: str(r.createdAt),
-    // Missing ⇒ complete: a server that predates CompleteProfile must not
-    // trap every existing customer on it.
-    profileComplete: bool(r.profileComplete, true),
+    // Customers: incomplete unless the server says so (the gate then asks);
+    // nobody else has a customer profile to complete.
+    profileComplete: role === 'customer' ? r.profileComplete === true : true,
+    // Customers who existed before CompleteProfile: asked once, may skip.
+    profileSkippable: r.profileSkippable === true,
     dateOfBirth: strOrNull(r.dateOfBirth),
     gender: oneOf(r.gender, GENDERS, null),
     streetAddress: strOrNull(r.streetAddress),
@@ -104,8 +107,10 @@ export const totpChallengeSerializer = (raw: unknown): TotpChallenge | null => {
 export const totpEnrolmentSerializer = (raw: unknown): TotpEnrolment | null => {
   if (!isObject(raw)) return null;
   const secret = str(raw.secret);
-  const otpauthUrl = str(raw.otpauthUrl ?? raw.otpauthUri ?? raw.uri);
-  return secret && otpauthUrl ? { secret, otpauthUrl } : null;
+  // The API sends otpauthUri; otpauthUrl is the older name.
+  const otpauthUrl = str(raw.otpauthUri ?? raw.otpauthUrl ?? raw.uri);
+  const qr = str(raw.qrDataUrl);
+  return secret && otpauthUrl ? { secret, otpauthUrl, qrDataUrl: qr.startsWith('data:image/') ? qr : null } : null;
 };
 
 export const recoveryCodesSerializer = (raw: unknown): string[] =>

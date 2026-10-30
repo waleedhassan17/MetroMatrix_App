@@ -11,7 +11,8 @@ import { createAppSlice } from '@store/createAppSlice';
 import { adminTotpConfirm, adminTotpEnrol } from '@networks/admin/adminBusinessNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import type { Business, TotpEnrolment, User } from '@/types';
-import { setPendingTotp } from '../../Auth/authSlice';
+import type { PendingTotp } from '../../Auth/authSlice';
+import { handleChallengeError } from '../shared/totpChallenge';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../Auth/shared/formStatus';
 
 export interface AdminTwoFactorEnrolSliceState {
@@ -36,7 +37,8 @@ const initialState: AdminTwoFactorEnrolSliceState = {
   error: NO_ERROR,
 };
 
-const CHALLENGE_DEAD = ['CHALLENGE_EXPIRED', 'CHALLENGE_INVALID'];
+const pendingOf = (getState: () => unknown) =>
+  (getState() as { auth: { pendingTotp: PendingTotp | null } }).auth.pendingTotp;
 
 export const adminTwoFactorEnrolSlice = createAppSlice({
   name: 'adminTwoFactorEnrol',
@@ -52,12 +54,12 @@ export const adminTwoFactorEnrolSlice = createAppSlice({
     resetEnrol: create.reducer(() => initialState),
 
     loadEnrolmentAsync: create.asyncThunk(
-      async (challengeToken: string, { dispatch, rejectWithValue }) => {
+      async (challengeToken: string, { dispatch, getState, rejectWithValue }) => {
         try {
           return await adminTotpEnrol(challengeToken);
         } catch (e) {
           const rejected = toRejectedValue(e);
-          if (rejected.code && CHALLENGE_DEAD.includes(rejected.code)) dispatch(setPendingTotp(null));
+          handleChallengeError(dispatch, rejected, pendingOf(getState), 'enrol');
           return rejectWithValue(rejected);
         }
       },
@@ -78,12 +80,14 @@ export const adminTwoFactorEnrolSlice = createAppSlice({
     ),
 
     confirmAsync: create.asyncThunk(
-      async ({ challengeToken, code }: { challengeToken: string; code: string }, { rejectWithValue }) => {
+      async ({ challengeToken, code }: { challengeToken: string; code: string }, { dispatch, getState, rejectWithValue }) => {
         try {
           const { result, recoveryCodes } = await adminTotpConfirm(challengeToken, code);
           return { session: { user: result.user, business: result.business }, recoveryCodes };
         } catch (e) {
-          return rejectWithValue(toRejectedValue(e));
+          const rejected = toRejectedValue(e);
+          handleChallengeError(dispatch, rejected, pendingOf(getState), 'enrol');
+          return rejectWithValue(rejected);
         }
       },
       {

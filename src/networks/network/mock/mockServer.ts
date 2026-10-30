@@ -17,7 +17,7 @@ import {
   type AxiosResponse,
   type InternalAxiosRequestConfig,
 } from 'axios';
-import { REQUIRED_DOCUMENTS, missingDocuments } from '../../../models/businessModel';
+import { DOCUMENT_REQUIREMENTS, evaluateDocuments } from '../../../models/businessModel';
 import type { DocumentKind, ServiceType, SubType } from '../../../types/auth';
 import { MOCK } from './mockConfig';
 import { getDb, newId, saveDb, type MockBusiness, type MockDb, type MockUser } from './mockDb';
@@ -67,13 +67,11 @@ const omit = <T extends object, K extends keyof T>(obj: T, keys: K[]): Omit<T, K
 
 const publicUser = (u: MockUser) => omit(u, ['password', 'verificationSentAt', 'totpEnrolled', 'recoveryCodes']);
 
+/** The API's BusinessDetail. */
 const publicBusiness = (b: MockBusiness) => {
-  const rest = omit(b, ['autoApprove']);
-  return {
-    ...rest,
-    requiredDocuments: REQUIRED_DOCUMENTS[b.subType],
-    missingDocuments: missingDocuments(b.subType, b.documents),
-  };
+  const rest = omit(b, ['autoApprove', 'details']);
+  const { requirements, missing } = evaluateDocuments(b.subType, b.documents);
+  return { ...rest, requiredDocuments: requirements, missingDocuments: missing };
 };
 
 const findUserByEmail = (db: MockDb, email: unknown) =>
@@ -102,16 +100,34 @@ const settleApproval = (b: MockBusiness | null, now: number) => {
 const issueSession = (db: MockDb, user: MockUser) => {
   const accessToken = `mock-access-${newId('t')}`;
   const refreshToken = `mock-refresh-${newId('t')}`;
-  db.access[accessToken] = { userId: user.id, expiresAt: Date.now() + MOCK.ACCESS_TTL_MS };
+  db.access[accessToken] = { userId: user.id, expiresAt: Date.now() + MOCK.ACCESS_TTL_MS, refreshToken };
   db.refresh[refreshToken] = user.id;
   return { accessToken, refreshToken };
 };
+
+/**
+ * As the API (API_AUTH.md §2 BusinessSummary): the session carries only the
+ * business's identity and status, no address or documents; a doctor's adds
+ * `isListed` and `pmdcVerified`. The App reads the rest from /businesses/me.
+ */
+const businessSummary = (b: MockBusiness) => ({
+  id: b.id,
+  name: b.name,
+  slug: b.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+  serviceType: b.serviceType,
+  subType: b.subType,
+  status: b.status,
+  rejectionReason: b.rejectionReason,
+  suspensionReason: b.suspensionReason,
+  submittedAt: b.submittedAt,
+  ...(b.subType === 'doctor' ? { isListed: !!b.isListed, pmdcVerified: !!b.pmdcVerified } : null),
+});
 
 const sessionPayload = (db: MockDb, user: MockUser, now: number) => ({
   user: publicUser(user),
   business: user.role === 'partner' ? (() => {
     const b = settleApproval(businessOf(db, user.id), now);
-    return b ? publicBusiness(b) : null;
+    return b ? businessSummary(b) : null;
   })() : null,
 });
 
@@ -147,8 +163,20 @@ const requireAdmin = (ctx: Ctx) => {
   return user;
 };
 
+/** The API's policy (common/validation/password.ts): 8–72, lower, upper, digit. */
 const passwordOk = (p: unknown) =>
-  typeof p === 'string' && p.length >= 8 && p.length <= 72 && /[A-Za-z]/.test(p) && /\d/.test(p);
+  typeof p === 'string' && p.length >= 8 && p.length <= 72 && /[a-z]/.test(p) && /[A-Z]/.test(p) && /\d/.test(p);
+
+const PASSWORD_MESSAGE = 'Use 8–72 characters with an upper-case letter, a lower-case letter and a number.';
+
+/** As on the API: 400 VALIDATION_FAILED with `details.fields` ({ field: [messages] }). */
+const invalid = (fields: Record<string, string>) =>
+  new MockError(
+    400,
+    'VALIDATION_FAILED',
+    Object.values(fields)[0] ?? 'Check your details and try again.',
+    { fields: Object.fromEntries(Object.entries(fields).map(([k, m]) => [k, [m]])) },
+  );
 
 const revokeSessions = (db: MockDb, userId: string) => {
   for (const [t, s] of Object.entries(db.access)) if (s.userId === userId) delete db.access[t];
@@ -177,20 +205,25 @@ const route = (method: string, pattern: string, handler: Handler) => {
 };
 
 // ── Auth ──
+// The API's SignupDto: { email, password, displayName, phone?, role }. The
+// provider's type is not on the account; it arrives with POST /businesses.
 route('POST', '/auth/signup', ({ db, body, now }) => {
   const email = String(body.email ?? '').trim().toLowerCase();
-  if (!email || !body.name || !passwordOk(body.password)) {
-    throw new MockError(400, 'VALIDATION', 'Check your details and try again.');
-  }
+  const role = body.role;
+  const fields: Record<string, string> = {};
+  if (!email) fields.email = 'Enter a valid email address';
+  if (!body.displayName || String(body.displayName).trim().length < 2) fields.displayName = 'Name must be at least 2 characters';
+  if (!passwordOk(body.password)) fields.password = PASSWORD_MESSAGE;
+  if (role !== 'customer' && role !== 'partner') fields.role = 'role must be customer or partner';
+  if (Object.keys(fields).length) throw invalid(fields);
   if (findUserByEmail(db, email)) {
-    throw new MockError(409, 'EMAIL_TAKEN', 'An account with this email already exists. Sign in instead.');
+    throw new MockError(409, 'EMAIL_EXISTS', 'An account with this email already exists.');
   }
-  const partner = body.portal === 'partner';
-  const subType: SubType | null = partner && SUB_TYPES.includes(body.subType) ? body.subType : null;
+  const partner = role === 'partner';
   const user: MockUser = {
     id: newId('u'),
     email,
-    name: String(body.name).trim(),
+    name: String(body.displayName).trim(),
     phone: body.phone ?? null,
     role: partner ? 'partner' : 'customer',
     avatarUrl: null,
@@ -204,8 +237,8 @@ route('POST', '/auth/signup', ({ db, body, now }) => {
     streetAddress: null,
     city: null,
     postalCode: null,
-    providerServiceType: subType ? SERVICE_OF[subType] : null,
-    providerSubType: subType,
+    providerServiceType: null,
+    providerSubType: null,
     password: body.password,
     verificationSentAt: now,
     totpEnrolled: false,
@@ -220,70 +253,74 @@ route('POST', '/auth/signin', ({ db, body, now }) => {
   if (!user || !user.password || user.password !== body.password) {
     throw new MockError(401, 'INVALID_CREDENTIALS', 'Incorrect email or password.');
   }
+  // As on the API: each door admits its own accounts, and WRONG_PORTAL names
+  // the ACCOUNT (accountType) and the door used (portal). Staff use the admin
+  // door, which the app tries for them after the User door says WRONG_PORTAL.
+  const door = body.portal;
   const staff = user.role === 'admin' || user.role === 'super_admin';
+  const allowed = staff ? door === 'admin' : user.role === door;
+  if (!allowed) {
+    const message = staff
+      ? 'Staff accounts sign in on the admin portal.'
+      : user.role === 'partner'
+        ? 'This is a service provider account. Sign in on the partner portal.'
+        : 'This is a customer account. Sign in on the customer portal.';
+    throw new MockError(403, 'WRONG_PORTAL', message, { accountType: user.role, portal: door });
+  }
   if (staff) {
-    // Staff sign in through the User sign-in, as in the FYP app.
-    if (body.portal === 'partner') {
-      throw new MockError(403, 'WRONG_PORTAL', 'Staff accounts sign in from the User sign-in.', { portal: 'customer' });
-    }
     const challengeToken = `mock-challenge-${newId('c')}`;
     db.challenges[challengeToken] = { userId: user.id, expiresAt: now + 5 * 60 * 1000 };
-    return { challengeToken, totpEnrolled: user.totpEnrolled };
-  }
-  if (body.portal === 'customer' && user.role === 'partner') {
-    throw new MockError(403, 'WRONG_PORTAL', 'This is a service provider account. Sign in as a Service Provider.', {
-      portal: 'partner',
-    });
-  }
-  if (body.portal === 'partner' && user.role === 'customer') {
-    throw new MockError(403, 'WRONG_PORTAL', 'This is a customer account. Sign in as a User.', { portal: 'customer' });
+    return { totpRequired: true, enrolmentRequired: !user.totpEnrolled, challengeToken };
   }
   return authResult(db, user, now);
 });
 
+/** A live challenge's user, or 401 UNAUTHORIZED (expired or spent), as on the API. */
 const challengeUser = (db: MockDb, token: unknown, now: number) => {
   const challenge = db.challenges[String(token)];
-  if (!challenge || challenge.expiresAt < now) {
-    throw new MockError(401, 'CHALLENGE_EXPIRED', 'Your sign-in timed out. Sign in again.');
-  }
-  const user = db.users.find(u => u.id === challenge.userId);
-  if (!user) throw new MockError(401, 'CHALLENGE_EXPIRED', 'Your sign-in timed out. Sign in again.');
+  const user = challenge && challenge.expiresAt >= now ? db.users.find(u => u.id === challenge.userId) : undefined;
+  if (!user) throw new MockError(401, 'UNAUTHORIZED', 'This sign-in has expired. Enter your email and password again.');
   return user;
 };
 
 route('POST', '/auth/admin/totp', ({ db, body, now }) => {
   const user = challengeUser(db, body.challengeToken, now);
+  if (!user.totpEnrolled) {
+    throw new MockError(403, 'TOTP_REQUIRED', 'Set up your authenticator app before signing in.', { enrolmentRequired: true });
+  }
   if (body.recoveryCode) {
     const code = String(body.recoveryCode).trim().toUpperCase();
     const i = user.recoveryCodes.indexOf(code);
-    if (i === -1) throw new MockError(401, 'RECOVERY_CODE_USED', 'That recovery code is not valid or was already used.');
+    if (i === -1) throw new MockError(401, 'TOTP_INVALID', 'That code is not right.');
     user.recoveryCodes.splice(i, 1);
   } else if (body.code !== MOCK.TOTP_CODE) {
-    throw new MockError(401, 'TOTP_INVALID', "That code didn't work. Check your authenticator and try again.");
+    throw new MockError(401, 'TOTP_INVALID', 'That code is not right.');
   }
   delete db.challenges[String(body.challengeToken)];
   return authResult(db, user, now);
 });
 
-route('POST', '/auth/admin/totp/enrol', ({ db, body, now }) => {
-  const user = challengeUser(db, body.challengeToken, now);
-  return {
-    secret: MOCK.TOTP_SECRET,
-    otpauthUrl: `otpauth://totp/MetroMatrix:${encodeURIComponent(user.email)}?secret=${MOCK.TOTP_SECRET}&issuer=MetroMatrix`,
-  };
+// The challenge travels as the bearer (AdminTotpEnrolGuard), never in the body.
+route('POST', '/admin/me/totp/enrol', ({ db, token, now }) => {
+  const user = challengeUser(db, token, now);
+  if (user.totpEnrolled) {
+    throw new MockError(403, 'TOTP_REQUIRED', 'Your authenticator is already set up. Sign in with a code from it.');
+  }
+  const otpauthUri = `otpauth://totp/MetroMatrix:${encodeURIComponent(user.email)}?secret=${MOCK.TOTP_SECRET}&issuer=MetroMatrix`;
+  return { otpauthUri, qrDataUrl: 'data:image/png;base64,', secret: MOCK.TOTP_SECRET };
 });
 
-route('POST', '/auth/admin/totp/confirm', ({ db, body, now }) => {
-  const user = challengeUser(db, body.challengeToken, now);
+route('POST', '/admin/me/totp/confirm', ({ db, body, token, now }) => {
+  const user = challengeUser(db, token, now);
   if (body.code !== MOCK.TOTP_CODE) {
-    throw new MockError(401, 'TOTP_INVALID', "That code didn't match. Check your phone's time and try again.");
+    throw new MockError(400, 'TOTP_INVALID', 'That code is not right. Check the time on your phone and try again.');
   }
   user.totpEnrolled = true;
   user.recoveryCodes = Array.from({ length: 8 }, () =>
     `MM${Math.random().toString(36).slice(2, 4)}-${Math.random().toString(36).slice(2, 6)}`.toUpperCase(),
   );
-  delete db.challenges[String(body.challengeToken)];
-  return { ...authResult(db, user, now), recoveryCodes: user.recoveryCodes };
+  delete db.challenges[String(token)];
+  return { recoveryCodes: user.recoveryCodes, auth: authResult(db, user, now) };
 });
 
 route('POST', '/auth/google', ({ db, body, now }) => {
@@ -323,73 +360,81 @@ route('POST', '/auth/google', ({ db, body, now }) => {
   return authResult(db, user, now);
 });
 
-route('GET', '/auth/verification-status', ctx => {
-  const user = requireUser(ctx);
-  // The dummy inbox: the link counts as opened a few seconds after it is sent.
-  if (!user.isEmailVerified && ctx.now - user.verificationSentAt >= MOCK.EMAIL_LINK_SECONDS * 1000) {
+/** The dummy inbox: the emailed link counts as opened a few seconds after it is sent. */
+const openLinkIfDue = (user: MockUser, now: number) => {
+  if (!user.isEmailVerified && now - user.verificationSentAt >= MOCK.EMAIL_LINK_SECONDS * 1000) {
     user.isEmailVerified = true;
   }
-  return { isEmailVerified: user.isEmailVerified };
-});
+};
 
-route('POST', '/auth/verify-email', ({ db, body }) => {
-  // The deep-link token: metromatrix://verify-success?token=mock-verify-<userId>
+// Public, as on the API: the link may open the app signed out.
+route('POST', '/auth/verify-email', ({ db, body, now }) => {
+  // The app link's token: metromatrix://verify-email?token=mock-verify-<userId>
   const userId = String(body.token ?? '').replace(/^mock-verify-/, '');
   const user = db.users.find(u => u.id === userId);
-  if (!user) throw new MockError(400, 'VERIFY_TOKEN_INVALID', 'This verification link is invalid or has expired.');
+  if (!user) {
+    throw new MockError(400, 'VERIFY_LINK_INVALID', 'This link has expired or been replaced. Open the app and tap Resend.');
+  }
   user.isEmailVerified = true;
-  return { user: publicUser(user) };
+  return sessionPayload(db, user, now);
 });
 
 route('POST', '/auth/resend-verification', ctx => {
   const user = requireUser(ctx);
+  if (user.isEmailVerified) return { sent: false, alreadyVerified: true, retryAfter: 0 };
   const wait = Math.ceil((user.verificationSentAt + MOCK.RESEND_SECONDS * 1000 - ctx.now) / 1000);
-  if (wait > 0) throw new MockError(429, 'RESEND_TOO_SOON', `Wait ${wait}s before resending.`, { retryAfter: wait });
+  if (wait > 0) throw new MockError(429, 'RESEND_COOLDOWN', `Please wait ${wait} seconds before requesting another link.`, { retryAfter: wait });
   user.verificationSentAt = ctx.now;
-  return { retryAfter: MOCK.RESEND_SECONDS };
+  return { sent: true, alreadyVerified: false, retryAfter: MOCK.RESEND_SECONDS };
 });
 
-route('POST', '/auth/refresh', ({ db, body }) => {
+route('POST', '/auth/refresh-token', ({ db, body }) => {
   const userId = db.refresh[String(body.refreshToken ?? '')];
   const user = userId ? db.users.find(u => u.id === userId) : undefined;
   if (!user) throw new MockError(401, 'REFRESH_INVALID', 'Please sign in again.');
   delete db.refresh[String(body.refreshToken)];
-  return issueSession(db, user);
+  return { ...issueSession(db, user), expiresIn: MOCK.ACCESS_TTL_MS / 1000 };
 });
 
+// As the API: no body; the bearer (expired or not) ends its own session,
+// refresh token included. Always 200.
 route('POST', '/auth/logout', ctx => {
+  const session = ctx.token ? ctx.db.access[ctx.token] : undefined;
+  if (session?.refreshToken) delete ctx.db.refresh[session.refreshToken];
   if (ctx.token) delete ctx.db.access[ctx.token];
-  if (ctx.body.refreshToken) delete ctx.db.refresh[String(ctx.body.refreshToken)];
-  return { ok: true };
+  return { signedOut: true };
 });
 
-route('GET', '/auth/me', ctx => sessionPayload(ctx.db, requireUser(ctx), ctx.now));
+route('GET', '/auth/me', ctx => {
+  const user = requireUser(ctx);
+  openLinkIfDue(user, ctx.now);
+  return sessionPayload(ctx.db, user, ctx.now);
+});
 
+// As on the API: always 200 { delivered: true }, no cooldown of its own (the
+// app keeps a 60 s timer), so the endpoint never reveals whether an account exists.
 route('POST', '/auth/forgot-password', ({ db, body, now }) => {
   const email = String(body.email ?? '').trim().toLowerCase();
-  const existing = db.resets[email];
-  if (existing) {
-    const wait = Math.ceil((existing.sentAt + MOCK.RESEND_SECONDS * 1000 - now) / 1000);
-    if (wait > 0) throw new MockError(429, 'RESEND_TOO_SOON', `Wait ${wait}s before requesting another code.`, { retryAfter: wait });
-  }
-  // Always 200, so the endpoint never reveals whether an account exists.
   if (findUserByEmail(db, email)) {
     db.resets[email] = { code: MOCK.RESET_OTP, attemptsLeft: MOCK.OTP_ATTEMPTS, sentAt: now, resetToken: null };
   }
-  return { retryAfter: MOCK.RESEND_SECONDS };
+  return { delivered: true };
 });
 
-route('POST', '/auth/verify-reset-otp', ({ db, body }) => {
+// { email, otp } → { resetToken }. All 400s, as on the API.
+route('POST', '/auth/verify-otp', ({ db, body }) => {
   const email = String(body.email ?? '').trim().toLowerCase();
   const reset = db.resets[email];
-  if (!reset) throw new MockError(400, 'OTP_EXPIRED', 'This code has expired. Request a new one.');
-  if (body.code !== reset.code) {
+  if (!reset) throw new MockError(400, 'OTP_INVALID', 'The code is invalid or has expired.');
+  if (body.otp !== reset.code) {
     reset.attemptsLeft -= 1;
     if (reset.attemptsLeft <= 0) {
       delete db.resets[email];
-      throw new MockError(429, 'OTP_LOCKED', 'Too many wrong codes. Request a new one.', { attemptsLeft: 0 });
+      throw new MockError(400, 'OTP_LOCKED', 'Too many incorrect attempts. Request a new code.');
     }
-    throw new MockError(400, 'INVALID_OTP', "That code isn't right.", { attemptsLeft: reset.attemptsLeft });
+    throw new MockError(400, 'OTP_INVALID', 'That code is not right. Check the email and try again.', {
+      attemptsLeft: reset.attemptsLeft,
+    });
   }
   reset.resetToken = `mock-reset-${newId('r')}`;
   return { resetToken: reset.resetToken };
@@ -397,8 +442,8 @@ route('POST', '/auth/verify-reset-otp', ({ db, body }) => {
 
 route('POST', '/auth/reset-password', ({ db, body }) => {
   const entry = Object.entries(db.resets).find(([, r]) => r.resetToken && r.resetToken === body.resetToken);
-  if (!entry) throw new MockError(400, 'RESET_TOKEN_INVALID', 'This reset has expired. Start again.');
-  if (!passwordOk(body.password)) throw new MockError(400, 'VALIDATION', 'Use 8+ characters with a letter and a number.');
+  if (!entry) throw new MockError(400, 'OTP_INVALID', 'This reset session is invalid or has expired. Please start again.');
+  if (!passwordOk(body.password)) throw invalid({ password: PASSWORD_MESSAGE });
   const user = findUserByEmail(db, entry[0]);
   if (user) {
     user.password = body.password;
@@ -406,46 +451,59 @@ route('POST', '/auth/reset-password', ({ db, body }) => {
     revokeSessions(db, user.id);
   }
   delete db.resets[entry[0]];
-  return { ok: true };
+  return { reset: true };
 });
 
+/** As on the API: the password, or for a Google-only account a Google ID token for its email. 403, not 401. */
+const reauthenticate = (user: MockUser, body: Record<string, unknown>) => {
+  const ok = user.hasPassword
+    ? body.password === user.password || body.currentPassword === user.password
+    : String(decodeJwt(String(body.idToken ?? ''))?.email ?? (body.idToken ? 'google.user@gmail.com' : '')).toLowerCase() ===
+      user.email;
+  if (!ok) throw new MockError(403, 'INVALID_CREDENTIALS', 'Your password is incorrect.');
+};
+
+// Ends every session (this one too) and answers a new pair, as the API does.
 route('POST', '/auth/change-password', ctx => {
   const user = requireUser(ctx);
-  if (user.hasPassword && user.password !== ctx.body.currentPassword) {
-    throw new MockError(401, 'INVALID_CREDENTIALS', 'Your current password is not correct.');
-  }
-  if (!passwordOk(ctx.body.newPassword)) throw new MockError(400, 'VALIDATION', 'Use 8+ characters with a letter and a number.');
+  reauthenticate(user, ctx.body);
+  if (!passwordOk(ctx.body.newPassword)) throw invalid({ newPassword: PASSWORD_MESSAGE });
   user.password = ctx.body.newPassword;
   user.hasPassword = true;
   if (!user.providers.includes('password')) user.providers.push('password');
-  return { user: publicUser(user) };
+  revokeSessions(ctx.db, user.id);
+  return { changed: true, tokens: { ...issueSession(ctx.db, user), expiresIn: MOCK.ACCESS_TTL_MS / 1000 } };
 });
 
 route('DELETE', '/auth/account', ctx => {
   const user = requireUser(ctx);
-  const ok = user.hasPassword ? ctx.body.password === user.password : ctx.body.confirm === 'DELETE';
-  if (!ok) throw new MockError(401, 'INVALID_CREDENTIALS', 'That password is not correct.');
+  reauthenticate(user, ctx.body);
   revokeSessions(ctx.db, user.id);
   ctx.db.users = ctx.db.users.filter(u => u.id !== user.id);
   ctx.db.businesses = ctx.db.businesses.filter(b => b.ownerId !== user.id);
-  return { ok: true };
+  return { deleted: true };
 });
 
 // ── Users ──
+// As on the API: the name is `displayName`, and the answer is the user itself.
 route('PATCH', '/users/me', ctx => {
   const user = requireUser(ctx);
-  if (typeof ctx.body.name === 'string') user.name = ctx.body.name.trim();
+  if (typeof ctx.body.displayName === 'string') user.name = ctx.body.displayName.trim();
   if (ctx.body.phone !== undefined) user.phone = ctx.body.phone;
   if (ctx.body.avatarUrl !== undefined) user.avatarUrl = ctx.body.avatarUrl;
-  return { user: publicUser(user) };
+  return publicUser(user);
 });
 
 route('PATCH', '/users/me/profile', ctx => {
   const user = requireUser(ctx);
+  if (user.role !== 'customer') throw new MockError(403, 'FORBIDDEN', 'Only customers have this profile.');
   const b = ctx.body;
-  if (!b.dateOfBirth || !b.gender || !b.streetAddress || !b.city) {
-    throw new MockError(400, 'VALIDATION', 'Complete every required field.');
-  }
+  const fields: Record<string, string> = {};
+  if (!b.dateOfBirth) fields.dateOfBirth = 'Enter a real date of birth (YYYY-MM-DD)';
+  if (!['male', 'female', 'other'].includes(b.gender)) fields.gender = 'gender must be male, female or other';
+  if (!b.streetAddress) fields.streetAddress = 'streetAddress must be at least 5 characters';
+  if (!b.city) fields.city = 'city must be at least 2 characters';
+  if (Object.keys(fields).length) throw invalid(fields);
   Object.assign(user, {
     dateOfBirth: b.dateOfBirth,
     gender: b.gender,
@@ -458,44 +516,87 @@ route('PATCH', '/users/me/profile', ctx => {
   return { user: publicUser(user) };
 });
 
-route('POST', '/users/me/devices', ctx => {
+// As on the API: PUT { expoPushToken, platform } → { registered }; a token
+// belongs to whichever account last registered it.
+route('PUT', '/users/me/devices', ctx => {
   const user = requireUser(ctx);
-  ctx.db.devices = ctx.db.devices.filter(d => d.token !== ctx.body.token);
-  ctx.db.devices.push({ userId: user.id, token: String(ctx.body.token) });
-  return { ok: true };
+  const token = String(ctx.body.expoPushToken ?? '');
+  if (!/^Expo(nent)?PushToken\[[A-Za-z0-9_-]{10,200}\]$/.test(token) || !['android', 'ios', 'web'].includes(ctx.body.platform)) {
+    throw new MockError(400, 'VALIDATION_FAILED', 'expoPushToken must be an Expo push token');
+  }
+  ctx.db.devices = ctx.db.devices.filter(d => d.token !== token);
+  ctx.db.devices.push({ userId: user.id, token });
+  return { registered: true };
 });
 
+// DELETE → { removed } (false when it was already gone; idempotent).
 route('DELETE', '/users/me/devices/:token', ctx => {
-  ctx.db.devices = ctx.db.devices.filter(d => d.token !== decodeURIComponent(ctx.params[0]));
-  return { ok: true };
+  const user = requireUser(ctx);
+  const token = decodeURIComponent(ctx.params[0]);
+  const before = ctx.db.devices.length;
+  ctx.db.devices = ctx.db.devices.filter(d => !(d.token === token && d.userId === user.id));
+  return { removed: ctx.db.devices.length < before };
 });
 
 // ── Media ──
-route('POST', '/media/sign', ctx => {
-  requireUser(ctx);
+// As the API's UPLOAD_PURPOSES (asset-url.ts): PDFs only where a paper is expected.
+const IMAGE_FORMATS = 'jpg,jpeg,png,webp,heic';
+const UPLOAD_SPECS: Record<string, { formats: string; maxBytes: number }> = {
+  avatar: { formats: IMAGE_FORMATS, maxBytes: 5_000_000 },
+  business_document: { formats: `${IMAGE_FORMATS},pdf`, maxBytes: 10_000_000 },
+  payment_proof: { formats: `${IMAGE_FORMATS},pdf`, maxBytes: 10_000_000 },
+  health_record: { formats: `${IMAGE_FORMATS},pdf`, maxBytes: 15_000_000 },
+};
+
+route('POST', '/media/sign-upload', ctx => {
+  const user = requireUser(ctx);
+  const purpose = String(ctx.body.purpose ?? '');
+  const spec = UPLOAD_SPECS[purpose] ?? { formats: IMAGE_FORMATS, maxBytes: 8_000_000 };
+  const folder = `metromatrix/dev/${user.id}/${purpose || 'misc'}`;
   return {
     cloudName: 'mock',
     apiKey: 'mock',
     timestamp: Math.floor(ctx.now / 1000),
     signature: 'mock-signature',
-    folder: `metromatrix/${ctx.body.purpose ?? 'misc'}`,
+    folder,
+    publicIdPrefix: `${folder}/`,
     uploadUrl: 'mock://upload',
+    allowedFormats: spec.formats,
+    maxBytes: spec.maxBytes,
+    ...(purpose === 'health_record' ? { type: 'authenticated' } : {}),
   };
 });
 
 // ── Businesses (the provider's own) ──
+// As the API's CreateBusinessDto: other fields are dropped (whitelist).
 const applyBusinessFields = (b: MockBusiness, body: Record<string, any>) => {
-  for (const key of ['name', 'phone', 'city', 'address'] as const) {
-    if (typeof body[key] === 'string') b[key] = body[key];
+  for (const key of ['name', 'phone', 'city', 'addressLine'] as const) {
+    if (typeof body[key] === 'string') b[key] = body[key].trim();
   }
-  if (body.location !== undefined) b.location = body.location;
-  if (body.details && typeof body.details === 'object') b.details = { ...body.details };
+  if (typeof body.lat === 'number' && typeof body.lng === 'number') {
+    b.lat = body.lat;
+    b.lng = body.lng;
+  }
   if (SUB_TYPES.includes(body.subType)) {
     b.subType = body.subType;
     b.serviceType = SERVICE_OF[b.subType];
   }
+  if (b.subType !== 'doctor') b.pmdcNumber = null;
+  else if (typeof body.pmdcNumber === 'string') b.pmdcNumber = body.pmdcNumber.trim().toUpperCase() || null;
   b.updatedAt = isoNow();
 };
+
+const EDITABLE: MockBusiness['status'][] = ['draft', 'rejected'];
+const requireEditable = (b: MockBusiness) => {
+  if (!EDITABLE.includes(b.status)) {
+    throw new MockError(409, 'BUSINESS_NOT_EDITABLE', 'This application is with our team and can’t be changed right now.');
+  }
+};
+const MULTI_KINDS: DocumentKind[] = ['kitchen_photo', 'shop_photo'];
+const MAX_PER_MULTI_KIND = 4;
+const allowedKinds = (subType: SubType): DocumentKind[] => [
+  ...new Set(DOCUMENT_REQUIREMENTS[subType].flatMap(r => ('anyOf' in r ? r.anyOf : [r.kind]))),
+];
 
 route('POST', '/businesses', ctx => {
   const { user, business } = requirePartnerBusiness(ctx);
@@ -509,8 +610,10 @@ route('POST', '/businesses', ctx => {
     name: '',
     phone: user.phone ?? '',
     city: '',
-    address: '',
-    location: null,
+    addressLine: '',
+    lat: null,
+    lng: null,
+    pmdcNumber: null,
     details: {},
     status: 'draft',
     documents: [],
@@ -523,12 +626,15 @@ route('POST', '/businesses', ctx => {
     autoApprove: true,
   };
   applyBusinessFields(b, ctx.body);
+  if (!b.addressLine) throw invalid({ addressLine: 'addressLine should not be empty' });
   ctx.db.businesses.push(b);
   return publicBusiness(b);
 });
 
+// As the API: the onboarding routes stay readable while suspended (the
+// partner sees their own status); only service routes answer 403.
 route('GET', '/businesses/me', ctx => {
-  const { business } = requirePartnerBusiness(ctx);
+  const { business } = requirePartnerBusiness(ctx, true);
   if (!business) throw new MockError(404, 'NOT_FOUND', 'No business yet.');
   return publicBusiness(business);
 });
@@ -536,42 +642,64 @@ route('GET', '/businesses/me', ctx => {
 route('PATCH', '/businesses/me', ctx => {
   const { business } = requirePartnerBusiness(ctx);
   if (!business) throw new MockError(404, 'NOT_FOUND', 'No business yet.');
+  requireEditable(business);
   applyBusinessFields(business, ctx.body);
   return publicBusiness(business);
 });
 
+/** As the API: answers the one document (DocumentView), not the business. */
 route('POST', '/businesses/me/documents', ctx => {
   const { business } = requirePartnerBusiness(ctx);
   if (!business) throw new MockError(404, 'NOT_FOUND', 'Save your details first.');
+  requireEditable(business);
   const kind = ctx.body.kind as DocumentKind;
-  business.documents = business.documents.filter(d => d.kind !== kind);
-  business.documents.push({
+  if (!allowedKinds(business.subType).includes(kind)) {
+    throw invalid({ kind: `A ${business.subType.replace('_', ' ')} does not need a ${String(kind)}.` });
+  }
+  if (!ctx.body.url || !ctx.body.publicId) throw invalid({ url: 'url and publicId are required' });
+  if (MULTI_KINDS.includes(kind)) {
+    if (business.documents.filter(d => d.kind === kind).length >= MAX_PER_MULTI_KIND) {
+      throw new MockError(400, 'VALIDATION_FAILED', `At most ${MAX_PER_MULTI_KIND} ${kind.replace('_', ' ')}s. Remove one first.`);
+    }
+  } else {
+    business.documents = business.documents.filter(d => d.kind !== kind);
+  }
+  const doc = {
     id: newId('doc'),
     kind,
-    url: String(ctx.body.url),
-    publicId: String(ctx.body.publicId ?? ''),
-    mimeType: String(ctx.body.mimeType ?? 'image/jpeg'),
-    status: 'pending',
-    reviewerNote: null,
-    uploadedAt: isoNow(),
-  });
+    url: String(ctx.body.url).trim(),
+    publicId: String(ctx.body.publicId).trim(),
+    status: 'pending' as const,
+    reviewNote: null,
+    createdAt: isoNow(),
+  };
+  business.documents.push(doc);
   business.updatedAt = isoNow();
-  return publicBusiness(business);
+  return doc;
 });
 
 route('DELETE', '/businesses/me/documents/:id', ctx => {
   const { business } = requirePartnerBusiness(ctx);
   if (!business) throw new MockError(404, 'NOT_FOUND', 'No business yet.');
-  business.documents = business.documents.filter(d => d.id !== decodeURIComponent(ctx.params[0]));
-  return publicBusiness(business);
+  requireEditable(business);
+  const id = decodeURIComponent(ctx.params[0]);
+  if (!business.documents.some(d => d.id === id)) throw new MockError(404, 'NOT_FOUND', 'Document not found.');
+  business.documents = business.documents.filter(d => d.id !== id);
+  return { removed: true };
 });
 
 route('POST', '/businesses/me/submit', ctx => {
   const { business } = requirePartnerBusiness(ctx);
   if (!business) throw new MockError(404, 'NOT_FOUND', 'Save your details first.');
-  const missing = missingDocuments(business.subType, business.documents);
+  if (!EDITABLE.includes(business.status)) {
+    throw new MockError(409, 'INVALID_TRANSITION', `A ${business.status.replace('_', ' ')} application can’t be submitted.`);
+  }
+  const { missing, requirements } = evaluateDocuments(business.subType, business.documents);
   if (missing.length) {
-    throw new MockError(422, 'DOCUMENTS_MISSING', 'Some required documents are missing.', { missing });
+    throw new MockError(422, 'DOCUMENTS_MISSING', 'Upload the required documents before submitting.', { missing, requirements });
+  }
+  if (business.subType === 'doctor' && !business.pmdcNumber) {
+    throw invalid({ pmdcNumber: 'Add your PMDC registration number before submitting.' });
   }
   business.status = 'pending_approval';
   business.submittedAt = isoNow();
@@ -587,7 +715,6 @@ route('GET', '/businesses/me/status', ctx => {
     status: business.status,
     rejectionReason: business.rejectionReason,
     suspensionReason: business.suspensionReason,
-    documents: business.documents.map(d => ({ id: d.id, kind: d.kind, status: d.status, reviewerNote: d.reviewerNote })),
   };
 });
 
@@ -605,29 +732,32 @@ route('GET', '/food/home', ctx => {
 });
 
 // ── Admin ──
-const PAGE = 20;
+// As the API's AdminBusinessQueryDto: page / pageSize / q → { items, total, page, pageSize }.
 route('GET', '/admin/businesses', ctx => {
   requireAdmin(ctx);
-  const status = ctx.query.status ?? 'pending_approval';
+  const status = ctx.query.status;
+  const q = String(ctx.query.q ?? '').trim().toLowerCase();
+  const page = Math.max(1, Number(ctx.query.page) || 1);
+  const pageSize = Math.min(100, Math.max(1, Number(ctx.query.pageSize) || 20));
+  const ownerOf = (b: MockBusiness) => ctx.db.users.find(u => u.id === b.ownerId);
   const rows = ctx.db.businesses
     .map(b => settleApproval(b, ctx.now)!)
-    .filter(b => b.status === status && (!ctx.query.serviceType || b.serviceType === ctx.query.serviceType))
-    .sort((a, b) => Date.parse(a.submittedAt ?? a.createdAt) - Date.parse(b.submittedAt ?? b.createdAt));
-  const start = Number(ctx.query.cursor ?? 0) || 0;
-  const items = rows.slice(start, start + PAGE).map(b => {
-    const owner = ctx.db.users.find(u => u.id === b.ownerId);
+    .filter(b => !status || b.status === status)
+    .filter(b => !ctx.query.serviceType || b.serviceType === ctx.query.serviceType)
+    .filter(b => !q || [b.name, b.city, ownerOf(b)?.email ?? ''].some(v => v.toLowerCase().includes(q)))
+    .sort((a, b) =>
+      status === 'pending_approval'
+        ? Date.parse(a.submittedAt ?? a.createdAt) - Date.parse(b.submittedAt ?? b.createdAt)
+        : Date.parse(b.createdAt) - Date.parse(a.createdAt),
+    );
+  const items = rows.slice((page - 1) * pageSize, page * pageSize).map(b => {
+    const owner = ownerOf(b);
     return {
-      id: b.id,
-      name: b.name,
-      serviceType: b.serviceType,
-      subType: b.subType,
-      city: b.city,
-      status: b.status,
-      submittedAt: b.submittedAt,
-      owner: { name: owner?.name ?? '', email: owner?.email ?? '' },
+      ...omit(publicBusiness(b), ['documents', 'requiredDocuments', 'missingDocuments']),
+      owner: owner ? { id: owner.id, email: owner.email, displayName: owner.name, phone: owner.phone } : null,
     };
   });
-  return { items, nextCursor: start + PAGE < rows.length ? String(start + PAGE) : null };
+  return { items, total: rows.length, page, pageSize };
 });
 
 const adminBusiness = (ctx: Ctx) => {
@@ -642,7 +772,7 @@ route('GET', '/admin/businesses/:id', ctx => {
   const owner = ctx.db.users.find(u => u.id === b.ownerId);
   return {
     ...publicBusiness(b),
-    owner: { id: owner?.id ?? '', name: owner?.name ?? '', email: owner?.email ?? '', phone: owner?.phone ?? null },
+    owner: owner ? { id: owner.id, displayName: owner.name, email: owner.email, phone: owner.phone } : null,
   };
 });
 
@@ -657,22 +787,28 @@ route('POST', '/admin/businesses/:id/approve', ctx => {
   b.rejectionReason = null;
   b.documents.forEach(d => {
     d.status = 'accepted';
-    d.reviewerNote = null;
+    d.reviewNote = null;
   });
   return publicBusiness(b);
 });
 
 route('POST', '/admin/businesses/:id/reject', ctx => {
   const b = adminBusiness(ctx);
-  const notes = (ctx.body.documentNotes ?? {}) as Record<string, string>;
+  // As the API's RejectBusinessDto: documentNotes is [{ documentId, note }].
+  const notes = new Map<string, string>();
+  for (const n of Array.isArray(ctx.body.documentNotes) ? (ctx.body.documentNotes as unknown[]) : []) {
+    const { documentId, note } = (n ?? {}) as { documentId?: unknown; note?: unknown };
+    if (typeof documentId === 'string' && typeof note === 'string') notes.set(documentId, note);
+  }
   b.status = 'rejected';
   b.reviewedAt = isoNow();
   b.rejectionReason = String(ctx.body.reason ?? '');
   b.autoApprove = false;
   b.documents.forEach(d => {
-    if (notes[d.id]) {
+    const note = notes.get(d.id);
+    if (note) {
       d.status = 'rejected';
-      d.reviewerNote = notes[d.id];
+      d.reviewNote = note;
     }
   });
   return publicBusiness(b);
@@ -687,6 +823,7 @@ route('POST', '/admin/businesses/:id/suspend', ctx => {
 
 route('POST', '/admin/businesses/:id/reinstate', ctx => {
   const b = adminBusiness(ctx);
+  if (String(ctx.body.reason ?? '').trim().length < 3) throw invalid({ reason: 'reason must be longer than or equal to 3 characters' });
   b.status = 'approved';
   b.suspensionReason = null;
   return publicBusiness(b);

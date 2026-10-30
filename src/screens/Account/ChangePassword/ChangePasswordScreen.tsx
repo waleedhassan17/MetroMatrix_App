@@ -54,7 +54,11 @@ const ChangePasswordContent: React.FC<Props> = () => {
     );
     if (changePasswordAsync.fulfilled.match(r)) {
       haptics.success();
-      Toast.show({ type: 'success', text1: requireCurrent ? 'Password changed' : 'Password set' });
+      Toast.show({
+        type: 'success',
+        text1: requireCurrent ? 'Password changed' : 'Password set',
+        text2: 'Your other devices have been signed out.',
+      });
       back();
     } else haptics.warning();
   };
@@ -64,8 +68,8 @@ const ChangePasswordContent: React.FC<Props> = () => {
       title={requireCurrent ? 'Change password' : 'Set a password'}
       subtitle={
         requireCurrent
-          ? 'Use at least 8 characters, with a letter and a number.'
-          : 'Add a password so you can also sign in with your email.'
+          ? 'Use 8–72 characters with an upper-case letter, a lower-case letter and a number.'
+          : "Add a password so you can also sign in with your email. You'll confirm with Google first."
       }
       onBack={back}
       footer={

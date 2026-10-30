@@ -26,13 +26,21 @@ describe('authSlice reducers', () => {
       isAuthenticated: false,
       hasSeenOnboarding: false,
       pendingTotp: null,
+      signedOutLanding: null,
     });
   });
 
   it('setSession opens a session, clears a pending TOTP and marks onboarding seen', () => {
     const withTotp = reducer(initial, setPendingTotp({ challengeToken: 'c', enrolled: true, email: 'a@x.com' }));
     const state = reducer(withTotp, setSession({ user, business }));
-    expect(state).toEqual({ user, business, isAuthenticated: true, hasSeenOnboarding: true, pendingTotp: null });
+    expect(state).toEqual({
+      user,
+      business,
+      isAuthenticated: true,
+      hasSeenOnboarding: true,
+      pendingTotp: null,
+      signedOutLanding: null,
+    });
   });
 
   it('setUser and setBusiness replace their part only', () => {
@@ -61,7 +69,15 @@ describe('authSlice reducers', () => {
       isAuthenticated: false,
       hasSeenOnboarding: true,
       pendingTotp: null,
+      signedOutLanding: null,
     });
+  });
+
+  it('"Use a different account" signs out onto Sign In; the next session clears it', () => {
+    const session = reducer(initial, setSession({ user, business }));
+    const out = reducer(session, signOut({ landing: 'SignIn' }));
+    expect(out).toMatchObject({ isAuthenticated: false, signedOutLanding: 'SignIn' });
+    expect(reducer(out, setSession({ user, business })).signedOutLanding).toBeNull();
   });
 });
 

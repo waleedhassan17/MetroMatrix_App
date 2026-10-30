@@ -24,42 +24,34 @@ import { useAppSelector } from '../hooks/useReduxHooks';
 import { useTheme } from '../theme';
 import type { RootStackParamList } from '../types';
 import type { IRoute } from '../navigations-maps/types';
-import {
-  ADMIN_TOTP_ROUTES,
-  COMPLETE_PROFILE_ROUTES,
-  EMAIL_VERIFY_ROUTES,
-  ONBOARDING_ROUTE,
-  PARTNER_SETUP_ROUTES,
-  PENDING_ROUTES,
-  REJECTED_ROUTES,
-  SUSPENDED_ROUTES,
-  UNAUTHENTICATED_ROUTES,
-} from '../navigations-maps/Auth';
-import { resolveGate, totpInitialRoute, type Gate } from './sessionGate';
+import { gateRoutes } from '../navigations-maps/Auth';
+import { gateInputOf, partnerSetupInitialRoute, resolveGate, totpInitialRoute, type Gate } from './sessionGate';
+import { selectSkippedProfile } from '../store/preferencesSlice';
+import { selectPendingPick } from '../screens/ProviderSelection/providerSelectionSlice';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const BaseNavigator: React.FC = () => {
   const auth = useAppSelector(state => state.auth);
+  const pendingPick = useAppSelector(selectPendingPick);
   const { colors } = useTheme();
-  const gate: Gate = resolveGate(auth);
+  const skippedProfile = useAppSelector(selectSkippedProfile);
+  const gate: Gate = resolveGate(gateInputOf(auth, skippedProfile));
 
-  const unauthenticated = [...(!auth.hasSeenOnboarding ? [ONBOARDING_ROUTE] : []), ...UNAUTHENTICATED_ROUTES];
+  const routes: IRoute[] = gateRoutes(gate, auth.hasSeenOnboarding);
 
-  const BRANCHES: Partial<Record<Gate, IRoute[]>> = {
-    totp: ADMIN_TOTP_ROUTES,
-    verify: EMAIL_VERIFY_ROUTES,
-    completeProfile: COMPLETE_PROFILE_ROUTES,
-    partnerSetup: PARTNER_SETUP_ROUTES,
-    pending: PENDING_ROUTES,
-    rejected: REJECTED_ROUTES,
-    suspended: SUSPENDED_ROUTES,
-  };
-  const routes: IRoute[] = BRANCHES[gate] ?? unauthenticated;
-
-  // A first-time admin enrols an authenticator before the code step; every
-  // other branch starts on its first route (Personal Info resumes its own step).
-  const initialRouteName = (gate === 'totp' ? totpInitialRoute(auth.pendingTotp) : routes[0].title) as keyof RootStackParamList;
+  // A first-time admin enrols an authenticator before the code step; a
+  // provider whose service isn't known yet chooses it first; every other
+  // branch starts on its first route (Personal Info resumes its own step).
+  const initialRouteName = (
+    gate === 'totp'
+      ? totpInitialRoute(auth.pendingTotp)
+      : gate === 'partnerSetup'
+        ? partnerSetupInitialRoute(auth.business, pendingPick?.subType, auth.user)
+        : gate === 'unauthenticated' && auth.signedOutLanding
+          ? auth.signedOutLanding
+          : routes[0].title
+  ) as keyof RootStackParamList;
 
   return (
     <Stack.Navigator

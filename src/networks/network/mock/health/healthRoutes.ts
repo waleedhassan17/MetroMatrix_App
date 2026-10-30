@@ -220,7 +220,7 @@ const ensureDoctor = (db: MockDb, user: MockUser, business: MockBusiness): MockD
     services: [],
     conditionSlugs: [],
     bookingRules: { windowDays: 14, minNoticeMinutes: 60, cancelCutoffHours: 4, videoPrepay: false },
-    pmdcNumber: business.details?.pmdcNumber ?? '',
+    pmdcNumber: business.pmdcNumber ?? '',
     isListed: false,
     topBooked: false,
     city: business.city,
@@ -1633,13 +1633,13 @@ export function registerHealthRoutes(kit: HealthKit) {
       name: db.users.find(u => u.id === b.ownerId)?.name ?? b.name,
       specialty: b.details?.specialty ?? '',
       city: b.city,
-      pmdcNumber: b.details?.pmdcNumber ?? '',
+      pmdcNumber: b.pmdcNumber ?? '',
       pmdcVerified: !!b.pmdcVerified,
       pmdcNote: p?.note ?? null,
       pmdcVerifiedAt: p?.at ?? null,
       status: b.status,
       submittedAt: b.submittedAt,
-      documents: b.documents.map(d => ({ id: d.id, kind: d.kind, url: d.url, mimeType: d.mimeType })),
+      documents: b.documents.map(d => ({ id: d.id, kind: d.kind, url: d.url, mimeType: d.url.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/png' })),
     };
   };
   route('GET', '/admin/healthcare/doctors', ctx => {

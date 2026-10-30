@@ -81,6 +81,8 @@ const PartnerHomeScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const business = useAppSelector(selectBusiness);
   if (!business) return null;
+  // Hidden rather than a bare pin if the session has only the summary.
+  const place = [business.address, business.city].filter(Boolean).join(', ');
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
@@ -115,12 +117,14 @@ const PartnerHomeScreen: React.FC = () => {
               </AppText>
             </View>
           </View>
-          <View style={styles.row}>
-            <IonIcon name="location-outline" size="sm" color={colors.inkMuted} />
-            <AppText variant="small" tone="muted" style={styles.grow}>
-              {[business.address, business.city].filter(Boolean).join(', ')}
-            </AppText>
-          </View>
+          {place ? (
+            <View style={styles.row}>
+              <IonIcon name="location-outline" size="sm" color={colors.inkMuted} />
+              <AppText variant="small" tone="muted" style={styles.grow}>
+                {place}
+              </AppText>
+            </View>
+          ) : null}
         </View>
 
         <AppText variant="h2" accessibilityRole="header">

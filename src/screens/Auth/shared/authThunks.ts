@@ -9,12 +9,32 @@ import type { Dispatch } from '@reduxjs/toolkit';
 import { resetAllState } from '../../../store/resetAllState';
 import { authGoogle, authSignin, authSignup, type SignupPayload } from '../../../networks/auth/authNetwork';
 import { AuthError } from '../../../networks/network/apiHelpers';
+import { isStaffAccount } from '../../../models/authDoors';
 import type { AuthResult, Portal } from '../../../types/auth';
 import { setPendingTotp, setSession } from '../authSlice';
+import { ERROR_CODES } from '../../../networks/network/errorCodes';
 
 const open = (dispatch: Dispatch, result: AuthResult) => {
   dispatch(resetAllState());
   dispatch(setSession({ user: result.user, business: result.business }));
+};
+
+/**
+ * Staff sign in on the ordinary User sign-in, as in the FYP. The API keeps
+ * them on its admin door, so a User-door sign-in it answers with
+ * WRONG_PORTAL for a staff account is retried there: that returns the TOTP
+ * challenge (no tokens). From the provider door they are pointed to the User
+ * sign-in instead (AuthErrorNotice).
+ */
+const signinOnTheirDoor = async (portal: Extract<Portal, 'customer' | 'partner'>, email: string, password: string) => {
+  try {
+    return await authSignin({ email, password, portal });
+  } catch (e) {
+    if (portal === 'customer' && e instanceof AuthError && e.code === ERROR_CODES.WRONG_PORTAL && isStaffAccount(e.details?.accountType)) {
+      return authSignin({ email, password, portal: 'admin' });
+    }
+    throw e;
+  }
 };
 
 export const signInAndOpen = async (
@@ -23,10 +43,13 @@ export const signInAndOpen = async (
   email: string,
   password: string,
 ): Promise<'session' | 'totp'> => {
-  const outcome = await authSignin({ email, password, portal });
+  const outcome = await signinOnTheirDoor(portal, email, password);
   if (outcome.kind === 'totp') {
     if (portal === 'partner') {
-      throw new AuthError('Staff accounts sign in from the User sign-in.', 'WRONG_PORTAL', 403, { portal: 'customer' });
+      throw new AuthError('Staff accounts sign in from the User sign-in.', ERROR_CODES.WRONG_PORTAL, 403, {
+        accountType: 'admin',
+        portal: 'partner',
+      });
     }
     dispatch(
       setPendingTotp({

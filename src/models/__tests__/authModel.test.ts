@@ -65,8 +65,8 @@ describe('validateSignUp (the FYP four fields)', () => {
     expect(validateSignUp({ ...valid, name: ' A ' }).name).toBe('Name must be at least 2 characters');
   });
 
-  it('requires a valid Pakistani mobile', () => {
-    expect(validateSignUp({ ...valid, phone: '' }).phone).toBe('Mobile number is required');
+  it('takes the mobile as optional, but a given one must be a valid Pakistani mobile', () => {
+    expect(validateSignUp({ ...valid, phone: '' }).phone).toBeUndefined();
     expect(validateSignUp({ ...valid, phone: '4235761234' }).phone).toMatch(/valid Pakistani mobile/);
     expect(validateSignUp({ ...valid, phone: '31248' }).phone).toMatch(/valid Pakistani mobile/);
   });

@@ -30,6 +30,16 @@ const tokenServer = (config: InternalAxiosRequestConfig) => {
 
 const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
 
+/** What the refresh endpoint answers, as an axios error. */
+const serverSays = (status: number, code: string) =>
+  new AxiosError(`HTTP ${status}`, 'ERR_BAD_RESPONSE', {} as never, null, {
+    data: { error: { code, message: code } },
+    status,
+    statusText: String(status),
+    headers: {},
+    config: {} as never,
+  });
+
 describe('apiHelpers — single-flight refresh', () => {
   let refreshSpy: jest.SpyInstance;
   const expired = jest.fn();
@@ -63,15 +73,29 @@ describe('apiHelpers — single-flight refresh', () => {
     expect(expired).not.toHaveBeenCalled();
   });
 
+  it('posts to /auth/refresh-token and stores the bare TokenPair', async () => {
+    refreshSpy.mockResolvedValue({ data: { success: true, data: { accessToken: 'access-2', refreshToken: 'refresh-2', expiresIn: 900 } } });
+    await api.get('/orders');
+    expect(refreshSpy.mock.calls[0][0]).toBe('/auth/refresh-token');
+    expect(await getRefreshToken()).toBe('refresh-2');
+  });
+
+  it('a refresh response without both tokens fails the request but keeps the session (not definitive)', async () => {
+    refreshSpy.mockResolvedValue({ data: { data: { tokens: { accessToken: 'access-2', refreshToken: 'refresh-2' } } } });
+    await expect(api.get('/orders')).rejects.toBeDefined();
+    expect(expired).not.toHaveBeenCalled();
+    expect(await getRefreshToken()).toBe('refresh-1');
+  });
+
   it('five concurrent 401s still refresh once', async () => {
     await Promise.all(['/a', '/b', '/c', '/d', '/e'].map(u => api.get(u)));
     expect(refreshSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('a failed refresh rejects every queued request, clears tokens and announces expiry ONCE', async () => {
+  it('a definitively refused refresh rejects every queued request, clears tokens and announces expiry ONCE', async () => {
     refreshSpy.mockImplementation(async () => {
       await delay(20);
-      throw new Error('refresh token revoked');
+      throw serverSays(401, 'REFRESH_INVALID');
     });
 
     const results = await Promise.allSettled([api.get('/a'), api.get('/b'), api.get('/c')]);
@@ -79,7 +103,33 @@ describe('apiHelpers — single-flight refresh', () => {
     expect(results.every(r => r.status === 'rejected')).toBe(true);
     expect(refreshSpy).toHaveBeenCalledTimes(1);
     expect(expired).toHaveBeenCalledTimes(1);
+    expect(expired).toHaveBeenCalledWith('REFRESH_INVALID');
     expect(await getAccessToken()).toBeNull();
+  });
+
+  it('REFRESH_REUSED ends the session with its own reason (the security toast)', async () => {
+    refreshSpy.mockRejectedValue(serverSays(401, 'REFRESH_REUSED'));
+    const err = await api.get('/a').catch(e => e);
+    expect(extractErrorCode(err)).toBe('REFRESH_REUSED');
+    expect(expired).toHaveBeenCalledWith('REFRESH_REUSED');
+    expect(await getRefreshToken()).toBeNull();
+  });
+
+  it.each([
+    ['offline', () => new AxiosError('Network Error', 'ERR_NETWORK', {} as never, {}, undefined)],
+    ['a 503', () => serverSays(503, 'SERVICE_UNAVAILABLE')],
+    ['a 429', () => serverSays(429, 'RATE_LIMITED')],
+    ['a 500', () => serverSays(500, 'INTERNAL_ERROR')],
+  ])('a refresh that fails transiently (%s) fails only this request: tokens kept, no sign-out', async (_n, make) => {
+    refreshSpy.mockRejectedValue(make());
+    await expect(api.get('/a')).rejects.toBeDefined();
+    expect(expired).not.toHaveBeenCalled();
+    expect(await getAccessToken()).toBe('access-1');
+    expect(await getRefreshToken()).toBe('refresh-1');
+
+    // The next request tries again and recovers.
+    refreshSpy.mockResolvedValue({ data: { data: { accessToken: 'access-2', refreshToken: 'refresh-2' } } });
+    await expect(api.get('/b')).resolves.toBeDefined();
   });
 
   it('does not refresh on auth routes — a 401 there is the real answer', async () => {
@@ -99,6 +149,15 @@ describe('apiHelpers — single-flight refresh', () => {
     await expect(api.get('/orders')).rejects.toBeDefined();
     expect(refreshSpy).not.toHaveBeenCalled();
     expect(expired).toHaveBeenCalledTimes(1);
+    expect(expired).toHaveBeenCalledWith('NO_REFRESH_TOKEN');
+  });
+
+  it('403 ACCOUNT_DISABLED on any request ends the session', async () => {
+    api.defaults.adapter = ((config: InternalAxiosRequestConfig) =>
+      Promise.reject(fail(config, 403, { error: { code: 'ACCOUNT_DISABLED', message: 'Disabled' } }))) as never;
+    await expect(api.get('/orders')).rejects.toBeDefined();
+    expect(expired).toHaveBeenCalledWith('ACCOUNT_DISABLED');
+    expect(await getAccessToken()).toBeNull();
   });
 });
 

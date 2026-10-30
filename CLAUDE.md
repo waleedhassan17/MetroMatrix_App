@@ -16,7 +16,7 @@ Copy the FYP's UX, never its code paths, Firebase setup or per-role duplicate ne
 
 ## Backend switch (one file)
 
-`src/config/env.ts` → `BACKEND_URL` (or `EXPO_PUBLIC_API_URL`). While it is empty, `api` uses the dummy API (`src/networks/network/mock/`: `mockServer.ts` routes, `mockDb.ts` seeded accounts, `mockConfig.ts` rules, `mockFood.ts` catalogue, `shop/` the whole Shopping API with its seed and server rules, `health/` the whole Healthcare API with its seed and server rules). The dummy API answers exactly what `docs/API_CONTRACT_ASSUMED.md`, `docs/API_SHOPPING_ASSUMED.md` and `docs/API_HEALTH_ASSUMED.md` specify, so nothing else changes when the real URL is set. When you add an endpoint, add its mock route in the same change. Shop and Health writes are all-or-nothing (a failed request leaves the dummy DB as it was).
+`src/config/env.ts` reads `EXPO_PUBLIC_API_URL` (`.env.local`, or the `eas.json` profile). With no URL the build is a configuration error: `ConfigErrorScreen` replaces the app and `api` rejects every request with `CONFIG_ERROR`. Never add a silent fallback. A development build with `EXPO_PUBLIC_USE_MOCK_API=1` uses the dummy API instead (it is `require`d behind `__DEV__ &&`, so release bundles drop it; jest sets the flag in `jest.setup.js`) (`src/networks/network/mock/`: `mockServer.ts` routes, `mockDb.ts` seeded accounts, `mockConfig.ts` rules, `mockFood.ts` catalogue, `shop/` the whole Shopping API with its seed and server rules, `health/` the whole Healthcare API with its seed and server rules). The dummy API answers exactly what `docs/API_CONTRACT_ASSUMED.md`, `docs/API_SHOPPING_ASSUMED.md` and `docs/API_HEALTH_ASSUMED.md` specify, so nothing else changes when the real URL is set. When you add an endpoint, add its mock route in the same change. Shop and Health writes are all-or-nothing (a failed request leaves the dummy DB as it was).
 
 ## Commands
 
@@ -189,7 +189,7 @@ The order matters. It lives in ONE pure function, `resolveGate()` in `src/naviga
 
 1. not authenticated → Onboarding (first launch only) + Role Selection, Provider Selection, SignIn/SignUp, ProviderSignIn/ProviderSignUp, ForgotPassword → ResetPasswordOTP → ResetPassword
 2. pending TOTP (staff sign in on the ordinary SignIn) → AdminTotp, or AdminTwoFactorEnrol on a first sign-in
-3. email not verified → EmailVerification (a link; VerifySuccess handles the deep link)
+3. email not verified → EmailVerification (a link: the screen polls /auth/me; VerifySuccess handles metromatrix://verify-email?token=… and ?verified=1, also registered while signed out)
 4. customer whose profile is incomplete → CompleteProfile (3 steps)
 5. provider with no business, or a `draft` one → PersonalInfo (3 steps, resumes at the unfinished one)
 6. `pending_approval` → ProviderApprovalPending
@@ -213,7 +213,7 @@ When the real document arrives, reconcile it in one pass:
 
 ## Testing on Expo / web
 
-- **Expo Go** (`npm start`): runs the whole app except native Google sign-in and push, against the dummy API. Seeded accounts and codes are in `docs/API_CONTRACT_ASSUMED.md` → "Mock mode" (doctors and patients in `docs/API_HEALTH_ASSUMED.md` → "Mock mode"). Video consultations open public meet.jit.si rooms in a WebView; on web they open in a new tab.
+- **Expo Go** (`npm start`): runs the whole app except native Google sign-in and push, against `EXPO_PUBLIC_API_URL`, or against the dummy API with `EXPO_PUBLIC_USE_MOCK_API=1`. Seeded accounts and codes are in `docs/API_CONTRACT_ASSUMED.md` → "Mock mode" (doctors and patients in `docs/API_HEALTH_ASSUMED.md` → "Mock mode"). Video consultations open public meet.jit.si rooms in a WebView; on web they open in a new tab.
 - **Web** (`npm run web`):
   - Google sign-in uses Google Identity Services and needs `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`.
   - Deep paths work, e.g. `/get-started`, `/sign-in`, `/provider/sign-in`, `/home/food`, `/shop`, `/shop/store/lawn-and-loom-7a1f3`, `/shop/product/p_l1`, `/orders/MM-24A7Q2`, `/store/orders/:id`, `/admin/shop`, `/health`, `/health/appointments`, `/health/doctor/:id`, `/health/appointment/:code`, `/shop/orders`, `/shop/bag`, `/profile/records`, `/doctor/appointments/:id`, `/admin/health`. The kitchen and staff Profile tab is `/account`.
