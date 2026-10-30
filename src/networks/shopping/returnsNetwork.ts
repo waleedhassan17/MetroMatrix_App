@@ -1,14 +1,25 @@
-// MetroMatrix — Customer returns network.
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Shopping Returns Network (API_SHOPPING_ASSUMED.md)
+// ═══════════════════════════════════════════════════════
 // TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
 
-import { api } from '../network/apiHelpers';
-import { paged } from '../../serializers/shopping/common';
-import { returnSerializer } from '../../serializers/shopping/orderSerializer';
+import { api, toApiError, pageParams } from '../network/apiHelpers';
 import type { ReturnInput } from '../../types/shopping';
-import { pageParams, request } from './http';
 
-export const requestReturn = (orderId: string, input: ReturnInput) =>
-  request(() => api.post(`/shop/orders/${encodeURIComponent(orderId)}/returns`, input), returnSerializer);
+export const requestReturnAPI = async (orderId: string, input: ReturnInput): Promise<unknown> => {
+  try {
+    const response = await api.post(`/shop/orders/${encodeURIComponent(orderId)}/returns`, input);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listReturns = (page: number, pageSize = 20) =>
-  request(() => api.get('/shop/returns', { params: pageParams(page, pageSize) }), raw => paged(raw, returnSerializer));
+export const getReturnsAPI = async (page: number, pageSize = 20): Promise<unknown> => {
+  try {
+    const response = await api.get('/shop/returns', { params: pageParams(page, pageSize) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

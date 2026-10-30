@@ -7,10 +7,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { countProducts } from '@networks/shopping/catalogNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getProductsAPI } from '@networks/shopping/catalogNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { DEFAULT_FILTERS, type ProductFilters } from '@models/shopping/filterModel';
 import type { ProductQuery } from '@/types';
+import { productSummaryPageSerializer } from '@serializers/shopping/catalogSerializer';
 
 export interface ProductListEntry {
   filters: ProductFilters;
@@ -74,7 +75,8 @@ export const productListSlice = createAppSlice({
     countDraftAsync: create.asyncThunk(
       async ({ query }: { key: string; query: ProductQuery }, { rejectWithValue }) => {
         try {
-          return await countProducts(query);
+          // How many match: one row is enough to read the total.
+          return required(productSummaryPageSerializer(await getProductsAPI(query, 1, 1))).total;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

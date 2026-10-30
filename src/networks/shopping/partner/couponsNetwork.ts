@@ -1,17 +1,43 @@
-// MetroMatrix — Store partner: coupons.
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Shopping Partner Coupons Network (API_SHOPPING_ASSUMED.md)
+// ═══════════════════════════════════════════════════════
+// Coupons.
 // TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
 
-import { api } from '../../network/apiHelpers';
-import { compact } from '../../../serializers/shopping/common';
-import { couponSerializer } from '../../../serializers/shopping/partnerSerializer';
-import { arr } from '../../../serializers/serializerUtils';
+import { api, toApiError } from '../../network/apiHelpers';
 import type { CouponInput } from '../../../types/shopping';
-import { ack, request } from '../http';
 
 const BASE = '/partner/shop/coupons';
 
-export const listCoupons = () => request(() => api.get(BASE), raw => compact(arr(raw).map(couponSerializer)));
-export const createCoupon = (input: CouponInput) => request(() => api.post(BASE, input), couponSerializer);
-export const updateCoupon = (id: string, input: CouponInput) =>
-  request(() => api.patch(`${BASE}/${encodeURIComponent(id)}`, input), couponSerializer);
-export const deleteCoupon = (id: string) => request(() => api.delete(`${BASE}/${encodeURIComponent(id)}`), ack);
+export const getCouponsAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get(BASE);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const createCouponAPI = async (input: CouponInput): Promise<unknown> => {
+  try {
+    const response = await api.post(BASE, input);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const updateCouponAPI = async (id: string, input: CouponInput): Promise<unknown> => {
+  try {
+    const response = await api.patch(`${BASE}/${encodeURIComponent(id)}`, input);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const deleteCouponAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.delete(`${BASE}/${encodeURIComponent(id)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

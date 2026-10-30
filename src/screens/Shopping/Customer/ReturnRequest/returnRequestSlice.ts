@@ -5,11 +5,12 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { requestReturn } from '@networks/shopping/returnsNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { requestReturnAPI } from '@networks/shopping/returnsNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { LocalFile, ReturnInput, ReturnReason } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { pendingPhoto, photoFailed, photoProgress, photoUploaded, upload, type FormPhoto } from '../shared/photoUploads';
+import { returnSerializer } from '@serializers/shopping/orderSerializer';
 
 export interface ReturnRequestSliceState {
   orderId: string | null;
@@ -83,7 +84,7 @@ export const returnRequestSlice = createAppSlice({
     submitReturnAsync: create.asyncThunk(
       async ({ orderId, input }: { orderId: string; input: ReturnInput }, { rejectWithValue }) => {
         try {
-          return await requestReturn(orderId, input);
+          return required(returnSerializer(await requestReturnAPI(orderId, input)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

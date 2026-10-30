@@ -2,10 +2,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { dismissReport, removeReportedProduct } from '@networks/admin/adminShopNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { dismissReportAPI, removeReportedProductAPI } from '@networks/admin/adminShopNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { ReportStatus } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { productReportSerializer } from '@serializers/shopping/adminShopSerializer';
 
 export interface ShopReportsSliceState {
   status: ReportStatus;
@@ -36,7 +37,7 @@ export const shopReportsSlice = createAppSlice({
     decideReportAsync: create.asyncThunk(
       async (d: { id: string; kind: 'dismiss' } | { id: string; kind: 'remove'; reason: string }, { rejectWithValue }) => {
         try {
-          return d.kind === 'dismiss' ? await dismissReport(d.id) : await removeReportedProduct(d.id, d.reason.trim());
+          return d.kind === 'dismiss' ? required(productReportSerializer(await dismissReportAPI(d.id))) : required(productReportSerializer(await removeReportedProductAPI(d.id, d.reason.trim())));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

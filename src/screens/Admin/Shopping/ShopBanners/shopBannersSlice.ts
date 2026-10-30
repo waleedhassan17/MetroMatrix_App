@@ -1,10 +1,11 @@
 // MetroMatrix — Admin banners slice: the Shopping home's carousel, in order.
 
 import { createAppSlice } from '@store/createAppSlice';
-import { listAdminBanners, updateBanner } from '@networks/admin/adminShopNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getAdminBannersAPI, updateBannerAPI } from '@networks/admin/adminShopNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { AdminBanner } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { adminBannerListSerializer } from '@serializers/shopping/adminShopSerializer';
 
 export interface ShopBannersSliceState {
   banners: AdminBanner[];
@@ -33,7 +34,7 @@ export const shopBannersSlice = createAppSlice({
     loadBannersAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await listAdminBanners();
+          return required(adminBannerListSerializer(await getAdminBannersAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -57,10 +58,10 @@ export const shopBannersSlice = createAppSlice({
       async (change: { kind: 'swap'; a: AdminBanner; b: AdminBanner } | { kind: 'toggle'; banner: AdminBanner }, { rejectWithValue }) => {
         try {
           if (change.kind === 'swap') {
-            await updateBanner(change.a.id, { ...input(change.a), position: change.b.position });
-            await updateBanner(change.b.id, { ...input(change.b), position: change.a.position });
-          } else await updateBanner(change.banner.id, { ...input(change.banner), isActive: !change.banner.isActive });
-          return await listAdminBanners();
+            await updateBannerAPI(change.a.id, { ...input(change.a), position: change.b.position });
+            await updateBannerAPI(change.b.id, { ...input(change.b), position: change.a.position });
+          } else await updateBannerAPI(change.banner.id, { ...input(change.banner), isActive: !change.banner.isActive });
+          return required(adminBannerListSerializer(await getAdminBannersAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

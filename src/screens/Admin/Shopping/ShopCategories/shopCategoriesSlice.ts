@@ -2,10 +2,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { createCategory, deleteCategory, listAdminCategories, reorderCategories, updateCategory } from '@networks/admin/adminShopNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { createCategoryAPI, deleteCategoryAPI, getAdminCategoriesAPI, reorderCategoriesAPI, updateCategoryAPI } from '@networks/admin/adminShopNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { ShopCategory } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { categoryListSerializer, categorySerializer } from '@serializers/shopping/catalogSerializer';
 
 export interface CategorySheet {
   /** '' a new one; an id to rename. */
@@ -44,7 +45,7 @@ export const shopCategoriesSlice = createAppSlice({
     loadCategoriesTreeAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await listAdminCategories();
+          return required(categoryListSerializer(await getAdminCategoriesAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -68,10 +69,10 @@ export const shopCategoriesSlice = createAppSlice({
         try {
           if (change.kind === 'save') {
             const { id, parentId, name, icon } = change.sheet;
-            await (id ? updateCategory(id, { name: name.trim(), icon }) : createCategory({ name: name.trim(), icon, parentId }));
-          } else if (change.kind === 'delete') await deleteCategory(change.id);
-          else await reorderCategories(change.parentId, change.ids);
-          return await listAdminCategories();
+            await (id ? updateCategoryAPI(id, { name: name.trim(), icon }).then(raw => required(categorySerializer(raw))) : createCategoryAPI({ name: name.trim(), icon, parentId }).then(raw => required(categorySerializer(raw))));
+          } else if (change.kind === 'delete') await deleteCategoryAPI(change.id);
+          else await reorderCategoriesAPI(change.parentId, change.ids);
+          return required(categoryListSerializer(await getAdminCategoriesAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

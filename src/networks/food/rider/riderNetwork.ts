@@ -5,7 +5,7 @@
 // GET /food/rider/cash.
 
 import { api } from '../../network/apiHelpers';
-import { riderCashSerializer, riderHomeSerializer, riderOrderSerializer, riderOrdersPageSerializer } from '../../../serializers/food/riderSerializer';
+import { riderCashSerializer, riderHomeSerializer, riderOrderSerializer, riderOrdersPageSerializer, riderDutySerializer, riderDeclinedSerializer, locationBatchSerializer } from '../../../serializers/food/riderSerializer';
 import { isObject } from '../../../serializers/serializerUtils';
 import type { RiderFix } from '../../../services/location/riderLocationCore';
 import { request } from '../../shopping/http';
@@ -16,7 +16,7 @@ export const getRiderHome = () => request(() => api.get('/food/rider/me'), rider
 
 /** Only on-duty riders can be given deliveries or share their location. */
 export const setDuty = (onDuty: boolean) =>
-  request(() => api.patch('/food/rider/duty', { onDuty }), raw => (isObject(raw) && typeof raw.onDuty === 'boolean' ? raw.onDuty : null));
+  request(() => api.patch('/food/rider/duty', { onDuty }), riderDutySerializer);
 
 export const listRiderOrders = (scope: 'active' | 'history', page = 1, pageSize = 20) =>
   request(() => api.get('/food/rider/orders', { params: { scope, page, pageSize } }), riderOrdersPageSerializer);
@@ -30,7 +30,7 @@ export const riderStep = (id: string, step: RiderStepAction) => request(() => ap
 
 /** Hand it back to the kitchen before pickup. */
 export const declineDelivery = (id: string, reason: string) =>
-  request(() => api.post(`/food/rider/orders/${enc(id)}/decline`, { reason }), raw => (isObject(raw) && raw.declined === true ? true : null));
+  request(() => api.post(`/food/rider/orders/${enc(id)}/decline`, { reason }), riderDeclinedSerializer);
 
 /** Delivered; cash on delivery records what was taken (≤ the total; the total when left out). */
 export const markRiderDelivered = (id: string, codCollected: number | null) =>
@@ -45,5 +45,5 @@ export const sendLocationBatch = (fixes: RiderFix[]) =>
       api.post('/food/rider/location', {
         points: fixes.map(f => ({ lat: f.lat, lng: f.lng, ...(f.heading !== null ? { heading: f.heading } : null), ...(f.speed !== null ? { speed: f.speed } : null), ...(f.accuracy !== null ? { accuracy: f.accuracy } : null), at: f.at })),
       }),
-    raw => (isObject(raw) ? Number(raw.accepted) || 0 : null),
+    locationBatchSerializer,
   );

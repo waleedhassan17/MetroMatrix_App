@@ -2,7 +2,7 @@
 // MetroMatrix-API docs/API_HEALTH.md §2 (Review), §4.1, §4.2.
 
 import { api } from '../network/apiHelpers';
-import { doctorReviewSerializer } from '../../serializers/health/discoverySerializer';
+import { doctorReviewSerializer, doctorReviewPageSerializer } from '../../serializers/health/discoverySerializer';
 import { appointmentDetailSerializer } from '../../serializers/health/appointmentSerializer';
 import { paged } from '../../serializers/shopping/common';
 import { reviewTagCodes } from '../../models/health/reviewFormModel';
@@ -29,7 +29,7 @@ export const listDoctorReviews = (
           ...pageParams(page, pageSize),
         }),
       }),
-    raw => paged(raw, doctorReviewSerializer),
+    doctorReviewPageSerializer,
   );
 
 /**

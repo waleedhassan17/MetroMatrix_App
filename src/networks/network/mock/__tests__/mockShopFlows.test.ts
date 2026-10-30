@@ -3,29 +3,34 @@
 // payment before shipping, one review per item, returns and moderation.
 
 import { getAddressesAPI } from '../../../addresses/addressesNetwork';
-import { listReports, removeReportedProduct } from '../../../admin/adminShopNetwork';
-import { acknowledgeCart, addToCart, getCart } from '../../../shopping/cartNetwork';
-import { getProduct } from '../../../shopping/catalogNetwork';
-import { placeOrder, previewCheckout } from '../../../shopping/checkoutNetwork';
-import { cancelOrder, getOrderGroup, submitPaymentProof } from '../../../shopping/ordersNetwork';
-import { requestReturn } from '../../../shopping/returnsNetwork';
-import { writeReview } from '../../../shopping/reviewsNetwork';
+import { getReportsAPI, removeReportedProductAPI } from '../../../admin/adminShopNetwork';
+import { acknowledgeCartAPI, addToCartAPI, getCartAPI } from '../../../shopping/cartNetwork';
+import { getProductAPI } from '../../../shopping/catalogNetwork';
+import { placeOrderAPI, previewCheckoutAPI } from '../../../shopping/checkoutNetwork';
+import { cancelOrderAPI, getOrderGroupAPI, submitPaymentProofAPI } from '../../../shopping/ordersNetwork';
+import { requestReturnAPI } from '../../../shopping/returnsNetwork';
+import { writeReviewAPI } from '../../../shopping/reviewsNetwork';
 import {
-  confirmOrder,
-  confirmPayment,
-  deliverOrder,
-  packOrder,
-  shipOrder,
+  confirmOrderAPI,
+  confirmPaymentAPI,
+  deliverOrderAPI,
+  packOrderAPI,
+  shipOrderAPI,
 } from '../../../shopping/partner/partnerOrdersNetwork';
-import { approveReturn, receiveReturn, recordRefund } from '../../../shopping/partner/partnerReturnsNetwork';
-import { createPartnerProduct, listPartnerProducts } from '../../../shopping/partner/productsNetwork';
-import { pauseStore } from '../../../shopping/partner/storeNetwork';
+import { approveReturnAPI, receiveReturnAPI, recordRefundAPI } from '../../../shopping/partner/partnerReturnsNetwork';
+import { createPartnerProductAPI, getPartnerProductsAPI } from '../../../shopping/partner/productsNetwork';
+import { pauseStoreAPI } from '../../../shopping/partner/storeNetwork';
 import { ApiError, required } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import type { CheckoutInput, ProductDetail } from '../../../../types/shopping';
 import { getDb, resetMockDb } from '../mockDb';
 import { signInAs, installDummyApi } from '../testing';
 import { addressListSerializer } from '../../../../serializers/addressSerializer';
+import { productDetailSerializer, reviewSerializer } from '../../../../serializers/shopping/catalogSerializer';
+import { cartSerializer, checkoutPreviewSerializer } from '../../../../serializers/shopping/cartSerializer';
+import { orderGroupSerializer, returnSerializer } from '../../../../serializers/shopping/orderSerializer';
+import { partnerOrderDetailSerializer, partnerProductRowPageSerializer, partnerProductSerializer } from '../../../../serializers/shopping/partnerSerializer';
+import { productReportPageSerializer } from '../../../../serializers/shopping/adminShopSerializer';
 
 installDummyApi();
 
@@ -63,10 +68,10 @@ const stockOf = async (variantId: string) => {
 
 /** Fill the bag with one Lawn & Loom kurta and one pair of Volt headphones. */
 const fillBag = async () => {
-  const kurta = inStock(await getProduct('p_l1'));
-  const phones = inStock(await getProduct('p_v1'));
-  await addToCart(kurta.id, 1);
-  await addToCart(phones.id, 1);
+  const kurta = inStock(required(productDetailSerializer(await getProductAPI('p_l1'))));
+  const phones = inStock(required(productDetailSerializer(await getProductAPI('p_v1'))));
+  await addToCartAPI(kurta.id, 1);
+  await addToCartAPI(phones.id, 1);
   const home = (required(addressListSerializer(await getAddressesAPI()))).find(a => a.city === 'Lahore')!;
   const input: CheckoutInput = {
     addressId: home.id,
@@ -94,36 +99,36 @@ describe('bag → preview → checkout', () => {
     const { kurta, phones, input } = await fillBag();
     const before = [await stockOf(kurta.id), await stockOf(phones.id)];
 
-    const bag = await getCart();
+    const bag = required(cartSerializer(await getCartAPI()));
     expect(bag.groups.map(g => g.store.id)).toEqual(['s_lawn', 's_volt']);
     expect(bag.blocking).toBe(false);
 
-    const preview = await previewCheckout(input);
+    const preview = required(checkoutPreviewSerializer(await previewCheckoutAPI(input)));
     expect(preview.canPlace).toBe(true);
     expect(preview.total).toBe(preview.stores.reduce((s, x) => s + x.total, 0));
 
-    const group = await placeOrder(input, 'key-1');
+    const group = required(orderGroupSerializer(await placeOrderAPI(input, 'key-1')));
     expect(group.orders).toHaveLength(2);
     expect(group.orders.map(o => o.paymentStatus).sort()).toEqual(['awaiting_transfer', 'cod_pending']);
     expect([await stockOf(kurta.id), await stockOf(phones.id)]).toEqual([before[0] - 1, before[1] - 1]);
-    expect((await getCart()).groups).toHaveLength(0);
+    expect((required(cartSerializer(await getCartAPI()))).groups).toHaveLength(0);
 
     // The same key again: the same order back, nothing placed twice.
     const db = await getDb();
     const orders = db.shop.orders.length;
-    const replay = await placeOrder(input, 'key-1');
+    const replay = required(orderGroupSerializer(await placeOrderAPI(input, 'key-1')));
     expect(replay.code).toBe(group.code);
     expect(db.shop.orders.length).toBe(orders);
   });
 
   it('refuses sold-out options and reports lines that sold out before checkout', async () => {
-    const bag = await getProduct('p_b7');
-    expect((await failure(addToCart(bag.variants[0].id, 1))).code).toBe('OUT_OF_STOCK');
+    const bag = required(productDetailSerializer(await getProductAPI('p_b7')));
+    expect((await failure(addToCartAPI(bag.variants[0].id, 1).then(raw => required(cartSerializer(raw))))).code).toBe('OUT_OF_STOCK');
 
     const { kurta, input } = await fillBag();
     const db = await getDb();
     db.shop.products.flatMap(p => p.variants).find(v => v.id === kurta.id)!.stock = 0;
-    const err = await failure(placeOrder(input, 'key-2'));
+    const err = await failure(placeOrderAPI(input, 'key-2').then(raw => required(orderGroupSerializer(raw))));
     expect(err.code).toBe('OUT_OF_STOCK');
     expect(err.details.lineIds).toHaveLength(1);
   });
@@ -132,53 +137,53 @@ describe('bag → preview → checkout', () => {
     const { input } = await fillBag();
     const db = await getDb();
     db.shop.products.find(p => p.id === 'p_l1')!.salePrice = 6990;
-    const bag = await getCart();
+    const bag = required(cartSerializer(await getCartAPI()));
     expect(bag.blocking).toBe(true);
     expect(bag.groups[0].lines[0].warnings[0]).toMatchObject({ code: 'PRICE_CHANGED', previousPrice: 7190, currentPrice: 6990 });
-    expect((await previewCheckout(input)).stores[0].error?.code).toBe('BAG_NEEDS_ATTENTION');
+    expect((required(checkoutPreviewSerializer(await previewCheckoutAPI(input)))).stores[0].error?.code).toBe('BAG_NEEDS_ATTENTION');
 
-    const cleared = await acknowledgeCart([]);
+    const cleared = required(cartSerializer(await acknowledgeCartAPI([])));
     expect(cleared.blocking).toBe(false);
   });
 
   it('blocks stores that do not deliver to the address city', async () => {
     const { input } = await fillBag();
     const quetta = (required(addressListSerializer(await getAddressesAPI()))).find(a => a.city === 'Quetta')!;
-    const preview = await previewCheckout({ ...input, addressId: quetta.id });
+    const preview = required(checkoutPreviewSerializer(await previewCheckoutAPI({ ...input, addressId: quetta.id })));
     const volt = preview.stores.find(s => s.store.id === 's_volt')!;
     expect(volt.error?.code).toBe('CITY_NOT_SERVED');
     // Lawn & Loom delivers nationwide.
     expect(preview.stores.find(s => s.store.id === 's_lawn')!.error).toBeNull();
     expect(preview.canPlace).toBe(false);
-    expect((await failure(placeOrder({ ...input, addressId: quetta.id }, 'key-3'))).code).toBe('CHECKOUT_BLOCKED');
+    expect((await failure(placeOrderAPI({ ...input, addressId: quetta.id }, 'key-3').then(raw => required(orderGroupSerializer(raw))))).code).toBe('CHECKOUT_BLOCKED');
   });
 
   it('enforces a coupon usage limit across customers', async () => {
-    const urban = (await getProduct('p_u1')).variants.filter(v => v.stock > 0);
-    await addToCart(urban[0].id, 1);
+    const urban = (required(productDetailSerializer(await getProductAPI('p_u1')))).variants.filter(v => v.stock > 0);
+    await addToCartAPI(urban[0].id, 1);
     const address = (required(addressListSerializer(await getAddressesAPI()))).find(a => a.city === 'Lahore')!;
     const input: CheckoutInput = {
       addressId: address.id,
       stores: [{ storeId: 's_urban', paymentMethod: 'cod', couponCode: 'urban300', note: null }],
     };
-    const preview = await previewCheckout(input);
+    const preview = required(checkoutPreviewSerializer(await previewCheckoutAPI(input)));
     expect(preview.stores[0]).toMatchObject({ discount: 300, couponCode: 'URBAN300', couponError: null });
-    await placeOrder(input, 'key-4');
+    await placeOrderAPI(input, 'key-4');
 
     await signIn('hamza@metromatrix.app');
-    await addToCart(urban[1].id, 1);
+    await addToCartAPI(urban[1].id, 1);
     const hamza = (required(addressListSerializer(await getAddressesAPI())))[0];
-    const theirs = await previewCheckout({ ...input, addressId: hamza.id });
+    const theirs = required(checkoutPreviewSerializer(await previewCheckoutAPI({ ...input, addressId: hamza.id })));
     expect(theirs.stores[0].couponError?.code).toBe('COUPON_USED_UP');
   });
 
   it('puts the stock back when the customer cancels', async () => {
     const { kurta, input } = await fillBag();
     const before = await stockOf(kurta.id);
-    const group = await placeOrder(input, 'key-5');
+    const group = required(orderGroupSerializer(await placeOrderAPI(input, 'key-5')));
     const lawn = group.orders.find(o => o.store.id === 's_lawn')!;
     expect(lawn.canCancel).toBe(true);
-    const after = await cancelOrder(lawn.id, 'Ordered the wrong size');
+    const after = required(orderGroupSerializer(await cancelOrderAPI(lawn.id, 'Ordered the wrong size')));
     expect(after.orders.find(o => o.id === lawn.id)!.status).toBe('cancelled');
     expect(await stockOf(kurta.id)).toBe(before);
   });
@@ -187,81 +192,81 @@ describe('bag → preview → checkout', () => {
 describe('store partner: payment before shipping, then delivery and review', () => {
   it('walks a transfer order from placed to reviewed', async () => {
     const { input } = await fillBag();
-    const group = await placeOrder(input, 'key-6');
+    const group = required(orderGroupSerializer(await placeOrderAPI(input, 'key-6')));
     const order = group.orders.find(o => o.store.id === 's_volt')!;
 
     await signIn('volt@metromatrix.app', 'partner');
-    await confirmOrder(order.id);
-    await packOrder(order.id);
-    const blocked = await failure(shipOrder(order.id, { courier: 'tcs', trackingRef: 'TCS123456' }));
+    await confirmOrderAPI(order.id);
+    await packOrderAPI(order.id);
+    const blocked = await failure(shipOrderAPI(order.id, { courier: 'tcs', trackingRef: 'TCS123456' }).then(raw => required(partnerOrderDetailSerializer(raw))));
     expect(blocked.code).toBe('PAYMENT_NOT_CONFIRMED');
 
     await signIn('customer@metromatrix.app');
-    const sent = await submitPaymentProof(order.id, { transactionId: 'rx-99887766', imageUrl: null });
+    const sent = required(orderGroupSerializer(await submitPaymentProofAPI(order.id, { transactionId: 'rx-99887766', imageUrl: null })));
     expect(sent.orders.find(o => o.id === order.id)!.paymentStatus).toBe('proof_submitted');
 
     await signIn('volt@metromatrix.app', 'partner');
-    await confirmPayment(order.id);
-    expect((await failure(shipOrder(order.id, { courier: 'tcs', trackingRef: '' }))).code).toBe('VALIDATION_FAILED');
-    const shipped = await shipOrder(order.id, { courier: 'tcs', trackingRef: 'TCS123456' });
+    await confirmPaymentAPI(order.id);
+    expect((await failure(shipOrderAPI(order.id, { courier: 'tcs', trackingRef: '' }).then(raw => required(partnerOrderDetailSerializer(raw))))).code).toBe('VALIDATION_FAILED');
+    const shipped = required(partnerOrderDetailSerializer(await shipOrderAPI(order.id, { courier: 'tcs', trackingRef: 'TCS123456' })));
     expect(shipped.status).toBe('shipped');
-    await deliverOrder(order.id);
+    await deliverOrderAPI(order.id);
 
     await signIn('customer@metromatrix.app');
-    const delivered = (await getOrderGroup(group.code)).orders.find(o => o.id === order.id)!;
+    const delivered = (required(orderGroupSerializer(await getOrderGroupAPI(group.code)))).orders.find(o => o.id === order.id)!;
     expect(delivered).toMatchObject({ status: 'delivered', canReview: true, canReturn: true });
     const item = delivered.items[0];
-    await writeReview(order.id, item.id, { rating: 5, title: null, body: 'Great sound and battery.', photos: [] });
-    expect((await failure(writeReview(order.id, item.id, { rating: 4, title: null, body: 'Again, again.', photos: [] }))).code).toBe(
+    await writeReviewAPI(order.id, item.id, { rating: 5, title: null, body: 'Great sound and battery.', photos: [] });
+    expect((await failure(writeReviewAPI(order.id, item.id, { rating: 4, title: null, body: 'Again, again.', photos: [] }).then(raw => required(reviewSerializer(raw))))).code).toBe(
       'ALREADY_REVIEWED',
     );
   });
 
   it('restocks returned items and closes the order once refunded', async () => {
     const { kurta, input } = await fillBag();
-    const group = await placeOrder(input, 'key-7');
+    const group = required(orderGroupSerializer(await placeOrderAPI(input, 'key-7')));
     const order = group.orders.find(o => o.store.id === 's_lawn')!;
     await signIn('store@metromatrix.app', 'partner');
-    await confirmOrder(order.id);
-    await packOrder(order.id);
-    await shipOrder(order.id, { courier: 'leopards', trackingRef: 'LP-77881' });
-    await deliverOrder(order.id);
+    await confirmOrderAPI(order.id);
+    await packOrderAPI(order.id);
+    await shipOrderAPI(order.id, { courier: 'leopards', trackingRef: 'LP-77881' });
+    await deliverOrderAPI(order.id);
     const afterSale = await stockOf(kurta.id);
 
     await signIn('customer@metromatrix.app');
-    const item = (await getOrderGroup(group.code)).orders.find(o => o.id === order.id)!.items[0];
-    const ret = await requestReturn(order.id, {
+    const item = (required(orderGroupSerializer(await getOrderGroupAPI(group.code)))).orders.find(o => o.id === order.id)!.items[0];
+    const ret = required(returnSerializer(await requestReturnAPI(order.id, {
       reason: 'size_issue',
       details: 'The medium runs small on me.',
       photos: [],
       items: [{ orderItemId: item.id, quantity: 1 }],
-    });
+    })));
     expect(ret.status).toBe('requested');
 
     await signIn('store@metromatrix.app', 'partner');
-    await approveReturn(ret.id, null);
-    await receiveReturn(ret.id, { [item.id]: true });
+    await approveReturnAPI(ret.id, null);
+    await receiveReturnAPI(ret.id, { [item.id]: true });
     expect(await stockOf(kurta.id)).toBe(afterSale + 1);
-    const refunded = await recordRefund(ret.id, { amount: item.unitPrice, reference: 'IBFT-5521' });
+    const refunded = required(returnSerializer(await recordRefundAPI(ret.id, { amount: item.unitPrice, reference: 'IBFT-5521' })));
     expect(refunded.status).toBe('refunded');
 
     await signIn('customer@metromatrix.app');
-    expect((await getOrderGroup(group.code)).orders.find(o => o.id === order.id)!.status).toBe('returned');
+    expect((required(orderGroupSerializer(await getOrderGroupAPI(group.code)))).orders.find(o => o.id === order.id)!.status).toBe('returned');
   });
 
   it('a paused store takes no new items', async () => {
     await signIn('store@metromatrix.app', 'partner');
-    await pauseStore('Back on Monday');
+    await pauseStoreAPI('Back on Monday');
     await signIn('customer@metromatrix.app');
-    const kurta = inStock(await getProduct('p_l1'));
-    expect((await failure(addToCart(kurta.id, 1))).code).toBe('STORE_PAUSED');
+    const kurta = inStock(required(productDetailSerializer(await getProductAPI('p_l1'))));
+    expect((await failure(addToCartAPI(kurta.id, 1).then(raw => required(cartSerializer(raw))))).code).toBe('STORE_PAUSED');
   });
 
   it('a failed publish leaves nothing behind', async () => {
     await signIn('store@metromatrix.app', 'partner');
-    const drafts = (await listPartnerProducts({ status: 'draft' }, 1)).total;
+    const drafts = (required(partnerProductRowPageSerializer(await getPartnerProductsAPI({ status: 'draft' }, 1)))).total;
     const err = await failure(
-      createPartnerProduct({
+      createPartnerProductAPI({
         name: 'Teal silk dupatta',
         description: '',
         categoryId: null,
@@ -273,23 +278,23 @@ describe('store partner: payment before shipping, then delivery and review', () 
         option1: null,
         option2: null,
         variants: [{ id: null, option1: null, option2: null, sku: '', stock: 0, priceDelta: 0 }],
-      }),
+      }).then(raw => required(partnerProductSerializer(raw))),
     );
     expect(err.code).toBe('PUBLISH_BLOCKED');
     expect(Object.keys(err.details.fields)).toEqual(expect.arrayContaining(['categoryId', 'images', 'variants']));
-    expect((await listPartnerProducts({ status: 'draft' }, 1)).total).toBe(drafts);
+    expect((required(partnerProductRowPageSerializer(await getPartnerProductsAPI({ status: 'draft' }, 1)))).total).toBe(drafts);
   });
 });
 
 describe('admin: moderation', () => {
   it('removing a reported product takes it off the shop', async () => {
     await signInAdmin();
-    const open = await listReports('open', 1);
+    const open = required(productReportPageSerializer(await getReportsAPI('open', 1)));
     expect(open.items[0].productId).toBe('p_v18');
-    await removeReportedProduct(open.items[0].id, 'Listing shows a counterfeit branded watch.');
-    expect((await listReports('open', 1)).total).toBe(0);
+    await removeReportedProductAPI(open.items[0].id, 'Listing shows a counterfeit branded watch.');
+    expect((required(productReportPageSerializer(await getReportsAPI('open', 1)))).total).toBe(0);
 
     await signIn('customer@metromatrix.app');
-    expect((await failure(getProduct('p_v18'))).code).toBe('NOT_FOUND');
+    expect((await failure(getProductAPI('p_v18').then(raw => required(productDetailSerializer(raw))))).code).toBe('NOT_FOUND');
   });
 });

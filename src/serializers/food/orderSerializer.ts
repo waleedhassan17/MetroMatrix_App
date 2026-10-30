@@ -32,7 +32,7 @@ import type {
   PromotionState,
 } from '../../types/food';
 import type { Paged } from '../../types/payments';
-import { arr, bool, isObject, num, oneOf, str, strOrNull } from '../serializerUtils';
+import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 
 export const FOOD_ORDER_STATUSES: readonly FoodOrderStatus[] = ['placed', 'accepted', 'preparing', 'ready', 'on_the_way', 'delivered', 'picked_up', 'rejected', 'auto_rejected', 'cancelled'];
 export const FOOD_PAYMENT_STATUSES: readonly FoodPaymentStatus[] = ['cod_pending', 'unpaid', 'awaiting_transfer', 'proof_submitted', 'paid', 'void', 'refund_due', 'refunded'];
@@ -419,3 +419,10 @@ export const foodPromotionSerializer = (raw: unknown): FoodPromotion | null => {
 
 export const foodPromotionsSerializer = (raw: unknown): FoodPromotion[] =>
   compact(arr(isObject(raw) ? raw.items : raw).map(foodPromotionSerializer));
+
+/** A reorder: the bag again, and how many dishes were dropped or repriced. */
+export const reorderSerializer = fromResponse(raw => {
+      const r = isObject(raw) ? raw : {};
+      const cart = foodCartSerializer(r.cart);
+      return cart ? { cart, dropped: Array.isArray(r.dropped) ? r.dropped.length : 0, priceChanges: Array.isArray(r.priceChanges) ? r.priceChanges.length : 0 } : null;
+    });

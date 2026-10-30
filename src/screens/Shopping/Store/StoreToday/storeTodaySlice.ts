@@ -2,11 +2,12 @@
 // sales, the newest orders, and opening the store again after a pause.
 
 import { createAppSlice } from '@store/createAppSlice';
-import { getPartnerSummary, resumeStore } from '@networks/shopping/partner/storeNetwork';
-import { listPartnerOrders } from '@networks/shopping/partner/partnerOrdersNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getPartnerSummaryAPI, resumeStoreAPI } from '@networks/shopping/partner/storeNetwork';
+import { getPartnerOrdersAPI } from '@networks/shopping/partner/partnerOrdersNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { PartnerOrderRow, PartnerSummary } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { partnerSummarySerializer, partnerOrderPageSerializer } from '@serializers/shopping/partnerSerializer';
 
 export interface StoreTodaySliceState {
   summary: PartnerSummary | null;
@@ -26,7 +27,7 @@ export const storeTodaySlice = createAppSlice({
     loadTodayAsync: create.asyncThunk(
       async (_: { refresh: boolean }, { rejectWithValue }) => {
         try {
-          const [summary, recent] = await Promise.all([getPartnerSummary(), listPartnerOrders({ segment: 'new' }, 1, 5)]);
+          const [summary, recent] = await Promise.all([getPartnerSummaryAPI().then(raw => required(partnerSummarySerializer(raw))), getPartnerOrdersAPI({ segment: 'new' }, 1, 5).then(raw => required(partnerOrderPageSerializer(raw)))]);
           return { summary, recent: recent.items };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -54,8 +55,8 @@ export const storeTodaySlice = createAppSlice({
     resumeStoreAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          await resumeStore();
-          return await getPartnerSummary();
+          await resumeStoreAPI();
+          return required(partnerSummarySerializer(await getPartnerSummaryAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

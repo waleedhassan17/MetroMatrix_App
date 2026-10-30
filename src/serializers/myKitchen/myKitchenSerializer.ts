@@ -20,7 +20,7 @@ import type {
   PantryStats,
   RecipeIdea,
 } from '../../types/myKitchen';
-import { arr, bool, isObject, num, oneOf, str, strOrNull } from '../serializerUtils';
+import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { count, dateOrNull, list, numOrNull } from '../kitchen/kitchenCommon';
 import { BASE_UNITS } from '../../utils/units';
 
@@ -200,3 +200,16 @@ export const healthyPicksSerializer = (raw: unknown): HealthyPick[] =>
       vendor: { id: str(v.id), slug: str(v.slug), name: str(v.name) },
     };
   });
+
+/** PUT /my-kitchen/nutrition/settings answers `{ settings }`. */
+export const nutritionSettingsResponseSerializer = fromResponse(raw => nutritionSettingsSerializer((raw as { settings?: unknown })?.settings));
+
+/** A pantry item removed: whether it was wasted. */
+export const pantryRemovedSerializer = fromResponse(raw =>
+  isObject(raw) ? { removed: bool(raw.removed), wasted: bool(raw.wasted) } : null,
+);
+
+/** A pantry item used up: whether it was saved from waste. */
+export const pantryUsedUpSerializer = fromResponse(raw =>
+  isObject(raw) ? { usedUp: bool(raw.usedUp), savedFromWaste: bool(raw.savedFromWaste) } : null,
+);

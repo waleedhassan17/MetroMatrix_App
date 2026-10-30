@@ -12,7 +12,7 @@ import type {
   SurplusReservation,
   SurplusSuggestion,
 } from '../../types/kitchen';
-import { arr, bool, enumList, isObject, num, oneOf, str, strOrNull } from '../serializerUtils';
+import { arr, bool, enumList, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { PAY_STATUSES, count, list, numOrNull, transferAccountSerializer } from './kitchenCommon';
 
 const BOX_STATUSES: readonly BoxStatus[] = ['live', 'sold_out', 'ended', 'cancelled'];
@@ -137,3 +137,6 @@ export const surplusDetailSerializer = (raw: unknown): SurplusDetail | null => {
 };
 
 export { num };
+
+/** The assistant's Bachat Box suggestion (a draft). */
+export const surplusSuggestionResponseSerializer = fromResponse(raw => ({ suggestion: surplusSuggestionSerializer(raw) }));

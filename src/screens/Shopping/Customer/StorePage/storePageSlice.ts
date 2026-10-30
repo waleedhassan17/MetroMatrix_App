@@ -4,10 +4,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getStore } from '@networks/shopping/catalogNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getStoreAPI } from '@networks/shopping/catalogNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { ProductSort, StoreDetail } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { storeDetailSerializer } from '@serializers/shopping/catalogSerializer';
 
 export interface StorePageEntry {
   store: StoreDetail | null;
@@ -40,7 +41,7 @@ export const storePageSlice = createAppSlice({
     loadStoreAsync: create.asyncThunk(
       async (slug: string, { rejectWithValue }) => {
         try {
-          return await getStore(slug);
+          return required(storeDetailSerializer(await getStoreAPI(slug)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

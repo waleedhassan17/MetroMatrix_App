@@ -1,24 +1,43 @@
-// MetroMatrix — Store partner: returns.
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Shopping Partner Returns Network (API_SHOPPING_ASSUMED.md)
+// ═══════════════════════════════════════════════════════
+// Returns.
 // TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
 
-import { api } from '../../network/apiHelpers';
-import { paged } from '../../../serializers/shopping/common';
-import { returnSerializer } from '../../../serializers/shopping/orderSerializer';
+import { api, toApiError, clean, pageParams } from '../../network/apiHelpers';
 import type { ReturnStatus } from '../../../types/shopping';
-import { clean, pageParams, request } from '../http';
 
 const BASE = '/partner/shop/returns';
 
-export const listPartnerReturns = (status: ReturnStatus | 'open' | null, page: number, pageSize = 20) =>
-  request(() => api.get(BASE, { params: clean({ status, ...pageParams(page, pageSize) }) }), raw => paged(raw, returnSerializer));
+export const getPartnerReturnsAPI = async (status: ReturnStatus | 'open' | null, page: number, pageSize = 20): Promise<unknown> => {
+  try {
+    const response = await api.get(BASE, { params: clean({ status, ...pageParams(page, pageSize) }) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getPartnerReturn = (id: string) => request(() => api.get(`${BASE}/${encodeURIComponent(id)}`), returnSerializer);
+export const getPartnerReturnAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`${BASE}/${encodeURIComponent(id)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-const act = (id: string, action: string, body?: object) =>
-  request(() => api.post(`${BASE}/${encodeURIComponent(id)}/${action}`, body ?? {}), returnSerializer);
+const act = async (id: string, action: string, body?: object): Promise<unknown> => {
+  try {
+    const response = await api.post(`${BASE}/${encodeURIComponent(id)}/${action}`, body ?? {});
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const approveReturn = (id: string, note: string | null) => act(id, 'approve', { note });
-export const rejectReturn = (id: string, note: string) => act(id, 'reject', { note });
+export const approveReturnAPI = (id: string, note: string | null): Promise<unknown> => act(id, 'approve', { note });
+export const rejectReturnAPI = (id: string, note: string): Promise<unknown> => act(id, 'reject', { note });
 /** `restock[orderItemId]` puts that item's quantity back into stock. */
-export const receiveReturn = (id: string, restock: Record<string, boolean>) => act(id, 'receive', { restock });
-export const recordRefund = (id: string, refund: { amount: number; reference: string }) => act(id, 'refund', refund);
+export const receiveReturnAPI = (id: string, restock: Record<string, boolean>): Promise<unknown> => act(id, 'receive', { restock });
+export const recordRefundAPI = (id: string, refund: { amount: number; reference: string }): Promise<unknown> => act(id, 'refund', refund);

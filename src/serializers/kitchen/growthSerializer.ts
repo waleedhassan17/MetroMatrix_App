@@ -26,7 +26,7 @@ import type {
   TiffinTomorrow,
   TiffinWindow,
 } from '../../types/kitchen';
-import { arr, bool, isObject, oneOf, str, strOrNull } from '../serializerUtils';
+import { arr, bool, isObject, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { PAY_STATUSES, count, dateOrNull, list, numOrNull, transferPaymentSerializer } from './kitchenCommon';
 
 export const MEALS: readonly Meal[] = ['breakfast', 'lunch', 'dinner'];
@@ -317,3 +317,6 @@ export const cateringSettingsSerializer = (raw: unknown): CateringSettings => {
   const r = isObject(raw) ? raw : {};
   return { open: bool(r.open), minGuests: count(r.minGuests), leadDays: count(r.leadDays) };
 };
+
+/** A tiffin plan removed. */
+export const tiffinRemovedSerializer = fromResponse(raw => ({ removed: !!(raw as { removed?: boolean })?.removed }));

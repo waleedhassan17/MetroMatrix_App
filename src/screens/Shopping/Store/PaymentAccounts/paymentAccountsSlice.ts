@@ -4,7 +4,7 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { createPaymentAccount, deletePaymentAccount, listPaymentAccounts, updatePaymentAccount } from '@networks/shopping/partner/storeNetwork';
+import { createPaymentAccountAPI, deletePaymentAccountAPI, getPaymentAccountsAPI, updatePaymentAccountAPI } from '@networks/shopping/partner/storeNetwork';
 import {
   createDoctorPaymentAccount,
   deleteDoctorPaymentAccount,
@@ -17,10 +17,11 @@ import {
   listVendorPaymentAccounts,
   updateVendorPaymentAccount,
 } from '@networks/food/vendor/settingsNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { normaliseAccountNumber } from '@models/shopping/storeModel';
 import type { PaymentAccount, PaymentAccountInput } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { paymentAccountListSerializer, paymentAccountSerializer } from '@serializers/shopping/partnerSerializer';
 
 export interface PaymentAccountsSliceState {
   accounts: PaymentAccount[];
@@ -35,7 +36,17 @@ export interface PaymentAccountsSliceState {
 
 type PartnerState = { auth: { business: { serviceType: string } | null } };
 
-const STORE = { list: listPaymentAccounts, create: createPaymentAccount, update: updatePaymentAccount, remove: deletePaymentAccount };
+// Each service's thin calls, serialized here (FinMatrix: Network → Serializer).
+const STORE = {
+  list: async () => required(paymentAccountListSerializer(await getPaymentAccountsAPI())),
+  create: async (input: PaymentAccountInput) => required(paymentAccountSerializer(await createPaymentAccountAPI(input))),
+  update: async (id: string, input: PaymentAccountInput) =>
+    required(paymentAccountSerializer(await updatePaymentAccountAPI(id, input))),
+  remove: async (id: string) => {
+    await deletePaymentAccountAPI(id);
+    return true as const;
+  },
+};
 const DOCTOR = { list: listDoctorPaymentAccounts, create: createDoctorPaymentAccount, update: updateDoctorPaymentAccount, remove: deleteDoctorPaymentAccount };
 const FOOD = { list: listVendorPaymentAccounts, create: createVendorPaymentAccount, update: updateVendorPaymentAccount, remove: deleteVendorPaymentAccount };
 const apiFor = (getState: () => unknown) => {

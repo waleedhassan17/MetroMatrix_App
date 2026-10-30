@@ -3,7 +3,7 @@
 // /cancel, /payment-proof, /reorder).
 
 import { api } from '../network/apiHelpers';
-import { foodCartSerializer, foodOrderSerializer, foodOrdersPageSerializer, foodTrackingSerializer } from '../../serializers/food/orderSerializer';
+import { foodCartSerializer, foodOrderSerializer, foodOrdersPageSerializer, foodTrackingSerializer, reorderSerializer } from '../../serializers/food/orderSerializer';
 import { isObject } from '../../serializers/serializerUtils';
 import type { FoodCheckoutInput } from '../../types/food';
 import { request } from '../shopping/http';
@@ -42,9 +42,5 @@ export const submitFoodPaymentProof = (code: string, input: { paymentRef: string
 export const reorderFood = (code: string) =>
   request(
     () => api.post(`/food/orders/${enc(code)}/reorder`),
-    raw => {
-      const r = isObject(raw) ? raw : {};
-      const cart = foodCartSerializer(r.cart);
-      return cart ? { cart, dropped: Array.isArray(r.dropped) ? r.dropped.length : 0, priceChanges: Array.isArray(r.priceChanges) ? r.priceChanges.length : 0 } : null;
-    },
+    reorderSerializer,
   );

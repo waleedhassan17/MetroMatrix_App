@@ -13,11 +13,13 @@ import { clearTokens } from '../../../../utils/storageUtils';
 import { resetMockDb } from '../mockDb';
 import { addToFoodCart, clearFoodCart } from '../../../food/cartNetwork';
 import { placeFoodOrder } from '../../../food/ordersNetwork';
-import { addToCart, getCart, removeCartLine } from '../../../shopping/cartNetwork';
-import { placeOrder } from '../../../shopping/checkoutNetwork';
+import { addToCartAPI, getCartAPI, removeCartLineAPI } from '../../../shopping/cartNetwork';
+import { placeOrderAPI } from '../../../shopping/checkoutNetwork';
 import { getAddressesAPI } from '../../../addresses/addressesNetwork';
 import { signInAs, installDummyApi } from '../testing';
 import { addressListSerializer } from '../../../../serializers/addressSerializer';
+import { cartSerializer } from '../../../../serializers/shopping/cartSerializer';
+import { orderGroupSerializer } from '../../../../serializers/shopping/orderSerializer';
 
 installDummyApi();
 
@@ -36,7 +38,7 @@ const call = async (name: string, method: 'get' | 'post' | 'put' | 'patch' | 'de
   }
 };
 const clearShopCart = async () => {
-  for (const l of (await getCart()).groups.flatMap(g => g.lines)) await removeCartLine(l.id);
+  for (const l of (required(cartSerializer(await getCartAPI()))).groups.flatMap(g => g.lines)) await removeCartLineAPI(l.id);
 };
 const as = async (email: string, portal: 'customer' | 'partner' = 'partner') => {
   await clearTokens();
@@ -253,9 +255,9 @@ const run = async () => {
   await call('pantryReminders', 'get', '/my-kitchen/pantry/reminders');
   // A grocery order to add from.
   await clearShopCart();
-  await addToCart('p_g5_v0', 1);
+  await addToCartAPI('p_g5_v0', 1);
   const home = (required(addressListSerializer(await getAddressesAPI()))).find(x => x.city === 'Lahore')!;
-  const grocery = await placeOrder({ addressId: home.id, stores: [{ storeId: 's_basket', paymentMethod: 'cod', couponCode: null, note: null }] }, 'kc-groceries');
+  const grocery = required(orderGroupSerializer(await placeOrderAPI({ addressId: home.id, stores: [{ storeId: 's_basket', paymentMethod: 'cod', couponCode: null, note: null }] }, 'kc-groceries')));
   void grocery;
   await call('pantryOrders', 'get', '/my-kitchen/pantry/shopping-orders');
   const ord = (out.pantryOrders.data as { items: { orderId: string; lines: { lineId: string }[] }[] }).items[0];

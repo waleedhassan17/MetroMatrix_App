@@ -5,14 +5,7 @@
 // accountNumber; the app's PaymentAccount says title and number).
 
 import { api } from '../../network/apiHelpers';
-import {
-  closuresSerializer,
-  feeBandsSerializer,
-  hoursSerializer,
-  vendorPaymentAccountSerializer,
-  vendorPaymentAccountsSerializer,
-  vendorSettingsSerializer,
-} from '../../../serializers/food/vendorSerializer';
+import { closuresSerializer, feeBandsSerializer, hoursSerializer, vendorPaymentAccountSerializer, vendorPaymentAccountsSerializer, vendorSettingsSerializer, closureResponseSerializer } from '../../../serializers/food/vendorSerializer';
 import type { FeeBand, HoursRange, VendorSettingsInput } from '../../../types/food';
 import type { PaymentAccountInput } from '../../../types/payments';
 import { ack, request } from '../../shopping/http';
@@ -43,7 +36,7 @@ export const getClosures = () => request(() => api.get('/food/vendor/closures'),
 export const addClosure = (input: { startsAt: string; endsAt: string; reason: string | null }) =>
   request(
     () => api.post('/food/vendor/closures', input.reason ? input : { startsAt: input.startsAt, endsAt: input.endsAt }),
-    raw => closuresSerializer([raw])[0] ?? null,
+    closureResponseSerializer,
   );
 
 export const removeClosure = (id: string) => request(() => api.delete(`/food/vendor/closures/${enc(id)}`), ack);

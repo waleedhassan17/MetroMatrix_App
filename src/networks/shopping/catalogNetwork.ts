@@ -1,63 +1,89 @@
-// MetroMatrix — Catalogue network (home, categories, stores, products, reviews).
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Shopping Catalog Network (API_SHOPPING_ASSUMED.md)
+// ═══════════════════════════════════════════════════════
 // TODO(API_SHOPPING): paths per docs/API_SHOPPING_ASSUMED.md.
 
-import { api } from '../network/apiHelpers';
-import {
-  categorySerializer,
-  productDetailSerializer,
-  productSummarySerializer,
-  reviewSerializer,
-  reviewSummarySerializer,
-  shopHomeSerializer,
-  storeDetailSerializer,
-  storeSummarySerializer,
-  suggestionSerializer,
-} from '../../serializers/shopping/catalogSerializer';
-import { compact, paged } from '../../serializers/shopping/common';
-import { arr, isObject } from '../../serializers/serializerUtils';
+import { api, toApiError, clean, pageParams } from '../network/apiHelpers';
 import type { ProductQuery } from '../../types/shopping';
-import { ack, clean, pageParams, request } from './http';
 
-export const getShopHome = () => request(() => api.get('/shop/home'), shopHomeSerializer);
+export const getShopHomeAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get('/shop/home');
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getCategories = () =>
-  request(() => api.get('/shop/categories'), raw => compact(arr(raw).map(categorySerializer)));
+export const getCategoriesAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get('/shop/categories');
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listStores = (query: { q?: string; city?: string | null }, page: number, pageSize = 20) =>
-  request(() => api.get('/shop/stores', { params: clean({ ...query, ...pageParams(page, pageSize) }) }), raw =>
-    paged(raw, storeSummarySerializer),
-  );
+export const getStoresAPI = async (query: { q?: string; city?: string | null }, page: number, pageSize = 20): Promise<unknown> => {
+  try {
+    const response = await api.get('/shop/stores', { params: clean({ ...query, ...pageParams(page, pageSize) }) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getStore = (slug: string) =>
-  request(() => api.get(`/shop/stores/${encodeURIComponent(slug)}`), storeDetailSerializer);
+export const getStoreAPI = async (slug: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`/shop/stores/${encodeURIComponent(slug)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listProducts = (query: ProductQuery, page: number, pageSize = 20) =>
-  request(() => api.get('/shop/products', { params: clean({ ...query, ...pageParams(page, pageSize) }) }), raw =>
-    paged(raw, productSummarySerializer),
-  );
+export const getProductsAPI = async (query: ProductQuery, page: number, pageSize = 20): Promise<unknown> => {
+  try {
+    const response = await api.get('/shop/products', { params: clean({ ...query, ...pageParams(page, pageSize) }) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** "Show N results": the same query with pageSize=1, read for `total`. */
-export const countProducts = (query: ProductQuery) => listProducts(query, 1, 1).then(p => p.total);
+export const suggestProductsAPI = async (q: string): Promise<unknown> => {
+  try {
+    const response = await api.get('/shop/products/suggest', { params: { q } });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const suggestProducts = (q: string) =>
-  request(() => api.get('/shop/products/suggest', { params: { q } }), raw => compact(arr(raw).map(suggestionSerializer)));
+export const getProductAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`/shop/products/${encodeURIComponent(id)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getProduct = (id: string) =>
-  request(() => api.get(`/shop/products/${encodeURIComponent(id)}`), productDetailSerializer);
+export const getReviewsAPI = async (productId: string, filter: { rating?: number | null; withPhotos?: boolean }, page: number, pageSize = 20): Promise<unknown> => {
+  try {
+    const response = await api.get(`/shop/products/${encodeURIComponent(productId)}/reviews`, { params: clean({ ...filter, ...pageParams(page, pageSize) }) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listReviews = (
-  productId: string,
-  filter: { rating?: number | null; withPhotos?: boolean },
-  page: number,
-  pageSize = 20,
-) =>
-  request(
-    () => api.get(`/shop/products/${encodeURIComponent(productId)}/reviews`, { params: clean({ ...filter, ...pageParams(page, pageSize) }) }),
-    raw => ({
-      ...paged(raw, reviewSerializer),
-      summary: reviewSummarySerializer(isObject(raw) ? raw.summary : null),
-    }),
-  );
-
-export const reportProduct = (id: string, body: { reason: string; details: string | null }) =>
-  request(() => api.post(`/shop/products/${encodeURIComponent(id)}/report`, body), ack);
+export const reportProductAPI = async (id: string, body: { reason: string; details: string | null }): Promise<unknown> => {
+  try {
+    const response = await api.post(`/shop/products/${encodeURIComponent(id)}/report`, body);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

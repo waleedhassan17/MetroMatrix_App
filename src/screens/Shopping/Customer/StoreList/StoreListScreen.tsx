@@ -11,12 +11,13 @@ import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { useDebouncedValue, usePagedList } from '@hooks/usePagedList';
 import { useShopNav } from '@hooks/useShop';
-import { listStores } from '@networks/shopping/catalogNetwork';
+import { getStoresAPI } from '@networks/shopping/catalogNetwork';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { Divider, EmptyState, InlineNotice, SkeletonLines, StoreCard, TextField } from '@custom/index';
 import { ShopTopBar } from '@components/shopping/ShopParts';
 import type { HomeStackParamList } from '@/types';
 import { selectStoreQuery, setStoreQuery } from './storeListSlice';
+import { storeSummaryPageSerializer } from '@serializers/shopping/catalogSerializer';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'StoreList'>;
 
@@ -42,7 +43,7 @@ const StoreListContent: React.FC<Props> = () => {
   const query = useAppSelector(selectStoreQuery);
   const q = useDebouncedValue(query.trim());
   const { openStore } = useShopNav();
-  const list = usePagedList((page, size) => listStores({ q: q || undefined }, page, size), `stores|${q}`);
+  const list = usePagedList((page, size) => getStoresAPI({ q: q || undefined }, page, size), storeSummaryPageSerializer, `stores|${q}`);
 
   return (
     <View style={styles.root}>

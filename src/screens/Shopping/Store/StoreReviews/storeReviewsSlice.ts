@@ -2,9 +2,10 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { replyToReview } from '@networks/shopping/partner/partnerReviewsNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { replyToReviewAPI } from '@networks/shopping/partner/partnerReviewsNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { partnerReviewSerializer } from '@serializers/shopping/partnerSerializer';
 
 export interface StoreReviewsSliceState {
   rating: number | null;
@@ -38,7 +39,7 @@ export const storeReviewsSlice = createAppSlice({
     postReplyAsync: create.asyncThunk(
       async ({ id, body }: { id: string; body: string }, { rejectWithValue }) => {
         try {
-          return await replyToReview(id, body.trim());
+          return required(partnerReviewSerializer(await replyToReviewAPI(id, body.trim())));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

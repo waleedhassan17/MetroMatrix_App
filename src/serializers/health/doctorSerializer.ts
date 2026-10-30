@@ -32,8 +32,8 @@ import type {
   TodaySummary,
   WeekDayHours,
 } from '../../types/health';
-import { arr, bool, isObject, num, oneOf, str, strOrNull } from '../serializerUtils';
-import { compact, count, iso, money } from '../shopping/common';
+import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
+import { compact, count, iso, money, paged } from '../shopping/common';
 import { dateInZone } from '../../utils/healthTime';
 import { completenessFrom } from '../../models/health/doctorProfileModel';
 import { appDayFromWeekday } from '../../models/health/availabilityModel';
@@ -505,3 +505,6 @@ export const insightsSerializer = (raw: unknown): DoctorInsights | null => {
     appointments: count(totals.appointments),
   };
 };
+
+/** A page of patientRows, as the API answers it. */
+export const patientRowPageSerializer = fromResponse(raw => paged(raw, patientRowSerializer));

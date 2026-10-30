@@ -3,14 +3,8 @@
 // deleted: "delete" deactivates. A condition's specialty is its own route.
 
 import { api, unwrap } from '../network/apiHelpers';
-import {
-  adminAppointmentSerializer,
-  adminConditionSerializer,
-  adminDoctorSerializer,
-  adminSpecialtySerializer,
-  healthOverviewSerializer,
-} from '../../serializers/health/adminHealthSerializer';
-import { doctorReviewSerializer } from '../../serializers/health/discoverySerializer';
+import { adminAppointmentSerializer, adminConditionSerializer, adminDoctorSerializer, adminSpecialtySerializer, healthOverviewSerializer, adminSpecialtyListSerializer, adminConditionListSerializer, adminDoctorListSerializer, adminDoctorLookupSerializer } from '../../serializers/health/adminHealthSerializer';
+import { doctorReviewSerializer, doctorReviewPageSerializer } from '../../serializers/health/discoverySerializer';
 import { iconKeyForGlyph } from '../../serializers/health/healthCommon';
 import { compact, paged } from '../../serializers/shopping/common';
 import { arr, isObject, str } from '../../serializers/serializerUtils';
@@ -34,7 +28,7 @@ const fresh = <T>(p: Promise<T>) => p.finally(resetReferenceIndex);
 
 export const getHealthOverview = () => request(() => api.get(`${A}/overview`), healthOverviewSerializer);
 
-export const listAdminSpecialties = () => request(() => api.get(`${A}/specialties`), raw => compact(arr(raw).map(adminSpecialtySerializer)));
+export const listAdminSpecialties = () => request(() => api.get(`${A}/specialties`), adminSpecialtyListSerializer);
 
 /** The API also wants an Urdu name and keywords; the app is in English, so its name stands in and keywords start empty. */
 export const createSpecialty = (input: AdminSpecialtyInput) =>
@@ -64,8 +58,7 @@ export const updateSpecialty = (id: string, input: Partial<AdminSpecialtyInput>)
 export const deleteSpecialty = (id: string) => fresh(request(() => api.patch(`${A}/specialties/${enc(id)}`, { isActive: false }), ack));
 
 export const listAdminConditions = (q: string) =>
-  request(() => api.get(`${A}/conditions`, { params: clean({ q, pageSize: 100 }) }), raw =>
-    compact(arr(isObject(raw) ? raw.items : raw).map(adminConditionSerializer)),
+  request(() => api.get(`${A}/conditions`, { params: clean({ q, pageSize: 100 }) }), adminConditionListSerializer,
   );
 
 /** First choice (rank 1) — the app keeps one specialty per condition. */
@@ -96,8 +89,7 @@ export const deleteCondition = (id: string) => fresh(request(() => api.patch(`${
 
 /** `pending`: PMDC numbers still to check. */
 export const listDoctorsForVerification = (status: 'pending' | 'all') =>
-  request(() => api.get(`${A}/doctors`, { params: clean({ pmdc: status === 'pending' ? 'unverified' : null, pageSize: 100 }) }), raw =>
-    compact(arr(isObject(raw) ? raw.items : raw).map(adminDoctorSerializer)),
+  request(() => api.get(`${A}/doctors`, { params: clean({ pmdc: status === 'pending' ? 'unverified' : null, pageSize: 100 }) }), adminDoctorListSerializer,
   );
 
 /** The app keys doctors by business; the route takes the doctor's id, looked up first. */
@@ -107,11 +99,10 @@ export const verifyPmdc = (businessId: string, note: string) =>
     const doctor = arr(isObject(page) ? page.items : []).find(isObject);
     await api.post(`${A}/doctors/${enc(str(doctor?.id))}/pmdc-verify`, clean({ note }));
     return api.get(`${A}/doctors`, { params: { businessId } });
-  }, raw => adminDoctorSerializer(arr(isObject(raw) ? raw.items : []).find(isObject)));
+  }, adminDoctorLookupSerializer);
 
 export const listReviewsForModeration = (hidden: boolean, page: number, pageSize = 20) =>
-  request(() => api.get(`${A}/reviews`, { params: { hidden: hidden ? 'true' : 'false', ...pageParams(page, pageSize) } }), raw =>
-    paged(raw, doctorReviewSerializer),
+  request(() => api.get(`${A}/reviews`, { params: { hidden: hidden ? 'true' : 'false', ...pageParams(page, pageSize) } }), doctorReviewPageSerializer,
   );
 
 export const setReviewHidden = (id: string, hidden: boolean, reason: string | null) =>

@@ -4,13 +4,7 @@
 
 import { api } from '../network/apiHelpers';
 import { request } from '../shopping/http';
-import {
-  reservationSerializer,
-  surplusBoxDetailSerializer,
-  surplusBoxSerializer,
-  surplusBoxesSerializer,
-  surplusSuggestionSerializer,
-} from '../../serializers/kitchen/surplusSerializer';
+import { reservationSerializer, surplusBoxDetailSerializer, surplusBoxSerializer, surplusBoxesSerializer, surplusSuggestionSerializer, surplusSuggestionResponseSerializer } from '../../serializers/kitchen/surplusSerializer';
 import type { SurplusBoxInput } from '../../types/kitchen';
 
 const enc = encodeURIComponent;
@@ -19,7 +13,7 @@ export const listBoxes = (scope: 'live' | 'past') => request(() => api.get('/foo
 
 /** The end-of-day suggestion; null before the evening or with nothing to suggest. */
 export const getBoxSuggestion = () =>
-  request(() => api.get('/food/vendor/surplus/suggestion'), raw => ({ suggestion: surplusSuggestionSerializer(raw) }));
+  request(() => api.get('/food/vendor/surplus/suggestion'), surplusSuggestionResponseSerializer);
 
 export const createBox = (input: SurplusBoxInput) => request(() => api.post('/food/vendor/surplus', input), surplusBoxSerializer);
 

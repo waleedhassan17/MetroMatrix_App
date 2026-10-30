@@ -2,10 +2,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { suggestProducts } from '@networks/shopping/catalogNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { suggestProductsAPI } from '@networks/shopping/catalogNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { SearchSuggestion } from '@/types';
 import type { FormStatus } from '../../../Auth/shared/formStatus';
+import { suggestionListSerializer } from '@serializers/shopping/catalogSerializer';
 
 /** Suggestions start at this many characters (the API's own minimum). */
 export const SUGGEST_MIN = 2;
@@ -34,7 +35,7 @@ export const shopSearchSlice = createAppSlice({
     suggestAsync: create.asyncThunk(
       async (q: string, { rejectWithValue }) => {
         try {
-          return await suggestProducts(q);
+          return required(suggestionListSerializer(await suggestProductsAPI(q)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

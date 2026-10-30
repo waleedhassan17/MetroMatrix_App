@@ -6,9 +6,10 @@
 // list itself pages from the server (usePagedList).
 
 import { createAppSlice } from '@store/createAppSlice';
-import { getWishlistIds, saveProduct, unsaveProduct } from '@networks/shopping/wishlistNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getWishlistIdsAPI, saveProductAPI, unsaveProductAPI } from '@networks/shopping/wishlistNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { FormStatus } from '../../../Auth/shared/formStatus';
+import { wishlistIdsSerializer } from '@serializers/shopping/catalogSerializer';
 
 export interface SavedSliceState {
   ids: string[];
@@ -26,7 +27,7 @@ export const savedSlice = createAppSlice({
     loadSavedIdsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await getWishlistIds();
+          return required(wishlistIdsSerializer(await getWishlistIdsAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -48,8 +49,8 @@ export const savedSlice = createAppSlice({
     setSavedAsync: create.asyncThunk(
       async ({ productId, save }: { productId: string; save: boolean }, { rejectWithValue }) => {
         try {
-          if (save) await saveProduct(productId);
-          else await unsaveProduct(productId);
+          if (save) await saveProductAPI(productId);
+          else await unsaveProductAPI(productId);
           return true;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

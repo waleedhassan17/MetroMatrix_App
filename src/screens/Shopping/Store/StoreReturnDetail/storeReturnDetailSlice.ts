@@ -6,10 +6,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { approveReturn, getPartnerReturn, receiveReturn, recordRefund, rejectReturn } from '@networks/shopping/partner/partnerReturnsNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { approveReturnAPI, getPartnerReturnAPI, receiveReturnAPI, recordRefundAPI, rejectReturnAPI } from '@networks/shopping/partner/partnerReturnsNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { ReturnRequest } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { returnSerializer } from '@serializers/shopping/orderSerializer';
 
 export type ReturnStep = { kind: 'approve'; note: string } | { kind: 'reject'; note: string } | { kind: 'receive'; restock: Record<string, boolean> } | { kind: 'refund'; amount: number; reference: string };
 
@@ -37,12 +38,12 @@ const initialState: StoreReturnDetailSliceState = {
 
 const perform = (id: string, s: ReturnStep) =>
   s.kind === 'approve'
-    ? approveReturn(id, s.note.trim() || null)
+    ? approveReturnAPI(id, s.note.trim() || null).then(raw => required(returnSerializer(raw)))
     : s.kind === 'reject'
-      ? rejectReturn(id, s.note.trim())
+      ? rejectReturnAPI(id, s.note.trim()).then(raw => required(returnSerializer(raw)))
       : s.kind === 'receive'
-        ? receiveReturn(id, s.restock)
-        : recordRefund(id, { amount: s.amount, reference: s.reference.trim() });
+        ? receiveReturnAPI(id, s.restock).then(raw => required(returnSerializer(raw)))
+        : recordRefundAPI(id, { amount: s.amount, reference: s.reference.trim() }).then(raw => required(returnSerializer(raw)));
 
 export const storeReturnDetailSlice = createAppSlice({
   name: 'storeReturnDetail',
@@ -63,7 +64,7 @@ export const storeReturnDetailSlice = createAppSlice({
     loadStoreReturnAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return await getPartnerReturn(id);
+          return required(returnSerializer(await getPartnerReturnAPI(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

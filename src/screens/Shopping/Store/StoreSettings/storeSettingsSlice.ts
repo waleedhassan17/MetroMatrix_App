@@ -2,10 +2,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getStoreSettings, listPaymentAccounts, updateStoreSettings } from '@networks/shopping/partner/storeNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getStoreSettingsAPI, getPaymentAccountsAPI, updateStoreSettingsAPI } from '@networks/shopping/partner/storeNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { StoreSettings } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { storeSettingsSerializer, paymentAccountListSerializer } from '@serializers/shopping/partnerSerializer';
 
 export interface StoreSettingsSliceState {
   form: StoreSettings | null;
@@ -36,7 +37,7 @@ export const storeSettingsSlice = createAppSlice({
     loadStoreSettingsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [settings, accounts] = await Promise.all([getStoreSettings(), listPaymentAccounts()]);
+          const [settings, accounts] = await Promise.all([getStoreSettingsAPI().then(raw => required(storeSettingsSerializer(raw))), getPaymentAccountsAPI().then(raw => required(paymentAccountListSerializer(raw)))]);
           return { settings, hasActiveAccount: accounts.some(a => a.isActive) };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -61,7 +62,7 @@ export const storeSettingsSlice = createAppSlice({
     saveStoreSettingsAsync: create.asyncThunk(
       async (input: StoreSettings, { rejectWithValue }) => {
         try {
-          return await updateStoreSettings(input);
+          return required(storeSettingsSerializer(await updateStoreSettingsAPI(input)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

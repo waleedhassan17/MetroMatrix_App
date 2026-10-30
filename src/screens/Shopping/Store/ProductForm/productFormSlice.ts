@@ -8,15 +8,15 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getCategories } from '@networks/shopping/catalogNetwork';
+import { getCategoriesAPI } from '@networks/shopping/catalogNetwork';
 import {
-  createPartnerProduct,
-  getPartnerProduct,
-  listCollections,
-  setPartnerProductStatus,
-  updatePartnerProduct,
+  createPartnerProductAPI,
+  getPartnerProductAPI,
+  getCollectionsAPI,
+  setPartnerProductStatusAPI,
+  updatePartnerProductAPI,
 } from '@networks/shopping/partner/productsNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import {
   MAX_OPTION_VALUES,
   emptyProductForm,
@@ -32,6 +32,8 @@ import { setAllStock, type VariantRow } from '@models/shopping/variantMatrixMode
 import type { Collection, LocalFile, PartnerProductStatus, ShopCategory } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { pendingPhoto, photoFailed, photoProgress, upload, type FormPhoto } from '../../Customer/shared/photoUploads';
+import { partnerProductSerializer } from '@serializers/shopping/partnerSerializer';
+import { categoryListSerializer, collectionListSerializer } from '@serializers/shopping/catalogSerializer';
 
 export interface ProductFormSliceState {
   productId: string | null;
@@ -141,7 +143,7 @@ export const productFormSlice = createAppSlice({
     loadProductFormAsync: create.asyncThunk(
       async (id: string | null, { rejectWithValue }) => {
         try {
-          const [product, categories, collections] = await Promise.all([id ? getPartnerProduct(id) : Promise.resolve(null), getCategories(), listCollections()]);
+          const [product, categories, collections] = await Promise.all([id ? getPartnerProductAPI(id).then(raw => required(partnerProductSerializer(raw))) : Promise.resolve(null), getCategoriesAPI().then(raw => required(categoryListSerializer(raw))), getCollectionsAPI().then(raw => required(collectionListSerializer(raw)))]);
           return { product, categories, collections };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -196,7 +198,7 @@ export const productFormSlice = createAppSlice({
       async ({ id, form, status }: { id: string | null; form: ProductForm; status: PartnerProductStatus }, { rejectWithValue }) => {
         try {
           const input = toProductInput(form, status);
-          return id ? await updatePartnerProduct(id, input) : await createPartnerProduct(input);
+          return id ? required(partnerProductSerializer(await updatePartnerProductAPI(id, input))) : required(partnerProductSerializer(await createPartnerProductAPI(input)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -226,7 +228,7 @@ export const productFormSlice = createAppSlice({
     setProductStatusAsync: create.asyncThunk(
       async ({ id, status }: { id: string; status: PartnerProductStatus }, { rejectWithValue }) => {
         try {
-          return await setPartnerProductStatus(id, status);
+          return required(partnerProductSerializer(await setPartnerProductStatusAPI(id, status)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

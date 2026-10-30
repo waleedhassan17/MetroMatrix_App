@@ -2,10 +2,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getInsights } from '@networks/shopping/partner/insightsNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getInsightsAPI } from '@networks/shopping/partner/insightsNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { Insights, InsightsRange } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { insightsSerializer } from '@serializers/shopping/partnerSerializer';
 
 export interface InsightsSliceState {
   range: InsightsRange;
@@ -26,7 +27,7 @@ export const insightsSlice = createAppSlice({
     loadInsightsAsync: create.asyncThunk(
       async (range: InsightsRange, { rejectWithValue }) => {
         try {
-          return await getInsights(range);
+          return required(insightsSerializer(await getInsightsAPI(range)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

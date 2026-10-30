@@ -3,14 +3,7 @@
 
 import { api } from '../network/apiHelpers';
 import { request } from '../shopping/http';
-import {
-  groceryOrdersSerializer,
-  pantryItemSerializer,
-  pantryItemsSerializer,
-  pantryListSerializer,
-  pantryRemindersSerializer,
-  pantryStatsSerializer,
-} from '../../serializers/myKitchen/myKitchenSerializer';
+import { groceryOrdersSerializer, pantryItemSerializer, pantryItemsSerializer, pantryListSerializer, pantryRemindersSerializer, pantryStatsSerializer, pantryRemovedSerializer, pantryUsedUpSerializer } from '../../serializers/myKitchen/myKitchenSerializer';
 import type { PantryLineInput, PantryReminders, PantrySegment } from '../../types/myKitchen';
 import type { StandardUnit } from '../../utils/units';
 
@@ -25,11 +18,11 @@ export const updatePantryItem = (id: string, patch: { qty?: number; unit?: Stand
   request(() => api.patch(`/my-kitchen/pantry/${enc(id)}`, patch), pantryItemSerializer);
 
 /** Thrown away. */
-export const removePantryItem = (id: string) => request(() => api.delete(`/my-kitchen/pantry/${enc(id)}`), raw => raw as { removed: boolean; wasted: boolean });
+export const removePantryItem = (id: string) => request(() => api.delete(`/my-kitchen/pantry/${enc(id)}`), pantryRemovedSerializer);
 
 /** All of it, or some (`qty`, `unit`). */
 export const markPantryUsed = (id: string, some?: { qty: number; unit: StandardUnit }) =>
-  request(() => api.post(`/my-kitchen/pantry/${enc(id)}/use`, some ?? {}), raw => raw as { usedUp: boolean; savedFromWaste?: boolean });
+  request(() => api.post(`/my-kitchen/pantry/${enc(id)}/use`, some ?? {}), pantryUsedUpSerializer);
 
 export const listGroceryOrders = () => request(() => api.get('/my-kitchen/pantry/shopping-orders'), groceryOrdersSerializer);
 

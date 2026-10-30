@@ -2,7 +2,7 @@
 // docs/API_FOOD.md §4.2: GET /food/favourites.
 
 import type { FoodFavourite } from '../../types/food';
-import { arr, bool, isObject, num, str, strOrNull } from '../serializerUtils';
+import { arr, bool, isObject, num, str, strOrNull, fromResponse } from '../serializerUtils';
 
 export const foodFavouriteSerializer = (raw: unknown): FoodFavourite | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
@@ -24,3 +24,6 @@ export const foodFavouritesSerializer = (raw: unknown): FoodFavourite[] =>
   arr(isObject(raw) ? raw.items : raw)
     .map(foodFavouriteSerializer)
     .filter((f): f is FoodFavourite => f !== null);
+
+/** Removing a favourite: true once it is gone. */
+export const unfavouritedSerializer = fromResponse(raw => (isObject(raw) ? raw.favourite === false : null));

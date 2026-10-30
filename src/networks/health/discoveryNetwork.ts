@@ -2,14 +2,7 @@
 // MetroMatrix-API docs/API_HEALTH.md §4.1 (public; signed in, the home adds the next appointment).
 
 import { api } from '../network/apiHelpers';
-import {
-  conditionsSerializer,
-  doctorCardSerializer,
-  doctorProfileSerializer,
-  healthHomeSerializer,
-  specialtiesSerializer,
-  suggestionsSerializer,
-} from '../../serializers/health/discoverySerializer';
+import { conditionsSerializer, doctorCardSerializer, doctorProfileSerializer, healthHomeSerializer, specialtiesSerializer, suggestionsSerializer, doctorCardPageSerializer } from '../../serializers/health/discoverySerializer';
 import { paged } from '../../serializers/shopping/common';
 import { isObject } from '../../serializers/serializerUtils';
 import { toParams } from '../../models/health/filterModel';
@@ -32,7 +25,7 @@ export const suggest = (q: string) => request(() => api.get('/health/search/sugg
 export const listDoctors = (query: DoctorQuery, page: number, pageSize = 20) =>
   request(
     () => api.get('/health/doctors', { params: clean({ ...toParams(query), ...pageParams(page, pageSize) }) }),
-    raw => paged(raw, doctorCardSerializer),
+    doctorCardPageSerializer,
   );
 
 /** The profile and the doctors like them, together. */

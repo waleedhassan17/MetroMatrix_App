@@ -1,10 +1,11 @@
 // MetroMatrix — Admin Shopping overview slice.
 
 import { createAppSlice } from '@store/createAppSlice';
-import { getShopOverview } from '@networks/admin/adminShopNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getShopOverviewAPI } from '@networks/admin/adminShopNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { ShopOverview } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { shopOverviewSerializer } from '@serializers/shopping/adminShopSerializer';
 
 export interface ShopOverviewSliceState {
   overview: ShopOverview | null;
@@ -21,7 +22,7 @@ export const shopOverviewSlice = createAppSlice({
     loadShopOverviewAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await getShopOverview();
+          return required(shopOverviewSerializer(await getShopOverviewAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

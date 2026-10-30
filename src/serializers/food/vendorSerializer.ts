@@ -26,7 +26,7 @@ import type {
 } from '../../types/food';
 import type { PaymentAccount, PaymentAccountKind } from '../../types/payments';
 import type { PauseReason } from '../../types/kitchen';
-import { arr, bool, isObject, num, oneOf, str, strOrNull } from '../serializerUtils';
+import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 
 export const KITCHEN_KINDS: readonly KitchenKind[] = ['restaurant', 'home_kitchen', 'cloud_kitchen'];
 /** TODO(API_KITCHEN): the pause body's `reason` (docs/API_KITCHEN_ASSUMED.md, additions). */
@@ -237,3 +237,6 @@ export const vendorPlanSerializer = (raw: unknown): VendorPlan | null => {
     startedAt: isoOrNull(raw.startedAt),
   };
 };
+
+/** One closure, as POST answers it. */
+export const closureResponseSerializer = fromResponse(raw => closuresSerializer([raw])[0] ?? null);

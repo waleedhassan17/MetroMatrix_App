@@ -17,8 +17,8 @@ import type {
   ReasonTag,
 } from '../../types/health';
 import type { PaymentInstructions, PaymentProof } from '../../types/payments';
-import { arr, bool, enumList, isObject, num, oneOf, str, strOrNull } from '../serializerUtils';
-import { compact, iso, money } from '../shopping/common';
+import { arr, bool, enumList, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
+import { compact, iso, money, paged } from '../shopping/common';
 import {
   KINDS,
   appointmentStatus,
@@ -218,3 +218,5 @@ export const alternativesFrom = (details: Record<string, unknown> | null | undef
 /** Count of minutes, defensive (used by queue and history readers). */
 export const minutes = (v: unknown) => Math.max(0, Math.round(num(v)));
 
+/** A page of appointmentSummarys, as the API answers it. */
+export const appointmentSummaryPageSerializer = fromResponse(raw => paged(raw, appointmentSummarySerializer));

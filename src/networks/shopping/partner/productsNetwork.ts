@@ -1,42 +1,94 @@
-// MetroMatrix — Store partner: products and collections.
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Shopping Partner Products Network (API_SHOPPING_ASSUMED.md)
+// ═══════════════════════════════════════════════════════
+// Products and collections.
 // TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
 
-import { api } from '../../network/apiHelpers';
-import { collectionSerializer } from '../../../serializers/shopping/catalogSerializer';
-import { compact, paged } from '../../../serializers/shopping/common';
-import { partnerProductRowSerializer, partnerProductSerializer } from '../../../serializers/shopping/partnerSerializer';
-import { arr } from '../../../serializers/serializerUtils';
+import { api, toApiError, clean, pageParams } from '../../network/apiHelpers';
 import type { PartnerProductInput, PartnerProductStatus } from '../../../types/shopping';
-import { ack, clean, pageParams, request } from '../http';
 
 const BASE = '/partner/shop';
 
-export const listPartnerProducts = (
-  query: { status: PartnerProductStatus; q?: string; lowStock?: boolean },
-  page: number,
-  pageSize = 20,
-) =>
-  request(() => api.get(`${BASE}/products`, { params: clean({ ...query, ...pageParams(page, pageSize) }) }), raw =>
-    paged(raw, partnerProductRowSerializer),
-  );
+export const getPartnerProductsAPI = async (query: { status: PartnerProductStatus; q?: string; lowStock?: boolean }, page: number, pageSize = 20): Promise<unknown> => {
+  try {
+    const response = await api.get(`${BASE}/products`, { params: clean({ ...query, ...pageParams(page, pageSize) }) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getPartnerProduct = (id: string) =>
-  request(() => api.get(`${BASE}/products/${encodeURIComponent(id)}`), partnerProductSerializer);
-export const createPartnerProduct = (input: PartnerProductInput) =>
-  request(() => api.post(`${BASE}/products`, input), partnerProductSerializer);
-export const updatePartnerProduct = (id: string, input: PartnerProductInput) =>
-  request(() => api.patch(`${BASE}/products/${encodeURIComponent(id)}`, input), partnerProductSerializer);
-export const setPartnerProductStatus = (id: string, status: PartnerProductStatus) =>
-  request(() => api.post(`${BASE}/products/${encodeURIComponent(id)}/status`, { status }), partnerProductSerializer);
+export const getPartnerProductAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`${BASE}/products/${encodeURIComponent(id)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const createPartnerProductAPI = async (input: PartnerProductInput): Promise<unknown> => {
+  try {
+    const response = await api.post(`${BASE}/products`, input);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const updatePartnerProductAPI = async (id: string, input: PartnerProductInput): Promise<unknown> => {
+  try {
+    const response = await api.patch(`${BASE}/products/${encodeURIComponent(id)}`, input);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const setPartnerProductStatusAPI = async (id: string, status: PartnerProductStatus): Promise<unknown> => {
+  try {
+    const response = await api.post(`${BASE}/products/${encodeURIComponent(id)}/status`, { status });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 // Collections
-export const listCollections = () =>
-  request(() => api.get(`${BASE}/collections`), raw => compact(arr(raw).map(collectionSerializer)));
-export const createCollection = (name: string) =>
-  request(() => api.post(`${BASE}/collections`, { name }), collectionSerializer);
-export const renameCollection = (id: string, name: string) =>
-  request(() => api.patch(`${BASE}/collections/${encodeURIComponent(id)}`, { name }), collectionSerializer);
-export const deleteCollection = (id: string) =>
-  request(() => api.delete(`${BASE}/collections/${encodeURIComponent(id)}`), ack);
-export const reorderCollections = (ids: string[]) =>
-  request(() => api.post(`${BASE}/collections/reorder`, { ids }), raw => compact(arr(raw).map(collectionSerializer)));
+export const getCollectionsAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get(`${BASE}/collections`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const createCollectionAPI = async (name: string): Promise<unknown> => {
+  try {
+    const response = await api.post(`${BASE}/collections`, { name });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const renameCollectionAPI = async (id: string, name: string): Promise<unknown> => {
+  try {
+    const response = await api.patch(`${BASE}/collections/${encodeURIComponent(id)}`, { name });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const deleteCollectionAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.delete(`${BASE}/collections/${encodeURIComponent(id)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const reorderCollectionsAPI = async (ids: string[]): Promise<unknown> => {
+  try {
+    const response = await api.post(`${BASE}/collections/reorder`, { ids });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

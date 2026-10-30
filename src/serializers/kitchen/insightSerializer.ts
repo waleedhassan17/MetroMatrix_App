@@ -16,7 +16,7 @@ import type {
   PackingResult,
   ReceiptDraft,
 } from '../../types/kitchen';
-import { arr, bool, isObject, num, oneOf, str, strOrNull } from '../serializerUtils';
+import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { count, dateOrNull, intOrNull, list } from './kitchenCommon';
 
 const SEVERITIES: readonly InsightSeverity[] = ['critical', 'warning', 'info'];
@@ -162,3 +162,6 @@ export const announcementSerializer = (raw: unknown): Announcement | null =>
     : null;
 
 export { arr };
+
+/** A snoozed insight card: its id and until when. */
+export const snoozedCardSerializer = fromResponse(raw => (isObject(raw) ? { id: str(raw.id), snoozedUntil: str(raw.snoozedUntil) } : null));

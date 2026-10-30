@@ -2,9 +2,10 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { setStoreFeatured } from '@networks/admin/adminShopNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { setStoreFeaturedAPI } from '@networks/admin/adminShopNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { NO_ERROR, readRejection, type ServerError } from '../../../Auth/shared/formStatus';
+import { storeSummarySerializer } from '@serializers/shopping/catalogSerializer';
 
 export interface ShopStoresSliceState {
   query: string;
@@ -24,7 +25,7 @@ export const shopStoresSlice = createAppSlice({
     setFeaturedAsync: create.asyncThunk(
       async ({ id, featured }: { id: string; featured: boolean }, { rejectWithValue }) => {
         try {
-          return await setStoreFeatured(id, featured);
+          return required(storeSummarySerializer(await setStoreFeaturedAPI(id, featured)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

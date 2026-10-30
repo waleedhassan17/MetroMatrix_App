@@ -1,57 +1,145 @@
-// MetroMatrix — Admin (Shopping): overview, categories, banners, reports,
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Admin Shop Network (API_SHOPPING_ASSUMED.md)
+// ═══════════════════════════════════════════════════════
+// Overview, categories, banners, reports,
 // order lookup, featured stores.
 // TODO(API_SHOPPING): paths per docs/API_SHOPPING_ASSUMED.md.
 
-import { api } from '../network/apiHelpers';
-import {
-  adminBannerSerializer,
-  orderLookupSerializer,
-  productReportSerializer,
-  shopOverviewSerializer,
-} from '../../serializers/shopping/adminShopSerializer';
-import { categorySerializer, storeSummarySerializer } from '../../serializers/shopping/catalogSerializer';
-import { compact, paged } from '../../serializers/shopping/common';
-import { arr } from '../../serializers/serializerUtils';
+import { api, toApiError, clean, pageParams } from '../network/apiHelpers';
 import type { AdminBannerInput, ReportStatus } from '../../types/shopping';
-import { ack, clean, pageParams, request } from '../shopping/http';
 
 const BASE = '/admin/shop';
 
-export const getShopOverview = () => request(() => api.get(`${BASE}/overview`), shopOverviewSerializer);
+export const getShopOverviewAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get(`${BASE}/overview`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listAdminCategories = () =>
-  request(() => api.get(`${BASE}/categories`), raw => compact(arr(raw).map(categorySerializer)));
-export const createCategory = (input: { name: string; icon: string; parentId: string | null }) =>
-  request(() => api.post(`${BASE}/categories`, input), categorySerializer);
-export const updateCategory = (id: string, input: { name: string; icon: string }) =>
-  request(() => api.patch(`${BASE}/categories/${encodeURIComponent(id)}`, input), categorySerializer);
-export const deleteCategory = (id: string) =>
-  request(() => api.delete(`${BASE}/categories/${encodeURIComponent(id)}`), ack);
-export const reorderCategories = (parentId: string | null, ids: string[]) =>
-  request(() => api.post(`${BASE}/categories/reorder`, { parentId, ids }), raw => compact(arr(raw).map(categorySerializer)));
+export const getAdminCategoriesAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get(`${BASE}/categories`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const createCategoryAPI = async (input: { name: string; icon: string; parentId: string | null }): Promise<unknown> => {
+  try {
+    const response = await api.post(`${BASE}/categories`, input);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const updateCategoryAPI = async (id: string, input: { name: string; icon: string }): Promise<unknown> => {
+  try {
+    const response = await api.patch(`${BASE}/categories/${encodeURIComponent(id)}`, input);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const deleteCategoryAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.delete(`${BASE}/categories/${encodeURIComponent(id)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const reorderCategoriesAPI = async (parentId: string | null, ids: string[]): Promise<unknown> => {
+  try {
+    const response = await api.post(`${BASE}/categories/reorder`, { parentId, ids });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listAdminBanners = () =>
-  request(() => api.get(`${BASE}/banners`), raw => compact(arr(raw).map(adminBannerSerializer)));
-export const createBanner = (input: AdminBannerInput) => request(() => api.post(`${BASE}/banners`, input), adminBannerSerializer);
-export const updateBanner = (id: string, input: AdminBannerInput) =>
-  request(() => api.patch(`${BASE}/banners/${encodeURIComponent(id)}`, input), adminBannerSerializer);
-export const deleteBanner = (id: string) => request(() => api.delete(`${BASE}/banners/${encodeURIComponent(id)}`), ack);
+export const getAdminBannersAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get(`${BASE}/banners`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const createBannerAPI = async (input: AdminBannerInput): Promise<unknown> => {
+  try {
+    const response = await api.post(`${BASE}/banners`, input);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const updateBannerAPI = async (id: string, input: AdminBannerInput): Promise<unknown> => {
+  try {
+    const response = await api.patch(`${BASE}/banners/${encodeURIComponent(id)}`, input);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const deleteBannerAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.delete(`${BASE}/banners/${encodeURIComponent(id)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listReports = (status: ReportStatus, page: number, pageSize = 20) =>
-  request(() => api.get(`${BASE}/reports`, { params: clean({ status, ...pageParams(page, pageSize) }) }), raw =>
-    paged(raw, productReportSerializer),
-  );
-export const dismissReport = (id: string) =>
-  request(() => api.post(`${BASE}/reports/${encodeURIComponent(id)}/dismiss`), productReportSerializer);
-export const removeReportedProduct = (id: string, reason: string) =>
-  request(() => api.post(`${BASE}/reports/${encodeURIComponent(id)}/remove`, { reason }), productReportSerializer);
+export const getReportsAPI = async (status: ReportStatus, page: number, pageSize = 20): Promise<unknown> => {
+  try {
+    const response = await api.get(`${BASE}/reports`, { params: clean({ status, ...pageParams(page, pageSize) }) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const dismissReportAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.post(`${BASE}/reports/${encodeURIComponent(id)}/dismiss`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const removeReportedProductAPI = async (id: string, reason: string): Promise<unknown> => {
+  try {
+    const response = await api.post(`${BASE}/reports/${encodeURIComponent(id)}/remove`, { reason });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const lookupOrder = (groupCode: string) =>
-  request(() => api.get(`${BASE}/orders/${encodeURIComponent(groupCode.trim().toUpperCase())}`), orderLookupSerializer);
+export const lookupOrderAPI = async (groupCode: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`${BASE}/orders/${encodeURIComponent(groupCode.trim().toUpperCase())}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listAdminStores = (q: string, page: number, pageSize = 20) =>
-  request(() => api.get(`${BASE}/stores`, { params: clean({ q, ...pageParams(page, pageSize) }) }), raw =>
-    paged(raw, storeSummarySerializer),
-  );
-export const setStoreFeatured = (storeId: string, featured: boolean) =>
-  request(() => api.post(`${BASE}/stores/${encodeURIComponent(storeId)}/featured`, { featured }), storeSummarySerializer);
+export const getAdminStoresAPI = async (q: string, page: number, pageSize = 20): Promise<unknown> => {
+  try {
+    const response = await api.get(`${BASE}/stores`, { params: clean({ q, ...pageParams(page, pageSize) }) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const setStoreFeaturedAPI = async (storeId: string, featured: boolean): Promise<unknown> => {
+  try {
+    const response = await api.post(`${BASE}/stores/${encodeURIComponent(storeId)}/featured`, { featured });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

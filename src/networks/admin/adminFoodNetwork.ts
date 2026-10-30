@@ -4,21 +4,7 @@
 // queue (/admin/businesses).
 
 import { api } from '../network/apiHelpers';
-import {
-  adminCuisineSerializer,
-  adminCuisinesSerializer,
-  adminFeaturedSerializer,
-  adminFoodBannerSerializer,
-  adminFoodBannersSerializer,
-  adminFoodOrderSerializer,
-  adminFoodOrdersPageSerializer,
-  adminFoodOverviewSerializer,
-  adminFoodReviewsPageSerializer,
-  adminFoodVendorSerializer,
-  adminFoodVendorsPageSerializer,
-  adminHiddenSerializer,
-  adminSuspensionSerializer,
-} from '../../serializers/food/adminFoodSerializer';
+import { adminCuisineSerializer, adminCuisinesSerializer, adminFeaturedSerializer, adminFoodBannerSerializer, adminFoodBannersSerializer, adminFoodOrderSerializer, adminFoodOrdersPageSerializer, adminFoodOverviewSerializer, adminFoodReviewsPageSerializer, adminFoodVendorSerializer, adminFoodVendorsPageSerializer, adminHiddenSerializer, adminSuspensionSerializer, foodSafetyOutcomeSerializer } from '../../serializers/food/adminFoodSerializer';
 import { vendorPlanSerializer } from '../../serializers/food/vendorSerializer';
 import { isObject, str } from '../../serializers/serializerUtils';
 import type { AdminCuisineInput, AdminFoodBannerInput, AdminFoodOrderQuery, AdminFoodReviewQuery, AdminFoodVendorQuery, PlanOverrides } from '../../types/food';
@@ -49,7 +35,7 @@ export const setVendorPlanOverrides = (id: string, overrides: PlanOverrides | nu
 
 /** Home kitchens: required before they can go live. */
 export const recordFoodSafetyCheck = (branchId: string, outcome: 'passed' | 'failed', note: string) =>
-  request(() => api.post(`${A}/branches/${enc(branchId)}/food-safety-check`, { outcome, note: note.trim() }), raw => (isObject(raw) && str(raw.outcome) ? str(raw.outcome) : null));
+  request(() => api.post(`${A}/branches/${enc(branchId)}/food-safety-check`, { outcome, note: note.trim() }), foodSafetyOutcomeSerializer);
 
 export const listAdminFoodOrders = (query: AdminFoodOrderQuery, page: number, pageSize: number) =>
   request(() => api.get(`${A}/orders`, { params: clean({ ...query, code: query.code?.trim().toUpperCase(), ...pageParams(page, pageSize) }) }), adminFoodOrdersPageSerializer);

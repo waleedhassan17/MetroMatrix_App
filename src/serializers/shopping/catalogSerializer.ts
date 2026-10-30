@@ -19,12 +19,12 @@ import type {
   StorePolicies,
   StoreSummary,
 } from '../../types/shopping';
-import { arr, bool, enumList, isObject, num, oneOf, str, strOrNull } from '../serializerUtils';
-import { BRAND_FALLBACK, color, compact, count, iso, isoOrNull, money, moneyOrNull } from './common';
+import { arr, bool, enumList, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
+import { BRAND_FALLBACK, color, compact, count, iso, isoOrNull, money, moneyOrNull, paged } from './common';
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
-export const categorySerializer = (raw: unknown): ShopCategory | null => {
+export const categorySerializer = fromResponse((raw: unknown): ShopCategory | null => {
   if (!isObject(raw)) return null;
   const id = str(raw.id);
   const name = str(raw.name);
@@ -38,9 +38,9 @@ export const categorySerializer = (raw: unknown): ShopCategory | null => {
     productCount: count(raw.productCount),
     children: compact(arr(raw.children).map(categorySerializer)),
   };
-};
+});
 
-export const storeSummarySerializer = (raw: unknown): StoreSummary | null => {
+export const storeSummarySerializer = fromResponse((raw: unknown): StoreSummary | null => {
   if (!isObject(raw)) return null;
   const id = str(raw.id);
   const name = str(raw.name);
@@ -64,7 +64,7 @@ export const storeSummarySerializer = (raw: unknown): StoreSummary | null => {
     isPaused: bool(raw.isPaused),
     productCount: count(raw.productCount),
   };
-};
+});
 
 const PAYMENT_METHODS: readonly PaymentMethod[] = ['cod', 'transfer'];
 
@@ -85,15 +85,15 @@ const policiesSerializer = (raw: unknown): StorePolicies => {
   };
 };
 
-export const collectionSerializer = (raw: unknown): Collection | null => {
+export const collectionSerializer = fromResponse((raw: unknown): Collection | null => {
   if (!isObject(raw)) return null;
   const id = str(raw.id);
   const name = str(raw.name);
   if (!id || !name) return null;
   return { id, name, slug: str(raw.slug, id), productCount: count(raw.productCount), position: Math.round(num(raw.position)) };
-};
+});
 
-export const storeDetailSerializer = (raw: unknown): StoreDetail | null => {
+export const storeDetailSerializer = fromResponse((raw: unknown): StoreDetail | null => {
   const summary = storeSummarySerializer(raw);
   if (!summary || !isObject(raw)) return null;
   const socials = isObject(raw.socials) ? raw.socials : {};
@@ -112,7 +112,7 @@ export const storeDetailSerializer = (raw: unknown): StoreDetail | null => {
     policies: policiesSerializer(raw.policies),
     collections: compact(arr(raw.collections).map(collectionSerializer)).sort((a, b) => a.position - b.position),
   };
-};
+});
 
 export const productSummarySerializer = (raw: unknown): ProductSummary | null => {
   if (!isObject(raw)) return null;
@@ -169,7 +169,7 @@ const variantSerializer = (raw: unknown): ProductVariant | null => {
   };
 };
 
-export const reviewSerializer = (raw: unknown): Review | null => {
+export const reviewSerializer = fromResponse((raw: unknown): Review | null => {
   if (!isObject(raw)) return null;
   const id = str(raw.id);
   if (!id) return null;
@@ -188,7 +188,7 @@ export const reviewSerializer = (raw: unknown): Review | null => {
     createdAt: iso(raw.createdAt),
     reply,
   };
-};
+});
 
 export const reviewSummarySerializer = (raw: unknown): ReviewSummary => {
   const r = isObject(raw) ? raw : {};
@@ -203,7 +203,7 @@ export const reviewSummarySerializer = (raw: unknown): ReviewSummary => {
   };
 };
 
-export const productDetailSerializer = (raw: unknown): ProductDetail | null => {
+export const productDetailSerializer = fromResponse((raw: unknown): ProductDetail | null => {
   const summary = productSummarySerializer(raw);
   if (!summary || !isObject(raw)) return null;
   const store = storeDetailSerializer(raw.store);
@@ -228,7 +228,7 @@ export const productDetailSerializer = (raw: unknown): ProductDetail | null => {
     related: compact(arr(raw.related).map(productSummarySerializer)),
     wishlisted: bool(raw.wishlisted),
   };
-};
+});
 
 const bannerTargetSerializer = (raw: unknown): BannerTarget | null => {
   if (!isObject(raw)) return null;
@@ -248,7 +248,7 @@ export const bannerSerializer = (raw: unknown): Banner | null => {
   return { id, imageUrl, headline: str(raw.headline), subhead: strOrNull(raw.subhead), target };
 };
 
-export const shopHomeSerializer = (raw: unknown): ShopHome => {
+export const shopHomeSerializer = fromResponse((raw: unknown): ShopHome => {
   const r = isObject(raw) ? raw : {};
   return {
     banners: compact(arr(r.banners).map(bannerSerializer)),
@@ -256,7 +256,7 @@ export const shopHomeSerializer = (raw: unknown): ShopHome => {
     featuredStores: compact(arr(r.featuredStores).map(storeSummarySerializer)),
     newThisWeek: compact(arr(r.newThisWeek).map(productSummarySerializer)),
   };
-};
+});
 
 export const suggestionSerializer = (raw: unknown): SearchSuggestion | null => {
   if (!isObject(raw)) return null;
@@ -267,3 +267,27 @@ export const suggestionSerializer = (raw: unknown): SearchSuggestion | null => {
 };
 
 export { isoOrNull };
+
+/** A page of productSummarys, as the API answers it. */
+export const productSummaryPageSerializer = fromResponse(raw => paged(raw, productSummarySerializer));
+
+/** A list of collections, as the API answers it. */
+export const collectionListSerializer = fromResponse(raw => compact(arr(raw).map(collectionSerializer)));
+
+/** A list of categorys, as the API answers it. */
+export const categoryListSerializer = fromResponse(raw => compact(arr(raw).map(categorySerializer)));
+
+/** A page of storeSummarys, as the API answers it. */
+export const storeSummaryPageSerializer = fromResponse(raw => paged(raw, storeSummarySerializer));
+
+/** A list of suggestions, as the API answers it. */
+export const suggestionListSerializer = fromResponse(raw => compact(arr(raw).map(suggestionSerializer)));
+
+/** GET /shop/wishlist/ids: every saved product id. */
+export const wishlistIdsSerializer = fromResponse(raw => arr(raw).map(v => str(v)).filter(Boolean));
+
+/** A page of a product's reviews, with the rating summary. */
+export const productReviewsSerializer = fromResponse(raw => ({
+      ...paged(raw, reviewSerializer),
+      summary: reviewSummarySerializer(isObject(raw) ? raw.summary : null),
+    }));

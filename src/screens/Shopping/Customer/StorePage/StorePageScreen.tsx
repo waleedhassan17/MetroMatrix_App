@@ -13,7 +13,7 @@ import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { usePagedList } from '@hooks/usePagedList';
 import { useShopBootstrap, useShopNav } from '@hooks/useShop';
-import { listProducts } from '@networks/shopping/catalogNetwork';
+import { getProductsAPI } from '@networks/shopping/catalogNetwork';
 import { SORT_OPTIONS, sortLabel } from '@models/shopping/filterModel';
 import { policyLines, whatsappUrl } from '@models/shopping/storePolicyModel';
 import { ServiceScope, StoreBrandScope, useStyles, useTheme, type Theme } from '@theme/index';
@@ -34,6 +34,7 @@ import { ProductGrid, SectionError, ShopTopBar } from '@components/shopping/Shop
 import type { ProductSort, ShopBrowseParamList, StoreDetail } from '@/types';
 import { cdn } from '@utils/cdn';
 import { loadStoreAsync, selectStorePage, setStoreCollection, setStoreSort } from './storePageSlice';
+import { productSummaryPageSerializer } from '@serializers/shopping/catalogSerializer';
 
 type Props = NativeStackScreenProps<ShopBrowseParamList, 'StorePage'>;
 
@@ -205,7 +206,8 @@ const StorePageContent: React.FC<Props> = ({ route }) => {
 
   const storeId = e.store?.id;
   const list = usePagedList(
-    (page, pageSize) => listProducts({ storeId, collectionId: e.collectionId ?? undefined, sort: e.sort }, page, pageSize),
+    (page, pageSize) => getProductsAPI({ storeId, collectionId: e.collectionId ?? undefined, sort: e.sort }, page, pageSize),
+    productSummaryPageSerializer,
     `store|${storeId}|${e.collectionId}|${e.sort}`,
     { enabled: !!storeId },
   );

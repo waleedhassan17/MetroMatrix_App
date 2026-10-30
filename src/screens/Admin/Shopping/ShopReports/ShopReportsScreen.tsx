@@ -12,13 +12,14 @@ import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { usePagedList } from '@hooks/usePagedList';
-import { listReports } from '@networks/admin/adminShopNetwork';
+import { getReportsAPI } from '@networks/admin/adminShopNetwork';
 import { useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Button, Card, EmptyState, InlineNotice, ScreenShell, SegmentTabs, Sheet, SkeletonLines, StatusPill, TextField } from '@custom/index';
 import type { AdminShopStackParamList, ReportStatus } from '@/types';
 import { cdn } from '@utils/cdn';
 import { formatDay } from '@utils/dates';
 import { decideReportAsync, openRemove, selectShopReports, setRemoveReason, setReportsStatus } from './shopReportsSlice';
+import { productReportPageSerializer } from '@serializers/shopping/adminShopSerializer';
 
 type Props = NativeStackScreenProps<AdminShopStackParamList, 'ShopReports'>;
 
@@ -44,7 +45,7 @@ const ShopReportsScreen: React.FC<Props> = () => {
   const styles = useStyles(makeStyles);
   const { size } = useTheme();
   const s = useAppSelector(selectShopReports);
-  const list = usePagedList((page, sz) => listReports(s.status, page, sz), `reports|${s.status}`);
+  const list = usePagedList((page, sz) => getReportsAPI(s.status, page, sz), productReportPageSerializer, `reports|${s.status}`);
 
   const decide = async (d: { id: string; kind: 'dismiss' } | { id: string; kind: 'remove'; reason: string }) => {
     const r = await dispatch(decideReportAsync(d));

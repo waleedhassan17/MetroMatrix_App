@@ -3,7 +3,7 @@
 
 import { api } from '../network/apiHelpers';
 import { request, requestAll } from '../shopping/http';
-import { aiUsageSerializer, insightCardsSerializer, kitchenSummarySerializer } from '../../serializers/kitchen/insightSerializer';
+import { aiUsageSerializer, insightCardsSerializer, kitchenSummarySerializer, snoozedCardSerializer } from '../../serializers/kitchen/insightSerializer';
 import { isObject, str } from '../../serializers/serializerUtils';
 
 const enc = encodeURIComponent;
@@ -25,4 +25,4 @@ export const getKitchenHub = () =>
 export const listInsightCards = () => request(() => api.get('/food/vendor/kitchen/insights/cards'), insightCardsSerializer);
 
 export const snoozeInsightCard = (id: string) =>
-  request(() => api.post(`/food/vendor/kitchen/insights/cards/${enc(id)}/snooze`), raw => (isObject(raw) ? { id: str(raw.id), snoozedUntil: str(raw.snoozedUntil) } : null));
+  request(() => api.post(`/food/vendor/kitchen/insights/cards/${enc(id)}/snooze`), snoozedCardSerializer);

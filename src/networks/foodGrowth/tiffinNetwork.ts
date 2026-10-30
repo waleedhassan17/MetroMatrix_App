@@ -3,16 +3,7 @@
 
 import { api } from '../network/apiHelpers';
 import { clean, request } from '../shopping/http';
-import {
-  tiffinCalendarSerializer,
-  tiffinDaySerializer,
-  tiffinInboxSerializer,
-  tiffinPlanSerializer,
-  tiffinPlansSerializer,
-  tiffinSubscriptionSerializer,
-  tiffinSubscriptionsSerializer,
-  tiffinTomorrowSerializer,
-} from '../../serializers/kitchen/growthSerializer';
+import { tiffinCalendarSerializer, tiffinDaySerializer, tiffinInboxSerializer, tiffinPlanSerializer, tiffinPlansSerializer, tiffinSubscriptionSerializer, tiffinSubscriptionsSerializer, tiffinTomorrowSerializer, tiffinRemovedSerializer } from '../../serializers/kitchen/growthSerializer';
 import type { TiffinPayMethod, TiffinPlanInput } from '../../types/kitchen';
 
 const enc = encodeURIComponent;
@@ -28,7 +19,7 @@ export const updateTiffinPlan = (id: string, patch: Partial<TiffinPlanInput>) =>
 
 /** Removed outright, or (once it has had subscribers) taken off. */
 export const deleteTiffinPlan = (id: string) =>
-  request(() => api.delete(`/food/vendor/tiffin/plans/${enc(id)}`), raw => ({ removed: !!(raw as { removed?: boolean })?.removed }));
+  request(() => api.delete(`/food/vendor/tiffin/plans/${enc(id)}`), tiffinRemovedSerializer);
 
 export const listPlanSubscribers = (planId: string) => request(() => api.get(`/food/vendor/tiffin/plans/${enc(planId)}/subscribers`), tiffinInboxSerializer);
 

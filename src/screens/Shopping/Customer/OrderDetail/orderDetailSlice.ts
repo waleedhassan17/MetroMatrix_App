@@ -8,12 +8,13 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { cancelOrder, confirmReceived, getOrderGroup, requestCancellation } from '@networks/shopping/ordersNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { cancelOrderAPI, confirmReceivedAPI, getOrderGroupAPI, requestCancellationAPI } from '@networks/shopping/ordersNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { OrderGroup } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { placeOrderAsync } from '../Checkout/checkoutSlice';
 import { submitPaymentProofAsync } from '../PaymentProof/paymentProofSlice';
+import { orderGroupSerializer } from '@serializers/shopping/orderSerializer';
 
 export interface OrderGroupEntry {
   group: OrderGroup | null;
@@ -45,7 +46,7 @@ export const CANCEL_REASONS = ['Ordered by mistake', 'Found it cheaper elsewhere
 type Action = 'cancel' | 'request' | 'received';
 
 const act = async (kind: Action, orderId: string, reason: string) =>
-  kind === 'cancel' ? cancelOrder(orderId, reason) : kind === 'request' ? requestCancellation(orderId, reason) : confirmReceived(orderId);
+  kind === 'cancel' ? cancelOrderAPI(orderId, reason).then(raw => required(orderGroupSerializer(raw))) : kind === 'request' ? requestCancellationAPI(orderId, reason).then(raw => required(orderGroupSerializer(raw))) : confirmReceivedAPI(orderId).then(raw => required(orderGroupSerializer(raw)));
 
 export const orderDetailSlice = createAppSlice({
   name: 'orderDetail',
@@ -68,7 +69,7 @@ export const orderDetailSlice = createAppSlice({
     loadOrderGroupAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return await getOrderGroup(code);
+          return required(orderGroupSerializer(await getOrderGroupAPI(code)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

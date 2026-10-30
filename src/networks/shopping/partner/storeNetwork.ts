@@ -1,39 +1,103 @@
-// MetroMatrix — Store partner: Today summary, profile, settings, pause, payment accounts.
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Shopping Partner Store Network (API_SHOPPING_ASSUMED.md)
+// ═══════════════════════════════════════════════════════
+// Today summary, profile, settings, pause, payment accounts.
 // TODO(API_SHOPPING): paths per docs/API_SHOPPING_ASSUMED.md.
 
-import { api } from '../../network/apiHelpers';
-import { compact } from '../../../serializers/shopping/common';
-import {
-  partnerSummarySerializer,
-  paymentAccountSerializer,
-  storeProfileSerializer,
-  storeSettingsSerializer,
-} from '../../../serializers/shopping/partnerSerializer';
-import { arr } from '../../../serializers/serializerUtils';
+import { api, toApiError } from '../../network/apiHelpers';
 import type { PaymentAccountInput, StoreProfileInput, StoreSettings } from '../../../types/shopping';
-import { ack, request } from '../http';
 
 const BASE = '/partner/shop';
 
-export const getPartnerSummary = () => request(() => api.get(`${BASE}/summary`), partnerSummarySerializer);
+export const getPartnerSummaryAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get(`${BASE}/summary`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getStoreProfile = () => request(() => api.get(`${BASE}/store`), storeProfileSerializer);
-export const updateStoreProfile = (input: StoreProfileInput) =>
-  request(() => api.patch(`${BASE}/store`, input), storeProfileSerializer);
+export const getStoreProfileAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get(`${BASE}/store`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const updateStoreProfileAPI = async (input: StoreProfileInput): Promise<unknown> => {
+  try {
+    const response = await api.patch(`${BASE}/store`, input);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getStoreSettings = () => request(() => api.get(`${BASE}/store/settings`), storeSettingsSerializer);
-export const updateStoreSettings = (input: StoreSettings) =>
-  request(() => api.patch(`${BASE}/store/settings`, input), storeSettingsSerializer);
+export const getStoreSettingsAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get(`${BASE}/store/settings`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const updateStoreSettingsAPI = async (input: StoreSettings): Promise<unknown> => {
+  try {
+    const response = await api.patch(`${BASE}/store/settings`, input);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const pauseStore = (message: string) =>
-  request(() => api.post(`${BASE}/store/pause`, { message }), storeSettingsSerializer);
-export const resumeStore = () => request(() => api.post(`${BASE}/store/resume`), storeSettingsSerializer);
+export const pauseStoreAPI = async (message: string): Promise<unknown> => {
+  try {
+    const response = await api.post(`${BASE}/store/pause`, { message });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const resumeStoreAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.post(`${BASE}/store/resume`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listPaymentAccounts = () =>
-  request(() => api.get(`${BASE}/payment-accounts`), raw => compact(arr(raw).map(paymentAccountSerializer)));
-export const createPaymentAccount = (input: PaymentAccountInput) =>
-  request(() => api.post(`${BASE}/payment-accounts`, input), paymentAccountSerializer);
-export const updatePaymentAccount = (id: string, input: PaymentAccountInput) =>
-  request(() => api.patch(`${BASE}/payment-accounts/${encodeURIComponent(id)}`, input), paymentAccountSerializer);
-export const deletePaymentAccount = (id: string) =>
-  request(() => api.delete(`${BASE}/payment-accounts/${encodeURIComponent(id)}`), ack);
+export const getPaymentAccountsAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get(`${BASE}/payment-accounts`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const createPaymentAccountAPI = async (input: PaymentAccountInput): Promise<unknown> => {
+  try {
+    const response = await api.post(`${BASE}/payment-accounts`, input);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const updatePaymentAccountAPI = async (id: string, input: PaymentAccountInput): Promise<unknown> => {
+  try {
+    const response = await api.patch(`${BASE}/payment-accounts/${encodeURIComponent(id)}`, input);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const deletePaymentAccountAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.delete(`${BASE}/payment-accounts/${encodeURIComponent(id)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

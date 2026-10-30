@@ -12,13 +12,14 @@ import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { usePagedList } from '@hooks/usePagedList';
-import { listPartnerReviews } from '@networks/shopping/partner/partnerReviewsNetwork';
+import { getPartnerReviewsAPI } from '@networks/shopping/partner/partnerReviewsNetwork';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Button, ChoiceChip, Divider, EmptyState, InlineNotice, ScreenShell, Sheet, SkeletonLines, TextAction, TextField } from '@custom/index';
 import { ReviewItem } from '@components/shopping/ReviewItem';
 import type { PartnerReview, StorePartnerStackParamList } from '@/types';
 import { cdn } from '@utils/cdn';
 import { openReply, postReplyAsync, selectStoreReviews, setReply, setReviewsRating, setUnrepliedOnly } from './storeReviewsSlice';
+import { partnerReviewPageSerializer } from '@serializers/shopping/partnerSerializer';
 
 type Props = NativeStackScreenProps<StorePartnerStackParamList, 'StoreReviews'>;
 
@@ -45,7 +46,8 @@ const StoreReviewsContent: React.FC<Props> = () => {
   const { size } = useTheme();
   const s = useAppSelector(selectStoreReviews);
   const list = usePagedList(
-    (page, sz) => listPartnerReviews({ rating: s.rating, unreplied: s.unrepliedOnly || undefined }, page, sz),
+    (page, sz) => getPartnerReviewsAPI({ rating: s.rating, unreplied: s.unrepliedOnly || undefined }, page, sz),
+    partnerReviewPageSerializer,
     `store-reviews|${s.rating}|${s.unrepliedOnly}`,
   );
 

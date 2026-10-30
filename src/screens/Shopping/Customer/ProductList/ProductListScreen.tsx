@@ -12,7 +12,7 @@ import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { useDebouncedValue, usePagedList } from '@hooks/usePagedList';
 import { useShopBootstrap } from '@hooks/useShop';
-import { listProducts } from '@networks/shopping/catalogNetwork';
+import { getProductsAPI } from '@networks/shopping/catalogNetwork';
 import {
   DEFAULT_FILTERS,
   activeFilterCount,
@@ -37,6 +37,7 @@ import {
   setDraft,
   setFilters,
 } from './productListSlice';
+import { productSummaryPageSerializer } from '@serializers/shopping/catalogSerializer';
 
 type Props = NativeStackScreenProps<ShopBrowseParamList, 'ProductList'>;
 
@@ -105,7 +106,7 @@ const ProductListContent: React.FC<Props> = ({ route }) => {
   }, [dispatch, key, initial]);
 
   const query = useMemo(() => toProductQuery(context, filters), [context, filters]);
-  const list = usePagedList((page, size) => listProducts(query, page, size), `${key}|${JSON.stringify(query)}`);
+  const list = usePagedList((page, size) => getProductsAPI(query, page, size), productSummaryPageSerializer, `${key}|${JSON.stringify(query)}`);
 
   // The sheet's "Show N results": count the draft once editing pauses.
   const draft = useDebouncedValue(e?.draft ?? filters, 300);

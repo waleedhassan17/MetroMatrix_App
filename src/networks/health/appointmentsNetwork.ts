@@ -2,7 +2,7 @@
 // MetroMatrix-API docs/API_HEALTH.md §4.2.
 
 import { api } from '../network/apiHelpers';
-import { appointmentDetailSerializer, appointmentSummarySerializer } from '../../serializers/health/appointmentSerializer';
+import { appointmentDetailSerializer, appointmentSummarySerializer, appointmentSummaryPageSerializer } from '../../serializers/health/appointmentSerializer';
 import { paged } from '../../serializers/shopping/common';
 import { cancelReasonText } from '../../models/health/bookingModel';
 import { newUuid } from '../../utils/ids';
@@ -33,8 +33,7 @@ export const bookAppointment = (input: BookingInput, idempotencyKey: string) =>
   request(() => api.post('/health/appointments', bookingBody(input), { headers: { 'Idempotency-Key': idempotencyKey } }), detail);
 
 export const listAppointments = (segment: AppointmentSegment, page: number, pageSize = 20) =>
-  request(() => api.get('/health/appointments', { params: { scope: segment, ...pageParams(page, pageSize) } }), raw =>
-    paged(raw, appointmentSummarySerializer),
+  request(() => api.get('/health/appointments', { params: { scope: segment, ...pageParams(page, pageSize) } }), appointmentSummaryPageSerializer,
   );
 
 export const getAppointment = (code: string) => request(() => api.get(path(code)), detail);

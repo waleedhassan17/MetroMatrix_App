@@ -1,26 +1,40 @@
-// MetroMatrix — Customer orders network.
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Shopping Orders Network (API_SHOPPING_ASSUMED.md)
+// ═══════════════════════════════════════════════════════
 // TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
 
-import { api } from '../network/apiHelpers';
-import { paged } from '../../serializers/shopping/common';
-import { orderGroupSerializer, orderGroupSummarySerializer } from '../../serializers/shopping/orderSerializer';
+import { api, toApiError, pageParams } from '../network/apiHelpers';
 import type { OrderSegment } from '../../types/shopping';
-import { pageParams, request } from './http';
 
-export const listOrders = (segment: OrderSegment, page: number, pageSize = 20) =>
-  request(() => api.get('/shop/orders', { params: { segment, ...pageParams(page, pageSize) } }), raw =>
-    paged(raw, orderGroupSummarySerializer),
-  );
+export const getOrdersAPI = async (segment: OrderSegment, page: number, pageSize = 20): Promise<unknown> => {
+  try {
+    const response = await api.get('/shop/orders', { params: { segment, ...pageParams(page, pageSize) } });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getOrderGroup = (groupCode: string) =>
-  request(() => api.get(`/shop/orders/${encodeURIComponent(groupCode)}`), orderGroupSerializer);
+export const getOrderGroupAPI = async (groupCode: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`/shop/orders/${encodeURIComponent(groupCode)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** Each action answers with the whole group, so the screen redraws from it. */
-const act = (orderId: string, action: string, body?: object) =>
-  request(() => api.post(`/shop/orders/${encodeURIComponent(orderId)}/${action}`, body ?? {}), orderGroupSerializer);
+const act = async (orderId: string, action: string, body?: object): Promise<unknown> => {
+  try {
+    const response = await api.post(`/shop/orders/${encodeURIComponent(orderId)}/${action}`, body ?? {});
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const cancelOrder = (orderId: string, reason: string) => act(orderId, 'cancel', { reason });
-export const requestCancellation = (orderId: string, reason: string) => act(orderId, 'cancel-request', { reason });
-export const confirmReceived = (orderId: string) => act(orderId, 'received');
-export const submitPaymentProof = (orderId: string, body: { transactionId: string; imageUrl: string | null }) =>
-  act(orderId, 'payment-proof', body);
+export const cancelOrderAPI = (orderId: string, reason: string): Promise<unknown> => act(orderId, 'cancel', { reason });
+export const requestCancellationAPI = (orderId: string, reason: string): Promise<unknown> => act(orderId, 'cancel-request', { reason });
+export const confirmReceivedAPI = (orderId: string): Promise<unknown> => act(orderId, 'received');
+export const submitPaymentProofAPI = (orderId: string, body: { transactionId: string; imageUrl: string | null }): Promise<unknown> => act(orderId, 'payment-proof', body);

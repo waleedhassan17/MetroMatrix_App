@@ -20,9 +20,9 @@ import type {
   Shipment,
   StoreOrder,
 } from '../../types/shopping';
-import { arr, bool, isObject, oneOf, str, strOrNull } from '../serializerUtils';
+import { arr, bool, isObject, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { addressSerializer } from '../addressSerializer';
-import { color, compact, count, iso, isoOrNull, money, storeRefSerializer, BRAND_FALLBACK } from './common';
+import { color, compact, count, iso, isoOrNull, money, storeRefSerializer, BRAND_FALLBACK, paged } from './common';
 import { courierName } from '../../models/shopping/orderStatusModel';
 
 export const ORDER_STATUSES: readonly OrderStatus[] = [
@@ -151,7 +151,7 @@ export const storeOrderSerializer = (raw: unknown): StoreOrder | null => {
   };
 };
 
-export const orderGroupSerializer = (raw: unknown): OrderGroup | null => {
+export const orderGroupSerializer = fromResponse((raw: unknown): OrderGroup | null => {
   if (!isObject(raw)) return null;
   const code = str(raw.code);
   const address = addressSerializer(raw.address);
@@ -167,7 +167,7 @@ export const orderGroupSerializer = (raw: unknown): OrderGroup | null => {
     discountTotal: money(raw.discountTotal),
     total: money(raw.total),
   };
-};
+});
 
 export const orderGroupSummarySerializer = (raw: unknown): OrderGroupSummary | null => {
   if (!isObject(raw)) return null;
@@ -197,7 +197,7 @@ export const orderGroupSummarySerializer = (raw: unknown): OrderGroupSummary | n
 const RETURN_STATUSES: readonly ReturnStatus[] = ['requested', 'approved', 'rejected', 'received', 'refunded'];
 const RETURN_REASONS: readonly ReturnReason[] = ['size_issue', 'damaged', 'wrong_item', 'not_as_described', 'changed_mind'];
 
-export const returnSerializer = (raw: unknown): ReturnRequest | null => {
+export const returnSerializer = fromResponse((raw: unknown): ReturnRequest | null => {
   if (!isObject(raw)) return null;
   const id = str(raw.id);
   if (!id) return null;
@@ -228,4 +228,10 @@ export const returnSerializer = (raw: unknown): ReturnRequest | null => {
     createdAt: iso(raw.createdAt),
     customerName: str(raw.customerName, 'Customer'),
   };
-};
+});
+
+/** A page of orderGroupSummarys, as the API answers it. */
+export const orderGroupSummaryPageSerializer = fromResponse(raw => paged(raw, orderGroupSummarySerializer));
+
+/** A page of returns, as the API answers it. */
+export const returnPageSerializer = fromResponse(raw => paged(raw, returnSerializer));

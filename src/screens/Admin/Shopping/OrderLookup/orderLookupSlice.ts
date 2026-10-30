@@ -2,10 +2,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { lookupOrder } from '@networks/admin/adminShopNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { lookupOrderAPI } from '@networks/admin/adminShopNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { AdminOrderLookup } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { orderLookupSerializer } from '@serializers/shopping/adminShopSerializer';
 
 export interface OrderLookupSliceState {
   code: string;
@@ -26,7 +27,7 @@ export const orderLookupSlice = createAppSlice({
     lookupOrderAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return await lookupOrder(code);
+          return required(orderLookupSerializer(await lookupOrderAPI(code)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

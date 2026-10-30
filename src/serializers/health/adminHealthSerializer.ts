@@ -4,7 +4,7 @@
 // Shapes: MetroMatrix-API docs/API_HEALTH.md §4.4.
 
 import type { AdminAppointment, AdminCondition, AdminDoctor, AdminSpecialty, HealthOverview } from '../../types/health';
-import { arr, isObject, num, oneOf, str } from '../serializerUtils';
+import { arr, isObject, num, oneOf, str, fromResponse } from '../serializerUtils';
 import { compact, count, isoOrNull } from '../shopping/common';
 import { conditionSerializer, specialtySerializer } from './discoverySerializer';
 import { appointmentDetailSerializer } from './appointmentSerializer';
@@ -87,3 +87,17 @@ export const adminAppointmentSerializer = (raw: unknown): AdminAppointment | nul
     prescriptionId: raw.hasPrescription === true ? 'written' : null,
   };
 };
+
+/** A list of adminSpecialtys, as the API answers it. */
+export const adminSpecialtyListSerializer = fromResponse(raw => compact(arr(raw).map(adminSpecialtySerializer)));
+
+/** The conditions list (an array, or `{ items }`). */
+export const adminConditionListSerializer = fromResponse(raw =>
+    compact(arr(isObject(raw) ? raw.items : raw).map(adminConditionSerializer)));
+
+/** Doctors to verify (an array, or `{ items }`). */
+export const adminDoctorListSerializer = fromResponse(raw =>
+    compact(arr(isObject(raw) ? raw.items : raw).map(adminDoctorSerializer)));
+
+/** The one doctor a lookup found, or null. */
+export const adminDoctorLookupSerializer = fromResponse(raw => adminDoctorSerializer(arr(isObject(raw) ? raw.items : []).find(isObject)));

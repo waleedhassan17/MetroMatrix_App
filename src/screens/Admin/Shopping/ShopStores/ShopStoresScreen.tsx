@@ -8,12 +8,13 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { useDebouncedValue, usePagedList } from '@hooks/usePagedList';
-import { listAdminStores } from '@networks/admin/adminShopNetwork';
+import { getAdminStoresAPI } from '@networks/admin/adminShopNetwork';
 import { useStyles, type Theme } from '@theme/index';
 import { Card, EmptyState, InlineNotice, ScreenShell, SkeletonLines, StoreMark, ToggleRow } from '@custom/index';
 import { SearchField } from '@components/shopping/ShopParts';
 import type { AdminShopStackParamList } from '@/types';
 import { selectShopStores, setFeaturedAsync, setStoresQuery } from './shopStoresSlice';
+import { storeSummaryPageSerializer } from '@serializers/shopping/catalogSerializer';
 
 type Props = NativeStackScreenProps<AdminShopStackParamList, 'ShopStores'>;
 
@@ -30,7 +31,7 @@ const ShopStoresScreen: React.FC<Props> = () => {
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectShopStores);
   const q = useDebouncedValue(s.query.trim());
-  const list = usePagedList((page, sz) => listAdminStores(q, page, sz), `admin-stores|${q}`);
+  const list = usePagedList((page, sz) => getAdminStoresAPI(q, page, sz), storeSummaryPageSerializer, `admin-stores|${q}`);
 
   const toggle = async (id: string, featured: boolean) => {
     const r = await dispatch(setFeaturedAsync({ id, featured }));

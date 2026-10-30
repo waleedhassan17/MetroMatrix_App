@@ -5,7 +5,7 @@
 
 import type { FoodOrderStatus, FoodPaymentMethod, FoodPaymentStatus, FoodRider, LiveRider, RiderCash, RiderCredential, RiderHome, RiderOrder, RiderSuggestion } from '../../types/food';
 import type { Paged } from '../../types/payments';
-import { arr, bool, isObject, num, str, strOrNull } from '../serializerUtils';
+import { arr, bool, isObject, num, str, strOrNull, fromResponse } from '../serializerUtils';
 
 const isoOrNull = (v: unknown): string | null => {
   const s = strOrNull(v);
@@ -180,3 +180,12 @@ export const riderSuggestionsSerializer = (raw: unknown): RiderSuggestion[] =>
         : null,
     )
     .filter((r): r is RiderSuggestion => r !== null);
+
+/** The rider's duty switch, as the server now has it. */
+export const riderDutySerializer = fromResponse(raw => (isObject(raw) && typeof raw.onDuty === 'boolean' ? raw.onDuty : null));
+
+/** A declined delivery (true), else null. */
+export const riderDeclinedSerializer = fromResponse(raw => (isObject(raw) && raw.declined === true ? true : null));
+
+/** How many location fixes the server accepted. */
+export const locationBatchSerializer = fromResponse(raw => (isObject(raw) ? Number(raw.accepted) || 0 : null));

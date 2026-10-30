@@ -12,7 +12,7 @@ import { Image } from 'expo-image';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { useDebouncedValue, usePagedList } from '@hooks/usePagedList';
-import { listInventory } from '@networks/shopping/partner/inventoryNetwork';
+import { getInventoryAPI } from '@networks/shopping/partner/inventoryNetwork';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import {
   AppText,
@@ -46,6 +46,7 @@ import {
   toggleSelected,
   toggleSelecting,
 } from './inventorySlice';
+import { inventoryRowPageSerializer } from '@serializers/shopping/partnerSerializer';
 
 type Props = NativeStackScreenProps<StorePartnerStackParamList, 'Inventory'>;
 
@@ -82,7 +83,7 @@ const InventoryContent: React.FC<Props> = ({ route }) => {
   const { service, colors, size } = useTheme();
   const s = useAppSelector(selectInventory);
   const q = useDebouncedValue(s.query.trim());
-  const list = usePagedList((page, sz) => listInventory({ q: q || undefined, lowStock: s.lowOnly || undefined }, page, sz), `inventory|${q}|${s.lowOnly}`, {
+  const list = usePagedList((page, sz) => getInventoryAPI({ q: q || undefined, lowStock: s.lowOnly || undefined }, page, sz), inventoryRowPageSerializer, `inventory|${q}|${s.lowOnly}`, {
     keyOf: r => r.variantId,
   });
 

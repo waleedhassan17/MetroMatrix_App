@@ -7,21 +7,22 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import {
-  approveCancellation,
-  cancelPartnerOrder,
-  confirmOrder,
-  confirmPayment,
-  deliverOrder,
-  getPartnerOrder,
-  markCashCollected,
-  packOrder,
-  rejectPayment,
-  saveInternalNote,
-  shipOrder,
+  approveCancellationAPI,
+  cancelPartnerOrderAPI,
+  confirmOrderAPI,
+  confirmPaymentAPI,
+  deliverOrderAPI,
+  getPartnerOrderAPI,
+  markCashCollectedAPI,
+  packOrderAPI,
+  rejectPaymentAPI,
+  saveInternalNoteAPI,
+  shipOrderAPI,
 } from '@networks/shopping/partner/partnerOrdersNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { CourierKey, PartnerOrderAction, PartnerOrderDetail } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { partnerOrderDetailSerializer } from '@serializers/shopping/partnerSerializer';
 
 export interface StoreOrderEntry {
   order: PartnerOrderDetail | null;
@@ -63,23 +64,23 @@ export type StoreOrderActionInput =
 const perform = (id: string, a: StoreOrderActionInput) => {
   switch (a.action) {
     case 'confirm':
-      return confirmOrder(id);
+      return confirmOrderAPI(id).then(raw => required(partnerOrderDetailSerializer(raw)));
     case 'pack':
-      return packOrder(id);
+      return packOrderAPI(id).then(raw => required(partnerOrderDetailSerializer(raw)));
     case 'ship':
-      return shipOrder(id, { courier: a.courier, trackingRef: a.trackingRef.trim() });
+      return shipOrderAPI(id, { courier: a.courier, trackingRef: a.trackingRef.trim() }).then(raw => required(partnerOrderDetailSerializer(raw)));
     case 'deliver':
-      return deliverOrder(id);
+      return deliverOrderAPI(id).then(raw => required(partnerOrderDetailSerializer(raw)));
     case 'cancel':
-      return cancelPartnerOrder(id, a.reason.trim());
+      return cancelPartnerOrderAPI(id, a.reason.trim()).then(raw => required(partnerOrderDetailSerializer(raw)));
     case 'approve_cancellation':
-      return approveCancellation(id);
+      return approveCancellationAPI(id).then(raw => required(partnerOrderDetailSerializer(raw)));
     case 'confirm_payment':
-      return confirmPayment(id);
+      return confirmPaymentAPI(id).then(raw => required(partnerOrderDetailSerializer(raw)));
     case 'reject_payment':
-      return rejectPayment(id, a.reason.trim());
+      return rejectPaymentAPI(id, a.reason.trim()).then(raw => required(partnerOrderDetailSerializer(raw)));
     case 'cash_collected':
-      return markCashCollected(id);
+      return markCashCollectedAPI(id).then(raw => required(partnerOrderDetailSerializer(raw)));
   }
 };
 
@@ -108,7 +109,7 @@ export const storeOrderDetailSlice = createAppSlice({
     loadStoreOrderAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return await getPartnerOrder(id);
+          return required(partnerOrderDetailSerializer(await getPartnerOrderAPI(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -164,7 +165,7 @@ export const storeOrderDetailSlice = createAppSlice({
     saveNoteAsync: create.asyncThunk(
       async ({ id, note }: { id: string; note: string }, { rejectWithValue }) => {
         try {
-          return await saveInternalNote(id, note.trim());
+          return required(partnerOrderDetailSerializer(await saveInternalNoteAPI(id, note.trim())));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

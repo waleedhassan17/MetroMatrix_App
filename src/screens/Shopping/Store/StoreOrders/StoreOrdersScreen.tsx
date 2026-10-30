@@ -10,12 +10,13 @@ import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useDebouncedValue, usePagedList } from '@hooks/usePagedList';
-import { listPartnerOrders } from '@networks/shopping/partner/partnerOrdersNetwork';
+import { getPartnerOrdersAPI } from '@networks/shopping/partner/partnerOrdersNetwork';
 import { PARTNER_SEGMENTS } from '@models/shopping/orderStatusModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { ChoiceChip, Divider, EmptyState, InlineNotice, ScreenShell, SkeletonLines, TextField } from '@custom/index';
 import { PartnerOrderRowView } from '@components/shopping/StoreParts';
 import { selectStoreOrders, setStoreOrdersQuery, setStoreOrdersView } from './storeOrdersSlice';
+import { partnerOrderPageSerializer } from '@serializers/shopping/partnerSerializer';
 
 type Nav = { navigate: (name: string, params?: object) => void };
 
@@ -41,7 +42,8 @@ const StoreOrdersContent: React.FC = () => {
   const payments = s.view === 'payments';
   const list = usePagedList(
     (page, size) =>
-      listPartnerOrders({ segment: s.view === 'payments' ? 'new' : s.view, q: q || undefined, payment: payments ? 'proof_submitted' : undefined }, page, size),
+      getPartnerOrdersAPI({ segment: s.view === 'payments' ? 'new' : s.view, q: q || undefined, payment: payments ? 'proof_submitted' : undefined }, page, size),
+    partnerOrderPageSerializer,
     `store-orders|${s.view}|${q}`,
   );
   const counts = list.first?.segmentCounts ?? null;

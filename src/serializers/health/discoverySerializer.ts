@@ -27,8 +27,8 @@ import type {
   Specialty,
   TimingRow,
 } from '../../types/health';
-import { arr, bool, isObject, num, oneOf, str, strOrNull } from '../serializerUtils';
-import { compact, count, iso, money } from '../shopping/common';
+import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
+import { compact, count, iso, money, paged } from '../shopping/common';
 import { reviewTagLabel } from '../../models/health/reviewFormModel';
 import {
   KINDS,
@@ -367,3 +367,9 @@ export const suggestionsSerializer = (raw: unknown): HealthSuggestions => {
 
 export const specialtiesSerializer = (raw: unknown): Specialty[] => compact(arr(raw).map(specialtySerializer));
 export const conditionsSerializer = (raw: unknown): Condition[] => compact(arr(raw).map(conditionSerializer));
+
+/** A page of doctorCards, as the API answers it. */
+export const doctorCardPageSerializer = fromResponse(raw => paged(raw, doctorCardSerializer));
+
+/** A page of doctorReviews, as the API answers it. */
+export const doctorReviewPageSerializer = fromResponse(raw => paged(raw, doctorReviewSerializer));

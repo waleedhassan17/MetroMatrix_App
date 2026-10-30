@@ -10,7 +10,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { usePagedList } from '@hooks/usePagedList';
-import { listReviews } from '@networks/shopping/catalogNetwork';
+import { getReviewsAPI } from '@networks/shopping/catalogNetwork';
 import { ServiceScope, StoreBrandScope, useStyles, type Theme } from '@theme/index';
 import { ChoiceChip, Divider, EmptyState, ImageViewer, InlineNotice, RatingBreakdown, SkeletonLines } from '@custom/index';
 import { ReviewItem } from '@components/shopping/ReviewItem';
@@ -18,6 +18,7 @@ import { ShopTopBar } from '@components/shopping/ShopParts';
 import type { ShopBrowseParamList } from '@/types';
 import { loadProductAsync, selectProductEntry } from '../ProductDetail/productDetailSlice';
 import { selectReviewFilter, setReviewPhotos, setReviewRating } from './productReviewsSlice';
+import { productReviewsSerializer } from '@serializers/shopping/catalogSerializer';
 
 type Props = NativeStackScreenProps<ShopBrowseParamList, 'ProductReviews'>;
 
@@ -56,7 +57,8 @@ const ProductReviewsContent: React.FC<Props> = ({ route }) => {
   }, [entry.status, productId, dispatch]);
 
   const list = usePagedList(
-    (page, size) => listReviews(productId, { rating: filter.rating, withPhotos: filter.withPhotos || undefined }, page, size),
+    (page, size) => getReviewsAPI(productId, { rating: filter.rating, withPhotos: filter.withPhotos || undefined }, page, size),
+    productReviewsSerializer,
     `reviews|${productId}|${filter.rating}|${filter.withPhotos}`,
   );
   const summary = entry.product?.reviewSummary;

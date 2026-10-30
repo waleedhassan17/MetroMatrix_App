@@ -1,32 +1,11 @@
 // MetroMatrix — Store-partner serializers.
 // TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
 
-import type {
-  Coupon,
-  CouponStatus,
-  CouponType,
-  Insights,
-  InsightsRange,
-  InventoryMovement,
-  InventoryRow,
-  MovementReason,
-  PartnerOrderAction,
-  PartnerOrderDetail,
-  PartnerOrderRow,
-  PartnerProduct,
-  PartnerProductRow,
-  PartnerProductStatus,
-  PartnerReview,
-  PartnerSummary,
-  PaymentAccount,
-  PaymentAccountKind,
-  StoreProfile,
-  StoreSettings,
-} from '../../types/shopping';
-import { arr, bool, enumList, isObject, num, oneOf, str, strOrNull } from '../serializerUtils';
+import type { Coupon, CouponStatus, CouponType, Insights, InsightsRange, InventoryMovement, InventoryRow, MovementReason, PartnerOrderAction, PartnerOrderDetail, PartnerOrderRow, PartnerProduct, PartnerProductRow, PartnerProductStatus, PartnerReview, PartnerSummary, PaymentAccount, PaymentAccountKind, StoreProfile, StoreSettings, PartnerOrderSegment } from '../../types/shopping';
+import { arr, bool, enumList, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { addressSerializer } from '../addressSerializer';
 import { reviewSerializer } from './catalogSerializer';
-import { BRAND_FALLBACK, color, compact, count, iso, isoOrNull, money, moneyOrNull } from './common';
+import { BRAND_FALLBACK, color, compact, count, iso, isoOrNull, money, moneyOrNull, paged } from './common';
 import { ORDER_STATUSES, PAYMENT_STATUSES, storeOrderSerializer } from './orderSerializer';
 
 const PRODUCT_STATUSES: readonly PartnerProductStatus[] = ['draft', 'active', 'archived'];
@@ -49,7 +28,7 @@ const series = <K extends 'amount' | 'count'>(raw: unknown, key: K) =>
     .map(p => ({ date: str(p.date), [key]: key === 'amount' ? money(p[key]) : count(p[key]) }) as { date: string } & Record<K, number>)
     .filter(p => p.date);
 
-export const partnerSummarySerializer = (raw: unknown): PartnerSummary => {
+export const partnerSummarySerializer = fromResponse((raw: unknown): PartnerSummary => {
   const r = isObject(raw) ? raw : {};
   const c = isObject(r.counts) ? r.counts : {};
   return {
@@ -67,7 +46,7 @@ export const partnerSummarySerializer = (raw: unknown): PartnerSummary => {
     sales7d: series(r.sales7d, 'amount'),
     recordedSales7d: money(r.recordedSales7d),
   };
-};
+});
 
 export const partnerOrderRowSerializer = (raw: unknown): PartnerOrderRow | null => {
   if (!isObject(raw)) return null;
@@ -86,7 +65,7 @@ export const partnerOrderRowSerializer = (raw: unknown): PartnerOrderRow | null 
   };
 };
 
-export const partnerOrderDetailSerializer = (raw: unknown): PartnerOrderDetail | null => {
+export const partnerOrderDetailSerializer = fromResponse((raw: unknown): PartnerOrderDetail | null => {
   const order = storeOrderSerializer(raw);
   if (!order || !isObject(raw)) return null;
   const address = addressSerializer(raw.address);
@@ -100,7 +79,7 @@ export const partnerOrderDetailSerializer = (raw: unknown): PartnerOrderDetail |
     allowedActions: enumList(raw.allowedActions, ACTIONS),
     shipBlockedReason: strOrNull(raw.shipBlockedReason),
   };
-};
+});
 
 export const partnerProductRowSerializer = (raw: unknown): PartnerProductRow | null => {
   if (!isObject(raw)) return null;
@@ -120,7 +99,7 @@ export const partnerProductRowSerializer = (raw: unknown): PartnerProductRow | n
   };
 };
 
-export const partnerProductSerializer = (raw: unknown): PartnerProduct | null => {
+export const partnerProductSerializer = fromResponse((raw: unknown): PartnerProduct | null => {
   if (!isObject(raw)) return null;
   const id = str(raw.id);
   if (!id) return null;
@@ -161,9 +140,9 @@ export const partnerProductSerializer = (raw: unknown): PartnerProduct | null =>
       })),
     updatedAt: iso(raw.updatedAt),
   };
-};
+});
 
-export const inventoryRowSerializer = (raw: unknown): InventoryRow | null => {
+export const inventoryRowSerializer = fromResponse((raw: unknown): InventoryRow | null => {
   if (!isObject(raw)) return null;
   const variantId = str(raw.variantId);
   if (!variantId) return null;
@@ -177,7 +156,7 @@ export const inventoryRowSerializer = (raw: unknown): InventoryRow | null => {
     lowStock: bool(raw.lowStock),
     imageUrl: strOrNull(raw.imageUrl),
   };
-};
+});
 
 const MOVEMENT_REASONS: readonly MovementReason[] = ['initial', 'manual', 'bulk', 'order', 'cancel', 'return_restock'];
 
@@ -198,7 +177,7 @@ export const movementSerializer = (raw: unknown): InventoryMovement | null => {
 const COUPON_TYPES: readonly CouponType[] = ['percent', 'fixed'];
 const COUPON_STATUSES: readonly CouponStatus[] = ['active', 'scheduled', 'expired', 'used_up', 'inactive'];
 
-export const couponSerializer = (raw: unknown): Coupon | null => {
+export const couponSerializer = fromResponse((raw: unknown): Coupon | null => {
   if (!isObject(raw)) return null;
   const id = str(raw.id);
   const code = str(raw.code);
@@ -220,17 +199,17 @@ export const couponSerializer = (raw: unknown): Coupon | null => {
     isActive: bool(raw.isActive, true),
     status: oneOf(raw.status, COUPON_STATUSES, 'active'),
   };
-};
+});
 
-export const partnerReviewSerializer = (raw: unknown): PartnerReview | null => {
+export const partnerReviewSerializer = fromResponse((raw: unknown): PartnerReview | null => {
   const review = reviewSerializer(raw);
   if (!review || !isObject(raw)) return null;
   return { ...review, productName: str(raw.productName, 'Product'), productImage: strOrNull(raw.productImage) };
-};
+});
 
 const RANGES: readonly InsightsRange[] = ['7d', '30d', '90d'];
 
-export const insightsSerializer = (raw: unknown): Insights => {
+export const insightsSerializer = fromResponse((raw: unknown): Insights => {
   const r = isObject(raw) ? raw : {};
   return {
     range: oneOf(r.range, RANGES, '7d'),
@@ -251,9 +230,9 @@ export const insightsSerializer = (raw: unknown): Insights => {
     repeatCustomerPct: Math.min(100, count(r.repeatCustomerPct)),
     deliveredRatePct: Math.min(100, count(r.deliveredRatePct)),
   };
-};
+});
 
-export const storeProfileSerializer = (raw: unknown): StoreProfile | null => {
+export const storeProfileSerializer = fromResponse((raw: unknown): StoreProfile | null => {
   if (!isObject(raw)) return null;
   const id = str(raw.id);
   if (!id) return null;
@@ -277,9 +256,9 @@ export const storeProfileSerializer = (raw: unknown): StoreProfile | null => {
     phone: strOrNull(raw.phone),
     whatsapp: strOrNull(raw.whatsapp),
   };
-};
+});
 
-export const storeSettingsSerializer = (raw: unknown): StoreSettings => {
+export const storeSettingsSerializer = fromResponse((raw: unknown): StoreSettings => {
   const r = isObject(raw) ? raw : {};
   const min = count(r.dispatchMinDays);
   return {
@@ -295,9 +274,9 @@ export const storeSettingsSerializer = (raw: unknown): StoreSettings => {
     isPaused: bool(r.isPaused),
     pauseMessage: strOrNull(r.pauseMessage),
   };
-};
+});
 
-export const paymentAccountSerializer = (raw: unknown): PaymentAccount | null => {
+export const paymentAccountSerializer = fromResponse((raw: unknown): PaymentAccount | null => {
   if (!isObject(raw)) return null;
   const id = str(raw.id);
   const number = str(raw.number);
@@ -310,6 +289,38 @@ export const paymentAccountSerializer = (raw: unknown): PaymentAccount | null =>
     bankName: strOrNull(raw.bankName),
     isActive: bool(raw.isActive, true),
   };
-};
+});
 
 export { compact };
+
+/** A page of partnerReviews, as the API answers it. */
+export const partnerReviewPageSerializer = fromResponse(raw => paged(raw, partnerReviewSerializer));
+
+/** A list of paymentAccounts, as the API answers it. */
+export const paymentAccountListSerializer = fromResponse(raw => compact(arr(raw).map(paymentAccountSerializer)));
+
+/** A page of partnerProductRows, as the API answers it. */
+export const partnerProductRowPageSerializer = fromResponse(raw => paged(raw, partnerProductRowSerializer));
+
+/** A list of coupons, as the API answers it. */
+export const couponListSerializer = fromResponse(raw => compact(arr(raw).map(couponSerializer)));
+
+/** A page of inventoryRows, as the API answers it. */
+export const inventoryRowPageSerializer = fromResponse(raw => paged(raw, inventoryRowSerializer));
+
+/** A list of inventoryRows, as the API answers it. */
+export const inventoryRowListSerializer = fromResponse(raw => compact(arr(raw).map(inventoryRowSerializer)));
+
+/** A list of movements, as the API answers it. */
+export const movementListSerializer = fromResponse(raw => compact(arr(raw).map(movementSerializer)));
+
+/** A page of the store's orders, with each segment's count. */
+export const partnerOrderPageSerializer = fromResponse(raw => ({
+    ...paged(raw, partnerOrderRowSerializer),
+    segmentCounts: isObject(raw) && isObject(raw.segmentCounts)
+      ? (Object.fromEntries(Object.entries(raw.segmentCounts).map(([k, v]) => [k, Math.max(0, Math.round(num(v)))])) as Record<
+          PartnerOrderSegment,
+          number
+        >)
+      : null,
+  }));

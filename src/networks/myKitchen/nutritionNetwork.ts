@@ -4,7 +4,7 @@
 
 import { api } from '../network/apiHelpers';
 import { request } from '../shopping/http';
-import { healthyPicksSerializer, nutritionSettingsSerializer, nutritionSummarySerializer } from '../../serializers/myKitchen/myKitchenSerializer';
+import { healthyPicksSerializer, nutritionSettingsSerializer, nutritionSummarySerializer, nutritionSettingsResponseSerializer } from '../../serializers/myKitchen/myKitchenSerializer';
 import type { NutritionSettings } from '../../types/myKitchen';
 
 export const getNutritionSettings = () => request(() => api.get('/my-kitchen/nutrition/settings'), nutritionSettingsSerializer);
@@ -13,7 +13,7 @@ export const saveNutritionSettings = (patch: Partial<Pick<NutritionSettings, 'en
   request(() => api.put('/my-kitchen/nutrition/settings', patch), nutritionSettingsSerializer);
 
 /** Everything: settings and body numbers. */
-export const deleteNutritionData = () => request(() => api.delete('/my-kitchen/nutrition'), raw => nutritionSettingsSerializer((raw as { settings?: unknown })?.settings));
+export const deleteNutritionData = () => request(() => api.delete('/my-kitchen/nutrition'), nutritionSettingsResponseSerializer);
 
 /** `409 NUTRITION_OFF` while nutrition is off. */
 export const getNutritionSummary = (days = 7) => request(() => api.get('/my-kitchen/nutrition/summary', { params: { days } }), nutritionSummarySerializer);

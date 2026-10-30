@@ -13,7 +13,7 @@ import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useServiceNav } from '@hooks/useServiceNav';
 import { useDebouncedValue, usePagedList } from '@hooks/usePagedList';
 import { useShopBootstrap, useShopNav } from '@hooks/useShop';
-import { listStores } from '@networks/shopping/catalogNetwork';
+import { getStoresAPI } from '@networks/shopping/catalogNetwork';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import {
   AppText,
@@ -32,6 +32,7 @@ import {
 } from '@components/shopping/ShopParts';
 import type { HomeStackParamList, StoreSummary } from '@/types';
 import { loadShoppingHomeAsync, selectShoppingHome, setBrandQuery } from './shoppingHomeSlice';
+import { storeSummaryPageSerializer } from '@serializers/shopping/catalogSerializer';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'ShoppingHome'>;
 
@@ -137,7 +138,8 @@ const ShoppingHomeContent: React.FC<Props> = () => {
 
   const q = useDebouncedValue(s.brandQuery.trim());
   const brands = usePagedList(
-    (page, sz) => listStores({ q: q || undefined }, page, sz),
+    (page, sz) => getStoresAPI({ q: q || undefined }, page, sz),
+    storeSummaryPageSerializer,
     `brands|${q}`,
   );
 

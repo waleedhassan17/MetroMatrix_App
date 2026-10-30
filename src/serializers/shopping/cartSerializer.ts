@@ -14,7 +14,7 @@ import type {
   PaymentOption,
   PreviewStore,
 } from '../../types/shopping';
-import { arr, bool, isObject, oneOf, str, strOrNull } from '../serializerUtils';
+import { arr, bool, isObject, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { compact, count, isoOrNull, money, moneyOrNull, storeRefSerializer } from './common';
 
 const WARNING_CODES: readonly CartWarningCode[] = ['PRICE_CHANGED', 'OUT_OF_STOCK', 'LOW_STOCK', 'STORE_PAUSED'];
@@ -75,7 +75,7 @@ const cartGroupSerializer = (raw: unknown): CartGroup | null => {
 
 export const EMPTY_CART: Cart = { groups: [], itemCount: 0, itemsTotal: 0, shippingTotal: 0, total: 0, blocking: false };
 
-export const cartSerializer = (raw: unknown): Cart => {
+export const cartSerializer = fromResponse((raw: unknown): Cart => {
   if (!isObject(raw)) return EMPTY_CART;
   const groups = compact(arr(raw.groups).map(cartGroupSerializer));
   return {
@@ -86,7 +86,7 @@ export const cartSerializer = (raw: unknown): Cart => {
     total: money(raw.total),
     blocking: bool(raw.blocking),
   };
-};
+});
 
 const issueSerializer = (raw: unknown): ApiIssue | null =>
   isObject(raw) && str(raw.code) ? { code: str(raw.code), message: str(raw.message, 'Something is not right here.') } : null;
@@ -120,7 +120,7 @@ const previewStoreSerializer = (raw: unknown): PreviewStore | null => {
   };
 };
 
-export const checkoutPreviewSerializer = (raw: unknown): CheckoutPreview => {
+export const checkoutPreviewSerializer = fromResponse((raw: unknown): CheckoutPreview => {
   const r = isObject(raw) ? raw : {};
   const stores = compact(arr(r.stores).map(previewStoreSerializer));
   return {
@@ -131,7 +131,7 @@ export const checkoutPreviewSerializer = (raw: unknown): CheckoutPreview => {
     total: money(r.total),
     canPlace: bool(r.canPlace) && stores.length > 0 && stores.every(s => !s.error),
   };
-};
+});
 
 export const availableCouponSerializer = (raw: unknown): AvailableCoupon | null => {
   if (!isObject(raw)) return null;
@@ -139,3 +139,6 @@ export const availableCouponSerializer = (raw: unknown): AvailableCoupon | null 
   if (!code) return null;
   return { code, label: str(raw.label), minOrder: moneyOrNull(raw.minOrder), endsAt: isoOrNull(raw.endsAt), shortBy: Math.max(0, money(raw.shortBy)) };
 };
+
+/** A list of availableCoupons, as the API answers it. */
+export const availableCouponListSerializer = fromResponse(raw => compact(arr(raw).map(availableCouponSerializer)));

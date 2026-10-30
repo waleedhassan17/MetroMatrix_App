@@ -18,7 +18,7 @@ import type {
   KitchenKind,
 } from '../../types/food';
 import type { Paged } from '../../types/payments';
-import { arr, bool, isObject, num, oneOf, str, strOrNull } from '../serializerUtils';
+import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { paged } from '../shopping/common';
 import { boardCardSerializer, foodOrderSerializer } from './orderSerializer';
 import { foodReviewSerializer, ratingSummarySerializer } from './reviewSerializer';
@@ -190,3 +190,6 @@ export const adminFoodBannerSerializer = (raw: unknown): AdminFoodBanner | null 
 };
 
 export const adminFoodBannersSerializer = (raw: unknown): AdminFoodBanner[] => compact(arr(raw).map(adminFoodBannerSerializer));
+
+/** The food-safety check's recorded outcome. */
+export const foodSafetyOutcomeSerializer = fromResponse(raw => (isObject(raw) && str(raw.outcome) ? str(raw.outcome) : null));

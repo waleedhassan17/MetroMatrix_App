@@ -77,13 +77,14 @@ import { addToPantry, listPantry } from '../../../myKitchen/pantryNetwork';
 import { getHomeRecipe, getMissingItems, suggestHomeRecipes } from '../../../myKitchen/recipesNetwork';
 import { deleteNutritionData, getNutritionSettings, getNutritionSummary, listHealthyPicks, saveNutritionSettings } from '../../../myKitchen/nutritionNetwork';
 import { searchFood } from '../../../food/discoveryNetwork';
-import { addToCart as addToShopCart, getCart as getShopCart } from '../../../shopping/cartNetwork';
+import { addToCartAPI as addToShopCart, getCartAPI as getShopCart } from '../../../shopping/cartNetwork';
 import { handedExternal, markDelivered } from '../../../food/vendor/ordersNetwork';
-import { api, ApiError } from '../../apiHelpers';
+import { api, ApiError, required } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import { getDb, resetMockDb } from '../mockDb';
 import type { FoodCheckoutInput } from '../../../../types/food';
 import { signInAs, installDummyApi } from '../testing';
+import { cartSerializer } from '../../../../serializers/shopping/cartSerializer';
 
 installDummyApi();
 
@@ -806,7 +807,7 @@ describe('My Kitchen and nutrition (5C)', () => {
     const atta = potato.find(m => m.key === 'atta')!;
     expect(atta.options[0].pricePerUnit.amount).toBe(155);
     await addToShopCart(atta.options[0].variantId!, atta.options[0].packsNeeded);
-    expect((await getShopCart()).groups.flatMap(g => g.lines).some(l => l.productId === atta.options[0].productId)).toBe(true);
+    expect((required(cartSerializer(await getShopCart()))).groups.flatMap(g => g.lines).some(l => l.productId === atta.options[0].productId)).toBe(true);
     // "Order it nearby" searches Food Court for the dish's own word.
     expect(keema.searchTerm).toBe('keema');
     const pulao = await getHomeRecipe('rc_chicken_pulao', 'ur', null);

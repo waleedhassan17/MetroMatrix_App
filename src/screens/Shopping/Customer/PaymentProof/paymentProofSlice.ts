@@ -6,17 +6,18 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { submitPaymentProof } from '@networks/shopping/ordersNetwork';
+import { submitPaymentProofAPI } from '@networks/shopping/ordersNetwork';
 import { submitAppointmentPaymentProof } from '@networks/health/appointmentsNetwork';
 import { submitFoodPaymentProof } from '@networks/food/ordersNetwork';
 import { submitReservationProof } from '@networks/food/surplusNetwork';
 import { submitTiffinProof } from '@networks/foodGrowth/tiffinNetwork';
 import { submitAdvanceProof } from '@networks/foodGrowth/cateringNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { normaliseTransactionId } from '@models/shopping/paymentProofModel';
 import type { LocalFile } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { pendingPhoto, photoFailed, photoKey, photoProgress, photoUploaded, upload, type FormPhoto } from '../shared/photoUploads';
+import { orderGroupSerializer } from '@serializers/shopping/orderSerializer';
 
 export interface PaymentProofSliceState {
   /** The order or appointment being paid for. */
@@ -73,7 +74,7 @@ export const paymentProofSlice = createAppSlice({
     submitPaymentProofAsync: create.asyncThunk(
       async ({ orderId, transactionId, imageUrl }: { orderId: string; transactionId: string; imageUrl: string | null }, { rejectWithValue }) => {
         try {
-          return await submitPaymentProof(orderId, { transactionId: normaliseTransactionId(transactionId), imageUrl });
+          return required(orderGroupSerializer(await submitPaymentProofAPI(orderId, { transactionId: normaliseTransactionId(transactionId), imageUrl })));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

@@ -17,8 +17,8 @@ import type {
   SymptomResult,
   VideoJoin,
 } from '../../types/health';
-import { arr, bool, isObject, oneOf, str, strOrNull } from '../serializerUtils';
-import { compact, count, iso } from '../shopping/common';
+import { arr, bool, isObject, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
+import { compact, count, iso, paged } from '../shopping/common';
 import {
   KINDS,
   dayOrNull,
@@ -198,3 +198,5 @@ export const minutesBetween = (from: unknown, to: unknown) => {
   return Number.isFinite(a) && Number.isFinite(b) ? Math.max(0, Math.round((b - a) / 60_000)) : 0;
 };
 
+/** A page of prescriptionSummarys, as the API answers it. */
+export const prescriptionSummaryPageSerializer = fromResponse(raw => paged(raw, prescriptionSummarySerializer));

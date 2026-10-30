@@ -12,10 +12,11 @@ import { usePagedList } from '@hooks/usePagedList';
 import { useBack } from '@hooks/useBack';
 import { useIsTabRoot } from '@hooks/useServiceNav';
 import { useShopBootstrap } from '@hooks/useShop';
-import { listWishlist } from '@networks/shopping/wishlistNetwork';
+import { getWishlistAPI } from '@networks/shopping/wishlistNetwork';
 import { ServiceScope, useStyles, type Theme } from '@theme/index';
 import { ProductGrid, ShopTopBar } from '@components/shopping/ShopParts';
 import type { AccountStackParamList } from '@/types';
+import { productSummaryPageSerializer } from '@serializers/shopping/catalogSerializer';
 
 type Props = NativeStackScreenProps<AccountStackParamList, 'Saved'>;
 
@@ -32,7 +33,7 @@ const SavedContent: React.FC<Props> = () => {
   const asTab = useIsTabRoot();
   const styles = useStyles(makeStyles);
   const root = useNavigation<{ navigate: (name: string, params?: object) => void }>();
-  const list = usePagedList((page, size) => listWishlist(page, size), 'saved');
+  const list = usePagedList((page, size) => getWishlistAPI(page, size), productSummaryPageSerializer, 'saved');
   useShopBootstrap();
 
   return (
