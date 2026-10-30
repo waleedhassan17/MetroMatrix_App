@@ -21,12 +21,17 @@ export interface PendingTotp {
   email: string;
 }
 
+/** Where the signed-out navigator opens after a sign-out that asked for one. */
+export type SignedOutLanding = 'SignIn';
+
 export interface AuthSliceState {
   user: User | null;
   business: Business | null;
   isAuthenticated: boolean;
   hasSeenOnboarding: boolean;
   pendingTotp: PendingTotp | null;
+  /** "Use a different account" lands on Sign In; any other sign-out on Role Selection. */
+  signedOutLanding: SignedOutLanding | null;
 }
 
 const initialState: AuthSliceState = {
@@ -35,6 +40,7 @@ const initialState: AuthSliceState = {
   isAuthenticated: false,
   hasSeenOnboarding: false,
   pendingTotp: null,
+  signedOutLanding: null,
 };
 
 /** Back to a signed-out session, keeping what belongs to the install. */
@@ -54,6 +60,7 @@ export const authSlice = createAppSlice({
         state.business = action.payload.business;
         state.isAuthenticated = true;
         state.pendingTotp = null;
+        state.signedOutLanding = null;
         // Anyone who has signed in has, by definition, seen the app's pitch.
         state.hasSeenOnboarding = true;
       },
@@ -67,7 +74,15 @@ export const authSlice = createAppSlice({
     setPendingTotp: create.reducer((state, action: PayloadAction<PendingTotp | null>) => {
       state.pendingTotp = action.payload;
     }),
-    signOut: create.reducer(state => toSignedOut(state)),
+    /** The staff sign-in challenge died (expired, spent, too many codes): back to Sign In. */
+    endPendingTotp: create.reducer(state => {
+      state.pendingTotp = null;
+      state.signedOutLanding = 'SignIn';
+    }),
+    signOut: create.reducer((state, action: PayloadAction<{ landing?: SignedOutLanding } | undefined>) => ({
+      ...toSignedOut(state),
+      signedOutLanding: action.payload?.landing ?? null,
+    })),
     setOnboardingSeen: create.reducer(state => {
       state.hasSeenOnboarding = true;
     }),
@@ -93,7 +108,7 @@ export const authSlice = createAppSlice({
   },
 });
 
-export const { setSession, setUser, setBusiness, setPendingTotp, signOut, setOnboardingSeen } =
+export const { setSession, setUser, setBusiness, setPendingTotp, endPendingTotp, signOut, setOnboardingSeen } =
   authSlice.actions;
 
 export const {

@@ -252,6 +252,14 @@ const authPersistConfig = {
   whitelist: ['hasSeenOnboarding'],
 };
 
+// Same pattern for the provider's pick: only `pending` reaches disk, so a new
+// provider who restarts before PersonalInfo still has the type they chose.
+const providerSelectionPersistConfig = {
+  key: 'providerSelection',
+  storage: AsyncStorage,
+  whitelist: ['pending'],
+};
+
 const rootReducer = combineReducers({
   auth: persistReducer(authPersistConfig, authReducer),
   preferences: preferencesSlice.reducer,
@@ -261,7 +269,7 @@ const rootReducer = combineReducers({
   voice: voiceSlice.reducer,
   designGallery: designGallerySlice.reducer,
   roleSelection: roleSelectionSlice.reducer,
-  providerSelection: providerSelectionSlice.reducer,
+  providerSelection: persistReducer(providerSelectionPersistConfig, providerSelectionSlice.reducer),
   signIn: signInSlice.reducer,
   signUp: signUpSlice.reducer,
   providerSignIn: providerSignInSlice.reducer,
@@ -492,7 +500,8 @@ type RootReducerState = ReturnType<typeof rootReducer>;
 //
 // `platformConfig` describes the platform (GET /config), not the account: a
 // sign-out must not forget that the platform is in maintenance.
-const SHELL_SLICES = ['appContainer', 'preferences', 'auth', 'platformConfig'] as const;
+// `providerSelection` is the same: it clears itself on reset.
+const SHELL_SLICES = ['appContainer', 'preferences', 'auth', 'platformConfig', 'providerSelection'] as const;
 
 // Applied at the root so a slice added later is account-scoped by default —
 // nobody has to remember to add it to a reset list.

@@ -43,7 +43,9 @@ describe('userSerializer', () => {
       hasPassword: true,
       providers: ['password'],
       createdAt: '2026-10-01T00:00:00Z',
-      profileComplete: false,
+      // A partner has no customer profile to complete, whatever the payload says.
+      profileComplete: true,
+      profileSkippable: false,
       dateOfBirth: '1995-04-12',
       gender: 'female',
       streetAddress: '12 Main Boulevard',
@@ -51,6 +53,31 @@ describe('userSerializer', () => {
       postalCode: '54000',
       providerServiceType: 'food',
       providerSubType: 'home_kitchen',
+    });
+  });
+
+  it("reads the API's AuthUser (displayName, profile fields, profileSkippable)", () => {
+    const u = userSerializer({
+      id: 'c1',
+      email: 'c@x.pk',
+      displayName: 'Hina Raza',
+      role: 'customer',
+      isEmailVerified: true,
+      hasPassword: false,
+      dateOfBirth: null,
+      gender: null,
+      streetAddress: null,
+      city: null,
+      postalCode: null,
+      profileComplete: false,
+      profileSkippable: true,
+    });
+    expect(u).toMatchObject({
+      name: 'Hina Raza',
+      isEmailVerified: true,
+      hasPassword: false,
+      profileComplete: false,
+      profileSkippable: true,
     });
   });
 
@@ -65,14 +92,16 @@ describe('userSerializer', () => {
     expect(userSerializer({ ...fullUser, role: 7 }).role).toBe('customer');
   });
 
-  it('reads legacy field names', () => {
-    const u = userSerializer({ _id: 'x', displayName: 'Bilal', photoURL: 'p', emailVerified: true });
-    expect(u).toMatchObject({ id: 'x', name: 'Bilal', avatarUrl: 'p', isEmailVerified: true });
+  it('reads legacy field names, but never a legacy verification flag', () => {
+    const u = userSerializer({ _id: 'x', name: 'Bilal', photoURL: 'p', emailVerified: true });
+    expect(u).toMatchObject({ id: 'x', name: 'Bilal', avatarUrl: 'p', isEmailVerified: false });
   });
 
-  it('treats a missing verification flag as verified, but honours an explicit false', () => {
-    expect(userSerializer({ id: 'a' }).isEmailVerified).toBe(true);
-    expect(userSerializer({ id: 'a', isEmailVerified: false }).isEmailVerified).toBe(false);
+  it('is verified only when the server says exactly true', () => {
+    expect(userSerializer({ id: 'a', isEmailVerified: true }).isEmailVerified).toBe(true);
+    for (const v of [undefined, false, 'true', 1, null]) {
+      expect(userSerializer({ id: 'a', isEmailVerified: v }).isEmailVerified).toBe(false);
+    }
   });
 
   it('marks Google-only accounts as having no password', () => {
@@ -83,7 +112,10 @@ describe('userSerializer', () => {
 
   it('defaults missing profile fields safely', () => {
     const u = userSerializer({ id: 'a', gender: 'robot', providerSubType: 'spaceship' });
-    expect(u.profileComplete).toBe(true);
+    // A customer (the fallback role) is incomplete unless the server says so.
+    expect(u.profileComplete).toBe(false);
+    expect(u.profileSkippable).toBe(false);
+    expect(userSerializer({ id: 'p', role: 'partner' }).profileComplete).toBe(true);
     expect(u.gender).toBeNull();
     expect(u.providerSubType).toBeNull();
     expect(userSerializer({ id: 'a', subType: 'doctor', serviceType: 'healthcare' })).toMatchObject({
@@ -153,7 +185,13 @@ describe('TOTP serializers', () => {
     expect(totpEnrolmentSerializer({ secret: 'S', otpauthUrl: 'otpauth://x' })).toEqual({
       secret: 'S',
       otpauthUrl: 'otpauth://x',
+      qrDataUrl: null,
     });
+    // The API's names: otpauthUri and a PNG data URL (anything else is dropped).
+    expect(
+      totpEnrolmentSerializer({ secret: 'S', otpauthUri: 'otpauth://y', qrDataUrl: 'data:image/png;base64,AA' }),
+    ).toEqual({ secret: 'S', otpauthUrl: 'otpauth://y', qrDataUrl: 'data:image/png;base64,AA' });
+    expect(totpEnrolmentSerializer({ secret: 'S', otpauthUri: 'otpauth://y', qrDataUrl: 'javascript:x' })?.qrDataUrl).toBeNull();
     expect(totpEnrolmentSerializer({ secret: 'S' })).toBeNull();
   });
 

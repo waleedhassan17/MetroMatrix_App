@@ -8,7 +8,7 @@ Every app file that depends on it carries `TODO(API_SHOPPING)` (`grep -rn "TODO(
 
 Screens and slices should not change.
 
-**No backend yet?** Leave `BACKEND_URL` in `src/config/env.ts` empty. The dummy API (`src/networks/network/mock/shop/`) then implements every endpoint below, and every rule in [Server rules](#server-rules). See [Mock mode](#mock-mode).
+**Tests:** the dummy API (`src/networks/network/mock/shop/`) implements every endpoint below for the flow tests (`installDummyApi()`, `mock/testing.ts`). The app itself talks to the real API, so this contract still has to be reconciled with the backend's `API_SHOPPING.md` (`TODO(API_SHOPPING)`).
 
 ## Conventions
 

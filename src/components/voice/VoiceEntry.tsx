@@ -12,7 +12,6 @@ import { StyleSheet, View } from 'react-native';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useStyles, type Theme } from '../../theme';
 import { Button, InlineNotice, TextField, VoiceButton, VoiceResultCard } from '../../Custom-Components';
-import { USE_MOCK_API } from '../../config/env';
 import { selectMicExplained, selectVoiceLanguage, setMicExplained, setVoiceLanguage } from '../../store/preferencesSlice';
 import { aiDownNote, isAiDown } from '../../models/kitchen/aiModel';
 import { VOICE_HINTS } from '../../models/kitchen/voiceModel';
@@ -30,7 +29,6 @@ export interface VoiceEntryProps {
   hint?: string;
 }
 
-const DUMMY_NOTE = 'Dummy API: a sample phrase stands in for your recording.';
 
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
@@ -73,7 +71,6 @@ export const VoiceEntry: React.FC<VoiceEntryProps> = ({ context, onConfirm, onEd
           onRetry={() => dispatch(clearVoice(context))}
           onDiscard={() => dispatch(clearVoice(context))}
           busy={busy}
-          note={USE_MOCK_API && run.result.heard === 'audio' ? DUMMY_NOTE : null}
         />
       ) : down ? (
         <InlineNotice tone="info" title={aiDownNote(run.error.code, run.error.details).title} message={aiDownNote(run.error.code, run.error.details).message} action={{ label: 'OK', onPress: () => dispatch(clearVoice(context)) }} />

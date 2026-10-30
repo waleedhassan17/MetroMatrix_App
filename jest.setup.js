@@ -1,3 +1,7 @@
+// No backend URL here, so the client answers CONFIG_ERROR (src/config/env.ts).
+// A test that runs networks against the dummy API installs it
+// (networks/network/mock/testing.ts); others stub axios themselves.
+
 // Native modules have no implementation under Jest. Mock the two storage
 // backends the infra layer touches so networks/slices/storageUtils can be
 // required (and exercised) from plain unit tests.

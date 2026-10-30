@@ -1,15 +1,23 @@
 // ═══════════════════════════════════════════════════════
 // AuthErrorNotice — a server error, phrased for the person reading it
 // ═══════════════════════════════════════════════════════
-// WRONG_PORTAL shows the server's message plus a button to the portal the
-// account belongs to (QA 10): the API names the account type (and the
-// portal that was tried); staff go to the User sign-in, as in the FYP. Offline gets its own title (QA 27); retrying
-// is simply submitting again.
+// WRONG_PORTAL shows a message plus a button to the door the account belongs
+// to (QA 10); a rider account is sent to the Rider sign-in. EMAIL_EXISTS
+// on a sign-up screen offers "Sign in instead". The API names the ACCOUNT (`details.accountType`) and the door
+// that was used (`details.portal`); the right door follows from the account.
+// Staff use the User sign-in, as in the FYP. Offline gets its own tone
+// (QA 27); retrying is simply submitting again. Every other code reads from
+// errorCopy (networks/network/errorCodes.ts), or the server's own message
+// when there is none; VALIDATION_FAILED lists its fields. SIGNUPS_PAUSED
+// (the platform switch) is information: SignupsPausedNotice says it too.
 
 import React from 'react';
 import { InlineNotice } from '../../Custom-Components/InlineNotice';
+import { doorForAccount, WRONG_DOOR_MESSAGE } from '../../models/authDoors';
+import { ERROR_CODES } from '../../networks/network/errorCodes';
 import type { Portal } from '../../types/auth';
 import type { ServerError } from '../../screens/Auth/shared/formStatus';
+import { authErrorMessage } from './authErrorMessage';
 
 const PORTAL_LABEL: Record<Portal, string> = {
   customer: 'Sign in as a User',
@@ -17,38 +25,45 @@ const PORTAL_LABEL: Record<Portal, string> = {
   admin: 'Sign in as a User',
 };
 
-const DOOR: Record<string, Portal> = { customer: 'customer', partner: 'partner', admin: 'customer', super_admin: 'customer' };
-
-/** `{ accountType, portal: tried }` from the API → where to sign in instead. */
-const rightPortal = (details: unknown): Portal | undefined => {
-  const d = (details ?? {}) as { accountType?: unknown; portal?: unknown };
-  return typeof d.accountType === 'string' ? DOOR[d.accountType] : (d.portal as Portal | undefined);
-};
+/** Codes that are an instruction, not a failure. */
+const INFO_CODES = new Set<string>([
+  ERROR_CODES.WRONG_PORTAL,
+  ERROR_CODES.RESEND_COOLDOWN,
+  ERROR_CODES.EMAIL_NOT_VERIFIED,
+  ERROR_CODES.TOTP_REQUIRED,
+  ERROR_CODES.SIGNUPS_PAUSED,
+]);
 
 export const AuthErrorNotice: React.FC<{
   error: ServerError;
   fallbackTitle?: string;
   onGoToPortal?: (portal: Portal) => void;
-}> = ({ error, fallbackTitle, onGoToPortal }) => {
+  /** Sign-up screens: EMAIL_EXISTS offers this side's sign-in (the API doesn't say which kind of account it is). */
+  onSignInInstead?: () => void;
+}> = ({ error, fallbackTitle, onGoToPortal, onSignInInstead }) => {
   if (!error.message) return null;
-  if (error.code === 'NETWORK_ERROR') {
-    return <InlineNotice tone="warning" message="You're offline. Check your connection, then try again." />;
+  if (error.code === ERROR_CODES.NETWORK_ERROR) {
+    return <InlineNotice tone="warning" message={authErrorMessage(error)} />;
   }
-  // Sign-ups paused: SignupsPausedNotice already says so on the screen.
-  if (error.code === 'SIGNUPS_PAUSED') {
-    return <InlineNotice tone="info" title="Sign-ups are paused" message={error.message} />;
-  }
-  const portal = rightPortal(error.details);
-  if (error.code === 'WRONG_PORTAL' && portal && onGoToPortal && PORTAL_LABEL[portal]) {
+  if (error.code === ERROR_CODES.WRONG_PORTAL) {
+    const accountType = error.details?.accountType;
+    const portal = doorForAccount(accountType);
+    const message = (typeof accountType === 'string' && WRONG_DOOR_MESSAGE[accountType]) || error.message;
     return (
       <InlineNotice
         tone="info"
-        message={error.message}
-        action={{ label: PORTAL_LABEL[portal], onPress: () => onGoToPortal(portal) }}
+        message={message}
+        action={portal && onGoToPortal ? { label: PORTAL_LABEL[portal], onPress: () => onGoToPortal(portal) } : undefined}
       />
     );
   }
-  return <InlineNotice tone="error" title={fallbackTitle} message={error.message} />;
+  if (error.code === ERROR_CODES.EMAIL_EXISTS && onSignInInstead) {
+    return (
+      <InlineNotice tone="info" message={authErrorMessage(error)} action={{ label: 'Sign in instead', onPress: onSignInInstead }} />
+    );
+  }
+  const tone = error.code && INFO_CODES.has(error.code) ? 'info' : 'error';
+  return <InlineNotice tone={tone} title={tone === 'error' ? fallbackTitle : undefined} message={authErrorMessage(error)} />;
 };
 
 export default AuthErrorNotice;

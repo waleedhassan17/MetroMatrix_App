@@ -5,7 +5,7 @@
 // system viewer), then the decision for the business's current status:
 //   pending_approval → Approve · Reject (reason + per-document notes)
 //   approved         → Suspend (reason)
-//   suspended        → Reinstate
+//   suspended        → Reinstate (reason)
 // A doctor is approved only after staff check the PMDC number (Health →
 // Doctor verification); until then Approve is held and the notice links there.
 
@@ -18,10 +18,10 @@ import Toast from 'react-native-toast-message';
 import dayjs from 'dayjs';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import {
-  BUSINESS_FORM_SCHEMA,
   DOCUMENT_LABELS,
   SERVICE_LABELS,
   SUBTYPE_LABELS,
+  requirementLabel,
   validateDecisionReason,
 } from '@models/businessModel';
 import { hasErrors } from '@models/authModel';
@@ -119,7 +119,7 @@ const BusinessReviewScreen: React.FC<Props> = ({ navigation, route }) => {
   const reasonError = s.reasonTouched ? reasonErrors.reason : undefined;
 
   const decide = async (decision: Decision) => {
-    if ((decision === 'reject' || decision === 'suspend') && hasErrors(reasonErrors)) {
+    if (decision !== 'approve' && hasErrors(reasonErrors)) {
       dispatch(touchReason());
       return;
     }
@@ -164,7 +164,6 @@ const BusinessReviewScreen: React.FC<Props> = ({ navigation, route }) => {
     );
   }
 
-  const schema = BUSINESS_FORM_SCHEMA[b.subType];
   const pmdcHeld = b.subType === 'doctor' && b.pmdcVerified !== true;
   const checkPmdc = () =>
     navigation.getParent()?.navigate('HealthAdminTab', { screen: 'DoctorVerification', params: { businessId: b.id }, initial: false });
@@ -183,7 +182,7 @@ const BusinessReviewScreen: React.FC<Props> = ({ navigation, route }) => {
     ) : b.status === 'approved' ? (
       <Button label="Suspend business" variant="destructive" onPress={() => dispatch(openSheet('suspend'))} fullWidth />
     ) : b.status === 'suspended' ? (
-      <Button label="Reinstate" onPress={() => decide('reinstate')} loading={s.deciding === 'reinstate'} fullWidth size="lg" />
+      <Button label="Reinstate" onPress={() => dispatch(openSheet('reinstate'))} fullWidth size="lg" />
     ) : undefined;
 
   return (
@@ -206,13 +205,11 @@ const BusinessReviewScreen: React.FC<Props> = ({ navigation, route }) => {
                 Pin {b.location.lat.toFixed(4)}, {b.location.lng.toFixed(4)}
               </AppText>
             ) : null}
-            {schema.details.map(field =>
-              b.details[field.key] ? (
-                <AppText key={field.key} variant="small" tone="muted">
-                  {field.label}: {b.details[field.key]}
-                </AppText>
-              ) : null,
-            )}
+            {b.pmdcNumber ? (
+              <AppText variant="small" tone="muted">
+                PMDC number: {b.pmdcNumber}
+              </AppText>
+            ) : null}
             {b.submittedAt ? (
               <AppText variant="small" tone="muted">
                 Submitted {dayjs(b.submittedAt).format('D MMM YYYY, h:mm a')}
@@ -252,7 +249,7 @@ const BusinessReviewScreen: React.FC<Props> = ({ navigation, route }) => {
         </Card>
 
         <AppText variant="micro" tone="muted">
-          Documents ({b.documents.length} of {b.requiredDocuments.length})
+          Documents ({b.requiredDocuments.filter(r => r.satisfied).length} of {b.requiredDocuments.length} requirements met)
         </AppText>
         <Card padded="horizontal">
           {b.documents.length === 0 ? (
@@ -284,7 +281,7 @@ const BusinessReviewScreen: React.FC<Props> = ({ navigation, route }) => {
         {b.missingDocuments.length ? (
           <InlineNotice
             tone="warning"
-            message={`Missing: ${b.missingDocuments.map(k => DOCUMENT_LABELS[k].label).join(', ')}.`}
+            message={`Missing: ${b.missingDocuments.map(requirementLabel).join(', ')}.`}
           />
         ) : null}
 
@@ -319,6 +316,7 @@ const BusinessReviewScreen: React.FC<Props> = ({ navigation, route }) => {
               value={s.documentNotes[doc.id] ?? ''}
               onChangeText={note => dispatch(setDocumentNote({ id: doc.id, note }))}
               placeholder="What to fix"
+              maxLength={500}
             />
           ))}
         </Sheet>
@@ -345,6 +343,26 @@ const BusinessReviewScreen: React.FC<Props> = ({ navigation, route }) => {
             onBlur={() => dispatch(touchReason())}
             error={reasonError}
             placeholder="Repeated customer complaints about expired stock."
+            multiline
+          />
+        </Sheet>
+
+        <Sheet
+          visible={s.sheet === 'reinstate'}
+          onClose={() => dispatch(openSheet(null))}
+          title="Reinstate business"
+          subtitle="The business is live again and the partner is told by email."
+          footer={
+            <Button label="Reinstate" onPress={() => decide('reinstate')} loading={s.deciding === 'reinstate'} fullWidth />
+          }>
+          {s.error.message ? <InlineNotice message={s.error.message} /> : null}
+          <TextField
+            label="Reason"
+            value={s.reason}
+            onChangeText={v => dispatch(setReason(v))}
+            onBlur={() => dispatch(touchReason())}
+            error={reasonError}
+            placeholder="The partner renewed their licence."
             multiline
           />
         </Sheet>

@@ -13,6 +13,7 @@ import { providerApprovalPendingSlice } from '../Partner/ProviderApprovalPending
 import { providerSelectionSlice } from '../ProviderSelection/providerSelectionSlice';
 import { adminTotpSlice } from '../Admin/AdminTotp/adminTotpSlice';
 import { approvalQueueSlice } from '../Admin/ApprovalQueue/approvalQueueSlice';
+import { resetAllState } from '../../store/resetAllState';
 import type { Business, BusinessSummary } from '../../types/auth';
 import { makeUser } from '../../__fixtures__/users';
 
@@ -41,7 +42,7 @@ describe('emailVerificationSlice (link based, as in the FYP)', () => {
 
   it('takes the resend countdown from the server (QA 6)', () => {
     const before = Date.now();
-    const s = reducer(init(reducer), actions.resendAsync.fulfilled(45, 'r', undefined));
+    const s = reducer(init(reducer), actions.resendAsync.fulfilled({ retryAfter: 45, alreadyVerified: false }, 'r', undefined));
     expect(s.resendAvailableAt).toBeGreaterThanOrEqual(before + 45_000);
     expect(s.resendAvailableAt).toBeLessThan(before + 46_000);
   });
@@ -54,35 +55,53 @@ describe('emailVerificationSlice (link based, as in the FYP)', () => {
 });
 
 describe('password reset — three screens, three slices (QA 11)', () => {
-  it('Forgot Password starts the resend countdown the OTP screen reads', () => {
+  it("Forgot Password starts the client's own 60 s resend countdown the OTP screen reads", () => {
     const { reducer, actions } = forgotPasswordSlice;
     const before = Date.now();
-    const s = reducer(init(reducer), actions.requestCodeAsync.fulfilled(60, 'r', 'a@x.com'));
+    const s = reducer(init(reducer), actions.requestCodeAsync.fulfilled(true, 'r', 'a@x.com'));
     expect(s.status).toBe('succeeded');
     expect(s.resendAvailableAt).toBeGreaterThanOrEqual(before + 60_000);
+    expect(s.resendAvailableAt).toBeLessThan(before + 61_000);
   });
 
-  it('a wrong code counts down attempts and clears the input', () => {
+  it('a throttled request (429 RATE_LIMITED) restarts the countdown from retryAfter', () => {
+    const { reducer, actions } = forgotPasswordSlice;
+    const before = Date.now();
+    const s = reducer(
+      init(reducer),
+      actions.requestCodeAsync.rejected(null, 'r', 'a@x.com', { message: 'Slow down', code: 'RATE_LIMITED', details: { retryAfter: 300 } }),
+    );
+    expect(s.resendAvailableAt).toBeGreaterThanOrEqual(before + 300_000);
+  });
+
+  it('OTP_INVALID counts down attempts, shows them and clears the input', () => {
     const { reducer, actions } = resetPasswordOtpSlice;
     let s = reducer(init(reducer), actions.setCode('111111'));
     s = reducer(
       s,
       actions.verifyCodeAsync.rejected(null, 'r', { email: 'a@x.com', code: '111111' }, {
         message: 'Wrong code',
-        code: 'INVALID_OTP',
+        code: 'OTP_INVALID',
         details: { attemptsLeft: 3 },
       }),
     );
-    expect(s).toMatchObject({ attemptsLeft: 3, code: '' });
+    expect(s).toMatchObject({ attemptsLeft: 3, code: '', needsNewCode: false });
+    expect(s.error.message).toBe("That code isn't right.");
   });
 
-  it('OTP_LOCKED ends the attempt', () => {
+  it.each([
+    ['OTP_LOCKED', 'Too many attempts'],
+    ['OTP_EXPIRED', 'expired'],
+  ])('%s ends this code: only a new one (Resend) helps', (code, copy) => {
     const { reducer, actions } = resetPasswordOtpSlice;
     const s = reducer(
       init(reducer),
-      actions.verifyCodeAsync.rejected(null, 'r', { email: 'a@x.com', code: '111111' }, { message: 'Locked', code: 'OTP_LOCKED' }),
+      actions.verifyCodeAsync.rejected(null, 'r', { email: 'a@x.com', code: '111111' }, { message: 'x', code }),
     );
-    expect(s.attemptsLeft).toBe(0);
+    expect(s.needsNewCode).toBe(true);
+    expect(s.error.message).toContain(copy);
+    // Typing again doesn't hide why the code can't work.
+    expect(reducer(s, actions.setCode('1')).error.code).toBe(code);
   });
 
   it('an accepted code keeps the reset token in the slice, not a route param', () => {
@@ -146,20 +165,20 @@ describe('personalInfoSlice (providers, 3 steps)', () => {
       actions.submitApplicationAsync.rejected(null, 'r', undefined, {
         message: 'Missing documents',
         code: 'DOCUMENTS_MISSING',
-        details: { missing: ['medical_license'] },
+        details: { missing: ['pmdc_certificate', 'ntn_certificate|shop_photo'] },
       }),
     );
-    expect(s).toMatchObject({ step: 3, highlight: ['medical_license'] });
+    expect(s).toMatchObject({ step: 3, highlight: ['pmdc_certificate', 'ntn_certificate|shop_photo'] });
   });
 });
 
 describe('providerApprovalPendingSlice', () => {
   const { reducer, actions } = providerApprovalPendingSlice;
-  it('counts checks and schedules the next one 30 s out', () => {
+  it('counts checks and schedules the next one 10 s out (the planned poll interval)', () => {
     const before = Date.now();
     const s = reducer(init(reducer), actions.checkStatusAsync.fulfilled('pending_approval', 'r', { manual: false }));
     expect(s.checks).toBe(1);
-    expect(s.nextCheckAt).toBeGreaterThanOrEqual(before + 30_000);
+    expect(s.nextCheckAt).toBeGreaterThanOrEqual(before + 10_000);
   });
   it('a failed silent poll stays quiet; a failed Check Now says so', () => {
     const quiet = reducer(
@@ -187,20 +206,37 @@ describe('providerSelectionSlice', () => {
     expect(reducer(init(reducer), actions.chooseService('healthcare')).subType).toBe('doctor');
     expect(reducer(init(reducer), actions.chooseService('shopping')).subType).toBe('store');
   });
+  it('keeps the signed-up pick as pending until the account is reset', () => {
+    let s = reducer(init(reducer), actions.rememberPendingPick({ serviceType: 'food', subType: 'cloud_kitchen' }));
+    expect(s.pending).toEqual({ serviceType: 'food', subType: 'cloud_kitchen' });
+    s = reducer(s, resetAllState());
+    expect(s.pending).toBeNull();
+  });
 });
 
 describe('adminTotpSlice (QA 20, 23)', () => {
   const { reducer, actions } = adminTotpSlice;
 
-  it('explains a reused recovery code', () => {
+  it('explains a wrong or reused recovery code (the API says TOTP_INVALID for both)', () => {
     const s = reducer(
       { ...init(reducer), useRecovery: true },
       actions.verifyTotpAsync.rejected(null, 'r', { challengeToken: 'c', recoveryCode: 'AAAA' }, {
-        message: 'Used',
-        code: 'RECOVERY_CODE_USED',
+        message: 'That code is not right.',
+        code: 'TOTP_INVALID',
       }),
     );
     expect(s.error.message).toMatch(/already been used/);
+  });
+
+  it('a wrong or replayed TOTP code says to wait for the next one', () => {
+    const s = reducer(
+      init(reducer),
+      actions.verifyTotpAsync.rejected(null, 'r', { challengeToken: 'c', code: '123456' }, {
+        message: 'That code is not right.',
+        code: 'TOTP_INVALID',
+      }),
+    );
+    expect(s.error.message).toMatch(/next code/);
   });
 
   it('toggling recovery mode clears both inputs', () => {

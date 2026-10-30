@@ -1,4 +1,14 @@
-import { doctorRootRoute, foodVendorRootRoute, isGateCleared, resolveGate, totpInitialRoute, type GateInput } from '../sessionGate';
+import {
+  doctorRootRoute,
+  foodVendorRootRoute,
+  gateInputOf,
+  isGateCleared,
+  partnerAppFor,
+  partnerSetupInitialRoute,
+  resolveGate,
+  totpInitialRoute,
+  type GateInput,
+} from '../sessionGate';
 import type { Business, BusinessStatus, User, UserRole } from '../../types/auth';
 import { makeUser } from '../../__fixtures__/users';
 
@@ -45,6 +55,23 @@ describe('resolveGate — the BaseNavigator ladder, in order', () => {
 
   it('4. a user whose profile is incomplete → completeProfile', () => {
     expect(resolveGate(input({ user: user('customer', true, false) }))).toBe('completeProfile');
+  });
+
+  it('4b. "Skip for now" lets only a skippable customer through, and only once they skipped', () => {
+    const existing = makeUser({ role: 'customer', profileComplete: false, profileSkippable: true });
+    const brandNew = makeUser({ role: 'customer', profileComplete: false, profileSkippable: false });
+    expect(resolveGate(input({ user: existing }))).toBe('completeProfile');
+    expect(resolveGate(input({ user: existing, profileSkipped: true }))).toBe('customer');
+    // A new customer can't skip, even if a skip was recorded for the id.
+    expect(resolveGate(input({ user: brandNew, profileSkipped: true }))).toBe('completeProfile');
+  });
+
+  it('gateInputOf reads the skip for THIS account from the device preferences', () => {
+    const u = makeUser({ id: 'u7', role: 'customer', profileComplete: false, profileSkippable: true });
+    const auth = { isAuthenticated: true, user: u, business: null, pendingTotp: null };
+    expect(gateInputOf(auth, { u7: true }).profileSkipped).toBe(true);
+    expect(gateInputOf(auth, { someoneElse: true }).profileSkipped).toBe(false);
+    expect(resolveGate(gateInputOf(auth, { u7: true }))).toBe('customer');
   });
 
   it('profile completion never gates providers or staff', () => {
@@ -96,6 +123,17 @@ describe('totpInitialRoute', () => {
   });
 });
 
+describe('partnerSetupInitialRoute — never guess the service', () => {
+  const partner = user('partner');
+  it('opens Personal Info when the draft business or the saved pick names the service', () => {
+    expect(partnerSetupInitialRoute(business('draft', { subType: 'doctor' }), null, partner)).toBe('PersonalInfo');
+    expect(partnerSetupInitialRoute(null, 'home_kitchen', partner)).toBe('PersonalInfo');
+  });
+  it('opens Provider Selection on a new device with no business and no saved pick', () => {
+    expect(partnerSetupInitialRoute(null, null, partner)).toBe('ProviderSelection');
+  });
+});
+
 describe('doctorRootRoute — Practice setup until listed', () => {
   it('opens a new doctor on Practice setup', () => {
     expect(doctorRootRoute({ isListed: false })).toBe('PracticeSetup');
@@ -116,5 +154,25 @@ describe('foodVendorRootRoute — Kitchen setup until live', () => {
   });
   it('opens a live kitchen on the tabs', () => {
     expect(foodVendorRootRoute({ food: food(true) })).toBe('VendorTabs');
+  });
+});
+
+describe('partnerAppFor — routing after approval', () => {
+  it('opens the app for the business’s service once the gate clears', () => {
+    const approved = (serviceType: Business['serviceType']) => business('approved', { serviceType });
+    expect(resolveGate(input({ user: user('partner'), business: approved('shopping') }))).toBe('partner');
+    expect(partnerAppFor(approved('shopping'))).toBe('store');
+    expect(partnerAppFor(approved('healthcare'))).toBe('doctor');
+    expect(partnerAppFor(approved('food'))).toBe('kitchen');
+  });
+
+  it('a doctor’s app then opens on Practice setup until listed', () => {
+    const doctor = business('approved', { serviceType: 'healthcare', subType: 'doctor', isListed: false });
+    expect(partnerAppFor(doctor)).toBe('doctor');
+    expect(doctorRootRoute(doctor)).toBe('PracticeSetup');
+  });
+
+  it('defaults to the store app when the service is unknown', () => {
+    expect(partnerAppFor(null)).toBe('store');
   });
 });

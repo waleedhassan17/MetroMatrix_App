@@ -15,13 +15,15 @@ import {
   BUSINESS_FORM_SCHEMA,
   CITIES,
   DOCUMENT_LABELS,
-  REQUIRED_DOCUMENTS,
   SUBTYPE_SERVICE,
   allDetailFields,
+  documentSlots,
   missingDocuments,
   providerTypeLabel,
+  requirementLabel,
   validateBusinessProfile,
   type DetailFieldSpec,
+  type DocumentSlot,
 } from '@models/businessModel';
 import { visibleErrors } from '@utils/formErrors';
 import { haptics } from '@utils/haptics';
@@ -42,17 +44,19 @@ import {
 } from '@custom/index';
 import { AuthHeader, AuthScreen, ProviderBadge } from '@components/auth/AuthChrome';
 import { StepButtons, StepHeading, StepProgress } from '@components/auth/StepFlow';
-import type { BusinessDocument, DocumentKind, LocalFile, RootStackParamList } from '@/types';
+import type { BusinessDocument, LocalFile, RootStackParamList } from '@/types';
 import { selectBusiness, selectUser } from '../../Auth/authSlice';
+import { selectPendingPick } from '../../ProviderSelection/providerSelectionSlice';
 import {
   dismissError,
   goToStep,
   initialise,
+  choosePickingKind,
   openDocumentPicker,
   openPicker,
   openViewer,
   removeDocumentAsync,
-  retryFileFor,
+  retryUploadFor,
   saveBasicsAsync,
   saveProfessionalAsync,
   selectPersonalInfo,
@@ -64,6 +68,7 @@ import {
   touchFields,
   uploadDocumentAsync,
 } from './personalInfoSlice';
+import { ERROR_CODES } from '@networks/network/errorCodes';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PersonalInfo'>;
 
@@ -82,7 +87,7 @@ const makeStyles = ({ space }: Theme) =>
     center: { alignItems: 'center' },
   });
 
-const PersonalInfoScreen: React.FC<Props> = ({ route }) => {
+const PersonalInfoScreen: React.FC<Props> = ({ route, navigation }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const user = useAppSelector(selectUser);
@@ -92,11 +97,18 @@ const PersonalInfoScreen: React.FC<Props> = ({ route }) => {
   const phoneRef = useRef<TextInput>(null);
   const addressRef = useRef<TextInput>(null);
 
-  const subType = business?.subType ?? user?.providerSubType ?? 'store';
-  const serviceType = business?.serviceType ?? user?.providerServiceType ?? SUBTYPE_SERVICE[subType];
+  const pending = useAppSelector(selectPendingPick);
+  const subType = business?.subType ?? pending?.subType ?? user?.providerSubType ?? 'store';
+  const serviceType = business?.serviceType ?? pending?.serviceType ?? user?.providerServiceType ?? SUBTYPE_SERVICE[subType];
   const schema = BUSINESS_FORM_SCHEMA[subType];
   const paramStep = route.params?.step;
   const paramHighlight = route.params?.highlight;
+
+  // No service known (no business, no saved pick): choose it rather than guess.
+  const serviceUnknown = !business && !pending && !user?.providerSubType;
+  useEffect(() => {
+    if (serviceUnknown) navigation.replace('ProviderSelection');
+  }, [serviceUnknown, navigation]);
 
   useEffect(() => {
     if (user) dispatch(initialise({ user, business, step: paramStep, highlight: paramHighlight }));
@@ -104,7 +116,7 @@ const PersonalInfoScreen: React.FC<Props> = ({ route }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, user?.id, business?.id, paramStep, paramHighlight]);
 
-  if (!user) return null;
+  if (!user || serviceUnknown) return null;
 
   const basicErrors = validateProviderBasics({ name: s.fullName, phone: s.phone });
   const proErrors = validateBusinessProfile(subType, s.form);
@@ -114,11 +126,11 @@ const PersonalInfoScreen: React.FC<Props> = ({ route }) => {
   );
   const busy = s.status === 'loading';
   const submitting = s.submitStatus === 'loading';
-  const required = REQUIRED_DOCUMENTS[subType];
   const documents = business?.documents ?? [];
+  const slots = documentSlots(subType, documents);
   const missing = missingDocuments(subType, documents);
+  const filledSlots = slots.filter(slot => slot.doc && slot.doc.status !== 'rejected').length;
   const uploading = Object.values(s.uploads).some(u => u?.status === 'uploading');
-  const byKind = new Map(documents.map(d => [d.kind, d]));
   const back = s.step > 1 ? () => dispatch(goToStep((s.step - 1) as 1 | 2)) : undefined;
 
   // ── Step actions ──
@@ -161,10 +173,11 @@ const PersonalInfoScreen: React.FC<Props> = ({ route }) => {
     s.step < 3 ? (busy ? 'Saving...' : 'Continue') : submitting ? 'Submitting...' : business?.status === 'rejected' ? 'Resubmit Application' : 'Submit Application';
 
   // ── Documents ──
-  const upload = async (kind: DocumentKind, file: LocalFile | null) => {
+  const upload = async (file: LocalFile | null) => {
+    const picking = s.pickingFor;
     dispatch(openDocumentPicker(null));
-    if (!file) return;
-    const r = await dispatch(uploadDocumentAsync({ kind, file }));
+    if (!file || !picking) return;
+    const r = await dispatch(uploadDocumentAsync({ slot: picking.slot, kind: picking.kind, file, replacing: picking.replacing }));
     if (uploadDocumentAsync.fulfilled.match(r)) haptics.success();
     else haptics.warning();
   };
@@ -174,27 +187,35 @@ const PersonalInfoScreen: React.FC<Props> = ({ route }) => {
     else dispatch(openViewer({ uri: doc.url, title: DOCUMENT_LABELS[doc.kind].label }));
   };
 
-  const tileFor = (kind: DocumentKind) => {
-    const pending = s.uploads[kind];
-    const doc = byKind.get(kind);
+  const tileFor = (slot: DocumentSlot) => {
+    const pending = s.uploads[slot.key];
+    const { doc } = slot;
     const state: DocumentTileState = pending ? 'uploading' : doc ? (doc.status === 'rejected' ? 'rejected' : 'uploaded') : 'empty';
+    const pick = () => dispatch(openDocumentPicker({ slot: slot.key, kinds: slot.kinds, replacing: doc?.id ?? null }));
     return (
       <DocumentUploadTile
-        key={kind}
-        label={DOCUMENT_LABELS[kind].label}
-        hint={DOCUMENT_LABELS[kind].hint}
+        key={slot.key}
+        label={doc && slot.kinds.length > 1 ? `${slot.label} · ${DOCUMENT_LABELS[doc.kind].label}` : slot.label}
+        hint={slot.hint}
         state={state}
         progress={pending?.progress}
         error={pending?.error}
         thumbnailUri={pending ? pending.previewUri : doc && !isPdf(doc) ? doc.url : null}
         isPdf={pending ? pending.isPdf : doc ? isPdf(doc) : false}
         note={doc?.reviewerNote}
-        highlighted={!doc && s.highlight.includes(kind)}
-        onPick={() => dispatch(openDocumentPicker(kind))}
+        // The server names requirements (`a|b`); Rejected passes the kinds it turned down.
+        highlighted={
+          (!doc || doc.status === 'rejected') &&
+          s.highlight.some(h => h === slot.requirement || (slot.kinds as string[]).includes(h))
+        }
+        onPick={pick}
         onRetry={() => {
-          const file = retryFileFor(kind);
-          if (file) void upload(kind, file);
-          else dispatch(openDocumentPicker(kind));
+          const retry = retryUploadFor(slot.key);
+          if (!retry) return pick();
+          void dispatch(uploadDocumentAsync(retry)).then(r => {
+            if (uploadDocumentAsync.fulfilled.match(r)) haptics.success();
+            else haptics.warning();
+          });
         }}
         onRemove={doc ? () => dispatch(removeDocumentAsync(doc.id)) : undefined}
         onView={doc ? () => view(doc) : undefined}
@@ -246,8 +267,8 @@ const PersonalInfoScreen: React.FC<Props> = ({ route }) => {
         {s.error.message ? (
           <InlineNotice
             message={
-              s.error.code === 'DOCUMENTS_MISSING' && s.highlight.length
-                ? `Add ${s.highlight.map(k => DOCUMENT_LABELS[k].label).join(', ')} to submit.`
+              s.error.code === ERROR_CODES.DOCUMENTS_MISSING && s.highlight.length
+                ? `Add ${s.highlight.map(requirementLabel).join(', ')} to submit.`
                 : s.error.message
             }
             action={{ label: 'Dismiss', onPress: () => dispatch(dismissError()) }}
@@ -357,9 +378,9 @@ const PersonalInfoScreen: React.FC<Props> = ({ route }) => {
         {s.step === 3 ? (
           <View style={styles.body}>
             <AppText variant="small" tone="muted">
-              {required.length - missing.length} of {required.length} added · clear photos or PDFs, every corner visible
+              {filledSlots} of {slots.length} added · clear photos or PDFs, every corner visible
             </AppText>
-            {required.map(tileFor)}
+            {slots.map(tileFor)}
           </View>
         ) : null}
 
@@ -371,22 +392,21 @@ const PersonalInfoScreen: React.FC<Props> = ({ route }) => {
         <Sheet
           visible={!!s.pickingFor}
           onClose={() => dispatch(openDocumentPicker(null))}
-          title={s.pickingFor ? DOCUMENT_LABELS[s.pickingFor].label : ''}
+          title={s.pickingFor ? DOCUMENT_LABELS[s.pickingFor.kind].label : ''}
           subtitle="Use good light and keep the whole document in frame.">
-          {Platform.OS !== 'web' ? (
-            <ListRow title="Take a photo" leftIcon="camera-outline" onPress={async () => s.pickingFor && upload(s.pickingFor, await takePhoto())} />
-          ) : null}
-          <ListRow
-            title="Choose from photos"
-            leftIcon="images-outline"
-            onPress={async () => s.pickingFor && upload(s.pickingFor, await pickImageFromLibrary())}
-          />
-          <ListRow
-            title="Choose a file"
-            subtitle="PDF or image"
-            leftIcon="document-text-outline"
-            onPress={async () => s.pickingFor && upload(s.pickingFor, await pickDocumentFile())}
-          />
+          {s.pickingFor && s.pickingFor.kinds.length > 1
+            ? s.pickingFor.kinds.map(kind => (
+                <ListRow
+                  key={kind}
+                  title={`This is my ${DOCUMENT_LABELS[kind].label}`}
+                  leftIcon={s.pickingFor?.kind === kind ? 'radio-button-on' : 'radio-button-off'}
+                  onPress={() => dispatch(choosePickingKind(kind))}
+                />
+              ))
+            : null}
+          {Platform.OS !== 'web' ? <ListRow title="Take a photo" leftIcon="camera-outline" onPress={async () => upload(await takePhoto())} /> : null}
+          <ListRow title="Choose from photos" leftIcon="images-outline" onPress={async () => upload(await pickImageFromLibrary())} />
+          <ListRow title="Choose a file" subtitle="PDF or image" leftIcon="document-text-outline" onPress={async () => upload(await pickDocumentFile())} />
         </Sheet>
         <ImageViewer visible={!!s.viewer} uri={s.viewer?.uri ?? null} title={s.viewer?.title} onClose={() => dispatch(openViewer(null))} />
       </AuthScreen>

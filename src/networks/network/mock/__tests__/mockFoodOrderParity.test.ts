@@ -10,12 +10,13 @@
 
 import ordersReal from '../../../../serializers/__tests__/fixtures/food/orders.json';
 import p8Real from '../../../../serializers/__tests__/fixtures/food/p8.json';
-import { authAdminTotp, authSignin } from '../../../auth/authNetwork';
 import { api } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
-import { MOCK, SEED_PASSWORD, STAFF_PASSWORD } from '../mockConfig';
 import { resetMockDb } from '../mockDb';
 import { isAddition, shippedAdditions } from '../kitchen/foodAdditions';
+import { signInAs, installDummyApi } from '../testing';
+
+installDummyApi();
 
 type Body = { success: boolean; data?: any; error?: { code: string; details?: unknown } };
 type Captured = Record<string, { status: number; body: Body }>;
@@ -172,12 +173,12 @@ add('checkoutPickup', 'customer', async () => (await refill(), place('cod', 'key
 add('customerCancel', 'customer', s => call('post', `/food/orders/${s.pickup!.code}/cancel`, { reason: 'Ordered by mistake' }), ['']);
 add('reject', 'vendor', async s => {
   await clearTokens();
-  await authSignin({ email: 'customer@metromatrix.app', password: SEED_PASSWORD, portal: 'customer' });
+  await signInAs('customer@metromatrix.app');
   await refill();
   const o = (await place('cod', 'key-4')).data;
   s.rejected = { code: o.code, id: o.id };
   await clearTokens();
-  await authSignin({ email: 'restaurant@metromatrix.app', password: SEED_PASSWORD, portal: 'partner' });
+  await signInAs('restaurant@metromatrix.app');
   return call('post', `/food/vendor/orders/${o.id}/reject`, { reason: 'too_busy' });
 }, ['']);
 add('boardDone', 'vendor', () => call('get', '/food/vendor/orders?status=done'), ['', 'items.0']);
@@ -259,14 +260,12 @@ const replay = async ({ label, real, strict }: (typeof RUNS)[number]) => {
   for (const c of steps) {
     if (c.as !== who) {
       await clearTokens();
-      if (c.as === 'customer') await authSignin({ email: 'customer@metromatrix.app', password: SEED_PASSWORD, portal: 'customer' });
-      else if (c.as === 'rider') await authSignin({ username: 'biryani-bazaar.ali', password: SEED_PASSWORD, portal: 'partner' });
+      if (c.as === 'customer') await signInAs('customer@metromatrix.app');
+      else if (c.as === 'rider') await signInAs('biryani-bazaar.ali');
       else if (c.as === 'admin') {
-        const outcome = await authSignin({ email: 'admin@metromatrix.app', password: STAFF_PASSWORD, portal: 'admin' });
-        if (outcome.kind !== 'totp') throw new Error('expected a challenge');
-        await authAdminTotp(outcome.challenge.challengeToken, { code: MOCK.TOTP_CODE });
+        await signInAs('admin@metromatrix.app');
       }
-      else await authSignin({ email: 'restaurant@metromatrix.app', password: SEED_PASSWORD, portal: 'partner' });
+      else await signInAs('restaurant@metromatrix.app');
       who = c.as;
     }
     const body = await c.run(s);

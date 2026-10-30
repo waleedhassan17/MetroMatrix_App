@@ -45,7 +45,15 @@ export interface GateInput {
   user: User | null;
   business: Business | null;
   pendingTotp: PendingTotp | null;
+  /** This account tapped "Skip for now" on this device (preferences.skippedProfile). */
+  profileSkipped?: boolean;
 }
+
+/** The gate's input from the store: the auth slice plus this account's skip. */
+export const gateInputOf = (
+  auth: Omit<GateInput, 'profileSkipped'>,
+  skippedProfile: Record<string, true>,
+): GateInput => ({ ...auth, profileSkipped: !!(auth.user && skippedProfile[auth.user.id]) });
 
 const PARTNER_GATES: Partial<Record<BusinessStatus, Gate>> = {
   pending_approval: 'pending',
@@ -53,7 +61,7 @@ const PARTNER_GATES: Partial<Record<BusinessStatus, Gate>> = {
   suspended: 'suspended',
 };
 
-export const resolveGate = ({ isAuthenticated, user, business, pendingTotp }: GateInput): Gate => {
+export const resolveGate = ({ isAuthenticated, user, business, pendingTotp, profileSkipped }: GateInput): Gate => {
   if (!isAuthenticated || !user) return pendingTotp ? 'totp' : 'unauthenticated';
   if (user.role === 'rider') return 'rider';
   if (!user.isEmailVerified) return 'verify';
@@ -67,7 +75,9 @@ export const resolveGate = ({ isAuthenticated, user, business, pendingTotp }: Ga
     case 'super_admin':
       return 'admin';
     case 'customer':
-      return user.profileComplete ? 'customer' : 'completeProfile';
+      // New customers must complete the profile; customers from before it
+      // existed are asked once and may skip (remembered on this device).
+      return user.profileComplete || (user.profileSkippable && profileSkipped) ? 'customer' : 'completeProfile';
     default:
       // An unknown role lands back on Role Selection rather than in an app
       // built for someone else.
@@ -75,9 +85,31 @@ export const resolveGate = ({ isAuthenticated, user, business, pendingTotp }: Ga
   }
 };
 
+/**
+ * Which partner app an approved partner gets, by the business's service:
+ * healthcare → the doctor’s app (Practice setup until listed), food → the
+ * Food vendor’s app (Kitchen setup until live), anything else → the
+ * store app.
+ */
+export const partnerAppFor = (business: Pick<Business, 'serviceType'> | null): 'doctor' | 'kitchen' | 'store' =>
+  business?.serviceType === 'healthcare' ? 'doctor' : business?.serviceType === 'food' ? 'kitchen' : 'store';
+
 /** True once a role app may mount (no gate left to clear). */
 export const isGateCleared = (gate: Gate): boolean =>
   gate === 'customer' || gate === 'partner' || gate === 'rider' || gate === 'admin';
+
+/**
+ * Provider setup opens on Personal Info when the service is known (the draft
+ * business, the pick saved at sign-up), and on Provider Selection when it
+ * isn't, e.g. a provider signing in on a new device before creating the
+ * business. Never a guessed default.
+ */
+export const partnerSetupInitialRoute = (
+  business: Pick<Business, 'subType'> | null,
+  pendingSubType: string | null | undefined,
+  user: Pick<User, 'providerSubType'> | null,
+): 'PersonalInfo' | 'ProviderSelection' =>
+  business?.subType || pendingSubType || user?.providerSubType ? 'PersonalInfo' : 'ProviderSelection';
 
 /** The TOTP branch opens on enrolment for a staff member's first sign-in. */
 export const totpInitialRoute = (pendingTotp: PendingTotp | null): 'AdminTotp' | 'AdminTwoFactorEnrol' =>

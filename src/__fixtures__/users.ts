@@ -14,6 +14,7 @@ export const makeUser = (over: Partial<User> = {}): User => ({
   providers: ['password'],
   createdAt: '2026-10-01T00:00:00Z',
   profileComplete: true,
+  profileSkippable: false,
   dateOfBirth: '1995-04-12',
   gender: 'female',
   streetAddress: '12 Main Boulevard',

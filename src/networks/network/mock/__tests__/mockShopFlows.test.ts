@@ -2,7 +2,6 @@
 // rules QA relies on: idempotent checkout, stock, delivery cities, coupons,
 // payment before shipping, one review per item, returns and moderation.
 
-import { authAdminTotp, authSignin } from '../../../auth/authNetwork';
 import { listAddresses } from '../../../addresses/addressesNetwork';
 import { listReports, removeReportedProduct } from '../../../admin/adminShopNetwork';
 import { acknowledgeCart, addToCart, getCart } from '../../../shopping/cartNetwork';
@@ -24,8 +23,10 @@ import { pauseStore } from '../../../shopping/partner/storeNetwork';
 import { AuthError } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import type { CheckoutInput, ProductDetail } from '../../../../types/shopping';
-import { MOCK, SEED_PASSWORD, STAFF_PASSWORD } from '../mockConfig';
 import { getDb, resetMockDb } from '../mockDb';
+import { signInAs, installDummyApi } from '../testing';
+
+installDummyApi();
 
 const T0 = new Date('2026-10-15T10:00:00Z').getTime();
 
@@ -40,14 +41,12 @@ const failure = async (p: Promise<unknown>): Promise<AuthError> => {
 
 const signIn = async (email: string, portal: 'customer' | 'partner' = 'customer') => {
   await clearTokens();
-  await authSignin({ email, password: SEED_PASSWORD, portal });
+  await signInAs(email);
 };
 
 const signInAdmin = async () => {
   await clearTokens();
-  const outcome = await authSignin({ email: 'admin@metromatrix.app', password: STAFF_PASSWORD, portal: 'admin' });
-  if (outcome.kind !== 'totp') throw new Error('expected a challenge');
-  await authAdminTotp(outcome.challenge.challengeToken, { code: MOCK.TOTP_CODE });
+  await signInAs('admin@metromatrix.app');
 };
 
 const inStock = (p: ProductDetail) => {

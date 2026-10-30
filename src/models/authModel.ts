@@ -4,7 +4,7 @@
 // Pure functions: data in, { field: message } out. No React, no Redux.
 // The password policy must be IDENTICAL to the API's, so a password the form
 // accepts is never refused by the server.
-// TODO(API_AUTH): confirm PASSWORD_POLICY against MetroMatrix-API.
+// PASSWORD_POLICY mirrors MetroMatrix_Backend docs/API_AUTH.md §4.1.
 
 import { isValidPkMobile, normalizePkPhone, PK_MOBILE_MESSAGE } from '../utils/phone';
 import type { Gender } from '../types/auth';
@@ -15,10 +15,12 @@ export interface ValidationErrors {
 
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/** The API's rule (MetroMatrix_Backend common/validation/password.ts). */
 export const PASSWORD_POLICY = {
   minLength: 8,
   maxLength: 72,
-  requiresLetter: true,
+  requiresLower: true,
+  requiresUpper: true,
   requiresNumber: true,
 } as const;
 
@@ -54,7 +56,8 @@ export const validatePassword = (password: string): string | undefined => {
   if (password.length > PASSWORD_POLICY.maxLength) {
     return `Use ${PASSWORD_POLICY.maxLength} characters or fewer`;
   }
-  if (PASSWORD_POLICY.requiresLetter && !/[A-Za-z]/.test(password)) return 'Add at least one letter';
+  if (PASSWORD_POLICY.requiresLower && !/[a-z]/.test(password)) return 'Add at least one lower-case letter';
+  if (PASSWORD_POLICY.requiresUpper && !/[A-Z]/.test(password)) return 'Add at least one capital letter';
   if (PASSWORD_POLICY.requiresNumber && !/[0-9]/.test(password)) return 'Add at least one number';
   return undefined;
 };
@@ -102,7 +105,7 @@ export const validateRiderSignIn = (data: RiderSignInData): ValidationErrors => 
 // ─── Sign Up (the FYP's four fields) ─────────────────
 export interface SignUpData {
   name: string;
-  /** National part only (the field shows +92). */
+  /** National part only (the field shows +92). Optional, as in the API's SignupDto. */
   phone: string;
   email: string;
   password: string;
@@ -114,7 +117,7 @@ export const validateSignUp = (data: SignUpData): ValidationErrors => {
   if (!data.name.trim()) errors.name = 'Full name is required';
   else if (data.name.trim().length < 2) errors.name = 'Name must be at least 2 characters';
 
-  const phone = validatePhone(data.phone, true);
+  const phone = validatePhone(data.phone, false);
   if (phone) errors.phone = phone;
 
   const email = validateEmail(data.email);

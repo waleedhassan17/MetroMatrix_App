@@ -5,7 +5,6 @@
 // more than they hold), handing a delivery back, and location (on duty,
 // their own orders) reaching the customer's tracking.
 
-import { authSignin } from '../../../auth/authNetwork';
 import { addToFoodCart } from '../../../food/cartNetwork';
 import { getFoodTracking, placeFoodOrder } from '../../../food/ordersNetwork';
 import { acceptOrder, assignRider, markReady, startPreparing } from '../../../food/vendor/ordersNetwork';
@@ -13,8 +12,10 @@ import { getRiderCashForVendor, liveRiders, recordHandover, suggestRiders } from
 import { declineDelivery, getRiderCash, listRiderOrders, markRiderDelivered, riderStep, sendLocationBatch, setDuty } from '../../../food/rider/riderNetwork';
 import { AuthError } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
-import { SEED_PASSWORD } from '../mockConfig';
 import { resetMockDb } from '../mockDb';
+import { signInAs, installDummyApi } from '../testing';
+
+installDummyApi();
 
 // Thursday 15 October 2026, 3 PM in Pakistan: Biryani Bazaar is open.
 const T0 = new Date('2026-10-15T10:00:00Z').getTime();
@@ -30,9 +31,9 @@ const failure = async (p: Promise<unknown>): Promise<AuthError> => {
 
 const as = async (who: 'customer' | 'vendor' | 'rider') => {
   await clearTokens();
-  if (who === 'customer') await authSignin({ email: 'customer@metromatrix.app', password: SEED_PASSWORD, portal: 'customer' });
-  else if (who === 'vendor') await authSignin({ email: 'restaurant@metromatrix.app', password: SEED_PASSWORD, portal: 'partner' });
-  else await authSignin({ username: 'biryani-bazaar.ali', password: SEED_PASSWORD, portal: 'partner' });
+  if (who === 'customer') await signInAs('customer@metromatrix.app');
+  else if (who === 'vendor') await signInAs('restaurant@metromatrix.app');
+  else await signInAs('biryani-bazaar.ali');
 };
 
 const fix = (lat = 31.5125, lng = 74.343) => ({ lat, lng, heading: null, speed: null, accuracy: null, at: new Date(Date.now()).toISOString() });

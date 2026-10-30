@@ -4,12 +4,16 @@
 //   1 Personal       name, phone (email shown, fixed)   → PATCH /users/me
 //   2 Professional   the sub-type's schema (businessModel) → create / PATCH
 //                    the draft, so a provider who leaves resumes it
-//   3 Documents      CNIC + the sub-type's papers, uploaded on pick
-//                    (signed, direct, progress, retry)
+//   3 Documents      one tile per slot (businessModel.documentSlots): CNIC
+//                    front and back plus the sub-type's papers, uploaded on
+//                    pick (signed, direct, progress, retry)
 // Submit → POST /businesses/me/submit → pending_approval, and the gate opens
-// Provider Approval Pending. 422 DOCUMENTS_MISSING highlights the tiles the
-// server named. A rejected application comes back here to fix and resubmit.
+// Provider Approval Pending. 422 DOCUMENTS_MISSING highlights the tiles of the
+// requirements the server named (`details.missing`: `kind` or `a|b`). A
+// rejected application comes back here to fix and resubmit.
 //
+// Uploads are keyed by SLOT, not kind: a home kitchen has two kitchen-photo
+// slots, and a store's "NTN certificate or shop photo" slot takes either kind.
 // Picked files can be Blobs on web, which must not enter Redux, so the file a
 // failed upload used lives in a module-level map for Retry.
 
@@ -53,11 +57,13 @@ export interface PersonalInfoSliceState {
   form: BusinessProfileForm;
   touched: Partial<Record<InfoField, boolean>>;
   picker: 'city' | DetailKey | null;
-  uploads: Partial<Record<DocumentKind, UploadState>>;
-  pickingFor: DocumentKind | null;
+  /** By slot key (businessModel.DocumentSlot.key). */
+  uploads: Partial<Record<string, UploadState>>;
+  /** The slot whose picker sheet is open, the kinds it takes and the one chosen. */
+  pickingFor: { slot: string; kinds: DocumentKind[]; kind: DocumentKind; replacing: string | null } | null;
   viewer: { uri: string; title: string } | null;
-  /** Tiles the server said are missing. */
-  highlight: DocumentKind[];
+  /** Requirement keys the server said are missing (`kind` or `a|b`). */
+  highlight: string[];
   status: FormStatus;
   submitStatus: FormStatus;
   error: ServerError;
@@ -80,8 +86,17 @@ const initialState: PersonalInfoSliceState = {
   error: NO_ERROR,
 };
 
-const retryFiles = new Map<DocumentKind, LocalFile>();
-export const retryFileFor = (kind: DocumentKind): LocalFile | undefined => retryFiles.get(kind);
+export interface DocumentUpload {
+  /** The slot the tile shows (DocumentSlot.key). */
+  slot: string;
+  kind: DocumentKind;
+  file: LocalFile;
+  /** The document this upload replaces in its slot, removed once the new one is in. */
+  replacing: string | null;
+}
+
+const retryFiles = new Map<string, DocumentUpload>();
+export const retryUploadFor = (slot: string): DocumentUpload | undefined => retryFiles.get(slot);
 
 const loading = (state: PersonalInfoSliceState) => {
   state.status = 'loading';
@@ -94,7 +109,7 @@ export const personalInfoSlice = createAppSlice({
   reducers: create => ({
     /** Fill from the account and any saved draft; resume at the first unfinished step. */
     initialise: create.reducer(
-      (state, action: PayloadAction<{ user: User; business: Business | null; step?: InfoStep; highlight?: DocumentKind[] }>) => {
+      (state, action: PayloadAction<{ user: User; business: Business | null; step?: InfoStep; highlight?: string[] }>) => {
         const { user, business, step, highlight } = action.payload;
         const key = `${user.id}:${business?.id ?? 'new'}`;
         if (state.loadedFor !== key) {
@@ -135,14 +150,21 @@ export const personalInfoSlice = createAppSlice({
     openPicker: create.reducer((state, action: PayloadAction<'city' | DetailKey | null>) => {
       state.picker = action.payload;
     }),
-    openDocumentPicker: create.reducer((state, action: PayloadAction<DocumentKind | null>) => {
-      state.pickingFor = action.payload;
+    openDocumentPicker: create.reducer(
+      (state, action: PayloadAction<{ slot: string; kinds: DocumentKind[]; replacing: string | null } | null>) => {
+        const p = action.payload;
+        state.pickingFor = p ? { ...p, kind: p.kinds[0] } : null;
+      },
+    ),
+    /** An either-or slot: which kind this file is. */
+    choosePickingKind: create.reducer((state, action: PayloadAction<DocumentKind>) => {
+      if (state.pickingFor?.kinds.includes(action.payload)) state.pickingFor.kind = action.payload;
     }),
     openViewer: create.reducer((state, action: PayloadAction<{ uri: string; title: string } | null>) => {
       state.viewer = action.payload;
     }),
-    setUploadProgress: create.reducer((state, action: PayloadAction<{ kind: DocumentKind; progress: number }>) => {
-      const upload = state.uploads[action.payload.kind];
+    setUploadProgress: create.reducer((state, action: PayloadAction<{ slot: string; progress: number }>) => {
+      const upload = state.uploads[action.payload.slot];
       if (upload) upload.progress = action.payload.progress;
     }),
     dismissError: create.reducer(state => {
@@ -206,29 +228,30 @@ export const personalInfoSlice = createAppSlice({
     ),
 
     uploadDocumentAsync: create.asyncThunk(
-      async ({ kind, file }: { kind: DocumentKind; file: LocalFile }, { dispatch, rejectWithValue }) => {
-        retryFiles.set(kind, file);
+      async (upload: DocumentUpload, { dispatch, rejectWithValue }) => {
+        const { slot, kind, file, replacing } = upload;
+        retryFiles.set(slot, upload);
         try {
           const signed = await signUpload('business_document');
-          const uploaded = await uploadToCloudinary(file, signed, progress => dispatch(setUploadProgress({ kind, progress })));
-          const business = await addDocument({
-            kind,
-            url: uploaded.url,
-            publicId: uploaded.publicId,
-            mimeType: uploaded.mimeType,
-          });
+          const uploaded = await uploadToCloudinary(file, signed, progress => dispatch(setUploadProgress({ slot, progress })));
+          let business = await addDocument({ kind, url: uploaded.url, publicId: uploaded.publicId });
+          // A single-copy kind is replaced by the API itself; kitchen and shop
+          // photos add up, so the one this upload replaces goes now.
+          if (replacing && business.documents.some(d => d.id === replacing)) {
+            business = await removeDocument(replacing);
+          }
           dispatch(setBusiness(business));
-          retryFiles.delete(kind);
-          return kind;
+          retryFiles.delete(slot);
+          return slot;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
       },
       {
         pending: (state, action) => {
-          const { kind, file } = action.meta.arg;
+          const { slot, file } = action.meta.arg;
           state.pickingFor = null;
-          state.uploads[kind] = {
+          state.uploads[slot] = {
             status: 'uploading',
             progress: 0,
             error: null,
@@ -238,10 +261,12 @@ export const personalInfoSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           delete state.uploads[action.payload];
-          state.highlight = state.highlight.filter(k => k !== action.payload);
+          const { kind } = action.meta.arg;
+          // The requirement this kind meets may now be met; the screen re-evaluates.
+          state.highlight = state.highlight.filter(k => !k.split('|').includes(kind));
         },
         rejected: (state, action) => {
-          const upload = state.uploads[action.meta.arg.kind];
+          const upload = state.uploads[action.meta.arg.slot];
           if (upload) {
             upload.status = 'failed';
             upload.error = readRejection(action, 'Upload failed. Try again.').message;
@@ -289,7 +314,7 @@ export const personalInfoSlice = createAppSlice({
           state.error = readRejection(action, "We couldn't submit your application. Try again.");
           const missing = state.error.details?.missing;
           if (Array.isArray(missing)) {
-            state.highlight = missing as DocumentKind[];
+            state.highlight = missing.filter((k): k is string => typeof k === 'string');
             state.step = 3;
           }
         },
@@ -311,6 +336,7 @@ export const {
   goToStep,
   openPicker,
   openDocumentPicker,
+  choosePickingKind,
   openViewer,
   setUploadProgress,
   dismissError,

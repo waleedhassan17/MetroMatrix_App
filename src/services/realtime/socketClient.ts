@@ -17,11 +17,11 @@
 //     resync listener runs — REST is the truth, events are only hints;
 //   • the status goes to realtimeSlice, which tells live screens when to
 //     fall back to polling.
-// While no backend URL is set the socket is the dummy API's in-process one
-// (networks/network/mock/mockRealtime.ts), so the same code runs in Expo Go.
+// The app's socket is the real API's; tests hand RealtimeClient the dummy
+// API's in-process one (networks/network/mock/mockRealtime.ts).
 
 import { io } from 'socket.io-client';
-import { API_BASE_URL, USE_MOCK_API } from '../../config/env';
+import { API_BASE_URL } from '../../config/env';
 import { getAccessToken, refreshTokens } from '../../networks/network/apiHelpers';
 import {
   REALTIME_AUTH_CODES,
@@ -303,13 +303,4 @@ const socketIo = (): SocketLike => {
   };
 };
 
-const createAppSocket = (): SocketLike => {
-  if (USE_MOCK_API) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { createMockSocket } = require('../../networks/network/mock/mockRealtime') as typeof import('../../networks/network/mock/mockRealtime');
-    return createMockSocket();
-  }
-  return socketIo();
-};
-
-export const realtime = new RealtimeClient(createAppSocket, refreshTokens);
+export const realtime = new RealtimeClient(socketIo, refreshTokens);

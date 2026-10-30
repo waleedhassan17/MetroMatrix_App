@@ -9,7 +9,6 @@ import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useCountdown } from '@hooks/useCountdown';
 import { OTP_LENGTH } from '@models/authModel';
-import { USE_MOCK_API } from '@/config/env';
 import { haptics } from '@utils/haptics';
 import { useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Button, InlineNotice, IonIcon, OtpInput } from '@custom/index';
@@ -42,7 +41,8 @@ const ResetPasswordOTPScreen: React.FC<Props> = ({ navigation, route }) => {
   const s = useAppSelector(selectResetPasswordOtp);
   const forgot = useAppSelector(selectForgotPassword);
   const secondsLeft = useCountdown(forgot.resendAvailableAt);
-  const locked = s.attemptsLeft === 0;
+  // Expired or locked: this code is done; only a new one helps.
+  const locked = s.needsNewCode || s.attemptsLeft === 0;
   const loading = s.status === 'loading';
 
   useEffect(() => {
@@ -76,14 +76,19 @@ const ResetPasswordOTPScreen: React.FC<Props> = ({ navigation, route }) => {
         <AppText variant="bodyStrong">{email}</AppText>
       </View>
 
-      {s.error.message ? (
+      {s.error.message || forgot.error.message ? (
         <InlineNotice
           message={
-            locked
-              ? 'Too many attempts. Request a new code to try again.'
-              : s.attemptsLeft
+            forgot.error.message && !s.error.message
+              ? forgot.error.message
+              : !locked && s.attemptsLeft
                 ? `${s.error.message} ${s.attemptsLeft} attempt${s.attemptsLeft === 1 ? '' : 's'} left.`
                 : s.error.message
+          }
+          action={
+            locked && secondsLeft <= 0
+              ? { label: 'Send a new code', onPress: () => void resend() }
+              : undefined
           }
         />
       ) : null}
@@ -115,11 +120,6 @@ const ResetPasswordOTPScreen: React.FC<Props> = ({ navigation, route }) => {
           <Button label="Resend Code" variant="ghost" size="sm" onPress={resend} loading={forgot.status === 'loading'} />
         )}
       </View>
-      {USE_MOCK_API ? (
-        <AppText variant="caption" tone="muted" align="center">
-          Demo mode: the code is 123456.
-        </AppText>
-      ) : null}
     </AuthScreen>
   );
 };

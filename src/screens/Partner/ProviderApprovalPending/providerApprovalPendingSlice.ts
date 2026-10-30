@@ -1,10 +1,11 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Provider Approval Pending slice
 // ═══════════════════════════════════════════════════════
-// Polls GET /businesses/me/status every 30 s while the screen is open (the
-// FYP's auto-check, with its "Checks Made" and "Next Check" stats), plus a
-// manual Check Now. When the status moves on it re-reads /auth/me — the fresh
-// session makes the gate open the partner app, Rejected or Suspended.
+// Polls GET /businesses/me/status every 10 s while the screen is open (the
+// FYP's auto-check, with its "Checks Made" and "Next Check" stats), again
+// whenever the app returns to the foreground, plus a manual Check Now. When
+// the status moves on it re-reads /auth/me — the fresh session makes the gate
+// open the partner app, Rejected or Suspended.
 
 import { createAppSlice } from '@store/createAppSlice';
 import { authMe } from '@networks/auth/authNetwork';
@@ -13,7 +14,7 @@ import { toRejectedValue } from '@networks/network/apiHelpers';
 import { setSession } from '../../Auth/authSlice';
 import { NO_ERROR, readRejection, type ServerError } from '../../Auth/shared/formStatus';
 
-export const POLL_INTERVAL_MS = 30_000;
+export const POLL_INTERVAL_MS = 10_000;
 
 export interface ProviderApprovalPendingSliceState {
   checking: boolean;

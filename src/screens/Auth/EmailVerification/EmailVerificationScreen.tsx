@@ -2,23 +2,20 @@
 // MetroMatrix — Verify Your Email (the FYP's link flow)
 // ═══════════════════════════════════════════════════════
 
-import React, { useCallback, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useCountdown } from '@hooks/useCountdown';
 import { useSignOut } from '@hooks/useSignOut';
-import { USE_MOCK_API } from '@/config/env';
 import { haptics } from '@utils/haptics';
 import { useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Button, InlineNotice, IonIcon, type IonName } from '@custom/index';
 import { AuthHeader, AuthScreen } from '@components/auth/AuthChrome';
 import { selectUser } from '../authSlice';
 import { checkVerifiedAsync, resendAsync, selectEmailVerification, startCooldownIfIdle } from './emailVerificationSlice';
-
-/** How often the screen quietly re-checks while it is open. */
-const RECHECK_MS = 4000;
+import { useVerificationPolling } from './useVerificationPolling';
+import { ERROR_CODES } from '@networks/network/errorCodes';
 
 const makeStyles = ({ colors, space, size, radius, elevation }: Theme) =>
   StyleSheet.create({
@@ -82,13 +79,7 @@ const EmailVerificationScreen: React.FC = () => {
     dispatch(startCooldownIfIdle());
   }, [dispatch]);
 
-  // A quiet re-check while the screen is open (the FYP's auto sign-in).
-  useFocusEffect(
-    useCallback(() => {
-      const id = setInterval(() => dispatch(checkVerifiedAsync({ silent: true })), RECHECK_MS);
-      return () => clearInterval(id);
-    }, [dispatch]),
-  );
+  useVerificationPolling(s.failures, s.autoSignIn);
 
   const check = async () => {
     const r = await dispatch(checkVerifiedAsync({ silent: false }));
@@ -98,7 +89,7 @@ const EmailVerificationScreen: React.FC = () => {
 
   const resend = async () => {
     const r = await dispatch(resendAsync());
-    if (resendAsync.fulfilled.match(r)) {
+    if (resendAsync.fulfilled.match(r) && !r.payload.alreadyVerified) {
       Toast.show({ type: 'success', text1: 'Email sent', text2: `We sent a new link to ${user?.email ?? 'your inbox'}.` });
     }
   };
@@ -108,7 +99,7 @@ const EmailVerificationScreen: React.FC = () => {
       <View style={[styles.hero, { backgroundColor: service.accentSoft }]}>
         <IonIcon name="mail-unread-outline" size="xl" color={service.accent} />
       </View>
-      <AuthHeader hideLogo title="Verify Your Email" subtitle="We've sent a verification link to your email address." />
+      <AuthHeader hideLogo title="Check your inbox" subtitle="We've sent a verification link to your email address." />
 
       <View style={styles.emailBox}>
         <AppText variant="small" tone="muted">
@@ -127,7 +118,7 @@ const EmailVerificationScreen: React.FC = () => {
       ) : null}
 
       {s.error.message ? (
-        <InlineNotice tone={s.error.code === 'NOT_VERIFIED' ? 'info' : 'error'} message={s.error.message} />
+        <InlineNotice tone={s.error.code === ERROR_CODES.NOT_VERIFIED ? 'info' : 'error'} message={s.error.message} />
       ) : null}
 
       <Button
@@ -163,18 +154,15 @@ const EmailVerificationScreen: React.FC = () => {
           { icon: 'time-outline', text: 'Wait a few minutes, then tap "Resend Email"' },
         ]}
       />
-      {USE_MOCK_API ? (
-        <AppText variant="caption" tone="muted" align="center">
-          Demo mode: the link counts as opened a few seconds after it is sent.
-        </AppText>
-      ) : null}
       <View style={styles.center}>
         <Button
-          label={signingOut ? 'Signing out...' : 'Wrong email? Sign out'}
+          label="Use a different account"
           variant="ghost"
           size="sm"
-          onPress={() => void signOutNow()}
+          disabled={signingOut}
+          onPress={() => void signOutNow({ landing: 'SignIn' })}
         />
+        <Button label={signingOut ? 'Signing out...' : 'Sign out'} variant="ghost" size="sm" onPress={() => void signOutNow()} />
       </View>
     </AuthScreen>
   );

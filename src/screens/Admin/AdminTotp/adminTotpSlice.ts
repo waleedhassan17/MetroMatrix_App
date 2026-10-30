@@ -11,8 +11,10 @@ import { createAppSlice } from '@store/createAppSlice';
 import { resetAllState } from '@store/resetAllState';
 import { authAdminTotp } from '@networks/auth/authNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
-import { setPendingTotp, setSession } from '../../Auth/authSlice';
+import { setSession, type PendingTotp } from '../../Auth/authSlice';
+import { handleChallengeError } from '../shared/totpChallenge';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../Auth/shared/formStatus';
+import { ERROR_CODES } from '@networks/network/errorCodes';
 
 export interface AdminTotpSliceState {
   code: string;
@@ -29,9 +31,6 @@ const initialState: AdminTotpSliceState = {
   status: 'idle',
   error: NO_ERROR,
 };
-
-/** Codes that mean the challenge itself is gone: sign in again. */
-export const CHALLENGE_DEAD = ['CHALLENGE_EXPIRED', 'CHALLENGE_INVALID'];
 
 export const adminTotpSlice = createAppSlice({
   name: 'adminTotp',
@@ -54,7 +53,10 @@ export const adminTotpSlice = createAppSlice({
     resetTotp: create.reducer(() => initialState),
 
     verifyTotpAsync: create.asyncThunk(
-      async (args: { challengeToken: string; code?: string; recoveryCode?: string }, { dispatch, rejectWithValue }) => {
+      async (
+        args: { challengeToken: string; code?: string; recoveryCode?: string },
+        { dispatch, getState, rejectWithValue },
+      ) => {
         try {
           const factor = args.recoveryCode ? { recoveryCode: args.recoveryCode.trim() } : { code: args.code ?? '' };
           const result = await authAdminTotp(args.challengeToken, factor);
@@ -63,7 +65,8 @@ export const adminTotpSlice = createAppSlice({
           return true;
         } catch (e) {
           const rejected = toRejectedValue(e);
-          if (rejected.code && CHALLENGE_DEAD.includes(rejected.code)) dispatch(setPendingTotp(null));
+          const pending = (getState() as { auth: { pendingTotp: PendingTotp | null } }).auth.pendingTotp;
+          handleChallengeError(dispatch, rejected, pending, 'code');
           return rejectWithValue(rejected);
         }
       },
@@ -78,9 +81,15 @@ export const adminTotpSlice = createAppSlice({
         rejected: (state, action) => {
           state.status = 'failed';
           const error = readRejection(action, "That code didn't work. Try again.");
+          // The API answers TOTP_INVALID for a wrong, reused or spent code alike.
           state.error =
-            error.code === 'RECOVERY_CODE_USED'
-              ? { ...error, message: 'That recovery code has already been used. Each code works once.' }
+            error.code === ERROR_CODES.TOTP_INVALID
+              ? {
+                  ...error,
+                  message: action.meta.arg.recoveryCode
+                    ? "That recovery code isn't valid or has already been used. Each code works once."
+                    : "That code didn't work. Wait for the next code in your authenticator and try again.",
+                }
               : error;
           state.code = '';
         },

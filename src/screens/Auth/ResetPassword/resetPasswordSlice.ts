@@ -1,14 +1,18 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Reset Password slice (step 3)
 // ═══════════════════════════════════════════════════════
-// POST /auth/reset-password with the step-2 token. A spent or expired token
-// (RESET_TOKEN_INVALID) cannot be retried — the screen sends the user back
-// for a new code.
+// POST /auth/reset-password with the step-2 token. The API answers:
+//   OTP_INVALID        the token is spent or expired (15 min): it cannot be
+//                      retried — the screen sends the user back for a new code
+//   VALIDATION_FAILED  the new password breaks the policy: fix and retry
+// A reset signs the account out everywhere, so any tokens this device still
+// holds are dead: they are cleared here, and the user signs in again.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { authResetPassword } from '@networks/auth/authNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
+import { clearTokens } from '@utils/storageUtils';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import type { Touched } from '@utils/formErrors';
 
@@ -50,6 +54,7 @@ export const resetPasswordSlice = createAppSlice({
       async ({ resetToken, password }: { resetToken: string; password: string }, { rejectWithValue }) => {
         try {
           await authResetPassword(resetToken, password);
+          await clearTokens();
           return true;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

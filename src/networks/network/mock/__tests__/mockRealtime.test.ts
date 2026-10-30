@@ -3,12 +3,13 @@
 // a room only, and — driven through the app's real client — rejoins rooms and
 // resyncs after the server drops everyone.
 
-import { authSignin } from '../../../auth/authNetwork';
 import { clearTokens } from '../../../../utils/storageUtils';
 import { RealtimeClient } from '../../../../services/realtime/socketClient';
-import { SEED_PASSWORD } from '../mockConfig';
 import { getDb, resetMockDb } from '../mockDb';
 import { createMockSocket, mockRealtime } from '../mockRealtime';
+import { signInAs, installDummyApi } from '../testing';
+
+installDummyApi();
 
 const until = async (check: () => boolean, ms = 2000) => {
   const end = Date.now() + ms;
@@ -39,7 +40,7 @@ describe('the dummy live connection', () => {
     expect(errors[0].data.code).toBe('UNAUTHORIZED');
     expect(anon.active).toBe(false);
 
-    await authSignin({ email: 'customer@metromatrix.app', password: SEED_PASSWORD, portal: 'customer' });
+    await signInAs('customer@metromatrix.app');
     const s = createMockSocket();
     let connected = false;
     s.on('connect', () => (connected = true));
@@ -50,7 +51,7 @@ describe('the dummy live connection', () => {
   });
 
   it('lets the server decide who joins, and pushes only to the room', async () => {
-    await authSignin({ email: 'customer@metromatrix.app', password: SEED_PASSWORD, portal: 'customer' });
+    await signInAs('customer@metromatrix.app');
     const s = createMockSocket();
     const got: unknown[] = [];
     s.on('order.updated', p => got.push(p));
@@ -72,7 +73,7 @@ describe('the dummy live connection', () => {
   });
 
   it('through the real client: a server drop is followed by a rejoin and a resync', async () => {
-    await authSignin({ email: 'customer@metromatrix.app', password: SEED_PASSWORD, portal: 'customer' });
+    await signInAs('customer@metromatrix.app');
     const client = new RealtimeClient(createMockSocket, async () => undefined);
     const resync = jest.fn();
     client.onResync(resync);

@@ -18,17 +18,11 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { useAppDispatch } from './useReduxHooks';
-import { signOut } from '../screens/Auth/authSlice';
+import { signOut, type SignedOutLanding } from '../screens/Auth/authSlice';
 import { resetAllState } from '../store/resetAllState';
 import { authLogout } from '../networks/auth/authNetwork';
 import { unregisterDevice } from '../networks/users/usersNetwork';
-import {
-  clearPushToken,
-  clearTokens,
-  getAccessToken,
-  getPushToken,
-  getRefreshToken,
-} from '../utils/storageUtils';
+import { clearPushToken, clearTokens, getAccessToken, getPushToken } from '../utils/storageUtils';
 import { markIntentionalSignOut } from '../utils/authEvents';
 import { Alert } from '../utils/alert';
 
@@ -41,27 +35,24 @@ export function useSignOut() {
   // Ref (not just state) so two taps in the same frame can't both pass.
   const inFlight = useRef(false);
 
-  const signOutNow = useCallback(async () => {
+  /** `landing`: where the signed-out app opens (default Role Selection). */
+  const signOutNow = useCallback(async (opts?: { landing?: SignedOutLanding }) => {
     if (inFlight.current) return;
     inFlight.current = true;
     setSigningOut(true);
 
     markIntentionalSignOut();
-    const [accessToken, refreshToken, pushToken] = await Promise.all([
-      getAccessToken(),
-      getRefreshToken(),
-      getPushToken(),
-    ]);
+    const [accessToken, pushToken] = await Promise.all([getAccessToken(), getPushToken()]);
     await Promise.all([clearTokens(), clearPushToken()]);
 
     // Synchronous — this is what swaps the navigator to Welcome.
     dispatch(resetAllState());
-    dispatch(signOut());
+    dispatch(signOut(opts?.landing ? { landing: opts.landing } : undefined));
 
     // Best-effort, in the prompt's order, on the captured token.
     void (async () => {
       if (pushToken) await unregisterDevice(pushToken, accessToken);
-      await authLogout(accessToken, refreshToken);
+      await authLogout(accessToken);
     })();
 
     inFlight.current = false;

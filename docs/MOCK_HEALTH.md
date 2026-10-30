@@ -1,6 +1,6 @@
 # The dummy Healthcare API
 
-While `BACKEND_URL` (or `EXPO_PUBLIC_API_URL`) is empty, every Health request is answered on the device by the dummy API in `src/networks/network/mock/health/`. It speaks the **real** contract, MetroMatrix-API `docs/API_HEALTH.md` (copied in `docs/API_HEALTH.md`):
+The app talks to the real API. In tests, Health requests are answered by the dummy API in `src/networks/network/mock/health/` (installed with `installDummyApi()`, `mock/testing.ts`). It speaks the **real** contract, MetroMatrix-API `docs/API_HEALTH.md` (copied in `docs/API_HEALTH.md`):
 
 - the same paths (`/health`, `/health/doctor`, `/admin/health`);
 - the same request bodies and `Idempotency-Key` rules;

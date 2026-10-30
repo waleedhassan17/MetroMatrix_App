@@ -7,6 +7,9 @@ import { getFoodHome, getItemSheet, getVendorPage, listVendors, searchFood } fro
 import { AuthError } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import { getDb, resetMockDb } from '../mockDb';
+import { installDummyApi } from '../testing';
+
+installDummyApi();
 
 // Thursday 15 October 2026, 3 PM in Pakistan.
 const T0 = new Date('2026-10-15T10:00:00Z').getTime();

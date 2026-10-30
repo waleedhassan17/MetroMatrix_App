@@ -5,7 +5,6 @@
 // banners whose target is gone aren't shown; plan overrides take effect at
 // once (rider seats, scheduled orders, insights).
 
-import { authAdminTotp, authSignin } from '../../../auth/authNetwork';
 import { addToFoodCart, setFoodCartMode } from '../../../food/cartNetwork';
 import { getFoodHome, getVendorPage } from '../../../food/discoveryNetwork';
 import { getFoodOrder, placeFoodOrder } from '../../../food/ordersNetwork';
@@ -32,8 +31,10 @@ import {
 } from '../../../admin/adminFoodNetwork';
 import { AuthError } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
-import { MOCK, SEED_PASSWORD, STAFF_PASSWORD } from '../mockConfig';
 import { resetMockDb } from '../mockDb';
+import { signInAs, installDummyApi } from '../testing';
+
+installDummyApi();
 
 // Thursday 15 October 2026, 3 PM in Pakistan: Biryani Bazaar is open.
 const T0 = new Date('2026-10-15T10:00:00Z').getTime();
@@ -50,12 +51,10 @@ const failure = async (p: Promise<unknown>): Promise<AuthError> => {
 
 const as = async (who: 'customer' | 'vendor' | 'admin') => {
   await clearTokens();
-  if (who === 'customer') await authSignin({ email: 'customer@metromatrix.app', password: SEED_PASSWORD, portal: 'customer' });
-  else if (who === 'vendor') await authSignin({ email: 'restaurant@metromatrix.app', password: SEED_PASSWORD, portal: 'partner' });
+  if (who === 'customer') await signInAs('customer@metromatrix.app');
+  else if (who === 'vendor') await signInAs('restaurant@metromatrix.app');
   else {
-    const outcome = await authSignin({ email: 'admin@metromatrix.app', password: STAFF_PASSWORD, portal: 'admin' });
-    if (outcome.kind !== 'totp') throw new Error('expected a challenge');
-    await authAdminTotp(outcome.challenge.challengeToken, { code: MOCK.TOTP_CODE });
+    await signInAs('admin@metromatrix.app');
   }
 };
 

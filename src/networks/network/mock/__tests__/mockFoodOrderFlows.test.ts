@@ -6,7 +6,6 @@
 // that must be confirmed before cooking, and the minute jobs (unanswered
 // orders declined, unpaid transfers cancelled).
 
-import { authSignin } from '../../../auth/authNetwork';
 import { addToFoodCart, clearFoodCart, getFoodCart, previewFoodCart, removeFoodCartLine, setFoodCartMode, updateFoodCartLine } from '../../../food/cartNetwork';
 import { cancelFoodOrder, getFoodOrder, listFoodOrders, placeFoodOrder, reorderFood, submitFoodPaymentProof } from '../../../food/ordersNetwork';
 import { acceptOrder, confirmPayment, getVendorOrder, handedExternal, listBoard, markDelivered, markReady, rejectOrder, startPreparing } from '../../../food/vendor/ordersNetwork';
@@ -14,9 +13,11 @@ import { createPromotion, deactivatePromotion, deletePromotion, listPromotions }
 import { getVendorPage } from '../../../food/discoveryNetwork';
 import { AuthError } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
-import { SEED_PASSWORD } from '../mockConfig';
 import { getDb, resetMockDb } from '../mockDb';
 import type { FoodCheckoutInput } from '../../../../types/food';
+import { signInAs, installDummyApi } from '../testing';
+
+installDummyApi();
 
 // Thursday 15 October 2026, 3 PM in Pakistan: Biryani Bazaar is open until 3:30.
 const T0 = new Date('2026-10-15T10:00:00Z').getTime();
@@ -33,11 +34,11 @@ const failure = async (p: Promise<unknown>): Promise<AuthError> => {
 
 const asCustomer = async () => {
   await clearTokens();
-  await authSignin({ email: 'customer@metromatrix.app', password: SEED_PASSWORD, portal: 'customer' });
+  await signInAs('customer@metromatrix.app');
 };
 const asVendor = async (email = 'restaurant@metromatrix.app') => {
   await clearTokens();
-  await authSignin({ email, password: SEED_PASSWORD, portal: 'partner' });
+  await signInAs(email);
 };
 
 const biryani = (quantity = 2, notes: string | null = null) => ({

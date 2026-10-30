@@ -9,13 +9,15 @@
 // XMLHttpRequest, not axios or fetch: it is the only API that reports upload
 // progress on native AND web. Native posts a { uri, name, type } part; web
 // posts the real Blob (RN's object trick serializes to "[object Object]").
-// MetroMatrix-API: POST /media/sign-upload { purpose } signs one upload into
-// metromatrix/{env}/{userId}/{purpose}; the signed allowed_formats (and
-// type, for private PHI uploads) go back to Cloudinary unchanged.
+// Per MetroMatrix_Backend media.controller.ts: POST /media/sign-upload
+// { purpose } signs one upload into metromatrix/{env}/{userId}/{purpose};
+// everything but the file and api_key is signed (folder, timestamp,
+// allowed_formats, and `type` for private PHI uploads), so all of them are
+// sent exactly as given.
 
 import { Platform } from 'react-native';
-import { USE_MOCK_API } from '../../config/env';
 import { api, unwrap, toAuthError, AuthError } from '../network/apiHelpers';
+import { ERROR_CODES } from '../network/errorCodes';
 import { isObject, num, str } from '../../serializers/serializerUtils';
 import type { LocalFile, SignedUpload, UploadedFile } from '../../types/auth';
 
@@ -38,7 +40,8 @@ export type UploadPurpose =
   | 'food_logo'
   | 'food_cover'
   | 'menu_item'
-  // Kitchen Intelligence (docs/API_KITCHEN_ASSUMED.md §1.4; TODO(API_KITCHEN))
+  // Kitchen Intelligence (TODO(API_KITCHEN): the API has no purpose of its own
+  // for a surplus box or hygiene photo; both go where its stories do)
   | 'voice_clip'
   | 'kitchen_receipt'
   | 'food_packing'
@@ -63,12 +66,12 @@ const API_PURPOSE: Record<UploadPurpose, string> = {
   food_logo: 'food_branding',
   food_cover: 'food_branding',
   menu_item: 'menu_item',
-  voice_clip: 'voice_clip',
-  kitchen_receipt: 'kitchen_receipt',
-  food_packing: 'food_packing',
-  food_surplus: 'food_surplus',
-  food_story: 'food_story',
-  hygiene_evidence: 'hygiene_evidence',
+  voice_clip: 'voice_audio',
+  kitchen_receipt: 'receipt',
+  food_packing: 'packing_proof',
+  food_surplus: 'kitchen_story',
+  food_story: 'kitchen_story',
+  hygiene_evidence: 'kitchen_story',
 };
 
 export const signUpload = async (purpose: UploadPurpose): Promise<SignedUpload> => {
@@ -76,7 +79,7 @@ export const signUpload = async (purpose: UploadPurpose): Promise<SignedUpload> 
     const response = await api.post('/media/sign-upload', { purpose: API_PURPOSE[purpose] });
     const raw = unwrap(response);
     if (!isObject(raw) || !raw.signature || !raw.cloudName) {
-      throw new AuthError('Upload could not be prepared. Please try again.', 'BAD_RESPONSE');
+      throw new AuthError('Upload could not be prepared. Please try again.', ERROR_CODES.BAD_RESPONSE);
     }
     const cloudName = str(raw.cloudName);
     return {
@@ -86,12 +89,38 @@ export const signUpload = async (purpose: UploadPurpose): Promise<SignedUpload> 
       signature: str(raw.signature),
       folder: str(raw.folder),
       uploadUrl: str(raw.uploadUrl) || `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
-      allowedFormats: str(raw.allowedFormats) || null,
+      allowedFormats: str(raw.allowedFormats),
+      maxBytes: Math.max(0, num(raw.maxBytes, 0)),
       type: raw.type === 'authenticated' ? 'authenticated' : null,
     };
   } catch (e) {
     throw toAuthError(e);
   }
+};
+
+const extensionOf = (file: LocalFile): string => {
+  const fromName = file.name.split('.').pop()?.toLowerCase() ?? '';
+  if (fromName && fromName !== file.name.toLowerCase()) return fromName === 'jpeg' ? 'jpg' : fromName;
+  const fromMime = file.mimeType.split('/')[1]?.toLowerCase() ?? '';
+  return fromMime === 'jpeg' ? 'jpg' : fromMime;
+};
+
+/**
+ * What Cloudinary would refuse anyway, said before the upload starts: a file
+ * over the purpose's size limit, or a format it doesn't allow. Null when fine.
+ */
+export const uploadProblem = (file: LocalFile & { size?: number }, signed: SignedUpload): string | null => {
+  if (signed.maxBytes && typeof file.size === 'number' && file.size > signed.maxBytes) {
+    return `That file is too large. The limit is ${Math.floor(signed.maxBytes / 1_000_000)} MB.`;
+  }
+  if (signed.allowedFormats) {
+    const allowed = signed.allowedFormats.split(',').map(f => (f.trim() === 'jpeg' ? 'jpg' : f.trim()));
+    const ext = extensionOf(file);
+    if (ext && !allowed.includes(ext)) {
+      return `That file type isn't accepted. Use ${signed.allowedFormats.split(',').join(', ').toUpperCase()}.`;
+    }
+  }
+  return null;
 };
 
 const appendFile = async (form: FormData, file: LocalFile) => {
@@ -103,32 +132,20 @@ const appendFile = async (form: FormData, file: LocalFile) => {
   form.append('file', { uri: file.uri, name: file.name, type: file.mimeType } as unknown as Blob);
 };
 
-/** Dummy API: a believable upload — progress over ~1.2 s, then the local file. */
-const mockUpload = (file: LocalFile, onProgress?: (fraction: number) => void): Promise<UploadedFile> =>
-  new Promise(resolve => {
-    let step = 0;
-    const tick = setInterval(() => {
-      step += 1;
-      onProgress?.(Math.min(1, step / 6));
-      if (step >= 6) {
-        clearInterval(tick);
-        resolve({ url: file.uri, publicId: `mock/${file.name}`, mimeType: file.mimeType });
-      }
-    }, 200);
-  });
-
 /** Resolves with the stored file; onProgress receives 0..1. */
 export const uploadToCloudinary = async (
   file: LocalFile,
   signed: SignedUpload,
   onProgress?: (fraction: number) => void,
 ): Promise<UploadedFile> => {
-  if (USE_MOCK_API) return mockUpload(file, onProgress);
+  const problem = uploadProblem(file, signed);
+  if (problem) throw new AuthError(problem, ERROR_CODES.VALIDATION_FAILED);
   const form = new FormData();
   await appendFile(form, file);
   form.append('api_key', signed.apiKey);
   form.append('timestamp', String(signed.timestamp));
   form.append('signature', signed.signature);
+  // Signed by the API: each must be sent exactly as given, or Cloudinary refuses.
   if (signed.folder) form.append('folder', signed.folder);
   // Signed with the rest: Cloudinary refuses the upload if these are missing.
   if (signed.allowedFormats) form.append('allowed_formats', signed.allowedFormats);

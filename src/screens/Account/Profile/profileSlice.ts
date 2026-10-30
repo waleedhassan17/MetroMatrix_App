@@ -3,7 +3,8 @@
 // ═══════════════════════════════════════════════════════
 // Edit name and phone, upload an avatar (signed, direct to Cloudinary, with
 // progress), and delete the account (Play policy: in-app deletion,
-// confirmed with the password — or "DELETE" for Google-only accounts).
+// confirmed with the password — or, for Google-only accounts, a typed
+// "DELETE" and then a fresh Google sign-in).
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
@@ -11,7 +12,8 @@ import { resetAllState } from '@store/resetAllState';
 import { authDeleteAccount } from '@networks/auth/authNetwork';
 import { updateMe } from '@networks/users/usersNetwork';
 import { signUpload, uploadToCloudinary } from '@networks/media/mediaNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { AuthError, toRejectedValue } from '@networks/network/apiHelpers';
+import { getGoogleIdToken } from '@/services/googleAuth';
 import { nationalFromPkPhone, toPkPhone } from '@models/authModel';
 import { clearPushToken } from '@utils/storageUtils';
 import { markIntentionalSignOut } from '@utils/authEvents';
@@ -19,6 +21,7 @@ import type { LocalFile, User } from '@/types';
 import { setUser, signOut } from '../../Auth/authSlice';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../Auth/shared/formStatus';
 import type { Touched } from '@utils/formErrors';
+import { ERROR_CODES } from '@networks/network/errorCodes';
 
 type Field = 'name' | 'phone';
 
@@ -155,11 +158,22 @@ export const profileSlice = createAppSlice({
       },
     ),
 
-    /** On success the account is gone: sign out locally, no revoke call needed. */
+    /**
+     * `{ password }`, or `{ google: true }` for a Google-only account: after
+     * the typed DELETE, Google is asked for a fresh ID token, which the API
+     * checks belongs to this account. On success the account is gone: sign
+     * out locally, no revoke call needed.
+     */
     deleteAccountAsync: create.asyncThunk(
-      async (confirmation: { password: string } | { confirm: 'DELETE' }, { dispatch, rejectWithValue }) => {
+      async (confirmation: { password: string } | { google: true }, { dispatch, rejectWithValue }) => {
         try {
-          await authDeleteAccount(confirmation);
+          if ('password' in confirmation) {
+            await authDeleteAccount({ password: confirmation.password });
+          } else {
+            const idToken = await getGoogleIdToken();
+            if (!idToken) throw new AuthError('Confirm with Google to delete your account.', ERROR_CODES.GOOGLE_CANCELLED);
+            await authDeleteAccount({ idToken });
+          }
           markIntentionalSignOut();
           await clearPushToken();
           dispatch(resetAllState());
@@ -181,7 +195,15 @@ export const profileSlice = createAppSlice({
           state.deleteStatus = 'failed';
           const error = readRejection(action, "We couldn't delete your account. Try again.");
           state.error =
-            error.code === 'INVALID_CREDENTIALS' ? { ...error, message: 'That password is not correct.' } : error;
+            error.code === ERROR_CODES.INVALID_CREDENTIALS
+              ? {
+                  ...error,
+                  message:
+                    'google' in action.meta.arg
+                      ? 'That Google account is not the one linked to MetroMatrix.'
+                      : 'That password is not correct.',
+                }
+              : error;
         },
       },
     ),

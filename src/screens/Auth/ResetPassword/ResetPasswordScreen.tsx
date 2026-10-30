@@ -17,6 +17,7 @@ import type { RootStackParamList } from '@/types';
 import { resetForgotPassword } from '../ForgotPassword/forgotPasswordSlice';
 import { selectResetToken } from '../ResetPasswordOTP/resetPasswordOtpSlice';
 import { resetPasswordAsync, resetResetPassword, selectResetPassword, setField, touch, touchAll } from './resetPasswordSlice';
+import { ERROR_CODES } from '@networks/network/errorCodes';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ResetPassword'>;
 
@@ -49,8 +50,9 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
   const errors = validateNewPassword({ password: s.password, confirmPassword: s.confirmPassword });
   const shown = visibleErrors(errors, s.touched);
   const loading = s.status === 'loading';
-  // No token: a reload on web, or a spent / expired one — get a new code.
-  const tokenSpent = !resetToken || s.error.code === 'RESET_TOKEN_INVALID';
+  // No token: a reload on web, or a spent / expired one (the API's
+  // OTP_INVALID here) — get a new code.
+  const tokenSpent = !resetToken || s.error.code === ERROR_CODES.OTP_INVALID;
 
   const submit = async () => {
     if (loading || tokenSpent) return;
@@ -63,9 +65,10 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
     if (resetPasswordAsync.fulfilled.match(r)) {
       haptics.success();
       dispatch(resetForgotPassword());
-      Toast.show({ type: 'success', text1: 'Password reset', text2: 'Sign in with your new password.' });
+      Toast.show({ type: 'success', text1: 'Password changed, please sign in' });
+      // A fresh stack: Back from sign-in must not return into the reset flow.
       const target = userType === 'provider' ? 'ProviderSignIn' : 'SignIn';
-      navigation.popTo(target, { email });
+      navigation.reset({ index: 1, routes: [{ name: 'RoleSelection' }, { name: target, params: { email } }] });
     } else haptics.warning();
   };
 
@@ -91,7 +94,7 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
           onBlur={() => dispatch(touch('password'))}
           error={shown.password}
           placeholder="Enter new password"
-          helper="At least 8 characters, with a letter and a number."
+          helper="8–72 characters, with an upper-case letter, a lower-case letter and a number."
           autoComplete="new-password"
           textContentType="newPassword"
           returnKeyType="next"

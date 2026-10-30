@@ -6,7 +6,6 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { OTP_LENGTH } from '@models/authModel';
-import { USE_MOCK_API } from '@/config/env';
 import { haptics } from '@utils/haptics';
 import { useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Button, InlineNotice, IonIcon, OtpInput, TextField } from '@custom/index';
@@ -105,11 +104,6 @@ const AdminTotpScreen: React.FC = () => {
         />
         <Button label="Cancel sign-in" variant="ghost" size="sm" onPress={cancel} />
       </View>
-      {USE_MOCK_API ? (
-        <AppText variant="caption" tone="muted" align="center">
-          Demo mode: the authenticator code is 123456.
-        </AppText>
-      ) : null}
     </AuthScreen>
   );
 };

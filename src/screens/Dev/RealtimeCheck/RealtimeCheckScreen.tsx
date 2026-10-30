@@ -2,7 +2,7 @@
 // MetroMatrix — Realtime check (dev only, /dev/realtime)
 // ═══════════════════════════════════════════════════════
 // Proves the Food foundation on a device or in the browser, signed in:
-//   • the live connection: status, a test room, drop → reconnect → resync;
+//   • the live connection: status, reconnects, resyncs and a test room;
 //   • the rider's location: mode (background / foreground / denied), each
 //     fix, the 15 s heartbeat, what's queued while the line is down;
 //   • the vendor's new-order alert: ring until stopped (web: one tap first);
@@ -20,7 +20,6 @@ import { useLayoutClass } from '@hooks/useLayoutClass';
 import { useRealtimeResync, useRealtimeRoom, useRealtimeStatus } from '@hooks/useRealtime';
 import { useAppSelector } from '@hooks/useReduxHooks';
 import { selectRealtimeReconnects } from '@store/realtimeSlice';
-import { USE_MOCK_API } from '../../../config/env';
 import { realtime } from '../../../services/realtime/socketClient';
 import { REALTIME_SEND } from '../../../services/realtime/realtimeConfig';
 import { riderLocation, supportsBackgroundTracking, type RiderLocationState } from '../../../services/location/riderLocation';
@@ -77,32 +76,6 @@ export const RealtimeCheckScreen: React.FC<Props> = () => {
   const [sent, setSent] = useState(0);
   const [tracking, setTracking] = useState(false);
   useEffect(() => riderLocation.subscribe(setLoc), []);
-  useEffect(() => {
-    if (!USE_MOCK_API) return;
-    // The check's own room on the dummy socket; every other order goes to the Food routes' handler.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { mockRealtime } = require('../../../networks/network/mock/mockRealtime') as typeof import('../../../networks/network/mock/mockRealtime');
-    const real = mockRealtime.getHandler('subscribe');
-    if (!(real as { devCheck?: boolean } | undefined)?.devCheck) {
-      const handler = Object.assign(
-        (ctx: Parameters<NonNullable<typeof real>>[0], payload: { orderId?: string }) => {
-          if (payload?.orderId === 'dev-check') {
-            ctx.join('order:dev-check');
-            return { ok: true };
-          }
-          return real ? real(ctx, payload) : { ok: false, code: 'NOT_FOUND' };
-        },
-        { devCheck: true },
-      );
-      mockRealtime.handle('subscribe', handler);
-    }
-    if (!mockRealtime.hasHandler(REALTIME_SEND.riderLocation)) {
-      mockRealtime.handle(REALTIME_SEND.riderLocation, (_ctx, payload: { fixes?: unknown[] }) => ({
-        ok: true,
-        accepted: payload?.fixes?.length ?? 0,
-      }));
-    }
-  }, []);
   useEffect(() => {
     // The check's own transport: the live connection first, then a pretend REST batch.
     riderLocation.setTransport({
@@ -161,18 +134,6 @@ export const RealtimeCheckScreen: React.FC<Props> = () => {
           <Row label="Test room" value={!roomOn ? 'not joined' : room.joined ? 'joined' : (room.code ?? 'joining')} />
           <View style={styles.buttons}>
             <Button label={roomOn ? 'Leave the test room' : 'Join a test room'} variant="secondary" size="sm" onPress={() => setRoomOn(v => !v)} />
-            {USE_MOCK_API ? (
-              <Button
-                label="Drop the connection"
-                variant="secondary"
-                size="sm"
-                onPress={() => {
-                  // eslint-disable-next-line @typescript-eslint/no-require-imports
-                  const { mockRealtime } = require('../../../networks/network/mock/mockRealtime');
-                  mockRealtime.dropAll();
-                }}
-              />
-            ) : null}
           </View>
         </Card>
 

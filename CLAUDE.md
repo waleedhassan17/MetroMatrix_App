@@ -18,7 +18,9 @@ Copy the FYP's UX, never its code paths, Firebase setup or per-role duplicate ne
 
 ## Backend switch (one file)
 
-`src/config/env.ts` → `BACKEND_URL` (or `EXPO_PUBLIC_API_URL`). While it is empty, `api` uses the dummy API (`src/networks/network/mock/`: `mockServer.ts` routes, `mockDb.ts` seeded accounts, `mockConfig.ts` rules, `shop/` the whole Shopping API with its seed and server rules, `health/` the whole Healthcare API with its seed and server rules, `food/` the whole Food API with its seed and server rules, see `docs/MOCK_FOOD.md`; `kitchen/` Kitchen Intelligence on its assumed contract, see `docs/MOCK_KITCHEN.md`). The dummy API answers exactly what `docs/API_CONTRACT_ASSUMED.md` and `docs/API_SHOPPING_ASSUMED.md` specify, for Health and Food the real `docs/API_HEALTH.md` and `docs/API_FOOD.md` (see `docs/MOCK_HEALTH.md`, `docs/MOCK_FOOD.md`), and for Kitchen Intelligence `docs/API_KITCHEN_ASSUMED.md`, `docs/AI_ASSUMED.md` and `docs/VOICE_ASSUMED.md`, so nothing else changes when the real URL is set. When you add an endpoint, add its mock route in the same change. Shop, Health, Food and Kitchen writes are all-or-nothing (a failed request leaves the dummy DB as it was).
+`src/config/env.ts` reads `EXPO_PUBLIC_API_URL` (`.env.local`, or the `eas.json` profile). As in FinMatrix, the app always talks to the real MetroMatrix API through the one client: there is no dummy fallback in any build. With no URL the build is a configuration error: `ConfigErrorScreen` replaces the app and `api` rejects every request with `CONFIG_ERROR`. Never add a silent fallback.
+
+The dummy API (`src/networks/network/mock/`) is test fixtures only: the Shopping, Health, Food and Kitchen routes with their seeds and server rules (`shop/`, `health/`, `food/` see `docs/MOCK_FOOD.md`, `kitchen/` see `docs/MOCK_KITCHEN.md`), which the parity and flow tests run the app's networks against. A test installs it with `installDummyApi()` and signs in with `signInAs()` (`mock/testing.ts`), which writes a session straight into the dummy DB. It has no auth, users, media, business, approval or platform routes: those are connected to the real API (`docs/AUTH_CONTRACT.md`, `docs/openapi.json`), and `src/networks/__tests__/contract.test.ts` checks every request the app sends them against `docs/openapi.json`. For a service not yet verified against the real API (Shopping, Kitchen), add the mock route with a new endpoint in the same change; Shop, Health, Food and Kitchen writes in the dummy API are all-or-nothing.
 
 ## Commands
 
@@ -84,8 +86,8 @@ The super admin can pause sign-ups, a service, AI, or put the platform in mainte
   `utils/authEvents.ts` (`emitPlatformNotice`), so a switch flipped mid-session shows at once;
 - `MaintenanceGate` replaces every navigator but the admin's; each service app (customer, partner, rider) renders through
   `components/platform/ServicePausedGate.tsx`; the sign-up screens show `SignupsPausedNotice` and disable Create Account;
-- the dummy API has the same switches, routes (`GET /config`, `GET`/`PATCH /admin/settings`) and refusals
-  (`network/mock/platformMock.ts`).
+- `networks/network/__tests__/platformNotices.test.ts` pins the `/config` shape and the three refusals (the dummy API
+  has no platform routes).
 
 ## Folder map
 
@@ -108,7 +110,8 @@ src/
                              useLayoutClass (phone or tablet)
   networks/
     network/apiHelpers.ts    the axios client, refresh queue, AuthError, unwrap
-    network/mock/            the dummy API (axios adapter + AsyncStorage DB) used while no backend URL is set
+    network/mock/            the dummy API, test fixtures only (axios adapter + AsyncStorage DB; testing.ts installs it
+                             and signs in with signInAs): no auth, users, media, business, approval or platform routes
     network/mock/shop/       the dummy Shopping API: shopTypes, shopSeed (3 stores, 52 products, orders), shopLogic (rules), shopRoutes
     network/mock/health/     the dummy Healthcare API, in the real API's shapes: healthTypes, healthSeed (16 specialties,
                              ~40 conditions, 23 doctors, appointments in every status), healthLogic (slots, rules),
@@ -123,7 +126,7 @@ src/
                              auto sell-out), forecastLogic, insightCards, tiffin/growth/ai/assistant/myKitchen logic,
                              voiceStandIn + aiStandIns (no network), one routes file per area (+ adminKitchenRoutes),
                              foodAdditions (the keys added to API_FOOD shapes), kitchenIndex (registers it, Food's hooks)
-    network/mock/mockRealtime the in-process stand-in for the Food socket (same surface as the real client)
+    network/mock/mockRealtime the in-process stand-in for the Food socket in tests (same surface as the real client)
     <domain>/<x>Network.ts   one function per endpoint (auth, users, media, businesses, admin, food, addresses, notifications)
     shopping/                catalogue, wishlist, cart, checkout, orders, returns, reviews; shopping/partner/ the store app's
     health/                  discovery, availability, appointments, family, records, prescriptions, reviews, video, symptom;
@@ -266,7 +269,7 @@ The order matters. It lives in ONE pure function, `resolveGate()` in `src/naviga
 
 1. not authenticated → Onboarding (first launch only) + Role Selection, Provider Selection, SignIn/SignUp, ProviderSignIn/ProviderSignUp, ForgotPassword → ResetPasswordOTP → ResetPassword
 2. pending TOTP (staff sign in on the ordinary SignIn; the API answers `WRONG_PORTAL` there and `signInAndOpen` retries on the admin portal) → AdminTotp, or AdminTwoFactorEnrol on a first sign-in
-3. email not verified → EmailVerification (a link; VerifySuccess handles the deep link)
+3. email not verified → EmailVerification (a link: the screen polls /auth/me; VerifySuccess handles metromatrix://verify-email?token=… and ?verified=1, also registered while signed out)
 4. customer whose profile is incomplete → CompleteProfile (3 steps)
 5. provider with no business, or a `draft` one → PersonalInfo (3 steps, resumes at the unfinished one)
 6. `pending_approval` → ProviderApprovalPending
@@ -299,7 +302,8 @@ Every network call is built from MetroMatrix-API `docs/API_AUTH.md` / `docs/API_
   - Serializers map the wire to `types/food.ts` (`lastGeo` becomes `lastPosition`, `etaRange` becomes `eta`, minor units become rupees). Every limit in `models/food` is the API's own DTO limit.
   - When the backend's document changes: copy it, update the networks, serializers, models and the dummy API, capture again (`scripts/capture-food-fixtures.js`, see `docs/MOCK_FOOD.md`), and run the gates. The parity tests fail on any key or error code the two disagree on.
   - What the API doesn't send yet is marked `TODO(API_FOOD)` (today: `isFeatured` on a staff vendor's detail).
-- **Auth and Shopping still run on assumed documents**: `docs/API_CONTRACT_ASSUMED.md` and `docs/API_SHOPPING_ASSUMED.md`. They follow NestJS conventions: `{ success, data }`, `VALIDATION_FAILED`, `page/pageSize`, integer rupees, `Idempotency-Key` on checkout and booking. The dummy API implements them. Every dependency is marked `TODO(API_AUTH)` or `TODO(API_SHOPPING)` (`grep -rn "TODO(API_" src`).
+- **Auth is on the real contract** (merged from the `ammar` branch, 2026-10-30): `docs/AUTH_CONTRACT.md` (the same file is in the backend) and `docs/openapi.json` (a copy of the backend's `openapi.json`, `npm run openapi:export` there). `src/networks/__tests__/contract.test.ts` checks every auth, users, media, business and approval request against it; copy the file again when the API changes. Error codes the app branches on live in `networks/network/errorCodes.ts`; only `REFRESH_INVALID`, `REFRESH_REUSED`, `TOKEN_REVOKED` and `ACCOUNT_DISABLED` end a session (`networks/network/sessionRefresh.ts`). Riders sign in on the partner portal with `identifier` (their username).
+- **Shopping still runs on an assumed document**: `docs/API_SHOPPING_ASSUMED.md` (NestJS conventions: `{ success, data }`, `VALIDATION_FAILED`, `page/pageSize`, integer rupees, `Idempotency-Key` on checkout and booking). The app now calls the real API for it too, so reconcile it with the backend's `API_SHOPPING.md`. Every dependency is marked `TODO(API_SHOPPING)` (`grep -rn "TODO(API_" src`).
 
 - **Kitchen Intelligence runs on an assumed contract** (Chunk 5, owner's decision 2026-10-19): `docs/API_KITCHEN_ASSUMED.md`, `docs/AI_ASSUMED.md` and `docs/VOICE_ASSUMED.md`, written in API_FOOD's conventions (whole rupees; quantities in base units g/ml/pc; branch-local dates; `Idempotency-Key` on reservations and subscriptions). No backend module exists yet.
   - Paths: `/food/vendor/kitchen`, `/food/vendor/{surplus,tiffin,catering,ramadan,storefront,demand,menu-insights,experiments,story,hygiene,ai,nutrition}`, `/food/{surplus,tiffin,catering,ramadan}`, `/ai/voice/interpret`, `/my-kitchen`, `/admin/kitchen`.
@@ -314,7 +318,7 @@ When a real document arrives, reconcile it in one pass:
 
 ## Testing on Expo / web
 
-- **Expo Go** (`npm start`): runs the whole app except native Google sign-in and push, against the dummy API. Seeded accounts and codes are in `docs/API_CONTRACT_ASSUMED.md` → "Mock mode" (doctors and patients in `docs/MOCK_HEALTH.md`). Video consultations open public meet.jit.si rooms in a WebView; on web they open in a new tab.
+- **Expo Go** (`npm start`): runs the whole app except native Google sign-in and push, against `EXPO_PUBLIC_API_URL` (a local API: `http://<LAN IP>:3000/api/v1` on a phone, `http://localhost:3000/api/v1` on web; the API's `CORS_ORIGINS` must list the web origin). Accounts come from the API's seeds (`npm run seed:superadmin`, `seed:shopping`, `seed:health`, `seed:food`, `seed:kitchen` in the backend). Video consultations open public meet.jit.si rooms in a WebView; on web they open in a new tab.
 - **Web** (`npm run web`):
   - Google sign-in uses Google Identity Services and needs `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`.
   - Deep paths work, e.g. `/get-started`, `/sign-in`, `/provider/sign-in`, `/home/food`, `/shop`, `/shop/store/lawn-and-loom-7a1f3`, `/shop/product/p_l1`, `/orders/MM-24A7Q2`, `/store/orders/:id`, `/admin/shop`, `/health`, `/health/appointments`, `/health/doctor/:id`, `/health/appointment/:code`, `/shop/orders`, `/shop/bag`, `/profile/records`, `/doctor/appointments/:code`, `/admin/health`, `/vendor/orders`, `/vendor/menu`, `/vendor/menu/dish/:id`, `/vendor/today`, `/vendor/setup`, `/vendor/riders/:id`, `/rider/sign-in`, `/rider/deliveries`, `/food/vendor/:slug`, `/food/bag`, `/food/checkout`, `/food/order/:code`, `/food/saved`, `/vendor/deals`, `/vendor/orders/:id`, `/rider/deliveries/:id`, `/rider/cash`, `/food/order/:code/rate`, `/food/reviews/:id`, `/vendor/reviews`, `/vendor/insights`, `/admin/food` (+ `/vendors/:id`, `/orders/:id`, `/reviews`, `/cuisines`, `/banners`, `/kitchen/{assistant,prices,nutrition,words,calendar,hygiene,signatures,demand,lookup}`), and Chunk 5's `/vendor/kitchen` (+ `/stock`, `/recipes/:itemId`, `/purchases`, `/forecast`, `/waste`, `/settings`), `/vendor/assistant`, `/food/bachat-box`, `/food/tiffins`, `/food/my-kitchen` (+ `/recipes`), `/food/nutrition` (+ `/week`), `/s/:slug` (a kitchen's link: the public page signed out). The staff Profile tab is `/account`.

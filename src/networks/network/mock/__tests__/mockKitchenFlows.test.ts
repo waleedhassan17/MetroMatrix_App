@@ -7,7 +7,6 @@
 // learning; waste; Bachat Box (one box can't be sold twice); voice that only
 // proposes; the assistant's switch and quota; a pause that lifts by itself.
 
-import { authAdminTotp, authSignin } from '../../../auth/authNetwork';
 import { addToFoodCart, clearFoodCart } from '../../../food/cartNetwork';
 import { getFoodOrder, placeFoodOrder } from '../../../food/ordersNetwork';
 import { acceptOrder, markReady, rejectOrder, startPreparing } from '../../../food/vendor/ordersNetwork';
@@ -82,9 +81,11 @@ import { addToCart as addToShopCart, getCart as getShopCart } from '../../../sho
 import { handedExternal, markDelivered } from '../../../food/vendor/ordersNetwork';
 import { api, AuthError } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
-import { MOCK, SEED_PASSWORD, STAFF_PASSWORD } from '../mockConfig';
 import { getDb, resetMockDb } from '../mockDb';
 import type { FoodCheckoutInput } from '../../../../types/food';
+import { signInAs, installDummyApi } from '../testing';
+
+installDummyApi();
 
 // Thursday 15 October 2026, 3 PM in Pakistan: Biryani Bazaar is open.
 const T0 = new Date('2026-10-15T10:00:00Z').getTime();
@@ -102,15 +103,13 @@ const failure = async (p: Promise<unknown>): Promise<AuthError> => {
 
 const as = async (email: string, portal: 'customer' | 'partner' = 'partner') => {
   await clearTokens();
-  await authSignin({ email, password: SEED_PASSWORD, portal });
+  await signInAs(email);
 };
 const asVendor = () => as('restaurant@metromatrix.app');
 const asCustomer = (email = 'customer@metromatrix.app') => as(email, 'customer');
 const asStaff = async () => {
   await clearTokens();
-  const outcome = await authSignin({ email: 'admin@metromatrix.app', password: STAFF_PASSWORD, portal: 'admin' });
-  if (outcome.kind !== 'totp') throw new Error('expected a challenge');
-  await authAdminTotp(outcome.challenge.challengeToken, { code: MOCK.TOTP_CODE });
+  await signInAs('admin@metromatrix.app');
 };
 
 const checkout: FoodCheckoutInput = { addressId: 'ad_customer_home', paymentMethod: 'cod', promoCode: null, cutlery: false, note: null, building: null, floor: null, riderInstructions: null };
@@ -640,13 +639,13 @@ describe('batching', () => {
     const s = await getBatchSuggestions(a.id);
     expect(s[0]).toMatchObject({ orderId: b.id, sameDirection: true, extraKm: 0 });
     await clearTokens();
-    await authSignin({ username: 'biryani-bazaar.ali', password: SEED_PASSWORD, portal: 'partner' });
+    await signInAs('biryani-bazaar.ali');
     await setDuty(true);
     await asVendor();
     await assignRider(a.id, 'rd_ali');
     await assignRider(b.id, 'rd_ali');
     await clearTokens();
-    await authSignin({ username: 'biryani-bazaar.ali', password: SEED_PASSWORD, portal: 'partner' });
+    await signInAs('biryani-bazaar.ali');
     const ra = await getRiderOrder(a.id);
     const rb = await getRiderOrder(b.id);
     expect([ra.dropOrder, rb.dropOrder].map(d => d?.of)).toEqual([2, 2]);

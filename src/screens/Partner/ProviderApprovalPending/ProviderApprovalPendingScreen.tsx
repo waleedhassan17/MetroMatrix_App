@@ -5,14 +5,14 @@
 // what happens next, Check Now / Contact Support, and the review timeline.
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, Linking, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, Animated, AppState, Easing, Linking, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import dayjs from 'dayjs';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useCountdown } from '@hooks/useCountdown';
 import { useSignOut } from '@hooks/useSignOut';
 import { providerTypeLabel } from '@models/businessModel';
-import { SUPPORT_EMAIL, USE_MOCK_API } from '@/config/env';
+import { SUPPORT_EMAIL } from '@/config/env';
 import { haptics } from '@utils/haptics';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Button, IonIcon, InlineNotice, MciIcon, StatusTimeline, type IonName } from '@custom/index';
@@ -147,7 +147,14 @@ const PendingContent: React.FC<{ business: Business }> = ({ business }) => {
     useCallback(() => {
       dispatch(checkStatusAsync({ manual: false }));
       const id = setInterval(() => dispatch(checkStatusAsync({ manual: false })), POLL_INTERVAL_MS);
-      return () => clearInterval(id);
+      // Back from the email app or the background: check at once, not at the next tick.
+      const sub = AppState.addEventListener('change', next => {
+        if (next === 'active') dispatch(checkStatusAsync({ manual: false }));
+      });
+      return () => {
+        clearInterval(id);
+        sub.remove();
+      };
     }, [dispatch]),
   );
 
@@ -193,11 +200,7 @@ const PendingContent: React.FC<{ business: Business }> = ({ business }) => {
         icon="time-outline"
         tint={colors.warning}
         title="Expected Timeline"
-        text={
-          USE_MOCK_API
-            ? 'Demo mode: applications are approved automatically about 30 seconds after you submit.'
-            : 'Approval typically takes 24-48 hours. We will keep you updated throughout the process.'
-        }
+        text="Approval typically takes 24-48 hours. We will keep you updated throughout the process."
       />
 
       <View style={styles.actions}>

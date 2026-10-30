@@ -22,7 +22,8 @@ import DoctorPartnerNavigator from '../../navigators/DoctorPartnerNavigator';
 import KitchenPartnerNavigator from '../../navigators/KitchenPartnerNavigator';
 import RiderNavigator from '../../navigators/RiderNavigator';
 import AdminNavigator from '../../navigators/AdminNavigator';
-import { resolveGate, isGateCleared } from '../../navigators/sessionGate';
+import { gateInputOf, resolveGate, isGateCleared, partnerAppFor } from '../../navigators/sessionGate';
+import { selectSkippedProfile } from '../../store/preferencesSlice';
 
 import {
   bootstrapSession,
@@ -39,6 +40,10 @@ import {
   servicePausedReported,
   signupsPausedReported,
 } from '../../store/platformConfigSlice';
+import { ConfigErrorScreen } from './ConfigErrorScreen';
+import { CONFIG_ERROR } from '../../config/env';
+import { rewriteVerifyPath } from '../../navigators/linkingPaths';
+import { sessionEndedCopy } from './sessionEndedCopy';
 import { PushPrePrompt } from './PushPrePrompt';
 import { onPushTap, pushTapUrl } from '../../services/push';
 import { signOut } from '../../screens/Auth/authSlice';
@@ -54,7 +59,9 @@ import { setRealtimeStatus } from '../../store/realtimeSlice';
 import { useOrientationPolicy } from '../../hooks/useLayoutClass';
 
 // ─── Deep linking ─────────────────────────────────────
-// metromatrix://verify-success?token=…        → VerifySuccess (the email link)
+// metromatrix://verify-email?token=…           → VerifySuccess (the email's app link)
+// metromatrix://verify-email?verified=1        → VerifySuccess (from the API's web page)
+// metromatrix://verify-success?…               → the same (older links; rewritten below)
 // metromatrix://reset-password?email=…        → ResetPasswordOTP
 // metromatrix://shop/store/:slug, shop/product/:id → a store, a product
 // metromatrix://orders/:groupCode               → an order
@@ -67,7 +74,9 @@ const linkingFor = (customer: boolean): LinkingOptions<ReactNavigation.RootParam
   // signed-in customer gets the kitchen's page in the Food app, marked `via`
   // so the order counts as one the kitchen brought. (One route name per
   // path: the same screen in two stacks breaks the swap after sign-in.)
-  getStateFromPath: (path, options) => {
+  getStateFromPath: (rawPath, options) => {
+    // The verification email's link lands on the verify screen (linkingPaths).
+    const path = rewriteVerifyPath(rawPath);
     const m = /^\/?s\/([^/?#]+)\/?(?:\?(.*))?$/.exec(path);
     if (m && customer) {
       const via = /(^|&)via=qr(&|$)/.test(m[2] ?? '') ? 'qr' : 'link';
@@ -92,8 +101,9 @@ const linkingFor = (customer: boolean): LinkingOptions<ReactNavigation.RootParam
       ForgotPassword: 'forgot-password',
       ResetPasswordOTP: 'reset-password',
       ResetPassword: 'reset-password/new',
-      EmailVerification: 'verify-email',
-      VerifySuccess: 'verify-success',
+      // The waiting screen; the link handler owns /verify-email.
+      EmailVerification: 'check-email',
+      VerifySuccess: 'verify-email',
       CompleteProfile: 'complete-profile',
       PersonalInfo: 'provider/personal-info',
       ProviderApprovalPending: 'provider/pending',
@@ -363,7 +373,11 @@ const linkingFor = (customer: boolean): LinkingOptions<ReactNavigation.RootParam
   } as LinkingOptions<ReactNavigation.RootParamList>['config'],
 });
 
-export const AppContainer: React.FC = () => {
+// A build with no backend URL renders nothing but the configuration error: no
+// bootstrap, no navigator, no request (CONFIG_ERROR is a build-time constant).
+export const AppContainer: React.FC = () => (CONFIG_ERROR ? <ConfigErrorScreen /> : <AppShell />);
+
+const AppShell: React.FC = () => {
   const dispatch = useAppDispatch();
   const isAppReady = useAppSelector(selectIsAppReady);
   const networkIsDown = useAppSelector(selectNetworkIsDown);
@@ -371,7 +385,8 @@ export const AppContainer: React.FC = () => {
   const auth = useAppSelector(state => state.auth);
   const theme = useTheme();
   const styles = useStyles(makeStyles);
-  const gate = resolveGate(auth);
+  const skippedProfile = useAppSelector(selectSkippedProfile);
+  const gate = resolveGate(gateInputOf(auth, skippedProfile));
   const customer = gate === 'customer';
   const linking = useMemo(() => linkingFor(customer), [customer]);
 
@@ -427,11 +442,13 @@ export const AppContainer: React.FC = () => {
   // has already cleared the stored tokens; this resets the store so the
   // navigator switches back to Role Selection instead of leaving the user on
   // authenticated screens whose every request fails.
+  // Only a definitive failure gets here (sessionRefresh.ts): offline or a
+  // server error never signs anyone out.
   useEffect(() => {
-    setSessionExpiredHandler(() => {
+    setSessionExpiredHandler(reason => {
       dispatch(resetAllState());
       dispatch(signOut());
-      Toast.show({ type: 'info', text1: 'Session expired', text2: 'Please sign in again.' });
+      Toast.show({ type: 'info', ...sessionEndedCopy(reason) });
     });
     return () => setSessionExpiredHandler(null);
   }, [dispatch]);
@@ -483,10 +500,10 @@ export const AppContainer: React.FC = () => {
         return <CustomerNavigator key="customer" />;
       case 'partner':
         // Approved partner: the app for the business's service.
-        switch (auth.business?.serviceType) {
-          case 'healthcare':
+        switch (partnerAppFor(auth.business)) {
+          case 'doctor':
             return <DoctorPartnerNavigator key="partner-doctor" />;
-          case 'food':
+          case 'kitchen':
             return <KitchenPartnerNavigator key="partner-kitchen" />;
           default:
             return <StorePartnerNavigator key="partner-store" />;

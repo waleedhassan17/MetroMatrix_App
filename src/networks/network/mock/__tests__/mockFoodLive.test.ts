@@ -4,16 +4,17 @@
 // customer the new view and the kitchen a card; a failed write sends
 // nothing; the minute jobs say what they did.
 
-import { authSignin } from '../../../auth/authNetwork';
 import { addToFoodCart } from '../../../food/cartNetwork';
 import { placeFoodOrder } from '../../../food/ordersNetwork';
 import { acceptOrder } from '../../../food/vendor/ordersNetwork';
 import { clearTokens } from '../../../../utils/storageUtils';
-import { SEED_PASSWORD } from '../mockConfig';
 import { getDb, resetMockDb } from '../mockDb';
 import { createMockSocket } from '../mockRealtime';
 import { getItemSheet } from '../../../food/discoveryNetwork';
 import type { SocketLike } from '../../../../services/realtime/socketClient';
+import { signInAs, installDummyApi } from '../testing';
+
+installDummyApi();
 
 const until = async (check: () => boolean, ms = 3000) => {
   const end = Date.now() + ms;
@@ -25,11 +26,11 @@ const until = async (check: () => boolean, ms = 3000) => {
 
 const asCustomer = async () => {
   await clearTokens();
-  await authSignin({ email: 'customer@metromatrix.app', password: SEED_PASSWORD, portal: 'customer' });
+  await signInAs('customer@metromatrix.app');
 };
 const asVendor = async () => {
   await clearTokens();
-  await authSignin({ email: 'cloudkitchen@metromatrix.app', password: SEED_PASSWORD, portal: 'partner' });
+  await signInAs('cloudkitchen@metromatrix.app');
 };
 
 /** A connected socket for whoever is signed in now, recording what it hears. */

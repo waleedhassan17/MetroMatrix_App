@@ -16,7 +16,8 @@ import { SERVICE_PALETTES, useStyles, useTheme, type Theme } from '@theme/index'
 import { AppText, Button, IonIcon, MciIcon, StickyCTA, type MciName } from '@custom/index';
 import { ChoiceCard } from '@components/auth/ChoiceCard';
 import type { RootStackParamList, ServiceType, SubType } from '@/types';
-import { chooseKitchen, chooseService, selectProviderSelection } from './providerSelectionSlice';
+import { useSignOut } from '@hooks/useSignOut';
+import { chooseKitchen, chooseService, rememberPendingPick, selectProviderSelection } from './providerSelectionSlice';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ProviderSelection'>;
 
@@ -66,15 +67,32 @@ const ProviderSelectionScreen: React.FC<Props> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const { serviceType, subType, expanded } = useAppSelector(selectProviderSelection);
   const canContinue = !!serviceType && !!subType;
+  // Signed in with no service known yet (provider setup gate): the choice is
+  // saved as the pending pick and Personal Info follows. There is no screen
+  // behind this one, so Back becomes Sign out.
+  const inSetup = useAppSelector(state => state.auth.isAuthenticated);
+  const { signOutNow, signingOut } = useSignOut();
 
   const back = () => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate('RoleSelection'));
+
+  const next = () => {
+    if (!serviceType || !subType) return;
+    if (inSetup) {
+      dispatch(rememberPendingPick({ serviceType, subType }));
+      navigation.replace('PersonalInfo');
+    } else {
+      navigation.navigate('ProviderSignIn');
+    }
+  };
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Pressable onPress={back} style={styles.back} accessibilityRole="button" accessibilityLabel="Back" hitSlop={8}>
-          <IonIcon name="arrow-back" size="lg" color={colors.ink} />
-        </Pressable>
+        {inSetup ? null : (
+          <Pressable onPress={back} style={styles.back} accessibilityRole="button" accessibilityLabel="Back" hitSlop={8}>
+            <IonIcon name="arrow-back" size="lg" color={colors.ink} />
+          </Pressable>
+        )}
         <View style={styles.titles}>
           <AppText variant="logo" tone="brand">
             MetroMatrix
@@ -83,7 +101,7 @@ const ProviderSelectionScreen: React.FC<Props> = ({ navigation }) => {
             Choose Your Service
           </AppText>
           <AppText variant="body" tone="muted" align="center">
-            Select the service you want to provide
+            {inSetup ? 'Choose the service your business provides to continue' : 'Select the service you want to provide'}
           </AppText>
         </View>
       </View>
@@ -145,12 +163,15 @@ const ProviderSelectionScreen: React.FC<Props> = ({ navigation }) => {
 
       <StickyCTA>
         <Button
-          label="Continue to Registration"
+          label={inSetup ? 'Continue' : 'Continue to Registration'}
           rightIon="arrow-forward"
-          onPress={() => canContinue && navigation.navigate('ProviderSignIn')}
+          onPress={next}
           disabled={!canContinue}
           fullWidth
         />
+        {inSetup ? (
+          <Button label={signingOut ? 'Signing out...' : 'Sign out'} variant="ghost" size="sm" onPress={() => void signOutNow()} fullWidth />
+        ) : null}
       </StickyCTA>
     </View>
   );

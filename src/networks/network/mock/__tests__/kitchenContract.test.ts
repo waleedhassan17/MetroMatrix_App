@@ -8,16 +8,17 @@
 
 import fs from 'fs';
 import path from 'path';
-import { authAdminTotp, authSignin } from '../../../auth/authNetwork';
 import { api } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
-import { MOCK, SEED_PASSWORD, STAFF_PASSWORD } from '../mockConfig';
 import { resetMockDb } from '../mockDb';
 import { addToFoodCart, clearFoodCart } from '../../../food/cartNetwork';
 import { placeFoodOrder } from '../../../food/ordersNetwork';
 import { addToCart, getCart, removeCartLine } from '../../../shopping/cartNetwork';
 import { placeOrder } from '../../../shopping/checkoutNetwork';
 import { listAddresses } from '../../../addresses/addressesNetwork';
+import { signInAs, installDummyApi } from '../testing';
+
+installDummyApi();
 
 const DOCS = ['API_KITCHEN_ASSUMED.md', 'AI_ASSUMED.md', 'VOICE_ASSUMED.md'].map(f => path.join(__dirname, '../../../../../docs', f));
 const T0 = new Date('2026-10-15T10:00:00Z').getTime();
@@ -38,7 +39,7 @@ const clearShopCart = async () => {
 };
 const as = async (email: string, portal: 'customer' | 'partner' = 'partner') => {
   await clearTokens();
-  await authSignin({ email, password: SEED_PASSWORD, portal });
+  await signInAs(email);
 };
 
 const run = async () => {
@@ -103,15 +104,13 @@ const run = async () => {
   await call('packing', 'post', `/food/vendor/orders/${order.id}/packing-photo`, { imageUrl: 'https://res.cloudinary.com/demo/packed.jpg' });
   await call('readyWithPhoto', 'post', `/food/vendor/orders/${order.id}/ready`);
   await clearTokens();
-  const o = await authSignin({ email: 'admin@metromatrix.app', password: STAFF_PASSWORD, portal: 'admin' });
-  if (o.kind === 'totp') await authAdminTotp(o.challenge.challengeToken, { code: MOCK.TOTP_CODE });
+  await signInAs('admin@metromatrix.app');
   await call('adminQuota', 'put', '/admin/kitchen/ai/quotas/b_resto', { limit: 1 });
   await as('restaurant@metromatrix.app');
   await call('quotaReached', 'post', '/food/vendor/ai/receipt-scan', { imageUrl: 'https://res.cloudinary.com/demo/receipt.jpg' });
   // Back to the plan's limit for the rest of the run.
   await clearTokens();
-  const o2 = await authSignin({ email: 'admin@metromatrix.app', password: STAFF_PASSWORD, portal: 'admin' });
-  if (o2.kind === 'totp') await authAdminTotp(o2.challenge.challengeToken, { code: MOCK.TOTP_CODE });
+  await signInAs('admin@metromatrix.app');
   await api.put('/admin/kitchen/ai/quotas/b_resto', { limit: null });
 
   // ── Tiffin (5B): Thursday 15 Oct, 3 PM in Lahore ──
@@ -221,8 +220,7 @@ const run = async () => {
   await call('hygieneItem', 'put', '/food/vendor/hygiene/items/water', { done: true, evidenceUrl: 'https://res.cloudinary.com/demo/filter.jpg' });
   await call('hygieneRequest', 'post', '/food/vendor/hygiene/request-verification');
   await clearTokens();
-  const staff = await authSignin({ email: 'admin@metromatrix.app', password: STAFF_PASSWORD, portal: 'admin' });
-  if (staff.kind === 'totp') await authAdminTotp(staff.challenge.challengeToken, { code: MOCK.TOTP_CODE });
+  await signInAs('admin@metromatrix.app');
   await call('hygieneQueue', 'get', '/admin/kitchen/hygiene?status=pending');
   await call('hygieneVerify', 'post', '/admin/kitchen/hygiene/b_nani/verify');
   await as('customer@metromatrix.app', 'customer');
@@ -271,8 +269,7 @@ const run = async () => {
   await call('nutritionDelete', 'delete', '/my-kitchen/nutrition');
   // ── The staff console's Kitchen tools (5C) ──
   await clearTokens();
-  const admin = await authSignin({ email: 'admin@metromatrix.app', password: STAFF_PASSWORD, portal: 'admin' });
-  if (admin.kind === 'totp') await authAdminTotp(admin.challenge.challengeToken, { code: MOCK.TOTP_CODE });
+  await signInAs('admin@metromatrix.app');
   await call('adminAiUsage', 'get', '/admin/kitchen/ai/usage');
   await call('adminAiSwitch', 'patch', '/admin/kitchen/ai/settings', { enabled: true });
   await call('adminPrices', 'get', '/admin/kitchen/reference-prices?city=Lahore&q=tom');

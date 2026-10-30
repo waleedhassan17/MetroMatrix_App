@@ -8,7 +8,9 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import { toPkPhone } from '@models/authModel';
+import { SUBTYPE_SERVICE } from '@models/businessModel';
 import type { SubType } from '@/types';
+import { rememberPendingPick } from '../../ProviderSelection/providerSelectionSlice';
 import { signUpAndOpen } from '../shared/authThunks';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import type { Touched } from '@utils/formErrors';
@@ -55,8 +57,9 @@ export const providerSignUpSlice = createAppSlice({
             phone: toPkPhone(values.phone) ?? '',
             password: values.password,
             portal: 'partner',
-            subType,
           });
+          // After the session opens: opening resets the store, which clears the pick.
+          dispatch(rememberPendingPick({ serviceType: SUBTYPE_SERVICE[subType], subType }));
           return true;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

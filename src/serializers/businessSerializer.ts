@@ -2,9 +2,10 @@
 // MetroMatrix — Business Serializer
 // ═══════════════════════════════════════════════════════
 // Defensive backend → app mapping for partner businesses, their documents,
-// admin queue rows and status polls. Required / missing document lists fall
-// back to the client's REQUIRED_DOCUMENTS when the server omits them.
-// TODO(API_AUTH): field names per docs/API_CONTRACT_ASSUMED.md.
+// admin queue rows and status polls, by the API's names (MetroMatrix_Backend
+// businesses.service.ts BusinessView / BusinessDetail / DocumentView). The
+// required / missing document lists are evaluated on the device when the
+// server omits them.
 
 import type {
   Business,
@@ -16,11 +17,12 @@ import type {
   DocumentKind,
   DocumentStatus,
   GeoPoint,
+  RequirementStatus,
   ServiceType,
   SubType,
 } from '../types/auth';
-import { REQUIRED_DOCUMENTS, SUBTYPE_SERVICE, missingDocuments } from '../models/businessModel';
-import { arr, bool, enumList, isObject, num, oneOf, str, strOrNull } from './serializerUtils';
+import { SUBTYPE_SERVICE, evaluateDocuments } from '../models/businessModel';
+import { arr, bool, isObject, num, oneOf, str, strOrNull } from './serializerUtils';
 import { foodVendorSessionSerializer } from './food/vendorSerializer';
 
 export const SERVICE_TYPES: readonly ServiceType[] = ['shopping', 'healthcare', 'food'];
@@ -33,36 +35,30 @@ export const BUSINESS_STATUSES: readonly BusinessStatus[] = [
   'suspended',
 ];
 export const DOCUMENT_KINDS: readonly DocumentKind[] = [
-  'cnic',
-  'medical_license',
+  'cnic_front',
+  'cnic_back',
+  'pmdc_certificate',
   'degree_certificate',
-  'business_license',
-  'food_license',
+  'ntn_certificate',
+  'shop_photo',
+  'pfa_licence',
+  'storefront_photo',
   'kitchen_photo',
 ];
 const DOCUMENT_STATUSES: readonly DocumentStatus[] = ['pending', 'accepted', 'rejected'];
 
-const location = (v: unknown): GeoPoint | null => {
-  if (!isObject(v)) return null;
-  const lat = num(v.lat ?? v.latitude, NaN);
-  const lng = num(v.lng ?? v.lon ?? v.longitude, NaN);
-  return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
-};
-
-const details = (v: unknown): Record<string, string> => {
-  if (!isObject(v)) return {};
-  const out: Record<string, string> = {};
-  for (const [k, value] of Object.entries(v)) {
-    const s = str(value);
-    if (s) out[k] = s;
-  }
-  return out;
+/** The API's `lat` / `lng` (top level), or a `location` object. */
+const location = (raw: Record<string, unknown>): GeoPoint | null => {
+  const src = isObject(raw.location) ? raw.location : raw;
+  const lat = num(src.lat ?? src.latitude, NaN);
+  const lng = num(src.lng ?? src.lon ?? src.longitude, NaN);
+  return src.lat !== null && src.lng !== null && Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
 };
 
 /** Returns null for an entry that cannot be a document (no kind or URL). */
 export const documentSerializer = (raw: unknown): BusinessDocument | null => {
   if (!isObject(raw)) return null;
-  const kind = oneOf(raw.kind ?? raw.type, DOCUMENT_KINDS, null);
+  const kind = oneOf(raw.kind, DOCUMENT_KINDS, null);
   const url = str(raw.url ?? raw.secureUrl);
   if (!kind || !url) return null;
   return {
@@ -70,12 +66,31 @@ export const documentSerializer = (raw: unknown): BusinessDocument | null => {
     kind,
     url,
     publicId: str(raw.publicId),
+    // The API doesn't send it; the URL says (PDFs are the only non-images).
     mimeType: str(raw.mimeType, url.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg'),
     status: oneOf(raw.status, DOCUMENT_STATUSES, 'pending'),
-    reviewerNote: strOrNull(raw.reviewerNote ?? raw.note),
-    uploadedAt: str(raw.uploadedAt ?? raw.createdAt),
+    reviewerNote: strOrNull(raw.reviewNote ?? raw.reviewerNote),
+    uploadedAt: str(raw.createdAt ?? raw.uploadedAt),
   };
 };
+
+/** The API's `requiredDocuments` (RequirementStatus[]); kinds it doesn't know are dropped. */
+const requirementStatuses = (v: unknown): RequirementStatus[] =>
+  arr(v)
+    .filter(isObject)
+    .map((r): RequirementStatus => {
+      const kind = oneOf(r.kind, DOCUMENT_KINDS, null);
+      const anyOf = arr(r.anyOf).filter((k): k is DocumentKind => DOCUMENT_KINDS.includes(k as DocumentKind));
+      const min = Math.max(1, num(r.min, 1));
+      const have = Math.max(0, num(r.have, 0));
+      return {
+        ...(kind ? { kind } : { anyOf }),
+        min,
+        have,
+        satisfied: bool(r.satisfied, have >= min),
+      };
+    })
+    .filter(r => r.kind || (r.anyOf && r.anyOf.length));
 
 export const businessSerializer = (raw: unknown): Business | null => {
   if (!isObject(raw)) return null;
@@ -84,10 +99,8 @@ export const businessSerializer = (raw: unknown): Business | null => {
   const documents = arr(raw.documents)
     .map(documentSerializer)
     .filter((d): d is BusinessDocument => d !== null);
-  const required = enumList(raw.requiredDocuments, DOCUMENT_KINDS);
-  const missing = Array.isArray(raw.missingDocuments)
-    ? enumList(raw.missingDocuments, DOCUMENT_KINDS)
-    : missingDocuments(subType, documents);
+  const fromServer = requirementStatuses(raw.requiredDocuments);
+  const local = evaluateDocuments(subType, documents);
   return {
     id: str(raw.id ?? raw._id),
     ownerId: str(raw.ownerId),
@@ -96,13 +109,15 @@ export const businessSerializer = (raw: unknown): Business | null => {
     name: str(raw.name),
     phone: str(raw.phone),
     city: str(raw.city),
-    address: str(raw.address),
-    location: location(raw.location),
-    details: details(raw.details),
+    address: str(raw.addressLine ?? raw.address),
+    location: location(raw),
+    pmdcNumber: subType === 'doctor' ? strOrNull(raw.pmdcNumber) : null,
     status: oneOf(raw.status, BUSINESS_STATUSES, 'draft'),
     documents,
-    requiredDocuments: required.length ? required : REQUIRED_DOCUMENTS[subType],
-    missingDocuments: missing,
+    requiredDocuments: fromServer.length ? fromServer : local.requirements,
+    missingDocuments: Array.isArray(raw.missingDocuments)
+      ? raw.missingDocuments.filter((k): k is string => typeof k === 'string' && k.length > 0)
+      : local.missing,
     rejectionReason: strOrNull(raw.rejectionReason),
     suspensionReason: strOrNull(raw.suspensionReason),
     submittedAt: strOrNull(raw.submittedAt),
@@ -124,7 +139,7 @@ export const businessWithOwnerSerializer = (raw: unknown): BusinessWithOwner | n
     ...business,
     owner: {
       id: str(owner.id ?? owner._id),
-      name: str(owner.name),
+      name: str(owner.displayName ?? owner.name),
       email: str(owner.email),
       phone: strOrNull(owner.phone),
     },
@@ -145,16 +160,24 @@ export const businessSummarySerializer = (raw: unknown): BusinessSummary | null 
     city: str(raw.city),
     status: oneOf(raw.status, BUSINESS_STATUSES, 'pending_approval'),
     submittedAt: strOrNull(raw.submittedAt),
-    owner: { name: str(owner.name), email: str(owner.email) },
+    owner: { name: str(owner.displayName ?? owner.name), email: str(owner.email) },
   };
 };
 
+/**
+ * The API's Paged `{ items, total, page, pageSize }`; `nextCursor` is the next
+ * page number while rows remain (a `nextCursor` the server sends wins).
+ */
 export const businessPageSerializer = (raw: unknown): { items: BusinessSummary[]; nextCursor: string | null } => {
   const body = isObject(raw) ? raw : {};
   const items = arr(Array.isArray(raw) ? raw : body.items)
     .map(businessSummarySerializer)
     .filter((b): b is BusinessSummary => b !== null);
-  return { items, nextCursor: strOrNull(body.nextCursor) };
+  if (body.nextCursor !== undefined) return { items, nextCursor: strOrNull(body.nextCursor) };
+  const page = Math.max(1, num(body.page, 1));
+  const pageSize = Math.max(1, num(body.pageSize, items.length || 1));
+  const total = num(body.total, 0);
+  return { items, nextCursor: page * pageSize < total ? String(page + 1) : null };
 };
 
 export const businessStatusSerializer = (raw: unknown): BusinessStatusInfo | null => {
@@ -165,13 +188,15 @@ export const businessStatusSerializer = (raw: unknown): BusinessStatusInfo | nul
     status,
     rejectionReason: strOrNull(raw.rejectionReason),
     suspensionReason: strOrNull(raw.suspensionReason),
+    // The API's status poll carries no documents (GET /businesses/me has them).
     documents: arr(raw.documents)
       .filter(isObject)
       .map(d => ({
         id: str(d.id ?? d._id),
-        kind: oneOf(d.kind, DOCUMENT_KINDS, 'cnic'),
+        kind: oneOf(d.kind, DOCUMENT_KINDS, null),
         status: oneOf(d.status, DOCUMENT_STATUSES, 'pending'),
-        reviewerNote: strOrNull(d.reviewerNote ?? d.note),
-      })),
+        reviewerNote: strOrNull(d.reviewNote ?? d.reviewerNote),
+      }))
+      .filter((d): d is BusinessStatusInfo['documents'][number] => d.kind !== null),
   };
 };

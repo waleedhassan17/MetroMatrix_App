@@ -2,7 +2,9 @@
 // MetroMatrix — Complete Your Profile (users, after email verification)
 // ═══════════════════════════════════════════════════════
 // The FYP's three steps with its progress bar + dots and Back / Continue
-// buttons. Step 3 is optional: "Skip for now" saves without a photo.
+// buttons. Step 3 is optional: "Finish without a photo" saves without one.
+// Customers from before Complete Profile existed (user.profileSkippable) may
+// "Skip for now": remembered on this device, and the gate lets them through.
 
 import React, { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -30,6 +32,7 @@ import { AuthHeader, AuthScreen } from '@components/auth/AuthChrome';
 import { OptionPills, StepButtons, StepHeading, StepProgress } from '@components/auth/StepFlow';
 import type { Gender } from '@/types';
 import { selectUser } from '../authSlice';
+import { skipProfile } from '@store/preferencesSlice';
 import {
   goToStep,
   removePhoto,
@@ -126,7 +129,13 @@ const CompleteProfileScreen: React.FC = () => {
   };
 
   const nextLabel =
-    s.step < 3 ? 'Continue' : loading ? 'Saving...' : s.photo.status === 'uploaded' ? 'Complete Registration' : 'Skip for now';
+    s.step < 3
+      ? 'Continue'
+      : loading
+        ? 'Saving...'
+        : s.photo.status === 'uploaded'
+          ? 'Complete Registration'
+          : 'Finish without a photo';
 
   return (
     <AuthScreen onBack={s.step > 1 ? () => dispatch(goToStep((s.step - 1) as 1 | 2)) : undefined}>
@@ -262,6 +271,10 @@ const CompleteProfileScreen: React.FC = () => {
         loading={loading}
       />
       <View style={styles.center}>
+        {user?.profileSkippable ? (
+          // Accounts from before Complete Profile existed may finish it later.
+          <Button label="Skip for now" variant="ghost" size="sm" onPress={() => dispatch(skipProfile(user.id))} />
+        ) : null}
         <AppText variant="caption" tone="muted" align="center">
           Signed in as {user?.email}
         </AppText>

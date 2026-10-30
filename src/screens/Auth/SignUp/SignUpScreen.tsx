@@ -27,7 +27,8 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
   const loading = form.status === 'loading';
   const busy = loading || form.googleStatus === 'loading';
   const open = useSignupsOpen('customer');
-  const complete = Object.values(form.values).every(v => v.trim().length > 0) && open;
+  // The mobile is optional (the API's SignupDto).
+  const complete = (['name', 'email', 'password'] as const).every(f => form.values[f].trim().length > 0) && open;
 
   const submit = async () => {
     if (!complete || busy) return;
@@ -53,6 +54,7 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
             ? navigation.navigate('ProviderSignIn', { email: form.values.email.trim() })
             : navigation.navigate('SignIn', { email: form.values.email.trim() })
         }
+        onSignInInstead={() => navigation.navigate('SignIn', { email: form.values.email.trim() })}
       />
       <SignUpFields
         values={form.values}

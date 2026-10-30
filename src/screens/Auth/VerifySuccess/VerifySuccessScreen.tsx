@@ -1,4 +1,6 @@
-// MetroMatrix — Verify Success: where the email's verification link lands.
+// MetroMatrix — Verify Success: where the email's verification link lands
+// (metromatrix://verify-email?token=… or ?verified=1). Deep links need a
+// development or store build: Expo Go doesn't own the metromatrix:// scheme.
 
 import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -8,6 +10,7 @@ import { useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Button, InlineNotice, IonIcon, SkeletonLines } from '@custom/index';
 import { AuthHeader, AuthScreen } from '@components/auth/AuthChrome';
 import type { RootStackParamList } from '@/types';
+import { selectIsAuthenticated } from '../authSlice';
 import { selectVerifySuccess, verifyLinkAsync } from './verifySuccessSlice';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'VerifySuccess'>;
@@ -29,14 +32,16 @@ const VerifySuccessScreen: React.FC<Props> = ({ navigation, route }) => {
   const styles = useStyles(makeStyles);
   const { service, colors } = useTheme();
   const s = useAppSelector(selectVerifySuccess);
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const token = route.params?.token;
+  const verified = route.params?.verified === '1' || route.params?.verified === true;
 
   useEffect(() => {
-    if (token) dispatch(verifyLinkAsync(token));
-  }, [token, dispatch]);
+    dispatch(verifyLinkAsync({ token, verified }));
+  }, [token, verified, dispatch]);
 
   const ok = s.status === 'succeeded';
-  const failed = s.status === 'failed' || !token;
+  const failed = s.status === 'failed';
 
   return (
     <AuthScreen>
@@ -45,21 +50,25 @@ const VerifySuccessScreen: React.FC<Props> = ({ navigation, route }) => {
       </View>
       <AuthHeader
         hideLogo
-        title={failed ? "We couldn't verify that link" : ok ? 'Email Verified' : 'Verifying your email'}
+        title={failed ? "We couldn't verify that link" : ok ? 'Email verified' : 'Verifying your email'}
         subtitle={
           failed
-            ? 'Request a new link from the verification screen.'
+            ? 'Open the app and tap Resend on the verification screen for a new link.'
             : ok && s.signedIn
               ? 'Taking you to the next step...'
               : ok
-                ? 'Your email is verified. Sign in to continue.'
+                ? 'Email verified, sign in to continue.'
                 : 'One moment.'
         }
       />
       {s.status === 'loading' ? <SkeletonLines lines={2} /> : null}
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
-      {(ok && !s.signedIn) || failed ? (
+      {/* Signed in, the gate replaces this screen; signed out, it leads to Sign In. */}
+      {(ok && !s.signedIn) || (failed && !isAuthenticated) ? (
         <Button label="Continue to Sign In" onPress={() => navigation.navigate('SignIn')} fullWidth />
+      ) : null}
+      {failed && isAuthenticated ? (
+        <Button label="Back to verification" onPress={() => navigation.navigate('EmailVerification')} fullWidth />
       ) : null}
       {ok && s.signedIn ? (
         <AppText variant="small" tone="muted" align="center">

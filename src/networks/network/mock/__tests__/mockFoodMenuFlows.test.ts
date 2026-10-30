@@ -4,7 +4,6 @@
 // kitchen's portions (reset each day), the weekly menu and pre-order slots,
 // and the menu step of the go-live checklist.
 
-import { authSignin } from '../../../auth/authNetwork';
 import {
   createMenuCategory,
   createMenuItem,
@@ -23,8 +22,10 @@ import { getVendorSetup } from '../../../food/vendor/setupNetwork';
 import { getVendorPlan } from '../../../food/vendor/planNetwork';
 import { AuthError } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
-import { SEED_PASSWORD } from '../mockConfig';
 import { getDb, resetMockDb } from '../mockDb';
+import { signInAs, installDummyApi } from '../testing';
+
+installDummyApi();
 
 // Thursday 15 October 2026, 3 PM in Pakistan.
 const T0 = new Date('2026-10-15T10:00:00Z').getTime();
@@ -41,7 +42,7 @@ const failure = async (p: Promise<unknown>): Promise<AuthError> => {
 
 const signIn = async (email: string) => {
   await clearTokens();
-  await authSignin({ email, password: SEED_PASSWORD, portal: 'partner' });
+  await signInAs(email);
 };
 
 const dish = { description: null, photoUrl: null, tags: [], isDeal: false, serves: null, days: [0, 1, 2, 3, 4, 5, 6], isActive: true };

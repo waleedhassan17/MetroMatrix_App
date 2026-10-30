@@ -18,30 +18,23 @@ npm run web                       # browser
 npm run gates                     # tsc + design-token gate + eslint + jest
 ```
 
-No backend is needed: until one is configured, every request is answered by the **dummy API** inside the network layer (`src/networks/network/mock/`), with the same endpoints, responses and errors the real API will have.
+## Connecting the backend
 
-## Connecting the real backend (one line)
+Copy [.env.example](.env.example) to `.env.local` and set `EXPO_PUBLIC_API_URL` (including `/api/v1`), then `npm run start:clear`. Release builds take the URL from their profile in [eas.json](eas.json) (`development`, `preview`, `production`; replace the placeholder hosts before building).
 
-Open [src/config/env.ts](src/config/env.ts) and set `BACKEND_URL`:
+A build with no URL doesn't fall back to anything. It shows a configuration-error screen and sends no requests.
 
-```ts
-const BACKEND_URL = 'https://your-api.example.com/api/v1';
-```
+## Trying it against a local API
 
-Or set `EXPO_PUBLIC_API_URL` in `.env.local`. That is the whole switch. The networks, serializers, slices and screens don't change.
+As in FinMatrix, the app always talks to the real MetroMatrix API: there is no dummy fallback in any build.
 
-## Trying it on the dummy API
+1. Run the backend (MetroMatrix API repo): `docker compose up -d --wait`, `npm run migration:run`, `npm run seed:superadmin`, then optionally `seed:shopping`, `seed:health`, `seed:food`, `seed:kitchen` (their accounts share `SEED_DEMO_PASSWORD`), then `npm run start:dev`. Its `CORS_ORIGINS` must list the web origin (`http://localhost:8081`).
+2. In `.env.local` here: `EXPO_PUBLIC_API_URL=http://localhost:3000/api/v1` for web, or `http://<your LAN IP>:3000/api/v1` for a phone. Then `npm run start:clear`.
+3. Emails (the verification link, reset codes) land in Mailpit at http://localhost:8025. Staff sign in on the ordinary Sign In with the super admin from `seed:superadmin`, then set up an authenticator app.
 
-| Try | How |
-|---|---|
-| New user | Role Selection → User → Sign Up → wait ~5 s → "I Verified My Email" → Complete Profile → home |
-| New provider | Role Selection → Service Provider → pick a service → Sign Up → verify → Personal Info (3 steps) → submit; approval arrives ~30 s later |
-| Existing accounts | `customer@` / `doctor@` / `kitchen@` / `vendor@metromatrix.app`, password `Metro2026` |
-| Shopping | `customer@metromatrix.app`: Home → Smart Shopping. Stores: `store@` (Lawn & Loom, the busiest), `urban@`, `volt@metromatrix.app` (sign in as Service Provider → Vendor Registration). Second shopper: `hamza@metromatrix.app`. All `Metro2026` |
-| Staff | `admin@metromatrix.app` / `Admin2026` on the ordinary Sign In, then code `123456` |
-| Password reset | Forgot Password → code `123456` |
+The auth requests are checked against the API's OpenAPI document (`docs/openapi.json`, `src/networks/__tests__/contract.test.ts`). With a running API, `src/__live__/live.test.ts` walks the auth flows against it.
 
-The full rules and seeded accounts are in [docs/API_CONTRACT_ASSUMED.md → Mock mode](docs/API_CONTRACT_ASSUMED.md#mock-mode) and, for Shopping, [docs/API_SHOPPING_ASSUMED.md → Mock mode](docs/API_SHOPPING_ASSUMED.md#mock-mode).
+The dummy API in `src/networks/network/mock/` is test fixtures only: the Shopping, Health, Food and Kitchen routes the parity and flow tests run the networks against (`mock/testing.ts`).
 
 ## Status
 

@@ -1,6 +1,6 @@
 # The dummy Kitchen Intelligence API
 
-While `BACKEND_URL` is empty, everything Chunk 5 calls is answered in the app by the dummy API in `src/networks/network/mock/kitchen/`. It covers:
+The app talks to the real API. In tests, everything Chunk 5 calls is answered by the dummy API in `src/networks/network/mock/kitchen/` (installed with `installDummyApi()`, `mock/testing.ts`). It covers:
 
 - the vendor's Kitchen: stock, recipes and costs, purchases, forecast and prep, waste, Bachat Box;
 - growth: tiffin, catering, Ramadan, the storefront and QR, demand, menu insights and tests, story and hygiene, batching;
@@ -121,7 +121,7 @@ Demo accounts and passwords are in `docs/MOCK_FOOD.md` ("Seeded accounts"). Staf
 - **Nothing is written** until Confirm: the app then calls the ordinary endpoint.
 - **`ttsUrl` is always `null`**, so announcements use the phone's own voice (`expo-speech`) or fall back to the ring (`TODO(API_VOICE)`).
 - **Walk switches**, in a development build or the web: `globalThis.__MM_MOCK__ = { aiOff: true }` turns the assistant off, and `{ aiUsedUp: true }` uses up every limit. Staff can do the same for real in the console (the switch, a kitchen's monthly limit).
-- **Walks can act as another person**: `globalThis.__MM_MOCK_DB__.request(method, url, body, token, headers)`.
+- Walks no longer run on the dummy API: the app always talks to the real API, and the dummy API is test fixtures only (`mock/testing.ts`).
 
 ## Tests
 

@@ -11,12 +11,13 @@ import vendorReal from '../../../../serializers/__tests__/fixtures/food/vendor.j
 import menuReal from '../../../../serializers/__tests__/fixtures/food/menu.json';
 import discoveryReal from '../../../../serializers/__tests__/fixtures/food/discovery.json';
 import p8Real from '../../../../serializers/__tests__/fixtures/food/p8.json';
-import { authSignin } from '../../../auth/authNetwork';
 import { api } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
-import { SEED_PASSWORD } from '../mockConfig';
 import { getDb, resetMockDb } from '../mockDb';
 import { isAddition, shippedAdditions } from '../kitchen/foodAdditions';
+import { signInAs, installDummyApi } from '../testing';
+
+installDummyApi();
 
 type Body = { success: boolean; data?: unknown; error?: { code: string; details?: unknown } };
 type Captured = Record<string, { status: number; body: Body }>;
@@ -74,7 +75,7 @@ type As = 'vendor' | 'rider' | 'home' | 'guest';
 const CASES: { fixture: string; as: As; run: () => Promise<Body>; paths: string[] }[] = [];
 const add = (fixture: string, as: As, run: () => Promise<Body>, paths: string[]) => CASES.push({ fixture, as, run, paths });
 
-add('resto.meAfter', 'vendor', () => call('get', '/auth/me'), ['business.food']);
+// /auth/me (`business.food`) is the real API's alone now: the dummy API has no auth routes.
 add('cuisines', 'vendor', () => call('get', '/food/cuisines'), ['0']);
 add('resto.setupAfter', 'vendor', () => call('get', '/food/vendor/setup'), ['', 'items.0']);
 add('resto.profilePatch', 'vendor', () => call('get', '/food/vendor/profile'), ['', 'cuisines.0', 'branch', 'branch.openState']);
@@ -198,9 +199,9 @@ const replay = async ({ label, real, strict }: (typeof RUNS)[number]) => {
         compare(c.fixture, await c.run(), c.paths);
         continue;
       }
-      if (c.as === 'vendor') await authSignin({ email: 'restaurant@metromatrix.app', password: SEED_PASSWORD, portal: 'partner' });
-      else if (c.as === 'home') await authSignin({ email: 'homekitchen@metromatrix.app', password: SEED_PASSWORD, portal: 'partner' });
-      else await authSignin({ username: 'biryani-bazaar.ali', password: SEED_PASSWORD, portal: 'partner' });
+      if (c.as === 'vendor') await signInAs('restaurant@metromatrix.app');
+      else if (c.as === 'home') await signInAs('homekitchen@metromatrix.app');
+      else await signInAs('biryani-bazaar.ali');
       who = c.as;
     }
     compare(c.fixture, await c.run(), c.paths);

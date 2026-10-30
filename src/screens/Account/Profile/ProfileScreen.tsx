@@ -266,7 +266,8 @@ const ProfileContent: React.FC<Props> = ({ navigation }) => {
 
   const confirmDelete = async () => {
     if (!deleteReady) return;
-    const r = await dispatch(deleteAccountAsync(googleOnly ? { confirm: 'DELETE' } : { password: p.deleteConfirmation }));
+    // The method follows the account: a password, or (Google-only) a fresh Google sign-in.
+    const r = await dispatch(deleteAccountAsync(googleOnly ? { google: true } : { password: p.deleteConfirmation }));
     if (deleteAccountAsync.fulfilled.match(r)) {
       Toast.show({ type: 'success', text1: 'Account deleted', text2: 'Your data has been removed.' });
     } else haptics.warning();
@@ -494,7 +495,7 @@ const ProfileContent: React.FC<Props> = ({ navigation }) => {
         footer={<Button label="Delete account" variant="destructive" onPress={confirmDelete} loading={p.deleteStatus === 'loading'} disabled={!deleteReady} fullWidth />}>
         {p.error.message && p.deleteOpen ? <InlineNotice message={p.error.message} /> : null}
         <TextField
-          label={googleOnly ? 'Type DELETE to confirm' : 'Enter your password to confirm'}
+          label={googleOnly ? 'Type DELETE, then confirm with Google' : 'Enter your password to confirm'}
           mode={googleOnly ? 'text' : 'password'}
           value={p.deleteConfirmation}
           onChangeText={v => dispatch(setDeleteConfirmation(v))}

@@ -4,7 +4,6 @@
 // all-or-nothing writes, and riders (username once, sign-in by username,
 // deactivation and resets ending sessions).
 
-import { authMe, authSignin } from '../../../auth/authNetwork';
 import { getVendorSetup, goLive } from '../../../food/vendor/setupNetwork';
 import { getCuisines, getVendorProfile, pauseOrders, resumeOrders, setBusy, updateVendorProfile } from '../../../food/vendor/profileNetwork';
 import {
@@ -22,8 +21,10 @@ import { getVendorPlan } from '../../../food/vendor/planNetwork';
 import { getRiderHome } from '../../../food/rider/riderNetwork';
 import { AuthError } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
-import { SEED_PASSWORD } from '../mockConfig';
 import { getDb, resetMockDb } from '../mockDb';
+import { currentSession, signInAs, installDummyApi } from '../testing';
+
+installDummyApi();
 
 // Thursday 15 October 2026, 3 PM in Pakistan.
 const T0 = new Date('2026-10-15T10:00:00Z').getTime();
@@ -39,12 +40,14 @@ const failure = async (p: Promise<unknown>): Promise<AuthError> => {
 
 const signInVendor = async (email: string) => {
   await clearTokens();
-  await authSignin({ email, password: SEED_PASSWORD, portal: 'partner' });
+  await signInAs(email);
 };
 
-const signInRider = async (username: string, password = SEED_PASSWORD) => {
+// Passwords and wrong-door answers are the real API's (its sign-in); here a
+// rider is simply signed in by username.
+const signInRider = async (username: string) => {
   await clearTokens();
-  return authSignin({ username, password, portal: 'partner' });
+  return signInAs(username);
 };
 
 beforeAll(() => {
@@ -60,15 +63,15 @@ beforeEach(async () => {
 describe('the session', () => {
   it("says which brand a vendor is and whether it is live", async () => {
     await signInVendor('restaurant@metromatrix.app');
-    const me = await authMe();
+    const me = await currentSession();
     expect(me.business?.food).toMatchObject({ brandSlug: 'biryani-bazaar', isLive: true, setupComplete: true });
     await signInVendor('homekitchen@metromatrix.app');
-    expect((await authMe()).business?.food).toMatchObject({ isLive: false, setupComplete: false });
+    expect((await currentSession()).business?.food).toMatchObject({ isLive: false, setupComplete: false });
   });
 
   it('refuses a vendor route to a partner of another service', async () => {
     await clearTokens();
-    await authSignin({ email: 'derm@metromatrix.app', password: SEED_PASSWORD, portal: 'partner' });
+    await signInAs('derm@metromatrix.app');
     expect((await failure(getVendorSetup())).code).toBe('WRONG_SERVICE');
   });
 });
@@ -94,7 +97,7 @@ describe('going live', () => {
     await saveHours([{ weekday: 5, opensAt: '18:00', closesAt: '02:00' }]);
     await goLive();
     expect((await getVendorSetup()).isLive).toBe(true);
-    expect((await authMe()).business?.food?.isLive).toBe(true);
+    expect((await currentSession()).business?.food?.isLive).toBe(true);
   });
 
   it('zones are not required when the kitchen only does pick-up', async () => {
@@ -201,7 +204,7 @@ describe('hours, zones, closures and accounts', () => {
 });
 
 describe('riders', () => {
-  it('issues a username and a password once; the rider signs in with them', async () => {
+  it("issues a username and a password once; the rider's app then works", async () => {
     await signInVendor('restaurant@metromatrix.app');
     const { rider, credential } = await createRider({ fullName: 'Kamran Shah', phone: '0301 2345678', vehicle: 'bike' });
     expect(credential.username).toBe('biryani-bazaar.kamran');
@@ -212,17 +215,10 @@ describe('riders', () => {
     expect((await createRider({ fullName: 'Kamran Ali', phone: null, vehicle: null })).credential.username).toBe('biryani-bazaar.kamran2');
     expect((await getVendorPlan()).usage.riders).toBe(3);
 
-    const outcome = await signInRider(credential.username, credential.password);
-    expect(outcome.kind).toBe('session');
+    await signInRider(credential.username);
     const home = await getRiderHome();
     expect(home.rider.fullName).toBe('Kamran Shah');
     expect(home.vendor).toMatchObject({ name: 'Biryani Bazaar', area: 'Gulberg III' });
-  });
-
-  it("refuses a rider on the customer side, and a wrong password by username", async () => {
-    await clearTokens();
-    expect((await failure(authSignin({ username: 'biryani-bazaar.ali', password: SEED_PASSWORD, portal: 'customer' }))).code).toBe('WRONG_PORTAL');
-    expect((await failure(signInRider('biryani-bazaar.ali', 'Wrong2026'))).message).toBe('Incorrect username or password.');
   });
 
   it('a rider on leave is signed out and cannot use rider routes; reactivating lets them back', async () => {
@@ -240,13 +236,14 @@ describe('riders', () => {
     expect((await getRiderHome()).rider.status).toBe('active');
   });
 
-  it('a reset gives a new password and ends the old one', async () => {
+  it('a reset gives a new password and signs the rider out', async () => {
+    await signInRider('biryani-bazaar.ali');
     await signInVendor('restaurant@metromatrix.app');
     const c = await resetRiderPassword('rd_ali');
     expect(c.username).toBe('biryani-bazaar.ali');
-    await clearTokens();
-    expect((await failure(signInRider('biryani-bazaar.ali'))).code).toBe('INVALID_CREDENTIALS');
-    expect((await signInRider('biryani-bazaar.ali', c.password)).kind).toBe('session');
+    expect(c.password).toMatch(/^[A-Za-z2-9]{10}$/);
+    const db = await getDb();
+    expect(Object.values(db.access).some(s => s.userId === 'u_rider_ali')).toBe(false);
   });
 
   it("edits a rider's vehicle and phone, and hides another vendor's riders", async () => {

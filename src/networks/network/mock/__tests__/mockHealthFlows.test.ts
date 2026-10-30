@@ -5,8 +5,6 @@
 // prescription lock, one review per visit, hours overlaps, time-off
 // conflicts and the PMDC gate.
 
-import { authAdminTotp, authSignin } from '../../../auth/authNetwork';
-import { approveBusiness } from '../../../admin/adminBusinessNetwork';
 import { verifyPmdc } from '../../../admin/adminHealthNetwork';
 import { getDoctor, getHealthHome, listDoctors, suggest } from '../../../health/discoveryNetwork';
 import { listDays, listSlots } from '../../../health/availabilityNetwork';
@@ -40,8 +38,10 @@ import { AuthError } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import { PKT, addDays, dateInZone, isoWeekday, todayInZone } from '../../../../utils/healthTime';
 import type { BookingInput } from '../../../../types/health';
-import { MOCK, SEED_PASSWORD, STAFF_PASSWORD } from '../mockConfig';
 import { getDb, resetMockDb } from '../mockDb';
+import { signInAs, installDummyApi } from '../testing';
+
+installDummyApi();
 
 // Thursday 15 October 2026, 3 PM in Pakistan.
 const T0 = new Date('2026-10-15T10:00:00Z').getTime();
@@ -58,14 +58,12 @@ const failure = async (p: Promise<unknown>): Promise<AuthError> => {
 
 const signIn = async (email: string, portal: 'customer' | 'partner' = 'customer') => {
   await clearTokens();
-  await authSignin({ email, password: SEED_PASSWORD, portal });
+  await signInAs(email);
 };
 
 const signInAdmin = async () => {
   await clearTokens();
-  const outcome = await authSignin({ email: 'admin@metromatrix.app', password: STAFF_PASSWORD, portal: 'admin' });
-  if (outcome.kind !== 'totp') throw new Error('expected a challenge');
-  await authAdminTotp(outcome.challenge.challengeToken, { code: MOCK.TOTP_CODE });
+  await signInAs('admin@metromatrix.app');
 };
 
 /**
@@ -354,12 +352,9 @@ describe('video, symptoms and staff', () => {
     expect(skin.disclaimer).toMatch(/not a diagnosis/);
   });
 
-  it('approves a doctor only after the PMDC check', async () => {
+  it('records the PMDC check on a doctor (approval itself is the real API)', async () => {
     await signInAdmin();
-    expect((await failure(approveBusiness('b_pmdc'))).code).toBe('PMDC_NOT_VERIFIED');
     const v = await verifyPmdc('b_pmdc', 'Matched on the PMDC register');
     expect(v.pmdcVerified).toBe(true);
-    const b = await approveBusiness('b_pmdc');
-    expect(b.status).toBe('approved');
   });
 });

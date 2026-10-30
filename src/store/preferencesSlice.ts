@@ -37,6 +37,13 @@ export interface PreferencesSliceState {
    * with the next order from that kitchen (signing in on the way keeps it).
    */
   storeSource?: (StoreSource & { at: number; opened?: boolean }) | null;
+  /**
+   * Accounts (by user id) that tapped "Skip for now" on Complete Profile.
+   * Only honoured while the server says the profile is skippable (customers
+   * from before Complete Profile existed). Kept across sign-outs: the
+   * choice was made on this device for that account.
+   */
+  skippedProfile: Record<string, true>;
 }
 
 export type AnnounceLanguage = 'off' | 'ur' | 'en';
@@ -47,6 +54,7 @@ const initialState: PreferencesSliceState = {
   pushPromptSeen: false,
   recentSearches: [],
   recentHealthSearches: [],
+  skippedProfile: {},
 };
 
 export const preferencesSlice = createAppSlice({
@@ -113,6 +121,9 @@ export const preferencesSlice = createAppSlice({
     markStoreSourceOpened: create.reducer(state => {
       if (state.storeSource) state.storeSource.opened = true;
     }),
+    skipProfile: create.reducer((state, action: PayloadAction<string>) => {
+      state.skippedProfile = { ...(state.skippedProfile ?? {}), [action.payload]: true };
+    }),
   }),
 
   // The device keeps its settings across accounts; a person's searches go with them.
@@ -137,6 +148,7 @@ export const preferencesSlice = createAppSlice({
     selectMicExplained: state => !!state.micExplained,
     selectAnnounce: state => state.announce ?? 'off',
     selectStoreSource: state => state.storeSource ?? null,
+    selectSkippedProfile: state => state.skippedProfile ?? {},
   },
 });
 
@@ -157,6 +169,7 @@ export const {
   setAnnounce,
   setStoreSource,
   markStoreSourceOpened,
+  skipProfile,
 } = preferencesSlice.actions;
 
 export const {
@@ -170,4 +183,5 @@ export const {
   selectMicExplained,
   selectAnnounce,
   selectStoreSource,
+  selectSkippedProfile,
 } = preferencesSlice.selectors;

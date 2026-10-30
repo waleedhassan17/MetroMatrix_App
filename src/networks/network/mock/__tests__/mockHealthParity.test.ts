@@ -5,11 +5,12 @@
 // here unless it is listed in KNOWN with the reason.
 
 import real from '../../../../serializers/__tests__/fixtures/health/real.json';
-import { authAdminTotp, authSignin } from '../../../auth/authNetwork';
 import { api } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
-import { MOCK, SEED_PASSWORD, STAFF_PASSWORD } from '../mockConfig';
 import { getDb, resetMockDb } from '../mockDb';
+import { signInAs, installDummyApi } from '../testing';
+
+installDummyApi();
 
 type Body = { success: boolean; data?: unknown; error?: { code: string; details?: unknown } };
 const R = real as unknown as Record<string, { status: number; body: Body }>;
@@ -19,14 +20,12 @@ const T0 = new Date('2026-10-15T10:00:00Z').getTime();
 
 const signIn = async (email: string, portal: 'customer' | 'partner' = 'customer') => {
   await clearTokens();
-  await authSignin({ email, password: SEED_PASSWORD, portal });
+  await signInAs(email);
 };
 
 const signInAdmin = async () => {
   await clearTokens();
-  const outcome = await authSignin({ email: 'admin@metromatrix.app', password: STAFF_PASSWORD, portal: 'admin' });
-  if (outcome.kind !== 'totp') throw new Error('expected a challenge');
-  await authAdminTotp(outcome.challenge.challengeToken, { code: MOCK.TOTP_CODE });
+  await signInAs('admin@metromatrix.app');
 };
 
 /** The answer's `data`, or `{ error }` for a failure, as the fixtures keep them. */
@@ -131,7 +130,7 @@ add('bookVideo', 'patient', async () => {
 add('prescription', 'patient', () => call('get', '/health/prescriptions/rx_acne'), ['', 'doctor', 'location', 'patient', 'medicines.0', 'tests.0']);
 add('symptomFallback', 'patient', () => call('post', '/health/symptom-checker', { text: 'Pimples on my face for two months' }), ['', 'specialty', 'areasToDiscuss.0']);
 add('symptomEmergency', 'patient', () => call('post', '/health/symptom-checker', { text: 'Sudden chest pain and I am short of breath' }), ['', 'numbers.0']);
-add('signUpload', 'patient', () => call('post', '/media/sign-upload', { purpose: 'health_record' }), ['']);
+// /media/sign-upload is the real API's alone now (contract.test.ts checks the App's request).
 add('notifications', 'patient', () => call('get', '/notifications'), ['', 'items.0']);
 add('videoTooEarly', 'patient', async () => {
   const db = await getDb();

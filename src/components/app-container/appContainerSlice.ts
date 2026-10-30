@@ -6,9 +6,10 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getAccessToken, clearTokens } from '../../utils/storageUtils';
+import { getAccessToken, getRefreshToken, clearTokens } from '../../utils/storageUtils';
 import { authMe } from '../../networks/auth/authNetwork';
-import { isNetworkError } from '../../networks/network/apiHelpers';
+import { isNetworkError, refreshTokens } from '../../networks/network/apiHelpers';
+import { isDefinitiveSessionFailure } from '../../networks/network/sessionRefresh';
 import { setSession, signOut } from '../../screens/Auth/authSlice';
 import { registerDevice } from '../../networks/users/usersNetwork';
 import { setPushToken } from '../../utils/storageUtils';
@@ -24,6 +25,8 @@ export interface AppContainerSliceState {
    * to Welcome.
    */
   networkIsDown: boolean;
+  /** Why: no connection, or the API answering 5xx / 429. Shapes the gate's copy. */
+  downReason: 'offline' | 'server';
 }
 
 const initialState: AppContainerSliceState = {
@@ -31,9 +34,10 @@ const initialState: AppContainerSliceState = {
   status: 'idle',
   isAppReady: false,
   networkIsDown: false,
+  downReason: 'offline',
 };
 
-type BootstrapOutcome = 'restored' | 'signedOut' | 'offline';
+type BootstrapOutcome = 'restored' | 'signedOut' | 'offline' | 'serverDown';
 
 export const appContainerSlice = createAppSlice({
   name: 'appContainer',
@@ -59,31 +63,39 @@ export const appContainerSlice = createAppSlice({
      * The axios client attaches the Bearer token and silently refreshes on
      * 401, so this call also rolls an expired access token.
      *
-     *   token missing        → app ready, unauthenticated (Welcome)
+     *   no tokens at all     → app ready, unauthenticated (Welcome)
+     *   refresh token only   → refresh first, then as below
      *   authMe OK            → setSession with the FRESH user + business
      *                          (role, verification, business status may all
      *                          have changed server-side)
-     *   authMe rejected      → tokens cleared, signed out → Welcome
-     *   network unreachable  → networkIsDown; tokens KEPT; Retry re-runs this
+     *   definitive failure   → tokens cleared, signed out → Welcome
+     *                          (sessionRefresh.isDefinitiveSessionFailure)
+     *   anything else        → networkIsDown (offline, or the API failing);
+     *                          tokens KEPT; Retry re-runs this
      */
     bootstrapSession: create.asyncThunk(
       async (_: void, { dispatch }): Promise<BootstrapOutcome> => {
-        const token = await getAccessToken();
-        if (!token) {
+        const [access, refresh] = await Promise.all([getAccessToken(), getRefreshToken()]);
+        if (!access && !refresh) {
           // No token ⇒ no session. Also reconciles stale in-memory state
           // (tokens wiped outside a normal sign-out).
           dispatch(signOut());
           return 'signedOut';
         }
         try {
+          // The access token can be gone while the refresh token lives on
+          // (cleared, or never stored): refresh instead of signing out.
+          if (!access) await refreshTokens();
           const session = await authMe();
           dispatch(setSession(session));
           return 'restored';
         } catch (e) {
-          if (isNetworkError(e)) return 'offline';
-          await clearTokens();
-          dispatch(signOut());
-          return 'signedOut';
+          if (isDefinitiveSessionFailure(e)) {
+            await clearTokens();
+            dispatch(signOut());
+            return 'signedOut';
+          }
+          return isNetworkError(e) ? 'offline' : 'serverDown';
         }
       },
       {
@@ -93,7 +105,8 @@ export const appContainerSlice = createAppSlice({
         fulfilled: (state, action) => {
           state.status = 'idle';
           state.isAppReady = true;
-          state.networkIsDown = action.payload === 'offline';
+          state.networkIsDown = action.payload === 'offline' || action.payload === 'serverDown';
+          state.downReason = action.payload === 'serverDown' ? 'server' : 'offline';
         },
         rejected: state => {
           state.status = 'idle';
@@ -159,6 +172,7 @@ export const appContainerSlice = createAppSlice({
     selectAppError: state => state.error,
     selectIsAppReady: state => state.isAppReady,
     selectNetworkIsDown: state => state.networkIsDown,
+    selectDownReason: state => state.downReason,
   },
 });
 
@@ -172,5 +186,5 @@ export const {
   registerPushAsync,
 } = appContainerSlice.actions;
 
-export const { selectAppStatus, selectAppError, selectIsAppReady, selectNetworkIsDown } =
+export const { selectAppStatus, selectAppError, selectIsAppReady, selectNetworkIsDown, selectDownReason } =
   appContainerSlice.selectors;
