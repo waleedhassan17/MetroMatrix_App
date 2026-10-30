@@ -3,11 +3,13 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { createCondition, deleteCondition, listAdminConditions, listAdminSpecialties, updateCondition } from '@networks/admin/adminHealthNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getAdminConditionsAPI, getAdminSpecialtiesAPI } from '@networks/admin/adminHealthNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { conditionInput, type ConditionForm } from '@models/health/adminHealthModel';
 import type { AdminCondition, AdminSpecialty } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { adminConditionListSerializer, adminSpecialtyListSerializer } from '@serializers/health/adminHealthSerializer';
+import { createCondition, deleteCondition, updateCondition } from '@screens/Admin/Health/shared/taxonomyWrites';
 
 export interface ConditionsSliceState {
   query: string;
@@ -55,7 +57,7 @@ export const conditionsSlice = createAppSlice({
       async (q: string, { getState, rejectWithValue }) => {
         try {
           const known = (getState() as { adminConditions: ConditionsSliceState }).adminConditions.specialties;
-          const [list, specialties] = await Promise.all([listAdminConditions(q.trim()), known.length ? Promise.resolve(known) : listAdminSpecialties()]);
+          const [list, specialties] = await Promise.all([getAdminConditionsAPI(q.trim()).then(raw => required(adminConditionListSerializer(raw))), known.length ? Promise.resolve(known) : getAdminSpecialtiesAPI().then(raw => required(adminSpecialtyListSerializer(raw)))]);
           return { list, specialties };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -83,7 +85,7 @@ export const conditionsSlice = createAppSlice({
             const input = conditionInput(change.form);
             await (change.form.id ? updateCondition(change.form.id, input) : createCondition(input));
           } else await deleteCondition(change.id);
-          return await listAdminConditions(change.query.trim());
+          return required(adminConditionListSerializer(await getAdminConditionsAPI(change.query.trim())));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

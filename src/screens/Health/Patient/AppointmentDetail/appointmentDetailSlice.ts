@@ -9,15 +9,17 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { attachRecords, cancelAppointment, getAppointment, rescheduleAppointment } from '@networks/health/appointmentsNetwork';
-import { listDays, listSlots } from '@networks/health/availabilityNetwork';
-import { listRecords } from '@networks/health/recordsNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
-import { alternativesFrom } from '@serializers/health/appointmentSerializer';
+import { cancelAppointmentAPI, getAppointmentAPI, rescheduleAppointmentAPI } from '@networks/health/appointmentsNetwork';
+import { getDaysAPI, getSlotsAPI } from '@networks/health/availabilityNetwork';
+
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
+import { alternativesFrom, appointmentDetailSerializer } from '@serializers/health/appointmentSerializer';
 import type { AppointmentDetail, CancelReason, DayAvailability, HealthRecord, Slot } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { submitAppointmentProofAsync } from '../../../Shopping/Customer/PaymentProof/paymentProofSlice';
 import { confirmBookingAsync } from '../BookAppointment/bookAppointmentSlice';
+import { daysSerializer, slotDaySerializer } from '@serializers/health/discoverySerializer';
+import { attachRecords, listRecords } from '@screens/Health/Patient/shared/healthReads';
 
 export interface AppointmentEntry {
   appointment: AppointmentDetail | null;
@@ -138,7 +140,7 @@ export const appointmentDetailSlice = createAppSlice({
     loadAppointmentAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return await getAppointment(code);
+          return required(appointmentDetailSerializer(await getAppointmentAPI(code)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -161,7 +163,7 @@ export const appointmentDetailSlice = createAppSlice({
     cancelAppointmentAsync: create.asyncThunk(
       async ({ code, reason, note }: { code: string; reason: CancelReason; note: string }, { rejectWithValue }) => {
         try {
-          return await cancelAppointment(code, reason, note.trim() || null);
+          return required(appointmentDetailSerializer(await cancelAppointmentAPI(code, reason, note.trim() || null)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -187,9 +189,9 @@ export const appointmentDetailSlice = createAppSlice({
     openRescheduleAsync: create.asyncThunk(
       async ({ doctorId, locationId }: { doctorId: string; locationId: string }, { rejectWithValue }) => {
         try {
-          const days = await listDays(doctorId, locationId, null, 14);
+          const days = required(daysSerializer(await getDaysAPI(doctorId, locationId, null, 14)));
           const first = days.find(d => d.slotCount > 0)?.date ?? days[0]?.date ?? null;
-          const slots = first ? await listSlots(doctorId, locationId, first) : null;
+          const slots = first ? required(slotDaySerializer(await getSlotsAPI(doctorId, locationId, first))) : null;
           return { days, slots };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -222,7 +224,7 @@ export const appointmentDetailSlice = createAppSlice({
     rescheduleDayAsync: create.asyncThunk(
       async ({ doctorId, locationId, date }: { doctorId: string; locationId: string; date: string }, { rejectWithValue }) => {
         try {
-          return await listSlots(doctorId, locationId, date);
+          return required(slotDaySerializer(await getSlotsAPI(doctorId, locationId, date)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -250,7 +252,7 @@ export const appointmentDetailSlice = createAppSlice({
     rescheduleAsync: create.asyncThunk(
       async ({ code, startAt }: { code: string; startAt: string }, { rejectWithValue }) => {
         try {
-          return await rescheduleAppointment(code, startAt);
+          return required(appointmentDetailSerializer(await rescheduleAppointmentAPI(code, startAt)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

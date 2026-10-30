@@ -14,7 +14,7 @@ import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { useIsTabRoot } from '@hooks/useServiceNav';
 import { usePagedList } from '@hooks/usePagedList';
-import { listRecords } from '@networks/health/recordsNetwork';
+
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Button, ChoiceChip, EmptyState, IonIcon, InlineNotice, PageHeader, Skeleton, type IonName } from '@custom/index';
 import { RECORD_TYPES, isPdf, recordTypeIcon, recordTypeLabel } from '@models/health/recordModel';
@@ -23,6 +23,7 @@ import { cdn } from '@utils/cdn';
 import { formatDayFull } from '@utils/healthTime';
 import { loadFamilyAsync, selectFamily } from '../FamilyMembers/familySlice';
 import { selectRecordsFilter, setRecordsMember, setRecordsType } from './healthRecordsSlice';
+import { fetchRecordsPage, recordsPageSerializer } from '@screens/Health/Patient/shared/healthReads';
 
 type Props = NativeStackScreenProps<AccountStackParamList, 'HealthRecords'>;
 
@@ -93,7 +94,7 @@ const HealthRecordsContent: React.FC<Props> = ({ navigation, route }) => {
   const { size } = useTheme();
   const f = useAppSelector(selectRecordsFilter);
   const family = useAppSelector(selectFamily);
-  const list = usePagedList((page, sz) => listRecords(f, page, sz), `records|${f.memberId}|${f.type}`);
+  const list = usePagedList((page, sz) => fetchRecordsPage(f, page, sz), recordsPageSerializer, `records|${f.memberId}|${f.type}`);
 
   useEffect(() => {
     if (route.params?.memberId) dispatch(setRecordsMember(route.params.memberId));

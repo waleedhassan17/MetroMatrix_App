@@ -7,7 +7,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { submitPaymentProofAPI } from '@networks/shopping/ordersNetwork';
-import { submitAppointmentPaymentProof } from '@networks/health/appointmentsNetwork';
+
 import { submitFoodPaymentProofAPI } from '@networks/food/ordersNetwork';
 import { submitReservationProofAPI } from '@networks/food/surplusNetwork';
 import { submitTiffinProofAPI } from '@networks/foodGrowth/tiffinNetwork';
@@ -21,6 +21,7 @@ import { orderGroupSerializer } from '@serializers/shopping/orderSerializer';
 import { foodOrderSerializer } from '@serializers/food/orderSerializer';
 import { reservationSerializer } from '@serializers/kitchen/surplusSerializer';
 import { tiffinSubscriptionSerializer, cateringRequestSerializer } from '@serializers/kitchen/growthSerializer';
+import { submitAppointmentPaymentProof } from '@screens/Health/Patient/shared/healthReads';
 
 export interface PaymentProofSliceState {
   /** The order or appointment being paid for. */

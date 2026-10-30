@@ -2,10 +2,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getCalendar } from '@networks/health/doctor/doctorAppointmentsNetwork';
+
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import type { CalendarRange } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { getCalendar } from '@screens/Health/Doctor/shared/practiceReads';
 
 export type CalendarMode = 'day' | 'week';
 

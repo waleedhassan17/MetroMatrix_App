@@ -168,7 +168,7 @@ export const appointmentSummarySerializer = (raw: unknown): AppointmentSummary |
 
 const UPCOMING = ['awaiting_payment', 'confirmed'];
 
-export const appointmentDetailSerializer = (raw: unknown, now: number = Date.now()): AppointmentDetail | null => {
+export const appointmentDetailSerializer = fromResponse((raw: unknown, now: number = Date.now()): AppointmentDetail | null => {
   const summary = appointmentSummarySerializer(raw);
   if (!summary || !isObject(raw)) return null;
   const p = isObject(raw.patient) ? raw.patient : {};
@@ -209,7 +209,7 @@ export const appointmentDetailSerializer = (raw: unknown, now: number = Date.now
     prescriptionId: strOrNull(raw.prescriptionId),
     reviewed: bool(raw.reviewed),
   };
-};
+});
 
 /** `409 SLOT_TAKEN` details `{ alternatives: [{ startsAt, endsAt }] }` → the times offered. */
 export const alternativesFrom = (details: Record<string, unknown> | null | undefined): string[] =>

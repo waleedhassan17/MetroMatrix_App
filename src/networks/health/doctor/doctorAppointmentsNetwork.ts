@@ -1,93 +1,143 @@
-// MetroMatrix — The doctor's day: queue, calendar, an appointment and its actions.
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Health Doctor Appointments Network (API_HEALTH.md)
+// ═══════════════════════════════════════════════════════
+// Queue, calendar, an appointment and its actions.
 // MetroMatrix-API docs/API_HEALTH.md §4.3. Doctor routes take the appointment
 // CODE, which is what the doctor side calls an appointment's id. An action
 // answers with the appointment's core; the screen redraws from the whole of
-// it (notes and prescription too), so each action reads it back.
+// it (notes and prescription too), so the slice reads it back
+// (screens/Health/Doctor/shared/doctorAppointmentReads.ts).
 
-import type { AxiosResponse } from 'axios';
-import { ApiError, api, toApiError, unwrap } from '../../network/apiHelpers';
-import { calendarSerializer, doctorAppointmentSerializer, todaySerializer } from '../../../serializers/health/doctorSerializer';
-import { healthRecordSerializer } from '../../../serializers/health/recordsSerializer';
+import { api, toApiError } from '../../network/apiHelpers';
 import { mimeFromUrl, publicIdFromCloudinaryUrl } from '../../../serializers/health/healthCommon';
-import { arr, isObject, str } from '../../../serializers/serializerUtils';
-import { ack, request, requestAll } from '../../shopping/http';
 
 const enc = encodeURIComponent;
 const path = (id: string) => `/health/doctor/appointments/${enc(id)}`;
-const locations = () => api.get('/health/doctor/locations');
 
-/** Only one location's patients, when the doctor picked one. */
-const forLocation = (today: unknown, locationId: string | null) => {
-  if (!locationId || !isObject(today)) return today;
-  return { ...today, queue: arr(today.queue).filter(q => isObject(q) && isObject(q.location) && str(q.location.id) === locationId) };
-};
-
-/** Today's queue (another day: that day's appointments). */
-export const getToday = async (date: string | null, locationId: string | null) => {
+/** Today's queue, its counts and the practice's day. */
+export const getDoctorTodayAPI = async (): Promise<unknown> => {
   try {
-    const [today, locs] = await Promise.all([
-      date
-        ? api
-            .get('/health/doctor/appointments', { params: { date, pageSize: 100 } })
-            .then(unwrap)
-            .then(page => ({ date, counts: {}, queue: arr(isObject(page) ? page.items : []) }))
-        : api.get('/health/doctor/today').then(unwrap),
-      api.get('/health/doctor/locations').then(unwrap),
-    ]);
-    const value = todaySerializer({ today: forLocation(today, locationId), locations: locs });
-    if (!value) throw new ApiError('The server sent something unexpected. Try again.', 'BAD_RESPONSE');
-    return value;
+    const response = await api.get('/health/doctor/today');
+    return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
-/** The range's appointments (first 100), time off and locations. */
-export const getCalendar = (from: string, to: string) =>
-  requestAll(
-    {
-      appointments: () => api.get('/health/doctor/appointments', { params: { from, to, pageSize: 100 } }),
-      timeOff: () => api.get('/health/doctor/time-off'),
-      locations,
-    },
-    calendarSerializer,
-  );
+/** The doctor's appointments: one `date`, or a `from`–`to` range. */
+export const getDoctorAppointmentsAPI = async (params: {
+  date?: string;
+  from?: string;
+  to?: string;
+  pageSize?: number;
+}): Promise<unknown> => {
+  try {
+    const response = await api.get('/health/doctor/appointments', { params });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-/** The appointment with its history and shared records, its private notes and its prescription. */
-export const getDoctorAppointment = (id: string) =>
-  requestAll(
-    { appointment: () => api.get(path(id)), notes: () => api.get(`${path(id)}/notes`), prescription: () => api.get(`${path(id)}/prescription`) },
-    doctorAppointmentSerializer,
-  );
+/** The appointment with its history and shared records. */
+export const getDoctorAppointmentAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.get(path(id));
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-/** Do something, then read the appointment back whole. */
-const thenRead = (id: string, call: () => Promise<AxiosResponse>) => request(call, ack).then(() => getDoctorAppointment(id));
+/** Its private notes. */
+export const getAppointmentNotesAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`${path(id)}/notes`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+
+/** Its prescription, when one was written. */
+export const getAppointmentPrescriptionAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`${path(id)}/prescription`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 export type DoctorAction = 'check-in' | 'start' | 'no-show';
 
-export const actOnAppointment = (id: string, action: DoctorAction) => thenRead(id, () => api.post(`${path(id)}/${action}`, {}));
+export const actOnAppointmentAPI = async (id: string, action: DoctorAction): Promise<unknown> => {
+  try {
+    const response = await api.post(`${path(id)}/${action}`, {});
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const completeAppointment = (id: string, paymentCollected: boolean) =>
-  thenRead(id, () => api.post(`${path(id)}/complete`, { paymentCollected }));
+export const completeAppointmentAPI = async (id: string, paymentCollected: boolean): Promise<unknown> => {
+  try {
+    const response = await api.post(`${path(id)}/complete`, { paymentCollected });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const cancelByDoctor = (id: string, reason: string) => thenRead(id, () => api.post(`${path(id)}/cancel`, { reason }));
+export const cancelByDoctorAPI = async (id: string, reason: string): Promise<unknown> => {
+  try {
+    const response = await api.post(`${path(id)}/cancel`, { reason });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const confirmPayment = (id: string) => thenRead(id, () => api.post(`${path(id)}/payment/confirm`, {}));
+export const confirmPaymentAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.post(`${path(id)}/payment/confirm`, {});
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const rejectPayment = (id: string, reason: string) => thenRead(id, () => api.post(`${path(id)}/payment/reject`, { reason }));
+export const rejectPaymentAPI = async (id: string, reason: string): Promise<unknown> => {
+  try {
+    const response = await api.post(`${path(id)}/payment/reject`, { reason });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** Private notes; files are `medical_note` uploads (the API checks each one's public id). */
-export const saveNotes = (id: string, notes: { text: string; attachments: string[] }) =>
-  thenRead(id, () =>
-    api.put(`${path(id)}/notes`, {
+export const saveNotesAPI = async (id: string, notes: { text: string; attachments: string[] }): Promise<unknown> => {
+  try {
+    const response = await api.put(`${path(id)}/notes`, {
       text: notes.text,
       files: notes.attachments.map(url => ({ url, publicId: publicIdFromCloudinaryUrl(url), mime: mimeFromUrl(url) })),
-    }),
-  );
+    });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /**
  * A record the patient shared with this visit, with short-lived links to its
  * files (only while it is attached; the read is audited).
  */
-export const openSharedRecord = (id: string, recordId: string) =>
-  request(() => api.get(`${path(id)}/records/${enc(recordId)}`), healthRecordSerializer);
+export const openSharedRecordAPI = async (id: string, recordId: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`${path(id)}/records/${enc(recordId)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

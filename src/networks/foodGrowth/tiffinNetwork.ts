@@ -5,7 +5,6 @@
 // docs/API_KITCHEN_ASSUMED.md §2.9, §3.9, §4.6 (TODO(API_KITCHEN): an assumed contract).
 
 import { api, toApiError, clean } from '../network/apiHelpers';
-import { tiffinSubscriptionSerializer } from '../../serializers/kitchen/growthSerializer';
 import type { TiffinPayMethod, TiffinPlanInput } from '../../types/kitchen';
 
 const enc = encodeURIComponent;

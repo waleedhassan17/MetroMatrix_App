@@ -1,16 +1,15 @@
-// MetroMatrix — The patient's appointments: book, list, reschedule, cancel, pay, attach.
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Health Appointments Network (API_HEALTH.md)
+// ═══════════════════════════════════════════════════════
+// Book, list, reschedule, cancel, pay, attach.
 // MetroMatrix-API docs/API_HEALTH.md §4.2.
 
-import { api } from '../network/apiHelpers';
-import { appointmentDetailSerializer, appointmentSummarySerializer, appointmentSummaryPageSerializer } from '../../serializers/health/appointmentSerializer';
-import { paged } from '../../serializers/shopping/common';
+import { api, toApiError, pageParams } from '../network/apiHelpers';
 import { cancelReasonText } from '../../models/health/bookingModel';
 import { newUuid } from '../../utils/ids';
 import type { AppointmentSegment, BookingInput, CancelReason } from '../../types/health';
-import { pageParams, request } from '../shopping/http';
 
 const path = (code: string) => `/health/appointments/${encodeURIComponent(code)}`;
-const detail = (raw: unknown) => appointmentDetailSerializer(raw);
 
 /** The booking body: the reason chips travel as `symptoms`, shared records as `attachmentRecordIds`. */
 const bookingBody = (input: BookingInput) => ({
@@ -29,36 +28,72 @@ const bookingBody = (input: BookingInput) => ({
  * attempt made — never a second one. A slot someone else took first answers
  * 409 SLOT_TAKEN with `details.alternatives` (alternativesFrom()).
  */
-export const bookAppointment = (input: BookingInput, idempotencyKey: string) =>
-  request(() => api.post('/health/appointments', bookingBody(input), { headers: { 'Idempotency-Key': idempotencyKey } }), detail);
+export const bookAppointmentAPI = async (input: BookingInput, idempotencyKey: string): Promise<unknown> => {
+  try {
+    const response = await api.post('/health/appointments', bookingBody(input), { headers: { 'Idempotency-Key': idempotencyKey } });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listAppointments = (segment: AppointmentSegment, page: number, pageSize = 20) =>
-  request(() => api.get('/health/appointments', { params: { scope: segment, ...pageParams(page, pageSize) } }), appointmentSummaryPageSerializer,
-  );
+export const getAppointmentsAPI = async (segment: AppointmentSegment, page: number, pageSize = 20): Promise<unknown> => {
+  try {
+    const response = await api.get('/health/appointments', { params: { scope: segment, ...pageParams(page, pageSize) } });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getAppointment = (code: string) => request(() => api.get(path(code)), detail);
+export const getAppointmentAPI = async (code: string): Promise<unknown> => {
+  try {
+    const response = await api.get(path(code));
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** The API keeps one free-text reason: the chip's words, and the note when there is one. */
-export const cancelAppointment = (code: string, reason: CancelReason, note: string | null) =>
-  request(() => api.post(`${path(code)}/cancel`, { reason: cancelReasonText(reason, note) }), detail);
+export const cancelAppointmentAPI = async (code: string, reason: CancelReason, note: string | null): Promise<unknown> => {
+  try {
+    const response = await api.post(`${path(code)}/cancel`, { reason: cancelReasonText(reason, note) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /**
  * The new time is a NEW appointment with its own code (the old one is
  * void); the answer is the new one. Its own Idempotency-Key per attempt.
  */
-export const rescheduleAppointment = (code: string, startAt: string) =>
-  request(() => api.post(`${path(code)}/reschedule`, { startsAt: startAt }, { headers: { 'Idempotency-Key': newUuid() } }), detail);
+export const rescheduleAppointmentAPI = async (code: string, startAt: string): Promise<unknown> => {
+  try {
+    const response = await api.post(`${path(code)}/reschedule`, { startsAt: startAt }, { headers: { 'Idempotency-Key': newUuid() } });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-/** The transaction ID (and a screenshot uploaded for `payment_proof`), then the appointment as it now is. */
-export const submitAppointmentPaymentProof = (code: string, body: { transactionId: string; imageUrl: string | null }) =>
-  request(async () => {
-    await api.post(`${path(code)}/payment-proof`, { paymentRef: body.transactionId, proofUrl: body.imageUrl ?? undefined });
-    return api.get(path(code));
-  }, detail);
+/** The transaction ID (and a screenshot uploaded for `payment_proof`); the caller reads the appointment again. */
+export const submitAppointmentPaymentProofAPI = async (code: string, body: { transactionId: string; imageUrl: string | null }): Promise<unknown> => {
+  try {
+    const response = await api.post(`${path(code)}/payment-proof`, { paymentRef: body.transactionId, proofUrl: body.imageUrl ?? undefined });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-/** Share records with the visit (while it's upcoming), then the appointment as it now is. */
-export const attachRecords = (code: string, recordIds: string[]) =>
-  request(async () => {
-    await api.post(`${path(code)}/attachments`, { recordIds });
-    return api.get(path(code));
-  }, detail);
+/** Share records with the visit (while it's upcoming); the caller reads the appointment again. */
+export const attachRecordsAPI = async (code: string, recordIds: string[]): Promise<unknown> => {
+  try {
+    const response = await api.post(`${path(code)}/attachments`, { recordIds });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

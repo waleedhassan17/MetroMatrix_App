@@ -1,36 +1,76 @@
-// MetroMatrix — Health discovery: home, specialties, conditions, search, doctors.
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Health Discovery Network (API_HEALTH.md)
+// ═══════════════════════════════════════════════════════
+// Home, specialties, conditions, search, doctors.
 // MetroMatrix-API docs/API_HEALTH.md §4.1 (public; signed in, the home adds the next appointment).
 
-import { api } from '../network/apiHelpers';
-import { conditionsSerializer, doctorCardSerializer, doctorProfileSerializer, healthHomeSerializer, specialtiesSerializer, suggestionsSerializer, doctorCardPageSerializer } from '../../serializers/health/discoverySerializer';
-import { paged } from '../../serializers/shopping/common';
-import { isObject } from '../../serializers/serializerUtils';
+import { api, toApiError, clean, pageParams } from '../network/apiHelpers';
 import { toParams } from '../../models/health/filterModel';
 import type { DoctorQuery } from '../../types/health';
-import { clean, pageParams, request, requestAll } from '../shopping/http';
 
 const enc = encodeURIComponent;
 
-export const getHealthHome = (city: string | null) =>
-  request(() => api.get('/health/home', { params: clean({ city }) }), healthHomeSerializer);
+export const getHealthHomeAPI = async (city: string | null): Promise<unknown> => {
+  try {
+    const response = await api.get('/health/home', { params: clean({ city }) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listSpecialties = (city: string | null) =>
-  request(() => api.get('/health/specialties', { params: clean({ city }) }), specialtiesSerializer);
+export const getSpecialtiesAPI = async (city: string | null): Promise<unknown> => {
+  try {
+    const response = await api.get('/health/specialties', { params: clean({ city }) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listConditions = (q?: string) =>
-  request(() => api.get('/health/conditions', { params: clean({ q }) }), conditionsSerializer);
+export const getConditionsAPI = async (q?: string): Promise<unknown> => {
+  try {
+    const response = await api.get('/health/conditions', { params: clean({ q }) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const suggest = (q: string) => request(() => api.get('/health/search/suggest', { params: { q } }), suggestionsSerializer);
+export const suggestAPI = async (q: string): Promise<unknown> => {
+  try {
+    const response = await api.get('/health/search/suggest', { params: { q } });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listDoctors = (query: DoctorQuery, page: number, pageSize = 20) =>
-  request(
-    () => api.get('/health/doctors', { params: clean({ ...toParams(query), ...pageParams(page, pageSize) }) }),
-    doctorCardPageSerializer,
-  );
+export const getDoctorsAPI = async (query: DoctorQuery, page: number, pageSize = 20): Promise<unknown> => {
+  try {
+    const response = await api.get('/health/doctors', { params: clean({ ...toParams(query), ...pageParams(page, pageSize) }) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** The profile and the doctors like them, together. */
-export const getDoctor = (id: string) =>
-  requestAll(
-    { profile: () => api.get(`/health/doctors/${enc(id)}`), similar: () => api.get(`/health/doctors/${enc(id)}/similar`) },
-    ({ profile, similar }) => doctorProfileSerializer(isObject(profile) ? { ...profile, similar } : null),
-  );
+export const getDoctorAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`/health/doctors/${enc(id)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+
+/** Doctors like this one (the profile reads them together). */
+export const getSimilarDoctorsAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`/health/doctors/${enc(id)}/similar`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

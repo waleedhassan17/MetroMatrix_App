@@ -8,10 +8,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { listDoctors } from '@networks/health/discoveryNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getDoctorsAPI } from '@networks/health/discoveryNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { baseQuery, clearFilters, toggleQuick, type QuickFilter } from '@models/health/filterModel';
 import type { DoctorQuery } from '@/types';
+import { doctorCardPageSerializer } from '@serializers/health/discoverySerializer';
 
 export interface DoctorListView {
   query: DoctorQuery;
@@ -80,7 +81,7 @@ export const doctorListSlice = createAppSlice({
     countDraftAsync: create.asyncThunk(
       async ({ query }: { key: string; query: DoctorQuery }, { rejectWithValue }) => {
         try {
-          return (await listDoctors(query, 1, 1)).total;
+          return (required(doctorCardPageSerializer(await getDoctorsAPI(query, 1, 1)))).total;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

@@ -3,10 +3,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { suggest } from '@networks/health/discoveryNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { suggestAPI } from '@networks/health/discoveryNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { HealthSuggestions } from '@/types';
 import type { FormStatus } from '../../../Auth/shared/formStatus';
+import { suggestionsSerializer } from '@serializers/health/discoverySerializer';
 
 const NONE: HealthSuggestions = { doctors: [], specialties: [], conditions: [] };
 
@@ -34,7 +35,7 @@ export const healthSearchSlice = createAppSlice({
     healthSuggestAsync: create.asyncThunk(
       async (q: string, { rejectWithValue }) => {
         try {
-          return await suggest(q);
+          return required(suggestionsSerializer(await suggestAPI(q)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

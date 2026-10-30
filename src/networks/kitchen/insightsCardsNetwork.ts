@@ -5,7 +5,6 @@
 // docs/API_KITCHEN_ASSUMED.md §4.1 (TODO(API_KITCHEN): an assumed contract).
 
 import { api, toApiError } from '../network/apiHelpers';
-import { aiUsageSerializer, insightCardsSerializer, kitchenSummarySerializer } from '../../serializers/kitchen/insightSerializer';
 
 const enc = encodeURIComponent;
 

@@ -27,7 +27,7 @@ import type {
   Specialty,
   TimingRow,
 } from '../../types/health';
-import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
+import { arr, bodiesOf, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { compact, count, iso, money, paged } from '../shopping/common';
 import { reviewTagLabel } from '../../models/health/reviewFormModel';
 import {
@@ -190,7 +190,7 @@ export const experienceSerializer = (raw: unknown): ExperienceRow | null =>
     : null;
 
 /** `{ count, averages, satisfactionPct, distribution, topTags }` → the summary card. */
-export const reviewSummarySerializer = (raw: unknown): DoctorReviewSummary => {
+export const reviewSummarySerializer = fromResponse((raw: unknown): DoctorReviewSummary => {
   const r = isObject(raw) ? raw : {};
   const a = isObject(r.averages) ? r.averages : {};
   const dist = arr(r.distribution).map(count);
@@ -204,10 +204,10 @@ export const reviewSummarySerializer = (raw: unknown): DoctorReviewSummary => {
       arr(r.topTags).map(t => (isObject(t) && str(t.tag) ? { label: reviewTagLabel(str(t.tag)), count: count(t.count) } : null)),
     ),
   };
-};
+});
 
 /** A review: the public one, or the doctor's and staff's (hidden flags, names). */
-export const doctorReviewSerializer = (raw: unknown): DoctorReview | null => {
+export const doctorReviewSerializer = fromResponse((raw: unknown): DoctorReview | null => {
   if (!isObject(raw)) return null;
   const id = str(raw.id);
   if (!id) return null;
@@ -227,7 +227,7 @@ export const doctorReviewSerializer = (raw: unknown): DoctorReview | null => {
     replyEditableUntil: null,
     doctorName: strOrNull(raw.doctorName),
   };
-};
+});
 
 const bookingRulesSerializer = (raw: unknown): BookingRules => {
   const r = isObject(raw) ? raw : {};
@@ -294,12 +294,12 @@ const slotDays = (raw: unknown) =>
   );
 
 /** The day chips: each day and how many free times it has. */
-export const daysSerializer = (raw: unknown): DayAvailability[] => slotDays(raw).map(d => ({ date: d.date, slotCount: d.slots.length }));
+export const daysSerializer = fromResponse((raw: unknown): DayAvailability[] => slotDays(raw).map(d => ({ date: d.date, slotCount: d.slots.length })));
 
 export const slotsSerializer = (raw: unknown): Slot[] => slotDays(raw).flatMap(d => d.slots);
 
 /** The first day's slots; when it has none, the next day that does (the network asks for a fortnight). */
-export const slotDaySerializer = (raw: unknown): SlotDay | null => {
+export const slotDaySerializer = fromResponse((raw: unknown): SlotDay | null => {
   const days = slotDays(raw);
   const first = days[0];
   if (!first) return null;
@@ -311,7 +311,7 @@ export const slotDaySerializer = (raw: unknown): SlotDay | null => {
     slots: first.slots,
     nextAvailable: next ? { date: next.date, startAt: next.slots[0].startAt } : null,
   };
-};
+});
 
 // ─── Home ─────────────────────────────────────────────
 const BANNER_SCREENS = ['video_consultation', 'symptom_checker', 'emergency', 'records', 'available_today'] as const;
@@ -335,7 +335,7 @@ export const healthBannerSerializer = (raw: unknown): HealthBanner | null => {
   return { id: str(raw.id), imageUrl: str(raw.imageUrl), headline: str(raw.title), subhead: strOrNull(raw.subtitle), target };
 };
 
-export const healthHomeSerializer = (raw: unknown): HealthHome | null => {
+export const healthHomeSerializer = fromResponse((raw: unknown): HealthHome | null => {
   if (!isObject(raw)) return null;
   const upcoming = raw.upcomingAppointment ?? raw.upcoming;
   return {
@@ -350,9 +350,9 @@ export const healthHomeSerializer = (raw: unknown): HealthHome | null => {
     upcoming: upcoming ? appointmentSummarySerializer(upcoming) : null,
     emergencyNumbers: emergencyNumbersSerializer(raw.emergencyNumbers),
   };
-};
+});
 
-export const suggestionsSerializer = (raw: unknown): HealthSuggestions => {
+export const suggestionsSerializer = fromResponse((raw: unknown): HealthSuggestions => {
   const r = isObject(raw) ? raw : {};
   return {
     doctors: compact(
@@ -363,13 +363,19 @@ export const suggestionsSerializer = (raw: unknown): HealthSuggestions => {
     specialties: compact(arr(r.specialties).map(specialtySerializer)),
     conditions: compact(arr(r.conditions).map(conditionSerializer)),
   };
-};
+});
 
-export const specialtiesSerializer = (raw: unknown): Specialty[] => compact(arr(raw).map(specialtySerializer));
-export const conditionsSerializer = (raw: unknown): Condition[] => compact(arr(raw).map(conditionSerializer));
+export const specialtiesSerializer = fromResponse((raw: unknown): Specialty[] => compact(arr(raw).map(specialtySerializer)));
+export const conditionsSerializer = fromResponse((raw: unknown): Condition[] => compact(arr(raw).map(conditionSerializer)));
 
 /** A page of doctorCards, as the API answers it. */
 export const doctorCardPageSerializer = fromResponse(raw => paged(raw, doctorCardSerializer));
 
 /** A page of doctorReviews, as the API answers it. */
 export const doctorReviewPageSerializer = fromResponse(raw => paged(raw, doctorReviewSerializer));
+
+/** A doctor's profile read with doctors like them. */
+export const doctorWithSimilarSerializer = (parts: { profile: unknown; similar: unknown }) => {
+  const { profile, similar } = bodiesOf(parts);
+  return doctorProfileSerializer(isObject(profile) ? { ...profile, similar } : null);
+};

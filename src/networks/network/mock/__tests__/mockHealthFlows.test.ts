@@ -5,41 +5,31 @@
 // prescription lock, one review per visit, hours overlaps, time-off
 // conflicts and the PMDC gate.
 
-import { verifyPmdc } from '../../../admin/adminHealthNetwork';
-import { getDoctor, getHealthHome, listDoctors, suggest } from '../../../health/discoveryNetwork';
-import { listDays, listSlots } from '../../../health/availabilityNetwork';
-import {
-  bookAppointment,
-  cancelAppointment,
-  getAppointment,
-  listAppointments,
-  rescheduleAppointment,
-  submitAppointmentPaymentProof,
-} from '../../../health/appointmentsNetwork';
-import { getPrescription } from '../../../health/prescriptionsNetwork';
-import { reviewAppointment } from '../../../health/reviewsNetwork';
-import { joinVideo } from '../../../health/videoNetwork';
-import { checkSymptoms } from '../../../health/symptomNetwork';
-import { getCompleteness, publishProfile } from '../../../health/doctor/profileNetwork';
-import { addTimeOff, listLocations, saveHours } from '../../../health/doctor/practiceNetwork';
-import {
-  actOnAppointment,
-  completeAppointment,
-  confirmPayment,
-  getDoctorAppointment,
-  getToday,
-} from '../../../health/doctor/doctorAppointmentsNetwork';
-import { issuePrescription, updatePrescription } from '../../../health/doctor/prescriptionWriterNetwork';
-import { listPatients } from '../../../health/doctor/patientsNetwork';
-import { alternativesFrom } from '../../../../serializers/health/appointmentSerializer';
-import { conflictsFrom, overlapsFrom } from '../../../../serializers/health/doctorSerializer';
+import { getHealthHomeAPI, getDoctorsAPI, suggestAPI } from '../../../health/discoveryNetwork';
+import { getDaysAPI, getSlotsAPI } from '../../../health/availabilityNetwork';
+import { bookAppointmentAPI, cancelAppointmentAPI, getAppointmentAPI, getAppointmentsAPI, rescheduleAppointmentAPI } from '../../../health/appointmentsNetwork';
+import { getPrescriptionAPI } from '../../../health/prescriptionsNetwork';
+
+import { joinVideoAPI } from '../../../health/videoNetwork';
+import { checkSymptomsAPI } from '../../../health/symptomNetwork';
+import { getCompletenessAPI } from '../../../health/doctor/profileNetwork';
+
+import { issuePrescriptionAPI } from '../../../health/doctor/prescriptionWriterNetwork';
+import { getPatientsAPI } from '../../../health/doctor/patientsNetwork';
+import { alternativesFrom, appointmentDetailSerializer, appointmentSummaryPageSerializer } from '../../../../serializers/health/appointmentSerializer';
+import { conflictsFrom, overlapsFrom, patientRowPageSerializer, completenessSerializer } from '../../../../serializers/health/doctorSerializer';
 import { baseQuery } from '../../../../models/health/filterModel';
-import { ApiError } from '../../apiHelpers';
+import { ApiError, required } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import { PKT, addDays, dateInZone, isoWeekday, todayInZone } from '../../../../utils/healthTime';
 import type { BookingInput } from '../../../../types/health';
 import { getDb, resetMockDb } from '../mockDb';
 import { signInAs, installDummyApi } from '../testing';
+import { daysSerializer, slotDaySerializer, healthHomeSerializer, suggestionsSerializer, doctorCardPageSerializer } from '../../../../serializers/health/discoverySerializer';
+import { prescriptionSerializer, videoJoinSerializer, symptomResultSerializer } from '../../../../serializers/health/recordsSerializer';
+import { verifyPmdc } from '../../../../screens/Admin/Health/shared/taxonomyWrites';
+import { getDoctor, submitAppointmentPaymentProof, reviewAppointment } from '../../../../screens/Health/Patient/shared/healthReads';
+import { publishProfile, addTimeOff, listLocations, saveHours, actOnAppointment, completeAppointment, confirmPayment, getDoctorAppointment, getToday, updatePrescription } from '../../../../screens/Health/Doctor/shared/practiceReads';
 
 installDummyApi();
 
@@ -74,9 +64,9 @@ const firstSlot = async (doctorId: string, locationId: string, skip = 0) => {
   const db = await getDb();
   const busy = db.health.appointments.filter(a => a.userId === 'u_customer' && ['awaiting_payment', 'confirmed', 'checked_in', 'in_progress'].includes(a.status));
   const clear = (startAt: string) => !busy.some(a => Math.abs(Date.parse(a.startAt) - Date.parse(startAt)) < HOUR);
-  const days = await listDays(doctorId, locationId, addDays(todayInZone(PKT, T0), 1));
+  const days = required(daysSerializer(await getDaysAPI(doctorId, locationId, addDays(todayInZone(PKT, T0), 1))));
   for (const d of days.filter(x => x.slotCount > 0)) {
-    const free = (await listSlots(doctorId, locationId, d.date)).slots.filter(x => clear(x.startAt));
+    const free = (required(slotDaySerializer(await getSlotsAPI(doctorId, locationId, d.date)))).slots.filter(x => clear(x.startAt));
     if (free.length > skip) return free[skip].startAt;
   }
   throw new Error('no free slot');
@@ -104,7 +94,7 @@ beforeEach(async () => {
 
 describe('discovery', () => {
   it("builds the home for the patient's city: its banners, its best-rated doctors, concerns with icons", async () => {
-    const lahore = await getHealthHome('Lahore');
+    const lahore = required(healthHomeSerializer(await getHealthHomeAPI('Lahore')));
     expect(lahore.banners.map(b => b.id)).toEqual(['hb_video', 'hb_skin', 'hb_symptoms', 'hb_child', 'hb_family']);
     expect(lahore.banners[1].target).toEqual({ kind: 'specialty', slug: 'dermatologist', name: 'Dermatologist' });
     expect(lahore.featuredDoctors.length).toBeGreaterThan(0);
@@ -118,7 +108,7 @@ describe('discovery', () => {
     for (const c of lahore.commonConditions) expect(c.icon).toBeTruthy();
 
     // The paediatric banner is for Lahore only.
-    const karachi = await getHealthHome('Karachi');
+    const karachi = required(healthHomeSerializer(await getHealthHomeAPI('Karachi')));
     expect(karachi.banners.map(b => b.id)).not.toContain('hb_child');
   });
 
@@ -128,14 +118,14 @@ describe('discovery', () => {
   });
 
   it('finds the condition behind an everyday word, and dermatologists for it', async () => {
-    const s = await suggest('pimples');
+    const s = required(suggestionsSerializer(await suggestAPI('pimples')));
     expect(s.conditions.map(c => c.name)).toContain('Acne');
     expect(s.specialties.map(x => x.slug)).toContain('dermatologist');
     expect(s.doctors.length).toBeGreaterThan(0);
   });
 
   it('matches a specialty typed in Urdu', async () => {
-    const s = await suggest('جلد');
+    const s = required(suggestionsSerializer(await suggestAPI('جلد')));
     expect(s.specialties.map(x => x.slug)).toContain('dermatologist');
   });
 
@@ -150,7 +140,7 @@ describe('discovery', () => {
   });
 
   it('filters by video and available today, server-side', async () => {
-    const page = await listDoctors({ ...baseQuery('Lahore'), kind: 'video', availableToday: true }, 1);
+    const page = required(doctorCardPageSerializer(await getDoctorsAPI({ ...baseQuery('Lahore'), kind: 'video', availableToday: true }, 1)));
     expect(page.items.length).toBeGreaterThan(0);
     for (const d of page.items) {
       expect(d.offersVideo).toBe(true);
@@ -160,17 +150,17 @@ describe('discovery', () => {
   });
 
   it('sorts by earliest available', async () => {
-    const page = await listDoctors({ ...baseQuery('Lahore'), sort: 'earliest' }, 1, 50);
+    const page = required(doctorCardPageSerializer(await getDoctorsAPI({ ...baseQuery('Lahore'), sort: 'earliest' }, 1, 50)));
     const times = page.items.map(d => d.availability.nextAt ?? '9');
     expect([...times].sort()).toEqual(times);
   });
 
   it('dims a closed day and points to the next one', async () => {
     // Gulberg is open Mon / Wed / Fri only.
-    const days = await listDays('d_bilal', 'loc_bilal_2', todayInZone(PKT, T0), 14);
+    const days = required(daysSerializer(await getDaysAPI('d_bilal', 'loc_bilal_2', todayInZone(PKT, T0), 14)));
     const closed = days.find(d => [2, 4, 6, 7].includes(isoWeekday(d.date)))!;
     expect(closed.slotCount).toBe(0);
-    const empty = await listSlots('d_bilal', 'loc_bilal_2', closed.date);
+    const empty = required(slotDaySerializer(await getSlotsAPI('d_bilal', 'loc_bilal_2', closed.date)));
     expect(empty.slots).toHaveLength(0);
     expect(empty.nextAvailable).not.toBeNull();
   });
@@ -180,8 +170,8 @@ describe('booking', () => {
   it('books once for a retried Confirm (Idempotency-Key)', async () => {
     const startAt = await firstSlot('d_imran', 'loc_imran_2');
     const input = booking({ doctorId: 'd_imran', locationId: 'loc_imran_2', startAt });
-    const first = await bookAppointment(input, 'k-1');
-    const again = await bookAppointment(input, 'k-1');
+    const first = required(appointmentDetailSerializer(await bookAppointmentAPI(input, 'k-1')));
+    const again = required(appointmentDetailSerializer(await bookAppointmentAPI(input, 'k-1')));
     expect(again.code).toBe(first.code);
     expect(first.status).toBe('confirmed');
     const db = await getDb();
@@ -191,54 +181,54 @@ describe('booking', () => {
   it('offers alternatives when the time is taken', async () => {
     const startAt = await firstSlot('d_imran', 'loc_imran_2');
     const input = booking({ doctorId: 'd_imran', locationId: 'loc_imran_2', startAt });
-    await bookAppointment(input, 'k-1');
-    const e = await failure(bookAppointment(input, 'k-2'));
+    await bookAppointmentAPI(input, 'k-1');
+    const e = await failure(bookAppointmentAPI(input, 'k-2').then(raw => required(appointmentDetailSerializer(raw))));
     expect(e.code).toBe('SLOT_TAKEN');
     const alternatives = alternativesFrom(e.details);
     expect(alternatives).toHaveLength(3);
     expect(alternatives.every(a => a > startAt)).toBe(true);
-    const picked = await bookAppointment({ ...input, startAt: alternatives[0] }, 'k-3');
+    const picked = required(appointmentDetailSerializer(await bookAppointmentAPI({ ...input, startAt: alternatives[0] }, 'k-3')));
     expect(picked.startAt).toBe(alternatives[0]);
   });
 
   it("simulates another patient taking Dr. Bilal's first Gulberg time (mock mode)", async () => {
     // The very first time of the next open day, whatever else is booked.
-    const open = (await listDays('d_bilal', 'loc_bilal_2', addDays(todayInZone(PKT, T0), 1))).find(d => d.slotCount > 0)!;
-    const startAt = (await listSlots('d_bilal', 'loc_bilal_2', open.date)).slots[0].startAt;
-    const e = await failure(bookAppointment(booking({ doctorId: 'd_bilal', locationId: 'loc_bilal_2', startAt }), 'k-1'));
+    const open = (required(daysSerializer(await getDaysAPI('d_bilal', 'loc_bilal_2', addDays(todayInZone(PKT, T0), 1))))).find(d => d.slotCount > 0)!;
+    const startAt = (required(slotDaySerializer(await getSlotsAPI('d_bilal', 'loc_bilal_2', open.date)))).slots[0].startAt;
+    const e = await failure(bookAppointmentAPI(booking({ doctorId: 'd_bilal', locationId: 'loc_bilal_2', startAt }), 'k-1').then(raw => required(appointmentDetailSerializer(raw))));
     expect(e.code).toBe('SLOT_TAKEN');
-    const day = await listSlots('d_bilal', 'loc_bilal_2', dateInZone(startAt, PKT));
+    const day = required(slotDaySerializer(await getSlotsAPI('d_bilal', 'loc_bilal_2', dateInZone(startAt, PKT))));
     expect(day.slots.map(s => s.startAt)).not.toContain(startAt);
   });
 
   it('books for a family member and reschedules only once', async () => {
     const startAt = await firstSlot('d_usman', 'loc_usman_1');
-    const a = await bookAppointment(booking({ doctorId: 'd_usman', locationId: 'loc_usman_1', startAt, familyMemberId: 'fm_zara' }), 'k-1');
+    const a = required(appointmentDetailSerializer(await bookAppointmentAPI(booking({ doctorId: 'd_usman', locationId: 'loc_usman_1', startAt, familyMemberId: 'fm_zara' }), 'k-1')));
     expect(a.patient.name).toBe('Zara Khan');
     expect(a.flags.canReschedule).toBe(true);
     const later = await firstSlot('d_usman', 'loc_usman_1', 2);
-    const moved = await rescheduleAppointment(a.code, later);
+    const moved = required(appointmentDetailSerializer(await rescheduleAppointmentAPI(a.code, later)));
     expect(moved.startAt).toBe(later);
     expect(moved.flags.canReschedule).toBe(false);
-    expect((await failure(rescheduleAppointment(a.code, startAt))).code).toBe('INVALID_TRANSITION');
+    expect((await failure(rescheduleAppointmentAPI(a.code, startAt).then(raw => required(appointmentDetailSerializer(raw))))).code).toBe('INVALID_TRANSITION');
   });
 
   it('marks a cancellation inside the cutoff as late, before confirming', async () => {
     const db = await getDb();
     const soon = db.health.appointments.find(a => a.userId === 'u_customer' && a.status === 'confirmed' && a.doctorId === 'd_bilal' && a.kind === 'clinic')!;
     jest.setSystemTime(Date.parse(soon.startAt) - 2 * HOUR);
-    const detail = await getAppointment(soon.code);
+    const detail = required(appointmentDetailSerializer(await getAppointmentAPI(soon.code)));
     expect(detail.isLateCancel).toBe(true);
     expect(detail.lateCancelNote).toMatch(/late cancellation/);
-    const cancelled = await cancelAppointment(soon.code, 'schedule_clash', null);
+    const cancelled = required(appointmentDetailSerializer(await cancelAppointmentAPI(soon.code, 'schedule_clash', null)));
     expect(cancelled.status).toBe('cancelled');
   });
 
   it('takes a prepaid video consult through transfer, proof and the doctor confirming', async () => {
     const startAt = await firstSlot('d_ayesha', 'loc_ayesha_1');
-    const e = await failure(bookAppointment(booking({ doctorId: 'd_ayesha', locationId: 'loc_ayesha_1', startAt }), 'k-0'));
+    const e = await failure(bookAppointmentAPI(booking({ doctorId: 'd_ayesha', locationId: 'loc_ayesha_1', startAt }), 'k-0').then(raw => required(appointmentDetailSerializer(raw))));
     expect(e.code).toBe('VALIDATION_FAILED');
-    const a = await bookAppointment(booking({ doctorId: 'd_ayesha', locationId: 'loc_ayesha_1', startAt, paymentMethod: 'transfer' }), 'k-1');
+    const a = required(appointmentDetailSerializer(await bookAppointmentAPI(booking({ doctorId: 'd_ayesha', locationId: 'loc_ayesha_1', startAt, paymentMethod: 'transfer' }), 'k-1')));
     expect(a.status).toBe('awaiting_payment');
     expect(a.payment.instructions?.amount).toBe(2000);
     expect(a.flags.canPay).toBe(true);
@@ -265,13 +255,13 @@ describe('the doctor app', () => {
     const done = await completeAppointment(waiting.id, true);
     expect(done.status).toBe('completed');
     expect(done.payment.status).toBe('collected');
-    const rx = await issuePrescription(waiting.id, {
+    const rx = required(prescriptionSerializer(await issuePrescriptionAPI(waiting.id, {
       diagnosis: 'Contact dermatitis',
       medicines: [{ name: 'Cetirizine', strength: '10 mg', form: 'tablet', dose: '0+0+1', timing: 'bedtime', days: 5, instructions: null }],
       tests: [],
       advice: null,
       followUpInDays: 14,
-    });
+    })));
     expect(rx.followUpInDays).toBe(14);
     // Still editable for 24 hours after the visit, then locked.
     expect((await getDoctorAppointment(waiting.id)).actions.canWritePrescription).toBe(true);
@@ -285,7 +275,7 @@ describe('the doctor app', () => {
   });
 
   it("lets the patient read their prescription, rate the visit once, and lists only the doctor's own patients", async () => {
-    const rx = await getPrescription('rx_acne');
+    const rx = required(prescriptionSerializer(await getPrescriptionAPI('rx_acne')));
     expect(rx.medicines).toHaveLength(3);
     const db = await getDb();
     const acne = db.health.appointments.find(a => a.prescriptionId === 'rx_acne')!;
@@ -295,7 +285,7 @@ describe('the doctor app', () => {
     expect(again.code).toBe('REVIEW_EXISTS');
 
     await signIn('derm@metromatrix.app', 'partner');
-    const patients = await listPatients('', 1);
+    const patients = required(patientRowPageSerializer(await getPatientsAPI('', 1)));
     const theirs = new Set(db.health.appointments.filter(a => a.doctorId === 'd_ayesha').map(a => a.patientName));
     expect(patients.items.every(p => theirs.has(p.name))).toBe(true);
   });
@@ -324,7 +314,7 @@ describe('the doctor app', () => {
 
   it('keeps a new doctor on Practice setup until the checklist is complete', async () => {
     await signIn('newdoctor@metromatrix.app', 'partner');
-    const c = await getCompleteness();
+    const c = required(completenessSerializer(await getCompletenessAPI()));
     expect(c.percent).toBeLessThan(100);
     expect(c.canPublish).toBe(false);
     expect((await failure(publishProfile())).code).toBe('PROFILE_INCOMPLETE');
@@ -333,20 +323,20 @@ describe('the doctor app', () => {
 
 describe('video, symptoms and staff', () => {
   it('opens the room only inside the join window', async () => {
-    const upcoming = await listAppointments('upcoming', 1);
+    const upcoming = required(appointmentSummaryPageSerializer(await getAppointmentsAPI('upcoming', 1)));
     const demo = upcoming.items.find(a => a.kind === 'video' && a.doctor.id === 'd_bilal')!;
     expect(demo.canJoinVideo).toBe(true);
-    const room = await joinVideo(demo.code);
+    const room = required(videoJoinSerializer(await joinVideoAPI(demo.code)));
     expect(room.roomUrl).toMatch(/^https:\/\/meet\.jit\.si\/MetroMatrix-/);
     const later = upcoming.items.find(a => a.kind === 'video' && a.doctor.id === 'd_ayesha')!;
-    expect((await failure(joinVideo(later.code))).code).toBe('VIDEO_NOT_JOINABLE');
+    expect((await failure(joinVideoAPI(later.code).then(raw => required(videoJoinSerializer(raw))))).code).toBe('VIDEO_NOT_JOINABLE');
   });
 
   it('sends red flags to Emergency and everything else to a specialty, always with the disclaimer', async () => {
-    const red = await checkSymptoms({ text: 'Sudden chest pain and short of breath', age: 54, gender: 'male' });
+    const red = required(symptomResultSerializer(await checkSymptomsAPI({ text: 'Sudden chest pain and short of breath', age: 54, gender: 'male' })));
     expect(red.emergency).toBe(true);
     expect(red.areas).toHaveLength(0);
-    const skin = await checkSymptoms({ text: 'Pimples on my face for two months', age: 22, gender: 'female' });
+    const skin = required(symptomResultSerializer(await checkSymptomsAPI({ text: 'Pimples on my face for two months', age: 22, gender: 'female' })));
     expect(skin.emergency).toBe(false);
     expect(skin.specialty?.slug).toBe('dermatologist');
     expect(skin.disclaimer).toMatch(/not a diagnosis/);

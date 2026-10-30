@@ -2,11 +2,12 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { reviewAppointment } from '@networks/health/reviewsNetwork';
+
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import { emptyDoctorReview } from '@models/health/reviewFormModel';
 import type { DoctorReviewInput, ReviewDimension } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { reviewAppointment } from '@screens/Health/Patient/shared/healthReads';
 
 export interface PostConsultReviewSliceState {
   code: string | null;

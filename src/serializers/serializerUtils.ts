@@ -39,15 +39,20 @@ export const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
 export const bodyOf = (payload: unknown): unknown =>
   isObject(payload) && typeof payload.success === 'boolean' && 'data' in payload ? payload.data : payload;
 
+/** Several answers read together (a thunk's Promise.all): each part's body. */
+export const bodiesOf = <K extends string>(parts: Record<K, unknown>): Record<K, unknown> =>
+  Object.fromEntries(Object.entries(parts).map(([k, v]) => [k, bodyOf(v)])) as Record<K, unknown>;
+
 /**
  * A response serializer, FinMatrix's `customerListSerializer(payload)`: it
  * takes what a network function returns (the envelope) and reads its body.
- * Wrapped serializers still accept a bare body, so nesting them is safe.
+ * Wrapped serializers still accept a bare body, so nesting them is safe;
+ * any further arguments (a clock, a timezone) pass through.
  */
 export const fromResponse =
-  <R>(serialize: (body: unknown) => R) =>
-  (payload: unknown): R =>
-    serialize(bodyOf(payload));
+  <A extends unknown[], R>(serialize: (body: unknown, ...rest: A) => R) =>
+  (payload: unknown, ...rest: A): R =>
+    serialize(bodyOf(payload), ...rest);
 
 /** Keep only allowed string members, de-duplicated, order preserved. */
 export function enumList<T extends string>(v: unknown, allowed: readonly T[]): T[] {

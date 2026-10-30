@@ -17,7 +17,7 @@ import type {
   SymptomResult,
   VideoJoin,
 } from '../../types/health';
-import { arr, bool, isObject, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
+import { arr, bodiesOf, bool, isObject, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { compact, count, iso, paged } from '../shopping/common';
 import {
   KINDS,
@@ -39,7 +39,7 @@ const TIMINGS: readonly MedicineTiming[] = ['before_meal', 'after_meal', 'with_m
 /** Before completion a prescription stays open; the API dates the 24-hour window from completion. */
 const OPEN_ENDED = '9999-12-31T23:59:59.000Z';
 
-export const familyMemberSerializer = (raw: unknown): FamilyMember | null => {
+export const familyMemberSerializer = fromResponse((raw: unknown): FamilyMember | null => {
   if (!isObject(raw)) return null;
   const id = str(raw.id);
   if (!id) return null;
@@ -51,9 +51,9 @@ export const familyMemberSerializer = (raw: unknown): FamilyMember | null => {
     dateOfBirth: dayOrNull(raw.dateOfBirth) ?? '',
     phone: strOrNull(raw.phone),
   };
-};
+});
 
-export const familySerializer = (raw: unknown): FamilyMember[] => compact(arr(raw).map(familyMemberSerializer));
+export const familySerializer = fromResponse((raw: unknown): FamilyMember[] => compact(arr(raw).map(familyMemberSerializer)));
 
 /** A file: the owner's short-lived `downloadUrl` when there is one (private PHI), else its URL. */
 const fileSerializer = (raw: unknown): RecordFile | null => {
@@ -67,7 +67,7 @@ const fileSerializer = (raw: unknown): RecordFile | null => {
  * (`sharedRecords`: no files until the doctor opens one). `memberName` is
  * added by the network from the family list.
  */
-export const healthRecordSerializer = (raw: unknown): HealthRecord | null => {
+export const healthRecordSerializer = fromResponse((raw: unknown): HealthRecord | null => {
   if (!isObject(raw)) return null;
   const id = str(raw.id);
   if (!id) return null;
@@ -83,7 +83,7 @@ export const healthRecordSerializer = (raw: unknown): HealthRecord | null => {
     files: compact(arr(raw.files).map(fileSerializer)),
     createdAt: created,
   };
-};
+});
 
 export const medicineSerializer = (raw: unknown): Medicine | null => {
   if (!isObject(raw) || !str(raw.name)) return null;
@@ -99,7 +99,7 @@ export const medicineSerializer = (raw: unknown): Medicine | null => {
 };
 
 /** `Prescription` → what the patient reads and the PDF prints; the header comes from the doctor and the place. */
-export const prescriptionSerializer = (raw: unknown): Prescription | null => {
+export const prescriptionSerializer = fromResponse((raw: unknown): Prescription | null => {
   if (!isObject(raw)) return null;
   const id = str(raw.id);
   if (!id) return null;
@@ -131,7 +131,7 @@ export const prescriptionSerializer = (raw: unknown): Prescription | null => {
     followUpInDays: follow && follow > 0 ? Math.round(follow) : null,
     editableUntil: instant(raw.editableUntil) ?? (bool(raw.locked) ? iso(null) : OPEN_ENDED),
   };
-};
+});
 
 export const prescriptionSummarySerializer = (raw: unknown): PrescriptionSummary | null => {
   if (!isObject(raw)) return null;
@@ -151,7 +151,7 @@ export const prescriptionSummarySerializer = (raw: unknown): PrescriptionSummary
 };
 
 /** `{ provider: jaas|public_jitsi, roomUrl, jwt, displayName, window: { closesAt } }`. */
-export const videoJoinSerializer = (raw: unknown): VideoJoin | null => {
+export const videoJoinSerializer = fromResponse((raw: unknown): VideoJoin | null => {
   if (!isObject(raw)) return null;
   const roomUrl = str(raw.roomUrl);
   if (!/^https:\/\//.test(roomUrl)) return null;
@@ -163,7 +163,7 @@ export const videoJoinSerializer = (raw: unknown): VideoJoin | null => {
     displayName: str(raw.displayName, 'Patient'),
     closesAt: iso(instant(w.closesAt) ?? instant(raw.expiresAt)),
   };
-};
+});
 
 const DISCLAIMER =
   'This is general information, not a diagnosis. Only a doctor who examines you can diagnose and treat you. If symptoms are severe or getting worse, call 1122.';
@@ -172,7 +172,7 @@ const DISCLAIMER =
  * Red flags `{ emergency: true, numbers, message }` or a suggestion
  * `{ areasToDiscuss: [{ title, explanation }], specialty }`; never without a disclaimer.
  */
-export const symptomResultSerializer = (raw: unknown): SymptomResult | null => {
+export const symptomResultSerializer = fromResponse((raw: unknown): SymptomResult | null => {
   if (!isObject(raw)) return null;
   const emergency = raw.emergency === true;
   return {
@@ -189,7 +189,7 @@ export const symptomResultSerializer = (raw: unknown): SymptomResult | null => {
     // Never shown without one: the API's own words, or ours.
     disclaimer: str(raw.disclaimer) || DISCLAIMER,
   };
-};
+});
 
 /** Minutes between two instants, defensive. */
 export const minutesBetween = (from: unknown, to: unknown) => {
@@ -200,3 +200,23 @@ export const minutesBetween = (from: unknown, to: unknown) => {
 
 /** A page of prescriptionSummarys, as the API answers it. */
 export const prescriptionSummaryPageSerializer = fromResponse(raw => paged(raw, prescriptionSummarySerializer));
+
+/** A record with its person's name (from the family list). */
+const named = (record: unknown, members: unknown) => {
+  if (!isObject(record)) return record;
+  const member = arr(members).find(m => isObject(m) && str(m.id) === str(record.familyMemberId));
+  return isObject(member) ? { ...record, memberName: str(member.fullName) } : record;
+};
+
+/** A page of records read with the family list: each record names its person. */
+export const recordPageSerializer = (parts: { records: unknown; family: unknown }) => {
+  const { records, family } = bodiesOf(parts);
+  const r = isObject(records) ? records : {};
+  return paged({ ...r, items: arr(r.items).map(x => named(x, family)) }, healthRecordSerializer);
+};
+
+/** One record (read or just created) with the family list, naming its person. */
+export const namedRecordSerializer = (parts: { record: unknown; family: unknown }) => {
+  const { record, family } = bodiesOf(parts);
+  return healthRecordSerializer(named(record, family));
+};

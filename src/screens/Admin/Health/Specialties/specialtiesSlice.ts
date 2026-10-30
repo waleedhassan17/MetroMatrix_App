@@ -3,11 +3,13 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { createSpecialty, deleteSpecialty, listAdminSpecialties, updateSpecialty } from '@networks/admin/adminHealthNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getAdminSpecialtiesAPI } from '@networks/admin/adminHealthNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { specialtyInput, type SpecialtyForm } from '@models/health/adminHealthModel';
 import type { AdminSpecialty } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { adminSpecialtyListSerializer } from '@serializers/health/adminHealthSerializer';
+import { createSpecialty, deleteSpecialty, updateSpecialty } from '@screens/Admin/Health/shared/taxonomyWrites';
 
 export interface SpecialtiesSliceState {
   list: AdminSpecialty[];
@@ -44,7 +46,7 @@ export const specialtiesSlice = createAppSlice({
     loadSpecialtiesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await listAdminSpecialties();
+          return required(adminSpecialtyListSerializer(await getAdminSpecialtiesAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -74,7 +76,7 @@ export const specialtiesSlice = createAppSlice({
             // Only the rows whose place changed are sent.
             for (const [i, x] of change.list.entries()) if (x.sort !== i + 1) await updateSpecialty(x.id, { sort: i + 1 });
           }
-          return await listAdminSpecialties();
+          return required(adminSpecialtyListSerializer(await getAdminSpecialtiesAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

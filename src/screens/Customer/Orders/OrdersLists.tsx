@@ -13,7 +13,7 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { usePagedList } from '@hooks/usePagedList';
 import { getOrdersAPI } from '@networks/shopping/ordersNetwork';
-import { listAppointments } from '@networks/health/appointmentsNetwork';
+import { getAppointmentsAPI } from '@networks/health/appointmentsNetwork';
 import { getFoodOrdersAPI } from '@networks/food/ordersNetwork';
 import { orderStatusLabel, ORDER_STATUS, pillTone } from '@models/food/foodStatusModel';
 import { useAppointmentAction } from '@components/health/HealthParts';
@@ -26,6 +26,7 @@ import { formatDateTime } from '@utils/dates';
 import { formatPKR } from '@utils/money';
 import { orderGroupSummaryPageSerializer } from '@serializers/shopping/orderSerializer';
 import { foodOrdersPageSerializer } from '@serializers/food/orderSerializer';
+import { appointmentSummaryPageSerializer } from '@serializers/health/appointmentSerializer';
 
 export const FOOD_SEGMENTS: { key: 'active' | 'past'; label: string }[] = [
   { key: 'active', label: 'Active' },
@@ -132,7 +133,7 @@ export const ShopOrders: React.FC<{ segment: OrderSegment; onOpen: (code: string
 export const Appointments: React.FC<{ segment: AppointmentSegment; onOpen: (code: string) => void; onFind: () => void }> = ({ segment, onOpen, onFind }) => {
   const styles = useStyles(makeStyles);
   const actionFor = useAppointmentAction();
-  const list = usePagedList((page, size) => listAppointments(segment, page, size), `appointments|${segment}`);
+  const list = usePagedList((page, size) => getAppointmentsAPI(segment, page, size), appointmentSummaryPageSerializer, `appointments|${segment}`);
   return (
     <ServiceScope service="healthcare">
       <FlatList

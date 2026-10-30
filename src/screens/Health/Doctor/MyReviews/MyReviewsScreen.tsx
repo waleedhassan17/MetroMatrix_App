@@ -12,7 +12,7 @@ import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { usePagedList } from '@hooks/usePagedList';
-import { listOwnReviews } from '@networks/health/doctor/doctorReviewsNetwork';
+import { getOwnReviewsAPI } from '@networks/health/doctor/doctorReviewsNetwork';
 import { ServiceScope, useStyles, type Theme } from '@theme/index';
 import { Button, ChoiceChip, Divider, DoctorReviewItem, EmptyState, InlineNotice, PageHeader, ReviewSummary, Sheet, SkeletonLines, TextAction, TextField } from '@custom/index';
 import { MAX_REPLY, validateReply } from '@models/health/reviewFormModel';
@@ -20,6 +20,7 @@ import type { DoctorPartnerStackParamList } from '@/types';
 import { haptics } from '@utils/haptics';
 import { useNow } from '@hooks/useNow';
 import { loadReviewSummaryAsync, openReply, selectMyReviews, sendReplyAsync, setReplyText, setUnreplied } from './myReviewsSlice';
+import { doctorReviewPageSerializer } from '@serializers/health/discoverySerializer';
 
 type Props = NativeStackScreenProps<DoctorPartnerStackParamList, 'MyReviews'>;
 
@@ -43,7 +44,7 @@ const MyReviewsContent: React.FC<Props> = () => {
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectMyReviews);
   const now = useNow();
-  const list = usePagedList((page, size) => listOwnReviews(s.unreplied, page, size), `myreviews|${s.unreplied}`);
+  const list = usePagedList((page, size) => getOwnReviewsAPI(s.unreplied, page, size), doctorReviewPageSerializer, `myreviews|${s.unreplied}`);
 
   useEffect(() => {
     void dispatch(loadReviewSummaryAsync());

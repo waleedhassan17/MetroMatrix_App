@@ -1,10 +1,11 @@
 // MetroMatrix — One prescription (by id), and sharing it as a PDF.
 
 import { createAppSlice } from '@store/createAppSlice';
-import { getPrescription } from '@networks/health/prescriptionsNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getPrescriptionAPI } from '@networks/health/prescriptionsNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { Prescription } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { prescriptionSerializer } from '@serializers/health/recordsSerializer';
 
 export interface PrescriptionEntry {
   prescription: Prescription | null;
@@ -26,7 +27,7 @@ export const prescriptionViewSlice = createAppSlice({
     loadPrescriptionAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return await getPrescription(id);
+          return required(prescriptionSerializer(await getPrescriptionAPI(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

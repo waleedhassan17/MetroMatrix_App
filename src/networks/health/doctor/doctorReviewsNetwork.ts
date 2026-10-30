@@ -1,18 +1,33 @@
-// MetroMatrix — Reviews of the doctor, and replies.
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Health Doctor Reviews Network (API_HEALTH.md)
+// ═══════════════════════════════════════════════════════
 // MetroMatrix-API docs/API_HEALTH.md §4.3: a reply is public and replaces an earlier one.
 
-import { api } from '../../network/apiHelpers';
-import { doctorReviewSerializer, reviewSummarySerializer, doctorReviewPageSerializer } from '../../../serializers/health/discoverySerializer';
-import { paged } from '../../../serializers/shopping/common';
-import { clean, pageParams, request } from '../../shopping/http';
+import { api, toApiError, clean, pageParams } from '../../network/apiHelpers';
 
-export const listOwnReviews = (unreplied: boolean, page: number, pageSize = 20) =>
-  request(
-    () => api.get('/health/doctor/reviews', { params: clean({ unreplied: unreplied ? 'true' : null, ...pageParams(page, pageSize) }) }),
-    doctorReviewPageSerializer,
-  );
+export const getOwnReviewsAPI = async (unreplied: boolean, page: number, pageSize = 20): Promise<unknown> => {
+  try {
+    const response = await api.get('/health/doctor/reviews', { params: clean({ unreplied: unreplied ? 'true' : null, ...pageParams(page, pageSize) }) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getOwnReviewSummary = () => request(() => api.get('/health/doctor/reviews/summary'), reviewSummarySerializer);
+export const getOwnReviewSummaryAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get('/health/doctor/reviews/summary');
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const replyToReview = (id: string, text: string) =>
-  request(() => api.post(`/health/doctor/reviews/${encodeURIComponent(id)}/reply`, { text }), doctorReviewSerializer);
+export const replyToReviewAPI = async (id: string, text: string): Promise<unknown> => {
+  try {
+    const response = await api.post(`/health/doctor/reviews/${encodeURIComponent(id)}/reply`, { text });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

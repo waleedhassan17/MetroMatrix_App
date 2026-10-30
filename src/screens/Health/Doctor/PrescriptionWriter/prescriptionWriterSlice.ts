@@ -8,13 +8,15 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getDoctorAppointment } from '@networks/health/doctor/doctorAppointmentsNetwork';
-import { getOwnProfile } from '@networks/health/doctor/profileNetwork';
-import { issuePrescription, recentDiagnoses, suggestMedicines, updatePrescription } from '@networks/health/doctor/prescriptionWriterNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+
+import { issuePrescriptionAPI, recentDiagnosesAPI, suggestMedicinesAPI } from '@networks/health/doctor/prescriptionWriterNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { emptyMedicine, emptyPrescription, moveMedicine } from '@models/health/prescriptionModel';
 import type { DoctorAppointmentDetail, DoctorOwnProfile, Medicine, MedicineSuggestion, PrescriptionInput } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { recentDiagnosesSerializer, medicineSuggestionsSerializer } from '@serializers/health/doctorSerializer';
+import { prescriptionSerializer } from '@serializers/health/recordsSerializer';
+import { getDoctorAppointment, getOwnProfile, updatePrescription } from '@screens/Health/Doctor/shared/practiceReads';
 
 export interface PrescriptionWriterSliceState {
   appointment: DoctorAppointmentDetail | null;
@@ -106,7 +108,7 @@ export const prescriptionWriterSlice = createAppSlice({
     startWriterAsync: create.asyncThunk(
       async (appointmentId: string, { rejectWithValue }) => {
         try {
-          const [appointment, diagnoses, profile] = await Promise.all([getDoctorAppointment(appointmentId), recentDiagnoses(), getOwnProfile()]);
+          const [appointment, diagnoses, profile] = await Promise.all([getDoctorAppointment(appointmentId), recentDiagnosesAPI().then(raw => required(recentDiagnosesSerializer(raw))), getOwnProfile()]);
           return { appointment, diagnoses, profile };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -136,7 +138,7 @@ export const prescriptionWriterSlice = createAppSlice({
     suggestMedicineAsync: create.asyncThunk(
       async ({ q }: { row: number; q: string }, { rejectWithValue }) => {
         try {
-          return await suggestMedicines(q);
+          return required(medicineSuggestionsSerializer(await suggestMedicinesAPI(q)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -152,7 +154,7 @@ export const prescriptionWriterSlice = createAppSlice({
     savePrescriptionAsync: create.asyncThunk(
       async ({ appointmentId, prescriptionId, input }: { appointmentId: string; prescriptionId: string | null; input: PrescriptionInput }, { rejectWithValue }) => {
         try {
-          return prescriptionId ? await updatePrescription(prescriptionId, input) : await issuePrescription(appointmentId, input);
+          return prescriptionId ? await updatePrescription(prescriptionId, input) : required(prescriptionSerializer(await issuePrescriptionAPI(appointmentId, input)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

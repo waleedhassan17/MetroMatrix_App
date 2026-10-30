@@ -1,10 +1,11 @@
 // MetroMatrix — A patient's history with you (by patient id).
 
 import { createAppSlice } from '@store/createAppSlice';
-import { getPatientHistory } from '@networks/health/doctor/patientsNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getPatientHistoryAPI } from '@networks/health/doctor/patientsNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { PatientHistory } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { patientHistorySerializer } from '@serializers/health/doctorSerializer';
 
 export interface PatientHistoryEntry {
   history: PatientHistory | null;
@@ -26,7 +27,7 @@ export const patientHistorySlice = createAppSlice({
     loadPatientHistoryAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return await getPatientHistory(id);
+          return required(patientHistorySerializer(await getPatientHistoryAPI(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

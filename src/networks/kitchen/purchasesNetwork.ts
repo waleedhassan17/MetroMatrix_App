@@ -5,7 +5,6 @@
 // docs/API_KITCHEN_ASSUMED.md §4.1 (TODO(API_KITCHEN): an assumed contract).
 
 import { api, toApiError, clean, pageParams } from '../network/apiHelpers';
-import { priceWatchSerializer, purchasesPageSerializer } from '../../serializers/kitchen/stockSerializer';
 import type { PurchaseInput } from '../../types/kitchen';
 
 const enc = encodeURIComponent;

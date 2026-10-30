@@ -1,15 +1,27 @@
-// MetroMatrix — Join a video consultation (Jitsi / JaaS room from the API).
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Health Video Network (API_HEALTH.md)
+// ═══════════════════════════════════════════════════════
 // MetroMatrix-API docs/VIDEO.md. Outside the window: 409 VIDEO_NOT_JOINABLE
 // (details.reason, opensAt); a prepaid visit not yet paid: 402 PAYMENT_REQUIRED.
 
-import { api } from '../network/apiHelpers';
-import { videoJoinSerializer } from '../../serializers/health/recordsSerializer';
-import { request } from '../shopping/http';
+import { api, toApiError } from '../network/apiHelpers';
 
 /** The patient's join, by appointment code. */
-export const joinVideo = (code: string) =>
-  request(() => api.post(`/health/appointments/${encodeURIComponent(code)}/video/join`, {}), videoJoinSerializer);
+export const joinVideoAPI = async (code: string): Promise<unknown> => {
+  try {
+    const response = await api.post(`/health/appointments/${encodeURIComponent(code)}/video/join`, {});
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** The doctor's join (the doctor side's appointment id is its code); it starts the consultation. */
-export const joinVideoAsDoctor = (appointmentId: string) =>
-  request(() => api.post(`/health/doctor/appointments/${encodeURIComponent(appointmentId)}/video/join`, {}), videoJoinSerializer);
+export const joinVideoAsDoctorAPI = async (appointmentId: string): Promise<unknown> => {
+  try {
+    const response = await api.post(`/health/doctor/appointments/${encodeURIComponent(appointmentId)}/video/join`, {});
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

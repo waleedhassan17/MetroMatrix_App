@@ -7,10 +7,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getHealthHome } from '@networks/health/discoveryNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getHealthHomeAPI } from '@networks/health/discoveryNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { HealthHome } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { healthHomeSerializer } from '@serializers/health/discoverySerializer';
 
 export interface HealthHomeSliceState {
   home: HealthHome | null;
@@ -34,7 +35,7 @@ export const healthHomeSlice = createAppSlice({
     loadHealthHomeAsync: create.asyncThunk(
       async ({ city }: { city: string | null; refresh?: boolean }, { rejectWithValue }) => {
         try {
-          return await getHealthHome(city);
+          return required(healthHomeSerializer(await getHealthHomeAPI(city)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

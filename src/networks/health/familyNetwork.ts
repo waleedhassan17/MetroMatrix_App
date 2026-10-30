@@ -1,10 +1,10 @@
-// MetroMatrix — Family members the patient books for (at most 8).
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Health Family Network (API_HEALTH.md)
+// ═══════════════════════════════════════════════════════
 // MetroMatrix-API docs/API_HEALTH.md §4.2.
 
-import { api } from '../network/apiHelpers';
-import { familyMemberSerializer, familySerializer } from '../../serializers/health/recordsSerializer';
+import { api, toApiError } from '../network/apiHelpers';
 import type { FamilyMemberInput } from '../../types/health';
-import { ack, request } from '../shopping/http';
 
 const enc = encodeURIComponent;
 
@@ -16,12 +16,38 @@ const body = (m: FamilyMemberInput) => ({
   phone: m.phone || undefined,
 });
 
-export const listFamily = () => request(() => api.get('/health/family-members'), familySerializer);
+export const getFamilyAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get('/health/family-members');
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const addFamilyMember = (input: FamilyMemberInput) =>
-  request(() => api.post('/health/family-members', body(input)), familyMemberSerializer);
+export const addFamilyMemberAPI = async (input: FamilyMemberInput): Promise<unknown> => {
+  try {
+    const response = await api.post('/health/family-members', body(input));
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const updateFamilyMember = (id: string, input: FamilyMemberInput) =>
-  request(() => api.patch(`/health/family-members/${enc(id)}`, body(input)), familyMemberSerializer);
+export const updateFamilyMemberAPI = async (id: string, input: FamilyMemberInput): Promise<unknown> => {
+  try {
+    const response = await api.patch(`/health/family-members/${enc(id)}`, body(input));
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const removeFamilyMember = (id: string) => request(() => api.delete(`/health/family-members/${enc(id)}`), ack);
+export const removeFamilyMemberAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.delete(`/health/family-members/${enc(id)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

@@ -32,28 +32,16 @@ import type {
   TodaySummary,
   WeekDayHours,
 } from '../../types/health';
-import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
+import { arr, bodiesOf, bodyOf, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { compact, count, iso, money, paged } from '../shopping/common';
 import { dateInZone } from '../../utils/healthTime';
 import { completenessFrom } from '../../models/health/doctorProfileModel';
 import { appDayFromWeekday } from '../../models/health/availabilityModel';
-import {
-  KINDS,
-  TITLE_PREFIX,
-  appointmentStatus,
-  dayOrNull,
-  gender,
-  instant,
-  numOrNull,
-  paymentMethod,
-  paymentStatus,
-  rating,
-  strings,
-  timezone,
-} from './healthCommon';
+import { KINDS, TITLE_PREFIX, appointmentStatus, dayOrNull, gender, instant, numOrNull, paymentMethod, paymentStatus, rating, strings, timezone } from './healthCommon';
 import { locationSerializer, experienceSerializer } from './discoverySerializer';
 import { eventSerializer, locationRefSerializer, paymentSerializer, reasonTags } from './appointmentSerializer';
 import { healthRecordSerializer, prescriptionSerializer } from './recordsSerializer';
+import { paymentAccountSerializer } from '../shopping/partnerSerializer';
 
 const MINUTE = 60_000;
 const JOIN_EARLY_MIN = 10;
@@ -99,10 +87,10 @@ export const ownProfileSerializer = (raw: unknown): DoctorOwnProfile | null => {
 };
 
 /** `{ percent, missing, isListed }` → the practice set-up checklist. */
-export const completenessSerializer = (raw: unknown): Completeness | null => {
+export const completenessSerializer = fromResponse((raw: unknown): Completeness | null => {
   if (!isObject(raw)) return null;
   return completenessFrom(strings(raw.missing), num(raw.percent), bool(raw.isListed));
-};
+});
 
 // ─── Locations and weekly hours ───────────────────────
 /** "24:00" (the API's end of day) reads as 23:59, the last minute the app's time picker has. */
@@ -184,7 +172,7 @@ export const overlapsFrom = (details: Record<string, unknown> | null | undefined
 };
 
 /** `{ locations: [{ location, days: [{ date, slots: [{ startsAt }] }] }] }` → what patients will see. */
-export const previewSerializer = (raw: unknown): AvailabilityPreview => {
+export const previewSerializer = fromResponse((raw: unknown): AvailabilityPreview => {
   const r = isObject(raw) ? raw : {};
   return {
     locations: compact(
@@ -208,7 +196,7 @@ export const previewSerializer = (raw: unknown): AvailabilityPreview => {
       }),
     ),
   };
-};
+});
 
 // ─── Time off ─────────────────────────────────────────
 type LocationLite = { id: string; name: string; kind: 'video' | 'clinic'; timezone: string };
@@ -446,7 +434,7 @@ export const doctorAppointmentSerializer = (raw: unknown): DoctorAppointmentDeta
 };
 
 /** `{ medicines: [{ source, name, strength, form }] }` → the writer's suggestions, favourites first. */
-export const medicineSuggestionsSerializer = (raw: unknown): MedicineSuggestion[] =>
+export const medicineSuggestionsSerializer = fromResponse((raw: unknown): MedicineSuggestion[] =>
   compact(
     arr(isObject(raw) ? raw.medicines : raw).map(m =>
       isObject(m) && str(m.name)
@@ -458,7 +446,7 @@ export const medicineSuggestionsSerializer = (raw: unknown): MedicineSuggestion[
           }
         : null,
     ),
-  ).sort((a, b) => Number(b.isFavourite) - Number(a.isFavourite));
+  ).sort((a, b) => Number(b.isFavourite) - Number(a.isFavourite)));
 
 /** `{ patientKey, name, age, gender, visits, lastVisitAt }`. */
 export const patientRowSerializer = (raw: unknown): PatientRow | null => {
@@ -469,15 +457,15 @@ export const patientRowSerializer = (raw: unknown): PatientRow | null => {
 };
 
 /** `{ patientKey, name, …, previousAppointments, prescriptions }` → the person and their visits with this doctor. */
-export const patientHistorySerializer = (raw: unknown): PatientHistory | null => {
+export const patientHistorySerializer = fromResponse((raw: unknown): PatientHistory | null => {
   if (!isObject(raw)) return null;
   const id = str(raw.patientKey);
   if (!id) return null;
   return { patient: { id, ...patientLite(raw) }, visits: previousVisits(raw) };
-};
+});
 
 /** The insights the doctor's chart and tiles show (fees are recorded by the doctor, never held). */
-export const insightsSerializer = (raw: unknown): DoctorInsights | null => {
+export const insightsSerializer = fromResponse((raw: unknown): DoctorInsights | null => {
   if (!isObject(raw)) return null;
   const totals = isObject(raw.totals) ? raw.totals : {};
   const times = isObject(raw.times) ? raw.times : {};
@@ -504,7 +492,74 @@ export const insightsSerializer = (raw: unknown): DoctorInsights | null => {
     recordedFees: money(fees.recorded),
     appointments: count(totals.appointments),
   };
-};
+});
 
 /** A page of patientRows, as the API answers it. */
 export const patientRowPageSerializer = fromResponse(raw => paged(raw, patientRowSerializer));
+
+// ─── The doctor app's reads, several answers together ──────────
+
+/** Only one location's patients, when the doctor picked one. */
+const forLocation = (today: unknown, locationId: string | null) => {
+  if (!locationId || !isObject(today)) return today;
+  return { ...today, queue: arr(today.queue).filter(q => isObject(q) && isObject(q.location) && str(q.location.id) === locationId) };
+};
+
+/**
+ * The doctor's day with the practice's locations: today's queue (GET
+ * /health/doctor/today), or another date's appointments (`date`) shaped as one.
+ */
+export const doctorDaySerializer = (parts: { day: unknown; locations: unknown }, date: string | null, locationId: string | null) => {
+  const { day, locations } = bodiesOf(parts);
+  const today = date ? { date, counts: {}, queue: arr(isObject(day) ? day.items : []) } : day;
+  return todaySerializer({ today: forLocation(today, locationId), locations });
+};
+
+/** The locations still in use (their ids are what the schedules are read for). */
+export const activeLocations = (raw: unknown): Record<string, unknown>[] =>
+  arr(bodyOf(raw)).filter(l => isObject(l) && l.isActive !== false) as Record<string, unknown>[];
+
+/** The practice's locations with their weekly hours; the video prepay rule is the profile's. */
+export const practiceLocationsSerializer = (parts: { locations: unknown; schedules: Record<string, unknown>; profile: unknown }) => {
+  const profile = bodyOf(parts.profile);
+  return doctorLocationsSerializer({
+    locations: activeLocations(parts.locations),
+    schedules: Object.fromEntries(Object.entries(parts.schedules).map(([id, s]) => [id, bodyOf(s)])),
+    videoPrepay: isObject(profile) && bool(profile.videoPrepayRequired),
+  });
+};
+
+/** A location as create or update answers it, with the prepay rule the form set. */
+export const savedLocationSerializer = (raw: unknown, videoPrepay: boolean) => doctorLocationSerializer(bodyOf(raw), undefined, videoPrepay);
+
+/** A location after its hours were saved: found in the list, with the saved week. */
+export const savedHoursSerializer = (parts: { schedule: unknown; locations: unknown }, id: string) => {
+  const { schedule, locations } = bodiesOf(parts);
+  return doctorLocationSerializer(arr(locations).find(l => isObject(l) && str(l.id) === id), schedule);
+};
+
+/** The timezone time off is counted in: the location's, else Pakistan time. */
+export const locationTimezone = (locations: unknown, locationId: string | null): string => {
+  const place = arr(bodyOf(locations)).find(l => isObject(l) && str(l.id) === locationId);
+  return (isObject(place) && str(place.timezone)) || PKT;
+};
+
+/** Time off just added, named with the practice's locations. */
+export const addedTimeOffSerializer = (parts: { created: unknown; locations: unknown }) => {
+  const { created, locations } = bodiesOf(parts);
+  return timeOffSerializer(
+    created,
+    compact(arr(locations).map(l => (isObject(l) ? { id: str(l.id), name: str(l.name), kind: 'clinic' as const, timezone: str(l.timezone) || PKT } : null))),
+  );
+};
+
+/** The doctor's own accounts patients pay into: `{ kind, accountTitle, accountNumber, bankName }`. */
+const accountIn = (raw: unknown) => (isObject(raw) ? paymentAccountSerializer({ ...raw, title: raw.accountTitle, number: raw.accountNumber }) : null);
+export const doctorPaymentAccountSerializer = fromResponse(accountIn);
+export const doctorPaymentAccountListSerializer = fromResponse(raw => compact(arr(raw).map(accountIn)));
+
+/** GET /health/doctor/diagnoses/recent. */
+export const recentDiagnosesSerializer = fromResponse(strings);
+
+/** A prescription's appointment code (editing re-issues it there). */
+export const prescriptionAppointmentCodeSerializer = fromResponse(raw => (isObject(raw) ? str(raw.appointmentCode) : ''));

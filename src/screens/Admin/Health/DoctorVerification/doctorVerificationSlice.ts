@@ -3,10 +3,12 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { listDoctorsForVerification, verifyPmdc } from '@networks/admin/adminHealthNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getDoctorsForVerificationAPI } from '@networks/admin/adminHealthNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { AdminDoctor } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { adminDoctorListSerializer } from '@serializers/health/adminHealthSerializer';
+import { verifyPmdc } from '@screens/Admin/Health/shared/taxonomyWrites';
 
 export type VerificationFilter = 'pending' | 'all';
 
@@ -60,7 +62,7 @@ export const doctorVerificationSlice = createAppSlice({
     loadDoctorsForVerificationAsync: create.asyncThunk(
       async (filter: VerificationFilter, { rejectWithValue }) => {
         try {
-          return await listDoctorsForVerification(filter);
+          return required(adminDoctorListSerializer(await getDoctorsForVerificationAPI(filter)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

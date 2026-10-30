@@ -7,12 +7,13 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { createLocation, deleteLocation, getPreview, listLocations, saveHours, updateLocation } from '@networks/health/doctor/practiceNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
-import { overlapsFrom } from '@serializers/health/doctorSerializer';
+import { deleteLocationAPI, getPreviewAPI } from '@networks/health/doctor/practiceNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
+import { overlapsFrom, previewSerializer } from '@serializers/health/doctorSerializer';
 import { DEFAULT_RANGE, copyToWeekdays, normaliseWeek } from '@models/health/availabilityModel';
 import type { AvailabilityPreview, DoctorLocation, DoctorLocationInput, HoursOverlap, WeekDayHours } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { createLocation, listLocations, saveHours, updateLocation } from '@screens/Health/Doctor/shared/practiceReads';
 
 export type AvailabilityTab = 'locations' | 'hours' | 'preview';
 
@@ -194,7 +195,7 @@ export const availabilitySlice = createAppSlice({
     deleteLocationAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          await deleteLocation(id);
+          await deleteLocationAPI(id);
           return id;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -248,7 +249,7 @@ export const availabilitySlice = createAppSlice({
     loadPreviewAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await getPreview(7);
+          return required(previewSerializer(await getPreviewAPI(7)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

@@ -13,7 +13,7 @@ import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { useDebouncedValue, usePagedList } from '@hooks/usePagedList';
 import { useHealthNav } from '@hooks/useHealth';
-import { listDoctors } from '@networks/health/discoveryNetwork';
+import { getDoctorsAPI } from '@networks/health/discoveryNetwork';
 import { ServiceScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { ChoiceChip, DoctorCard, EmptyState, InlineNotice, PageHeader, Skeleton } from '@custom/index';
 import { QUICK_FILTERS, activeFilterCount, isQuickOn, queryKey } from '@models/health/filterModel';
@@ -34,6 +34,7 @@ import {
   selectDoctorListView,
   toggleQuickFilter,
 } from './doctorListSlice';
+import { doctorCardPageSerializer } from '@serializers/health/discoverySerializer';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'DoctorList'>;
 
@@ -84,7 +85,7 @@ const DoctorListContent: React.FC<Props> = ({ route }) => {
   }, [dispatch, key]);
 
   const query = view?.query ?? baseQuery(city);
-  const list = usePagedList((page, sz) => listDoctors(query, page, sz), queryKey(query), { enabled: !!view });
+  const list = usePagedList((page, sz) => getDoctorsAPI(query, page, sz), doctorCardPageSerializer, queryKey(query), { enabled: !!view });
 
   // "Show N doctors" follows the draft.
   const draftKey = useDebouncedValue(view?.sheetOpen ? queryKey(view.draft) : '', 300);

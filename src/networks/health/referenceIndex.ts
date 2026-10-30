@@ -3,11 +3,12 @@
 // ═══════════════════════════════════════════════════════
 // The app works in slugs ("dermatologist", "acne"); a few API bodies take
 // ids (a doctor's specialties and conditions, a condition's specialty).
-// Loaded once from the public reference routes and kept for the session;
+// Loaded once from the public reference routes (the discovery network's
+// thin calls) and kept for the session;
 // staff edits to the taxonomy drop it (resetReferenceIndex).
 
-import { api, unwrap } from '../network/apiHelpers';
-import { arr, isObject, str } from '../../serializers/serializerUtils';
+import { getConditionsAPI, getSpecialtiesAPI } from './discoveryNetwork';
+import { arr, bodyOf, isObject, str } from '../../serializers/serializerUtils';
 
 export interface ReferenceIndex {
   specialtyId: Map<string, string>;
@@ -18,14 +19,14 @@ export interface ReferenceIndex {
 let loading: Promise<ReferenceIndex> | null = null;
 
 const load = async (): Promise<ReferenceIndex> => {
-  const [specialties, conditions] = await Promise.all([api.get('/health/specialties'), api.get('/health/conditions')]);
+  const [specialties, conditions] = await Promise.all([getSpecialtiesAPI(null), getConditionsAPI()]);
   const index: ReferenceIndex = { specialtyId: new Map(), specialtySlug: new Map(), conditionId: new Map() };
-  for (const s of arr(unwrap(specialties))) {
+  for (const s of arr(bodyOf(specialties))) {
     if (!isObject(s) || !str(s.slug) || !str(s.id)) continue;
     index.specialtyId.set(str(s.slug), str(s.id));
     index.specialtySlug.set(str(s.id), str(s.slug));
   }
-  for (const c of arr(unwrap(conditions))) if (isObject(c) && str(c.slug) && str(c.id)) index.conditionId.set(str(c.slug), str(c.id));
+  for (const c of arr(bodyOf(conditions))) if (isObject(c) && str(c.slug) && str(c.id)) index.conditionId.set(str(c.slug), str(c.id));
   return index;
 };
 

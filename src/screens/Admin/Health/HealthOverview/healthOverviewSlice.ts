@@ -1,10 +1,11 @@
 // MetroMatrix — Admin Health overview slice.
 
 import { createAppSlice } from '@store/createAppSlice';
-import { getHealthOverview } from '@networks/admin/adminHealthNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getHealthOverviewAPI } from '@networks/admin/adminHealthNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { HealthOverview } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { healthOverviewSerializer } from '@serializers/health/adminHealthSerializer';
 
 export interface HealthOverviewSliceState {
   overview: HealthOverview | null;
@@ -21,7 +22,7 @@ export const healthOverviewSlice = createAppSlice({
     loadHealthOverviewAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await getHealthOverview();
+          return required(healthOverviewSerializer(await getHealthOverviewAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

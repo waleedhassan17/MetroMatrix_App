@@ -7,11 +7,12 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { addTimeOff, listLocations, listTimeOff, removeTimeOff } from '@networks/health/doctor/practiceNetwork';
+import { removeTimeOffAPI } from '@networks/health/doctor/practiceNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import { conflictsFrom } from '@serializers/health/doctorSerializer';
 import type { ConflictingAppointment, TimeOff, TimeOffInput } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { addTimeOff, listLocations, listTimeOff } from '@screens/Health/Doctor/shared/practiceReads';
 
 export interface TimeOffSliceState {
   items: TimeOff[];
@@ -115,7 +116,7 @@ export const timeOffSlice = createAppSlice({
     removeTimeOffAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          await removeTimeOff(id);
+          await removeTimeOffAPI(id);
           return id;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

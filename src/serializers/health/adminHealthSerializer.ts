@@ -11,7 +11,7 @@ import { appointmentDetailSerializer } from './appointmentSerializer';
 import { TITLE_PREFIX, mimeFromUrl, strings } from './healthCommon';
 
 /** `{ doctors: { listed, awaitingPmdc }, listedBySpecialty, today: { newBookings, cancellations, noShows } }`. */
-export const healthOverviewSerializer = (raw: unknown): HealthOverview | null => {
+export const healthOverviewSerializer = fromResponse((raw: unknown): HealthOverview | null => {
   if (!isObject(raw)) return null;
   const d = isObject(raw.doctors) ? raw.doctors : {};
   const t = isObject(raw.today) ? raw.today : {};
@@ -25,20 +25,20 @@ export const healthOverviewSerializer = (raw: unknown): HealthOverview | null =>
     noShowsToday: count(t.noShows),
     pendingVerification: count(d.awaitingPmdc),
   };
-};
+});
 
 /** Staff specialties carry `sort`, `isActive` and `doctors`; a deactivated one is gone from the app's list. */
-export const adminSpecialtySerializer = (raw: unknown): AdminSpecialty | null => {
+export const adminSpecialtySerializer = fromResponse((raw: unknown): AdminSpecialty | null => {
   if (!isObject(raw) || raw.isActive === false) return null;
   const s = specialtySerializer(raw);
   return s ? { ...s, sort: Math.round(num(raw.sort)) } : null;
-};
+});
 
-export const adminConditionSerializer = (raw: unknown): AdminCondition | null => {
+export const adminConditionSerializer = fromResponse((raw: unknown): AdminCondition | null => {
   if (!isObject(raw) || raw.isActive === false) return null;
   const c = conditionSerializer(raw);
   return c ? { ...c, aliases: strings(raw.aliases) } : null;
-};
+});
 
 const BUSINESS_STATUSES = ['draft', 'pending_approval', 'approved', 'rejected', 'suspended'] as const;
 
@@ -77,7 +77,7 @@ export const adminDoctorSerializer = (raw: unknown): AdminDoctor | null => {
  * A staff appointment: booking facts and the payment trail. Staff learn only
  * whether a prescription was written (`hasPrescription`), never what it says.
  */
-export const adminAppointmentSerializer = (raw: unknown): AdminAppointment | null => {
+export const adminAppointmentSerializer = fromResponse((raw: unknown): AdminAppointment | null => {
   const a = appointmentDetailSerializer(raw);
   if (!a || !isObject(raw)) return null;
   const doctor = isObject(raw.doctor) ? raw.doctor : {};
@@ -86,7 +86,7 @@ export const adminAppointmentSerializer = (raw: unknown): AdminAppointment | nul
     doctorBusinessId: str(doctor.businessId),
     prescriptionId: raw.hasPrescription === true ? 'written' : null,
   };
-};
+});
 
 /** A list of adminSpecialtys, as the API answers it. */
 export const adminSpecialtyListSerializer = fromResponse(raw => compact(arr(raw).map(adminSpecialtySerializer)));
@@ -101,3 +101,12 @@ export const adminDoctorListSerializer = fromResponse(raw =>
 
 /** The one doctor a lookup found, or null. */
 export const adminDoctorLookupSerializer = fromResponse(raw => adminDoctorSerializer(arr(isObject(raw) ? raw.items : []).find(isObject)));
+
+/** A created row's id (a condition before its specialty is set). */
+export const adminCreatedIdSerializer = fromResponse(raw => (isObject(raw) ? str(raw.id) : ''));
+
+/** The doctor behind a business (a one-row page): their id, for the PMDC check. */
+export const adminDoctorIdSerializer = fromResponse(raw => {
+  const row = arr(isObject(raw) ? raw.items : []).find(isObject);
+  return isObject(row) ? str(row.id) : '';
+});

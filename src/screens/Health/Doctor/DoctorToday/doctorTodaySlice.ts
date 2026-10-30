@@ -8,10 +8,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { actOnAppointment, completeAppointment, getToday, type DoctorAction } from '@networks/health/doctor/doctorAppointmentsNetwork';
+import { type DoctorAction } from '@networks/health/doctor/doctorAppointmentsNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import type { TodaySummary } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { actOnAppointment, completeAppointment, getToday } from '@screens/Health/Doctor/shared/practiceReads';
 
 export interface DoctorTodaySliceState {
   today: TodaySummary | null;

@@ -7,10 +7,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { checkSymptoms } from '@networks/health/symptomNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { checkSymptomsAPI } from '@networks/health/symptomNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { Gender, SymptomResult } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { symptomResultSerializer } from '@serializers/health/recordsSerializer';
 
 export interface SymptomCheckerSliceState {
   text: string;
@@ -38,7 +39,7 @@ export const symptomCheckerSlice = createAppSlice({
     checkSymptomsAsync: create.asyncThunk(
       async (input: { text: string; age: number | null; gender: Gender | null }, { rejectWithValue }) => {
         try {
-          return await checkSymptoms(input);
+          return required(symptomResultSerializer(await checkSymptomsAPI(input)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

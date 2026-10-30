@@ -6,7 +6,6 @@
 // docs/API_KITCHEN_ASSUMED.md §4.7 (TODO(API_KITCHEN): an assumed contract).
 
 import { api, toApiError } from '../network/apiHelpers';
-import { updateIngredientAPI } from './stockNetwork';
 
 export const getVendorNutritionAPI = async (): Promise<unknown> => {
   try {

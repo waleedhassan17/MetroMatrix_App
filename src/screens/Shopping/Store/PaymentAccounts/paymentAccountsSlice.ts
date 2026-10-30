@@ -6,10 +6,10 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { createPaymentAccountAPI, deletePaymentAccountAPI, getPaymentAccountsAPI, updatePaymentAccountAPI } from '@networks/shopping/partner/storeNetwork';
 import {
-  createDoctorPaymentAccount,
-  deleteDoctorPaymentAccount,
-  listDoctorPaymentAccounts,
-  updateDoctorPaymentAccount,
+  createDoctorPaymentAccountAPI,
+  deleteDoctorPaymentAccountAPI,
+  getDoctorPaymentAccountsAPI,
+  updateDoctorPaymentAccountAPI,
 } from '@networks/health/doctor/practiceNetwork';
 import {
   createVendorPaymentAccountAPI,
@@ -23,6 +23,7 @@ import type { PaymentAccount, PaymentAccountInput } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { paymentAccountListSerializer, paymentAccountSerializer } from '@serializers/shopping/partnerSerializer';
 import { vendorPaymentAccountSerializer, vendorPaymentAccountsSerializer } from '@serializers/food/vendorSerializer';
+import { doctorPaymentAccountListSerializer, doctorPaymentAccountSerializer } from '@serializers/health/doctorSerializer';
 
 export interface PaymentAccountsSliceState {
   accounts: PaymentAccount[];
@@ -48,7 +49,16 @@ const STORE = {
     return true as const;
   },
 };
-const DOCTOR = { list: listDoctorPaymentAccounts, create: createDoctorPaymentAccount, update: updateDoctorPaymentAccount, remove: deleteDoctorPaymentAccount };
+const DOCTOR = {
+  list: async () => required(doctorPaymentAccountListSerializer(await getDoctorPaymentAccountsAPI())),
+  create: async (input: PaymentAccountInput) => required(doctorPaymentAccountSerializer(await createDoctorPaymentAccountAPI(input))),
+  update: async (id: string, input: PaymentAccountInput) =>
+    required(doctorPaymentAccountSerializer(await updateDoctorPaymentAccountAPI(id, input))),
+  remove: async (id: string) => {
+    await deleteDoctorPaymentAccountAPI(id);
+    return true as const;
+  },
+};
 const FOOD = {
   list: async () => required(vendorPaymentAccountsSerializer(await getVendorPaymentAccountsAPI())),
   create: async (input: PaymentAccountInput) => required(vendorPaymentAccountSerializer(await createVendorPaymentAccountAPI(input))),

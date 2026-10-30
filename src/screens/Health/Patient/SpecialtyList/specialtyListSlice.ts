@@ -2,10 +2,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { listSpecialties } from '@networks/health/discoveryNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getSpecialtiesAPI } from '@networks/health/discoveryNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { Specialty } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { specialtiesSerializer } from '@serializers/health/discoverySerializer';
 
 export interface SpecialtyListSliceState {
   items: Specialty[];
@@ -26,7 +27,7 @@ export const specialtyListSlice = createAppSlice({
     loadSpecialtiesAsync: create.asyncThunk(
       async (city: string | null, { rejectWithValue }) => {
         try {
-          return await listSpecialties(city);
+          return required(specialtiesSerializer(await getSpecialtiesAPI(city)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

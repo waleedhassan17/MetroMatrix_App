@@ -2,10 +2,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getOwnReviewSummary, replyToReview } from '@networks/health/doctor/doctorReviewsNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getOwnReviewSummaryAPI, replyToReviewAPI } from '@networks/health/doctor/doctorReviewsNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { DoctorReview, DoctorReviewSummary } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { reviewSummarySerializer, doctorReviewSerializer } from '@serializers/health/discoverySerializer';
 
 export interface MyReviewsSliceState {
   summary: DoctorReviewSummary | null;
@@ -36,7 +37,7 @@ export const myReviewsSlice = createAppSlice({
     loadReviewSummaryAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await getOwnReviewSummary();
+          return required(reviewSummarySerializer(await getOwnReviewSummaryAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -50,7 +51,7 @@ export const myReviewsSlice = createAppSlice({
     sendReplyAsync: create.asyncThunk(
       async ({ id, text }: { id: string; text: string }, { rejectWithValue }) => {
         try {
-          return await replyToReview(id, text.trim());
+          return required(doctorReviewSerializer(await replyToReviewAPI(id, text.trim())));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

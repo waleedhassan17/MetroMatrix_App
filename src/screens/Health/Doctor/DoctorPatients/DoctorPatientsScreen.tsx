@@ -9,7 +9,7 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useDebouncedValue, usePagedList } from '@hooks/usePagedList';
-import { listPatients } from '@networks/health/doctor/patientsNetwork';
+import { getPatientsAPI } from '@networks/health/doctor/patientsNetwork';
 import { ServiceScope, useStyles, type Theme } from '@theme/index';
 import { Avatar, Divider, EmptyState, InlineNotice, ListRow, PageHeader, SkeletonLines } from '@custom/index';
 import { SearchField } from '@components/shopping/ShopParts';
@@ -17,6 +17,7 @@ import type { DoctorPartnerStackParamList } from '@/types';
 import { formatOn } from '@utils/healthTime';
 import { genderLabel } from '@models/health/familyMemberModel';
 import { selectPatientQuery, setPatientQuery } from './doctorPatientsSlice';
+import { patientRowPageSerializer } from '@serializers/health/doctorSerializer';
 
 type Props = NativeStackScreenProps<DoctorPartnerStackParamList, 'DoctorTabs'>;
 
@@ -38,7 +39,7 @@ const DoctorPatientsContent: React.FC<Props> = ({ navigation }) => {
   const styles = useStyles(makeStyles);
   const query = useAppSelector(selectPatientQuery);
   const q = useDebouncedValue(query.trim());
-  const list = usePagedList((page, size) => listPatients(q, page, size), `patients|${q}`);
+  const list = usePagedList((page, size) => getPatientsAPI(q, page, size), patientRowPageSerializer, `patients|${q}`);
 
   return (
     <View style={styles.root}>

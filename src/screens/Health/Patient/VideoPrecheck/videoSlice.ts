@@ -6,12 +6,15 @@
 // asks the API for the room (Jitsi URL, or JaaS with a token).
 
 import { createAppSlice } from '@store/createAppSlice';
-import { getAppointment } from '@networks/health/appointmentsNetwork';
-import { getDoctorAppointment } from '@networks/health/doctor/doctorAppointmentsNetwork';
-import { joinVideo, joinVideoAsDoctor } from '@networks/health/videoNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getAppointmentAPI } from '@networks/health/appointmentsNetwork';
+
+import { joinVideoAPI, joinVideoAsDoctorAPI } from '@networks/health/videoNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { VideoJoin } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { appointmentDetailSerializer } from '@serializers/health/appointmentSerializer';
+import { videoJoinSerializer } from '@serializers/health/recordsSerializer';
+import { getDoctorAppointment } from '@screens/Health/Doctor/shared/practiceReads';
 
 export interface VideoTarget {
   code?: string;
@@ -52,7 +55,7 @@ export const videoSlice = createAppSlice({
       async (t: VideoTarget, { rejectWithValue }): Promise<VideoVisit | ReturnType<typeof rejectWithValue>> => {
         try {
           if (t.code) {
-            const a = await getAppointment(t.code);
+            const a = required(appointmentDetailSerializer(await getAppointmentAPI(t.code)));
             return { other: a.doctor.name, startAt: a.startAt, endAt: a.endAt, timezone: a.timezone, joinOpensAt: a.joinOpensAt, canJoin: a.flags.canJoinVideo, code: a.code };
           }
           const a = await getDoctorAppointment(t.appointmentId ?? '');
@@ -79,7 +82,7 @@ export const videoSlice = createAppSlice({
     joinRoomAsync: create.asyncThunk(
       async (t: VideoTarget, { rejectWithValue }) => {
         try {
-          return t.code ? await joinVideo(t.code) : await joinVideoAsDoctor(t.appointmentId ?? '');
+          return t.code ? required(videoJoinSerializer(await joinVideoAPI(t.code))) : required(videoJoinSerializer(await joinVideoAsDoctorAPI(t.appointmentId ?? '')));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

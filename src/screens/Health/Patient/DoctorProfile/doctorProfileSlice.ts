@@ -7,12 +7,14 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getDoctor } from '@networks/health/discoveryNetwork';
-import { listDays, listSlots } from '@networks/health/availabilityNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+
+import { getDaysAPI, getSlotsAPI } from '@networks/health/availabilityNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { DayAvailability, DoctorProfile, SlotDay } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { confirmBookingAsync } from '../BookAppointment/bookAppointmentSlice';
+import { daysSerializer, slotDaySerializer } from '@serializers/health/discoverySerializer';
+import { getDoctor } from '@screens/Health/Patient/shared/healthReads';
 
 export interface DoctorEntry {
   profile: DoctorProfile | null;
@@ -100,9 +102,9 @@ export const doctorProfileSlice = createAppSlice({
     chooseLocationAsync: create.asyncThunk(
       async ({ doctorId, locationId, date }: { key: string; doctorId: string; locationId: string; date?: string }, { rejectWithValue }) => {
         try {
-          const days = await listDays(doctorId, locationId, null, 14);
+          const days = required(daysSerializer(await getDaysAPI(doctorId, locationId, null, 14)));
           const pick = (date && days.find(d => d.date === date)?.date) || days.find(d => d.slotCount > 0)?.date || days[0]?.date || null;
-          const day = pick ? await listSlots(doctorId, locationId, pick) : null;
+          const day = pick ? required(slotDaySerializer(await getSlotsAPI(doctorId, locationId, pick))) : null;
           return { days, day };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -139,7 +141,7 @@ export const doctorProfileSlice = createAppSlice({
     chooseDayAsync: create.asyncThunk(
       async ({ doctorId, locationId, date }: { key: string; doctorId: string; locationId: string; date: string }, { rejectWithValue }) => {
         try {
-          return await listSlots(doctorId, locationId, date);
+          return required(slotDaySerializer(await getSlotsAPI(doctorId, locationId, date)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
