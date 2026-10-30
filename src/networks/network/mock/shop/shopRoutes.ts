@@ -772,14 +772,17 @@ export function registerShopRoutes(kit: ShopKit) {
   });
   route('GET', '/notifications/unread-count', ctx => {
     const user = requireUser(ctx);
-    return { count: ctx.db.shop.notifications.filter(n => n.userId === user.id && !n.isRead).length };
+    return { unread: ctx.db.shop.notifications.filter(n => n.userId === user.id && !n.isRead).length };
   });
-  route('POST', '/notifications/read', ctx => {
+  route('POST', '/notifications/read-all', ctx => {
     const user = requireUser(ctx);
-    const ids: string[] = Array.isArray(ctx.body.ids) ? ctx.body.ids : [];
-    for (const n of ctx.db.shop.notifications) {
-      if (n.userId === user.id && (bool(ctx.body.all) || ids.includes(n.id))) n.isRead = true;
-    }
+    for (const n of ctx.db.shop.notifications) if (n.userId === user.id) n.isRead = true;
+    return { read: true };
+  });
+  route('POST', '/notifications/:id/read', ctx => {
+    const user = requireUser(ctx);
+    const n = ctx.db.shop.notifications.find(x => x.id === ctx.params[0] && x.userId === user.id);
+    if (n) n.isRead = true;
     return { read: true };
   });
 

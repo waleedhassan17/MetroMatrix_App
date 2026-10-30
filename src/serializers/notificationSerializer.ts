@@ -74,5 +74,5 @@ export const notificationSerializer = (raw: unknown): AppNotification | null => 
 /** GET /notifications: a page of notifications. */
 export const notificationPageSerializer = fromResponse(raw => paged(raw, notificationSerializer));
 
-/** GET /notifications/unread-count. */
-export const unreadCountSerializer = fromResponse(raw => count(isObject(raw) ? raw.count : raw));
+/** GET /notifications/unread-count → `{ unread }`. */
+export const unreadCountSerializer = fromResponse(raw => count(isObject(raw) ? (raw.unread ?? raw.count) : raw));

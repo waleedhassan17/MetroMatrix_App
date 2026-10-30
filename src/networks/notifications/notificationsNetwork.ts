@@ -1,7 +1,8 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Notifications Network (Production API)
 // ═══════════════════════════════════════════════════════
-// TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
+// The real API's core notifications (docs/openapi.json): newest first,
+// paged; read one at a time or all at once.
 
 import { api, toApiError, pageParams } from '../network/apiHelpers';
 
@@ -23,9 +24,18 @@ export const getUnreadCountAPI = async (): Promise<unknown> => {
   }
 };
 
-export const markNotificationsReadAPI = async (target: { ids: string[] } | { all: true }): Promise<unknown> => {
+export const markNotificationReadAPI = async (id: string): Promise<unknown> => {
   try {
-    const response = await api.post('/notifications/read', target);
+    const response = await api.post(`/notifications/${encodeURIComponent(id)}/read`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+
+export const markAllNotificationsReadAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.post('/notifications/read-all');
     return response.data;
   } catch (e) {
     throw toApiError(e);
