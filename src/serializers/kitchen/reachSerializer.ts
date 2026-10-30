@@ -26,7 +26,7 @@ import type {
   SuggestionKind,
   TimeWindow,
 } from '../../types/kitchen';
-import { arr, bool, isObject, num, oneOf, str, strOrNull } from '../serializerUtils';
+import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { count, dateOrNull, list, numOrNull, whole } from './kitchenCommon';
 
 const RAMADAN_STATES: readonly RamadanState[] = ['active', 'upcoming', 'none'];
@@ -52,7 +52,7 @@ const eventSerializer = (raw: unknown): RamadanEvent | null =>
   isObject(raw) && str(raw.name) ? { name: str(raw.name), startsOn: dateOrNull(raw.startsOn) ?? '', endsOn: dateOrNull(raw.endsOn) ?? '' } : null;
 
 // ── Ramadan ──
-export const ramadanSettingsSerializer = (raw: unknown): RamadanSettings => {
+export const ramadanSettingsSerializer = fromResponse((raw: unknown): RamadanSettings => {
   const r = isObject(raw) ? raw : {};
   return {
     event: eventSerializer(r.event),
@@ -63,7 +63,7 @@ export const ramadanSettingsSerializer = (raw: unknown): RamadanSettings => {
     iftar: windowSerializer(r.iftar),
     iftarPreorderOnly: bool(r.iftarPreorderOnly),
   };
-};
+});
 
 const iftarKitchenSerializer = (raw: unknown): IftarKitchen | null =>
   isObject(raw) && str(raw.vendorId)
@@ -79,13 +79,13 @@ const iftarKitchenSerializer = (raw: unknown): IftarKitchen | null =>
       }
     : null;
 
-export const iftarNearbySerializer = (raw: unknown): IftarNearby => {
+export const iftarNearbySerializer = fromResponse((raw: unknown): IftarNearby => {
   const r = isObject(raw) ? raw : {};
   return { state: oneOf(r.state, RAMADAN_STATES, 'none'), event: eventSerializer(r.event), items: list(r.items, iftarKitchenSerializer) };
-};
+});
 
 // ── Storefront ──
-export const storefrontSerializer = (raw: unknown): Storefront => {
+export const storefrontSerializer = fromResponse((raw: unknown): Storefront => {
   const r = isObject(raw) ? raw : {};
   const st = isObject(r.stats) ? r.stats : {};
   const url = str(r.url);
@@ -97,7 +97,7 @@ export const storefrontSerializer = (raw: unknown): Storefront => {
     shareText: str(r.shareText, url),
     stats: { month: str(st.month), link: count(st.link), qr: count(st.qr), app: count(st.app), tiffin: count(st.tiffin) },
   };
-};
+});
 
 // ── Demand ──
 const point = (raw: unknown) => {
@@ -119,7 +119,7 @@ const curve = (raw: unknown) => {
   return Array.from({ length: 24 }, (_, h) => xs[h] ?? 0);
 };
 
-export const demandMapSerializer = (raw: unknown): DemandMap => {
+export const demandMapSerializer = fromResponse((raw: unknown): DemandMap => {
   const r = isObject(raw) ? raw : {};
   const minCount = Math.max(1, count(r.minCount) || 10);
   const hc = isObject(r.hourCurve) ? r.hourCurve : {};
@@ -137,7 +137,7 @@ export const demandMapSerializer = (raw: unknown): DemandMap => {
     ),
     hourCurve: { area: curve(hc.area), own: curve(hc.own) },
   };
-};
+});
 
 // ── Menu insights and experiments ──
 const insightItemSerializer = (raw: unknown): MenuInsightItem | null => {
@@ -161,18 +161,18 @@ const insightItemSerializer = (raw: unknown): MenuInsightItem | null => {
   };
 };
 
-export const menuInsightsSerializer = (raw: unknown): MenuInsights => {
+export const menuInsightsSerializer = fromResponse((raw: unknown): MenuInsights => {
   const r = isObject(raw) ? raw : {};
   const m = isObject(r.medians) ? r.medians : {};
   return { range: str(r.range, '30d'), medians: { sold: num(m.sold), keep: num(m.keep) }, items: list(r.items, insightItemSerializer) };
-};
+});
 
 const rate = (raw: unknown) => {
   const r = isObject(raw) ? raw : {};
   return { perDay: Math.max(0, num(r.perDay)), salesPerDay: count(r.salesPerDay) };
 };
 
-export const experimentSerializer = (raw: unknown): Experiment | null => {
+export const experimentSerializer = fromResponse((raw: unknown): Experiment | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
   const c = isObject(raw.change) ? raw.change : {};
   const p = isObject(raw.progress) ? raw.progress : {};
@@ -191,20 +191,20 @@ export const experimentSerializer = (raw: unknown): Experiment | null => {
     result: res ? { verdict: res.verdict ? oneOf(res.verdict, VERDICTS, 'adjust') : null, before: rate(res.before), during: rate(res.during) } : null,
     decidedAt: isoOrNull(raw.decidedAt),
   };
-};
+});
 
-export const experimentsSerializer = (raw: unknown): Experiment[] => list(isObject(raw) ? raw.items : raw, experimentSerializer);
+export const experimentsSerializer = fromResponse((raw: unknown): Experiment[] => list(isObject(raw) ? raw.items : raw, experimentSerializer));
 
 // ── Story, hygiene, batching ──
-export const storySerializer = (raw: unknown): KitchenStory => {
+export const storySerializer = fromResponse((raw: unknown): KitchenStory => {
   const r = isObject(raw) ? raw : {};
   return { text: str(r.text), cookName: str(r.cookName), photoUrls: strings(r.photoUrls), videoUrl: strOrNull(r.videoUrl), updatedAt: isoOrNull(r.updatedAt) };
-};
+});
 
 const hygieneItemSerializer = (raw: unknown): HygieneItem | null =>
   isObject(raw) && str(raw.key) ? { key: str(raw.key), label: str(raw.label, str(raw.key)), done: bool(raw.done), evidenceUrl: strOrNull(raw.evidenceUrl) } : null;
 
-export const hygieneSerializer = (raw: unknown): Hygiene => {
+export const hygieneSerializer = fromResponse((raw: unknown): Hygiene => {
   const r = isObject(raw) ? raw : {};
   return {
     status: oneOf(r.status, HYGIENE_STATUSES, 'none'),
@@ -214,14 +214,14 @@ export const hygieneSerializer = (raw: unknown): Hygiene => {
     reviewedAt: isoOrNull(r.reviewedAt),
     canRequest: bool(r.canRequest),
   };
-};
+});
 
 const batchSerializer = (raw: unknown): BatchSuggestion | null =>
   isObject(raw) && str(raw.orderId)
     ? { orderId: str(raw.orderId), code: str(raw.code), extraKm: Math.max(0, num(raw.extraKm)), sameDirection: bool(raw.sameDirection), readyAt: isoOrNull(raw.readyAt) }
     : null;
 
-export const batchSuggestionsSerializer = (raw: unknown): BatchSuggestion[] => list(isObject(raw) ? raw.items : raw, batchSerializer);
+export const batchSuggestionsSerializer = fromResponse((raw: unknown): BatchSuggestion[] => list(isObject(raw) ? raw.items : raw, batchSerializer));
 
 // ── Staff: the hygiene queue ──
 
@@ -235,4 +235,4 @@ const hygieneReviewSerializer = (raw: unknown): HygieneReview | null => {
   };
 };
 
-export const hygieneQueueSerializer = (raw: unknown): HygieneReview[] => list(isObject(raw) ? raw.items : raw, hygieneReviewSerializer);
+export const hygieneQueueSerializer = fromResponse((raw: unknown): HygieneReview[] => list(isObject(raw) ? raw.items : raw, hygieneReviewSerializer));

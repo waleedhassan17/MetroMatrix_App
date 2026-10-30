@@ -59,7 +59,7 @@ const vendorSerializer = (raw: unknown) => {
 };
 
 // ── Tiffin ──
-export const tiffinPlanSerializer = (raw: unknown): TiffinPlan | null => {
+export const tiffinPlanSerializer = fromResponse((raw: unknown): TiffinPlan | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
   const v = isObject(raw.vendor) ? raw.vendor : {};
   return {
@@ -92,9 +92,9 @@ export const tiffinPlanSerializer = (raw: unknown): TiffinPlan | null => {
     isActive: raw.isActive !== false,
     nextStart: dateOrNull(raw.nextStart),
   };
-};
+});
 
-export const tiffinPlansSerializer = (raw: unknown): TiffinPlan[] => list(isObject(raw) ? raw.items : raw, tiffinPlanSerializer);
+export const tiffinPlansSerializer = fromResponse((raw: unknown): TiffinPlan[] => list(isObject(raw) ? raw.items : raw, tiffinPlanSerializer));
 
 /** A plan on the vendor page (an addition to API_FOOD's VendorPage). */
 export const tiffinPlanCardSerializer = (raw: unknown): TiffinPlanCard | null =>
@@ -126,7 +126,7 @@ const periodSerializer = (raw: unknown): TiffinPeriod | null =>
       }
     : null;
 
-export const tiffinSubscriptionSerializer = (raw: unknown): TiffinSubscription | null => {
+export const tiffinSubscriptionSerializer = fromResponse((raw: unknown): TiffinSubscription | null => {
   if (!isObject(raw) || !str(raw.code)) return null;
   const p = isObject(raw.plan) ? raw.plan : {};
   const next = isObject(raw.nextDelivery) ? raw.nextDelivery : null;
@@ -162,19 +162,19 @@ export const tiffinSubscriptionSerializer = (raw: unknown): TiffinSubscription |
     canCancel: bool(raw.canCancel),
     createdAt: str(raw.createdAt),
   };
-};
+});
 
-export const tiffinSubscriptionsSerializer = (raw: unknown): TiffinSubscription[] => list(isObject(raw) ? raw.items : raw, tiffinSubscriptionSerializer);
+export const tiffinSubscriptionsSerializer = fromResponse((raw: unknown): TiffinSubscription[] => list(isObject(raw) ? raw.items : raw, tiffinSubscriptionSerializer));
 
-export const tiffinInboxSerializer = (raw: unknown): TiffinInbox => {
+export const tiffinInboxSerializer = fromResponse((raw: unknown): TiffinInbox => {
   const c = isObject(raw) && isObject(raw.counts) ? raw.counts : {};
   return {
     counts: { pending: count(c.pending), active: count(c.active), paused: count(c.paused), toCheck: count(c.toCheck) },
     items: tiffinSubscriptionsSerializer(raw),
   };
-};
+});
 
-export const tiffinDaySerializer = (raw: unknown): TiffinDay | null =>
+export const tiffinDaySerializer = fromResponse((raw: unknown): TiffinDay | null =>
   isObject(raw) && dateOrNull(raw.date)
     ? {
         date: dateOrNull(raw.date)!,
@@ -185,14 +185,14 @@ export const tiffinDaySerializer = (raw: unknown): TiffinDay | null =>
         canUnskip: bool(raw.canUnskip),
         orderCode: strOrNull(raw.orderCode),
       }
-    : null;
+    : null);
 
-export const tiffinCalendarSerializer = (raw: unknown): TiffinCalendar => {
+export const tiffinCalendarSerializer = fromResponse((raw: unknown): TiffinCalendar => {
   const r = isObject(raw) ? raw : {};
   return { month: str(r.month), days: list(r.days, tiffinDaySerializer) };
-};
+});
 
-export const tiffinTomorrowSerializer = (raw: unknown): TiffinTomorrow => {
+export const tiffinTomorrowSerializer = fromResponse((raw: unknown): TiffinTomorrow => {
   const r = isObject(raw) ? raw : {};
   return {
     date: dateOrNull(r.date) ?? '',
@@ -217,7 +217,7 @@ export const tiffinTomorrowSerializer = (raw: unknown): TiffinTomorrow => {
         : null,
     ),
   };
-};
+});
 
 // ── Catering ──
 const quoteSerializer = (raw: unknown): CateringQuote | null =>
@@ -239,7 +239,7 @@ const quoteSerializer = (raw: unknown): CateringQuote | null =>
       }
     : null;
 
-export const cateringRequestSerializer = (raw: unknown): CateringRequest | null => {
+export const cateringRequestSerializer = fromResponse((raw: unknown): CateringRequest | null => {
   if (!isObject(raw) || !str(raw.code)) return null;
   const adv = isObject(raw.advance) ? raw.advance : null;
   const pay = adv ? transferPaymentSerializer(adv, ['transfer'], 'transfer') : null;
@@ -272,16 +272,16 @@ export const cateringRequestSerializer = (raw: unknown): CateringRequest | null 
     createdAt: str(raw.createdAt),
     updatedAt: str(raw.updatedAt),
   };
-};
+});
 
-export const cateringRequestsSerializer = (raw: unknown): CateringRequest[] => list(isObject(raw) ? raw.items : raw, cateringRequestSerializer);
+export const cateringRequestsSerializer = fromResponse((raw: unknown): CateringRequest[] => list(isObject(raw) ? raw.items : raw, cateringRequestSerializer));
 
-export const cateringInboxSerializer = (raw: unknown): CateringInbox => {
+export const cateringInboxSerializer = fromResponse((raw: unknown): CateringInbox => {
   const c = isObject(raw) && isObject(raw.counts) ? raw.counts : {};
   return { counts: { new: count(c.new), quoted: count(c.quoted), confirmed: count(c.confirmed), past: count(c.past) }, items: cateringRequestsSerializer(raw) };
-};
+});
 
-export const cateringVendorSerializer = (raw: unknown): CateringVendor | null =>
+export const cateringVendorSerializer = fromResponse((raw: unknown): CateringVendor | null =>
   isObject(raw) && str(raw.vendorId)
     ? {
         vendorId: str(raw.vendorId),
@@ -292,9 +292,9 @@ export const cateringVendorSerializer = (raw: unknown): CateringVendor | null =>
         modes: arr(raw.modes).map(m => oneOf(m, CATERING_MODES, 'delivery')),
         menu: list(raw.menu, m => (isObject(m) && str(m.itemId) ? { itemId: str(m.itemId), name: str(m.name), price: count(m.price), photoUrl: strOrNull(m.photoUrl) } : null)),
       }
-    : null;
+    : null);
 
-export const cateringCalendarSerializer = (raw: unknown): CateringCalendar => {
+export const cateringCalendarSerializer = fromResponse((raw: unknown): CateringCalendar => {
   const r = isObject(raw) ? raw : {};
   return {
     month: str(r.month),
@@ -311,12 +311,12 @@ export const cateringCalendarSerializer = (raw: unknown): CateringCalendar => {
         : null,
     ),
   };
-};
+});
 
-export const cateringSettingsSerializer = (raw: unknown): CateringSettings => {
+export const cateringSettingsSerializer = fromResponse((raw: unknown): CateringSettings => {
   const r = isObject(raw) ? raw : {};
   return { open: bool(r.open), minGuests: count(r.minGuests), leadDays: count(r.leadDays) };
-};
+});
 
 /** A tiffin plan removed. */
 export const tiffinRemovedSerializer = fromResponse(raw => ({ removed: !!(raw as { removed?: boolean })?.removed }));

@@ -1,41 +1,84 @@
-// MetroMatrix — Kitchen: purchases, suppliers, the price watch.
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Kitchen Purchases Network (API_KITCHEN_ASSUMED.md)
+// ═══════════════════════════════════════════════════════
+// Purchases, suppliers, the price watch.
 // docs/API_KITCHEN_ASSUMED.md §4.1 (TODO(API_KITCHEN): an assumed contract).
 
-import { api } from '../network/apiHelpers';
-import { clean, pageParams, request, requestAll } from '../shopping/http';
-import { priceWatchSerializer, purchaseSerializer, purchasesPageSerializer, supplierSerializer, suppliersSerializer } from '../../serializers/kitchen/stockSerializer';
+import { api, toApiError, clean, pageParams } from '../network/apiHelpers';
+import { priceWatchSerializer, purchasesPageSerializer } from '../../serializers/kitchen/stockSerializer';
 import type { PurchaseInput } from '../../types/kitchen';
 
 const enc = encodeURIComponent;
 
-export const listPurchases = (page: number, pageSize: number) =>
-  request(() => api.get('/food/vendor/kitchen/purchases', { params: pageParams(page, pageSize) }), purchasesPageSerializer);
+export const getPurchasesAPI = async (page: number, pageSize: number): Promise<unknown> => {
+  try {
+    const response = await api.get('/food/vendor/kitchen/purchases', { params: pageParams(page, pageSize) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getPurchase = (id: string) => request(() => api.get(`/food/vendor/kitchen/purchases/${enc(id)}`), purchaseSerializer);
+export const getPurchaseAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`/food/vendor/kitchen/purchases/${enc(id)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const createPurchase = (input: PurchaseInput) => request(() => api.post('/food/vendor/kitchen/purchases', input), purchaseSerializer);
+export const createPurchaseAPI = async (input: PurchaseInput): Promise<unknown> => {
+  try {
+    const response = await api.post('/food/vendor/kitchen/purchases', input);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listSuppliers = () => request(() => api.get('/food/vendor/kitchen/suppliers'), suppliersSerializer);
+export const getSuppliersAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get('/food/vendor/kitchen/suppliers');
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const createSupplier = (input: { name: string; phone?: string | null; note?: string | null }) =>
-  request(() => api.post('/food/vendor/kitchen/suppliers', clean(input)), supplierSerializer);
+export const createSupplierAPI = async (input: { name: string; phone?: string | null; note?: string | null }): Promise<unknown> => {
+  try {
+    const response = await api.post('/food/vendor/kitchen/suppliers', clean(input));
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const updateSupplier = (id: string, patch: { name?: string; phone?: string | null; note?: string | null }) =>
-  request(() => api.patch(`/food/vendor/kitchen/suppliers/${enc(id)}`, patch), supplierSerializer);
+export const updateSupplierAPI = async (id: string, patch: { name?: string; phone?: string | null; note?: string | null }): Promise<unknown> => {
+  try {
+    const response = await api.patch(`/food/vendor/kitchen/suppliers/${enc(id)}`, patch);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const deleteSupplier = (id: string) => request(() => api.delete(`/food/vendor/kitchen/suppliers/${enc(id)}`), () => true as const);
+export const deleteSupplierAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.delete(`/food/vendor/kitchen/suppliers/${enc(id)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getPriceWatch = () => request(() => api.get('/food/vendor/kitchen/price-watch'), priceWatchSerializer);
+export const getPriceWatchAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get('/food/vendor/kitchen/price-watch');
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-/** Purchases' top: the week's spend and the ingredients above the city's price, read together. */
-export const getPurchasesOverview = () =>
-  requestAll(
-    {
-      first: () => api.get('/food/vendor/kitchen/purchases', { params: pageParams(1, 1) }),
-      watch: () => api.get('/food/vendor/kitchen/price-watch'),
-    },
-    parts => {
-      const watch = priceWatchSerializer(parts.watch);
-      return watch ? { weekTotal: purchasesPageSerializer(parts.first).weekTotal, watch } : null;
-    },
-  );

@@ -1,36 +1,103 @@
-// MetroMatrix — My Kitchen: the customer's pantry.
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — My Kitchen Pantry Network (API_KITCHEN_ASSUMED.md)
+// ═══════════════════════════════════════════════════════
+// The customer's pantry.
 // docs/API_KITCHEN_ASSUMED.md §2.15, §4.7 (TODO(API_KITCHEN): an assumed contract).
 
-import { api } from '../network/apiHelpers';
-import { request } from '../shopping/http';
-import { groceryOrdersSerializer, pantryItemSerializer, pantryItemsSerializer, pantryListSerializer, pantryRemindersSerializer, pantryStatsSerializer, pantryRemovedSerializer, pantryUsedUpSerializer } from '../../serializers/myKitchen/myKitchenSerializer';
+import { api, toApiError } from '../network/apiHelpers';
 import type { PantryLineInput, PantryReminders, PantrySegment } from '../../types/myKitchen';
 import type { StandardUnit } from '../../utils/units';
 
 const enc = encodeURIComponent;
 
-export const listPantry = (segment: PantrySegment) => request(() => api.get('/my-kitchen/pantry', { params: { segment } }), pantryListSerializer);
+export const getPantryAPI = async (segment: PantrySegment): Promise<unknown> => {
+  try {
+    const response = await api.get('/my-kitchen/pantry', { params: { segment } });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const addToPantry = (lines: PantryLineInput[], source: 'manual' | 'voice' = 'manual') =>
-  request(() => api.post('/my-kitchen/pantry', { source, lines }), pantryItemsSerializer);
+export const addToPantryAPI = async (lines: PantryLineInput[], source: 'manual' | 'voice' = 'manual'): Promise<unknown> => {
+  try {
+    const response = await api.post('/my-kitchen/pantry', { source, lines });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const updatePantryItem = (id: string, patch: { qty?: number; unit?: StandardUnit; expiresOn?: string | null }) =>
-  request(() => api.patch(`/my-kitchen/pantry/${enc(id)}`, patch), pantryItemSerializer);
+export const updatePantryItemAPI = async (id: string, patch: { qty?: number; unit?: StandardUnit; expiresOn?: string | null }): Promise<unknown> => {
+  try {
+    const response = await api.patch(`/my-kitchen/pantry/${enc(id)}`, patch);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** Thrown away. */
-export const removePantryItem = (id: string) => request(() => api.delete(`/my-kitchen/pantry/${enc(id)}`), pantryRemovedSerializer);
+export const removePantryItemAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.delete(`/my-kitchen/pantry/${enc(id)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** All of it, or some (`qty`, `unit`). */
-export const markPantryUsed = (id: string, some?: { qty: number; unit: StandardUnit }) =>
-  request(() => api.post(`/my-kitchen/pantry/${enc(id)}/use`, some ?? {}), pantryUsedUpSerializer);
+export const markPantryUsedAPI = async (id: string, some?: { qty: number; unit: StandardUnit }): Promise<unknown> => {
+  try {
+    const response = await api.post(`/my-kitchen/pantry/${enc(id)}/use`, some ?? {});
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listGroceryOrders = () => request(() => api.get('/my-kitchen/pantry/shopping-orders'), groceryOrdersSerializer);
+export const getGroceryOrdersAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get('/my-kitchen/pantry/shopping-orders');
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const addFromShoppingOrder = (orderId: string, lineIds: string[]) =>
-  request(() => api.post('/my-kitchen/pantry/from-shopping-order', { orderId, lineIds }), pantryItemsSerializer);
+export const addFromShoppingOrderAPI = async (orderId: string, lineIds: string[]): Promise<unknown> => {
+  try {
+    const response = await api.post('/my-kitchen/pantry/from-shopping-order', { orderId, lineIds });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getPantryReminders = () => request(() => api.get('/my-kitchen/pantry/reminders'), pantryRemindersSerializer);
+export const getPantryRemindersAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get('/my-kitchen/pantry/reminders');
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const savePantryReminders = (r: Partial<PantryReminders>) => request(() => api.put('/my-kitchen/pantry/reminders', r), pantryRemindersSerializer);
+export const savePantryRemindersAPI = async (r: Partial<PantryReminders>): Promise<unknown> => {
+  try {
+    const response = await api.put('/my-kitchen/pantry/reminders', r);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getPantryStats = (month?: string) => request(() => api.get('/my-kitchen/stats', { params: month ? { month } : undefined }), pantryStatsSerializer);
+export const getPantryStatsAPI = async (month?: string): Promise<unknown> => {
+  try {
+    const response = await api.get('/my-kitchen/stats', { params: month ? { month } : undefined });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

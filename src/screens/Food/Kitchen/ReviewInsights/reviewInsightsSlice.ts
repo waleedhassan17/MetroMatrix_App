@@ -2,10 +2,11 @@
 // bad, with how many reviews each and anonymised lines.
 
 import { createAppSlice } from '@store/createAppSlice';
-import { getReviewInsights } from '@networks/kitchen/kitchenAiNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getReviewInsightsAPI } from '@networks/kitchen/kitchenAiNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { ReviewInsights } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { reviewInsightsSerializer } from '@serializers/kitchen/assistantSerializer';
 
 export interface ReviewInsightsSliceState {
   data: ReviewInsights | null;
@@ -22,7 +23,7 @@ export const reviewInsightsSlice = createAppSlice({
     loadReviewInsightsAsync: create.asyncThunk(
       async (week: string | null, { rejectWithValue }) => {
         try {
-          return await getReviewInsights(week);
+          return required(reviewInsightsSerializer(await getReviewInsightsAPI(week)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

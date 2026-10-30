@@ -18,7 +18,7 @@ import type {
   UnmappedIngredient,
   VendorNutrition,
 } from '../../types/kitchen';
-import { arr, bool, isObject, num, oneOf, str, strOrNull } from '../serializerUtils';
+import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { costSerializer, count, dateOrNull, list, numOrNull } from './kitchenCommon';
 
 const strings = (raw: unknown) => arr(raw).filter((x): x is string => typeof x === 'string' && !!x);
@@ -36,7 +36,7 @@ const descriptionSerializer = (raw: unknown): DescriptionDraft | null => {
   return { itemId: str(raw.itemId), name: str(raw.name), current: { en: strOrNull(c.en), ur: strOrNull(c.ur) }, en: str(raw.en), ur: str(raw.ur) };
 };
 
-export const descriptionDraftsSerializer = (raw: unknown): DescriptionDraft[] => list(isObject(raw) ? raw.items : raw, descriptionSerializer);
+export const descriptionDraftsSerializer = fromResponse((raw: unknown): DescriptionDraft[] => list(isObject(raw) ? raw.items : raw, descriptionSerializer));
 
 const specialSerializer = (raw: unknown): SpecialIdea | null => {
   if (!isObject(raw) || !str(raw.title)) return null;
@@ -54,10 +54,10 @@ const specialSerializer = (raw: unknown): SpecialIdea | null => {
   };
 };
 
-export const specialIdeasSerializer = (raw: unknown): { items: SpecialIdea[]; category: DraftCategory | null } => {
+export const specialIdeasSerializer = fromResponse((raw: unknown): { items: SpecialIdea[]; category: DraftCategory | null } => {
   const r = isObject(raw) ? raw : {};
   return { items: list(r.items, specialSerializer), category: draftCategorySerializer(r.category) };
-};
+});
 
 const comboSerializer = (raw: unknown): ComboIdea | null => {
   if (!isObject(raw)) return null;
@@ -74,12 +74,12 @@ const comboSerializer = (raw: unknown): ComboIdea | null => {
   };
 };
 
-export const comboIdeasSerializer = (raw: unknown): { items: ComboIdea[]; category: DraftCategory | null } => {
+export const comboIdeasSerializer = fromResponse((raw: unknown): { items: ComboIdea[]; category: DraftCategory | null } => {
   const r = isObject(raw) ? raw : {};
   return { items: list(r.items, comboSerializer), category: draftCategorySerializer(r.category) };
-};
+});
 
-export const photoCheckSerializer = (raw: unknown): PhotoCheck | null => {
+export const photoCheckSerializer = fromResponse((raw: unknown): PhotoCheck | null => {
   if (!isObject(raw)) return null;
   return {
     imageUrl: str(raw.imageUrl),
@@ -87,7 +87,7 @@ export const photoCheckSerializer = (raw: unknown): PhotoCheck | null => {
     verdict: oneOf(raw.verdict, VERDICTS, 'ok'),
     tips: list(raw.tips, t => (isObject(t) && str(t.text) ? { kind: oneOf(t.kind, TIP_KINDS, 'framing'), text: str(t.text) } : null)),
   };
-};
+});
 
 const themeSerializer = (raw: unknown): ReviewTheme | null =>
   isObject(raw) && THEME_KEYS.includes(raw.key as ReviewThemeKey)
@@ -100,7 +100,7 @@ const themeSerializer = (raw: unknown): ReviewTheme | null =>
       }
     : null;
 
-export const reviewInsightsSerializer = (raw: unknown): ReviewInsights | null => {
+export const reviewInsightsSerializer = fromResponse((raw: unknown): ReviewInsights | null => {
   if (!isObject(raw)) return null;
   const week = dateOrNull(raw.week);
   if (!week) return null;
@@ -112,14 +112,14 @@ export const reviewInsightsSerializer = (raw: unknown): ReviewInsights | null =>
     weeks: list(raw.weeks, w => (isObject(w) && dateOrNull(w.week) ? { week: dateOrNull(w.week)!, count: count(w.count) } : null)),
     themes: list(raw.themes, themeSerializer),
   };
-};
+});
 
 const macro = (v: unknown) => {
   const n = numOrNull(v);
   return n === null ? null : Math.max(0, Math.round(n));
 };
 
-export const dishNutritionSerializer = (raw: unknown): DishNutrition | null => {
+export const dishNutritionSerializer = fromResponse((raw: unknown): DishNutrition | null => {
   if (!isObject(raw) || !str(raw.itemId)) return null;
   const method = oneOf(raw.method, METHODS, 'none');
   return {
@@ -134,7 +134,7 @@ export const dishNutritionSerializer = (raw: unknown): DishNutrition | null => {
     hidden: bool(raw.hidden),
     missing: strings(raw.missing),
   };
-};
+});
 
 const unmappedSerializer = (raw: unknown): UnmappedIngredient | null =>
   isObject(raw) && str(raw.ingredientId)
@@ -146,7 +146,7 @@ const unmappedSerializer = (raw: unknown): UnmappedIngredient | null =>
       }
     : null;
 
-export const vendorNutritionSerializer = (raw: unknown): VendorNutrition => {
+export const vendorNutritionSerializer = fromResponse((raw: unknown): VendorNutrition => {
   const r = isObject(raw) ? raw : {};
   const c = isObject(r.counts) ? r.counts : {};
   return {
@@ -154,11 +154,11 @@ export const vendorNutritionSerializer = (raw: unknown): VendorNutrition => {
     items: list(r.items, dishNutritionSerializer),
     unmapped: list(r.unmapped, unmappedSerializer),
   };
-};
+});
 
 const foodSerializer = (raw: unknown): NutritionFood | null =>
   isObject(raw) && str(raw.id)
     ? { id: str(raw.id), name: str(raw.name), per: oneOf(raw.per, PERS, 'g100'), kcal: num(raw.kcal), protein: num(raw.protein), carbs: num(raw.carbs), fat: num(raw.fat) }
     : null;
 
-export const nutritionFoodsSerializer = (raw: unknown): NutritionFood[] => list(isObject(raw) ? raw.items : raw, foodSerializer);
+export const nutritionFoodsSerializer = fromResponse((raw: unknown): NutritionFood[] => list(isObject(raw) ? raw.items : raw, foodSerializer));

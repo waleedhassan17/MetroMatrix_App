@@ -13,7 +13,7 @@ import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { usePagedList } from '@hooks/usePagedList';
-import { listPurchases } from '@networks/kitchen/purchasesNetwork';
+import { getPurchasesAPI } from '@networks/kitchen/purchasesNetwork';
 import { ServiceScope, useStyles, type Theme } from '@theme/index';
 import { AppText, Button, Card, EmptyState, IconButton, InlineNotice, ScreenShell, SkeletonLines, TextAction } from '@custom/index';
 import { Sparkline } from '@custom/shopping/charts/Sparkline';
@@ -25,6 +25,7 @@ import { formatPKR } from '@utils/money';
 import { formatUnitPrice } from '@utils/units';
 import { haptics } from '@utils/haptics';
 import { confirmSpokenPurchaseAsync, loadPurchasesOverviewAsync, selectPurchases } from './purchasesSlice';
+import { purchasesPageSerializer } from '@serializers/kitchen/stockSerializer';
 
 type Props = NativeStackScreenProps<FoodVendorStackParamList, 'KitchenPurchases'>;
 
@@ -52,7 +53,7 @@ const PurchasesContent: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectPurchases);
-  const list = usePagedList(listPurchases, `kitchen-purchases|${s.version}`);
+  const list = usePagedList(getPurchasesAPI, purchasesPageSerializer, `kitchen-purchases|${s.version}`);
 
   useFocusEffect(
     useCallback(() => {

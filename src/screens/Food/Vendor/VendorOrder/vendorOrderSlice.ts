@@ -22,15 +22,18 @@ import {
   rejectPaymentAPI,
   startPreparingAPI,
 } from '@networks/food/vendor/ordersNetwork';
-import { getKitchenSettings } from '@networks/kitchen/costingNetwork';
-import { attachPackingPhoto } from '@networks/kitchen/packingNetwork';
+import { getKitchenSettingsAPI } from '@networks/kitchen/costingNetwork';
+import { attachPackingPhotoAPI } from '@networks/kitchen/packingNetwork';
 import { uploadImage } from '@/services/mediaUpload';
-import { getBatchSuggestions } from '@networks/foodGrowth/batchingNetwork';
+import { getBatchSuggestionsAPI } from '@networks/foodGrowth/batchingNetwork';
 import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { BatchSuggestion, LocalFile, PackingPhotoRule, PackingResult, RiderSuggestion, VendorFoodOrder } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { vendorFoodOrderSerializer } from '@serializers/food/orderSerializer';
 import { riderSuggestionsSerializer } from '@serializers/food/riderSerializer';
+import { kitchenSettingsSerializer } from '@serializers/kitchen/recipeSerializer';
+import { packingResultSerializer } from '@serializers/kitchen/insightSerializer';
+import { batchSuggestionsSerializer } from '@serializers/kitchen/reachSerializer';
 
 export type VendorOrderAct =
   | { kind: 'accept'; eta: number }
@@ -138,7 +141,7 @@ export const vendorOrderSlice = createAppSlice({
     loadSuggestionsAsync: create.asyncThunk(
       async (orderId: string, { rejectWithValue }) => {
         try {
-          const [riders, batch] = await Promise.all([suggestRidersAPI(orderId).then(raw => required(riderSuggestionsSerializer(raw))), getBatchSuggestions(orderId).catch(() => [] as BatchSuggestion[])]);
+          const [riders, batch] = await Promise.all([suggestRidersAPI(orderId).then(raw => required(riderSuggestionsSerializer(raw))), getBatchSuggestionsAPI(orderId).then(raw => required(batchSuggestionsSerializer(raw))).catch(() => [] as BatchSuggestion[])]);
           return { riders, batch };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -185,7 +188,7 @@ export const vendorOrderSlice = createAppSlice({
     loadPackingRuleAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return (await getKitchenSettings())?.packingPhoto ?? 'off';
+          return (required(kitchenSettingsSerializer(await getKitchenSettingsAPI())))?.packingPhoto ?? 'off';
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -202,7 +205,7 @@ export const vendorOrderSlice = createAppSlice({
       async ({ id, file }: { id: string; file: LocalFile }, { rejectWithValue }) => {
         try {
           const uploaded = await uploadImage(file, 'food_packing');
-          const result = await attachPackingPhoto(id, uploaded.url);
+          const result = required(packingResultSerializer(await attachPackingPhotoAPI(id, uploaded.url)));
           const order = required(vendorFoodOrderSerializer(await getVendorOrderAPI(id)));
           return { result, order };
         } catch (e) {

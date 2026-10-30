@@ -4,14 +4,16 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { createPurchase, listSuppliers } from '@networks/kitchen/purchasesNetwork';
-import { listStock } from '@networks/kitchen/stockNetwork';
-import { scanReceipt } from '@networks/kitchen/kitchenAiNetwork';
+import { createPurchaseAPI, getSuppliersAPI } from '@networks/kitchen/purchasesNetwork';
+import { getStockAPI } from '@networks/kitchen/stockNetwork';
+import { scanReceiptAPI } from '@networks/kitchen/kitchenAiNetwork';
 import { uploadImage } from '@/services/mediaUpload';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { emptyLine, linesFromReceipt, linesFromVoice, type DraftLine } from '@models/kitchen/purchaseModel';
 import type { Ingredient, LocalFile, PurchaseInput, PurchaseSource, Supplier, VoiceQtyLine } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { stockListSerializer, suppliersSerializer, purchaseSerializer } from '@serializers/kitchen/stockSerializer';
+import { receiptDraftSerializer } from '@serializers/kitchen/insightSerializer';
 
 export interface PurchaseFormSliceState {
   source: PurchaseSource;
@@ -90,7 +92,7 @@ export const purchaseFormSlice = createAppSlice({
     loadPurchaseFormAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [stock, suppliers] = await Promise.all([listStock('all', ''), listSuppliers()]);
+          const [stock, suppliers] = await Promise.all([getStockAPI('all', '').then(raw => required(stockListSerializer(raw))), getSuppliersAPI().then(raw => required(suppliersSerializer(raw)))]);
           return { ingredients: stock.items, suppliers };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -116,7 +118,7 @@ export const purchaseFormSlice = createAppSlice({
       async (file: LocalFile, { rejectWithValue }) => {
         try {
           const uploaded = await uploadImage(file, 'kitchen_receipt');
-          return await scanReceipt(uploaded.url);
+          return required(receiptDraftSerializer(await scanReceiptAPI(uploaded.url)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -144,7 +146,7 @@ export const purchaseFormSlice = createAppSlice({
     savePurchaseAsync: create.asyncThunk(
       async (input: PurchaseInput, { rejectWithValue }) => {
         try {
-          return await createPurchase(input);
+          return required(purchaseSerializer(await createPurchaseAPI(input)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

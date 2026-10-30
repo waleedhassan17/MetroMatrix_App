@@ -3,12 +3,13 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getDemand } from '@networks/foodGrowth/demandNetwork';
+import { getDemandAPI } from '@networks/foodGrowth/demandNetwork';
 import { getCuisinesAPI } from '@networks/food/vendor/profileNetwork';
 import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { DemandMap, FoodCuisine } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { foodCuisinesSerializer } from '@serializers/food/vendorSerializer';
+import { demandMapSerializer } from '@serializers/kitchen/reachSerializer';
 
 export interface DemandMapSliceState {
   cuisine: string | null;
@@ -32,7 +33,7 @@ export const demandMapSlice = createAppSlice({
     loadDemandAsync: create.asyncThunk(
       async (filter: { cuisine: string | null; hour: number | null; withCuisines?: boolean }, { rejectWithValue }) => {
         try {
-          const [data, cuisines] = await Promise.all([getDemand(filter), filter.withCuisines ? getCuisinesAPI().then(raw => required(foodCuisinesSerializer(raw))) : Promise.resolve(null)]);
+          const [data, cuisines] = await Promise.all([getDemandAPI(filter).then(raw => required(demandMapSerializer(raw))), filter.withCuisines ? getCuisinesAPI().then(raw => required(foodCuisinesSerializer(raw))) : Promise.resolve(null)]);
           return { data, cuisines };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

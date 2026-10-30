@@ -3,10 +3,11 @@
 // cancelling; read again on focus as the kitchen approves and confirms.
 
 import { createAppSlice } from '@store/createAppSlice';
-import { cancelMyTiffin, getMyTiffin, getTiffinCalendar, pauseMyTiffin, resumeMyTiffin, skipTiffinDay } from '@networks/foodGrowth/tiffinNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { cancelMyTiffinAPI, getMyTiffinAPI, getTiffinCalendarAPI, pauseMyTiffinAPI, resumeMyTiffinAPI, skipTiffinDayAPI } from '@networks/foodGrowth/tiffinNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { TiffinCalendar, TiffinSubscription } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { tiffinSubscriptionSerializer, tiffinCalendarSerializer, tiffinDaySerializer } from '@serializers/kitchen/growthSerializer';
 
 export type TiffinAct = { kind: 'pause'; until: string | null } | { kind: 'resume' } | { kind: 'cancel' };
 
@@ -30,7 +31,7 @@ export const foodTiffinSlice = createAppSlice({
     loadMyTiffinAsync: create.asyncThunk(
       async ({ code, month }: { code: string; month: string }, { rejectWithValue }) => {
         try {
-          const [sub, calendar] = await Promise.all([getMyTiffin(code), getTiffinCalendar(code, month)]);
+          const [sub, calendar] = await Promise.all([getMyTiffinAPI(code).then(raw => required(tiffinSubscriptionSerializer(raw))), getTiffinCalendarAPI(code, month).then(raw => required(tiffinCalendarSerializer(raw)))]);
           return { sub, calendar };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -55,8 +56,8 @@ export const foodTiffinSlice = createAppSlice({
     tiffinDayAsync: create.asyncThunk(
       async ({ code, date, skip }: { code: string; date: string; skip: boolean }, { rejectWithValue }) => {
         try {
-          const day = await skipTiffinDay(code, date, skip);
-          const sub = await getMyTiffin(code);
+          const day = required(tiffinDaySerializer(await skipTiffinDayAPI(code, date, skip)));
+          const sub = required(tiffinSubscriptionSerializer(await getMyTiffinAPI(code)));
           return { day, sub };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -83,7 +84,7 @@ export const foodTiffinSlice = createAppSlice({
     tiffinActAsync: create.asyncThunk(
       async ({ code, act }: { code: string; act: TiffinAct }, { rejectWithValue }) => {
         try {
-          return act.kind === 'pause' ? await pauseMyTiffin(code, act.until) : act.kind === 'resume' ? await resumeMyTiffin(code) : await cancelMyTiffin(code);
+          return act.kind === 'pause' ? required(tiffinSubscriptionSerializer(await pauseMyTiffinAPI(code, act.until))) : act.kind === 'resume' ? required(tiffinSubscriptionSerializer(await resumeMyTiffinAPI(code))) : required(tiffinSubscriptionSerializer(await cancelMyTiffinAPI(code)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

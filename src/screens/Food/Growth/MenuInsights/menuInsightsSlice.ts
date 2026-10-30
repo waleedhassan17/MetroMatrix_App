@@ -3,12 +3,13 @@
 // tests, and starting one (a price, or a new photo uploaded first).
 
 import { createAppSlice } from '@store/createAppSlice';
-import { getMenuInsights, listExperiments, startExperiment } from '@networks/foodGrowth/experimentsNetwork';
+import { getMenuInsightsAPI, getExperimentsAPI, startExperimentAPI } from '@networks/foodGrowth/experimentsNetwork';
 import { uploadImage } from '@/services/mediaUpload';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { Experiment, ExperimentInput, MenuInsights } from '@/types';
 import type { LocalFile } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { menuInsightsSerializer, experimentsSerializer, experimentSerializer } from '@serializers/kitchen/reachSerializer';
 
 export interface MenuInsightsSliceState {
   data: MenuInsights | null;
@@ -31,7 +32,7 @@ export const menuInsightsSlice = createAppSlice({
     loadMenuInsightsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [data, experiments] = await Promise.all([getMenuInsights(), listExperiments()]);
+          const [data, experiments] = await Promise.all([getMenuInsightsAPI().then(raw => required(menuInsightsSerializer(raw))), getExperimentsAPI().then(raw => required(experimentsSerializer(raw)))]);
           return { data, experiments };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -59,7 +60,7 @@ export const menuInsightsSlice = createAppSlice({
         try {
           const change: ExperimentInput['change'] =
             input.change.kind === 'price' ? input.change : { kind: 'photo', photoUrl: (await uploadImage(input.change.file, 'menu_item')).url };
-          return await startExperiment({ itemId: input.itemId, days: input.days, change });
+          return required(experimentSerializer(await startExperimentAPI({ itemId: input.itemId, days: input.days, change })));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

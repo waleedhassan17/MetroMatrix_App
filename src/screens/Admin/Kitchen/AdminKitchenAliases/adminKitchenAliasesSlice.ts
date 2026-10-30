@@ -7,8 +7,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { createAlias, deleteAlias, listAliases, listIngredientKeys } from '@networks/admin/adminKitchenNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { createAliasAPI, deleteAliasAPI, getAliasesAPI, getIngredientKeysAPI } from '@networks/admin/adminKitchenNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { emptyAliasForm, type AliasForm } from '@models/kitchen/adminKitchenModel';
 import type { IngredientAlias, IngredientKey } from '@/types';
 import {
@@ -17,6 +17,7 @@ import {
   type FormStatus,
   type ServerError,
 } from '../../../Auth/shared/formStatus';
+import { aliasesSerializer, ingredientKeysSerializer, aliasSerializer } from '@serializers/kitchen/adminKitchenSerializer';
 
 export interface AdminKitchenAliasesSliceState {
   q: string;
@@ -73,7 +74,7 @@ export const adminKitchenAliasesSlice = createAppSlice({
     loadAliasesAsync: create.asyncThunk(
       async (q: string, { rejectWithValue }) => {
         try {
-          return await listAliases(q.trim() || undefined);
+          return required(aliasesSerializer(await getAliasesAPI(q.trim() || undefined)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -98,7 +99,7 @@ export const adminKitchenAliasesSlice = createAppSlice({
     searchKeysAsync: create.asyncThunk(
       async (q: string, { rejectWithValue }) => {
         try {
-          return await listIngredientKeys(q.trim() || undefined);
+          return required(ingredientKeysSerializer(await getIngredientKeysAPI(q.trim() || undefined)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -113,8 +114,8 @@ export const adminKitchenAliasesSlice = createAppSlice({
     saveAliasAsync: create.asyncThunk(
       async (input: { form: AliasForm; q: string }, { rejectWithValue }) => {
         try {
-          const a = await createAlias({ word: input.form.word, language: input.form.language, key: input.form.key });
-          return { alias: a, list: await listAliases(input.q.trim() || undefined) };
+          const a = required(aliasSerializer(await createAliasAPI({ word: input.form.word, language: input.form.language, key: input.form.key })));
+          return { alias: a, list: required(aliasesSerializer(await getAliasesAPI(input.q.trim() || undefined))) };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -140,8 +141,8 @@ export const adminKitchenAliasesSlice = createAppSlice({
     deleteAliasAsync: create.asyncThunk(
       async (input: { id: string; q: string }, { rejectWithValue }) => {
         try {
-          await deleteAlias(input.id);
-          return await listAliases(input.q.trim() || undefined);
+          await deleteAliasAPI(input.id);
+          return required(aliasesSerializer(await getAliasesAPI(input.q.trim() || undefined)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

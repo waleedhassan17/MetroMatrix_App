@@ -4,11 +4,12 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getTiffinPlan, subscribeTiffin } from '@networks/foodGrowth/tiffinNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getTiffinPlanAPI, subscribeTiffinAPI } from '@networks/foodGrowth/tiffinNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { newUuid } from '@utils/ids';
 import type { TiffinPayMethod, TiffinPlan } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { tiffinPlanSerializer, tiffinSubscriptionSerializer } from '@serializers/kitchen/growthSerializer';
 
 export interface FoodTiffinPlanSliceState {
   plan: TiffinPlan | null;
@@ -51,7 +52,7 @@ export const foodTiffinPlanSlice = createAppSlice({
     loadTiffinPlanAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return await getTiffinPlan(id);
+          return required(tiffinPlanSerializer(await getTiffinPlanAPI(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -82,7 +83,7 @@ export const foodTiffinPlanSlice = createAppSlice({
         const s = (getState() as { foodTiffinPlan: FoodTiffinPlanSliceState }).foodTiffinPlan;
         if (!s.plan || !s.startDate) return rejectWithValue({ message: 'Pick a day to start.', code: 'VALIDATION_FAILED', status: 400, details: null });
         try {
-          const out = await subscribeTiffin(s.plan.id, { startDate: s.startDate, addressId: s.plan.mode === 'delivery' ? s.addressId : null, paymentMethod: s.payMethod }, s.idempotencyKey || newUuid());
+          const out = required(tiffinSubscriptionSerializer(await subscribeTiffinAPI(s.plan.id, { startDate: s.startDate, addressId: s.plan.mode === 'delivery' ? s.addressId : null, paymentMethod: s.payMethod }, s.idempotencyKey || newUuid())));
           dispatch(newTiffinKey());
           return out;
         } catch (e) {

@@ -4,7 +4,7 @@
 // docs/VOICE_ASSUMED.md §3.
 
 import type { VoiceAction, VoiceQtyLine, VoiceResult } from '../../types/kitchen';
-import { isObject, num, str, strOrNull } from '../serializerUtils';
+import { isObject, num, str, strOrNull, fromResponse } from '../serializerUtils';
 import { WASTE_REASONS } from '../kitchen/wasteSerializer';
 import { dateOrNull, list, standardUnit } from '../kitchen/kitchenCommon';
 import { oneOf } from '../serializerUtils';
@@ -61,7 +61,7 @@ export const voiceActionSerializer = (raw: unknown): VoiceAction | null => {
   }
 };
 
-export const voiceResultSerializer = (raw: unknown): VoiceResult | null => {
+export const voiceResultSerializer = fromResponse((raw: unknown): VoiceResult | null => {
   if (!isObject(raw)) return null;
   return {
     id: str(raw.id),
@@ -75,4 +75,4 @@ export const voiceResultSerializer = (raw: unknown): VoiceResult | null => {
     }).slice(0, 3),
     heard: raw.heard === 'text' ? 'text' : 'audio',
   };
-};
+});

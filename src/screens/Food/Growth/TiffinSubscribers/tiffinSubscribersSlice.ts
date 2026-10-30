@@ -5,12 +5,17 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { confirmTiffinPayment, getMyTiffinPlan, listPlanSubscribers, listTiffinSubscriptions, moveSubscriber, rejectTiffinPayment, type SubscriberMove } from '@networks/foodGrowth/tiffinNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { confirmTiffinPaymentAPI, getMyTiffinPlanAPI, getPlanSubscribersAPI, getTiffinSubscriptionsAPI, moveSubscriberAPI, rejectTiffinPaymentAPI, type SubscriberMove } from '@networks/foodGrowth/tiffinNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { TiffinInbox, TiffinPlan } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { tiffinInboxSerializer, tiffinPlanSerializer, tiffinSubscriptionSerializer } from '@serializers/kitchen/growthSerializer';
 
 export type SubscribersTab = 'pending' | 'active' | 'paused' | 'ended';
+
+/** A subscriber move: its kind is the path, the rest the body. */
+const moveSubscriber = async (code: string, { kind, ...body }: SubscriberMove) =>
+  required(tiffinSubscriptionSerializer(await moveSubscriberAPI(code, kind, body)));
 
 export type SubscriberAct = SubscriberMove | { kind: 'confirm-payment'; periodId: string } | { kind: 'reject-payment'; periodId: string; reason: string };
 
@@ -39,7 +44,7 @@ export const tiffinSubscribersSlice = createAppSlice({
     loadSubscribersAsync: create.asyncThunk(
       async (planId: string | null, { rejectWithValue }) => {
         try {
-          const [inbox, plan] = await Promise.all([planId ? listPlanSubscribers(planId) : listTiffinSubscriptions(), planId ? getMyTiffinPlan(planId) : Promise.resolve(null)]);
+          const [inbox, plan] = await Promise.all([planId ? getPlanSubscribersAPI(planId).then(raw => required(tiffinInboxSerializer(raw))) : getTiffinSubscriptionsAPI().then(raw => required(tiffinInboxSerializer(raw))), planId ? getMyTiffinPlanAPI(planId).then(raw => required(tiffinPlanSerializer(raw))) : Promise.resolve(null)]);
           return { inbox, plan };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -70,7 +75,7 @@ export const tiffinSubscribersSlice = createAppSlice({
       async ({ code, act }: { code: string; act: SubscriberAct }, { getState, dispatch, rejectWithValue }) => {
         try {
           const out =
-            act.kind === 'confirm-payment' ? await confirmTiffinPayment(act.periodId) : act.kind === 'reject-payment' ? await rejectTiffinPayment(act.periodId, act.reason) : await moveSubscriber(code, act);
+            act.kind === 'confirm-payment' ? required(tiffinSubscriptionSerializer(await confirmTiffinPaymentAPI(act.periodId))) : act.kind === 'reject-payment' ? required(tiffinSubscriptionSerializer(await rejectTiffinPaymentAPI(act.periodId, act.reason))) : await moveSubscriber(code, act);
           void dispatch(loadSubscribersAsync((getState() as { tiffinSubscribers: TiffinSubscribersSliceState }).tiffinSubscribers.planId));
           return out;
         } catch (e) {

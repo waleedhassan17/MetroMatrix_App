@@ -2,10 +2,11 @@
 // the kitchen's decision (keep, adjust the price, go back, or stop early).
 
 import { createAppSlice } from '@store/createAppSlice';
-import { decideExperiment, getExperiment, type ExperimentDecision } from '@networks/foodGrowth/experimentsNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { decideExperimentAPI, getExperimentAPI, type ExperimentDecision } from '@networks/foodGrowth/experimentsNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { Experiment } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { experimentSerializer } from '@serializers/kitchen/reachSerializer';
 
 export interface MenuExperimentSliceState {
   data: Experiment | null;
@@ -24,7 +25,7 @@ export const menuExperimentSlice = createAppSlice({
     loadExperimentAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return await getExperiment(id);
+          return required(experimentSerializer(await getExperimentAPI(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -49,7 +50,7 @@ export const menuExperimentSlice = createAppSlice({
     decideExperimentAsync: create.asyncThunk(
       async ({ id, decision }: { id: string; decision: ExperimentDecision }, { rejectWithValue }) => {
         try {
-          return await decideExperiment(id, decision);
+          return required(experimentSerializer(await decideExperimentAPI(id, decision)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

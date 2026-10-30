@@ -3,10 +3,11 @@
 // announcements are this device's: preferences.)
 
 import { createAppSlice } from '@store/createAppSlice';
-import { getKitchenSettings, updateKitchenSettings } from '@networks/kitchen/costingNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getKitchenSettingsAPI, updateKitchenSettingsAPI } from '@networks/kitchen/costingNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { KitchenSettings } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { kitchenSettingsSerializer } from '@serializers/kitchen/recipeSerializer';
 
 export interface KitchenSettingsSliceState {
   settings: KitchenSettings | null;
@@ -24,7 +25,7 @@ export const kitchenSettingsSlice = createAppSlice({
     loadKitchenSettingsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await getKitchenSettings();
+          return required(kitchenSettingsSerializer(await getKitchenSettingsAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -47,7 +48,7 @@ export const kitchenSettingsSlice = createAppSlice({
     saveKitchenSettingsAsync: create.asyncThunk(
       async (patch: Partial<KitchenSettings>, { rejectWithValue }) => {
         try {
-          return await updateKitchenSettings(patch);
+          return required(kitchenSettingsSerializer(await updateKitchenSettingsAPI(patch)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

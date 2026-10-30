@@ -9,14 +9,16 @@
 import { createSelector, type PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { getTodayAPI, setTodayAPI } from '@networks/food/vendor/availabilityNetwork';
-import { getForecast } from '@networks/kitchen/forecastNetwork';
-import { getTiffinTomorrow } from '@networks/foodGrowth/tiffinNetwork';
+import { getForecastAPI } from '@networks/kitchen/forecastNetwork';
+import { getTiffinTomorrowAPI } from '@networks/foodGrowth/tiffinNetwork';
 import { suggestedPortions } from '@models/kitchen/forecastModel';
 import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { Forecast, TiffinTomorrow, TodayMenu } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { menuChanged } from '../VendorMenu/vendorMenuSlice';
 import { todayMenuSerializer } from '@serializers/food/menuSerializer';
+import { forecastSerializer } from '@serializers/kitchen/forecastSerializer';
+import { tiffinTomorrowSerializer } from '@serializers/kitchen/growthSerializer';
 
 export interface TodayEdit {
   portions?: number | null;
@@ -65,7 +67,7 @@ export const vendorTodaySlice = createAppSlice({
       async (_: void, { rejectWithValue }) => {
         try {
           const today = required(todayMenuSerializer(await getTodayAPI()));
-          const [forecast, tiffin] = await Promise.all([today ? getForecast(today.date).catch(() => null) : null, getTiffinTomorrow().catch(() => null)]);
+          const [forecast, tiffin] = await Promise.all([today ? getForecastAPI(today.date).then(raw => required(forecastSerializer(raw))).catch(() => null) : null, getTiffinTomorrowAPI().then(raw => required(tiffinTomorrowSerializer(raw))).catch(() => null)]);
           return { today, forecast, tiffin };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

@@ -1,11 +1,12 @@
-// MetroMatrix — Voice: a recording (or typed words) → one proposed action.
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Ai Voice Network (VOICE_ASSUMED.md)
+// ═══════════════════════════════════════════════════════
+// A recording (or typed words) → one proposed action.
 // The clip is uploaded first (media purpose voice_clip), then interpreted;
 // the answer is a draft the person confirms, after which the screen calls
 // the ordinary endpoint. docs/VOICE_ASSUMED.md (TODO(API_VOICE)).
 
-import { api } from '../network/apiHelpers';
-import { clean, request } from '../shopping/http';
-import { voiceResultSerializer } from '../../serializers/ai/voiceSerializer';
+import { api, toApiError, clean } from '../network/apiHelpers';
 import type { VoiceContext, VoiceLanguage } from '../../types/kitchen';
 
 export interface VoiceInput {
@@ -16,4 +17,11 @@ export interface VoiceInput {
   text?: string;
 }
 
-export const interpretVoice = (input: VoiceInput) => request(() => api.post('/ai/voice/interpret', clean({ ...input })), voiceResultSerializer);
+export const interpretVoiceAPI = async (input: VoiceInput): Promise<unknown> => {
+  try {
+    const response = await api.post('/ai/voice/interpret', clean({ ...input }));
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

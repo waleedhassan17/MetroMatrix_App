@@ -1,10 +1,11 @@
 // MetroMatrix — the customer's week of ordered food (Food Court only).
 
 import { createAppSlice } from '@store/createAppSlice';
-import { getNutritionSummary } from '@networks/myKitchen/nutritionNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getNutritionSummaryAPI } from '@networks/myKitchen/nutritionNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { NutritionSummary } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../Auth/shared/formStatus';
+import { nutritionSummarySerializer } from '@serializers/myKitchen/myKitchenSerializer';
 
 export interface NutritionSummarySliceState {
   summary: NutritionSummary | null;
@@ -21,7 +22,7 @@ export const nutritionSummarySlice = createAppSlice({
     loadNutritionSummaryAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await getNutritionSummary(7);
+          return required(nutritionSummarySerializer(await getNutritionSummaryAPI(7)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

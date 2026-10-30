@@ -9,11 +9,12 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { getMenuCategoriesAPI, getMenuItemsAPI } from '@networks/food/vendor/menuNetwork';
 import { getAvailabilityAPI, setAvailabilityAPI } from '@networks/food/vendor/availabilityNetwork';
-import { getBoardHints } from '@networks/kitchen/costingNetwork';
+import { getBoardHintsAPI } from '@networks/kitchen/costingNetwork';
 import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { AvailabilityItem, BoardHints, MenuCategory, VendorMenuItem } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { menuCategoriesSerializer, vendorMenuItemsSerializer, menuAvailabilitySerializer } from '@serializers/food/menuSerializer';
+import { boardHintsSerializer } from '@serializers/kitchen/insightSerializer';
 
 export interface VendorMenuSliceState {
   categories: MenuCategory[];
@@ -63,7 +64,7 @@ export const vendorMenuSlice = createAppSlice({
     loadVendorMenuAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [categories, items, availability, stock] = await Promise.all([getMenuCategoriesAPI().then(raw => required(menuCategoriesSerializer(raw))), getMenuItemsAPI().then(raw => required(vendorMenuItemsSerializer(raw))), getAvailabilityAPI().then(raw => required(menuAvailabilitySerializer(raw))), getBoardHints().catch(() => null)]);
+          const [categories, items, availability, stock] = await Promise.all([getMenuCategoriesAPI().then(raw => required(menuCategoriesSerializer(raw))), getMenuItemsAPI().then(raw => required(vendorMenuItemsSerializer(raw))), getAvailabilityAPI().then(raw => required(menuAvailabilitySerializer(raw))), getBoardHintsAPI().then(raw => required(boardHintsSerializer(raw))).catch(() => null)]);
           return { categories, items, availability, stock };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

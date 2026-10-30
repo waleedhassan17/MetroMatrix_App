@@ -29,7 +29,7 @@ import type {
   SignatureStatus,
   StaffNutritionFood,
 } from '../../types/kitchenAdmin';
-import { arr, isObject, num, oneOf, str, strOrNull } from '../serializerUtils';
+import { arr, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { count, dateOrNull, list, numOrNull } from './kitchenCommon';
 import { demandMapSerializer } from './reachSerializer';
 import { cateringRequestSerializer, tiffinSubscriptionSerializer } from './growthSerializer';
@@ -62,7 +62,7 @@ const ownerSerializer = (raw: unknown): AiOwnerUse | null =>
       }
     : null;
 
-export const aiUsageReportSerializer = (raw: unknown): AiUsageReport => {
+export const aiUsageReportSerializer = fromResponse((raw: unknown): AiUsageReport => {
   const r = isObject(raw) ? raw : {};
   const t = isObject(r.totals) ? r.totals : {};
   return {
@@ -73,10 +73,10 @@ export const aiUsageReportSerializer = (raw: unknown): AiUsageReport => {
     byFeature: list(r.byFeature, x => (isObject(x) && str(x.feature) ? { ...sumOf(x), feature: str(x.feature) } : null)),
     byOwner: list(r.byOwner, ownerSerializer),
   };
-};
+});
 
 // ── The city price list ──
-export const referencePricesSerializer = (raw: unknown): ReferencePriceList => {
+export const referencePricesSerializer = fromResponse((raw: unknown): ReferencePriceList => {
   const r = isObject(raw) ? raw : {};
   return {
     city: str(r.city, 'Lahore'),
@@ -88,7 +88,7 @@ export const referencePricesSerializer = (raw: unknown): ReferencePriceList => {
         : null,
     ),
   };
-};
+});
 
 // ── CSV dry runs and imports ──
 const rowErrorSerializer = (raw: unknown): CsvRowError | null =>
@@ -111,7 +111,7 @@ const importSerializer =
     };
   };
 
-export const priceImportSerializer = importSerializer<PriceImportRow>(x =>
+export const priceImportSerializer = fromResponse(importSerializer<PriceImportRow>(x =>
   isObject(x) && str(x.key)
     ? {
         row: count(x.row),
@@ -124,44 +124,44 @@ export const priceImportSerializer = importSerializer<PriceImportRow>(x =>
         previous: numOrNull(x.previous),
       }
     : null,
-);
+));
 
 // ── Nutrition foods ──
 const macros = (x: Record<string, unknown>) => ({ kcal: money(x.kcal), protein: money(x.protein), carbs: money(x.carbs), fat: money(x.fat) });
 
-export const nutritionFoodSerializer = (raw: unknown): StaffNutritionFood | null =>
+export const nutritionFoodSerializer = fromResponse((raw: unknown): StaffNutritionFood | null =>
   isObject(raw) && str(raw.id)
     ? { id: str(raw.id), key: str(raw.key), name: str(raw.name, str(raw.key)), per: oneOf(raw.per, PERS, 'g100'), ...macros(raw), usedBy: count(raw.usedBy), updatedAt: isoOrNull(raw.updatedAt) }
-    : null;
+    : null);
 
-export const staffNutritionFoodsSerializer = (raw: unknown) => {
+export const staffNutritionFoodsSerializer = fromResponse((raw: unknown) => {
   const r = isObject(raw) ? raw : {};
   return { items: list(r.items, nutritionFoodSerializer), total: count(r.total) };
-};
+});
 
-export const nutritionFoodImportSerializer = importSerializer<NutritionFoodImportRow>(x =>
+export const nutritionFoodImportSerializer = fromResponse(importSerializer<NutritionFoodImportRow>(x =>
   isObject(x) && str(x.key)
     ? { row: count(x.row), key: str(x.key), name: str(x.name, str(x.key)), per: oneOf(x.per, PERS, 'g100'), ...macros(x), change: oneOf(x.change, ['new', 'update', 'same'] as const, 'update') }
     : null,
-);
+));
 
 // ── Aliases ──
-export const aliasSerializer = (raw: unknown): IngredientAlias | null =>
+export const aliasSerializer = fromResponse((raw: unknown): IngredientAlias | null =>
   isObject(raw) && str(raw.id) && str(raw.word)
     ? { id: str(raw.id), word: str(raw.word), language: oneOf(raw.language, LANGUAGES, 'roman_ur'), key: str(raw.key), keyName: str(raw.keyName, str(raw.key)) }
-    : null;
+    : null);
 
-export const aliasesSerializer = (raw: unknown) => {
+export const aliasesSerializer = fromResponse((raw: unknown) => {
   const r = isObject(raw) ? raw : {};
   const items = list(r.items, aliasSerializer);
   return { items, total: Math.max(items.length, count(r.total)) };
-};
+});
 
-export const ingredientKeysSerializer = (raw: unknown): IngredientKey[] =>
-  list(isObject(raw) ? raw.items : raw, x => (isObject(x) && str(x.key) ? { key: str(x.key), name: str(x.name, str(x.key)) } : null));
+export const ingredientKeysSerializer = fromResponse((raw: unknown): IngredientKey[] =>
+  list(isObject(raw) ? raw.items : raw, x => (isObject(x) && str(x.key) ? { key: str(x.key), name: str(x.name, str(x.key)) } : null)));
 
 // ── Calendar events ──
-export const calendarEventSerializer = (raw: unknown): CalendarEvent | null => {
+export const calendarEventSerializer = fromResponse((raw: unknown): CalendarEvent | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
   const startsOn = dateOrNull(raw.startsOn);
   const endsOn = dateOrNull(raw.endsOn);
@@ -175,12 +175,12 @@ export const calendarEventSerializer = (raw: unknown): CalendarEvent | null => {
     days: Math.max(1, count(raw.days)),
     state: oneOf(raw.state, ['upcoming', 'now', 'past'] as const, 'upcoming'),
   };
-};
+});
 
-export const calendarEventsSerializer = (raw: unknown): CalendarEvent[] => list(isObject(raw) ? raw.items : raw, calendarEventSerializer);
+export const calendarEventsSerializer = fromResponse((raw: unknown): CalendarEvent[] => list(isObject(raw) ? raw.items : raw, calendarEventSerializer));
 
 // ── Signature dishes ──
-export const signatureDishSerializer = (raw: unknown): SignatureDish | null => {
+export const signatureDishSerializer = fromResponse((raw: unknown): SignatureDish | null => {
   if (!isObject(raw) || !str(raw.itemId)) return null;
   const v = isObject(raw.vendor) ? raw.vendor : null;
   return {
@@ -193,19 +193,19 @@ export const signatureDishSerializer = (raw: unknown): SignatureDish | null => {
     note: strOrNull(raw.note),
     reviewedAt: isoOrNull(raw.reviewedAt),
   };
-};
+});
 
-export const signatureListSerializer = (raw: unknown): SignatureList => {
+export const signatureListSerializer = fromResponse((raw: unknown): SignatureList => {
   const r = isObject(raw) ? raw : {};
   const c = isObject(r.counts) ? r.counts : {};
   return { items: list(r.items, signatureDishSerializer), counts: { new: count(c.new), approved: count(c.approved), removed: count(c.removed) } };
-};
+});
 
 // ── The platform's demand map ──
-export const adminDemandSerializer = (raw: unknown): AdminDemandMap => ({ ...demandMapSerializer(raw), cities: strings(isObject(raw) ? raw.cities : null) });
+export const adminDemandSerializer = fromResponse((raw: unknown): AdminDemandMap => ({ ...demandMapSerializer(raw), cities: strings(isObject(raw) ? raw.cities : null) }));
 
 // ── A code looked up ──
-export const growthLookupSerializer = (raw: unknown): GrowthLookup | null => {
+export const growthLookupSerializer = fromResponse((raw: unknown): GrowthLookup | null => {
   if (!isObject(raw)) return null;
   if (raw.kind === 'tiffin') {
     const tiffin = tiffinSubscriptionSerializer(raw.tiffin);
@@ -216,4 +216,4 @@ export const growthLookupSerializer = (raw: unknown): GrowthLookup | null => {
     return catering ? { kind: 'catering', catering } : null;
   }
   return null;
-};
+});

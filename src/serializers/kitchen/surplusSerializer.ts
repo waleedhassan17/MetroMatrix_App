@@ -25,7 +25,7 @@ const point = (raw: unknown) => {
 };
 
 
-export const surplusBoxSerializer = (raw: unknown): SurplusBox | null => {
+export const surplusBoxSerializer = fromResponse((raw: unknown): SurplusBox | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
   return {
     id: str(raw.id),
@@ -44,9 +44,9 @@ export const surplusBoxSerializer = (raw: unknown): SurplusBox | null => {
     status: oneOf(raw.status, BOX_STATUSES, 'ended'),
     createdAt: str(raw.createdAt),
   };
-};
+});
 
-export const surplusBoxesSerializer = (raw: unknown): SurplusBox[] => list(isObject(raw) ? raw.items : raw, surplusBoxSerializer);
+export const surplusBoxesSerializer = fromResponse((raw: unknown): SurplusBox[] => list(isObject(raw) ? raw.items : raw, surplusBoxSerializer));
 
 export const reservationSerializer = fromResponse((raw: unknown): SurplusReservation | null => {
   if (!isObject(raw) || !str(raw.code)) return null;
@@ -81,10 +81,10 @@ export const reservationSerializer = fromResponse((raw: unknown): SurplusReserva
 
 export const reservationsSerializer = fromResponse((raw: unknown): SurplusReservation[] => list(isObject(raw) ? raw.items : raw, reservationSerializer));
 
-export const surplusBoxDetailSerializer = (raw: unknown): SurplusBoxDetail | null => {
+export const surplusBoxDetailSerializer = fromResponse((raw: unknown): SurplusBoxDetail | null => {
   const b = surplusBoxSerializer(raw);
   return b && isObject(raw) ? { ...b, reservations: list(raw.reservations, reservationSerializer) } : null;
-};
+});
 
 export const surplusSuggestionSerializer = (raw: unknown): SurplusSuggestion | null => {
   const s = isObject(raw) ? raw.suggestion : null;

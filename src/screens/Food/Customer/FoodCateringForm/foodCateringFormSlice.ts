@@ -3,12 +3,13 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getCateringVendor, requestCatering } from '@networks/foodGrowth/cateringNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getCateringVendorAPI, requestCateringAPI } from '@networks/foodGrowth/cateringNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { emptyCateringForm, newDishKey, type CateringForm } from '@models/kitchen/cateringModel';
 import type { CateringRequestInput, CateringVendor } from '@/types';
 import type { ValidationErrors } from '@models/authModel';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { cateringVendorSerializer, cateringRequestSerializer } from '@serializers/kitchen/growthSerializer';
 
 export interface FoodCateringFormSliceState {
   slug: string | null;
@@ -50,7 +51,7 @@ export const foodCateringFormSlice = createAppSlice({
     loadCateringVendorAsync: create.asyncThunk(
       async (slug: string, { rejectWithValue }) => {
         try {
-          return await getCateringVendor(slug);
+          return required(cateringVendorSerializer(await getCateringVendorAPI(slug)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -82,7 +83,7 @@ export const foodCateringFormSlice = createAppSlice({
     sendCateringAsync: create.asyncThunk(
       async (input: CateringRequestInput, { rejectWithValue }) => {
         try {
-          return await requestCatering(input);
+          return required(cateringRequestSerializer(await requestCateringAPI(input)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

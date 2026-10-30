@@ -14,7 +14,7 @@ import type {
   Supplier,
 } from '../../types/kitchen';
 import type { Paged } from '../../types/payments';
-import { bool, isObject, num, oneOf, str, strOrNull } from '../serializerUtils';
+import { bool, isObject, num, oneOf, str, strOrNull, bodyOf, fromResponse } from '../serializerUtils';
 import { paged } from '../shopping/common';
 import { baseUnit, category, count, countingOf, dateOrNull, list, numOrNull, whole } from './kitchenCommon';
 
@@ -42,7 +42,7 @@ export const ingredientSerializer = (raw: unknown): Ingredient | null => {
   };
 };
 
-export const ingredientDetailSerializer = (raw: unknown): IngredientDetail | null => {
+export const ingredientDetailSerializer = fromResponse((raw: unknown): IngredientDetail | null => {
   const i = ingredientSerializer(raw);
   if (!i || !isObject(raw)) return null;
   return {
@@ -70,18 +70,18 @@ export const ingredientDetailSerializer = (raw: unknown): IngredientDetail | nul
       isObject(u) && str(u.itemId) ? { itemId: str(u.itemId), variantId: strOrNull(u.variantId), name: str(u.name), qtyPerServing: Math.max(0, num(u.qtyPerServing)) } : null,
     ),
   };
-};
+});
 
-export const stockListSerializer = (raw: unknown): StockList | null => {
+export const stockListSerializer = fromResponse((raw: unknown): StockList | null => {
   if (!isObject(raw)) return null;
   const c = isObject(raw.counts) ? raw.counts : {};
   return {
     items: list(raw.items, ingredientSerializer),
     counts: { all: count(c.all), low: count(c.low), expiring: count(c.expiring), negative: count(c.negative) },
   };
-};
+});
 
-export const stockTakeSerializer = (raw: unknown): StockTakeResult | null => {
+export const stockTakeSerializer = fromResponse((raw: unknown): StockTakeResult | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
   return {
     id: str(raw.id),
@@ -93,16 +93,16 @@ export const stockTakeSerializer = (raw: unknown): StockTakeResult | null => {
         : null,
     ),
   };
-};
+});
 
-export const supplierSerializer = (raw: unknown): Supplier | null =>
+export const supplierSerializer = fromResponse((raw: unknown): Supplier | null =>
   isObject(raw) && str(raw.id)
     ? { id: str(raw.id), name: str(raw.name), phone: strOrNull(raw.phone), note: strOrNull(raw.note), purchaseCount: count(raw.purchaseCount), lastPurchaseOn: dateOrNull(raw.lastPurchaseOn) }
-    : null;
+    : null);
 
-export const suppliersSerializer = (raw: unknown): Supplier[] => list(raw, supplierSerializer);
+export const suppliersSerializer = fromResponse((raw: unknown): Supplier[] => list(raw, supplierSerializer));
 
-export const purchaseSerializer = (raw: unknown): Purchase | null => {
+export const purchaseSerializer = fromResponse((raw: unknown): Purchase | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
   return {
     id: str(raw.id),
@@ -128,18 +128,18 @@ export const purchaseSerializer = (raw: unknown): Purchase | null => {
     ),
     createdAt: str(raw.createdAt),
   };
-};
+});
 
 export interface PurchasesPage extends Paged<Purchase> {
   weekTotal: number;
 }
 
-export const purchasesPageSerializer = (raw: unknown): PurchasesPage => ({
+export const purchasesPageSerializer = fromResponse((raw: unknown): PurchasesPage => ({
   ...paged(raw, purchaseSerializer),
   weekTotal: isObject(raw) ? count(raw.weekTotal) : 0,
-});
+}));
 
-export const priceWatchSerializer = (raw: unknown): PriceWatch | null => {
+export const priceWatchSerializer = fromResponse((raw: unknown): PriceWatch | null => {
   if (!isObject(raw)) return null;
   return {
     city: str(raw.city),
@@ -158,4 +158,10 @@ export const priceWatchSerializer = (raw: unknown): PriceWatch | null => {
         : null,
     ),
   };
+});
+
+/** Purchases' header: this week's spend (from the first page) and the price watch, read together. */
+export const purchasesOverviewSerializer = (parts: { first: unknown; watch: unknown }) => {
+  const watch = priceWatchSerializer(bodyOf(parts.watch));
+  return watch ? { weekTotal: purchasesPageSerializer(bodyOf(parts.first)).weekTotal, watch } : null;
 };

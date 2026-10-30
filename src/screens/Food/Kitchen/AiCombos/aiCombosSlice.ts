@@ -3,14 +3,16 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { suggestCombos } from '@networks/kitchen/kitchenAiNetwork';
+import { suggestCombosAPI } from '@networks/kitchen/kitchenAiNetwork';
 import { createMenuItemAPI } from '@networks/food/vendor/menuNetwork';
-import { getKitchenSettings } from '@networks/kitchen/costingNetwork';
+import { getKitchenSettingsAPI } from '@networks/kitchen/costingNetwork';
 import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { comboItemInput } from '@models/kitchen/assistantModel';
 import type { ComboIdea, DraftCategory } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { vendorMenuItemSerializer } from '@serializers/food/menuSerializer';
+import { comboIdeasSerializer } from '@serializers/kitchen/assistantSerializer';
+import { kitchenSettingsSerializer } from '@serializers/kitchen/recipeSerializer';
 
 export interface AiCombosSliceState {
   ideas: ComboIdea[];
@@ -36,7 +38,7 @@ export const aiCombosSlice = createAppSlice({
     suggestCombosAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [ideas, settings] = await Promise.all([suggestCombos(), getKitchenSettings()]);
+          const [ideas, settings] = await Promise.all([suggestCombosAPI().then(raw => required(comboIdeasSerializer(raw))), getKitchenSettingsAPI().then(raw => required(kitchenSettingsSerializer(raw)))]);
           return { ...ideas, targetPct: settings.targetFoodCostPct };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

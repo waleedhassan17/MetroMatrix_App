@@ -3,12 +3,13 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { createIngredient, getIngredient, updateIngredient } from '@networks/kitchen/stockNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { createIngredientAPI, getIngredientAPI, updateIngredientAPI } from '@networks/kitchen/stockNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { customUnitRows, defaultUnit, type CustomUnitRow, type IngredientForm } from '@models/kitchen/stockModel';
 import type { IngredientDetail, IngredientInput } from '@/types';
 import { UNITS, type BaseUnit } from '@utils/units';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { ingredientDetailSerializer } from '@serializers/kitchen/stockSerializer';
 
 export interface IngredientFormSliceState {
   editingId: string | null;
@@ -57,7 +58,7 @@ export const ingredientFormSlice = createAppSlice({
     loadIngredientForEditAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return await getIngredient(id);
+          return required(ingredientDetailSerializer(await getIngredientAPI(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -81,7 +82,7 @@ export const ingredientFormSlice = createAppSlice({
     saveIngredientAsync: create.asyncThunk(
       async ({ id, input }: { id: string | null; input: IngredientInput }, { rejectWithValue }) => {
         try {
-          return id ? await updateIngredient(id, input) : await createIngredient(input);
+          return id ? required(ingredientDetailSerializer(await updateIngredientAPI(id, input))) : required(ingredientDetailSerializer(await createIngredientAPI(input)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

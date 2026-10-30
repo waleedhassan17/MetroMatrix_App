@@ -7,8 +7,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { listHygieneQueue, rejectHygiene, verifyHygiene } from '@networks/admin/adminKitchenNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getHygieneQueueAPI, rejectHygieneAPI, verifyHygieneAPI } from '@networks/admin/adminKitchenNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { HygieneReview } from '@/types';
 import {
   NO_ERROR,
@@ -16,6 +16,7 @@ import {
   type FormStatus,
   type ServerError,
 } from '../../../Auth/shared/formStatus';
+import { hygieneQueueSerializer } from '@serializers/kitchen/reachSerializer';
 
 export type HygieneTab = 'pending' | 'verified' | 'rejected';
 
@@ -66,7 +67,7 @@ export const adminKitchenHygieneSlice = createAppSlice({
     loadHygieneAsync: create.asyncThunk(
       async (tab: HygieneTab, { rejectWithValue }) => {
         try {
-          return { tab, items: await listHygieneQueue(tab) };
+          return { tab, items: required(hygieneQueueSerializer(await getHygieneQueueAPI(tab))) };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -91,9 +92,9 @@ export const adminKitchenHygieneSlice = createAppSlice({
     reviewHygieneAsync: create.asyncThunk(
       async (input: { businessId: string; verify: boolean; note?: string }, { rejectWithValue }) => {
         try {
-          if (input.verify) await verifyHygiene(input.businessId);
-          else await rejectHygiene(input.businessId, input.note ?? '');
-          return await listHygieneQueue('pending');
+          if (input.verify) await verifyHygieneAPI(input.businessId);
+          else await rejectHygieneAPI(input.businessId, input.note ?? '');
+          return required(hygieneQueueSerializer(await getHygieneQueueAPI('pending')));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

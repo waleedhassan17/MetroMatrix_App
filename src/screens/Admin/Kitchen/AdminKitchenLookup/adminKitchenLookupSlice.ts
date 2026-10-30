@@ -6,8 +6,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { lookupGrowthCode } from '@networks/admin/adminKitchenNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { lookupGrowthCodeAPI } from '@networks/admin/adminKitchenNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { GrowthLookup } from '@/types';
 import {
   NO_ERROR,
@@ -15,6 +15,7 @@ import {
   type FormStatus,
   type ServerError,
 } from '../../../Auth/shared/formStatus';
+import { growthLookupSerializer } from '@serializers/kitchen/adminKitchenSerializer';
 
 export interface AdminKitchenLookupSliceState {
   code: string;
@@ -41,7 +42,7 @@ export const adminKitchenLookupSlice = createAppSlice({
     lookupCodeAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return await lookupGrowthCode(code);
+          return required(growthLookupSerializer(await lookupGrowthCodeAPI(code)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

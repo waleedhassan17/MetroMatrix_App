@@ -12,9 +12,9 @@
 import { createAppSlice } from '@store/createAppSlice';
 import { getFoodHomeAPI } from '@networks/food/discoveryNetwork';
 import { getSurplusNearbyAPI } from '@networks/food/surplusNetwork';
-import { listTiffinPlansNear } from '@networks/foodGrowth/tiffinNetwork';
-import { listIftarNearby } from '@networks/foodGrowth/ramadanNetwork';
-import { listHealthyPicks } from '@networks/myKitchen/nutritionNetwork';
+import { getTiffinPlansNearAPI } from '@networks/foodGrowth/tiffinNetwork';
+import { getIftarNearbyAPI } from '@networks/foodGrowth/ramadanNetwork';
+import { getHealthyPicksAPI } from '@networks/myKitchen/nutritionNetwork';
 import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { currentPoint } from '../../../../services/location';
 import { setFoodPoint } from '@store/preferencesSlice';
@@ -22,6 +22,9 @@ import type { FoodHome, HealthyPick, IftarKitchen, SurplusCard, TiffinPlan } fro
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { foodHomeSerializer } from '@serializers/food/discoverySerializer';
 import { surplusCardsSerializer } from '@serializers/kitchen/surplusSerializer';
+import { tiffinPlansSerializer } from '@serializers/kitchen/growthSerializer';
+import { iftarNearbySerializer } from '@serializers/kitchen/reachSerializer';
+import { healthyPicksSerializer } from '@serializers/myKitchen/myKitchenSerializer';
 
 export interface FoodHomeSliceState {
   home: FoodHome | null;
@@ -76,11 +79,11 @@ export const foodHomeSlice = createAppSlice({
           const [home, surplus, tiffins, iftar, healthy] = await Promise.all([
             getFoodHomeAPI(lat, lng).then(raw => required(foodHomeSerializer(raw))),
             getSurplusNearbyAPI({ lat, lng }).then(raw => required(surplusCardsSerializer(raw))).catch(() => [] as SurplusCard[]),
-            listTiffinPlansNear({ lat, lng }).catch(() => [] as TiffinPlan[]),
-            listIftarNearby({ lat, lng })
+            getTiffinPlansNearAPI({ lat, lng }).then(raw => required(tiffinPlansSerializer(raw))).catch(() => [] as TiffinPlan[]),
+            getIftarNearbyAPI({ lat, lng }).then(raw => required(iftarNearbySerializer(raw)))
               .then(r => (r.state === 'active' ? r.items : []))
               .catch(() => [] as IftarKitchen[]),
-            listHealthyPicks({ lat, lng }).catch(() => [] as HealthyPick[]),
+            getHealthyPicksAPI({ lat, lng }).then(raw => required(healthyPicksSerializer(raw))).catch(() => [] as HealthyPick[]),
           ]);
           return { home, surplus, tiffins, iftar, healthy };
         } catch (e) {

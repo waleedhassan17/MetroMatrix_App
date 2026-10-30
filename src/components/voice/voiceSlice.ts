@@ -9,12 +9,13 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { toRejectedValue } from '../../networks/network/apiHelpers';
+import { toRejectedValue, required } from '../../networks/network/apiHelpers';
 import { uploadImage } from '../../services/mediaUpload';
-import { interpretVoice } from '../../networks/ai/voiceNetwork';
+import { interpretVoiceAPI } from '../../networks/ai/voiceNetwork';
 import { NO_ERROR, readRejection, type ServerError } from '../../screens/Auth/shared/formStatus';
 import type { Clip } from '../../services/voice/recorderShared';
 import type { VoiceContext, VoiceLanguage, VoiceResult } from '../../types/kitchen';
+import { voiceResultSerializer } from '../../serializers/ai/voiceSerializer';
 
 export interface VoiceRun {
   status: 'idle' | 'working' | 'result' | 'failed';
@@ -55,7 +56,7 @@ export const voiceSlice = createAppSlice({
       async ({ context, language, clip }: { context: VoiceContext; language: VoiceLanguage; clip: Clip }, { rejectWithValue }) => {
         try {
           const uploaded = await uploadImage(clip, 'voice_clip');
-          return await interpretVoice({ context, language, audioUrl: uploaded.url, durationMs: clip.durationMs });
+          return required(voiceResultSerializer(await interpretVoiceAPI({ context, language, audioUrl: uploaded.url, durationMs: clip.durationMs })));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -82,7 +83,7 @@ export const voiceSlice = createAppSlice({
     interpretTextAsync: create.asyncThunk(
       async ({ context, language, text }: { context: VoiceContext; language: VoiceLanguage; text: string }, { rejectWithValue }) => {
         try {
-          return await interpretVoice({ context, language, text: text.trim() });
+          return required(voiceResultSerializer(await interpretVoiceAPI({ context, language, text: text.trim() })));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

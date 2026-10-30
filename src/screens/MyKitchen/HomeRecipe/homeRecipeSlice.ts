@@ -2,10 +2,11 @@
 // many it's for, with what the kitchen has marked.
 
 import { createAppSlice } from '@store/createAppSlice';
-import { getHomeRecipe } from '@networks/myKitchen/recipesNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getHomeRecipeAPI } from '@networks/myKitchen/recipesNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { HomeRecipe } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../Auth/shared/formStatus';
+import { homeRecipeSerializer } from '@serializers/myKitchen/myKitchenSerializer';
 
 export interface HomeRecipeSliceState {
   recipe: HomeRecipe | null;
@@ -22,7 +23,7 @@ export const homeRecipeSlice = createAppSlice({
     loadHomeRecipeAsync: create.asyncThunk(
       async ({ id, language, servings }: { id: string; language: 'en' | 'ur'; servings: number | null }, { rejectWithValue }) => {
         try {
-          return await getHomeRecipe(id, language, servings);
+          return required(homeRecipeSerializer(await getHomeRecipeAPI(id, language, servings)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

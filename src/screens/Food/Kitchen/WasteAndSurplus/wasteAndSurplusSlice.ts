@@ -4,13 +4,15 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getWasteSummary, listWaste, logWaste } from '@networks/kitchen/wasteNetwork';
-import { collectReservation, getBoxSuggestion, listBoxes } from '@networks/kitchen/surplusNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getWasteSummaryAPI, getWasteAPI, logWasteAPI } from '@networks/kitchen/wasteNetwork';
+import { collectReservationAPI, getBoxSuggestionAPI, getBoxesAPI } from '@networks/kitchen/surplusNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { normalizeCode } from '@models/kitchen/surplusModel';
 import { wasteFromVoice } from '@models/kitchen/stockModel';
 import type { SurplusBox, SurplusSuggestion, VoiceQtyLine, WasteEntry, WasteReason, WasteSummary } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { wasteSummarySerializer, wastePageSerializer, wasteSerializer } from '@serializers/kitchen/wasteSerializer';
+import { surplusBoxesSerializer, surplusSuggestionResponseSerializer, reservationSerializer } from '@serializers/kitchen/surplusSerializer';
 
 export interface WasteAndSurplusSliceState {
   range: '7d' | '30d';
@@ -57,7 +59,7 @@ export const wasteAndSurplusSlice = createAppSlice({
     loadWasteAndSurplusAsync: create.asyncThunk(
       async (range: '7d' | '30d', { rejectWithValue }) => {
         try {
-          const [summary, recent, live, suggestion] = await Promise.all([getWasteSummary(range), listWaste(1, 5), listBoxes('live'), getBoxSuggestion()]);
+          const [summary, recent, live, suggestion] = await Promise.all([getWasteSummaryAPI(range).then(raw => required(wasteSummarySerializer(raw))), getWasteAPI(1, 5).then(raw => required(wastePageSerializer(raw))), getBoxesAPI('live').then(raw => required(surplusBoxesSerializer(raw))), getBoxSuggestionAPI().then(raw => required(surplusSuggestionResponseSerializer(raw)))]);
           return { summary, recent: recent.items, boxes: live, suggestion: suggestion.suggestion };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -87,7 +89,7 @@ export const wasteAndSurplusSlice = createAppSlice({
       async (_: void, { getState, rejectWithValue }) => {
         const code = normalizeCode((getState() as { wasteAndSurplus: WasteAndSurplusSliceState }).wasteAndSurplus.code);
         try {
-          return await collectReservation(code);
+          return required(reservationSerializer(await collectReservationAPI(code)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -111,7 +113,7 @@ export const wasteAndSurplusSlice = createAppSlice({
     logSpokenWasteAsync: create.asyncThunk(
       async ({ lines, reason }: { lines: VoiceQtyLine[]; reason: WasteReason }, { rejectWithValue }) => {
         try {
-          return await logWaste(wasteFromVoice(lines, reason));
+          return required(wasteSerializer(await logWasteAPI(wasteFromVoice(lines, reason))));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

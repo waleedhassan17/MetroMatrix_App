@@ -6,8 +6,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { approveSignature, listSignatures, removeSignature } from '@networks/admin/adminKitchenNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { approveSignatureAPI, getSignaturesAPI, removeSignatureAPI } from '@networks/admin/adminKitchenNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { SignatureDish, SignatureList, SignatureStatus } from '@/types';
 import {
   NO_ERROR,
@@ -15,6 +15,7 @@ import {
   type FormStatus,
   type ServerError,
 } from '../../../Auth/shared/formStatus';
+import { signatureListSerializer } from '@serializers/kitchen/adminKitchenSerializer';
 
 export interface AdminKitchenSignaturesSliceState {
   tab: SignatureStatus;
@@ -63,7 +64,7 @@ export const adminKitchenSignaturesSlice = createAppSlice({
     loadSignaturesAsync: create.asyncThunk(
       async (tab: SignatureStatus, { rejectWithValue }) => {
         try {
-          return await listSignatures(tab);
+          return required(signatureListSerializer(await getSignaturesAPI(tab)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -87,9 +88,9 @@ export const adminKitchenSignaturesSlice = createAppSlice({
     reviewSignatureAsync: create.asyncThunk(
       async (input: { itemId: string; keep: boolean; note?: string; tab: SignatureStatus }, { rejectWithValue }) => {
         try {
-          if (input.keep) await approveSignature(input.itemId);
-          else await removeSignature(input.itemId, input.note ?? '');
-          return await listSignatures(input.tab);
+          if (input.keep) await approveSignatureAPI(input.itemId);
+          else await removeSignatureAPI(input.itemId, input.note ?? '');
+          return required(signatureListSerializer(await getSignaturesAPI(input.tab)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

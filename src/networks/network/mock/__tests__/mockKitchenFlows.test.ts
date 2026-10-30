@@ -12,70 +12,71 @@ import { getFoodOrderAPI, placeFoodOrderAPI } from '../../../food/ordersNetwork'
 import { acceptOrderAPI, markReadyAPI, rejectOrderAPI, startPreparingAPI } from '../../../food/vendor/ordersNetwork';
 import { getVendorPageAPI } from '../../../food/discoveryNetwork';
 import { getVendorProfileAPI, pauseOrdersAPI } from '../../../food/vendor/profileNetwork';
-import { getIngredient, listStock, recordStockTake } from '../../../kitchen/stockNetwork';
-import { createPurchase, getPriceWatch, listPurchases } from '../../../kitchen/purchasesNetwork';
-import { getRecipe, listRecipes, saveRecipe } from '../../../kitchen/recipesNetwork';
-import { getBoardHints, updateKitchenSettings } from '../../../kitchen/costingNetwork';
-import { adjustForecast, getForecast, getForecastAccuracy, getPrepSheet, getShoppingList } from '../../../kitchen/forecastNetwork';
-import { getWasteSummary, logDonation, logWaste } from '../../../kitchen/wasteNetwork';
-import { collectReservation, createBox, getBox } from '../../../kitchen/surplusNetwork';
-import { attachPackingPhoto, getAnnouncement } from '../../../kitchen/packingNetwork';
-import { getAiUsage, scanReceipt } from '../../../kitchen/kitchenAiNetwork';
-import { getKitchenHub, listInsightCards, snoozeInsightCard } from '../../../kitchen/insightsCardsNetwork';
-import { interpretVoice } from '../../../ai/voiceNetwork';
+import { getIngredientAPI, getStockAPI, recordStockTakeAPI, updateIngredientAPI } from '../../../kitchen/stockNetwork';
+import { createPurchaseAPI, getPriceWatchAPI, getPurchasesAPI } from '../../../kitchen/purchasesNetwork';
+import { getRecipeAPI, getRecipesAPI, saveRecipeAPI } from '../../../kitchen/recipesNetwork';
+import { getBoardHintsAPI, updateKitchenSettingsAPI } from '../../../kitchen/costingNetwork';
+import { adjustForecastAPI, getForecastAPI, getForecastAccuracyAPI, getPrepSheetAPI, getShoppingListAPI } from '../../../kitchen/forecastNetwork';
+import { getWasteSummaryAPI, logDonationAPI, logWasteAPI } from '../../../kitchen/wasteNetwork';
+import { collectReservationAPI, createBoxAPI, getBoxAPI } from '../../../kitchen/surplusNetwork';
+import { attachPackingPhotoAPI, getAnnouncementAPI } from '../../../kitchen/packingNetwork';
+import { getAiUsageAPI, scanReceiptAPI } from '../../../kitchen/kitchenAiNetwork';
+import { getInsightCardsAPI, getKitchenSummaryAPI, snoozeInsightCardAPI } from '../../../kitchen/insightsCardsNetwork';
+import { interpretVoiceAPI } from '../../../ai/voiceNetwork';
 import { getSurplusNearbyAPI, reserveSurplusAPI } from '../../../food/surplusNetwork';
 import { getBoardAPI } from '../../../food/vendor/ordersNetwork';
 import {
-  createTiffinPlan,
-  getMyTiffin,
-  getTiffinCalendar,
-  getTiffinTomorrow,
-  listTiffinSubscriptions,
-  moveSubscriber,
-  skipTiffinDay,
-  subscribeTiffin,
+  createTiffinPlanAPI,
+  getMyTiffinAPI,
+  getTiffinCalendarAPI,
+  getTiffinTomorrowAPI,
+  getTiffinSubscriptionsAPI,
+  moveSubscriberAPI,
+  type SubscriberMove,
+  skipTiffinDayAPI,
+  subscribeTiffinAPI,
 } from '../../../foodGrowth/tiffinNetwork';
-import { acceptQuote, confirmAdvance, getMyCatering, requestCatering, sendQuote, submitAdvanceProof } from '../../../foodGrowth/cateringNetwork';
-import { getRamadan, listIftarNearby, updateRamadan } from '../../../foodGrowth/ramadanNetwork';
-import { getStorefront } from '../../../foodGrowth/storefrontNetwork';
-import { getDemand } from '../../../foodGrowth/demandNetwork';
-import { decideExperiment, getExperiment, getMenuInsights, startExperiment } from '../../../foodGrowth/experimentsNetwork';
-import { getHygiene, requestHygieneVerification, saveStory, setHygieneItem } from '../../../foodGrowth/storyNetwork';
-import { getBatchSuggestions } from '../../../foodGrowth/batchingNetwork';
+import { acceptQuoteAPI, confirmAdvanceAPI, getMyCateringRequestAPI, requestCateringAPI, sendQuoteAPI, submitAdvanceProofAPI } from '../../../foodGrowth/cateringNetwork';
+import { getRamadanAPI, getIftarNearbyAPI, updateRamadanAPI } from '../../../foodGrowth/ramadanNetwork';
+import { getStorefrontAPI } from '../../../foodGrowth/storefrontNetwork';
+import { getDemandAPI } from '../../../foodGrowth/demandNetwork';
+import { decideExperimentAPI, getExperimentAPI, getMenuInsightsAPI, startExperimentAPI } from '../../../foodGrowth/experimentsNetwork';
+import { getHygieneAPI, requestHygieneVerificationAPI, saveStoryAPI, setHygieneItemAPI } from '../../../foodGrowth/storyNetwork';
+import { getBatchSuggestionsAPI } from '../../../foodGrowth/batchingNetwork';
 import {
-  approveSignature,
-  createAlias,
-  createCalendarEvent,
-  getAiUsageReport,
-  getPlatformDemand,
-  getReferencePrices,
-  importNutritionFoods,
-  importReferencePrices,
-  listHygieneQueue,
-  listSignatures,
-  lookupGrowthCode,
-  rejectHygiene,
-  removeSignature,
-  setAiQuota,
-  updateCalendarEvent,
-  updateNutritionFood,
-  listNutritionFoods,
-  verifyHygiene,
+  approveSignatureAPI,
+  createAliasAPI,
+  createCalendarEventAPI,
+  getAiUsageReportAPI,
+  getPlatformDemandAPI,
+  getReferencePricesAPI,
+  importNutritionFoodsAPI,
+  importReferencePricesAPI,
+  getHygieneQueueAPI,
+  getSignaturesAPI,
+  lookupGrowthCodeAPI,
+  rejectHygieneAPI,
+  removeSignatureAPI,
+  setAiQuotaAPI,
+  updateCalendarEventAPI,
+  updateNutritionFoodAPI,
+  getNutritionFoodsAPI,
+  verifyHygieneAPI,
 } from '../../../admin/adminKitchenNetwork';
 import { getVendorsAPI } from '../../../food/discoveryNetwork';
 import { getRiderOrderAPI, setDutyAPI } from '../../../food/rider/riderNetwork';
 import { assignRiderAPI } from '../../../food/vendor/ordersNetwork';
 import { ramadanSwitch } from '../../../../models/kitchen/reachModel';
-import { checkPhoto, draftDescriptions, getReviewInsights, saveDescription, suggestCombos, suggestSpecials } from '../../../kitchen/kitchenAiNetwork';
-import { getVendorNutrition, mapIngredientNutrition, setNutritionHidden } from '../../../kitchen/nutritionNetwork';
+import { checkPhotoAPI, draftDescriptionsAPI, getReviewInsightsAPI, saveDescriptionAPI, suggestCombosAPI, suggestSpecialsAPI } from '../../../kitchen/kitchenAiNetwork';
+import { getVendorNutritionAPI, setNutritionHiddenAPI } from '../../../kitchen/nutritionNetwork';
 import { createMenuItemAPI, getMenuItemAPI } from '../../../food/vendor/menuNetwork';
 import { getItemSheetAPI } from '../../../food/discoveryNetwork';
 import { getReviewsByThemeAPI } from '../../../food/vendor/reviewsNetwork';
 import { comboItemInput, specialItemInput, specialRecipe } from '../../../../models/kitchen/assistantModel';
 import { isUrduScript } from '../../../../utils/script';
-import { addToPantry, listPantry } from '../../../myKitchen/pantryNetwork';
-import { getHomeRecipe, getMissingItems, suggestHomeRecipes } from '../../../myKitchen/recipesNetwork';
-import { deleteNutritionData, getNutritionSettings, getNutritionSummary, listHealthyPicks, saveNutritionSettings } from '../../../myKitchen/nutritionNetwork';
+import { addToPantryAPI, getPantryAPI } from '../../../myKitchen/pantryNetwork';
+import { getHomeRecipeAPI, getMissingItemsAPI, suggestHomeRecipesAPI } from '../../../myKitchen/recipesNetwork';
+import { deleteNutritionDataAPI, getNutritionSettingsAPI, getNutritionSummaryAPI, getHealthyPicksAPI, saveNutritionSettingsAPI } from '../../../myKitchen/nutritionNetwork';
 import { searchFoodAPI } from '../../../food/discoveryNetwork';
 import { addToCartAPI as addToShopCart, getCartAPI as getShopCart } from '../../../shopping/cartNetwork';
 import { handedExternalAPI, markDeliveredAPI } from '../../../food/vendor/ordersNetwork';
@@ -88,12 +89,31 @@ import { cartSerializer } from '../../../../serializers/shopping/cartSerializer'
 import { foodOrderSerializer, vendorFoodOrderSerializer, boardPageSerializer } from '../../../../serializers/food/orderSerializer';
 import { vendorPageSerializer, vendorCardsPageSerializer, itemSheetSerializer, foodSearchSerializer } from '../../../../serializers/food/discoverySerializer';
 import { vendorProfileSerializer } from '../../../../serializers/food/vendorSerializer';
-import { surplusCardsSerializer, reservationSerializer } from '../../../../serializers/kitchen/surplusSerializer';
+import { surplusCardsSerializer, reservationSerializer, surplusBoxSerializer, surplusBoxDetailSerializer } from '../../../../serializers/kitchen/surplusSerializer';
 import { riderOrderSerializer } from '../../../../serializers/food/riderSerializer';
 import { vendorMenuItemSerializer } from '../../../../serializers/food/menuSerializer';
 import { vendorReviewsPageSerializer } from '../../../../serializers/food/reviewSerializer';
+import { ingredientDetailSerializer, stockListSerializer, stockTakeSerializer, purchaseSerializer, purchasesPageSerializer, priceWatchSerializer } from '../../../../serializers/kitchen/stockSerializer';
+import { boardHintsSerializer, packingResultSerializer, announcementSerializer, aiUsageSerializer, receiptDraftSerializer, insightCardsSerializer, kitchenHubSerializer } from '../../../../serializers/kitchen/insightSerializer';
+import { recipeListSerializer, recipeSerializer } from '../../../../serializers/kitchen/recipeSerializer';
+import { forecastSerializer, prepSheetSerializer, shoppingListSerializer, accuracySerializer } from '../../../../serializers/kitchen/forecastSerializer';
+import { wasteSerializer, wasteSummarySerializer } from '../../../../serializers/kitchen/wasteSerializer';
+import { descriptionDraftsSerializer, specialIdeasSerializer, comboIdeasSerializer, reviewInsightsSerializer, vendorNutritionSerializer, dishNutritionSerializer, photoCheckSerializer } from '../../../../serializers/kitchen/assistantSerializer';
+import { tiffinPlanSerializer, tiffinSubscriptionSerializer, tiffinInboxSerializer, tiffinCalendarSerializer, tiffinDaySerializer, tiffinTomorrowSerializer, cateringRequestSerializer } from '../../../../serializers/kitchen/growthSerializer';
+import { ramadanSettingsSerializer, iftarNearbySerializer, storefrontSerializer, demandMapSerializer, menuInsightsSerializer, experimentSerializer, hygieneSerializer, batchSuggestionsSerializer, hygieneQueueSerializer } from '../../../../serializers/kitchen/reachSerializer';
+import { nutritionSettingsSerializer, nutritionSettingsResponseSerializer, nutritionSummarySerializer, healthyPicksSerializer, pantryListSerializer, pantryItemsSerializer, recipeIdeasSerializer, missingItemsSerializer, homeRecipeSerializer } from '../../../../serializers/myKitchen/myKitchenSerializer';
+import { voiceResultSerializer } from '../../../../serializers/ai/voiceSerializer';
+import { aiUsageReportSerializer, priceImportSerializer, referencePricesSerializer, staffNutritionFoodsSerializer, nutritionFoodImportSerializer, aliasSerializer, calendarEventSerializer, signatureListSerializer, signatureDishSerializer, adminDemandSerializer, growthLookupSerializer } from '../../../../serializers/kitchen/adminKitchenSerializer';
 
 installDummyApi();
+
+// The hub and a subscriber move, composed as their slices compose them.
+const getKitchenHub = async () => {
+  const [summary, cards, usage] = await Promise.all([getKitchenSummaryAPI(), getInsightCardsAPI(), getAiUsageAPI()]);
+  return required(kitchenHubSerializer({ summary, cards, usage }));
+};
+const moveSubscriber = async (code: string, { kind, ...body }: SubscriberMove) =>
+  required(tiffinSubscriptionSerializer(await moveSubscriberAPI(code, kind, body)));
 
 // Thursday 15 October 2026, 3 PM in Pakistan: Biryani Bazaar is open.
 const T0 = new Date('2026-10-15T10:00:00Z').getTime();
@@ -132,7 +152,7 @@ const orderBiryani = async (quantity = 2) => {
   return required(foodOrderSerializer(await placeFoodOrderAPI(checkout, key())));
 };
 
-const onHand = async (id: string) => (await getIngredient(id)).onHand;
+const onHand = async (id: string) => (required(ingredientDetailSerializer(await getIngredientAPI(id)))).onHand;
 
 beforeAll(() => {
   jest.useFakeTimers({ doNotFake: ['setTimeout', 'setInterval', 'setImmediate', 'nextTick', 'queueMicrotask'] });
@@ -147,22 +167,22 @@ beforeEach(async () => {
 
 describe('stock', () => {
   it('lists stock by segment with counts, in base units', async () => {
-    const all = await listStock('all', '');
+    const all = required(stockListSerializer(await getStockAPI('all', '')));
     expect(all.counts.all).toBeGreaterThan(25);
     expect(all.counts.negative).toBe(1);
     const chicken = all.items.find(i => i.id === 'ing_bb_chicken')!;
     expect(chicken).toMatchObject({ baseUnit: 'g', onHand: 16000, expiring: { on: '2026-10-16', qty: 4000 } });
-    const neg = await listStock('negative', '');
+    const neg = required(stockListSerializer(await getStockAPI('negative', '')));
     expect(neg.items.map(i => i.name)).toEqual(['Cream']);
-    expect((await listStock('all', 'tamatar')).items.map(i => i.name)).toEqual(['Tomato']);
+    expect((required(stockListSerializer(await getStockAPI('all', 'tamatar')))).items.map(i => i.name)).toEqual(['Tomato']);
   });
 
   it('records a six-item stock take and shows the movements (QA 5)', async () => {
     const ids = ['ing_bb_chicken', 'ing_bb_rice', 'ing_bb_onion', 'ing_bb_yoghurt', 'ing_bb_cream', 'ing_bb_salt'];
-    const r = await recordStockTake(ids.map((ingredientId, n) => ({ ingredientId, counted: [15000, 22000, 11000, 1500, 500, 5000][n] })));
+    const r = required(stockTakeSerializer(await recordStockTakeAPI(ids.map((ingredientId, n) => ({ ingredientId, counted: [15000, 22000, 11000, 1500, 500, 5000][n] })))));
     expect(r.adjusted).toBe(3);
     expect(r.lines.find(l => l.ingredientId === 'ing_bb_cream')).toMatchObject({ before: -200, counted: 500, change: 700 });
-    const cream = await getIngredient('ing_bb_cream');
+    const cream = required(ingredientDetailSerializer(await getIngredientAPI('ing_bb_cream')));
     expect(cream.onHand).toBe(500);
     expect(cream.state).toBe('low');
     expect(cream.movements[0]).toMatchObject({ kind: 'count', qty: 700 });
@@ -179,45 +199,45 @@ describe('stock', () => {
     await asVendor();
     await rejectOrderAPI(o2.id, 'too_busy');
     expect(await onHand('ing_bb_chicken')).toBe(before - 300);
-    const detail = await getIngredient('ing_bb_chicken');
+    const detail = required(ingredientDetailSerializer(await getIngredientAPI('ing_bb_chicken')));
     expect(detail.movements.find(m => m.kind === 'usage' && m.orderCode === o1.code)?.qty).toBe(-300);
   });
 
   it('sells a dish out when its recipe can’t be made, and a purchase brings it back (QA 21)', async () => {
     // 7 PM, when BBQ is served. Cream is recorded below zero: Malai Boti can't be made.
     jest.setSystemTime(T0 + 4 * 60 * MINUTE);
-    const hints = await getBoardHints();
+    const hints = required(boardHintsSerializer(await getBoardHintsAPI()));
     expect(hints.soldOutByStock.map(x => x.itemId)).toContain('mi_malai');
     const page = required(vendorPageSerializer(await getVendorPageAPI('biryani-bazaar', GULBERG)));
     const malai = page.menu.flatMap(c => c.items).find(i => i.id === 'mi_malai')!;
     expect(malai).toMatchObject({ available: false, unavailableReason: 'ingredients' });
-    const p = await createPurchase({ source: 'voice', supplierName: 'Gulberg Cash & Carry', lines: [{ ingredientId: 'ing_bb_cream', qty: 2, unit: 'kg', total: 1800 }] });
+    const p = required(purchaseSerializer(await createPurchaseAPI({ source: 'voice', supplierName: 'Gulberg Cash & Carry', lines: [{ ingredientId: 'ing_bb_cream', qty: 2, unit: 'kg', total: 1800 }] })));
     expect(p.lines[0]).toMatchObject({ qty: 2000, total: 1800, costPerBase: 0.9 });
     expect(await onHand('ing_bb_cream')).toBe(1800);
-    expect((await getBoardHints()).soldOutByStock.map(x => x.itemId)).not.toContain('mi_malai');
+    expect((required(boardHintsSerializer(await getBoardHintsAPI()))).soldOutByStock.map(x => x.itemId)).not.toContain('mi_malai');
     const after = (required(vendorPageSerializer(await getVendorPageAPI('biryani-bazaar', GULBERG)))).menu.flatMap(c => c.items).find(i => i.id === 'mi_malai')!;
     expect(after.available).toBe(true);
   });
 
   it('adds a purchase with a new ingredient and converts the units', async () => {
-    const p = await createPurchase({
+    const p = required(purchaseSerializer(await createPurchaseAPI({
       source: 'receipt',
       lines: [
         { ingredientId: 'ing_bb_tomato', qty: 5, unit: 'kg', total: 1200 },
         { newIngredient: { name: 'Shimla mirch (capsicum)', category: 'vegetables', baseUnit: 'g' }, qty: 1, unit: 'kg', total: 280 },
       ],
-    });
+    })));
     expect(p.total).toBe(1480);
     expect(p.lines.map(l => l.qty)).toEqual([5000, 1000]);
-    const list = await listPurchases(1, 20);
+    const list = required(purchasesPageSerializer(await getPurchasesAPI(1, 20)));
     expect(list.items[0].id).toBe(p.id);
     expect(list.weekTotal).toBeGreaterThanOrEqual(1480);
-    const err = await failure(createPurchase({ source: 'manual', lines: [{ ingredientId: 'ing_bb_tomato', qty: 2, unit: 'L', total: 100 }] }));
+    const err = await failure(createPurchaseAPI({ source: 'manual', lines: [{ ingredientId: 'ing_bb_tomato', qty: 2, unit: 'L', total: 100 }] }).then(raw => required(purchaseSerializer(raw))));
     expect(err.code).toBe('VALIDATION_FAILED');
   });
 
   it('shows ingredients above the city price with a trend (QA 11)', async () => {
-    const w = await getPriceWatch();
+    const w = required(priceWatchSerializer(await getPriceWatchAPI()));
     const tomato = w.items.find(i => i.name === 'Tomato')!;
     expect(tomato.diffPct).toBeGreaterThanOrEqual(10);
     expect(tomato.trend).toHaveLength(8);
@@ -227,17 +247,17 @@ describe('stock', () => {
 
 describe('recipes and costs', () => {
   it('costs a recipe against the target and lists the dishes that need one (QA 8, 9)', async () => {
-    const list = await listRecipes(false);
+    const list = required(recipeListSerializer(await getRecipesAPI(false)));
     expect(list.targetFoodCostPct).toBe(40);
     const mutton = list.items.find(r => r.itemId === 'mi_mutton_karahi')!;
     expect(mutton.cost?.overTarget).toBe(true);
-    const needs = await listRecipes(true);
+    const needs = required(recipeListSerializer(await getRecipesAPI(true)));
     expect(needs.items.map(r => r.itemId)).toEqual(expect.arrayContaining(['mi_sindhi_biryani', 'mi_kheer', 'mi_soft']));
     expect(needs.items.every(r => r.status !== 'complete')).toBe(true);
   });
 
   it('saves a recipe and answers its cost to make', async () => {
-    const r = await saveRecipe('mi_sindhi_biryani', null, {
+    const r = required(recipeSerializer(await saveRecipeAPI('mi_sindhi_biryani', null, {
       yield: 1,
       lines: [
         { ingredientId: 'ing_bb_chicken', qty: 150 },
@@ -247,13 +267,13 @@ describe('recipes and costs', () => {
       addOns: [],
       packaging: [{ ingredientId: 'ing_bb_box_biryani', qty: 1 }],
       signature: { on: false, creatorName: null },
-    });
+    })));
     expect(r.cost?.sellPrice).toBe(780);
     expect(r.cost?.toMake).toBeGreaterThan(100);
     expect(r.cost!.keep).toBe(780 - r.cost!.toMake);
-    const back = await getRecipe('mi_sindhi_biryani');
+    const back = required(recipeSerializer(await getRecipeAPI('mi_sindhi_biryani')));
     expect(back.lines).toHaveLength(3);
-    const err = await failure(saveRecipe('mi_sindhi_biryani', null, { yield: 1, lines: [], addOns: [], packaging: [], signature: { on: false, creatorName: null } }));
+    const err = await failure(saveRecipeAPI('mi_sindhi_biryani', null, { yield: 1, lines: [], addOns: [], packaging: [], signature: { on: false, creatorName: null } }).then(raw => required(recipeSerializer(raw))));
     expect(err.code).toBe('VALIDATION_FAILED');
   });
 });
@@ -267,7 +287,7 @@ describe('the hub', () => {
     expect(hub.cards.map(c => c.kind)).toEqual(expect.arrayContaining(['negative_stock', 'food_cost_high']));
     expect(hub.summary.stock.negative).toBe(1);
     expect(hub.usage?.left).toBe(300);
-    await snoozeInsightCard(hub.cards[0].id);
+    await snoozeInsightCardAPI(hub.cards[0].id);
     expect((await getKitchenHub()).cards.some(c => c.id === hub.cards[0].id)).toBe(false);
     jest.setSystemTime(T0 + 25 * 60 * MINUTE);
     expect((await getKitchenHub()).cards.some(c => c.kind === 'expiring_stock')).toBe(true);
@@ -276,37 +296,37 @@ describe('the hub', () => {
 
 describe('forecast and prep', () => {
   it('forecasts with a range from ten weeks, and adjusting a dish moves the prep sheet (QA 14)', async () => {
-    const f = await getForecast('2026-10-16');
+    const f = required(forecastSerializer(await getForecastAPI('2026-10-16')));
     expect(f.learning).toBe(false);
     const biryani = f.items.find(i => i.itemId === 'mi_chicken_biryani')!;
     expect(biryani.low).toBeLessThanOrEqual(biryani.expected);
     expect(biryani.high).toBeGreaterThanOrEqual(biryani.expected);
-    const chicken = (s: Awaited<ReturnType<typeof getPrepSheet>>) => s.groups.flatMap(g => g.lines).find(l => l.ingredientId === 'ing_bb_chicken')!.qty;
-    const before = chicken(await getPrepSheet('2026-10-16'));
-    await adjustForecast('2026-10-16', 'mi_chicken_biryani', biryani.expected + 10);
-    expect(chicken(await getPrepSheet('2026-10-16'))).toBe(before + 1500);
-    const list = await getShoppingList('2026-10-16');
+    const chicken = (s: NonNullable<ReturnType<typeof prepSheetSerializer>>) => s.groups.flatMap(g => g.lines).find(l => l.ingredientId === 'ing_bb_chicken')!.qty;
+    const before = chicken(required(prepSheetSerializer(await getPrepSheetAPI('2026-10-16'))));
+    await adjustForecastAPI('2026-10-16', 'mi_chicken_biryani', biryani.expected + 10);
+    expect(chicken(required(prepSheetSerializer(await getPrepSheetAPI('2026-10-16'))))).toBe(before + 1500);
+    const list = required(shoppingListSerializer(await getShoppingListAPI('2026-10-16')));
     expect(list.shareText).toContain('To buy for');
-    expect((await getForecastAccuracy()).accuracyPct).not.toBeNull();
+    expect((required(accuracySerializer(await getForecastAccuracyAPI()))).accuracyPct).not.toBeNull();
   });
 
   it('says it is still learning with under 14 days of history (QA 13)', async () => {
     await as('nani@metromatrix.app');
-    const f = await getForecast('2026-10-16');
+    const f = required(forecastSerializer(await getForecastAPI('2026-10-16')));
     expect(f.learning).toBe(true);
     const qorma = f.items.find(i => i.itemId === 'mi_nani_qorma')!;
     expect(qorma.high - qorma.low).toBeGreaterThanOrEqual(qorma.expected);
-    expect((await getForecastAccuracy()).accuracyPct).toBeNull();
+    expect((required(accuracySerializer(await getForecastAccuracyAPI()))).accuracyPct).toBeNull();
   });
 });
 
 describe('waste and donations', () => {
   it('logs waste at what it cost and counts rescued meals', async () => {
-    const w = await logWaste([{ ingredientId: 'ing_bb_onion', qty: 2, unit: 'kg', reason: 'spoiled' }]);
+    const w = required(wasteSerializer(await logWasteAPI([{ ingredientId: 'ing_bb_onion', qty: 2, unit: 'kg', reason: 'spoiled' }])));
     expect(w.lines[0]).toMatchObject({ qty: 2000, reason: 'spoiled' });
     expect(w.cost).toBeGreaterThan(0);
-    await logDonation({ meals: 8, to: 'Edhi centre, Gulberg' });
-    const s = await getWasteSummary('7d');
+    await logDonationAPI({ meals: 8, to: 'Edhi centre, Gulberg' });
+    const s = required(wasteSummarySerializer(await getWasteSummaryAPI('7d')));
     expect(s.cost).toBeGreaterThanOrEqual(w.cost);
     expect(s.mealsRescued.total).toBeGreaterThanOrEqual(20);
   });
@@ -314,13 +334,13 @@ describe('waste and donations', () => {
 
 describe('the board', () => {
   it('can require a packing photo before ready, and checks it if the assistant is on', async () => {
-    await updateKitchenSettings({ packingPhoto: 'required' });
+    await updateKitchenSettingsAPI({ packingPhoto: 'required' });
     const o = await orderBiryani(1);
     await asVendor();
     await acceptOrderAPI(o.id, 15);
     await startPreparingAPI(o.id);
     expect((await failure(markReadyAPI(o.id).then(raw => required(vendorFoodOrderSerializer(raw))))).code).toBe('PACKING_PHOTO_REQUIRED');
-    const r = await attachPackingPhoto(o.id, 'https://res.cloudinary.com/demo/packed.jpg');
+    const r = required(packingResultSerializer(await attachPackingPhotoAPI(o.id, 'https://res.cloudinary.com/demo/packed.jpg')));
     expect(r.check?.note).toBeTruthy();
     await markReadyAPI(o.id);
     await asCustomer();
@@ -330,10 +350,10 @@ describe('the board', () => {
   it('speaks a new order in Urdu or English', async () => {
     const o = await orderBiryani(2);
     await asVendor();
-    const ur = await getAnnouncement(o.id, 'ur');
+    const ur = required(announcementSerializer(await getAnnouncementAPI(o.id, 'ur')));
     expect(ur.text).toMatch(/^نیا آرڈر/);
     expect(ur.ttsUrl).toBeNull();
-    const en = await getAnnouncement(o.id, 'en');
+    const en = required(announcementSerializer(await getAnnouncementAPI(o.id, 'en')));
     expect(en.text).toContain('2 Chicken Biryani');
   });
 
@@ -364,7 +384,7 @@ describe('Bachat Box', () => {
   });
 
   it('shows a new box nearby, and the last one goes to one customer only (QA 22, 23)', async () => {
-    const b = await createBox(box());
+    const b = required(surplusBoxSerializer(await createBoxAPI(box())));
     await asCustomer();
     const near = required(surplusCardsSerializer(await getSurplusNearbyAPI(GULBERG)));
     expect(near.map(x => x.id)).toContain(b.id);
@@ -377,13 +397,13 @@ describe('Bachat Box', () => {
     expect(err.code).toBe('SURPLUS_SOLD_OUT');
     expect(err.details).toMatchObject({ left: 0 });
     await asVendor();
-    const c = await collectReservation(r1.code.toLowerCase());
+    const c = required(reservationSerializer(await collectReservationAPI(r1.code.toLowerCase())));
     expect(c).toMatchObject({ status: 'collected', payment: { status: 'paid' } });
-    expect((await getBox(b.id)).collected).toBe(1);
+    expect((required(surplusBoxDetailSerializer(await getBoxAPI(b.id)))).collected).toBe(1);
   });
 
   it('refuses a box that isn’t a saving', async () => {
-    expect((await failure(createBox({ ...box(), price: 1100 }))).code).toBe('VALIDATION_FAILED');
+    expect((await failure(createBoxAPI({ ...box(), price: 1100 }).then(raw => required(surplusBoxSerializer(raw))))).code).toBe('VALIDATION_FAILED');
   });
 });
 
@@ -392,7 +412,7 @@ describe('tiffin', () => {
 
   it('puts a new plan on the kitchen’s page (QA 25)', async () => {
     await asNani();
-    const p = await createTiffinPlan({
+    const p = required(tiffinPlanSerializer(await createTiffinPlanAPI({
       name: 'Breakfast paratha box',
       meal: 'breakfast',
       days: [1, 2, 3, 4, 5, 6],
@@ -403,7 +423,7 @@ describe('tiffin', () => {
       capacity: 10,
       skipCutoffHours: 10,
       rotation: [1, 2, 3, 4, 5, 6].map(weekday => ({ weekday, itemIds: [], note: 'Aloo paratha, omelette and chai' })),
-    });
+    })));
     expect(p).toMatchObject({ perMeal: 300, mealsPerPeriod: 6, seatsLeft: 10 });
     await asCustomer();
     const page = required(vendorPageSerializer(await getVendorPageAPI('nani-ki-handi', GULBERG)));
@@ -413,14 +433,14 @@ describe('tiffin', () => {
 
   it('starts pending, is approved, and the calendar shows the deliveries (QA 26)', async () => {
     await asCustomer();
-    const s = await subscribeTiffin('tp_nani_lunch', { startDate: '2026-10-16', addressId: 'ad_customer_home', paymentMethod: 'transfer' }, key());
+    const s = required(tiffinSubscriptionSerializer(await subscribeTiffinAPI('tp_nani_lunch', { startDate: '2026-10-16', addressId: 'ad_customer_home', paymentMethod: 'transfer' }, key())));
     expect(s).toMatchObject({ status: 'pending', period: null });
     await as('nani@metromatrix.app');
-    expect((await listTiffinSubscriptions('pending')).items.map(x => x.code)).toContain(s.code);
+    expect((required(tiffinInboxSerializer(await getTiffinSubscriptionsAPI('pending')))).items.map(x => x.code)).toContain(s.code);
     const a = await moveSubscriber(s.code, { kind: 'approve' });
     expect(a).toMatchObject({ status: 'active', period: { from: '2026-10-16', to: '2026-10-22', amount: 2300, payment: { status: 'awaiting_transfer' } } });
     await asCustomer();
-    const cal = await getTiffinCalendar(s.code, '2026-10');
+    const cal = required(tiffinCalendarSerializer(await getTiffinCalendarAPI(s.code, '2026-10')));
     const state = (d: string) => cal.days.find(x => x.date === d)!.state;
     expect([state('2026-10-15'), state('2026-10-16'), state('2026-10-17'), state('2026-10-19')]).toEqual(['before_start', 'upcoming', 'off', 'upcoming']);
     expect(cal.days.find(x => x.date === '2026-10-16')!.dishes).toEqual(['Chicken pulao']);
@@ -428,29 +448,29 @@ describe('tiffin', () => {
 
   it('skips a day before its cut-off, not after, and takes it off the next period (QA 27)', async () => {
     await asCustomer();
-    const s = await subscribeTiffin('tp_nani_lunch', { startDate: '2026-10-16', addressId: 'ad_customer_home', paymentMethod: 'cash' }, key());
+    const s = required(tiffinSubscriptionSerializer(await subscribeTiffinAPI('tp_nani_lunch', { startDate: '2026-10-16', addressId: 'ad_customer_home', paymentMethod: 'cash' }, key())));
     await as('nani@metromatrix.app');
     await moveSubscriber(s.code, { kind: 'approve' });
     await asCustomer();
-    expect(await skipTiffinDay(s.code, '2026-10-19', true)).toMatchObject({ state: 'skipped', canUnskip: true });
+    expect(required(tiffinDaySerializer(await skipTiffinDayAPI(s.code, '2026-10-19', true)))).toMatchObject({ state: 'skipped', canUnskip: true });
     // Thursday 11 PM: Friday's cut-off (10:30 PM) has passed.
     jest.setSystemTime(T0 + 8 * 60 * MINUTE);
-    const err = await failure(skipTiffinDay(s.code, '2026-10-16', true));
+    const err = await failure(skipTiffinDayAPI(s.code, '2026-10-16', true).then(raw => required(tiffinDaySerializer(raw))));
     expect(err.code).toBe('TIFFIN_SKIP_CLOSED');
     expect(err.details).toMatchObject({ cutoffAt: '2026-10-15T17:30:00.000Z' });
-    const day = (await getTiffinCalendar(s.code, '2026-10')).days.find(x => x.date === '2026-10-16')!;
+    const day = (required(tiffinCalendarSerializer(await getTiffinCalendarAPI(s.code, '2026-10')))).days.find(x => x.date === '2026-10-16')!;
     expect(day).toMatchObject({ canSkip: false, state: 'ordered' });
     // The next week's period is Rs 460 less for the skipped Monday.
     jest.setSystemTime(Date.parse('2026-10-23T03:00:00Z'));
-    expect((await getMyTiffin(s.code)).period).toMatchObject({ from: '2026-10-23', credit: 1, amount: 1840 });
+    expect((required(tiffinSubscriptionSerializer(await getMyTiffinAPI(s.code)))).period).toMatchObject({ from: '2026-10-23', credit: 1, amount: 1840 });
   });
 
   it('makes tomorrow’s tiffins scheduled orders on the board at the cut-off (QA 28)', async () => {
     await asCustomer();
-    const s = await subscribeTiffin('tp_nani_lunch', { startDate: '2026-10-16', addressId: 'ad_customer_home', paymentMethod: 'transfer' }, key());
+    const s = required(tiffinSubscriptionSerializer(await subscribeTiffinAPI('tp_nani_lunch', { startDate: '2026-10-16', addressId: 'ad_customer_home', paymentMethod: 'transfer' }, key())));
     await as('nani@metromatrix.app');
     await moveSubscriber(s.code, { kind: 'approve' });
-    expect((await getTiffinTomorrow()).plans[0]).toMatchObject({ name: 'Office lunch tiffin', count: 2, dishes: ['Chicken pulao'] });
+    expect((required(tiffinTomorrowSerializer(await getTiffinTomorrowAPI()))).plans[0]).toMatchObject({ name: 'Office lunch tiffin', count: 2, dishes: ['Chicken pulao'] });
     const before = (required(boardPageSerializer(await getBoardAPI('active')))).items.filter(c => c.origin.kind === 'tiffin');
     expect(before).toHaveLength(0);
     jest.setSystemTime(T0 + 8 * 60 * MINUTE);
@@ -462,7 +482,7 @@ describe('tiffin', () => {
 
 describe('catering', () => {
   const request = () =>
-    requestCatering({
+    requestCateringAPI({
       vendorId: 'fb_resto',
       date: '2026-10-31',
       time: '19:30',
@@ -472,7 +492,7 @@ describe('catering', () => {
       budget: 45000,
       mode: 'delivery',
       addressId: 'ad_customer_home',
-    });
+    }).then(raw => required(cateringRequestSerializer(raw)));
   const quote = (unitPrice: number) => ({
     lines: [
       { itemId: 'mi_chicken_biryani', qty: 60, unitPrice },
@@ -488,38 +508,38 @@ describe('catering', () => {
     const r = await request();
     expect(r).toMatchObject({ status: 'requested', canAccept: false });
     await asVendor();
-    const q = await sendQuote(r.code, quote(520));
+    const q = required(cateringRequestSerializer(await sendQuoteAPI(r.code, quote(520))));
     expect(q).toMatchObject({ status: 'quoted', quotes: [{ version: 1, total: 39300, advance: 11790, state: 'current' }] });
     await asCustomer();
-    const a = await acceptQuote(r.code, 1);
+    const a = required(cateringRequestSerializer(await acceptQuoteAPI(r.code, 1)));
     expect(a).toMatchObject({ status: 'accepted', acceptedVersion: 1, advance: { amount: 11790, status: 'awaiting_transfer' }, balance: 27510 });
-    expect((await submitAdvanceProof(r.code, { transactionId: 'IBFT-77120', imageUrl: null })).advance).toMatchObject({ status: 'proof_submitted', reference: 'IBFT-77120' });
+    expect((required(cateringRequestSerializer(await submitAdvanceProofAPI(r.code, { transactionId: 'IBFT-77120', imageUrl: null })))).advance).toMatchObject({ status: 'proof_submitted', reference: 'IBFT-77120' });
     await asVendor();
-    expect(await confirmAdvance(r.code)).toMatchObject({ status: 'confirmed', advance: { status: 'paid' } });
+    expect(required(cateringRequestSerializer(await confirmAdvanceAPI(r.code)))).toMatchObject({ status: 'confirmed', advance: { status: 'paid' } });
   });
 
   it('refuses an outdated quote and an expired one (QA 30)', async () => {
     await asCustomer();
     const r = await request();
     await asVendor();
-    await sendQuote(r.code, quote(520));
-    await sendQuote(r.code, quote(480));
+    await sendQuoteAPI(r.code, quote(520));
+    await sendQuoteAPI(r.code, quote(480));
     await asCustomer();
-    const outdated = await failure(acceptQuote(r.code, 1));
+    const outdated = await failure(acceptQuoteAPI(r.code, 1).then(raw => required(cateringRequestSerializer(raw))));
     expect(outdated.code).toBe('QUOTE_OUTDATED');
     expect(outdated.details).toMatchObject({ latest: 2 });
-    expect((await getMyCatering(r.code)).quotes.map(x => x.state)).toEqual(['outdated', 'current']);
+    expect((required(cateringRequestSerializer(await getMyCateringRequestAPI(r.code)))).quotes.map(x => x.state)).toEqual(['outdated', 'current']);
     jest.setSystemTime(Date.parse('2026-10-23T00:00:00Z'));
-    expect((await failure(acceptQuote(r.code, 2))).code).toBe('QUOTE_EXPIRED');
+    expect((await failure(acceptQuoteAPI(r.code, 2).then(raw => required(cateringRequestSerializer(raw))))).code).toBe('QUOTE_EXPIRED');
   });
 });
 
 describe('Ramadan', () => {
   it('keeps the switch off outside the event and the month before it, with the reason (QA 32)', async () => {
-    const r = await getRamadan();
+    const r = required(ramadanSettingsSerializer(await getRamadanAPI()));
     expect(r).toMatchObject({ state: 'none', enabled: false, opensOn: '2027-01-09', event: { name: 'Ramadan 1448', startsOn: '2027-02-08' } });
     expect(ramadanSwitch(r)).toEqual({ disabled: true, reason: 'Ramadan mode opens on Sat 9 Jan, a month before the first fast (Mon 8 Feb).' });
-    const e = await failure(updateRamadan({ enabled: true }));
+    const e = await failure(updateRamadanAPI({ enabled: true }).then(raw => required(ramadanSettingsSerializer(raw))));
     expect(e.code).toBe('RAMADAN_NOT_ACTIVE');
     expect(e.details).toMatchObject({ opensOn: '2027-01-09' });
   });
@@ -527,12 +547,12 @@ describe('Ramadan', () => {
   it('turns on in Ramadan, shows the hours on the page and in "Iftar near you"', async () => {
     jest.setSystemTime(Date.parse('2027-02-12T08:00:00Z'));
     await asVendor();
-    expect(ramadanSwitch(await getRamadan()).disabled).toBe(false);
-    const on = await updateRamadan({ enabled: true, iftar: { from: '17:45', to: '19:15' } });
+    expect(ramadanSwitch(required(ramadanSettingsSerializer(await getRamadanAPI()))).disabled).toBe(false);
+    const on = required(ramadanSettingsSerializer(await updateRamadanAPI({ enabled: true, iftar: { from: '17:45', to: '19:15' } })));
     expect(on).toMatchObject({ state: 'active', enabled: true, iftar: { label: '5:45 PM – 7:15 PM' } });
     await asCustomer();
     expect((required(vendorPageSerializer(await getVendorPageAPI('biryani-bazaar', GULBERG)))).ramadan).toMatchObject({ iftar: { from: '17:45', to: '19:15' }, iftarPreorderOnly: true });
-    const near = await listIftarNearby(GULBERG);
+    const near = required(iftarNearbySerializer(await getIftarNearbyAPI(GULBERG)));
     expect(near.state).toBe('active');
     expect(near.items.map(i => i.slug)).toEqual(['biryani-bazaar']);
   });
@@ -540,7 +560,7 @@ describe('Ramadan', () => {
 
 describe('the storefront', () => {
   it('gives the kitchen its link and QR, and counts the orders they bring (QA 33, 34)', async () => {
-    const before = await getStorefront();
+    const before = required(storefrontSerializer(await getStorefrontAPI()));
     expect(before).toMatchObject({ url: 'https://metromatrix.app/s/biryani-bazaar', qrUrl: 'https://metromatrix.app/s/biryani-bazaar?via=qr', slug: 'biryani-bazaar' });
     expect(before.shareText).toContain(before.url);
     const viaLink = async (source: FoodCheckoutInput['source']) => {
@@ -554,7 +574,7 @@ describe('the storefront', () => {
     // Another kitchen's link isn't this one's to count.
     await viaLink({ kind: 'link', slug: 'smash-lab' });
     await asVendor();
-    const after = await getStorefront();
+    const after = required(storefrontSerializer(await getStorefrontAPI()));
     expect(after.stats.link - before.stats.link).toBe(1);
     expect(after.stats.qr - before.stats.qr).toBe(1);
     expect(after.stats.app - before.stats.app).toBe(1);
@@ -563,21 +583,21 @@ describe('the storefront', () => {
 
 describe('demand', () => {
   it('sends only cells with enough searches, and says how many it held back (QA 35)', async () => {
-    const d = await getDemand();
+    const d = required(demandMapSerializer(await getDemandAPI()));
     expect(d.minCount).toBe(10);
     expect(d.cells.length).toBeGreaterThan(5);
     expect(d.cells.every(c => c.searches >= 10)).toBe(true);
     expect(d.hidden).toBeGreaterThan(0);
     expect(d.hourCurve.area).toHaveLength(24);
     expect(d.topUnmet[0].unmetShare).toBeGreaterThan(0.5);
-    const late = await getDemand({ hour: 23 });
+    const late = required(demandMapSerializer(await getDemandAPI({ hour: 23 })));
     expect(late.total).toBeLessThan(d.total);
   });
 });
 
 describe('menu insights and experiments', () => {
   it('puts each dish in a group with a suggestion (QA 36)', async () => {
-    const m = await getMenuInsights();
+    const m = required(menuInsightsSerializer(await getMenuInsightsAPI()));
     const seekh = m.items.find(i => i.itemId === 'mi_seekh')!;
     expect(seekh).toMatchObject({ quadrant: 'star', suggestion: { kind: 'keep' } });
     const naan = m.items.find(i => i.itemId === 'mi_naan')!;
@@ -586,30 +606,30 @@ describe('menu insights and experiments', () => {
   });
 
   it('tests a price, reports a result at the end, and keeps or goes back (QA 37)', async () => {
-    const e = await startExperiment({ itemId: 'mi_seekh', change: { kind: 'price', price: 990 }, days: 3 });
+    const e = required(experimentSerializer(await startExperimentAPI({ itemId: 'mi_seekh', change: { kind: 'price', price: 990 }, days: 3 })));
     expect(e).toMatchObject({ status: 'running', change: { oldPrice: 900, price: 990 }, result: null });
-    expect((await getMenuInsights()).items.find(i => i.itemId === 'mi_seekh')).toMatchObject({ price: 990, experimentRunning: true });
-    expect((await failure(startExperiment({ itemId: 'mi_seekh', change: { kind: 'price', price: 950 }, days: 3 }))).code).toBe('EXPERIMENT_RUNNING');
-    expect((await failure(startExperiment({ itemId: 'mi_chicken_biryani', change: { kind: 'price', price: 700 }, days: 3 }))).code).toBe('EXPERIMENT_NOT_SUPPORTED');
-    expect((await failure(decideExperiment(e.id, { kind: 'keep' }))).code).toBe('INVALID_TRANSITION');
+    expect((required(menuInsightsSerializer(await getMenuInsightsAPI()))).items.find(i => i.itemId === 'mi_seekh')).toMatchObject({ price: 990, experimentRunning: true });
+    expect((await failure(startExperimentAPI({ itemId: 'mi_seekh', change: { kind: 'price', price: 950 }, days: 3 }).then(raw => required(experimentSerializer(raw))))).code).toBe('EXPERIMENT_RUNNING');
+    expect((await failure(startExperimentAPI({ itemId: 'mi_chicken_biryani', change: { kind: 'price', price: 700 }, days: 3 }).then(raw => required(experimentSerializer(raw))))).code).toBe('EXPERIMENT_NOT_SUPPORTED');
+    expect((await failure(decideExperimentAPI(e.id, { kind: 'keep' }).then(raw => required(experimentSerializer(raw))))).code).toBe('INVALID_TRANSITION');
     jest.setSystemTime(T0 + 4 * 86_400_000);
     await asVendor();
-    const done = await getExperiment(e.id);
+    const done = required(experimentSerializer(await getExperimentAPI(e.id)));
     expect(done.status).toBe('done');
     expect(done.result).toMatchObject({ verdict: expect.stringMatching(/keep|adjust|drop/), before: { perDay: expect.any(Number) }, during: { perDay: expect.any(Number) } });
-    expect((await decideExperiment(e.id, { kind: 'drop' })).status).toBe('dropped');
-    expect((await getMenuInsights()).items.find(i => i.itemId === 'mi_seekh')).toMatchObject({ price: 900, experimentRunning: false });
+    expect((required(experimentSerializer(await decideExperimentAPI(e.id, { kind: 'drop' })))).status).toBe('dropped');
+    expect((required(menuInsightsSerializer(await getMenuInsightsAPI()))).items.find(i => i.itemId === 'mi_seekh')).toMatchObject({ price: 900, experimentRunning: false });
   });
 });
 
 describe('story and hygiene', () => {
   it('shows the verified badge only after staff verify the checklist (QA 38)', async () => {
     await as('nani@metromatrix.app');
-    await saveStory({ text: 'Nani has cooked for the whole street since 1985; now she cooks for you.', cookName: 'Nasreen Begum', photoUrls: [], videoUrl: null });
-    const h = await getHygiene();
+    await saveStoryAPI({ text: 'Nani has cooked for the whole street since 1985; now she cooks for you.', cookName: 'Nasreen Begum', photoUrls: [], videoUrl: null });
+    const h = required(hygieneSerializer(await getHygieneAPI()));
     expect(h.status).toBe('self_declared');
-    await setHygieneItem('water', { done: true, evidenceUrl: 'https://res.cloudinary.com/demo/filter.jpg' });
-    expect((await requestHygieneVerification()).status).toBe('pending');
+    await setHygieneItemAPI('water', { done: true, evidenceUrl: 'https://res.cloudinary.com/demo/filter.jpg' });
+    expect((required(hygieneSerializer(await requestHygieneVerificationAPI()))).status).toBe('pending');
     const badges = async () => {
       await asCustomer();
       const page = required(vendorPageSerializer(await getVendorPageAPI('nani-ki-handi', GULBERG)));
@@ -621,8 +641,8 @@ describe('story and hygiene', () => {
     expect(pending.card).not.toContain('hygiene_verified');
     expect(pending.story).toBe('Nasreen Begum');
     await asStaff();
-    expect((await listHygieneQueue()).map(x => x.businessId)).toContain('b_nani');
-    expect((await verifyHygiene('b_nani')).status).toBe('verified');
+    expect((required(hygieneQueueSerializer(await getHygieneQueueAPI()))).map(x => x.businessId)).toContain('b_nani');
+    expect((required(hygieneSerializer(await verifyHygieneAPI('b_nani')))).status).toBe('verified');
     const verified = await badges();
     expect(verified.page).toBe('verified');
     expect(verified.card).toContain('hygiene_verified');
@@ -630,10 +650,10 @@ describe('story and hygiene', () => {
 
   it('won’t ask for verification before every item is ticked', async () => {
     await as('nani@metromatrix.app');
-    await setHygieneItem('pests', { done: false });
-    const e = await failure(requestHygieneVerification());
+    await setHygieneItemAPI('pests', { done: false });
+    const e = await failure(requestHygieneVerificationAPI().then(raw => required(hygieneSerializer(raw))));
     expect(e.code).toBe('HYGIENE_INCOMPLETE');
-    expect((await getHygiene()).status).toBe('none');
+    expect((required(hygieneSerializer(await getHygieneAPI()))).status).toBe('none');
   });
 });
 
@@ -644,7 +664,7 @@ describe('batching', () => {
     await asVendor();
     await acceptOrderAPI(a.id, 20);
     await acceptOrderAPI(b.id, 20);
-    const s = await getBatchSuggestions(a.id);
+    const s = required(batchSuggestionsSerializer(await getBatchSuggestionsAPI(a.id)));
     expect(s[0]).toMatchObject({ orderId: b.id, sameDirection: true, extraKm: 0 });
     await clearTokens();
     await signInAs('biryani-bazaar.ali');
@@ -663,32 +683,32 @@ describe('batching', () => {
 
 describe('the assistant’s drafts (5C)', () => {
   it('drafts English and Urdu descriptions, and changes nothing until one is saved (QA 40)', async () => {
-    const [naan] = await draftDescriptions(['mi_naan']);
+    const [naan] = required(descriptionDraftsSerializer(await draftDescriptionsAPI(['mi_naan'])));
     expect(naan.en).toMatch(/^Naan: /);
     expect(isUrduScript(naan.ur)).toBe(true);
     expect((required(vendorMenuItemSerializer(await getMenuItemAPI('mi_naan')))).description).toBe(naan.current.en);
-    expect((await getAiUsage()).used).toBe(1);
-    await saveDescription('mi_naan', { description: naan.en, descriptionUr: naan.ur });
+    expect((required(aiUsageSerializer(await getAiUsageAPI()))).used).toBe(1);
+    await saveDescriptionAPI('mi_naan', { description: naan.en, descriptionUr: naan.ur });
     await asCustomer();
     const sheet = required(itemSheetSerializer(await getItemSheetAPI('mi_naan')));
     expect(sheet).toMatchObject({ description: naan.en, descriptionUr: naan.ur });
   });
 
   it('suggests specials from expiring stock and adds one as a hidden dish with its recipe card (QA 41)', async () => {
-    const { items, category } = await suggestSpecials();
+    const { items, category } = required(specialIdeasSerializer(await suggestSpecialsAPI()));
     const tikka = items.find(i => i.title === 'Chicken tikka plate')!;
     expect(tikka.usesExpiring).toContain('Chicken (curry cut)');
     expect(tikka.cost.foodCostPct).toBeLessThanOrEqual(40);
     const dish = required(vendorMenuItemSerializer(await createMenuItemAPI(specialItemInput(tikka, category!.id, tikka.suggestedPrice), [])));
     expect(dish).toMatchObject({ name: 'Chicken tikka plate', isActive: false, basePrice: tikka.suggestedPrice });
-    expect((await saveRecipe(dish.id, null, specialRecipe(tikka))).cost?.toMake).toBe(tikka.cost.toMake);
+    expect((required(recipeSerializer(await saveRecipeAPI(dish.id, null, specialRecipe(tikka))))).cost?.toMake).toBe(tikka.cost.toMake);
     await asCustomer();
     const page = required(vendorPageSerializer(await getVendorPageAPI('biryani-bazaar', GULBERG)));
     expect(page.menu.flatMap(m => m.items).some(i => i.id === dish.id)).toBe(false);
   });
 
   it('pairs dishes ordered together into a deal at the bundle price (QA 42)', async () => {
-    const { items, category } = await suggestCombos();
+    const { items, category } = required(comboIdeasSerializer(await suggestCombosAPI()));
     const first = items[0];
     expect(first.itemIds).toHaveLength(2);
     expect(first.bundlePrice).toBeLessThan(first.regularPrice);
@@ -699,7 +719,7 @@ describe('the assistant’s drafts (5C)', () => {
   });
 
   it('reads a week of reviews for themes, and lists the reviews behind one (QA 43)', async () => {
-    const r = await getReviewInsights();
+    const r = required(reviewInsightsSerializer(await getReviewInsightsAPI()));
     const late = r.themes.find(t => t.key === 'late')!;
     expect(late).toMatchObject({ tone: 'negative' });
     expect(late.count).toBeGreaterThan(1);
@@ -708,13 +728,13 @@ describe('the assistant’s drafts (5C)', () => {
     const behind = required(vendorReviewsPageSerializer(await getReviewsByThemeAPI('late', r.week, 1, 20)));
     expect(behind.items).toHaveLength(late.count);
     // Reading the same week again is free.
-    const used = (await getAiUsage()).used;
-    await getReviewInsights(r.week);
-    expect((await getAiUsage()).used).toBe(used);
+    const used = (required(aiUsageSerializer(await getAiUsageAPI()))).used;
+    await getReviewInsightsAPI(r.week);
+    expect((required(aiUsageSerializer(await getAiUsageAPI()))).used).toBe(used);
   });
 
   it('works out nutrition from recipe cards, says how, and lists what to match (QA 44)', async () => {
-    const n = await getVendorNutrition();
+    const n = required(vendorNutritionSerializer(await getVendorNutritionAPI()));
     const biryani = n.items.find(i => i.itemId === 'mi_chicken_biryani')!;
     expect(biryani).toMatchObject({ method: 'recipe', missing: ['House biryani masala'] });
     expect(biryani.confidence).toBeLessThan(0.95);
@@ -722,21 +742,21 @@ describe('the assistant’s drafts (5C)', () => {
     const masala = n.unmapped.find(u => u.name === 'House biryani masala')!;
     expect(masala.usedIn).toContain('Chicken Biryani');
     expect(masala.suggestions[0]).toMatchObject({ name: 'Biryani masala' });
-    await mapIngredientNutrition(masala.ingredientId, masala.suggestions[0].foodId);
-    const after = await getVendorNutrition();
+    await updateIngredientAPI(masala.ingredientId, { nutritionFoodId: masala.suggestions[0].foodId });
+    const after = required(vendorNutritionSerializer(await getVendorNutritionAPI()));
     expect(after.unmapped.some(u => u.ingredientId === masala.ingredientId)).toBe(false);
     expect(after.items.find(i => i.itemId === 'mi_chicken_biryani')).toMatchObject({ missing: [], confidence: 0.95 });
-    expect((await setNutritionHidden('mi_chicken_biryani', true)).hidden).toBe(true);
+    expect((required(dishNutritionSerializer(await setNutritionHiddenAPI('mi_chicken_biryani', true)))).hidden).toBe(true);
   });
 
   it('checks a photo, and goes quiet when staff switch the assistant off', async () => {
-    const c = await checkPhoto('https://res.cloudinary.com/demo/kebab.jpg', 'mi_seekh');
+    const c = required(photoCheckSerializer(await checkPhotoAPI('https://res.cloudinary.com/demo/kebab.jpg', 'mi_seekh')));
     expect(c.score).toBeGreaterThanOrEqual(55);
     expect(c.tips.length).toBeGreaterThan(0);
     await asStaff();
     await api.patch('/admin/kitchen/ai/settings', { enabled: false });
     await asVendor();
-    expect((await failure(suggestSpecials())).code).toBe('AI_UNAVAILABLE');
+    expect((await failure(suggestSpecialsAPI().then(raw => required(specialIdeasSerializer(raw))))).code).toBe('AI_UNAVAILABLE');
     // The expiring-stock card falls back to a Bachat Box.
     const hub = await getKitchenHub();
     expect(hub.cards.find(x => x.kind === 'expiring_stock')?.action.kind).toBe('create_surplus');
@@ -746,15 +766,15 @@ describe('the assistant’s drafts (5C)', () => {
 describe('My Kitchen and nutrition (5C)', () => {
   it('keeps calories off until the customer opts in; works out a target; deletes it all (QA 45, 46)', async () => {
     await asCustomer();
-    expect(await getNutritionSettings()).toMatchObject({ enabled: false, showCalories: false, targetKcal: null });
+    expect(required(nutritionSettingsSerializer(await getNutritionSettingsAPI()))).toMatchObject({ enabled: false, showCalories: false, targetKcal: null });
     // Turning calories on without nutrition on keeps them off.
-    expect((await saveNutritionSettings({ showCalories: true })).showCalories).toBe(false);
-    const on = await saveNutritionSettings({ enabled: true, showCalories: true, goal: 'maintain', metrics: { sex: 'female', age: 31, heightCm: 163, weightKg: 62, activity: 'moderate' } });
+    expect((required(nutritionSettingsSerializer(await saveNutritionSettingsAPI({ showCalories: true })))).showCalories).toBe(false);
+    const on = required(nutritionSettingsSerializer(await saveNutritionSettingsAPI({ enabled: true, showCalories: true, goal: 'maintain', metrics: { sex: 'female', age: 31, heightCm: 163, weightKg: 62, activity: 'moderate' } })));
     expect(on).toMatchObject({ enabled: true, showCalories: true, targetKcal: 1920 });
-    expect((await saveNutritionSettings({ manualTargetKcal: 1800 })).targetKcal).toBe(1800);
-    const gone = await deleteNutritionData();
+    expect((required(nutritionSettingsSerializer(await saveNutritionSettingsAPI({ manualTargetKcal: 1800 })))).targetKcal).toBe(1800);
+    const gone = required(nutritionSettingsResponseSerializer(await deleteNutritionDataAPI()));
     expect(gone).toMatchObject({ enabled: false, showCalories: false, metrics: null, manualTargetKcal: null, targetKcal: null });
-    expect((await failure(getNutritionSummary())).code).toBe('NUTRITION_OFF');
+    expect((await failure(getNutritionSummaryAPI().then(raw => required(nutritionSummarySerializer(raw))))).code).toBe('NUTRITION_OFF');
   });
 
   it('filters search and healthy picks to dishes that qualify, per person (QA 47)', async () => {
@@ -765,7 +785,7 @@ describe('My Kitchen and nutrition (5C)', () => {
     expect(dishes.every(d => d.nutrition && d.nutrition.kcal < 600)).toBe(true);
     const all = required(foodSearchSerializer(await searchFoodAPI('chicken', GULBERG.lat, GULBERG.lng)));
     expect(all.dishes.flatMap(d => d.items).length).toBeGreaterThan(dishes.length);
-    const picks = await listHealthyPicks(GULBERG);
+    const picks = required(healthyPicksSerializer(await getHealthyPicksAPI(GULBERG)));
     expect(picks.length).toBeGreaterThan(0);
     expect(picks.every(p => p.kcal < 600 || (p.tags.includes('high_protein') && p.kcal <= 800))).toBe(true);
     expect(picks.some(p => /drink|naan|lassi/i.test(p.name))).toBe(false);
@@ -780,8 +800,8 @@ describe('My Kitchen and nutrition (5C)', () => {
     await handedExternalAPI(o.id);
     await markDeliveredAPI(o.id, o.totals.total);
     await asCustomer();
-    await saveNutritionSettings({ enabled: true });
-    const w = await getNutritionSummary();
+    await saveNutritionSettingsAPI({ enabled: true });
+    const w = required(nutritionSummarySerializer(await getNutritionSummaryAPI()));
     expect(w.days).toHaveLength(7);
     const today = w.days[w.days.length - 1];
     expect(today).toMatchObject({ orders: 1 });
@@ -791,33 +811,33 @@ describe('My Kitchen and nutrition (5C)', () => {
 
   it('adds what was said to the pantry only on confirm, with its expiry (QA 49)', async () => {
     await asCustomer();
-    const before = (await listPantry('all')).items.length;
-    const v = await interpretVoice({ context: 'pantry', language: 'auto', text: 'do kilo aloo, expiry agle hafte' });
+    const before = (required(pantryListSerializer(await getPantryAPI('all')))).items.length;
+    const v = required(voiceResultSerializer(await interpretVoiceAPI({ context: 'pantry', language: 'auto', text: 'do kilo aloo, expiry agle hafte' })));
     expect(v.action?.kind).toBe('pantry.add');
-    expect((await listPantry('all')).items).toHaveLength(before);
+    expect((required(pantryListSerializer(await getPantryAPI('all')))).items).toHaveLength(before);
     const lines = v.action!.kind === 'pantry.add' ? v.action!.lines : [];
-    const added = await addToPantry(lines.map(l => ({ name: l.name, key: l.key, qty: l.qty, unit: l.unit, expiresOn: l.expiresOn })), 'voice');
+    const added = required(pantryItemsSerializer(await addToPantryAPI(lines.map(l => ({ name: l.name, key: l.key, qty: l.qty, unit: l.unit, expiresOn: l.expiresOn })), 'voice')));
     expect(added[0]).toMatchObject({ key: 'potato', qty: 2000, unit: 'g', source: 'voice', expiresOn: '2026-10-22' });
   });
 
   it('suggests recipes using what expires first, with what is missing, priced from Shopping (QA 50, 51, 52)', async () => {
     await asCustomer();
-    const ideas = await suggestHomeRecipes({ language: 'en', servings: 4 });
+    const ideas = required(recipeIdeasSerializer(await suggestHomeRecipesAPI({ language: 'en', servings: 4 })));
     expect(ideas[0].usesExpiring.length).toBeGreaterThan(0);
     const keema = ideas.find(i => i.id === 'rc_aloo_keema')!;
     expect(keema.have).toContain('Potato');
     expect(keema.missing).toContain('Ginger garlic paste');
-    const missing = await getMissingItems('rc_aloo_keema', 4);
+    const missing = required(missingItemsSerializer(await getMissingItemsAPI('rc_aloo_keema', 4)));
     const onions = missing.find(m => m.key === 'ginger_garlic')!;
     expect(onions.options[0]).toMatchObject({ store: { name: 'Daily Basket' }, pricePerUnit: { per: 'kg' } });
-    const potato = await getMissingItems('rc_aloo_paratha', 4);
+    const potato = required(missingItemsSerializer(await getMissingItemsAPI('rc_aloo_paratha', 4)));
     const atta = potato.find(m => m.key === 'atta')!;
     expect(atta.options[0].pricePerUnit.amount).toBe(155);
     await addToShopCart(atta.options[0].variantId!, atta.options[0].packsNeeded);
     expect((required(cartSerializer(await getShopCart()))).groups.flatMap(g => g.lines).some(l => l.productId === atta.options[0].productId)).toBe(true);
     // "Order it nearby" searches Food Court for the dish's own word.
     expect(keema.searchTerm).toBe('keema');
-    const pulao = await getHomeRecipe('rc_chicken_pulao', 'ur', null);
+    const pulao = required(homeRecipeSerializer(await getHomeRecipeAPI('rc_chicken_pulao', 'ur', null)));
     expect(pulao.searchTerm).toBe('pulao');
     const nearby = required(foodSearchSerializer(await searchFoodAPI(pulao.searchTerm, GULBERG.lat, GULBERG.lng)));
     expect(nearby.dishes.flatMap(d => d.items).some(i => /pulao/i.test(i.name))).toBe(true);
@@ -829,31 +849,31 @@ describe('My Kitchen and nutrition (5C)', () => {
 describe('voice and the assistant', () => {
   it('proposes an action from typed words and from a recording, and never writes', async () => {
     const before = await onHand('ing_bb_tomato');
-    const typed = await interpretVoice({ context: 'stock', language: 'auto', text: '5 kilo tamatar 1200 rupay' });
+    const typed = required(voiceResultSerializer(await interpretVoiceAPI({ context: 'stock', language: 'auto', text: '5 kilo tamatar 1200 rupay' })));
     expect(typed).toMatchObject({ heard: 'text', language: 'ur', action: { kind: 'purchase.add' } });
-    const spoken = await interpretVoice({ context: 'stock', language: 'ur', audioUrl: 'file:///clip.m4a', durationMs: 4000 });
+    const spoken = required(voiceResultSerializer(await interpretVoiceAPI({ context: 'stock', language: 'ur', audioUrl: 'file:///clip.m4a', durationMs: 4000 })));
     expect(spoken.heard).toBe('audio');
     expect(spoken.transcript).toBeTruthy();
     expect(await onHand('ing_bb_tomato')).toBe(before);
-    expect((await getAiUsage()).voice.used).toBe(2);
+    expect((required(aiUsageSerializer(await getAiUsageAPI()))).voice.used).toBe(2);
   });
 
   it('answers a receipt photo with draft lines, and goes quiet when staff switch the assistant off (QA 3, 4)', async () => {
-    const d = await scanReceipt('https://res.cloudinary.com/demo/receipt.jpg');
+    const d = required(receiptDraftSerializer(await scanReceiptAPI('https://res.cloudinary.com/demo/receipt.jpg')));
     expect(d.lines.some(l => l.match === null)).toBe(true);
-    expect((await getAiUsage()).used).toBe(1);
+    expect((required(aiUsageSerializer(await getAiUsageAPI()))).used).toBe(1);
     await asStaff();
     await api.put('/admin/kitchen/ai/quotas/b_resto', { limit: 1 });
     await asVendor();
-    const quota = await failure(scanReceipt('https://res.cloudinary.com/demo/receipt.jpg'));
+    const quota = await failure(scanReceiptAPI('https://res.cloudinary.com/demo/receipt.jpg').then(raw => required(receiptDraftSerializer(raw))));
     expect(quota.code).toBe('AI_QUOTA_REACHED');
     expect(quota.details).toMatchObject({ limit: 1, used: 1 });
     expect(String((quota.details as { resetsAt: string }).resetsAt)).toMatch(/^2026-10-31T19:00:00/);
     await asStaff();
     await api.patch('/admin/kitchen/ai/settings', { enabled: false });
     await asVendor();
-    expect((await failure(interpretVoice({ context: 'board', language: 'auto', text: 'accept karo' }))).code).toBe('AI_UNAVAILABLE');
-    expect((await getAiUsage()).enabled).toBe(false);
+    expect((await failure(interpretVoiceAPI({ context: 'board', language: 'auto', text: 'accept karo' }).then(raw => required(voiceResultSerializer(raw))))).code).toBe('AI_UNAVAILABLE');
+    expect((required(aiUsageSerializer(await getAiUsageAPI()))).enabled).toBe(false);
   });
 });
 
@@ -867,85 +887,85 @@ it('keeps the kitchen rows when a Food write fails part-way', async () => {
 describe('the staff console (5C)', () => {
   it('shows the assistant’s use and changes a kitchen’s monthly limit', async () => {
     await asStaff();
-    const r = await getAiUsageReport();
+    const r = required(aiUsageReportSerializer(await getAiUsageReportAPI()));
     expect(r.totals.actions).toBeGreaterThan(50);
     expect(r.byFeature.map(f => f.feature)).toContain('voice');
     const resto = r.byOwner.find(o => o.ownerId === 'b_resto')!;
     expect(resto).toMatchObject({ kind: 'kitchen', name: 'Biryani Bazaar', limit: 300, override: null });
-    await setAiQuota('b_resto', 1000);
-    expect((await getAiUsageReport()).byOwner.find(o => o.ownerId === 'b_resto')).toMatchObject({ limit: 1000, override: 1000 });
+    await setAiQuotaAPI('b_resto', 1000);
+    expect((required(aiUsageReportSerializer(await getAiUsageReportAPI()))).byOwner.find(o => o.ownerId === 'b_resto')).toMatchObject({ limit: 1000, override: 1000 });
     await asVendor();
-    expect((await getAiUsage()).limit).toBe(1000);
+    expect((required(aiUsageSerializer(await getAiUsageAPI()))).limit).toBe(1000);
   });
 
   it('imports city prices only from a clean file, all or nothing', async () => {
     await asStaff();
     const bad = 'key,city,week,price\ntomato,Lahore,2026-10-12,250\nshimla,Lahore,2026-10-12,300\nonion,Lahore,2026-10-13,150';
-    const dry = await importReferencePrices(bad, true);
+    const dry = required(priceImportSerializer(await importReferencePricesAPI(bad, true)));
     expect(dry).toMatchObject({ dryRun: true, rows: 3, valid: 1, imported: 0 });
     expect(dry.errors.map(e => [e.row, e.field])).toEqual([[3, 'key'], [4, 'week']]);
     const before = JSON.stringify((await getDb()).kitchen.priceRefs);
-    expect((await failure(importReferencePrices(bad, false))).code).toBe('CSV_HAS_ERRORS');
+    expect((await failure(importReferencePricesAPI(bad, false).then(raw => required(priceImportSerializer(raw))))).code).toBe('CSV_HAS_ERRORS');
     expect(JSON.stringify((await getDb()).kitchen.priceRefs)).toBe(before);
-    expect((await importReferencePrices('key,city,week,price\ntomato,Lahore,2026-10-12,250', false)).imported).toBe(1);
-    expect((await getReferencePrices({ city: 'Lahore', q: 'tomato' })).items.find(i => i.key === 'tomato')).toMatchObject({ price: 250, unit: 'kg' });
+    expect((required(priceImportSerializer(await importReferencePricesAPI('key,city,week,price\ntomato,Lahore,2026-10-12,250', false)))).imported).toBe(1);
+    expect((required(referencePricesSerializer(await getReferencePricesAPI({ city: 'Lahore', q: 'tomato' })))).items.find(i => i.key === 'tomato')).toMatchObject({ price: 250, unit: 'kg' });
   });
 
   it('corrects a nutrition food, and a dry run says what an import would change', async () => {
     await asStaff();
-    const ghee = (await listNutritionFoods({ q: 'ghee' })).items[0];
+    const ghee = (required(staffNutritionFoodsSerializer(await getNutritionFoodsAPI({ q: 'ghee' })))).items[0];
     expect(ghee.usedBy).toBeGreaterThan(0);
-    const dry = await importNutritionFoods(`key,name,per,kcal,protein,carbs,fat\n${ghee.key},${ghee.name},g100,${ghee.kcal},${ghee.protein},${ghee.carbs},${ghee.fat}\nkhoya,Khoya,g100,421,14.6,25,30`, true);
+    const dry = required(nutritionFoodImportSerializer(await importNutritionFoodsAPI(`key,name,per,kcal,protein,carbs,fat\n${ghee.key},${ghee.name},g100,${ghee.kcal},${ghee.protein},${ghee.carbs},${ghee.fat}\nkhoya,Khoya,g100,421,14.6,25,30`, true)));
     expect(dry.preview.map(p => p.change)).toEqual(['same', 'new']);
-    await updateNutritionFood(ghee.id, { kcal: ghee.kcal + 100 });
-    expect((await listNutritionFoods({ q: 'ghee' })).items[0].kcal).toBe(ghee.kcal + 100);
+    await updateNutritionFoodAPI(ghee.id, { kcal: ghee.kcal + 100 });
+    expect((required(staffNutritionFoodsSerializer(await getNutritionFoodsAPI({ q: 'ghee' })))).items[0].kcal).toBe(ghee.kcal + 100);
   });
 
   it('teaches voice a new word, and refuses one that already means something', async () => {
     await asStaff();
-    await createAlias({ word: 'Tomatar', language: 'roman_ur', key: 'tomato' });
-    expect((await failure(createAlias({ word: 'tomatar', language: 'roman_ur', key: 'onion' }))).code).toBe('ALIAS_EXISTS');
+    await createAliasAPI({ word: 'Tomatar', language: 'roman_ur', key: 'tomato' });
+    expect((await failure(createAliasAPI({ word: 'tomatar', language: 'roman_ur', key: 'onion' }).then(raw => required(aliasSerializer(raw))))).code).toBe('ALIAS_EXISTS');
     await asVendor();
-    const v = await interpretVoice({ context: 'purchases', language: 'auto', text: '3 kilo tomatar 600 rupay' });
+    const v = required(voiceResultSerializer(await interpretVoiceAPI({ context: 'purchases', language: 'auto', text: '3 kilo tomatar 600 rupay' })));
     expect(v.action).toMatchObject({ kind: 'purchase.add' });
     expect(JSON.stringify(v.action)).toMatch(/Tomato/);
   });
 
   it('moves Ramadan, and never lets two Ramadans overlap', async () => {
     await asStaff();
-    expect((await failure(createCalendarEvent({ kind: 'ramadan', name: 'Ramadan again', startsOn: '2027-02-20', endsOn: '2027-03-01' }))).code).toBe('EVENT_OVERLAP');
-    expect(await updateCalendarEvent('ev_ramadan_1448', { startsOn: '2027-02-09', endsOn: '2027-03-10' })).toMatchObject({ startsOn: '2027-02-09', days: 30, state: 'upcoming' });
-    expect((await failure(createCalendarEvent({ kind: 'other', name: 'Too long', startsOn: '2027-01-01', endsOn: '2027-03-01' }))).code).toBe('VALIDATION_FAILED');
+    expect((await failure(createCalendarEventAPI({ kind: 'ramadan', name: 'Ramadan again', startsOn: '2027-02-20', endsOn: '2027-03-01' }).then(raw => required(calendarEventSerializer(raw))))).code).toBe('EVENT_OVERLAP');
+    expect(required(calendarEventSerializer(await updateCalendarEventAPI('ev_ramadan_1448', { startsOn: '2027-02-09', endsOn: '2027-03-10' })))).toMatchObject({ startsOn: '2027-02-09', days: 30, state: 'upcoming' });
+    expect((await failure(createCalendarEventAPI({ kind: 'other', name: 'Too long', startsOn: '2027-01-01', endsOn: '2027-03-01' }).then(raw => required(calendarEventSerializer(raw))))).code).toBe('VALIDATION_FAILED');
   });
 
   it('sends a hygiene check back with a note, then verifies it', async () => {
     await asStaff();
-    expect((await listHygieneQueue('pending')).map(h => h.businessId)).toContain('b_homek');
-    expect((await failure(rejectHygiene('b_homek', 'no'))).code).toBe('VALIDATION_FAILED');
-    expect(await rejectHygiene('b_homek', 'The storage photo does not show the fridge.')).toMatchObject({ status: 'rejected', note: 'The storage photo does not show the fridge.' });
-    expect((await listHygieneQueue('rejected')).map(h => h.businessId)).toContain('b_homek');
-    expect((await failure(verifyHygiene('b_homek'))).code).toBe('INVALID_TRANSITION');
+    expect((required(hygieneQueueSerializer(await getHygieneQueueAPI('pending')))).map(h => h.businessId)).toContain('b_homek');
+    expect((await failure(rejectHygieneAPI('b_homek', 'no').then(raw => required(hygieneSerializer(raw))))).code).toBe('VALIDATION_FAILED');
+    expect(required(hygieneSerializer(await rejectHygieneAPI('b_homek', 'The storage photo does not show the fridge.')))).toMatchObject({ status: 'rejected', note: 'The storage photo does not show the fridge.' });
+    expect((required(hygieneQueueSerializer(await getHygieneQueueAPI('rejected')))).map(h => h.businessId)).toContain('b_homek');
+    expect((await failure(verifyHygieneAPI('b_homek').then(raw => required(hygieneSerializer(raw))))).code).toBe('INVALID_TRANSITION');
   });
 
   it('keeps a signature dish, or takes the label off and tells the kitchen why', async () => {
     await asStaff();
-    const fresh = await listSignatures('new');
+    const fresh = required(signatureListSerializer(await getSignaturesAPI('new')));
     expect(fresh.items.map(d => d.itemId)).toEqual(expect.arrayContaining(['mi_chicken_biryani', 'mi_seekh']));
-    expect((await approveSignature('mi_chicken_biryani')).status).toBe('approved');
-    expect((await failure(removeSignature('mi_seekh', 'no'))).code).toBe('VALIDATION_FAILED');
-    expect(await removeSignature('mi_seekh', 'Another kitchen sells this seekh under its own name.')).toMatchObject({ status: 'removed' });
-    expect((await listSignatures('new')).counts).toMatchObject({ new: fresh.counts.new - 2, approved: 1, removed: 1 });
+    expect((required(signatureDishSerializer(await approveSignatureAPI('mi_chicken_biryani')))).status).toBe('approved');
+    expect((await failure(removeSignatureAPI('mi_seekh', 'no').then(raw => required(signatureDishSerializer(raw))))).code).toBe('VALIDATION_FAILED');
+    expect(required(signatureDishSerializer(await removeSignatureAPI('mi_seekh', 'Another kitchen sells this seekh under its own name.')))).toMatchObject({ status: 'removed' });
+    expect((required(signatureListSerializer(await getSignaturesAPI('new')))).counts).toMatchObject({ new: fresh.counts.new - 2, approved: 1, removed: 1 });
     // The kitchen reads the note on the recipe, where the label is turned on.
     await asVendor();
-    expect((await getRecipe('mi_seekh')).signature).toEqual({ on: false, creatorName: 'Imran Qureshi', removedNote: 'Another kitchen sells this seekh under its own name.' });
+    expect((required(recipeSerializer(await getRecipeAPI('mi_seekh')))).signature).toEqual({ on: false, creatorName: 'Imran Qureshi', removedNote: 'Another kitchen sells this seekh under its own name.' });
     // And on the hub when there's room (cards are ranked; this one is info).
-    const cards = await listInsightCards();
+    const cards = required(insightCardsSerializer(await getInsightCardsAPI()));
     if (cards.length < 5) expect(cards.find(c => c.kind === 'signature_removed')).toMatchObject({ action: { kind: 'open_recipe' } });
   });
 
   it('shows a city’s demand without any area too small to be anonymous', async () => {
     await asStaff();
-    const d = await getPlatformDemand({ city: 'Lahore' });
+    const d = required(adminDemandSerializer(await getPlatformDemandAPI({ city: 'Lahore' })));
     expect(d.cities).toEqual(['Lahore', 'Karachi', 'Islamabad']);
     expect(d.cells.length).toBeGreaterThan(0);
     expect(d.cells.every(c => c.searches >= d.minCount)).toBe(true);
@@ -955,18 +975,18 @@ describe('the staff console (5C)', () => {
 
   it('looks up a tiffin or catering code as its kitchen sees it', async () => {
     await asStaff();
-    const t = await lookupGrowthCode('tf-hmz4k2');
+    const t = required(growthLookupSerializer(await lookupGrowthCodeAPI('tf-hmz4k2')));
     expect(t.kind === 'tiffin' && t.tiffin).toMatchObject({ code: 'TF-HMZ4K2', customer: { name: 'Hamza Qureshi' } });
-    const c = await lookupGrowthCode('CT-MHD7Q4');
+    const c = required(growthLookupSerializer(await lookupGrowthCodeAPI('CT-MHD7Q4')));
     expect(c.kind === 'catering' && c.catering.guests).toBe(80);
-    expect((await failure(lookupGrowthCode('TF-NOPE00'))).code).toBe('NOT_FOUND');
-    expect((await failure(lookupGrowthCode('FC-NBNWXT'))).code).toBe('VALIDATION_FAILED');
+    expect((await failure(lookupGrowthCodeAPI('TF-NOPE00').then(raw => required(growthLookupSerializer(raw))))).code).toBe('NOT_FOUND');
+    expect((await failure(lookupGrowthCodeAPI('FC-NBNWXT').then(raw => required(growthLookupSerializer(raw))))).code).toBe('VALIDATION_FAILED');
   });
 
   it('is staff only', async () => {
     await asVendor();
-    expect((await failure(getAiUsageReport())).status).toBe(403);
+    expect((await failure(getAiUsageReportAPI().then(raw => required(aiUsageReportSerializer(raw))))).status).toBe(403);
     await asCustomer();
-    expect((await failure(listSignatures('new'))).status).toBe(403);
+    expect((await failure(getSignaturesAPI('new').then(raw => required(signatureListSerializer(raw))))).status).toBe(403);
   });
 });

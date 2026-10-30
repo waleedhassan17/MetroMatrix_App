@@ -3,10 +3,11 @@
 // kitchen's account, or the receipt sent back with a reason.
 
 import { createAppSlice } from '@store/createAppSlice';
-import { confirmAdvance, declineCatering, getCateringRequest, rejectAdvance } from '@networks/foodGrowth/cateringNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { confirmAdvanceAPI, declineCateringAPI, getCateringRequestAPI, rejectAdvanceAPI } from '@networks/foodGrowth/cateringNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { CateringRequest } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { cateringRequestSerializer } from '@serializers/kitchen/growthSerializer';
 
 export type CateringAct = { kind: 'decline'; reason: string } | { kind: 'confirm-advance' } | { kind: 'reject-advance'; reason: string };
 
@@ -27,7 +28,7 @@ export const cateringRequestSlice = createAppSlice({
     loadCateringRequestAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return await getCateringRequest(code);
+          return required(cateringRequestSerializer(await getCateringRequestAPI(code)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -50,7 +51,7 @@ export const cateringRequestSlice = createAppSlice({
     cateringActAsync: create.asyncThunk(
       async ({ code, act }: { code: string; act: CateringAct }, { rejectWithValue }) => {
         try {
-          return act.kind === 'decline' ? await declineCatering(code, act.reason) : act.kind === 'confirm-advance' ? await confirmAdvance(code) : await rejectAdvance(code, act.reason);
+          return act.kind === 'decline' ? required(cateringRequestSerializer(await declineCateringAPI(code, act.reason))) : act.kind === 'confirm-advance' ? required(cateringRequestSerializer(await confirmAdvanceAPI(code))) : required(cateringRequestSerializer(await rejectAdvanceAPI(code, act.reason)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

@@ -1,73 +1,227 @@
-// MetroMatrix — Food Court: tiffin plans and subscriptions (the kitchen's and the customer's).
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Food Growth Tiffin Network (API_KITCHEN_ASSUMED.md)
+// ═══════════════════════════════════════════════════════
+// Tiffin plans and subscriptions (the kitchen's and the customer's).
 // docs/API_KITCHEN_ASSUMED.md §2.9, §3.9, §4.6 (TODO(API_KITCHEN): an assumed contract).
 
-import { api } from '../network/apiHelpers';
-import { clean, request } from '../shopping/http';
-import { tiffinCalendarSerializer, tiffinDaySerializer, tiffinInboxSerializer, tiffinPlanSerializer, tiffinPlansSerializer, tiffinSubscriptionSerializer, tiffinSubscriptionsSerializer, tiffinTomorrowSerializer, tiffinRemovedSerializer } from '../../serializers/kitchen/growthSerializer';
+import { api, toApiError, clean } from '../network/apiHelpers';
+import { tiffinSubscriptionSerializer } from '../../serializers/kitchen/growthSerializer';
 import type { TiffinPayMethod, TiffinPlanInput } from '../../types/kitchen';
 
 const enc = encodeURIComponent;
 
 // ── The kitchen ──
-export const listMyTiffinPlans = () => request(() => api.get('/food/vendor/tiffin/plans'), tiffinPlansSerializer);
+export const getMyTiffinPlansAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get('/food/vendor/tiffin/plans');
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getMyTiffinPlan = (id: string) => request(() => api.get(`/food/vendor/tiffin/plans/${enc(id)}`), tiffinPlanSerializer);
+export const getMyTiffinPlanAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`/food/vendor/tiffin/plans/${enc(id)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const createTiffinPlan = (input: TiffinPlanInput) => request(() => api.post('/food/vendor/tiffin/plans', input), tiffinPlanSerializer);
+export const createTiffinPlanAPI = async (input: TiffinPlanInput): Promise<unknown> => {
+  try {
+    const response = await api.post('/food/vendor/tiffin/plans', input);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const updateTiffinPlan = (id: string, patch: Partial<TiffinPlanInput>) => request(() => api.patch(`/food/vendor/tiffin/plans/${enc(id)}`, patch), tiffinPlanSerializer);
+export const updateTiffinPlanAPI = async (id: string, patch: Partial<TiffinPlanInput>): Promise<unknown> => {
+  try {
+    const response = await api.patch(`/food/vendor/tiffin/plans/${enc(id)}`, patch);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** Removed outright, or (once it has had subscribers) taken off. */
-export const deleteTiffinPlan = (id: string) =>
-  request(() => api.delete(`/food/vendor/tiffin/plans/${enc(id)}`), tiffinRemovedSerializer);
+export const deleteTiffinPlanAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.delete(`/food/vendor/tiffin/plans/${enc(id)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listPlanSubscribers = (planId: string) => request(() => api.get(`/food/vendor/tiffin/plans/${enc(planId)}/subscribers`), tiffinInboxSerializer);
+export const getPlanSubscribersAPI = async (planId: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`/food/vendor/tiffin/plans/${enc(planId)}/subscribers`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listTiffinSubscriptions = (status?: 'pending' | 'active' | 'paused' | 'ended') =>
-  request(() => api.get('/food/vendor/tiffin/subscriptions', { params: clean({ status }) }), tiffinInboxSerializer);
+export const getTiffinSubscriptionsAPI = async (status?: 'pending' | 'active' | 'paused' | 'ended'): Promise<unknown> => {
+  try {
+    const response = await api.get('/food/vendor/tiffin/subscriptions', { params: clean({ status }) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 export type SubscriberMove = { kind: 'approve' } | { kind: 'decline'; reason: string } | { kind: 'pause'; until?: string | null } | { kind: 'resume' } | { kind: 'end'; reason?: string };
 
-export const moveSubscriber = (code: string, m: SubscriberMove) => {
-  const { kind, ...body } = m;
-  return request(() => api.post(`/food/vendor/tiffin/subscriptions/${enc(code)}/${kind}`, clean(body)), tiffinSubscriptionSerializer);
+/** approve · decline · pause · resume · end: the move's kind is the path, its other fields the body. */
+export const moveSubscriberAPI = async (code: string, kind: SubscriberMove['kind'], body: Record<string, unknown>): Promise<unknown> => {
+  try {
+    const response = await api.post(`/food/vendor/tiffin/subscriptions/${enc(code)}/${kind}`, clean(body));
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
 };
 
-export const confirmTiffinPayment = (periodId: string) => request(() => api.post(`/food/vendor/tiffin/periods/${enc(periodId)}/payment/confirm`), tiffinSubscriptionSerializer);
+export const confirmTiffinPaymentAPI = async (periodId: string): Promise<unknown> => {
+  try {
+    const response = await api.post(`/food/vendor/tiffin/periods/${enc(periodId)}/payment/confirm`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const rejectTiffinPayment = (periodId: string, reason: string) =>
-  request(() => api.post(`/food/vendor/tiffin/periods/${enc(periodId)}/payment/reject`, { reason: reason.trim() }), tiffinSubscriptionSerializer);
+export const rejectTiffinPaymentAPI = async (periodId: string, reason: string): Promise<unknown> => {
+  try {
+    const response = await api.post(`/food/vendor/tiffin/periods/${enc(periodId)}/payment/reject`, { reason: reason.trim() });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getTiffinTomorrow = () => request(() => api.get('/food/vendor/tiffin/tomorrow'), tiffinTomorrowSerializer);
+export const getTiffinTomorrowAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get('/food/vendor/tiffin/tomorrow');
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 // ── Customers ──
 /** `vendor`: the kitchen's brand id or slug. */
-export const listTiffinPlans = (vendor?: string) => request(() => api.get('/food/tiffin/plans', { params: clean({ vendor }) }), tiffinPlansSerializer);
+export const getTiffinPlansAPI = async (vendor?: string): Promise<unknown> => {
+  try {
+    const response = await api.get('/food/tiffin/plans', { params: clean({ vendor }) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** Plans whose kitchen reaches the point, nearest first (the Food home's "Home-cooked tiffins"). */
-export const listTiffinPlansNear = (point: { lat: number; lng: number }) => request(() => api.get('/food/tiffin/plans', { params: point }), tiffinPlansSerializer);
+export const getTiffinPlansNearAPI = async (point: { lat: number; lng: number }): Promise<unknown> => {
+  try {
+    const response = await api.get('/food/tiffin/plans', { params: point });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getTiffinPlan = (id: string) => request(() => api.get(`/food/tiffin/plans/${enc(id)}`), tiffinPlanSerializer);
+export const getTiffinPlanAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`/food/tiffin/plans/${enc(id)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** `idempotencyKey`: one per attempt, reused for its retries — a retry never subscribes twice. */
-export const subscribeTiffin = (planId: string, input: { startDate: string; addressId?: string | null; paymentMethod: TiffinPayMethod }, idempotencyKey: string) =>
-  request(() => api.post(`/food/tiffin/plans/${enc(planId)}/subscribe`, clean(input), { headers: { 'Idempotency-Key': idempotencyKey } }), tiffinSubscriptionSerializer);
+export const subscribeTiffinAPI = async (planId: string, input: { startDate: string; addressId?: string | null; paymentMethod: TiffinPayMethod }, idempotencyKey: string): Promise<unknown> => {
+  try {
+    const response = await api.post(`/food/tiffin/plans/${enc(planId)}/subscribe`, clean(input), { headers: { 'Idempotency-Key': idempotencyKey } });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listMyTiffins = () => request(() => api.get('/food/tiffin/subscriptions'), tiffinSubscriptionsSerializer);
+export const getMyTiffinsAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get('/food/tiffin/subscriptions');
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getMyTiffin = (code: string) => request(() => api.get(`/food/tiffin/subscriptions/${enc(code)}`), tiffinSubscriptionSerializer);
+export const getMyTiffinAPI = async (code: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`/food/tiffin/subscriptions/${enc(code)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getTiffinCalendar = (code: string, month: string) =>
-  request(() => api.get(`/food/tiffin/subscriptions/${enc(code)}/calendar`, { params: { month } }), tiffinCalendarSerializer);
+export const getTiffinCalendarAPI = async (code: string, month: string): Promise<unknown> => {
+  try {
+    const response = await api.get(`/food/tiffin/subscriptions/${enc(code)}/calendar`, { params: { month } });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const skipTiffinDay = (code: string, date: string, skip: boolean) =>
-  request(() => api.post(`/food/tiffin/subscriptions/${enc(code)}/days/${enc(date)}/${skip ? 'skip' : 'unskip'}`), tiffinDaySerializer);
+export const skipTiffinDayAPI = async (code: string, date: string, skip: boolean): Promise<unknown> => {
+  try {
+    const response = await api.post(`/food/tiffin/subscriptions/${enc(code)}/days/${enc(date)}/${skip ? 'skip' : 'unskip'}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const pauseMyTiffin = (code: string, until: string | null) => request(() => api.post(`/food/tiffin/subscriptions/${enc(code)}/pause`, { until }), tiffinSubscriptionSerializer);
+export const pauseMyTiffinAPI = async (code: string, until: string | null): Promise<unknown> => {
+  try {
+    const response = await api.post(`/food/tiffin/subscriptions/${enc(code)}/pause`, { until });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const resumeMyTiffin = (code: string) => request(() => api.post(`/food/tiffin/subscriptions/${enc(code)}/resume`), tiffinSubscriptionSerializer);
+export const resumeMyTiffinAPI = async (code: string): Promise<unknown> => {
+  try {
+    const response = await api.post(`/food/tiffin/subscriptions/${enc(code)}/resume`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const cancelMyTiffin = (code: string) => request(() => api.post(`/food/tiffin/subscriptions/${enc(code)}/cancel`), tiffinSubscriptionSerializer);
+export const cancelMyTiffinAPI = async (code: string): Promise<unknown> => {
+  try {
+    const response = await api.post(`/food/tiffin/subscriptions/${enc(code)}/cancel`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const submitTiffinProof = (periodId: string, input: { transactionId: string; imageUrl: string | null }) =>
-  request(() => api.post(`/food/tiffin/periods/${enc(periodId)}/payment-proof`, input), tiffinSubscriptionSerializer);
+export const submitTiffinProofAPI = async (periodId: string, input: { transactionId: string; imageUrl: string | null }): Promise<unknown> => {
+  try {
+    const response = await api.post(`/food/tiffin/periods/${enc(periodId)}/payment-proof`, input);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

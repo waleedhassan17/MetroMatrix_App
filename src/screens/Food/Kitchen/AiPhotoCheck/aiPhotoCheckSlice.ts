@@ -4,13 +4,14 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { checkPhoto } from '@networks/kitchen/kitchenAiNetwork';
+import { checkPhotoAPI } from '@networks/kitchen/kitchenAiNetwork';
 import { getMenuItemsAPI, updateMenuItemAPI } from '@networks/food/vendor/menuNetwork';
 import { uploadImage } from '@/services/mediaUpload';
 import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { LocalFile, PhotoCheck, VendorMenuItem } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { vendorMenuItemsSerializer, vendorMenuItemSerializer } from '@serializers/food/menuSerializer';
+import { photoCheckSerializer } from '@serializers/kitchen/assistantSerializer';
 
 export interface AiPhotoCheckSliceState {
   items: VendorMenuItem[];
@@ -59,7 +60,7 @@ export const aiPhotoCheckSlice = createAppSlice({
       async ({ file, itemId }: { file: LocalFile; itemId: string | null }, { rejectWithValue }) => {
         try {
           const uploaded = await uploadImage(file, 'menu_item');
-          return await checkPhoto(uploaded.url, itemId);
+          return required(photoCheckSerializer(await checkPhotoAPI(uploaded.url, itemId)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

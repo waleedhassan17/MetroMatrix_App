@@ -4,7 +4,7 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getCateringRequest, sendQuote } from '@networks/foodGrowth/cateringNetwork';
+import { getCateringRequestAPI, sendQuoteAPI } from '@networks/foodGrowth/cateringNetwork';
 import { getMenuItemsAPI } from '@networks/food/vendor/menuNetwork';
 import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { draftFromRequest, newDishKey, type QuoteDraft } from '@models/kitchen/cateringModel';
@@ -12,6 +12,7 @@ import type { CateringRequest, QuoteInput, VendorMenuItem } from '@/types';
 import type { ValidationErrors } from '@models/authModel';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { vendorMenuItemsSerializer } from '@serializers/food/menuSerializer';
+import { cateringRequestSerializer } from '@serializers/kitchen/growthSerializer';
 
 export interface QuoteBuilderSliceState {
   code: string | null;
@@ -59,7 +60,7 @@ export const quoteBuilderSlice = createAppSlice({
     loadQuoteBuilderAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          const [request, menu] = await Promise.all([getCateringRequest(code), getMenuItemsAPI().then(raw => required(vendorMenuItemsSerializer(raw)))]);
+          const [request, menu] = await Promise.all([getCateringRequestAPI(code).then(raw => required(cateringRequestSerializer(raw))), getMenuItemsAPI().then(raw => required(vendorMenuItemsSerializer(raw)))]);
           return { request, menu: menu.filter(i => i.isActive).map(i => ({ id: i.id, name: i.name, basePrice: i.basePrice })) };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -92,7 +93,7 @@ export const quoteBuilderSlice = createAppSlice({
     sendQuoteAsync: create.asyncThunk(
       async ({ code, input }: { code: string; input: QuoteInput }, { rejectWithValue }) => {
         try {
-          return await sendQuote(code, input);
+          return required(cateringRequestSerializer(await sendQuoteAPI(code, input)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

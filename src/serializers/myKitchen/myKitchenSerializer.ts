@@ -29,7 +29,7 @@ const STATES: readonly PantryState[] = ['fresh', 'use_soon', 'expired'];
 const GOALS: readonly NutritionGoal[] = ['eat_better', 'maintain', 'lose', 'gain'];
 const base = (v: unknown) => oneOf(v, BASE_UNITS, 'g');
 
-export const pantryItemSerializer = (raw: unknown): PantryItem | null =>
+export const pantryItemSerializer = fromResponse((raw: unknown): PantryItem | null =>
   isObject(raw) && str(raw.id)
     ? {
         id: str(raw.id),
@@ -42,32 +42,32 @@ export const pantryItemSerializer = (raw: unknown): PantryItem | null =>
         source: oneOf(raw.source, ['manual', 'voice', 'shopping'] as const, 'manual'),
         addedAt: str(raw.addedAt),
       }
-    : null;
+    : null);
 
-export const pantryListSerializer = (raw: unknown): PantryList => {
+export const pantryListSerializer = fromResponse((raw: unknown): PantryList => {
   const r = isObject(raw) ? raw : {};
   const c = isObject(r.counts) ? r.counts : {};
   return { counts: { all: count(c.all), use_soon: count(c.use_soon), expired: count(c.expired) }, items: list(r.items, pantryItemSerializer) };
-};
+});
 
-export const pantryItemsSerializer = (raw: unknown): PantryItem[] => list(isObject(raw) ? raw.items : raw, pantryItemSerializer);
+export const pantryItemsSerializer = fromResponse((raw: unknown): PantryItem[] => list(isObject(raw) ? raw.items : raw, pantryItemSerializer));
 
-export const pantryStatsSerializer = (raw: unknown): PantryStats => {
+export const pantryStatsSerializer = fromResponse((raw: unknown): PantryStats => {
   const r = isObject(raw) ? raw : {};
   return { month: str(r.month), used: count(r.used), savedFromWaste: count(r.savedFromWaste), wasted: count(r.wasted), inKitchen: count(r.inKitchen) };
-};
+});
 
-export const pantryRemindersSerializer = (raw: unknown): PantryReminders => {
+export const pantryRemindersSerializer = fromResponse((raw: unknown): PantryReminders => {
   const r = isObject(raw) ? raw : {};
   return { enabled: bool(r.enabled, true), time: str(r.time, '09:00'), daysBefore: Math.min(3, count(r.daysBefore)) };
-};
+});
 
 const netOf = (raw: unknown) => {
   const n = isObject(raw) ? raw : {};
   return { qty: Math.max(0, num(n.qty)), unit: base(n.unit) };
 };
 
-export const groceryOrdersSerializer = (raw: unknown): GroceryOrder[] =>
+export const groceryOrdersSerializer = fromResponse((raw: unknown): GroceryOrder[] =>
   list(isObject(raw) ? raw.items : raw, o =>
     isObject(o) && str(o.orderId)
       ? {
@@ -79,7 +79,7 @@ export const groceryOrdersSerializer = (raw: unknown): GroceryOrder[] =>
           lines: list(o.lines, l => (isObject(l) && str(l.lineId) ? { lineId: str(l.lineId), name: str(l.name), quantity: Math.max(1, count(l.quantity)), netQuantity: netOf(l.netQuantity), alreadyAdded: bool(l.alreadyAdded) } : null)),
         }
       : null,
-  );
+  ));
 
 const macrosOf = (raw: unknown): Macros | null =>
   isObject(raw) && numOrNull(raw.kcal) !== null ? { kcal: count(raw.kcal), protein: count(raw.protein), carbs: count(raw.carbs), fat: count(raw.fat) } : null;
@@ -104,9 +104,9 @@ const ideaSerializer = (raw: unknown): RecipeIdea | null =>
       }
     : null;
 
-export const recipeIdeasSerializer = (raw: unknown): RecipeIdea[] => list(isObject(raw) ? raw.items : raw, ideaSerializer);
+export const recipeIdeasSerializer = fromResponse((raw: unknown): RecipeIdea[] => list(isObject(raw) ? raw.items : raw, ideaSerializer));
 
-export const homeRecipeSerializer = (raw: unknown): HomeRecipe | null =>
+export const homeRecipeSerializer = fromResponse((raw: unknown): HomeRecipe | null =>
   isObject(raw) && str(raw.id)
     ? {
         id: str(raw.id),
@@ -121,7 +121,7 @@ export const homeRecipeSerializer = (raw: unknown): HomeRecipe | null =>
         steps: strings(raw.steps),
         nutrition: macrosOf(raw.nutrition),
       }
-    : null;
+    : null);
 
 const optionSerializer = (raw: unknown): GroceryOption | null => {
   if (!isObject(raw) || !str(raw.productId)) return null;
@@ -140,10 +140,10 @@ const optionSerializer = (raw: unknown): GroceryOption | null => {
   };
 };
 
-export const missingItemsSerializer = (raw: unknown): MissingItem[] =>
+export const missingItemsSerializer = fromResponse((raw: unknown): MissingItem[] =>
   list(isObject(raw) ? raw.items : raw, m =>
     isObject(m) && str(m.key) ? { key: str(m.key), name: str(m.name), need: netOf(m.need), options: list(m.options, optionSerializer) } : null,
-  );
+  ));
 
 const metricsOf = (raw: unknown): BodyMetrics | null =>
   isObject(raw) && numOrNull(raw.age) !== null
@@ -156,7 +156,7 @@ const metricsOf = (raw: unknown): BodyMetrics | null =>
       }
     : null;
 
-export const nutritionSettingsSerializer = (raw: unknown): NutritionSettings => {
+export const nutritionSettingsSerializer = fromResponse((raw: unknown): NutritionSettings => {
   const r = isObject(raw) ? raw : {};
   const enabled = bool(r.enabled);
   return {
@@ -168,9 +168,9 @@ export const nutritionSettingsSerializer = (raw: unknown): NutritionSettings => 
     targetKcal: enabled ? numOrNull(r.targetKcal) : null,
     updatedAt: strOrNull(r.updatedAt),
   };
-};
+});
 
-export const nutritionSummarySerializer = (raw: unknown): NutritionSummary | null => {
+export const nutritionSummarySerializer = fromResponse((raw: unknown): NutritionSummary | null => {
   if (!isObject(raw)) return null;
   const avg = macrosOf(raw.averageOnOrderDays) ?? { kcal: 0, protein: 0, carbs: 0, fat: 0 };
   return {
@@ -182,9 +182,9 @@ export const nutritionSummarySerializer = (raw: unknown): NutritionSummary | nul
     uncounted: count(raw.uncounted),
     targetKcal: numOrNull(raw.targetKcal),
   };
-};
+});
 
-export const healthyPicksSerializer = (raw: unknown): HealthyPick[] =>
+export const healthyPicksSerializer = fromResponse((raw: unknown): HealthyPick[] =>
   list(isObject(raw) ? raw.items : raw, p => {
     if (!isObject(p) || !str(p.itemId)) return null;
     const v = isObject(p.vendor) ? p.vendor : {};
@@ -199,7 +199,7 @@ export const healthyPicksSerializer = (raw: unknown): HealthyPick[] =>
       tags: strings(p.tags).filter((t): t is 'under_600' | 'high_protein' => t === 'under_600' || t === 'high_protein'),
       vendor: { id: str(v.id), slug: str(v.slug), name: str(v.name) },
     };
-  });
+  }));
 
 /** PUT /my-kitchen/nutrition/settings answers `{ settings }`. */
 export const nutritionSettingsResponseSerializer = fromResponse(raw => nutritionSettingsSerializer((raw as { settings?: unknown })?.settings));

@@ -8,12 +8,12 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import {
-  createNutritionFood,
-  importNutritionFoods,
-  listNutritionFoods,
-  updateNutritionFood,
+  createNutritionFoodAPI,
+  importNutritionFoodsAPI,
+  getNutritionFoodsAPI,
+  updateNutritionFoodAPI,
 } from '@networks/admin/adminKitchenNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import {
   emptyNutritionFoodForm,
   foodKeyOf,
@@ -28,6 +28,7 @@ import {
   type FormStatus,
   type ServerError,
 } from '../../../Auth/shared/formStatus';
+import { staffNutritionFoodsSerializer, nutritionFoodImportSerializer } from '@serializers/kitchen/adminKitchenSerializer';
 
 export interface FoodSheet {
   /** '' for a new one. */
@@ -111,7 +112,7 @@ export const adminKitchenNutritionSlice = createAppSlice({
     loadFoodsAsync: create.asyncThunk(
       async (q: string, { rejectWithValue }) => {
         try {
-          return await listNutritionFoods({ q: q.trim() || undefined, ...PAGE });
+          return required(staffNutritionFoodsSerializer(await getNutritionFoodsAPI({ q: q.trim() || undefined, ...PAGE })));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -137,9 +138,9 @@ export const adminKitchenNutritionSlice = createAppSlice({
       async (input: { sheet: FoodSheet; q: string }, { rejectWithValue }) => {
         try {
           const body = nutritionFoodInputOf(input.sheet.form);
-          if (input.sheet.id) await updateNutritionFood(input.sheet.id, body);
-          else await createNutritionFood({ ...body, key: input.sheet.form.key.trim() });
-          return await listNutritionFoods({ q: input.q.trim() || undefined, ...PAGE });
+          if (input.sheet.id) await updateNutritionFoodAPI(input.sheet.id, body);
+          else await createNutritionFoodAPI({ ...body, key: input.sheet.form.key.trim() });
+          return required(staffNutritionFoodsSerializer(await getNutritionFoodsAPI({ q: input.q.trim() || undefined, ...PAGE })));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -165,7 +166,7 @@ export const adminKitchenNutritionSlice = createAppSlice({
     checkFoodsCsvAsync: create.asyncThunk(
       async (csv: string, { rejectWithValue }) => {
         try {
-          return await importNutritionFoods(csv, true);
+          return required(nutritionFoodImportSerializer(await importNutritionFoodsAPI(csv, true)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -189,8 +190,8 @@ export const adminKitchenNutritionSlice = createAppSlice({
     importFoodsCsvAsync: create.asyncThunk(
       async (input: { csv: string; q: string }, { rejectWithValue }) => {
         try {
-          const result = await importNutritionFoods(input.csv, false);
-          return { result, list: await listNutritionFoods({ q: input.q.trim() || undefined, ...PAGE }) };
+          const result = required(nutritionFoodImportSerializer(await importNutritionFoodsAPI(input.csv, false)));
+          return { result, list: required(staffNutritionFoodsSerializer(await getNutritionFoodsAPI({ q: input.q.trim() || undefined, ...PAGE }))) };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

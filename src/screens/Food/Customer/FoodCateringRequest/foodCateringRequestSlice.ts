@@ -2,10 +2,11 @@
 // quotes, accepting the latest, cancelling; read again on focus.
 
 import { createAppSlice } from '@store/createAppSlice';
-import { acceptQuote, cancelMyCatering, getMyCatering } from '@networks/foodGrowth/cateringNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { acceptQuoteAPI, cancelMyCateringAPI, getMyCateringRequestAPI } from '@networks/foodGrowth/cateringNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { CateringRequest } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { cateringRequestSerializer } from '@serializers/kitchen/growthSerializer';
 
 export interface FoodCateringRequestSliceState {
   byCode: Record<string, CateringRequest>;
@@ -24,7 +25,7 @@ export const foodCateringRequestSlice = createAppSlice({
     loadMyCateringRequestAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return await getMyCatering(code);
+          return required(cateringRequestSerializer(await getMyCateringRequestAPI(code)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -47,7 +48,7 @@ export const foodCateringRequestSlice = createAppSlice({
     myCateringActAsync: create.asyncThunk(
       async ({ code, act }: { code: string; act: { kind: 'accept'; version: number } | { kind: 'cancel' } }, { dispatch, rejectWithValue }) => {
         try {
-          return act.kind === 'accept' ? await acceptQuote(code, act.version) : await cancelMyCatering(code);
+          return act.kind === 'accept' ? required(cateringRequestSerializer(await acceptQuoteAPI(code, act.version))) : required(cateringRequestSerializer(await cancelMyCateringAPI(code)));
         } catch (e) {
           // A newer quote, or an expired one: read the request again so the screen shows it.
           void dispatch(loadMyCateringRequestAsync(code));

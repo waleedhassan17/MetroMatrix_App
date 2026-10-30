@@ -1,17 +1,53 @@
-// MetroMatrix — Kitchen: waste, its summary, donations.
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Kitchen Waste Network (API_KITCHEN_ASSUMED.md)
+// ═══════════════════════════════════════════════════════
+// Waste, its summary, donations.
 // docs/API_KITCHEN_ASSUMED.md §4.3 (TODO(API_KITCHEN): an assumed contract).
 
-import { api } from '../network/apiHelpers';
-import { clean, pageParams, request } from '../shopping/http';
-import { donationSerializer, donationsSerializer, wastePageSerializer, wasteSerializer, wasteSummarySerializer } from '../../serializers/kitchen/wasteSerializer';
+import { api, toApiError, clean, pageParams } from '../network/apiHelpers';
 import type { WasteLineInput } from '../../types/kitchen';
 
-export const logWaste = (lines: WasteLineInput[], note?: string) => request(() => api.post('/food/vendor/kitchen/waste', clean({ lines, note })), wasteSerializer);
+export const logWasteAPI = async (lines: WasteLineInput[], note?: string): Promise<unknown> => {
+  try {
+    const response = await api.post('/food/vendor/kitchen/waste', clean({ lines, note }));
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listWaste = (page: number, pageSize: number) => request(() => api.get('/food/vendor/kitchen/waste', { params: pageParams(page, pageSize) }), wastePageSerializer);
+export const getWasteAPI = async (page: number, pageSize: number): Promise<unknown> => {
+  try {
+    const response = await api.get('/food/vendor/kitchen/waste', { params: pageParams(page, pageSize) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getWasteSummary = (range: '7d' | '30d') => request(() => api.get('/food/vendor/kitchen/waste/summary', { params: { range } }), wasteSummarySerializer);
+export const getWasteSummaryAPI = async (range: '7d' | '30d'): Promise<unknown> => {
+  try {
+    const response = await api.get('/food/vendor/kitchen/waste/summary', { params: { range } });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listDonations = () => request(() => api.get('/food/vendor/kitchen/donations'), donationsSerializer);
+export const getDonationsAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get('/food/vendor/kitchen/donations');
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const logDonation = (input: { meals: number; to: string; note?: string }) => request(() => api.post('/food/vendor/kitchen/donations', clean(input)), donationSerializer);
+export const logDonationAPI = async (input: { meals: number; to: string; note?: string }): Promise<unknown> => {
+  try {
+    const response = await api.post('/food/vendor/kitchen/donations', clean(input));
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

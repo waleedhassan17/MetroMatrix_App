@@ -4,12 +4,13 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { getMenuItemsAPI } from '@networks/food/vendor/menuNetwork';
-import { draftDescriptions, saveDescription } from '@networks/kitchen/kitchenAiNetwork';
+import { draftDescriptionsAPI, saveDescriptionAPI } from '@networks/kitchen/kitchenAiNetwork';
 import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { MAX_DESCRIPTION_DISHES, descriptionInput } from '@models/kitchen/assistantModel';
 import type { DescriptionDraft, VendorMenuItem } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
-import { vendorMenuItemsSerializer } from '@serializers/food/menuSerializer';
+import { vendorMenuItemsSerializer, vendorMenuItemSerializer } from '@serializers/food/menuSerializer';
+import { descriptionDraftsSerializer } from '@serializers/kitchen/assistantSerializer';
 
 export interface AiDescriptionsSliceState {
   items: VendorMenuItem[];
@@ -87,7 +88,7 @@ export const aiDescriptionsSlice = createAppSlice({
     draftDescriptionsAsync: create.asyncThunk(
       async (itemIds: string[], { rejectWithValue }) => {
         try {
-          return await draftDescriptions(itemIds);
+          return required(descriptionDraftsSerializer(await draftDescriptionsAPI(itemIds)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -112,7 +113,7 @@ export const aiDescriptionsSlice = createAppSlice({
     saveDescriptionAsync: create.asyncThunk(
       async ({ itemId, en, ur }: { itemId: string; en: string; ur: string }, { rejectWithValue }) => {
         try {
-          return await saveDescription(itemId, descriptionInput({ en, ur }));
+          return required(vendorMenuItemSerializer(await saveDescriptionAPI(itemId, descriptionInput({ en, ur }))));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

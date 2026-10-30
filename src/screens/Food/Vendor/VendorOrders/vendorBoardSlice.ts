@@ -13,14 +13,15 @@ import { createAppSlice } from '@store/createAppSlice';
 import { acceptOrderAPI, handedExternalAPI, getBoardAPI, markCollectedAPI, markDeliveredAPI, markReadyAPI, rejectOrderAPI, startPreparingAPI } from '@networks/food/vendor/ordersNetwork';
 import { getVendorProfileAPI, pauseOrdersAPI, resumeOrdersAPI, setBusyAPI } from '@networks/food/vendor/profileNetwork';
 import { setAvailabilityAPI } from '@networks/food/vendor/availabilityNetwork';
-import { getBoardHints } from '@networks/kitchen/costingNetwork';
-import { getAnnouncement } from '@networks/kitchen/packingNetwork';
+import { getBoardHintsAPI } from '@networks/kitchen/costingNetwork';
+import { getAnnouncementAPI } from '@networks/kitchen/packingNetwork';
 import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { cardOfOrder, columnOf, isEnded, type BoardColumn } from '@models/food/foodStatusModel';
 import type { BoardCard, BoardHints, FoodLiveBoardUpdate, PauseReason, VendorProfile } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
 import { vendorFoodOrderSerializer, boardPageSerializer } from '@serializers/food/orderSerializer';
 import { vendorProfileSerializer } from '@serializers/food/vendorSerializer';
+import { boardHintsSerializer, announcementSerializer } from '@serializers/kitchen/insightSerializer';
 
 export type BoardMove = 'preparing' | 'ready' | 'handed-external' | 'picked-up' | 'delivered';
 
@@ -158,7 +159,7 @@ export const vendorBoardSlice = createAppSlice({
     loadBoardHintsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await getBoardHints();
+          return required(boardHintsSerializer(await getBoardHintsAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -200,7 +201,7 @@ export const vendorBoardSlice = createAppSlice({
     announceOrderAsync: create.asyncThunk(
       async ({ id, language }: { id: string; language: 'ur' | 'en' }, { rejectWithValue }) => {
         try {
-          return await getAnnouncement(id, language);
+          return required(announcementSerializer(await getAnnouncementAPI(id, language)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

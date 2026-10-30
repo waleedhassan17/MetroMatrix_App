@@ -1,23 +1,48 @@
-// MetroMatrix — Kitchen: recipe cards per dish and size.
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Kitchen Recipes Network (API_KITCHEN_ASSUMED.md)
+// ═══════════════════════════════════════════════════════
+// Recipe cards per dish and size.
 // docs/API_KITCHEN_ASSUMED.md §4.2 (TODO(API_KITCHEN): an assumed contract).
 
-import { api } from '../network/apiHelpers';
-import { request } from '../shopping/http';
-import { recipeListSerializer, recipeSerializer } from '../../serializers/kitchen/recipeSerializer';
+import { api, toApiError } from '../network/apiHelpers';
 import type { RecipeInput } from '../../types/kitchen';
 
 const enc = encodeURIComponent;
 const sized = (variantId: string | null | undefined) => (variantId === undefined ? {} : { variantId: variantId ?? 'null' });
 
-export const listRecipes = (needsRecipe: boolean) =>
-  request(() => api.get('/food/vendor/kitchen/recipes', { params: needsRecipe ? { needs: 'recipe' } : {} }), recipeListSerializer);
+export const getRecipesAPI = async (needsRecipe: boolean): Promise<unknown> => {
+  try {
+    const response = await api.get('/food/vendor/kitchen/recipes', { params: needsRecipe ? { needs: 'recipe' } : {} });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 /** undefined: the dish's default size; null: the recipe every size shares. */
-export const getRecipe = (itemId: string, variantId?: string | null) =>
-  request(() => api.get(`/food/vendor/kitchen/recipes/${enc(itemId)}`, { params: sized(variantId) }), recipeSerializer);
+export const getRecipeAPI = async (itemId: string, variantId?: string | null): Promise<unknown> => {
+  try {
+    const response = await api.get(`/food/vendor/kitchen/recipes/${enc(itemId)}`, { params: sized(variantId) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const saveRecipe = (itemId: string, variantId: string | null, input: RecipeInput) =>
-  request(() => api.put(`/food/vendor/kitchen/recipes/${enc(itemId)}`, input, { params: sized(variantId) }), recipeSerializer);
+export const saveRecipeAPI = async (itemId: string, variantId: string | null, input: RecipeInput): Promise<unknown> => {
+  try {
+    const response = await api.put(`/food/vendor/kitchen/recipes/${enc(itemId)}`, input, { params: sized(variantId) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const deleteRecipe = (itemId: string, variantId: string | null) =>
-  request(() => api.delete(`/food/vendor/kitchen/recipes/${enc(itemId)}`, { params: sized(variantId) }), recipeSerializer);
+export const deleteRecipeAPI = async (itemId: string, variantId: string | null): Promise<unknown> => {
+  try {
+    const response = await api.delete(`/food/vendor/kitchen/recipes/${enc(itemId)}`, { params: sized(variantId) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

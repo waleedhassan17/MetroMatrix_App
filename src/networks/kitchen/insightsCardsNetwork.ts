@@ -1,28 +1,38 @@
-// MetroMatrix — Kitchen: the hub's numbers and its insight cards.
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Kitchen Insights Cards Network (API_KITCHEN_ASSUMED.md)
+// ═══════════════════════════════════════════════════════
+// The hub's numbers and its insight cards.
 // docs/API_KITCHEN_ASSUMED.md §4.1 (TODO(API_KITCHEN): an assumed contract).
 
-import { api } from '../network/apiHelpers';
-import { request, requestAll } from '../shopping/http';
-import { aiUsageSerializer, insightCardsSerializer, kitchenSummarySerializer, snoozedCardSerializer } from '../../serializers/kitchen/insightSerializer';
-import { isObject, str } from '../../serializers/serializerUtils';
+import { api, toApiError } from '../network/apiHelpers';
+import { aiUsageSerializer, insightCardsSerializer, kitchenSummarySerializer } from '../../serializers/kitchen/insightSerializer';
 
 const enc = encodeURIComponent;
 
-/** The hub: its tiles' numbers, the cards and the assistant's meter, read together. */
-export const getKitchenHub = () =>
-  requestAll(
-    {
-      summary: () => api.get('/food/vendor/kitchen/summary'),
-      cards: () => api.get('/food/vendor/kitchen/insights/cards'),
-      usage: () => api.get('/food/vendor/ai/usage'),
-    },
-    parts => {
-      const summary = kitchenSummarySerializer(parts.summary);
-      return summary ? { summary, cards: insightCardsSerializer(parts.cards), usage: aiUsageSerializer(parts.usage) } : null;
-    },
-  );
+/** The hub's tiles: today's numbers (the hub reads them with the cards and the AI meter). */
+export const getKitchenSummaryAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get('/food/vendor/kitchen/summary');
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const listInsightCards = () => request(() => api.get('/food/vendor/kitchen/insights/cards'), insightCardsSerializer);
+export const getInsightCardsAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get('/food/vendor/kitchen/insights/cards');
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const snoozeInsightCard = (id: string) =>
-  request(() => api.post(`/food/vendor/kitchen/insights/cards/${enc(id)}/snooze`), snoozedCardSerializer);
+export const snoozeInsightCardAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.post(`/food/vendor/kitchen/insights/cards/${enc(id)}/snooze`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

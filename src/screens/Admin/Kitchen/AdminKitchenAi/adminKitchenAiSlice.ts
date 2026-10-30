@@ -6,8 +6,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getAiUsageReport, setAiEnabled, setAiQuota } from '@networks/admin/adminKitchenNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getAiUsageReportAPI, setAiEnabledAPI, setAiQuotaAPI } from '@networks/admin/adminKitchenNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { AiOwnerUse, AiUsageReport } from '@/types';
 import {
   NO_ERROR,
@@ -15,6 +15,7 @@ import {
   type FormStatus,
   type ServerError,
 } from '../../../Auth/shared/formStatus';
+import { aiUsageReportSerializer } from '@serializers/kitchen/adminKitchenSerializer';
 
 export interface QuotaSheet {
   ownerId: string;
@@ -67,7 +68,7 @@ export const adminKitchenAiSlice = createAppSlice({
     loadAiUsageAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await getAiUsageReport();
+          return required(aiUsageReportSerializer(await getAiUsageReportAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -91,9 +92,9 @@ export const adminKitchenAiSlice = createAppSlice({
     changeAiAsync: create.asyncThunk(
       async (change: Change, { rejectWithValue }) => {
         try {
-          if (change.kind === 'enabled') await setAiEnabled(change.enabled);
-          else await setAiQuota(change.ownerId, change.limit);
-          return await getAiUsageReport();
+          if (change.kind === 'enabled') await setAiEnabledAPI(change.enabled);
+          else await setAiQuotaAPI(change.ownerId, change.limit);
+          return required(aiUsageReportSerializer(await getAiUsageReportAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

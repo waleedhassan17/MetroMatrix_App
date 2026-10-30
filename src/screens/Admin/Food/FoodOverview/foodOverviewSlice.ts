@@ -4,7 +4,7 @@
 
 import { createAppSlice } from '@store/createAppSlice';
 import { getFoodOverviewAPI } from '@networks/admin/adminFoodNetwork';
-import { listHygieneQueue, listSignatures } from '@networks/admin/adminKitchenNetwork';
+import { getHygieneQueueAPI, getSignaturesAPI } from '@networks/admin/adminKitchenNetwork';
 import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { AdminFoodOverview } from '@/types';
 import {
@@ -14,6 +14,8 @@ import {
   type ServerError,
 } from '../../../Auth/shared/formStatus';
 import { adminFoodOverviewSerializer } from '@serializers/food/adminFoodSerializer';
+import { hygieneQueueSerializer } from '@serializers/kitchen/reachSerializer';
+import { signatureListSerializer } from '@serializers/kitchen/adminKitchenSerializer';
 
 export interface FoodOverviewSliceState {
   overview: AdminFoodOverview | null;
@@ -57,7 +59,7 @@ export const foodOverviewSlice = createAppSlice({
     loadKitchenWaitingAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [hygiene, signatures] = await Promise.all([listHygieneQueue('pending'), listSignatures('new')]);
+          const [hygiene, signatures] = await Promise.all([getHygieneQueueAPI('pending').then(raw => required(hygieneQueueSerializer(raw))), getSignaturesAPI('new').then(raw => required(signatureListSerializer(raw)))]);
           return { hygiene: hygiene.length, signatures: signatures.counts.new };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

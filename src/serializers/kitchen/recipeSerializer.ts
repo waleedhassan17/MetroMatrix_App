@@ -2,7 +2,7 @@
 // docs/API_KITCHEN_ASSUMED.md §2.4, §4.2.
 
 import type { KitchenSettings, PackingPhotoRule, Recipe, RecipeLine, RecipeList, RecipeRow, RecipeStatus } from '../../types/kitchen';
-import { bool, isObject, num, oneOf, str, strOrNull } from '../serializerUtils';
+import { bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { baseUnit, costSerializer, count, intOrNull, list } from './kitchenCommon';
 
 const STATUSES: readonly RecipeStatus[] = ['complete', 'partial', 'missing'];
@@ -39,7 +39,7 @@ export const recipeRowSerializer = (raw: unknown): RecipeRow | null => {
   };
 };
 
-export const recipeListSerializer = (raw: unknown): RecipeList | null => {
+export const recipeListSerializer = fromResponse((raw: unknown): RecipeList | null => {
   if (!isObject(raw)) return null;
   const c = isObject(raw.counts) ? raw.counts : {};
   return {
@@ -48,9 +48,9 @@ export const recipeListSerializer = (raw: unknown): RecipeList | null => {
     counts: { all: count(c.all), missing: count(c.missing), overTarget: count(c.overTarget) },
     items: list(raw.items, recipeRowSerializer),
   };
-};
+});
 
-export const recipeSerializer = (raw: unknown): Recipe | null => {
+export const recipeSerializer = fromResponse((raw: unknown): Recipe | null => {
   if (!isObject(raw) || !str(raw.itemId)) return null;
   return {
     itemId: str(raw.itemId),
@@ -74,9 +74,9 @@ export const recipeSerializer = (raw: unknown): Recipe | null => {
     targetFoodCostPct: count(raw.targetFoodCostPct) || 40,
     updatedAt: strOrNull(raw.updatedAt),
   };
-};
+});
 
-export const kitchenSettingsSerializer = (raw: unknown): KitchenSettings | null =>
+export const kitchenSettingsSerializer = fromResponse((raw: unknown): KitchenSettings | null =>
   isObject(raw)
     ? { targetFoodCostPct: count(raw.targetFoodCostPct) || 40, autoSellOut: bool(raw.autoSellOut, true), packingPhoto: oneOf(raw.packingPhoto, PACKING, 'off') }
-    : null;
+    : null);

@@ -2,10 +2,10 @@
 // docs/API_KITCHEN_ASSUMED.md §2.5, §4.3.
 
 import type { Forecast, ForecastAccuracy, ForecastItem, PrepSheet, ShoppingList } from '../../types/kitchen';
-import { bool, isObject, str, strOrNull } from '../serializerUtils';
+import { bool, isObject, str, strOrNull, fromResponse } from '../serializerUtils';
 import { baseUnit, category, count, dateOrNull, intOrNull, list, whole } from './kitchenCommon';
 
-export const forecastItemSerializer = (raw: unknown): ForecastItem | null => {
+export const forecastItemSerializer = fromResponse((raw: unknown): ForecastItem | null => {
   if (!isObject(raw) || !str(raw.itemId)) return null;
   const expected = count(raw.expected);
   const fixed = isObject(raw.fixed) ? raw.fixed : {};
@@ -22,9 +22,9 @@ export const forecastItemSerializer = (raw: unknown): ForecastItem | null => {
     fixed: { tiffin: count(fixed.tiffin), catering: count(fixed.catering) },
     planned: count(raw.planned),
   };
-};
+});
 
-export const forecastSerializer = (raw: unknown): Forecast | null => {
+export const forecastSerializer = fromResponse((raw: unknown): Forecast | null => {
   if (!isObject(raw) || !dateOrNull(raw.date)) return null;
   const o = isObject(raw.orders) ? raw.orders : {};
   return {
@@ -35,12 +35,12 @@ export const forecastSerializer = (raw: unknown): Forecast | null => {
     orders: { expected: count(o.expected), low: count(o.low), high: count(o.high) },
     items: list(raw.items, forecastItemSerializer),
   };
-};
+});
 
-export const accuracySerializer = (raw: unknown): ForecastAccuracy | null =>
-  isObject(raw) ? { days: count(raw.days) || 7, accuracyPct: intOrNull(raw.accuracyPct), learning: bool(raw.learning), note: str(raw.note) } : null;
+export const accuracySerializer = fromResponse((raw: unknown): ForecastAccuracy | null =>
+  isObject(raw) ? { days: count(raw.days) || 7, accuracyPct: intOrNull(raw.accuracyPct), learning: bool(raw.learning), note: str(raw.note) } : null);
 
-export const prepSheetSerializer = (raw: unknown): PrepSheet | null => {
+export const prepSheetSerializer = fromResponse((raw: unknown): PrepSheet | null => {
   if (!isObject(raw) || !dateOrNull(raw.date)) return null;
   return {
     date: dateOrNull(raw.date)!,
@@ -60,9 +60,9 @@ export const prepSheetSerializer = (raw: unknown): PrepSheet | null => {
     ),
     shareText: str(raw.shareText),
   };
-};
+});
 
-export const shoppingListSerializer = (raw: unknown): ShoppingList | null => {
+export const shoppingListSerializer = fromResponse((raw: unknown): ShoppingList | null => {
   if (!isObject(raw) || !dateOrNull(raw.date)) return null;
   return {
     date: dateOrNull(raw.date)!,
@@ -74,4 +74,4 @@ export const shoppingListSerializer = (raw: unknown): ShoppingList | null => {
     estTotal: count(raw.estTotal),
     shareText: str(raw.shareText),
   };
-};
+});

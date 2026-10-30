@@ -2,10 +2,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { createSupplier, deleteSupplier, listSuppliers, updateSupplier } from '@networks/kitchen/purchasesNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { createSupplierAPI, deleteSupplierAPI, getSuppliersAPI, updateSupplierAPI } from '@networks/kitchen/purchasesNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { Supplier } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { suppliersSerializer, supplierSerializer } from '@serializers/kitchen/stockSerializer';
 
 export interface SupplierDraft {
   id: string | null;
@@ -39,7 +40,7 @@ export const suppliersSlice = createAppSlice({
     loadSuppliersAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await listSuppliers();
+          return required(suppliersSerializer(await getSuppliersAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -63,7 +64,7 @@ export const suppliersSlice = createAppSlice({
       async (d: SupplierDraft, { rejectWithValue }) => {
         try {
           const body = { name: d.name.trim(), phone: d.phone.trim() || null, note: d.note.trim() || null };
-          return d.id ? await updateSupplier(d.id, body) : await createSupplier(body);
+          return d.id ? required(supplierSerializer(await updateSupplierAPI(d.id, body))) : required(supplierSerializer(await createSupplierAPI(body)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -89,7 +90,7 @@ export const suppliersSlice = createAppSlice({
     deleteSupplierAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          await deleteSupplier(id);
+          await deleteSupplierAPI(id);
           return id;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

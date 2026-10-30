@@ -4,10 +4,12 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { getVendorNutrition, mapIngredientNutrition, searchNutritionFoods, setNutritionHidden } from '@networks/kitchen/nutritionNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getVendorNutritionAPI, searchNutritionFoodsAPI, setNutritionHiddenAPI } from '@networks/kitchen/nutritionNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { NutritionFood, VendorNutrition } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { vendorNutritionSerializer, dishNutritionSerializer, nutritionFoodsSerializer } from '@serializers/kitchen/assistantSerializer';
+import { updateIngredientAPI } from '@networks/kitchen/stockNetwork';
 
 export interface NutritionVendorSliceState {
   data: VendorNutrition | null;
@@ -51,7 +53,7 @@ export const nutritionVendorSlice = createAppSlice({
     loadVendorNutritionAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await getVendorNutrition();
+          return required(vendorNutritionSerializer(await getVendorNutritionAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -74,7 +76,7 @@ export const nutritionVendorSlice = createAppSlice({
     setNutritionHiddenAsync: create.asyncThunk(
       async ({ itemId, hidden }: { itemId: string; hidden: boolean }, { rejectWithValue }) => {
         try {
-          return await setNutritionHidden(itemId, hidden);
+          return required(dishNutritionSerializer(await setNutritionHiddenAPI(itemId, hidden)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -101,8 +103,8 @@ export const nutritionVendorSlice = createAppSlice({
     mapIngredientAsync: create.asyncThunk(
       async ({ ingredientId, foodId }: { ingredientId: string; foodId: string }, { rejectWithValue }) => {
         try {
-          await mapIngredientNutrition(ingredientId, foodId);
-          return await getVendorNutrition();
+          await updateIngredientAPI(ingredientId, { nutritionFoodId: foodId });
+          return required(vendorNutritionSerializer(await getVendorNutritionAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -126,7 +128,7 @@ export const nutritionVendorSlice = createAppSlice({
     searchFoodsAsync: create.asyncThunk(
       async (q: string, { rejectWithValue }) => {
         try {
-          return await searchNutritionFoods(q);
+          return required(nutritionFoodsSerializer(await searchNutritionFoodsAPI(q)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

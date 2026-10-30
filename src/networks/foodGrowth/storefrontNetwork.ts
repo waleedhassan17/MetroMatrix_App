@@ -1,9 +1,17 @@
-// MetroMatrix — Food Court: the kitchen's own link and QR, and the orders they brought.
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Food Growth Storefront Network (API_KITCHEN_ASSUMED.md)
+// ═══════════════════════════════════════════════════════
+// The kitchen's own link and QR, and the orders they brought.
 // docs/API_KITCHEN_ASSUMED.md §2.12 (TODO(API_KITCHEN): an assumed contract). The public page
 // itself is the ordinary vendor page (`GET /food/vendors/:slug`).
 
-import { api } from '../network/apiHelpers';
-import { request } from '../shopping/http';
-import { storefrontSerializer } from '../../serializers/kitchen/reachSerializer';
+import { api, toApiError } from '../network/apiHelpers';
 
-export const getStorefront = () => request(() => api.get('/food/vendor/storefront'), storefrontSerializer);
+export const getStorefrontAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get('/food/vendor/storefront');
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

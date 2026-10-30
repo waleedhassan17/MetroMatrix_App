@@ -16,7 +16,7 @@ import type {
   PackingResult,
   ReceiptDraft,
 } from '../../types/kitchen';
-import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
+import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse, bodyOf } from '../serializerUtils';
 import { count, dateOrNull, intOrNull, list } from './kitchenCommon';
 
 const SEVERITIES: readonly InsightSeverity[] = ['critical', 'warning', 'info'];
@@ -64,7 +64,7 @@ export const insightCardSerializer = (raw: unknown): InsightCard | null => {
   };
 };
 
-export const insightCardsSerializer = (raw: unknown): InsightCard[] => list(isObject(raw) ? raw.items : raw, insightCardSerializer).slice(0, 5);
+export const insightCardsSerializer = fromResponse((raw: unknown): InsightCard[] => list(isObject(raw) ? raw.items : raw, insightCardSerializer).slice(0, 5));
 
 const growthSerializer = (raw: unknown): KitchenSummary['growth'] => {
   const g = isObject(raw) ? raw : {};
@@ -102,7 +102,7 @@ export const kitchenSummarySerializer = (raw: unknown): KitchenSummary | null =>
   };
 };
 
-export const boardHintsSerializer = (raw: unknown): BoardHints | null => {
+export const boardHintsSerializer = fromResponse((raw: unknown): BoardHints | null => {
   if (!isObject(raw)) return null;
   const h = isObject(raw.prepHint) && num(raw.prepHint.minutes) > 0 ? { minutes: count(raw.prepHint.minutes), label: str(raw.prepHint.label) } : null;
   return {
@@ -111,9 +111,9 @@ export const boardHintsSerializer = (raw: unknown): BoardHints | null => {
     prepHint: h,
     packingPhoto: oneOf(raw.packingPhoto, PACKING, 'off'),
   };
-};
+});
 
-export const aiUsageSerializer = (raw: unknown): AiUsage | null => {
+export const aiUsageSerializer = fromResponse((raw: unknown): AiUsage | null => {
   if (!isObject(raw)) return null;
   const v = isObject(raw.voice) ? raw.voice : {};
   return {
@@ -124,9 +124,9 @@ export const aiUsageSerializer = (raw: unknown): AiUsage | null => {
     resetsAt: str(raw.resetsAt),
     voice: { limit: count(v.limit), used: count(v.used), left: count(v.left), resetsAt: str(v.resetsAt) },
   };
-};
+});
 
-export const receiptDraftSerializer = (raw: unknown): ReceiptDraft | null => {
+export const receiptDraftSerializer = fromResponse((raw: unknown): ReceiptDraft | null => {
   if (!isObject(raw)) return null;
   return {
     supplierName: strOrNull(raw.supplierName),
@@ -145,23 +145,31 @@ export const receiptDraftSerializer = (raw: unknown): ReceiptDraft | null => {
         : null,
     ),
   };
-};
+});
 
-export const packingResultSerializer = (raw: unknown): PackingResult | null =>
+export const packingResultSerializer = fromResponse((raw: unknown): PackingResult | null =>
   isObject(raw) && str(raw.packedPhotoUrl)
     ? {
         orderId: str(raw.orderId),
         packedPhotoUrl: str(raw.packedPhotoUrl),
         check: isObject(raw.check) && str(raw.check.note) ? { ok: bool(raw.check.ok, true), note: str(raw.check.note) } : null,
       }
-    : null;
+    : null);
 
-export const announcementSerializer = (raw: unknown): Announcement | null =>
+export const announcementSerializer = fromResponse((raw: unknown): Announcement | null =>
   isObject(raw) && str(raw.text)
     ? { orderId: str(raw.orderId), text: str(raw.text), language: raw.language === 'ur' ? 'ur' : 'en', ttsUrl: strOrNull(raw.ttsUrl) }
-    : null;
+    : null);
 
 export { arr };
 
 /** A snoozed insight card: its id and until when. */
 export const snoozedCardSerializer = fromResponse(raw => (isObject(raw) ? { id: str(raw.id), snoozedUntil: str(raw.snoozedUntil) } : null));
+
+/** The hub's three answers (tiles, cards, the assistant's meter), read together. */
+export const kitchenHubSerializer = (parts: { summary: unknown; cards: unknown; usage: unknown }) => {
+  const summary = kitchenSummarySerializer(bodyOf(parts.summary));
+  return summary
+    ? { summary, cards: insightCardsSerializer(bodyOf(parts.cards)), usage: aiUsageSerializer(bodyOf(parts.usage)) }
+    : null;
+};

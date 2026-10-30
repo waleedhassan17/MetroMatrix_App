@@ -3,10 +3,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { listRecipes } from '@networks/kitchen/recipesNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getRecipesAPI } from '@networks/kitchen/recipesNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { RecipeList } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';
+import { recipeListSerializer } from '@serializers/kitchen/recipeSerializer';
 
 export interface RecipesAndCostsSliceState {
   needsRecipe: boolean;
@@ -27,7 +28,7 @@ export const recipesAndCostsSlice = createAppSlice({
     loadRecipesAsync: create.asyncThunk(
       async (needsRecipe: boolean, { rejectWithValue }) => {
         try {
-          return await listRecipes(needsRecipe);
+          return required(recipeListSerializer(await getRecipesAPI(needsRecipe)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
