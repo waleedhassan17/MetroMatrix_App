@@ -10,7 +10,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { toRejectedValue } from '../../networks/network/apiHelpers';
-import { uploadImage } from '../../networks/media/mediaNetwork';
+import { uploadImage } from '../../services/mediaUpload';
 import { interpretVoice } from '../../networks/ai/voiceNetwork';
 import { NO_ERROR, readRejection, type ServerError } from '../../screens/Auth/shared/formStatus';
 import type { Clip } from '../../services/voice/recorderShared';

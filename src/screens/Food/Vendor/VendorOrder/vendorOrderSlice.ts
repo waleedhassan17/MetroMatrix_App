@@ -24,7 +24,7 @@ import {
 } from '@networks/food/vendor/ordersNetwork';
 import { getKitchenSettings } from '@networks/kitchen/costingNetwork';
 import { attachPackingPhoto } from '@networks/kitchen/packingNetwork';
-import { uploadImage } from '@networks/media/mediaNetwork';
+import { uploadImage } from '@/services/mediaUpload';
 import { getBatchSuggestions } from '@networks/foodGrowth/batchingNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import type { BatchSuggestion, LocalFile, PackingPhotoRule, PackingResult, RiderSuggestion, VendorFoodOrder } from '@/types';

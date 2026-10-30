@@ -5,7 +5,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { createBox, getBoxSuggestion } from '@networks/kitchen/surplusNetwork';
-import { uploadImage } from '@networks/media/mediaNetwork';
+import { uploadImage } from '@/services/mediaUpload';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import { emptyBoxForm, formFromSuggestion, type BoxForm } from '@models/kitchen/surplusModel';
 import type { LocalFile, SurplusBoxInput } from '@/types';

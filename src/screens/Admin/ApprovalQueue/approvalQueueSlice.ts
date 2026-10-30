@@ -6,10 +6,14 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { listBusinesses } from '@networks/admin/adminBusinessNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getBusinessesAPI } from '@networks/admin/adminBusinessNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { BusinessSummary, ServiceType } from '@/types';
 import { NO_ERROR, readRejection, type ServerError } from '../../Auth/shared/formStatus';
+
+/** Applications per page of the queue. */
+const QUEUE_PAGE_SIZE = 20;
+import { businessPageSerializer } from '@serializers/businessSerializer';
 
 export type QueueTab = 'all' | ServiceType;
 export type LoadMode = 'initial' | 'refresh' | 'more';
@@ -53,12 +57,14 @@ export const approvalQueueSlice = createAppSlice({
         { rejectWithValue },
       ) => {
         try {
-          const page = await listBusinesses({
+          // The API pages by number; the queue's "load more" cursor is the next page.
+          const raw = await getBusinessesAPI({
             status: 'pending_approval',
             serviceType: tab === 'all' ? undefined : tab,
-            cursor: mode === 'more' ? cursor : null,
+            page: mode === 'more' ? Math.max(1, Number(cursor) || 1) : 1,
+            pageSize: QUEUE_PAGE_SIZE,
           });
-          return page;
+          return required(businessPageSerializer(raw));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

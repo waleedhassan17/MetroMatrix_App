@@ -5,9 +5,9 @@
 // the app — the server still enforces the real switches.
 
 import { OPEN_PLATFORM, PLATFORM_SERVICES, type PlatformConfig } from '../types/platformConfig';
-import { bool, isObject, strOrNull, str } from './serializerUtils';
+import { bool, isObject, strOrNull, str, fromResponse } from './serializerUtils';
 
-export const platformConfigSerializer = (raw: unknown): PlatformConfig | null => {
+export const platformConfigSerializer = fromResponse((raw: unknown): PlatformConfig | null => {
   if (!isObject(raw)) return null;
   const signups = isObject(raw.signupsEnabled) ? raw.signupsEnabled : {};
   const services = isObject(raw.services) ? raw.services : {};
@@ -27,4 +27,4 @@ export const platformConfigSerializer = (raw: unknown): PlatformConfig | null =>
     },
     supportEmail: isObject(raw.support) ? strOrNull(raw.support.email) : null,
   };
-};
+});

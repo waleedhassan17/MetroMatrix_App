@@ -18,7 +18,7 @@ import type {
   UserRole,
 } from '../types/auth';
 import { businessSerializer, SERVICE_TYPES, SUB_TYPES } from './businessSerializer';
-import { bool, enumList, isObject, oneOf, str, strOrNull } from './serializerUtils';
+import { bool, enumList, fromResponse, isObject, oneOf, str, strOrNull } from './serializerUtils';
 
 export const USER_ROLES: readonly UserRole[] = ['customer', 'partner', 'rider', 'admin', 'super_admin'];
 const PROVIDERS: readonly AuthProvider[] = ['password', 'google'];
@@ -60,6 +60,9 @@ export const userSerializer = (raw: unknown): User => {
     providerSubType: oneOf(r.providerSubType ?? r.subType, SUB_TYPES, null),
   };
 };
+
+/** PATCH /users/me and /users/me/profile answer the user, or `{ user }`. */
+export const userResponseSerializer = fromResponse(raw => userSerializer(isObject(raw) && isObject(raw.user) ? raw.user : raw));
 
 /** Top-level pair or one nested under `tokens`; null when either is missing. */
 export const tokensSerializer = (raw: unknown): AuthTokens | null => {

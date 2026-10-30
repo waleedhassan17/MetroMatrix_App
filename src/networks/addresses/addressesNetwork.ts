@@ -1,17 +1,49 @@
-// MetroMatrix — Delivery addresses network (core: Shopping now, Food later).
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Addresses Network (Production API)
+// ═══════════════════════════════════════════════════════
+// Shopping now, Food later).
 // TODO(API_SHOPPING): paths per docs/API_SHOPPING_ASSUMED.md.
 
-import { api } from '../network/apiHelpers';
-import { addressSerializer } from '../../serializers/addressSerializer';
-import { compact } from '../../serializers/shopping/common';
-import { arr } from '../../serializers/serializerUtils';
+import { api, toApiError } from '../network/apiHelpers';
 import type { AddressInput } from '../../types/shopping';
-import { ack, request } from '../shopping/http';
 
-export const listAddresses = () => request(() => api.get('/addresses'), raw => compact(arr(raw).map(addressSerializer)));
-export const createAddress = (input: AddressInput) => request(() => api.post('/addresses', input), addressSerializer);
-export const updateAddress = (id: string, input: AddressInput) =>
-  request(() => api.patch(`/addresses/${encodeURIComponent(id)}`, input), addressSerializer);
-export const deleteAddress = (id: string) => request(() => api.delete(`/addresses/${encodeURIComponent(id)}`), ack);
-export const setDefaultAddress = (id: string) =>
-  request(() => api.post(`/addresses/${encodeURIComponent(id)}/default`), addressSerializer);
+export const getAddressesAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get('/addresses');
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const createAddressAPI = async (input: AddressInput): Promise<unknown> => {
+  try {
+    const response = await api.post('/addresses', input);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const updateAddressAPI = async (id: string, input: AddressInput): Promise<unknown> => {
+  try {
+    const response = await api.patch(`/addresses/${encodeURIComponent(id)}`, input);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const deleteAddressAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.delete(`/addresses/${encodeURIComponent(id)}`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const setDefaultAddressAPI = async (id: string): Promise<unknown> => {
+  try {
+    const response = await api.post(`/addresses/${encodeURIComponent(id)}/default`);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

@@ -1,17 +1,33 @@
-// MetroMatrix — In-app notifications network (core).
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Notifications Network (Production API)
+// ═══════════════════════════════════════════════════════
 // TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
 
-import { api } from '../network/apiHelpers';
-import { notificationSerializer } from '../../serializers/notificationSerializer';
-import { count, paged } from '../../serializers/shopping/common';
-import { isObject } from '../../serializers/serializerUtils';
-import { ack, pageParams, request } from '../shopping/http';
+import { api, toApiError, pageParams } from '../network/apiHelpers';
 
-export const listNotifications = (page: number, pageSize = 30) =>
-  request(() => api.get('/notifications', { params: pageParams(page, pageSize) }), raw => paged(raw, notificationSerializer));
+export const getNotificationsAPI = async (page: number, pageSize = 30): Promise<unknown> => {
+  try {
+    const response = await api.get('/notifications', { params: pageParams(page, pageSize) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const getUnreadCount = () =>
-  request(() => api.get('/notifications/unread-count'), raw => count(isObject(raw) ? raw.count : raw));
+export const getUnreadCountAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get('/notifications/unread-count');
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
-export const markNotificationsRead = (target: { ids: string[] } | { all: true }) =>
-  request(() => api.post('/notifications/read', target), ack);
+export const markNotificationsReadAPI = async (target: { ids: string[] } | { all: true }): Promise<unknown> => {
+  try {
+    const response = await api.post('/notifications/read', target);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

@@ -2,11 +2,12 @@
 // TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
 
 import type { Address, AddressLabel } from '../types/shopping';
-import { bool, isObject, num, oneOf, str, strOrNull } from './serializerUtils';
+import { bool, isObject, num, oneOf, str, strOrNull, arr, fromResponse } from './serializerUtils';
+import { compact } from './shopping/common';
 
 const LABELS: readonly AddressLabel[] = ['home', 'work', 'other'];
 
-export const addressSerializer = (raw: unknown): Address | null => {
+export const addressSerializer = fromResponse((raw: unknown): Address | null => {
   if (!isObject(raw)) return null;
   const id = str(raw.id);
   // An address nobody can deliver to is not an address.
@@ -26,4 +27,7 @@ export const addressSerializer = (raw: unknown): Address | null => {
     lng: lng !== null && Number.isFinite(lng) ? lng : null,
     isDefault: bool(raw.isDefault),
   };
-};
+});
+
+/** GET /addresses: the address book. */
+export const addressListSerializer = fromResponse(raw => compact(arr(raw).map(addressSerializer)));

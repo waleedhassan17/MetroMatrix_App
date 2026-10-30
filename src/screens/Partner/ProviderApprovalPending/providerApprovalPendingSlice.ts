@@ -9,10 +9,11 @@
 
 import { createAppSlice } from '@store/createAppSlice';
 import { authMe } from '@networks/auth/authNetwork';
-import { getMyBusinessStatus } from '@networks/businesses/businessNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getMyBusinessStatusAPI } from '@networks/businesses/businessNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import { setSession } from '../../Auth/authSlice';
 import { NO_ERROR, readRejection, type ServerError } from '../../Auth/shared/formStatus';
+import { businessStatusSerializer } from '@serializers/businessSerializer';
 
 export const POLL_INTERVAL_MS = 10_000;
 
@@ -44,7 +45,7 @@ export const providerApprovalPendingSlice = createAppSlice({
     checkStatusAsync: create.asyncThunk(
       async (_: { manual: boolean }, { dispatch, rejectWithValue }) => {
         try {
-          const info = await getMyBusinessStatus();
+          const info = required(businessStatusSerializer(await getMyBusinessStatusAPI()));
           if (info.status !== 'pending_approval') dispatch(setSession(await authMe()));
           return info.status;
         } catch (e) {

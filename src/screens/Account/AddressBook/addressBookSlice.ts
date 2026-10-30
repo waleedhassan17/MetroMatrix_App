@@ -4,11 +4,12 @@
 // Read by the address book, the address form (after a save) and Checkout.
 
 import { createAppSlice } from '@store/createAppSlice';
-import { deleteAddress, listAddresses, setDefaultAddress } from '@networks/addresses/addressesNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { deleteAddressAPI, getAddressesAPI, setDefaultAddressAPI } from '@networks/addresses/addressesNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { Address } from '@/types';
 import { saveAddressAsync } from '../AddressForm/addressFormSlice';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../Auth/shared/formStatus';
+import { addressListSerializer } from '@serializers/addressSerializer';
 
 export interface AddressBookSliceState {
   addresses: Address[];
@@ -27,7 +28,7 @@ export const addressBookSlice = createAppSlice({
     loadAddressesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await listAddresses();
+          return required(addressListSerializer(await getAddressesAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -50,8 +51,8 @@ export const addressBookSlice = createAppSlice({
     setDefaultAddressAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          await setDefaultAddress(id);
-          return await listAddresses();
+          await setDefaultAddressAPI(id);
+          return required(addressListSerializer(await getAddressesAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -74,8 +75,8 @@ export const addressBookSlice = createAppSlice({
     deleteAddressAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          await deleteAddress(id);
-          return await listAddresses();
+          await deleteAddressAPI(id);
+          return required(addressListSerializer(await getAddressesAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

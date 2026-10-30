@@ -267,3 +267,19 @@ export const getPasswordStrength = (password: string): PasswordStrengthLevel => 
 };
 
 export const hasErrors = (errors: ValidationErrors): boolean => Object.keys(errors).length > 0;
+
+// ─── API bodies ──────────────────────────────────────
+// The app's shape → the API's (FinMatrix keeps its to-API maps in models).
+
+/** A profile edit → PATCH /users/me's body: the API calls the name `displayName`. */
+export const updateMeBody = ({
+  name,
+  ...rest
+}: {
+  name?: string;
+  phone?: string | null;
+  avatarUrl?: string | null;
+}): { displayName?: string; phone?: string | null; avatarUrl?: string | null } => ({
+  ...rest,
+  ...(name === undefined ? {} : { displayName: name.trim() }),
+});

@@ -6,7 +6,8 @@
 // the stored URLs, and waits while any is still uploading.
 
 import type { LocalFile } from '@/types';
-import { uploadImage, type UploadPurpose } from '@networks/media/mediaNetwork';
+import { uploadImage } from '@/services/mediaUpload';
+import type { UploadPurpose } from '@models/mediaModel';
 import type { StripPhoto } from '@custom/PhotoStrip';
 
 export interface FormPhoto extends StripPhoto {

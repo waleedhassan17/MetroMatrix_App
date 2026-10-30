@@ -10,17 +10,18 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { resetAllState } from '@store/resetAllState';
 import { authDeleteAccount } from '@networks/auth/authNetwork';
-import { updateMe } from '@networks/users/usersNetwork';
-import { signUpload } from '@networks/media/mediaNetwork';
-import { uploadToCloudinary, ApiError, toRejectedValue, ERROR_CODES } from '@networks/network/apiHelpers';
+import { updateMeAPI } from '@networks/users/usersNetwork';
+import { signUpload } from '@/services/mediaUpload';
+import { uploadToCloudinary, ApiError, toRejectedValue, ERROR_CODES, required } from '@networks/network/apiHelpers';
 import { getGoogleIdToken } from '@/services/googleAuth';
-import { nationalFromPkPhone, toPkPhone } from '@models/authModel';
+import { nationalFromPkPhone, toPkPhone, updateMeBody } from '@models/authModel';
 import { clearPushToken } from '@utils/storageUtils';
 import { markIntentionalSignOut } from '@utils/authEvents';
 import type { LocalFile, User } from '@/types';
 import { setUser, signOut } from '../../Auth/authSlice';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../Auth/shared/formStatus';
 import type { Touched } from '@utils/formErrors';
+import { userResponseSerializer } from '@serializers/authSerializer';
 
 type Field = 'name' | 'phone';
 
@@ -104,7 +105,7 @@ export const profileSlice = createAppSlice({
     saveProfileAsync: create.asyncThunk(
       async ({ name, phone }: { name: string; phone: string }, { dispatch, rejectWithValue }) => {
         try {
-          const user = await updateMe({ name: name.trim(), phone: toPkPhone(phone) ?? null });
+          const user = required(userResponseSerializer(await updateMeAPI(updateMeBody({ name, phone: toPkPhone(phone) ?? null }))));
           dispatch(setUser(user));
           return user;
         } catch (e) {
@@ -134,7 +135,7 @@ export const profileSlice = createAppSlice({
         try {
           const signed = await signUpload('avatar');
           const uploaded = await uploadToCloudinary(file, signed, p => dispatch(setAvatarProgress(p)));
-          const user = await updateMe({ avatarUrl: uploaded.url });
+          const user = required(userResponseSerializer(await updateMeAPI({ avatarUrl: uploaded.url })));
           dispatch(setUser(user));
           return true;
         } catch (e) {

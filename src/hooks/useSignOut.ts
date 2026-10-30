@@ -21,7 +21,7 @@ import { useAppDispatch } from './useReduxHooks';
 import { signOut, type SignedOutLanding } from '../screens/Auth/authSlice';
 import { resetAllState } from '../store/resetAllState';
 import { authLogout } from '../networks/auth/authNetwork';
-import { unregisterDevice } from '../networks/users/usersNetwork';
+import { unregisterDeviceAPI } from '../networks/users/usersNetwork';
 import { clearPushToken, clearTokens, getAccessToken, getPushToken } from '../utils/storageUtils';
 import { markIntentionalSignOut } from '../utils/authEvents';
 import { Alert } from '../utils/alert';
@@ -51,7 +51,8 @@ export function useSignOut() {
 
     // Best-effort, in the prompt's order, on the captured token.
     void (async () => {
-      if (pushToken) await unregisterDevice(pushToken, accessToken);
+      // A stale device row only costs the server one undelivered push.
+      if (pushToken) await unregisterDeviceAPI(pushToken, accessToken).catch(() => undefined);
       await authLogout(accessToken);
     })();
 

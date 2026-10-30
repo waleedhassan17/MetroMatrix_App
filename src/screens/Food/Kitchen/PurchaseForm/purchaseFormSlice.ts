@@ -7,7 +7,7 @@ import { createAppSlice } from '@store/createAppSlice';
 import { createPurchase, listSuppliers } from '@networks/kitchen/purchasesNetwork';
 import { listStock } from '@networks/kitchen/stockNetwork';
 import { scanReceipt } from '@networks/kitchen/kitchenAiNetwork';
-import { uploadImage } from '@networks/media/mediaNetwork';
+import { uploadImage } from '@/services/mediaUpload';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import { emptyLine, linesFromReceipt, linesFromVoice, type DraftLine } from '@models/kitchen/purchaseModel';
 import type { Ingredient, LocalFile, PurchaseInput, PurchaseSource, Supplier, VoiceQtyLine } from '@/types';

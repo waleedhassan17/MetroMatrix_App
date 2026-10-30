@@ -8,7 +8,7 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { adminTotpConfirm, adminTotpEnrol } from '@networks/admin/adminBusinessNetwork';
+import { adminTotpConfirm, adminTotpEnrol } from '@networks/auth/authNetwork';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import type { Business, TotpEnrolment, User } from '@/types';
 import type { PendingTotp } from '../../Auth/authSlice';

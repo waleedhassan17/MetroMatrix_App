@@ -4,9 +4,10 @@
 // reports as platform notices (apiHelpers → authEvents → AppContainer).
 
 import { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
-import { api, extractErrorCode } from '../apiHelpers';
-import { fetchPlatformConfig } from '../../config/configNetwork';
+import { api, extractErrorCode, required } from '../apiHelpers';
+import { getPlatformConfigAPI } from '../../config/configNetwork';
 import { setPlatformNoticeHandler, type PlatformNotice } from '../../../utils/authEvents';
+import { platformConfigSerializer } from '../../../serializers/platformConfigSerializer';
 
 const respond = (config: InternalAxiosRequestConfig, status: number, data: unknown): AxiosResponse => ({
   data,
@@ -67,7 +68,7 @@ describe('GET /config', () => {
         support: { email: 'help@metromatrix.app' },
       },
     });
-    expect(await fetchPlatformConfig()).toEqual({
+    expect(required(platformConfigSerializer(await getPlatformConfigAPI()))).toEqual({
       signupsEnabled: { customer: true, partner: false },
       services: { shopping: true, healthcare: false, food: true, kitchen: true },
       aiEnabled: true,
@@ -78,7 +79,7 @@ describe('GET /config', () => {
 
   it('reads anything missing as open', async () => {
     serverAnswers(200, { success: true, data: {} });
-    const config = await fetchPlatformConfig();
+    const config = required(platformConfigSerializer(await getPlatformConfigAPI()));
     expect(config.signupsEnabled).toEqual({ customer: true, partner: true });
     expect(config.services).toEqual({ shopping: true, healthcare: true, food: true, kitchen: true });
     expect(config.maintenance.enabled).toBe(false);

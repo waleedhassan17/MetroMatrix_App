@@ -22,7 +22,7 @@ import type {
   SubType,
 } from '../types/auth';
 import { SUBTYPE_SERVICE, evaluateDocuments } from '../models/businessModel';
-import { arr, bool, isObject, num, oneOf, str, strOrNull } from './serializerUtils';
+import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from './serializerUtils';
 import { foodVendorSessionSerializer } from './food/vendorSerializer';
 
 export const SERVICE_TYPES: readonly ServiceType[] = ['shopping', 'healthcare', 'food'];
@@ -92,7 +92,7 @@ const requirementStatuses = (v: unknown): RequirementStatus[] =>
     })
     .filter(r => r.kind || (r.anyOf && r.anyOf.length));
 
-export const businessSerializer = (raw: unknown): Business | null => {
+export const businessSerializer = fromResponse((raw: unknown): Business | null => {
   if (!isObject(raw)) return null;
   const subType = oneOf(raw.subType, SUB_TYPES, null);
   if (!subType) return null;
@@ -129,9 +129,9 @@ export const businessSerializer = (raw: unknown): Business | null => {
     pmdcVerified: subType === 'doctor' ? bool(raw.pmdcVerified) : null,
     food: foodVendorSessionSerializer(raw.food),
   };
-};
+});
 
-export const businessWithOwnerSerializer = (raw: unknown): BusinessWithOwner | null => {
+export const businessWithOwnerSerializer = fromResponse((raw: unknown): BusinessWithOwner | null => {
   const business = businessSerializer(raw);
   if (!business || !isObject(raw)) return null;
   const owner = isObject(raw.owner) ? raw.owner : {};
@@ -144,7 +144,7 @@ export const businessWithOwnerSerializer = (raw: unknown): BusinessWithOwner | n
       phone: strOrNull(owner.phone),
     },
   };
-};
+});
 
 export const businessSummarySerializer = (raw: unknown): BusinessSummary | null => {
   if (!isObject(raw)) return null;
@@ -168,7 +168,7 @@ export const businessSummarySerializer = (raw: unknown): BusinessSummary | null 
  * The API's Paged `{ items, total, page, pageSize }`; `nextCursor` is the next
  * page number while rows remain (a `nextCursor` the server sends wins).
  */
-export const businessPageSerializer = (raw: unknown): { items: BusinessSummary[]; nextCursor: string | null } => {
+export const businessPageSerializer = fromResponse((raw: unknown): { items: BusinessSummary[]; nextCursor: string | null } => {
   const body = isObject(raw) ? raw : {};
   const items = arr(Array.isArray(raw) ? raw : body.items)
     .map(businessSummarySerializer)
@@ -178,9 +178,9 @@ export const businessPageSerializer = (raw: unknown): { items: BusinessSummary[]
   const pageSize = Math.max(1, num(body.pageSize, items.length || 1));
   const total = num(body.total, 0);
   return { items, nextCursor: page * pageSize < total ? String(page + 1) : null };
-};
+});
 
-export const businessStatusSerializer = (raw: unknown): BusinessStatusInfo | null => {
+export const businessStatusSerializer = fromResponse((raw: unknown): BusinessStatusInfo | null => {
   if (!isObject(raw)) return null;
   const status = oneOf(raw.status, BUSINESS_STATUSES, null);
   if (!status) return null;
@@ -199,4 +199,4 @@ export const businessStatusSerializer = (raw: unknown): BusinessStatusInfo | nul
       }))
       .filter((d): d is BusinessStatusInfo['documents'][number] => d.kind !== null),
   };
-};
+});

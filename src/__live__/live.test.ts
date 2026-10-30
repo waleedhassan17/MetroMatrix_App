@@ -24,19 +24,57 @@ jest.mock('../config/env', () => ({
 
 import { createHmac } from 'crypto';
 import { readFileSync } from 'fs';
-import { api, refreshClient, refreshTokens, toApiError, unwrap } from '../networks/network/apiHelpers';
+import { api, refreshClient, refreshTokens, toApiError, unwrap, required } from '../networks/network/apiHelpers';
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '../utils/storageUtils';
 import { setBusinessStatusStaleHandler } from '../utils/authEvents';
 import * as auth from '../networks/auth/authNetwork';
 import * as users from '../networks/users/usersNetwork';
-import * as media from '../networks/media/mediaNetwork';
-import * as biz from '../networks/businesses/businessNetwork';
-import * as admin from '../networks/admin/adminBusinessNetwork';
+import * as media from '../services/mediaUpload';
+import * as businessNetwork from '../networks/businesses/businessNetwork';
+import {
+  businessPageSerializer,
+  businessSerializer,
+  businessStatusSerializer,
+  businessWithOwnerSerializer,
+} from '../serializers/businessSerializer';
+import * as adminNetwork from '../networks/admin/adminBusinessNetwork';
 import { resolveGate, partnerAppFor } from '../navigators/sessionGate';
 import { doorForAccount } from '../models/authDoors';
 import { documentSlots } from '../models/businessModel';
 import type { ApiError } from '../networks/network/apiHelpers';
 import type { DocumentKind } from '../types/auth';
+import { userResponseSerializer } from '../serializers/authSerializer';
+
+// The partner's steps as the setup slice composes them: thin network calls,
+// then the business read and serialized.
+const readBusiness = async () => required(businessSerializer(await businessNetwork.getMyBusinessAPI()));
+const biz = {
+  createBusiness: async (p: businessNetwork.BusinessPayload) => required(businessSerializer(await businessNetwork.createBusinessAPI(p))),
+  getMyBusiness: readBusiness,
+  addDocument: async (d: Parameters<typeof businessNetwork.addDocumentAPI>[0]) => {
+    await businessNetwork.addDocumentAPI(d);
+    return readBusiness();
+  },
+  removeDocument: async (id: string) => {
+    await businessNetwork.removeDocumentAPI(id);
+    return readBusiness();
+  },
+  submitBusiness: async () => required(businessSerializer(await businessNetwork.submitBusinessAPI())),
+  getMyBusinessStatus: async () => required(businessStatusSerializer(await businessNetwork.getMyBusinessStatusAPI())),
+};
+
+// Staff's steps as the approval slices compose them.
+const admin = {
+  listBusinesses: async (q: adminNetwork.AdminBusinessQueryParams) =>
+    required(businessPageSerializer(await adminNetwork.getBusinessesAPI({ page: 1, pageSize: 20, ...q }))),
+  getBusiness: async (id: string) => required(businessWithOwnerSerializer(await adminNetwork.getBusinessAPI(id))),
+  approveBusiness: async (id: string) => required(businessSerializer(await adminNetwork.approveBusinessAPI(id))),
+  rejectBusiness: async (id: string, body: Parameters<typeof adminNetwork.rejectBusinessAPI>[1]) =>
+    required(businessSerializer(await adminNetwork.rejectBusinessAPI(id, body))),
+  suspendBusiness: async (id: string, reason: string) => required(businessSerializer(await adminNetwork.suspendBusinessAPI(id, reason))),
+  reinstateBusiness: async (id: string, reason: string) =>
+    required(businessSerializer(await adminNetwork.reinstateBusinessAPI(id, reason))),
+};
 
 const LIVE = process.env.LIVE_API_URL;
 const MAIL_LOG = process.env.LIVE_MAIL_LOG ?? '';
@@ -156,7 +194,7 @@ live('live run against the local API', () => {
 
   it('c. complete profile → customer app; a customer on the provider door is sent to the User door', async () => {
     await use(sessions.cust);
-    const user = await users.completeProfile({ dateOfBirth: '1998-02-14', gender: 'female', streetAddress: '7 Canal View, Johar Town', city: 'Lahore', postalCode: '54000' });
+    const user = userResponseSerializer(await users.completeProfileAPI({ dateOfBirth: '1998-02-14', gender: 'female', streetAddress: '7 Canal View, Johar Town', city: 'Lahore', postalCode: '54000' }));
     expect(user.profileComplete).toBe(true);
     expect(gateOf(await auth.authMe())).toBe('customer');
 
@@ -227,7 +265,7 @@ live('live run against the local API', () => {
 
     await use(sessions.kitchen);
     expect(gateOf(await auth.authMe())).toBe('partnerSetup');
-    await users.updateMe({ name: 'Live Kitchen', phone: '+923001112233' });
+    await users.updateMeAPI({ displayName: 'Live Kitchen', phone: '+923001112233' });
     const draft = await biz.createBusiness({ serviceType: 'food', subType: 'home_kitchen', name: `Live Kitchen ${run}`, phone: '+923001112233', city: 'Lahore', addressLine: '9 Garden Town, Lahore', lat: 31.5204, lng: 74.3587 });
     partnerBusinessId = draft.id;
     expect(draft).toMatchObject({ status: 'draft', address: '9 Garden Town, Lahore', location: { lat: 31.5204, lng: 74.3587 } });
@@ -262,10 +300,10 @@ live('live run against the local API', () => {
     const first = await signin({ email: 'live-admin@metromatrix.local', password: 'LiveAdmin2026!', portal: 'admin' });
     if (first.kind !== 'totp') throw new Error('expected a TOTP challenge');
     expect(first.challenge.totpEnrolled).toBe(false);
-    const enrolment = await admin.adminTotpEnrol(first.challenge.challengeToken);
+    const enrolment = await auth.adminTotpEnrol(first.challenge.challengeToken);
     adminSecret = enrolment.secret;
     expect(enrolment.otpauthUrl).toMatch(/^otpauth:\/\/totp\//);
-    const { result, recoveryCodes } = await admin.adminTotpConfirm(first.challenge.challengeToken, totp(adminSecret));
+    const { result, recoveryCodes } = await auth.adminTotpConfirm(first.challenge.challengeToken, totp(adminSecret));
     expect(recoveryCodes).toHaveLength(10);
     expect(gateOf(result)).toBe('admin');
     sessions.admin = await stored();

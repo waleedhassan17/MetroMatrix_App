@@ -2,8 +2,8 @@
 // TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
 
 import type { AppNotification, NotificationType } from '../types/shopping';
-import { bool, isObject, oneOf, str, strOrNull } from './serializerUtils';
-import { iso } from './shopping/common';
+import { bool, isObject, oneOf, str, strOrNull, fromResponse } from './serializerUtils';
+import { iso, count, paged } from './shopping/common';
 
 const TYPES: readonly NotificationType[] = [
   'order_placed',
@@ -70,3 +70,9 @@ export const notificationSerializer = (raw: unknown): AppNotification | null => 
     createdAt: iso(raw.createdAt),
   };
 };
+
+/** GET /notifications: a page of notifications. */
+export const notificationPageSerializer = fromResponse(raw => paged(raw, notificationSerializer));
+
+/** GET /notifications/unread-count. */
+export const unreadCountSerializer = fromResponse(raw => count(isObject(raw) ? raw.count : raw));

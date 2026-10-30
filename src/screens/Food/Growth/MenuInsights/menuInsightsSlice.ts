@@ -4,7 +4,7 @@
 
 import { createAppSlice } from '@store/createAppSlice';
 import { getMenuInsights, listExperiments, startExperiment } from '@networks/foodGrowth/experimentsNetwork';
-import { uploadImage } from '@networks/media/mediaNetwork';
+import { uploadImage } from '@/services/mediaUpload';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import type { Experiment, ExperimentInput, MenuInsights } from '@/types';
 import type { LocalFile } from '@/types';

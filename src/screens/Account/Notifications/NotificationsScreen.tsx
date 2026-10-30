@@ -13,13 +13,14 @@ import { useAppDispatch, useAppSelector } from '@hooks/useReduxHooks';
 import { useBack } from '@hooks/useBack';
 import { useServiceNav } from '@hooks/useServiceNav';
 import { usePagedList } from '@hooks/usePagedList';
-import { listNotifications } from '@networks/notifications/notificationsNetwork';
+import { getNotificationsAPI } from '@networks/notifications/notificationsNetwork';
 import { PageHeaderScope, useStyles, useTheme, type Theme } from '@theme/index';
 import { AppText, Divider, EmptyState, IconButton, InlineNotice, IonIcon, ScreenShell, SkeletonLines, type IonName } from '@custom/index';
 import type { AppNotification, NotificationType, ShopBrowseParamList } from '@/types';
 import { formatDay } from '@utils/dates';
 import { selectUser } from '../../Auth/authSlice';
 import { loadUnreadCountAsync, markReadAsync, selectUnreadCount } from './notificationsSlice';
+import { notificationPageSerializer } from '@serializers/notificationSerializer';
 
 type Props = NativeStackScreenProps<ShopBrowseParamList, 'Notifications'>;
 
@@ -67,7 +68,7 @@ const NotificationsContent: React.FC<Props> = ({ navigation }) => {
   const { service, colors, opacity } = useTheme();
   const user = useAppSelector(selectUser);
   const unread = useAppSelector(selectUnreadCount);
-  const list = usePagedList((page, size) => listNotifications(page, size), 'notifications');
+  const list = usePagedList((page, size) => getNotificationsAPI(page, size), notificationPageSerializer, 'notifications');
   const isStore = user?.role === 'partner';
 
   useFocusEffect(

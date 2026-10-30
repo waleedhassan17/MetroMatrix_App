@@ -1,32 +1,21 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Users Network
+// MetroMatrix — Users Network (AUTH_CONTRACT.md)
 // ═══════════════════════════════════════════════════════
 // Paths and bodies per MetroMatrix_Backend users.controller.ts / docs/API_AUTH.md §4.2.
 
-import { api, unwrap, toApiError } from '../network/apiHelpers';
-import { userSerializer } from '../../serializers/authSerializer';
-import type { Gender, User } from '../../types/auth';
+import { api, toApiError } from '../network/apiHelpers';
+import type { Gender } from '../../types/auth';
 
-export interface UpdateMePayload {
-  name?: string;
+/** PATCH /users/me: the API's UpdateMeDto (models/authModel `updateMeBody` builds it). */
+export interface UpdateMeBody {
+  displayName?: string;
   /** Canonical +92…; null clears it. */
   phone?: string | null;
   avatarUrl?: string | null;
 }
 
-/** PATCH /users/me: the API calls the name `displayName`; answers the user. */
-export const updateMe = async ({ name, ...rest }: UpdateMePayload): Promise<User> => {
-  try {
-    const named = name === undefined ? {} : { displayName: name.trim() };
-    const response = await api.patch('/users/me', { ...rest, ...named });
-    const body = unwrap(response);
-    return userSerializer(body?.user ?? body);
-  } catch (e) {
-    throw toApiError(e);
-  }
-};
-
-export interface CompleteProfilePayload {
+/** PATCH /users/me/profile: Complete Profile's three steps in one save. */
+export interface CompleteProfileBody {
   /** ISO date, YYYY-MM-DD. */
   dateOfBirth: string;
   gender: Gender;
@@ -36,40 +25,51 @@ export interface CompleteProfilePayload {
   avatarUrl?: string | null;
 }
 
-/** CompleteProfile's three steps in one save; marks the profile complete. */
-export const completeProfile = async (payload: CompleteProfilePayload): Promise<User> => {
+export type DevicePlatform = 'android' | 'ios' | 'web';
+
+/** Answers the user. */
+export const updateMeAPI = async (body: UpdateMeBody): Promise<unknown> => {
   try {
-    const response = await api.patch('/users/me/profile', payload);
-    const body = unwrap(response);
-    return userSerializer(body?.user ?? body);
+    const response = await api.patch('/users/me', body);
+    return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
-/** PUT /users/me/devices: register (or refresh) this install's Expo push token. */
-export const registerDevice = async (token: string, platform: 'android' | 'ios' | 'web'): Promise<void> => {
+/** Marks the profile complete; answers `{ user }`. */
+export const completeProfileAPI = async (body: CompleteProfileBody): Promise<unknown> => {
   try {
-    await api.put('/users/me/devices', { expoPushToken: token, platform });
+    const response = await api.patch('/users/me/profile', body);
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+
+/** Registers (or refreshes) this install's Expo push token. */
+export const registerDeviceAPI = async (token: string, platform: DevicePlatform): Promise<unknown> => {
+  try {
+    const response = await api.put('/users/me/devices', { expoPushToken: token, platform });
+    return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
 /**
- * DELETE /users/me/devices/:token → `{ removed }` (false when it was already
- * gone). Best-effort, during sign-out: storage is already cleared, so the
- * caller passes the access token it captured. Never throws.
+ * Answers `{ removed }` (false when it was already gone). Called during
+ * sign-out, after storage is cleared, so the caller passes the access token
+ * it captured.
  */
-export const unregisterDevice = async (token: string, accessToken: string | null): Promise<boolean> => {
+export const unregisterDeviceAPI = async (token: string, accessToken: string | null): Promise<unknown> => {
   try {
     const response = await api.delete(`/users/me/devices/${encodeURIComponent(token)}`, {
       timeout: 8000,
       headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
     });
-    return unwrap(response)?.removed === true;
-  } catch {
-    // A stale device row only costs the server one undelivered push.
-    return false;
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
   }
 };

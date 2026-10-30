@@ -9,8 +9,10 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from './createAppSlice';
-import { fetchPlatformConfig } from '../networks/config/configNetwork';
+import { getPlatformConfigAPI } from '../networks/config/configNetwork';
 import { OPEN_PLATFORM, type PlatformConfig, type PlatformService } from '../types/platformConfig';
+import { platformConfigSerializer } from '../serializers/platformConfigSerializer';
+import { required } from '../networks/network/apiHelpers';
 
 export interface PlatformConfigSliceState {
   config: PlatformConfig;
@@ -27,7 +29,7 @@ export const platformConfigSlice = createAppSlice({
      * Best effort: if /config can't be read the app stays open — the server
      * still refuses whatever is switched off, and those refusals land here.
      */
-    loadPlatformConfig: create.asyncThunk(async () => fetchPlatformConfig(), {
+    loadPlatformConfig: create.asyncThunk(async () => required(platformConfigSerializer(await getPlatformConfigAPI())), {
       pending: state => {
         state.status = 'loading';
       },

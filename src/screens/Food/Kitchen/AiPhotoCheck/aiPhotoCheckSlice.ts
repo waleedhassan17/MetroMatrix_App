@@ -6,7 +6,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { checkPhoto } from '@networks/kitchen/kitchenAiNetwork';
 import { listMenuItems, updateMenuItem } from '@networks/food/vendor/menuNetwork';
-import { uploadImage } from '@networks/media/mediaNetwork';
+import { uploadImage } from '@/services/mediaUpload';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import type { LocalFile, PhotoCheck, VendorMenuItem } from '@/types';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../../Auth/shared/formStatus';

@@ -5,8 +5,9 @@
 // count the home bell and the store's Today show, and marks things read.
 
 import { createAppSlice } from '@store/createAppSlice';
-import { getUnreadCount, markNotificationsRead } from '@networks/notifications/notificationsNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { getUnreadCountAPI, markNotificationsReadAPI } from '@networks/notifications/notificationsNetwork';
+import { toRejectedValue, required } from '@networks/network/apiHelpers';
+import { unreadCountSerializer } from '@serializers/notificationSerializer';
 
 export interface NotificationsSliceState {
   unread: number;
@@ -21,7 +22,7 @@ export const notificationsSlice = createAppSlice({
     loadUnreadCountAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await getUnreadCount();
+          return required(unreadCountSerializer(await getUnreadCountAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -35,8 +36,8 @@ export const notificationsSlice = createAppSlice({
     markReadAsync: create.asyncThunk(
       async (target: { ids: string[] } | { all: true }, { rejectWithValue }) => {
         try {
-          await markNotificationsRead(target);
-          return await getUnreadCount();
+          await markNotificationsReadAPI(target);
+          return required(unreadCountSerializer(await getUnreadCountAPI()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

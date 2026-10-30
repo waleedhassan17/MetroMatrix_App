@@ -19,11 +19,18 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { updateMe } from '@networks/users/usersNetwork';
-import { addDocument, createBusiness, removeDocument, submitBusiness, updateMyBusiness } from '@networks/businesses/businessNetwork';
-import { signUpload } from '@networks/media/mediaNetwork';
-import { uploadToCloudinary, toRejectedValue } from '@networks/network/apiHelpers';
-import { nationalFromPkPhone, toPkPhone } from '@models/authModel';
+import { updateMeAPI } from '@networks/users/usersNetwork';
+import {
+  addDocumentAPI,
+  createBusinessAPI,
+  getMyBusinessAPI,
+  removeDocumentAPI,
+  submitBusinessAPI,
+  updateMyBusinessAPI,
+} from '@networks/businesses/businessNetwork';
+import { signUpload } from '@/services/mediaUpload';
+import { uploadToCloudinary, toRejectedValue, required } from '@networks/network/apiHelpers';
+import { nationalFromPkPhone, toPkPhone, updateMeBody } from '@models/authModel';
 import {
   businessProfileToPayload,
   businessToProfileForm,
@@ -34,6 +41,8 @@ import {
 import type { Business, DocumentKind, LocalFile, ServiceType, SubType, User } from '@/types';
 import { setBusiness, setUser } from '../../Auth/authSlice';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../Auth/shared/formStatus';
+import { userResponseSerializer } from '@serializers/authSerializer';
+import { businessSerializer } from '@serializers/businessSerializer';
 
 export type InfoStep = 1 | 2 | 3;
 type CoreField = 'name' | 'city' | 'address';
@@ -177,7 +186,7 @@ export const personalInfoSlice = createAppSlice({
         try {
           const canonical = toPkPhone(phone) ?? null;
           if (fullName.trim() !== user.name || canonical !== user.phone) {
-            dispatch(setUser(await updateMe({ name: fullName.trim(), phone: canonical })));
+            dispatch(setUser(required(userResponseSerializer(await updateMeAPI(updateMeBody({ name: fullName, phone: canonical }))))));
           }
           return true;
         } catch (e) {
@@ -205,7 +214,9 @@ export const personalInfoSlice = createAppSlice({
       ) => {
         try {
           const payload = businessProfileToPayload(args.serviceType, args.subType, args.form, args.phone);
-          const saved = args.business ? await updateMyBusiness(payload) : await createBusiness(payload);
+          const saved = required(
+            businessSerializer(args.business ? await updateMyBusinessAPI(payload) : await createBusinessAPI(payload)),
+          );
           dispatch(setBusiness(saved));
           return saved.id;
         } catch (e) {
@@ -234,11 +245,15 @@ export const personalInfoSlice = createAppSlice({
         try {
           const signed = await signUpload('business_document');
           const uploaded = await uploadToCloudinary(file, signed, progress => dispatch(setUploadProgress({ slot, progress })));
-          let business = await addDocument({ kind, url: uploaded.url, publicId: uploaded.publicId });
+          // The API answers the one document: the business is read again for
+          // the new list and requirement statuses.
+          await addDocumentAPI({ kind, url: uploaded.url, publicId: uploaded.publicId });
+          let business = required(businessSerializer(await getMyBusinessAPI()));
           // A single-copy kind is replaced by the API itself; kitchen and shop
           // photos add up, so the one this upload replaces goes now.
           if (replacing && business.documents.some(d => d.id === replacing)) {
-            business = await removeDocument(replacing);
+            await removeDocumentAPI(replacing);
+            business = required(businessSerializer(await getMyBusinessAPI()));
           }
           dispatch(setBusiness(business));
           retryFiles.delete(slot);
@@ -278,7 +293,8 @@ export const personalInfoSlice = createAppSlice({
     removeDocumentAsync: create.asyncThunk(
       async (documentId: string, { dispatch, rejectWithValue }) => {
         try {
-          dispatch(setBusiness(await removeDocument(documentId)));
+          await removeDocumentAPI(documentId);
+          dispatch(setBusiness(required(businessSerializer(await getMyBusinessAPI()))));
           return documentId;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -294,7 +310,7 @@ export const personalInfoSlice = createAppSlice({
     submitApplicationAsync: create.asyncThunk(
       async (_: void, { dispatch, rejectWithValue }) => {
         try {
-          dispatch(setBusiness(await submitBusiness()));
+          dispatch(setBusiness(required(businessSerializer(await submitBusinessAPI()))));
           return true;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

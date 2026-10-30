@@ -6,7 +6,7 @@
 import type { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import { api } from '../../../networks/network/apiHelpers';
-import { adminTotpConfirm, adminTotpEnrol } from '../../../networks/admin/adminBusinessNetwork';
+import { adminTotpConfirm, adminTotpEnrol } from '../../../networks/auth/authNetwork';
 import authReducer, { setPendingTotp } from '../../Auth/authSlice';
 import { signInSlice } from '../../Auth/SignIn/signInSlice';
 import { adminTotpSlice, verifyTotpAsync } from '../AdminTotp/adminTotpSlice';

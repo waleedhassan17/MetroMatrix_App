@@ -1,26 +1,29 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Auth Network
+// MetroMatrix — Auth Network (AUTH_CONTRACT.md)
 // ═══════════════════════════════════════════════════════
-// One function per /auth endpoint. Each: call `api`, unwrap, serialize,
-// and on failure throw an ApiError carrying the server's code + details.
-// Functions that open a session store the token pair HERE (FinMatrix
-// convention), so a slice never touches storage.
-// Paths and bodies per MetroMatrix_Backend docs/API_AUTH.md. The dummy API
-// (./network/mock) speaks the same contract.
+// The session layer, as FinMatrix's authNetwork is: one function per /auth
+// endpoint (and the first admin sign-in's TOTP enrolment). It is the one
+// network that serializes: a function that opens a session stores the token
+// pair HERE and answers the session, so a slice never touches storage or raw
+// auth data. On failure each throws an ApiError carrying the server's code
+// and details. Paths and bodies per MetroMatrix_Backend docs/API_AUTH.md.
 
 import { api, unwrap, setTokens, clearTokens, refreshTokens, toApiError, ApiError, AUTH_PATHS, ERROR_CODES } from '../network/apiHelpers';
 import { clearIntentionalSignOut } from '../../utils/authEvents';
 import { getAccessToken } from '../../utils/storageUtils';
-import { getMyBusiness } from '../businesses/businessNetwork';
+import { getMyBusinessAPI } from '../businesses/businessNetwork';
+import { businessSerializer } from '../../serializers/businessSerializer';
 import {
   authResultSerializer,
+  recoveryCodesSerializer,
   retryAfterSerializer,
   sessionSerializer,
   tokensSerializer,
   totpChallengeSerializer,
+  totpEnrolmentSerializer,
   type SessionPayload,
 } from '../../serializers/authSerializer';
-import type { AuthResult, Portal, TotpChallenge } from '../../types/auth';
+import type { AuthResult, Portal, TotpChallenge, TotpEnrolment } from '../../types/auth';
 
 // ─── Types ────────────────────────────────────────────
 export interface SignupPayload {
@@ -69,7 +72,7 @@ const openSession = async (result: AuthResult | null): Promise<AuthResult> => {
 const withFullBusiness = async <T extends SessionPayload>(session: T): Promise<T> => {
   if (session.user.role !== 'partner' || !session.business || !(await getAccessToken())) return session;
   try {
-    const full = await getMyBusiness();
+    const full = businessSerializer(await getMyBusinessAPI());
     // A Food vendor's brand (`food`) comes only with the session's summary.
     return full && full.id === session.business.id
       ? { ...session, business: { ...full, food: full.food ?? session.business.food } }
@@ -300,6 +303,49 @@ export const authDeleteAccount = async (confirmation: { password: string } | { i
   try {
     await api.delete('/auth/account', { data: confirmation });
     await clearTokens();
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+
+// ─── TOTP enrolment (first admin sign-in) ────────────
+// Both run on the sign-in challenge token: the admin has no session yet. The
+// API's AdminTotpEnrolGuard reads it as the bearer — never from the body.
+// Enrol has no body; confirm sends only { code }. Confirm opens the session,
+// so both live here with the other session openers.
+
+const asChallenge = (challengeToken: string) => ({ headers: { Authorization: `Bearer ${challengeToken}` } });
+
+/** `{ otpauthUri, qrDataUrl, secret }`; the app draws the QR from the URI. */
+export const adminTotpEnrol = async (challengeToken: string): Promise<TotpEnrolment> => {
+  try {
+    const enrolment = totpEnrolmentSerializer(
+      unwrap(await api.post(AUTH_PATHS.adminTotpEnrol, undefined, asChallenge(challengeToken))),
+    );
+    if (!enrolment) throw malformed();
+    return enrolment;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+
+/**
+ * Confirms the first code. Stores the session tokens now (they are real),
+ * but the caller keeps the user on the recovery-codes step until they have
+ * saved them — Redux only learns of the session after that.
+ */
+export const adminTotpConfirm = async (
+  challengeToken: string,
+  code: string,
+): Promise<{ result: AuthResult; recoveryCodes: string[] }> => {
+  try {
+    const body = unwrap(await api.post(AUTH_PATHS.adminTotpConfirm, { code }, asChallenge(challengeToken)));
+    // The API nests the session: { recoveryCodes, auth: AuthResult }.
+    const result = authResultSerializer(body?.auth);
+    if (!result) throw malformed();
+    await setTokens(result.tokens.accessToken, result.tokens.refreshToken);
+    clearIntentionalSignOut();
+    return { result, recoveryCodes: recoveryCodesSerializer(body) };
   } catch (e) {
     throw toApiError(e);
   }

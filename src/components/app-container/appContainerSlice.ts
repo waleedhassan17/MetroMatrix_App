@@ -10,7 +10,7 @@ import { getAccessToken, getRefreshToken, clearTokens } from '../../utils/storag
 import { authMe } from '../../networks/auth/authNetwork';
 import { isNetworkError, refreshTokens, isDefinitiveSessionFailure } from '../../networks/network/apiHelpers';
 import { setSession, signOut } from '../../screens/Auth/authSlice';
-import { registerDevice } from '../../networks/users/usersNetwork';
+import { registerDeviceAPI } from '../../networks/users/usersNetwork';
 import { setPushToken } from '../../utils/storageUtils';
 import { obtainPushToken, pushPlatform } from '../../services/push';
 
@@ -143,7 +143,7 @@ export const appContainerSlice = createAppSlice({
         try {
           const token = await obtainPushToken(ask);
           if (!token) return null;
-          await registerDevice(token, pushPlatform());
+          await registerDeviceAPI(token, pushPlatform());
           await setPushToken(token);
           return token;
         } catch {

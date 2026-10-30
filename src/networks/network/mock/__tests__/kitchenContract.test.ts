@@ -8,15 +8,16 @@
 
 import fs from 'fs';
 import path from 'path';
-import { api } from '../../apiHelpers';
+import { api, required } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import { resetMockDb } from '../mockDb';
 import { addToFoodCart, clearFoodCart } from '../../../food/cartNetwork';
 import { placeFoodOrder } from '../../../food/ordersNetwork';
 import { addToCart, getCart, removeCartLine } from '../../../shopping/cartNetwork';
 import { placeOrder } from '../../../shopping/checkoutNetwork';
-import { listAddresses } from '../../../addresses/addressesNetwork';
+import { getAddressesAPI } from '../../../addresses/addressesNetwork';
 import { signInAs, installDummyApi } from '../testing';
+import { addressListSerializer } from '../../../../serializers/addressSerializer';
 
 installDummyApi();
 
@@ -253,7 +254,7 @@ const run = async () => {
   // A grocery order to add from.
   await clearShopCart();
   await addToCart('p_g5_v0', 1);
-  const home = (await listAddresses()).find(x => x.city === 'Lahore')!;
+  const home = (required(addressListSerializer(await getAddressesAPI()))).find(x => x.city === 'Lahore')!;
   const grocery = await placeOrder({ addressId: home.id, stores: [{ storeId: 's_basket', paymentMethod: 'cod', couponCode: null, note: null }] }, 'kc-groceries');
   void grocery;
   await call('pantryOrders', 'get', '/my-kitchen/pantry/shopping-orders');

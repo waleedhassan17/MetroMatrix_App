@@ -1,153 +1,82 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Admin Network (partner approvals + TOTP enrolment)
+// MetroMatrix — Admin Business Network (AUTH_CONTRACT.md)
 // ═══════════════════════════════════════════════════════
-// Paths and bodies per MetroMatrix_Backend admin.controller.ts and
-// admin/dto (RejectBusinessDto, ReasonDto, AdminBusinessQueryDto).
+// Partner approvals. Paths and bodies per MetroMatrix_Backend
+// admin.controller.ts and admin/dto (RejectBusinessDto, ReasonDto,
+// AdminBusinessQueryDto). The first admin sign-in's TOTP enrolment opens a
+// session, so it lives with the session layer (auth/authNetwork.ts).
 
-import { api, unwrap, setTokens, toApiError, ApiError, AUTH_PATHS, ERROR_CODES } from '../network/apiHelpers';
-import { clearIntentionalSignOut } from '../../utils/authEvents';
-import {
-  businessPageSerializer,
-  businessSerializer,
-  businessWithOwnerSerializer,
-} from '../../serializers/businessSerializer';
-import {
-  authResultSerializer,
-  recoveryCodesSerializer,
-  totpEnrolmentSerializer,
-} from '../../serializers/authSerializer';
-import type {
-  AuthResult,
-  Business,
-  BusinessStatus,
-  BusinessSummary,
-  BusinessWithOwner,
-  ServiceType,
-  TotpEnrolment,
-} from '../../types/auth';
+import { api, toApiError } from '../network/apiHelpers';
+import type { BusinessStatus, ServiceType } from '../../types/auth';
 
-const malformed = () => new ApiError('The server sent an unexpected response.', ERROR_CODES.BAD_RESPONSE);
+// ─── Query Params ────────────────────────────────────
 
-const toBusiness = (raw: unknown): Business => {
-  const business = businessSerializer(raw);
-  if (!business) throw malformed();
-  return business;
-};
-
-// ─── Approval queue ──────────────────────────────────
-const PAGE_SIZE = 20;
-
-/**
- * The API pages by number (`page`, `pageSize`, optional `q`) and answers
- * `{ items, total, page, pageSize }`; the queue keeps its "load more" cursor,
- * which here is the next page number.
- */
-export const listBusinesses = async (query: {
+/** The API's AdminBusinessQueryDto: pages by number; answers `{ items, total, page, pageSize }`. */
+export interface AdminBusinessQueryParams {
   status?: BusinessStatus;
   serviceType?: ServiceType;
   q?: string;
-  cursor?: string | null;
-}): Promise<{ items: BusinessSummary[]; nextCursor: string | null }> => {
+  page?: number;
+  pageSize?: number;
+}
+
+// ═══════════════════════════════════════════════════════
+// API Functions
+// ═══════════════════════════════════════════════════════
+
+export const getBusinessesAPI = async (params: AdminBusinessQueryParams): Promise<unknown> => {
   try {
-    const page = Math.max(1, Number(query.cursor) || 1);
-    const response = await api.get('/admin/businesses', {
-      params: {
-        status: query.status ?? 'pending_approval',
-        serviceType: query.serviceType,
-        q: query.q?.trim() || undefined,
-        page,
-        pageSize: PAGE_SIZE,
-      },
-    });
-    return businessPageSerializer(unwrap(response));
+    const response = await api.get('/admin/businesses', { params });
+    return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
-export const getBusiness = async (id: string): Promise<BusinessWithOwner> => {
+export const getBusinessAPI = async (id: string): Promise<unknown> => {
   try {
-    const business = businessWithOwnerSerializer(unwrap(await api.get(`/admin/businesses/${encodeURIComponent(id)}`)));
-    if (!business) throw malformed();
-    return business;
+    const response = await api.get(`/admin/businesses/${encodeURIComponent(id)}`);
+    return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
-export const approveBusiness = async (id: string): Promise<Business> => {
+export const approveBusinessAPI = async (id: string): Promise<unknown> => {
   try {
-    return toBusiness(unwrap(await api.post(`/admin/businesses/${encodeURIComponent(id)}/approve`)));
+    const response = await api.post(`/admin/businesses/${encodeURIComponent(id)}/approve`);
+    return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
-export const rejectBusiness = async (
+export const rejectBusinessAPI = async (
   id: string,
   body: { reason: string; documentNotes: { documentId: string; note: string }[] },
-): Promise<Business> => {
+): Promise<unknown> => {
   try {
-    return toBusiness(unwrap(await api.post(`/admin/businesses/${encodeURIComponent(id)}/reject`, body)));
+    const response = await api.post(`/admin/businesses/${encodeURIComponent(id)}/reject`, body);
+    return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
-export const suspendBusiness = async (id: string, reason: string): Promise<Business> => {
+export const suspendBusinessAPI = async (id: string, reason: string): Promise<unknown> => {
   try {
-    return toBusiness(unwrap(await api.post(`/admin/businesses/${encodeURIComponent(id)}/suspend`, { reason })));
+    const response = await api.post(`/admin/businesses/${encodeURIComponent(id)}/suspend`, { reason });
+    return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
 /** The API's ReasonDto: a reason (3–1000) is required, as for suspend. */
-export const reinstateBusiness = async (id: string, reason: string): Promise<Business> => {
+export const reinstateBusinessAPI = async (id: string, reason: string): Promise<unknown> => {
   try {
-    return toBusiness(unwrap(await api.post(`/admin/businesses/${encodeURIComponent(id)}/reinstate`, { reason })));
-  } catch (e) {
-    throw toApiError(e);
-  }
-};
-
-// ─── TOTP enrolment (first admin sign-in) ────────────
-// Both run on the sign-in challenge token: the admin has no session yet. The
-// API's AdminTotpEnrolGuard reads it as the bearer — never from the body.
-// Enrol has no body; confirm sends only { code }.
-
-const asChallenge = (challengeToken: string) => ({ headers: { Authorization: `Bearer ${challengeToken}` } });
-
-/** `{ otpauthUri, qrDataUrl, secret }`; the app draws the QR from the URI. */
-export const adminTotpEnrol = async (challengeToken: string): Promise<TotpEnrolment> => {
-  try {
-    const enrolment = totpEnrolmentSerializer(
-      unwrap(await api.post(AUTH_PATHS.adminTotpEnrol, undefined, asChallenge(challengeToken))),
-    );
-    if (!enrolment) throw malformed();
-    return enrolment;
-  } catch (e) {
-    throw toApiError(e);
-  }
-};
-
-/**
- * Confirms the first code. Stores the session tokens now (they are real),
- * but the caller keeps the user on the recovery-codes step until they have
- * saved them — Redux only learns of the session after that.
- */
-export const adminTotpConfirm = async (
-  challengeToken: string,
-  code: string,
-): Promise<{ result: AuthResult; recoveryCodes: string[] }> => {
-  try {
-    const body = unwrap(await api.post(AUTH_PATHS.adminTotpConfirm, { code }, asChallenge(challengeToken)));
-    // The API nests the session: { recoveryCodes, auth: AuthResult }.
-    const result = authResultSerializer(body?.auth);
-    if (!result) throw malformed();
-    await setTokens(result.tokens.accessToken, result.tokens.refreshToken);
-    clearIntentionalSignOut();
-    return { result, recoveryCodes: recoveryCodesSerializer(body) };
+    const response = await api.post(`/admin/businesses/${encodeURIComponent(id)}/reinstate`, { reason });
+    return response.data;
   } catch (e) {
     throw toApiError(e);
   }

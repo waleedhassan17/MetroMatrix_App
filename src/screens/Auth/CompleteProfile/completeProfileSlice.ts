@@ -13,13 +13,14 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
-import { completeProfile } from '@networks/users/usersNetwork';
-import { signUpload } from '@networks/media/mediaNetwork';
-import { uploadToCloudinary, toRejectedValue } from '@networks/network/apiHelpers';
+import { completeProfileAPI } from '@networks/users/usersNetwork';
+import { signUpload } from '@/services/mediaUpload';
+import { uploadToCloudinary, toRejectedValue, required } from '@networks/network/apiHelpers';
 import type { Gender, LocalFile } from '@/types';
 import type { Touched } from '@utils/formErrors';
 import { setUser } from '../authSlice';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
+import { userResponseSerializer } from '@serializers/authSerializer';
 
 export type ProfileStep = 1 | 2 | 3;
 export type ProfileField = 'dateOfBirth' | 'gender' | 'streetAddress' | 'city' | 'postalCode';
@@ -146,7 +147,7 @@ export const completeProfileSlice = createAppSlice({
         { dispatch, rejectWithValue },
       ) => {
         try {
-          const user = await completeProfile({
+          const raw = await completeProfileAPI({
             dateOfBirth: payload.dateOfBirth,
             gender: payload.gender,
             streetAddress: payload.streetAddress.trim(),
@@ -154,7 +155,7 @@ export const completeProfileSlice = createAppSlice({
             postalCode: payload.postalCode.trim() || undefined,
             avatarUrl: payload.avatarUrl,
           });
-          dispatch(setUser(user));
+          dispatch(setUser(required(userResponseSerializer(raw))));
           return true;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

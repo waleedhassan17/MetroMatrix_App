@@ -8,7 +8,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { getOwnProfile, updateOwnProfile } from '@networks/health/doctor/profileNetwork';
 import { listConditions, listSpecialties } from '@networks/health/discoveryNetwork';
-import { uploadImage } from '@networks/media/mediaNetwork';
+import { uploadImage } from '@/services/mediaUpload';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import { ownProfilePatch } from '@models/health/doctorProfileModel';
 import type { Condition, DoctorOwnProfile, LocalFile, Specialty } from '@/types';

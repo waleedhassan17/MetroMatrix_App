@@ -1,12 +1,12 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Business Network (partner's own business)
+// MetroMatrix — Businesses Network (AUTH_CONTRACT.md)
 // ═══════════════════════════════════════════════════════
-// Paths and bodies per MetroMatrix_Backend businesses.controller.ts and
-// dto/business.dto.ts (partners with a verified email).
+// The partner's own business. Paths and bodies per MetroMatrix_Backend
+// businesses.controller.ts and dto/business.dto.ts (partners with a verified
+// email).
 
-import { api, unwrap, toApiError, ApiError, ERROR_CODES } from '../network/apiHelpers';
-import { businessSerializer, businessStatusSerializer } from '../../serializers/businessSerializer';
-import type { Business, BusinessStatusInfo, DocumentKind, ServiceType, SubType } from '../../types/auth';
+import { api, toApiError } from '../network/apiHelpers';
+import type { DocumentKind, ServiceType, SubType } from '../../types/auth';
 
 /** The API's CreateBusinessDto (PATCH takes any part of it). Unknown fields are dropped by the API. */
 export interface BusinessPayload {
@@ -22,34 +22,29 @@ export interface BusinessPayload {
   pmdcNumber?: string;
 }
 
-const toBusiness = (raw: unknown): Business => {
-  const business = businessSerializer(raw);
-  if (!business) throw new ApiError('The server sent an unexpected business record.', ERROR_CODES.BAD_RESPONSE);
-  return business;
-};
-
-export const createBusiness = async (payload: BusinessPayload): Promise<Business> => {
+export const createBusinessAPI = async (payload: BusinessPayload): Promise<unknown> => {
   try {
-    return toBusiness(unwrap(await api.post('/businesses', payload)));
+    const response = await api.post('/businesses', payload);
+    return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
-/** null when the partner has not created one yet (404). */
-export const getMyBusiness = async (): Promise<Business | null> => {
+/** 404 (status) when the partner has not created one yet. */
+export const getMyBusinessAPI = async (): Promise<unknown> => {
   try {
-    return toBusiness(unwrap(await api.get('/businesses/me')));
+    const response = await api.get('/businesses/me');
+    return response.data;
   } catch (e) {
-    const err = toApiError(e);
-    if (err.status === 404) return null;
-    throw err;
+    throw toApiError(e);
   }
 };
 
-export const updateMyBusiness = async (patch: Partial<BusinessPayload>): Promise<Business> => {
+export const updateMyBusinessAPI = async (patch: Partial<BusinessPayload>): Promise<unknown> => {
   try {
-    return toBusiness(unwrap(await api.patch('/businesses/me', patch)));
+    const response = await api.patch('/businesses/me', patch);
+    return response.data;
   } catch (e) {
     throw toApiError(e);
   }
@@ -59,46 +54,43 @@ export const updateMyBusiness = async (patch: Partial<BusinessPayload>): Promise
  * Records an uploaded file: `{ kind, url, publicId }`, the URL and id
  * Cloudinary returned for an upload signed for `business_document`. A
  * single-copy kind replaces the earlier one; kitchen and shop photos add up
- * (at most 4). The API answers the one document (DocumentView), so the
- * business is read again for the new list and requirement statuses.
+ * (at most 4). Answers the one document (DocumentView), so the caller reads
+ * the business again for the new list and requirement statuses.
  */
-export const addDocument = async (doc: { kind: DocumentKind; url: string; publicId: string }): Promise<Business> => {
+export const addDocumentAPI = async (doc: { kind: DocumentKind; url: string; publicId: string }): Promise<unknown> => {
   try {
     const { kind, url, publicId } = doc;
-    await api.post('/businesses/me/documents', { kind, url, publicId });
-    return toBusiness(unwrap(await api.get('/businesses/me')));
+    const response = await api.post('/businesses/me/documents', { kind, url, publicId });
+    return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
-/**
- * DELETE answers `{ removed: true }`, not the business, so the business is
- * read again for the new document list.
- */
-export const removeDocument = async (documentId: string): Promise<Business> => {
+/** Answers `{ removed: true }`, not the business: the caller reads it again. */
+export const removeDocumentAPI = async (documentId: string): Promise<unknown> => {
   try {
-    await api.delete(`/businesses/me/documents/${encodeURIComponent(documentId)}`);
-    return toBusiness(unwrap(await api.get('/businesses/me')));
+    const response = await api.delete(`/businesses/me/documents/${encodeURIComponent(documentId)}`);
+    return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
 /** 422 DOCUMENTS_MISSING carries `details.missing`: requirement keys (`kind` or `a|b`). */
-export const submitBusiness = async (): Promise<Business> => {
+export const submitBusinessAPI = async (): Promise<unknown> => {
   try {
-    return toBusiness(unwrap(await api.post('/businesses/me/submit')));
+    const response = await api.post('/businesses/me/submit');
+    return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
-export const getMyBusinessStatus = async (): Promise<BusinessStatusInfo> => {
+export const getMyBusinessStatusAPI = async (): Promise<unknown> => {
   try {
-    const info = businessStatusSerializer(unwrap(await api.get('/businesses/me/status')));
-    if (!info) throw new ApiError('The server sent an unexpected status.', ERROR_CODES.BAD_RESPONSE);
-    return info;
+    const response = await api.get('/businesses/me/status');
+    return response.data;
   } catch (e) {
     throw toApiError(e);
   }

@@ -2,7 +2,7 @@
 // rules QA relies on: idempotent checkout, stock, delivery cities, coupons,
 // payment before shipping, one review per item, returns and moderation.
 
-import { listAddresses } from '../../../addresses/addressesNetwork';
+import { getAddressesAPI } from '../../../addresses/addressesNetwork';
 import { listReports, removeReportedProduct } from '../../../admin/adminShopNetwork';
 import { acknowledgeCart, addToCart, getCart } from '../../../shopping/cartNetwork';
 import { getProduct } from '../../../shopping/catalogNetwork';
@@ -20,11 +20,12 @@ import {
 import { approveReturn, receiveReturn, recordRefund } from '../../../shopping/partner/partnerReturnsNetwork';
 import { createPartnerProduct, listPartnerProducts } from '../../../shopping/partner/productsNetwork';
 import { pauseStore } from '../../../shopping/partner/storeNetwork';
-import { ApiError } from '../../apiHelpers';
+import { ApiError, required } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import type { CheckoutInput, ProductDetail } from '../../../../types/shopping';
 import { getDb, resetMockDb } from '../mockDb';
 import { signInAs, installDummyApi } from '../testing';
+import { addressListSerializer } from '../../../../serializers/addressSerializer';
 
 installDummyApi();
 
@@ -66,7 +67,7 @@ const fillBag = async () => {
   const phones = inStock(await getProduct('p_v1'));
   await addToCart(kurta.id, 1);
   await addToCart(phones.id, 1);
-  const home = (await listAddresses()).find(a => a.city === 'Lahore')!;
+  const home = (required(addressListSerializer(await getAddressesAPI()))).find(a => a.city === 'Lahore')!;
   const input: CheckoutInput = {
     addressId: home.id,
     stores: [
@@ -142,7 +143,7 @@ describe('bag → preview → checkout', () => {
 
   it('blocks stores that do not deliver to the address city', async () => {
     const { input } = await fillBag();
-    const quetta = (await listAddresses()).find(a => a.city === 'Quetta')!;
+    const quetta = (required(addressListSerializer(await getAddressesAPI()))).find(a => a.city === 'Quetta')!;
     const preview = await previewCheckout({ ...input, addressId: quetta.id });
     const volt = preview.stores.find(s => s.store.id === 's_volt')!;
     expect(volt.error?.code).toBe('CITY_NOT_SERVED');
@@ -155,7 +156,7 @@ describe('bag → preview → checkout', () => {
   it('enforces a coupon usage limit across customers', async () => {
     const urban = (await getProduct('p_u1')).variants.filter(v => v.stock > 0);
     await addToCart(urban[0].id, 1);
-    const address = (await listAddresses()).find(a => a.city === 'Lahore')!;
+    const address = (required(addressListSerializer(await getAddressesAPI()))).find(a => a.city === 'Lahore')!;
     const input: CheckoutInput = {
       addressId: address.id,
       stores: [{ storeId: 's_urban', paymentMethod: 'cod', couponCode: 'urban300', note: null }],
@@ -166,7 +167,7 @@ describe('bag → preview → checkout', () => {
 
     await signIn('hamza@metromatrix.app');
     await addToCart(urban[1].id, 1);
-    const hamza = (await listAddresses())[0];
+    const hamza = (required(addressListSerializer(await getAddressesAPI())))[0];
     const theirs = await previewCheckout({ ...input, addressId: hamza.id });
     expect(theirs.stores[0].couponError?.code).toBe('COUPON_USED_UP');
   });

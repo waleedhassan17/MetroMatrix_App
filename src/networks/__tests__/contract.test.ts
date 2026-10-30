@@ -134,26 +134,26 @@ const CASES: [string, () => Promise<unknown>, string[]][] = [
   ['authDeleteAccount (password)', () => auth.authDeleteAccount({ password: 'Metro2026' }), ['DELETE /auth/account']],
   ['authDeleteAccount (Google)', () => auth.authDeleteAccount({ idToken: 'google-id-token' }), ['DELETE /auth/account']],
   ['authMe', () => auth.authMe(), ['GET /auth/me']],
-  ['updateMe', () => users.updateMe({ name: 'Ayesha Khan', phone: '+923124890176' }), ['PATCH /users/me']],
-  ['completeProfile', () => users.completeProfile({ dateOfBirth: '1998-02-14', gender: 'female', streetAddress: '7 Canal View', city: 'Lahore', postalCode: '54000' }), ['PATCH /users/me/profile']],
-  ['registerDevice', () => users.registerDevice('ExponentPushToken[x]', 'android'), ['PUT /users/me/devices']],
-  ['unregisterDevice', () => users.unregisterDevice('ExponentPushToken[x]', 'access-1'), ['DELETE /users/me/devices/{token}']],
-  ['signUpload', () => media.signUpload('business_document'), ['POST /media/sign-upload']],
-  ['createBusiness (doctor, with pin)', () => businesses.createBusiness({ serviceType: 'healthcare', subType: 'doctor', name: 'Clinic', phone: '+923124890176', city: 'Lahore', addressLine: '12 Main Boulevard', lat: 31.52, lng: 74.35, pmdcNumber: '12345-P' }), ['POST /businesses']],
-  ['getMyBusiness', () => businesses.getMyBusiness(), ['GET /businesses/me']],
-  ['updateMyBusiness', () => businesses.updateMyBusiness({ name: 'Clinic 2', addressLine: '14 Main Boulevard' }), ['PATCH /businesses/me']],
-  ['addDocument', () => businesses.addDocument({ kind: 'cnic_front', url: 'https://res.cloudinary.com/x/a.jpg', publicId: 'x/a' }), ['POST /businesses/me/documents', 'GET /businesses/me']],
-  ['removeDocument', () => businesses.removeDocument('doc-1'), ['DELETE /businesses/me/documents/{id}', 'GET /businesses/me']],
-  ['submitBusiness', () => businesses.submitBusiness(), ['POST /businesses/me/submit']],
-  ['getMyBusinessStatus', () => businesses.getMyBusinessStatus(), ['GET /businesses/me/status']],
-  ['listBusinesses', () => admin.listBusinesses({ status: 'pending_approval', serviceType: 'food', q: 'karahi', cursor: '2' }), ['GET /admin/businesses']],
-  ['getBusiness', () => admin.getBusiness('b1'), ['GET /admin/businesses/{id}']],
-  ['approveBusiness', () => admin.approveBusiness('b1'), ['POST /admin/businesses/{id}/approve']],
-  ['rejectBusiness', () => admin.rejectBusiness('b1', { reason: 'The CNIC photo is too blurry.', documentNotes: [{ documentId: 'd1', note: 'Retake it' }] }), ['POST /admin/businesses/{id}/reject']],
-  ['suspendBusiness', () => admin.suspendBusiness('b1', 'Repeated complaints.'), ['POST /admin/businesses/{id}/suspend']],
-  ['reinstateBusiness', () => admin.reinstateBusiness('b1', 'The licence was renewed.'), ['POST /admin/businesses/{id}/reinstate']],
-  ['adminTotpEnrol', () => admin.adminTotpEnrol('challenge'), ['POST /admin/me/totp/enrol']],
-  ['adminTotpConfirm', () => admin.adminTotpConfirm('challenge', '123456'), ['POST /admin/me/totp/confirm']],
+  ['updateMeAPI', () => users.updateMeAPI({ displayName: 'Ayesha Khan', phone: '+923124890176' }), ['PATCH /users/me']],
+  ['completeProfileAPI', () => users.completeProfileAPI({ dateOfBirth: '1998-02-14', gender: 'female', streetAddress: '7 Canal View', city: 'Lahore', postalCode: '54000' }), ['PATCH /users/me/profile']],
+  ['registerDeviceAPI', () => users.registerDeviceAPI('ExponentPushToken[x]', 'android'), ['PUT /users/me/devices']],
+  ['unregisterDeviceAPI', () => users.unregisterDeviceAPI('ExponentPushToken[x]', 'access-1'), ['DELETE /users/me/devices/{token}']],
+  ['signUploadAPI', () => media.signUploadAPI('business_document'), ['POST /media/sign-upload']],
+  ['createBusinessAPI (doctor, with pin)', () => businesses.createBusinessAPI({ serviceType: 'healthcare', subType: 'doctor', name: 'Clinic', phone: '+923124890176', city: 'Lahore', addressLine: '12 Main Boulevard', lat: 31.52, lng: 74.35, pmdcNumber: '12345-P' }), ['POST /businesses']],
+  ['getMyBusinessAPI', () => businesses.getMyBusinessAPI(), ['GET /businesses/me']],
+  ['updateMyBusinessAPI', () => businesses.updateMyBusinessAPI({ name: 'Clinic 2', addressLine: '14 Main Boulevard' }), ['PATCH /businesses/me']],
+  ['addDocumentAPI', () => businesses.addDocumentAPI({ kind: 'cnic_front', url: 'https://res.cloudinary.com/x/a.jpg', publicId: 'x/a' }), ['POST /businesses/me/documents']],
+  ['removeDocumentAPI', () => businesses.removeDocumentAPI('doc-1'), ['DELETE /businesses/me/documents/{id}']],
+  ['submitBusinessAPI', () => businesses.submitBusinessAPI(), ['POST /businesses/me/submit']],
+  ['getMyBusinessStatusAPI', () => businesses.getMyBusinessStatusAPI(), ['GET /businesses/me/status']],
+  ['getBusinessesAPI', () => admin.getBusinessesAPI({ status: 'pending_approval', serviceType: 'food', q: 'karahi', page: 2, pageSize: 20 }), ['GET /admin/businesses']],
+  ['getBusinessAPI', () => admin.getBusinessAPI('b1'), ['GET /admin/businesses/{id}']],
+  ['approveBusinessAPI', () => admin.approveBusinessAPI('b1'), ['POST /admin/businesses/{id}/approve']],
+  ['rejectBusinessAPI', () => admin.rejectBusinessAPI('b1', { reason: 'The CNIC photo is too blurry.', documentNotes: [{ documentId: 'd1', note: 'Retake it' }] }), ['POST /admin/businesses/{id}/reject']],
+  ['suspendBusinessAPI', () => admin.suspendBusinessAPI('b1', 'Repeated complaints.'), ['POST /admin/businesses/{id}/suspend']],
+  ['reinstateBusinessAPI', () => admin.reinstateBusinessAPI('b1', 'The licence was renewed.'), ['POST /admin/businesses/{id}/reinstate']],
+  ['adminTotpEnrol', () => auth.adminTotpEnrol('challenge'), ['POST /admin/me/totp/enrol']],
+  ['adminTotpConfirm', () => auth.adminTotpConfirm('challenge', '123456'), ['POST /admin/me/totp/confirm']],
 ];
 
 describe('App ↔ API contract (docs/openapi.json)', () => {
@@ -162,8 +162,8 @@ describe('App ↔ API contract (docs/openapi.json)', () => {
   });
 
   it('the admin list sends the API’s query (page / pageSize / q), not a cursor', async () => {
-    const [req] = await run(() => admin.listBusinesses({ status: 'approved', q: 'karahi', cursor: '3' }));
-    expect(req.query).toEqual({ status: 'approved', serviceType: undefined, q: 'karahi', page: 3, pageSize: 20 });
+    const [req] = await run(() => admin.getBusinessesAPI({ status: 'approved', q: 'karahi', page: 3, pageSize: 20 }));
+    expect(req.query).toEqual({ status: 'approved', q: 'karahi', page: 3, pageSize: 20 });
   });
 
   it('logout and the admin TOTP enrolment send no body; the TOTP calls carry the challenge as the bearer', async () => {
@@ -171,7 +171,7 @@ describe('App ↔ API contract (docs/openapi.json)', () => {
     expect(logout.body).toBeUndefined();
     expect(logout.authorization).toBe('Bearer access-1');
     sent = [];
-    const [enrol] = await run(() => admin.adminTotpEnrol('challenge-xyz'));
+    const [enrol] = await run(() => auth.adminTotpEnrol('challenge-xyz'));
     expect(enrol.body).toBeUndefined();
     expect(enrol.authorization).toBe('Bearer challenge-xyz');
   });

@@ -1,8 +1,15 @@
-// MetroMatrix — platform config network (GET /config, public).
+// ═══════════════════════════════════════════════════════
+// MetroMatrix — Config Network (ADMIN_API.md §5)
+// ═══════════════════════════════════════════════════════
 // Real contract: MetroMatrix API docs/ADMIN_API.md §5.
 
-import { api } from '../network/apiHelpers';
-import { platformConfigSerializer } from '../../serializers/platformConfigSerializer';
-import { request } from '../shopping/http';
+import { api, toApiError } from '../network/apiHelpers';
 
-export const fetchPlatformConfig = () => request(() => api.get('/config'), platformConfigSerializer);
+export const getPlatformConfigAPI = async (): Promise<unknown> => {
+  try {
+    const response = await api.get('/config');
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};

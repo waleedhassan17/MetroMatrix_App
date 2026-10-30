@@ -14,7 +14,7 @@ import {
   listAdminFoodVendors,
   updateFoodBanner,
 } from '@networks/admin/adminFoodNetwork';
-import { uploadImage } from '@networks/media/mediaNetwork';
+import { uploadImage } from '@/services/mediaUpload';
 import { toRejectedValue } from '@networks/network/apiHelpers';
 import type {
   AdminCuisine,
