@@ -29,7 +29,7 @@ import {
   setVendorPlanOverrides,
   setVendorSuspended,
 } from '../../../admin/adminFoodNetwork';
-import { AuthError } from '../../apiHelpers';
+import { ApiError } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import { resetMockDb } from '../mockDb';
 import { signInAs, installDummyApi } from '../testing';
@@ -40,11 +40,11 @@ installDummyApi();
 const T0 = new Date('2026-10-15T10:00:00Z').getTime();
 const HOME = { lat: 31.516, lng: 74.342 };
 
-const failure = async (p: Promise<unknown>): Promise<AuthError> => {
+const failure = async (p: Promise<unknown>): Promise<ApiError> => {
   try {
     await p;
   } catch (e) {
-    return e as AuthError;
+    return e as ApiError;
   }
   throw new Error('expected the call to fail');
 };

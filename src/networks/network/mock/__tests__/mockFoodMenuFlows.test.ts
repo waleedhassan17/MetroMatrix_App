@@ -20,7 +20,7 @@ import {
 import { getAvailability, getPreorderSlots, getToday, savePreorderSlots, saveWeeklyMenu, setAvailability, setToday } from '../../../food/vendor/availabilityNetwork';
 import { getVendorSetup } from '../../../food/vendor/setupNetwork';
 import { getVendorPlan } from '../../../food/vendor/planNetwork';
-import { AuthError } from '../../apiHelpers';
+import { ApiError } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import { getDb, resetMockDb } from '../mockDb';
 import { signInAs, installDummyApi } from '../testing';
@@ -31,11 +31,11 @@ installDummyApi();
 const T0 = new Date('2026-10-15T10:00:00Z').getTime();
 const HOUR = 3_600_000;
 
-const failure = async (p: Promise<unknown>): Promise<AuthError> => {
+const failure = async (p: Promise<unknown>): Promise<ApiError> => {
   try {
     await p;
   } catch (e) {
-    return e as AuthError;
+    return e as ApiError;
   }
   throw new Error('expected the call to fail');
 };

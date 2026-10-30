@@ -19,7 +19,7 @@ import {
 import { createRider, listRiders, resetRiderPassword, setRiderStatus, updateRider } from '../../../food/vendor/ridersNetwork';
 import { getVendorPlan } from '../../../food/vendor/planNetwork';
 import { getRiderHome } from '../../../food/rider/riderNetwork';
-import { AuthError } from '../../apiHelpers';
+import { ApiError } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import { getDb, resetMockDb } from '../mockDb';
 import { currentSession, signInAs, installDummyApi } from '../testing';
@@ -29,11 +29,11 @@ installDummyApi();
 // Thursday 15 October 2026, 3 PM in Pakistan.
 const T0 = new Date('2026-10-15T10:00:00Z').getTime();
 
-const failure = async (p: Promise<unknown>): Promise<AuthError> => {
+const failure = async (p: Promise<unknown>): Promise<ApiError> => {
   try {
     await p;
   } catch (e) {
-    return e as AuthError;
+    return e as ApiError;
   }
   throw new Error('expected the call to fail');
 };

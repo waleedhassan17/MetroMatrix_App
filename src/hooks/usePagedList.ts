@@ -1,15 +1,17 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — usePagedList (ported from FinMatrix)
 // ═══════════════════════════════════════════════════════
-// A list the SERVER pages, searches and filters. The network function
-// returns a serialized `Paged<T>` (`{ items, total, page, pageSize }`), so a
-// screen never shapes API data. This is the one sanctioned place a screen
-// hands a network function over — as in FinMatrix — instead of a thunk.
+// A list the SERVER pages, searches and filters. As in FinMatrix, the screen
+// hands over the network function (it returns the raw body) and the page's
+// serializer (raw body → `Paged<T>`, `{ items, total, page, pageSize }`), so
+// the screen itself never shapes API data. This is the one sanctioned place a
+// screen calls a network function instead of a thunk.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { appendUnique, hasMorePages, LIST_PAGE_SIZE } from '../models/pagingModel';
 import type { Paged } from '../types/shopping';
+import { required } from '../networks/network/apiHelpers';
 
 export interface PagedList<T, P extends Paged<T> = Paged<T>> {
   /** The pages loaded so far, in the server's order. */
@@ -45,11 +47,28 @@ export interface PagedList<T, P extends Paged<T> = Paged<T>> {
 /** The row type of a page type. */
 type RowOf<P> = P extends Paged<infer T> ? T : never;
 
+type PagedOptions<T> = { enabled?: boolean; keyOf?: (row: T) => string | undefined; pageSize?: number };
+
+export function usePagedList<P extends Paged<unknown>, T = RowOf<P>>(
+  fetchPage: (page: number, pageSize: number) => Promise<unknown>,
+  serialize: (payload: unknown) => P | null,
+  key: string,
+  options?: PagedOptions<T>,
+): PagedList<T, P & Paged<T>>;
+/** TODO(net/p6): a network that still serializes its pages; removed once every network is thin. */
 export function usePagedList<P extends Paged<unknown>, T = RowOf<P>>(
   fetchPage: (page: number, pageSize: number) => Promise<P>,
   key: string,
-  options: { enabled?: boolean; keyOf?: (row: T) => string | undefined; pageSize?: number } = {},
+  options?: PagedOptions<T>,
+): PagedList<T, P & Paged<T>>;
+export function usePagedList<P extends Paged<unknown>, T = RowOf<P>>(
+  fetchPage: (page: number, pageSize: number) => Promise<unknown>,
+  ...rest: [(payload: unknown) => P | null, string, PagedOptions<T>?] | [string, PagedOptions<T>?]
 ): PagedList<T, P & Paged<T>> {
+  const [serialize, key, options = {}] =
+    typeof rest[0] === 'function'
+      ? (rest as [(payload: unknown) => P | null, string, PagedOptions<T>?])
+      : [(payload: unknown) => payload as P, ...(rest as [string, PagedOptions<T>?])];
   const { enabled = true, keyOf, pageSize = LIST_PAGE_SIZE } = options;
   const [rows, setRowsState] = useState<T[]>([]);
   const [first, setFirst] = useState<(P & Paged<T>) | null>(null);
@@ -63,10 +82,11 @@ export function usePagedList<P extends Paged<unknown>, T = RowOf<P>>(
   const [error, setError] = useState('');
 
   // The latest callbacks, so reload/loadMore keep one identity per `key`.
-  const fetchRef = useRef(fetchPage);
+  // One page, serialized: a body the serializer can't read fails the load.
+  const fetchRef = useRef((page: number, size: number) => fetchPage(page, size).then(raw => required(serialize(raw))));
   const keyOfRef = useRef(keyOf);
   useEffect(() => {
-    fetchRef.current = fetchPage;
+    fetchRef.current = (page: number, size: number) => fetchPage(page, size).then(raw => required(serialize(raw)));
     keyOfRef.current = keyOf;
   });
 

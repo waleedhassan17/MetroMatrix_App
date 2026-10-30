@@ -34,7 +34,7 @@ import { listPatients } from '../../../health/doctor/patientsNetwork';
 import { alternativesFrom } from '../../../../serializers/health/appointmentSerializer';
 import { conflictsFrom, overlapsFrom } from '../../../../serializers/health/doctorSerializer';
 import { baseQuery } from '../../../../models/health/filterModel';
-import { AuthError } from '../../apiHelpers';
+import { ApiError } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import { PKT, addDays, dateInZone, isoWeekday, todayInZone } from '../../../../utils/healthTime';
 import type { BookingInput } from '../../../../types/health';
@@ -47,11 +47,11 @@ installDummyApi();
 const T0 = new Date('2026-10-15T10:00:00Z').getTime();
 const HOUR = 3_600_000;
 
-const failure = async (p: Promise<unknown>): Promise<AuthError> => {
+const failure = async (p: Promise<unknown>): Promise<ApiError> => {
   try {
     await p;
   } catch (e) {
-    return e as AuthError;
+    return e as ApiError;
   }
   throw new Error('expected the call to fail');
 };

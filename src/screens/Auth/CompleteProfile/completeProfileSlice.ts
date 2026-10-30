@@ -14,8 +14,8 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { completeProfile } from '@networks/users/usersNetwork';
-import { signUpload, uploadToCloudinary } from '@networks/media/mediaNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { signUpload } from '@networks/media/mediaNetwork';
+import { uploadToCloudinary, toRejectedValue } from '@networks/network/apiHelpers';
 import type { Gender, LocalFile } from '@/types';
 import type { Touched } from '@utils/formErrors';
 import { setUser } from '../authSlice';

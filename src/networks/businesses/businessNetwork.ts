@@ -4,10 +4,9 @@
 // Paths and bodies per MetroMatrix_Backend businesses.controller.ts and
 // dto/business.dto.ts (partners with a verified email).
 
-import { api, unwrap, toAuthError, AuthError } from '../network/apiHelpers';
+import { api, unwrap, toApiError, ApiError, ERROR_CODES } from '../network/apiHelpers';
 import { businessSerializer, businessStatusSerializer } from '../../serializers/businessSerializer';
 import type { Business, BusinessStatusInfo, DocumentKind, ServiceType, SubType } from '../../types/auth';
-import { ERROR_CODES } from '../network/errorCodes';
 
 /** The API's CreateBusinessDto (PATCH takes any part of it). Unknown fields are dropped by the API. */
 export interface BusinessPayload {
@@ -25,7 +24,7 @@ export interface BusinessPayload {
 
 const toBusiness = (raw: unknown): Business => {
   const business = businessSerializer(raw);
-  if (!business) throw new AuthError('The server sent an unexpected business record.', ERROR_CODES.BAD_RESPONSE);
+  if (!business) throw new ApiError('The server sent an unexpected business record.', ERROR_CODES.BAD_RESPONSE);
   return business;
 };
 
@@ -33,7 +32,7 @@ export const createBusiness = async (payload: BusinessPayload): Promise<Business
   try {
     return toBusiness(unwrap(await api.post('/businesses', payload)));
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -42,7 +41,7 @@ export const getMyBusiness = async (): Promise<Business | null> => {
   try {
     return toBusiness(unwrap(await api.get('/businesses/me')));
   } catch (e) {
-    const err = toAuthError(e);
+    const err = toApiError(e);
     if (err.status === 404) return null;
     throw err;
   }
@@ -52,7 +51,7 @@ export const updateMyBusiness = async (patch: Partial<BusinessPayload>): Promise
   try {
     return toBusiness(unwrap(await api.patch('/businesses/me', patch)));
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -69,7 +68,7 @@ export const addDocument = async (doc: { kind: DocumentKind; url: string; public
     await api.post('/businesses/me/documents', { kind, url, publicId });
     return toBusiness(unwrap(await api.get('/businesses/me')));
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -82,7 +81,7 @@ export const removeDocument = async (documentId: string): Promise<Business> => {
     await api.delete(`/businesses/me/documents/${encodeURIComponent(documentId)}`);
     return toBusiness(unwrap(await api.get('/businesses/me')));
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -91,16 +90,16 @@ export const submitBusiness = async (): Promise<Business> => {
   try {
     return toBusiness(unwrap(await api.post('/businesses/me/submit')));
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
 export const getMyBusinessStatus = async (): Promise<BusinessStatusInfo> => {
   try {
     const info = businessStatusSerializer(unwrap(await api.get('/businesses/me/status')));
-    if (!info) throw new AuthError('The server sent an unexpected status.', ERROR_CODES.BAD_RESPONSE);
+    if (!info) throw new ApiError('The server sent an unexpected status.', ERROR_CODES.BAD_RESPONSE);
     return info;
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };

@@ -17,7 +17,7 @@ import type { RootStackParamList } from '@/types';
 import { resetForgotPassword } from '../ForgotPassword/forgotPasswordSlice';
 import { selectResetToken } from '../ResetPasswordOTP/resetPasswordOtpSlice';
 import { resetPasswordAsync, resetResetPassword, selectResetPassword, setField, touch, touchAll } from './resetPasswordSlice';
-import { ERROR_CODES } from '@networks/network/errorCodes';
+import { ERROR_CODES } from '@networks/network/apiHelpers';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ResetPassword'>;
 

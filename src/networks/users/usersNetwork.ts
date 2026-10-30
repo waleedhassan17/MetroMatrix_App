@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════
 // Paths and bodies per MetroMatrix_Backend users.controller.ts / docs/API_AUTH.md §4.2.
 
-import { api, unwrap, toAuthError } from '../network/apiHelpers';
+import { api, unwrap, toApiError } from '../network/apiHelpers';
 import { userSerializer } from '../../serializers/authSerializer';
 import type { Gender, User } from '../../types/auth';
 
@@ -22,7 +22,7 @@ export const updateMe = async ({ name, ...rest }: UpdateMePayload): Promise<User
     const body = unwrap(response);
     return userSerializer(body?.user ?? body);
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -43,7 +43,7 @@ export const completeProfile = async (payload: CompleteProfilePayload): Promise<
     const body = unwrap(response);
     return userSerializer(body?.user ?? body);
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -52,7 +52,7 @@ export const registerDevice = async (token: string, platform: 'android' | 'ios' 
   try {
     await api.put('/users/me/devices', { expoPushToken: token, platform });
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 

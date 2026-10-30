@@ -68,7 +68,7 @@ import {
   touchFields,
   uploadDocumentAsync,
 } from './personalInfoSlice';
-import { ERROR_CODES } from '@networks/network/errorCodes';
+import { ERROR_CODES } from '@networks/network/apiHelpers';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PersonalInfo'>;
 

@@ -2,11 +2,10 @@
 // MetroMatrix-API docs/API_HEALTH.md §4.3. The API takes specialty and
 // condition ids; the app works in slugs (referenceIndex).
 
-import { api, toAuthError, unwrap } from '../../network/apiHelpers';
+import { api, toApiError, unwrap, ApiError } from '../../network/apiHelpers';
 import { completenessSerializer, ownProfileSerializer } from '../../../serializers/health/doctorSerializer';
 import { titleKey } from '../../../serializers/health/healthCommon';
 import { businessSerializer } from '../../../serializers/businessSerializer';
-import { AuthError } from '../../network/apiHelpers';
 import { arr, isObject, str } from '../../../serializers/serializerUtils';
 import type { DoctorOwnProfile } from '../../../types/health';
 import { request } from '../../shopping/http';
@@ -17,7 +16,7 @@ const readProfile = async (raw: unknown): Promise<DoctorOwnProfile> => {
   const { specialtySlug } = await referenceIndex();
   const second = isObject(raw) ? str(arr(raw.secondarySpecialtyIds)[0]) : '';
   const profile = ownProfileSerializer(isObject(raw) ? { ...raw, secondarySpecialtySlug: specialtySlug.get(second) ?? null } : null);
-  if (!profile) throw new AuthError('The server sent something unexpected. Try again.', 'BAD_RESPONSE');
+  if (!profile) throw new ApiError('The server sent something unexpected. Try again.', 'BAD_RESPONSE');
   return profile;
 };
 
@@ -25,7 +24,7 @@ export const getOwnProfile = async () => {
   try {
     return await readProfile(unwrap(await api.get('/health/doctor/profile')));
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -59,7 +58,7 @@ export const updateOwnProfile = async (patch: Partial<DoctorOwnProfile>) => {
   try {
     return await readProfile(unwrap(await api.patch('/health/doctor/profile', await profileBody(patch))));
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 

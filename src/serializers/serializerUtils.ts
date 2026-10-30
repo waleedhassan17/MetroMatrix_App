@@ -30,6 +30,25 @@ export function oneOf<T extends string>(v: unknown, allowed: readonly T[], fallb
 
 export const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
 
+/**
+ * The API's envelope `{ success: true, data }` → `data`. A network function
+ * returns the raw body (FinMatrix's `return response.data`), so a response
+ * serializer starts here. Only a real envelope is opened: an object that
+ * merely has a `data` key (a notification's payload) passes through.
+ */
+export const bodyOf = (payload: unknown): unknown =>
+  isObject(payload) && typeof payload.success === 'boolean' && 'data' in payload ? payload.data : payload;
+
+/**
+ * A response serializer, FinMatrix's `customerListSerializer(payload)`: it
+ * takes what a network function returns (the envelope) and reads its body.
+ * Wrapped serializers still accept a bare body, so nesting them is safe.
+ */
+export const fromResponse =
+  <R>(serialize: (body: unknown) => R) =>
+  (payload: unknown): R =>
+    serialize(bodyOf(payload));
+
 /** Keep only allowed string members, de-duplicated, order preserved. */
 export function enumList<T extends string>(v: unknown, allowed: readonly T[]): T[] {
   const out: T[] = [];

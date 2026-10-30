@@ -1,8 +1,7 @@
 // B12: one list of codes, the copy people read, field errors, and a 429's wait.
 
 import { AxiosError } from 'axios';
-import { ERROR_CODES, errorCopy, fieldErrors, retryAfterOf } from '../errorCodes';
-import { toAuthError } from '../apiHelpers';
+import { ERROR_CODES, errorCopy, fieldErrors, retryAfterOf, toApiError } from '../apiHelpers';
 import { authErrorMessage } from '../../../components/auth/authErrorMessage';
 
 const http = (status: number, data: unknown, headers: Record<string, string> = {}) =>
@@ -77,17 +76,17 @@ describe('fieldErrors', () => {
 
 describe("a 429's wait", () => {
   it('comes from the body when the API gives one', () => {
-    const e = toAuthError(http(429, { error: { code: 'RESEND_COOLDOWN', message: 'Wait', details: { retryAfter: 42 } } }, { 'retry-after': '60' }));
+    const e = toApiError(http(429, { error: { code: 'RESEND_COOLDOWN', message: 'Wait', details: { retryAfter: 42 } } }, { 'retry-after': '60' }));
     expect(retryAfterOf(e.details)).toBe(42);
   });
 
   it("else from the throttler's Retry-After header", () => {
-    const e = toAuthError(http(429, { error: { code: 'RATE_LIMITED', message: 'Slow down' } }, { 'retry-after': '37' }));
+    const e = toApiError(http(429, { error: { code: 'RATE_LIMITED', message: 'Slow down' } }, { 'retry-after': '37' }));
     expect(e).toMatchObject({ code: 'RATE_LIMITED', status: 429, details: { retryAfter: 37 } });
   });
 
   it('only for a 429', () => {
-    const e = toAuthError(http(503, { error: { code: 'SERVICE_UNAVAILABLE', message: 'Down' } }, { 'retry-after': '30' }));
+    const e = toApiError(http(503, { error: { code: 'SERVICE_UNAVAILABLE', message: 'Down' } }, { 'retry-after': '30' }));
     expect(e.details).toBeUndefined();
   });
 });

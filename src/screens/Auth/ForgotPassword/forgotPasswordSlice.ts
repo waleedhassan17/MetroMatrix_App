@@ -9,10 +9,9 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { authForgotPassword } from '@networks/auth/authNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { toRejectedValue, ERROR_CODES } from '@networks/network/apiHelpers';
 import { retryAfterSerializer } from '@serializers/authSerializer';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { ERROR_CODES } from '@networks/network/errorCodes';
 
 export interface ForgotPasswordSliceState {
   email: string;

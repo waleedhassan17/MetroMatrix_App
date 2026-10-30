@@ -2,22 +2,13 @@
 // MetroMatrix — Auth Network
 // ═══════════════════════════════════════════════════════
 // One function per /auth endpoint. Each: call `api`, unwrap, serialize,
-// and on failure throw an AuthError carrying the server's code + details.
+// and on failure throw an ApiError carrying the server's code + details.
 // Functions that open a session store the token pair HERE (FinMatrix
 // convention), so a slice never touches storage.
 // Paths and bodies per MetroMatrix_Backend docs/API_AUTH.md. The dummy API
 // (./network/mock) speaks the same contract.
 
-import {
-  api,
-  unwrap,
-  setTokens,
-  clearTokens,
-  refreshTokens,
-  toAuthError,
-  AuthError,
-  AUTH_PATHS,
-} from '../network/apiHelpers';
+import { api, unwrap, setTokens, clearTokens, refreshTokens, toApiError, ApiError, AUTH_PATHS, ERROR_CODES } from '../network/apiHelpers';
 import { clearIntentionalSignOut } from '../../utils/authEvents';
 import { getAccessToken } from '../../utils/storageUtils';
 import { getMyBusiness } from '../businesses/businessNetwork';
@@ -30,7 +21,6 @@ import {
   type SessionPayload,
 } from '../../serializers/authSerializer';
 import type { AuthResult, Portal, TotpChallenge } from '../../types/auth';
-import { ERROR_CODES } from '../network/errorCodes';
 
 // ─── Types ────────────────────────────────────────────
 export interface SignupPayload {
@@ -57,7 +47,7 @@ export type SigninOutcome =
 
 // ─── Session helpers ─────────────────────────────────
 const malformed = () =>
-  new AuthError('The server sent an unexpected response. Please try again.', ERROR_CODES.BAD_RESPONSE);
+  new ApiError('The server sent an unexpected response. Please try again.', ERROR_CODES.BAD_RESPONSE);
 
 /** Store the pair and start a fresh session (riders included: their app is RiderNavigator). */
 const openSession = async (result: AuthResult | null): Promise<AuthResult> => {
@@ -108,7 +98,7 @@ export const authSignup = async (payload: SignupPayload): Promise<AuthResult> =>
     });
     return await openSession(authResultSerializer(unwrap(response)));
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -131,7 +121,7 @@ export const authSignin = async (payload: SigninPayload): Promise<SigninOutcome>
     if (challenge) return { kind: 'totp', challenge };
     return { kind: 'session', result: await withFullBusiness(await openSession(authResultSerializer(body))) };
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -144,7 +134,7 @@ export const authAdminTotp = async (
     const response = await api.post(AUTH_PATHS.adminTotp, { challengeToken, ...factor });
     return await openSession(authResultSerializer(unwrap(response)));
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -155,7 +145,7 @@ export const authGoogle = async (idToken: string): Promise<AuthResult> => {
     const response = await api.post(AUTH_PATHS.google, { idToken });
     return await openSession(authResultSerializer(unwrap(response)));
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -177,7 +167,7 @@ export const authVerifyEmail = async (token: string): Promise<SessionPayload> =>
     if (!session) throw malformed();
     return await withFullBusiness(session);
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -194,7 +184,7 @@ export const authResendVerification = async (): Promise<ResendOutcome> => {
     const body = unwrap(await api.post('/auth/resend-verification'));
     return { retryAfter: retryAfterSerializer(body), alreadyVerified: body?.alreadyVerified === true };
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -213,7 +203,7 @@ export const authMe = async (): Promise<SessionPayload> => {
     if (!session) throw malformed();
     return await withFullBusiness(session);
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -246,7 +236,7 @@ export const authForgotPassword = async (email: string): Promise<void> => {
   try {
     await api.post(AUTH_PATHS.forgotPassword, { email: email.trim().toLowerCase() });
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -264,7 +254,7 @@ export const authVerifyResetOtp = async (email: string, code: string): Promise<s
     if (typeof resetToken !== 'string' || !resetToken) throw malformed();
     return resetToken;
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -272,7 +262,7 @@ export const authResetPassword = async (resetToken: string, password: string): P
   try {
     await api.post(AUTH_PATHS.resetPassword, { resetToken, password });
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -300,7 +290,7 @@ export const authChangePassword = async (payload: ChangePasswordPayload): Promis
     await setTokens(tokens.accessToken, tokens.refreshToken);
     return await authMe();
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -311,6 +301,6 @@ export const authDeleteAccount = async (confirmation: { password: string } | { i
     await api.delete('/auth/account', { data: confirmation });
     await clearTokens();
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };

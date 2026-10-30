@@ -1,7 +1,7 @@
 // What the "you were signed out" toast says, by the server's reason
 // (authEvents.emitSessionExpired). Only definitive failures reach it.
 
-import { ERROR_CODES, errorCopy } from '../../networks/network/errorCodes';
+import { ERROR_CODES, errorCopy } from '../../networks/network/apiHelpers';
 
 export const sessionEndedCopy = (reason: string): { text1: string; text2: string } => {
   switch (reason) {

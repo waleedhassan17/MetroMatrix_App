@@ -1,6 +1,6 @@
 // Shared shapes for screen slices that submit a form to the API.
 
-import type { RejectedAuthError } from '../../../networks/network/apiHelpers';
+import type { RejectedApiError } from '../../../networks/network/apiHelpers';
 
 export type FormStatus = 'idle' | 'loading' | 'failed' | 'succeeded';
 
@@ -17,7 +17,7 @@ export const readRejection = (
   action: { payload?: unknown; error: { message?: string } },
   fallback: string,
 ): ServerError => {
-  const p = action.payload as RejectedAuthError | undefined;
+  const p = action.payload as RejectedApiError | undefined;
   return {
     message: p?.message || action.error.message || fallback,
     code: p?.code ?? null,

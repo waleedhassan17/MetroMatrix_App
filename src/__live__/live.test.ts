@@ -24,7 +24,7 @@ jest.mock('../config/env', () => ({
 
 import { createHmac } from 'crypto';
 import { readFileSync } from 'fs';
-import { api, refreshClient, refreshTokens, toAuthError, unwrap } from '../networks/network/apiHelpers';
+import { api, refreshClient, refreshTokens, toApiError, unwrap } from '../networks/network/apiHelpers';
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '../utils/storageUtils';
 import { setBusinessStatusStaleHandler } from '../utils/authEvents';
 import * as auth from '../networks/auth/authNetwork';
@@ -35,7 +35,7 @@ import * as admin from '../networks/admin/adminBusinessNetwork';
 import { resolveGate, partnerAppFor } from '../navigators/sessionGate';
 import { doorForAccount } from '../models/authDoors';
 import { documentSlots } from '../models/businessModel';
-import type { AuthError } from '../networks/network/apiHelpers';
+import type { ApiError } from '../networks/network/apiHelpers';
 import type { DocumentKind } from '../types/auth';
 
 const LIVE = process.env.LIVE_API_URL;
@@ -69,18 +69,18 @@ const signin = async (...args: Parameters<typeof auth.authSignin>) => {
     try {
       return await auth.authSignin(...args);
     } catch (e) {
-      const err = e as AuthError;
+      const err = e as ApiError;
       if (err.code !== 'RATE_LIMITED' || attempt > 3) throw e;
       await sleep((Number(err.details?.retryAfter) || 60) * 1000 + 1000);
     }
   }
 };
 
-const failure = async (p: Promise<unknown>): Promise<AuthError> => {
+const failure = async (p: Promise<unknown>): Promise<ApiError> => {
   try {
     await p;
   } catch (e) {
-    return e as AuthError;
+    return e as ApiError;
   }
   throw new Error('expected the call to fail');
 };
@@ -173,11 +173,11 @@ live('live run against the local API', () => {
     expect(after.refresh).not.toBe(before.refresh);
 
     await sleep(11_000); // past the API's 10 s reuse grace
-    const replay = await refreshClient.post('/auth/refresh-token', { refreshToken: before.refresh }).catch(e => toAuthError(e));
-    expect((replay as AuthError).code).toBe('REFRESH_REUSED');
+    const replay = await refreshClient.post('/auth/refresh-token', { refreshToken: before.refresh }).catch(e => toApiError(e));
+    expect((replay as ApiError).code).toBe('REFRESH_REUSED');
     // The whole family is gone, the newest token included.
-    const next = await refreshClient.post('/auth/refresh-token', { refreshToken: after.refresh }).catch(e => toAuthError(e));
-    expect(['REFRESH_INVALID', 'TOKEN_REVOKED', 'REFRESH_REUSED']).toContain((next as AuthError).code);
+    const next = await refreshClient.post('/auth/refresh-token', { refreshToken: after.refresh }).catch(e => toApiError(e));
+    expect(['REFRESH_INVALID', 'TOKEN_REVOKED', 'REFRESH_REUSED']).toContain((next as ApiError).code);
   });
 
   it('e. forgot password → emailed code → reset; the old password and old sessions stop working', async () => {
@@ -193,10 +193,10 @@ live('live run against the local API', () => {
     await auth.authResetPassword(resetToken, 'Metro2026Reset');
 
     expect((await failure(signin({ email: email('cust'), password: PASSWORD, portal: 'customer' }))).code).toBe('INVALID_CREDENTIALS');
-    const dead = await refreshClient.post('/auth/refresh-token', { refreshToken: oldSession.refresh }).catch(e => toAuthError(e));
+    const dead = await refreshClient.post('/auth/refresh-token', { refreshToken: oldSession.refresh }).catch(e => toApiError(e));
     // A token revoked without rotation (sign-out, reset) is answered REFRESH_REUSED today: see the
     // finding in AUTH_PROGRESS.md. Either way the App ends the session.
-    expect((dead as AuthError).code).toMatch(/REFRESH_INVALID|TOKEN_REVOKED|REFRESH_REUSED/);
+    expect((dead as ApiError).code).toMatch(/REFRESH_INVALID|TOKEN_REVOKED|REFRESH_REUSED/);
     const ok = await signin({ email: email('cust'), password: 'Metro2026Reset', portal: 'customer' });
     expect(ok.kind).toBe('session');
     sessions.cust = await stored();
@@ -213,8 +213,8 @@ live('live run against the local API', () => {
     sessions.cust = await stored();
     expect((await auth.authMe()).user.role).toBe('customer'); // A's new pair works
 
-    const b = await refreshClient.post('/auth/refresh-token', { refreshToken: deviceB.refresh }).catch(e => toAuthError(e));
-    expect((b as AuthError).code).toMatch(/REFRESH_INVALID|TOKEN_REVOKED|REFRESH_REUSED/);
+    const b = await refreshClient.post('/auth/refresh-token', { refreshToken: deviceB.refresh }).catch(e => toApiError(e));
+    expect((b as ApiError).code).toMatch(/REFRESH_INVALID|TOKEN_REVOKED|REFRESH_REUSED/);
     await use(deviceB);
     expect((await failure(api.get('/auth/me').then(unwrap))).toString()).toBeTruthy();
   });
@@ -333,8 +333,8 @@ live('live run against the local API', () => {
     await use(sessions.store);
     const approved = await auth.authMe();
     expect(partnerAppFor(approved.business)).toBe('store');
-    const couponsBefore = await api.get('/shop/partner/coupons').catch(e => toAuthError(e));
-    expect((couponsBefore as AuthError).code).not.toBe('BUSINESS_SUSPENDED');
+    const couponsBefore = await api.get('/shop/partner/coupons').catch(e => toApiError(e));
+    expect((couponsBefore as ApiError).code).not.toBe('BUSINESS_SUSPENDED');
 
     await use(sessions.admin);
     await admin.suspendBusiness(store.id, 'Counterfeit goods reported by customers.');
@@ -342,8 +342,8 @@ live('live run against the local API', () => {
     let reread: Awaited<ReturnType<typeof auth.authMe>> | null = null;
     setBusinessStatusStaleHandler(() => void auth.authMe().then(s => (reread = s)));
     try {
-      const coupons = await api.get('/shop/partner/coupons').catch(e => toAuthError(e));
-      expect((coupons as AuthError).code).toBe('BUSINESS_SUSPENDED');
+      const coupons = await api.get('/shop/partner/coupons').catch(e => toApiError(e));
+      expect((coupons as ApiError).code).toBe('BUSINESS_SUSPENDED');
       for (let i = 0; i < 30 && !reread; i++) await sleep(100);
       expect(gateOf(reread!)).toBe('suspended');
     } finally {
@@ -355,8 +355,8 @@ live('live run against the local API', () => {
     await use(sessions.kitchen);
     const s = await stored();
     await auth.authLogout(s.access);
-    const after = await refreshClient.post('/auth/refresh-token', { refreshToken: s.refresh }).catch(e => toAuthError(e));
-    expect((after as AuthError).code).toMatch(/REFRESH_INVALID|TOKEN_REVOKED|REFRESH_REUSED/);
+    const after = await refreshClient.post('/auth/refresh-token', { refreshToken: s.refresh }).catch(e => toApiError(e));
+    expect((after as ApiError).code).toMatch(/REFRESH_INVALID|TOKEN_REVOKED|REFRESH_REUSED/);
 
     await use(sessions.cust);
     await auth.authDeleteAccount({ password: 'Metro2026Changed' });

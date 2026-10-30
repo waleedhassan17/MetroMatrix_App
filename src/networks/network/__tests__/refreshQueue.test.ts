@@ -1,5 +1,5 @@
 import { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
-import { api, AuthError, extractErrorCode, refreshClient, toAuthError, unwrap } from '../apiHelpers';
+import { api, ApiError, extractErrorCode, refreshClient, toApiError, unwrap } from '../apiHelpers';
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '../../../utils/storageUtils';
 import {
   clearIntentionalSignOut,
@@ -173,15 +173,15 @@ describe('apiHelpers — status gates and errors', () => {
     setBusinessStatusStaleHandler(null);
   });
 
-  it('toAuthError keeps message, code, status and details', async () => {
+  it('toApiError keeps message, code, status and details', async () => {
     api.defaults.adapter = ((config: InternalAxiosRequestConfig) =>
       Promise.reject(
         fail(config, 422, {
           error: { code: 'DOCUMENTS_MISSING', message: 'Upload your PMDC certificate', details: { missing: ['pmdc_certificate'] } },
         }),
       )) as never;
-    const err = toAuthError(await api.post('/businesses/me/submit').catch(e => e));
-    expect(err).toBeInstanceOf(AuthError);
+    const err = toApiError(await api.post('/businesses/me/submit').catch(e => e));
+    expect(err).toBeInstanceOf(ApiError);
     expect(err).toMatchObject({
       message: 'Upload your PMDC certificate',
       code: 'DOCUMENTS_MISSING',
@@ -195,6 +195,6 @@ describe('apiHelpers — status gates and errors', () => {
       Promise.reject(new AxiosError('Network Error', 'ERR_NETWORK', config, {}, undefined))) as never;
     const raw = await api.get('/x').catch(e => e);
     expect(extractErrorCode(raw)).toBe('NETWORK_ERROR');
-    expect(toAuthError(raw).message).toMatch(/offline/);
+    expect(toApiError(raw).message).toMatch(/offline/);
   });
 });

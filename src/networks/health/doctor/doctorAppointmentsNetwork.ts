@@ -5,7 +5,7 @@
 // it (notes and prescription too), so each action reads it back.
 
 import type { AxiosResponse } from 'axios';
-import { AuthError, api, toAuthError, unwrap } from '../../network/apiHelpers';
+import { ApiError, api, toApiError, unwrap } from '../../network/apiHelpers';
 import { calendarSerializer, doctorAppointmentSerializer, todaySerializer } from '../../../serializers/health/doctorSerializer';
 import { healthRecordSerializer } from '../../../serializers/health/recordsSerializer';
 import { mimeFromUrl, publicIdFromCloudinaryUrl } from '../../../serializers/health/healthCommon';
@@ -35,10 +35,10 @@ export const getToday = async (date: string | null, locationId: string | null) =
       api.get('/health/doctor/locations').then(unwrap),
     ]);
     const value = todaySerializer({ today: forLocation(today, locationId), locations: locs });
-    if (!value) throw new AuthError('The server sent something unexpected. Try again.', 'BAD_RESPONSE');
+    if (!value) throw new ApiError('The server sent something unexpected. Try again.', 'BAD_RESPONSE');
     return value;
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 

@@ -7,10 +7,10 @@
 //                      admin isn't enrolled yet; at enrolment they already are
 
 import type { Dispatch } from '@reduxjs/toolkit';
-import type { RejectedAuthError } from '@networks/network/apiHelpers';
+import type { RejectedApiError } from '@networks/network/apiHelpers';
 import { endPendingTotp, setPendingTotp, type PendingTotp } from '../../Auth/authSlice';
 import { showError } from '../../Auth/SignIn/signInSlice';
-import { ERROR_CODES } from '@networks/network/errorCodes';
+import { ERROR_CODES } from '@networks/network/apiHelpers';
 
 /** Codes that mean the challenge itself is gone. */
 export const CHALLENGE_DEAD: readonly string[] = [ERROR_CODES.UNAUTHORIZED, ERROR_CODES.RATE_LIMITED];
@@ -26,7 +26,7 @@ const DEAD_COPY: Record<string, string> = {
  */
 export const handleChallengeError = (
   dispatch: Dispatch,
-  rejected: RejectedAuthError,
+  rejected: RejectedApiError,
   pending: PendingTotp | null,
   step: 'code' | 'enrol',
 ): boolean => {

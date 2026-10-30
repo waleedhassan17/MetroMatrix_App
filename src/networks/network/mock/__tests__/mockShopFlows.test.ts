@@ -20,7 +20,7 @@ import {
 import { approveReturn, receiveReturn, recordRefund } from '../../../shopping/partner/partnerReturnsNetwork';
 import { createPartnerProduct, listPartnerProducts } from '../../../shopping/partner/productsNetwork';
 import { pauseStore } from '../../../shopping/partner/storeNetwork';
-import { AuthError } from '../../apiHelpers';
+import { ApiError } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import type { CheckoutInput, ProductDetail } from '../../../../types/shopping';
 import { getDb, resetMockDb } from '../mockDb';
@@ -30,11 +30,11 @@ installDummyApi();
 
 const T0 = new Date('2026-10-15T10:00:00Z').getTime();
 
-const failure = async (p: Promise<unknown>): Promise<AuthError> => {
+const failure = async (p: Promise<unknown>): Promise<ApiError> => {
   try {
     await p;
   } catch (e) {
-    return e as AuthError;
+    return e as ApiError;
   }
   throw new Error('expected the call to fail');
 };

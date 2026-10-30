@@ -12,12 +12,11 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { authChangePassword } from '@networks/auth/authNetwork';
-import { AuthError, toRejectedValue } from '@networks/network/apiHelpers';
+import { ApiError, toRejectedValue, ERROR_CODES } from '@networks/network/apiHelpers';
 import { getGoogleIdToken } from '@/services/googleAuth';
 import { setSession } from '../../Auth/authSlice';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../Auth/shared/formStatus';
 import type { Touched } from '@utils/formErrors';
-import { ERROR_CODES } from '@networks/network/errorCodes';
 
 export type ChangePasswordField = 'currentPassword' | 'password' | 'confirmPassword';
 
@@ -59,7 +58,7 @@ export const changePasswordSlice = createAppSlice({
             session = await authChangePassword({ currentPassword, newPassword });
           } else {
             const idToken = await getGoogleIdToken();
-            if (!idToken) throw new AuthError('Confirm with Google to set your password.', ERROR_CODES.GOOGLE_CANCELLED);
+            if (!idToken) throw new ApiError('Confirm with Google to set your password.', ERROR_CODES.GOOGLE_CANCELLED);
             session = await authChangePassword({ idToken, newPassword });
           }
           dispatch(setSession(session));

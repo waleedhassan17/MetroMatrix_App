@@ -3,8 +3,7 @@
 
 import { AxiosError } from 'axios';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
-import { AuthError } from '../apiHelpers';
-import { isDefinitiveSessionFailure, isTransient, NO_REFRESH_TOKEN } from '../sessionRefresh';
+import { ApiError, isDefinitiveSessionFailure, isTransient, NO_REFRESH_TOKEN } from '../apiHelpers';
 import { appContainerSlice, bootstrapSession } from '../../../components/app-container/appContainerSlice';
 import { sessionEndedCopy } from '../../../components/app-container/sessionEndedCopy';
 import authReducer from '../../../screens/Auth/authSlice';
@@ -35,8 +34,8 @@ describe('isDefinitiveSessionFailure', () => {
     ['401 REFRESH_REUSED', http(401, 'REFRESH_REUSED')],
     ['401 TOKEN_REVOKED', http(401, 'TOKEN_REVOKED')],
     ['403 ACCOUNT_DISABLED', http(403, 'ACCOUNT_DISABLED')],
-    ['no refresh token', new AuthError('x', NO_REFRESH_TOKEN, 401)],
-    ['an AuthError carrying REFRESH_REUSED', new AuthError('x', 'REFRESH_REUSED', 401)],
+    ['no refresh token', new ApiError('x', NO_REFRESH_TOKEN, 401)],
+    ['an ApiError carrying REFRESH_REUSED', new ApiError('x', 'REFRESH_REUSED', 401)],
   ])('%s ends the session', (_n, err) => {
     expect(isDefinitiveSessionFailure(err)).toBe(true);
   });

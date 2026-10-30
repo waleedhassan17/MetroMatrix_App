@@ -15,9 +15,7 @@
 // allowed_formats, and `type` for private PHI uploads), so all of them are
 // sent exactly as given.
 
-import { Platform } from 'react-native';
-import { api, unwrap, toAuthError, AuthError } from '../network/apiHelpers';
-import { ERROR_CODES } from '../network/errorCodes';
+import { api, unwrap, toApiError, ApiError, uploadToCloudinary, ERROR_CODES } from '../network/apiHelpers';
 import { isObject, num, str } from '../../serializers/serializerUtils';
 import type { LocalFile, SignedUpload, UploadedFile } from '../../types/auth';
 
@@ -79,7 +77,7 @@ export const signUpload = async (purpose: UploadPurpose): Promise<SignedUpload> 
     const response = await api.post('/media/sign-upload', { purpose: API_PURPOSE[purpose] });
     const raw = unwrap(response);
     if (!isObject(raw) || !raw.signature || !raw.cloudName) {
-      throw new AuthError('Upload could not be prepared. Please try again.', ERROR_CODES.BAD_RESPONSE);
+      throw new ApiError('Upload could not be prepared. Please try again.', ERROR_CODES.BAD_RESPONSE);
     }
     const cloudName = str(raw.cloudName);
     return {
@@ -94,99 +92,8 @@ export const signUpload = async (purpose: UploadPurpose): Promise<SignedUpload> 
       type: raw.type === 'authenticated' ? 'authenticated' : null,
     };
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
-};
-
-const extensionOf = (file: LocalFile): string => {
-  const fromName = file.name.split('.').pop()?.toLowerCase() ?? '';
-  if (fromName && fromName !== file.name.toLowerCase()) return fromName === 'jpeg' ? 'jpg' : fromName;
-  const fromMime = file.mimeType.split('/')[1]?.toLowerCase() ?? '';
-  return fromMime === 'jpeg' ? 'jpg' : fromMime;
-};
-
-/**
- * What Cloudinary would refuse anyway, said before the upload starts: a file
- * over the purpose's size limit, or a format it doesn't allow. Null when fine.
- */
-export const uploadProblem = (file: LocalFile & { size?: number }, signed: SignedUpload): string | null => {
-  if (signed.maxBytes && typeof file.size === 'number' && file.size > signed.maxBytes) {
-    return `That file is too large. The limit is ${Math.floor(signed.maxBytes / 1_000_000)} MB.`;
-  }
-  if (signed.allowedFormats) {
-    const allowed = signed.allowedFormats.split(',').map(f => (f.trim() === 'jpeg' ? 'jpg' : f.trim()));
-    const ext = extensionOf(file);
-    if (ext && !allowed.includes(ext)) {
-      return `That file type isn't accepted. Use ${signed.allowedFormats.split(',').join(', ').toUpperCase()}.`;
-    }
-  }
-  return null;
-};
-
-const appendFile = async (form: FormData, file: LocalFile) => {
-  if (Platform.OS === 'web') {
-    const blob = file.file ?? (await (await fetch(file.uri)).blob());
-    (form as unknown as { append: (k: string, v: Blob, n: string) => void }).append('file', blob, file.name);
-    return;
-  }
-  form.append('file', { uri: file.uri, name: file.name, type: file.mimeType } as unknown as Blob);
-};
-
-/** Resolves with the stored file; onProgress receives 0..1. */
-export const uploadToCloudinary = async (
-  file: LocalFile,
-  signed: SignedUpload,
-  onProgress?: (fraction: number) => void,
-): Promise<UploadedFile> => {
-  const problem = uploadProblem(file, signed);
-  if (problem) throw new AuthError(problem, ERROR_CODES.VALIDATION_FAILED);
-  const form = new FormData();
-  await appendFile(form, file);
-  form.append('api_key', signed.apiKey);
-  form.append('timestamp', String(signed.timestamp));
-  form.append('signature', signed.signature);
-  // Signed by the API: each must be sent exactly as given, or Cloudinary refuses.
-  if (signed.folder) form.append('folder', signed.folder);
-  // Signed with the rest: Cloudinary refuses the upload if these are missing.
-  if (signed.allowedFormats) form.append('allowed_formats', signed.allowedFormats);
-  if (signed.type) form.append('type', signed.type);
-
-  return new Promise<UploadedFile>((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', signed.uploadUrl);
-    xhr.timeout = 120000;
-    xhr.upload.onprogress = event => {
-      if (event.lengthComputable && onProgress) onProgress(event.loaded / event.total);
-    };
-    xhr.onload = () => {
-      let body: any = null;
-      try {
-        body = JSON.parse(xhr.responseText);
-      } catch {
-        /* non-JSON */
-      }
-      if (xhr.status >= 200 && xhr.status < 300 && body?.secure_url) {
-        onProgress?.(1);
-        resolve({
-          url: str(body.secure_url),
-          publicId: str(body.public_id),
-          mimeType: file.mimeType,
-        });
-      } else {
-        reject(
-          new AuthError(
-            body?.error?.message ?? `Upload failed (${xhr.status}). Please try again.`,
-            'UPLOAD_FAILED',
-            xhr.status,
-          ),
-        );
-      }
-    };
-    xhr.onerror = () =>
-      reject(new AuthError("Upload failed — you're offline or the connection dropped.", 'NETWORK_ERROR'));
-    xhr.ontimeout = () => reject(new AuthError('Upload timed out. Please try again.', 'NETWORK_ERROR'));
-    xhr.send(form);
-  });
 };
 
 /** Sign, then upload: one call for a photo a form attaches (review, return, payment proof, product). */

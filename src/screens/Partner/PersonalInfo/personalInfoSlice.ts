@@ -21,8 +21,8 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '@store/createAppSlice';
 import { updateMe } from '@networks/users/usersNetwork';
 import { addDocument, createBusiness, removeDocument, submitBusiness, updateMyBusiness } from '@networks/businesses/businessNetwork';
-import { signUpload, uploadToCloudinary } from '@networks/media/mediaNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { signUpload } from '@networks/media/mediaNetwork';
+import { uploadToCloudinary, toRejectedValue } from '@networks/network/apiHelpers';
 import { nationalFromPkPhone, toPkPhone } from '@models/authModel';
 import {
   businessProfileToPayload,

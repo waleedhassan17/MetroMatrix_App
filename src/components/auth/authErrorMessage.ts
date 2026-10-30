@@ -2,7 +2,7 @@
 // fields VALIDATION_FAILED names, or the server's own message. Pure, so it is
 // unit-tested without rendering.
 
-import { ERROR_CODES, errorCopy, fieldErrors } from '../../networks/network/errorCodes';
+import { ERROR_CODES, errorCopy, fieldErrors } from '../../networks/network/apiHelpers';
 import type { ServerError } from '../../screens/Auth/shared/formStatus';
 
 export const authErrorMessage = (error: ServerError): string => {

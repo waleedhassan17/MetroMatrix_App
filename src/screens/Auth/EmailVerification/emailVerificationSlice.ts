@@ -16,11 +16,10 @@
 
 import { createAppSlice } from '@store/createAppSlice';
 import { authMe, authResendVerification } from '@networks/auth/authNetwork';
-import { toRejectedValue } from '@networks/network/apiHelpers';
+import { toRejectedValue, ERROR_CODES, errorCopy } from '@networks/network/apiHelpers';
 import { retryAfterSerializer } from '@serializers/authSerializer';
 import { setSession } from '../authSlice';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { ERROR_CODES, errorCopy } from '@networks/network/errorCodes';
 
 /** Until the server says otherwise, the email we just sent can be re-sent in 60 s. */
 export const DEFAULT_RESEND_SECONDS = 60;

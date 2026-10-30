@@ -18,7 +18,7 @@ import {
 import { useVerificationPolling } from '../EmailVerification/useVerificationPolling';
 import { verifyLinkAsync, verifySuccessSlice } from '../VerifySuccess/verifySuccessSlice';
 import { rewriteVerifyPath } from '../../../navigators/linkingPaths';
-import { AuthError } from '../../../networks/network/apiHelpers';
+import { ApiError } from '../../../networks/network/apiHelpers';
 import { clearTokens, setTokens } from '../../../utils/storageUtils';
 import { makeUser } from '../../../__fixtures__/users';
 
@@ -74,7 +74,7 @@ describe('checkVerifiedAsync', () => {
   it('a failed check counts toward the back-off, shows nothing when silent, and never signs out', async () => {
     const store = makeStore();
     store.dispatch({ type: 'auth/setSession', payload: unverified });
-    network.authMe.mockRejectedValue(new AuthError('Server is temporarily unavailable.', undefined, 503));
+    network.authMe.mockRejectedValue(new ApiError('Server is temporarily unavailable.', undefined, 503));
     await store.dispatch(checkVerifiedAsync({ silent: true }));
     await store.dispatch(checkVerifiedAsync({ silent: true }));
     expect(store.getState().emailVerification).toMatchObject({ failures: 2, error: { message: '' } });
@@ -100,7 +100,7 @@ describe('checkVerifiedAsync', () => {
 describe('resendAsync', () => {
   it('RESEND_COOLDOWN restarts the countdown from retryAfter', async () => {
     const store = makeStore();
-    network.authResendVerification.mockRejectedValue(new AuthError('Wait', 'RESEND_COOLDOWN', 429, { retryAfter: 42 }));
+    network.authResendVerification.mockRejectedValue(new ApiError('Wait', 'RESEND_COOLDOWN', 429, { retryAfter: 42 }));
     const before = Date.now();
     await store.dispatch(resendAsync());
     const at = store.getState().emailVerification.resendAvailableAt;
@@ -212,7 +212,7 @@ describe('verifyLinkAsync (the deep-link handler)', () => {
   it('a failed token, signed in, re-reads the account before reporting a failure', async () => {
     const store = makeStore();
     await setTokens('a', 'r');
-    network.authVerifyEmail.mockRejectedValue(new AuthError('Expired', 'VERIFY_LINK_INVALID', 400));
+    network.authVerifyEmail.mockRejectedValue(new ApiError('Expired', 'VERIFY_LINK_INVALID', 400));
     network.authMe.mockResolvedValue(verified);
     await store.dispatch(verifyLinkAsync({ token: 'spent' }));
     expect(store.getState().verifySuccess.status).toBe('succeeded');

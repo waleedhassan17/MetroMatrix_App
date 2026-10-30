@@ -11,7 +11,7 @@ import { cancelFoodOrder, getFoodOrder, listFoodOrders, placeFoodOrder, reorderF
 import { acceptOrder, confirmPayment, getVendorOrder, handedExternal, listBoard, markDelivered, markReady, rejectOrder, startPreparing } from '../../../food/vendor/ordersNetwork';
 import { createPromotion, deactivatePromotion, deletePromotion, listPromotions } from '../../../food/vendor/promotionsNetwork';
 import { getVendorPage } from '../../../food/discoveryNetwork';
-import { AuthError } from '../../apiHelpers';
+import { ApiError } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import { getDb, resetMockDb } from '../mockDb';
 import type { FoodCheckoutInput } from '../../../../types/food';
@@ -23,11 +23,11 @@ installDummyApi();
 const T0 = new Date('2026-10-15T10:00:00Z').getTime();
 const MINUTE = 60_000;
 
-const failure = async (p: Promise<unknown>): Promise<AuthError> => {
+const failure = async (p: Promise<unknown>): Promise<ApiError> => {
   try {
     await p;
   } catch (e) {
-    return e as AuthError;
+    return e as ApiError;
   }
   throw new Error('expected the call to fail');
 };

@@ -79,7 +79,7 @@ import { deleteNutritionData, getNutritionSettings, getNutritionSummary, listHea
 import { searchFood } from '../../../food/discoveryNetwork';
 import { addToCart as addToShopCart, getCart as getShopCart } from '../../../shopping/cartNetwork';
 import { handedExternal, markDelivered } from '../../../food/vendor/ordersNetwork';
-import { api, AuthError } from '../../apiHelpers';
+import { api, ApiError } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import { getDb, resetMockDb } from '../mockDb';
 import type { FoodCheckoutInput } from '../../../../types/food';
@@ -92,11 +92,11 @@ const T0 = new Date('2026-10-15T10:00:00Z').getTime();
 const MINUTE = 60_000;
 const GULBERG = { lat: 31.5102, lng: 74.3441 };
 
-const failure = async (p: Promise<unknown>): Promise<AuthError> => {
+const failure = async (p: Promise<unknown>): Promise<ApiError> => {
   try {
     await p;
   } catch (e) {
-    return e as AuthError;
+    return e as ApiError;
   }
   throw new Error('expected the call to fail');
 };

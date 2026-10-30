@@ -4,7 +4,7 @@
 // Paths and bodies per MetroMatrix_Backend admin.controller.ts and
 // admin/dto (RejectBusinessDto, ReasonDto, AdminBusinessQueryDto).
 
-import { api, unwrap, setTokens, toAuthError, AuthError, AUTH_PATHS } from '../network/apiHelpers';
+import { api, unwrap, setTokens, toApiError, ApiError, AUTH_PATHS, ERROR_CODES } from '../network/apiHelpers';
 import { clearIntentionalSignOut } from '../../utils/authEvents';
 import {
   businessPageSerializer,
@@ -25,9 +25,8 @@ import type {
   ServiceType,
   TotpEnrolment,
 } from '../../types/auth';
-import { ERROR_CODES } from '../network/errorCodes';
 
-const malformed = () => new AuthError('The server sent an unexpected response.', ERROR_CODES.BAD_RESPONSE);
+const malformed = () => new ApiError('The server sent an unexpected response.', ERROR_CODES.BAD_RESPONSE);
 
 const toBusiness = (raw: unknown): Business => {
   const business = businessSerializer(raw);
@@ -62,7 +61,7 @@ export const listBusinesses = async (query: {
     });
     return businessPageSerializer(unwrap(response));
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -72,7 +71,7 @@ export const getBusiness = async (id: string): Promise<BusinessWithOwner> => {
     if (!business) throw malformed();
     return business;
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -80,7 +79,7 @@ export const approveBusiness = async (id: string): Promise<Business> => {
   try {
     return toBusiness(unwrap(await api.post(`/admin/businesses/${encodeURIComponent(id)}/approve`)));
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -91,7 +90,7 @@ export const rejectBusiness = async (
   try {
     return toBusiness(unwrap(await api.post(`/admin/businesses/${encodeURIComponent(id)}/reject`, body)));
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -99,7 +98,7 @@ export const suspendBusiness = async (id: string, reason: string): Promise<Busin
   try {
     return toBusiness(unwrap(await api.post(`/admin/businesses/${encodeURIComponent(id)}/suspend`, { reason })));
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -108,7 +107,7 @@ export const reinstateBusiness = async (id: string, reason: string): Promise<Bus
   try {
     return toBusiness(unwrap(await api.post(`/admin/businesses/${encodeURIComponent(id)}/reinstate`, { reason })));
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -128,7 +127,7 @@ export const adminTotpEnrol = async (challengeToken: string): Promise<TotpEnrolm
     if (!enrolment) throw malformed();
     return enrolment;
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -150,6 +149,6 @@ export const adminTotpConfirm = async (
     clearIntentionalSignOut();
     return { result, recoveryCodes: recoveryCodesSerializer(body) };
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };

@@ -10,7 +10,7 @@ import { getFoodTracking, placeFoodOrder } from '../../../food/ordersNetwork';
 import { acceptOrder, assignRider, markReady, startPreparing } from '../../../food/vendor/ordersNetwork';
 import { getRiderCashForVendor, liveRiders, recordHandover, suggestRiders } from '../../../food/vendor/ridersNetwork';
 import { declineDelivery, getRiderCash, listRiderOrders, markRiderDelivered, riderStep, sendLocationBatch, setDuty } from '../../../food/rider/riderNetwork';
-import { AuthError } from '../../apiHelpers';
+import { ApiError } from '../../apiHelpers';
 import { clearTokens } from '../../../../utils/storageUtils';
 import { resetMockDb } from '../mockDb';
 import { signInAs, installDummyApi } from '../testing';
@@ -20,11 +20,11 @@ installDummyApi();
 // Thursday 15 October 2026, 3 PM in Pakistan: Biryani Bazaar is open.
 const T0 = new Date('2026-10-15T10:00:00Z').getTime();
 
-const failure = async (p: Promise<unknown>): Promise<AuthError> => {
+const failure = async (p: Promise<unknown>): Promise<ApiError> => {
   try {
     await p;
   } catch (e) {
-    return e as AuthError;
+    return e as ApiError;
   }
   throw new Error('expected the call to fail');
 };

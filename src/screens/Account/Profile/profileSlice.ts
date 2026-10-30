@@ -11,8 +11,8 @@ import { createAppSlice } from '@store/createAppSlice';
 import { resetAllState } from '@store/resetAllState';
 import { authDeleteAccount } from '@networks/auth/authNetwork';
 import { updateMe } from '@networks/users/usersNetwork';
-import { signUpload, uploadToCloudinary } from '@networks/media/mediaNetwork';
-import { AuthError, toRejectedValue } from '@networks/network/apiHelpers';
+import { signUpload } from '@networks/media/mediaNetwork';
+import { uploadToCloudinary, ApiError, toRejectedValue, ERROR_CODES } from '@networks/network/apiHelpers';
 import { getGoogleIdToken } from '@/services/googleAuth';
 import { nationalFromPkPhone, toPkPhone } from '@models/authModel';
 import { clearPushToken } from '@utils/storageUtils';
@@ -21,7 +21,6 @@ import type { LocalFile, User } from '@/types';
 import { setUser, signOut } from '../../Auth/authSlice';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../../Auth/shared/formStatus';
 import type { Touched } from '@utils/formErrors';
-import { ERROR_CODES } from '@networks/network/errorCodes';
 
 type Field = 'name' | 'phone';
 
@@ -171,7 +170,7 @@ export const profileSlice = createAppSlice({
             await authDeleteAccount({ password: confirmation.password });
           } else {
             const idToken = await getGoogleIdToken();
-            if (!idToken) throw new AuthError('Confirm with Google to delete your account.', ERROR_CODES.GOOGLE_CANCELLED);
+            if (!idToken) throw new ApiError('Confirm with Google to delete your account.', ERROR_CODES.GOOGLE_CANCELLED);
             await authDeleteAccount({ idToken });
           }
           markIntentionalSignOut();

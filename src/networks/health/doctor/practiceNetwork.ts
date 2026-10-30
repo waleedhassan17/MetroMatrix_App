@@ -4,7 +4,7 @@
 // route (`…/schedule`), and the video prepay rule is the doctor's (profile),
 // so the location list is read from all three.
 
-import { api, toAuthError, unwrap } from '../../network/apiHelpers';
+import { api, toApiError, unwrap } from '../../network/apiHelpers';
 import {
   doctorLocationSerializer,
   doctorLocationsSerializer,
@@ -58,7 +58,7 @@ export const listLocations = async (): Promise<DoctorLocation[]> => {
     );
     return doctorLocationsSerializer({ locations: active, schedules, videoPrepay: prepay });
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 
@@ -128,7 +128,7 @@ export const addTimeOff = async (input: TimeOffInput, cancelConflicts = false) =
     if (!value) throw new Error('bad time off');
     return value;
   } catch (e) {
-    throw toAuthError(e);
+    throw toApiError(e);
   }
 };
 

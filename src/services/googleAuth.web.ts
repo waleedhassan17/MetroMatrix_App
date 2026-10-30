@@ -6,7 +6,7 @@
 // token in a callback. This module only loads and initialises GIS.
 
 import { GOOGLE_WEB_CLIENT_ID } from '../config/env';
-import { AuthError } from '../networks/network/apiHelpers';
+import { ApiError } from '../networks/network/apiHelpers';
 
 export const GOOGLE_UNAVAILABLE = 'GOOGLE_UNAVAILABLE';
 
@@ -35,7 +35,7 @@ export const isGoogleSignInAvailable = (): boolean => !!GOOGLE_WEB_CLIENT_ID;
 
 export const loadGoogleIdentity = (): Promise<GoogleIdApi> => {
   if (!GOOGLE_WEB_CLIENT_ID) {
-    return Promise.reject(new AuthError('Google sign-in is not set up on this build yet.', GOOGLE_UNAVAILABLE));
+    return Promise.reject(new ApiError('Google sign-in is not set up on this build yet.', GOOGLE_UNAVAILABLE));
   }
   if (window.google?.accounts?.id) return Promise.resolve(window.google.accounts.id);
   if (!loading) {
@@ -47,10 +47,10 @@ export const loadGoogleIdentity = (): Promise<GoogleIdApi> => {
       script.onload = () =>
         window.google?.accounts?.id
           ? resolve(window.google.accounts.id)
-          : reject(new AuthError('Google sign-in failed to load.', GOOGLE_UNAVAILABLE));
+          : reject(new ApiError('Google sign-in failed to load.', GOOGLE_UNAVAILABLE));
       script.onerror = () => {
         loading = null;
-        reject(new AuthError("Google sign-in couldn't load. Check your connection.", 'NETWORK_ERROR'));
+        reject(new ApiError("Google sign-in couldn't load. Check your connection.", 'NETWORK_ERROR'));
       };
       document.head.appendChild(script);
     });
@@ -59,7 +59,7 @@ export const loadGoogleIdentity = (): Promise<GoogleIdApi> => {
 };
 
 export const getGoogleIdToken = async (): Promise<string | null> => {
-  throw new AuthError('Use the Google button to continue.', GOOGLE_UNAVAILABLE);
+  throw new ApiError('Use the Google button to continue.', GOOGLE_UNAVAILABLE);
 };
 
 export const GOOGLE_CLIENT_ID = GOOGLE_WEB_CLIENT_ID;

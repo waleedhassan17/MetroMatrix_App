@@ -11,11 +11,10 @@
 import type { Dispatch } from '@reduxjs/toolkit';
 import { resetAllState } from '../../../store/resetAllState';
 import { authGoogle, authSignin, authSignup, type SignupPayload } from '../../../networks/auth/authNetwork';
-import { AuthError } from '../../../networks/network/apiHelpers';
+import { ApiError, ERROR_CODES } from '../../../networks/network/apiHelpers';
 import { isStaffAccount } from '../../../models/authDoors';
 import type { AuthResult, Portal } from '../../../types/auth';
 import { setPendingTotp, setSession } from '../authSlice';
-import { ERROR_CODES } from '../../../networks/network/errorCodes';
 
 const open = (dispatch: Dispatch, result: AuthResult) => {
   dispatch(resetAllState());
@@ -33,7 +32,7 @@ const signinOnTheirDoor = async (portal: Extract<Portal, 'customer' | 'partner'>
   try {
     return await authSignin({ email, password, portal });
   } catch (e) {
-    if (portal === 'customer' && e instanceof AuthError && e.code === ERROR_CODES.WRONG_PORTAL && isStaffAccount(e.details?.accountType)) {
+    if (portal === 'customer' && e instanceof ApiError && e.code === ERROR_CODES.WRONG_PORTAL && isStaffAccount(e.details?.accountType)) {
       return authSignin({ email, password, portal: 'admin' });
     }
     throw e;
@@ -49,7 +48,7 @@ export const signInAndOpen = async (
   const outcome = await signinOnTheirDoor(portal, email, password);
   if (outcome.kind === 'totp') {
     if (portal === 'partner') {
-      throw new AuthError('Staff accounts sign in from the User sign-in.', ERROR_CODES.WRONG_PORTAL, 403, {
+      throw new ApiError('Staff accounts sign in from the User sign-in.', ERROR_CODES.WRONG_PORTAL, 403, {
         accountType: 'admin',
         portal: 'partner',
       });
@@ -75,7 +74,7 @@ export const signInAndOpen = async (
 export const riderSignInAndOpen = async (dispatch: Dispatch, username: string, password: string): Promise<'session'> => {
   const outcome = await authSignin({ username, password, portal: 'partner' });
   if (outcome.kind !== 'session') {
-    throw new AuthError('This is a staff account. Sign in as a User.', ERROR_CODES.WRONG_PORTAL, 403, { accountType: 'admin', portal: 'partner' });
+    throw new ApiError('This is a staff account. Sign in as a User.', ERROR_CODES.WRONG_PORTAL, 403, { accountType: 'admin', portal: 'partner' });
   }
   open(dispatch, outcome.result);
   return 'session';

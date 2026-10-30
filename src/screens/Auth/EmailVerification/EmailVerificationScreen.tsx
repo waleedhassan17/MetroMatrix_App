@@ -15,7 +15,7 @@ import { AuthHeader, AuthScreen } from '@components/auth/AuthChrome';
 import { selectUser } from '../authSlice';
 import { checkVerifiedAsync, resendAsync, selectEmailVerification, startCooldownIfIdle } from './emailVerificationSlice';
 import { useVerificationPolling } from './useVerificationPolling';
-import { ERROR_CODES } from '@networks/network/errorCodes';
+import { ERROR_CODES } from '@networks/network/apiHelpers';
 
 const makeStyles = ({ colors, space, size, radius, elevation }: Theme) =>
   StyleSheet.create({

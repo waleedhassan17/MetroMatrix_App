@@ -2,7 +2,7 @@
 // button to the right one when this app has a door for it.
 
 import { doorForAccount, isStaffAccount, WRONG_DOOR_MESSAGE } from '../authDoors';
-import { errorCopy, ERROR_CODES } from '../../networks/network/errorCodes';
+import { errorCopy, ERROR_CODES } from '../../networks/network/apiHelpers';
 
 describe('wrong door (WRONG_PORTAL details.accountType)', () => {
   it.each([

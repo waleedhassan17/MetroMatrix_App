@@ -4,8 +4,8 @@
 // The app always talks to the real API (src/config/env.ts). This adapter is
 // test fixtures: the Shopping, Health, Food and Kitchen routes, answering as
 // their documents say the real backend does:
-//   success  { data: <payload> }                      2xx
-//   failure  { error: { code, message, details } }    4xx
+//   success  { success: true, data: <payload> }       2xx
+//   failure  { success: false, error: { code, message, details } }  4xx
 // so the parity and flow tests run the app's networks and serializers
 // against it (mock/testing.ts installs it). It has no auth, users, media,
 // business, approval or platform routes: those are the real API's, and a
@@ -264,11 +264,11 @@ export const mockAdapter: AxiosAdapter = async config => {
         status = s;
       },
     });
-    payload = { data: result };
+    payload = { success: true, data: result };
   } catch (e) {
     const err = e instanceof ShopError ? e : new MockError(500, 'MOCK_ERROR', (e as Error).message);
     status = err.status;
-    payload = { error: { code: err.code, message: err.message, details: err.details ?? null } };
+    payload = { success: false, error: { code: err.code, message: err.message, details: err.details ?? null } };
   }
   await saveDb();
 

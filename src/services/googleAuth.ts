@@ -12,7 +12,7 @@
 
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { GOOGLE_WEB_CLIENT_ID } from '../config/env';
-import { AuthError } from '../networks/network/apiHelpers';
+import { ApiError } from '../networks/network/apiHelpers';
 
 export const GOOGLE_UNAVAILABLE = 'GOOGLE_UNAVAILABLE';
 
@@ -23,13 +23,13 @@ let configured = false;
 
 export const getGoogleIdToken = async (): Promise<string | null> => {
   if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
-    throw new AuthError(
+    throw new ApiError(
       'Google sign-in needs the MetroMatrix app build. Use your email for now.',
       GOOGLE_UNAVAILABLE,
     );
   }
   if (!GOOGLE_WEB_CLIENT_ID) {
-    throw new AuthError('Google sign-in is not set up on this build yet.', GOOGLE_UNAVAILABLE);
+    throw new ApiError('Google sign-in is not set up on this build yet.', GOOGLE_UNAVAILABLE);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -44,16 +44,16 @@ export const getGoogleIdToken = async (): Promise<string | null> => {
     const response = await google.GoogleSignin.signIn();
     if (!google.isSuccessResponse(response)) return null; // cancelled
     const idToken = response.data.idToken;
-    if (!idToken) throw new AuthError('Google did not return an ID token. Try again.', 'GOOGLE_NO_TOKEN');
+    if (!idToken) throw new ApiError('Google did not return an ID token. Try again.', 'GOOGLE_NO_TOKEN');
     return idToken;
   } catch (e) {
-    if (e instanceof AuthError) throw e;
+    if (e instanceof ApiError) throw e;
     if (google.isErrorWithCode(e)) {
       if (e.code === google.statusCodes.IN_PROGRESS) return null;
       if (e.code === google.statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        throw new AuthError('Google Play services is unavailable on this device.', GOOGLE_UNAVAILABLE);
+        throw new ApiError('Google Play services is unavailable on this device.', GOOGLE_UNAVAILABLE);
       }
     }
-    throw new AuthError('Google sign-in did not finish. Try again.', 'GOOGLE_FAILED');
+    throw new ApiError('Google sign-in did not finish. Try again.', 'GOOGLE_FAILED');
   }
 };
