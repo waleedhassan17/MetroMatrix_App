@@ -15,8 +15,16 @@ import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index
 import { AppText, Divider, EmptyState, InlineNotice, ScreenShell, SegmentTabs, SkeletonLines, StatusPill } from '../../Custom-Components/index';
 import type { StorePartnerStackParamList } from '../../models';
 import { formatDay } from '../../utils/dates/dates';
-import { selectStoreReturns, setReturnsOpenOnly } from './storeReturnsSlice';
+import { selectStoreReturns, setReturnsView, type StoreReturnsView } from './storeReturnsSlice';
 import { returnPageSerializer } from '../../serializers/shopping/orderSerializer';
+
+/** The open states one at a time (the API filters by one status), then every return. */
+const VIEWS: { key: StoreReturnsView; label: string }[] = [
+  { key: 'requested', label: 'New' },
+  { key: 'approved', label: 'On the way' },
+  { key: 'received', label: 'To refund' },
+  { key: 'all', label: 'All' },
+];
 
 type Props = NativeStackScreenProps<StorePartnerStackParamList, 'StoreReturns'>;
 
@@ -39,17 +47,14 @@ const StoreReturnsContent: React.FC<Props> = ({ navigation }) => {
   const styles = useStyles(makeStyles);
   const { opacity } = useTheme();
   const s = useAppSelector(selectStoreReturns);
-  const list = usePagedList((page, size) => fetchPartnerReturns(s.openOnly ? 'open' : null, page, size), returnPageSerializer, `store-returns|${s.openOnly}`);
+  const list = usePagedList((page, size) => fetchPartnerReturns(s.view === 'all' ? null : s.view, page, size), returnPageSerializer, `store-returns|${s.view}`);
 
   return (
     <ScreenShell title="Returns" onBack={back} scroll={false}>
       <SegmentTabs
-        options={[
-          { key: 'open', label: 'To do' },
-          { key: 'all', label: 'All' },
-        ]}
-        value={s.openOnly ? 'open' : 'all'}
-        onChange={k => dispatch(setReturnsOpenOnly(k === 'open'))}
+        options={VIEWS}
+        value={s.view}
+        onChange={k => dispatch(setReturnsView(k))}
       />
       <FlatList
         data={list.rows}
@@ -83,7 +88,7 @@ const StoreReturnsContent: React.FC<Props> = ({ navigation }) => {
           ) : list.error ? (
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
-            <EmptyState icon="rotate-ccw" title={s.openOnly ? 'No returns to handle' : 'No returns yet'} body="When a customer asks to return something, it shows here." />
+            <EmptyState icon="rotate-ccw" title={s.view === 'all' ? 'No returns yet' : 'Nothing here'} body="When a customer asks to return something, it shows here." />
           )
         }
       />

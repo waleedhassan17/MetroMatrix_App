@@ -12,13 +12,12 @@ import { Image } from 'expo-image';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
-import { BRAND_PRESETS, ON_BRAND_CHOICES, brandContrast, validateStoreProfile } from '../../models/shopping/storeModel';
+import { BRAND_PRESETS, validateStoreProfile } from '../../models/shopping/storeModel';
 import { ServiceScope, StoreBrandScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import {
   AppText,
   Button,
   Card,
-  ChoiceChip,
   IonIcon,
   InlineNotice,
   ScreenShell,
@@ -73,7 +72,6 @@ const StoreProfileContent: React.FC<Props> = () => {
   }
 
   const errors = validateStoreProfile(f);
-  const contrast = brandContrast(f.brandColor, f.onBrandColor);
 
   const pick = async (kind: 'logo' | 'cover') => {
     const file = await pickImageFromLibrary({ square: kind === 'logo' });
@@ -132,22 +130,16 @@ const StoreProfileContent: React.FC<Props> = () => {
           ))}
         </View>
         <TextField label="Or any colour (hex)" value={f.brandColor} onChangeText={v => dispatch(setProfileField({ field: 'brandColor', value: v }))} autoCapitalize="characters" autoCorrect={false} error={errors.brandColor} />
-        <View style={styles.swatches}>
-          {ON_BRAND_CHOICES.map(c => (
-            <ChoiceChip key={c.value} label={c.label} selected={f.onBrandColor === c.value} onPress={() => dispatch(setProfileField({ field: 'onBrandColor', value: c.value }))} />
-          ))}
-        </View>
-        <StoreBrandScope brand={f.brandColor} onBrand={f.onBrandColor}>
+        <StoreBrandScope brand={f.brandColor} onBrand={null}>
           <View style={styles.preview}>
             <Button label="Add to bag" leftIcon="bag-add-outline" onPress={() => undefined} fullWidth />
-            <AppText variant="small" tone={contrast.passes ? 'success' : 'danger'}>
-              {contrast.passes ? `Easy to read (${contrast.ratio}:1)` : `Hard to read (${contrast.ratio}:1). Customers will see a readable text colour instead.`}
+            <AppText variant="small" tone="muted">
+              We pick the text colour on it, so your buttons always read.
             </AppText>
           </View>
         </StoreBrandScope>
       </Card>
 
-      <TextField label="Phone" mode="phone" value={(f.phone ?? '').replace(/^\+92/, '')} onChangeText={v => dispatch(setProfileField({ field: 'phone', value: v ? `+92${v}` : null }))} placeholder="300 1112233" />
       <TextField label="WhatsApp" mode="phone" value={(f.whatsapp ?? '').replace(/^\+92/, '')} onChangeText={v => dispatch(setProfileField({ field: 'whatsapp', value: v ? `+92${v}` : null }))} placeholder="300 1112233" />
       <TextField label="Instagram" value={f.socials.instagram ?? ''} onChangeText={v => dispatch(setSocial({ key: 'instagram', value: v }))} autoCapitalize="none" placeholder="@yourstore" />
       <TextField label="Website" value={f.socials.website ?? ''} onChangeText={v => dispatch(setSocial({ key: 'website', value: v }))} autoCapitalize="none" keyboardType="url" placeholder="yourstore.pk" />

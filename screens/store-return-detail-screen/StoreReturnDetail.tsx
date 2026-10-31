@@ -107,7 +107,7 @@ const StoreReturnDetailContent: React.FC<Props> = ({ route }) => {
 
       <Card>
         {r.items.map((it, i) => (
-          <View key={it.orderItemId}>
+          <View key={it.id}>
             {i > 0 ? <Divider /> : null}
             <View style={styles.item}>
               {it.imageUrl ? <Image source={{ uri: cdn(it.imageUrl, { w: size.thumb }) ?? undefined }} style={styles.thumb} contentFit="cover" /> : <View style={styles.thumb} />}
@@ -121,11 +121,11 @@ const StoreReturnDetailContent: React.FC<Props> = ({ route }) => {
               </View>
               {r.status === 'approved' ? (
                 <Pressable
-                  onPress={() => dispatch(toggleRestock(it.orderItemId))}
+                  onPress={() => dispatch(toggleRestock(it.id))}
                   accessibilityRole="checkbox"
-                  aria-checked={!!s.restock[it.orderItemId]}
+                  aria-checked={!!s.restock[it.id]}
                   accessibilityLabel={`Put ${it.name} back in stock`}>
-                  <IonIcon name={s.restock[it.orderItemId] ? 'checkbox' : 'square-outline'} size="lg" color={s.restock[it.orderItemId] ? service.accent : colors.lineStrong} />
+                  <IonIcon name={s.restock[it.id] ? 'checkbox' : 'square-outline'} size="lg" color={s.restock[it.id] ? service.accent : colors.lineStrong} />
                 </Pressable>
               ) : null}
             </View>

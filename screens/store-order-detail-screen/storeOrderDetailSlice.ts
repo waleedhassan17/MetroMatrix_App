@@ -2,7 +2,8 @@
 // MetroMatrix — Store order detail slice (keyed by order id)
 // ═══════════════════════════════════════════════════════
 // The order, the actions the server allows on it now, and the sheets that
-// collect what an action needs (courier + tracking, a reason).
+// collect what an action needs (courier + tracking or the rider, a reason,
+// the refund sent).
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
@@ -15,11 +16,12 @@ import {
   fetchPartnerOrder,
   markCashCollected,
   packOrder,
+  recordOrderRefund,
   rejectPayment,
-  saveInternalNote,
   shipOrder,
+  type ShipInput,
 } from '../../networks/shopping/partner/partnerOrders';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { CourierKey, PartnerOrderAction, PartnerOrderDetail } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { partnerOrderDetailSerializer } from '../../serializers/shopping/partnerSerializer';
@@ -34,13 +36,17 @@ export type StoreOrderSheet = 'ship' | 'cancel' | 'reject_payment' | null;
 
 export interface StoreOrderDetailSliceState {
   byId: Record<string, StoreOrderEntry>;
-  busy: PartnerOrderAction | 'note' | null;
+  busy: PartnerOrderAction | null;
   actionError: ServerError;
   sheet: StoreOrderSheet;
   courier: CourierKey | null;
   trackingRef: string;
+  riderName: string;
+  /** The rider's national number, typed after "+92". */
+  riderPhone: string;
   reason: string;
-  note: string;
+  refundAmount: string;
+  refundReference: string;
 }
 
 const EMPTY: StoreOrderEntry = { order: null, status: 'idle', error: NO_ERROR };
@@ -52,35 +58,41 @@ const initialState: StoreOrderDetailSliceState = {
   sheet: null,
   courier: null,
   trackingRef: '',
+  riderName: '',
+  riderPhone: '',
   reason: '',
-  note: '',
+  refundAmount: '',
+  refundReference: '',
 };
 
 export type StoreOrderActionInput =
   | { action: 'confirm' | 'pack' | 'deliver' | 'confirm_payment' | 'cash_collected' | 'approve_cancellation' }
-  | { action: 'ship'; courier: CourierKey; trackingRef: string }
-  | { action: 'cancel' | 'reject_payment'; reason: string };
+  | ({ action: 'ship' } & ShipInput)
+  | { action: 'cancel' | 'reject_payment'; reason: string }
+  | { action: 'refund'; amount: number; reference: string };
 
-const perform = (id: string, a: StoreOrderActionInput) => {
+const perform = (id: string, a: StoreOrderActionInput): Promise<unknown> => {
   switch (a.action) {
     case 'confirm':
-      return confirmOrder(id).then(raw => required(partnerOrderDetailSerializer(raw)));
+      return confirmOrder(id);
     case 'pack':
-      return packOrder(id).then(raw => required(partnerOrderDetailSerializer(raw)));
+      return packOrder(id);
     case 'ship':
-      return shipOrder(id, { courier: a.courier, trackingRef: a.trackingRef.trim() }).then(raw => required(partnerOrderDetailSerializer(raw)));
+      return shipOrder(id, a);
     case 'deliver':
-      return deliverOrder(id).then(raw => required(partnerOrderDetailSerializer(raw)));
+      return deliverOrder(id);
     case 'cancel':
-      return cancelPartnerOrder(id, a.reason.trim()).then(raw => required(partnerOrderDetailSerializer(raw)));
+      return cancelPartnerOrder(id, a.reason.trim());
     case 'approve_cancellation':
-      return approveCancellation(id).then(raw => required(partnerOrderDetailSerializer(raw)));
+      return approveCancellation(id);
     case 'confirm_payment':
-      return confirmPayment(id).then(raw => required(partnerOrderDetailSerializer(raw)));
+      return confirmPayment(id);
     case 'reject_payment':
-      return rejectPayment(id, a.reason.trim()).then(raw => required(partnerOrderDetailSerializer(raw)));
+      return rejectPayment(id, a.reason.trim());
     case 'cash_collected':
-      return markCashCollected(id).then(raw => required(partnerOrderDetailSerializer(raw)));
+      return markCashCollected(id);
+    case 'refund':
+      return recordOrderRefund(id, { amount: a.amount, reference: a.reference });
   }
 };
 
@@ -99,13 +111,21 @@ export const storeOrderDetailSlice = createAppSlice({
     setTrackingRef: create.reducer((state, action: PayloadAction<string>) => {
       state.trackingRef = action.payload.toUpperCase();
     }),
+    setRiderName: create.reducer((state, action: PayloadAction<string>) => {
+      state.riderName = action.payload.slice(0, 80);
+    }),
+    setRiderPhone: create.reducer((state, action: PayloadAction<string>) => {
+      state.riderPhone = action.payload.replace(/\D/g, '').slice(0, 10);
+    }),
     setStoreOrderReason: create.reducer((state, action: PayloadAction<string>) => {
       state.reason = action.payload;
     }),
-    setInternalNote: create.reducer((state, action: PayloadAction<string>) => {
-      state.note = action.payload.slice(0, 500);
+    setOrderRefundAmount: create.reducer((state, action: PayloadAction<string>) => {
+      state.refundAmount = action.payload.replace(/\D/g, '').slice(0, 8);
     }),
-
+    setOrderRefundReference: create.reducer((state, action: PayloadAction<string>) => {
+      state.refundReference = action.payload.toUpperCase().slice(0, 80);
+    }),
     loadStoreOrderAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
@@ -126,8 +146,8 @@ export const storeOrderDetailSlice = createAppSlice({
           if (!payload) return;
           state.byId[action.meta.arg] = { order: payload, status: 'succeeded', error: NO_ERROR };
           if (first) {
-            state.note = payload.internalNote ?? '';
             state.courier = payload.shipment?.courier ?? state.courier;
+            state.refundAmount = String(payload.total);
           }
         },
         rejected: (state, action) => {
@@ -137,7 +157,6 @@ export const storeOrderDetailSlice = createAppSlice({
         },
       },
     ),
-
     storeOrderActionAsync: create.asyncThunk(
       async ({ id, input }: { id: string; input: StoreOrderActionInput }, { rejectWithValue }) => {
         try {
@@ -152,38 +171,17 @@ export const storeOrderDetailSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = partnerOrderDetailSerializer(action.payload);
           state.busy = null;
           state.sheet = null;
           state.trackingRef = '';
-          state.byId[action.meta.arg.id] = { order: action.payload, status: 'succeeded', error: NO_ERROR };
-        },
-        rejected: (state, action) => {
-          state.busy = null;
-          state.actionError = readRejection(action, "That didn't go through. Pull down to refresh.");
-        },
-      },
-    ),
-
-    saveNoteAsync: create.asyncThunk(
-      async ({ id, note }: { id: string; note: string }, { rejectWithValue }) => {
-        try {
-          return await saveInternalNote(id, note.trim());
-        } catch (e) {
-          return rejectWithValue(toRejectedValue(e));
-        }
-      },
-      {
-        pending: state => {
-          state.busy = 'note';
-        },
-        fulfilled: (state, action) => {
-          const payload = partnerOrderDetailSerializer(action.payload);
-          state.busy = null;
+          state.refundReference = '';
+          if (!payload) return;
           state.byId[action.meta.arg.id] = { order: payload, status: 'succeeded', error: NO_ERROR };
         },
         rejected: (state, action) => {
           state.busy = null;
-          state.actionError = readRejection(action, "We couldn't save the note.");
+          state.actionError = readRejection(action, "That didn't go through. Pull down to refresh.");
         },
       },
     ),
@@ -198,10 +196,12 @@ export const {
   openStoreOrderSheet,
   setCourier,
   setTrackingRef,
+  setRiderName,
+  setRiderPhone,
   setStoreOrderReason,
-  setInternalNote,
+  setOrderRefundAmount,
+  setOrderRefundReference,
   loadStoreOrderAsync,
   storeOrderActionAsync,
-  saveNoteAsync,
 } = storeOrderDetailSlice.actions;
 export const { selectStoreOrder, selectStoreOrderUi } = storeOrderDetailSlice.selectors;

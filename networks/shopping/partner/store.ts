@@ -1,17 +1,51 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Shopping Partner Store Network (API_SHOPPING_ASSUMED.md)
+// MetroMatrix — Shopping Partner Store Network (API_SHOPPING.md)
 // ═══════════════════════════════════════════════════════
-// Today summary, profile, settings, pause, payment accounts.
-// TODO(API_SHOPPING): paths per docs/API_SHOPPING_ASSUMED.md.
+// The dashboard, profile, settings (pausing is a setting), payment accounts.
 
 import { API, toApiError } from '../../network/network';
 import type { PaymentAccountInput, StoreProfileInput, StoreSettings } from '../../../models/shopping';
+import { COD_NO_LIMIT } from '../../../models/shopping/storeModel';
 
-const BASE = '/partner/shop';
+const BASE = '/shop/partner';
 
-export const fetchPartnerSummary = async (): Promise<unknown> => {
+/** The links the store set (StoreSocials keeps only those); the server picks the text colour on the brand. */
+const profileBody = (input: StoreProfileInput) => ({
+  tagline: input.tagline.trim() || null,
+  about: input.about.trim() || null,
+  logoUrl: input.logoUrl,
+  coverUrl: input.coverUrl,
+  brandColor: input.brandColor,
+  socials: Object.fromEntries(
+    Object.entries({ ...input.socials, whatsapp: input.whatsapp }).filter((e): e is [string, string] => !!e[1]?.trim()),
+  ),
+});
+
+/** Nationwide is no city list; pausing is a setting too (the pause message only while paused). */
+const settingsBody = (input: StoreSettings) => ({
+  returnWindowDays: input.returnWindowDays,
+  codEnabled: input.codEnabled,
+  codLimit: input.codLimit ?? COD_NO_LIMIT,
+  shippingFlatFee: input.shippingFee,
+  freeShippingOver: input.freeShippingOver,
+  deliveryCities: input.nationwide ? [] : input.deliveryCities,
+  dispatchDaysMin: input.dispatchMinDays,
+  dispatchDaysMax: input.dispatchMaxDays,
+  isPaused: input.isPaused,
+  pauseMessage: input.isPaused ? input.pauseMessage?.trim() || null : null,
+});
+
+const accountBody = (input: PaymentAccountInput) => ({
+  kind: input.kind,
+  accountTitle: input.title.trim(),
+  accountNumber: input.number.trim(),
+  ...(input.bankName?.trim() ? { bankName: input.bankName.trim() } : {}),
+  isActive: input.isActive,
+});
+
+export const fetchDashboard = async (): Promise<unknown> => {
   try {
-    const response = await API.GET({ URL: `${BASE}/summary` });
+    const response = await API.GET({ URL: `${BASE}/dashboard` });
     return response.data;
   } catch (e) {
     throw toApiError(e);
@@ -28,7 +62,7 @@ export const fetchStoreProfile = async (): Promise<unknown> => {
 };
 export const updateStoreProfile = async (input: StoreProfileInput): Promise<unknown> => {
   try {
-    const response = await API.PATCH({ URL: `${BASE}/store`, data: input });
+    const response = await API.PATCH({ URL: `${BASE}/store`, data: profileBody(input) });
     return response.data;
   } catch (e) {
     throw toApiError(e);
@@ -45,7 +79,7 @@ export const fetchStoreSettings = async (): Promise<unknown> => {
 };
 export const updateStoreSettings = async (input: StoreSettings): Promise<unknown> => {
   try {
-    const response = await API.PATCH({ URL: `${BASE}/store/settings`, data: input });
+    const response = await API.PATCH({ URL: `${BASE}/store/settings`, data: settingsBody(input) });
     return response.data;
   } catch (e) {
     throw toApiError(e);
@@ -54,7 +88,7 @@ export const updateStoreSettings = async (input: StoreSettings): Promise<unknown
 
 export const pauseStore = async (message: string): Promise<unknown> => {
   try {
-    const response = await API.POST({ URL: `${BASE}/store/pause`, data: { message } });
+    const response = await API.PATCH({ URL: `${BASE}/store/settings`, data: { isPaused: true, pauseMessage: message.trim() || null } });
     return response.data;
   } catch (e) {
     throw toApiError(e);
@@ -62,7 +96,7 @@ export const pauseStore = async (message: string): Promise<unknown> => {
 };
 export const resumeStore = async (): Promise<unknown> => {
   try {
-    const response = await API.POST({ URL: `${BASE}/store/resume` });
+    const response = await API.PATCH({ URL: `${BASE}/store/settings`, data: { isPaused: false } });
     return response.data;
   } catch (e) {
     throw toApiError(e);
@@ -71,7 +105,7 @@ export const resumeStore = async (): Promise<unknown> => {
 
 export const fetchPaymentAccounts = async (): Promise<unknown> => {
   try {
-    const response = await API.GET({ URL: `${BASE}/payment-accounts` });
+    const response = await API.GET({ URL: `${BASE}/store/payment-accounts` });
     return response.data;
   } catch (e) {
     throw toApiError(e);
@@ -79,7 +113,7 @@ export const fetchPaymentAccounts = async (): Promise<unknown> => {
 };
 export const createPaymentAccount = async (input: PaymentAccountInput): Promise<unknown> => {
   try {
-    const response = await API.POST({ URL: `${BASE}/payment-accounts`, data: input });
+    const response = await API.POST({ URL: `${BASE}/store/payment-accounts`, data: accountBody(input) });
     return response.data;
   } catch (e) {
     throw toApiError(e);
@@ -87,7 +121,7 @@ export const createPaymentAccount = async (input: PaymentAccountInput): Promise<
 };
 export const updatePaymentAccount = async (id: string, input: PaymentAccountInput): Promise<unknown> => {
   try {
-    const response = await API.PATCH({ URL: `${BASE}/payment-accounts/${encodeURIComponent(id)}`, data: input });
+    const response = await API.PATCH({ URL: `${BASE}/store/payment-accounts/${encodeURIComponent(id)}`, data: accountBody(input) });
     return response.data;
   } catch (e) {
     throw toApiError(e);
@@ -95,7 +129,7 @@ export const updatePaymentAccount = async (id: string, input: PaymentAccountInpu
 };
 export const deletePaymentAccount = async (id: string): Promise<unknown> => {
   try {
-    const response = await API.DELETE({ URL: `${BASE}/payment-accounts/${encodeURIComponent(id)}` });
+    const response = await API.DELETE({ URL: `${BASE}/store/payment-accounts/${encodeURIComponent(id)}` });
     return response.data;
   } catch (e) {
     throw toApiError(e);

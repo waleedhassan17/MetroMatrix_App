@@ -1,13 +1,16 @@
 // MetroMatrix — Store "Today" slice: the counts to act on, a week of recorded
-// sales, the newest orders, and opening the store again after a pause.
+// sales, the newest orders, and opening the store again after a pause. The
+// API's dashboard holds the counts; the name, the pause and the week come
+// from the store, its settings and its 7-day insights.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { fetchPartnerSummary, resumeStore } from '../../networks/shopping/partner/store';
+import { fetchDashboard, fetchStoreProfile, fetchStoreSettings, resumeStore } from '../../networks/shopping/partner/store';
+import { fetchInsights } from '../../networks/shopping/partner/insights';
 import { fetchPartnerOrders } from '../../networks/shopping/partner/partnerOrders';
 import { toRejectedValue } from '../../networks/network/network';
 import type { PartnerOrderRow, PartnerSummary } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { partnerSummarySerializer, partnerOrderPageSerializer } from '../../serializers/shopping/partnerSerializer';
+import { partnerOrderPageSerializer, partnerSummarySerializer, pauseStateSerializer } from '../../serializers/shopping/partnerSerializer';
 
 export interface StoreTodaySliceState {
   summary: PartnerSummary | null;
@@ -27,8 +30,14 @@ export const storeTodaySlice = createAppSlice({
     loadTodayAsync: create.asyncThunk(
       async (_: { refresh: boolean }, { rejectWithValue }) => {
         try {
-          const [summary, recent] = await Promise.all([fetchPartnerSummary(), fetchPartnerOrders({ segment: 'new' }, 1, 5)]);
-          return { summary, recent };
+          const [dashboard, store, settings, insights, recent] = await Promise.all([
+            fetchDashboard(),
+            fetchStoreProfile(),
+            fetchStoreSettings(),
+            fetchInsights('7d'),
+            fetchPartnerOrders({ segment: 'new' }, 1, 5),
+          ]);
+          return { summary: { dashboard, store, settings, insights }, recent };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -55,8 +64,7 @@ export const storeTodaySlice = createAppSlice({
     resumeStoreAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          await resumeStore();
-          return await fetchPartnerSummary();
+          return await resumeStore();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -66,9 +74,11 @@ export const storeTodaySlice = createAppSlice({
           state.resuming = true;
         },
         fulfilled: (state, action) => {
-          const payload = partnerSummarySerializer(action.payload);
+          const payload = pauseStateSerializer(action.payload);
           state.resuming = false;
-          state.summary = payload;
+          if (!payload || !state.summary) return;
+          state.summary.isPaused = payload.isPaused;
+          state.summary.pauseMessage = payload.pauseMessage;
         },
         rejected: (state, action) => {
           state.resuming = false;

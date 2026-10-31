@@ -192,25 +192,7 @@ export const PARTNER_SEGMENTS: { key: PartnerOrderSegment; label: string }[] = [
   { key: 'to_pack', label: 'To pack' },
   { key: 'to_ship', label: 'To ship' },
   { key: 'shipped', label: 'Shipped' },
-  { key: 'done', label: 'Done' },
+  { key: 'delivered', label: 'Delivered' },
+  { key: 'completed', label: 'Completed' },
   { key: 'cancelled', label: 'Cancelled' },
 ];
-
-/** The partner segment an order sits in (mirrors the API's grouping). */
-export const partnerSegmentOf = (status: OrderStatus): PartnerOrderSegment => {
-  switch (status) {
-    case 'placed':
-    case 'cancellation_requested':
-      return 'new';
-    case 'confirmed':
-      return 'to_pack';
-    case 'packed':
-      return 'to_ship';
-    case 'shipped':
-      return 'shipped';
-    case 'cancelled':
-      return 'cancelled';
-    default:
-      return 'done';
-  }
-};

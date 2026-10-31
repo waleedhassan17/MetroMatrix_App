@@ -58,6 +58,8 @@ const shapeDiff = (a: unknown, b: unknown, path = ''): string[] => {
 const compare = (name: string, mock: Body) => {
   const r = real[name];
   if (!r) throw new Error(`${name} was not captured`);
+  if (r.body.success !== mock.success) return [`${name}: real ${r.body.success ? 'succeeded' : r.body.error?.code}, dummy ${mock.success ? 'succeeded' : mock.error?.code}`];
+  if (!r.body.success && r.body.error?.code !== mock.error?.code) return [`${name}: real ${r.body.error?.code}, dummy ${mock.error?.code}`];
   return shapeDiff(r.body.data ?? { error: r.body.error?.code }, mock.data ?? { error: mock.error?.code }).map(d => `${name}${d}`);
 };
 
@@ -120,6 +122,116 @@ describe('the dummy Shopping API speaks the real API (customer side)', () => {
     out.push(...compare('returnRequest', ret));
     out.push(...compare('returns', await call('get', '/shop/returns?page=1&pageSize=3')));
     out.push(...compare('return', await call('get', `/shop/returns/${(ret.data as { id: string }).id}`)));
+    expect(out).toEqual([]);
+  });
+});
+
+describe('the dummy Shopping API speaks the real API (store partner)', () => {
+  it('answers the store’s pages and moves in the captured shapes', async () => {
+    const out: string[] = [];
+    const db = await getDb();
+    const home = db.shop.addresses.find(a => a.userId === 'u_customer' && a.city === 'Lahore')!;
+    const variant = db.shop.products.find(p => p.id === 'p_l1')!.variants.find(v => v.stock > 3)!;
+    const idOf = (b: Body) => (b.data as { id: string }).id;
+
+    // A cash order (A) and a transfer order with its proof (B) at the store, as the capture placed them.
+    await signInAs('customer@metromatrix.app');
+    const place = async (paymentMethod: 'cod' | 'transfer', key: string) => {
+      await call('post', '/shop/cart/items', { variantId: variant.id, quantity: 1 });
+      const r = await call('post', '/shop/checkout', { addressId: home.id, stores: [{ storeId: 's_lawn', paymentMethod }] }, { 'Idempotency-Key': key });
+      return (r.data as { storeOrders: { id: string }[] }).storeOrders[0].id;
+    };
+    const a = await place('cod', 'parity-a');
+    const b = await place('transfer', 'parity-b');
+    await call('post', `/shop/store-orders/${b}/payment-proof`, { paymentRef: 'TXN 8812 3341' });
+
+    await signInAs('store@metromatrix.app');
+    out.push(...compare('dashboard', await call('get', '/shop/partner/dashboard')));
+    out.push(...compare('insights', await call('get', '/shop/partner/insights?range=30d')));
+    out.push(...compare('storeProfile', await call('get', '/shop/partner/store')));
+    out.push(...compare('storeProfileUpdate', await call('patch', '/shop/partner/store', { tagline: 'Hand-finished lawn' })));
+    out.push(...compare('storeSettings', await call('get', '/shop/partner/store/settings')));
+    out.push(...compare('storeSettingsUpdate', await call('patch', '/shop/partner/store/settings', { returnWindowDays: 7 })));
+    out.push(...compare('paymentAccounts', await call('get', '/shop/partner/store/payment-accounts')));
+    const acc = await call('post', '/shop/partner/store/payment-accounts', { kind: 'jazzcash', accountTitle: 'Lawn and Loom', accountNumber: '03001234567' });
+    out.push(...compare('paymentAccountCreate', acc));
+    out.push(...compare('paymentAccountUpdate', await call('patch', `/shop/partner/store/payment-accounts/${idOf(acc)}`, { isActive: false })));
+    out.push(...compare('paymentAccountDelete', await call('delete', `/shop/partner/store/payment-accounts/${idOf(acc)}`)));
+
+    out.push(...compare('collections', await call('get', '/shop/partner/collections')));
+    const col = await call('post', '/shop/partner/collections', { name: 'Parity edit' });
+    out.push(...compare('collectionCreate', col));
+    out.push(...compare('collectionRename', await call('patch', `/shop/partner/collections/${idOf(col)}`, { name: 'Parity edit 2' })));
+    out.push(...compare('collectionReorder', await call('patch', '/shop/partner/collections/reorder', { ids: [idOf(col)] })));
+    out.push(...compare('collectionDelete', await call('delete', `/shop/partner/collections/${idOf(col)}`)));
+
+    out.push(...compare('partnerProducts', await call('get', '/shop/partner/products?status=active&page=1&pageSize=3')));
+    out.push(...compare('partnerProduct', await call('get', '/shop/partner/products/p_l1')));
+    const category = db.shop.categories.find(c => c.parentId)!.id;
+    const draft = await call('post', '/shop/partner/products', {
+      name: 'Parity kurta',
+      description: 'A plain cotton kurta.',
+      categoryId: category,
+      basePrice: 2500,
+      status: 'draft',
+      variants: [{ option1: 'S', stock: 3 }, { option1: 'M', stock: 5 }],
+    });
+    out.push(...compare('productCreate', draft));
+    out.push(...compare('productPublishErr', await call('post', '/shop/partner/products', { name: 'No photo', description: 'Fails to publish.', categoryId: category, basePrice: 2500, status: 'active' })));
+    out.push(...compare('productUpdate', await call('patch', `/shop/partner/products/${idOf(draft)}`, { salePrice: 2200 })));
+    const copy = await call('post', `/shop/partner/products/${idOf(draft)}/duplicate`);
+    out.push(...compare('productDuplicate', copy));
+    out.push(...compare('productDelete', await call('delete', `/shop/partner/products/${idOf(copy)}`)));
+
+    const inventory = await call('get', '/shop/partner/inventory?page=1&pageSize=3');
+    out.push(...compare('inventory', inventory));
+    const row = (inventory.data as { items: { variantId: string; stock: number }[] }).items[0];
+    out.push(...compare('inventorySet', await call('patch', `/shop/partner/inventory/${row.variantId}`, { setTo: row.stock + 1 })));
+    out.push(...compare('inventoryDelta', await call('patch', `/shop/partner/inventory/${row.variantId}`, { delta: -1 })));
+    out.push(...compare('inventoryBulk', await call('post', '/shop/partner/inventory/bulk', [{ variantId: row.variantId, setTo: row.stock }])));
+    out.push(...compare('movements', await call('get', `/shop/partner/inventory/${row.variantId}/movements?page=1&pageSize=3`)));
+
+    out.push(...compare('coupons', await call('get', '/shop/partner/coupons?page=1&pageSize=3')));
+    const coupon = await call('post', '/shop/partner/coupons', { code: 'PARITY10', type: 'percent', value: 10, minOrder: 1000, maxDiscount: 500, endsAt: '2026-11-15T00:00:00.000Z', usageLimit: 50 });
+    out.push(...compare('couponCreate', coupon));
+    out.push(...compare('coupon', await call('get', `/shop/partner/coupons/${idOf(coupon)}`)));
+    out.push(...compare('couponUpdate', await call('patch', `/shop/partner/coupons/${idOf(coupon)}`, { value: 15 })));
+    out.push(...compare('couponDeactivate', await call('post', `/shop/partner/coupons/${idOf(coupon)}/deactivate`)));
+
+    // A: cash, from placed to cash collected.
+    out.push(...compare('partnerOrders', await call('get', '/shop/partner/orders?status=placed&page=1&pageSize=3')));
+    out.push(...compare('partnerOrder', await call('get', `/shop/partner/orders/${a}`)));
+    out.push(...compare('partnerConfirm', await call('post', `/shop/partner/orders/${a}/confirm`)));
+    out.push(...compare('partnerPack', await call('post', `/shop/partner/orders/${a}/pack`)));
+    out.push(...compare('partnerShip', await call('post', `/shop/partner/orders/${a}/ship`, { courierName: 'TCS', trackingRef: 'TCS-77120934' })));
+    out.push(...compare('partnerDeliver', await call('post', `/shop/partner/orders/${a}/deliver`)));
+    out.push(...compare('partnerCashCollected', await call('post', `/shop/partner/orders/${a}/cash-collected`)));
+
+    // B: the proof refused, sent again, confirmed; then cancelled and the refund recorded.
+    out.push(...compare('partnerPaymentReject', await call('post', `/shop/partner/orders/${b}/payment/reject`, { reason: 'No transfer with that reference yet.' })));
+    await signInAs('customer@metromatrix.app');
+    await call('post', `/shop/store-orders/${b}/payment-proof`, { paymentRef: 'TXN 8812 3342' });
+    await signInAs('store@metromatrix.app');
+    out.push(...compare('partnerPaymentConfirm', await call('post', `/shop/partner/orders/${b}/payment/confirm`)));
+    out.push(...compare('partnerCancelPaid', await call('post', `/shop/partner/orders/${b}/cancel`, { reason: 'This colour is out of stock.' })));
+    out.push(...compare('partnerRefund', await call('post', `/shop/partner/orders/${b}/refund`, { amount: 100, refundRef: 'RAAST-551099' })));
+
+    // A return on A, from request to refund; a reply to the customer's review.
+    await signInAs('customer@metromatrix.app');
+    const item = (await getDb()).shop.orders.find(o => o.id === a)!.items[0];
+    await call('post', `/shop/order-items/${item.id}/review`, { rating: 5, text: 'Lovely fabric, true to size.' });
+    const ret = await call('post', `/shop/store-orders/${a}/returns`, { items: [{ orderItemId: item.id, quantity: 1 }], reason: 'size_issue', details: 'Too tight.' });
+    await signInAs('store@metromatrix.app');
+    out.push(...compare('partnerReturns', await call('get', '/shop/partner/returns?status=requested&pageSize=3')));
+    out.push(...compare('partnerReturn', await call('get', `/shop/partner/returns/${idOf(ret)}`)));
+    const approved = await call('post', `/shop/partner/returns/${idOf(ret)}/approve`, { note: 'Send it back with the tag on.' });
+    out.push(...compare('returnApprove', approved));
+    const lines = (approved.data as { items: { id: string }[]; value: number }).items;
+    out.push(...compare('returnReceive', await call('post', `/shop/partner/returns/${idOf(ret)}/receive`, { items: lines.map(l => ({ returnItemId: l.id, restock: true })) })));
+    out.push(...compare('returnRefund', await call('post', `/shop/partner/returns/${idOf(ret)}/refund`, { amount: (approved.data as { value: number }).value, refundRef: 'RAAST-551023' })));
+    const reviews = await call('get', '/shop/partner/reviews?unreplied=true&page=1&pageSize=3');
+    out.push(...compare('partnerReviews', reviews));
+    out.push(...compare('reviewReply', await call('post', `/shop/partner/reviews/${(reviews.data as { items: { id: string }[] }).items[0].id}/reply`, { text: 'Thank you for shopping with us!' })));
     expect(out).toEqual([]);
   });
 });

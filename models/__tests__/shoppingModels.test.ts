@@ -9,7 +9,6 @@ import {
   needsPayment,
   ORDER_STATUS,
   orderTimeline,
-  partnerSegmentOf,
   PAYMENT_STATUS,
   RETURN_STATUS,
 } from '../shopping/orderStatusModel';
@@ -67,12 +66,6 @@ describe('orderStatusModel', () => {
 
     const delivered = orderTimeline({ status: 'delivered', events: [], shipment: null }, fmt);
     expect(delivered[4].state).toBe('done');
-  });
-
-  it('files partner orders in the API segments', () => {
-    expect(partnerSegmentOf('cancellation_requested')).toBe('new');
-    expect(partnerSegmentOf('packed')).toBe('to_ship');
-    expect(partnerSegmentOf('returned')).toBe('done');
   });
 });
 
@@ -132,7 +125,10 @@ describe('coupon form', () => {
     const f = { ...emptyCouponForm(), code: 'EID25', value: '95', startsAt: '2026-10-15' };
     expect(validateCouponForm(f).value).toBe('Up to 90% off');
     expect(validateCouponForm({ ...f, value: '25', endsAt: '2026-10-01' }).endsAt).toBe('The end date is before the start');
-    expect(validateCouponForm({ ...f, value: '25' })).toEqual({});
+    // The API needs an end date and 1 to 100 uses per customer.
+    expect(validateCouponForm({ ...f, value: '25' }).endsAt).toBe('Choose an end date');
+    expect(validateCouponForm({ ...f, value: '25', endsAt: '2026-10-31', perCustomerLimit: '' }).perCustomerLimit).toBe('Enter 1 to 100');
+    expect(validateCouponForm({ ...f, value: '25', endsAt: '2026-10-31' })).toEqual({});
     expect(couponValueLabel({ type: 'percent', value: 10, maxDiscount: 500 })).toContain('Rs 500');
   });
 });

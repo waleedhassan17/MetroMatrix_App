@@ -4,8 +4,8 @@
 // The next step is the one big button: Confirm → Mark packed → Ship (courier
 // and tracking) → Mark delivered. Only what the server allows now is shown.
 // A transfer must be checked in the store's own account before it ships;
-// a cancellation the customer asked for is approved here. The customer is a
-// call or a WhatsApp away; the note is for the store only.
+// a cancellation the customer asked for is approved here, and a refund that
+// is due is recorded once sent. The customer is a call or a WhatsApp away.
 
 import React, { useCallback, useState } from 'react';
 import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
@@ -42,15 +42,17 @@ import { cdn } from '../../utils/cdn/cdn';
 import { formatDateTime } from '../../utils/dates/dates';
 import { haptics } from '../../utils/haptics/haptics';
 import { formatPKR } from '../../utils/money/money';
-import { formatPkPhoneForDisplay } from '../../utils/phone/phone';
+import { formatPkPhoneForDisplay, isValidPkMobile } from '../../utils/phone/phone';
 import {
   loadStoreOrderAsync,
   openStoreOrderSheet,
-  saveNoteAsync,
   selectStoreOrder,
   selectStoreOrderUi,
   setCourier,
-  setInternalNote,
+  setOrderRefundAmount,
+  setOrderRefundReference,
+  setRiderName,
+  setRiderPhone,
   setStoreOrderReason,
   setTrackingRef,
   storeOrderActionAsync,
@@ -79,6 +81,7 @@ const DONE: Partial<Record<PartnerOrderAction, string>> = {
   confirm_payment: 'Payment confirmed. You can ship it now.',
   reject_payment: 'The customer has been asked to check their transfer.',
   cash_collected: 'Cash recorded',
+  refund: 'Refund recorded. The customer has been told.',
 };
 
 const makeStyles = ({ colors, space, size, radius }: Theme) =>
@@ -94,6 +97,8 @@ const makeStyles = ({ colors, space, size, radius }: Theme) =>
     proof: { width: size.tile * 2, aspectRatio: size.productAspect, borderRadius: radius.md, backgroundColor: colors.surfaceSunk },
     scroll: { gap: space.s16, paddingBottom: space.s40 },
     actions: { gap: space.s8 },
+    two: { flexDirection: 'row', gap: space.s12 },
+    half: { flex: 1 },
   });
 
 const StoreOrderDetail: React.FC<Props> = props => (
@@ -190,6 +195,30 @@ const StoreOrderDetailContent: React.FC<Props> = ({ route }) => {
 
         {next ? <Button label={next.label} onPress={onNext} loading={ui.busy === next.action} fullWidth /> : null}
 
+        {can('refund') ? (
+          <Card selected>
+            <AppText variant="title">Record the refund you sent</AppText>
+            <AppText variant="small" tone="muted">
+              {order.customer.name} paid {formatPKR(order.total)} before the order was cancelled. Send it back, then note it here.
+            </AppText>
+            <View style={styles.two}>
+              <View style={styles.half}>
+                <TextField label="Amount (Rs)" mode="numeric" value={ui.refundAmount} onChangeText={t => dispatch(setOrderRefundAmount(t))} helper={`Up to ${formatPKR(order.total)}`} />
+              </View>
+              <View style={styles.half}>
+                <TextField label="Reference" value={ui.refundReference} onChangeText={t => dispatch(setOrderRefundReference(t))} autoCapitalize="characters" placeholder="IBFT-5521" />
+              </View>
+            </View>
+            <Button
+              label="Record refund"
+              disabled={!refundOk(order.total)}
+              onPress={() => void run({ action: 'refund', amount: Number(ui.refundAmount), reference: ui.refundReference })}
+              loading={ui.busy === 'refund'}
+              fullWidth
+            />
+          </Card>
+        ) : null}
+
         <Card>
           <AppText variant="title">{order.customer.name}</AppText>
           <AppText variant="small" tone="muted">
@@ -267,17 +296,6 @@ const StoreOrderDetailContent: React.FC<Props> = ({ route }) => {
 
         <OrderTimeline order={order} />
 
-        <TextField
-          label="Private note (only your store sees it)"
-          value={ui.note}
-          onChangeText={t => dispatch(setInternalNote(t))}
-          multiline
-          placeholder="Packed by Ali, fragile …"
-        />
-        {ui.note !== (order.internalNote ?? '') ? (
-          <Button label="Save note" variant="secondary" size="sm" onPress={() => void dispatch(saveNoteAsync({ id, note: ui.note }))} loading={ui.busy === 'note'} />
-        ) : null}
-
         {can('cancel') ? (
           <Button label="Cancel this order" variant="ghost" onPress={() => dispatch(openStoreOrderSheet('cancel'))} fullWidth />
         ) : null}
@@ -286,6 +304,17 @@ const StoreOrderDetailContent: React.FC<Props> = ({ route }) => {
   };
 
   const reasonOk = ui.reason.trim().length >= 5;
+  const refundOk = (total: number) => Number(ui.refundAmount) >= 1 && Number(ui.refundAmount) <= total && ui.refundReference.trim().length >= 3;
+  const ownRider = ui.courier === 'own_rider';
+  const shipOk = ownRider ? ui.riderName.trim().length >= 2 && isValidPkMobile(`+92${ui.riderPhone}`) : !!ui.courier && ui.trackingRef.trim().length >= 4;
+  const ship = () => {
+    if (!ui.courier) return;
+    void run(
+      ui.courier === 'own_rider'
+        ? { action: 'ship', courier: 'own_rider', riderName: ui.riderName, riderPhone: `+92${ui.riderPhone}` }
+        : { action: 'ship', courier: ui.courier, trackingRef: ui.trackingRef },
+    );
+  };
 
   return (
     <ScreenShell title={route.params.code ?? o?.code ?? 'Order'} onBack={back} scroll={false}>
@@ -307,29 +336,28 @@ const StoreOrderDetailContent: React.FC<Props> = ({ route }) => {
         visible={ui.sheet === 'ship'}
         onClose={() => dispatch(openStoreOrderSheet(null))}
         title="Ship this order"
-        subtitle="The customer gets the courier and tracking number."
-        footer={
-          <Button
-            label="Mark as shipped"
-            disabled={!ui.courier || ui.trackingRef.trim().length < 4}
-            loading={ui.busy === 'ship'}
-            onPress={() => ui.courier && void run({ action: 'ship', courier: ui.courier, trackingRef: ui.trackingRef })}
-            fullWidth
-          />
-        }>
+        subtitle={ownRider ? 'The customer gets your rider’s name and number.' : 'The customer gets the courier and tracking number.'}
+        footer={<Button label="Mark as shipped" disabled={!shipOk} loading={ui.busy === 'ship'} onPress={ship} fullWidth />}>
         <View style={styles.chips}>
           {COURIERS.map(c => (
             <ChoiceChip key={c.key} label={c.name} selected={ui.courier === c.key} onPress={() => dispatch(setCourier(c.key))} />
           ))}
         </View>
-        <TextField
-          label={ui.courier === 'own_rider' ? 'Reference (rider name or phone)' : 'Tracking number'}
-          value={ui.trackingRef}
-          onChangeText={t => dispatch(setTrackingRef(t))}
-          autoCapitalize="characters"
-          autoCorrect={false}
-          placeholder="TCS-778812"
-        />
+        {ownRider ? (
+          <>
+            <TextField label="Rider’s name" value={ui.riderName} onChangeText={t => dispatch(setRiderName(t))} autoCapitalize="words" placeholder="Ali Raza" />
+            <TextField label="Rider’s phone" mode="phone" value={ui.riderPhone} onChangeText={t => dispatch(setRiderPhone(t))} placeholder="300 1112233" />
+          </>
+        ) : (
+          <TextField
+            label="Tracking number"
+            value={ui.trackingRef}
+            onChangeText={t => dispatch(setTrackingRef(t))}
+            autoCapitalize="characters"
+            autoCorrect={false}
+            placeholder="TCS-778812"
+          />
+        )}
       </Sheet>
 
       <Sheet

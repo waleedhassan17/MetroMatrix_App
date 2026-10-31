@@ -40,13 +40,19 @@ const StoreOrdersContent: React.FC = () => {
   const s = useAppSelector(selectStoreOrders);
   const q = useDebouncedValue(s.query.trim());
   const payments = s.view === 'payments';
+  const refunds = s.view === 'refunds';
   const list = usePagedList(
     (page, size) =>
-      fetchPartnerOrders({ segment: s.view === 'payments' ? 'new' : s.view, q: q || undefined, payment: payments ? 'proof_submitted' : undefined }, page, size),
+      fetchPartnerOrders(
+        s.view === 'payments' || s.view === 'refunds'
+          ? { paymentStatus: s.view === 'payments' ? 'proof_submitted' : 'refund_due', q: q || undefined }
+          : { segment: s.view, q: q || undefined },
+        page,
+        size,
+      ),
     partnerOrderPageSerializer,
     `store-orders|${s.view}|${q}`,
   );
-  const counts = list.first?.segmentCounts ?? null;
 
   // New orders arrive while the store watches: refresh quietly every 30 s.
   const { poll } = list;
@@ -72,14 +78,10 @@ const StoreOrdersContent: React.FC = () => {
       <View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
           {PARTNER_SEGMENTS.map(sg => (
-            <ChoiceChip
-              key={sg.key}
-              label={counts && counts[sg.key] ? `${sg.label} ${counts[sg.key]}` : sg.label}
-              selected={s.view === sg.key}
-              onPress={() => dispatch(setStoreOrdersView(sg.key))}
-            />
+            <ChoiceChip key={sg.key} label={sg.label} selected={s.view === sg.key} onPress={() => dispatch(setStoreOrdersView(sg.key))} />
           ))}
           <ChoiceChip label="Payments to check" icon="card-outline" selected={payments} onPress={() => dispatch(setStoreOrdersView('payments'))} />
+          <ChoiceChip label="Refunds to record" icon="return-down-back-outline" selected={refunds} onPress={() => dispatch(setStoreOrdersView('refunds'))} />
         </ScrollView>
       </View>
       <FlatList
@@ -100,8 +102,14 @@ const StoreOrdersContent: React.FC = () => {
           ) : (
             <EmptyState
               icon="inbox"
-              title={q ? `No orders match "${q}"` : payments ? 'No payments to check' : 'Nothing here'}
-              body={payments ? 'Transfers customers report paying show here.' : 'Orders move here as you work through them.'}
+              title={q ? `No orders match "${q}"` : payments ? 'No payments to check' : refunds ? 'No refunds to record' : 'Nothing here'}
+              body={
+                payments
+                  ? 'Transfers customers report paying show here.'
+                  : refunds
+                    ? 'A paid order that is cancelled shows here until you note the refund you sent.'
+                    : 'Orders move here as you work through them.'
+              }
             />
           )
         }

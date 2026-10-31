@@ -9,15 +9,17 @@ import { createAppSlice } from '../../store/createAppSlice';
 import { bulkSetStock, fetchMovements, setStock } from '../../networks/shopping/partner/inventory';
 import { toRejectedValue } from '../../networks/network/network';
 import type { InventoryMovement, InventoryRow } from '../../models';
+
+export type SavedStock = Pick<InventoryRow, 'stock' | 'lowStock'>;
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { inventoryRowSerializer, inventoryRowListSerializer, movementListSerializer } from '../../serializers/shopping/partnerSerializer';
+import { movementListSerializer, stockLevelListSerializer, stockLevelResponseSerializer } from '../../serializers/shopping/partnerSerializer';
 
 export interface InventorySliceState {
   query: string;
   lowOnly: boolean;
   drafts: Record<string, string>;
-  /** Rows saved since the list loaded (the list shows these). */
-  saved: Record<string, InventoryRow>;
+  /** Stock saved since the list loaded (the list shows it over its rows). */
+  saved: Record<string, SavedStock>;
   selecting: boolean;
   selected: string[];
   bulkStock: string;
@@ -81,10 +83,10 @@ export const inventorySlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = inventoryRowSerializer(action.payload);
+          const payload = stockLevelResponseSerializer(action.payload);
           state.busy = null;
           if (!payload) return;
-          state.saved[payload.variantId] = payload;
+          state.saved[payload.variantId] = { stock: payload.stock, lowStock: payload.lowStock };
           delete state.drafts[payload.variantId];
         },
         rejected: (state, action) => {
@@ -108,10 +110,10 @@ export const inventorySlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = inventoryRowListSerializer(action.payload);
+          const payload = stockLevelListSerializer(action.payload);
           state.busy = null;
           for (const row of payload) {
-            state.saved[row.variantId] = row;
+            state.saved[row.variantId] = { stock: row.stock, lowStock: row.lowStock };
             delete state.drafts[row.variantId];
           }
           state.selecting = false;

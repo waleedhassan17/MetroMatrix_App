@@ -57,7 +57,7 @@ const CollectionsContent: React.FC<Props> = () => {
   };
 
   const remove = (c: Collection) =>
-    Alert.alert(`Delete "${c.name}"?`, c.productCount ? 'It still has products. Move them first.' : 'Customers won’t see this shelf any more.', [
+    Alert.alert(`Delete "${c.name}"?`, 'Its products stay in your store; customers won’t see this shelf any more.', [
       { text: 'Keep it', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: () => void dispatch(changeCollectionsAsync({ kind: 'delete', id: c.id })) },
     ]);
@@ -81,9 +81,6 @@ const CollectionsContent: React.FC<Props> = () => {
               <View style={styles.row}>
                 <View style={styles.text}>
                   <AppText variant="bodyStrong">{c.name}</AppText>
-                  <AppText variant="caption" tone="muted">
-                    {c.productCount} {c.productCount === 1 ? 'product' : 'products'}
-                  </AppText>
                   <View style={styles.actions}>
                     <TextAction label="Rename" onPress={() => dispatch(openCollectionSheet({ id: c.id, name: c.name }))} />
                     <TextAction label="Delete" tone="danger" onPress={() => remove(c)} />

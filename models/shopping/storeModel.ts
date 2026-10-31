@@ -8,6 +8,9 @@ import { contrastRatio, AA_BODY } from '../../theme/contrast';
 
 export const HEX = /^#[0-9A-Fa-f]{6}$/;
 
+/** The API's highest cash-on-delivery limit, which the app shows as "no limit". */
+export const COD_NO_LIMIT = 1_000_000;
+
 /** The brand colour test the API also runs: text on the button must read (AA 4.5:1). */
 export const brandContrast = (brand: string, onBrand: string): { ratio: number; passes: boolean } => {
   if (!HEX.test(brand) || !HEX.test(onBrand)) return { ratio: 0, passes: false };
@@ -15,14 +18,12 @@ export const brandContrast = (brand: string, onBrand: string): { ratio: number; 
   return { ratio: Math.round(ratio * 10) / 10, passes: ratio >= AA_BODY };
 };
 
-export const validateStoreProfile = (p: { tagline: string; about: string; brandColor: string; onBrandColor: string }): ValidationErrors => {
+/** The server picks the text colour on the brand, so any colour reads. */
+export const validateStoreProfile = (p: { tagline: string; about: string; brandColor: string }): ValidationErrors => {
   const errors: ValidationErrors = {};
   if (p.tagline.trim().length > 80) errors.tagline = 'Keep the tagline under 80 characters';
   if (p.about.trim().length > 1200) errors.about = 'Keep it under 1,200 characters';
   if (!HEX.test(p.brandColor)) errors.brandColor = 'Use a colour like #7A1F3D';
-  else if (!brandContrast(p.brandColor, p.onBrandColor).passes) {
-    errors.brandColor = 'Text on this colour is hard to read. Pick a darker or lighter shade.';
-  }
   return errors;
 };
 
@@ -69,12 +70,6 @@ export const validatePaymentAccount = (a: PaymentAccountInput): ValidationErrors
 
 /** Brand colours a store can start from (any hex works). */
 export const BRAND_PRESETS = ['#7A1F3D', '#111827', '#0F766E', '#1E3A8A', '#9A3412', '#065F46', '#6B21A8', '#B91C1C', '#C25100', '#334155'];
-
-/** The text colour on the brand: white, or the app's ink. */
-export const ON_BRAND_CHOICES: { value: string; label: string }[] = [
-  { value: '#FFFFFF', label: 'White text' },
-  { value: '#0F172A', label: 'Dark text' },
-];
 
 /** "7a1f3d" / "#7A1F3D" → "#7A1F3D" while typing (never more than 6 digits). */
 export const normaliseHex = (raw: string) => `#${raw.replace(/[^0-9a-fA-F]/g, '').slice(0, 6).toUpperCase()}`;

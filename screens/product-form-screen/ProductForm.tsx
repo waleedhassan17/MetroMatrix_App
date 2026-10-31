@@ -305,13 +305,12 @@ const ProductFormContent: React.FC<Props> = ({ navigation, route }) => {
               const values = which === 1 ? f.option1Values : f.option2Values;
               return (
                 <View key={which} style={styles.variant}>
-                  <TextField
-                    label={which === 1 ? 'First option' : 'Second option (optional)'}
-                    value={which === 1 ? f.option1Name : f.option2Name}
-                    onChangeText={v => dispatch(setProductField({ field: which === 1 ? 'option1Name' : 'option2Name', value: v }))}
-                    placeholder={which === 1 ? 'Size' : 'Colour'}
-                    error={which === 1 ? errors.option1 : errors.option2}
-                  />
+                  <AppText variant="title">{which === 1 ? 'Sizes' : 'Colours (optional)'}</AppText>
+                  {(which === 1 ? errors.option1 : errors.option2) ? (
+                    <AppText variant="small" tone="danger">
+                      {which === 1 ? errors.option1 : errors.option2}
+                    </AppText>
+                  ) : null}
                   <View style={styles.chips}>
                     {values.map(v => (
                       <ChoiceChip
@@ -327,7 +326,7 @@ const ProductFormContent: React.FC<Props> = ({ navigation, route }) => {
                   <View style={styles.addRow}>
                     <View style={styles.grow}>
                       <TextField
-                        label={`Add ${which === 1 ? f.option1Name || 'values' : f.option2Name || 'values'}`}
+                        label={which === 1 ? 'Add sizes' : 'Add colours'}
                         value={s.optionInput[which]}
                         onChangeText={t => dispatch(setOptionInput({ which, text: t }))}
                         onSubmitEditing={() => dispatch(addOptionValues(which))}

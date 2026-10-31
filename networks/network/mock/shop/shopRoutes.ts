@@ -8,15 +8,13 @@
 // /addresses and /notifications.
 
 import type { MockBusiness, MockDb, MockUser } from '../mockDb';
-import type { MockAddress, MockOrder, MockProduct, MockStore, MockVariant } from './shopTypes';
+import type { MockAddress, MockCoupon, MockOrder, MockProduct, MockStore, MockVariant } from './shopTypes';
 import {
   ShopError,
   addEvent,
-  allowedActions,
   cancelOrder,
   categoryAndChildren,
   categoryTree,
-  couponView,
   delivers,
   evaluateCoupon,
   findVariant,
@@ -31,17 +29,12 @@ import {
   nextId,
   notify,
   openReturnFor,
-  partnerOrderRow,
-  partnerOrderView,
   productById,
   productHaystack,
   progressStatus,
   returnableQty,
-  returnView,
   returnWindowEnd,
-  reviewView,
   rupees,
-  shipBlockedReason,
   storeById,
   storeOfOwner,
   storeSummaryView,
@@ -57,19 +50,33 @@ import {
   availableCouponsWire,
   cartWire,
   categoryTree as categoryTreeWire,
+  couponWire,
+  dashboardWire,
   groupRowWire,
   groupWire,
+  insightsWire,
+  inventoryRowWire,
+  movementWire,
+  partnerCollectionWire,
+  partnerOrderRowWire,
+  partnerProductRowWire,
+  partnerProductWire,
+  paymentAccountWire,
   planFor,
   planWire,
   productCard,
   productPage,
+  returnItemId,
   returnWire,
   reviewSummary,
   reviewWire,
   storeCard,
   storeOrderWire,
   storePage,
+  storeProfileWire,
+  storeSettingsWire,
 } from './shopWire';
+import { COURIERS } from '../../../../models/shopping/orderStatusModel';
 import type { ReturnReason } from '../../../../models/shopping';
 
 export interface ShopCtx {
@@ -822,204 +829,142 @@ export function registerShopRoutes(kit: ShopKit) {
     return { read: true };
   });
 
-  // ══ Store partner ═══════════════════════════════════
-  route('GET', '/partner/shop/summary', ctx => {
-    const { store } = myStore(ctx);
-    const shop = ctx.db.shop;
-    const orders = shop.orders.filter(o => o.storeId === store.id);
-    const days = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(ctx.now - (6 - i) * DAY);
-      return d.toISOString().slice(0, 10);
-    });
-    const sales7d = days.map(date => ({
-      date,
-      amount: orders.filter(o => o.deliveredAt?.slice(0, 10) === date && o.status !== 'cancelled').reduce((s, o) => s + o.total, 0),
-    }));
-    return {
-      storeName: store.name,
-      storeSlug: store.slug,
-      isPaused: store.isPaused,
-      pauseMessage: store.pauseMessage,
-      counts: {
-        newOrders: orders.filter(o => o.status === 'placed' || o.status === 'cancellation_requested').length,
-        toShip: orders.filter(o => o.status === 'packed' || o.status === 'confirmed').length,
-        paymentsToConfirm: orders.filter(o => o.paymentStatus === 'proof_submitted' && o.status !== 'cancelled').length,
-        returnsOpen: shop.returns.filter(r => r.storeId === store.id && ['requested', 'approved', 'received'].includes(r.status)).length,
-        lowStock: shop.products
-          .filter(p => p.storeId === store.id && p.status === 'active')
-          .reduce((n, p) => n + p.variants.filter(v => v.stock > 0 && v.stock <= LOW_STOCK).length, 0),
-      },
-      sales7d,
-      recordedSales7d: sales7d.reduce((s, d) => s + d.amount, 0),
-    };
+  // ══ Store partner (/shop/partner) ═══════════════════
+  // The real API's paths, bodies, rules and error codes; answers from shopWire.
+  const P = '/shop/partner';
+
+  /** 400 VALIDATION_FAILED unless `text` is `min`–`max` characters after trimming. */
+  const textOf = (v: unknown, field: string, min: number, max: number, message: string) => {
+    const t = String(v ?? '').trim();
+    if (t.length < min || t.length > max) throw bad(message, { [field]: message });
+    return t;
+  };
+  const invalidMove = (from: string, to: string, allowed: string[] = []) =>
+    new ShopError(409, 'INVALID_TRANSITION', 'This order can’t do that right now.', { from, to, allowed });
+
+  route('GET', `${P}/dashboard`, ctx => dashboardWire(ctx.db.shop, myStore(ctx).store, ctx.now));
+  route('GET', `${P}/insights`, ctx => {
+    const range = ['7d', '30d', '90d'].includes(ctx.query.range) ? ctx.query.range : '30d';
+    return insightsWire(ctx.db.shop, myStore(ctx).store, range, ctx.now);
   });
 
   // Store profile & settings
-  const profileView = (s: MockStore) => ({
-    id: s.id,
-    slug: s.slug,
-    name: s.name,
-    tagline: s.tagline,
-    about: s.about,
-    logoUrl: s.logoUrl,
-    coverUrl: s.coverUrl,
-    brandColor: s.brandColor,
-    onBrandColor: s.onBrandColor,
-    socials: s.socials,
-    phone: s.phone,
-    whatsapp: s.whatsapp,
-  });
-  const settingsView = (s: MockStore) => ({ ...s.settings, isPaused: s.isPaused, pauseMessage: s.pauseMessage });
-
-  const contrast = (a: string, b: string) => {
+  /** The server picks the text colour on the brand: white where it reads, else ink. */
+  const onBrandFor = (brand: string) => {
     const lum = (hex: string) => {
       const c = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
       return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
     };
-    const [l1, l2] = [lum(a), lum(b)].sort((x, y) => y - x);
-    return (l1 + 0.05) / (l2 + 0.05);
+    return (1.05 / (lum(brand) + 0.05) >= 4.5 ? '#FFFFFF' : '#16151A');
   };
+  const SOCIAL_KEYS = ['instagram', 'facebook', 'tiktok', 'website'] as const;
 
-  route('GET', '/partner/shop/store', ctx => profileView(myStore(ctx).store));
-  route('PATCH', '/partner/shop/store', ctx => {
+  route('GET', `${P}/store`, ctx => storeProfileWire(ctx.db.shop, myStore(ctx).store));
+  route('PATCH', `${P}/store`, ctx => {
     const { store } = myStore(ctx);
     const b = ctx.body;
-    const brand = String(b.brandColor ?? store.brandColor).toUpperCase();
-    const onBrand = String(b.onBrandColor ?? store.onBrandColor).toUpperCase();
-    if (!/^#[0-9A-F]{6}$/.test(brand) || !/^#[0-9A-F]{6}$/.test(onBrand)) throw bad('Use hex colours.', { brandColor: 'Use a colour like #7A1F3D' });
-    if (contrast(brand, onBrand) < 4.5) {
-      throw new ShopError(400, 'BRAND_CONTRAST_LOW', 'Text on this colour is hard to read. Pick a darker or lighter shade.', { ratio: Math.round(contrast(brand, onBrand) * 10) / 10 });
+    if (b.brandColor !== undefined && !/^#[0-9A-Fa-f]{6}$/.test(String(b.brandColor))) throw bad('brandColor must be a #RRGGBB hex colour', { brandColor: 'brandColor must be a #RRGGBB hex colour' });
+    if (b.tagline !== undefined) store.tagline = b.tagline === null ? '' : textOf(b.tagline, 'tagline', 0, 120, 'Keep the tagline under 120 characters.');
+    if (b.about !== undefined) store.about = b.about === null ? '' : textOf(b.about, 'about', 0, 2000, 'Keep it under 2,000 characters.');
+    if (b.logoUrl !== undefined) store.logoUrl = b.logoUrl;
+    if (b.coverUrl !== undefined) store.coverUrl = b.coverUrl;
+    if (b.brandColor !== undefined) {
+      store.brandColor = String(b.brandColor).toUpperCase();
+      store.onBrandColor = onBrandFor(store.brandColor);
     }
-    Object.assign(store, {
-      tagline: String(b.tagline ?? store.tagline).slice(0, 80),
-      about: String(b.about ?? store.about).slice(0, 1200),
-      logoUrl: b.logoUrl === undefined ? store.logoUrl : b.logoUrl,
-      coverUrl: b.coverUrl === undefined ? store.coverUrl : b.coverUrl,
-      brandColor: brand,
-      onBrandColor: onBrand,
-      socials: { ...store.socials, ...(b.socials ?? {}) },
-      phone: b.phone === undefined ? store.phone : b.phone,
-      whatsapp: b.whatsapp === undefined ? store.whatsapp : b.whatsapp,
-    });
-    return profileView(store);
+    if (b.socials !== undefined) {
+      const given: Record<string, unknown> = b.socials ?? {};
+      store.socials = Object.fromEntries(SOCIAL_KEYS.map(k => [k, given[k] ? String(given[k]) : null])) as MockStore['socials'];
+      store.whatsapp = given.whatsapp ? String(given.whatsapp) : null;
+    }
+    return storeProfileWire(ctx.db.shop, store);
   });
-  route('GET', '/partner/shop/store/settings', ctx => settingsView(myStore(ctx).store));
-  route('PATCH', '/partner/shop/store/settings', ctx => {
+
+  route('GET', `${P}/store/settings`, ctx => storeSettingsWire(myStore(ctx).store));
+  route('PATCH', `${P}/store/settings`, ctx => {
     const { store } = myStore(ctx);
     const b = ctx.body;
     const s = store.settings;
-    const next = {
-      shippingFee: Math.max(0, int(b.shippingFee, s.shippingFee)),
-      freeShippingOver: b.freeShippingOver === null ? null : int(b.freeShippingOver, s.freeShippingOver ?? 0) || null,
-      nationwide: b.nationwide === undefined ? s.nationwide : bool(b.nationwide),
-      deliveryCities: Array.isArray(b.deliveryCities) ? b.deliveryCities.map(String) : s.deliveryCities,
-      dispatchMinDays: Math.max(0, int(b.dispatchMinDays, s.dispatchMinDays)),
-      dispatchMaxDays: Math.max(0, int(b.dispatchMaxDays, s.dispatchMaxDays)),
-      returnWindowDays: Math.min(30, Math.max(0, int(b.returnWindowDays, s.returnWindowDays))),
-      codEnabled: b.codEnabled === undefined ? s.codEnabled : bool(b.codEnabled),
-      codLimit: b.codLimit === null ? null : int(b.codLimit, s.codLimit ?? 0) || null,
-    };
-    if (!next.nationwide && !next.deliveryCities.length) throw bad('Choose at least one city.', { deliveryCities: 'Choose a city, or deliver nationwide' });
-    if (next.dispatchMaxDays < next.dispatchMinDays) throw bad('Check the dispatch days.', { dispatch: 'The longest must be at least the shortest' });
-    if (!next.codEnabled && !store.paymentAccounts.some(a => a.isActive)) {
-      throw new ShopError(422, 'PAYMENT_ACCOUNT_REQUIRED', 'Add a payment account before turning cash on delivery off.');
+    const next = { ...s };
+    if (b.returnWindowDays !== undefined) next.returnWindowDays = Math.min(30, Math.max(0, int(b.returnWindowDays)));
+    if (b.codEnabled !== undefined) next.codEnabled = bool(b.codEnabled);
+    if (b.codLimit !== undefined) next.codLimit = int(b.codLimit) >= 1_000_000 ? null : Math.max(0, int(b.codLimit));
+    if (b.shippingFlatFee !== undefined) next.shippingFee = Math.max(0, int(b.shippingFlatFee));
+    if (b.freeShippingOver !== undefined) next.freeShippingOver = b.freeShippingOver === null ? null : Math.max(1, int(b.freeShippingOver));
+    if (Array.isArray(b.deliveryCities)) {
+      next.deliveryCities = [...new Set(b.deliveryCities.map((c: unknown) => String(c).trim()).filter((c: string) => c.length >= 2))] as string[];
+      next.nationwide = next.deliveryCities.length === 0;
+    }
+    if (b.dispatchDaysMin !== undefined) next.dispatchMinDays = Math.max(0, int(b.dispatchDaysMin));
+    if (b.dispatchDaysMax !== undefined) next.dispatchMaxDays = Math.max(0, int(b.dispatchDaysMax));
+    if (next.dispatchMinDays > next.dispatchMaxDays) {
+      throw bad('Dispatch days: the maximum cannot be below the minimum.', { dispatchDaysMax: 'Dispatch days: the maximum cannot be below the minimum.' });
     }
     store.settings = next;
-    if (b.isPaused !== undefined) {
-      store.isPaused = bool(b.isPaused);
-      store.pauseMessage = store.isPaused ? String(b.pauseMessage ?? store.pauseMessage ?? '').trim() || null : null;
-    }
-    return settingsView(store);
-  });
-  route('POST', '/partner/shop/store/pause', ctx => {
-    const { store } = myStore(ctx);
-    const message = String(ctx.body.message ?? '').trim();
-    if (!message) throw bad('Tell customers when you will be back.', { message: 'Required' });
-    store.isPaused = true;
-    store.pauseMessage = message;
-    return settingsView(store);
-  });
-  route('POST', '/partner/shop/store/resume', ctx => {
-    const { store } = myStore(ctx);
-    store.isPaused = false;
-    store.pauseMessage = null;
-    return settingsView(store);
+    if (b.isPaused !== undefined) store.isPaused = bool(b.isPaused);
+    if (b.pauseMessage !== undefined) store.pauseMessage = b.pauseMessage === null ? null : String(b.pauseMessage).slice(0, 200);
+    return storeSettingsWire(store);
   });
 
   // Payment accounts
   const readAccount = (b: Record<string, any>) => {
     const kind = ['raast', 'jazzcash', 'easypaisa', 'bank'].includes(b.kind) ? b.kind : 'bank';
-    const number = kind === 'bank' ? String(b.number ?? '').toUpperCase().replace(/\s+/g, '') : String(b.number ?? '').replace(/\D/g, '');
+    const number = kind === 'bank' ? String(b.accountNumber ?? '').toUpperCase().replace(/\s+/g, '') : String(b.accountNumber ?? '').replace(/\D/g, '');
     const fields: Record<string, string> = {};
-    if (String(b.title ?? '').trim().length < 3) fields.title = 'Enter the account title';
-    if (kind === 'bank' ? !/^PK\d{2}[A-Z]{4}[A-Z0-9]{16}$/.test(number) : !/^03\d{9}$/.test(number)) fields.number = 'Check the number';
+    if (String(b.accountTitle ?? '').trim().length < 3) fields.accountTitle = 'Enter the account title';
+    if (kind === 'bank' ? !/^PK\d{2}[A-Z]{4}[A-Z0-9]{16}$/.test(number) : !/^03\d{9}$/.test(number)) fields.accountNumber = 'Check the number';
     if (kind === 'bank' && !String(b.bankName ?? '').trim()) fields.bankName = 'Enter the bank name';
     if (Object.keys(fields).length) throw bad('Check the account details.', fields);
-    return { kind, title: String(b.title).trim(), number, bankName: kind === 'bank' ? String(b.bankName).trim() : null, isActive: b.isActive === undefined ? true : bool(b.isActive) };
+    return { kind, title: String(b.accountTitle).trim(), number, bankName: kind === 'bank' ? String(b.bankName).trim() : null, isActive: b.isActive === undefined ? true : bool(b.isActive) };
   };
-  route('GET', '/partner/shop/payment-accounts', ctx => myStore(ctx).store.paymentAccounts);
-  route('POST', '/partner/shop/payment-accounts', ctx => {
+  const tooManyActive = (store: MockStore) => {
+    if (store.paymentAccounts.filter(a => a.isActive).length > 4) {
+      throw bad('A store can have at most 4 active payment accounts. Deactivate one first.', { isActive: 'At most 4 active accounts' });
+    }
+  };
+  route('GET', `${P}/store/payment-accounts`, ctx => {
+    const { store } = myStore(ctx);
+    return store.paymentAccounts.map(a => paymentAccountWire(store, a));
+  });
+  route('POST', `${P}/store/payment-accounts`, ctx => {
     const { store } = myStore(ctx);
     const account = { id: nextId(ctx.db.shop, 'pa'), ...readAccount(ctx.body) };
+    if (store.paymentAccounts.some(a => a.kind === account.kind && a.number === account.number)) throw new ShopError(409, 'CONFLICT', 'You have already added this account.');
     store.paymentAccounts.push(account);
+    tooManyActive(store);
     ctx.setStatus(201);
-    return account;
+    return paymentAccountWire(store, account);
   });
-  route('PATCH', '/partner/shop/payment-accounts/:id', ctx => {
+  route('PATCH', `${P}/store/payment-accounts/:id`, ctx => {
     const { store } = myStore(ctx);
     const a = store.paymentAccounts.find(x => x.id === decodeURIComponent(ctx.params[0]));
-    if (!a) throw notFound('Account');
-    const next = readAccount({ ...a, ...ctx.body });
-    if (!next.isActive && !store.settings.codEnabled && store.paymentAccounts.filter(x => x.isActive && x.id !== a.id).length === 0) {
-      throw new ShopError(422, 'PAYMENT_ACCOUNT_REQUIRED', 'Keep one account active while cash on delivery is off.');
-    }
-    Object.assign(a, next);
-    return a;
+    if (!a) throw notFound('Payment account');
+    Object.assign(a, readAccount({ kind: a.kind, accountTitle: a.title, accountNumber: a.number, bankName: a.bankName, isActive: a.isActive, ...ctx.body }));
+    tooManyActive(store);
+    return paymentAccountWire(store, a);
   });
-  route('DELETE', '/partner/shop/payment-accounts/:id', ctx => {
+  route('DELETE', `${P}/store/payment-accounts/:id`, ctx => {
     const { store } = myStore(ctx);
     const id = decodeURIComponent(ctx.params[0]);
-    if (!store.settings.codEnabled && store.paymentAccounts.filter(x => x.isActive && x.id !== id).length === 0) {
-      throw new ShopError(422, 'PAYMENT_ACCOUNT_REQUIRED', 'Keep one account active while cash on delivery is off.');
-    }
+    if (!store.paymentAccounts.some(x => x.id === id)) throw notFound('Payment account');
     store.paymentAccounts = store.paymentAccounts.filter(x => x.id !== id);
     return { removed: true };
   });
 
-  // Partner orders
-  const segmentOf = (o: MockOrder) => {
-    switch (o.status) {
-      case 'placed':
-      case 'cancellation_requested':
-        return 'new';
-      case 'confirmed':
-        return 'to_pack';
-      case 'packed':
-        return 'to_ship';
-      case 'shipped':
-        return 'shipped';
-      case 'cancelled':
-        return 'cancelled';
-      default:
-        return 'done';
-    }
-  };
-
-  route('GET', '/partner/shop/orders', ctx => {
+  // Orders
+  route('GET', `${P}/orders`, ctx => {
     const { store } = myStore(ctx);
     const db = ctx.db;
     const q = String(ctx.query.q ?? '').trim().toLowerCase();
-    const mine = db.shop.orders.filter(o => o.storeId === store.id);
-    const counts: Record<string, number> = { new: 0, to_pack: 0, to_ship: 0, shipped: 0, done: 0, cancelled: 0 };
-    for (const o of mine) counts[segmentOf(o)]++;
-    // `payment=proof_submitted`: every order with a transfer to check, whatever its segment.
-    const payment = ctx.query.payment ? String(ctx.query.payment) : null;
-    const rows = mine
-      .filter(o => (payment ? o.paymentStatus === payment && o.status !== 'cancelled' : segmentOf(o) === String(ctx.query.segment ?? 'new')))
-      .filter(o => !q || o.code.toLowerCase().includes(q) || (db.users.find(u => u.id === o.userId)?.name ?? '').toLowerCase().includes(q))
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .map(o => partnerOrderRow(db, o));
-    return { ...paginate(rows, ctx.query), segmentCounts: counts };
+    const status = ctx.query.status ? String(ctx.query.status) : null;
+    const paymentStatus = ctx.query.paymentStatus ? String(ctx.query.paymentStatus) : null;
+    const rows = db.shop.orders
+      .filter(o => o.storeId === store.id)
+      .filter(o => (!status || apiStatus(o) === status) && (!paymentStatus || apiPaymentStatus(o) === paymentStatus))
+      .map(o => partnerOrderRowWire(db, o))
+      .filter(r => !q || r.code.toLowerCase().includes(q) || r.customerName.toLowerCase().includes(q))
+      .sort((a, b) => b.placedAt.localeCompare(a.placedAt));
+    return paginate(rows, ctx.query);
   });
 
   const storeOrder = (ctx: ShopCtx) => {
@@ -1028,137 +973,126 @@ export function registerShopRoutes(kit: ShopKit) {
     if (!o) throw notFound('Order');
     return { store, order: o };
   };
-
-  const requireAction = (o: MockOrder, action: string) => {
-    if (!allowedActions(o).includes(action as never)) {
-      throw new ShopError(409, 'INVALID_TRANSITION', 'This order can’t do that right now.', { from: o.status, to: action });
-    }
+  /** The order moves `to` if the store may move it there now. */
+  const storeMove = (o: MockOrder, to: string) => {
+    const from = apiStatus(o);
+    const allowed = ({ placed: ['confirmed', 'cancelled'], confirmed: ['packed', 'cancelled'], packed: ['shipped', 'cancelled'], shipped: ['delivered'] } as Record<string, string[]>)[from] ?? [];
+    if (!allowed.includes(to)) throw invalidMove(from, to, allowed);
   };
-
-  route('GET', '/partner/shop/orders/:id', ctx => partnerOrderView(ctx.db, storeOrder(ctx).order));
-  route('PATCH', '/partner/shop/orders/:id', ctx => {
-    const { order } = storeOrder(ctx);
-    order.internalNote = String(ctx.body.internalNote ?? '').slice(0, 500) || null;
-    return partnerOrderView(ctx.db, order);
-  });
-
   const customerUpdate = (ctx: ShopCtx, o: MockOrder, title: string, body: string, type: 'order_update' | 'payment_update' = 'order_update') =>
     notify(ctx.db.shop, o.userId, type, title, body, { groupCode: o.groupCode, orderId: o.id });
+  const storeView = (ctx: ShopCtx, o: MockOrder) => storeOrderWire(ctx.db, o, 'store');
 
-  route('POST', '/partner/shop/orders/:id/confirm', ctx => {
+  route('GET', `${P}/orders/:id`, ctx => storeView(ctx, storeOrder(ctx).order));
+  route('POST', `${P}/orders/:id/confirm`, ctx => {
     const { store, order } = storeOrder(ctx);
-    requireAction(order, 'confirm');
+    storeMove(order, 'confirmed');
     order.status = 'confirmed';
     addEvent(order, 'confirmed');
     customerUpdate(ctx, order, `${store.name} confirmed your order`, `${order.code} is being prepared.`);
-    return partnerOrderView(ctx.db, order);
+    return storeView(ctx, order);
   });
-  route('POST', '/partner/shop/orders/:id/pack', ctx => {
+  route('POST', `${P}/orders/:id/reject`, ctx => {
     const { order } = storeOrder(ctx);
-    requireAction(order, 'pack');
+    if (apiStatus(order) !== 'placed') throw new ShopError(409, 'INVALID_TRANSITION', 'Only a new order can be rejected; cancel it instead.', { from: apiStatus(order), to: 'cancelled', allowed: [] });
+    const reason = textOf(ctx.body.reason, 'reason', 3, 500, 'reason must be 3 to 500 characters');
+    cancelOrder(ctx.db.shop, order, reason);
+    customerUpdate(ctx, order, `${order.code} declined`, reason);
+    return storeView(ctx, order);
+  });
+  route('POST', `${P}/orders/:id/pack`, ctx => {
+    const { order } = storeOrder(ctx);
+    storeMove(order, 'packed');
     order.status = 'packed';
     addEvent(order, 'packed');
-    return partnerOrderView(ctx.db, order);
+    return storeView(ctx, order);
   });
-  route('POST', '/partner/shop/orders/:id/ship', ctx => {
+  route('POST', `${P}/orders/:id/ship`, ctx => {
     const { store, order } = storeOrder(ctx);
-    requireAction(order, 'ship');
-    const blocked = shipBlockedReason(order);
-    if (blocked) throw new ShopError(409, 'PAYMENT_NOT_CONFIRMED', blocked);
-    const courier = ['tcs', 'leopards', 'mnp', 'postex', 'trax', 'own_rider', 'other'].includes(ctx.body.courier) ? ctx.body.courier : null;
+    storeMove(order, 'shipped');
+    if (order.paymentMethod === 'transfer' && order.paymentStatus !== 'paid') {
+      throw new ShopError(409, 'PAYMENT_NOT_CONFIRMED', 'Confirm the transfer has arrived before shipping.', { paymentStatus: apiPaymentStatus(order) });
+    }
+    const courierName = textOf(ctx.body.courierName, 'courierName', 2, 80, 'courierName must be 2 to 80 characters');
+    const self = courierName.toLowerCase() === 'self';
+    const riderName = String(ctx.body.riderName ?? '').trim();
+    const riderPhone = String(ctx.body.riderPhone ?? '').trim();
     const trackingRef = String(ctx.body.trackingRef ?? '').trim();
-    const fields: Record<string, string> = {};
-    if (!courier) fields.courier = 'Choose a courier';
-    if (trackingRef.length < 4) fields.trackingRef = 'Enter the tracking reference';
-    if (Object.keys(fields).length) throw bad('Add the courier details.', fields);
+    if (self ? !riderName || !riderPhone : trackingRef.length < 3) {
+      const message = self ? 'Self-delivery needs the rider’s name and phone.' : 'Add the courier tracking number.';
+      throw bad(message, self ? { riderName: message, riderPhone: message } : { trackingRef: message });
+    }
+    const known = COURIERS.find(c => c.name.toLowerCase() === courierName.toLowerCase());
     order.status = 'shipped';
-    order.shipment = { courier, trackingRef };
-    addEvent(order, 'shipped', `${courier} · ${trackingRef}`);
-    customerUpdate(ctx, order, `Your ${store.name} order shipped`, `${trackingRef}`);
-    return partnerOrderView(ctx.db, order);
+    order.shipment = self ? { courier: 'own_rider', trackingRef: '', riderName, riderPhone } : { courier: known?.key ?? 'other', trackingRef };
+    addEvent(order, 'shipped', self ? `with ${riderName} (${riderPhone})` : `${courierName} · ${trackingRef}`);
+    customerUpdate(ctx, order, `Your ${store.name} order shipped`, self ? `With ${riderName}` : trackingRef);
+    return storeView(ctx, order);
   });
-  route('POST', '/partner/shop/orders/:id/deliver', ctx => {
+  route('POST', `${P}/orders/:id/deliver`, ctx => {
     const { order } = storeOrder(ctx);
-    requireAction(order, 'deliver');
+    storeMove(order, 'delivered');
     order.status = 'delivered';
     order.deliveredAt = isoNow();
     addEvent(order, 'delivered');
     customerUpdate(ctx, order, `Delivered: ${order.code}`, 'How was it? You can review your items now.');
-    return partnerOrderView(ctx.db, order);
+    return storeView(ctx, order);
   });
-  route('POST', '/partner/shop/orders/:id/cancel', ctx => {
+  route('POST', `${P}/orders/:id/cancel`, ctx => {
     const { store, order } = storeOrder(ctx);
-    requireAction(order, 'cancel');
-    const reason = String(ctx.body.reason ?? '').trim();
-    if (reason.length < 5) throw bad('Tell the customer why.', { reason: 'At least 5 characters' });
+    storeMove(order, 'cancelled');
+    const reason = textOf(ctx.body.reason, 'reason', 3, 500, 'reason must be 3 to 500 characters');
     cancelOrder(ctx.db.shop, order, reason);
     customerUpdate(ctx, order, `${store.name} cancelled ${order.code}`, reason);
-    return partnerOrderView(ctx.db, order);
+    return storeView(ctx, order);
   });
-  route('POST', '/partner/shop/orders/:id/approve-cancellation', ctx => {
+  route('POST', `${P}/orders/:id/payment/confirm`, ctx => {
     const { order } = storeOrder(ctx);
-    requireAction(order, 'approve_cancellation');
-    cancelOrder(ctx.db.shop, order, order.events.filter(e => e.type === 'cancellation_requested').pop()?.note || 'Cancelled on request');
-    customerUpdate(ctx, order, `Cancelled: ${order.code}`, 'The store approved your cancellation.');
-    return partnerOrderView(ctx.db, order);
-  });
-  route('POST', '/partner/shop/orders/:id/payment/confirm', ctx => {
-    const { order } = storeOrder(ctx);
-    requireAction(order, 'confirm_payment');
+    const from = apiPaymentStatus(order);
+    if (order.paymentMethod !== 'transfer' || order.status === 'cancelled' || !['awaiting_transfer', 'proof_submitted'].includes(from)) throw invalidMove(from, 'paid');
     order.paymentStatus = 'paid';
     addEvent(order, 'payment_confirmed');
     customerUpdate(ctx, order, `Payment confirmed for ${order.code}`, `${rupees(order.total)} received.`, 'payment_update');
-    return partnerOrderView(ctx.db, order);
+    return storeView(ctx, order);
   });
-  route('POST', '/partner/shop/orders/:id/payment/reject', ctx => {
+  route('POST', `${P}/orders/:id/payment/reject`, ctx => {
     const { order } = storeOrder(ctx);
-    requireAction(order, 'reject_payment');
-    const reason = String(ctx.body.reason ?? '').trim();
-    if (reason.length < 5) throw bad('Tell the customer what is wrong.', { reason: 'At least 5 characters' });
+    const from = apiPaymentStatus(order);
+    if (from !== 'proof_submitted' || order.status === 'cancelled') throw invalidMove(from, 'awaiting_transfer');
+    const reason = textOf(ctx.body.reason, 'reason', 3, 500, 'reason must be 3 to 500 characters');
     order.paymentStatus = 'proof_rejected';
     if (order.paymentProof) order.paymentProof.rejectionReason = reason;
-    order.payBy = new Date(Date.now() + 24 * HOUR).toISOString();
+    order.payBy = new Date(ctx.now + 24 * HOUR).toISOString();
     addEvent(order, 'payment_rejected', reason);
     customerUpdate(ctx, order, `Payment not received for ${order.code}`, reason, 'payment_update');
-    return partnerOrderView(ctx.db, order);
+    return storeView(ctx, order);
   });
-  route('POST', '/partner/shop/orders/:id/cash-collected', ctx => {
+  route('POST', `${P}/orders/:id/cash-collected`, ctx => {
     const { order } = storeOrder(ctx);
-    requireAction(order, 'cash_collected');
+    const from = apiPaymentStatus(order);
+    if (order.paymentMethod !== 'cod' || from !== 'cod_pending' || apiStatus(order) !== 'delivered') throw invalidMove(from, 'paid');
     order.paymentStatus = 'cash_collected';
     addEvent(order, 'cash_collected');
-    return partnerOrderView(ctx.db, order);
+    return storeView(ctx, order);
+  });
+  route('POST', `${P}/orders/:id/refund`, ctx => {
+    const { order } = storeOrder(ctx);
+    const from = apiPaymentStatus(order);
+    if (from !== 'refund_due') throw invalidMove(from, 'refunded');
+    const amount = int(ctx.body.amount);
+    const refundRef = String(ctx.body.refundRef ?? '').trim();
+    const fields: Record<string, string> = {};
+    if (amount < 1 || amount > order.total) fields.amount = `Between Rs 1 and ${rupees(order.total)}`;
+    if (refundRef.length < 3) fields.refundRef = 'Enter the refund reference';
+    if (Object.keys(fields).length) throw bad('Check the refund.', fields);
+    order.paymentStatus = 'refunded';
+    order.refund = { amount, reference: refundRef, recordedAt: isoNow() };
+    addEvent(order, 'refunded', `${rupees(amount)} · ${refundRef}`);
+    customerUpdate(ctx, order, `Refund sent for ${order.code}`, `${rupees(amount)} · ${refundRef}`, 'payment_update');
+    return storeView(ctx, order);
   });
 
-  // Partner products
-  const productRow = (p: MockProduct) => ({
-    id: p.id,
-    name: p.name,
-    status: p.removed ? 'archived' : p.status,
-    price: p.price,
-    salePrice: p.salePrice,
-    imageUrl: p.images[0]?.url ?? null,
-    totalStock: totalStock(p),
-    variantCount: p.variants.length,
-    lowStock: p.variants.some(v => v.stock <= LOW_STOCK),
-    updatedAt: p.updatedAt,
-  });
-  const productFull = (p: MockProduct) => ({
-    id: p.id,
-    name: p.name,
-    description: p.description,
-    categoryId: p.categoryId,
-    collectionId: p.collectionId,
-    price: p.price,
-    salePrice: p.salePrice,
-    status: p.status,
-    images: p.images,
-    option1: p.option1,
-    option2: p.option2,
-    variants: p.variants,
-    updatedAt: p.updatedAt,
-  });
-
+  // Products
   const myProduct = (ctx: ShopCtx) => {
     const { store } = myStore(ctx);
     const p = ctx.db.shop.products.find(x => x.id === decodeURIComponent(ctx.params[0]) && x.storeId === store.id);
@@ -1166,77 +1100,86 @@ export function registerShopRoutes(kit: ShopKit) {
     return { store, product: p };
   };
 
+  /** What publishing needs, as the API words it. */
   const publishProblems = (p: Pick<MockProduct, 'name' | 'price' | 'categoryId' | 'images' | 'variants'>) => {
     const fields: Record<string, string> = {};
-    if (!p.name.trim()) fields.name = 'Give the product a name';
-    if (!p.price) fields.price = 'Add a price before publishing';
-    if (!p.categoryId) fields.categoryId = 'Choose a category before publishing';
-    if (!p.images.length) fields.images = 'Add at least one photo before publishing';
-    if (!p.variants.some(v => v.stock > 0)) fields.variants = 'At least one variant must be in stock to publish';
+    if (!p.images.length) fields.images = 'Add at least one photo before publishing.';
+    if (!p.categoryId) fields.categoryId = 'Choose a category before publishing.';
+    if (!p.variants.some(v => v.stock > 0)) fields.variants = 'At least one variant must be in stock to publish.';
     return fields;
   };
 
+  /** Applies a CreateProductDto / UpdateProductDto: option 1 is the size, option 2 the colour with its swatch. */
   const applyProduct = (ctx: ShopCtx, store: MockStore, p: MockProduct, b: Record<string, any>) => {
     const shop = ctx.db.shop;
-    const price = Math.max(0, int(b.price, p.price));
-    const salePrice = b.salePrice === null || b.salePrice === undefined || b.salePrice === '' ? null : int(b.salePrice);
-    if (salePrice !== null && price && salePrice >= price) throw bad('The sale price must be below the price.', { salePrice: 'Must be below the price' });
-    if (b.collectionId && !shop.collections.some(c => c.id === b.collectionId && c.storeId === store.id)) {
-      throw bad('Choose one of your collections.', { collectionId: 'Unknown collection' });
+    if (b.name !== undefined) p.name = textOf(b.name, 'name', 2, 120, 'name must be 2 to 120 characters');
+    if (b.description !== undefined) p.description = String(b.description).slice(0, 5000);
+    if (b.categoryId !== undefined) {
+      if (!shop.categories.some(c => c.id === b.categoryId)) throw bad('Choose a category.', { categoryId: 'Unknown category' });
+      p.categoryId = b.categoryId;
     }
-    const incoming: any[] = Array.isArray(b.variants) && b.variants.length ? b.variants : [{ option1: null, option2: null, sku: '', stock: 0, priceDelta: 0 }];
-    const skus = incoming.map(v => String(v.sku ?? '').toUpperCase()).filter(Boolean);
-    if (new Set(skus).size !== skus.length) throw bad('Each variant needs its own SKU.', { variants: 'Duplicate SKU' });
-    const kept: MockVariant[] = incoming.map((v, i) => {
-      const existing = p.variants.find(x => x.id === v.id) ?? p.variants.find(x => x.option1 === (v.option1 ?? null) && x.option2 === (v.option2 ?? null));
-      const stock = Math.max(0, int(v.stock));
-      const variant: MockVariant = existing ?? { id: `${p.id}_v${Date.now().toString(36)}${i}`, option1: v.option1 ?? null, option2: v.option2 ?? null, sku: '', stock: 0, priceDelta: 0 };
-      variant.sku = String(v.sku ?? '').toUpperCase() || `${p.id.toUpperCase()}-${i + 1}`;
-      variant.priceDelta = int(v.priceDelta);
-      variant.option1 = v.option1 ?? null;
-      variant.option2 = v.option2 ?? null;
-      if (stock !== variant.stock) moveStock(shop, variant, stock - variant.stock, existing ? 'manual' : 'initial', 'Product form');
-      return variant;
-    });
-    Object.assign(p, {
-      name: String(b.name ?? p.name).trim().slice(0, 80),
-      description: String(b.description ?? p.description).slice(0, 4000),
-      categoryId: b.categoryId === undefined ? p.categoryId : b.categoryId,
-      collectionId: b.collectionId === undefined ? p.collectionId : b.collectionId,
-      price,
-      salePrice,
-      images: Array.isArray(b.images) ? b.images.slice(0, 8).map((i: any) => ({ url: String(i.url), publicId: String(i.publicId ?? '') })) : p.images,
-      option1: b.option1 === undefined ? p.option1 : b.option1,
-      option2: b.option2 === undefined ? p.option2 : b.option2,
-      variants: kept,
-      updatedAt: isoNow(),
-    });
+    if (b.collectionId !== undefined) {
+      if (b.collectionId && !shop.collections.some(c => c.id === b.collectionId && c.storeId === store.id)) throw notFound('Collection');
+      p.collectionId = b.collectionId;
+    }
+    if (b.basePrice !== undefined) p.price = Math.max(1, int(b.basePrice));
+    if (b.salePrice !== undefined) p.salePrice = b.salePrice === null ? null : int(b.salePrice);
+    if (p.salePrice !== null && p.salePrice >= p.price) throw bad('The sale price must be below the price.', { salePrice: 'The sale price must be below the price.' });
+    if (Array.isArray(b.images)) p.images = b.images.slice(0, 8).map((i: any) => ({ url: String(i.url), publicId: String(i.publicId ?? '') }));
+    if (Array.isArray(b.variants) && b.variants.length) {
+      const swatches: Record<string, string> = {};
+      const kept: MockVariant[] = b.variants.map((v: any, i: number) => {
+        const existing = p.variants.find(x => x.id === v.id) ?? p.variants.find(x => x.option1 === (v.option1 ?? null) && x.option2 === (v.option2 ?? null));
+        const variant: MockVariant = existing ?? { id: `${p.id}_v${Date.now().toString(36)}${i}`, option1: null, option2: null, sku: '', stock: 0, priceDelta: 0 };
+        variant.option1 = v.option1 ?? null;
+        variant.option2 = v.option2 ?? null;
+        variant.sku = String(v.sku ?? '').toUpperCase();
+        variant.priceDelta = int(v.priceDelta);
+        if (v.option2 && v.colorHex) swatches[v.option2] = String(v.colorHex);
+        const stock = Math.max(0, int(v.stock, variant.stock));
+        if (stock !== variant.stock) moveStock(shop, variant, stock - variant.stock, 'manual', null);
+        return variant;
+      });
+      const sizes = [...new Set(kept.map(v => v.option1).filter((x): x is string => !!x))];
+      const colours = [...new Set(kept.map(v => v.option2).filter((x): x is string => !!x))];
+      p.variants = kept;
+      p.option1 = sizes.length ? { name: 'Size', values: sizes } : null;
+      p.option2 = colours.length ? { name: 'Colour', values: colours, swatches } : null;
+    }
+    if (!p.variants.length) p.variants = [{ id: `${p.id}_v0`, option1: null, option2: null, sku: '', stock: 0, priceDelta: 0 }];
+    p.updatedAt = isoNow();
     const status = b.status ?? p.status;
     if (status === 'active') {
       const problems = publishProblems(p);
-      if (Object.keys(problems).length) {
-        throw new ShopError(422, 'PUBLISH_BLOCKED', 'Finish the highlighted parts to publish.', { fields: Object.fromEntries(Object.entries(problems).map(([k, v]) => [k, [v]])) });
-      }
+      const first = Object.values(problems)[0];
+      if (first) throw bad(first, problems);
     }
     p.status = status;
   };
 
-  route('GET', '/partner/shop/products', ctx => {
+  route('GET', `${P}/products`, ctx => {
     const { store } = myStore(ctx);
     const q = String(ctx.query.q ?? '').trim().toLowerCase();
-    const status = String(ctx.query.status ?? 'active');
+    const status = ctx.query.status ? String(ctx.query.status) : null;
     const rows = ctx.db.shop.products
-      .filter(p => p.storeId === store.id && (status === 'archived' ? p.status === 'archived' || p.removed : p.status === status && !p.removed))
-      .filter(p => !q || p.name.toLowerCase().includes(q) || p.variants.some(v => v.sku.toLowerCase().includes(q)))
-      .filter(p => !bool(ctx.query.lowStock) || p.variants.some(v => v.stock <= LOW_STOCK))
+      .filter(p => p.storeId === store.id && (!status || (status === 'archived' ? p.status === 'archived' || p.removed : p.status === status && !p.removed)))
+      .filter(p => !q || p.name.toLowerCase().includes(q))
+      .filter(p => !ctx.query.collectionId || p.collectionId === ctx.query.collectionId)
+      .filter(p => ctx.query.lowStock !== 'true' || p.variants.some(v => v.stock <= LOW_STOCK))
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
-      .map(productRow);
+      .map(p => partnerProductRowWire(ctx.db.shop, p));
     return paginate(rows, ctx.query);
   });
-  route('GET', '/partner/shop/products/:id', ctx => productFull(myProduct(ctx).product));
-  route('POST', '/partner/shop/products', ctx => {
+  route('GET', `${P}/products/:id`, ctx => partnerProductWire(ctx.db.shop, myProduct(ctx).product));
+  route('POST', `${P}/products`, ctx => {
     const { store } = myStore(ctx);
     const shop = ctx.db.shop;
+    const b = ctx.body;
+    const fields: Record<string, string> = {};
+    if (String(b.name ?? '').trim().length < 2) fields.name = 'name must be 2 to 120 characters';
+    if (!b.categoryId) fields.categoryId = 'categoryId must be a UUID';
+    if (!(int(b.basePrice) >= 1)) fields.basePrice = 'basePrice must not be less than 1';
+    if (Object.keys(fields).length) throw bad(Object.values(fields)[0], fields);
     const p: MockProduct = {
       id: nextId(shop, 'p'),
       storeId: store.id,
@@ -1244,7 +1187,7 @@ export function registerShopRoutes(kit: ShopKit) {
       description: '',
       categoryId: null,
       collectionId: null,
-      price: 0,
+      price: 1,
       salePrice: null,
       status: 'draft',
       images: [],
@@ -1256,84 +1199,92 @@ export function registerShopRoutes(kit: ShopKit) {
       createdAt: isoNow(),
       updatedAt: isoNow(),
     };
-    if (!String(ctx.body.name ?? '').trim()) throw bad('Give the product a name.', { name: 'Required' });
     shop.products.push(p);
-    applyProduct(ctx, store, p, ctx.body);
+    applyProduct(ctx, store, p, { status: 'draft', ...b });
     ctx.setStatus(201);
-    return productFull(p);
+    return partnerProductWire(shop, p);
   });
-  route('PATCH', '/partner/shop/products/:id', ctx => {
+  route('PATCH', `${P}/products/:id`, ctx => {
     const { store, product } = myProduct(ctx);
+    if (ctx.body.status !== undefined && !['draft', 'active', 'archived'].includes(ctx.body.status)) throw bad('status must be draft, active or archived', { status: 'Unknown status' });
     applyProduct(ctx, store, product, ctx.body);
-    return productFull(product);
+    return partnerProductWire(ctx.db.shop, product);
   });
-  route('POST', '/partner/shop/products/:id/status', ctx => {
+  route('POST', `${P}/products/:id/duplicate`, ctx => {
     const { product } = myProduct(ctx);
-    const status = ['draft', 'active', 'archived'].includes(ctx.body.status) ? ctx.body.status : product.status;
-    if (status === 'active') {
-      const problems = publishProblems(product);
-      if (Object.keys(problems).length) {
-        throw new ShopError(422, 'PUBLISH_BLOCKED', Object.values(problems)[0], { fields: Object.fromEntries(Object.entries(problems).map(([k, v]) => [k, [v]])) });
-      }
+    const shop = ctx.db.shop;
+    const id = nextId(shop, 'p');
+    const copy: MockProduct = {
+      ...JSON.parse(JSON.stringify(product)),
+      id,
+      name: `${product.name} (copy)`,
+      status: 'draft',
+      removed: false,
+      createdAt: isoNow(),
+      updatedAt: isoNow(),
+    };
+    copy.variants = copy.variants.map((v, i) => ({ ...v, id: `${id}_v${i}`, sku: '', stock: 0 }));
+    shop.products.push(copy);
+    ctx.setStatus(201);
+    return partnerProductWire(shop, copy);
+  });
+  route('DELETE', `${P}/products/:id`, ctx => {
+    const { product } = myProduct(ctx);
+    const shop = ctx.db.shop;
+    // A product someone ordered is archived (its orders keep pointing at it); otherwise it goes.
+    if (shop.orders.some(o => o.items.some(i => i.productId === product.id))) {
+      product.status = 'archived';
+      product.updatedAt = isoNow();
+      return { archived: true, deleted: false };
     }
-    product.status = status;
-    product.updatedAt = isoNow();
-    return productFull(product);
+    shop.products = shop.products.filter(p => p.id !== product.id);
+    return { archived: false, deleted: true };
   });
 
   // Inventory
-  const inventoryRow = (p: MockProduct, v: MockVariant) => ({
-    variantId: v.id,
-    productId: p.id,
-    productName: p.name,
-    variantLabel: variantLabel(v) || 'Default',
-    sku: v.sku,
-    stock: v.stock,
-    lowStock: v.stock <= LOW_STOCK,
-    imageUrl: p.images[0]?.url ?? null,
-  });
   const myVariant = (ctx: ShopCtx, id: string) => {
     const { store } = myStore(ctx);
     const found = findVariant(ctx.db.shop, id);
     if (!found || found.product.storeId !== store.id) throw notFound('Variant');
     return found;
   };
-
-  route('GET', '/partner/shop/inventory', ctx => {
+  route('GET', `${P}/inventory`, ctx => {
     const { store } = myStore(ctx);
     const q = String(ctx.query.q ?? '').trim().toLowerCase();
     const rows = ctx.db.shop.products
       .filter(p => p.storeId === store.id && p.status !== 'archived')
       .flatMap(p => p.variants.map(v => ({ p, v })))
       .filter(({ p, v }) => !q || p.name.toLowerCase().includes(q) || v.sku.toLowerCase().includes(q))
-      .filter(({ v }) => !bool(ctx.query.lowStock) || v.stock <= LOW_STOCK)
+      .filter(({ v }) => ctx.query.lowStock !== 'true' || v.stock <= LOW_STOCK)
       .sort((a, b) => a.v.stock - b.v.stock || a.p.name.localeCompare(b.p.name))
-      .map(({ p, v }) => inventoryRow(p, v));
+      .map(({ p, v }) => inventoryRowWire(p, v));
     return paginate(rows, ctx.query);
   });
-  route('PATCH', '/partner/shop/inventory/:variantId', ctx => {
-    const { product, variant } = myVariant(ctx, decodeURIComponent(ctx.params[0]));
-    const stock = int(ctx.body.stock, variant.stock);
-    if (stock < 0) throw bad('Stock can’t be negative.', { stock: 'At least 0' });
-    moveStock(ctx.db.shop, variant, stock - variant.stock, 'manual', ctx.body.note ? String(ctx.body.note) : null);
-    return inventoryRow(product, variant);
+  route('PATCH', `${P}/inventory/:variantId`, ctx => {
+    const { variant } = myVariant(ctx, decodeURIComponent(ctx.params[0]));
+    const { delta, setTo } = ctx.body;
+    if ((delta === undefined) === (setTo === undefined)) throw bad('Send exactly one of delta or setTo.', { setTo: 'Send exactly one of delta or setTo.' });
+    const next = setTo !== undefined ? int(setTo) : variant.stock + int(delta);
+    if (next < 0) throw bad('Stock can’t go below 0.', { delta: 'Stock can’t go below 0.' });
+    moveStock(ctx.db.shop, variant, next - variant.stock, 'manual', null);
+    return { variantId: variant.id, stock: variant.stock };
   });
-  route('POST', '/partner/shop/inventory/bulk', ctx => {
-    const ids: string[] = Array.isArray(ctx.body.variantIds) ? ctx.body.variantIds : [];
-    const stock = int(ctx.body.stock);
-    if (stock < 0) throw bad('Stock can’t be negative.', { stock: 'At least 0' });
-    return ids.map(id => {
-      const { product, variant } = myVariant(ctx, id);
-      moveStock(ctx.db.shop, variant, stock - variant.stock, 'bulk', `Set to ${stock}`);
-      return inventoryRow(product, variant);
+  route('POST', `${P}/inventory/bulk`, ctx => {
+    const rows: { variantId: string; setTo: number }[] = Array.isArray(ctx.body) ? ctx.body : [];
+    if (rows.length < 1 || rows.length > 200) throw bad('Send 1 to 200 rows.', { rows: 'Send 1 to 200 rows.' });
+    const items = rows.map(r => {
+      const { variant } = myVariant(ctx, String(r.variantId));
+      const setTo = int(r.setTo);
+      if (setTo < 0) throw bad('Stock can’t go below 0.', { setTo: 'Stock can’t go below 0.' });
+      moveStock(ctx.db.shop, variant, setTo - variant.stock, 'bulk', null);
+      return { variantId: variant.id, stock: variant.stock };
     });
+    return { updated: items.length, items };
   });
-  route('GET', '/partner/shop/inventory/:variantId/movements', ctx => {
-    const { product, variant } = myVariant(ctx, decodeURIComponent(ctx.params[0]));
+  route('GET', `${P}/inventory/:variantId/movements`, ctx => {
+    const { variant } = myVariant(ctx, decodeURIComponent(ctx.params[0]));
     const moves = ctx.db.shop.movements.filter(m => m.variantId === variant.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-    if (moves.length) return moves;
-    // Nothing recorded yet: the opening stock is the only "movement".
-    return [{ id: `mv_open_${variant.id}`, delta: variant.stock, stockAfter: variant.stock, reason: 'initial', note: null, createdAt: product.createdAt }];
+    return paginate(moves.map(movementWire), ctx.query);
   });
 
   // Collections
@@ -1341,110 +1292,123 @@ export function registerShopRoutes(kit: ShopKit) {
     ctx.db.shop.collections
       .filter(c => c.storeId === storeId)
       .sort((a, b) => a.position - b.position)
-      .map(c => ({ ...c, productCount: ctx.db.shop.products.filter(p => p.collectionId === c.id && !p.removed).length }));
+      .map(partnerCollectionWire);
+  const uniqueName = (ctx: ShopCtx, storeId: string, name: string, id: string | null = null) => {
+    if (ctx.db.shop.collections.some(c => c.storeId === storeId && c.id !== id && c.name.toLowerCase() === name.toLowerCase())) {
+      throw new ShopError(409, 'CONFLICT', 'You already have a collection with this name.');
+    }
+  };
 
-  route('GET', '/partner/shop/collections', ctx => collectionsOf(ctx, myStore(ctx).store.id));
-  route('POST', '/partner/shop/collections', ctx => {
+  route('GET', `${P}/collections`, ctx => collectionsOf(ctx, myStore(ctx).store.id));
+  route('POST', `${P}/collections`, ctx => {
     const { store } = myStore(ctx);
-    const name = String(ctx.body.name ?? '').trim();
-    if (name.length < 2) throw bad('Name the collection.', { name: 'At least 2 characters' });
+    const name = textOf(ctx.body.name, 'name', 2, 60, 'name must be 2 to 60 characters');
+    uniqueName(ctx, store.id, name);
     const position = ctx.db.shop.collections.filter(c => c.storeId === store.id).length;
     const c = { id: nextId(ctx.db.shop, 'col'), storeId: store.id, name, slug: slugify(name), position };
     ctx.db.shop.collections.push(c);
     ctx.setStatus(201);
-    return { ...c, productCount: 0 };
+    return partnerCollectionWire(c);
   });
-  route('PATCH', '/partner/shop/collections/:id', ctx => {
+  route('PATCH', `${P}/collections/reorder`, ctx => {
+    const { store } = myStore(ctx);
+    const ids: string[] = Array.isArray(ctx.body.ids) ? ctx.body.ids : [];
+    const owned = ids.map(id => ctx.db.shop.collections.find(x => x.id === id && x.storeId === store.id));
+    if (owned.some(c => !c)) throw notFound('Collection');
+    owned.forEach((c, i) => (c!.position = i));
+    return collectionsOf(ctx, store.id);
+  });
+  route('PATCH', `${P}/collections/:id`, ctx => {
     const { store } = myStore(ctx);
     const c = ctx.db.shop.collections.find(x => x.id === decodeURIComponent(ctx.params[0]) && x.storeId === store.id);
     if (!c) throw notFound('Collection');
-    const name = String(ctx.body.name ?? '').trim();
-    if (name.length < 2) throw bad('Name the collection.', { name: 'At least 2 characters' });
+    const name = textOf(ctx.body.name, 'name', 2, 60, 'name must be 2 to 60 characters');
+    uniqueName(ctx, store.id, name, c.id);
     c.name = name;
-    return collectionsOf(ctx, store.id).find(x => x.id === c.id);
+    c.slug = slugify(name);
+    return partnerCollectionWire(c);
   });
-  route('DELETE', '/partner/shop/collections/:id', ctx => {
+  route('DELETE', `${P}/collections/:id`, ctx => {
     const { store } = myStore(ctx);
     const id = decodeURIComponent(ctx.params[0]);
-    const count = ctx.db.shop.products.filter(p => p.collectionId === id && !p.removed && p.status !== 'archived').length;
-    if (count) throw new ShopError(409, 'COLLECTION_NOT_EMPTY', `Move its ${count} product(s) to another collection first.`, { productCount: count });
-    ctx.db.shop.collections = ctx.db.shop.collections.filter(c => !(c.id === id && c.storeId === store.id));
+    if (!ctx.db.shop.collections.some(c => c.id === id && c.storeId === store.id)) throw notFound('Collection');
+    // Its products keep existing, out of any collection (the API's FK sets null).
+    for (const p of ctx.db.shop.products) if (p.collectionId === id) p.collectionId = null;
+    ctx.db.shop.collections = ctx.db.shop.collections.filter(c => c.id !== id);
     return { removed: true };
-  });
-  route('POST', '/partner/shop/collections/reorder', ctx => {
-    const { store } = myStore(ctx);
-    const ids: string[] = Array.isArray(ctx.body.ids) ? ctx.body.ids : [];
-    ids.forEach((id, i) => {
-      const c = ctx.db.shop.collections.find(x => x.id === id && x.storeId === store.id);
-      if (c) c.position = i;
-    });
-    return collectionsOf(ctx, store.id);
   });
 
   // Coupons
-  const readCoupon = (b: Record<string, any>) => {
-    const code = String(b.code ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-    const type = b.type === 'percent' ? 'percent' : 'fixed';
-    const value = int(b.value);
+  const readCoupon = (b: Record<string, any>, current: MockCoupon | null) => {
     const fields: Record<string, string> = {};
-    if (code.length < 4 || code.length > 16) fields.code = 'Use 4 to 16 letters or digits';
-    if (value <= 0 || (type === 'percent' && value > 90)) fields.value = type === 'percent' ? 'Between 1 and 90' : 'Enter an amount';
-    if (b.endsAt && b.startsAt && Date.parse(b.endsAt) < Date.parse(b.startsAt)) fields.endsAt = 'Ends before it starts';
-    if (Object.keys(fields).length) throw bad('Check the coupon.', fields);
+    const type = b.type === undefined ? current?.type ?? 'fixed' : b.type === 'percent' ? 'percent' : 'fixed';
+    const value = b.value === undefined ? current?.value ?? 0 : int(b.value);
+    if (value < 1) fields.value = 'value must not be less than 1';
+    const endsAt = b.endsAt === undefined ? current?.endsAt ?? null : b.endsAt;
+    if (!endsAt) fields.endsAt = 'endsAt must be a valid ISO 8601 date string';
+    const startsAt = b.startsAt === undefined ? current?.startsAt ?? isoNow() : String(b.startsAt);
+    if (endsAt && Date.parse(endsAt) <= Date.parse(startsAt)) fields.endsAt = 'The coupon must end after it starts.';
+    const perUser = b.perUserLimit === undefined ? current?.perCustomerLimit ?? 1 : int(b.perUserLimit);
+    if (perUser < 1 || perUser > 100) fields.perUserLimit = 'perUserLimit must be 1 to 100';
+    if (Object.keys(fields).length) throw bad(Object.values(fields)[0], fields);
     return {
-      code,
       type,
       value,
-      minOrder: num(b.minOrder) || null,
-      maxDiscount: type === 'percent' ? num(b.maxDiscount) || null : null,
-      startsAt: b.startsAt ? String(b.startsAt) : isoNow(),
-      endsAt: b.endsAt ? String(b.endsAt) : null,
-      usageLimit: num(b.usageLimit) || null,
-      perCustomerLimit: num(b.perCustomerLimit) || null,
-      isActive: b.isActive === undefined ? true : bool(b.isActive),
+      minOrder: (b.minOrder === undefined ? current?.minOrder ?? 0 : int(b.minOrder)) || null,
+      maxDiscount: type === 'percent' ? (b.maxDiscount === undefined ? current?.maxDiscount ?? null : b.maxDiscount === null ? null : int(b.maxDiscount)) : null,
+      startsAt,
+      endsAt: String(endsAt),
+      usageLimit: b.usageLimit === undefined ? current?.usageLimit ?? null : b.usageLimit === null ? null : int(b.usageLimit),
+      perCustomerLimit: perUser,
     } as const;
   };
-  route('GET', '/partner/shop/coupons', ctx => {
-    const { store } = myStore(ctx);
-    return ctx.db.shop.coupons.filter(c => c.storeId === store.id).map(couponView);
-  });
-  route('POST', '/partner/shop/coupons', ctx => {
-    const { store } = myStore(ctx);
-    const input = readCoupon(ctx.body);
-    if (ctx.db.shop.coupons.some(c => c.storeId === store.id && c.code === input.code)) {
-      throw new ShopError(409, 'COUPON_CODE_TAKEN', 'You already have a coupon with this code.');
-    }
-    const c = { id: nextId(ctx.db.shop, 'cp'), storeId: store.id, ...input, usedCount: 0, usedBy: {} };
-    ctx.db.shop.coupons.push(c);
-    ctx.setStatus(201);
-    return couponView(c);
-  });
-  route('PATCH', '/partner/shop/coupons/:id', ctx => {
+  const myCoupon = (ctx: ShopCtx) => {
     const { store } = myStore(ctx);
     const c = ctx.db.shop.coupons.find(x => x.id === decodeURIComponent(ctx.params[0]) && x.storeId === store.id);
     if (!c) throw notFound('Coupon');
-    const input = readCoupon({ ...c, ...ctx.body });
-    if (ctx.db.shop.coupons.some(x => x.storeId === store.id && x.code === input.code && x.id !== c.id)) {
-      throw new ShopError(409, 'COUPON_CODE_TAKEN', 'You already have a coupon with this code.');
-    }
-    Object.assign(c, input);
-    return couponView(c);
-  });
-  route('DELETE', '/partner/shop/coupons/:id', ctx => {
+    return c;
+  };
+  route('GET', `${P}/coupons`, ctx => {
     const { store } = myStore(ctx);
-    ctx.db.shop.coupons = ctx.db.shop.coupons.filter(c => !(c.id === decodeURIComponent(ctx.params[0]) && c.storeId === store.id));
-    return { removed: true };
+    const state = ctx.query.state ? String(ctx.query.state) : null;
+    const rows = ctx.db.shop.coupons
+      .filter(c => c.storeId === store.id)
+      .map(couponWire)
+      .filter(c => !state || c.state === state)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return paginate(rows, ctx.query);
+  });
+  route('POST', `${P}/coupons`, ctx => {
+    const { store } = myStore(ctx);
+    const code = String(ctx.body.code ?? '').trim();
+    if (!/^[A-Z0-9-]{3,20}$/.test(code)) throw bad('Codes are 3 to 20 capital letters, digits or dashes.', { code: 'Codes are 3 to 20 capital letters, digits or dashes.' });
+    if (ctx.db.shop.coupons.some(c => c.storeId === store.id && c.code === code)) throw new ShopError(409, 'CONFLICT', 'You already have a coupon with this code.');
+    const c: MockCoupon = { id: nextId(ctx.db.shop, 'cp'), storeId: store.id, code, ...readCoupon(ctx.body, null), isActive: true, usedCount: 0, usedBy: {} };
+    ctx.db.shop.coupons.push(c);
+    ctx.setStatus(201);
+    return couponWire(c);
+  });
+  route('GET', `${P}/coupons/:id`, ctx => couponWire(myCoupon(ctx)));
+  route('PATCH', `${P}/coupons/:id`, ctx => {
+    const c = myCoupon(ctx);
+    Object.assign(c, readCoupon(ctx.body, c));
+    if (ctx.body.isActive !== undefined) c.isActive = bool(ctx.body.isActive);
+    return couponWire(c);
+  });
+  route('POST', `${P}/coupons/:id/deactivate`, ctx => {
+    const c = myCoupon(ctx);
+    c.isActive = false;
+    return couponWire(c);
   });
 
-  // Returns (partner)
-  route('GET', '/partner/shop/returns', ctx => {
+  // Returns
+  route('GET', `${P}/returns`, ctx => {
     const { store } = myStore(ctx);
     const status = ctx.query.status ? String(ctx.query.status) : null;
     const rows = ctx.db.shop.returns
-      .filter(r => r.storeId === store.id)
-      .filter(r => !status || (status === 'open' ? ['requested', 'approved', 'received'].includes(r.status) : r.status === status))
+      .filter(r => r.storeId === store.id && (!status || r.status === status))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .map(r => returnView(ctx.db, r));
+      .map(r => returnWire(ctx.db, r, 'store'));
     return paginate(rows, ctx.query);
   });
   const storeReturn = (ctx: ShopCtx) => {
@@ -1454,50 +1418,50 @@ export function registerShopRoutes(kit: ShopKit) {
     return { store, ret: r, order: ctx.db.shop.orders.find(o => o.id === r.orderId)! };
   };
   const returnStep = (r: { status: string }, from: string, to: string) => {
-    if (r.status !== from) throw new ShopError(409, 'INVALID_TRANSITION', 'This return can’t do that right now.', { from: r.status, to });
+    if (r.status !== from) throw new ShopError(409, 'INVALID_TRANSITION', 'This return can’t do that right now.', { from: r.status, to, allowed: [] });
   };
-  route('GET', '/partner/shop/returns/:id', ctx => returnView(ctx.db, storeReturn(ctx).ret));
-  route('POST', '/partner/shop/returns/:id/approve', ctx => {
+  route('GET', `${P}/returns/:id`, ctx => returnWire(ctx.db, storeReturn(ctx).ret, 'store'));
+  route('POST', `${P}/returns/:id/approve`, ctx => {
     const { ret, order } = storeReturn(ctx);
     returnStep(ret, 'requested', 'approved');
     ret.status = 'approved';
-    ret.storeNote = ctx.body.note ? String(ctx.body.note) : null;
+    ret.storeNote = ctx.body.note ? String(ctx.body.note).trim() : null;
     notify(ctx.db.shop, ret.userId, 'return_update', `Return approved for ${order.code}`, ret.storeNote ?? 'Send the items back as the store instructs.', { groupCode: order.groupCode, orderId: order.id, returnId: ret.id });
-    return returnView(ctx.db, ret);
+    return returnWire(ctx.db, ret, 'store');
   });
-  route('POST', '/partner/shop/returns/:id/reject', ctx => {
+  route('POST', `${P}/returns/:id/reject`, ctx => {
     const { ret, order } = storeReturn(ctx);
     returnStep(ret, 'requested', 'rejected');
-    const note = String(ctx.body.note ?? '').trim();
-    if (note.length < 5) throw bad('Tell the customer why.', { note: 'At least 5 characters' });
+    const note = textOf(ctx.body.note, 'note', 3, 1000, 'Tell the customer why.');
     ret.status = 'rejected';
     ret.storeNote = note;
     notify(ctx.db.shop, ret.userId, 'return_update', `Return declined for ${order.code}`, note, { groupCode: order.groupCode, orderId: order.id, returnId: ret.id });
-    return returnView(ctx.db, ret);
+    return returnWire(ctx.db, ret, 'store');
   });
-  route('POST', '/partner/shop/returns/:id/receive', ctx => {
+  route('POST', `${P}/returns/:id/receive`, ctx => {
     const { ret, order } = storeReturn(ctx);
     returnStep(ret, 'approved', 'received');
-    const restock: Record<string, boolean> = ctx.body.restock ?? {};
+    const lines: { returnItemId: string; restock: boolean }[] = Array.isArray(ctx.body.items) ? ctx.body.items : [];
     for (const ri of ret.items) {
+      const back = lines.find(l => l.returnItemId === returnItemId(ret, ri.orderItemId))?.restock;
       const item = order.items.find(i => i.id === ri.orderItemId);
       const found = item ? findVariant(ctx.db.shop, item.variantId) : null;
-      if (found && restock[ri.orderItemId]) moveStock(ctx.db.shop, found.variant, ri.quantity, 'return_restock', order.code);
+      if (found && back) moveStock(ctx.db.shop, found.variant, ri.quantity, 'return_restock', order.code);
     }
     ret.status = 'received';
-    return returnView(ctx.db, ret);
+    return returnWire(ctx.db, ret, 'store');
   });
-  route('POST', '/partner/shop/returns/:id/refund', ctx => {
+  route('POST', `${P}/returns/:id/refund`, ctx => {
     const { ret, order } = storeReturn(ctx);
     returnStep(ret, 'received', 'refunded');
     const max = ret.items.reduce((s, ri) => s + (order.items.find(i => i.id === ri.orderItemId)?.unitPrice ?? 0) * ri.quantity, 0);
     const amount = int(ctx.body.amount);
-    const reference = String(ctx.body.reference ?? '').trim();
+    const refundRef = String(ctx.body.refundRef ?? '').trim();
     const fields: Record<string, string> = {};
-    if (amount <= 0 || amount > max) fields.amount = `Between Rs 1 and ${rupees(max)}`;
-    if (reference.length < 4) fields.reference = 'Enter the refund reference';
+    if (amount < 1 || amount > max) fields.amount = `Between Rs 1 and ${rupees(max)}`;
+    if (refundRef.length < 3) fields.refundRef = 'Enter the refund reference';
     if (Object.keys(fields).length) throw bad('Check the refund.', fields);
-    ret.refund = { amount, reference, recordedAt: isoNow() };
+    ret.refund = { amount, reference: refundRef, recordedAt: isoNow() };
     ret.status = 'refunded';
     for (const ri of ret.items) {
       const item = order.items.find(i => i.id === ri.orderItemId);
@@ -1508,71 +1472,29 @@ export function registerShopRoutes(kit: ShopKit) {
       order.paymentStatus = 'refunded';
       addEvent(order, 'returned');
     }
-    notify(ctx.db.shop, ret.userId, 'return_update', `Refund recorded for ${order.code}`, `${rupees(amount)} · ${reference}`, { groupCode: order.groupCode, orderId: order.id, returnId: ret.id });
-    return returnView(ctx.db, ret);
+    notify(ctx.db.shop, ret.userId, 'return_update', `Refund recorded for ${order.code}`, `${rupees(amount)} · ${refundRef}`, { groupCode: order.groupCode, orderId: order.id, returnId: ret.id });
+    return returnWire(ctx.db, ret, 'store');
   });
 
-  // Reviews (partner)
-  const partnerReview = (ctx: ShopCtx, r: (typeof ctx.db.shop.reviews)[number]) => {
-    const p = productById(ctx.db.shop, r.productId);
-    return { ...reviewView(r), productName: p?.name ?? 'Product', productImage: p?.images[0]?.url ?? null };
-  };
-  route('GET', '/partner/shop/reviews', ctx => {
+  // Reviews
+  route('GET', `${P}/reviews`, ctx => {
     const { store } = myStore(ctx);
-    const rating = num(ctx.query.rating);
     const rows = ctx.db.shop.reviews
       .filter(r => r.storeId === store.id)
-      .filter(r => rating === null || r.rating === rating)
-      .filter(r => !bool(ctx.query.unreplied) || !r.reply)
+      .filter(r => ctx.query.unreplied !== 'true' || !r.reply)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .map(r => partnerReview(ctx, r));
+      .map(r => reviewWire(ctx.db.shop, r, true));
     return paginate(rows, ctx.query);
   });
-  route('PUT', '/partner/shop/reviews/:id/reply', ctx => {
+  route('POST', `${P}/reviews/:id/reply`, ctx => {
     const { store } = myStore(ctx);
     const r = ctx.db.shop.reviews.find(x => x.id === decodeURIComponent(ctx.params[0]) && x.storeId === store.id);
     if (!r) throw notFound('Review');
-    const body = String(ctx.body.body ?? '').trim();
-    if (body.length < 2) throw bad('Write a reply.', { body: 'Required' });
-    if (r.reply && Date.parse(r.reply.createdAt) + DAY < ctx.now) {
-      throw new ShopError(409, 'REPLY_LOCKED', 'Replies can be edited for 24 hours after posting.');
-    }
-    r.reply = { body: body.slice(0, 600), createdAt: r.reply?.createdAt ?? isoNow() };
-    notify(ctx.db.shop, r.userId, 'review_reply', `${store.name} replied to your review`, body.slice(0, 80), { productId: r.productId });
-    return partnerReview(ctx, r);
-  });
-
-  // Insights
-  route('GET', '/partner/shop/insights', ctx => {
-    const { store } = myStore(ctx);
-    const range = ['7d', '30d', '90d'].includes(ctx.query.range) ? ctx.query.range : '7d';
-    const days = range === '90d' ? 90 : range === '30d' ? 30 : 7;
-    const since = ctx.now - days * DAY;
-    const all = ctx.db.shop.orders.filter(o => o.storeId === store.id);
-    const delivered = all.filter(o => o.deliveredAt && Date.parse(o.deliveredAt) >= since && (o.status === 'delivered' || o.status === 'returned'));
-    const dates = Array.from({ length: days }, (_, i) => new Date(ctx.now - (days - 1 - i) * DAY).toISOString().slice(0, 10));
-    const byProduct = new Map<string, { productId: string; name: string; imageUrl: string | null; units: number; amount: number }>();
-    for (const o of delivered) {
-      for (const i of o.items) {
-        const row = byProduct.get(i.productId) ?? { productId: i.productId, name: i.name, imageUrl: i.imageUrl, units: 0, amount: 0 };
-        row.units += i.quantity;
-        row.amount += i.unitPrice * i.quantity;
-        byProduct.set(i.productId, row);
-      }
-    }
-    const customers = new Map<string, number>();
-    for (const o of delivered) customers.set(o.userId, (customers.get(o.userId) ?? 0) + 1);
-    const created = all.filter(o => Date.parse(o.createdAt) >= since && o.status !== 'cancelled');
-    return {
-      range,
-      orders: dates.map(date => ({ date, count: delivered.filter(o => o.deliveredAt!.slice(0, 10) === date).length })),
-      sales: dates.map(date => ({ date, amount: delivered.filter(o => o.deliveredAt!.slice(0, 10) === date).reduce((s, o) => s + o.total, 0) })),
-      recordedSales: delivered.reduce((s, o) => s + o.total, 0),
-      orderCount: delivered.length,
-      topProducts: [...byProduct.values()].sort((a, b) => b.amount - a.amount).slice(0, 5),
-      repeatCustomerPct: customers.size ? Math.round(([...customers.values()].filter(n => n > 1).length / customers.size) * 100) : 0,
-      deliveredRatePct: created.length ? Math.round((created.filter(o => o.status === 'delivered' || o.status === 'returned').length / created.length) * 100) : 0,
-    };
+    const text = textOf(ctx.body.text, 'text', 2, 1000, 'text must be 2 to 1000 characters');
+    if (r.reply && Date.parse(r.reply.createdAt) + DAY < ctx.now) throw new ShopError(409, 'CONFLICT', 'Replies can only be edited for 24 hours.', { repliedAt: r.reply.createdAt });
+    r.reply = { body: text, createdAt: r.reply?.createdAt ?? isoNow() };
+    notify(ctx.db.shop, r.userId, 'review_reply', `${store.name} replied to your review`, text.slice(0, 80), { productId: r.productId });
+    return reviewWire(ctx.db.shop, r, true);
   });
 
   // ══ Admin (Shopping) ════════════════════════════════

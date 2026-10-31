@@ -1,20 +1,24 @@
-// MetroMatrix — Store returns slice: open ones, or every return.
+// MetroMatrix — Store returns slice: the returns in one state (new, on the way
+// back, to refund), or every return.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
+import type { ReturnStatus } from '../../models';
+
+export type StoreReturnsView = Extract<ReturnStatus, 'requested' | 'approved' | 'received'> | 'all';
 
 export interface StoreReturnsSliceState {
-  openOnly: boolean;
+  view: StoreReturnsView;
 }
 
-const initialState: StoreReturnsSliceState = { openOnly: true };
+const initialState: StoreReturnsSliceState = { view: 'requested' };
 
 export const storeReturnsSlice = createAppSlice({
   name: 'storeReturns',
   initialState,
   reducers: create => ({
-    setReturnsOpenOnly: create.reducer((state, action: PayloadAction<boolean>) => {
-      state.openOnly = action.payload;
+    setReturnsView: create.reducer((state, action: PayloadAction<StoreReturnsView>) => {
+      state.view = action.payload;
     }),
   }),
   selectors: {
@@ -22,5 +26,5 @@ export const storeReturnsSlice = createAppSlice({
   },
 });
 
-export const { setReturnsOpenOnly } = storeReturnsSlice.actions;
+export const { setReturnsView } = storeReturnsSlice.actions;
 export const { selectStoreReturns } = storeReturnsSlice.selectors;

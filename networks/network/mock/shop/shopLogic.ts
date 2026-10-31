@@ -22,7 +22,7 @@ import type {
   MockStore,
   MockVariant,
 } from './shopTypes';
-import type { NotificationType, OrderStatus, PartnerOrderAction, PaymentMethod } from '../../../../models/shopping';
+import type { MovementReason, NotificationType, OrderStatus, PartnerOrderAction, PaymentMethod } from '../../../../models/shopping';
 
 const DAY = 24 * 60 * 60 * 1000;
 export const isoNow = () => new Date().toISOString();
@@ -550,7 +550,7 @@ export const moveStock = (
   shop: MockShop,
   variant: MockVariant,
   delta: number,
-  reason: 'initial' | 'manual' | 'bulk' | 'order' | 'cancel' | 'return_restock',
+  reason: MovementReason,
   note: string | null = null,
 ) => {
   variant.stock = Math.max(0, variant.stock + delta);

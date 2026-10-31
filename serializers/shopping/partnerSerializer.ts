@@ -1,83 +1,142 @@
-// MetroMatrix — Store-partner serializers.
-// TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
+// MetroMatrix — Store-partner serializers: MetroMatrix-API's /shop/partner
+// shapes (API_SHOPPING.md) in the app's words.
 
-import type { Coupon, CouponStatus, CouponType, Insights, InsightsRange, InventoryMovement, InventoryRow, MovementReason, PartnerOrderAction, PartnerOrderDetail, PartnerOrderRow, PartnerProduct, PartnerProductRow, PartnerProductStatus, PartnerReview, PartnerSummary, PaymentAccount, PaymentAccountKind, StoreProfile, StoreSettings, PartnerOrderSegment } from '../../models/shopping';
-import { arr, bool, enumList, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
-import { addressSerializer } from '../addressSerializer';
-import { reviewSerializer } from './catalogSerializer';
+import type {
+  Coupon,
+  CouponStatus,
+  CouponType,
+  Insights,
+  InsightsRange,
+  InventoryMovement,
+  InventoryRow,
+  MovementReason,
+  PartnerOrderAction,
+  PartnerOrderDetail,
+  PartnerOrderRow,
+  PartnerProduct,
+  PartnerProductRow,
+  PartnerProductStatus,
+  PartnerReview,
+  PartnerSummary,
+  PaymentAccount,
+  PaymentAccountKind,
+  StoreProfile,
+  StoreSettings,
+} from '../../models/shopping';
+import { arr, bool, bodiesOf, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
+import { LOW_STOCK, reviewSerializer } from './catalogSerializer';
 import { BRAND_FALLBACK, color, compact, count, iso, isoOrNull, money, moneyOrNull, paged } from './common';
-import { ORDER_STATUSES, PAYMENT_STATUSES, storeOrderSerializer } from './orderSerializer';
+import { orderStatusOf, paymentStatusOf, storeOrderSerializer } from './orderSerializer';
+import { COD_NO_LIMIT } from '../../models/shopping/storeModel';
 
 const PRODUCT_STATUSES: readonly PartnerProductStatus[] = ['draft', 'active', 'archived'];
-const ACTIONS: readonly PartnerOrderAction[] = [
-  'confirm',
-  'pack',
-  'ship',
-  'deliver',
-  'cancel',
-  'confirm_payment',
-  'reject_payment',
-  'cash_collected',
-  'approve_cancellation',
-];
 const ACCOUNT_KINDS: readonly PaymentAccountKind[] = ['raast', 'jazzcash', 'easypaisa', 'bank'];
+const METHODS = ['cod', 'transfer'] as const;
 
-const series = <K extends 'amount' | 'count'>(raw: unknown, key: K) =>
+const series = <K extends 'amount' | 'count'>(raw: unknown, from: string, key: K) =>
   arr(raw)
     .filter(isObject)
-    .map(p => ({ date: str(p.date), [key]: key === 'amount' ? money(p[key]) : count(p[key]) }) as { date: string } & Record<K, number>)
+    .map(p => ({ date: str(p.date), [key]: key === 'amount' ? money(p[from]) : count(p[from]) }) as { date: string } & Record<K, number>)
     .filter(p => p.date);
 
-export const partnerSummarySerializer = fromResponse((raw: unknown): PartnerSummary => {
-  const r = isObject(raw) ? raw : {};
-  const c = isObject(r.counts) ? r.counts : {};
+/**
+ * The Today screen, from four answers: the dashboard's counts, the store's
+ * name, its pause (a setting) and a week of recorded sales (insights, 7d).
+ */
+export const partnerSummarySerializer = (parts: { dashboard: unknown; store: unknown; settings: unknown; insights: unknown }): PartnerSummary => {
+  const raw = bodiesOf(isObject(parts) ? parts : { dashboard: null, store: null, settings: null, insights: null });
+  const d = isObject(raw.dashboard) ? raw.dashboard : {};
+  const store = isObject(raw.store) ? raw.store : {};
+  const settings = isObject(raw.settings) ? raw.settings : {};
+  const sales = isObject(d.recordedSales) ? d.recordedSales : {};
   return {
-    storeName: str(r.storeName, 'Your store'),
-    storeSlug: str(r.storeSlug),
-    isPaused: bool(r.isPaused),
-    pauseMessage: strOrNull(r.pauseMessage),
+    storeName: str(store.name, 'Your store'),
+    storeSlug: str(store.slug),
+    isPaused: bool(settings.isPaused, bool(store.isPaused)),
+    pauseMessage: strOrNull(settings.pauseMessage),
     counts: {
-      newOrders: count(c.newOrders),
-      toShip: count(c.toShip),
-      paymentsToConfirm: count(c.paymentsToConfirm),
-      returnsOpen: count(c.returnsOpen),
-      lowStock: count(c.lowStock),
+      newOrders: count(d.newOrders),
+      toShip: count(d.toShip),
+      paymentsToConfirm: count(d.awaitingPaymentConfirmation),
+      refundsDue: count(d.refundsDue),
+      cancelRequests: count(d.cancelRequests),
+      returnsOpen: count(d.openReturns),
+      lowStock: count(d.lowStockVariants),
     },
-    sales7d: series(r.sales7d, 'amount'),
-    recordedSales7d: money(r.recordedSales7d),
+    sales7d: series(isObject(raw.insights) ? raw.insights.recordedSalesPerDay : [], 'amount', 'amount'),
+    recordedSales7d: money(sales.last7Days),
   };
-});
+};
+
+/** A pause or resume answers with the settings: the summary keeps its counts. */
+export const pauseStateSerializer = fromResponse((raw: unknown) =>
+  isObject(raw) && typeof raw.isPaused === 'boolean' ? { isPaused: raw.isPaused, pauseMessage: strOrNull(raw.pauseMessage) } : null,
+);
 
 export const partnerOrderRowSerializer = (raw: unknown): PartnerOrderRow | null => {
   if (!isObject(raw)) return null;
   const id = str(raw.id);
   if (!id) return null;
+  const method = oneOf(raw.paymentMethod, METHODS, 'cod');
   return {
     id,
     code: str(raw.code, id),
-    customerFirstName: str(raw.customerFirstName, 'Customer'),
+    customerFirstName: str(raw.customerName, 'Customer').split(/\s+/)[0],
     itemCount: count(raw.itemCount),
     total: money(raw.total),
-    status: oneOf(raw.status, ORDER_STATUSES, 'placed'),
-    paymentMethod: oneOf(raw.paymentMethod, ['cod', 'transfer'] as const, 'cod'),
-    paymentStatus: oneOf(raw.paymentStatus, PAYMENT_STATUSES, 'cod_pending'),
-    createdAt: iso(raw.createdAt),
+    status: orderStatusOf(raw),
+    paymentMethod: method,
+    paymentStatus: paymentStatusOf(method, raw.paymentStatus, null),
+    createdAt: iso(raw.placedAt),
   };
 };
 
+/** The status moves the API offers (`can.moveTo`), as the app's actions. */
+const MOVE_ACTION: Record<string, PartnerOrderAction> = { confirmed: 'confirm', packed: 'pack', shipped: 'ship', delivered: 'deliver', cancelled: 'cancel' };
+
+/**
+ * The store's view of an order. The API lists its status moves; the payment
+ * steps follow from the payment state (a transfer is checked once its proof is
+ * in, cash is taken after delivery, a refund is recorded when one is due), and
+ * a transfer order ships only once it is paid.
+ */
 export const partnerOrderDetailSerializer = fromResponse((raw: unknown): PartnerOrderDetail | null => {
   const order = storeOrderSerializer(raw);
   if (!order || !isObject(raw)) return null;
-  const address = addressSerializer(raw.address);
-  if (!address) return null;
   const customer = isObject(raw.customer) ? raw.customer : {};
+  const where = isObject(customer.address) ? customer.address : {};
+  const can = isObject(raw.can) ? raw.can : {};
+  const payStatus = str(raw.paymentStatus);
+  const unpaidTransfer = order.paymentMethod === 'transfer' && payStatus !== 'paid';
+  const moves = arr(can.moveTo).map(m => MOVE_ACTION[str(m)]).filter((a): a is PartnerOrderAction => !!a);
+  const allowed: PartnerOrderAction[] = [];
+  if (order.status === 'cancellation_requested' && moves.includes('cancel')) allowed.push('approve_cancellation');
+  allowed.push(...moves.filter(a => !(a === 'ship' && unpaidTransfer)));
+  if (payStatus === 'proof_submitted') allowed.push('confirm_payment', 'reject_payment');
+  if (order.paymentMethod === 'cod' && payStatus === 'cod_pending' && order.status === 'delivered') allowed.push('cash_collected');
+  if (payStatus === 'refund_due') allowed.push('refund');
+  const name = str(customer.name, 'Customer');
+  const phone = str(customer.phone);
+  const lat = where.lat === null || where.lat === undefined ? null : num(where.lat, NaN);
+  const lng = where.lng === null || where.lng === undefined ? null : num(where.lng, NaN);
   return {
     ...order,
-    customer: { name: str(customer.name, 'Customer'), phone: str(customer.phone) },
-    address,
-    internalNote: strOrNull(raw.internalNote),
-    allowedActions: enumList(raw.allowedActions, ACTIONS),
-    shipBlockedReason: strOrNull(raw.shipBlockedReason),
+    customer: { name, phone },
+    address: {
+      id: '',
+      label: 'home',
+      fullName: name,
+      phone,
+      city: str(where.city),
+      area: str(where.area),
+      line1: str(where.line1),
+      landmark: strOrNull(where.landmark),
+      lat: lat !== null && Number.isFinite(lat) ? lat : null,
+      lng: lng !== null && Number.isFinite(lng) ? lng : null,
+      isDefault: false,
+    },
+    allowedActions: allowed,
+    shipBlockedReason: moves.includes('ship') && unpaidTransfer ? 'Confirm the customer’s transfer before you ship.' : null,
   };
 });
 
@@ -89,9 +148,9 @@ export const partnerProductRowSerializer = (raw: unknown): PartnerProductRow | n
     id,
     name: str(raw.name, 'Untitled product'),
     status: oneOf(raw.status, PRODUCT_STATUSES, 'draft'),
-    price: money(raw.price),
+    price: money(raw.basePrice ?? raw.price),
     salePrice: moneyOrNull(raw.salePrice),
-    imageUrl: strOrNull(raw.imageUrl),
+    imageUrl: strOrNull(raw.coverUrl),
     totalStock: count(raw.totalStock),
     variantCount: count(raw.variantCount),
     lowStock: bool(raw.lowStock),
@@ -99,19 +158,23 @@ export const partnerProductRowSerializer = (raw: unknown): PartnerProductRow | n
   };
 };
 
+/** Distinct option values in variant order. */
+const valuesOf = (variants: Record<string, unknown>[], key: 'option1' | 'option2') => [
+  ...new Set(variants.map(v => str(v[key])).filter(Boolean)),
+];
+
+/** The API names no options: option 1 is the size, option 2 the colour (with each variant's swatch). */
 export const partnerProductSerializer = fromResponse((raw: unknown): PartnerProduct | null => {
   if (!isObject(raw)) return null;
   const id = str(raw.id);
   if (!id) return null;
-  const opt = (o: unknown) =>
-    isObject(o) && str(o.name) ? { name: str(o.name), values: arr(o.values).map(v => str(v)).filter(Boolean) } : null;
-  const o2 = opt(raw.option2);
+  const variants = arr(raw.variants).filter(isObject);
+  const sizes = valuesOf(variants, 'option1');
+  const colours = valuesOf(variants, 'option2');
   const swatches: Record<string, string> = {};
-  if (isObject(raw.option2) && isObject(raw.option2.swatches)) {
-    for (const [k, v] of Object.entries(raw.option2.swatches)) {
-      const c = color(v, '');
-      if (c) swatches[k] = c;
-    }
+  for (const v of variants) {
+    const c = color(v.colorHex, '');
+    if (c && str(v.option2)) swatches[str(v.option2)] = c;
   }
   return {
     id,
@@ -119,25 +182,24 @@ export const partnerProductSerializer = fromResponse((raw: unknown): PartnerProd
     description: str(raw.description),
     categoryId: strOrNull(raw.categoryId),
     collectionId: strOrNull(raw.collectionId),
-    price: money(raw.price),
+    price: money(raw.basePrice ?? raw.price),
     salePrice: moneyOrNull(raw.salePrice),
     status: oneOf(raw.status, PRODUCT_STATUSES, 'draft'),
     images: arr(raw.images)
       .filter(isObject)
+      .sort((a, b) => num(a.sort) - num(b.sort))
       .map(i => ({ url: str(i.url), publicId: str(i.publicId) }))
       .filter(i => i.url),
-    option1: opt(raw.option1),
-    option2: o2 ? { ...o2, swatches } : null,
-    variants: arr(raw.variants)
-      .filter(isObject)
-      .map(v => ({
-        id: strOrNull(v.id),
-        option1: strOrNull(v.option1),
-        option2: strOrNull(v.option2),
-        sku: str(v.sku),
-        stock: count(v.stock),
-        priceDelta: money(v.priceDelta),
-      })),
+    option1: sizes.length ? { name: 'Size', values: sizes } : null,
+    option2: colours.length ? { name: 'Colour', values: colours, swatches } : null,
+    variants: variants.map(v => ({
+      id: strOrNull(v.id),
+      option1: strOrNull(v.option1),
+      option2: strOrNull(v.option2),
+      sku: str(v.sku),
+      stock: count(v.stock),
+      priceDelta: money(v.priceDelta),
+    })),
     updatedAt: iso(raw.updatedAt),
   };
 });
@@ -150,7 +212,7 @@ export const inventoryRowSerializer = fromResponse((raw: unknown): InventoryRow 
     variantId,
     productId: str(raw.productId),
     productName: str(raw.productName, 'Product'),
-    variantLabel: str(raw.variantLabel),
+    variantLabel: str(raw.label),
     sku: str(raw.sku),
     stock: count(raw.stock),
     lowStock: bool(raw.lowStock),
@@ -158,7 +220,16 @@ export const inventoryRowSerializer = fromResponse((raw: unknown): InventoryRow 
   };
 });
 
-const MOVEMENT_REASONS: readonly MovementReason[] = ['initial', 'manual', 'bulk', 'order', 'cancel', 'return_restock'];
+/** A stock write answers `{ variantId, stock }` (a bulk one, `{ items: [those] }`); low is the API's 3 or fewer. */
+export const stockLevelSerializer = (raw: unknown): { variantId: string; stock: number; lowStock: boolean } | null => {
+  if (!isObject(raw) || !str(raw.variantId)) return null;
+  const stock = count(raw.stock);
+  return { variantId: str(raw.variantId), stock, lowStock: stock <= LOW_STOCK };
+};
+export const stockLevelResponseSerializer = fromResponse(stockLevelSerializer);
+export const stockLevelListSerializer = fromResponse(raw => compact(arr(isObject(raw) ? raw.items : raw).map(stockLevelSerializer)));
+
+const MOVEMENT_REASONS: readonly MovementReason[] = ['manual', 'bulk', 'order', 'cancel', 'return_restock'];
 
 export const movementSerializer = (raw: unknown): InventoryMovement | null => {
   if (!isObject(raw)) return null;
@@ -167,15 +238,16 @@ export const movementSerializer = (raw: unknown): InventoryMovement | null => {
   return {
     id,
     delta: Math.round(num(raw.delta)),
-    stockAfter: count(raw.stockAfter),
+    stockAfter: count(raw.balanceAfter),
     reason: oneOf(raw.reason, MOVEMENT_REASONS, 'manual'),
-    note: strOrNull(raw.note),
+    note: null,
     createdAt: iso(raw.createdAt),
   };
 };
 
 const COUPON_TYPES: readonly CouponType[] = ['percent', 'fixed'];
-const COUPON_STATUSES: readonly CouponStatus[] = ['active', 'scheduled', 'expired', 'used_up', 'inactive'];
+/** The API's coupon states; one used up is "exhausted" there. */
+const COUPON_STATE: Record<string, CouponStatus> = { active: 'active', scheduled: 'scheduled', expired: 'expired', exhausted: 'used_up', inactive: 'inactive' };
 
 export const couponSerializer = fromResponse((raw: unknown): Coupon | null => {
   if (!isObject(raw)) return null;
@@ -183,21 +255,20 @@ export const couponSerializer = fromResponse((raw: unknown): Coupon | null => {
   const code = str(raw.code);
   if (!id || !code) return null;
   const limit = raw.usageLimit === null || raw.usageLimit === undefined ? null : count(raw.usageLimit);
-  const per = raw.perCustomerLimit === null || raw.perCustomerLimit === undefined ? null : count(raw.perCustomerLimit);
   return {
     id,
     code,
     type: oneOf(raw.type, COUPON_TYPES, 'fixed'),
     value: count(raw.value),
-    minOrder: moneyOrNull(raw.minOrder),
+    minOrder: money(raw.minOrder) || null,
     maxDiscount: moneyOrNull(raw.maxDiscount),
     startsAt: iso(raw.startsAt),
     endsAt: isoOrNull(raw.endsAt),
     usageLimit: limit || null,
-    perCustomerLimit: per || null,
+    perCustomerLimit: count(raw.perUserLimit) || null,
     usedCount: count(raw.usedCount),
     isActive: bool(raw.isActive, true),
-    status: oneOf(raw.status, COUPON_STATUSES, 'active'),
+    status: COUPON_STATE[str(raw.state)] ?? 'inactive',
   };
 });
 
@@ -208,15 +279,17 @@ export const partnerReviewSerializer = fromResponse((raw: unknown): PartnerRevie
 });
 
 const RANGES: readonly InsightsRange[] = ['7d', '30d', '90d'];
+const pct = (share: unknown) => Math.min(100, Math.round(Math.max(0, num(share)) * 100));
 
 export const insightsSerializer = fromResponse((raw: unknown): Insights => {
   const r = isObject(raw) ? raw : {};
+  const totals = isObject(r.totals) ? r.totals : {};
   return {
     range: oneOf(r.range, RANGES, '7d'),
-    orders: series(r.orders, 'count'),
-    sales: series(r.sales, 'amount'),
-    recordedSales: money(r.recordedSales),
-    orderCount: count(r.orderCount),
+    orders: series(r.ordersPerDay, 'orders', 'count'),
+    sales: series(r.recordedSalesPerDay, 'amount', 'amount'),
+    recordedSales: money(totals.recordedSales),
+    orderCount: count(totals.orders),
     topProducts: arr(r.topProducts)
       .filter(isObject)
       .map(p => ({
@@ -224,14 +297,15 @@ export const insightsSerializer = fromResponse((raw: unknown): Insights => {
         name: str(p.name, 'Product'),
         imageUrl: strOrNull(p.imageUrl),
         units: count(p.units),
-        amount: money(p.amount),
+        amount: money(p.value),
       }))
       .filter(p => p.productId),
-    repeatCustomerPct: Math.min(100, count(r.repeatCustomerPct)),
-    deliveredRatePct: Math.min(100, count(r.deliveredRatePct)),
+    repeatCustomerPct: pct(isObject(r.repeatCustomers) ? r.repeatCustomers.share : 0),
+    deliveredRatePct: pct(isObject(r.conversion) ? r.conversion.rate : 0),
   };
 });
 
+/** The store's profile; WhatsApp is one of its links, and there is no public phone. */
 export const storeProfileSerializer = fromResponse((raw: unknown): StoreProfile | null => {
   if (!isObject(raw)) return null;
   const id = str(raw.id);
@@ -253,24 +327,26 @@ export const storeProfileSerializer = fromResponse((raw: unknown): StoreProfile 
       tiktok: strOrNull(s.tiktok),
       website: strOrNull(s.website),
     },
-    phone: strOrNull(raw.phone),
-    whatsapp: strOrNull(raw.whatsapp),
+    whatsapp: strOrNull(s.whatsapp),
   };
 });
 
+/** No delivery cities is nationwide; the API's top cash limit reads as none. */
 export const storeSettingsSerializer = fromResponse((raw: unknown): StoreSettings => {
   const r = isObject(raw) ? raw : {};
-  const min = count(r.dispatchMinDays);
+  const min = count(r.dispatchDaysMin);
+  const cities = arr(r.deliveryCities).map(c => str(c)).filter(Boolean);
+  const codLimit = moneyOrNull(r.codLimit);
   return {
-    shippingFee: Math.max(0, money(r.shippingFee)),
+    shippingFee: Math.max(0, money(r.shippingFlatFee)),
     freeShippingOver: moneyOrNull(r.freeShippingOver),
-    nationwide: bool(r.nationwide),
-    deliveryCities: arr(r.deliveryCities).map(c => str(c)).filter(Boolean),
+    nationwide: cities.length === 0,
+    deliveryCities: cities,
     dispatchMinDays: min,
-    dispatchMaxDays: Math.max(min, count(r.dispatchMaxDays)),
+    dispatchMaxDays: Math.max(min, count(r.dispatchDaysMax)),
     returnWindowDays: count(r.returnWindowDays),
     codEnabled: bool(r.codEnabled, true),
-    codLimit: moneyOrNull(r.codLimit),
+    codLimit: codLimit === null || codLimit >= COD_NO_LIMIT ? null : codLimit,
     isPaused: bool(r.isPaused),
     pauseMessage: strOrNull(r.pauseMessage),
   };
@@ -279,12 +355,12 @@ export const storeSettingsSerializer = fromResponse((raw: unknown): StoreSetting
 export const paymentAccountSerializer = fromResponse((raw: unknown): PaymentAccount | null => {
   if (!isObject(raw)) return null;
   const id = str(raw.id);
-  const number = str(raw.number);
+  const number = str(raw.accountNumber);
   if (!id || !number) return null;
   return {
     id,
     kind: oneOf(raw.kind, ACCOUNT_KINDS, 'bank'),
-    title: str(raw.title),
+    title: str(raw.accountTitle),
     number,
     bankName: strOrNull(raw.bankName),
     isActive: bool(raw.isActive, true),
@@ -302,25 +378,14 @@ export const paymentAccountListSerializer = fromResponse(raw => compact(arr(raw)
 /** A page of partnerProductRows, as the API answers it. */
 export const partnerProductRowPageSerializer = fromResponse(raw => paged(raw, partnerProductRowSerializer));
 
-/** A list of coupons, as the API answers it. */
-export const couponListSerializer = fromResponse(raw => compact(arr(raw).map(couponSerializer)));
+/** The store's coupons (one page holds them all). */
+export const couponListSerializer = fromResponse(raw => compact(arr(isObject(raw) ? raw.items : raw).map(couponSerializer)));
 
 /** A page of inventoryRows, as the API answers it. */
 export const inventoryRowPageSerializer = fromResponse(raw => paged(raw, inventoryRowSerializer));
 
-/** A list of inventoryRows, as the API answers it. */
-export const inventoryRowListSerializer = fromResponse(raw => compact(arr(raw).map(inventoryRowSerializer)));
+/** A variant's movements, newest first. */
+export const movementListSerializer = fromResponse(raw => compact(arr(isObject(raw) ? raw.items : raw).map(movementSerializer)));
 
-/** A list of movements, as the API answers it. */
-export const movementListSerializer = fromResponse(raw => compact(arr(raw).map(movementSerializer)));
-
-/** A page of the store's orders, with each segment's count. */
-export const partnerOrderPageSerializer = fromResponse(raw => ({
-    ...paged(raw, partnerOrderRowSerializer),
-    segmentCounts: isObject(raw) && isObject(raw.segmentCounts)
-      ? (Object.fromEntries(Object.entries(raw.segmentCounts).map(([k, v]) => [k, Math.max(0, Math.round(num(v)))])) as Record<
-          PartnerOrderSegment,
-          number
-        >)
-      : null,
-  }));
+/** A page of the store's orders. */
+export const partnerOrderPageSerializer = fromResponse(raw => paged(raw, partnerOrderRowSerializer));

@@ -550,13 +550,22 @@ export interface PartnerSummary {
   storeSlug: string;
   isPaused: boolean;
   pauseMessage: string | null;
-  counts: { newOrders: number; toShip: number; paymentsToConfirm: number; returnsOpen: number; lowStock: number };
+  counts: {
+    newOrders: number;
+    toShip: number;
+    paymentsToConfirm: number;
+    refundsDue: number;
+    cancelRequests: number;
+    returnsOpen: number;
+    lowStock: number;
+  };
   /** Recorded sales per day for the last 7 days, oldest first. */
   sales7d: { date: string; amount: number }[];
   recordedSales7d: number;
 }
 
-export type PartnerOrderSegment = 'new' | 'to_pack' | 'to_ship' | 'shipped' | 'done' | 'cancelled';
+/** One tab per API status: delivered orders are in their return window, completed ones are past it. */
+export type PartnerOrderSegment = 'new' | 'to_pack' | 'to_ship' | 'shipped' | 'delivered' | 'completed' | 'cancelled';
 
 export interface PartnerOrderRow {
   id: string;
@@ -579,12 +588,12 @@ export type PartnerOrderAction =
   | 'confirm_payment'
   | 'reject_payment'
   | 'cash_collected'
-  | 'approve_cancellation';
+  | 'approve_cancellation'
+  | 'refund';
 
 export interface PartnerOrderDetail extends StoreOrder {
   customer: { name: string; phone: string };
   address: Address;
-  internalNote: string | null;
   allowedActions: PartnerOrderAction[];
   /** Why ship is not offered, when it isn't ("Confirm the transfer first"). */
   shipBlockedReason: string | null;
@@ -648,7 +657,7 @@ export interface InventoryRow {
   imageUrl: string | null;
 }
 
-export type MovementReason = 'initial' | 'manual' | 'bulk' | 'order' | 'cancel' | 'return_restock';
+export type MovementReason = 'manual' | 'bulk' | 'order' | 'cancel' | 'return_restock';
 
 export interface InventoryMovement {
   id: string;
@@ -709,7 +718,6 @@ export interface StoreProfile {
   brandColor: string;
   onBrandColor: string;
   socials: StoreSocials;
-  phone: string | null;
   whatsapp: string | null;
 }
 

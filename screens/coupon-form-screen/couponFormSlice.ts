@@ -2,7 +2,7 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { createCoupon, deleteCoupon, updateCoupon } from '../../networks/shopping/partner/coupons';
+import { createCoupon, deactivateCoupon, updateCoupon } from '../../networks/shopping/partner/coupons';
 import { toRejectedValue } from '../../networks/network/network';
 import { emptyCouponForm, normaliseCode, toCouponInput, type CouponForm } from '../../models/shopping/couponFormModel';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -58,10 +58,10 @@ export const couponFormSlice = createAppSlice({
         },
       },
     ),
-    deleteCouponAsync: create.asyncThunk(
+    deactivateCouponAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return await deleteCoupon(id);
+          return await deactivateCoupon(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -75,7 +75,7 @@ export const couponFormSlice = createAppSlice({
         },
         rejected: (state, action) => {
           state.status = 'failed';
-          state.error = readRejection(action, "We couldn't delete this coupon.");
+          state.error = readRejection(action, "We couldn't turn this coupon off.");
         },
       },
     ),
@@ -85,5 +85,5 @@ export const couponFormSlice = createAppSlice({
   },
 });
 
-export const { startCouponForm, setCouponField, markCouponSubmitted, saveCouponAsync, deleteCouponAsync } = couponFormSlice.actions;
+export const { startCouponForm, setCouponField, markCouponSubmitted, saveCouponAsync, deactivateCouponAsync } = couponFormSlice.actions;
 export const { selectCouponForm } = couponFormSlice.selectors;

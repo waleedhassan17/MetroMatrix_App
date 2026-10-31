@@ -248,7 +248,8 @@ describe('store partner: payment before shipping, then delivery and review', () 
 
     await signIn('store@metromatrix.app', 'partner');
     await approveReturn(ret.id, null);
-    await receiveReturn(ret.id, { [item.id]: true });
+    // The store restocks by the return's own line.
+    await receiveReturn(ret.id, { [ret.items[0].id]: true });
     expect(await stockOf(kurta.id)).toBe(afterSale + 1);
     const refunded = required(returnSerializer(await recordRefund(ret.id, { amount: item.unitPrice, reference: 'IBFT-5521' })));
     expect(refunded.status).toBe('refunded');
@@ -269,11 +270,12 @@ describe('store partner: payment before shipping, then delivery and review', () 
   it('a failed publish leaves nothing behind', async () => {
     await signIn('store@metromatrix.app', 'partner');
     const drafts = (required(partnerProductRowPageSerializer(await fetchPartnerProducts({ status: 'draft' }, 1)))).total;
+    const category = (await getDb()).shop.categories.find(c => c.parentId)!.id;
     const err = await failure(
       createPartnerProduct({
         name: 'Teal silk dupatta',
         description: '',
-        categoryId: null,
+        categoryId: category,
         collectionId: null,
         price: 2500,
         salePrice: null,
@@ -284,8 +286,9 @@ describe('store partner: payment before shipping, then delivery and review', () 
         variants: [{ id: null, option1: null, option2: null, sku: '', stock: 0, priceDelta: 0 }],
       }).then(raw => required(partnerProductSerializer(raw))),
     );
-    expect(err.code).toBe('PUBLISH_BLOCKED');
-    expect(Object.keys(err.details.fields)).toEqual(expect.arrayContaining(['categoryId', 'images', 'variants']));
+    // Publishing needs a photo and stock: the API's 400, every missing part named.
+    expect([err.status, err.code, err.message]).toEqual([400, 'VALIDATION_FAILED', 'Add at least one photo before publishing.']);
+    expect(Object.keys(err.details.fields)).toEqual(expect.arrayContaining(['images', 'variants']));
     expect((required(partnerProductRowPageSerializer(await fetchPartnerProducts({ status: 'draft' }, 1)))).total).toBe(drafts);
   });
 });

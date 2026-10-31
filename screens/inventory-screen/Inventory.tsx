@@ -51,7 +51,6 @@ import { inventoryRowPageSerializer } from '../../serializers/shopping/partnerSe
 type Props = NativeStackScreenProps<StorePartnerStackParamList, 'Inventory'>;
 
 const REASON: Record<MovementReason, string> = {
-  initial: 'Opening stock',
   manual: 'You changed it',
   bulk: 'Set in bulk',
   order: 'Sold',
@@ -92,7 +91,7 @@ const InventoryContent: React.FC<Props> = ({ route }) => {
   }, [route.params?.lowStock, dispatch]);
 
   const renderRow = (raw: InventoryRow) => {
-    const row = s.saved[raw.variantId] ?? raw;
+    const row = s.saved[raw.variantId] ? { ...raw, ...s.saved[raw.variantId] } : raw;
     const draft = s.drafts[row.variantId];
     const changed = draft !== undefined && draft !== '' && Number(draft) !== row.stock;
     const picked = s.selected.includes(row.variantId);

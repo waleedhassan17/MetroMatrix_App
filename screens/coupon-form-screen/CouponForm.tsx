@@ -18,7 +18,7 @@ import type { CouponType, StorePartnerStackParamList } from '../../models';
 import { Alert } from '../../utils/alert/alert';
 import { haptics } from '../../utils/haptics/haptics';
 import { selectCoupons } from '../coupons-screen/couponsSlice';
-import { deleteCouponAsync, markCouponSubmitted, saveCouponAsync, selectCouponForm, setCouponField, startCouponForm } from './couponFormSlice';
+import { deactivateCouponAsync, markCouponSubmitted, saveCouponAsync, selectCouponForm, setCouponField, startCouponForm } from './couponFormSlice';
 
 type Props = NativeStackScreenProps<StorePartnerStackParamList, 'CouponForm'>;
 
@@ -72,16 +72,16 @@ const CouponFormContent: React.FC<Props> = ({ route }) => {
     } else haptics.warning();
   };
 
-  const remove = () =>
+  const turnOff = () =>
     s.id &&
-    Alert.alert(`Delete ${f.code}?`, 'Orders that used it keep their discount.', [
-      { text: 'Keep it', style: 'cancel' },
+    Alert.alert(`Turn off ${f.code}?`, 'Customers can’t use it any more. Orders that used it keep their discount.', [
+      { text: 'Keep it on', style: 'cancel' },
       {
-        text: 'Delete',
+        text: 'Turn off',
         style: 'destructive',
         onPress: async () => {
-          const r = await dispatch(deleteCouponAsync(s.id!));
-          if (deleteCouponAsync.fulfilled.match(r)) back();
+          const r = await dispatch(deactivateCouponAsync(s.id!));
+          if (deactivateCouponAsync.fulfilled.match(r)) back();
         },
       },
     ]);
@@ -102,9 +102,10 @@ const CouponFormContent: React.FC<Props> = ({ route }) => {
         autoCapitalize="characters"
         autoCorrect={false}
         placeholder="EID15"
-        helper="4 to 16 letters or digits. Customers type this."
+        editable={!id}
+        helper={id ? 'A code stays the same once it’s made.' : '4 to 16 letters or digits. Customers type this.'}
       />
-      <TextAction label="Make one up for me" icon="shuffle-outline" onPress={() => set('code', generateCode())} />
+      {id ? null : <TextAction label="Make one up for me" icon="shuffle-outline" onPress={() => set('code', generateCode())} />}
       <SegmentTabs options={TYPES} value={f.type} onChange={t => set('type', t)} accessibilityLabel="Discount type" />
       <View style={styles.two}>
         <View style={styles.half}>
@@ -122,7 +123,7 @@ const CouponFormContent: React.FC<Props> = ({ route }) => {
           <DateField label="Starts" value={f.startsAt} onChange={v => set('startsAt', v)} error={errors.startsAt} />
         </View>
         <View style={styles.half}>
-          <DateField label="Ends (optional)" value={f.endsAt} onChange={v => set('endsAt', v)} min={f.startsAt || undefined} error={errors.endsAt} />
+          <DateField label="Ends" value={f.endsAt} onChange={v => set('endsAt', v)} min={f.startsAt || undefined} error={errors.endsAt} />
         </View>
       </View>
       <View style={styles.two}>
@@ -130,10 +131,10 @@ const CouponFormContent: React.FC<Props> = ({ route }) => {
           <TextField label="Uses in all" mode="numeric" value={f.usageLimit} onChangeText={v => set('usageLimit', v)} error={errors.usageLimit} placeholder="No limit" />
         </View>
         <View style={styles.half}>
-          <TextField label="Per customer" mode="numeric" value={f.perCustomerLimit} onChangeText={v => set('perCustomerLimit', v)} error={errors.perCustomerLimit} placeholder="No limit" />
+          <TextField label="Per customer" mode="numeric" value={f.perCustomerLimit} onChangeText={v => set('perCustomerLimit', v)} error={errors.perCustomerLimit} placeholder="1" />
         </View>
       </View>
-      <ToggleRow label="Active" helper="Turn off to pause it without deleting." value={f.isActive} onChange={v => set('isActive', v)} />
+      <ToggleRow label="Active" helper="Turn it off to pause it; you can turn it on again." value={f.isActive} onChange={v => set('isActive', v)} />
       {preview && f.code ? (
         <Card>
           <AppText variant="small" tone="muted">
@@ -144,7 +145,7 @@ const CouponFormContent: React.FC<Props> = ({ route }) => {
           </AppText>
         </Card>
       ) : null}
-      {s.id ? <Button label="Delete coupon" variant="ghost" onPress={() => void remove()} fullWidth /> : null}
+      {s.id && f.isActive ? <Button label="Turn off this coupon" variant="ghost" onPress={() => void turnOff()} fullWidth /> : null}
     </ScreenShell>
   );
 };

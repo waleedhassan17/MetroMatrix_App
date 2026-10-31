@@ -1,10 +1,10 @@
-// MetroMatrix — Store orders slice: the segment (or "payments to check") and the search.
+// MetroMatrix — Store orders slice: the segment (or "payments to check", "refunds to record") and the search.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import type { PartnerOrderSegment } from '../../models';
 
-export type StoreOrdersView = PartnerOrderSegment | 'payments';
+export type StoreOrdersView = PartnerOrderSegment | 'payments' | 'refunds';
 
 export interface StoreOrdersSliceState {
   view: StoreOrdersView;

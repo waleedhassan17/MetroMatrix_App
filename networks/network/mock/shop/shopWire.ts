@@ -8,11 +8,11 @@
 // order's step plus `cancelRequestedAt`, "returned" is delivered, cash taken
 // is `paid`, a refused proof is `awaiting_transfer` with a `rejectedReason`,
 // and a cancelled order's payment is `void` or `refund_due`.
-// serializers/__tests__/shopParity.test.ts keeps these keys and the real
-// capture (serializers/__tests__/fixtures/shop/real.json) the same.
+// networks/network/mock/__tests__/mockShopParity.test.ts keeps these keys and
+// the real capture (serializers/__tests__/fixtures/shop/real.json) the same.
 
 import type { MockDb } from '../mockDb';
-import type { MockCoupon, MockGroup, MockOrder, MockProduct, MockReturn, MockReview, MockStore } from './shopTypes';
+import type { MockCollection, MockCoupon, MockGroup, MockMovement, MockOrder, MockProduct, MockReturn, MockReview, MockStore, MockVariant } from './shopTypes';
 import type { StoreChoice } from './shopLogic';
 import {
   LOW_STOCK,
@@ -364,6 +364,14 @@ export const planWire = (plan: ReturnType<typeof planFor>) => {
 };
 
 // ─── Orders ───────────────────────────────────────────
+/** Where the store may move an order from each status (the API's allowedOrderMoves(…, 'store')). */
+const STORE_MOVES: Record<string, string[]> = {
+  placed: ['confirmed', 'cancelled'],
+  confirmed: ['packed', 'cancelled'],
+  packed: ['shipped', 'cancelled'],
+  shipped: ['delivered'],
+};
+
 const COURIER_NAMES: Record<string, string> = { tcs: 'TCS', leopards: 'Leopards', mnp: 'M&P', postex: 'PostEx', trax: 'Trax', own_rider: 'Own rider', other: 'Courier' };
 
 const eventAt = (o: MockOrder, type: string) => o.events.filter(e => e.type === type).map(e => e.createdAt).pop() ?? null;
@@ -449,15 +457,15 @@ export const storeOrderWire = (db: MockDb, o: MockOrder, view: 'customer' | 'gro
       proofUrl: o.paymentProof?.imageUrl ?? null,
       rejectedReason: o.paymentStatus === 'proof_rejected' ? (o.paymentProof?.rejectionReason ?? 'The store could not find your transfer.') : null,
       accounts: account ? [{ kind: account.kind, bankName: account.bankName, accountTitle: account.title, accountNumber: account.number }] : null,
-      refundAmount: o.paymentStatus === 'refunded' ? o.total : null,
-      refundRef: null,
-      refundedAt: null,
+      refundAmount: o.refund?.amount ?? (o.paymentStatus === 'refunded' ? o.total : null),
+      refundRef: o.refund?.reference ?? null,
+      refundedAt: o.refund?.recordedAt ?? null,
     },
     shipping: {
-      courierName: o.shipment ? COURIER_NAMES[o.shipment.courier] : null,
-      trackingRef: o.shipment?.trackingRef ?? null,
-      riderName: null,
-      riderPhone: null,
+      courierName: o.shipment ? (o.shipment.courier === 'own_rider' ? 'self' : COURIER_NAMES[o.shipment.courier]) : null,
+      trackingRef: o.shipment && o.shipment.courier !== 'own_rider' ? o.shipment.trackingRef : null,
+      riderName: o.shipment?.riderName ?? null,
+      riderPhone: o.shipment?.riderPhone ?? null,
     },
     cancelReason: o.cancelReason,
     cancelledBy: o.status === 'cancelled' ? 'store' : null,
@@ -490,15 +498,8 @@ export const storeOrderWire = (db: MockDb, o: MockOrder, view: 'customer' | 'gro
   }
   const g = shop.groups.find(x => x.code === o.groupCode);
   const customer = userById(db, o.userId);
-  const moveTo: string[] = [];
-  const step = apiStatus(o);
-  if (o.status !== 'cancelled') {
-    if (step === 'placed') moveTo.push('confirmed');
-    if (step === 'confirmed') moveTo.push('packed');
-    if (step === 'packed' && !(o.paymentMethod === 'transfer' && o.paymentStatus !== 'paid')) moveTo.push('shipped');
-    if (step === 'shipped') moveTo.push('delivered');
-    if (['placed', 'confirmed', 'packed'].includes(step)) moveTo.push('cancelled');
-  }
+  // The status machine's moves for the store; a transfer still ships only once paid (the ship call says so).
+  const moveTo = STORE_MOVES[apiStatus(o)] ?? [];
   return {
     ...common,
     customer: {
@@ -620,3 +621,232 @@ export const availableCouponsWire = (shop: Shop, storeId: string, userId: string
       }),
   };
 };
+
+// ─── The store partner (/shop/partner) ────────────────
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** A row of GET /shop/partner/orders. */
+export const partnerOrderRowWire = (db: MockDb, o: MockOrder) => {
+  const g = db.shop.groups.find(x => x.code === o.groupCode);
+  return {
+    id: o.id,
+    code: o.code,
+    status: apiStatus(o),
+    paymentMethod: o.paymentMethod,
+    paymentStatus: apiPaymentStatus(o),
+    total: o.total,
+    itemCount: o.items.reduce((n, i) => n + i.quantity, 0),
+    customerName: g?.address.fullName ?? userById(db, o.userId)?.name ?? 'Customer',
+    city: g?.address.city ?? '',
+    payBy: o.payBy,
+    cancelRequested: o.status === 'cancellation_requested',
+    placedAt: o.createdAt,
+  };
+};
+
+const sold = (o: MockOrder) => (o.status === 'delivered' || o.status === 'returned') && !!o.deliveredAt;
+
+/** GET /shop/partner/dashboard: the counts a store acts on, and its recorded sales. */
+export const dashboardWire = (shop: Shop, store: MockStore, now: number) => {
+  const orders = shop.orders.filter(o => o.storeId === store.id);
+  const step = (o: MockOrder) => apiStatus(o);
+  const salesSince = (days: number) => orders.filter(o => sold(o) && Date.parse(o.deliveredAt!) > now - days * DAY_MS).reduce((s, o) => s + o.total, 0);
+  const reviews = shop.reviews.filter(r => r.storeId === store.id);
+  return {
+    todayNewOrders: orders.filter(o => o.createdAt.slice(0, 10) === new Date(now).toISOString().slice(0, 10)).length,
+    newOrders: orders.filter(o => step(o) === 'placed').length,
+    toShip: orders.filter(o => ['confirmed', 'packed'].includes(step(o))).length,
+    awaitingPaymentConfirmation: orders.filter(o => o.paymentStatus === 'proof_submitted' && o.status !== 'cancelled').length,
+    refundsDue: orders.filter(o => apiPaymentStatus(o) === 'refund_due').length,
+    cancelRequests: orders.filter(o => o.status === 'cancellation_requested').length,
+    lowStockVariants: shop.products.filter(p => p.storeId === store.id && p.status === 'active').reduce((n, p) => n + p.variants.filter(v => v.stock <= LOW_STOCK).length, 0),
+    openReturns: shop.returns.filter(r => r.storeId === store.id && ['requested', 'approved', 'received'].includes(r.status)).length,
+    unrepliedReviews: reviews.filter(r => !r.reply).length,
+    rating: { avg: ratingOf(reviews).ratingAvg, count: reviews.length },
+    recordedSales: { last7Days: salesSince(7), last30Days: salesSince(30) },
+  };
+};
+
+/** GET /shop/partner/insights?range=: orders and recorded sales per day, top products, repeat customers, conversion. */
+export const insightsWire = (shop: Shop, store: MockStore, range: '7d' | '30d' | '90d', now: number) => {
+  const days = range === '90d' ? 90 : range === '30d' ? 30 : 7;
+  const since = now - days * DAY_MS;
+  const all = shop.orders.filter(o => o.storeId === store.id && Date.parse(o.createdAt) >= since);
+  const delivered = shop.orders.filter(o => o.storeId === store.id && sold(o) && Date.parse(o.deliveredAt!) >= since);
+  const dates = Array.from({ length: days }, (_, i) => new Date(now - (days - 1 - i) * DAY_MS).toISOString().slice(0, 10));
+  const top = new Map<string, { productId: string; name: string; units: number; value: number }>();
+  for (const o of delivered) {
+    for (const i of o.items) {
+      const row = top.get(i.productId) ?? { productId: i.productId, name: i.name, units: 0, value: 0 };
+      row.units += i.quantity;
+      row.value += i.unitPrice * i.quantity;
+      top.set(i.productId, row);
+    }
+  }
+  const buyers = new Map<string, number>();
+  for (const o of delivered) buyers.set(o.userId, (buyers.get(o.userId) ?? 0) + 1);
+  const repeat = [...buyers.values()].filter(n => n > 1).length;
+  const placed = all.length;
+  const done = all.filter(sold).length;
+  return {
+    range,
+    days,
+    ordersPerDay: dates.map(date => ({ date, orders: all.filter(o => o.createdAt.slice(0, 10) === date).length })),
+    recordedSalesPerDay: dates.map(date => ({ date, amount: delivered.filter(o => o.deliveredAt!.slice(0, 10) === date).reduce((s, o) => s + o.total, 0) })),
+    totals: { orders: placed, recordedSales: delivered.reduce((s, o) => s + o.total, 0) },
+    topProducts: [...top.values()].sort((a, b) => b.value - a.value).slice(0, 5),
+    repeatCustomers: { customers: buyers.size, repeat, share: buyers.size ? repeat / buyers.size : 0 },
+    conversion: { placed, delivered: done, cancelled: all.filter(o => o.status === 'cancelled').length, rate: placed ? done / placed : 0 },
+  };
+};
+
+/** GET /shop/partner/store. */
+export const storeProfileWire = (shop: Shop, s: MockStore) => ({
+  id: s.id,
+  slug: s.slug,
+  tagline: s.tagline,
+  about: s.about,
+  logoUrl: s.logoUrl,
+  coverUrl: s.coverUrl,
+  brandColor: s.brandColor,
+  onBrandColor: s.onBrandColor,
+  socials: socialsOf(s),
+  ...ratingOf(shop.reviews.filter(r => r.storeId === s.id)),
+  isFeatured: s.isFeatured,
+  isPaused: s.isPaused,
+  name: s.name,
+  city: s.city,
+});
+
+/** GET /shop/partner/store/settings. */
+export const storeSettingsWire = (s: MockStore) => ({
+  returnWindowDays: s.settings.returnWindowDays,
+  codEnabled: s.settings.codEnabled,
+  codLimit: s.settings.codLimit ?? 1_000_000,
+  shippingFlatFee: s.settings.shippingFee,
+  freeShippingOver: s.settings.freeShippingOver,
+  deliveryCities: deliveryCities(s),
+  dispatchDaysMin: s.settings.dispatchMinDays,
+  dispatchDaysMax: s.settings.dispatchMaxDays,
+  isPaused: s.isPaused,
+  pauseMessage: s.pauseMessage,
+});
+
+export const paymentAccountWire = (s: MockStore, a: MockStore['paymentAccounts'][number]) => ({
+  id: a.id,
+  kind: a.kind,
+  accountTitle: a.title,
+  accountNumber: a.number,
+  bankName: a.bankName,
+  isActive: a.isActive,
+  createdAt: s.createdAt,
+});
+
+export const partnerCollectionWire = (c: MockCollection) => ({ id: c.id, name: c.name, slug: c.slug, sort: c.position });
+
+const colourOf = (p: MockProduct, v: MockVariant) => (v.option2 && p.option2?.swatches[v.option2]) || null;
+const lowOf = (p: MockProduct) => p.variants.some(v => v.stock <= LOW_STOCK);
+const soldOf = (shop: Shop, p: MockProduct) => shop.orders.filter(o => sold(o)).reduce((n, o) => n + o.items.filter(i => i.productId === p.id).reduce((m, i) => m + i.quantity, 0), 0);
+
+/** A row of GET /shop/partner/products. */
+export const partnerProductRowWire = (shop: Shop, p: MockProduct) => ({
+  id: p.id,
+  name: p.name,
+  slug: productSlug(p),
+  status: p.status,
+  basePrice: p.price,
+  salePrice: p.salePrice,
+  price: unitPrice(p, null),
+  categoryId: p.categoryId,
+  collectionId: p.collectionId,
+  coverUrl: p.images[0]?.url ?? null,
+  variantCount: p.variants.length,
+  totalStock: totalStock(p),
+  lowStock: lowOf(p),
+  soldCount: soldOf(shop, p),
+  ratingAvg: ratingOf(reviewsOf(shop, p.id)).ratingAvg,
+  updatedAt: p.updatedAt,
+});
+
+/** GET /shop/partner/products/:id, and every product write. */
+export const partnerProductWire = (shop: Shop, p: MockProduct) => ({
+  id: p.id,
+  name: p.name,
+  slug: productSlug(p),
+  description: p.description,
+  categoryId: p.categoryId,
+  collectionId: p.collectionId,
+  basePrice: p.price,
+  salePrice: p.salePrice,
+  price: unitPrice(p, null),
+  pack: null,
+  pricePer: null,
+  status: p.status,
+  removedReason: p.removed ? 'Removed after a report' : null,
+  tags: [],
+  ...ratingOf(reviewsOf(shop, p.id)),
+  soldCount: soldOf(shop, p),
+  publishedAt: p.status === 'active' ? p.createdAt : null,
+  createdAt: p.createdAt,
+  updatedAt: p.updatedAt,
+  images: p.images.map((i, k) => ({ id: `${p.id}-img${k}`, url: i.url, publicId: i.publicId, sort: k })),
+  variants: p.variants.map(v => ({
+    id: v.id,
+    option1: v.option1,
+    option2: v.option2,
+    label: variantLabel(v) || 'Default',
+    colorHex: colourOf(p, v),
+    sku: v.sku || null,
+    priceDelta: v.priceDelta,
+    price: unitPrice(p, v),
+    pack: null,
+    pricePer: null,
+    stock: v.stock,
+    isActive: true,
+    lowStock: v.stock <= LOW_STOCK,
+  })),
+  totalStock: totalStock(p),
+});
+
+/** A row of GET /shop/partner/inventory. */
+export const inventoryRowWire = (p: MockProduct, v: MockVariant) => ({
+  variantId: v.id,
+  productId: p.id,
+  productName: p.name,
+  label: variantLabel(v) || 'Default',
+  sku: v.sku || null,
+  stock: v.stock,
+  isActive: true,
+  lowStock: v.stock <= LOW_STOCK,
+});
+
+export const movementWire = (m: MockMovement) => ({
+  id: m.id,
+  delta: m.delta,
+  reason: m.reason,
+  refType: m.reason === 'order' || m.reason === 'cancel' ? 'store_order' : m.reason === 'return_restock' ? 'return' : null,
+  refId: null,
+  actorUserId: null,
+  balanceAfter: m.stockAfter,
+  createdAt: m.createdAt,
+});
+
+/** The API's coupon state; one used up is "exhausted" there. */
+const COUPON_STATE: Record<string, string> = { active: 'active', scheduled: 'scheduled', expired: 'expired', used_up: 'exhausted', inactive: 'inactive' };
+
+export const couponWire = (c: MockCoupon) => ({
+  id: c.id,
+  code: c.code,
+  type: c.type,
+  value: c.value,
+  minOrder: c.minOrder ?? 0,
+  maxDiscount: c.maxDiscount,
+  startsAt: c.startsAt,
+  endsAt: c.endsAt,
+  usageLimit: c.usageLimit,
+  perUserLimit: c.perCustomerLimit ?? 1,
+  usedCount: c.usedCount,
+  isActive: c.isActive,
+  state: COUPON_STATE[couponStatus(c)],
+  createdAt: c.startsAt,
+});

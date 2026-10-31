@@ -34,7 +34,6 @@ const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
     grid: { gap: space.s12 },
     gridRow: { flexDirection: 'row', gap: space.s12 },
-    spacer: { flex: 1 },
     actions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.s12 },
   });
 
@@ -97,7 +96,7 @@ const StoreTodayContent: React.FC = () => {
             </View>
             <View style={styles.gridRow}>
               <ActionTile label="Low on stock" count={sum.counts.lowStock} icon="alert-circle-outline" tone="warning" onPress={() => navigation.navigate('Inventory', { lowStock: true })} />
-              <View style={styles.spacer} />
+              <ActionTile label="Refunds to record" count={sum.counts.refundsDue} icon="cash-outline" tone="warning" onPress={() => openOrders('refunds')} />
             </View>
           </View>
 

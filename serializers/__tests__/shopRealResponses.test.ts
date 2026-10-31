@@ -1,11 +1,13 @@
 // Real MetroMatrix-API Shopping responses (captured end to end on a local
 // backend's seed:shopping demo by scripts/capture-shop-fixtures.js: the
 // catalogue, the bag, checkout, the orders a customer and a store move, a
-// transfer, returns and reviews) through the customer's Shopping serializers.
+// transfer, returns and reviews, and the store's own pages) through the
+// Shopping serializers.
 
 import real from './fixtures/shop/real.json';
 import {
   categoryListSerializer,
+  collectionListSerializer,
   productDetailSerializer,
   productReviewsSerializer,
   reviewSerializer,
@@ -23,6 +25,24 @@ import {
   returnSerializer,
   storeOrderResponseSerializer,
 } from '../shopping/orderSerializer';
+import {
+  couponListSerializer,
+  couponSerializer,
+  insightsSerializer,
+  inventoryRowPageSerializer,
+  partnerOrderDetailSerializer,
+  partnerOrderPageSerializer,
+  partnerProductRowPageSerializer,
+  partnerProductSerializer,
+  partnerReviewPageSerializer,
+  partnerReviewSerializer,
+  partnerSummarySerializer,
+  paymentAccountListSerializer,
+  stockLevelListSerializer,
+  stockLevelResponseSerializer,
+  storeProfileSerializer,
+  storeSettingsSerializer,
+} from '../shopping/partnerSerializer';
 
 type Captured = Record<string, { status: number; body: { success: boolean; data?: any; error?: any } }>;
 const R = real as unknown as Captured;
@@ -208,5 +228,121 @@ describe('orders, returns and refunds', () => {
       { id: expect.any(String), orderItemId: expect.any(String), name: 'Silk festive kurta', variantLabel: 'S', imageUrl: expect.any(String), quantity: 1, unitPrice: 7500 },
     ]);
     expect(returnPageSerializer(body('returns'))!.items[0].id).toBe(r.id);
+  });
+});
+
+describe('the store partner', () => {
+  const store = (k: string) => {
+    const o = partnerOrderDetailSerializer(body(k))!;
+    return [o.status, o.paymentStatus, o.allowedActions];
+  };
+
+  it('reads Today from the dashboard, the store, its settings and a week of insights', () => {
+    const t = partnerSummarySerializer({ dashboard: body('dashboard'), store: body('storeProfile'), settings: body('storeSettings'), insights: body('insights') });
+    expect(t).toMatchObject({ storeName: 'Lahore Loom', storeSlug: 'lahore-loom', isPaused: false, pauseMessage: null, recordedSales7d: 15000 });
+    expect(t.counts).toEqual({ newOrders: 0, toShip: 0, paymentsToConfirm: 0, refundsDue: 0, cancelRequests: 0, returnsOpen: 0, lowStock: 21 });
+    expect(t.sales7d[0]).toEqual({ date: '2026-10-02', amount: 0 });
+  });
+
+  it('reads the order list and the store’s view of an order', () => {
+    expect(partnerOrderPageSerializer(body('partnerOrders'))!.items[0]).toMatchObject({ customerFirstName: 'Ayesha', itemCount: 1, total: 7500, status: 'placed', paymentMethod: 'transfer', paymentStatus: 'awaiting_transfer' });
+    const o = partnerOrderDetailSerializer(body('partnerOrder'))!;
+    expect(o.customer).toEqual({ name: 'Ayesha Khan', phone: '+923000000000' });
+    expect(o.address).toMatchObject({ fullName: 'Ayesha Khan', city: 'Lahore', area: 'Gulberg III', line1: 'House 12, Street 4' });
+    expect([o.status, o.paymentStatus, o.allowedActions, o.note]).toEqual(['placed', 'cod_pending', ['confirm', 'cancel'], 'Ring the bell']);
+  });
+
+  it('offers each next step, the payment ones from the payment state', () => {
+    expect(store('partnerConfirm')).toEqual(['confirmed', 'cod_pending', ['pack', 'cancel']]);
+    expect(store('partnerPack')).toEqual(['packed', 'cod_pending', ['ship', 'cancel']]);
+    expect(store('partnerShip')).toEqual(['shipped', 'cod_pending', ['deliver']]);
+    expect(partnerOrderDetailSerializer(body('partnerShip'))!.shipment).toEqual({ courier: 'tcs', courierName: 'TCS', trackingRef: 'TCS-77120934' });
+    expect(store('partnerDeliver')).toEqual(['delivered', 'cod_pending', ['cash_collected']]);
+    expect(store('partnerCashCollected')).toEqual(['delivered', 'cash_collected', []]);
+    expect(store('partnerPaymentReject')).toEqual(['placed', 'proof_rejected', ['confirm', 'cancel']]);
+    expect(store('partnerPaymentConfirm')).toEqual(['placed', 'paid', ['confirm', 'cancel']]);
+    expect(store('partnerCancelPaid')).toEqual(['cancelled', 'refund_due', ['refund']]);
+    expect(store('partnerRefund')).toEqual(['cancelled', 'refunded', []]);
+  });
+
+  it('holds a transfer back from shipping until it is paid', () => {
+    const packed = body('partnerPack');
+    const unpaid = { ...packed, data: { ...packed.data, paymentMethod: 'transfer', paymentStatus: 'awaiting_transfer', payment: { ...packed.data.payment, method: 'transfer', status: 'awaiting_transfer' } } };
+    const o = partnerOrderDetailSerializer(unpaid)!;
+    expect(o.allowedActions).toEqual(['cancel']);
+    expect(o.shipBlockedReason).toMatch(/transfer/);
+  });
+
+  it('reads products, with the sizes from the variants', () => {
+    expect(partnerProductRowPageSerializer(body('partnerProducts'))!.items[0]).toMatchObject({ name: 'Kids lawn frock', status: 'active', price: 2200, salePrice: 1900, totalStock: 15, variantCount: 3, lowStock: false });
+    const p = partnerProductSerializer(body('partnerProduct'))!;
+    expect(p).toMatchObject({ name: 'Silk festive kurta', price: 8900, salePrice: 7500, status: 'active', option1: { name: 'Size', values: ['S', 'M', 'L'] }, option2: null });
+    expect(p.images).toHaveLength(1);
+    expect(p.variants.map(v => [v.option1, v.stock])).toEqual([
+      ['S', 2],
+      ['M', 2],
+      ['L', 1],
+    ]);
+    expect(partnerProductSerializer(body('productCreate'))).toMatchObject({ name: 'Capture test kurta', status: 'draft', price: 2500, salePrice: null });
+    expect(error('productPublishErr')).toMatchObject({ code: 'VALIDATION_FAILED', details: { fields: { images: ['Add at least one photo before publishing.'] } } });
+  });
+
+  it('reads stock rows and the answers to a stock write', () => {
+    expect(inventoryRowPageSerializer(body('inventory'))!.items[0]).toMatchObject({ productName: 'Peshawari chappal', variantLabel: '43', stock: 0, lowStock: true });
+    expect(stockLevelResponseSerializer(body('inventorySet'))).toMatchObject({ stock: 0, lowStock: true });
+    expect(stockLevelListSerializer(body('inventoryBulk'))).toHaveLength(1);
+  });
+
+  it('reads coupons in the app’s words', () => {
+    expect(couponSerializer(body('couponCreate'))).toMatchObject({ type: 'percent', value: 10, minOrder: 1000, maxDiscount: 500, usageLimit: 50, perCustomerLimit: 1, isActive: true, status: 'active' });
+    expect(couponSerializer(body('couponDeactivate'))).toMatchObject({ value: 15, isActive: false, status: 'inactive' });
+    expect(couponListSerializer(body('coupons'))![0]).toMatchObject({ type: 'fixed', value: 300, minOrder: 2000, status: 'inactive' });
+  });
+
+  it('reads reviews and a reply, editable for a day', () => {
+    expect(partnerReviewPageSerializer(body('partnerReviews'))!.items[0]).toMatchObject({ productName: 'Silk festive kurta', rating: 5, reply: null });
+    const r = partnerReviewSerializer(body('reviewReply'))!;
+    expect(r.reply).toMatchObject({ body: 'Thank you for shopping with us!' });
+    expect(Date.parse(r.reply!.editableUntil) - Date.parse(r.reply!.createdAt)).toBe(24 * 60 * 60 * 1000);
+  });
+
+  it('reads insights, with shares as percentages', () => {
+    const i = insightsSerializer(body('insights'));
+    expect(i).toMatchObject({ range: '30d', recordedSales: 29040, orderCount: 6, repeatCustomerPct: 0, deliveredRatePct: 50 });
+    expect(i.topProducts[0]).toMatchObject({ name: 'Embroidered lawn kurta', units: 4, amount: 15600 });
+  });
+
+  it('reads the profile, settings, payment accounts and collections', () => {
+    expect(storeProfileSerializer(body('storeProfile'))).toMatchObject({ name: 'Lahore Loom', brandColor: '#7F1D1D', onBrandColor: '#FFFFFF', whatsapp: null });
+    // The server picks the text on a light brand colour.
+    expect(storeProfileSerializer(body('storeProfileContrastErr'))).toMatchObject({ brandColor: '#9CA3AF', onBrandColor: '#16151A' });
+    expect(storeSettingsSerializer(body('storeSettings'))).toEqual({
+      shippingFee: 200,
+      freeShippingOver: 5000,
+      nationwide: true,
+      deliveryCities: [],
+      dispatchMinDays: 1,
+      dispatchMaxDays: 3,
+      returnWindowDays: 7,
+      codEnabled: true,
+      codLimit: 15000,
+      isPaused: false,
+      pauseMessage: null,
+    });
+    expect(paymentAccountListSerializer(body('paymentAccounts'))!.map(a => [a.kind, a.title, a.bankName])).toEqual([
+      ['jazzcash', 'Sana Iqbal', null],
+      ['bank', 'Lahore Loom', 'Meezan Bank'],
+    ]);
+    expect(collectionListSerializer(body('collectionReorder'))!.map(c => [c.name, c.position])).toEqual([
+      ['Capture edit 2', 0],
+      ['Eid edit', 1],
+      ['Winter khaddar', 2],
+    ]);
+  });
+
+  it('reads the store’s side of a return, through to the refund', () => {
+    const r = returnSerializer(body('partnerReturn'))!;
+    expect(r).toMatchObject({ customerName: 'Ayesha Khan', status: 'requested', reason: 'size_issue' });
+    expect(returnSerializer(body('returnRefund'))).toMatchObject({ status: 'refunded', storeNote: 'Send it back with the tag on.', refund: { amount: 7500, reference: 'RAAST-551023' } });
   });
 });

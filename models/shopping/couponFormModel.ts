@@ -57,9 +57,11 @@ export const validateCouponForm = (f: CouponForm): ValidationErrors => {
   else if (f.type === 'percent' && value > 90) errors.value = 'Up to 90% off';
   if (f.maxDiscount && f.type !== 'percent') errors.maxDiscount = 'Only percentage coupons have a cap';
   if (!f.startsAt) errors.startsAt = 'Choose a start date';
-  if (f.endsAt && f.startsAt && f.endsAt < f.startsAt) errors.endsAt = 'The end date is before the start';
+  if (!f.endsAt) errors.endsAt = 'Choose an end date';
+  else if (f.startsAt && f.endsAt < f.startsAt) errors.endsAt = 'The end date is before the start';
   if (f.usageLimit && !parseRupees(f.usageLimit)) errors.usageLimit = 'Enter a whole number, or leave it empty';
-  if (f.perCustomerLimit && !parseRupees(f.perCustomerLimit)) errors.perCustomerLimit = 'Enter a whole number, or leave it empty';
+  const perCustomer = parseRupees(f.perCustomerLimit);
+  if (!perCustomer || perCustomer > 100) errors.perCustomerLimit = 'Enter 1 to 100';
   return errors;
 };
 

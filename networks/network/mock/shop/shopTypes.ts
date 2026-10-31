@@ -177,13 +177,16 @@ export interface MockOrder {
   total: number;
   couponCode: string | null;
   note: string | null;
-  shipment: { courier: CourierKey; trackingRef: string } | null;
+  /** The store's own rider delivers with a name and phone instead of a tracking number. */
+  shipment: { courier: CourierKey; trackingRef: string; riderName?: string; riderPhone?: string } | null;
   events: { type: OrderEventType; note: string | null; createdAt: string }[];
   paymentAccountId: string | null;
   payBy: string | null;
   paymentProof: { transactionId: string; imageUrl: string | null; submittedAt: string; rejectionReason: string | null } | null;
   cancelReason: string | null;
   internalNote: string | null;
+  /** A refund the store recorded after cancelling a paid order. */
+  refund?: { amount: number; reference: string; recordedAt: string } | null;
   createdAt: string;
   deliveredAt: string | null;
 }
