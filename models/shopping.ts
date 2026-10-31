@@ -179,7 +179,8 @@ export interface ProductQuery {
 }
 
 export type BannerTarget =
-  | { kind: 'store'; slug: string }
+  /** `id` is there whenever the API sent the banner (staff write by it). */
+  | { kind: 'store'; slug: string; id?: string }
   | { kind: 'category'; id: string; name: string }
   | { kind: 'collection'; id: string }
   | { kind: 'product'; id: string }
@@ -739,11 +740,12 @@ export interface StoreSettings {
 
 
 // ─── Admin ────────────────────────────────────────────
+/** Counted from the lists the API has: visible stores, live products, every Shopping order, open reports. */
 export interface ShopOverview {
   stores: number;
   activeProducts: number;
   openReports: number;
-  ordersToday: number;
+  orders: number;
 }
 
 export interface AdminBanner extends Banner {
@@ -770,7 +772,12 @@ export interface ProductReport {
   createdAt: string;
 }
 
+/** A group found by its code: who ordered, and each store order with its timeline. */
 export interface AdminOrderLookup {
-  group: OrderGroup;
-  customer: { name: string; email: string };
+  code: string;
+  customerName: string;
+  city: string;
+  placedAt: string;
+  total: number;
+  orders: StoreOrder[];
 }

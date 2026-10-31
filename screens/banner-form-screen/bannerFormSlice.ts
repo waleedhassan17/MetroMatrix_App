@@ -4,7 +4,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { createBanner, deleteBanner, fetchAdminCategories, fetchAdminStores, updateBanner } from '../../networks/admin/adminShop';
+import { createBanner, deleteBanner, fetchAdminCategories, updateBanner } from '../../networks/admin/adminShop';
+import { fetchStores } from '../../networks/shopping/catalog';
 import { toRejectedValue } from '../../networks/network/network';
 import type { AdminBanner, AdminBannerInput, LocalFile, ShopCategory, StoreSummary } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -16,7 +17,7 @@ export interface BannerForm {
   headline: string;
   subhead: string;
   kind: 'store' | 'category' | 'product' | 'collection' | 'none';
-  /** A store slug, a category id or a product id. */
+  /** The store's, category's, collection's or product's id. */
   ref: string;
   /** YYYY-MM-DD */
   startsAt: string;
@@ -55,7 +56,7 @@ export const fromBanner = (b: AdminBanner): BannerForm => ({
   headline: b.headline,
   subhead: b.subhead ?? '',
   kind: b.target.kind,
-  ref: b.target.kind === 'store' ? b.target.slug : b.target.kind === 'none' ? '' : b.target.id,
+  ref: b.target.kind === 'none' ? '' : (b.target.id ?? ''),
   startsAt: b.startsAt.slice(0, 10),
   endsAt: b.endsAt ? b.endsAt.slice(0, 10) : '',
   position: b.position,
@@ -66,23 +67,26 @@ export const validateBannerForm = (f: BannerForm): Record<string, string> => {
   const e: Record<string, string> = {};
   if (!f.imageUrl) e.imageUrl = 'Add an image';
   if (f.headline.trim().length < 3) e.headline = 'Write a headline';
-  if (!f.ref.trim()) e.ref = 'Choose where it leads';
+  if (f.kind !== 'none' && !f.ref.trim()) e.ref = 'Choose where it leads';
   if (f.endsAt && f.endsAt < f.startsAt) e.endsAt = 'Ends before it starts';
   return e;
 };
 
-export const toBannerInput = (f: BannerForm, categories: ShopCategory[]): AdminBannerInput => {
+export const toBannerInput = (f: BannerForm, categories: ShopCategory[], stores: StoreSummary[]): AdminBannerInput => {
   const cat = categories.flatMap(c => [c, ...c.children]).find(c => c.id === f.ref);
+  const ref = f.ref.trim();
   return {
     imageUrl: f.imageUrl,
     headline: f.headline.trim(),
     subhead: f.subhead.trim() || null,
     target:
       f.kind === 'store'
-        ? { kind: 'store', slug: f.ref.trim() }
+        ? { kind: 'store', id: ref, slug: stores.find(st => st.id === ref)?.slug ?? '' }
         : f.kind === 'category'
-          ? { kind: 'category', id: f.ref, name: cat?.name ?? '' }
-          : { kind: 'product', id: f.ref.trim() },
+          ? { kind: 'category', id: ref, name: cat?.name ?? '' }
+          : f.kind === 'none'
+            ? { kind: 'none' }
+            : { kind: f.kind, id: ref },
     startsAt: new Date(`${f.startsAt}T00:00:00`).toISOString(),
     endsAt: f.endsAt ? new Date(`${f.endsAt}T23:59:59`).toISOString() : null,
     position: f.position,
@@ -122,7 +126,7 @@ export const bannerFormSlice = createAppSlice({
     loadBannerChoicesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [stores, categories] = await Promise.all([fetchAdminStores('', 1, 100), fetchAdminCategories()]);
+          const [stores, categories] = await Promise.all([fetchStores({}, 1, 100), fetchAdminCategories()]);
           return { stores, categories };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

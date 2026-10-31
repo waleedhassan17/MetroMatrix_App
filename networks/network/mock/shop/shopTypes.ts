@@ -61,6 +61,8 @@ export interface MockCategory {
   icon: string;
   parentId: string | null;
   position: number;
+  /** Staff switch a category off rather than delete one in use. */
+  isActive?: boolean;
 }
 
 export interface MockCollection {

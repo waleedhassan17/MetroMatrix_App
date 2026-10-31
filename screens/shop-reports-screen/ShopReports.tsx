@@ -49,10 +49,12 @@ const ShopReports: React.FC<Props> = () => {
   const list = usePagedList((page, sz) => fetchReports(s.status, page, sz), productReportPageSerializer, `reports|${s.status}`);
 
   const decide = async (d: { id: string; kind: 'dismiss' } | { id: string; kind: 'remove'; reason: string }) => {
-    const r = await dispatch(decideReportAsync(d));
+    const productId = list.rows.find(x => x.id === d.id)?.productId;
+    if (!productId) return;
+    const r = await dispatch(decideReportAsync({ ...d, productId }));
     const decided = decideReportAsync.fulfilled.match(r) ? selectShopReports(appStore.getState()).decided : null;
     if (decided) {
-      list.setRows(rows => rows.filter(x => x.productId !== decided.productId));
+      list.setRows(rows => rows.filter(x => (d.kind === 'remove' ? x.productId !== decided.productId : x.id !== decided.id)));
       Toast.show({ type: 'success', text1: d.kind === 'dismiss' ? 'Report dismissed' : 'Product taken down', text2: d.kind === 'remove' ? 'The store has your reason.' : undefined });
     }
   };

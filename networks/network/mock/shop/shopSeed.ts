@@ -998,7 +998,7 @@ export const seedShop = (): MockShop =>
       banners,
       reports: [
         {
-          id: 'rp_1', productId: 'p_v18', userId: 'u_customer', reason: 'Counterfeit or copy',
+          id: 'rp_1', productId: 'p_v18', userId: 'u_customer', reason: 'counterfeit',
           details: 'The listing photo looks like a branded watch.', status: 'open', createdAt: ago(DAY),
         },
       ],

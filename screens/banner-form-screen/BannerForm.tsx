@@ -87,7 +87,7 @@ const BannerFormScreen: React.FC<Props> = ({ route }) => {
 
   const options =
     f.kind === 'store'
-      ? s.stores.map(st => ({ value: st.slug, label: st.name }))
+      ? s.stores.map(st => ({ value: st.id, label: st.name }))
       : s.categories.flatMap(c => [{ value: c.id, label: c.name }, ...c.children.map(x => ({ value: x.id, label: `${c.name} › ${x.name}` }))]);
   const refLabel = options.find(o => o.value === f.ref)?.label ?? null;
 
@@ -99,7 +99,7 @@ const BannerFormScreen: React.FC<Props> = ({ route }) => {
   const save = async () => {
     dispatch(markBannerSubmitted());
     if (Object.keys(validateBannerForm(f)).length) return;
-    const r = await dispatch(saveBannerAsync({ id: s.id, input: toBannerInput(f, s.categories) }));
+    const r = await dispatch(saveBannerAsync({ id: s.id, input: toBannerInput(f, s.categories, s.stores) }));
     if (saveBannerAsync.fulfilled.match(r)) {
       Toast.show({ type: 'success', text1: 'Banner saved' });
       back();

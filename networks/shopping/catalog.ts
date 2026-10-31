@@ -6,6 +6,7 @@
 
 import { API, toApiError, clean, pageParams } from '../network/network';
 import type { ProductQuery } from '../../models/shopping';
+import { reportReasonKey } from '../../models/shopping/reportModel';
 
 export const fetchShopHome = async (): Promise<unknown> => {
   try {
@@ -99,16 +100,8 @@ export const fetchReviews = async (productId: string, filter: { rating?: number 
 };
 
 /** The report sheet's reasons, as the API names them. */
-const REPORT_REASON: Record<string, string> = {
-  'Counterfeit or copy': 'counterfeit',
-  'Misleading photos or description': 'misleading',
-  'Prohibited item': 'prohibited_item',
-  'Offensive content': 'offensive',
-  'Wrong category': 'wrong_category',
-};
-
 const reportBody = (body: { reason: string; details: string | null }) => ({
-  reason: REPORT_REASON[body.reason] ?? 'other',
+  reason: reportReasonKey(body.reason),
   ...(body.details ? { details: body.details } : null),
 });
 

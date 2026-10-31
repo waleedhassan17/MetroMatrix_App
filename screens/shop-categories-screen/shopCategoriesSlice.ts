@@ -2,7 +2,7 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { createCategory, deleteCategory, fetchAdminCategories, reorderCategories, updateCategory } from '../../networks/admin/adminShop';
+import { createCategory, deleteCategory, fetchAdminCategories, updateCategory } from '../../networks/admin/adminShop';
 import { toRejectedValue } from '../../networks/network/network';
 import type { ShopCategory } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -72,7 +72,8 @@ export const shopCategoriesSlice = createAppSlice({
             const { id, parentId, name, icon } = change.sheet;
             await (id ? updateCategory(id, { name: name.trim(), icon }) : createCategory({ name: name.trim(), icon, parentId }));
           } else if (change.kind === 'delete') await deleteCategory(change.id);
-          else await reorderCategories(change.parentId, change.ids);
+          // The API has no reorder: each category in the group takes its place as `sort`.
+          else for (const [sort, id] of change.ids.entries()) await updateCategory(id, { sort });
           return await fetchAdminCategories();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

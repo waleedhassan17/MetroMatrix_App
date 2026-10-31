@@ -1,23 +1,30 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Admin Shop Network (API_SHOPPING_ASSUMED.md)
+// MetroMatrix — Admin Shop Network (API_SHOPPING.md)
 // ═══════════════════════════════════════════════════════
-// Overview, categories, banners, reports,
-// order lookup, featured stores.
-// TODO(API_SHOPPING): paths per docs/API_SHOPPING_ASSUMED.md.
+// Categories, banners, reports (a removal is by product), the order lookup,
+// featured stores. The API has no overview or store list for staff: the
+// console counts from these lists and the public catalogue.
 
 import { API, toApiError, clean, pageParams } from '../network/network';
 import type { AdminBannerInput, ReportStatus } from '../../models/shopping';
 
 const BASE = '/admin/shop';
 
-export const fetchShopOverview = async (): Promise<unknown> => {
-  try {
-    const response = await API.GET({ URL: `${BASE}/overview` });
-    return response.data;
-  } catch (e) {
-    throw toApiError(e);
-  }
-};
+/** A banner leads to a store, category, collection or product by its id, or nowhere. */
+const bannerBody = (input: AdminBannerInput) => ({
+  imageUrl: input.imageUrl,
+  title: input.headline.trim(),
+  subtitle: input.subhead?.trim() || null,
+  targetType: input.target.kind,
+  targetId: input.target.kind === 'none' ? null : input.target.kind === 'store' ? (input.target.id ?? null) : input.target.id,
+  startsAt: input.startsAt,
+  endsAt: input.endsAt,
+  sort: input.position,
+  isActive: input.isActive,
+});
+
+/** The app's "removed" is the API's "actioned". */
+const REPORT_STATUS: Record<ReportStatus, string> = { open: 'open', dismissed: 'dismissed', removed: 'actioned' };
 
 export const fetchAdminCategories = async (): Promise<unknown> => {
   try {
@@ -27,7 +34,7 @@ export const fetchAdminCategories = async (): Promise<unknown> => {
     throw toApiError(e);
   }
 };
-export const createCategory = async (input: { name: string; icon: string; parentId: string | null }): Promise<unknown> => {
+export const createCategory = async (input: { name: string; icon: string; parentId: string | null; sort?: number }): Promise<unknown> => {
   try {
     const response = await API.POST({ URL: `${BASE}/categories`, data: input });
     return response.data;
@@ -35,7 +42,8 @@ export const createCategory = async (input: { name: string; icon: string; parent
     throw toApiError(e);
   }
 };
-export const updateCategory = async (id: string, input: { name: string; icon: string }): Promise<unknown> => {
+/** A rename, an icon, a place in the order (`sort`), or switching it off. */
+export const updateCategory = async (id: string, input: { name?: string; icon?: string; sort?: number; isActive?: boolean }): Promise<unknown> => {
   try {
     const response = await API.PATCH({ URL: `${BASE}/categories/${encodeURIComponent(id)}`, data: input });
     return response.data;
@@ -43,17 +51,10 @@ export const updateCategory = async (id: string, input: { name: string; icon: st
     throw toApiError(e);
   }
 };
+/** Only an unused leaf can go; anything in use is switched off instead. */
 export const deleteCategory = async (id: string): Promise<unknown> => {
   try {
     const response = await API.DELETE({ URL: `${BASE}/categories/${encodeURIComponent(id)}` });
-    return response.data;
-  } catch (e) {
-    throw toApiError(e);
-  }
-};
-export const reorderCategories = async (parentId: string | null, ids: string[]): Promise<unknown> => {
-  try {
-    const response = await API.POST({ URL: `${BASE}/categories/reorder`, data: { parentId, ids } });
     return response.data;
   } catch (e) {
     throw toApiError(e);
@@ -70,7 +71,7 @@ export const fetchAdminBanners = async (): Promise<unknown> => {
 };
 export const createBanner = async (input: AdminBannerInput): Promise<unknown> => {
   try {
-    const response = await API.POST({ URL: `${BASE}/banners`, data: input });
+    const response = await API.POST({ URL: `${BASE}/banners`, data: bannerBody(input) });
     return response.data;
   } catch (e) {
     throw toApiError(e);
@@ -78,7 +79,7 @@ export const createBanner = async (input: AdminBannerInput): Promise<unknown> =>
 };
 export const updateBanner = async (id: string, input: AdminBannerInput): Promise<unknown> => {
   try {
-    const response = await API.PATCH({ URL: `${BASE}/banners/${encodeURIComponent(id)}`, data: input });
+    const response = await API.PATCH({ URL: `${BASE}/banners/${encodeURIComponent(id)}`, data: bannerBody(input) });
     return response.data;
   } catch (e) {
     throw toApiError(e);
@@ -95,7 +96,7 @@ export const deleteBanner = async (id: string): Promise<unknown> => {
 
 export const fetchReports = async (status: ReportStatus, page: number, pageSize = 20): Promise<unknown> => {
   try {
-    const response = await API.GET({ URL: `${BASE}/reports`, params: clean({ status, ...pageParams(page, pageSize) }) });
+    const response = await API.GET({ URL: `${BASE}/reports`, params: clean({ status: REPORT_STATUS[status], ...pageParams(page, pageSize) }) });
     return response.data;
   } catch (e) {
     throw toApiError(e);
@@ -109,35 +110,36 @@ export const dismissReport = async (id: string): Promise<unknown> => {
     throw toApiError(e);
   }
 };
-export const removeReportedProduct = async (id: string, reason: string): Promise<unknown> => {
+/** Hidden everywhere; its open reports are actioned and the store is told why. */
+export const removeProduct = async (productId: string, reason: string): Promise<unknown> => {
   try {
-    const response = await API.POST({ URL: `${BASE}/reports/${encodeURIComponent(id)}/remove`, data: { reason } });
+    const response = await API.POST({ URL: `${BASE}/products/${encodeURIComponent(productId)}/remove`, data: { reason } });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+/** Store orders whose code starts with `code` (a group's code finds each of its store orders). */
+export const fetchAdminOrders = async (query: { code?: string; status?: string }, page: number, pageSize = 20): Promise<unknown> => {
+  try {
+    const response = await API.GET({ URL: `${BASE}/orders`, params: clean({ ...query, ...pageParams(page, pageSize) }) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+export const fetchAdminOrder = async (id: string): Promise<unknown> => {
+  try {
+    const response = await API.GET({ URL: `${BASE}/orders/${encodeURIComponent(id)}` });
     return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
-export const lookupOrder = async (groupCode: string): Promise<unknown> => {
-  try {
-    const response = await API.GET({ URL: `${BASE}/orders/${encodeURIComponent(groupCode.trim().toUpperCase())}` });
-    return response.data;
-  } catch (e) {
-    throw toApiError(e);
-  }
-};
-
-export const fetchAdminStores = async (q: string, page: number, pageSize = 20): Promise<unknown> => {
-  try {
-    const response = await API.GET({ URL: `${BASE}/stores`, params: clean({ q, ...pageParams(page, pageSize) }) });
-    return response.data;
-  } catch (e) {
-    throw toApiError(e);
-  }
-};
 export const setStoreFeatured = async (storeId: string, featured: boolean): Promise<unknown> => {
   try {
-    const response = await API.POST({ URL: `${BASE}/stores/${encodeURIComponent(storeId)}/featured`, data: { featured } });
+    const response = await API.POST({ URL: `${BASE}/stores/${encodeURIComponent(storeId)}/${featured ? 'feature' : 'unfeature'}` });
     return response.data;
   } catch (e) {
     throw toApiError(e);

@@ -3,9 +3,9 @@
 // payment before shipping, one review per item, returns and moderation.
 
 import { fetchAddresses } from '../../../addresses/addresses';
-import { fetchReports, removeReportedProduct } from '../../../admin/adminShop';
+import { createBanner, fetchAdminBanners, fetchAdminCategories, fetchAdminOrder, fetchAdminOrders, fetchReports, removeProduct, updateCategory } from '../../../admin/adminShop';
 import { addToCart, fetchCart, updateCartLine } from '../../../shopping/cart';
-import { fetchProduct } from '../../../shopping/catalog';
+import { fetchProduct, fetchProducts, fetchStores } from '../../../shopping/catalog';
 import { placeOrder, previewCheckout } from '../../../shopping/checkout';
 import { cancelOrder, fetchOrderGroup, submitPaymentProof } from '../../../shopping/orders';
 import { requestReturn } from '../../../shopping/returns';
@@ -24,13 +24,14 @@ import { ApiError, required } from '../../network';
 import { clearTokens } from '../../../../utils/storage_utils/storageUtils';
 import type { CheckoutInput, ProductDetail } from '../../../../models/shopping';
 import { getDb, resetMockDb } from '../mockDb';
+import { isListed, storeById } from '../shop/shopLogic';
 import { signInAs, installDummyApi } from '../testing';
 import { addressListSerializer } from '../../../../serializers/addressSerializer';
-import { productDetailSerializer, reviewSerializer } from '../../../../serializers/shopping/catalogSerializer';
+import { categoryListSerializer, productDetailSerializer, reviewSerializer } from '../../../../serializers/shopping/catalogSerializer';
 import { cartSerializer, checkoutPreviewSerializer } from '../../../../serializers/shopping/cartSerializer';
 import { orderGroupSerializer, returnSerializer, storeOrderResponseSerializer } from '../../../../serializers/shopping/orderSerializer';
 import { partnerOrderDetailSerializer, partnerProductRowPageSerializer, partnerProductSerializer } from '../../../../serializers/shopping/partnerSerializer';
-import { productReportPageSerializer } from '../../../../serializers/shopping/adminShopSerializer';
+import { adminBannerListSerializer, lookupRowsSerializer, orderLookupSerializer, productReportPageSerializer, shopOverviewSerializer } from '../../../../serializers/shopping/adminShopSerializer';
 
 installDummyApi();
 
@@ -297,11 +298,66 @@ describe('admin: moderation', () => {
   it('removing a reported product takes it off the shop', async () => {
     await signInAdmin();
     const open = required(productReportPageSerializer(await fetchReports('open', 1)));
-    expect(open.items[0].productId).toBe('p_v18');
-    await removeReportedProduct(open.items[0].id, 'Listing shows a counterfeit branded watch.');
+    expect(open.items[0]).toMatchObject({ productId: 'p_v18', reason: 'Counterfeit or copy' });
+    // A removal is the product's: its open reports are actioned with it.
+    await removeProduct(open.items[0].productId, 'Listing shows a counterfeit branded watch.');
     expect((required(productReportPageSerializer(await fetchReports('open', 1)))).total).toBe(0);
+    expect((required(productReportPageSerializer(await fetchReports('removed', 1)))).items[0]).toMatchObject({ productId: 'p_v18', status: 'removed' });
 
     await signIn('customer@metromatrix.app');
     expect((await failure(fetchProduct('p_v18').then(raw => required(productDetailSerializer(raw))))).code).toBe('NOT_FOUND');
+  });
+
+  it('finds an order by its code: the group, then each store order with its timeline', async () => {
+    const { input } = await fillBag();
+    const group = required(orderGroupSerializer(await placeOrder(input, 'key-lookup')));
+    await signInAdmin();
+    const lookup = async (code: string) => {
+      const rows = await fetchAdminOrders({ code }, 1, 20);
+      const details = await Promise.all(required(lookupRowsSerializer(rows, code)).map(r => fetchAdminOrder(String(r.id))));
+      return orderLookupSerializer({ rows, details }, code);
+    };
+    const found = required(await lookup(group.code));
+    expect(found).toMatchObject({ code: group.code, total: group.total, customerName: group.address.fullName, city: 'Lahore' });
+    expect(found.orders.map(o => o.code).sort()).toEqual(group.orders.map(o => o.code).sort());
+    expect(found.orders.every(o => o.events.some(e => e.type === 'placed'))).toBe(true);
+    // A store order's own code opens just that one.
+    const one = required(await lookup(group.orders[0].code));
+    expect(one.orders.map(o => o.code)).toEqual([group.orders[0].code]);
+    expect(await lookup('MM-NOPE99')).toBeNull();
+  });
+
+  it('counts the overview from the lists the API has', async () => {
+    await signInAdmin();
+    const [stores, products, orders, reports] = await Promise.all([fetchStores({}, 1, 1), fetchProducts({}, 1, 1), fetchAdminOrders({}, 1, 1), fetchReports('open', 1, 1)]);
+    const { shop } = await getDb();
+    expect(shopOverviewSerializer({ stores, products, orders, reports })).toEqual({
+      stores: shop.stores.filter(st => !st.isPaused).length,
+      activeProducts: shop.products.filter(p => isListed(p) && !storeById(shop, p.storeId)?.isPaused).length,
+      orders: shop.orders.length,
+      openReports: 1,
+    });
+  });
+
+  it('points a banner at a store by its id, and orders categories by sort', async () => {
+    await signInAdmin();
+    await createBanner({
+      imageUrl: 'https://img/winter.png',
+      headline: 'Winter sale',
+      subhead: null,
+      target: { kind: 'store', id: 's_lawn', slug: '' },
+      startsAt: new Date(T0).toISOString(),
+      endsAt: null,
+      position: 9,
+      isActive: true,
+    });
+    const banners = adminBannerListSerializer(await fetchAdminBanners());
+    expect(banners.find(b => b.headline === 'Winter sale')).toMatchObject({ position: 9, target: { kind: 'store', id: 's_lawn' } });
+
+    const tree = categoryListSerializer(await fetchAdminCategories());
+    const [a, b] = tree;
+    await updateCategory(b.id, { sort: 0 });
+    await updateCategory(a.id, { sort: 1 });
+    expect(categoryListSerializer(await fetchAdminCategories()).slice(0, 2).map(c => c.id)).toEqual([b.id, a.id]);
   });
 });

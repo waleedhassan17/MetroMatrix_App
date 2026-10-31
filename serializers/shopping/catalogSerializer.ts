@@ -279,7 +279,7 @@ const bannerTargetOf = (raw: Record<string, unknown>, home: { stores: StoreSumma
   const id = str(raw.targetId);
   const type = oneOf(raw.targetType, ['store', 'category', 'collection', 'product', 'none'] as const, 'none');
   const flat = home.categories.flatMap(c => [c, ...c.children]);
-  if (type === 'store' && id) return { kind: 'store', slug: home.stores.find(s => s.id === id)?.slug ?? id };
+  if (type === 'store' && id) return { kind: 'store', id, slug: home.stores.find(s => s.id === id)?.slug ?? id };
   if (type === 'category' && id) return { kind: 'category', id, name: flat.find(c => c.id === id)?.name ?? '' };
   if (type === 'product' && id) return { kind: 'product', id };
   if (type === 'collection' && id) return { kind: 'collection', id };

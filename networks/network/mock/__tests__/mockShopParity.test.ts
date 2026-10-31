@@ -63,6 +63,8 @@ const compare = (name: string, mock: Body) => {
   return shapeDiff(r.body.data ?? { error: r.body.error?.code }, mock.data ?? { error: mock.error?.code }).map(d => `${name}${d}`);
 };
 
+const idOf = (b: Body) => (b.data as { id: string }).id;
+
 beforeAll(() => {
   jest.useFakeTimers({ doNotFake: ['setTimeout', 'setInterval', 'setImmediate', 'nextTick', 'queueMicrotask'] });
 });
@@ -132,7 +134,6 @@ describe('the dummy Shopping API speaks the real API (store partner)', () => {
     const db = await getDb();
     const home = db.shop.addresses.find(a => a.userId === 'u_customer' && a.city === 'Lahore')!;
     const variant = db.shop.products.find(p => p.id === 'p_l1')!.variants.find(v => v.stock > 3)!;
-    const idOf = (b: Body) => (b.data as { id: string }).id;
 
     // A cash order (A) and a transfer order with its proof (B) at the store, as the capture placed them.
     await signInAs('customer@metromatrix.app');
@@ -232,6 +233,67 @@ describe('the dummy Shopping API speaks the real API (store partner)', () => {
     const reviews = await call('get', '/shop/partner/reviews?unreplied=true&page=1&pageSize=3');
     out.push(...compare('partnerReviews', reviews));
     out.push(...compare('reviewReply', await call('post', `/shop/partner/reviews/${(reviews.data as { items: { id: string }[] }).items[0].id}/reply`, { text: 'Thank you for shopping with us!' })));
+    expect(out).toEqual([]);
+  });
+});
+
+/**
+ * The staff views' keys as the backend declares them (admin-shop.response.ts,
+ * "checked against real responses from the e2e suites"). There is no capture:
+ * staff sign in with a TOTP.
+ */
+const STAFF_CATEGORY = ['id', 'parentId', 'name', 'slug', 'icon', 'sort', 'isActive'];
+const STAFF_KEYS: Record<string, string[]> = {
+  category: STAFF_CATEGORY,
+  categoryTree: [...STAFF_CATEGORY, 'children'],
+  banner: ['id', 'imageUrl', 'title', 'subtitle', 'targetType', 'targetId', 'startsAt', 'endsAt', 'sort', 'isActive'],
+  report: ['id', 'reason', 'details', 'status', 'createdAt', 'resolvedAt', 'resolutionNote', 'openReportsOnProduct', 'product', 'store'],
+  orderRow: ['id', 'code', 'groupCode', 'status', 'paymentMethod', 'paymentStatus', 'total', 'store', 'customerName', 'city', 'cancelReason', 'cancelledBy', 'placedAt'],
+  order: ['id', 'code', 'storeId', 'status', 'paymentMethod', 'paymentStatus', 'subtotal', 'discount', 'shippingFee', 'total', 'paymentRef', 'paymentProofUrl', 'cancelReason', 'cancelledBy', 'items', 'events', 'placedAt'],
+  orderItem: ['id', 'productName', 'variantLabel', 'unitPrice', 'quantity', 'lineTotal', 'returnedQty'],
+  dismiss: ['id', 'status'],
+  remove: ['id', 'status', 'removedReason'],
+  feature: ['id', 'isFeatured'],
+  deleted: ['deleted'],
+};
+
+const keysOf = (v: unknown) => (v && typeof v === 'object' ? Object.keys(v).sort() : []);
+const staff = (name: string, value: unknown) => {
+  const want = [...STAFF_KEYS[name]].sort();
+  const got = keysOf(value);
+  return JSON.stringify(got) === JSON.stringify(want) ? [] : [`${name}: ${JSON.stringify(got)} ≠ ${JSON.stringify(want)}`];
+};
+
+describe('the dummy Shopping API speaks the real API (staff)', () => {
+  it('answers in the views admin-shop.response.ts declares', async () => {
+    const out: string[] = [];
+    await signInAs('admin@metromatrix.app');
+    const tree = (await call('get', '/admin/shop/categories')).data as Record<string, unknown>[];
+    out.push(...staff('categoryTree', tree[0]), ...staff('category', (tree[0].children as unknown[])[0]));
+    const made = await call('post', '/admin/shop/categories', { name: 'Parity shelf', icon: 'pricetag-outline', parentId: null });
+    out.push(...staff('category', made.data));
+    out.push(...staff('category', (await call('patch', `/admin/shop/categories/${idOf(made)}`, { sort: 9 })).data));
+    out.push(...staff('deleted', (await call('delete', `/admin/shop/categories/${idOf(made)}`)).data));
+
+    const banners = (await call('get', '/admin/shop/banners')).data as unknown[];
+    out.push(...staff('banner', banners[0]));
+    const banner = await call('post', '/admin/shop/banners', { imageUrl: 'https://img/b.png', title: 'Winter sale', targetType: 'store', targetId: 's_lawn' });
+    out.push(...staff('banner', banner.data));
+    expect(banner.data).toMatchObject({ targetType: 'store', targetId: 's_lawn' });
+    out.push(...staff('banner', (await call('patch', `/admin/shop/banners/${idOf(banner)}`, { isActive: false })).data));
+    out.push(...staff('deleted', (await call('delete', `/admin/shop/banners/${idOf(banner)}`)).data));
+
+    const reports = (await call('get', '/admin/shop/reports?status=open')).data as { items: Record<string, unknown>[] };
+    out.push(...staff('report', reports.items[0]));
+    out.push(...staff('remove', (await call('post', `/admin/shop/products/${(reports.items[0].product as { id: string }).id}/remove`, { reason: 'Counterfeit goods are not allowed.' })).data));
+
+    const orders = (await call('get', '/admin/shop/orders?page=1&pageSize=3')).data as { items: Record<string, unknown>[] };
+    out.push(...staff('orderRow', orders.items[0]));
+    const order = (await call('get', `/admin/shop/orders/${orders.items[0].id}`)).data as { items: unknown[] };
+    out.push(...staff('order', order), ...staff('orderItem', order.items[0]));
+
+    out.push(...staff('feature', (await call('post', '/admin/shop/stores/s_lawn/feature')).data));
+    out.push(...staff('feature', (await call('post', '/admin/shop/stores/s_lawn/unfeature')).data));
     expect(out).toEqual([]);
   });
 });

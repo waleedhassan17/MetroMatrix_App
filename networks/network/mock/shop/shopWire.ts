@@ -12,7 +12,7 @@
 // the real capture (serializers/__tests__/fixtures/shop/real.json) the same.
 
 import type { MockDb } from '../mockDb';
-import type { MockCollection, MockCoupon, MockGroup, MockMovement, MockOrder, MockProduct, MockReturn, MockReview, MockStore, MockVariant } from './shopTypes';
+import type { MockBanner, MockCategory, MockCollection, MockCoupon, MockGroup, MockMovement, MockOrder, MockProduct, MockReport, MockReturn, MockReview, MockStore, MockVariant } from './shopTypes';
 import type { StoreChoice } from './shopLogic';
 import {
   LOW_STOCK,
@@ -48,14 +48,16 @@ const kebab = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace
 export const productSlug = (p: MockProduct) => `${kebab(p.name)}-${p.id.replace(/[^a-z0-9]/gi, '').slice(-4).toLowerCase()}`;
 
 // ─── Catalogue ────────────────────────────────────────
+/** The shopper's tree: what staff switched off is hidden. */
 export const categoryTree = (shop: Shop) => {
   const node = (c: Shop['categories'][number]) => ({ id: c.id, name: c.name, slug: c.slug, icon: c.icon });
-  return shop.categories
+  const live = shop.categories.filter(c => c.isActive !== false);
+  return live
     .filter(c => !c.parentId)
     .sort((a, b) => a.position - b.position)
     .map(c => ({
       ...node(c),
-      children: shop.categories
+      children: live
         .filter(x => x.parentId === c.id)
         .sort((a, b) => a.position - b.position)
         .map(node),
@@ -850,3 +852,106 @@ export const couponWire = (c: MockCoupon) => ({
   state: COUPON_STATE[couponStatus(c)],
   createdAt: c.startsAt,
 });
+
+// ─── Staff (/admin/shop) ───────────────────────────────
+/** A category as staff see it (inactive ones too). */
+export const adminCategoryWire = (c: MockCategory) => ({
+  id: c.id,
+  parentId: c.parentId,
+  name: c.name,
+  slug: c.slug,
+  icon: c.icon,
+  sort: c.position,
+  isActive: c.isActive ?? true,
+});
+
+export const adminCategoryTree = (shop: Shop) =>
+  shop.categories
+    .filter(c => !c.parentId)
+    .sort((a, b) => a.position - b.position)
+    .map(c => ({
+      ...adminCategoryWire(c),
+      children: shop.categories
+        .filter(x => x.parentId === c.id)
+        .sort((a, b) => a.position - b.position)
+        .map(adminCategoryWire),
+    }));
+
+/** A banner leads by id: a store target's id is found from its slug. */
+export const bannerWire = (shop: Shop, b: MockBanner) => ({
+  id: b.id,
+  imageUrl: b.imageUrl,
+  title: b.headline,
+  subtitle: b.subhead,
+  targetType: b.target.kind,
+  targetId: b.target.kind === 'none' ? null : b.target.kind === 'store' ? (shop.stores.find(s => s.slug === (b.target as { slug: string }).slug)?.id ?? null) : b.target.id,
+  startsAt: b.startsAt,
+  endsAt: b.endsAt,
+  sort: b.position,
+  isActive: b.isActive,
+});
+
+/** The API's report states; the dummy's "removed" is "actioned" there. */
+const REPORT_STATE: Record<string, string> = { open: 'open', dismissed: 'dismissed', removed: 'actioned' };
+
+export const reportWire = (shop: Shop, r: MockReport) => {
+  const p = shop.products.find(x => x.id === r.productId);
+  const store = p ? storeById(shop, p.storeId) : undefined;
+  return {
+    id: r.id,
+    reason: r.reason,
+    details: r.details,
+    status: REPORT_STATE[r.status] ?? r.status,
+    createdAt: r.createdAt,
+    resolvedAt: null,
+    resolutionNote: null,
+    openReportsOnProduct: shop.reports.filter(x => x.productId === r.productId && x.status === 'open').length,
+    product: { id: r.productId, name: p?.name ?? 'Product', status: p?.removed ? 'removed' : (p?.status ?? 'archived') },
+    store: { id: store?.id ?? '', name: store?.name ?? '' },
+  };
+};
+
+/** A row of GET /admin/shop/orders. */
+export const adminOrderRowWire = (db: MockDb, o: MockOrder) => {
+  const g = db.shop.groups.find(x => x.code === o.groupCode);
+  const store = storeById(db.shop, o.storeId);
+  return {
+    id: o.id,
+    code: o.code,
+    groupCode: o.groupCode,
+    status: apiStatus(o),
+    paymentMethod: o.paymentMethod,
+    paymentStatus: apiPaymentStatus(o),
+    total: o.total,
+    store: { id: o.storeId, name: store?.name ?? '' },
+    customerName: g?.address.fullName ?? userById(db, o.userId)?.name ?? 'Customer',
+    city: g?.address.city ?? '',
+    cancelReason: o.cancelReason,
+    cancelledBy: o.status === 'cancelled' ? 'store' : null,
+    placedAt: o.createdAt,
+  };
+};
+
+/** GET /admin/shop/orders/:id: the lines and the timeline, read-only. */
+export const adminOrderWire = (db: MockDb, o: MockOrder) => {
+  const full = storeOrderWire(db, o, 'store');
+  return {
+    id: o.id,
+    code: o.code,
+    storeId: o.storeId,
+    status: full.status,
+    paymentMethod: o.paymentMethod,
+    paymentStatus: full.paymentStatus,
+    subtotal: o.itemsTotal,
+    discount: o.discount,
+    shippingFee: o.shippingFee,
+    total: o.total,
+    paymentRef: o.paymentProof?.transactionId ?? null,
+    paymentProofUrl: o.paymentProof?.imageUrl ?? null,
+    cancelReason: o.cancelReason,
+    cancelledBy: full.cancelledBy,
+    items: full.items.map(i => ({ id: i.id, productName: i.productName, variantLabel: i.variantLabel, unitPrice: i.unitPrice, quantity: i.quantity, lineTotal: i.lineTotal, returnedQty: i.returnedQty })),
+    events: full.events,
+    placedAt: o.createdAt,
+  };
+};

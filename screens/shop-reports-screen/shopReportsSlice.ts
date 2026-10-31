@@ -2,11 +2,10 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { dismissReport, removeReportedProduct } from '../../networks/admin/adminShop';
+import { dismissReport, removeProduct } from '../../networks/admin/adminShop';
 import { toRejectedValue } from '../../networks/network/network';
 import type { ReportStatus } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { productReportSerializer } from '../../serializers/shopping/adminShopSerializer';
 
 export interface ShopReportsSliceState {
   status: ReportStatus;
@@ -15,8 +14,8 @@ export interface ShopReportsSliceState {
   busy: string | null;
   action: FormStatus;
   error: ServerError;
-  /** The report just decided. */
-  decided: ReturnType<typeof productReportSerializer>;
+  /** The report just decided, and its product (a removal settles all of its reports). */
+  decided: { id: string; productId: string } | null;
 }
 
 const initialState: ShopReportsSliceState = { status: 'open', removing: null, reason: '', busy: null, action: 'idle', error: NO_ERROR ,
@@ -39,9 +38,10 @@ export const shopReportsSlice = createAppSlice({
       state.reason = action.payload.slice(0, 300);
     }),
     decideReportAsync: create.asyncThunk(
-      async (d: { id: string; kind: 'dismiss' } | { id: string; kind: 'remove'; reason: string }, { rejectWithValue }) => {
+      async (d: { id: string; productId: string; kind: 'dismiss' } | { id: string; productId: string; kind: 'remove'; reason: string }, { rejectWithValue }) => {
         try {
-          return d.kind === 'dismiss' ? await dismissReport(d.id) : await removeReportedProduct(d.id, d.reason.trim());
+          // A removal is the product's: every open report on it is actioned with it.
+          return d.kind === 'dismiss' ? await dismissReport(d.id) : await removeProduct(d.productId, d.reason.trim());
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -52,10 +52,9 @@ export const shopReportsSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = productReportSerializer(action.payload);
           state.busy = null;
           state.removing = null;
-          state.decided = payload;
+          state.decided = { id: action.meta.arg.id, productId: action.meta.arg.productId };
         },
         rejected: (state, action) => {
           state.busy = null;

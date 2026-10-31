@@ -5,14 +5,14 @@ import { createAppSlice } from '../../store/createAppSlice';
 import { setStoreFeatured } from '../../networks/admin/adminShop';
 import { toRejectedValue } from '../../networks/network/network';
 import { NO_ERROR, readRejection, type ServerError } from '../shared/formStatus';
-import { storeSummarySerializer } from '../../serializers/shopping/catalogSerializer';
+import { featuredStateSerializer } from '../../serializers/shopping/adminShopSerializer';
 
 export interface ShopStoresSliceState {
   query: string;
   busy: string | null;
   error: ServerError;
   /** The store just featured or unfeatured, as the server has it now. */
-  updated: ReturnType<typeof storeSummarySerializer>;
+  updated: ReturnType<typeof featuredStateSerializer>;
 }
 
 const initialState: ShopStoresSliceState = { query: '', busy: null, error: NO_ERROR ,
@@ -40,7 +40,7 @@ export const shopStoresSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = storeSummarySerializer(action.payload);
+          const payload = featuredStateSerializer(action.payload);
           state.busy = null;
           state.updated = payload;
         },

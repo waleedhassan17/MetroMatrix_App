@@ -8,19 +8,16 @@
 // /addresses and /notifications.
 
 import type { MockBusiness, MockDb, MockUser } from '../mockDb';
-import type { MockAddress, MockCoupon, MockOrder, MockProduct, MockStore, MockVariant } from './shopTypes';
+import type { MockAddress, MockBanner, MockCoupon, MockOrder, MockProduct, MockStore, MockVariant } from './shopTypes';
 import {
   ShopError,
   addEvent,
   cancelOrder,
   categoryAndChildren,
-  categoryTree,
   delivers,
-  evaluateCoupon,
   findVariant,
   firstName,
   groupSegment,
-  groupView,
   isListed,
   isoNow,
   LOW_STOCK,
@@ -31,13 +28,11 @@ import {
   openReturnFor,
   productById,
   productHaystack,
-  progressStatus,
   returnableQty,
   returnWindowEnd,
   rupees,
   storeById,
   storeOfOwner,
-  storeSummaryView,
   totalStock,
   unitPrice,
   variantLabel,
@@ -49,6 +44,11 @@ import {
   apiStatus,
   availableCouponsWire,
   cartWire,
+  adminCategoryTree,
+  adminCategoryWire,
+  adminOrderRowWire,
+  adminOrderWire,
+  bannerWire,
   categoryTree as categoryTreeWire,
   couponWire,
   dashboardWire,
@@ -61,6 +61,7 @@ import {
   partnerOrderRowWire,
   partnerProductRowWire,
   partnerProductWire,
+  reportWire,
   paymentAccountWire,
   planFor,
   planWire,
@@ -1497,191 +1498,162 @@ export function registerShopRoutes(kit: ShopKit) {
     return reviewWire(ctx.db.shop, r, true);
   });
 
-  // ══ Admin (Shopping) ════════════════════════════════
-  route('GET', '/admin/shop/overview', ctx => {
-    requireAdmin(ctx);
-    const shop = ctx.db.shop;
-    const today = new Date(ctx.now).toISOString().slice(0, 10);
-    return {
-      stores: shop.stores.length,
-      activeProducts: shop.products.filter(isListed).length,
-      openReports: shop.reports.filter(r => r.status === 'open').length,
-      ordersToday: shop.orders.filter(o => o.createdAt.slice(0, 10) === today).length,
-    };
-  });
+  // ══ Staff (/admin/shop) ═════════════════════════════
+  // The real API's paths, bodies and answers. It has no overview or staff
+  // store list: the console counts from these lists and the catalogue.
+  const A = '/admin/shop';
 
-  route('GET', '/admin/shop/categories', ctx => {
+  route('GET', `${A}/categories`, ctx => {
     requireAdmin(ctx);
-    return categoryTree(ctx.db.shop);
+    return adminCategoryTree(ctx.db.shop);
   });
-  route('POST', '/admin/shop/categories', ctx => {
+  route('POST', `${A}/categories`, ctx => {
     requireAdmin(ctx);
     const shop = ctx.db.shop;
-    const name = String(ctx.body.name ?? '').trim();
-    if (name.length < 2) throw bad('Name the category.', { name: 'At least 2 characters' });
+    const name = textOf(ctx.body.name, 'name', 2, 60, 'name must be 2 to 60 characters');
     const parentId = ctx.body.parentId ? String(ctx.body.parentId) : null;
-    if (parentId && !shop.categories.some(c => c.id === parentId && !c.parentId)) throw bad('Choose a top-level parent.', { parentId: 'Unknown parent' });
+    if (parentId && !shop.categories.some(c => c.id === parentId && !c.parentId)) throw notFound('Category');
     const c = {
       id: nextId(shop, 'cat'),
       name,
-      slug: slugify(name),
+      slug: ctx.body.slug ? String(ctx.body.slug) : slugify(name),
       icon: String(ctx.body.icon ?? 'pricetag-outline'),
       parentId,
-      position: shop.categories.filter(x => x.parentId === parentId).length,
+      position: ctx.body.sort === undefined ? shop.categories.filter(x => x.parentId === parentId).length : int(ctx.body.sort),
+      isActive: true,
     };
+    if (shop.categories.some(x => x.slug === c.slug)) throw new ShopError(409, 'CONFLICT', 'A category with this slug already exists.');
     shop.categories.push(c);
     ctx.setStatus(201);
-    return { ...c, productCount: 0, children: [] };
+    return adminCategoryWire(c);
   });
-  route('PATCH', '/admin/shop/categories/:id', ctx => {
+  route('PATCH', `${A}/categories/:id`, ctx => {
     requireAdmin(ctx);
     const c = ctx.db.shop.categories.find(x => x.id === decodeURIComponent(ctx.params[0]));
     if (!c) throw notFound('Category');
-    if (ctx.body.name !== undefined) {
-      const name = String(ctx.body.name).trim();
-      if (name.length < 2) throw bad('Name the category.', { name: 'At least 2 characters' });
-      c.name = name;
-    }
-    if (ctx.body.icon) c.icon = String(ctx.body.icon);
-    return categoryTree(ctx.db.shop).flatMap((x: any) => [x, ...x.children]).find((x: any) => x.id === c.id);
+    if (ctx.body.name !== undefined) c.name = textOf(ctx.body.name, 'name', 2, 60, 'name must be 2 to 60 characters');
+    if (ctx.body.icon !== undefined) c.icon = String(ctx.body.icon);
+    if (ctx.body.sort !== undefined) c.position = Math.max(0, int(ctx.body.sort));
+    if (ctx.body.isActive !== undefined) c.isActive = bool(ctx.body.isActive);
+    return adminCategoryWire(c);
   });
-  route('DELETE', '/admin/shop/categories/:id', ctx => {
+  route('DELETE', `${A}/categories/:id`, ctx => {
     requireAdmin(ctx);
     const shop = ctx.db.shop;
     const id = decodeURIComponent(ctx.params[0]);
-    if (shop.categories.some(c => c.parentId === id)) throw new ShopError(409, 'CATEGORY_IN_USE', 'Remove its sub-categories first.');
-    const used = shop.products.filter(p => p.categoryId === id).length;
-    if (used) throw new ShopError(409, 'CATEGORY_IN_USE', `${used} product(s) use this category.`, { productCount: used });
+    if (!shop.categories.some(c => c.id === id)) throw notFound('Category');
+    if (shop.categories.some(c => c.parentId === id) || shop.products.some(p => p.categoryId === id)) {
+      throw new ShopError(409, 'CONFLICT', 'This category is in use. Switch it off instead.');
+    }
     shop.categories = shop.categories.filter(c => c.id !== id);
-    return { removed: true };
-  });
-  route('POST', '/admin/shop/categories/reorder', ctx => {
-    requireAdmin(ctx);
-    const ids: string[] = Array.isArray(ctx.body.ids) ? ctx.body.ids : [];
-    ids.forEach((id, i) => {
-      const c = ctx.db.shop.categories.find(x => x.id === id);
-      if (c) c.position = i;
-    });
-    return categoryTree(ctx.db.shop);
+    return { deleted: true };
   });
 
-  const readBanner = (b: Record<string, any>) => {
-    const fields: Record<string, string> = {};
-    if (!String(b.imageUrl ?? '').trim()) fields.imageUrl = 'Add an image';
-    if (String(b.headline ?? '').trim().length < 3) fields.headline = 'Write a headline';
-    const t = b.target ?? {};
-    if (!['store', 'category', 'product'].includes(t.kind) || !(t.slug || t.id)) fields.target = 'Choose where it leads';
-    if (Object.keys(fields).length) throw bad('Check the banner.', fields);
-    return {
-      imageUrl: String(b.imageUrl),
-      headline: String(b.headline).trim(),
-      subhead: b.subhead ? String(b.subhead).trim() : null,
-      target: t,
-      startsAt: b.startsAt ? String(b.startsAt) : isoNow(),
-      endsAt: b.endsAt ? String(b.endsAt) : null,
-      position: int(b.position),
-      isActive: b.isActive === undefined ? true : bool(b.isActive),
-    };
+  /** A CreateBannerDto / UpdateBannerDto onto the dummy's banner (a store target keeps its slug). */
+  const applyBanner = (ctx: ShopCtx, b: MockBanner, body: Record<string, any>) => {
+    const shop = ctx.db.shop;
+    if (body.imageUrl !== undefined) b.imageUrl = textOf(body.imageUrl, 'imageUrl', 1, 500, 'imageUrl is required');
+    if (body.title !== undefined) b.headline = textOf(body.title, 'title', 2, 80, 'title must be 2 to 80 characters');
+    if (body.subtitle !== undefined) b.subhead = body.subtitle ? String(body.subtitle).slice(0, 140) : null;
+    if (body.targetType !== undefined || body.targetId !== undefined) {
+      const kind = String(body.targetType ?? b.target.kind);
+      const id = body.targetId === undefined ? null : body.targetId;
+      if (kind === 'none') b.target = { kind: 'none' };
+      else if (!id) throw bad('Choose where it leads.', { targetId: 'targetId is required for this target' });
+      else if (kind === 'store') {
+        const store = storeById(shop, String(id));
+        if (!store) throw notFound('Store');
+        b.target = { kind: 'store', slug: store.slug, id: store.id };
+      } else if (kind === 'category') b.target = { kind: 'category', id: String(id), name: shop.categories.find(c => c.id === id)?.name ?? '' };
+      else if (kind === 'collection' || kind === 'product') b.target = { kind, id: String(id) };
+      else throw bad('targetType must be store, category, collection, product or none', { targetType: 'Unknown target' });
+    }
+    if (body.startsAt !== undefined) b.startsAt = body.startsAt ? String(body.startsAt) : isoNow();
+    if (body.endsAt !== undefined) b.endsAt = body.endsAt ? String(body.endsAt) : null;
+    if (body.sort !== undefined) b.position = Math.max(0, int(body.sort));
+    if (body.isActive !== undefined) b.isActive = bool(body.isActive);
   };
-  route('GET', '/admin/shop/banners', ctx => {
+  route('GET', `${A}/banners`, ctx => {
     requireAdmin(ctx);
-    return [...ctx.db.shop.banners].sort((a, b) => a.position - b.position);
+    return [...ctx.db.shop.banners].sort((a, b) => a.position - b.position).map(b => bannerWire(ctx.db.shop, b));
   });
-  route('POST', '/admin/shop/banners', ctx => {
+  route('POST', `${A}/banners`, ctx => {
     requireAdmin(ctx);
-    const banner = { id: nextId(ctx.db.shop, 'bn'), ...readBanner(ctx.body) };
-    ctx.db.shop.banners.push(banner);
+    const b: MockBanner = { id: nextId(ctx.db.shop, 'bn'), imageUrl: '', headline: '', subhead: null, target: { kind: 'none' }, startsAt: isoNow(), endsAt: null, position: ctx.db.shop.banners.length, isActive: true };
+    applyBanner(ctx, b, { imageUrl: ctx.body.imageUrl ?? '', title: ctx.body.title ?? '', targetType: ctx.body.targetType, targetId: ctx.body.targetId ?? null, ...ctx.body });
+    ctx.db.shop.banners.push(b);
     ctx.setStatus(201);
-    return banner;
+    return bannerWire(ctx.db.shop, b);
   });
-  route('PATCH', '/admin/shop/banners/:id', ctx => {
+  route('PATCH', `${A}/banners/:id`, ctx => {
     requireAdmin(ctx);
-    const banner = ctx.db.shop.banners.find(x => x.id === decodeURIComponent(ctx.params[0]));
-    if (!banner) throw notFound('Banner');
-    Object.assign(banner, readBanner({ ...banner, ...ctx.body }));
-    return banner;
+    const b = ctx.db.shop.banners.find(x => x.id === decodeURIComponent(ctx.params[0]));
+    if (!b) throw notFound('Banner');
+    applyBanner(ctx, b, ctx.body);
+    return bannerWire(ctx.db.shop, b);
   });
-  route('DELETE', '/admin/shop/banners/:id', ctx => {
+  route('DELETE', `${A}/banners/:id`, ctx => {
     requireAdmin(ctx);
-    ctx.db.shop.banners = ctx.db.shop.banners.filter(b => b.id !== decodeURIComponent(ctx.params[0]));
-    return { removed: true };
+    const id = decodeURIComponent(ctx.params[0]);
+    if (!ctx.db.shop.banners.some(b => b.id === id)) throw notFound('Banner');
+    ctx.db.shop.banners = ctx.db.shop.banners.filter(b => b.id !== id);
+    return { deleted: true };
   });
 
-  const reportView = (ctx: ShopCtx, r: (typeof ctx.db.shop.reports)[number]) => {
-    const p = productById(ctx.db.shop, r.productId);
-    return {
-      id: r.id,
-      productId: r.productId,
-      productName: p?.name ?? 'Product',
-      productImage: p?.images[0]?.url ?? null,
-      storeName: p ? storeById(ctx.db.shop, p.storeId)?.name ?? '' : '',
-      reason: r.reason,
-      details: r.details,
-      reportCount: ctx.db.shop.reports.filter(x => x.productId === r.productId && x.status === 'open').length || 1,
-      status: r.status,
-      createdAt: r.createdAt,
-    };
-  };
-  route('GET', '/admin/shop/reports', ctx => {
+  route('GET', `${A}/reports`, ctx => {
     requireAdmin(ctx);
     const status = String(ctx.query.status ?? 'open');
+    const mine = status === 'actioned' ? 'removed' : status;
     const rows = ctx.db.shop.reports
-      .filter(r => r.status === status)
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .map(r => reportView(ctx, r));
+      .filter(r => r.status === mine)
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+      .map(r => reportWire(ctx.db.shop, r));
     return paginate(rows, ctx.query);
   });
-  route('POST', '/admin/shop/reports/:id/dismiss', ctx => {
+  route('POST', `${A}/reports/:id/dismiss`, ctx => {
     requireAdmin(ctx);
     const r = ctx.db.shop.reports.find(x => x.id === decodeURIComponent(ctx.params[0]));
     if (!r) throw notFound('Report');
+    if (r.status !== 'open') throw new ShopError(409, 'INVALID_TRANSITION', 'This report is already settled.', { from: r.status, to: 'dismissed', allowed: [] });
     r.status = 'dismissed';
-    return reportView(ctx, r);
+    return { id: r.id, status: 'dismissed' };
   });
-  route('POST', '/admin/shop/reports/:id/remove', ctx => {
+  route('POST', `${A}/products/:id/remove`, ctx => {
     requireAdmin(ctx);
     const shop = ctx.db.shop;
-    const r = shop.reports.find(x => x.id === decodeURIComponent(ctx.params[0]));
-    if (!r) throw notFound('Report');
-    const reason = String(ctx.body.reason ?? '').trim();
-    if (reason.length < 10) throw bad('Give the store a reason.', { reason: 'At least 10 characters' });
-    const p = productById(shop, r.productId);
-    if (p) {
-      p.removed = true;
-      const store = storeById(shop, p.storeId);
-      if (store) notify(shop, store.ownerId, 'low_stock', `${p.name} was removed`, reason, { productId: p.id });
-    }
-    for (const x of shop.reports) if (x.productId === r.productId && x.status === 'open') x.status = 'removed';
-    return reportView(ctx, r);
+    const p = productById(shop, decodeURIComponent(ctx.params[0]));
+    if (!p) throw notFound('Product');
+    const reason = textOf(ctx.body.reason, 'reason', 3, 500, 'reason must be 3 to 500 characters');
+    p.removed = true;
+    for (const x of shop.reports) if (x.productId === p.id && x.status === 'open') x.status = 'removed';
+    const store = storeById(shop, p.storeId);
+    if (store) notify(shop, store.ownerId, 'low_stock', `${p.name} was removed`, reason, { productId: p.id });
+    return { id: p.id, status: 'removed', removedReason: reason };
   });
 
-  route('GET', '/admin/shop/orders/:groupCode', ctx => {
+  route('GET', `${A}/orders`, ctx => {
     requireAdmin(ctx);
-    const g = ctx.db.shop.groups.find(x => x.code === decodeURIComponent(ctx.params[0]).toUpperCase());
-    if (!g) throw notFound('Order');
-    const customer = ctx.db.users.find(u => u.id === g.userId);
-    return { group: groupView(ctx.db.shop, g), customer: { name: customer?.name ?? 'Customer', email: customer?.email ?? '' } };
-  });
-
-  route('GET', '/admin/shop/stores', ctx => {
-    requireAdmin(ctx);
-    const q = String(ctx.query.q ?? '').trim().toLowerCase();
-    const rows = ctx.db.shop.stores
-      .filter(s => !q || s.name.toLowerCase().includes(q) || s.city.toLowerCase().includes(q))
-      .sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured) || a.name.localeCompare(b.name))
-      .map(s => storeSummaryView(ctx.db.shop, s));
+    const code = String(ctx.query.code ?? '').trim().toUpperCase();
+    const rows = ctx.db.shop.orders
+      .filter(o => (!code || o.code.startsWith(code)) && (!ctx.query.storeId || o.storeId === ctx.query.storeId) && (!ctx.query.status || apiStatus(o) === ctx.query.status))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .map(o => adminOrderRowWire(ctx.db, o));
     return paginate(rows, ctx.query);
   });
-  route('POST', '/admin/shop/stores/:id/featured', ctx => {
+  route('GET', `${A}/orders/:id`, ctx => {
+    requireAdmin(ctx);
+    const o = ctx.db.shop.orders.find(x => x.id === decodeURIComponent(ctx.params[0]));
+    if (!o) throw notFound('Order');
+    return adminOrderWire(ctx.db, o);
+  });
+
+  const featured = (ctx: ShopCtx, on: boolean) => {
     requireAdmin(ctx);
     const s = storeById(ctx.db.shop, decodeURIComponent(ctx.params[0]));
     if (!s) throw notFound('Store');
-    s.isFeatured = bool(ctx.body.featured);
-    return storeSummaryView(ctx.db.shop, s);
-  });
-
-  // Silence "unused" for helpers kept for clarity in this file.
-  void delivers;
-  void evaluateCoupon;
-  void progressStatus;
+    s.isFeatured = on;
+    return { id: s.id, isFeatured: s.isFeatured };
+  };
+  route('POST', `${A}/stores/:id/feature`, ctx => featured(ctx, true));
+  route('POST', `${A}/stores/:id/unfeature`, ctx => featured(ctx, false));
 }

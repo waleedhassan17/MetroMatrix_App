@@ -9,7 +9,6 @@ import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
-import { formatAddress } from '../../models/addressModel';
 import { ORDER_STATUS, PAYMENT_METHOD_LABEL, PAYMENT_STATUS } from '../../models/shopping/orderStatusModel';
 import { useStyles, type Theme } from '../../theme/index';
 import { AppText, Button, Card, EmptyState, InlineNotice, OrderTimeline, ScreenShell, SkeletonLines, StatusPill, StoreMark } from '../../Custom-Components/index';
@@ -33,7 +32,7 @@ const OrderLookup: React.FC<Props> = ({ route }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectOrderLookup);
-  const g = s.result?.group;
+  const g = s.result;
 
   useEffect(() => {
     const code = route.params?.groupCode;
@@ -59,15 +58,15 @@ const OrderLookup: React.FC<Props> = ({ route }) => {
       {s.status === 'idle' ? <EmptyState icon="search" title="Find any Shopping order" body="Type the MM- code from the shopper's receipt or email." /> : null}
       {s.status === 'failed' ? <InlineNotice message={s.error.message} /> : null}
       {s.status === 'loading' ? <SkeletonLines lines={6} /> : null}
-      {g && s.result ? (
+      {g ? (
         <>
           <Card>
             <AppText variant="title">{g.code}</AppText>
             <AppText variant="small" tone="muted">
-              {s.result.customer.name} · {s.result.customer.email}
+              {[g.customerName, g.city].filter(Boolean).join(' · ')}
             </AppText>
             <AppText variant="small" tone="muted">
-              Placed {formatDateTime(g.createdAt)} · {formatPKR(g.total)} · to {formatAddress(g.address)}
+              Placed {formatDateTime(g.placedAt)} · {formatPKR(g.total)}
             </AppText>
           </Card>
           {g.orders.map(o => {

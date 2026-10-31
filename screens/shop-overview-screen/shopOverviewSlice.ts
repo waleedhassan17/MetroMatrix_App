@@ -1,7 +1,8 @@
 // MetroMatrix — Admin Shopping overview slice.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { fetchShopOverview } from '../../networks/admin/adminShop';
+import { fetchAdminOrders, fetchReports } from '../../networks/admin/adminShop';
+import { fetchProducts, fetchStores } from '../../networks/shopping/catalog';
 import { toRejectedValue } from '../../networks/network/network';
 import type { ShopOverview } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -22,7 +23,14 @@ export const shopOverviewSlice = createAppSlice({
     loadShopOverviewAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await fetchShopOverview();
+          // The API has no overview for staff: each number is a list's total.
+          const [stores, products, orders, reports] = await Promise.all([
+            fetchStores({}, 1, 1),
+            fetchProducts({}, 1, 1),
+            fetchAdminOrders({}, 1, 1),
+            fetchReports('open', 1, 1),
+          ]);
+          return { stores, products, orders, reports };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
