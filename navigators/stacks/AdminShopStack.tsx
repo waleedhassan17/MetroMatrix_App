@@ -1,8 +1,8 @@
-// MetroMatrix — AdminShopStack: dumb mapper over navigations-maps/AdminShopping.ts.
+// MetroMatrix — AdminShopStack: dumb mapper over navigations-maps/AdminShopping.tsx.
 
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import type { AdminShopStackParamList } from '../../types';
+import type { AdminShopStackParamList } from '../../models';
 import { ADMIN_SHOP_ROUTES } from '../../navigations-maps/AdminShopping';
 
 const Stack = createNativeStackNavigator<AdminShopStackParamList>();

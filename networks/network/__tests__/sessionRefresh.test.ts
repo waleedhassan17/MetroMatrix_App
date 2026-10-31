@@ -4,10 +4,10 @@
 import { AxiosError } from 'axios';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import { ApiError, isDefinitiveSessionFailure, isTransient, NO_REFRESH_TOKEN } from '../apiHelpers';
-import { appContainerSlice, bootstrapSession } from '../../../Components/app-container/appContainerSlice';
-import { sessionEndedCopy } from '../../../Components/app-container/sessionEndedCopy';
-import authReducer from '../../../screens/Auth/authSlice';
-import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '../../../utils/storageUtils';
+import { appContainerSlice, bootstrapSession } from '../../../Components/appContainerSlice';
+import { sessionEndedCopy } from '../../../Components/sessionEndedCopy';
+import authReducer from '../../../store/authSlice';
+import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '../../../utils/storage_utils/storageUtils';
 import { makeUser } from '../../../__fixtures__/users';
 
 jest.mock('../../auth/authNetwork', () => ({ authMe: jest.fn() }));

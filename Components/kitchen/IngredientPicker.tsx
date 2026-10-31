@@ -7,7 +7,7 @@ import { useStyles, type Theme } from '../../theme/index';
 import { AppText, Divider, ListRow, Sheet, TextField } from '../../Custom-Components/index';
 import { CATEGORY_LABEL } from '../../models/kitchen/kitchenStatusModel';
 import { qtyLabel } from '../../models/kitchen/stockModel';
-import type { Ingredient } from '../../types';
+import type { Ingredient } from '../../models';
 
 const makeStyles = ({ space, size }: Theme) =>
   StyleSheet.create({

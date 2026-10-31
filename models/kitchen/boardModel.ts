@@ -6,11 +6,11 @@
 // chip), whether "Ready" waits for a packing photo, and a pause's private
 // reason with when it lifts. Pure: the board screen renders what this says.
 
-import type { BoardCard, VendorBranch } from '../../types/food';
-import type { BoardHints, PauseReason } from '../../types/kitchen';
+import type { BoardCard, VendorBranch } from '../food';
+import type { BoardHints, PauseReason } from '../kitchen';
 import { ETA_CHOICES } from '../food/foodStatusModel';
 import { PAUSE_REASON_LABEL } from './kitchenStatusModel';
-import { addDays, dateInZone, formatDayShort, formatSlot } from '../../utils/healthTime';
+import { addDays, dateInZone, formatDayShort, formatSlot } from '../../utils/health-time/healthTime';
 
 /** Fewer servings than this left of a dish's recipe: the ticket says so. */
 export const LOW_SERVINGS = 3;

@@ -1,7 +1,7 @@
 // MetroMatrix — Store-partner serializers.
 // TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
 
-import type { Coupon, CouponStatus, CouponType, Insights, InsightsRange, InventoryMovement, InventoryRow, MovementReason, PartnerOrderAction, PartnerOrderDetail, PartnerOrderRow, PartnerProduct, PartnerProductRow, PartnerProductStatus, PartnerReview, PartnerSummary, PaymentAccount, PaymentAccountKind, StoreProfile, StoreSettings, PartnerOrderSegment } from '../../types/shopping';
+import type { Coupon, CouponStatus, CouponType, Insights, InsightsRange, InventoryMovement, InventoryRow, MovementReason, PartnerOrderAction, PartnerOrderDetail, PartnerOrderRow, PartnerProduct, PartnerProductRow, PartnerProductStatus, PartnerReview, PartnerSummary, PaymentAccount, PaymentAccountKind, StoreProfile, StoreSettings, PartnerOrderSegment } from '../../models/shopping';
 import { arr, bool, enumList, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { addressSerializer } from '../addressSerializer';
 import { reviewSerializer } from './catalogSerializer';

@@ -11,7 +11,7 @@
 // §2, §4.1).
 
 import type { MockDb } from '../mockDb';
-import { dateInZone, zoneOffsetMinutes } from '../../../../utils/healthTime';
+import { dateInZone, zoneOffsetMinutes } from '../../../../utils/health-time/healthTime';
 import { isoNow, openState, overrideOf } from './foodLogic';
 import type { MockFoodVendor, MockMenuItem } from './foodTypes';
 import { foodHooks } from './foodHooks';

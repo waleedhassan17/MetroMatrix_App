@@ -4,7 +4,7 @@
 // MetroMatrix-API docs/API_HEALTH.md §4.3 (Insights).
 
 import { api, toApiError } from '../../network/apiHelpers';
-import type { DoctorInsightsRange } from '../../../types/health';
+import type { DoctorInsightsRange } from '../../../models/health';
 
 export const getInsightsAPI = async (range: DoctorInsightsRange): Promise<unknown> => {
   try {

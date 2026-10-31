@@ -6,11 +6,11 @@
 // kitchen's plan form checked against the API's limits (§3.9) before it is
 // sent. Pure: the slices and screens call these.
 
-import type { Meal, TiffinDay, TiffinPeriod, TiffinPlan, TiffinPlanCard, TiffinPlanInput, TiffinPeriodKind, TiffinMode } from '../../types/kitchen';
+import type { Meal, TiffinDay, TiffinPeriod, TiffinPlan, TiffinPlanCard, TiffinPlanInput, TiffinPeriodKind, TiffinMode } from '../kitchen';
 import type { TiffinPlanCardData } from '../../Custom-Components/kitchen/TiffinPlanCard';
 import type { ValidationErrors } from '../authModel';
-import { addDays, formatDayShort, formatWhen, isoWeekday } from '../../utils/healthTime';
-import { formatPKR, parseRupees } from '../../utils/money';
+import { addDays, formatDayShort, formatWhen, isoWeekday } from '../../utils/health-time/healthTime';
+import { formatPKR, parseRupees } from '../../utils/money/money';
 import { MEAL_LABEL, WEEKDAY_LONG, WEEKDAY_SHORT } from './kitchenStatusModel';
 
 export const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];

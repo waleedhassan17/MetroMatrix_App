@@ -15,7 +15,7 @@ import {
   validateSuspendReason,
   vendorStanding,
 } from '../food/adminFoodModel';
-import type { AdminFoodBannerInput } from '../../types/food';
+import type { AdminFoodBannerInput } from '../food';
 
 describe('rating an order', () => {
   it('needs the food’s stars; the rest is optional', () => {

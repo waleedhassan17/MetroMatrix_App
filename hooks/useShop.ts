@@ -7,10 +7,10 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from './useReduxHooks';
-import { loadBagAsync, selectBagCount } from '../screens/Shopping/Customer/Bag/bagSlice';
-import { loadSavedIdsAsync, selectSavedIds, setSavedAsync } from '../screens/Shopping/Customer/Saved/savedSlice';
-import type { Banner, ShopBrowseParamList } from '../types';
-import { haptics } from '../utils/haptics';
+import { loadBagAsync, selectBagCount } from '../screens/bag-screen/bagSlice';
+import { loadSavedIdsAsync, selectSavedIds, setSavedAsync } from '../screens/saved-screen/savedSlice';
+import type { Banner, ShopBrowseParamList } from '../models';
+import { haptics } from '../utils/haptics/haptics';
 
 /** The Bag and the hearts load once, on the first Shopping screen. */
 export const useShopBootstrap = () => {

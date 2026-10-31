@@ -14,7 +14,7 @@ import type {
   PaymentStatus,
   ReturnStatus,
   StoreOrder,
-} from '../../types/shopping';
+} from '../shopping';
 
 export type StatusTone = 'neutral' | 'accent' | 'success' | 'warning' | 'danger';
 

@@ -9,9 +9,9 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../../theme';
-import type { PracticeLocation } from '../../types/health';
-import { formatPKR } from '../../utils/money';
-import { openDirections } from '../../utils/maps';
+import type { PracticeLocation } from '../../models/health';
+import { formatPKR } from '../../utils/money/money';
+import { openDirections } from '../../utils/maps/maps';
 import { AppText } from '../AppText';
 import { IonIcon } from '../Icon';
 import { TextAction } from '../TextAction';

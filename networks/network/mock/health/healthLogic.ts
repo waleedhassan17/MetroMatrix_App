@@ -11,7 +11,7 @@
 import type { MockDb } from '../mockDb';
 import { ShopError } from '../shop/shopLogic';
 import type { MockAppointment, MockDoctor, MockHealth, MockLocation } from './healthTypes';
-import type { AppointmentStatus, ConsultKind, SlotPeriod } from '../../../../types/health';
+import type { AppointmentStatus, ConsultKind, SlotPeriod } from '../../../../models/health';
 import {
   addDays,
   dateInZone,
@@ -19,7 +19,7 @@ import {
   isoWeekday,
   todayInZone,
   zonedToIso,
-} from '../../../../utils/healthTime';
+} from '../../../../utils/health-time/healthTime';
 
 export { ShopError as HealthError };
 

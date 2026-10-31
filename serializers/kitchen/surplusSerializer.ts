@@ -11,7 +11,7 @@ import type {
   SurplusDetail,
   SurplusReservation,
   SurplusSuggestion,
-} from '../../types/kitchen';
+} from '../../models/kitchen';
 import { arr, bool, enumList, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { PAY_STATUSES, count, list, numOrNull, transferAccountSerializer } from './kitchenCommon';
 

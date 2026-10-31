@@ -9,8 +9,8 @@
 // and details. Paths and bodies per MetroMatrix_Backend docs/API_AUTH.md.
 
 import { api, unwrap, setTokens, clearTokens, refreshTokens, toApiError, ApiError, AUTH_PATHS, ERROR_CODES } from '../network/apiHelpers';
-import { clearIntentionalSignOut } from '../../utils/authEvents';
-import { getAccessToken } from '../../utils/storageUtils';
+import { clearIntentionalSignOut } from '../../utils/auth-events/authEvents';
+import { getAccessToken } from '../../utils/storage_utils/storageUtils';
 import { getMyBusinessAPI } from '../businesses/businessNetwork';
 import { businessSerializer } from '../../serializers/businessSerializer';
 import {
@@ -23,7 +23,7 @@ import {
   totpEnrolmentSerializer,
   type SessionPayload,
 } from '../../serializers/authSerializer';
-import type { AuthResult, Portal, TotpChallenge, TotpEnrolment } from '../../types/auth';
+import type { AuthResult, Portal, TotpChallenge, TotpEnrolment } from '../../models/auth';
 
 // ─── Types ────────────────────────────────────────────
 export interface SignupPayload {

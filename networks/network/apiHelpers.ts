@@ -10,14 +10,14 @@
 import { Platform } from 'react-native';
 import axios, { AxiosAdapter, AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { API_BASE_URL, CONFIG_ERROR } from '../../config/env';
-import { setTokens, getAccessToken, getRefreshToken, clearTokens } from '../../utils/storageUtils';
+import { setTokens, getAccessToken, getRefreshToken, clearTokens } from '../../utils/storage_utils/storageUtils';
 import {
   emitSessionExpired,
   emitBusinessStatusStale,
   isIntentionalSignOut,
   emitPlatformNotice,
-} from '../../utils/authEvents';
-import type { LocalFile, SignedUpload, UploadedFile } from '../../types/auth';
+} from '../../utils/auth-events/authEvents';
+import type { LocalFile, SignedUpload, UploadedFile } from '../../models/auth';
 
 // ★ BACKEND BASE URL ★
 // EXPO_PUBLIC_API_URL, read by config/env.ts (the one module that reads
@@ -26,7 +26,7 @@ import type { LocalFile, SignedUpload, UploadedFile } from '../../types/auth';
 // physical device use the machine's LAN address, not localhost.
 export { API_BASE_URL };
 
-// Token storage lives in utils/storageUtils.ts; re-exported here so the domain
+// Token storage lives in utils/storage_utils/storageUtils.ts; re-exported here so the domain
 // network files keep importing everything they need from the shared client.
 export { setTokens, getAccessToken, getRefreshToken, clearTokens };
 

@@ -6,7 +6,7 @@
 
 import real from '../../../../serializers/__tests__/fixtures/health/real.json';
 import { api } from '../../apiHelpers';
-import { clearTokens } from '../../../../utils/storageUtils';
+import { clearTokens } from '../../../../utils/storage_utils/storageUtils';
 import { getDb, resetMockDb } from '../mockDb';
 import { signInAs, installDummyApi } from '../testing';
 

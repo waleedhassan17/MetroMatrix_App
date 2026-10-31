@@ -18,9 +18,9 @@ import type {
   PriceUnit,
   ReferencePriceList,
   SignatureStatus,
-} from '../../types/kitchenAdmin';
-import { formatPKR } from '../../utils/money';
-import { formatDayShort } from '../../utils/healthTime';
+} from '../kitchenAdmin';
+import { formatPKR } from '../../utils/money/money';
+import { formatDayShort } from '../../utils/health-time/healthTime';
 import type { KitchenTone } from './kitchenStatusModel';
 
 type Errors = Record<string, string>;

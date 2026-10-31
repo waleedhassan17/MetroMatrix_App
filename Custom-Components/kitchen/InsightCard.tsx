@@ -11,7 +11,7 @@ import { Card } from '../Card';
 import { TextAction } from '../TextAction';
 import { ToneWell } from './kitchenShared';
 import { cardLook } from '../../models/kitchen/insightCardModel';
-import type { InsightCard as InsightCardData } from '../../types/kitchen';
+import type { InsightCard as InsightCardData } from '../../models/kitchen';
 
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({

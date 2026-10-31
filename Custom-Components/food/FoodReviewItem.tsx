@@ -9,9 +9,9 @@ import { Image } from 'expo-image';
 import { useStyles, useTheme, type Theme } from '../../theme/index';
 import { AppText, Stars } from '../index';
 import { FOOD_REVIEW_TAG_LABEL } from '../../models/food/reviewModel';
-import type { FoodReview } from '../../types';
-import { cdn } from '../../utils/cdn';
-import { formatDate } from '../../utils/dates';
+import type { FoodReview } from '../../models';
+import { cdn } from '../../utils/cdn/cdn';
+import { formatDate } from '../../utils/dates/dates';
 
 const makeStyles = ({ colors, space, size, radius }: Theme) =>
   StyleSheet.create({

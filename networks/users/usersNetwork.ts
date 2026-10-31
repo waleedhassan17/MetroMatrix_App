@@ -4,7 +4,7 @@
 // Paths and bodies per MetroMatrix_Backend users.controller.ts / docs/API_AUTH.md §4.2.
 
 import { api, toApiError } from '../network/apiHelpers';
-import type { Gender } from '../../types/auth';
+import type { Gender } from '../../models/auth';
 
 /** PATCH /users/me: the API's UpdateMeDto (models/authModel `updateMeBody` builds it). */
 export interface UpdateMeBody {

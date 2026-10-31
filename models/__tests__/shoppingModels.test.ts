@@ -19,10 +19,10 @@ import { returnDaysLeft, validateReturn } from '../shopping/returnFormModel';
 import { validateReview } from '../shopping/reviewFormModel';
 import { brandContrast, validatePaymentAccount, validateStoreSettings } from '../shopping/storeModel';
 import { buildMatrix, setAllStock, skuFor, totalStock } from '../shopping/variantMatrixModel';
-import { pushTapUrl } from '../../services/push';
+import { pushTapUrl } from '../../notifications/push';
 import { choose, initialChoice, isValueAvailable, stockNote, variantFor } from '../shopping/variantPickerModel';
 import { ORDER_STATUSES, PAYMENT_STATUSES } from '../../serializers/shopping/orderSerializer';
-import type { StoreSettings } from '../../types/shopping';
+import type { StoreSettings } from '../shopping';
 
 describe('orderStatusModel', () => {
   it('has a label, a tone and a line of copy for every status', () => {

@@ -6,7 +6,7 @@ import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStyles, useTheme, type Theme } from '../../theme';
-import { formatPKR } from '../../utils/money';
+import { formatPKR } from '../../utils/money/money';
 import { AppText } from '../AppText';
 
 const makeStyles = ({ space, radius, size, gutter, elevation }: Theme) =>

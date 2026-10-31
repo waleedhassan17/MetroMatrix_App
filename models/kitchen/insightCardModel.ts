@@ -5,7 +5,7 @@
 // down its side); its action opens one screen of the vendor's Kitchen.
 // Pure: the screen navigates with what this returns.
 
-import type { InsightActionKind, InsightCard, InsightSeverity } from '../../types/kitchen';
+import type { InsightActionKind, InsightCard, InsightSeverity } from '../kitchen';
 import type { IonName } from '../../Custom-Components/Icon';
 import { ROUTES } from '../../navigations-maps/Base';
 import { SEVERITY_TONE, type KitchenTone } from './kitchenStatusModel';

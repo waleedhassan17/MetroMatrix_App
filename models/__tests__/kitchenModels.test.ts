@@ -7,7 +7,7 @@ import { actionTitle, actionWarnings, isUnsure } from '../kitchen/voiceModel';
 import { aiDownNote, isAiDown, usageLine, usageNote } from '../kitchen/aiModel';
 import { cardLook, cardTarget } from '../kitchen/insightCardModel';
 import { STOCK_STATE, boxPaymentStatus } from '../kitchen/kitchenStatusModel';
-import type { InsightCard } from '../../types/kitchen';
+import type { InsightCard } from '../kitchen';
 
 describe('cost to make', () => {
   it('divides ingredients by the servings and adds packaging per serving', () => {

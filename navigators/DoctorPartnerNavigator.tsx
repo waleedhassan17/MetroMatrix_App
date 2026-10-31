@@ -1,16 +1,16 @@
 // MetroMatrix — the approved doctor's app: a stack whose first screen is the
 // four tabs (or Practice setup until the doctor is listed), with every tool
-// pushed over them (navigations-maps/DoctorPartner.ts).
+// pushed over them (navigations-maps/DoctorPartner.tsx).
 
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ServiceScope } from '../theme';
 import { ServicePausedGate } from '../Components/platform/ServicePausedGate';
-import type { DoctorPartnerStackParamList } from '../types';
+import type { DoctorPartnerStackParamList } from '../models';
 import { ROUTES } from '../navigations-maps/Base';
 import { DOCTOR_PARTNER_STACK_ROUTES, DOCTOR_PARTNER_TABS } from '../navigations-maps/DoctorPartner';
 import { useAppSelector } from '../hooks/useReduxHooks';
-import { selectBusiness } from '../screens/Auth/authSlice';
+import { selectBusiness } from '../store/authSlice';
 import { RouteTabs } from './RouteTabs';
 import { doctorRootRoute } from './sessionGate';
 

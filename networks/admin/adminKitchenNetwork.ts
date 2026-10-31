@@ -5,7 +5,7 @@
 // docs/API_KITCHEN_ASSUMED.md §4.8 (TODO(API_KITCHEN): an assumed contract).
 
 import { api, toApiError, clean } from '../network/apiHelpers';
-import type { AliasLanguage, CalendarEventInput, NutritionFoodInput, SignatureStatus } from '../../types/kitchenAdmin';
+import type { AliasLanguage, CalendarEventInput, NutritionFoodInput, SignatureStatus } from '../../models/kitchenAdmin';
 
 const enc = encodeURIComponent;
 

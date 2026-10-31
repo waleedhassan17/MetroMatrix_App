@@ -8,8 +8,8 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../../theme';
-import type { EmergencyNumber } from '../../types/health';
-import { callNumber } from '../../utils/maps';
+import type { EmergencyNumber } from '../../models/health';
+import { callNumber } from '../../utils/maps/maps';
 import { AppText } from '../AppText';
 import { IonIcon } from '../Icon';
 

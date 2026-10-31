@@ -13,7 +13,7 @@ import type {
   AppointmentSegment,
   AppointmentStatus,
   ConsultKind,
-} from '../../types/health';
+} from '../health';
 import type { StatusMeta } from '../shopping/orderStatusModel';
 
 export const APPOINTMENT_STATUS: Record<AppointmentStatus, StatusMeta> = {

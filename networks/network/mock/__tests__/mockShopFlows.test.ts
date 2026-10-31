@@ -21,8 +21,8 @@ import { approveReturnAPI, receiveReturnAPI, recordRefundAPI } from '../../../sh
 import { createPartnerProductAPI, getPartnerProductsAPI } from '../../../shopping/partner/productsNetwork';
 import { pauseStoreAPI } from '../../../shopping/partner/storeNetwork';
 import { ApiError, required } from '../../apiHelpers';
-import { clearTokens } from '../../../../utils/storageUtils';
-import type { CheckoutInput, ProductDetail } from '../../../../types/shopping';
+import { clearTokens } from '../../../../utils/storage_utils/storageUtils';
+import type { CheckoutInput, ProductDetail } from '../../../../models/shopping';
 import { getDb, resetMockDb } from '../mockDb';
 import { signInAs, installDummyApi } from '../testing';
 import { addressListSerializer } from '../../../../serializers/addressSerializer';

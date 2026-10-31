@@ -11,7 +11,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText } from '../AppText';
 import { StatusPill } from '../StatusPill';
 import { useStyles, useTheme, type Theme } from '../../theme';
-import type { FoodRider } from '../../types/food';
+import type { FoodRider } from '../../models/food';
 import { riderStatusLabel, riderVehicleLabel } from '../../models/food/vendorModel';
 
 const initials = (name: string) =>

@@ -4,7 +4,7 @@
 // TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
 
 import { api, toApiError, pageParams } from '../network/apiHelpers';
-import type { OrderSegment } from '../../types/shopping';
+import type { OrderSegment } from '../../models/shopping';
 
 export const getOrdersAPI = async (segment: OrderSegment, page: number, pageSize = 20): Promise<unknown> => {
   try {

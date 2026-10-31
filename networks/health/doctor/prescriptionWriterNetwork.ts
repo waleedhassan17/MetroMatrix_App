@@ -6,7 +6,7 @@
 // appointment's prescription.
 
 import { api, toApiError, clean } from '../../network/apiHelpers';
-import type { PrescriptionInput } from '../../../types/health';
+import type { PrescriptionInput } from '../../../models/health';
 
 const enc = encodeURIComponent;
 

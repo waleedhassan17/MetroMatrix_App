@@ -3,7 +3,7 @@
 // the right door follows from the account. Staff use the User sign-in, as in
 // the FYP (signInAndOpen then retries them on the API's admin door).
 
-import type { Portal } from '../types/auth';
+import type { Portal } from './auth';
 
 /** The door for an account type; riders have their own (RiderSignIn), named in WRONG_DOOR_MESSAGE. */
 export const doorForAccount = (accountType: unknown): Portal | undefined => {

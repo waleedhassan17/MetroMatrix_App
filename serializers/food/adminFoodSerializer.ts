@@ -2,7 +2,7 @@
 // MetroMatrix — The staff Food console serializers (/admin/food)
 // ═══════════════════════════════════════════════════════
 // The overview, vendors (list and detail), orders for disputes, review
-// moderation, cuisines and banners → the app's shapes (types/food.ts).
+// moderation, cuisines and banners → the app's shapes (models/food.ts).
 // docs/API_FOOD.md §4.5.
 
 import type {
@@ -16,8 +16,8 @@ import type {
   AdminFoodVendorRow,
   FoodBannerTargetType,
   KitchenKind,
-} from '../../types/food';
-import type { Paged } from '../../types/payments';
+} from '../../models/food';
+import type { Paged } from '../../models/payments';
 import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { paged } from '../shopping/common';
 import { boardCardSerializer, foodOrderSerializer } from './orderSerializer';

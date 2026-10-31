@@ -12,7 +12,7 @@ import { ExpiryChip } from './ExpiryChip';
 import { useToneColors } from './kitchenShared';
 import { STOCK_STATE } from '../../models/kitchen/kitchenStatusModel';
 import { fillOf, parLabel } from '../../models/kitchen/stockModel';
-import type { Ingredient } from '../../types/kitchen';
+import type { Ingredient } from '../../models/kitchen';
 
 const makeStyles = ({ space, size, radius, colors }: Theme) =>
   StyleSheet.create({

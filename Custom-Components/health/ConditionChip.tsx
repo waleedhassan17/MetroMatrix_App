@@ -2,7 +2,7 @@
 // doctors who treat it.
 
 import React from 'react';
-import type { Condition } from '../../types/health';
+import type { Condition } from '../../models/health';
 import { ChoiceChip } from '../shopping/ChoiceChip';
 
 export const ConditionChip: React.FC<{ condition: Pick<Condition, 'name'>; onPress: () => void }> = ({ condition, onPress }) => (

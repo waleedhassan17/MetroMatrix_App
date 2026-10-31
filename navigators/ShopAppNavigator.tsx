@@ -1,12 +1,12 @@
 // MetroMatrix — the customer's Smart Shopping app (the FYP's): a stack whose
 // first screen is the Shopping tabs, with every Shopping page pushed over them
-// (navigations-maps/ShoppingCustomer.ts). Shopping orange throughout.
+// (navigations-maps/ShoppingCustomer.tsx). Shopping orange throughout.
 
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ServiceScope } from '../theme';
 import { CustomerServiceGate } from '../Components/platform/ServicePausedGate';
-import type { ShopAppParamList } from '../types';
+import type { ShopAppParamList } from '../models';
 import { ROUTES } from '../navigations-maps/Base';
 import { SHOP_APP_ROUTES, SHOP_TABS } from '../navigations-maps/ShoppingCustomer';
 import { ServiceTabs } from './ServiceTabs';

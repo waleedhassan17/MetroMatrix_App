@@ -2,9 +2,9 @@
 // MetroMatrix — Coupon form (store partner) and coupon wording
 // ═══════════════════════════════════════════════════════
 
-import type { Coupon, CouponInput, CouponStatus, CouponType } from '../../types/shopping';
+import type { Coupon, CouponInput, CouponStatus, CouponType } from '../shopping';
 import type { ValidationErrors } from '../authModel';
-import { formatPKR, parseRupees } from '../../utils/money';
+import { formatPKR, parseRupees } from '../../utils/money/money';
 
 export interface CouponForm {
   code: string;

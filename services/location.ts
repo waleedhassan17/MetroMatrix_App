@@ -8,7 +8,7 @@
 
 import { Platform } from 'react-native';
 import * as Location from 'expo-location';
-import type { GeoPoint } from '../types/auth';
+import type { GeoPoint } from '../models/auth';
 
 export interface LocatedPlace {
   location: GeoPoint;

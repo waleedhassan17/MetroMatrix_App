@@ -15,8 +15,8 @@ import type {
   AppointmentStatus,
   AppointmentSummary,
   ReasonTag,
-} from '../../types/health';
-import type { PaymentInstructions, PaymentProof } from '../../types/payments';
+} from '../../models/health';
+import type { PaymentInstructions, PaymentProof } from '../../models/payments';
 import { arr, bool, enumList, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { compact, iso, money, paged } from '../shopping/common';
 import {

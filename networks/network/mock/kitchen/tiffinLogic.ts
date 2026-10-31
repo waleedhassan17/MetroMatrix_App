@@ -12,7 +12,7 @@
 
 import type { MockDb } from '../mockDb';
 import type { MockFoodOrder } from '../food/foodTypes';
-import { addDays, formatSlot, isoWeekday, zonedToIso } from '../../../../utils/healthTime';
+import { addDays, formatSlot, isoWeekday, zonedToIso } from '../../../../utils/health-time/healthTime';
 import type { MockTiffinDay, MockTiffinPeriod, MockTiffinPlan, MockTiffinSub } from './kitchenTypes';
 import { HOUR, afterMove, isoNow, k, nextId, orderKitchenOf, todayOf, vendorOf } from './kitchenLogic';
 

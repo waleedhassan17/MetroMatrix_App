@@ -6,7 +6,7 @@
 // /cancel, /payment-proof, /reorder).
 
 import { api, toApiError } from '../network/apiHelpers';
-import type { FoodCheckoutInput } from '../../types/food';
+import type { FoodCheckoutInput } from '../../models/food';
 import { orderDetails } from './cartNetwork';
 
 const enc = encodeURIComponent;

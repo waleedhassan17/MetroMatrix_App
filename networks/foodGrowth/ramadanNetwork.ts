@@ -5,7 +5,7 @@
 // docs/API_KITCHEN_ASSUMED.md §2.11, §3.11 (TODO(API_KITCHEN): an assumed contract).
 
 import { api, toApiError } from '../network/apiHelpers';
-import type { RamadanInput } from '../../types/kitchen';
+import type { RamadanInput } from '../../models/kitchen';
 
 export const getRamadanAPI = async (): Promise<unknown> => {
   try {

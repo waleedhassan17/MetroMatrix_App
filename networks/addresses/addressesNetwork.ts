@@ -5,7 +5,7 @@
 // TODO(API_SHOPPING): paths per docs/API_SHOPPING_ASSUMED.md.
 
 import { api, toApiError } from '../network/apiHelpers';
-import type { AddressInput } from '../../types/shopping';
+import type { AddressInput } from '../../models/shopping';
 
 export const getAddressesAPI = async (): Promise<unknown> => {
   try {

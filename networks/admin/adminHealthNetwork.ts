@@ -6,7 +6,7 @@
 
 import { api, toApiError, clean, pageParams } from '../network/apiHelpers';
 import { iconKeyForGlyph } from '../../serializers/health/healthCommon';
-import type { AdminConditionInput, AdminSpecialtyInput } from '../../types/health';
+import type { AdminConditionInput, AdminSpecialtyInput } from '../../models/health';
 import { specialtyIds } from '../health/referenceIndex';
 
 const A = '/admin/health';

@@ -6,9 +6,9 @@
 // entry, as a cook logs it after the event. Mirrors the API's limits
 // (docs/API_KITCHEN_ASSUMED.md §4.3).
 
-import type { VoiceQtyLine, WasteLineInput, WasteReason, WasteSummary } from '../../types/kitchen';
+import type { VoiceQtyLine, WasteLineInput, WasteReason, WasteSummary } from '../kitchen';
 import type { ValidationErrors } from '../authModel';
-import { formatPKR } from '../../utils/money';
+import { formatPKR } from '../../utils/money/money';
 import type { CostedIngredient } from './costingModel';
 import { lineCostLabel } from './costingModel';
 import { defaultUnit, parseAmount, typedToBase, unitOfKey } from './stockModel';

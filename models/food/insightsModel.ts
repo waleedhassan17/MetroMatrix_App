@@ -2,7 +2,7 @@
 // Recorded sales are orders the kitchen marked delivered or collected;
 // customers paid the kitchen directly, so they are records, never earnings.
 
-import type { FoodInsights, FoodInsightsRange } from '../../types/food';
+import type { FoodInsights, FoodInsightsRange } from '../food';
 import { rejectReasonLabel } from './foodStatusModel';
 
 export const INSIGHT_RANGES: { key: FoodInsightsRange; label: string }[] = [

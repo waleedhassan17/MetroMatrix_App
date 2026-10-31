@@ -4,7 +4,7 @@
 // TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
 
 import { api, toApiError } from '../network/apiHelpers';
-import type { ReviewInput } from '../../types/shopping';
+import type { ReviewInput } from '../../models/shopping';
 
 export const writeReviewAPI = async (orderId: string, itemId: string, input: ReviewInput): Promise<unknown> => {
   try {

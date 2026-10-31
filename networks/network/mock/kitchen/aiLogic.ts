@@ -10,9 +10,9 @@
 // TODO(API_AI): docs/AI_ASSUMED.md §2.
 
 import type { MockDb } from '../mockDb';
-import { addDays, zonedToIso } from '../../../../utils/healthTime';
+import { addDays, zonedToIso } from '../../../../utils/health-time/healthTime';
 import { KitchenError, isoNow, nextId } from './kitchenLogic';
-import { dateInZone } from '../../../../utils/healthTime';
+import { dateInZone } from '../../../../utils/health-time/healthTime';
 
 const TZ = 'Asia/Karachi';
 export const VENDOR_MONTHLY_ACTIONS = 300;

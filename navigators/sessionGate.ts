@@ -23,8 +23,8 @@
 // account (its email is a never-mailed placeholder) and the vendor's own
 // approval covers it, so a signed-in rider goes straight to the rider app.
 
-import type { Business, BusinessStatus, User } from '../types/auth';
-import type { PendingTotp } from '../screens/Auth/authSlice';
+import type { Business, BusinessStatus, User } from '../models/auth';
+import type { PendingTotp } from '../store/authSlice';
 
 export type Gate =
   | 'unauthenticated'

@@ -7,7 +7,7 @@
 // Money is always paid to the vendor directly; nothing implies a MetroMatrix
 // cut or MetroMatrix riders.
 
-import type { FoodFulfilment, FoodOrderStatus, FoodPaymentMethod, FoodPaymentStatus, RiderStep } from '../../types/food';
+import type { FoodFulfilment, FoodOrderStatus, FoodPaymentMethod, FoodPaymentStatus, RiderStep } from '../food';
 
 export type Tone = 'neutral' | 'info' | 'success' | 'warning';
 

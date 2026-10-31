@@ -11,7 +11,7 @@ import { acceptOrderAPI, assignRiderAPI, markReadyAPI, startPreparingAPI } from 
 import { getRiderCashForVendorAPI, liveRidersAPI, recordHandoverAPI, suggestRidersAPI } from '../../../food/vendor/ridersNetwork';
 import { declineDeliveryAPI, getRiderCashAPI, getRiderOrdersAPI, markRiderDeliveredAPI, riderStepAPI, sendLocationBatchAPI, setDutyAPI } from '../../../food/rider/riderNetwork';
 import { ApiError, required } from '../../apiHelpers';
-import { clearTokens } from '../../../../utils/storageUtils';
+import { clearTokens } from '../../../../utils/storage_utils/storageUtils';
 import { resetMockDb } from '../mockDb';
 import { signInAs, installDummyApi } from '../testing';
 import { foodOrderSerializer, vendorFoodOrderSerializer, foodTrackingSerializer } from '../../../../serializers/food/orderSerializer';

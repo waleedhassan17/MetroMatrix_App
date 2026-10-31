@@ -4,7 +4,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../../theme';
-import { haptics } from '../../utils/haptics';
+import { haptics } from '../../utils/haptics/haptics';
 import { AppText } from '../AppText';
 import { IonIcon } from '../Icon';
 

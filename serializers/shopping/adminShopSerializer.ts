@@ -1,7 +1,7 @@
 // MetroMatrix — Admin (Shopping) serializers.
 // TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
 
-import type { AdminBanner, AdminOrderLookup, ProductReport, ReportStatus, ShopOverview } from '../../types/shopping';
+import type { AdminBanner, AdminOrderLookup, ProductReport, ReportStatus, ShopOverview } from '../../models/shopping';
 import { bool, isObject, num, oneOf, str, strOrNull, arr, fromResponse } from '../serializerUtils';
 import { bannerSerializer } from './catalogSerializer';
 import { count, iso, isoOrNull, compact, paged } from './common';

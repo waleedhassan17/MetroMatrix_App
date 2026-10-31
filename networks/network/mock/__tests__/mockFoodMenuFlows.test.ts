@@ -21,7 +21,7 @@ import { getAvailabilityAPI, getPreorderSlotsAPI, getTodayAPI, savePreorderSlots
 import { getVendorSetupAPI } from '../../../food/vendor/setupNetwork';
 import { getVendorPlanAPI } from '../../../food/vendor/planNetwork';
 import { ApiError, required } from '../../apiHelpers';
-import { clearTokens } from '../../../../utils/storageUtils';
+import { clearTokens } from '../../../../utils/storage_utils/storageUtils';
 import { getDb, resetMockDb } from '../mockDb';
 import { signInAs, installDummyApi } from '../testing';
 import { vendorPlanSerializer, vendorSetupSerializer } from '../../../../serializers/food/vendorSerializer';

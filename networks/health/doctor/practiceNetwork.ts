@@ -6,13 +6,13 @@
 // MetroMatrix-API docs/API_HEALTH.md §4.3. A location's hours are their own
 // route (`…/schedule`), and the video prepay rule is the doctor's (profile),
 // so the slices read the location list from all three
-// (screens/Health/Doctor/shared/practiceReads.ts).
+// (screens/shared/practiceReads.ts).
 
 import { api, toApiError } from '../../network/apiHelpers';
 import { scheduleBody } from '../../../models/health/availabilityModel';
-import { addDays, zonedToIso } from '../../../utils/healthTime';
-import type { DoctorLocationInput, TimeOffInput, WeekDayHours } from '../../../types/health';
-import type { PaymentAccountInput } from '../../../types/payments';
+import { addDays, zonedToIso } from '../../../utils/health-time/healthTime';
+import type { DoctorLocationInput, TimeOffInput, WeekDayHours } from '../../../models/health';
+import type { PaymentAccountInput } from '../../../models/payments';
 
 const enc = encodeURIComponent;
 const loc = (id: string) => `/health/doctor/locations/${enc(id)}`;

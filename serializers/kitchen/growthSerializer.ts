@@ -25,7 +25,7 @@ import type {
   TiffinSubscription,
   TiffinTomorrow,
   TiffinWindow,
-} from '../../types/kitchen';
+} from '../../models/kitchen';
 import { arr, bool, isObject, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { PAY_STATUSES, count, dateOrNull, list, numOrNull, transferPaymentSerializer } from './kitchenCommon';
 

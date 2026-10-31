@@ -7,7 +7,7 @@
 import { addToFoodCartAPI } from '../../../food/cartNetwork';
 import { placeFoodOrderAPI } from '../../../food/ordersNetwork';
 import { acceptOrderAPI } from '../../../food/vendor/ordersNetwork';
-import { clearTokens } from '../../../../utils/storageUtils';
+import { clearTokens } from '../../../../utils/storage_utils/storageUtils';
 import { getDb, resetMockDb } from '../mockDb';
 import { createMockSocket } from '../mockRealtime';
 import { getItemSheetAPI } from '../../../food/discoveryNetwork';

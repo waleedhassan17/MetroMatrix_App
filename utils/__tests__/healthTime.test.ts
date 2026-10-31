@@ -18,7 +18,7 @@ import {
   weekStart,
   zoneOffsetMinutes,
   zonedToIso,
-} from '../healthTime';
+} from '../health-time/healthTime';
 
 const PKT = 'Asia/Karachi';
 // 6:15 PM in Lahore on Thursday 15 October 2026.

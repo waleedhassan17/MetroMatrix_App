@@ -15,7 +15,7 @@ import { Button, InlineNotice, TextField, VoiceButton, VoiceResultCard } from '.
 import { selectMicExplained, selectVoiceLanguage, setMicExplained, setVoiceLanguage } from '../../store/preferencesSlice';
 import { aiDownNote, isAiDown } from '../../models/kitchen/aiModel';
 import { VOICE_HINTS } from '../../models/kitchen/voiceModel';
-import type { VoiceAction, VoiceContext } from '../../types/kitchen';
+import type { VoiceAction, VoiceContext } from '../../models/kitchen';
 import { clearVoice, interpretClipAsync, interpretTextAsync, selectVoiceRun, setVoiceTyped, setVoiceTyping } from './voiceSlice';
 
 export interface VoiceEntryProps {

@@ -3,7 +3,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../../theme';
-import type { DoctorBadge } from '../../types/health';
+import type { DoctorBadge } from '../../models/health';
 import { AppText } from '../AppText';
 import { IonIcon, type IonName } from '../Icon';
 

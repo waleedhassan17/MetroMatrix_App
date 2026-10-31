@@ -3,18 +3,18 @@
 // multi-step profile forms, DOCUMENTS_MISSING, the TOTP step and the
 // approval queue.
 
-import { emailVerificationSlice } from '../Auth/EmailVerification/emailVerificationSlice';
-import { forgotPasswordSlice } from '../Auth/ForgotPassword/forgotPasswordSlice';
-import { resetPasswordOtpSlice } from '../Auth/ResetPasswordOTP/resetPasswordOtpSlice';
-import { resetPasswordSlice } from '../Auth/ResetPassword/resetPasswordSlice';
-import { completeProfileSlice } from '../Auth/CompleteProfile/completeProfileSlice';
-import { personalInfoSlice } from '../Partner/PersonalInfo/personalInfoSlice';
-import { providerApprovalPendingSlice } from '../Partner/ProviderApprovalPending/providerApprovalPendingSlice';
-import { providerSelectionSlice } from '../ProviderSelection/providerSelectionSlice';
-import { adminTotpSlice } from '../Admin/AdminTotp/adminTotpSlice';
-import { approvalQueueSlice } from '../Admin/ApprovalQueue/approvalQueueSlice';
+import { emailVerificationSlice } from '../email-verification-screen/emailVerificationSlice';
+import { forgotPasswordSlice } from '../forgot-password-screen/forgotPasswordSlice';
+import { resetPasswordOtpSlice } from '../reset-password-otp-screen/resetPasswordOtpSlice';
+import { resetPasswordSlice } from '../reset-password-screen/resetPasswordSlice';
+import { completeProfileSlice } from '../complete-profile-screen/completeProfileSlice';
+import { personalInfoSlice } from '../personal-info-screen/personalInfoSlice';
+import { providerApprovalPendingSlice } from '../provider-approval-pending-screen/providerApprovalPendingSlice';
+import { providerSelectionSlice } from '../provider-selection-screen/providerSelectionSlice';
+import { adminTotpSlice } from '../admin-totp-screen/adminTotpSlice';
+import { approvalQueueSlice } from '../approval-queue-screen/approvalQueueSlice';
 import { resetAllState } from '../../store/resetAllState';
-import type { Business, BusinessSummary } from '../../types/auth';
+import type { Business, BusinessSummary } from '../../models/auth';
 import { makeUser } from '../../__fixtures__/users';
 
 const init = <S>(reducer: (s: S | undefined, a: { type: string }) => S) => reducer(undefined, { type: '@@init' });

@@ -5,7 +5,7 @@
 // TODO(API_SHOPPING): paths per docs/API_SHOPPING_ASSUMED.md.
 
 import { api, toApiError } from '../../network/apiHelpers';
-import type { PaymentAccountInput, StoreProfileInput, StoreSettings } from '../../../types/shopping';
+import type { PaymentAccountInput, StoreProfileInput, StoreSettings } from '../../../models/shopping';
 
 const BASE = '/partner/shop';
 

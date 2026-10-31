@@ -16,9 +16,9 @@ import {
   secondsLeft,
   type VendorMove,
 } from '../../models/food/foodStatusModel';
-import type { BoardCard } from '../../types/food';
+import type { BoardCard } from '../../models/food';
 import { originLabel, scheduledLabel } from '../../models/kitchen/boardModel';
-import { formatPKR } from '../../utils/money';
+import { formatPKR } from '../../utils/money/money';
 import { AppText } from '../AppText';
 import { Button } from '../Button';
 import { IonIcon } from '../Icon';

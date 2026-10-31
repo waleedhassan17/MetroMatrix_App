@@ -9,7 +9,7 @@
 // (recorder.web.ts). Kept apart from both on purpose: a .web file must
 // never import its own name (CLAUDE.md, sheetShared.ts).
 
-import type { LocalFile } from '../../types/auth';
+import type { LocalFile } from '../../models/auth';
 
 export const MAX_CLIP_MS = 30_000;
 /** How often the level and the clock update while recording. */

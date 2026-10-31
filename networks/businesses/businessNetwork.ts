@@ -6,7 +6,7 @@
 // email).
 
 import { api, toApiError } from '../network/apiHelpers';
-import type { DocumentKind, ServiceType, SubType } from '../../types/auth';
+import type { DocumentKind, ServiceType, SubType } from '../../models/auth';
 
 /** The API's CreateBusinessDto (PATCH takes any part of it). Unknown fields are dropped by the API. */
 export interface BusinessPayload {

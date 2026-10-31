@@ -5,10 +5,10 @@
 // happen ("Accept order FC-NBNWXT · ready in 20 min"), and nothing happens
 // until the cook taps Confirm. Below CONFIDENT the card asks "Did you mean…".
 
-import type { VoiceAction, VoiceContext, VoiceLanguage, VoiceResult } from '../../types/kitchen';
-import { formatIn } from '../../utils/units';
-import { formatPKR } from '../../utils/money';
-import { formatDayShort } from '../../utils/healthTime';
+import type { VoiceAction, VoiceContext, VoiceLanguage, VoiceResult } from '../kitchen';
+import { formatIn } from '../../utils/units/units';
+import { formatPKR } from '../../utils/money/money';
+import { formatDayShort } from '../../utils/health-time/healthTime';
 import { rejectReasonLabel } from '../food/foodStatusModel';
 import { WASTE_REASON_LABEL } from './kitchenStatusModel';
 

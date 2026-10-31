@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Food vendor serializers (the vendor's own app)
 // ═══════════════════════════════════════════════════════
-// The Food API's vendor shapes → the app's (types/food.ts). Defensive: a
+// The Food API's vendor shapes → the app's (models/food.ts). Defensive: a
 // missing field becomes a sensible default, never a crash.
 // docs/API_FOOD.md §4.3 (setup, profile, settings, hours, zones, payment
 // accounts, plan).
@@ -23,9 +23,9 @@ import type {
   VendorSettings,
   VendorSetup,
   VendorSetupItem,
-} from '../../types/food';
-import type { PaymentAccount, PaymentAccountKind } from '../../types/payments';
-import type { PauseReason } from '../../types/kitchen';
+} from '../../models/food';
+import type { PaymentAccount, PaymentAccountKind } from '../../models/payments';
+import type { PauseReason } from '../../models/kitchen';
 import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 
 export const KITCHEN_KINDS: readonly KitchenKind[] = ['restaurant', 'home_kitchen', 'cloud_kitchen'];

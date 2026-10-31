@@ -15,7 +15,7 @@
 import { useMemo } from 'react';
 import { useNavigation, useRoute, type NavigationProp, type ParamListBase } from '@react-navigation/native';
 import { ROUTES } from '../navigations-maps/Base';
-import type { FoodTabParamList, HealthTabParamList, ShopTabParamList } from '../types';
+import type { FoodTabParamList, HealthTabParamList, ShopTabParamList } from '../models';
 
 type Nav = NavigationProp<ParamListBase>;
 type Go = (name: string, params?: object) => void;

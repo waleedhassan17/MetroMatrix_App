@@ -1,8 +1,8 @@
-// MetroMatrix — AccountStack: dumb mapper over navigations-maps/Account.ts.
+// MetroMatrix — AccountStack: dumb mapper over navigations-maps/Account.tsx.
 
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import type { AccountStackParamList } from '../../types';
+import type { AccountStackParamList } from '../../models';
 import { ACCOUNT_ROUTES } from '../../navigations-maps/Account';
 
 const Stack = createNativeStackNavigator<AccountStackParamList>();

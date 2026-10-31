@@ -8,8 +8,8 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from './createAppSlice';
 import type { ServiceName } from '../theme/services';
 import { resetAllState } from './resetAllState';
-import type { FoodPoint } from '../types/food';
-import type { StoreSource, VoiceLanguage } from '../types/kitchen';
+import type { FoodPoint } from '../models/food';
+import type { StoreSource, VoiceLanguage } from '../models/kitchen';
 
 /** Recent Shopping searches kept on the device. */
 export const MAX_RECENT_SEARCHES = 10;

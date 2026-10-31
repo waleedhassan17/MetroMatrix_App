@@ -18,13 +18,13 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { useAppDispatch } from './useReduxHooks';
-import { signOut, type SignedOutLanding } from '../screens/Auth/authSlice';
+import { signOut, type SignedOutLanding } from '../store/authSlice';
 import { resetAllState } from '../store/resetAllState';
 import { authLogout } from '../networks/auth/authNetwork';
 import { unregisterDeviceAPI } from '../networks/users/usersNetwork';
-import { clearPushToken, clearTokens, getAccessToken, getPushToken } from '../utils/storageUtils';
-import { markIntentionalSignOut } from '../utils/authEvents';
-import { Alert } from '../utils/alert';
+import { clearPushToken, clearTokens, getAccessToken, getPushToken } from '../utils/storage_utils/storageUtils';
+import { markIntentionalSignOut } from '../utils/auth-events/authEvents';
+import { Alert } from '../utils/alert/alert';
 
 const CONFIRM_TITLE = 'Sign out';
 const CONFIRM_MESSAGE = 'You can sign back in any time with the same account.';

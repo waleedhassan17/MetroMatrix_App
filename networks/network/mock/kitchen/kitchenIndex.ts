@@ -29,7 +29,7 @@ import { assistantHooks, registerAssistantRoutes } from './assistantRoutes';
 import { nutritionSearchFilter, registerMyKitchenRoutes } from './myKitchenRoutes';
 import { registerAdminKitchenRoutes } from './adminKitchenRoutes';
 import { dishNutritionFor } from './myKitchenLogic';
-import { formatPKR } from '../../../../utils/money';
+import { formatPKR } from '../../../../utils/money/money';
 import type { MockPauseInfo } from './kitchenTypes';
 
 type InsightCardAction = InsightCard['action'];

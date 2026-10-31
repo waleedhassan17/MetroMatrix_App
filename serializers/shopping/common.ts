@@ -4,7 +4,7 @@
 // Money arrives as integer rupees; a float or a numeric string is rounded,
 // never trusted. A record with no id is dropped rather than half-rendered.
 
-import type { Paged, StoreRef } from '../../types/shopping';
+import type { Paged, StoreRef } from '../../models/shopping';
 import { isObject, num, str, strOrNull } from '../serializerUtils';
 
 export const HEX = /^#[0-9A-Fa-f]{6}$/;

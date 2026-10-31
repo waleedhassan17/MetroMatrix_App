@@ -4,7 +4,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useStyles, type Theme } from '../../theme';
-import type { DoctorStats } from '../../types/health';
+import type { DoctorStats } from '../../models/health';
 import { AppText } from '../AppText';
 
 const makeStyles = ({ space, colors, size, radius, elevation }: Theme) =>

@@ -8,7 +8,7 @@ import { Image } from 'expo-image';
 import { useStyles, useTheme, type Theme } from '../../theme';
 import { AppText } from '../AppText';
 import { IonIcon } from '../Icon';
-import { cdn } from '../../utils/cdn';
+import { cdn } from '../../utils/cdn/cdn';
 
 export interface DishRowProps {
   name: string;

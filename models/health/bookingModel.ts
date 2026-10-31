@@ -6,7 +6,7 @@ import type {
   CancelReason,
   PracticeLocation,
   ReasonTag,
-} from '../../types/health';
+} from '../health';
 import type { ValidationErrors } from '../authModel';
 
 export const REASON_TAGS: { key: ReasonTag; label: string }[] = [

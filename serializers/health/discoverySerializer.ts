@@ -26,7 +26,7 @@ import type {
   SlotPeriod,
   Specialty,
   TimingRow,
-} from '../../types/health';
+} from '../../models/health';
 import { arr, bodiesOf, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { compact, count, iso, money, paged } from '../shopping/common';
 import { reviewTagLabel } from '../../models/health/reviewFormModel';

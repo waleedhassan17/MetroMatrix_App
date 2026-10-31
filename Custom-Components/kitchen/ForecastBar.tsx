@@ -10,7 +10,7 @@ import { IconButton } from '../IconButton';
 import { StatusPill } from '../StatusPill';
 import { TextAction } from '../TextAction';
 import { adjustmentLabel, barPositions, plannedOf, rangeLabel } from '../../models/kitchen/forecastModel';
-import type { ForecastItem } from '../../types/kitchen';
+import type { ForecastItem } from '../../models/kitchen';
 
 const makeStyles = ({ space, size, radius, colors, service }: Theme) =>
   StyleSheet.create({

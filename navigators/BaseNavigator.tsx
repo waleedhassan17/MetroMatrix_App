@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — BaseNavigator (auth / onboarding / status gates)
 // ═══════════════════════════════════════════════════════
-// Dumb mapper over the route arrays in navigations-maps/Auth.ts. Which
+// Dumb mapper over the route arrays in navigations-maps/Auth.tsx. Which
 // top-level navigator mounts — this one, the customer app, a partner app or
 // the admin console — is decided by AppContainer.renderNavigator(); this
 // navigator only shows the gate branch resolveGate() picks:
@@ -22,12 +22,12 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAppSelector } from '../hooks/useReduxHooks';
 import { useTheme } from '../theme';
-import type { RootStackParamList } from '../types';
+import type { RootStackParamList } from '../models';
 import type { IRoute } from '../navigations-maps/types';
 import { gateRoutes } from '../navigations-maps/Auth';
 import { gateInputOf, partnerSetupInitialRoute, resolveGate, totpInitialRoute, type Gate } from './sessionGate';
 import { selectSkippedProfile } from '../store/preferencesSlice';
-import { selectPendingPick } from '../screens/ProviderSelection/providerSelectionSlice';
+import { selectPendingPick } from '../screens/provider-selection-screen/providerSelectionSlice';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 

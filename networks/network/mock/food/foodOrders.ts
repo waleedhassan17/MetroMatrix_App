@@ -10,8 +10,8 @@
 // orders and views services (docs/API_FOOD.md §3).
 
 import type { MockDb, MockUser } from '../mockDb';
-import { addDays, formatDayShort, formatSlot, zonedToIso } from '../../../../utils/healthTime';
-import { formatPKR } from '../../../../utils/money';
+import { addDays, formatDayShort, formatSlot, zonedToIso } from '../../../../utils/health-time/healthTime';
+import { formatPKR } from '../../../../utils/money/money';
 import { zoned } from '../health/healthWire';
 import { FoodError, isoNow, kitchenToday, nextId, openIntervals, overrideOf, planOf } from './foodLogic';
 import { inWindow, isVisible, quote, unavailableReason, type Deal } from './foodDiscovery';

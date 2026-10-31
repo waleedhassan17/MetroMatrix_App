@@ -6,8 +6,8 @@
 // pre-order slots. Limits mirror the Food API's DTOs.
 // Every limit is the API's own (food/menu/dto/menu.dto.ts).
 
-import type { ItemTag, MenuItemInput, OptionGroup, OptionGroupInput, PreorderSlot, VendorMenuItem } from '../../types/food';
-import { formatPKR } from '../../utils/money';
+import type { ItemTag, MenuItemInput, OptionGroup, OptionGroupInput, PreorderSlot, VendorMenuItem } from '../food';
+import { formatPKR } from '../../utils/money/money';
 
 export type ValidationErrors = Record<string, string>;
 

@@ -16,7 +16,7 @@ import type {
   TotpEnrolment,
   User,
   UserRole,
-} from '../types/auth';
+} from '../models/auth';
 import { businessSerializer, SERVICE_TYPES, SUB_TYPES } from './businessSerializer';
 import { bool, enumList, fromResponse, isObject, oneOf, str, strOrNull } from './serializerUtils';
 

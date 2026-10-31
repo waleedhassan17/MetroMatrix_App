@@ -42,7 +42,7 @@ import {
   validateSpecialty,
 } from '../health/adminHealthModel';
 import { APPOINTMENT_PAYMENT_STATUSES, APPOINTMENT_STATUSES } from '../../serializers/health/appointmentSerializer';
-import type { DoctorOwnProfile, Medicine } from '../../types/health';
+import type { DoctorOwnProfile, Medicine } from '../health';
 
 describe('appointmentStatusModel', () => {
   it('has a label for every status, and red is kept for emergencies', () => {

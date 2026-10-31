@@ -1,6 +1,6 @@
 // MetroMatrix — Write a review.
 
-import type { ReviewInput } from '../../types/shopping';
+import type { ReviewInput } from '../shopping';
 import type { ValidationErrors } from '../authModel';
 
 export const MAX_REVIEW_PHOTOS = 4;

@@ -8,8 +8,8 @@ import {
   pricePerUnit,
   toBase,
   unitsFor,
-} from '../units';
-import { directionOf, isUrduScript } from '../script';
+} from '../units/units';
+import { directionOf, isUrduScript } from '../script/script';
 
 describe('units', () => {
   it('shows large weights in kilos, never a big number of grams (QA 12)', () => {

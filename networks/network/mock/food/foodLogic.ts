@@ -9,7 +9,7 @@
 
 import { ShopError } from '../shop/shopLogic';
 import type { MockBusiness, MockDb } from '../mockDb';
-import { addDays, dateInZone, formatSlot, zonedToIso } from '../../../../utils/healthTime';
+import { addDays, dateInZone, formatSlot, zonedToIso } from '../../../../utils/health-time/healthTime';
 import type { MockFoodVendor, MockHoursRow, MockItemOverride, MockKitchenKind, MockMenuItem, MockPlanEntitlementKey, MockPlanLimitKey } from './foodTypes';
 
 export class FoodError extends ShopError {}

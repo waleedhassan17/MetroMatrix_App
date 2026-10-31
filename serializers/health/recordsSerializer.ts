@@ -16,7 +16,7 @@ import type {
   RecordFile,
   SymptomResult,
   VideoJoin,
-} from '../../types/health';
+} from '../../models/health';
 import { arr, bodiesOf, bool, isObject, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { compact, count, iso, paged } from '../shopping/common';
 import {

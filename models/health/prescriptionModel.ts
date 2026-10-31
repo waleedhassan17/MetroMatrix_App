@@ -5,7 +5,7 @@
 // "1+0+1" is one in the morning and one at night. Halves are allowed
 // ("½+0+½" is written "0.5+0+0.5").
 
-import type { Medicine, MedicineForm, MedicineTiming, PrescriptionInput } from '../../types/health';
+import type { Medicine, MedicineForm, MedicineTiming, PrescriptionInput } from '../health';
 import type { ValidationErrors } from '../authModel';
 
 export const MEDICINE_FORMS: { key: MedicineForm; label: string }[] = [

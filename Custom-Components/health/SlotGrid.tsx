@@ -9,8 +9,8 @@
 import React from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../../theme';
-import type { Slot, SlotPeriod } from '../../types/health';
-import { formatDayShort, formatSlot, slotA11yLabel } from '../../utils/healthTime';
+import type { Slot, SlotPeriod } from '../../models/health';
+import { formatDayShort, formatSlot, slotA11yLabel } from '../../utils/health-time/healthTime';
 import { AppText } from '../AppText';
 import { IonIcon, type IonName } from '../Icon';
 import { Skeleton } from '../Skeleton';

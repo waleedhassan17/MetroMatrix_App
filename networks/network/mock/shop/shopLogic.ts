@@ -22,7 +22,7 @@ import type {
   MockStore,
   MockVariant,
 } from './shopTypes';
-import type { NotificationType, OrderStatus, PartnerOrderAction, PaymentMethod } from '../../../../types/shopping';
+import type { NotificationType, OrderStatus, PartnerOrderAction, PaymentMethod } from '../../../../models/shopping';
 
 const DAY = 24 * 60 * 60 * 1000;
 export const isoNow = () => new Date().toISOString();

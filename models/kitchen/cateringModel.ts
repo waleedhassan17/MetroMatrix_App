@@ -5,11 +5,11 @@
 // against the API's rules (§3.10) before they are sent; "Aqiqah · 60
 // guests · Sat 31 Oct, 7:30 PM"; a quote as the QuoteCard shows it.
 
-import type { CateringMode, CateringQuote, CateringRequest, CateringRequestInput, CateringVendor, EventType, QuoteInput } from '../../types/kitchen';
+import type { CateringMode, CateringQuote, CateringRequest, CateringRequestInput, CateringVendor, EventType, QuoteInput } from '../kitchen';
 import type { QuoteCardData } from '../../Custom-Components/kitchen/QuoteCard';
 import type { ValidationErrors } from '../authModel';
-import { addDays, formatDayShort, formatWhen, zonedToIso } from '../../utils/healthTime';
-import { formatPKR, parseRupees } from '../../utils/money';
+import { addDays, formatDayShort, formatWhen, zonedToIso } from '../../utils/health-time/healthTime';
+import { formatPKR, parseRupees } from '../../utils/money/money';
 import { EVENT_TYPE_LABEL, QUOTE_STATE } from './kitchenStatusModel';
 
 export const MAX_GUESTS = 2000;

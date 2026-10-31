@@ -11,7 +11,7 @@
 
 import * as Speech from 'expo-speech';
 import { createAudioPlayer, type AudioPlayer } from 'expo-audio';
-import type { Announcement } from '../types/kitchen';
+import type { Announcement } from '../models/kitchen';
 
 export type SpokenLanguage = 'ur' | 'en';
 export type AnnounceOutcome = 'spoken' | 'played' | 'no_voice' | 'failed';

@@ -5,7 +5,7 @@
 // filters are kept per context (a store, a category, a search), keyed by
 // filterContextKey, so coming back to "Kurtas" shows the filters you left.
 
-import type { ProductQuery, ProductSort } from '../../types/shopping';
+import type { ProductQuery, ProductSort } from '../shopping';
 import type { ValidationErrors } from '../authModel';
 
 export interface ProductFilters {

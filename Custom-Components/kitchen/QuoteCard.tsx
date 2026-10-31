@@ -8,7 +8,7 @@ import { AppText } from '../AppText';
 import { Card } from '../Card';
 import { Divider } from '../Divider';
 import { StatusPill } from '../StatusPill';
-import { formatPKR } from '../../utils/money';
+import { formatPKR } from '../../utils/money/money';
 
 export interface QuoteCardData {
   version: number;

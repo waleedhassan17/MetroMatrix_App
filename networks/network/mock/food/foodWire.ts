@@ -6,7 +6,7 @@
 
 import type { MockDb } from '../mockDb';
 import { LIVE_WINDOW_MS, planOf, activeRiders, isItemAvailable, isoNow, kitchenToday, menuItemCount, openState, overrideOf } from './foodLogic';
-import { formatSlot } from '../../../../utils/healthTime';
+import { formatSlot } from '../../../../utils/health-time/healthTime';
 import type { MockFoodVendor, MockMenuCategory, MockMenuItem, MockOptionGroup, MockPreorderSlot, MockRider, MockVendorAccount } from './foodTypes';
 import { foodHooks } from './foodHooks';
 

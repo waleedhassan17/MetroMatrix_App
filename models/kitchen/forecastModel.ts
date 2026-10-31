@@ -4,10 +4,10 @@
 // "Expected tomorrow: 42 (35–49)", "Learning your patterns" until there
 // are two weeks of orders, "Last 7 days: 86% accurate" and what that means.
 
-import type { Forecast, ForecastAccuracy, ForecastItem, PrepSheet, ShoppingList, VoiceQtyLine } from '../../types/kitchen';
-import type { TodayMenu } from '../../types/food';
-import { addDays, formatDayShort } from '../../utils/healthTime';
-import { formatQty, type StandardUnit } from '../../utils/units';
+import type { Forecast, ForecastAccuracy, ForecastItem, PrepSheet, ShoppingList, VoiceQtyLine } from '../kitchen';
+import type { TodayMenu } from '../food';
+import { addDays, formatDayShort } from '../../utils/health-time/healthTime';
+import { formatQty, type StandardUnit } from '../../utils/units/units';
 import { editableAmount } from './stockModel';
 
 export const FORECAST_DAYS = 7;

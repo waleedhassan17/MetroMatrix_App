@@ -5,8 +5,8 @@ import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { storePalette, useStyles, useTheme, type Theme } from '../../theme';
-import type { StoreSummary } from '../../types/shopping';
-import { cdn } from '../../utils/cdn';
+import type { StoreSummary } from '../../models/shopping';
+import { cdn } from '../../utils/cdn/cdn';
 import { AppText } from '../AppText';
 import { IonIcon } from '../Icon';
 

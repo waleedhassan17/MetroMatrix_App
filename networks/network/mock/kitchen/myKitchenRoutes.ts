@@ -9,8 +9,8 @@
 // Only the signed-in person's own rows, ever. TODO(API_KITCHEN) §4.7.
 
 import type { ShopCtx } from '../shop/shopRoutes';
-import { addDays, dateInZone } from '../../../../utils/healthTime';
-import { STANDARD_UNITS, UNITS, toBase, type StandardUnit } from '../../../../utils/units';
+import { addDays, dateInZone } from '../../../../utils/health-time/healthTime';
+import { STANDARD_UNITS, UNITS, toBase, type StandardUnit } from '../../../../utils/units/units';
 import { distanceKm, isVisible, quote, unavailableReason } from '../food/foodDiscovery';
 import type { MockNutritionSettings, MockPantryItem } from './kitchenTypes';
 import { DATE, KitchenError, invalid, isInt, isNum, isoNow, k, nextId, notFound, text } from './kitchenLogic';

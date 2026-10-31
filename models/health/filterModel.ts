@@ -4,7 +4,7 @@
 // Quick chips and the Sort & filter sheet edit one DoctorQuery; the server
 // filters and sorts (the list never filters on the device).
 
-import type { DoctorQuery, DoctorSort } from '../../types/health';
+import type { DoctorQuery, DoctorSort } from '../health';
 
 export const SORTS: { key: DoctorSort; label: string }[] = [
   { key: 'recommended', label: 'Recommended' },

@@ -7,7 +7,7 @@
 // docs/API_FOOD.md §4.3 Availability: /food/vendor/{availability,today,preorder-slots,weekly-menu}.
 
 import { api, toApiError } from '../../network/apiHelpers';
-import type { PreorderSlot } from '../../../types/food';
+import type { PreorderSlot } from '../../../models/food';
 
 export const getAvailabilityAPI = async (): Promise<unknown> => {
   try {

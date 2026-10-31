@@ -1,12 +1,12 @@
 // Shopping slices: the rules that live in reducers (not the API).
 
-import { checkoutSlice, newCheckoutKey, placeOrderAsync, choosePayment, toCheckoutInput } from '../Shopping/Customer/Checkout/checkoutSlice';
+import { checkoutSlice, newCheckoutKey, placeOrderAsync, choosePayment, toCheckoutInput } from '../checkout-screen/checkoutSlice';
 import { addRecentSearch, preferencesSlice, removeRecentSearch, MAX_RECENT_SEARCHES } from '../../store/preferencesSlice';
 import { resetAllState } from '../../store/resetAllState';
-import { applyFilters, initList, openFilters, productListSlice, setDraft, resetDraft } from '../Shopping/Customer/ProductList/productListSlice';
+import { applyFilters, initList, openFilters, productListSlice, setDraft, resetDraft } from '../product-list-screen/productListSlice';
 import { DEFAULT_FILTERS } from '../../models/shopping/filterModel';
-import { addToBagAsync, bagSlice } from '../Shopping/Customer/Bag/bagSlice';
-import { savedSlice, setSavedAsync } from '../Shopping/Customer/Saved/savedSlice';
+import { addToBagAsync, bagSlice } from '../bag-screen/bagSlice';
+import { savedSlice, setSavedAsync } from '../saved-screen/savedSlice';
 
 describe('checkout', () => {
   const reduce = checkoutSlice.reducer;

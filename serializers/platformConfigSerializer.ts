@@ -4,7 +4,7 @@
 // Defensive: anything missing reads as "on", so a partial answer never shuts
 // the app — the server still enforces the real switches.
 
-import { OPEN_PLATFORM, PLATFORM_SERVICES, type PlatformConfig } from '../types/platformConfig';
+import { OPEN_PLATFORM, PLATFORM_SERVICES, type PlatformConfig } from '../models/platformConfig';
 import { bool, isObject, strOrNull, str, fromResponse } from './serializerUtils';
 
 export const platformConfigSerializer = fromResponse((raw: unknown): PlatformConfig | null => {

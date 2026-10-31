@@ -3,7 +3,7 @@
 import { bagBlocker, bagNotices, cleanCode, defaultPayment, fixOf, lineChoices, payChoices, validateCheckout, whenChoices } from '../food/bagModel';
 import { dealLabel, daysLine, emptyPromotionForm, formLabel, promotionForm, promotionInput, validatePromotion, whenLine } from '../food/promotionModel';
 import { agoLabel, cardOfOrder, columnCounts, nextVendorMove, pillTone } from '../food/foodStatusModel';
-import type { FoodPreview, FoodPromotion, FoodSlots } from '../../types/food';
+import type { FoodPreview, FoodPromotion, FoodSlots } from '../food';
 
 // Thursday 15 October 2026, 3:10 PM in Pakistan.
 const NOW = Date.parse('2026-10-15T10:10:00Z');

@@ -5,7 +5,7 @@
 // docs/API_KITCHEN_ASSUMED.md §2.10, §3.10, §4.6 (TODO(API_KITCHEN): an assumed contract).
 
 import { api, toApiError, clean } from '../network/apiHelpers';
-import type { CateringRequestInput, CateringSettings, QuoteInput } from '../../types/kitchen';
+import type { CateringRequestInput, CateringSettings, QuoteInput } from '../../models/kitchen';
 
 const enc = encodeURIComponent;
 

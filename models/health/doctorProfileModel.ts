@@ -1,6 +1,6 @@
 // MetroMatrix — The doctor's public profile and booking rules.
 
-import type { BookingRules, Completeness, CompletenessKey, DoctorOwnProfile, ExperienceRow, Qualification } from '../../types/health';
+import type { BookingRules, Completeness, CompletenessKey, DoctorOwnProfile, ExperienceRow, Qualification } from '../health';
 import type { ValidationErrors } from '../authModel';
 
 export const TITLES = ['Dr.', 'Prof. Dr.', 'Assoc. Prof. Dr.', 'Asst. Prof. Dr.'];

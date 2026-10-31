@@ -19,10 +19,10 @@ import type {
   PantryState,
   PantryStats,
   RecipeIdea,
-} from '../../types/myKitchen';
+} from '../../models/myKitchen';
 import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { count, dateOrNull, list, numOrNull } from '../kitchen/kitchenCommon';
-import { BASE_UNITS } from '../../utils/units';
+import { BASE_UNITS } from '../../utils/units/units';
 
 const strings = (raw: unknown) => arr(raw).filter((x): x is string => typeof x === 'string' && !!x);
 const STATES: readonly PantryState[] = ['fresh', 'use_soon', 'expired'];

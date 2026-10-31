@@ -2,7 +2,7 @@
 // storefront, demand, menu insights and experiments, story, hygiene, batching.
 // docs/API_KITCHEN_ASSUMED.md §2.11–2.14 (TODO(API_KITCHEN): an assumed contract).
 
-import type { HygieneReview } from '../../types/kitchenAdmin';
+import type { HygieneReview } from '../../models/kitchenAdmin';
 import type {
   BatchSuggestion,
   DemandCell,
@@ -25,7 +25,7 @@ import type {
   Storefront,
   SuggestionKind,
   TimeWindow,
-} from '../../types/kitchen';
+} from '../../models/kitchen';
 import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { count, dateOrNull, list, numOrNull, whole } from './kitchenCommon';
 

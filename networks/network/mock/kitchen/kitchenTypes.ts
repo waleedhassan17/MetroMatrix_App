@@ -6,7 +6,7 @@
 // each Food vendor (keyed by businessId, as the Food rows are). Sent through
 // kitchenWire in the shapes docs/API_KITCHEN_ASSUMED.md gives.
 
-import type { BaseUnit, CustomUnit } from '../../../../utils/units';
+import type { BaseUnit, CustomUnit } from '../../../../utils/units/units';
 
 export type MockIngredientCategory =
   | 'meat_poultry'

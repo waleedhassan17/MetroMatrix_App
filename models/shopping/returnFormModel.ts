@@ -1,6 +1,6 @@
 // MetroMatrix — Return request form and the return window.
 
-import type { OrderItem, ReturnInput, ReturnReason } from '../../types/shopping';
+import type { OrderItem, ReturnInput, ReturnReason } from '../shopping';
 import type { ValidationErrors } from '../authModel';
 
 export const MAX_RETURN_PHOTOS = 4;

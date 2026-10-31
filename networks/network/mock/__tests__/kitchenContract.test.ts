@@ -9,7 +9,7 @@
 import fs from 'fs';
 import path from 'path';
 import { api, required } from '../../apiHelpers';
-import { clearTokens } from '../../../../utils/storageUtils';
+import { clearTokens } from '../../../../utils/storage_utils/storageUtils';
 import { resetMockDb } from '../mockDb';
 import { addToFoodCartAPI, clearFoodCartAPI } from '../../../food/cartNetwork';
 import { placeFoodOrderAPI } from '../../../food/ordersNetwork';

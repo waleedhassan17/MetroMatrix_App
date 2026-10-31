@@ -9,7 +9,7 @@
 import type { MockFoodReview, MockCuisine, MockFood, MockFoodVendor, MockHoursRow, MockRider } from './foodTypes';
 import { seedMenus } from './foodMenuSeed';
 import { FOOD_IMG } from './foodImages';
-import { dateInZone } from '../../../../utils/healthTime';
+import { dateInZone } from '../../../../utils/health-time/healthTime';
 
 const DAY = 24 * 60 * 60 * 1000;
 const iso = (msAgo = 0) => new Date(Date.now() - msAgo).toISOString();

@@ -1,7 +1,7 @@
 // MetroMatrix — Kitchen serializers: recipes and costs, kitchen settings.
 // docs/API_KITCHEN_ASSUMED.md §2.4, §4.2.
 
-import type { KitchenSettings, PackingPhotoRule, Recipe, RecipeLine, RecipeList, RecipeRow, RecipeStatus } from '../../types/kitchen';
+import type { KitchenSettings, PackingPhotoRule, Recipe, RecipeLine, RecipeList, RecipeRow, RecipeStatus } from '../../models/kitchen';
 import { bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { baseUnit, costSerializer, count, intOrNull, list } from './kitchenCommon';
 

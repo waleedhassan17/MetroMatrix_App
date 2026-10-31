@@ -14,8 +14,8 @@
 // zero (Malai Boti sells out by itself), tomatoes up on last month, Mutton
 // Karahi over the food-cost target and five dishes without a recipe card.
 
-import type { BaseUnit, CustomUnit } from '../../../../utils/units';
-import { addDays, dateInZone, isoWeekday, weekStart, zonedToIso } from '../../../../utils/healthTime';
+import type { BaseUnit, CustomUnit } from '../../../../utils/units/units';
+import { addDays, dateInZone, isoWeekday, weekStart, zonedToIso } from '../../../../utils/health-time/healthTime';
 import { FOOD_IMG } from '../food/foodImages';
 import type { MockFoodReview } from '../food/foodTypes';
 import type {

@@ -8,8 +8,8 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useStyles, useTheme, type Theme } from '../../theme/index';
 import { AppText, IonIcon, type AppointmentAction, type IonName } from '../../Custom-Components/index';
-import type { AppointmentSummary, HealthBanner, HealthBannerScreen, HealthBrowseParamList, ShopBrowseParamList } from '../../types';
-import { openDirections } from '../../utils/maps';
+import type { AppointmentSummary, HealthBanner, HealthBannerScreen, HealthBrowseParamList, ShopBrowseParamList } from '../../models';
+import { openDirections } from '../../utils/maps/maps';
 
 const makeStyles = ({ colors, space, radius, size, elevation }: Theme) =>
   StyleSheet.create({

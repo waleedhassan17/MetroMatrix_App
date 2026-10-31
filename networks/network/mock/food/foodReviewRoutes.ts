@@ -12,7 +12,7 @@
 
 import type { MockDb, MockUser } from '../mockDb';
 import type { ShopCtx, ShopKit } from '../shop/shopRoutes';
-import { addDays, dateInZone } from '../../../../utils/healthTime';
+import { addDays, dateInZone } from '../../../../utils/health-time/healthTime';
 import { FoodError, assertEntitled, invalid, isoNow, kitchenToday, nextId, text } from './foodLogic';
 import { isVisible } from './foodDiscovery';
 import type { MockFoodOrder, MockFoodReview, MockFoodVendor } from './foodTypes';

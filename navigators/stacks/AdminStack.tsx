@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import type { AdminStackParamList } from '../../types';
+import type { AdminStackParamList } from '../../models';
 import { ADMIN_STACK_ROUTES } from '../../navigations-maps/Approvals';
 
 const Stack = createNativeStackNavigator<AdminStackParamList>();

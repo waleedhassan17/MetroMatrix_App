@@ -13,7 +13,7 @@ import { AppText } from '../AppText';
 import { Button } from '../Button';
 import { InlineNotice } from '../InlineNotice';
 import { useStyles, type Theme } from '../../theme';
-import type { RiderCredential } from '../../types/food';
+import type { RiderCredential } from '../../models/food';
 
 const makeStyles = ({ colors, space, radius, size }: Theme) =>
   StyleSheet.create({

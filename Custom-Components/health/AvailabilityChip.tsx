@@ -4,7 +4,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../../theme';
-import type { Availability } from '../../types/health';
+import type { Availability } from '../../models/health';
 import { AppText } from '../AppText';
 import { IonIcon } from '../Icon';
 

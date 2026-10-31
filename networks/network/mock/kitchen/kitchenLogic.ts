@@ -11,8 +11,8 @@
 import type { MockDb } from '../mockDb';
 import { FoodError, isoNow } from '../food/foodLogic';
 import type { MockFoodOrder, MockFoodVendor, MockMenuItem } from '../food/foodTypes';
-import { addDays, dateInZone, hourOfDay } from '../../../../utils/healthTime';
-import { formatQty } from '../../../../utils/units';
+import { addDays, dateInZone, hourOfDay } from '../../../../utils/health-time/healthTime';
+import { formatQty } from '../../../../utils/units/units';
 import type {
   MockBatch,
   MockIngredient,

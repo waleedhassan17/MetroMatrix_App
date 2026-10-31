@@ -5,7 +5,7 @@ import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../../theme';
 import { PAYMENT_METHOD_LABEL } from '../../models/shopping/orderStatusModel';
-import type { PaymentMethod, PaymentOption } from '../../types/shopping';
+import type { PaymentMethod, PaymentOption } from '../../models/shopping';
 import { AppText } from '../AppText';
 import { IonIcon, type IonName } from '../Icon';
 

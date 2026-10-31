@@ -13,9 +13,9 @@
 // Times are relative to the moment the dummy database is created.
 
 import type { MockAppointment, MockDoctor, MockDoctorReview, MockFormularyItem, MockHealth, MockHealthBanner, MockLocation } from './healthTypes';
-import type { ConsultKind, ExperienceRow, Qualification, WeekDayHours } from '../../../../types/health';
-import type { Gender } from '../../../../types/auth';
-import { PKT, addDays, todayInZone, zonedToIso } from '../../../../utils/healthTime';
+import type { ConsultKind, ExperienceRow, Qualification, WeekDayHours } from '../../../../models/health';
+import type { Gender } from '../../../../models/auth';
+import { PKT, addDays, todayInZone, zonedToIso } from '../../../../utils/health-time/healthTime';
 import { DAY, HOUR, MINUTE, appointmentCode, nextAvailable } from './healthLogic';
 
 // ─── Catalogue ────────────────────────────────────────

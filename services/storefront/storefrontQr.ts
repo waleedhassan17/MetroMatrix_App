@@ -3,7 +3,7 @@
 // expo-file-system and handed to the share sheet (WhatsApp, Files, print
 // shops); the card prints through expo-print.
 
-import type { PrintColours } from '../../utils/prescriptionHtml';
+import type { PrintColours } from '../../utils/prescription-html/prescriptionHtml';
 import { cardHtmlFor, fileNameFor, type QrResult } from './storefrontQrShared';
 
 export type { QrResult } from './storefrontQrShared';

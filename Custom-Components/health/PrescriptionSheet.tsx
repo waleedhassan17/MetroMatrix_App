@@ -4,14 +4,14 @@
 // Doctor header (name, qualifications, PMDC, where), the patient line,
 // diagnosis, a row per medicine with its morning / afternoon / night dots,
 // timing and duration, tests, advice and follow-up. The PDF is built from
-// the same layout (utils/prescriptionHtml), so what you share is what you see.
+// the same layout (utils/prescription-html/prescriptionHtml), so what you share is what you see.
 
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../../theme';
-import type { Prescription, PrescriptionInput } from '../../types/health';
+import type { Prescription, PrescriptionInput } from '../../models/health';
 import { doseSlots, formLabel, formatDose, timingLabel } from '../../models/health/prescriptionModel';
-import { formatOn } from '../../utils/healthTime';
+import { formatOn } from '../../utils/health-time/healthTime';
 import { AppText } from '../AppText';
 import { Divider } from '../Divider';
 

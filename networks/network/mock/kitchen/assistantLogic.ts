@@ -11,7 +11,7 @@
 
 import type { MockDb } from '../mockDb';
 import type { MockFoodReview, MockFoodVendor, MockMenuItem } from '../food/foodTypes';
-import { addDays, dateInZone, isoWeekday } from '../../../../utils/healthTime';
+import { addDays, dateInZone, isoWeekday } from '../../../../utils/health-time/healthTime';
 import type { MockIngredient, MockNutritionFood } from './kitchenTypes';
 import { costOf, costView, defaultVariantOf, expiringOf, ingredientsOf, itemsOf, k, onHandOf, recipeCost, recipeFor, settingsOf, todayOf } from './kitchenLogic';
 import { hashOf } from './aiStandIns';

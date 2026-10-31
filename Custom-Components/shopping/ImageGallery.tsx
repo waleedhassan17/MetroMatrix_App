@@ -8,7 +8,7 @@ import React, { useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { Image } from 'expo-image';
 import { useStyles, useTheme, type Theme } from '../../theme';
-import { cdn } from '../../utils/cdn';
+import { cdn } from '../../utils/cdn/cdn';
 import { AppText } from '../AppText';
 import { ImageViewer } from '../ImageViewer';
 

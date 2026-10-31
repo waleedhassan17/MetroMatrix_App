@@ -3,7 +3,7 @@
 // is dropped, so the card falls back to "Did you mean…" or the manual way.
 // docs/VOICE_ASSUMED.md §3.
 
-import type { VoiceAction, VoiceQtyLine, VoiceResult } from '../../types/kitchen';
+import type { VoiceAction, VoiceQtyLine, VoiceResult } from '../../models/kitchen';
 import { isObject, num, str, strOrNull, fromResponse } from '../serializerUtils';
 import { WASTE_REASONS } from '../kitchen/wasteSerializer';
 import { dateOrNull, list, standardUnit } from '../kitchen/kitchenCommon';

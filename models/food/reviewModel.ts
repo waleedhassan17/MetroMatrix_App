@@ -2,7 +2,7 @@
 // One review per order, once it was delivered or collected. The delivery
 // stars go only with a delivery; the rider tag only where there was a rider.
 
-import type { FoodFulfilment, FoodRatingSummary, FoodReviewInput, FoodReviewTag } from '../../types/food';
+import type { FoodFulfilment, FoodRatingSummary, FoodReviewInput, FoodReviewTag } from '../food';
 import type { ValidationErrors } from '../authModel';
 
 export { RATING_WORDS } from '../shopping/reviewFormModel';

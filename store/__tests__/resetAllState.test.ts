@@ -1,9 +1,9 @@
 import { store } from '../store';
 import { resetAllState } from '../resetAllState';
 import { setLastService } from '../preferencesSlice';
-import { setOnboardingSeen, setSession } from '../../screens/Auth/authSlice';
-import { setPreviewService } from '../../screens/Dev/DesignGallery/designGallerySlice';
-import type { User } from '../../types/auth';
+import { setOnboardingSeen, setSession } from '../authSlice';
+import { setPreviewService } from '../../screens/design-gallery-screen/designGallerySlice';
+import type { User } from '../../models/auth';
 
 const user = { id: 'u1', role: 'customer', isEmailVerified: true } as User;
 

@@ -11,7 +11,7 @@
 import ordersReal from '../../../../serializers/__tests__/fixtures/food/orders.json';
 import p8Real from '../../../../serializers/__tests__/fixtures/food/p8.json';
 import { api } from '../../apiHelpers';
-import { clearTokens } from '../../../../utils/storageUtils';
+import { clearTokens } from '../../../../utils/storage_utils/storageUtils';
 import { resetMockDb } from '../mockDb';
 import { isAddition, shippedAdditions } from '../kitchen/foodAdditions';
 import { signInAs, installDummyApi } from '../testing';

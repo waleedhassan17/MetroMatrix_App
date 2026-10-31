@@ -6,10 +6,10 @@
 // result, the kitchen's story and hygiene checklist, batching ("Drop 1 of
 // 2"). Checked against the API's rules (§3.11–3.13) before they are sent.
 
-import type { BatchSuggestion, Experiment, Hygiene, KitchenStory, MenuInsightItem, RamadanSettings, StoreSource, Storefront } from '../../types/kitchen';
+import type { BatchSuggestion, Experiment, Hygiene, KitchenStory, MenuInsightItem, RamadanSettings, StoreSource, Storefront } from '../kitchen';
 import type { ValidationErrors } from '../authModel';
-import { formatDayShort } from '../../utils/healthTime';
-import { formatPKR, parseRupees } from '../../utils/money';
+import { formatDayShort } from '../../utils/health-time/healthTime';
+import { formatPKR, parseRupees } from '../../utils/money/money';
 import { timeLabel } from './cateringModel';
 
 // ── Ramadan ──

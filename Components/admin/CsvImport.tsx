@@ -11,7 +11,7 @@ import { StyleSheet, View } from 'react-native';
 import { canImport, importSummary } from '../../models/kitchen/adminKitchenModel';
 import { useStyles, type Theme } from '../../theme/index';
 import { AppText, Button, Card, Divider, InlineNotice, StatusPill, TextField } from '../../Custom-Components/index';
-import type { CsvImportResult } from '../../types';
+import type { CsvImportResult } from '../../models';
 
 type PillTone = React.ComponentProps<typeof StatusPill>['tone'];
 

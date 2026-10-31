@@ -6,8 +6,8 @@
 // accepts is never refused by the server.
 // PASSWORD_POLICY mirrors MetroMatrix_Backend docs/API_AUTH.md §4.1.
 
-import { isValidPkMobile, normalizePkPhone, PK_MOBILE_MESSAGE } from '../utils/phone';
-import type { Gender } from '../types/auth';
+import { isValidPkMobile, normalizePkPhone, PK_MOBILE_MESSAGE } from '../utils/phone/phone';
+import type { Gender } from './auth';
 
 export interface ValidationErrors {
   [field: string]: string;

@@ -7,7 +7,7 @@
 // screen still reads the truth over REST — so anything malformed is null.
 // docs/API_FOOD.md §5 (the gateway's events).
 
-import type { FoodBoardSync, FoodLiveBoardUpdate, FoodLiveCustomerUpdate, FoodLiveHead, FoodLivePayment, FoodOrderStatus, FoodRiderFix } from '../../types/food';
+import type { FoodBoardSync, FoodLiveBoardUpdate, FoodLiveCustomerUpdate, FoodLiveHead, FoodLivePayment, FoodOrderStatus, FoodRiderFix } from '../../models/food';
 import { arr, isObject, num, oneOf, str } from '../serializerUtils';
 import { FOOD_ORDER_STATUSES, FOOD_PAYMENT_METHODS, FOOD_PAYMENT_STATUSES, boardCardSerializer, foodOrderSerializer } from './orderSerializer';
 

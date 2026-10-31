@@ -1,8 +1,8 @@
-// MetroMatrix — AdminFoodStack: dumb mapper over navigations-maps/AdminFood.ts.
+// MetroMatrix — AdminFoodStack: dumb mapper over navigations-maps/AdminFood.tsx.
 
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import type { AdminFoodStackParamList } from '../../types';
+import type { AdminFoodStackParamList } from '../../models';
 import { ADMIN_FOOD_ROUTES } from '../../navigations-maps/AdminFood';
 
 const Stack = createNativeStackNavigator<AdminFoodStackParamList>();

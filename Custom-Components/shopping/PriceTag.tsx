@@ -4,7 +4,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useStyles, type Theme } from '../../theme';
-import { discountPercent, formatPKR } from '../../utils/money';
+import { discountPercent, formatPKR } from '../../utils/money/money';
 import { AppText } from '../AppText';
 
 export interface PriceTagProps {

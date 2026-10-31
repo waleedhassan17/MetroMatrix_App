@@ -9,7 +9,7 @@ import {
   totpInitialRoute,
   type GateInput,
 } from '../sessionGate';
-import type { Business, BusinessStatus, User, UserRole } from '../../types/auth';
+import type { Business, BusinessStatus, User, UserRole } from '../../models/auth';
 import { makeUser } from '../../__fixtures__/users';
 
 const user = (role: UserRole, isEmailVerified = true, profileComplete = true): User =>

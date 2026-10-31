@@ -20,7 +20,7 @@ import { createRiderAPI, getRidersAPI, resetRiderPasswordAPI, setRiderStatusAPI,
 import { getVendorPlanAPI } from '../../../food/vendor/planNetwork';
 import { getRiderHomeAPI } from '../../../food/rider/riderNetwork';
 import { ApiError, required } from '../../apiHelpers';
-import { clearTokens } from '../../../../utils/storageUtils';
+import { clearTokens } from '../../../../utils/storage_utils/storageUtils';
 import { getDb, resetMockDb } from '../mockDb';
 import { currentSession, signInAs, installDummyApi } from '../testing';
 import { vendorSetupSerializer, vendorProfileSerializer, foodCuisinesSerializer, hoursSerializer, feeBandsSerializer, closuresSerializer, closureResponseSerializer, vendorPaymentAccountSerializer, vendorSettingsSerializer, vendorPlanSerializer } from '../../../../serializers/food/vendorSerializer';

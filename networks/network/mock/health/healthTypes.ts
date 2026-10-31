@@ -21,9 +21,9 @@ import type {
   RecordType,
   ReviewDimension,
   WeekDayHours,
-} from '../../../../types/health';
-import type { Gender } from '../../../../types/auth';
-import type { PaymentAccount, PaymentInstructions, PaymentProof } from '../../../../types/payments';
+} from '../../../../models/health';
+import type { Gender } from '../../../../models/auth';
+import type { PaymentAccount, PaymentInstructions, PaymentProof } from '../../../../models/payments';
 
 export interface MockSpecialty {
   id: string;

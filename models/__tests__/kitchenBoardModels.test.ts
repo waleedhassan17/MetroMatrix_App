@@ -5,7 +5,7 @@ import { menuStockNote, needsPackingPhoto, pausedNote, pauseLine, quotedEta, res
 import { dishLine, ingredientLine, rescuedShareText, validateDonation, wasteDraftFromVoice, wasteInputOf, wasteSentence } from '../kitchen/wasteModel';
 import { emptyBoxForm, pickupTimes, withPickupFrom } from '../kitchen/surplusModel';
 import { barMax, dishesLine, prepGroups, purchaseDraftOf, suggestedPortions } from '../kitchen/forecastModel';
-import type { BoardHints, ForecastItem } from '../../types/kitchen';
+import type { BoardHints, ForecastItem } from '../kitchen';
 
 const hints = (more: Partial<BoardHints> = {}): BoardHints => ({
   lowStock: [{ itemId: 'mi_karahi', name: 'Chicken Karahi', servingsLeft: 2 }],

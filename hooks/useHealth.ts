@@ -7,7 +7,7 @@
 import { useMemo } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { HealthBanner, HealthBrowseParamList, HealthTabParamList } from '../types';
+import type { HealthBanner, HealthBrowseParamList, HealthTabParamList } from '../models';
 
 type HealthNav = NativeStackNavigationProp<HealthBrowseParamList>;
 type TabNav = { navigate: (name: 'HealthTabs', params: { screen: keyof HealthTabParamList; params?: object }) => void };

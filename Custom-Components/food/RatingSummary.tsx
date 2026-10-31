@@ -6,7 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { useStyles, type Theme } from '../../theme/index';
 import { AppText, ProgressBar, Stars } from '../index';
 import { FOOD_REVIEW_TAG_LABEL, ratingCountLabel, starShares } from '../../models/food/reviewModel';
-import type { FoodRatingSummary } from '../../types';
+import type { FoodRatingSummary } from '../../models';
 
 const makeStyles = ({ colors, space, radius }: Theme) =>
   StyleSheet.create({

@@ -7,7 +7,7 @@
 // /:id/reset-password, /:id/credential, /suggest, /live, /:id/cash, /:id/handover).
 
 import { api, toApiError } from '../../network/apiHelpers';
-import type { RiderInput, RiderStatus } from '../../../types/food';
+import type { RiderInput, RiderStatus } from '../../../models/food';
 
 const enc = encodeURIComponent;
 const body = (input: Partial<RiderInput>) => ({

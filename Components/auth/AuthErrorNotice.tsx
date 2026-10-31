@@ -15,8 +15,8 @@ import React from 'react';
 import { InlineNotice } from '../../Custom-Components/InlineNotice';
 import { doorForAccount, WRONG_DOOR_MESSAGE } from '../../models/authDoors';
 import { ERROR_CODES } from '../../networks/network/apiHelpers';
-import type { Portal } from '../../types/auth';
-import type { ServerError } from '../../screens/Auth/shared/formStatus';
+import type { Portal } from '../../models/auth';
+import type { ServerError } from '../../screens/shared/formStatus';
 import { authErrorMessage } from './authErrorMessage';
 
 const PORTAL_LABEL: Record<Portal, string> = {

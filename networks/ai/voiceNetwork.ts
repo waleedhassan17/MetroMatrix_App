@@ -7,7 +7,7 @@
 // the ordinary endpoint. docs/VOICE_ASSUMED.md (TODO(API_VOICE)).
 
 import { api, toApiError, clean } from '../network/apiHelpers';
-import type { VoiceContext, VoiceLanguage } from '../../types/kitchen';
+import type { VoiceContext, VoiceLanguage } from '../../models/kitchen';
 
 export interface VoiceInput {
   context: VoiceContext;

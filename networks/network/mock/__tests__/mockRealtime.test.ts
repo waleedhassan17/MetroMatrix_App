@@ -3,7 +3,7 @@
 // a room only, and — driven through the app's real client — rejoins rooms and
 // resyncs after the server drops everyone.
 
-import { clearTokens } from '../../../../utils/storageUtils';
+import { clearTokens } from '../../../../utils/storage_utils/storageUtils';
 import { RealtimeClient } from '../../../../services/realtime/socketClient';
 import { getDb, resetMockDb } from '../mockDb';
 import { createMockSocket, mockRealtime } from '../mockRealtime';

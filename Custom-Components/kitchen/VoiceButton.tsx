@@ -18,10 +18,10 @@ import { IonIcon } from '../Icon';
 import { Sheet } from '../Sheet';
 import { TextAction } from '../TextAction';
 import { ChoiceChip } from '../shopping/ChoiceChip';
-import { haptics } from '../../utils/haptics';
+import { haptics } from '../../utils/haptics/haptics';
 import { useClipRecorder, MAX_CLIP_MS, type Clip } from '../../services/voice/recorder';
 import { LANGUAGE_CHOICES, WARN_CLIP_MS, secondsLeft } from '../../models/kitchen/voiceModel';
-import type { VoiceLanguage } from '../../types/kitchen';
+import type { VoiceLanguage } from '../../models/kitchen';
 
 export interface VoiceButtonProps {
   onClip: (clip: Clip) => void;

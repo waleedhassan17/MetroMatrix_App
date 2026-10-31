@@ -1,16 +1,16 @@
 // MetroMatrix — the approved Food vendor's app (restaurant, home or cloud
 // kitchen): a stack whose first screen is the tabs (or Kitchen setup until the
-// kitchen is live), with every tool pushed over them (navigations-maps/FoodVendor.ts).
+// kitchen is live), with every tool pushed over them (navigations-maps/FoodVendor.tsx).
 
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ServiceScope } from '../theme';
 import { ServicePausedGate } from '../Components/platform/ServicePausedGate';
-import type { FoodVendorStackParamList } from '../types';
+import type { FoodVendorStackParamList } from '../models';
 import { ROUTES } from '../navigations-maps/Base';
 import { FOOD_VENDOR_HOME_TABS, FOOD_VENDOR_STACK_ROUTES, FOOD_VENDOR_TABS } from '../navigations-maps/FoodVendor';
 import { useAppSelector } from '../hooks/useReduxHooks';
-import { selectBusiness } from '../screens/Auth/authSlice';
+import { selectBusiness } from '../store/authSlice';
 import { RouteTabs } from './RouteTabs';
 import { foodVendorRootRoute } from './sessionGate';
 

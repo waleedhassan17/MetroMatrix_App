@@ -8,8 +8,8 @@
 import React, { useEffect, useRef } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../../theme';
-import type { DayAvailability } from '../../types/health';
-import { formatDayChip } from '../../utils/healthTime';
+import type { DayAvailability } from '../../models/health';
+import { formatDayChip } from '../../utils/health-time/healthTime';
 import { AppText } from '../AppText';
 import { Skeleton } from '../Skeleton';
 

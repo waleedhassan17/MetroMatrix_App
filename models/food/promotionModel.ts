@@ -7,9 +7,9 @@
 // funds none and takes nothing. One deal per order — the best for the
 // customer; a coded deal applies only when the code is typed.
 
-import type { FoodPromotion, PromotionInput, PromotionKind, PromotionState } from '../../types/food';
-import { formatPKR } from '../../utils/money';
-import { PKT, addDays, dateInZone, formatDayShort, zonedToIso } from '../../utils/healthTime';
+import type { FoodPromotion, PromotionInput, PromotionKind, PromotionState } from '../food';
+import { formatPKR } from '../../utils/money/money';
+import { PKT, addDays, dateInZone, formatDayShort, zonedToIso } from '../../utils/health-time/healthTime';
 
 export const PROMOTION_KINDS: { key: PromotionKind; label: string; hint: string }[] = [
   { key: 'percent_off_order', label: '% off the order', hint: 'A share off the dishes, with a cap if you like' },

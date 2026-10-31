@@ -9,7 +9,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DOCUMENT_REQUIREMENTS } from '../../../models/businessModel';
-import type { DocumentKind, ServiceType, SubType } from '../../../types/auth';
+import type { DocumentKind, ServiceType, SubType } from '../../../models/auth';
 import { MOCK, SEED_PASSWORD, STAFF_PASSWORD } from './mockConfig';
 import { SHOP_SEED_SHOPPER, SHOP_SEED_USERS, seedShop } from './shop/shopSeed';
 import type { MockShop } from './shop/shopTypes';

@@ -14,7 +14,7 @@
 import type { MockDb } from '../mockDb';
 import type { MockFoodOrder, MockFoodVendor } from '../food/foodTypes';
 import { distanceKm } from '../food/foodDiscovery';
-import { addDays, dateInZone, hourOfDay } from '../../../../utils/healthTime';
+import { addDays, dateInZone, hourOfDay } from '../../../../utils/health-time/healthTime';
 import type { MockExperiment, MockHygiene, MockRamadanSettings, MockSearchLog } from './kitchenTypes';
 import { defaultVariantOf, isoNow, itemsOf, k, recipeCost, recipeFor, todayOf, vendorOf } from './kitchenLogic';
 import { HYGIENE_KEYS, KITCHENS, WEEKDAY_FACTOR } from './kitchenSeed';

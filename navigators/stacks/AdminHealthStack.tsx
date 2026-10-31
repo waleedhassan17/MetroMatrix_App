@@ -1,8 +1,8 @@
-// MetroMatrix — AdminHealthStack: dumb mapper over navigations-maps/AdminHealth.ts.
+// MetroMatrix — AdminHealthStack: dumb mapper over navigations-maps/AdminHealth.tsx.
 
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import type { AdminHealthStackParamList } from '../../types';
+import type { AdminHealthStackParamList } from '../../models';
 import { ADMIN_HEALTH_ROUTES } from '../../navigations-maps/AdminHealth';
 
 const Stack = createNativeStackNavigator<AdminHealthStackParamList>();

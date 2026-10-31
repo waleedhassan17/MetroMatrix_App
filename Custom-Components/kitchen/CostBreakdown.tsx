@@ -8,8 +8,8 @@ import { useStyles, type Theme } from '../../theme';
 import { AppText } from '../AppText';
 import { StatusPill } from '../StatusPill';
 import { foodCostLabel } from '../../models/kitchen/costingModel';
-import { formatPKR } from '../../utils/money';
-import type { Cost } from '../../types/kitchen';
+import { formatPKR } from '../../utils/money/money';
+import type { Cost } from '../../models/kitchen';
 
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({

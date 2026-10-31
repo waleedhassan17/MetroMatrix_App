@@ -6,11 +6,11 @@
 // to pay reads, and the checkout form's own checks. Prices and totals are
 // never worked out here: they are always the server's.
 
-import type { FoodCart, FoodCartLine, FoodFulfilment, FoodIssue, FoodPaymentMethod, FoodPreview, FoodSlots } from '../../types/food';
-import type { ItemSheet } from '../../types/food';
+import type { FoodCart, FoodCartLine, FoodFulfilment, FoodIssue, FoodPaymentMethod, FoodPreview, FoodSlots } from '../food';
+import type { ItemSheet } from '../food';
 import { chosenOptionIds, type Selection } from './itemSelectionModel';
 import { PAYMENT_METHOD } from './foodStatusModel';
-import { formatDayShort, formatSlot, dateInZone } from '../../utils/healthTime';
+import { formatDayShort, formatSlot, dateInZone } from '../../utils/health-time/healthTime';
 
 /** The request "Add to bag" sends for the sheet's choice. */
 export const lineInput = (vendorId: string, sheet: ItemSheet, sel: Selection) => ({

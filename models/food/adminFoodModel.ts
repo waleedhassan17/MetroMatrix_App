@@ -1,7 +1,7 @@
 // MetroMatrix — Admin Food console: reasons, cuisines, banners and plan
 // overrides. The API's own limits, so a form is refused before it is sent.
 
-import type { AdminCuisineInput, AdminFoodBannerInput, PlanOverrides } from '../../types/food';
+import type { AdminCuisineInput, AdminFoodBannerInput, PlanOverrides } from '../food';
 import type { ValidationErrors } from '../authModel';
 
 /** Suspend or reinstate a vendor: the owner is told. */

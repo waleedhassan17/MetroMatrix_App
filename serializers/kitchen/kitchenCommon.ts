@@ -6,9 +6,9 @@
 // serializer: a missing field is a sensible default, never a crash.
 // TODO(API_KITCHEN): docs/API_KITCHEN_ASSUMED.md §2.
 
-import type { Cost, Counting, IngredientCategory, TransferPayment } from '../../types/kitchen';
-import type { FoodPaymentStatus, FoodTransferAccount } from '../../types/food';
-import { BASE_UNITS, STANDARD_UNITS, type BaseUnit, type StandardUnit } from '../../utils/units';
+import type { Cost, Counting, IngredientCategory, TransferPayment } from '../../models/kitchen';
+import type { FoodPaymentStatus, FoodTransferAccount } from '../../models/food';
+import { BASE_UNITS, STANDARD_UNITS, type BaseUnit, type StandardUnit } from '../../utils/units/units';
 import { arr, bool, isObject, num, oneOf, str, strOrNull } from '../serializerUtils';
 
 export const INGREDIENT_CATEGORIES: readonly IngredientCategory[] = [
@@ -70,7 +70,7 @@ export const dateOrNull = (v: unknown): string | null => {
 export const PAY_STATUSES: readonly FoodPaymentStatus[] = ['cod_pending', 'unpaid', 'awaiting_transfer', 'proof_submitted', 'paid', 'void', 'refund_due', 'refunded'];
 const ACCOUNT_KINDS = ['raast', 'jazzcash', 'easypaisa', 'bank'] as const;
 
-/** The Food order's own account words (types/food FoodTransferAccount). */
+/** The Food order's own account words (models/food FoodTransferAccount). */
 export const transferAccountSerializer = (raw: unknown): FoodTransferAccount | null =>
   isObject(raw) && str(raw.accountNumber)
     ? { kind: oneOf(raw.kind, ACCOUNT_KINDS, 'bank'), title: str(raw.accountTitle), number: str(raw.accountNumber), bankName: strOrNull(raw.bankName) }

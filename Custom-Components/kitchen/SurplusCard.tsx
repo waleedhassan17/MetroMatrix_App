@@ -9,10 +9,10 @@ import { useStyles, useTheme, type Theme } from '../../theme';
 import { AppText } from '../AppText';
 import { IonIcon } from '../Icon';
 import { StatusPill } from '../StatusPill';
-import { cdn } from '../../utils/cdn';
-import { formatPKR } from '../../utils/money';
+import { cdn } from '../../utils/cdn/cdn';
+import { formatPKR } from '../../utils/money/money';
 import { BACHAT_BOX, discountLabel } from '../../models/kitchen/surplusModel';
-import type { SurplusCard as SurplusCardData } from '../../types/kitchen';
+import type { SurplusCard as SurplusCardData } from '../../models/kitchen';
 
 const makeStyles = ({ space, size, radius, colors, elevation }: Theme) =>
   StyleSheet.create({

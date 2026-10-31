@@ -6,7 +6,7 @@
 // The customer's side is networks/food/surplusNetwork.ts.
 
 import { api, toApiError } from '../network/apiHelpers';
-import type { SurplusBoxInput } from '../../types/kitchen';
+import type { SurplusBoxInput } from '../../models/kitchen';
 
 const enc = encodeURIComponent;
 

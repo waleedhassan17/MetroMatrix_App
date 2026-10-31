@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════
 // Shapes: MetroMatrix-API docs/API_HEALTH.md §4.4.
 
-import type { AdminAppointment, AdminCondition, AdminDoctor, AdminSpecialty, HealthOverview } from '../../types/health';
+import type { AdminAppointment, AdminCondition, AdminDoctor, AdminSpecialty, HealthOverview } from '../../models/health';
 import { arr, isObject, num, oneOf, str, fromResponse } from '../serializerUtils';
 import { compact, count, isoOrNull } from '../shopping/common';
 import { conditionSerializer, specialtySerializer } from './discoverySerializer';

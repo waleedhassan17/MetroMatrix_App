@@ -12,8 +12,8 @@ import type {
   StockState,
   StockTakeResult,
   Supplier,
-} from '../../types/kitchen';
-import type { Paged } from '../../types/payments';
+} from '../../models/kitchen';
+import type { Paged } from '../../models/payments';
 import { bool, isObject, num, oneOf, str, strOrNull, bodyOf, fromResponse } from '../serializerUtils';
 import { paged } from '../shopping/common';
 import { baseUnit, category, count, countingOf, dateOrNull, list, numOrNull, whole } from './kitchenCommon';

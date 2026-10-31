@@ -4,7 +4,7 @@
 // TODO(API_SHOPPING): paths per docs/API_SHOPPING_ASSUMED.md.
 
 import { api, toApiError, clean, pageParams } from '../network/apiHelpers';
-import type { ProductQuery } from '../../types/shopping';
+import type { ProductQuery } from '../../models/shopping';
 
 export const getShopHomeAPI = async (): Promise<unknown> => {
   try {

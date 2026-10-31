@@ -7,7 +7,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../../theme/index';
 import { AppText, IonIcon } from '../index';
 import { RATING_WORDS } from '../../models/food/reviewModel';
-import { haptics } from '../../utils/haptics';
+import { haptics } from '../../utils/haptics/haptics';
 
 const makeStyles = ({ space, size }: Theme) =>
   StyleSheet.create({

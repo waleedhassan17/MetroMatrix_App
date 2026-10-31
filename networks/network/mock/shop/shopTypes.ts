@@ -19,7 +19,7 @@ import type {
   ReportStatus,
   ReturnReason,
   ReturnStatus,
-} from '../../../../types/shopping';
+} from '../../../../models/shopping';
 
 export interface MockStore {
   id: string;

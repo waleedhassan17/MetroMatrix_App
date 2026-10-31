@@ -1,7 +1,7 @@
 // MetroMatrix — Kitchen serializers: forecast, accuracy, prep sheet, shopping list.
 // docs/API_KITCHEN_ASSUMED.md §2.5, §4.3.
 
-import type { Forecast, ForecastAccuracy, ForecastItem, PrepSheet, ShoppingList } from '../../types/kitchen';
+import type { Forecast, ForecastAccuracy, ForecastItem, PrepSheet, ShoppingList } from '../../models/kitchen';
 import { bool, isObject, str, strOrNull, fromResponse } from '../serializerUtils';
 import { baseUnit, category, count, dateOrNull, intOrNull, list, whole } from './kitchenCommon';
 

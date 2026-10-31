@@ -10,7 +10,7 @@ import { required, uploadToCloudinary } from '../networks/network/apiHelpers';
 import { signUploadAPI } from '../networks/media/mediaNetwork';
 import { signedUploadSerializer } from '../serializers/mediaSerializer';
 import { API_PURPOSE, type UploadPurpose } from '../models/mediaModel';
-import type { LocalFile, SignedUpload, UploadedFile } from '../types/auth';
+import type { LocalFile, SignedUpload, UploadedFile } from '../models/auth';
 
 /** The API's signature for one upload of this kind. */
 export const signUpload = async (purpose: UploadPurpose): Promise<SignedUpload> =>

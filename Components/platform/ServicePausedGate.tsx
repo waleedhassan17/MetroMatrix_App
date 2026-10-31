@@ -7,7 +7,7 @@ import React from 'react';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { EmptyState, ScreenShell } from '../../Custom-Components';
 import { loadPlatformConfig, selectPlatformStatus, selectServicePaused } from '../../store/platformConfigSlice';
-import type { PlatformService } from '../../types/platformConfig';
+import type { PlatformService } from '../../models/platformConfig';
 import { useServiceNav } from '../../hooks/useServiceNav';
 
 export const SERVICE_LABEL: Record<PlatformService, string> = {

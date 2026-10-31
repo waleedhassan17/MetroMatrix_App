@@ -1,8 +1,8 @@
 // MetroMatrix — Family members a patient books for.
 
-import type { FamilyMemberInput, FamilyRelation } from '../../types/health';
+import type { FamilyMemberInput, FamilyRelation } from '../health';
 import type { ValidationErrors } from '../authModel';
-import { isValidPkMobile } from '../../utils/phone';
+import { isValidPkMobile } from '../../utils/phone/phone';
 
 export const RELATIONS: { key: FamilyRelation; label: string }[] = [
   { key: 'spouse', label: 'Spouse' },

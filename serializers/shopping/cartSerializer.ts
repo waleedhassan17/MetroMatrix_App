@@ -13,7 +13,7 @@ import type {
   PaymentMethod,
   PaymentOption,
   PreviewStore,
-} from '../../types/shopping';
+} from '../../models/shopping';
 import { arr, bool, isObject, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { compact, count, isoOrNull, money, moneyOrNull, storeRefSerializer } from './common';
 

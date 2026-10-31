@@ -6,11 +6,11 @@
 // a deal on the menu at the bundle price. Nutrition is said with how it was
 // worked out and how sure it is; review weeks read "12–18 Oct".
 
-import type { ComboIdea, Cost, DishNutrition, NutritionMethod, PhotoTipKind, PhotoVerdict, RecipeInput, SpecialIdea } from '../../types/kitchen';
-import type { MenuItemInput } from '../../types/food';
+import type { ComboIdea, Cost, DishNutrition, NutritionMethod, PhotoTipKind, PhotoVerdict, RecipeInput, SpecialIdea } from '../kitchen';
+import type { MenuItemInput } from '../food';
 import type { ValidationErrors } from '../authModel';
-import { formatPKR, parseRupees } from '../../utils/money';
-import { addDays } from '../../utils/healthTime';
+import { formatPKR, parseRupees } from '../../utils/money/money';
+import { addDays } from '../../utils/health-time/healthTime';
 import { EVERY_DAY } from '../food/menuModel';
 import { costCard } from './costingModel';
 import type { KitchenTone } from './kitchenStatusModel';

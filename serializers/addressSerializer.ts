@@ -1,7 +1,7 @@
 // MetroMatrix — Delivery address serializer (core; Shopping now, Food later).
 // TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
 
-import type { Address, AddressLabel } from '../types/shopping';
+import type { Address, AddressLabel } from '../models/shopping';
 import { bool, isObject, num, oneOf, str, strOrNull, arr, fromResponse } from './serializerUtils';
 import { compact } from './shopping/common';
 

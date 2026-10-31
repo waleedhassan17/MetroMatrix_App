@@ -5,9 +5,9 @@
 // numbers form; a week of ordered food said without praise or blame ("1,840
 // kcal on Tue", never "great job" or "too much").
 
-import type { Activity, BodyMetrics, DishFacts, NutritionGoal, NutritionSummary } from '../../types/myKitchen';
+import type { Activity, BodyMetrics, DishFacts, NutritionGoal, NutritionSummary } from '../myKitchen';
 import type { ValidationErrors } from '../authModel';
-import { formatDayShort } from '../../utils/healthTime';
+import { formatDayShort } from '../../utils/health-time/healthTime';
 
 export const GOAL: Record<NutritionGoal, { label: string; hint: string }> = {
   eat_better: { label: 'Eat a little better', hint: 'See the numbers, no target to hit' },

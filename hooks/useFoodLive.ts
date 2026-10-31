@@ -23,7 +23,7 @@ import {
   riderFixSerializer,
 } from '../serializers/food/liveSerializer';
 import { REALTIME_EVENTS } from '../services/realtime/realtimeConfig';
-import type { BoardCard, FoodBoardSync, FoodLiveBoardUpdate, FoodLivePayment, FoodOrder, FoodRiderFix } from '../types/food';
+import type { BoardCard, FoodBoardSync, FoodLiveBoardUpdate, FoodLivePayment, FoodOrder, FoodRiderFix } from '../models/food';
 import { useLiveFallback, useRealtimeEvent, useRealtimeResync, useRealtimeRoom, useRealtimeStatus } from './useRealtime';
 
 export interface OrderChannelHandlers {

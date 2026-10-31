@@ -5,8 +5,8 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../../theme';
-import type { DoctorReview } from '../../types/health';
-import { formatOn } from '../../utils/healthTime';
+import type { DoctorReview } from '../../models/health';
+import { formatOn } from '../../utils/health-time/healthTime';
 import { AppText } from '../AppText';
 import { Avatar } from '../Avatar';
 import { IonIcon } from '../Icon';

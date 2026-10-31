@@ -15,7 +15,7 @@ import {
   validatePriceRange,
   type ProductFilters,
 } from '../../models/shopping/filterModel';
-import { formatPKR, parseRupees } from '../../utils/money';
+import { formatPKR, parseRupees } from '../../utils/money/money';
 import { AppText } from '../AppText';
 import { Button } from '../Button';
 import { Divider } from '../Divider';

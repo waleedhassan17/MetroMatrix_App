@@ -3,7 +3,7 @@
 // unit-tested without rendering.
 
 import { ERROR_CODES, errorCopy, fieldErrors } from '../../networks/network/apiHelpers';
-import type { ServerError } from '../../screens/Auth/shared/formStatus';
+import type { ServerError } from '../../screens/shared/formStatus';
 
 export const authErrorMessage = (error: ServerError): string => {
   if (error.code === ERROR_CODES.VALIDATION_FAILED) {

@@ -3,7 +3,7 @@
 // dialog (print it, or "Save as PDF").
 
 import QRCode from 'qrcode';
-import type { PrintColours } from '../../utils/prescriptionHtml';
+import type { PrintColours } from '../../utils/prescription-html/prescriptionHtml';
 import { cardHtmlFor, fileNameFor, type QrResult } from './storefrontQrShared';
 
 export type { QrResult } from './storefrontQrShared';

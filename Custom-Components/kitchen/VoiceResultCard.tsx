@@ -12,7 +12,7 @@ import { Card } from '../Card';
 import { TextAction } from '../TextAction';
 import { ContentText, ToneWell } from './kitchenShared';
 import { actionTitle, actionWarnings, isUnsure } from '../../models/kitchen/voiceModel';
-import type { VoiceAction, VoiceResult } from '../../types/kitchen';
+import type { VoiceAction, VoiceResult } from '../../models/kitchen';
 
 export interface VoiceResultCardProps {
   result: VoiceResult;

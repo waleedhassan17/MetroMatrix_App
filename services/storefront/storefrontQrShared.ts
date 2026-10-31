@@ -2,8 +2,8 @@
 // and the printable card). Platform files: storefrontQr.ts / storefrontQr.web.ts.
 
 import QRCode from 'qrcode';
-import { storeCardHtml } from '../../utils/storeCardHtml';
-import type { PrintColours } from '../../utils/prescriptionHtml';
+import { storeCardHtml } from '../../utils/store-card-html/storeCardHtml';
+import type { PrintColours } from '../../utils/prescription-html/prescriptionHtml';
 
 export type QrResult = 'shared' | 'downloaded' | 'printed' | 'unavailable';
 

@@ -11,9 +11,9 @@
 import type { MockDb, MockUser } from '../mockDb';
 import type { ShopCtx, ShopKit } from '../shop/shopRoutes';
 import type { MockFoodOrder, MockFoodVendor } from '../food/foodTypes';
-import { formatSlot } from '../../../../utils/healthTime';
-import { addDays } from '../../../../utils/healthTime';
-import { STANDARD_UNITS, UNITS, toBase, type BaseUnit, type StandardUnit } from '../../../../utils/units';
+import { formatSlot } from '../../../../utils/health-time/healthTime';
+import { addDays } from '../../../../utils/health-time/healthTime';
+import { STANDARD_UNITS, UNITS, toBase, type BaseUnit, type StandardUnit } from '../../../../utils/units/units';
 import type { MockIngredient, MockIngredientCategory, MockWasteReason } from './kitchenTypes';
 import {
   DATE,

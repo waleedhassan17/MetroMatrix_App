@@ -7,8 +7,8 @@
 // /resume, /busy — each answers with the profile.
 
 import { api, toApiError, clean } from '../../network/apiHelpers';
-import type { VendorProfileInput } from '../../../types/food';
-import type { PauseReason } from '../../../types/kitchen';
+import type { VendorProfileInput } from '../../../models/food';
+import type { PauseReason } from '../../../models/kitchen';
 
 export const getVendorProfileAPI = async (): Promise<unknown> => {
   try {

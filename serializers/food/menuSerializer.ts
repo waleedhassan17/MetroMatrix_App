@@ -18,7 +18,7 @@ import type {
   TodayMenu,
   VendorMenuItem,
   WeeklyMenuEntry,
-} from '../../types/food';
+} from '../../models/food';
 import { arr, bool, isObject, num, str, strOrNull, fromResponse } from '../serializerUtils';
 
 export const ITEM_TAGS: readonly ItemTag[] = ['spicy', 'veg', 'bestseller', 'new', 'contains_nuts'];

@@ -5,7 +5,7 @@
 // docs/API_KITCHEN_ASSUMED.md §4.2 (TODO(API_KITCHEN): an assumed contract).
 
 import { api, toApiError } from '../network/apiHelpers';
-import type { RecipeInput } from '../../types/kitchen';
+import type { RecipeInput } from '../../models/kitchen';
 
 const enc = encodeURIComponent;
 const sized = (variantId: string | null | undefined) => (variantId === undefined ? {} : { variantId: variantId ?? 'null' });

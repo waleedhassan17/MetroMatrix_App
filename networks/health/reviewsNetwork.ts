@@ -6,7 +6,7 @@
 
 import { api, toApiError, clean, pageParams } from '../network/apiHelpers';
 import { reviewTagCodes } from '../../models/health/reviewFormModel';
-import type { ConsultKind, DoctorReviewInput } from '../../types/health';
+import type { ConsultKind, DoctorReviewInput } from '../../models/health';
 
 const enc = encodeURIComponent;
 

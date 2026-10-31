@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — The prescription as a PDF (expo-print + expo-sharing)
 // ═══════════════════════════════════════════════════════
-// The same layout as the screen (utils/prescriptionHtml), printed to a PDF
+// The same layout as the screen (utils/prescription-html/prescriptionHtml), printed to a PDF
 // file and handed to the share sheet (WhatsApp, email, Files). On web the
 // browser's print dialog does both: print, or "Save as PDF".
 

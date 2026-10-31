@@ -8,7 +8,7 @@
 import type { ShopCtx } from '../shop/shopRoutes';
 import type { MockFoodVendor } from '../food/foodTypes';
 import { distanceKm, isVisible } from '../food/foodDiscovery';
-import { formatSlot, zonedToIso } from '../../../../utils/healthTime';
+import { formatSlot, zonedToIso } from '../../../../utils/health-time/healthTime';
 import type { MockExperiment } from './kitchenTypes';
 import { KitchenError, invalid, isInt, isoNow, k, nextId, notFound, text, todayOf } from './kitchenLogic';
 import {

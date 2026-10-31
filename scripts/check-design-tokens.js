@@ -36,7 +36,7 @@ const ALLOWED = new Map([
     'the legibility scrim over service photos (both colours are theme tokens) — imagery, not a surface',
   ],
   [
-    'screens/Dev/DesignGallery/ShoppingStories.tsx',
+    'screens/design-gallery-screen/ShoppingStories.tsx',
     'demo STORE brand colours (data a store chooses, painted only through StoreBrandScope) — dev-only gallery',
   ],
   [
@@ -48,7 +48,7 @@ const ALLOWED = new Map([
     "the FYP Health tab bar's selected-icon pill (theme.tabBar.gradient: the service's highlight → accent) — a 40×32 marker, not a surface",
   ],
   [
-    'screens/Onboarding/OnboardingScreen.tsx',
+    'screens/onboarding-screen/Onboarding.tsx',
     "the onboarding preview card's header gradient, copied from the FYP app (its colours still come from the theme)",
   ],
 ]);

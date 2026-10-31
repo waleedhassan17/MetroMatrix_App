@@ -5,7 +5,7 @@
 
 import { getFoodHomeAPI, getItemSheetAPI, getVendorPageAPI, getVendorsAPI, searchFoodAPI } from '../../../food/discoveryNetwork';
 import { ApiError, required } from '../../apiHelpers';
-import { clearTokens } from '../../../../utils/storageUtils';
+import { clearTokens } from '../../../../utils/storage_utils/storageUtils';
 import { getDb, resetMockDb } from '../mockDb';
 import { installDummyApi } from '../testing';
 import { foodHomeSerializer, vendorCardsPageSerializer, vendorPageSerializer, itemSheetSerializer, foodSearchSerializer } from '../../../../serializers/food/discoverySerializer';

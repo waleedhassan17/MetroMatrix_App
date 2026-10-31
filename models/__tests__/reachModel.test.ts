@@ -19,7 +19,7 @@ import {
   validateTestPrice,
 } from '../kitchen/reachModel';
 import { demandMapSerializer, experimentSerializer, menuInsightsSerializer } from '../../serializers/kitchen/reachSerializer';
-import type { Hygiene } from '../../types/kitchen';
+import type { Hygiene } from '../kitchen';
 
 const DAY = 86_400_000;
 

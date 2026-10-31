@@ -28,7 +28,7 @@ const HOUR = 60 * 60 * 1000;
 const ago = (ms: number) => new Date(Date.now() - ms).toISOString();
 const ahead = (ms: number) => new Date(Date.now() + ms).toISOString();
 
-/** A free Unsplash photo by id; utils/cdn adds the size at render time. */
+/** A free Unsplash photo by id; utils/cdn/cdn adds the size at render time. */
 export const unsplash = (id: string) => `https://images.unsplash.com/photo-${id}`;
 
 const IMG = {

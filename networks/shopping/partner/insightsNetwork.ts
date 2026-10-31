@@ -5,7 +5,7 @@
 // TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
 
 import { api, toApiError } from '../../network/apiHelpers';
-import type { InsightsRange } from '../../../types/shopping';
+import type { InsightsRange } from '../../../models/shopping';
 
 export const getInsightsAPI = async (range: InsightsRange): Promise<unknown> => {
   try {

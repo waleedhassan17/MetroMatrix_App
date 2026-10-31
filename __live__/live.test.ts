@@ -25,8 +25,8 @@ jest.mock('../config/env', () => ({
 import { createHmac } from 'crypto';
 import { readFileSync } from 'fs';
 import { api, refreshClient, refreshTokens, toApiError, unwrap, required } from '../networks/network/apiHelpers';
-import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '../utils/storageUtils';
-import { setBusinessStatusStaleHandler } from '../utils/authEvents';
+import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '../utils/storage_utils/storageUtils';
+import { setBusinessStatusStaleHandler } from '../utils/auth-events/authEvents';
 import * as auth from '../networks/auth/authNetwork';
 import * as users from '../networks/users/usersNetwork';
 import * as media from '../services/mediaUpload';
@@ -42,7 +42,7 @@ import { resolveGate, partnerAppFor } from '../navigators/sessionGate';
 import { doorForAccount } from '../models/authDoors';
 import { documentSlots } from '../models/businessModel';
 import type { ApiError } from '../networks/network/apiHelpers';
-import type { DocumentKind } from '../types/auth';
+import type { DocumentKind } from '../models/auth';
 import { userResponseSerializer } from '../serializers/authSerializer';
 
 // The partner's steps as the setup slice composes them: thin network calls,

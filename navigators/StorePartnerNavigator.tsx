@@ -1,11 +1,11 @@
 // MetroMatrix — the approved store partner's app: a stack whose first screen
-// is the four tabs, with every tool pushed over them (navigations-maps/StorePartner.ts).
+// is the four tabs, with every tool pushed over them (navigations-maps/StorePartner.tsx).
 
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ServiceScope } from '../theme';
 import { ServicePausedGate } from '../Components/platform/ServicePausedGate';
-import type { StorePartnerStackParamList } from '../types';
+import type { StorePartnerStackParamList } from '../models';
 import { ROUTES } from '../navigations-maps/Base';
 import { STORE_PARTNER_STACK_ROUTES, STORE_PARTNER_TABS } from '../navigations-maps/StorePartner';
 import { RouteTabs } from './RouteTabs';

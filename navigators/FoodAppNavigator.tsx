@@ -1,12 +1,12 @@
 // MetroMatrix — the customer's Food Court app: a stack whose first screen is
-// the Food Court tabs (navigations-maps/FoodCustomer.ts), with browsing and
+// the Food Court tabs (navigations-maps/FoodCustomer.tsx), with browsing and
 // a vendor's page pushed over them. Food pink throughout.
 
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ServiceScope } from '../theme';
 import { CustomerServiceGate } from '../Components/platform/ServicePausedGate';
-import type { FoodAppParamList } from '../types';
+import type { FoodAppParamList } from '../models';
 import { ROUTES } from '../navigations-maps/Base';
 import { FOOD_STACK_ROUTES, FOOD_TABS } from '../navigations-maps/FoodCustomer';
 import { ServiceTabs } from './ServiceTabs';

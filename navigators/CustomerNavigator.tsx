@@ -7,7 +7,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ServiceScope } from '../theme';
-import type { CustomerStackParamList } from '../types';
+import type { CustomerStackParamList } from '../models';
 import { ROUTES } from '../navigations-maps/Base';
 import { CUSTOMER_ROUTES } from '../navigations-maps/Customer';
 import { CUSTOMER_STACK_ID } from '../hooks/useServiceNav';

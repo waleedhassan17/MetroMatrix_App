@@ -5,7 +5,7 @@
 // the best for the customer. docs/API_FOOD.md §4.3 Promotions.
 
 import { api, toApiError } from '../../network/apiHelpers';
-import type { PromotionInput } from '../../../types/food';
+import type { PromotionInput } from '../../../models/food';
 
 const enc = encodeURIComponent;
 

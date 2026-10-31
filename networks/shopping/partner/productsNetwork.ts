@@ -5,7 +5,7 @@
 // TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
 
 import { api, toApiError, clean, pageParams } from '../../network/apiHelpers';
-import type { PartnerProductInput, PartnerProductStatus } from '../../../types/shopping';
+import type { PartnerProductInput, PartnerProductStatus } from '../../../models/shopping';
 
 const BASE = '/partner/shop';
 

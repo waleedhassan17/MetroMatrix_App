@@ -2,9 +2,9 @@
 // MetroMatrix — Delivery addresses (Shopping now, Food later)
 // ═══════════════════════════════════════════════════════
 
-import type { Address, AddressInput, AddressLabel } from '../types/shopping';
+import type { Address, AddressInput, AddressLabel } from './shopping';
 import type { ValidationErrors } from './authModel';
-import { isValidPkMobile, PK_MOBILE_MESSAGE } from '../utils/phone';
+import { isValidPkMobile, PK_MOBILE_MESSAGE } from '../utils/phone/phone';
 
 export const ADDRESS_LABELS: { key: AddressLabel; label: string; icon: 'home-outline' | 'briefcase-outline' | 'location-outline' }[] = [
   { key: 'home', label: 'Home', icon: 'home-outline' },

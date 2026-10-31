@@ -5,7 +5,7 @@
 // docs/API_KITCHEN_ASSUMED.md §4.3 (TODO(API_KITCHEN): an assumed contract).
 
 import { api, toApiError, clean, pageParams } from '../network/apiHelpers';
-import type { WasteLineInput } from '../../types/kitchen';
+import type { WasteLineInput } from '../../models/kitchen';
 
 export const logWasteAPI = async (lines: WasteLineInput[], note?: string): Promise<unknown> => {
   try {

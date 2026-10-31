@@ -4,7 +4,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../../theme';
-import type { ReviewSummary } from '../../types/shopping';
+import type { ReviewSummary } from '../../models/shopping';
 import { AppText } from '../AppText';
 import { Stars } from './Stars';
 

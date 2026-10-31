@@ -28,7 +28,7 @@ import type {
   SignatureList,
   SignatureStatus,
   StaffNutritionFood,
-} from '../../types/kitchenAdmin';
+} from '../../models/kitchenAdmin';
 import { arr, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { count, dateOrNull, list, numOrNull } from './kitchenCommon';
 import { demandMapSerializer } from './reachSerializer';

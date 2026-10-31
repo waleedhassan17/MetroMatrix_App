@@ -6,9 +6,9 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useStyles, useTheme, type Theme } from '../../theme/index';
 import { AppText, IonIcon, Stars } from '../../Custom-Components/index';
-import type { Review } from '../../types';
-import { cdn } from '../../utils/cdn';
-import { formatDate } from '../../utils/dates';
+import type { Review } from '../../models';
+import { cdn } from '../../utils/cdn/cdn';
+import { formatDate } from '../../utils/dates/dates';
 
 const makeStyles = ({ colors, space, size, radius }: Theme) =>
   StyleSheet.create({

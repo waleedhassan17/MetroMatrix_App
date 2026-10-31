@@ -5,7 +5,7 @@
 // docs/API_FOOD.md §4.3 Insights: GET /food/vendor/insights?range=today|7d|30d.
 
 import { api, toApiError } from '../../network/apiHelpers';
-import type { FoodInsightsRange } from '../../../types/food';
+import type { FoodInsightsRange } from '../../../models/food';
 
 export const getFoodInsightsAPI = async (range: FoodInsightsRange): Promise<unknown> => {
   try {

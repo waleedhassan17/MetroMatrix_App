@@ -1,6 +1,6 @@
 // Test fixture: a complete, valid User; override what the test is about.
 
-import type { User } from '../types/auth';
+import type { User } from '../models/auth';
 
 export const makeUser = (over: Partial<User> = {}): User => ({
   id: 'u1',

@@ -1,6 +1,6 @@
 import { PixelRatio } from 'react-native';
-import { cdn } from '../cdn';
-import { discountPercent, formatPKR, parseRupees } from '../money';
+import { cdn } from '../cdn/cdn';
+import { discountPercent, formatPKR, parseRupees } from '../money/money';
 
 describe('formatPKR', () => {
   it('groups thousands and never shows decimals', () => {

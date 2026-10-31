@@ -5,8 +5,8 @@
 // docs/API_KITCHEN_ASSUMED.md §4.4 (TODO(API_KITCHEN): an assumed contract).
 
 import { api, toApiError, clean } from '../network/apiHelpers';
-import type { BoxPaymentMethod } from '../../types/kitchen';
-import type { FoodPoint } from '../../types/food';
+import type { BoxPaymentMethod } from '../../models/kitchen';
+import type { FoodPoint } from '../../models/food';
 
 const enc = encodeURIComponent;
 

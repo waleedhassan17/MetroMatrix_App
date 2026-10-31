@@ -2,12 +2,12 @@
 // MetroMatrix — Stock: amounts a cook types, ingredient forms, stock takes
 // ═══════════════════════════════════════════════════════
 // The cook types "2.5" and picks "kg"; the API takes 2500 (g). Every
-// conversion goes through utils/units. Pure functions: the slices call them.
+// conversion goes through utils/units/units. Pure functions: the slices call them.
 
-import type { Counting, Ingredient, IngredientCategory, IngredientInput, VoiceQtyLine, WasteLineInput, WasteReason } from '../../types/kitchen';
+import type { Counting, Ingredient, IngredientCategory, IngredientInput, VoiceQtyLine, WasteLineInput, WasteReason } from '../kitchen';
 import type { ValidationErrors } from '../authModel';
-import { UNITS, formatQty, toBase, unitsFor, type BaseUnit, type CustomUnit, type StandardUnit } from '../../utils/units';
-import { addDays } from '../../utils/healthTime';
+import { UNITS, formatQty, toBase, unitsFor, type BaseUnit, type CustomUnit, type StandardUnit } from '../../utils/units/units';
+import { addDays } from '../../utils/health-time/healthTime';
 
 /** A unit the cook can pick for this ingredient: the standard ones of its kind and its own. */
 export interface UnitChoice {

@@ -4,7 +4,7 @@
 // POST /media/sign-upload's answer → the parameters the Cloudinary upload
 // sends back unchanged (apiHelpers' upload section).
 
-import type { SignedUpload } from '../types/auth';
+import type { SignedUpload } from '../models/auth';
 import { fromResponse, isObject, num, str } from './serializerUtils';
 
 /** null when the API did not sign anything usable. */

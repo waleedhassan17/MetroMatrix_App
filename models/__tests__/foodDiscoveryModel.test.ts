@@ -11,7 +11,7 @@ import {
   unitPrice,
 } from '../food/itemSelectionModel';
 import { cardLine, closedLabel, cuisineLine, distanceLabel, feeLabel, filtersOf, listQuery, pointOfAddress, priceLevelLabel, ratingLabel, railList } from '../food/discoveryModel';
-import type { Address, ItemSheet, VendorCard } from '../../types';
+import type { Address, ItemSheet, VendorCard } from '../../models';
 
 const sheet = (over: Partial<ItemSheet> = {}): ItemSheet => ({
   id: 'mi_1',

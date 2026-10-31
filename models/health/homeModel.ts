@@ -2,7 +2,7 @@
 // MetroMatrix — What the Health home shows from its payload
 // ═══════════════════════════════════════════════════════
 
-import type { Condition, Specialty } from '../../types/health';
+import type { Condition, Specialty } from '../health';
 
 /**
  * The home's specialty grid: those with doctors in the city first (in the

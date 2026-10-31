@@ -19,7 +19,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useStyles, useTheme, type Theme } from '../theme';
-import { haptics } from '../utils/haptics';
+import { haptics } from '../utils/haptics/haptics';
 import { AppText } from './AppText';
 import { useOnGradient } from './headerInk';
 import { IonIcon, type IonName } from './Icon';

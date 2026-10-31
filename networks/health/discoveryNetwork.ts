@@ -6,7 +6,7 @@
 
 import { api, toApiError, clean, pageParams } from '../network/apiHelpers';
 import { toParams } from '../../models/health/filterModel';
-import type { DoctorQuery } from '../../types/health';
+import type { DoctorQuery } from '../../models/health';
 
 const enc = encodeURIComponent;
 

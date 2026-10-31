@@ -11,8 +11,8 @@
 
 import type { MockDb } from '../mockDb';
 import type { MockFoodVendor } from '../food/foodTypes';
-import { addDays, dateInZone } from '../../../../utils/healthTime';
-import { pricePerUnit, type BaseUnit } from '../../../../utils/units';
+import { addDays, dateInZone } from '../../../../utils/health-time/healthTime';
+import { pricePerUnit, type BaseUnit } from '../../../../utils/units/units';
 import type { MockNutritionSettings, MockPantryItem } from './kitchenTypes';
 import { CANON } from './kitchenSeed';
 import { k } from './kitchenLogic';

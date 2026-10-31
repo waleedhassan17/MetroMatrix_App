@@ -4,9 +4,9 @@
 // The assistant is never a wall: off, or out of this month's actions, the
 // screen keeps its manual form and says when the assistant is back.
 
-import type { AiUsage } from '../../types/kitchen';
-import { formatDayFull } from '../../utils/healthTime';
-import { dateInZone } from '../../utils/healthTime';
+import type { AiUsage } from '../kitchen';
+import { formatDayFull } from '../../utils/health-time/healthTime';
+import { dateInZone } from '../../utils/health-time/healthTime';
 
 export const AI_UNAVAILABLE = 'AI_UNAVAILABLE';
 export const AI_QUOTA_REACHED = 'AI_QUOTA_REACHED';

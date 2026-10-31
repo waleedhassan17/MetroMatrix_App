@@ -1,11 +1,11 @@
 // MetroMatrix — Kitchen serializers: waste, its summary, donations.
 // docs/API_KITCHEN_ASSUMED.md §2.6, §4.3.
 
-import type { Donation, Donations, WasteEntry, WasteReason, WasteSummary } from '../../types/kitchen';
-import type { Paged } from '../../types/payments';
+import type { Donation, Donations, WasteEntry, WasteReason, WasteSummary } from '../../models/kitchen';
+import type { Paged } from '../../models/payments';
 import { isObject, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { paged } from '../shopping/common';
-import { BASE_UNITS } from '../../utils/units';
+import { BASE_UNITS } from '../../utils/units/units';
 import { count, dateOrNull, list } from './kitchenCommon';
 
 export const WASTE_REASONS: readonly WasteReason[] = ['expired', 'spoiled', 'burnt', 'dropped', 'leftover', 'other'];

@@ -6,8 +6,8 @@
 
 import { api, toApiError, pageParams } from '../network/apiHelpers';
 import { cancelReasonText } from '../../models/health/bookingModel';
-import { newUuid } from '../../utils/ids';
-import type { AppointmentSegment, BookingInput, CancelReason } from '../../types/health';
+import { newUuid } from '../../utils/ids/ids';
+import type { AppointmentSegment, BookingInput, CancelReason } from '../../models/health';
 
 const path = (code: string) => `/health/appointments/${encodeURIComponent(code)}`;
 

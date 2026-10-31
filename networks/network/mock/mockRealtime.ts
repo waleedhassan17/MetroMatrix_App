@@ -14,7 +14,7 @@
 // Every socket joins `user:<id>` on connect.
 
 import type { SocketLike } from '../../../services/realtime/socketClient';
-import { getAccessToken } from '../../../utils/storageUtils';
+import { getAccessToken } from '../../../utils/storage_utils/storageUtils';
 import { getDb, type MockDb, type MockUser } from './mockDb';
 
 export interface MockSocketCtx {

@@ -2,10 +2,10 @@
 // MetroMatrix — Shared readers for the Health serializers
 // ═══════════════════════════════════════════════════════
 // Every map between MetroMatrix-API docs/API_HEALTH.md and the app's own
-// vocabulary (types/health.ts) lives here: instants, icon keys, statuses,
+// vocabulary (models/health.ts) lives here: instants, icon keys, statuses,
 // payment states, timeline events, titles and record types.
 
-import type { Gender } from '../../types/auth';
+import type { Gender } from '../../models/auth';
 import type {
   AppointmentEventType,
   AppointmentPaymentMethod,
@@ -16,7 +16,7 @@ import type {
   EmergencyNumber,
   RecordType,
   SpecialtyRef,
-} from '../../types/health';
+} from '../../models/health';
 import { arr, isObject, num, oneOf, str, strOrNull } from '../serializerUtils';
 
 export const KINDS: readonly ConsultKind[] = ['video', 'clinic'];

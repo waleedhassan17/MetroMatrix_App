@@ -4,7 +4,7 @@
 // MetroMatrix-API docs/API_HEALTH.md §4.2.
 
 import { api, toApiError } from '../network/apiHelpers';
-import type { FamilyMemberInput } from '../../types/health';
+import type { FamilyMemberInput } from '../../models/health';
 
 const enc = encodeURIComponent;
 

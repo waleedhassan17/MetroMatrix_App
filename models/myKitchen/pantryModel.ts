@@ -5,11 +5,11 @@
 // without a calendar, the month's "7 things saved from waste", and grocery
 // prices per kilo, litre or piece.
 
-import type { GroceryOption, PantryItem, PantryLineInput, PantrySegment, PantryState, PantryStats } from '../../types/myKitchen';
+import type { GroceryOption, PantryItem, PantryLineInput, PantrySegment, PantryState, PantryStats } from '../myKitchen';
 import type { ValidationErrors } from '../authModel';
-import { addDays, formatDayShort } from '../../utils/healthTime';
-import { formatPKR } from '../../utils/money';
-import { formatQty, unitsFor, type BaseUnit, type StandardUnit } from '../../utils/units';
+import { addDays, formatDayShort } from '../../utils/health-time/healthTime';
+import { formatPKR } from '../../utils/money/money';
+import { formatQty, unitsFor, type BaseUnit, type StandardUnit } from '../../utils/units/units';
 import type { KitchenTone } from '../kitchen/kitchenStatusModel';
 
 export const PANTRY_SEGMENTS: { key: PantrySegment; label: string }[] = [

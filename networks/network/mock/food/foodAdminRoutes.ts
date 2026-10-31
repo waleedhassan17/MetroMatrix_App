@@ -16,7 +16,7 @@ import { ACTIVE_STATUSES, boardView, orderView } from './foodOrders';
 import { feeBandsWire, hoursWire, planWire, profileWire, settingsWire } from './foodWire';
 import { recomputeRating, reviewSummary, reviewView } from './foodReviewRoutes';
 import type { MockFoodBanner, MockFoodVendor, MockPlanEntitlementKey, MockPlanLimitKey, MockPlanOverrides } from './foodTypes';
-import { dateInZone } from '../../../../utils/healthTime';
+import { dateInZone } from '../../../../utils/health-time/healthTime';
 
 const PKT = 'Asia/Karachi';
 const SUB_TYPE_LABEL: Record<string, string> = { restaurant: 'Restaurant', cloud_kitchen: 'Cloud kitchen', home_kitchen: 'Home kitchen' };

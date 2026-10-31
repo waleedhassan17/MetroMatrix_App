@@ -5,10 +5,10 @@
 // up today in a window of at least 30 minutes. Mirrors the API's rules
 // (docs/API_KITCHEN_ASSUMED.md §3.6) so the form says what's wrong first.
 
-import type { SurplusBoxInput, SurplusSuggestion } from '../../types/kitchen';
+import type { SurplusBoxInput, SurplusSuggestion } from '../kitchen';
 import type { ValidationErrors } from '../authModel';
-import { parseRupees } from '../../utils/money';
-import { addDays, formatSlot, todayInZone, zonedToIso } from '../../utils/healthTime';
+import { parseRupees } from '../../utils/money/money';
+import { addDays, formatSlot, todayInZone, zonedToIso } from '../../utils/health-time/healthTime';
 
 export const MIN_DISCOUNT = 0.2;
 export const MAX_BOX_QUANTITY = 50;

@@ -15,7 +15,7 @@ jest.mock('../../config/env', () => ({
 
 import spec from '../../docs/openapi.json';
 import { api, refreshClient, refreshTokens } from '../network/apiHelpers';
-import { setTokens } from '../../utils/storageUtils';
+import { setTokens } from '../../utils/storage_utils/storageUtils';
 import * as auth from '../auth/authNetwork';
 import * as users from '../users/usersNetwork';
 import * as media from '../media/mediaNetwork';

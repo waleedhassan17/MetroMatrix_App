@@ -17,7 +17,7 @@ import { AppText } from '../../AppText';
 import { TextLink } from '../../TextLink';
 import { useStyles, useTheme, type Theme } from '../../../theme';
 import { useCalmMotion } from '../../../hooks/useCalmMotion';
-import { directionsUrl } from '../../../utils/maps';
+import { directionsUrl } from '../../../utils/maps/maps';
 import {
   CELL_MAX_OPACITY,
   CentrePin,

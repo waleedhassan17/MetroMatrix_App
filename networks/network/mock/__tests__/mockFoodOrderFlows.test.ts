@@ -12,9 +12,9 @@ import { acceptOrderAPI, confirmPaymentAPI, getVendorOrderAPI, handedExternalAPI
 import { createPromotionAPI, deactivatePromotionAPI, deletePromotionAPI, getPromotionsAPI } from '../../../food/vendor/promotionsNetwork';
 import { getVendorPageAPI } from '../../../food/discoveryNetwork';
 import { ApiError, required } from '../../apiHelpers';
-import { clearTokens } from '../../../../utils/storageUtils';
+import { clearTokens } from '../../../../utils/storage_utils/storageUtils';
 import { getDb, resetMockDb } from '../mockDb';
-import type { FoodCheckoutInput } from '../../../../types/food';
+import type { FoodCheckoutInput } from '../../../../models/food';
 import { signInAs, installDummyApi } from '../testing';
 import { foodCartSerializer, foodPreviewSerializer, foodOrderSerializer, foodOrdersPageSerializer, boardPageSerializer, vendorFoodOrderSerializer, reorderSerializer, foodPromotionSerializer, foodPromotionsSerializer } from '../../../../serializers/food/orderSerializer';
 import { vendorPageSerializer } from '../../../../serializers/food/discoverySerializer';

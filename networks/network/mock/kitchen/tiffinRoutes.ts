@@ -12,7 +12,7 @@ import type { MockDb, MockUser } from '../mockDb';
 import type { ShopCtx } from '../shop/shopRoutes';
 import type { MockFoodVendor } from '../food/foodTypes';
 import { distanceKm, isVisible } from '../food/foodDiscovery';
-import { addDays, isoWeekday } from '../../../../utils/healthTime';
+import { addDays, isoWeekday } from '../../../../utils/health-time/healthTime';
 import type { MockMeal, MockTiffinPeriod, MockTiffinPlan, MockTiffinSub } from './kitchenTypes';
 import { DATE, KitchenError, invalid, isInt, isoNow, k, nextId, notFound, text, todayOf, vendorOf } from './kitchenLogic';
 import {

@@ -12,9 +12,9 @@
 
 import type { MockDb } from '../mockDb';
 import type { MockMenuItem } from '../food/foodTypes';
-import { addDays } from '../../../../utils/healthTime';
-import { formatQty } from '../../../../utils/units';
-import { formatDayShort } from '../../../../utils/healthTime';
+import { addDays } from '../../../../utils/health-time/healthTime';
+import { formatQty } from '../../../../utils/units/units';
+import { formatDayShort } from '../../../../utils/health-time/healthTime';
 import type { MockIngredient, MockIngredientCategory } from './kitchenTypes';
 import { defaultVariantOf, itemsOf, k, latestCostOf, onHandOf, perServing, recipeFor, todayOf, vendorOf } from './kitchenLogic';
 

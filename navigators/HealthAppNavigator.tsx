@@ -1,12 +1,12 @@
 // MetroMatrix — the customer's Digital Health app (the FYP's): a stack whose
 // first screen is the Health tabs, with every Health page pushed over them
-// (navigations-maps/HealthPatient.ts). Health blue throughout.
+// (navigations-maps/HealthPatient.tsx). Health blue throughout.
 
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ServiceScope } from '../theme';
 import { CustomerServiceGate } from '../Components/platform/ServicePausedGate';
-import type { HealthAppParamList } from '../types';
+import type { HealthAppParamList } from '../models';
 import { ROUTES } from '../navigations-maps/Base';
 import { HEALTH_APP_ROUTES, HEALTH_TABS } from '../navigations-maps/HealthPatient';
 import { ServiceTabs } from './ServiceTabs';

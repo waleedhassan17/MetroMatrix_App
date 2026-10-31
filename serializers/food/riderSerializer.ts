@@ -3,8 +3,8 @@
 // ═══════════════════════════════════════════════════════
 // docs/API_FOOD.md §2 RiderOrder, §4.3 Riders and §4.4.
 
-import type { FoodOrderStatus, FoodPaymentMethod, FoodPaymentStatus, FoodRider, LiveRider, RiderCash, RiderCredential, RiderHome, RiderOrder, RiderSuggestion } from '../../types/food';
-import type { Paged } from '../../types/payments';
+import type { FoodOrderStatus, FoodPaymentMethod, FoodPaymentStatus, FoodRider, LiveRider, RiderCash, RiderCredential, RiderHome, RiderOrder, RiderSuggestion } from '../../models/food';
+import type { Paged } from '../../models/payments';
 import { arr, bool, isObject, num, str, strOrNull, fromResponse } from '../serializerUtils';
 
 const isoOrNull = (v: unknown): string | null => {

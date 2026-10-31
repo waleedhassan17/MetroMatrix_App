@@ -6,9 +6,9 @@
 // mirror the Food API's DTOs so a form never sends what the server refuses.
 // Every limit is the API's own (food/vendor/dto/vendor.dto.ts).
 
-import type { FeeBand, HoursRange, KitchenKind, RiderInput, RiderStatus, VendorProfileInput, VendorSettings, VendorSetupKey } from '../../types/food';
+import type { FeeBand, HoursRange, KitchenKind, RiderInput, RiderStatus, VendorProfileInput, VendorSettings, VendorSetupKey } from '../food';
 import { brandContrast } from '../shopping/storeModel';
-import { isValidPkMobile, isValidPkPhone, PK_MOBILE_MESSAGE } from '../../utils/phone';
+import { isValidPkMobile, isValidPkPhone, PK_MOBILE_MESSAGE } from '../../utils/phone/phone';
 
 export type ValidationErrors = Record<string, string>;
 

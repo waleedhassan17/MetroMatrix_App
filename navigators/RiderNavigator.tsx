@@ -1,11 +1,11 @@
 // MetroMatrix — the Food rider's app: a stack over Deliveries · Cash · Profile
-// (navigations-maps/Rider.ts).
+// (navigations-maps/Rider.tsx).
 
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ServiceScope } from '../theme';
 import { ServicePausedGate } from '../Components/platform/ServicePausedGate';
-import type { RiderStackParamList } from '../types';
+import type { RiderStackParamList } from '../models';
 import { ROUTES } from '../navigations-maps/Base';
 import { RIDER_STACK_ROUTES, RIDER_TABS } from '../navigations-maps/Rider';
 import { RouteTabs } from './RouteTabs';

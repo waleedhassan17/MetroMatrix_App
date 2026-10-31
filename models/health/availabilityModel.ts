@@ -5,7 +5,7 @@
 // location's timezone. The server is the judge of overlaps across clinics;
 // these checks give the same answer inline, before saving.
 
-import type { DoctorLocation, HoursOverlap, TimeOffInput, TimeRange, WeekDayHours } from '../../types/health';
+import type { DoctorLocation, HoursOverlap, TimeOffInput, TimeRange, WeekDayHours } from '../health';
 import type { ValidationErrors } from '../authModel';
 
 export const WEEKDAYS: { day: number; short: string; long: string }[] = [

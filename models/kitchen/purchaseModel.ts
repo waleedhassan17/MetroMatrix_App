@@ -4,10 +4,10 @@
 // All three end as the same draft lines the cook checks before saving;
 // unknown names become new ingredients only when the cook says so.
 
-import type { IngredientCategory, PurchaseInput, PurchaseSource, ReceiptDraft, VoiceQtyLine } from '../../types/kitchen';
+import type { IngredientCategory, PurchaseInput, PurchaseSource, ReceiptDraft, VoiceQtyLine } from '../kitchen';
 import type { ValidationErrors } from '../authModel';
-import { UNITS, parseUnit, type BaseUnit, type StandardUnit } from '../../utils/units';
-import { parseRupees } from '../../utils/money';
+import { UNITS, parseUnit, type BaseUnit, type StandardUnit } from '../../utils/units/units';
+import { parseRupees } from '../../utils/money/money';
 import { parseAmount } from './stockModel';
 
 export interface DraftLine {

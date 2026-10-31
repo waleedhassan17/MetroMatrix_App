@@ -15,7 +15,7 @@ import type {
   PackingPhotoRule,
   PackingResult,
   ReceiptDraft,
-} from '../../types/kitchen';
+} from '../../models/kitchen';
 import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse, bodyOf } from '../serializerUtils';
 import { count, dateOrNull, intOrNull, list } from './kitchenCommon';
 

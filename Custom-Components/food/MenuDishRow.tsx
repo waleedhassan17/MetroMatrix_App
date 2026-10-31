@@ -9,11 +9,11 @@ import { Image } from 'expo-image';
 import { useStyles, useTheme, type Theme } from '../../theme';
 import { AppText } from '../AppText';
 import { IonIcon } from '../Icon';
-import { cdn } from '../../utils/cdn';
-import { formatPKR } from '../../utils/money';
+import { cdn } from '../../utils/cdn/cdn';
+import { formatPKR } from '../../utils/money/money';
 import { ITEM_TAG_LABEL } from '../../models/food/menuModel';
 import { unavailableLabel } from '../../models/food/itemSelectionModel';
-import type { DishCard } from '../../types/food';
+import type { DishCard } from '../../models/food';
 
 export interface MenuDishRowProps {
   dish: DishCard;

@@ -5,7 +5,7 @@
 // docs/API_FOOD.md §4.2 and §4.1: POST /food/orders/:code/review, GET /food/vendors/:id/reviews.
 
 import { api, toApiError, pageParams } from '../network/apiHelpers';
-import type { FoodReviewInput } from '../../types/food';
+import type { FoodReviewInput } from '../../models/food';
 
 const enc = encodeURIComponent;
 

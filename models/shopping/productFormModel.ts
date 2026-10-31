@@ -5,9 +5,9 @@
 // customer cannot buy without: a name, a price, a category, at least one
 // photo and at least one variant in stock.
 
-import type { PartnerProduct, PartnerProductInput, PartnerProductStatus, ProductImage } from '../../types/shopping';
+import type { PartnerProduct, PartnerProductInput, PartnerProductStatus, ProductImage } from '../shopping';
 import type { ValidationErrors } from '../authModel';
-import { discountPercent, parseRupees } from '../../utils/money';
+import { discountPercent, parseRupees } from '../../utils/money/money';
 import { buildMatrix, rowKey, skuFor, toInt, totalStock, type VariantRow } from './variantMatrixModel';
 
 export const MAX_PRODUCT_PHOTOS = 8;

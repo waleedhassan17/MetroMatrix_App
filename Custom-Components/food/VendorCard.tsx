@@ -10,9 +10,9 @@ import { useStyles, useTheme, type Theme } from '../../theme';
 import { AppText } from '../AppText';
 import { IonIcon } from '../Icon';
 import { BadgeRow } from '../kitchen/BadgeRow';
-import { cdn } from '../../utils/cdn';
+import { cdn } from '../../utils/cdn/cdn';
 import { cardLine, closedLabel, cuisineLine, ratingLabel } from '../../models/food/discoveryModel';
-import type { VendorCard as VendorCardData } from '../../types/food';
+import type { VendorCard as VendorCardData } from '../../models/food';
 
 export interface VendorCardProps {
   vendor: VendorCardData;

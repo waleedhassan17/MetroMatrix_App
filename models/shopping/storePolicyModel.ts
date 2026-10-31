@@ -1,7 +1,7 @@
 // MetroMatrix — A store's policies in plain words (store page, product page).
 
-import type { StorePolicies } from '../../types/shopping';
-import { formatPKR } from '../../utils/money';
+import type { StorePolicies } from '../shopping';
+import { formatPKR } from '../../utils/money/money';
 import type { IonName } from '../../Custom-Components/Icon';
 
 export interface PolicyLine {

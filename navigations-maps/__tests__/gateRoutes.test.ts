@@ -4,59 +4,59 @@
 
 // What each stack holds is pinned here, not the screens (they load native
 // modules Jest has no implementation for), so every screen is a stub.
-jest.mock('../../screens/Onboarding/OnboardingScreen', () => () => null);
-jest.mock('../../screens/RoleSelection/RoleSelectionScreen', () => () => null);
-jest.mock('../../screens/ProviderSelection/ProviderSelectionScreen', () => () => null);
-jest.mock('../../screens/Auth/SignIn/SignInScreen', () => () => null);
-jest.mock('../../screens/Auth/SignUp/SignUpScreen', () => () => null);
-jest.mock('../../screens/Auth/ProviderSignIn/ProviderSignInScreen', () => () => null);
-jest.mock('../../screens/Auth/ProviderSignUp/ProviderSignUpScreen', () => () => null);
-jest.mock('../../screens/Auth/ForgotPassword/ForgotPasswordScreen', () => () => null);
-jest.mock('../../screens/Auth/ResetPasswordOTP/ResetPasswordOTPScreen', () => () => null);
-jest.mock('../../screens/Auth/ResetPassword/ResetPasswordScreen', () => () => null);
-jest.mock('../../screens/Auth/EmailVerification/EmailVerificationScreen', () => () => null);
-jest.mock('../../screens/Auth/VerifySuccess/VerifySuccessScreen', () => () => null);
-jest.mock('../../screens/Auth/CompleteProfile/CompleteProfileScreen', () => () => null);
-jest.mock('../../screens/Partner/PersonalInfo/PersonalInfoScreen', () => () => null);
-jest.mock('../../screens/Partner/ProviderApprovalPending/ProviderApprovalPendingScreen', () => () => null);
-jest.mock('../../screens/Partner/Rejected/RejectedScreen', () => () => null);
-jest.mock('../../screens/Partner/Suspended/SuspendedScreen', () => () => null);
-jest.mock('../../screens/Admin/AdminTotp/AdminTotpScreen', () => () => null);
-jest.mock('../../screens/Admin/AdminTwoFactorEnrol/AdminTwoFactorEnrolScreen', () => () => null);
-jest.mock('../../screens/Dev/DesignGallery/DesignGalleryScreen', () => () => null);
-jest.mock('../../screens/Auth/RiderSignIn/RiderSignInScreen', () => () => null);
-jest.mock('../../screens/Food/Customer/PublicStore/PublicStoreScreen', () => () => null);
+jest.mock('../../screens/onboarding-screen/Onboarding', () => () => null);
+jest.mock('../../screens/role-selection-screen/RoleSelection', () => () => null);
+jest.mock('../../screens/provider-selection-screen/ProviderSelection', () => () => null);
+jest.mock('../../screens/sign-in-screen/SignIn', () => () => null);
+jest.mock('../../screens/sign-up-screen/SignUp', () => () => null);
+jest.mock('../../screens/provider-sign-in-screen/ProviderSignIn', () => () => null);
+jest.mock('../../screens/provider-sign-up-screen/ProviderSignUp', () => () => null);
+jest.mock('../../screens/forgot-password-screen/ForgotPassword', () => () => null);
+jest.mock('../../screens/reset-password-otp-screen/ResetPasswordOTP', () => () => null);
+jest.mock('../../screens/reset-password-screen/ResetPassword', () => () => null);
+jest.mock('../../screens/email-verification-screen/EmailVerification', () => () => null);
+jest.mock('../../screens/verify-success-screen/VerifySuccess', () => () => null);
+jest.mock('../../screens/complete-profile-screen/CompleteProfile', () => () => null);
+jest.mock('../../screens/personal-info-screen/PersonalInfo', () => () => null);
+jest.mock('../../screens/provider-approval-pending-screen/ProviderApprovalPending', () => () => null);
+jest.mock('../../screens/rejected-screen/Rejected', () => () => null);
+jest.mock('../../screens/suspended-screen/Suspended', () => () => null);
+jest.mock('../../screens/admin-totp-screen/AdminTotp', () => () => null);
+jest.mock('../../screens/admin-two-factor-enrol-screen/AdminTwoFactorEnrol', () => () => null);
+jest.mock('../../screens/design-gallery-screen/DesignGallery', () => () => null);
+jest.mock('../../screens/rider-sign-in-screen/RiderSignIn', () => () => null);
+jest.mock('../../screens/public-store-screen/PublicStore', () => () => null);
 
 import { ROUTES } from '../Base';
 import { gateRoutes } from '../Auth';
 import { gateInputOf, resolveGate, type Gate } from '../../navigators/sessionGate';
-import { authSlice, setSession, signOut } from '../../screens/Auth/authSlice';
+import { authSlice, setSession, signOut } from '../../store/authSlice';
 import { resetAllState } from '../../store/resetAllState';
 import { makeUser } from '../../__fixtures__/users';
-import type { Business } from '../../types/auth';
+import type { Business } from '../../models/auth';
 
 // Only the route names matter here; the screens themselves (and the native
 // modules they pull in) are stubbed.
-jest.mock('../../screens/Onboarding/OnboardingScreen', () => ({ __esModule: true, default: () => null }));
-jest.mock('../../screens/RoleSelection/RoleSelectionScreen', () => ({ __esModule: true, default: () => null }));
-jest.mock('../../screens/ProviderSelection/ProviderSelectionScreen', () => ({ __esModule: true, default: () => null }));
-jest.mock('../../screens/Auth/SignIn/SignInScreen', () => ({ __esModule: true, default: () => null }));
-jest.mock('../../screens/Auth/SignUp/SignUpScreen', () => ({ __esModule: true, default: () => null }));
-jest.mock('../../screens/Auth/ProviderSignIn/ProviderSignInScreen', () => ({ __esModule: true, default: () => null }));
-jest.mock('../../screens/Auth/ProviderSignUp/ProviderSignUpScreen', () => ({ __esModule: true, default: () => null }));
-jest.mock('../../screens/Auth/ForgotPassword/ForgotPasswordScreen', () => ({ __esModule: true, default: () => null }));
-jest.mock('../../screens/Auth/ResetPasswordOTP/ResetPasswordOTPScreen', () => ({ __esModule: true, default: () => null }));
-jest.mock('../../screens/Auth/ResetPassword/ResetPasswordScreen', () => ({ __esModule: true, default: () => null }));
-jest.mock('../../screens/Auth/EmailVerification/EmailVerificationScreen', () => ({ __esModule: true, default: () => null }));
-jest.mock('../../screens/Auth/VerifySuccess/VerifySuccessScreen', () => ({ __esModule: true, default: () => null }));
-jest.mock('../../screens/Auth/CompleteProfile/CompleteProfileScreen', () => ({ __esModule: true, default: () => null }));
-jest.mock('../../screens/Partner/PersonalInfo/PersonalInfoScreen', () => ({ __esModule: true, default: () => null }));
-jest.mock('../../screens/Partner/ProviderApprovalPending/ProviderApprovalPendingScreen', () => ({ __esModule: true, default: () => null }));
-jest.mock('../../screens/Partner/Rejected/RejectedScreen', () => ({ __esModule: true, default: () => null }));
-jest.mock('../../screens/Partner/Suspended/SuspendedScreen', () => ({ __esModule: true, default: () => null }));
-jest.mock('../../screens/Admin/AdminTotp/AdminTotpScreen', () => ({ __esModule: true, default: () => null }));
-jest.mock('../../screens/Admin/AdminTwoFactorEnrol/AdminTwoFactorEnrolScreen', () => ({ __esModule: true, default: () => null }));
-jest.mock('../../screens/Dev/DesignGallery/DesignGalleryScreen', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../screens/onboarding-screen/Onboarding', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../screens/role-selection-screen/RoleSelection', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../screens/provider-selection-screen/ProviderSelection', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../screens/sign-in-screen/SignIn', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../screens/sign-up-screen/SignUp', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../screens/provider-sign-in-screen/ProviderSignIn', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../screens/provider-sign-up-screen/ProviderSignUp', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../screens/forgot-password-screen/ForgotPassword', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../screens/reset-password-otp-screen/ResetPasswordOTP', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../screens/reset-password-screen/ResetPassword', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../screens/email-verification-screen/EmailVerification', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../screens/verify-success-screen/VerifySuccess', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../screens/complete-profile-screen/CompleteProfile', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../screens/personal-info-screen/PersonalInfo', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../screens/provider-approval-pending-screen/ProviderApprovalPending', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../screens/rejected-screen/Rejected', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../screens/suspended-screen/Suspended', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../screens/admin-totp-screen/AdminTotp', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../screens/admin-two-factor-enrol-screen/AdminTwoFactorEnrol', () => ({ __esModule: true, default: () => null }));
+jest.mock('../../screens/design-gallery-screen/DesignGallery', () => ({ __esModule: true, default: () => null }));
 
 const titles = (gate: Gate, hasSeenOnboarding = true) => gateRoutes(gate, hasSeenOnboarding).map(r => r.title);
 

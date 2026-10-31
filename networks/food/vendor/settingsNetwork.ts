@@ -8,8 +8,8 @@
 // accountNumber; the app's PaymentAccount says title and number).
 
 import { api, toApiError } from '../../network/apiHelpers';
-import type { FeeBand, HoursRange, VendorSettingsInput } from '../../../types/food';
-import type { PaymentAccountInput } from '../../../types/payments';
+import type { FeeBand, HoursRange, VendorSettingsInput } from '../../../models/food';
+import type { PaymentAccountInput } from '../../../models/payments';
 
 const enc = encodeURIComponent;
 

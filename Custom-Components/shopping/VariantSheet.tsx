@@ -9,8 +9,8 @@ import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useStyles, useTheme, type Theme } from '../../theme';
-import type { ProductDetail } from '../../types/shopping';
-import { cdn } from '../../utils/cdn';
+import type { ProductDetail } from '../../models/shopping';
+import { cdn } from '../../utils/cdn/cdn';
 import {
   choose,
   initialChoice,

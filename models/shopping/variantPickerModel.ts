@@ -6,7 +6,7 @@
 // what is already chosen in the other option) — so a shopper never picks a
 // combination that can't be bought.
 
-import type { ProductDetail, ProductVariant } from '../../types/shopping';
+import type { ProductDetail, ProductVariant } from '../shopping';
 
 export interface VariantChoice {
   option1: string | null;

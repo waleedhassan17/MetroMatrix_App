@@ -19,7 +19,7 @@ import type {
   ReturnStatus,
   Shipment,
   StoreOrder,
-} from '../../types/shopping';
+} from '../../models/shopping';
 import { arr, bool, isObject, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { addressSerializer } from '../addressSerializer';
 import { color, compact, count, iso, isoOrNull, money, storeRefSerializer, BRAND_FALLBACK, paged } from './common';

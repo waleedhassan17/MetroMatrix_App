@@ -2,7 +2,7 @@
 // MetroMatrix — Store profile, settings and payment accounts
 // ═══════════════════════════════════════════════════════
 
-import type { PaymentAccountInput, PaymentAccountKind, StoreSettings } from '../../types/shopping';
+import type { PaymentAccountInput, PaymentAccountKind, StoreSettings } from '../shopping';
 import type { ValidationErrors } from '../authModel';
 import { contrastRatio, AA_BODY } from '../../theme/contrast';
 

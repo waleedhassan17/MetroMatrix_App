@@ -13,7 +13,7 @@ import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 're
 import { Image } from 'expo-image';
 import { useCalmMotion } from '../hooks/useCalmMotion';
 import { useStyles, useTheme, type Theme } from '../theme';
-import { cdn } from '../utils/cdn';
+import { cdn } from '../utils/cdn/cdn';
 import { AppText } from './AppText';
 import { IonIcon } from './Icon';
 import { PhotoScrim } from './PhotoScrim';

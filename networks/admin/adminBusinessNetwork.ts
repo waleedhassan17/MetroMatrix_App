@@ -7,7 +7,7 @@
 // session, so it lives with the session layer (auth/authNetwork.ts).
 
 import { api, toApiError } from '../network/apiHelpers';
-import type { BusinessStatus, ServiceType } from '../../types/auth';
+import type { BusinessStatus, ServiceType } from '../../models/auth';
 
 // ─── Query Params ────────────────────────────────────
 

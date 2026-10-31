@@ -60,7 +60,7 @@ import { liveBanners, registerFoodAdminRoutes } from './foodAdminRoutes';
 import { dealsFor, settleFoodOrders } from './foodOrders';
 import { beginEmits, dropEmits, emitOrder, flushEmits, registerFoodRealtime } from './foodRealtime';
 import { foodHooks } from './foodHooks';
-import { isValidPkMobile, isValidPkPhone, normalizePkPhone } from '../../../../utils/phone';
+import { isValidPkMobile, isValidPkPhone, normalizePkPhone } from '../../../../utils/phone/phone';
 
 export interface FoodKit extends ShopKit {
   /** Ends every session of a user (a rider deactivated or given a new password). */

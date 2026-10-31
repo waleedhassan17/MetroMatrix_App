@@ -6,7 +6,7 @@
 import { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import { api, extractErrorCode, required } from '../apiHelpers';
 import { getPlatformConfigAPI } from '../../config/configNetwork';
-import { setPlatformNoticeHandler, type PlatformNotice } from '../../../utils/authEvents';
+import { setPlatformNoticeHandler, type PlatformNotice } from '../../../utils/auth-events/authEvents';
 import { platformConfigSerializer } from '../../../serializers/platformConfigSerializer';
 
 const respond = (config: InternalAxiosRequestConfig, status: number, data: unknown): AxiosResponse => ({

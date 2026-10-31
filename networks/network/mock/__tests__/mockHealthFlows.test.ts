@@ -20,16 +20,16 @@ import { alternativesFrom, appointmentDetailSerializer, appointmentSummaryPageSe
 import { conflictsFrom, overlapsFrom, patientRowPageSerializer, completenessSerializer } from '../../../../serializers/health/doctorSerializer';
 import { baseQuery } from '../../../../models/health/filterModel';
 import { ApiError, required } from '../../apiHelpers';
-import { clearTokens } from '../../../../utils/storageUtils';
-import { PKT, addDays, dateInZone, isoWeekday, todayInZone } from '../../../../utils/healthTime';
-import type { BookingInput } from '../../../../types/health';
+import { clearTokens } from '../../../../utils/storage_utils/storageUtils';
+import { PKT, addDays, dateInZone, isoWeekday, todayInZone } from '../../../../utils/health-time/healthTime';
+import type { BookingInput } from '../../../../models/health';
 import { getDb, resetMockDb } from '../mockDb';
 import { signInAs, installDummyApi } from '../testing';
 import { daysSerializer, slotDaySerializer, healthHomeSerializer, suggestionsSerializer, doctorCardPageSerializer } from '../../../../serializers/health/discoverySerializer';
 import { prescriptionSerializer, videoJoinSerializer, symptomResultSerializer } from '../../../../serializers/health/recordsSerializer';
-import { verifyPmdc } from '../../../../screens/Admin/Health/shared/taxonomyWrites';
-import { getDoctor, submitAppointmentPaymentProof, reviewAppointment } from '../../../../screens/Health/Patient/shared/healthReads';
-import { publishProfile, addTimeOff, listLocations, saveHours, actOnAppointment, completeAppointment, confirmPayment, getDoctorAppointment, getToday, updatePrescription } from '../../../../screens/Health/Doctor/shared/practiceReads';
+import { verifyPmdc } from '../../../../screens/shared/taxonomyWrites';
+import { getDoctor, submitAppointmentPaymentProof, reviewAppointment } from '../../../../screens/shared/healthReads';
+import { publishProfile, addTimeOff, listLocations, saveHours, actOnAppointment, completeAppointment, confirmPayment, getDoctorAppointment, getToday, updatePrescription } from '../../../../screens/shared/practiceReads';
 
 installDummyApi();
 

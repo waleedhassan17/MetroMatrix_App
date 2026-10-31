@@ -8,7 +8,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../../theme';
-import type { DoctorReviewSummary } from '../../types/health';
+import type { DoctorReviewSummary } from '../../models/health';
 import { AppText } from '../AppText';
 import { RatingBreakdown } from '../shopping/RatingBreakdown';
 

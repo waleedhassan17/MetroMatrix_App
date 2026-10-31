@@ -1,7 +1,7 @@
 // MetroMatrix — Admin Health console: specialty and condition forms, the
 // PMDC check note and the reason for hiding a review.
 
-import type { AdminCondition, AdminConditionInput, AdminSpecialty, AdminSpecialtyInput } from '../../types/health';
+import type { AdminCondition, AdminConditionInput, AdminSpecialty, AdminSpecialtyInput } from '../health';
 import type { ValidationErrors } from '../authModel';
 
 /** Line icons a specialty can wear (Ionicons outline glyphs). */

@@ -5,7 +5,7 @@
 // docs/API_KITCHEN_ASSUMED.md §2.15 (TODO(API_KITCHEN): an assumed contract).
 
 import { api, toApiError } from '../network/apiHelpers';
-import type { NutritionSettings } from '../../types/myKitchen';
+import type { NutritionSettings } from '../../models/myKitchen';
 
 export const getNutritionSettingsAPI = async (): Promise<unknown> => {
   try {

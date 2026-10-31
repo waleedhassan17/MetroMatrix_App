@@ -2,7 +2,7 @@
 // MetroMatrix — Food ordering serializers
 // ═══════════════════════════════════════════════════════
 // The bag, the preview, an order (customer and vendor views), tracking, the
-// vendor's board cards and promotions → the app's shapes (types/food.ts).
+// vendor's board cards and promotions → the app's shapes (models/food.ts).
 // docs/API_FOOD.md §2 (Cart, Preview, CustomerOrder, BoardCard, Tracking,
 // Slots), §3 and §4.2–4.3.
 
@@ -30,8 +30,8 @@ import type {
   VendorFoodOrder,
   PromotionKind,
   PromotionState,
-} from '../../types/food';
-import type { Paged } from '../../types/payments';
+} from '../../models/food';
+import type { Paged } from '../../models/payments';
 import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 
 export const FOOD_ORDER_STATUSES: readonly FoodOrderStatus[] = ['placed', 'accepted', 'preparing', 'ready', 'on_the_way', 'delivered', 'picked_up', 'rejected', 'auto_rejected', 'cancelled'];

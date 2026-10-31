@@ -8,8 +8,8 @@
 // API, so mock mode exercises the same code.
 
 import type { MockAppointment, MockCondition, MockDoctor, MockDoctorReview, MockHealth, MockLocation, MockSpecialty } from './healthTypes';
-import type { AppointmentEventType, ConsultKind } from '../../../../types/health';
-import { PKT, addDays, ageFrom, dateInZone, formatDayShort, formatSlot, isoWeekday, todayInZone, zoneOffsetMinutes } from '../../../../utils/healthTime';
+import type { AppointmentEventType, ConsultKind } from '../../../../models/health';
+import { PKT, addDays, ageFrom, dateInZone, formatDayShort, formatSlot, isoWeekday, todayInZone, zoneOffsetMinutes } from '../../../../utils/health-time/healthTime';
 import { iconKeyForGlyph, recordTypeOut, titleKey } from '../../../../serializers/health/healthCommon';
 import { reviewTagCodes } from '../../../../models/health/reviewFormModel';
 import { weekdayFromAppDay } from '../../../../models/health/availabilityModel';

@@ -10,8 +10,8 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../../theme';
-import type { DoctorCardData } from '../../types/health';
-import { formatPKR } from '../../utils/money';
+import type { DoctorCardData } from '../../models/health';
+import { formatPKR } from '../../utils/money/money';
 import { AppText } from '../AppText';
 import { Button } from '../Button';
 import { IonIcon } from '../Icon';

@@ -7,7 +7,7 @@
 //
 // The board also keeps the screen awake (expo-keep-awake). When the app is
 // in the background the API's push carries the sound instead, on the
-// Android channel `new-orders` (services/push.ts).
+// Android channel `new-orders` (notifications/push.ts).
 //
 // Browsers block sound until the page has been tapped once. On web a start
 // that can't play reports `blocked`, and the board shows "Tap to turn on

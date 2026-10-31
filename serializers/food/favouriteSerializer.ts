@@ -1,7 +1,7 @@
 // MetroMatrix — Food Court: saved kitchens → the app's shape.
 // docs/API_FOOD.md §4.2: GET /food/favourites.
 
-import type { FoodFavourite } from '../../types/food';
+import type { FoodFavourite } from '../../models/food';
 import { arr, bool, isObject, num, str, strOrNull, fromResponse } from '../serializerUtils';
 
 export const foodFavouriteSerializer = (raw: unknown): FoodFavourite | null => {

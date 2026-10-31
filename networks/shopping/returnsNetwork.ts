@@ -4,7 +4,7 @@
 // TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
 
 import { api, toApiError, pageParams } from '../network/apiHelpers';
-import type { ReturnInput } from '../../types/shopping';
+import type { ReturnInput } from '../../models/shopping';
 
 export const requestReturnAPI = async (orderId: string, input: ReturnInput): Promise<unknown> => {
   try {

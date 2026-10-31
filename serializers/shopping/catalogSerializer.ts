@@ -18,7 +18,7 @@ import type {
   StoreDetail,
   StorePolicies,
   StoreSummary,
-} from '../../types/shopping';
+} from '../../models/shopping';
 import { arr, bool, enumList, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { BRAND_FALLBACK, color, compact, count, iso, isoOrNull, money, moneyOrNull, paged } from './common';
 

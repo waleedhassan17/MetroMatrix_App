@@ -5,8 +5,8 @@
 // docs/API_KITCHEN_ASSUMED.md §2.15, §4.7 (TODO(API_KITCHEN): an assumed contract).
 
 import { api, toApiError } from '../network/apiHelpers';
-import type { PantryLineInput, PantryReminders, PantrySegment } from '../../types/myKitchen';
-import type { StandardUnit } from '../../utils/units';
+import type { PantryLineInput, PantryReminders, PantrySegment } from '../../models/myKitchen';
+import type { StandardUnit } from '../../utils/units/units';
 
 const enc = encodeURIComponent;
 

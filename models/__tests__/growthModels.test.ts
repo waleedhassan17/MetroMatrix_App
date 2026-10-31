@@ -3,7 +3,7 @@
 
 import { cutoffChoiceLabel, daysLabel, draftPerMeal, emptyPlanForm, monthGrid, monthLabel, periodAmountLabel, planInput, priceLabel, shiftMonth, startChoices, validatePlan } from '../kitchen/tiffinModel';
 import { cateringInput, draftFromRequest, emptyCateringForm, eventLine, quoteCardData, quoteInput, quoteTotals, validateCatering, validateQuote } from '../kitchen/cateringModel';
-import type { CateringQuote, CateringRequest, TiffinDay } from '../../types/kitchen';
+import type { CateringQuote, CateringRequest, TiffinDay } from '../kitchen';
 
 describe('tiffin words', () => {
   it('says days, prices and credit plainly', () => {

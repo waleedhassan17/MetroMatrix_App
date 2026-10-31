@@ -5,9 +5,9 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../../theme';
-import type { RiderCash } from '../../types/food';
-import { formatSlot, formatDayShort, dateInZone } from '../../utils/healthTime';
-import { formatPKR } from '../../utils/money';
+import type { RiderCash } from '../../models/food';
+import { formatSlot, formatDayShort, dateInZone } from '../../utils/health-time/healthTime';
+import { formatPKR } from '../../utils/money/money';
 import { AppText } from '../AppText';
 import { Card } from '../Card';
 import { Divider } from '../Divider';

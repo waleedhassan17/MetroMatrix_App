@@ -1,7 +1,7 @@
 // MetroMatrix — Emergency numbers and the "share my location" message.
 
 import { Platform } from 'react-native';
-import type { EmergencyNumber } from '../../types/health';
+import type { EmergencyNumber } from '../health';
 
 /** Used only when the API's own list hasn't loaded (no connection is exactly when it matters). */
 export const FALLBACK_EMERGENCY_NUMBERS: EmergencyNumber[] = [

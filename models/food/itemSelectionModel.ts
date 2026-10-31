@@ -5,7 +5,7 @@
 // can be added (the first unmet group, named as the API names it), and the
 // live price. The server checks it all again; this is instant feedback.
 
-import type { ItemSheet, SheetGroup } from '../../types/food';
+import type { ItemSheet, SheetGroup } from '../food';
 
 export interface Selection {
   variantId: string | null;

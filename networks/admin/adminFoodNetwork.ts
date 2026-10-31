@@ -6,7 +6,7 @@
 // queue (/admin/businesses).
 
 import { api, toApiError, clean, pageParams } from '../network/apiHelpers';
-import type { AdminCuisineInput, AdminFoodBannerInput, AdminFoodOrderQuery, AdminFoodReviewQuery, AdminFoodVendorQuery, PlanOverrides } from '../../types/food';
+import type { AdminCuisineInput, AdminFoodBannerInput, AdminFoodOrderQuery, AdminFoodReviewQuery, AdminFoodVendorQuery, PlanOverrides } from '../../models/food';
 
 const A = '/admin/food';
 const enc = encodeURIComponent;

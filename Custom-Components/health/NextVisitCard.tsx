@@ -9,8 +9,8 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../../theme';
-import type { AppointmentSummary } from '../../types/health';
-import { formatWhen, relativeStart } from '../../utils/healthTime';
+import type { AppointmentSummary } from '../../models/health';
+import { formatWhen, relativeStart } from '../../utils/health-time/healthTime';
 import { AppText } from '../AppText';
 import { Button } from '../Button';
 import { IonIcon } from '../Icon';

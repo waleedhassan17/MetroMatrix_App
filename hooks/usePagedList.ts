@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { appendUnique, hasMorePages, LIST_PAGE_SIZE } from '../models/pagingModel';
-import type { Paged } from '../types/shopping';
+import type { Paged } from '../models/shopping';
 import { required } from '../networks/network/apiHelpers';
 
 export interface PagedList<T, P extends Paged<T> = Paged<T>> {

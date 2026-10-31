@@ -11,7 +11,7 @@ import { AccessibilityInfo, Platform, StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../../theme';
 import { AppText, type AppTextProps } from '../AppText';
 import { IonIcon, type IonName } from '../Icon';
-import { directionOf } from '../../utils/script';
+import { directionOf } from '../../utils/script/script';
 import type { KitchenTone } from '../../models/kitchen/kitchenStatusModel';
 
 export const useToneColors = () => {

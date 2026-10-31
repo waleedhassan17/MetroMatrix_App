@@ -1,7 +1,7 @@
 // MetroMatrix — In-app notification serializer (core).
 // TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
 
-import type { AppNotification, NotificationType } from '../types/shopping';
+import type { AppNotification, NotificationType } from '../models/shopping';
 import { bool, isObject, oneOf, str, strOrNull, fromResponse } from './serializerUtils';
 import { iso, count, paged } from './shopping/common';
 

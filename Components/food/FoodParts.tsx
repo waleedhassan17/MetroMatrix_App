@@ -15,8 +15,8 @@ import { TextAction } from '../../Custom-Components/TextAction';
 import { VendorCard } from '../../Custom-Components/food/VendorCard';
 import { useOnGradient } from '../../Custom-Components/headerInk';
 import { SurplusCard } from '../../Custom-Components/kitchen/SurplusCard';
-import type { FoodCuisine, VendorCard as VendorCardData } from '../../types/food';
-import type { SurplusCard as SurplusCardData } from '../../types/kitchen';
+import type { FoodCuisine, VendorCard as VendorCardData } from '../../models/food';
+import type { SurplusCard as SurplusCardData } from '../../models/kitchen';
 
 // ─── Cuisine glyphs (the Food API's icon keys, and slugs) ─
 const CUISINE_GLYPH: Record<string, MciName> = {

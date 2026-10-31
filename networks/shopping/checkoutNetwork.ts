@@ -6,7 +6,7 @@
 // TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
 
 import { api, toApiError } from '../network/apiHelpers';
-import type { CheckoutInput } from '../../types/shopping';
+import type { CheckoutInput } from '../../models/shopping';
 
 export const previewCheckoutAPI = async (input: CheckoutInput): Promise<unknown> => {
   try {

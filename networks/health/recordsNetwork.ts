@@ -6,7 +6,7 @@
 
 import { api, toApiError, clean, pageParams } from '../network/apiHelpers';
 import { publicIdFromCloudinaryUrl, recordTypeOut } from '../../serializers/health/healthCommon';
-import type { RecordInput, RecordType } from '../../types/health';
+import type { RecordInput, RecordType } from '../../models/health';
 
 const enc = encodeURIComponent;
 

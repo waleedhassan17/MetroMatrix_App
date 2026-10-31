@@ -8,8 +8,8 @@
 
 import { api, getAccessToken, refreshClient, setTokens } from '../apiHelpers';
 import { authResultSerializer, sessionSerializer } from '../../../serializers/authSerializer';
-import { clearIntentionalSignOut } from '../../../utils/authEvents';
-import type { AuthResult } from '../../../types/auth';
+import { clearIntentionalSignOut } from '../../../utils/auth-events/authEvents';
+import type { AuthResult } from '../../../models/auth';
 import { mockAdapter, mockSessionFor, mockSessionOf } from './mockServer';
 
 /** axios needs a base URL; nothing is ever sent there. */

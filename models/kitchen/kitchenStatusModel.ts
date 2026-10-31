@@ -30,8 +30,8 @@ import type {
   ReservationStatus,
   StockState,
   WasteReason,
-} from '../../types/kitchen';
-import type { FoodPaymentStatus } from '../../types/food';
+} from '../kitchen';
+import type { FoodPaymentStatus } from '../food';
 
 export type KitchenTone = 'neutral' | 'accent' | 'success' | 'warning' | 'danger';
 

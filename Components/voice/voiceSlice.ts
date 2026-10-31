@@ -12,9 +12,9 @@ import { createAppSlice } from '../../store/createAppSlice';
 import { toRejectedValue, required } from '../../networks/network/apiHelpers';
 import { uploadImage } from '../../services/mediaUpload';
 import { interpretVoiceAPI } from '../../networks/ai/voiceNetwork';
-import { NO_ERROR, readRejection, type ServerError } from '../../screens/Auth/shared/formStatus';
+import { NO_ERROR, readRejection, type ServerError } from '../../screens/shared/formStatus';
 import type { Clip } from '../../services/voice/recorderShared';
-import type { VoiceContext, VoiceLanguage, VoiceResult } from '../../types/kitchen';
+import type { VoiceContext, VoiceLanguage, VoiceResult } from '../../models/kitchen';
 import { voiceResultSerializer } from '../../serializers/ai/voiceSerializer';
 
 export interface VoiceRun {

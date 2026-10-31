@@ -6,7 +6,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../../theme';
-import type { Specialty } from '../../types/health';
+import type { Specialty } from '../../models/health';
 import { AppText } from '../AppText';
 import { IonIcon, type IonName } from '../Icon';
 

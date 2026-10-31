@@ -7,9 +7,9 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../../theme/index';
 import { AppText, IonIcon, StatusPill, type IonName } from '../../Custom-Components/index';
 import { ORDER_STATUS, PAYMENT_STATUS } from '../../models/shopping/orderStatusModel';
-import type { PartnerOrderRow } from '../../types';
-import { formatDay } from '../../utils/dates';
-import { formatPKR } from '../../utils/money';
+import type { PartnerOrderRow } from '../../models';
+import { formatDay } from '../../utils/dates/dates';
+import { formatPKR } from '../../utils/money/money';
 
 const makeStyles = ({ colors, space, size, radius }: Theme) =>
   StyleSheet.create({

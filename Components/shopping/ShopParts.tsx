@@ -27,7 +27,7 @@ import { useOnGradient } from '../../Custom-Components/headerInk';
 import { useBagCount, useSaved, useShopNav } from '../../hooks/useShop';
 import { useCalmMotion } from '../../hooks/useCalmMotion';
 import type { PagedList } from '../../hooks/usePagedList';
-import type { Banner, ProductSummary } from '../../types';
+import type { Banner, ProductSummary } from '../../models';
 
 const makeStyles = ({ colors, space, size, radius, gutter, type, elevation }: Theme) =>
   StyleSheet.create({

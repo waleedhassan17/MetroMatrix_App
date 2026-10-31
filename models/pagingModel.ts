@@ -2,7 +2,7 @@
 // MetroMatrix — Paging rules (pure; used by usePagedList)
 // ═══════════════════════════════════════════════════════
 
-import type { Paged } from '../types/shopping';
+import type { Paged } from './shopping';
 
 /** Rows a list asks for per page unless it says otherwise. */
 export const LIST_PAGE_SIZE = 20;

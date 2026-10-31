@@ -3,8 +3,8 @@
 
 import React from 'react';
 import { orderTimeline } from '../../models/shopping/orderStatusModel';
-import type { StoreOrder } from '../../types/shopping';
-import { formatDateTime } from '../../utils/dates';
+import type { StoreOrder } from '../../models/shopping';
+import { formatDateTime } from '../../utils/dates/dates';
 import { StatusTimeline } from '../StatusTimeline';
 
 export const OrderTimeline: React.FC<{ order: Pick<StoreOrder, 'status' | 'events' | 'shipment'> }> = ({ order }) => (

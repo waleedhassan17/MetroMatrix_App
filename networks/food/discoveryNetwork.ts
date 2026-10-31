@@ -6,7 +6,7 @@
 // docs/API_FOOD.md §4.1: /food/{home,vendors,vendors/:slug,items/:id,search}.
 
 import { api, toApiError } from '../network/apiHelpers';
-import type { VendorListQuery } from '../../types/food';
+import type { VendorListQuery } from '../../models/food';
 
 const point = (lat: number, lng: number) => ({ lat: Number(lat.toFixed(6)), lng: Number(lng.toFixed(6)) });
 

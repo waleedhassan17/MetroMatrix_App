@@ -30,7 +30,7 @@ import {
   setVendorSuspendedAPI,
 } from '../../../admin/adminFoodNetwork';
 import { ApiError, required } from '../../apiHelpers';
-import { clearTokens } from '../../../../utils/storageUtils';
+import { clearTokens } from '../../../../utils/storage_utils/storageUtils';
 import { resetMockDb } from '../mockDb';
 import { signInAs, installDummyApi } from '../testing';
 import { foodOrderSerializer, foodCartSerializer } from '../../../../serializers/food/orderSerializer';

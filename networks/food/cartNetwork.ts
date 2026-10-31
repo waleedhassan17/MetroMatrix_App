@@ -5,7 +5,7 @@
 // docs/API_FOOD.md §4.2: /food/cart (+ /items, /preview).
 
 import { api, toApiError } from '../network/apiHelpers';
-import type { FoodCheckoutInput, FoodFulfilment } from '../../types/food';
+import type { FoodCheckoutInput, FoodFulfilment } from '../../models/food';
 
 const enc = encodeURIComponent;
 

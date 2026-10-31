@@ -31,10 +31,10 @@ import type {
   TimingRow,
   TodaySummary,
   WeekDayHours,
-} from '../../types/health';
+} from '../../models/health';
 import { arr, bodiesOf, bodyOf, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { compact, count, iso, money, paged } from '../shopping/common';
-import { dateInZone } from '../../utils/healthTime';
+import { dateInZone } from '../../utils/health-time/healthTime';
 import { completenessFrom } from '../../models/health/doctorProfileModel';
 import { appDayFromWeekday } from '../../models/health/availabilityModel';
 import { KINDS, TITLE_PREFIX, appointmentStatus, dayOrNull, gender, instant, numOrNull, paymentMethod, paymentStatus, rating, strings, timezone } from './healthCommon';

@@ -17,7 +17,7 @@ import type {
   SpecialIdea,
   UnmappedIngredient,
   VendorNutrition,
-} from '../../types/kitchen';
+} from '../../models/kitchen';
 import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { costSerializer, count, dateOrNull, list, numOrNull } from './kitchenCommon';
 

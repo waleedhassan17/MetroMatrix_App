@@ -4,7 +4,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useStyles, type Theme } from '../../theme';
-import type { FamilyMember } from '../../types/health';
+import type { FamilyMember } from '../../models/health';
 import { ChoiceChip } from '../shopping/ChoiceChip';
 
 const makeStyles = ({ space }: Theme) => StyleSheet.create({ row: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 } });

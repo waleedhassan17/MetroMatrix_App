@@ -23,7 +23,7 @@ import type {
   RequirementStatus,
   ServiceType,
   SubType,
-} from '../types/auth';
+} from './auth';
 import type { ValidationErrors } from './authModel';
 
 // ─── Services and sub-types ──────────────────────────

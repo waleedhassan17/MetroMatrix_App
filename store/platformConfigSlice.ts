@@ -3,14 +3,14 @@
 // ═══════════════════════════════════════════════════════
 // Loaded at boot by AppContainer, refreshed on Retry. The API client also
 // reports what the server refuses mid-session (503 MAINTENANCE, 503
-// SERVICE_PAUSED, 403 SIGNUPS_PAUSED) through utils/authEvents, so a switch
+// SERVICE_PAUSED, 403 SIGNUPS_PAUSED) through utils/auth-events/authEvents, so a switch
 // flipped after boot shows its screen at once. A shell slice: it describes
 // the platform, not the account, and survives RESET_ALL_STATE.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from './createAppSlice';
 import { getPlatformConfigAPI } from '../networks/config/configNetwork';
-import { OPEN_PLATFORM, type PlatformConfig, type PlatformService } from '../types/platformConfig';
+import { OPEN_PLATFORM, type PlatformConfig, type PlatformService } from '../models/platformConfig';
 import { platformConfigSerializer } from '../serializers/platformConfigSerializer';
 import { required } from '../networks/network/apiHelpers';
 

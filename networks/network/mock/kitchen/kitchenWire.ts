@@ -2,14 +2,14 @@
 // MetroMatrix — Dummy kitchen rows → the assumed API's shapes
 // ═══════════════════════════════════════════════════════
 // Quantities go out in base units with the unit they are counted in; the
-// app words them (utils/units). Money is whole rupees, except unit costs
+// app words them (utils/units/units). Money is whole rupees, except unit costs
 // (rupees per base unit, four decimals) and a recipe line's cost per
 // serving (two decimals: 2 g of salt is 12 paisa).
 // TODO(API_KITCHEN): docs/API_KITCHEN_ASSUMED.md §2 (shared shapes).
 
 import type { MockDb } from '../mockDb';
 import type { MockMenuItem } from '../food/foodTypes';
-import { formatSlot } from '../../../../utils/healthTime';
+import { formatSlot } from '../../../../utils/health-time/healthTime';
 import type {
   MockDonation,
   MockIngredient,

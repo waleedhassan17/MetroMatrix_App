@@ -4,9 +4,9 @@
 import type { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { api } from '../../network/apiHelpers';
 import { authSignup } from '../authNetwork';
-import { clearTokens } from '../../../utils/storageUtils';
+import { clearTokens } from '../../../utils/storage_utils/storageUtils';
 import { store } from '../../../store/store';
-import { signUpAsync } from '../../../screens/Auth/ProviderSignUp/providerSignUpSlice';
+import { signUpAsync } from '../../../screens/provider-sign-up-screen/providerSignUpSlice';
 import { resetAllState } from '../../../store/resetAllState';
 
 const sent: { url?: string; body: Record<string, unknown> }[] = [];

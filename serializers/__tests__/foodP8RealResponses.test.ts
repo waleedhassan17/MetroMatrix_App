@@ -33,7 +33,7 @@ import {
 import { foodInsightsSerializer, foodReviewSerializer, vendorReviewsPageSerializer } from '../food/reviewSerializer';
 import { liveRidersSerializer, riderCashSerializer, riderHomeSerializer, riderOrderSerializer, riderSuggestionsSerializer } from '../food/riderSerializer';
 import { feeBandsSerializer, hoursSerializer, vendorPlanSerializer, vendorProfileSerializer, vendorSettingsSerializer, vendorSetupSerializer } from '../food/vendorSerializer';
-import type { FoodTotals } from '../../types/food';
+import type { FoodTotals } from '../../models/food';
 
 type Captured = Record<string, { status: number; body: { success: boolean; data?: any; error?: any } }>;
 const R = real as unknown as Captured;

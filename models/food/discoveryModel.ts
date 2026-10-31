@@ -5,8 +5,8 @@
 // and how a vendor card says its time, fee, distance and state. Money only
 // through formatPKR; no commission is ever implied (the fee is the vendor's).
 
-import type { Address, FoodPoint, VendorCard, VendorListQuery, VendorSort } from '../../types';
-import { formatPKR } from '../../utils/money';
+import type { Address, FoodPoint, VendorCard, VendorListQuery, VendorSort } from '../../models';
+import { formatPKR } from '../../utils/money/money';
 
 export type FoodRail = 'orderAgain' | 'offers' | 'topRated' | 'fastest' | 'homeKitchens' | 'newOnFoodCourt' | 'freeDelivery';
 

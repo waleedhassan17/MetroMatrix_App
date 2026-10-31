@@ -6,10 +6,10 @@
 // plus packaging per serving, at what the kitchen paid. Whole rupees for
 // the card; the saved recipe's cost (the server's) replaces this one.
 
-import type { Cost, RecipeInput } from '../../types/kitchen';
+import type { Cost, RecipeInput } from '../kitchen';
 import { typedToBase, unitOfKey } from './stockModel';
 import type { ValidationErrors } from '../authModel';
-import { formatPKR } from '../../utils/money';
+import { formatPKR } from '../../utils/money/money';
 
 /** A line as the editor holds it: base units and the ingredient's cost per base unit. */
 export interface CostLine {

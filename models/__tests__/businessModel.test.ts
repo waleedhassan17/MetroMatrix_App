@@ -19,7 +19,7 @@ import {
   validateDecisionReason,
   type BusinessProfileForm,
 } from '../businessModel';
-import type { Business, BusinessDocument, DocumentKind, SubType } from '../../types/auth';
+import type { Business, BusinessDocument, DocumentKind, SubType } from '../auth';
 
 const SUB_TYPES: SubType[] = ['store', 'doctor', 'restaurant', 'home_kitchen', 'cloud_kitchen'];
 

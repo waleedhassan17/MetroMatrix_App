@@ -1,12 +1,12 @@
 import { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import { api, ApiError, extractErrorCode, refreshClient, toApiError, unwrap } from '../apiHelpers';
-import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '../../../utils/storageUtils';
+import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '../../../utils/storage_utils/storageUtils';
 import {
   clearIntentionalSignOut,
   markIntentionalSignOut,
   setBusinessStatusStaleHandler,
   setSessionExpiredHandler,
-} from '../../../utils/authEvents';
+} from '../../../utils/auth-events/authEvents';
 
 // The adapter stands in for the server: a request carrying the NEW access
 // token succeeds; anything else is a 401 (expired token).

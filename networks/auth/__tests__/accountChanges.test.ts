@@ -7,10 +7,10 @@ import type { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import { api } from '../../network/apiHelpers';
 import { authChangePassword, authDeleteAccount } from '../authNetwork';
-import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '../../../utils/storageUtils';
-import authReducer, { setSession } from '../../../screens/Auth/authSlice';
-import { changePasswordAsync, changePasswordSlice } from '../../../screens/Account/ChangePassword/changePasswordSlice';
-import { deleteAccountAsync, profileSlice } from '../../../screens/Account/Profile/profileSlice';
+import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '../../../utils/storage_utils/storageUtils';
+import authReducer, { setSession } from '../../../store/authSlice';
+import { changePasswordAsync, changePasswordSlice } from '../../../screens/change-password-screen/changePasswordSlice';
+import { deleteAccountAsync, profileSlice } from '../../../screens/profile-screen/profileSlice';
 import { makeUser } from '../../../__fixtures__/users';
 
 jest.mock('../../../services/googleAuth', () => ({ getGoogleIdToken: jest.fn() }));

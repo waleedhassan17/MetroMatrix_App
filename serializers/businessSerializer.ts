@@ -20,7 +20,7 @@ import type {
   RequirementStatus,
   ServiceType,
   SubType,
-} from '../types/auth';
+} from '../models/auth';
 import { SUBTYPE_SERVICE, evaluateDocuments } from '../models/businessModel';
 import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from './serializerUtils';
 import { foodVendorSessionSerializer } from './food/vendorSerializer';

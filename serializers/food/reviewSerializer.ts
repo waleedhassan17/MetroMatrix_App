@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════
 // A review (the customer's, the vendor page's, the kitchen's own list), the
 // vendor page's rating block, the kitchen's insights and the staff banners
-// the Food home shows → the app's shapes (types/food.ts). Defensive: a
+// the Food home shows → the app's shapes (models/food.ts). Defensive: a
 // missing field is a sensible default, never a crash.
 // docs/API_FOOD.md §2 Review, §4.2 review, §4.3 Reviews and Insights, §4.1
 // home banners.
@@ -17,8 +17,8 @@ import type {
   FoodReview,
   FoodReviewTag,
   VendorReview,
-} from '../../types/food';
-import type { Paged } from '../../types/payments';
+} from '../../models/food';
+import type { Paged } from '../../models/payments';
 import { arr, enumList, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { paged } from '../shopping/common';
 import { FOOD_ORDER_STATUSES } from './orderSerializer';

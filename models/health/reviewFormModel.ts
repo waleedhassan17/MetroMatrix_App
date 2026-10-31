@@ -1,6 +1,6 @@
 // MetroMatrix — Rate a visit (after a completed appointment).
 
-import type { ConsultKind, DoctorReviewInput, ReviewDimension } from '../../types/health';
+import type { ConsultKind, DoctorReviewInput, ReviewDimension } from '../health';
 import type { ValidationErrors } from '../authModel';
 
 export const DIMENSIONS: { key: ReviewDimension; label: string; clinicOnly: boolean }[] = [

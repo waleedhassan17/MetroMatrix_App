@@ -1,6 +1,6 @@
 // MetroMatrix — Health records (lab reports, scans, old prescriptions).
 
-import type { RecordInput, RecordType } from '../../types/health';
+import type { RecordInput, RecordType } from '../health';
 import type { ValidationErrors } from '../authModel';
 
 export const RECORD_TYPES: { key: RecordType; label: string; icon: string }[] = [

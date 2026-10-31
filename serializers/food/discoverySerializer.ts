@@ -2,7 +2,7 @@
 // MetroMatrix — Food discovery serializers (what customers browse)
 // ═══════════════════════════════════════════════════════
 // The home, vendor lists, a vendor's page with its menu, the dish sheet and
-// search → the app's shapes (types/food.ts). Defensive: a missing field is a
+// search → the app's shapes (models/food.ts). Defensive: a missing field is a
 // sensible default, never a crash.
 // docs/API_FOOD.md §2 (VendorCard, VendorPage, ItemSheet) and §4.1.
 
@@ -19,9 +19,9 @@ import type {
   SheetGroup,
   VendorCard,
   VendorPage,
-} from '../../types/food';
-import type { Paged } from '../../types/payments';
-import type { HygieneStatus, VendorBadge } from '../../types/kitchen';
+} from '../../models/food';
+import type { Paged } from '../../models/payments';
+import type { HygieneStatus, VendorBadge } from '../../models/kitchen';
 import { arr, bool, isObject, num, str, strOrNull, fromResponse } from '../serializerUtils';
 import { foodCuisinesSerializer } from './vendorSerializer';
 import { ITEM_TAGS } from './menuSerializer';

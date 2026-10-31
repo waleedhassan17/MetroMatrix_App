@@ -5,7 +5,7 @@
 // reusable add-on groups). docs/API_FOOD.md §4.3 Menu.
 
 import { api, toApiError } from '../../network/apiHelpers';
-import type { MenuItemInput, OptionGroupInput } from '../../../types/food';
+import type { MenuItemInput, OptionGroupInput } from '../../../models/food';
 
 const enc = encodeURIComponent;
 // ── Categories ──

@@ -9,8 +9,8 @@
 import type { MockBusiness, MockDb, MockUser } from '../mockDb';
 import type { ShopCtx, ShopKit } from '../shop/shopRoutes';
 import type { MockAppointment, MockDoctor, MockHealth, MockHealthBanner, MockLocation } from './healthTypes';
-import type { AppointmentPaymentMethod, ConsultKind, Medicine, MedicineForm, ReasonTag, RecordType, WeekDayHours } from '../../../../types/health';
-import { PKT, addDays, ageFrom, dateInZone, todayInZone } from '../../../../utils/healthTime';
+import type { AppointmentPaymentMethod, ConsultKind, Medicine, MedicineForm, ReasonTag, RecordType, WeekDayHours } from '../../../../models/health';
+import { PKT, addDays, ageFrom, dateInZone, todayInZone } from '../../../../utils/health-time/healthTime';
 import { appDayFromWeekday } from '../../../../models/health/availabilityModel';
 import { REVIEW_TAG_CODES, reviewTagLabel } from '../../../../models/health/reviewFormModel';
 import { recordTypeIn } from '../../../../serializers/health/healthCommon';

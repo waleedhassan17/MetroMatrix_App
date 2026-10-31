@@ -9,9 +9,9 @@
 import type { MockDb } from '../mockDb';
 import { dayOf } from './tiffinLogic';
 import { demandWire, ramadanState, storefrontWire } from './growthLogic';
-import { addDays } from '../../../../utils/healthTime';
-import { formatPKR } from '../../../../utils/money';
-import { formatQty } from '../../../../utils/units';
+import { addDays } from '../../../../utils/health-time/healthTime';
+import { formatPKR } from '../../../../utils/money/money';
+import { formatQty } from '../../../../utils/units/units';
 import {
   HOUR,
   costOf,

@@ -6,7 +6,7 @@
 // TODO(API_SHOPPING): paths per docs/API_SHOPPING_ASSUMED.md.
 
 import { api, toApiError, clean, pageParams } from '../network/apiHelpers';
-import type { AdminBannerInput, ReportStatus } from '../../types/shopping';
+import type { AdminBannerInput, ReportStatus } from '../../models/shopping';
 
 const BASE = '/admin/shop';
 
