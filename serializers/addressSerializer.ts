@@ -1,5 +1,5 @@
-// MetroMatrix — Delivery address serializer (core; Shopping now, Food later).
-// TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
+// MetroMatrix — Delivery address serializer (core; Shopping now, Food later):
+// the API's Address (API_SHOPPING.md §5.1); an order's snapshot has no id.
 
 import type { Address, AddressLabel } from '../models/shopping';
 import { bool, isObject, num, oneOf, str, strOrNull, arr, fromResponse } from './serializerUtils';

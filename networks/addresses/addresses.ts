@@ -1,8 +1,7 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Addresses Network (Production API)
 // ═══════════════════════════════════════════════════════
-// Shopping now, Food later).
-// TODO(API_SHOPPING): paths per docs/API_SHOPPING_ASSUMED.md.
+// Shopping now, Food later): /addresses, API_SHOPPING.md §5.1.
 
 import { API, toApiError } from '../network/network';
 import type { AddressInput } from '../../models/shopping';

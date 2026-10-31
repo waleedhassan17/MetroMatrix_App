@@ -12,6 +12,7 @@
 import { Platform } from 'react-native';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import * as Device from 'expo-device';
+import { groupCodeOf } from '../models/shopping/orderStatusModel';
 
 const projectId = (): string | undefined =>
   (Constants.expoConfig?.extra as { eas?: { projectId?: string } } | undefined)?.eas?.projectId ??
@@ -98,10 +99,10 @@ const foodTapUrl = (s: (k: string) => string | null, audience: PushAudience): st
 
 /**
  * Where a tapped push goes, as one of the app's own deep links (the
- * navigation container routes it). The API puts groupCode / orderId /
- * returnId / productId in the push's data, as it does for in-app
- * notifications, and the notification's `type`. TODO(API_SHOPPING): confirm
- * the Shopping push data keys.
+ * navigation container routes it). The push's data is the notification's:
+ * Shopping sends `{ storeOrderId, code }` (a group's code is the code's
+ * prefix), `{ groupCode }` once placed, `{ returnId, … }` or `{ productId }`,
+ * with the notification's `type`.
  */
 export const pushTapUrl = (data: Record<string, unknown> | null | undefined, audience: PushAudience): string | null => {
   const s = (k: string) => (typeof data?.[k] === 'string' && data[k] ? (data[k] as string) : null);
@@ -111,12 +112,14 @@ export const pushTapUrl = (data: Record<string, unknown> | null | undefined, aud
     const visit = s('appointmentCode') ?? s('appointmentId');
     if (visit) return `metromatrix://doctor/appointments/${encodeURIComponent(visit)}`;
     if (s('returnId')) return `metromatrix://store/returns/${encodeURIComponent(s('returnId')!)}`;
-    if (s('orderId')) return `metromatrix://store/orders/${encodeURIComponent(s('orderId')!)}`;
+    const order = s('storeOrderId') ?? s('orderId');
+    if (order) return `metromatrix://store/orders/${encodeURIComponent(order)}`;
     return null;
   }
   if (s('prescriptionId')) return `metromatrix://profile/prescriptions/${encodeURIComponent(s('prescriptionId')!)}`;
   if (s('appointmentCode')) return `metromatrix://health/appointment/${encodeURIComponent(s('appointmentCode')!)}`;
-  if (s('groupCode')) return `metromatrix://orders/${encodeURIComponent(s('groupCode')!)}`;
+  const group = s('groupCode') ?? groupCodeOf(s('code'));
+  if (group) return `metromatrix://orders/${encodeURIComponent(group)}`;
   if (s('productId')) return `metromatrix://shop/product/${encodeURIComponent(s('productId')!)}`;
   return null;
 };

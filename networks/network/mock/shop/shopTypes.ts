@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Dummy shop records (what the mock DB stores)
 // ═══════════════════════════════════════════════════════
-// Internal shapes for the dummy API. Views (shopViews.ts) turn them into the
-// wire JSON that docs/API_SHOPPING_ASSUMED.md describes.
+// Internal shapes for the dummy API. shopWire.ts turns them into the answers
+// docs/API_SHOPPING.md describes.
 
 import type {
   AddressLabel,
@@ -103,7 +103,8 @@ export interface MockProduct {
   updatedAt: string;
   /**
    * Groceries (Daily Basket): what one unit holds, and the kitchen ingredient
-   * it is. Kitchen Intelligence's price compare reads them (TODO(API_SHOPPING)).
+   * it is. Kitchen Intelligence's price compare reads them; the real API's
+   * counterpart is a product's `pack` (API_SHOPPING.md §5.6), TODO(API_KITCHEN).
    */
   netQuantity?: { qty: number; unit: 'g' | 'ml' | 'pc' };
   ingredientKey?: string;

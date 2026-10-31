@@ -1,9 +1,10 @@
-// MetroMatrix — In-app notification serializer (core).
-// TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
+// MetroMatrix — In-app notification serializer (core): MetroMatrix-API's
+// notification view `{ id, type, title, body, data, readAt, createdAt }`.
 
 import type { AppNotification, NotificationType } from '../models/shopping';
 import { bool, isObject, oneOf, str, strOrNull, fromResponse } from './serializerUtils';
 import { iso, count, paged } from './shopping/common';
+import { groupCodeOf } from '../models/shopping/orderStatusModel';
 
 const TYPES: readonly NotificationType[] = [
   'order_placed',
@@ -39,9 +40,27 @@ const HEALTH_TYPES: Record<string, NotificationType> = {
   'health.review.reply': 'review_reply',
 };
 
+/** Shopping notices as MetroMatrix-API names them (`shop.order.shipped`, …) → the app's kinds. */
+const SHOP_TYPES: Record<string, NotificationType> = {
+  'shop.order.placed': 'order_placed',
+  'shop.order.new': 'new_order',
+  'shop.payment.proof': 'payment_proof',
+  'shop.payment.confirmed': 'payment_update',
+  'shop.payment.rejected': 'payment_update',
+  'shop.payment.refunded': 'payment_update',
+  'shop.return.requested': 'return_requested',
+  'shop.return.approved': 'return_update',
+  'shop.return.rejected': 'return_update',
+  'shop.return.refunded': 'return_update',
+  'shop.review.new': 'review_new',
+  'shop.inventory.low_stock': 'low_stock',
+};
+
 const typeOf = (raw: unknown): NotificationType => {
   const t = str(raw);
   if (HEALTH_TYPES[t]) return HEALTH_TYPES[t];
+  if (SHOP_TYPES[t]) return SHOP_TYPES[t];
+  if (t.startsWith('shop.')) return 'order_update';
   if (t.startsWith('health.appointment.')) return 'appointment_update';
   return oneOf(t, TYPES, 'order_update');
 };
@@ -57,8 +76,9 @@ export const notificationSerializer = (raw: unknown): AppNotification | null => 
     title: str(raw.title),
     body: str(raw.body),
     data: {
-      groupCode: strOrNull(data.groupCode),
-      orderId: strOrNull(data.orderId),
+      // Shopping notices name the store order (`storeOrderId`, `code`); its group's code is the code's prefix.
+      groupCode: strOrNull(data.groupCode) ?? groupCodeOf(strOrNull(data.code)),
+      orderId: strOrNull(data.orderId) ?? strOrNull(data.storeOrderId),
       returnId: strOrNull(data.returnId),
       productId: strOrNull(data.productId),
       // Health notices carry the appointment's code; the doctor app opens appointments by code too.

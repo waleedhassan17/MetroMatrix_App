@@ -1,11 +1,10 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Dummy shop routes
 // ═══════════════════════════════════════════════════════
-// Registered on the mock server's router. Customer routes under /shop speak
-// the real API (its paths, rules and error codes; shapes from shopWire,
-// pinned by mockShopParity). The store partner's under /partner/shop and
-// staff under /admin/shop still follow API_SHOPPING_ASSUMED. Plus the core
-// /addresses and /notifications.
+// Registered on the mock server's router: the real API's paths, rules and
+// error codes (docs/API_SHOPPING.md) for the customer (/shop), the store
+// (/shop/partner) and staff (/admin/shop), answering in its shapes (shopWire,
+// pinned by mockShopParity). Plus the core /addresses and /notifications.
 
 import type { MockBusiness, MockDb, MockUser } from '../mockDb';
 import type { MockAddress, MockBanner, MockCoupon, MockOrder, MockProduct, MockStore, MockVariant } from './shopTypes';
@@ -1482,6 +1481,7 @@ export function registerShopRoutes(kit: ShopKit) {
     const { store } = myStore(ctx);
     const rows = ctx.db.shop.reviews
       .filter(r => r.storeId === store.id)
+      .filter(r => !ctx.query.rating || r.rating === int(ctx.query.rating))
       .filter(r => ctx.query.unreplied !== 'true' || !r.reply)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
       .map(r => reviewWire(ctx.db.shop, r, true));

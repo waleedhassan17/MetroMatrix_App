@@ -20,7 +20,7 @@ Copy the FYP's UX, never its code paths, Firebase setup or per-role duplicate ne
 
 The main network file, `networks/network/network.ts`, reads `EXPO_PUBLIC_API_URL` as `API_URL` (`.env.local`, or the `eas.json` profile). The deployed API is `https://metromatrix-api.duckdns.org/api/v1` (the EC2 server; `.env.local`, `.env.example` and every `eas.json` profile name it); the local one is `http://localhost:3000/api/v1`. The app always talks to the real MetroMatrix API through the one client: there is no dummy fallback in any build. With no URL the build is a configuration error: `ConfigErrorScreen` replaces the app and `api` rejects every request with `CONFIG_ERROR`. Never add a silent fallback.
 
-The dummy API (`networks/network/mock/`) is test fixtures only: the Shopping, Health, Food and Kitchen routes with their seeds and server rules (`shop/`, `health/`, `food/` see `docs/MOCK_FOOD.md`, `kitchen/` see `docs/MOCK_KITCHEN.md`), which the parity and flow tests run the app's networks against. A test installs it with `installDummyApi()` and signs in with `signInAs()` (`mock/testing.ts`), which writes a session straight into the dummy DB. It has no auth, users, media, business, approval or platform routes: those are connected to the real API (`docs/AUTH_CONTRACT.md`, `docs/openapi.json`), and `networks/__tests__/contract.test.ts` checks every request the app sends them against `docs/openapi.json`. For a service not yet verified against the real API (Shopping, Kitchen), add the mock route with a new endpoint in the same change; Shop, Health, Food and Kitchen writes in the dummy API are all-or-nothing.
+The dummy API (`networks/network/mock/`) is test fixtures only: the Shopping, Health, Food and Kitchen routes with their seeds and server rules (`shop/`, `health/`, `food/` see `docs/MOCK_FOOD.md`, `kitchen/` see `docs/MOCK_KITCHEN.md`), which the parity and flow tests run the app's networks against. A test installs it with `installDummyApi()` and signs in with `signInAs()` (`mock/testing.ts`), which writes a session straight into the dummy DB. It has no auth, users, media, business, approval or platform routes: those are connected to the real API (`docs/AUTH_CONTRACT.md`, `docs/openapi.json`), and `networks/__tests__/contract.test.ts` checks every request the app sends them against `docs/openapi.json` (`shopContract.test.ts` does the same for Shopping, addresses and notifications). For a service not yet verified against the real API (Kitchen), add the mock route with a new endpoint in the same change; Shop, Health, Food and Kitchen writes in the dummy API are all-or-nothing.
 
 ## Commands
 
@@ -190,7 +190,7 @@ screens/<name>-screen/       <Name>.tsx + <name>Slice.ts, one flat folder per sc
                              shared/ (authThunks, formStatus, totpChallenge, healthReads, practiceReads, taxonomyWrites,
                              photoUploads); __tests__/
 serializers/                 defensive backend → app mapping, one file per domain (shopping/ and health/ per resource;
-                             health/healthCommon holds every Health wire map); __tests__/fixtures/health/ real API responses;
+                             health/healthCommon holds every Health wire map); __tests__/fixtures/{health,food,shop}/ real API responses;
                              kitchen/ (kitchenCommon the shared readers), myKitchen/, ai/
 services/                    device/SDK adapters: googleAuth(.web), location, calendar,
                              prescriptionPdf (expo-print + sharing; the print dialog on web), voice/recorder(.web)
@@ -210,9 +210,9 @@ utils/<name>/                one folder per util: storage_utils/storageUtils (to
                              prescription-html, units (base units g/ml/pc, "7.5 kg", "2 dozen", custom units), script (Urdu
                              script → RTL), share-text, store-card-html (the printable QR card)
 __live__/, __fixtures__/     the live suite against a running API; shared test fixtures
-scripts/check-design-tokens.js, capture-health-fixtures.js and capture-food-fixtures.js (real responses → the
-                             serializer fixtures)
-docs/                        API_CONTRACT_ASSUMED.md, API_SHOPPING_ASSUMED.md, API_HEALTH.md and API_FOOD.md (copies of
+scripts/check-design-tokens.js, capture-health-fixtures.js, capture-food-fixtures.js and capture-shop-fixtures.js (real
+                             responses → the serializer fixtures)
+docs/                        API_CONTRACT_ASSUMED.md, API_SHOPPING.md, API_HEALTH.md and API_FOOD.md (copies of
                              the backend's), MOCK_HEALTH.md, MOCK_FOOD.md, MOCK_IMAGES.md, GOOGLE_SIGNIN.md,
                              PLAY_BACKGROUND_LOCATION.md, FOOD_DEVICE_CHECKS.md; API_KITCHEN_ASSUMED.md, AI_ASSUMED.md,
                              VOICE_ASSUMED.md (Chunk 5's assumed contract), MOCK_KITCHEN.md, KITCHEN_DEVICE_CHECKS.md
@@ -318,14 +318,18 @@ Every network call is built from MetroMatrix-API `docs/API_AUTH.md` / `docs/API_
   - When the backend's document changes: copy it, update the networks, serializers, models and the dummy API, capture again (`scripts/capture-food-fixtures.js`, see `docs/MOCK_FOOD.md`), and run the gates. The parity tests fail on any key or error code the two disagree on.
   - What the API doesn't send yet is marked `TODO(API_FOOD)` (today: `isFeatured` on a staff vendor's detail).
 - **Auth is on the real contract** (merged from the `ammar` branch, 2026-10-30): `docs/AUTH_CONTRACT.md` (the same file is in the backend) and `docs/openapi.json` (a copy of the backend's `openapi.json`, `npm run openapi:export` there). `networks/__tests__/contract.test.ts` checks every auth, users, media, business and approval request against it; copy the file again when the API changes. Error codes the app branches on live in the main network file (`ERROR_CODES` in `networks/network/network.ts`), with the rule that only `REFRESH_INVALID`, `REFRESH_REUSED`, `TOKEN_REVOKED` and `ACCOUNT_DISABLED` end a session. Riders sign in on the partner portal with `identifier` (their username).
-- **Shopping still runs on an assumed document**: `docs/API_SHOPPING_ASSUMED.md` (NestJS conventions: `{ success, data }`, `VALIDATION_FAILED`, `page/pageSize`, integer rupees, `Idempotency-Key` on checkout and booking). The app now calls the real API for it too, so reconcile it with the backend's `API_SHOPPING.md`. Every dependency is marked `TODO(API_SHOPPING)` (`grep -rn "TODO(API_" src`).
+- **Shopping is on the real contract** (`shop/p1`–`p3`, 2026-10-31): `docs/API_SHOPPING.md` is a copy of the backend's. Paths are `/shop` (catalogue, bag, checkout, orders by group code, store orders by id), `/shop/partner` and `/admin/shop`, plus the core `/addresses` and `/notifications` (`shop.*` types, `{ storeOrderId, code }` data; a group's code is a store order's code without its `-N`).
+  - Bodies and queries follow the backend's DTO classes, not openapi.json's schemas: Swagger merges Shopping DTOs that share a class name and leaves some query fields out (`shopContract.test.ts` holds the DTO field lists).
+  - Serializers map the wire to `models/shopping.ts`: a cancel request is the step plus `cancelRequestedAt` (`cancellation_requested`), cash taken is `cash_collected`, a refused proof is `proof_rejected`, `completed` reads as delivered, the API's "actioned" report is "removed", option 1 and 2 are Size and Colour. The store's payment steps follow from the payment state; a transfer ships only once paid.
+  - The API has no staff overview or store list (the console counts lists and uses the public stores), no store phone, no private order note, and no category reorder (staff set `sort`).
+  - When the backend's document changes: copy it, update the networks, serializers, models and the dummy API (`shop/shopWire.ts` builds the answers), capture again (`scripts/capture-shop-fixtures.js` against a local backend with `seed:shopping`), and run the gates. `mockShopParity` fails on any key or outcome the dummy and the capture disagree on; staff views are pinned to the backend's `admin-shop.response.ts` (staff sign in with a TOTP, so they aren't captured).
 
-- **Kitchen Intelligence runs on an assumed contract** (Chunk 5, owner's decision 2026-10-19): `docs/API_KITCHEN_ASSUMED.md`, `docs/AI_ASSUMED.md` and `docs/VOICE_ASSUMED.md`, written in API_FOOD's conventions (whole rupees; quantities in base units g/ml/pc; branch-local dates; `Idempotency-Key` on reservations and subscriptions). No backend module exists yet.
+- **Kitchen Intelligence runs on an assumed contract** (Chunk 5, owner's decision 2026-10-19): `docs/API_KITCHEN_ASSUMED.md`, `docs/AI_ASSUMED.md` and `docs/VOICE_ASSUMED.md`, written in API_FOOD's conventions (whole rupees; quantities in base units g/ml/pc; branch-local dates; `Idempotency-Key` on reservations and subscriptions). The backend now has its Kitchen module and its own `docs/API_KITCHEN.md`, `AI.md` and `VOICE.md`: reconciling with them is the next step.
   - Paths: `/food/vendor/kitchen`, `/food/vendor/{surplus,tiffin,catering,ramadan,storefront,demand,menu-insights,experiments,story,hygiene,ai,nutrition}`, `/food/{surplus,tiffin,catering,ramadan}`, `/ai/voice/interpret`, `/my-kitchen`, `/admin/kitchen`.
   - Voice never writes: it answers a proposed action, and the app's Confirm calls the ordinary endpoint.
   - Keys added to API_FOOD shapes live in one list (`mock/kitchen/foodAdditions.ts`, doc §5); the Food parity tests leave them out and assert they're absent from the real capture.
   - `kitchenContract.test.ts` keeps the three documents and the dummy API one thing: every `<!-- contract: name -->` example has the answer's keys, and every request it runs is documented. Add an example whenever you add a route.
-  - Dependencies are marked `TODO(API_KITCHEN)`, `TODO(API_AI)` or `TODO(API_VOICE)`; Daily Basket's grocery `netQuantity` is `TODO(API_SHOPPING)`.
+  - Dependencies are marked `TODO(API_KITCHEN)`, `TODO(API_AI)` or `TODO(API_VOICE)`; Daily Basket's grocery `netQuantity` is the real API's product `pack` (API_SHOPPING.md §5.6).
 
 When a real document arrives, reconcile it in one pass:
 - update the networks, serializers and models (and the dummy API);

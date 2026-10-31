@@ -18,7 +18,7 @@ import { AppText, Button, ChoiceChip, Divider, EmptyState, InlineNotice, ScreenS
 import { ReviewItem } from '../../Components/shopping/ReviewItem';
 import type { PartnerReview, StorePartnerStackParamList } from '../../models';
 import { cdn } from '../../utils/cdn/cdn';
-import { openReply, postReplyAsync, selectStoreReviews, setReply, setUnrepliedOnly } from './storeReviewsSlice';
+import { openReply, postReplyAsync, selectStoreReviews, setReply, setReviewsRating, setUnrepliedOnly } from './storeReviewsSlice';
 import { partnerReviewPageSerializer } from '../../serializers/shopping/partnerSerializer';
 
 type Props = NativeStackScreenProps<StorePartnerStackParamList, 'StoreReviews'>;
@@ -47,9 +47,9 @@ const StoreReviewsContent: React.FC<Props> = () => {
   const { size } = useTheme();
   const s = useAppSelector(selectStoreReviews);
   const list = usePagedList(
-    (page, sz) => fetchPartnerReviews({ unreplied: s.unrepliedOnly || undefined }, page, sz),
+    (page, sz) => fetchPartnerReviews({ rating: s.rating, unreplied: s.unrepliedOnly || undefined }, page, sz),
     partnerReviewPageSerializer,
-    `store-reviews|${s.unrepliedOnly}`,
+    `store-reviews|${s.rating}|${s.unrepliedOnly}`,
   );
 
   const post = async () => {
@@ -67,6 +67,9 @@ const StoreReviewsContent: React.FC<Props> = () => {
       <View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
           <ChoiceChip label="Not replied" selected={s.unrepliedOnly} onPress={() => dispatch(setUnrepliedOnly(!s.unrepliedOnly))} />
+          {[5, 4, 3, 2, 1].map(n => (
+            <ChoiceChip key={n} label={`${n} stars`} icon="star" selected={s.rating === n} onPress={() => dispatch(setReviewsRating(s.rating === n ? null : n))} />
+          ))}
         </ScrollView>
       </View>
       <FlatList

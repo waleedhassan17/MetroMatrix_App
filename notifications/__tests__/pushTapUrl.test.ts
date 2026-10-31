@@ -15,9 +15,13 @@ describe('pushTapUrl', () => {
     expect(pushTapUrl({ appointmentId: 'ap_9' }, 'partner')).toBe('metromatrix://doctor/appointments/ap_9');
   });
 
-  it('keeps Shopping taps as they were', () => {
-    expect(pushTapUrl({ groupCode: 'MM-24A7Q2' }, 'customer')).toBe('metromatrix://orders/MM-24A7Q2');
-    expect(pushTapUrl({ orderId: 'o_1' }, 'partner')).toBe('metromatrix://store/orders/o_1');
+  it('sends Shopping pushes to the order, from the data MetroMatrix-API sends', () => {
+    expect(pushTapUrl({ type: 'shop.order.placed', groupCode: 'MM-24A7Q2' }, 'customer')).toBe('metromatrix://orders/MM-24A7Q2');
+    // A store order's notice names it and its code; the group is the code's prefix.
+    expect(pushTapUrl({ type: 'shop.order.shipped', storeOrderId: 'so_1', code: 'MM-24A7Q2-2' }, 'customer')).toBe('metromatrix://orders/MM-24A7Q2');
+    expect(pushTapUrl({ type: 'shop.order.new', storeOrderId: 'so_1', code: 'MM-24A7Q2-2' }, 'partner')).toBe('metromatrix://store/orders/so_1');
+    expect(pushTapUrl({ type: 'shop.return.requested', storeOrderId: 'so_1', code: 'MM-24A7Q2-2' }, 'partner')).toBe('metromatrix://store/orders/so_1');
+    expect(pushTapUrl({ type: 'shop.return.approved', returnId: 'rt_1', storeOrderId: 'so_1', code: 'MM-24A7Q2-2' }, 'customer')).toBe('metromatrix://orders/MM-24A7Q2');
     expect(pushTapUrl({}, 'customer')).toBeNull();
   });
 

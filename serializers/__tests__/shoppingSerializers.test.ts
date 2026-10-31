@@ -95,3 +95,16 @@ describe('the dummy API payloads', () => {
     expect(bag.blocking).toBe(true);
   });
 });
+
+describe('Shopping notices', () => {
+  it('reads MetroMatrix-API’s shop.* types and the store order they name', () => {
+    const n = (type: string, data: Record<string, unknown>) =>
+      notificationSerializer({ id: 'n1', type, title: 'T', body: 'B', data, readAt: null, createdAt: '2026-10-31T06:00:00.000Z' })!;
+    expect(n('shop.order.shipped', { storeOrderId: 'so_1', code: 'MM-24A7Q2-2' })).toMatchObject({ type: 'order_update', isRead: false, data: { groupCode: 'MM-24A7Q2', orderId: 'so_1' } });
+    expect(n('shop.order.placed', { groupCode: 'MM-24A7Q2' }).type).toBe('order_placed');
+    expect(n('shop.order.new', { storeOrderId: 'so_1', code: 'MM-24A7Q2-1' }).type).toBe('new_order');
+    expect(n('shop.payment.proof', {}).type).toBe('payment_proof');
+    expect(n('shop.return.requested', { returnId: 'rt_1' })).toMatchObject({ type: 'return_requested', data: { returnId: 'rt_1' } });
+    expect(n('shop.inventory.low_stock', { screen: 'inventory', lowStock: true }).type).toBe('low_stock');
+  });
+});

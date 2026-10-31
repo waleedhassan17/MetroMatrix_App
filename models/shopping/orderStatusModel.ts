@@ -196,3 +196,6 @@ export const PARTNER_SEGMENTS: { key: PartnerOrderSegment; label: string }[] = [
   { key: 'completed', label: 'Completed' },
   { key: 'cancelled', label: 'Cancelled' },
 ];
+
+/** A store order's code is its group's and its place in it: MM-24A7Q2-1 belongs to MM-24A7Q2. */
+export const groupCodeOf = (storeOrderCode: string | null | undefined): string | null => storeOrderCode?.match(/^(.+)-\d+$/)?.[1] ?? null;

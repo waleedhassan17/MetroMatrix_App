@@ -8,6 +8,7 @@ import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../s
 import { partnerReviewSerializer } from '../../serializers/shopping/partnerSerializer';
 
 export interface StoreReviewsSliceState {
+  rating: number | null;
   unrepliedOnly: boolean;
   replyFor: string | null;
   reply: string;
@@ -17,12 +18,17 @@ export interface StoreReviewsSliceState {
   replied: ReturnType<typeof partnerReviewSerializer>;
 }
 
-const initialState: StoreReviewsSliceState = { unrepliedOnly: false, replyFor: null, reply: '', status: 'idle', error: NO_ERROR, replied: null };
+const initialState: StoreReviewsSliceState = { rating: null, unrepliedOnly: false, replyFor: null, reply: '', status: 'idle', error: NO_ERROR ,
+  replied: null,
+};
 
 export const storeReviewsSlice = createAppSlice({
   name: 'storeReviews',
   initialState,
   reducers: create => ({
+    setReviewsRating: create.reducer((state, action: PayloadAction<number | null>) => {
+      state.rating = action.payload;
+    }),
     setUnrepliedOnly: create.reducer((state, action: PayloadAction<boolean>) => {
       state.unrepliedOnly = action.payload;
     }),
@@ -65,5 +71,5 @@ export const storeReviewsSlice = createAppSlice({
   },
 });
 
-export const { setUnrepliedOnly, openReply, setReply, postReplyAsync } = storeReviewsSlice.actions;
+export const { setReviewsRating, setUnrepliedOnly, openReply, setReply, postReplyAsync } = storeReviewsSlice.actions;
 export const { selectStoreReviews } = storeReviewsSlice.selectors;

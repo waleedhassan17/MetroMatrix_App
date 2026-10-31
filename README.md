@@ -47,7 +47,7 @@ The dummy API in `networks/network/mock/` is test fixtures only: the Shopping, H
 - **Store app:** Today, orders (payment check, ship with tracking), products with sizes and colours, inventory, collections, coupons, returns, reviews, insights, store profile, settings and payment accounts. MetroMatrix never holds a store's money: "Recorded sales" are records only.
 - **Partner apps:** doctor and kitchen landing screens; their tools arrive with Health and Food.
 - **Admin console:** the approval queue and business review, plus a Shopping tab (reports, categories, banners, featured stores, order lookup).
-- **The API contracts are assumed.** See [docs/API_CONTRACT_ASSUMED.md](docs/API_CONTRACT_ASSUMED.md) and [docs/API_SHOPPING_ASSUMED.md](docs/API_SHOPPING_ASSUMED.md). Every dependency is marked `TODO(API_AUTH)`, `TODO(API_FOOD)` or `TODO(API_SHOPPING)`.
+- **API contracts.** Auth, Shopping, Healthcare and Food Court run on MetroMatrix-API's real contracts ([docs/AUTH_CONTRACT.md](docs/AUTH_CONTRACT.md), [docs/API_SHOPPING.md](docs/API_SHOPPING.md), [docs/API_HEALTH.md](docs/API_HEALTH.md), [docs/API_FOOD.md](docs/API_FOOD.md), [docs/openapi.json](docs/openapi.json)); Kitchen Intelligence still runs on an assumed one ([docs/API_KITCHEN_ASSUMED.md](docs/API_KITCHEN_ASSUMED.md)).
 - **Before release:**
   - confirm the support email
   - set the iOS Google URL scheme (`app.json`)
