@@ -57,7 +57,7 @@ export const fromBanner = (b: AdminBanner): BannerForm => ({
   subhead: b.subhead ?? '',
   kind: b.target.kind,
   ref: b.target.kind === 'none' ? '' : (b.target.id ?? ''),
-  startsAt: b.startsAt.slice(0, 10),
+  startsAt: b.startsAt ? b.startsAt.slice(0, 10) : today(),
   endsAt: b.endsAt ? b.endsAt.slice(0, 10) : '',
   position: b.position,
   isActive: b.isActive,

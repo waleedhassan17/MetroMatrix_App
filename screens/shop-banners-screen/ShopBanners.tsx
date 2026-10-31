@@ -68,7 +68,8 @@ const ShopBanners: React.FC<Props> = ({ navigation }) => {
             <View style={styles.text}>
               <AppText variant="title">{b.headline}</AppText>
               <AppText variant="small" tone="muted">
-                {targetText(b)} · from {formatDate(b.startsAt)}
+                {targetText(b)}
+                {b.startsAt ? ` · from ${formatDate(b.startsAt)}` : ''}
                 {b.endsAt ? ` to ${formatDate(b.endsAt)}` : ''}
               </AppText>
             </View>

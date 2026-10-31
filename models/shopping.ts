@@ -753,7 +753,8 @@ export interface ShopOverview {
 }
 
 export interface AdminBanner extends Banner {
-  startsAt: string;
+  /** null shows it at once. */
+  startsAt: string | null;
   endsAt: string | null;
   position: number;
   isActive: boolean;

@@ -1,10 +1,12 @@
 // Real MetroMatrix-API Shopping responses (captured end to end on a local
 // backend's seed:shopping demo by scripts/capture-shop-fixtures.js: the
 // catalogue, the bag, checkout, the orders a customer and a store move, a
-// transfer, returns and reviews, and the store's own pages) through the
-// Shopping serializers.
+// transfer, returns and reviews, and the store's own pages; staff answers
+// from the backend's e2e run, scripts/capture-shop-staff-fixtures.js) through
+// the Shopping serializers.
 
 import real from './fixtures/shop/real.json';
+import staffCapture from './fixtures/shop/staff.json';
 import {
   categoryListSerializer,
   collectionListSerializer,
@@ -43,6 +45,13 @@ import {
   storeProfileSerializer,
   storeSettingsSerializer,
 } from '../shopping/partnerSerializer';
+import {
+  adminBannerSerializer,
+  featuredStateSerializer,
+  orderLookupSerializer,
+  productReportPageSerializer,
+  shopOverviewSerializer,
+} from '../shopping/adminShopSerializer';
 
 type Captured = Record<string, { status: number; body: { success: boolean; data?: any; error?: any } }>;
 const R = real as unknown as Captured;
@@ -347,3 +356,48 @@ describe('the store partner', () => {
     expect(returnSerializer(body('returnRefund'))).toMatchObject({ status: 'refunded', storeNote: 'Send it back with the tag on.', refund: { amount: 7500, reference: 'RAAST-551023' } });
   });
 });
+
+describe('the staff console', () => {
+  const STAFF = staffCapture as unknown as Record<string, { body: { data: unknown } }[]>;
+  const answer = (route: string, n = 0) => ({ success: true, data: STAFF[route][n].body.data });
+
+  it('reads the overview', () => {
+    expect(shopOverviewSerializer(answer('GET /admin/shop/overview'))).toEqual({ stores: 3, activeProducts: 27, openReports: 0, ordersToday: 19 });
+  });
+
+  it('reads the staff store list, paused stores too', () => {
+    const page = storeSummaryPageSerializer(answer('GET /admin/shop/stores'))!;
+    expect(page.items[0]).toMatchObject({ name: 'QA Karachi Crafts', isPaused: true, isFeatured: false, productCount: 2, brandColor: '#16151A' });
+  });
+
+  it('reads reports in words, with the product they are about', () => {
+    expect(productReportPageSerializer(answer('GET /admin/shop/reports'))!.items[0]).toMatchObject({
+      productName: 'Replica watch',
+      storeName: 'Admin Arcade',
+      reason: 'Counterfeit or copy',
+      reportCount: 2,
+      status: 'open',
+    });
+  });
+
+  it('reads a banner, including one that shows at once (no start date)', () => {
+    const b = adminBannerSerializer(answer('POST /admin/shop/banners'))!;
+    expect(b).toMatchObject({ headline: 'Admin Arcade sale', startsAt: null, endsAt: null, position: 0, isActive: true, target: { kind: 'store' } });
+  });
+
+  it('reads a category order and the featured state', () => {
+    expect(categoryListSerializer(answer('PUT /admin/shop/categories/order'))![0].name).toBe('Grocery');
+    expect(featuredStateSerializer(answer('POST /admin/shop/stores/:id/feature'))).toEqual({ id: expect.any(String), isFeatured: true });
+  });
+
+  it('opens an order found by its code, with its lines and timeline', () => {
+    const rows = answer('GET /admin/shop/orders');
+    const code = (STAFF['GET /admin/shop/orders'][0].body.data as { items: { groupCode: string }[] }).items[0].groupCode;
+    const found = orderLookupSerializer({ rows, details: [answer('GET /admin/shop/orders/:id')] }, code)!;
+    expect(found).toMatchObject({ code: 'MM-BKAZAT', customerName: 'Ayesha Khan', city: 'Lahore' });
+    expect(found.orders[0]).toMatchObject({ code: 'MM-BKAZAT-1', store: { name: 'Admin Arcade' }, status: 'placed', total: 2550 });
+    expect(found.orders[0].items[0]).toMatchObject({ name: 'Brass tray', quantity: 1, unitPrice: 2400 });
+    expect(found.orders[0].events.map(e => e.type)).toContain('placed');
+  });
+});
+

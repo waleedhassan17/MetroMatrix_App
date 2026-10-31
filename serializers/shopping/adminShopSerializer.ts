@@ -26,7 +26,7 @@ export const adminBannerSerializer = fromResponse(
     if (!banner || !isObject(raw)) return null;
     return {
       ...banner,
-      startsAt: iso(raw.startsAt),
+      startsAt: isoOrNull(raw.startsAt),
       endsAt: isoOrNull(raw.endsAt),
       position: Math.round(num(raw.sort)),
       isActive: bool(raw.isActive, true),

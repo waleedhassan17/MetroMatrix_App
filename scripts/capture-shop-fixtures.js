@@ -13,8 +13,8 @@
 // to clear them). It leaves the demo store as it found it: the product it buys
 // is restocked for the run and its counts put back at the end (even when the
 // run fails), the store's colours go back after the contrast check, and the
-// store replies only to the run's own review. Staff routes (/admin/shop) are
-// not captured: they need a staff sign-in with an authenticator.
+// store replies only to the run's own review. Staff routes (/admin/shop) come
+// from scripts/capture-shop-staff-fixtures.js.
 //
 // Credentials come from the backend's git-ignored .env (SEED_DEMO_PASSWORD)
 // and are never printed. The output is scrubbed (tokens, passwords, emails,

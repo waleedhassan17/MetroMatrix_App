@@ -1,0 +1,1449 @@
+{
+  "POST /admin/shop/products/:id/remove": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "b65d04c3-748b-4d65-bd56-7871a63e8538",
+          "status": "removed",
+          "removedReason": "Unsafe wiring"
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "a8d2ee62-1a80-4c9a-8370-224e9ec0afa8",
+          "status": "removed",
+          "removedReason": "Counterfeit branded goods"
+        }
+      }
+    }
+  ],
+  "GET /admin/shop/overview": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "stores": 3,
+          "activeProducts": 27,
+          "openReports": 0,
+          "ordersToday": 19
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "stores": 3,
+          "activeProducts": 28,
+          "openReports": 0,
+          "ordersToday": 20
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "stores": 4,
+          "activeProducts": 28,
+          "openReports": 0,
+          "ordersToday": 20
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "stores": 4,
+          "activeProducts": 29,
+          "openReports": 0,
+          "ordersToday": 21
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "stores": 3,
+          "activeProducts": 28,
+          "openReports": 0,
+          "ordersToday": 21
+        }
+      }
+    }
+  ],
+  "GET /admin/shop/stores": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": "1b0c228c-f774-4286-8ccc-04d9b7feb0a3",
+              "slug": "qa-karachi-crafts-9a454",
+              "name": "QA Karachi Crafts",
+              "city": "Lahore",
+              "logoUrl": null,
+              "brandColor": "#16151A",
+              "onBrandColor": "#FFFFFF",
+              "isFeatured": false,
+              "isPaused": true,
+              "businessStatus": "approved",
+              "productCount": 2,
+              "ratingAvg": 0,
+              "ratingCount": 0,
+              "ownerEmail": "someone@example.com",
+              "createdAt": "2026-10-31T13:42:39.599Z"
+            }
+          ],
+          "total": 1,
+          "page": 1,
+          "pageSize": 20
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": "13dadb52-d2f9-4b2f-bc41-b0a4ee3a0e4b",
+              "slug": "quiet-quilts-ac85f",
+              "name": "Quiet Quilts",
+              "city": "Lahore",
+              "logoUrl": null,
+              "brandColor": "#16151A",
+              "onBrandColor": "#FFFFFF",
+              "isFeatured": true,
+              "isPaused": true,
+              "businessStatus": "approved",
+              "productCount": 0,
+              "ratingAvg": 0,
+              "ratingCount": 0,
+              "ownerEmail": "someone@example.com",
+              "createdAt": "2026-10-31T13:42:47.752Z"
+            },
+            {
+              "id": "8895447e-71a5-48f0-84f5-aa35fe2d2eb9",
+              "slug": "admin-arcade-71c16",
+              "name": "Admin Arcade",
+              "city": "Lahore",
+              "logoUrl": null,
+              "brandColor": "#16151A",
+              "onBrandColor": "#FFFFFF",
+              "isFeatured": false,
+              "isPaused": false,
+              "businessStatus": "approved",
+              "productCount": 1,
+              "ratingAvg": 0,
+              "ratingCount": 0,
+              "ownerEmail": "someone@example.com",
+              "createdAt": "2026-10-31T13:42:47.271Z"
+            },
+            {
+              "id": "03b0ba6e-f715-4efe-b36c-4ca99435ac92",
+              "slug": "qa-apparel-18c9a",
+              "name": "QA Apparel",
+              "city": "Lahore",
+              "logoUrl": null,
+              "brandColor": "#16151A",
+              "onBrandColor": "#FFFFFF",
+              "isFeatured": false,
+              "isPaused": false,
+              "businessStatus": "approved",
+              "productCount": 21,
+              "ratingAvg": 5,
+              "ratingCount": 1,
+              "ownerEmail": "someone@example.com",
+              "createdAt": "2026-10-31T13:42:39.332Z"
+            }
+          ],
+          "total": 5,
+          "page": 1,
+          "pageSize": 20
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": "13dadb52-d2f9-4b2f-bc41-b0a4ee3a0e4b",
+              "slug": "quiet-quilts-ac85f",
+              "name": "Quiet Quilts",
+              "city": "Lahore",
+              "logoUrl": null,
+              "brandColor": "#16151A",
+              "onBrandColor": "#FFFFFF",
+              "isFeatured": true,
+              "isPaused": true,
+              "businessStatus": "approved",
+              "productCount": 0,
+              "ratingAvg": 0,
+              "ratingCount": 0,
+              "ownerEmail": "someone@example.com",
+              "createdAt": "2026-10-31T13:42:47.752Z"
+            }
+          ],
+          "total": 1,
+          "page": 1,
+          "pageSize": 20
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": "13dadb52-d2f9-4b2f-bc41-b0a4ee3a0e4b",
+              "slug": "quiet-quilts-ac85f",
+              "name": "Quiet Quilts",
+              "city": "Lahore",
+              "logoUrl": null,
+              "brandColor": "#16151A",
+              "onBrandColor": "#FFFFFF",
+              "isFeatured": true,
+              "isPaused": true,
+              "businessStatus": "approved",
+              "productCount": 0,
+              "ratingAvg": 0,
+              "ratingCount": 0,
+              "ownerEmail": "someone@example.com",
+              "createdAt": "2026-10-31T13:42:47.752Z"
+            }
+          ],
+          "total": 1,
+          "page": 1,
+          "pageSize": 20
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": "8895447e-71a5-48f0-84f5-aa35fe2d2eb9",
+              "slug": "admin-arcade-71c16",
+              "name": "Admin Arcade",
+              "city": "Lahore",
+              "logoUrl": null,
+              "brandColor": "#16151A",
+              "onBrandColor": "#FFFFFF",
+              "isFeatured": false,
+              "isPaused": false,
+              "businessStatus": "approved",
+              "productCount": 1,
+              "ratingAvg": 0,
+              "ratingCount": 0,
+              "ownerEmail": "someone@example.com",
+              "createdAt": "2026-10-31T13:42:47.271Z"
+            },
+            {
+              "id": "03b0ba6e-f715-4efe-b36c-4ca99435ac92",
+              "slug": "qa-apparel-18c9a",
+              "name": "QA Apparel",
+              "city": "Lahore",
+              "logoUrl": null,
+              "brandColor": "#16151A",
+              "onBrandColor": "#FFFFFF",
+              "isFeatured": false,
+              "isPaused": false,
+              "businessStatus": "approved",
+              "productCount": 21,
+              "ratingAvg": 5,
+              "ratingCount": 1,
+              "ownerEmail": "someone@example.com",
+              "createdAt": "2026-10-31T13:42:39.332Z"
+            },
+            {
+              "id": "93f10012-8a53-4edb-bc96-2692abf8ca39",
+              "slug": "qa-bazaar-8c5ec",
+              "name": "QA Bazaar",
+              "city": "Lahore",
+              "logoUrl": null,
+              "brandColor": "#16151A",
+              "onBrandColor": "#FFFFFF",
+              "isFeatured": false,
+              "isPaused": false,
+              "businessStatus": "approved",
+              "productCount": 5,
+              "ratingAvg": 0,
+              "ratingCount": 0,
+              "ownerEmail": "someone@example.com",
+              "createdAt": "2026-10-31T13:42:39.450Z"
+            }
+          ],
+          "total": 4,
+          "page": 1,
+          "pageSize": 20
+        }
+      }
+    }
+  ],
+  "GET /admin/shop/categories": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": [
+          {
+            "id": "044f1d84-830b-4596-83b0-e9315f3f7910",
+            "parentId": null,
+            "name": "Women",
+            "slug": "women",
+            "icon": "women",
+            "sort": 0,
+            "isActive": true,
+            "children": [
+              {
+                "id": "b9587e12-96d2-44fd-8725-a3370ea8d3e5",
+                "parentId": "044f1d84-830b-4596-83b0-e9315f3f7910",
+                "name": "Kurtas & tunics",
+                "slug": "women-kurtas-tunics",
+                "icon": null,
+                "sort": 0,
+                "isActive": true
+              },
+              {
+                "id": "e48b423e-0cf4-4ced-8adc-e8ff8b8f0616",
+                "parentId": "044f1d84-830b-4596-83b0-e9315f3f7910",
+                "name": "Shalwar kameez",
+                "slug": "women-shalwar-kameez",
+                "icon": null,
+                "sort": 1,
+                "isActive": true
+              },
+              {
+                "id": "d31bcdd9-5786-4b57-a5d0-ff6939cdf988",
+                "parentId": "044f1d84-830b-4596-83b0-e9315f3f7910",
+                "name": "Dupattas & shawls",
+                "slug": "women-dupattas-shawls",
+                "icon": null,
+                "sort": 2,
+                "isActive": true
+              }
+            ]
+          },
+          {
+            "id": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+            "parentId": null,
+            "name": "Men",
+            "slug": "men",
+            "icon": "men",
+            "sort": 1,
+            "isActive": true,
+            "children": [
+              {
+                "id": "ca1f9b75-eee1-45cc-bd08-2d0974380a53",
+                "parentId": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+                "name": "Kurtas & shalwar kameez",
+                "slug": "men-kurtas-shalwar-kameez",
+                "icon": null,
+                "sort": 0,
+                "isActive": true
+              },
+              {
+                "id": "4c7c7bac-0922-402c-8abe-ae0411691c9e",
+                "parentId": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+                "name": "Shirts & T-shirts",
+                "slug": "men-shirts-tshirts",
+                "icon": null,
+                "sort": 1,
+                "isActive": true
+              },
+              {
+                "id": "60b9a8ad-4da1-40f0-8f2b-3eb7c7121825",
+                "parentId": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+                "name": "Trousers & jeans",
+                "slug": "men-trousers-jeans",
+                "icon": null,
+                "sort": 2,
+                "isActive": true
+              }
+            ]
+          },
+          {
+            "id": "4aea0df7-937f-4f53-9f38-561728b17e4d",
+            "parentId": null,
+            "name": "Kids",
+            "slug": "kids",
+            "icon": "kids",
+            "sort": 2,
+            "isActive": true,
+            "children": [
+              {
+                "id": "edf6d7be-8572-48bd-b597-e824e523d865",
+                "parentId": "4aea0df7-937f-4f53-9f38-561728b17e4d",
+                "name": "Girls",
+                "slug": "kids-girls",
+                "icon": null,
+                "sort": 0,
+                "isActive": true
+              },
+              {
+                "id": "fce35b2c-c980-48d1-9984-ad6415cc6486",
+                "parentId": "4aea0df7-937f-4f53-9f38-561728b17e4d",
+                "name": "Boys",
+                "slug": "kids-boys",
+                "icon": null,
+                "sort": 1,
+                "isActive": true
+              },
+              {
+                "id": "34098a31-b131-470f-b66b-1e873f049401",
+                "parentId": "4aea0df7-937f-4f53-9f38-561728b17e4d",
+                "name": "Babies",
+                "slug": "kids-babies",
+                "icon": null,
+                "sort": 2,
+                "isActive": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": [
+          {
+            "id": "dfa4ddff-e5cb-4b0b-8660-4ae8acd5dc5f",
+            "parentId": null,
+            "name": "Grocery",
+            "slug": "grocery",
+            "icon": "grocery",
+            "sort": 0,
+            "isActive": true,
+            "children": [
+              {
+                "id": "ed5cbf12-062a-4ef9-871d-2de1b61b0670",
+                "parentId": "dfa4ddff-e5cb-4b0b-8660-4ae8acd5dc5f",
+                "name": "Vegetables & fruit",
+                "slug": "grocery-vegetables-fruit",
+                "icon": null,
+                "sort": 0,
+                "isActive": true
+              },
+              {
+                "id": "d24b5a4f-04dc-4f66-9c67-aa671a3cf1ef",
+                "parentId": "dfa4ddff-e5cb-4b0b-8660-4ae8acd5dc5f",
+                "name": "Meat & poultry",
+                "slug": "grocery-meat-poultry",
+                "icon": null,
+                "sort": 1,
+                "isActive": true
+              },
+              {
+                "id": "2473dd7d-6eaf-4803-8671-5ad41cda6455",
+                "parentId": "dfa4ddff-e5cb-4b0b-8660-4ae8acd5dc5f",
+                "name": "Dairy & eggs",
+                "slug": "grocery-dairy-eggs",
+                "icon": null,
+                "sort": 2,
+                "isActive": true
+              }
+            ]
+          },
+          {
+            "id": "044f1d84-830b-4596-83b0-e9315f3f7910",
+            "parentId": null,
+            "name": "Women",
+            "slug": "women",
+            "icon": "women",
+            "sort": 1,
+            "isActive": true,
+            "children": [
+              {
+                "id": "b9587e12-96d2-44fd-8725-a3370ea8d3e5",
+                "parentId": "044f1d84-830b-4596-83b0-e9315f3f7910",
+                "name": "Kurtas & tunics",
+                "slug": "women-kurtas-tunics",
+                "icon": null,
+                "sort": 0,
+                "isActive": true
+              },
+              {
+                "id": "e48b423e-0cf4-4ced-8adc-e8ff8b8f0616",
+                "parentId": "044f1d84-830b-4596-83b0-e9315f3f7910",
+                "name": "Shalwar kameez",
+                "slug": "women-shalwar-kameez",
+                "icon": null,
+                "sort": 1,
+                "isActive": true
+              },
+              {
+                "id": "d31bcdd9-5786-4b57-a5d0-ff6939cdf988",
+                "parentId": "044f1d84-830b-4596-83b0-e9315f3f7910",
+                "name": "Dupattas & shawls",
+                "slug": "women-dupattas-shawls",
+                "icon": null,
+                "sort": 2,
+                "isActive": true
+              }
+            ]
+          },
+          {
+            "id": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+            "parentId": null,
+            "name": "Men",
+            "slug": "men",
+            "icon": "men",
+            "sort": 2,
+            "isActive": true,
+            "children": [
+              {
+                "id": "ca1f9b75-eee1-45cc-bd08-2d0974380a53",
+                "parentId": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+                "name": "Kurtas & shalwar kameez",
+                "slug": "men-kurtas-shalwar-kameez",
+                "icon": null,
+                "sort": 0,
+                "isActive": true
+              },
+              {
+                "id": "4c7c7bac-0922-402c-8abe-ae0411691c9e",
+                "parentId": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+                "name": "Shirts & T-shirts",
+                "slug": "men-shirts-tshirts",
+                "icon": null,
+                "sort": 1,
+                "isActive": true
+              },
+              {
+                "id": "60b9a8ad-4da1-40f0-8f2b-3eb7c7121825",
+                "parentId": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+                "name": "Trousers & jeans",
+                "slug": "men-trousers-jeans",
+                "icon": null,
+                "sort": 2,
+                "isActive": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": [
+          {
+            "id": "044f1d84-830b-4596-83b0-e9315f3f7910",
+            "parentId": null,
+            "name": "Women",
+            "slug": "women",
+            "icon": "women",
+            "sort": 0,
+            "isActive": true,
+            "children": [
+              {
+                "id": "31c5e778-afad-4d5e-86af-449c675b89f6",
+                "parentId": "044f1d84-830b-4596-83b0-e9315f3f7910",
+                "name": "Footwear",
+                "slug": "women-footwear",
+                "icon": null,
+                "sort": 0,
+                "isActive": true
+              },
+              {
+                "id": "b9587e12-96d2-44fd-8725-a3370ea8d3e5",
+                "parentId": "044f1d84-830b-4596-83b0-e9315f3f7910",
+                "name": "Kurtas & tunics",
+                "slug": "women-kurtas-tunics",
+                "icon": null,
+                "sort": 1,
+                "isActive": true
+              },
+              {
+                "id": "e48b423e-0cf4-4ced-8adc-e8ff8b8f0616",
+                "parentId": "044f1d84-830b-4596-83b0-e9315f3f7910",
+                "name": "Shalwar kameez",
+                "slug": "women-shalwar-kameez",
+                "icon": null,
+                "sort": 2,
+                "isActive": true
+              }
+            ]
+          },
+          {
+            "id": "dfa4ddff-e5cb-4b0b-8660-4ae8acd5dc5f",
+            "parentId": null,
+            "name": "Grocery",
+            "slug": "grocery",
+            "icon": "grocery",
+            "sort": 1,
+            "isActive": true,
+            "children": [
+              {
+                "id": "ed5cbf12-062a-4ef9-871d-2de1b61b0670",
+                "parentId": "dfa4ddff-e5cb-4b0b-8660-4ae8acd5dc5f",
+                "name": "Vegetables & fruit",
+                "slug": "grocery-vegetables-fruit",
+                "icon": null,
+                "sort": 0,
+                "isActive": true
+              },
+              {
+                "id": "d24b5a4f-04dc-4f66-9c67-aa671a3cf1ef",
+                "parentId": "dfa4ddff-e5cb-4b0b-8660-4ae8acd5dc5f",
+                "name": "Meat & poultry",
+                "slug": "grocery-meat-poultry",
+                "icon": null,
+                "sort": 1,
+                "isActive": true
+              },
+              {
+                "id": "2473dd7d-6eaf-4803-8671-5ad41cda6455",
+                "parentId": "dfa4ddff-e5cb-4b0b-8660-4ae8acd5dc5f",
+                "name": "Dairy & eggs",
+                "slug": "grocery-dairy-eggs",
+                "icon": null,
+                "sort": 2,
+                "isActive": true
+              }
+            ]
+          },
+          {
+            "id": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+            "parentId": null,
+            "name": "Men",
+            "slug": "men",
+            "icon": "men",
+            "sort": 2,
+            "isActive": true,
+            "children": [
+              {
+                "id": "ca1f9b75-eee1-45cc-bd08-2d0974380a53",
+                "parentId": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+                "name": "Kurtas & shalwar kameez",
+                "slug": "men-kurtas-shalwar-kameez",
+                "icon": null,
+                "sort": 0,
+                "isActive": true
+              },
+              {
+                "id": "4c7c7bac-0922-402c-8abe-ae0411691c9e",
+                "parentId": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+                "name": "Shirts & T-shirts",
+                "slug": "men-shirts-tshirts",
+                "icon": null,
+                "sort": 1,
+                "isActive": true
+              },
+              {
+                "id": "60b9a8ad-4da1-40f0-8f2b-3eb7c7121825",
+                "parentId": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+                "name": "Trousers & jeans",
+                "slug": "men-trousers-jeans",
+                "icon": null,
+                "sort": 2,
+                "isActive": true
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "PUT /admin/shop/categories/order": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": [
+          {
+            "id": "dfa4ddff-e5cb-4b0b-8660-4ae8acd5dc5f",
+            "parentId": null,
+            "name": "Grocery",
+            "slug": "grocery",
+            "icon": "grocery",
+            "sort": 0,
+            "isActive": true,
+            "children": [
+              {
+                "id": "ed5cbf12-062a-4ef9-871d-2de1b61b0670",
+                "parentId": "dfa4ddff-e5cb-4b0b-8660-4ae8acd5dc5f",
+                "name": "Vegetables & fruit",
+                "slug": "grocery-vegetables-fruit",
+                "icon": null,
+                "sort": 0,
+                "isActive": true
+              },
+              {
+                "id": "d24b5a4f-04dc-4f66-9c67-aa671a3cf1ef",
+                "parentId": "dfa4ddff-e5cb-4b0b-8660-4ae8acd5dc5f",
+                "name": "Meat & poultry",
+                "slug": "grocery-meat-poultry",
+                "icon": null,
+                "sort": 1,
+                "isActive": true
+              },
+              {
+                "id": "2473dd7d-6eaf-4803-8671-5ad41cda6455",
+                "parentId": "dfa4ddff-e5cb-4b0b-8660-4ae8acd5dc5f",
+                "name": "Dairy & eggs",
+                "slug": "grocery-dairy-eggs",
+                "icon": null,
+                "sort": 2,
+                "isActive": true
+              }
+            ]
+          },
+          {
+            "id": "044f1d84-830b-4596-83b0-e9315f3f7910",
+            "parentId": null,
+            "name": "Women",
+            "slug": "women",
+            "icon": "women",
+            "sort": 1,
+            "isActive": true,
+            "children": [
+              {
+                "id": "b9587e12-96d2-44fd-8725-a3370ea8d3e5",
+                "parentId": "044f1d84-830b-4596-83b0-e9315f3f7910",
+                "name": "Kurtas & tunics",
+                "slug": "women-kurtas-tunics",
+                "icon": null,
+                "sort": 0,
+                "isActive": true
+              },
+              {
+                "id": "e48b423e-0cf4-4ced-8adc-e8ff8b8f0616",
+                "parentId": "044f1d84-830b-4596-83b0-e9315f3f7910",
+                "name": "Shalwar kameez",
+                "slug": "women-shalwar-kameez",
+                "icon": null,
+                "sort": 1,
+                "isActive": true
+              },
+              {
+                "id": "d31bcdd9-5786-4b57-a5d0-ff6939cdf988",
+                "parentId": "044f1d84-830b-4596-83b0-e9315f3f7910",
+                "name": "Dupattas & shawls",
+                "slug": "women-dupattas-shawls",
+                "icon": null,
+                "sort": 2,
+                "isActive": true
+              }
+            ]
+          },
+          {
+            "id": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+            "parentId": null,
+            "name": "Men",
+            "slug": "men",
+            "icon": "men",
+            "sort": 2,
+            "isActive": true,
+            "children": [
+              {
+                "id": "ca1f9b75-eee1-45cc-bd08-2d0974380a53",
+                "parentId": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+                "name": "Kurtas & shalwar kameez",
+                "slug": "men-kurtas-shalwar-kameez",
+                "icon": null,
+                "sort": 0,
+                "isActive": true
+              },
+              {
+                "id": "4c7c7bac-0922-402c-8abe-ae0411691c9e",
+                "parentId": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+                "name": "Shirts & T-shirts",
+                "slug": "men-shirts-tshirts",
+                "icon": null,
+                "sort": 1,
+                "isActive": true
+              },
+              {
+                "id": "60b9a8ad-4da1-40f0-8f2b-3eb7c7121825",
+                "parentId": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+                "name": "Trousers & jeans",
+                "slug": "men-trousers-jeans",
+                "icon": null,
+                "sort": 2,
+                "isActive": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": [
+          {
+            "id": "dfa4ddff-e5cb-4b0b-8660-4ae8acd5dc5f",
+            "parentId": null,
+            "name": "Grocery",
+            "slug": "grocery",
+            "icon": "grocery",
+            "sort": 0,
+            "isActive": true,
+            "children": [
+              {
+                "id": "ed5cbf12-062a-4ef9-871d-2de1b61b0670",
+                "parentId": "dfa4ddff-e5cb-4b0b-8660-4ae8acd5dc5f",
+                "name": "Vegetables & fruit",
+                "slug": "grocery-vegetables-fruit",
+                "icon": null,
+                "sort": 0,
+                "isActive": true
+              },
+              {
+                "id": "d24b5a4f-04dc-4f66-9c67-aa671a3cf1ef",
+                "parentId": "dfa4ddff-e5cb-4b0b-8660-4ae8acd5dc5f",
+                "name": "Meat & poultry",
+                "slug": "grocery-meat-poultry",
+                "icon": null,
+                "sort": 1,
+                "isActive": true
+              },
+              {
+                "id": "2473dd7d-6eaf-4803-8671-5ad41cda6455",
+                "parentId": "dfa4ddff-e5cb-4b0b-8660-4ae8acd5dc5f",
+                "name": "Dairy & eggs",
+                "slug": "grocery-dairy-eggs",
+                "icon": null,
+                "sort": 2,
+                "isActive": true
+              }
+            ]
+          },
+          {
+            "id": "044f1d84-830b-4596-83b0-e9315f3f7910",
+            "parentId": null,
+            "name": "Women",
+            "slug": "women",
+            "icon": "women",
+            "sort": 1,
+            "isActive": true,
+            "children": [
+              {
+                "id": "31c5e778-afad-4d5e-86af-449c675b89f6",
+                "parentId": "044f1d84-830b-4596-83b0-e9315f3f7910",
+                "name": "Footwear",
+                "slug": "women-footwear",
+                "icon": null,
+                "sort": 0,
+                "isActive": true
+              },
+              {
+                "id": "b9587e12-96d2-44fd-8725-a3370ea8d3e5",
+                "parentId": "044f1d84-830b-4596-83b0-e9315f3f7910",
+                "name": "Kurtas & tunics",
+                "slug": "women-kurtas-tunics",
+                "icon": null,
+                "sort": 1,
+                "isActive": true
+              },
+              {
+                "id": "e48b423e-0cf4-4ced-8adc-e8ff8b8f0616",
+                "parentId": "044f1d84-830b-4596-83b0-e9315f3f7910",
+                "name": "Shalwar kameez",
+                "slug": "women-shalwar-kameez",
+                "icon": null,
+                "sort": 2,
+                "isActive": true
+              }
+            ]
+          },
+          {
+            "id": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+            "parentId": null,
+            "name": "Men",
+            "slug": "men",
+            "icon": "men",
+            "sort": 2,
+            "isActive": true,
+            "children": [
+              {
+                "id": "ca1f9b75-eee1-45cc-bd08-2d0974380a53",
+                "parentId": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+                "name": "Kurtas & shalwar kameez",
+                "slug": "men-kurtas-shalwar-kameez",
+                "icon": null,
+                "sort": 0,
+                "isActive": true
+              },
+              {
+                "id": "4c7c7bac-0922-402c-8abe-ae0411691c9e",
+                "parentId": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+                "name": "Shirts & T-shirts",
+                "slug": "men-shirts-tshirts",
+                "icon": null,
+                "sort": 1,
+                "isActive": true
+              },
+              {
+                "id": "60b9a8ad-4da1-40f0-8f2b-3eb7c7121825",
+                "parentId": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+                "name": "Trousers & jeans",
+                "slug": "men-trousers-jeans",
+                "icon": null,
+                "sort": 2,
+                "isActive": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": [
+          {
+            "id": "044f1d84-830b-4596-83b0-e9315f3f7910",
+            "parentId": null,
+            "name": "Women",
+            "slug": "women",
+            "icon": "women",
+            "sort": 0,
+            "isActive": true,
+            "children": [
+              {
+                "id": "31c5e778-afad-4d5e-86af-449c675b89f6",
+                "parentId": "044f1d84-830b-4596-83b0-e9315f3f7910",
+                "name": "Footwear",
+                "slug": "women-footwear",
+                "icon": null,
+                "sort": 0,
+                "isActive": true
+              },
+              {
+                "id": "b9587e12-96d2-44fd-8725-a3370ea8d3e5",
+                "parentId": "044f1d84-830b-4596-83b0-e9315f3f7910",
+                "name": "Kurtas & tunics",
+                "slug": "women-kurtas-tunics",
+                "icon": null,
+                "sort": 1,
+                "isActive": true
+              },
+              {
+                "id": "e48b423e-0cf4-4ced-8adc-e8ff8b8f0616",
+                "parentId": "044f1d84-830b-4596-83b0-e9315f3f7910",
+                "name": "Shalwar kameez",
+                "slug": "women-shalwar-kameez",
+                "icon": null,
+                "sort": 2,
+                "isActive": true
+              }
+            ]
+          },
+          {
+            "id": "dfa4ddff-e5cb-4b0b-8660-4ae8acd5dc5f",
+            "parentId": null,
+            "name": "Grocery",
+            "slug": "grocery",
+            "icon": "grocery",
+            "sort": 1,
+            "isActive": true,
+            "children": [
+              {
+                "id": "ed5cbf12-062a-4ef9-871d-2de1b61b0670",
+                "parentId": "dfa4ddff-e5cb-4b0b-8660-4ae8acd5dc5f",
+                "name": "Vegetables & fruit",
+                "slug": "grocery-vegetables-fruit",
+                "icon": null,
+                "sort": 0,
+                "isActive": true
+              },
+              {
+                "id": "d24b5a4f-04dc-4f66-9c67-aa671a3cf1ef",
+                "parentId": "dfa4ddff-e5cb-4b0b-8660-4ae8acd5dc5f",
+                "name": "Meat & poultry",
+                "slug": "grocery-meat-poultry",
+                "icon": null,
+                "sort": 1,
+                "isActive": true
+              },
+              {
+                "id": "2473dd7d-6eaf-4803-8671-5ad41cda6455",
+                "parentId": "dfa4ddff-e5cb-4b0b-8660-4ae8acd5dc5f",
+                "name": "Dairy & eggs",
+                "slug": "grocery-dairy-eggs",
+                "icon": null,
+                "sort": 2,
+                "isActive": true
+              }
+            ]
+          },
+          {
+            "id": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+            "parentId": null,
+            "name": "Men",
+            "slug": "men",
+            "icon": "men",
+            "sort": 2,
+            "isActive": true,
+            "children": [
+              {
+                "id": "ca1f9b75-eee1-45cc-bd08-2d0974380a53",
+                "parentId": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+                "name": "Kurtas & shalwar kameez",
+                "slug": "men-kurtas-shalwar-kameez",
+                "icon": null,
+                "sort": 0,
+                "isActive": true
+              },
+              {
+                "id": "4c7c7bac-0922-402c-8abe-ae0411691c9e",
+                "parentId": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+                "name": "Shirts & T-shirts",
+                "slug": "men-shirts-tshirts",
+                "icon": null,
+                "sort": 1,
+                "isActive": true
+              },
+              {
+                "id": "60b9a8ad-4da1-40f0-8f2b-3eb7c7121825",
+                "parentId": "185d213c-e764-4d43-81e6-9796a46e5cdb",
+                "name": "Trousers & jeans",
+                "slug": "men-trousers-jeans",
+                "icon": null,
+                "sort": 2,
+                "isActive": true
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "POST /admin/shop/stores/:id/feature": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "13dadb52-d2f9-4b2f-bc41-b0a4ee3a0e4b",
+          "isFeatured": true
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "8895447e-71a5-48f0-84f5-aa35fe2d2eb9",
+          "isFeatured": true
+        }
+      }
+    }
+  ],
+  "POST /admin/shop/categories": [
+    {
+      "status": 201,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "5ee7eda6-906b-4e8f-8522-d16972e22a93",
+          "parentId": "044f1d84-830b-4596-83b0-e9315f3f7910",
+          "name": "Bridal wear",
+          "slug": "bridal-wear",
+          "icon": "sparkles",
+          "sort": 0,
+          "isActive": true
+        }
+      }
+    },
+    {
+      "status": 201,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "52ab9884-89b8-41b1-837d-ba298dfb3e42",
+          "parentId": null,
+          "name": "Temporary shelf",
+          "slug": "temporary-shelf",
+          "icon": null,
+          "sort": 0,
+          "isActive": true
+        }
+      }
+    }
+  ],
+  "PATCH /admin/shop/categories/:id": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "5ee7eda6-906b-4e8f-8522-d16972e22a93",
+          "parentId": "044f1d84-830b-4596-83b0-e9315f3f7910",
+          "name": "Bridal wear",
+          "slug": "bridal-wear",
+          "icon": "sparkles",
+          "sort": 0,
+          "isActive": false
+        }
+      }
+    }
+  ],
+  "DELETE /admin/shop/categories/:id": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "deleted": true
+        }
+      }
+    }
+  ],
+  "POST /admin/shop/banners": [
+    {
+      "status": 201,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "4a8361c8-2026-437f-8116-cf5c9735fd64",
+          "imageUrl": "https://res.cloudinary.com/metromatrix-test/image/upload/v1712345678/metromatrix/test/8852c15d-6758-4eeb-a538-42ac53354fb0/banner/a3.jpg",
+          "title": "Admin Arcade sale",
+          "subtitle": null,
+          "targetType": "store",
+          "targetId": "8895447e-71a5-48f0-84f5-aa35fe2d2eb9",
+          "startsAt": null,
+          "endsAt": null,
+          "sort": 0,
+          "isActive": true
+        }
+      }
+    },
+    {
+      "status": 201,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "5cce73f1-df9f-444a-a7fd-607e0a487f65",
+          "imageUrl": "https://res.cloudinary.com/metromatrix-test/image/upload/v1712345678/metromatrix/test/8852c15d-6758-4eeb-a538-42ac53354fb0/banner/a3.jpg",
+          "title": "Last season",
+          "subtitle": null,
+          "targetType": "none",
+          "targetId": null,
+          "startsAt": "2026-10-21T13:42:48.715Z",
+          "endsAt": "2026-10-30T13:42:48.715Z",
+          "sort": 0,
+          "isActive": true
+        }
+      }
+    }
+  ],
+  "POST /admin/shop/stores/:id/unfeature": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "8895447e-71a5-48f0-84f5-aa35fe2d2eb9",
+          "isFeatured": false
+        }
+      }
+    }
+  ],
+  "DELETE /admin/shop/banners/:id": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "deleted": true
+        }
+      }
+    }
+  ],
+  "GET /admin/shop/reports": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": "4f510765-3822-41c4-b748-7653832b33a4",
+              "reason": "counterfeit",
+              "details": null,
+              "status": "open",
+              "createdAt": "2026-10-31T13:42:49.040Z",
+              "resolvedAt": null,
+              "resolutionNote": null,
+              "openReportsOnProduct": 2,
+              "product": {
+                "id": "a8d2ee62-1a80-4c9a-8370-224e9ec0afa8",
+                "name": "Replica watch",
+                "status": "active"
+              },
+              "store": {
+                "id": "8895447e-71a5-48f0-84f5-aa35fe2d2eb9",
+                "name": "Admin Arcade"
+              }
+            },
+            {
+              "id": "3964f891-b7a6-4867-9a28-8704ebcc9dbd",
+              "reason": "other",
+              "details": null,
+              "status": "open",
+              "createdAt": "2026-10-31T13:42:49.107Z",
+              "resolvedAt": null,
+              "resolutionNote": null,
+              "openReportsOnProduct": 2,
+              "product": {
+                "id": "a8d2ee62-1a80-4c9a-8370-224e9ec0afa8",
+                "name": "Replica watch",
+                "status": "active"
+              },
+              "store": {
+                "id": "8895447e-71a5-48f0-84f5-aa35fe2d2eb9",
+                "name": "Admin Arcade"
+              }
+            }
+          ],
+          "total": 2,
+          "page": 1,
+          "pageSize": 20
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": "4f510765-3822-41c4-b748-7653832b33a4",
+              "reason": "counterfeit",
+              "details": null,
+              "status": "actioned",
+              "createdAt": "2026-10-31T13:42:49.040Z",
+              "resolvedAt": "2026-10-31T13:42:49.210Z",
+              "resolutionNote": "Counterfeit branded goods",
+              "openReportsOnProduct": 0,
+              "product": {
+                "id": "a8d2ee62-1a80-4c9a-8370-224e9ec0afa8",
+                "name": "Replica watch",
+                "status": "removed"
+              },
+              "store": {
+                "id": "8895447e-71a5-48f0-84f5-aa35fe2d2eb9",
+                "name": "Admin Arcade"
+              }
+            }
+          ],
+          "total": 1,
+          "page": 1,
+          "pageSize": 20
+        }
+      }
+    }
+  ],
+  "POST /admin/shop/reports/:id/dismiss": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "3964f891-b7a6-4867-9a28-8704ebcc9dbd",
+          "status": "dismissed"
+        }
+      }
+    }
+  ],
+  "POST /admin/shop/products/:id/restore": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "a8d2ee62-1a80-4c9a-8370-224e9ec0afa8",
+          "status": "active"
+        }
+      }
+    }
+  ],
+  "GET /admin/shop/orders": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": "8fc253ef-96f8-4f90-9606-9014ee1672bc",
+              "code": "MM-BKAZAT-1",
+              "groupCode": "MM-BKAZAT",
+              "status": "placed",
+              "paymentMethod": "cod",
+              "paymentStatus": "cod_pending",
+              "total": 2550,
+              "store": {
+                "id": "8895447e-71a5-48f0-84f5-aa35fe2d2eb9",
+                "name": "Admin Arcade"
+              },
+              "customerName": "Ayesha Khan",
+              "city": "Lahore",
+              "cancelReason": null,
+              "cancelledBy": null,
+              "placedAt": "2026-10-31T13:42:49.968Z"
+            }
+          ],
+          "total": 1,
+          "page": 1,
+          "pageSize": 20
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": "8fc253ef-96f8-4f90-9606-9014ee1672bc",
+              "code": "MM-BKAZAT-1",
+              "groupCode": "MM-BKAZAT",
+              "status": "placed",
+              "paymentMethod": "cod",
+              "paymentStatus": "cod_pending",
+              "total": 2550,
+              "store": {
+                "id": "8895447e-71a5-48f0-84f5-aa35fe2d2eb9",
+                "name": "Admin Arcade"
+              },
+              "customerName": "Ayesha Khan",
+              "city": "Lahore",
+              "cancelReason": null,
+              "cancelledBy": null,
+              "placedAt": "2026-10-31T13:42:49.968Z"
+            },
+            {
+              "id": "50a54373-9c58-4e34-be55-7cf9747166da",
+              "code": "MM-QZFPN4-1",
+              "groupCode": "MM-QZFPN4",
+              "status": "placed",
+              "paymentMethod": "cod",
+              "paymentStatus": "cod_pending",
+              "total": 2150,
+              "store": {
+                "id": "8895447e-71a5-48f0-84f5-aa35fe2d2eb9",
+                "name": "Admin Arcade"
+              },
+              "customerName": "Ayesha Khan",
+              "city": "Lahore",
+              "cancelReason": null,
+              "cancelledBy": null,
+              "placedAt": "2026-10-31T13:42:47.508Z"
+            }
+          ],
+          "total": 2,
+          "page": 1,
+          "pageSize": 100
+        }
+      }
+    }
+  ],
+  "GET /admin/shop/orders/:id": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "8fc253ef-96f8-4f90-9606-9014ee1672bc",
+          "code": "MM-BKAZAT-1",
+          "storeId": "8895447e-71a5-48f0-84f5-aa35fe2d2eb9",
+          "status": "placed",
+          "paymentMethod": "cod",
+          "paymentStatus": "cod_pending",
+          "subtotal": 2400,
+          "discount": 0,
+          "shippingFee": 150,
+          "total": 2550,
+          "paymentRef": null,
+          "paymentProofUrl": null,
+          "cancelReason": null,
+          "cancelledBy": null,
+          "items": [
+            {
+              "id": "5bcbec29-3484-4443-b740-094211cab520",
+              "productName": "Brass tray",
+              "variantLabel": "One",
+              "unitPrice": 2400,
+              "quantity": 1,
+              "lineTotal": 2400,
+              "returnedQty": 0
+            }
+          ],
+          "events": [
+            {
+              "kind": "status",
+              "from": null,
+              "to": "placed",
+              "actorRole": "customer",
+              "note": null,
+              "at": "2026-10-31T13:42:49.991Z"
+            }
+          ],
+          "placedAt": "2026-10-31T13:42:49.968Z"
+        }
+      }
+    }
+  ],
+  "POST /admin/shop/reviews/:id/hide": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "7540c32f-9987-4fbf-84e6-9045a3792504",
+          "isHidden": true,
+          "hiddenReason": "Abusive language"
+        }
+      }
+    }
+  ],
+  "POST /admin/shop/reviews/:id/unhide": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "7540c32f-9987-4fbf-84e6-9045a3792504",
+          "isHidden": false
+        }
+      }
+    }
+  ]
+}

@@ -210,8 +210,8 @@ utils/<name>/                one folder per util: storage_utils/storageUtils (to
                              prescription-html, units (base units g/ml/pc, "7.5 kg", "2 dozen", custom units), script (Urdu
                              script → RTL), share-text, store-card-html (the printable QR card)
 __live__/, __fixtures__/     the live suite against a running API; shared test fixtures
-scripts/check-design-tokens.js, capture-health-fixtures.js, capture-food-fixtures.js and capture-shop-fixtures.js (real
-                             responses → the serializer fixtures)
+scripts/check-design-tokens.js, capture-health-fixtures.js, capture-food-fixtures.js, capture-shop-fixtures.js and
+                             capture-shop-staff-fixtures.js (real responses → the serializer fixtures)
 docs/                        API_CONTRACT_ASSUMED.md, API_SHOPPING.md, API_HEALTH.md and API_FOOD.md (copies of
                              the backend's), MOCK_HEALTH.md, MOCK_FOOD.md, MOCK_IMAGES.md, GOOGLE_SIGNIN.md,
                              PLAY_BACKGROUND_LOCATION.md, FOOD_DEVICE_CHECKS.md; API_KITCHEN_ASSUMED.md, AI_ASSUMED.md,
@@ -322,7 +322,7 @@ Every network call is built from MetroMatrix-API `docs/API_AUTH.md` / `docs/API_
   - Bodies and queries follow the backend's DTO classes, not openapi.json's schemas: Swagger merges Shopping DTOs that share a class name and leaves some query fields out (`shopContract.test.ts` holds the DTO field lists).
   - Serializers map the wire to `models/shopping.ts`: a cancel request is the step plus `cancelRequestedAt` (`cancellation_requested`), cash taken is `cash_collected`, a refused proof is `proof_rejected`, `completed` reads as delivered, the API's "actioned" report is "removed", option 1 and 2 are Size and Colour. The store's payment steps follow from the payment state; a transfer ships only once paid.
   - A store's phone is opt-in (its profile; shown only once set), the store's private order note is `internalNote` (only the store's view carries it), and the staff console has `GET /admin/shop/overview`, `GET /admin/shop/stores` and `PUT /admin/shop/categories/order`.
-  - When the backend's document changes: copy it, update the networks, serializers, models and the dummy API (`shop/shopWire.ts` builds the answers), capture again (`scripts/capture-shop-fixtures.js` against a local backend with `seed:shopping`), and run the gates. `mockShopParity` fails on any key or outcome the dummy and the capture disagree on; staff views are pinned to the backend's `admin-shop.response.ts` (staff sign in with a TOTP, so they aren't captured).
+  - When the backend's document changes: copy it, update the networks, serializers, models and the dummy API (`shop/shopWire.ts` builds the answers), capture again (`scripts/capture-shop-fixtures.js` against a local backend with `seed:shopping`), and run the gates. `mockShopParity` fails on any key or outcome the dummy and the capture disagree on. Staff views are captured from the backend's own e2e run on its throwaway database (`scripts/capture-shop-staff-fixtures.js`, the response probe), since staff sign in with an authenticator.
 
 - **Kitchen Intelligence runs on an assumed contract** (Chunk 5, owner's decision 2026-10-19): `docs/API_KITCHEN_ASSUMED.md`, `docs/AI_ASSUMED.md` and `docs/VOICE_ASSUMED.md`, written in API_FOOD's conventions (whole rupees; quantities in base units g/ml/pc; branch-local dates; `Idempotency-Key` on reservations and subscriptions). The backend now has its Kitchen module and its own `docs/API_KITCHEN.md`, `AI.md` and `VOICE.md`: reconciling with them is the next step.
   - Paths: `/food/vendor/kitchen`, `/food/vendor/{surplus,tiffin,catering,ramadan,storefront,demand,menu-insights,experiments,story,hygiene,ai,nutrition}`, `/food/{surplus,tiffin,catering,ramadan}`, `/ai/voice/interpret`, `/my-kitchen`, `/admin/kitchen`.

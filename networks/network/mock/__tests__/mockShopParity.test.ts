@@ -5,6 +5,7 @@
 // with lists compared by their first row (when both have one). A key only one
 // side has fails here.
 import realCapture from '../../../../serializers/__tests__/fixtures/shop/real.json';
+import staffCapture from '../../../../serializers/__tests__/fixtures/shop/staff.json';
 import { MainAxiosInstance } from '../../network';
 import { clearTokens } from '../../../../utils/storage_utils/storageUtils';
 import { getDb, resetMockDb } from '../mockDb';
@@ -241,62 +242,50 @@ describe('the dummy Shopping API speaks the real API (store partner)', () => {
 });
 
 /**
- * The staff views' keys as the backend declares them (admin-shop.response.ts,
- * "checked against real responses from the e2e suites"). There is no capture:
- * staff sign in with a TOTP.
+ * Staff answers captured from the backend's own e2e run on its throwaway
+ * database (scripts/capture-shop-staff-fixtures.js): staff sign in with an
+ * authenticator, so they aren't part of the live capture.
  */
-const STAFF_CATEGORY = ['id', 'parentId', 'name', 'slug', 'icon', 'sort', 'isActive'];
-const STAFF_KEYS: Record<string, string[]> = {
-  category: STAFF_CATEGORY,
-  categoryTree: [...STAFF_CATEGORY, 'children'],
-  banner: ['id', 'imageUrl', 'title', 'subtitle', 'targetType', 'targetId', 'startsAt', 'endsAt', 'sort', 'isActive'],
-  report: ['id', 'reason', 'details', 'status', 'createdAt', 'resolvedAt', 'resolutionNote', 'openReportsOnProduct', 'product', 'store'],
-  orderRow: ['id', 'code', 'groupCode', 'status', 'paymentMethod', 'paymentStatus', 'total', 'store', 'customerName', 'city', 'cancelReason', 'cancelledBy', 'placedAt'],
-  order: ['id', 'code', 'storeId', 'status', 'paymentMethod', 'paymentStatus', 'subtotal', 'discount', 'shippingFee', 'total', 'paymentRef', 'paymentProofUrl', 'cancelReason', 'cancelledBy', 'items', 'events', 'placedAt'],
-  orderItem: ['id', 'productName', 'variantLabel', 'unitPrice', 'quantity', 'lineTotal', 'returnedQty'],
-  dismiss: ['id', 'status'],
-  remove: ['id', 'status', 'removedReason'],
-  feature: ['id', 'isFeatured'],
-  deleted: ['deleted'],
-};
-
-const keysOf = (v: unknown) => (v && typeof v === 'object' ? Object.keys(v).sort() : []);
-const staff = (name: string, value: unknown) => {
-  const want = [...STAFF_KEYS[name]].sort();
-  const got = keysOf(value);
-  return JSON.stringify(got) === JSON.stringify(want) ? [] : [`${name}: ${JSON.stringify(got)} ≠ ${JSON.stringify(want)}`];
+const staffReal = staffCapture as unknown as Record<string, { status: number; body: Body }[]>;
+const staff = (route: string, mock: Body, sample = route) => {
+  const r = staffReal[sample]?.[0];
+  if (!r) throw new Error(`${sample} was not captured`);
+  if (!mock.success) return [`${route}: the dummy answered ${mock.error?.code}`];
+  return shapeDiff(r.body.data, mock.data).map(d => `${route}${d}`);
 };
 
 describe('the dummy Shopping API speaks the real API (staff)', () => {
-  it('answers in the views admin-shop.response.ts declares', async () => {
+  it('answers in the shapes the backend’s staff routes answer', async () => {
     const out: string[] = [];
     await signInAs('admin@metromatrix.app');
-    const tree = (await call('get', '/admin/shop/categories')).data as Record<string, unknown>[];
-    out.push(...staff('categoryTree', tree[0]), ...staff('category', (tree[0].children as unknown[])[0]));
+    out.push(...staff('GET /admin/shop/overview', await call('get', '/admin/shop/overview')));
+    out.push(...staff('GET /admin/shop/stores', await call('get', '/admin/shop/stores?page=1&pageSize=3')));
+    out.push(...staff('GET /admin/shop/categories', await call('get', '/admin/shop/categories')));
+    const tree = (await call('get', '/admin/shop/categories')).data as { id: string }[];
+    out.push(...staff('PUT /admin/shop/categories/order', await call('put', '/admin/shop/categories/order', { parentId: null, ids: [tree[1].id] })));
     const made = await call('post', '/admin/shop/categories', { name: 'Parity shelf', icon: 'pricetag-outline', parentId: null });
-    out.push(...staff('category', made.data));
-    out.push(...staff('category', (await call('patch', `/admin/shop/categories/${idOf(made)}`, { sort: 9 })).data));
-    out.push(...staff('deleted', (await call('delete', `/admin/shop/categories/${idOf(made)}`)).data));
+    out.push(...staff('POST /admin/shop/categories', made));
+    out.push(...staff('PATCH /admin/shop/categories/:id', await call('patch', `/admin/shop/categories/${idOf(made)}`, { sort: 9 })));
+    out.push(...staff('DELETE /admin/shop/categories/:id', await call('delete', `/admin/shop/categories/${idOf(made)}`)));
 
-    const banners = (await call('get', '/admin/shop/banners')).data as unknown[];
-    out.push(...staff('banner', banners[0]));
     const banner = await call('post', '/admin/shop/banners', { imageUrl: 'https://img/b.png', title: 'Winter sale', targetType: 'store', targetId: 's_lawn' });
-    out.push(...staff('banner', banner.data));
+    out.push(...staff('POST /admin/shop/banners', banner));
     expect(banner.data).toMatchObject({ targetType: 'store', targetId: 's_lawn' });
-    out.push(...staff('banner', (await call('patch', `/admin/shop/banners/${idOf(banner)}`, { isActive: false })).data));
-    out.push(...staff('deleted', (await call('delete', `/admin/shop/banners/${idOf(banner)}`)).data));
+    // The banner list answers the same view, one per banner.
+    out.push(...staff('GET /admin/shop/banners', { success: true, data: ((await call('get', '/admin/shop/banners')).data as unknown[])[0] }, 'POST /admin/shop/banners'));
+    out.push(...staff('PATCH /admin/shop/banners/:id', await call('patch', `/admin/shop/banners/${idOf(banner)}`, { isActive: false }), 'POST /admin/shop/banners'));
+    out.push(...staff('DELETE /admin/shop/banners/:id', await call('delete', `/admin/shop/banners/${idOf(banner)}`)));
 
-    const reports = (await call('get', '/admin/shop/reports?status=open')).data as { items: Record<string, unknown>[] };
-    out.push(...staff('report', reports.items[0]));
-    out.push(...staff('remove', (await call('post', `/admin/shop/products/${(reports.items[0].product as { id: string }).id}/remove`, { reason: 'Counterfeit goods are not allowed.' })).data));
+    const reports = await call('get', '/admin/shop/reports?status=open');
+    out.push(...staff('GET /admin/shop/reports', reports));
+    const report = (reports.data as { items: { id: string; product: { id: string } }[] }).items[0];
+    out.push(...staff('POST /admin/shop/products/:id/remove', await call('post', `/admin/shop/products/${report.product.id}/remove`, { reason: 'Counterfeit goods are not allowed.' })));
 
-    const orders = (await call('get', '/admin/shop/orders?page=1&pageSize=3')).data as { items: Record<string, unknown>[] };
-    out.push(...staff('orderRow', orders.items[0]));
-    const order = (await call('get', `/admin/shop/orders/${orders.items[0].id}`)).data as { items: unknown[] };
-    out.push(...staff('order', order), ...staff('orderItem', order.items[0]));
-
-    out.push(...staff('feature', (await call('post', '/admin/shop/stores/s_lawn/feature')).data));
-    out.push(...staff('feature', (await call('post', '/admin/shop/stores/s_lawn/unfeature')).data));
+    out.push(...staff('GET /admin/shop/orders', await call('get', '/admin/shop/orders?page=1&pageSize=3')));
+    const orderId = ((await call('get', '/admin/shop/orders?page=1&pageSize=1')).data as { items: { id: string }[] }).items[0].id;
+    out.push(...staff('GET /admin/shop/orders/:id', await call('get', `/admin/shop/orders/${orderId}`)));
+    out.push(...staff('POST /admin/shop/stores/:id/feature', await call('post', '/admin/shop/stores/s_lawn/feature')));
+    out.push(...staff('POST /admin/shop/stores/:id/unfeature', await call('post', '/admin/shop/stores/s_lawn/unfeature')));
     expect(out).toEqual([]);
   });
 });
