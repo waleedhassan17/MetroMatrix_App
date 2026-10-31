@@ -6,7 +6,7 @@
 // token in a callback. This module only loads and initialises GIS.
 
 import { GOOGLE_WEB_CLIENT_ID } from '../config/env';
-import { ApiError } from '../networks/network/apiHelpers';
+import { ApiError } from '../networks/network/network';
 
 export const GOOGLE_UNAVAILABLE = 'GOOGLE_UNAVAILABLE';
 

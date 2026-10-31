@@ -22,7 +22,7 @@ import { AppText, Button, Card, Divider, IconButton, InlineNotice, IonIcon, Scre
 import { ChoiceLine } from '../../Custom-Components/food/ChoiceLine';
 import { FoodMap } from '../../Custom-Components/food/map/FoodMap';
 import type { RiderStackParamList } from '../../models';
-import type { RiderStepAction } from '../../networks/food/rider/riderNetwork';
+import type { RiderStepAction } from '../../networks/food/rider/rider';
 import { riderLocation, type RiderLocationState } from '../../services/location/riderLocation';
 import { placeLine } from '../../models/food/vendorModel';
 import { formatSlot } from '../../utils/health-time/healthTime';

@@ -3,8 +3,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getAdminSpecialtiesAPI } from '../../networks/admin/adminHealthNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchAdminSpecialties } from '../../networks/admin/adminHealth';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { specialtyInput, type SpecialtyForm } from '../../models/health/adminHealthModel';
 import type { AdminSpecialty } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -46,7 +46,7 @@ export const specialtiesSlice = createAppSlice({
     loadSpecialtiesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(adminSpecialtyListSerializer(await getAdminSpecialtiesAPI()));
+          return required(adminSpecialtyListSerializer(await fetchAdminSpecialties()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -76,7 +76,7 @@ export const specialtiesSlice = createAppSlice({
             // Only the rows whose place changed are sent.
             for (const [i, x] of change.list.entries()) if (x.sort !== i + 1) await updateSpecialty(x.id, { sort: i + 1 });
           }
-          return required(adminSpecialtyListSerializer(await getAdminSpecialtiesAPI()));
+          return required(adminSpecialtyListSerializer(await fetchAdminSpecialties()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

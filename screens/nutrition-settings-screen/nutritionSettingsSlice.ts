@@ -3,8 +3,8 @@
 // person turned them on.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { deleteNutritionDataAPI, getNutritionSettingsAPI, saveNutritionSettingsAPI } from '../../networks/myKitchen/nutritionNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { deleteNutritionData, fetchNutritionSettings, saveNutritionSettings } from '../../networks/myKitchen/nutrition';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { NutritionSettings } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { nutritionSettingsSerializer, nutritionSettingsResponseSerializer } from '../../serializers/myKitchen/myKitchenSerializer';
@@ -27,7 +27,7 @@ export const nutritionSettingsSlice = createAppSlice({
     loadNutritionSettingsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(nutritionSettingsSerializer(await getNutritionSettingsAPI()));
+          return required(nutritionSettingsSerializer(await fetchNutritionSettings()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -48,9 +48,9 @@ export const nutritionSettingsSlice = createAppSlice({
       },
     ),
     saveNutritionAsync: create.asyncThunk(
-      async (patch: Parameters<typeof saveNutritionSettingsAPI>[0], { rejectWithValue }) => {
+      async (patch: Parameters<typeof saveNutritionSettings>[0], { rejectWithValue }) => {
         try {
-          return required(nutritionSettingsSerializer(await saveNutritionSettingsAPI(patch)));
+          return required(nutritionSettingsSerializer(await saveNutritionSettings(patch)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -73,7 +73,7 @@ export const nutritionSettingsSlice = createAppSlice({
     deleteNutritionAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(nutritionSettingsResponseSerializer(await deleteNutritionDataAPI()));
+          return required(nutritionSettingsResponseSerializer(await deleteNutritionData()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

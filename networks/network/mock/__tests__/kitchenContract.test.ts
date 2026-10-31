@@ -8,14 +8,14 @@
 
 import fs from 'fs';
 import path from 'path';
-import { api, required } from '../../apiHelpers';
+import { MainAxiosInstance, required } from '../../network';
 import { clearTokens } from '../../../../utils/storage_utils/storageUtils';
 import { resetMockDb } from '../mockDb';
-import { addToFoodCartAPI, clearFoodCartAPI } from '../../../food/cartNetwork';
-import { placeFoodOrderAPI } from '../../../food/ordersNetwork';
-import { addToCartAPI, getCartAPI, removeCartLineAPI } from '../../../shopping/cartNetwork';
-import { placeOrderAPI } from '../../../shopping/checkoutNetwork';
-import { getAddressesAPI } from '../../../addresses/addressesNetwork';
+import { addToFoodCart, clearFoodCart } from '../../../food/cart';
+import { placeFoodOrder } from '../../../food/orders';
+import { addToCart, fetchCart, removeCartLine } from '../../../shopping/cart';
+import { placeOrder } from '../../../shopping/checkout';
+import { fetchAddresses } from '../../../addresses/addresses';
 import { signInAs, installDummyApi } from '../testing';
 import { addressListSerializer } from '../../../../serializers/addressSerializer';
 import { cartSerializer } from '../../../../serializers/shopping/cartSerializer';
@@ -30,7 +30,7 @@ const out: Record<string, { data?: unknown; error?: unknown }> = {};
 
 const call = async (name: string, method: 'get' | 'post' | 'put' | 'patch' | 'delete', url: string, body?: unknown, headers?: Record<string, string>) => {
   try {
-    const r = method === 'get' || method === 'delete' ? await api[method](url, { headers }) : await api[method](url, body, { headers });
+    const r = method === 'get' || method === 'delete' ? await MainAxiosInstance[method](url, { headers }) : await MainAxiosInstance[method](url, body, { headers });
     out[name] = r.data;
     return r.data.data;
   } catch (e) {
@@ -39,7 +39,7 @@ const call = async (name: string, method: 'get' | 'post' | 'put' | 'patch' | 'de
   }
 };
 const clearShopCart = async () => {
-  for (const l of (required(cartSerializer(await getCartAPI()))).groups.flatMap(g => g.lines)) await removeCartLineAPI(l.id);
+  for (const l of (required(cartSerializer(await fetchCart()))).groups.flatMap(g => g.lines)) await removeCartLine(l.id);
 };
 const as = async (email: string, _portal: 'customer' | 'partner' = 'partner') => {
   await clearTokens();
@@ -84,9 +84,9 @@ const run = async () => {
   await call('resume', 'post', '/food/vendor/resume');
   // An order to show the packing photo and the announcement on.
   await as('customer@metromatrix.app', 'customer');
-  await clearFoodCartAPI();
-  await addToFoodCartAPI({ vendorId: 'fb_resto', itemId: 'mi_chicken_biryani', variantId: 'mi_chicken_biryani_v1', optionIds: ['og_spice_1'], quantity: 2, notes: null }, true);
-  const order = required(foodOrderSerializer(await placeFoodOrderAPI({ addressId: 'ad_customer_home', paymentMethod: 'cod', promoCode: null, cutlery: false, note: null, building: null, floor: null, riderInstructions: null }, 'k1')));
+  await clearFoodCart();
+  await addToFoodCart({ vendorId: 'fb_resto', itemId: 'mi_chicken_biryani', variantId: 'mi_chicken_biryani_v1', optionIds: ['og_spice_1'], quantity: 2, notes: null }, true);
+  const order = required(foodOrderSerializer(await placeFoodOrder({ addressId: 'ad_customer_home', paymentMethod: 'cod', promoCode: null, cutlery: false, note: null, building: null, floor: null, riderInstructions: null }, 'k1')));
   await call('surplusNearby', 'get', '/food/surplus?lat=31.5102&lng=74.3441');
   await call('surplusDetail', 'get', `/food/surplus/${box.id}?lat=31.5102&lng=74.3441`);
   const res = await call('reserve', 'post', `/food/surplus/${box.id}/reserve`, { quantity: 1, paymentMethod: 'transfer' }, { 'Idempotency-Key': 'doc-1' });
@@ -101,9 +101,9 @@ const run = async () => {
   await call('boxes', 'get', '/food/vendor/surplus?scope=live');
   await call('announcementUr', 'get', `/food/vendor/orders/${order.id}/announcement?language=ur`);
   await call('announcementEn', 'get', `/food/vendor/orders/${order.id}/announcement?language=en`);
-  await api.patch('/food/vendor/kitchen/settings', { packingPhoto: 'required' });
-  await api.post(`/food/vendor/orders/${order.id}/accept`, { etaMinutes: 20 });
-  await api.post(`/food/vendor/orders/${order.id}/preparing`);
+  await MainAxiosInstance.patch('/food/vendor/kitchen/settings', { packingPhoto: 'required' });
+  await MainAxiosInstance.post(`/food/vendor/orders/${order.id}/accept`, { etaMinutes: 20 });
+  await MainAxiosInstance.post(`/food/vendor/orders/${order.id}/preparing`);
   await call('readyNoPhoto', 'post', `/food/vendor/orders/${order.id}/ready`);
   await call('packing', 'post', `/food/vendor/orders/${order.id}/packing-photo`, { imageUrl: 'https://res.cloudinary.com/demo/packed.jpg' });
   await call('readyWithPhoto', 'post', `/food/vendor/orders/${order.id}/ready`);
@@ -115,7 +115,7 @@ const run = async () => {
   // Back to the plan's limit for the rest of the run.
   await clearTokens();
   await signInAs('admin@metromatrix.app');
-  await api.put('/admin/kitchen/ai/quotas/b_resto', { limit: null });
+  await MainAxiosInstance.put('/admin/kitchen/ai/quotas/b_resto', { limit: null });
 
   // ── Tiffin (5B): Thursday 15 Oct, 3 PM in Lahore ──
   jest.setSystemTime(T0);
@@ -213,11 +213,11 @@ const run = async () => {
   await call('storyPut', 'put', '/food/vendor/story', { text: 'Three brothers from Gujranwala, cooking biryani the way our father did since 1998.', cookName: 'Imran Qureshi', photoUrls: ['https://res.cloudinary.com/demo/kitchen.jpg'] });
   // Two deliveries to the same street: the second rides with the first.
   await as('customer@metromatrix.app', 'customer');
-  await clearFoodCartAPI();
-  await addToFoodCartAPI({ vendorId: 'fb_resto', itemId: 'mi_naan', variantId: null, optionIds: [], quantity: 10, notes: null }, true);
-  const second = required(foodOrderSerializer(await placeFoodOrderAPI({ addressId: 'ad_customer_home', paymentMethod: 'cod', promoCode: null, cutlery: false, note: null, building: null, floor: null, riderInstructions: null }, 'k2')));
+  await clearFoodCart();
+  await addToFoodCart({ vendorId: 'fb_resto', itemId: 'mi_naan', variantId: null, optionIds: [], quantity: 10, notes: null }, true);
+  const second = required(foodOrderSerializer(await placeFoodOrder({ addressId: 'ad_customer_home', paymentMethod: 'cod', promoCode: null, cutlery: false, note: null, building: null, floor: null, riderInstructions: null }, 'k2')));
   await as('restaurant@metromatrix.app');
-  await api.post(`/food/vendor/orders/${second.id}/accept`, { etaMinutes: 25 });
+  await MainAxiosInstance.post(`/food/vendor/orders/${second.id}/accept`, { etaMinutes: 25 });
   await call('batch', 'get', `/food/vendor/orders/${second.id}/batch-suggestions`);
   await as('nani@metromatrix.app');
   await call('hygiene', 'get', '/food/vendor/hygiene');
@@ -256,9 +256,9 @@ const run = async () => {
   await call('pantryReminders', 'get', '/my-kitchen/pantry/reminders');
   // A grocery order to add from.
   await clearShopCart();
-  await addToCartAPI('p_g5_v0', 1);
-  const home = (required(addressListSerializer(await getAddressesAPI()))).find(x => x.city === 'Lahore')!;
-  const grocery = required(orderGroupSerializer(await placeOrderAPI({ addressId: home.id, stores: [{ storeId: 's_basket', paymentMethod: 'cod', couponCode: null, note: null }] }, 'kc-groceries')));
+  await addToCart('p_g5_v0', 1);
+  const home = (required(addressListSerializer(await fetchAddresses()))).find(x => x.city === 'Lahore')!;
+  const grocery = required(orderGroupSerializer(await placeOrder({ addressId: home.id, stores: [{ storeId: 's_basket', paymentMethod: 'cod', couponCode: null, note: null }] }, 'kc-groceries')));
   void grocery;
   await call('pantryOrders', 'get', '/my-kitchen/pantry/shopping-orders');
   const ord = (out.pantryOrders.data as { items: { orderId: string; lines: { lineId: string }[] }[] }).items[0];

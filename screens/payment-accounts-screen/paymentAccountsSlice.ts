@@ -4,20 +4,20 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { createPaymentAccountAPI, deletePaymentAccountAPI, getPaymentAccountsAPI, updatePaymentAccountAPI } from '../../networks/shopping/partner/storeNetwork';
+import { createPaymentAccount, deletePaymentAccount, fetchPaymentAccounts, updatePaymentAccount } from '../../networks/shopping/partner/store';
 import {
-  createDoctorPaymentAccountAPI,
-  deleteDoctorPaymentAccountAPI,
-  getDoctorPaymentAccountsAPI,
-  updateDoctorPaymentAccountAPI,
-} from '../../networks/health/doctor/practiceNetwork';
+  createDoctorPaymentAccount,
+  deleteDoctorPaymentAccount,
+  fetchDoctorPaymentAccounts,
+  updateDoctorPaymentAccount,
+} from '../../networks/health/doctor/practice';
 import {
-  createVendorPaymentAccountAPI,
-  deleteVendorPaymentAccountAPI,
-  getVendorPaymentAccountsAPI,
-  updateVendorPaymentAccountAPI,
-} from '../../networks/food/vendor/settingsNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+  createVendorPaymentAccount,
+  deleteVendorPaymentAccount,
+  fetchVendorPaymentAccounts,
+  updateVendorPaymentAccount,
+} from '../../networks/food/vendor/settings';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { normaliseAccountNumber } from '../../models/shopping/storeModel';
 import type { PaymentAccount, PaymentAccountInput } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -40,32 +40,32 @@ type PartnerState = { auth: { business: { serviceType: string } | null } };
 
 // Each service's thin calls, serialized here (FinMatrix: Network → Serializer).
 const STORE = {
-  list: async () => required(paymentAccountListSerializer(await getPaymentAccountsAPI())),
-  create: async (input: PaymentAccountInput) => required(paymentAccountSerializer(await createPaymentAccountAPI(input))),
+  list: async () => required(paymentAccountListSerializer(await fetchPaymentAccounts())),
+  create: async (input: PaymentAccountInput) => required(paymentAccountSerializer(await createPaymentAccount(input))),
   update: async (id: string, input: PaymentAccountInput) =>
-    required(paymentAccountSerializer(await updatePaymentAccountAPI(id, input))),
+    required(paymentAccountSerializer(await updatePaymentAccount(id, input))),
   remove: async (id: string) => {
-    await deletePaymentAccountAPI(id);
+    await deletePaymentAccount(id);
     return true as const;
   },
 };
 const DOCTOR = {
-  list: async () => required(doctorPaymentAccountListSerializer(await getDoctorPaymentAccountsAPI())),
-  create: async (input: PaymentAccountInput) => required(doctorPaymentAccountSerializer(await createDoctorPaymentAccountAPI(input))),
+  list: async () => required(doctorPaymentAccountListSerializer(await fetchDoctorPaymentAccounts())),
+  create: async (input: PaymentAccountInput) => required(doctorPaymentAccountSerializer(await createDoctorPaymentAccount(input))),
   update: async (id: string, input: PaymentAccountInput) =>
-    required(doctorPaymentAccountSerializer(await updateDoctorPaymentAccountAPI(id, input))),
+    required(doctorPaymentAccountSerializer(await updateDoctorPaymentAccount(id, input))),
   remove: async (id: string) => {
-    await deleteDoctorPaymentAccountAPI(id);
+    await deleteDoctorPaymentAccount(id);
     return true as const;
   },
 };
 const FOOD = {
-  list: async () => required(vendorPaymentAccountsSerializer(await getVendorPaymentAccountsAPI())),
-  create: async (input: PaymentAccountInput) => required(vendorPaymentAccountSerializer(await createVendorPaymentAccountAPI(input))),
+  list: async () => required(vendorPaymentAccountsSerializer(await fetchVendorPaymentAccounts())),
+  create: async (input: PaymentAccountInput) => required(vendorPaymentAccountSerializer(await createVendorPaymentAccount(input))),
   update: async (id: string, input: PaymentAccountInput) =>
-    required(vendorPaymentAccountSerializer(await updateVendorPaymentAccountAPI(id, input))),
+    required(vendorPaymentAccountSerializer(await updateVendorPaymentAccount(id, input))),
   remove: async (id: string) => {
-    await deleteVendorPaymentAccountAPI(id);
+    await deleteVendorPaymentAccount(id);
     return true as const;
   },
 };

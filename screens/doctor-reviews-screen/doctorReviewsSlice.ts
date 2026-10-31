@@ -2,7 +2,7 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import type { DoctorReviewSort } from '../../networks/health/reviewsNetwork';
+import type { DoctorReviewSort } from '../../networks/health/reviews';
 import type { ConsultKind } from '../../models';
 
 export interface DoctorReviewsSliceState {

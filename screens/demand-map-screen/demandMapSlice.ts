@@ -3,9 +3,9 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getDemandAPI } from '../../networks/foodGrowth/demandNetwork';
-import { getCuisinesAPI } from '../../networks/food/vendor/profileNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchDemand } from '../../networks/foodGrowth/demand';
+import { fetchCuisines } from '../../networks/food/vendor/profile';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { DemandMap, FoodCuisine } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { foodCuisinesSerializer } from '../../serializers/food/vendorSerializer';
@@ -33,7 +33,7 @@ export const demandMapSlice = createAppSlice({
     loadDemandAsync: create.asyncThunk(
       async (filter: { cuisine: string | null; hour: number | null; withCuisines?: boolean }, { rejectWithValue }) => {
         try {
-          const [data, cuisines] = await Promise.all([getDemandAPI(filter).then(raw => required(demandMapSerializer(raw))), filter.withCuisines ? getCuisinesAPI().then(raw => required(foodCuisinesSerializer(raw))) : Promise.resolve(null)]);
+          const [data, cuisines] = await Promise.all([fetchDemand(filter).then(raw => required(demandMapSerializer(raw))), filter.withCuisines ? fetchCuisines().then(raw => required(foodCuisinesSerializer(raw))) : Promise.resolve(null)]);
           return { data, cuisines };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

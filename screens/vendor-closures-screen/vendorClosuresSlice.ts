@@ -6,8 +6,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { addClosureAPI, getClosuresAPI, removeClosureAPI } from '../../networks/food/vendor/settingsNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { addClosure, fetchClosures, removeClosure } from '../../networks/food/vendor/settings';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { VendorClosure } from '../../models';
 import { PKT, addDays, zonedToIso } from '../../utils/health-time/healthTime';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -66,7 +66,7 @@ export const vendorClosuresSlice = createAppSlice({
     loadClosuresAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(closuresSerializer(await getClosuresAPI()));
+          return required(closuresSerializer(await fetchClosures()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -90,12 +90,12 @@ export const vendorClosuresSlice = createAppSlice({
       async (form: ClosureForm, { rejectWithValue }) => {
         try {
           // Whole days in Pakistan time: from the first day's midnight to the day after the last.
-          await addClosureAPI({
+          await addClosure({
             startsAt: zonedToIso(form.from, '00:00', PKT),
             endsAt: zonedToIso(addDays(form.to, 1), '00:00', PKT),
             reason: form.reason.trim() || null,
           });
-          return required(closuresSerializer(await getClosuresAPI()));
+          return required(closuresSerializer(await fetchClosures()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -119,7 +119,7 @@ export const vendorClosuresSlice = createAppSlice({
     removeClosureAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          await removeClosureAPI(id);
+          await removeClosure(id);
           return id;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

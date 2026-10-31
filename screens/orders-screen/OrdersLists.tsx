@@ -12,9 +12,9 @@ import React from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { usePagedList } from '../../hooks/usePagedList';
-import { getOrdersAPI } from '../../networks/shopping/ordersNetwork';
-import { getAppointmentsAPI } from '../../networks/health/appointmentsNetwork';
-import { getFoodOrdersAPI } from '../../networks/food/ordersNetwork';
+import { fetchOrders } from '../../networks/shopping/orders';
+import { fetchAppointments } from '../../networks/health/appointments';
+import { fetchFoodOrders } from '../../networks/food/orders';
 import { orderStatusLabel, ORDER_STATUS, pillTone } from '../../models/food/foodStatusModel';
 import { useAppointmentAction } from '../../Components/health/HealthParts';
 import { groupHeadline } from '../../models/shopping/orderStatusModel';
@@ -98,7 +98,7 @@ const OrderGroupCard: React.FC<{ group: OrderGroupSummary; onPress: () => void }
 
 export const ShopOrders: React.FC<{ segment: OrderSegment; onOpen: (code: string) => void; onShop: () => void }> = ({ segment, onOpen, onShop }) => {
   const styles = useStyles(makeStyles);
-  const list = usePagedList((page, size) => getOrdersAPI(segment, page, size), orderGroupSummaryPageSerializer, `orders|${segment}`);
+  const list = usePagedList((page, size) => fetchOrders(segment, page, size), orderGroupSummaryPageSerializer, `orders|${segment}`);
   return (
     <ServiceScope service="shopping">
       <FlatList
@@ -133,7 +133,7 @@ export const ShopOrders: React.FC<{ segment: OrderSegment; onOpen: (code: string
 export const Appointments: React.FC<{ segment: AppointmentSegment; onOpen: (code: string) => void; onFind: () => void }> = ({ segment, onOpen, onFind }) => {
   const styles = useStyles(makeStyles);
   const actionFor = useAppointmentAction();
-  const list = usePagedList((page, size) => getAppointmentsAPI(segment, page, size), appointmentSummaryPageSerializer, `appointments|${segment}`);
+  const list = usePagedList((page, size) => fetchAppointments(segment, page, size), appointmentSummaryPageSerializer, `appointments|${segment}`);
   return (
     <ServiceScope service="healthcare">
       <FlatList
@@ -195,7 +195,7 @@ const FoodOrderCard: React.FC<{ order: FoodOrderSummary; onPress: () => void }> 
 
 export const FoodOrdersList: React.FC<{ segment: 'active' | 'past'; onOpen: (code: string) => void; onBrowse: () => void }> = ({ segment, onOpen, onBrowse }) => {
   const styles = useStyles(makeStyles);
-  const list = usePagedList((page, size) => getFoodOrdersAPI(segment, page, size), foodOrdersPageSerializer, `food-orders|${segment}`);
+  const list = usePagedList((page, size) => fetchFoodOrders(segment, page, size), foodOrdersPageSerializer, `food-orders|${segment}`);
   return (
     <ServiceScope service="food">
       <FlatList

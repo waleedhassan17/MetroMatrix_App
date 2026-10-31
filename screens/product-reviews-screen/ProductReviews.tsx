@@ -10,7 +10,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { usePagedList } from '../../hooks/usePagedList';
-import { getReviewsAPI } from '../../networks/shopping/catalogNetwork';
+import { fetchReviews } from '../../networks/shopping/catalog';
 import { ServiceScope, StoreBrandScope, useStyles, type Theme } from '../../theme/index';
 import { ChoiceChip, Divider, EmptyState, ImageViewer, InlineNotice, RatingBreakdown, SkeletonLines } from '../../Custom-Components/index';
 import { ReviewItem } from '../../Components/shopping/ReviewItem';
@@ -57,7 +57,7 @@ const ProductReviewsContent: React.FC<Props> = ({ route }) => {
   }, [entry.status, productId, dispatch]);
 
   const list = usePagedList(
-    (page, size) => getReviewsAPI(productId, { rating: filter.rating, withPhotos: filter.withPhotos || undefined }, page, size),
+    (page, size) => fetchReviews(productId, { rating: filter.rating, withPhotos: filter.withPhotos || undefined }, page, size),
     productReviewsSerializer,
     `reviews|${productId}|${filter.rating}|${filter.withPhotos}`,
   );

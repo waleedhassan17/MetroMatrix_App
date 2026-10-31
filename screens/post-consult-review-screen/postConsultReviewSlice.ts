@@ -3,7 +3,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 
-import { toRejectedValue } from '../../networks/network/apiHelpers';
+import { toRejectedValue } from '../../networks/network/network';
 import { emptyDoctorReview } from '../../models/health/reviewFormModel';
 import type { DoctorReviewInput, ReviewDimension } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';

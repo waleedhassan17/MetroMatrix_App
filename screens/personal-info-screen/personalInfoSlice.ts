@@ -19,17 +19,17 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { updateMeAPI } from '../../networks/users/usersNetwork';
+import { updateMe } from '../../networks/users/users';
 import {
-  addDocumentAPI,
-  createBusinessAPI,
-  getMyBusinessAPI,
-  removeDocumentAPI,
-  submitBusinessAPI,
-  updateMyBusinessAPI,
-} from '../../networks/businesses/businessNetwork';
+  addDocument,
+  createBusiness,
+  fetchMyBusiness,
+  removeDocument,
+  submitBusiness,
+  updateMyBusiness,
+} from '../../networks/businesses/business';
 import { signUpload } from '../../services/mediaUpload';
-import { uploadToCloudinary, toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { uploadToCloudinary, toRejectedValue, required } from '../../networks/network/network';
 import { nationalFromPkPhone, toPkPhone, updateMeBody } from '../../models/authModel';
 import {
   businessProfileToPayload,
@@ -186,7 +186,7 @@ export const personalInfoSlice = createAppSlice({
         try {
           const canonical = toPkPhone(phone) ?? null;
           if (fullName.trim() !== user.name || canonical !== user.phone) {
-            dispatch(setUser(required(userResponseSerializer(await updateMeAPI(updateMeBody({ name: fullName, phone: canonical }))))));
+            dispatch(setUser(required(userResponseSerializer(await updateMe(updateMeBody({ name: fullName, phone: canonical }))))));
           }
           return true;
         } catch (e) {
@@ -215,7 +215,7 @@ export const personalInfoSlice = createAppSlice({
         try {
           const payload = businessProfileToPayload(args.serviceType, args.subType, args.form, args.phone);
           const saved = required(
-            businessSerializer(args.business ? await updateMyBusinessAPI(payload) : await createBusinessAPI(payload)),
+            businessSerializer(args.business ? await updateMyBusiness(payload) : await createBusiness(payload)),
           );
           dispatch(setBusiness(saved));
           return saved.id;
@@ -247,13 +247,13 @@ export const personalInfoSlice = createAppSlice({
           const uploaded = await uploadToCloudinary(file, signed, progress => dispatch(setUploadProgress({ slot, progress })));
           // The API answers the one document: the business is read again for
           // the new list and requirement statuses.
-          await addDocumentAPI({ kind, url: uploaded.url, publicId: uploaded.publicId });
-          let business = required(businessSerializer(await getMyBusinessAPI()));
+          await addDocument({ kind, url: uploaded.url, publicId: uploaded.publicId });
+          let business = required(businessSerializer(await fetchMyBusiness()));
           // A single-copy kind is replaced by the API itself; kitchen and shop
           // photos add up, so the one this upload replaces goes now.
           if (replacing && business.documents.some(d => d.id === replacing)) {
-            await removeDocumentAPI(replacing);
-            business = required(businessSerializer(await getMyBusinessAPI()));
+            await removeDocument(replacing);
+            business = required(businessSerializer(await fetchMyBusiness()));
           }
           dispatch(setBusiness(business));
           retryFiles.delete(slot);
@@ -293,8 +293,8 @@ export const personalInfoSlice = createAppSlice({
     removeDocumentAsync: create.asyncThunk(
       async (documentId: string, { dispatch, rejectWithValue }) => {
         try {
-          await removeDocumentAPI(documentId);
-          dispatch(setBusiness(required(businessSerializer(await getMyBusinessAPI()))));
+          await removeDocument(documentId);
+          dispatch(setBusiness(required(businessSerializer(await fetchMyBusiness()))));
           return documentId;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -310,7 +310,7 @@ export const personalInfoSlice = createAppSlice({
     submitApplicationAsync: create.asyncThunk(
       async (_: void, { dispatch, rejectWithValue }) => {
         try {
-          dispatch(setBusiness(required(businessSerializer(await submitBusinessAPI()))));
+          dispatch(setBusiness(required(businessSerializer(await submitBusiness()))));
           return true;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

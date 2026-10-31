@@ -4,8 +4,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getStoreProfileAPI, updateStoreProfileAPI } from '../../networks/shopping/partner/storeNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchStoreProfile, updateStoreProfile } from '../../networks/shopping/partner/store';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { normaliseHex } from '../../models/shopping/storeModel';
 import type { LocalFile, StoreProfile, StoreProfileInput } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -52,7 +52,7 @@ export const storeProfileSlice = createAppSlice({
     loadStoreProfileAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(storeProfileSerializer(await getStoreProfileAPI()));
+          return required(storeProfileSerializer(await fetchStoreProfile()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -97,7 +97,7 @@ export const storeProfileSlice = createAppSlice({
     saveStoreProfileAsync: create.asyncThunk(
       async (input: StoreProfileInput, { rejectWithValue }) => {
         try {
-          return required(storeProfileSerializer(await updateStoreProfileAPI(input)));
+          return required(storeProfileSerializer(await updateStoreProfile(input)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

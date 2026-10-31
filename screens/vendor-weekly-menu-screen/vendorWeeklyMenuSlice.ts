@@ -5,9 +5,9 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getMenuItemsAPI } from '../../networks/food/vendor/menuNetwork';
-import { saveWeeklyMenuAPI } from '../../networks/food/vendor/availabilityNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchMenuItems } from '../../networks/food/vendor/menu';
+import { saveWeeklyMenu } from '../../networks/food/vendor/availability';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { WeeklyMenuEntry } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { menuChanged } from '../vendor-menu-screen/vendorMenuSlice';
@@ -40,7 +40,7 @@ export const vendorWeeklyMenuSlice = createAppSlice({
     loadWeeklyMenuAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return (required(vendorMenuItemsSerializer(await getMenuItemsAPI()))).map(i => ({ itemId: i.id, name: i.name, days: i.days }));
+          return (required(vendorMenuItemsSerializer(await fetchMenuItems()))).map(i => ({ itemId: i.id, name: i.name, days: i.days }));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -66,7 +66,7 @@ export const vendorWeeklyMenuSlice = createAppSlice({
         const { saved, days } = (getState() as { vendorWeeklyMenu: VendorWeeklyMenuSliceState }).vendorWeeklyMenu;
         const changed = saved.filter(r => JSON.stringify(r.days) !== JSON.stringify(days[r.itemId])).map(r => ({ itemId: r.itemId, days: days[r.itemId] }));
         try {
-          const out = changed.length ? required(weeklyMenuSerializer(await saveWeeklyMenuAPI(changed))) : saved;
+          const out = changed.length ? required(weeklyMenuSerializer(await saveWeeklyMenu(changed))) : saved;
           dispatch(menuChanged());
           return out;
         } catch (e) {

@@ -1,7 +1,7 @@
 // B12: one list of codes, the copy people read, field errors, and a 429's wait.
 
 import { AxiosError } from 'axios';
-import { ERROR_CODES, errorCopy, fieldErrors, retryAfterOf, toApiError } from '../apiHelpers';
+import { ERROR_CODES, errorCopy, fieldErrors, retryAfterOf, toApiError } from '../network';
 import { authErrorMessage } from '../../../Components/auth/authErrorMessage';
 
 const http = (status: number, data: unknown, headers: Record<string, string> = {}) =>

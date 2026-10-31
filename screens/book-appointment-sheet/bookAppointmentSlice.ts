@@ -8,9 +8,9 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { bookAppointmentAPI } from '../../networks/health/appointmentsNetwork';
+import { bookAppointment } from '../../networks/health/appointments';
 
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { alternativesFrom, appointmentDetailSerializer } from '../../serializers/health/appointmentSerializer';
 import { defaultPaymentFor } from '../../models/health/bookingModel';
 import type { AppointmentPaymentMethod, BookingInput, HealthRecord, PracticeLocation, ReasonTag } from '../../models';
@@ -143,7 +143,7 @@ export const bookAppointmentSlice = createAppSlice({
     confirmBookingAsync: create.asyncThunk(
       async ({ input, idempotencyKey }: { input: BookingInput; idempotencyKey: string }, { rejectWithValue }) => {
         try {
-          return required(appointmentDetailSerializer(await bookAppointmentAPI(input, idempotencyKey)));
+          return required(appointmentDetailSerializer(await bookAppointment(input, idempotencyKey)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

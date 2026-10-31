@@ -13,9 +13,9 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { completeProfileAPI } from '../../networks/users/usersNetwork';
+import { completeProfile } from '../../networks/users/users';
 import { signUpload } from '../../services/mediaUpload';
-import { uploadToCloudinary, toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { uploadToCloudinary, toRejectedValue, required } from '../../networks/network/network';
 import type { Gender, LocalFile } from '../../models';
 import type { Touched } from '../../utils/form-errors/formErrors';
 import { setUser } from '../../store/authSlice';
@@ -147,7 +147,7 @@ export const completeProfileSlice = createAppSlice({
         { dispatch, rejectWithValue },
       ) => {
         try {
-          const raw = await completeProfileAPI({
+          const raw = await completeProfile({
             dateOfBirth: payload.dateOfBirth,
             gender: payload.gender,
             streetAddress: payload.streetAddress.trim(),

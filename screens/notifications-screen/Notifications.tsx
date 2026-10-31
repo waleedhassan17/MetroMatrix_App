@@ -13,7 +13,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { useServiceNav } from '../../hooks/useServiceNav';
 import { usePagedList } from '../../hooks/usePagedList';
-import { getNotificationsAPI } from '../../networks/notifications/notificationsNetwork';
+import { fetchNotifications } from '../../networks/notifications/notifications';
 import { PageHeaderScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import { AppText, Divider, EmptyState, IconButton, InlineNotice, IonIcon, ScreenShell, SkeletonLines, type IonName } from '../../Custom-Components/index';
 import type { AppNotification, NotificationType, ShopBrowseParamList } from '../../models';
@@ -68,7 +68,7 @@ const NotificationsContent: React.FC<Props> = ({ navigation }) => {
   const { service, colors, opacity } = useTheme();
   const user = useAppSelector(selectUser);
   const unread = useAppSelector(selectUnreadCount);
-  const list = usePagedList((page, size) => getNotificationsAPI(page, size), notificationPageSerializer, 'notifications');
+  const list = usePagedList((page, size) => fetchNotifications(page, size), notificationPageSerializer, 'notifications');
   const isStore = user?.role === 'partner';
 
   useFocusEffect(

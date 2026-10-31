@@ -5,9 +5,9 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getHygieneAPI, getStoryAPI, requestHygieneVerificationAPI, saveStoryAPI, setHygieneItemAPI } from '../../networks/foodGrowth/storyNetwork';
+import { fetchHygiene, fetchStory, requestHygieneVerification, saveStory, setHygieneItem } from '../../networks/foodGrowth/story';
 import { uploadImage } from '../../services/mediaUpload';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { Hygiene, KitchenStory, LocalFile } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { storySerializer, hygieneSerializer } from '../../serializers/kitchen/reachSerializer';
@@ -62,7 +62,7 @@ export const storyAndHygieneSlice = createAppSlice({
     loadStoryAndHygieneAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [story, hygiene] = await Promise.all([getStoryAPI().then(raw => required(storySerializer(raw))), getHygieneAPI().then(raw => required(hygieneSerializer(raw)))]);
+          const [story, hygiene] = await Promise.all([fetchStory().then(raw => required(storySerializer(raw))), fetchHygiene().then(raw => required(hygieneSerializer(raw)))]);
           return { story, hygiene };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -114,7 +114,7 @@ export const storyAndHygieneSlice = createAppSlice({
     saveStoryAsync: create.asyncThunk(
       async (form: StoryForm, { rejectWithValue }) => {
         try {
-          return required(storySerializer(await saveStoryAPI({ text: form.text.trim(), cookName: form.cookName.trim(), photoUrls: form.photoUrls, videoUrl: form.videoUrl })));
+          return required(storySerializer(await saveStory({ text: form.text.trim(), cookName: form.cookName.trim(), photoUrls: form.photoUrls, videoUrl: form.videoUrl })));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -140,7 +140,7 @@ export const storyAndHygieneSlice = createAppSlice({
       async ({ key, done, file }: { key: string; done: boolean; file?: LocalFile }, { rejectWithValue }) => {
         try {
           const evidenceUrl = file ? (await uploadImage(file, 'hygiene_evidence')).url : undefined;
-          return required(hygieneSerializer(await setHygieneItemAPI(key, { done, ...(evidenceUrl ? { evidenceUrl } : null) })));
+          return required(hygieneSerializer(await setHygieneItem(key, { done, ...(evidenceUrl ? { evidenceUrl } : null) })));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -163,7 +163,7 @@ export const storyAndHygieneSlice = createAppSlice({
     requestVerificationAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(hygieneSerializer(await requestHygieneVerificationAPI()));
+          return required(hygieneSerializer(await requestHygieneVerification()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

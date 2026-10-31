@@ -5,17 +5,17 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import {
-  addFromShoppingOrderAPI,
-  addToPantryAPI,
-  getPantryRemindersAPI,
-  getPantryStatsAPI,
-  getGroceryOrdersAPI,
-  getPantryAPI,
-  removePantryItemAPI,
-  savePantryRemindersAPI,
-  markPantryUsedAPI,
-} from '../../networks/myKitchen/pantryNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+  addFromShoppingOrder,
+  addToPantry,
+  fetchPantryReminders,
+  fetchPantryStats,
+  fetchGroceryOrders,
+  fetchPantry,
+  removePantryItem,
+  savePantryReminders,
+  markPantryUsed,
+} from '../../networks/myKitchen/pantry';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { emptyPantryForm, type PantryForm } from '../../models/myKitchen/pantryModel';
 import type { GroceryOrder, PantryLineInput, PantryList, PantryReminders, PantrySegment, PantryStats } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -71,7 +71,7 @@ export const pantrySlice = createAppSlice({
     loadPantryAsync: create.asyncThunk(
       async (segment: PantrySegment, { rejectWithValue }) => {
         try {
-          const [list, stats, reminders] = await Promise.all([getPantryAPI(segment).then(raw => required(pantryListSerializer(raw))), getPantryStatsAPI().then(raw => required(pantryStatsSerializer(raw))), getPantryRemindersAPI().then(raw => required(pantryRemindersSerializer(raw)))]);
+          const [list, stats, reminders] = await Promise.all([fetchPantry(segment).then(raw => required(pantryListSerializer(raw))), fetchPantryStats().then(raw => required(pantryStatsSerializer(raw))), fetchPantryReminders().then(raw => required(pantryRemindersSerializer(raw)))]);
           return { list, stats, reminders };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -98,7 +98,7 @@ export const pantrySlice = createAppSlice({
     addPantryAsync: create.asyncThunk(
       async ({ lines, source }: { lines: PantryLineInput[]; source: 'manual' | 'voice' }, { rejectWithValue }) => {
         try {
-          return required(pantryItemsSerializer(await addToPantryAPI(lines, source)));
+          return required(pantryItemsSerializer(await addToPantry(lines, source)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -121,7 +121,7 @@ export const pantrySlice = createAppSlice({
     markUsedAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(pantryUsedUpSerializer(await markPantryUsedAPI(id)));
+          return required(pantryUsedUpSerializer(await markPantryUsed(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -144,7 +144,7 @@ export const pantrySlice = createAppSlice({
     throwAwayAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(pantryRemovedSerializer(await removePantryItemAPI(id)));
+          return required(pantryRemovedSerializer(await removePantryItem(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -167,7 +167,7 @@ export const pantrySlice = createAppSlice({
     loadGroceryOrdersAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(groceryOrdersSerializer(await getGroceryOrdersAPI()));
+          return required(groceryOrdersSerializer(await fetchGroceryOrders()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -189,7 +189,7 @@ export const pantrySlice = createAppSlice({
     addFromOrderAsync: create.asyncThunk(
       async ({ orderId, lineIds }: { orderId: string; lineIds: string[] }, { rejectWithValue }) => {
         try {
-          return required(pantryItemsSerializer(await addFromShoppingOrderAPI(orderId, lineIds)));
+          return required(pantryItemsSerializer(await addFromShoppingOrder(orderId, lineIds)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -211,7 +211,7 @@ export const pantrySlice = createAppSlice({
     saveRemindersAsync: create.asyncThunk(
       async (patch: Partial<PantryReminders>, { rejectWithValue }) => {
         try {
-          return required(pantryRemindersSerializer(await savePantryRemindersAPI(patch)));
+          return required(pantryRemindersSerializer(await savePantryReminders(patch)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

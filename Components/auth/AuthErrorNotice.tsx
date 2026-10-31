@@ -14,7 +14,7 @@
 import React from 'react';
 import { InlineNotice } from '../../Custom-Components/InlineNotice';
 import { doorForAccount, WRONG_DOOR_MESSAGE } from '../../models/authDoors';
-import { ERROR_CODES } from '../../networks/network/apiHelpers';
+import { ERROR_CODES } from '../../networks/network/network';
 import type { Portal } from '../../models/auth';
 import type { ServerError } from '../../screens/shared/formStatus';
 import { authErrorMessage } from './authErrorMessage';

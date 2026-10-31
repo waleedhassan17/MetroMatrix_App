@@ -7,12 +7,12 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import {
-  createCalendarEventAPI,
-  deleteCalendarEventAPI,
-  getCalendarEventsAPI,
-  updateCalendarEventAPI,
-} from '../../networks/admin/adminKitchenNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+  createCalendarEvent,
+  deleteCalendarEvent,
+  fetchCalendarEvents,
+  updateCalendarEvent,
+} from '../../networks/admin/adminKitchen';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { emptyEventForm } from '../../models/kitchen/adminKitchenModel';
 import type { CalendarEvent, CalendarEventInput } from '../../models';
 import {
@@ -74,7 +74,7 @@ export const adminKitchenCalendarSlice = createAppSlice({
     loadEventsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(calendarEventsSerializer(await getCalendarEventsAPI()));
+          return required(calendarEventsSerializer(await fetchCalendarEvents()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -98,13 +98,13 @@ export const adminKitchenCalendarSlice = createAppSlice({
     changeEventAsync: create.asyncThunk(
       async (change: Change, { rejectWithValue }) => {
         try {
-          if (change.kind === 'delete') await deleteCalendarEventAPI(change.id);
+          if (change.kind === 'delete') await deleteCalendarEvent(change.id);
           else {
             const { id, ...input } = change.sheet;
-            if (id) await updateCalendarEventAPI(id, input);
-            else await createCalendarEventAPI(input);
+            if (id) await updateCalendarEvent(id, input);
+            else await createCalendarEvent(input);
           }
-          return required(calendarEventsSerializer(await getCalendarEventsAPI()));
+          return required(calendarEventsSerializer(await fetchCalendarEvents()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

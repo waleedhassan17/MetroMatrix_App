@@ -13,7 +13,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useServiceNav } from '../../hooks/useServiceNav';
 import { useDebouncedValue, usePagedList } from '../../hooks/usePagedList';
 import { useShopBootstrap, useShopNav } from '../../hooks/useShop';
-import { getStoresAPI } from '../../networks/shopping/catalogNetwork';
+import { fetchStores } from '../../networks/shopping/catalog';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import {
   AppText,
@@ -138,7 +138,7 @@ const ShoppingHomeContent: React.FC<Props> = () => {
 
   const q = useDebouncedValue(s.brandQuery.trim());
   const brands = usePagedList(
-    (page, sz) => getStoresAPI({ q: q || undefined }, page, sz),
+    (page, sz) => fetchStores({ q: q || undefined }, page, sz),
     storeSummaryPageSerializer,
     `brands|${q}`,
   );

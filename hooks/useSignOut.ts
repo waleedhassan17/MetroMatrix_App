@@ -9,7 +9,7 @@
 //   clearTokens()              local sign-out never depends on the network
 //   RESET_ALL_STATE + signOut  synchronous — AppContainer swaps to Welcome on
 //                              the same frame; back-navigation cannot re-enter
-//   unregisterDevice → authLogout   fire-and-forget with the captured token:
+//   unregisterDevice → logoutUser   fire-and-forget with the captured token:
 //                              an offline or hung request must not hold the
 //                              user on a spinner (FinMatrix's lesson)
 //
@@ -20,8 +20,8 @@ import { useCallback, useRef, useState } from 'react';
 import { useAppDispatch } from './useReduxHooks';
 import { signOut, type SignedOutLanding } from '../store/authSlice';
 import { resetAllState } from '../store/resetAllState';
-import { authLogout } from '../networks/auth/authNetwork';
-import { unregisterDeviceAPI } from '../networks/users/usersNetwork';
+import { logoutUser } from '../networks/authcalls/logout';
+import { unregisterDevice } from '../networks/users/users';
 import { clearPushToken, clearTokens, getAccessToken, getPushToken } from '../utils/storage_utils/storageUtils';
 import { markIntentionalSignOut } from '../utils/auth-events/authEvents';
 import { Alert } from '../utils/alert/alert';
@@ -52,8 +52,8 @@ export function useSignOut() {
     // Best-effort, in the prompt's order, on the captured token.
     void (async () => {
       // A stale device row only costs the server one undelivered push.
-      if (pushToken) await unregisterDeviceAPI(pushToken, accessToken).catch(() => undefined);
-      await authLogout(accessToken);
+      if (pushToken) await unregisterDevice(pushToken, accessToken).catch(() => undefined);
+      await logoutUser(accessToken);
     })();
 
     inFlight.current = false;

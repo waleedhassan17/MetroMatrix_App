@@ -1,8 +1,8 @@
 // MetroMatrix — Food Court: the customer's dawat requests, latest first.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getMyCateringRequestsAPI } from '../../networks/foodGrowth/cateringNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchMyCateringRequests } from '../../networks/foodGrowth/catering';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { CateringRequest } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { cateringRequestsSerializer } from '../../serializers/kitchen/growthSerializer';
@@ -22,7 +22,7 @@ export const foodCateringRequestsSlice = createAppSlice({
     loadMyCateringAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(cateringRequestsSerializer(await getMyCateringRequestsAPI()));
+          return required(cateringRequestsSerializer(await fetchMyCateringRequests()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

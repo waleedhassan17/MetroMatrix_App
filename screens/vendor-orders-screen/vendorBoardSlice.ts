@@ -10,12 +10,12 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { acceptOrderAPI, handedExternalAPI, getBoardAPI, markCollectedAPI, markDeliveredAPI, markReadyAPI, rejectOrderAPI, startPreparingAPI } from '../../networks/food/vendor/ordersNetwork';
-import { getVendorProfileAPI, pauseOrdersAPI, resumeOrdersAPI, setBusyAPI } from '../../networks/food/vendor/profileNetwork';
-import { setAvailabilityAPI } from '../../networks/food/vendor/availabilityNetwork';
-import { getBoardHintsAPI } from '../../networks/kitchen/costingNetwork';
-import { getAnnouncementAPI } from '../../networks/kitchen/packingNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { acceptOrder, handedExternal, fetchBoard, markCollected, markDelivered, markReady, rejectOrder, startPreparing } from '../../networks/food/vendor/orders';
+import { fetchVendorProfile, pauseOrders, resumeOrders, setBusy } from '../../networks/food/vendor/profile';
+import { setAvailability } from '../../networks/food/vendor/availability';
+import { fetchBoardHints } from '../../networks/kitchen/costing';
+import { fetchAnnouncement } from '../../networks/kitchen/packing';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { cardOfOrder, columnOf, isEnded, type BoardColumn } from '../../models/food/foodStatusModel';
 import type { BoardCard, BoardHints, FoodLiveBoardUpdate, PauseReason, VendorProfile } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -81,11 +81,11 @@ type VendorOrderMove = (id: string) => Promise<NonNullable<ReturnType<typeof ven
 
 /** Each card move: its thin call, then the order serialized. */
 const MOVES: Record<BoardMove, VendorOrderMove> = {
-  preparing: async id => required(vendorFoodOrderSerializer(await startPreparingAPI(id))),
-  ready: async id => required(vendorFoodOrderSerializer(await markReadyAPI(id))),
-  'handed-external': async id => required(vendorFoodOrderSerializer(await handedExternalAPI(id))),
-  'picked-up': async id => required(vendorFoodOrderSerializer(await markCollectedAPI(id))),
-  delivered: async id => required(vendorFoodOrderSerializer(await markDeliveredAPI(id, null))),
+  preparing: async id => required(vendorFoodOrderSerializer(await startPreparing(id))),
+  ready: async id => required(vendorFoodOrderSerializer(await markReady(id))),
+  'handed-external': async id => required(vendorFoodOrderSerializer(await handedExternal(id))),
+  'picked-up': async id => required(vendorFoodOrderSerializer(await markCollected(id))),
+  delivered: async id => required(vendorFoodOrderSerializer(await markDelivered(id, null))),
 };
 
 export const vendorBoardSlice = createAppSlice({
@@ -131,7 +131,7 @@ export const vendorBoardSlice = createAppSlice({
     loadBoardAsync: create.asyncThunk(
       async (_: void, { dispatch, rejectWithValue }) => {
         try {
-          const [fresh, active] = await Promise.all([getBoardAPI('new').then(raw => required(boardPageSerializer(raw))), getBoardAPI('active').then(raw => required(boardPageSerializer(raw)))]);
+          const [fresh, active] = await Promise.all([fetchBoard('new').then(raw => required(boardPageSerializer(raw))), fetchBoard('active').then(raw => required(boardPageSerializer(raw)))]);
           // Every board read reads the kitchen's side too.
           void dispatch(loadBoardHintsAsync());
           return [...fresh.items, ...active.items];
@@ -159,7 +159,7 @@ export const vendorBoardSlice = createAppSlice({
     loadBoardHintsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(boardHintsSerializer(await getBoardHintsAPI()));
+          return required(boardHintsSerializer(await fetchBoardHints()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -175,7 +175,7 @@ export const vendorBoardSlice = createAppSlice({
     soldOutDishAsync: create.asyncThunk(
       async (itemId: string, { dispatch, rejectWithValue }) => {
         try {
-          await setAvailabilityAPI({ items: [{ itemId, isAvailable: false }] });
+          await setAvailability({ items: [{ itemId, isAvailable: false }] });
           void dispatch(loadBoardHintsAsync());
           return itemId;
         } catch (e) {
@@ -201,7 +201,7 @@ export const vendorBoardSlice = createAppSlice({
     announceOrderAsync: create.asyncThunk(
       async ({ id, language }: { id: string; language: 'ur' | 'en' }, { rejectWithValue }) => {
         try {
-          return required(announcementSerializer(await getAnnouncementAPI(id, language)));
+          return required(announcementSerializer(await fetchAnnouncement(id, language)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -216,7 +216,7 @@ export const vendorBoardSlice = createAppSlice({
     acceptOrderAsync: create.asyncThunk(
       async ({ id, eta }: { id: string; eta: number }, { dispatch, rejectWithValue }) => {
         try {
-          const o = required(vendorFoodOrderSerializer(await acceptOrderAPI(id, eta)));
+          const o = required(vendorFoodOrderSerializer(await acceptOrder(id, eta)));
           // Accepting takes its recipes from stock: the tickets' stock notes change.
           void dispatch(loadBoardHintsAsync());
           return o;
@@ -244,7 +244,7 @@ export const vendorBoardSlice = createAppSlice({
     rejectOrderAsync: create.asyncThunk(
       async ({ id, reason }: { id: string; reason: string }, { dispatch, rejectWithValue }) => {
         try {
-          const o = required(vendorFoodOrderSerializer(await rejectOrderAPI(id, reason)));
+          const o = required(vendorFoodOrderSerializer(await rejectOrder(id, reason)));
           void dispatch(loadBoardHintsAsync());
           return o;
         } catch (e) {
@@ -296,7 +296,7 @@ export const vendorBoardSlice = createAppSlice({
     loadKitchenAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(vendorProfileSerializer(await getVendorProfileAPI()));
+          return required(vendorProfileSerializer(await fetchVendorProfile()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -310,9 +310,9 @@ export const vendorBoardSlice = createAppSlice({
     switchKitchenAsync: create.asyncThunk(
       async (to: { pause: string | null; reason?: PauseReason | null; resumeAt?: string | null } | { resume: true } | { busy: number }, { rejectWithValue }) => {
         try {
-          if ('resume' in to) return required(vendorProfileSerializer(await resumeOrdersAPI()));
-          if ('busy' in to) return required(vendorProfileSerializer(await setBusyAPI(to.busy, to.busy ? new Date(Date.now() + 60 * 60_000).toISOString() : null)));
-          return required(vendorProfileSerializer(await pauseOrdersAPI(to.pause, { reason: to.reason, resumeAt: to.resumeAt })));
+          if ('resume' in to) return required(vendorProfileSerializer(await resumeOrders()));
+          if ('busy' in to) return required(vendorProfileSerializer(await setBusy(to.busy, to.busy ? new Date(Date.now() + 60 * 60_000).toISOString() : null)));
+          return required(vendorProfileSerializer(await pauseOrders(to.pause, { reason: to.reason, resumeAt: to.resumeAt })));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

@@ -5,8 +5,8 @@
 // starting later, ended, off) and how often it has been used.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getPromotionsAPI } from '../../networks/food/vendor/promotionsNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchPromotions } from '../../networks/food/vendor/promotions';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { FoodPromotion } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { foodPromotionsSerializer } from '../../serializers/food/orderSerializer';
@@ -26,7 +26,7 @@ export const vendorPromotionsSlice = createAppSlice({
     loadPromotionsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(foodPromotionsSerializer(await getPromotionsAPI()));
+          return required(foodPromotionsSerializer(await fetchPromotions()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

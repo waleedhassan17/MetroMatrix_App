@@ -6,8 +6,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getShopHomeAPI } from '../../networks/shopping/catalogNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchShopHome } from '../../networks/shopping/catalog';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { ShopHome } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { shopHomeSerializer } from '../../serializers/shopping/catalogSerializer';
@@ -39,7 +39,7 @@ export const shoppingHomeSlice = createAppSlice({
     loadShoppingHomeAsync: create.asyncThunk(
       async (_: { refresh: boolean }, { rejectWithValue }) => {
         try {
-          return required(shopHomeSerializer(await getShopHomeAPI()));
+          return required(shopHomeSerializer(await fetchShopHome()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

@@ -10,7 +10,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useDebouncedValue, usePagedList } from '../../hooks/usePagedList';
-import { getPartnerProductsAPI } from '../../networks/shopping/partner/productsNetwork';
+import { fetchPartnerProducts } from '../../networks/shopping/partner/products';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import { AppText, Button, Divider, EmptyState, InlineNotice, ScreenShell, SegmentTabs, SkeletonLines, StatusPill, TextField } from '../../Custom-Components/index';
 import type { PartnerProductRow, PartnerProductStatus } from '../../models';
@@ -86,7 +86,7 @@ const StoreProductsContent: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const s = useAppSelector(selectStoreProducts);
   const q = useDebouncedValue(s.query.trim());
-  const list = usePagedList((page, size) => getPartnerProductsAPI({ status: s.status, q: q || undefined }, page, size), partnerProductRowPageSerializer, `store-products|${s.status}|${q}`);
+  const list = usePagedList((page, size) => fetchPartnerProducts({ status: s.status, q: q || undefined }, page, size), partnerProductRowPageSerializer, `store-products|${s.status}|${q}`);
 
   return (
     <ScreenShell

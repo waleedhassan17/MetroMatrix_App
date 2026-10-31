@@ -13,7 +13,7 @@ import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { usePagedList } from '../../hooks/usePagedList';
-import { getPurchasesAPI } from '../../networks/kitchen/purchasesNetwork';
+import { fetchPurchases } from '../../networks/kitchen/purchases';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
 import { AppText, Button, Card, EmptyState, IconButton, InlineNotice, ScreenShell, SkeletonLines, TextAction } from '../../Custom-Components/index';
 import { Sparkline } from '../../Custom-Components/shopping/charts/Sparkline';
@@ -53,7 +53,7 @@ const PurchasesContent: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectPurchases);
-  const list = usePagedList(getPurchasesAPI, purchasesPageSerializer, `kitchen-purchases|${s.version}`);
+  const list = usePagedList(fetchPurchases, purchasesPageSerializer, `kitchen-purchases|${s.version}`);
 
   useFocusEffect(
     useCallback(() => {

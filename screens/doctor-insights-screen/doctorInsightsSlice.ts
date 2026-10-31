@@ -1,8 +1,8 @@
 // MetroMatrix — Insights for 7, 30 or 90 days (recorded from completed visits).
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getInsightsAPI } from '../../networks/health/doctor/doctorInsightsNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchInsights } from '../../networks/health/doctor/doctorInsights';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { DoctorInsights, DoctorInsightsRange } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { insightsSerializer } from '../../serializers/health/doctorSerializer';
@@ -23,7 +23,7 @@ export const doctorInsightsSlice = createAppSlice({
     loadInsightsAsync: create.asyncThunk(
       async (range: DoctorInsightsRange, { rejectWithValue }) => {
         try {
-          return required(insightsSerializer(await getInsightsAPI(range)));
+          return required(insightsSerializer(await fetchInsights(range)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

@@ -11,7 +11,7 @@ import vendorReal from '../../../../serializers/__tests__/fixtures/food/vendor.j
 import menuReal from '../../../../serializers/__tests__/fixtures/food/menu.json';
 import discoveryReal from '../../../../serializers/__tests__/fixtures/food/discovery.json';
 import p8Real from '../../../../serializers/__tests__/fixtures/food/p8.json';
-import { api } from '../../apiHelpers';
+import { MainAxiosInstance } from '../../network';
 import { clearTokens } from '../../../../utils/storage_utils/storageUtils';
 import { getDb, resetMockDb } from '../mockDb';
 import { isAddition, shippedAdditions } from '../kitchen/foodAdditions';
@@ -31,7 +31,7 @@ const T0 = new Date('2026-10-15T10:00:00Z').getTime();
 
 const call = async (method: 'get' | 'post' | 'put' | 'patch' | 'delete', url: string, body?: unknown): Promise<Body> => {
   try {
-    const res = method === 'get' || method === 'delete' ? await api[method](url) : await api[method](url, body);
+    const res = method === 'get' || method === 'delete' ? await MainAxiosInstance[method](url) : await MainAxiosInstance[method](url, body);
     return res.data as Body;
   } catch (e) {
     return ((e as { response?: { data?: Body } }).response?.data ?? { success: false }) as Body;

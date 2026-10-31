@@ -4,8 +4,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { createBannerAPI, deleteBannerAPI, getAdminCategoriesAPI, getAdminStoresAPI, updateBannerAPI } from '../../networks/admin/adminShopNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { createBanner, deleteBanner, fetchAdminCategories, fetchAdminStores, updateBanner } from '../../networks/admin/adminShop';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { AdminBanner, AdminBannerInput, LocalFile, ShopCategory, StoreSummary } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { upload } from '../shared/photoUploads';
@@ -123,7 +123,7 @@ export const bannerFormSlice = createAppSlice({
     loadBannerChoicesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [stores, categories] = await Promise.all([getAdminStoresAPI('', 1, 100).then(raw => required(storeSummaryPageSerializer(raw))), getAdminCategoriesAPI().then(raw => required(categoryListSerializer(raw)))]);
+          const [stores, categories] = await Promise.all([fetchAdminStores('', 1, 100).then(raw => required(storeSummaryPageSerializer(raw))), fetchAdminCategories().then(raw => required(categoryListSerializer(raw)))]);
           return { stores: stores.items, categories };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -161,7 +161,7 @@ export const bannerFormSlice = createAppSlice({
     saveBannerAsync: create.asyncThunk(
       async ({ id, input }: { id: string | null; input: AdminBannerInput }, { rejectWithValue }) => {
         try {
-          return id ? required(adminBannerSerializer(await updateBannerAPI(id, input))) : required(adminBannerSerializer(await createBannerAPI(input)));
+          return id ? required(adminBannerSerializer(await updateBanner(id, input))) : required(adminBannerSerializer(await createBanner(input)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -183,7 +183,7 @@ export const bannerFormSlice = createAppSlice({
     deleteBannerAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return await deleteBannerAPI(id);
+          return await deleteBanner(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

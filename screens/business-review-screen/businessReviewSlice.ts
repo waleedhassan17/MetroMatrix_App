@@ -8,13 +8,13 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import {
-  approveBusinessAPI,
-  getBusinessAPI,
-  reinstateBusinessAPI,
-  rejectBusinessAPI,
-  suspendBusinessAPI,
-} from '../../networks/admin/adminBusinessNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+  approveBusiness,
+  fetchBusiness,
+  reinstateBusiness,
+  rejectBusiness,
+  suspendBusiness,
+} from '../../networks/admin/adminBusiness';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { cleanDocumentNotes } from '../../models/businessModel';
 import type { Business, BusinessWithOwner } from '../../models';
 import { removeFromQueue } from '../approval-queue-screen/approvalQueueSlice';
@@ -84,7 +84,7 @@ export const businessReviewSlice = createAppSlice({
     loadBusinessAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(businessWithOwnerSerializer(await getBusinessAPI(id)));
+          return required(businessWithOwnerSerializer(await fetchBusiness(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -113,15 +113,15 @@ export const businessReviewSlice = createAppSlice({
         try {
           const raw =
             args.decision === 'approve'
-              ? await approveBusinessAPI(args.id)
+              ? await approveBusiness(args.id)
               : args.decision === 'reject'
-                ? await rejectBusinessAPI(args.id, {
+                ? await rejectBusiness(args.id, {
                     reason: (args.reason ?? '').trim(),
                     documentNotes: cleanDocumentNotes(args.documentNotes ?? {}),
                   })
                 : args.decision === 'suspend'
-                  ? await suspendBusinessAPI(args.id, (args.reason ?? '').trim())
-                  : await reinstateBusinessAPI(args.id, (args.reason ?? '').trim());
+                  ? await suspendBusiness(args.id, (args.reason ?? '').trim())
+                  : await reinstateBusiness(args.id, (args.reason ?? '').trim());
           const business = required(businessSerializer(raw));
           dispatch(removeFromQueue(args.id));
           return business;

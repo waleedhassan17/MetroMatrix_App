@@ -2,8 +2,8 @@
 // dishes that use it), and deleting it.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { deleteIngredientAPI, getIngredientAPI } from '../../networks/kitchen/stockNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { deleteIngredient, fetchIngredient } from '../../networks/kitchen/stock';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { IngredientDetail } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { ingredientDetailSerializer } from '../../serializers/kitchen/stockSerializer';
@@ -25,7 +25,7 @@ export const ingredientSlice = createAppSlice({
     loadIngredientAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(ingredientDetailSerializer(await getIngredientAPI(id)));
+          return required(ingredientDetailSerializer(await fetchIngredient(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -50,7 +50,7 @@ export const ingredientSlice = createAppSlice({
     deleteIngredientAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return await deleteIngredientAPI(id);
+          return await deleteIngredient(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

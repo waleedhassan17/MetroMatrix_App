@@ -7,8 +7,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { acknowledgeCartAPI, addToCartAPI, getCartAPI, removeCartLineAPI, updateCartLineAPI } from '../../networks/shopping/cartNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { acknowledgeCart, addToCart, fetchCart, removeCartLine, updateCartLine } from '../../networks/shopping/cart';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { EMPTY_CART, cartSerializer } from '../../serializers/shopping/cartSerializer';
 import type { Cart } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -53,7 +53,7 @@ export const bagSlice = createAppSlice({
     loadBagAsync: create.asyncThunk(
       async (_: { refresh: boolean } | undefined, { rejectWithValue }) => {
         try {
-          return required(cartSerializer(await getCartAPI()));
+          return required(cartSerializer(await fetchCart()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -80,7 +80,7 @@ export const bagSlice = createAppSlice({
     addToBagAsync: create.asyncThunk(
       async ({ variantId, quantity }: { variantId: string; quantity: number }, { rejectWithValue }) => {
         try {
-          return required(cartSerializer(await addToCartAPI(variantId, quantity)));
+          return required(cartSerializer(await addToCart(variantId, quantity)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -105,7 +105,7 @@ export const bagSlice = createAppSlice({
     updateLineAsync: create.asyncThunk(
       async ({ lineId, quantity }: { lineId: string; quantity: number }, { rejectWithValue }) => {
         try {
-          return required(cartSerializer(await updateCartLineAPI(lineId, quantity)));
+          return required(cartSerializer(await updateCartLine(lineId, quantity)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -129,7 +129,7 @@ export const bagSlice = createAppSlice({
     removeLineAsync: create.asyncThunk(
       async (lineId: string, { rejectWithValue }) => {
         try {
-          return required(cartSerializer(await removeCartLineAPI(lineId)));
+          return required(cartSerializer(await removeCartLine(lineId)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -153,7 +153,7 @@ export const bagSlice = createAppSlice({
     acknowledgeBagAsync: create.asyncThunk(
       async (lineIds: string[], { rejectWithValue }) => {
         try {
-          return required(cartSerializer(await acknowledgeCartAPI(lineIds)));
+          return required(cartSerializer(await acknowledgeCart(lineIds)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

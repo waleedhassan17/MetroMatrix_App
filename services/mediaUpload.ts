@@ -6,15 +6,15 @@
 // parameters (apiHelpers' upload section). The slices that attach files call
 // these instead of repeating both steps.
 
-import { required, uploadToCloudinary } from '../networks/network/apiHelpers';
-import { signUploadAPI } from '../networks/media/mediaNetwork';
+import { required, uploadToCloudinary } from '../networks/network/network';
+import { signUpload as signUploadRequest } from '../networks/media/media';
 import { signedUploadSerializer } from '../serializers/mediaSerializer';
 import { API_PURPOSE, type UploadPurpose } from '../models/mediaModel';
 import type { LocalFile, SignedUpload, UploadedFile } from '../models/auth';
 
 /** The API's signature for one upload of this kind. */
 export const signUpload = async (purpose: UploadPurpose): Promise<SignedUpload> =>
-  required(signedUploadSerializer(await signUploadAPI(API_PURPOSE[purpose])));
+  required(signedUploadSerializer(await signUploadRequest(API_PURPOSE[purpose])));
 
 /** Sign, then upload: one call for a photo a form attaches (review, return, payment proof, product). */
 export const uploadImage = async (

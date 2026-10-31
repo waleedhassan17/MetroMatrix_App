@@ -10,7 +10,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { usePagedList } from '../../hooks/usePagedList';
-import { getReviewsByThemeAPI } from '../../networks/food/vendor/reviewsNetwork';
+import { fetchReviewsByTheme } from '../../networks/food/vendor/reviews';
 import { weekLabel } from '../../models/kitchen/assistantModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
 import { Divider, EmptyState, InlineNotice, ScreenShell, SkeletonLines, TextAction } from '../../Custom-Components/index';
@@ -37,7 +37,7 @@ const ReviewThemeContent: React.FC<Props> = ({ navigation, route }) => {
   const { back } = useBack({ name: 'KitchenReviewInsights' });
   const styles = useStyles(makeStyles);
   const name = useAppSelector(selectBusiness)?.name ?? 'Your kitchen';
-  const list = usePagedList((page, size) => getReviewsByThemeAPI(theme, week ?? null, page, size), vendorReviewsPageSerializer, `review-theme|${theme}|${week ?? ''}`);
+  const list = usePagedList((page, size) => fetchReviewsByTheme(theme, week ?? null, page, size), vendorReviewsPageSerializer, `review-theme|${theme}|${week ?? ''}`);
 
   return (
     <ScreenShell title={label ?? 'Reviews'} subtitle={week ? weekLabel(week) : undefined} onBack={back} scroll={false}>

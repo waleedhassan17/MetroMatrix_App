@@ -8,11 +8,11 @@
 
 import { createSelector, type PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getTodayAPI, setTodayAPI } from '../../networks/food/vendor/availabilityNetwork';
-import { getForecastAPI } from '../../networks/kitchen/forecastNetwork';
-import { getTiffinTomorrowAPI } from '../../networks/foodGrowth/tiffinNetwork';
+import { fetchToday, setToday } from '../../networks/food/vendor/availability';
+import { fetchForecast } from '../../networks/kitchen/forecast';
+import { fetchTiffinTomorrow } from '../../networks/foodGrowth/tiffin';
 import { suggestedPortions } from '../../models/kitchen/forecastModel';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { Forecast, TiffinTomorrow, TodayMenu } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { menuChanged } from '../vendor-menu-screen/vendorMenuSlice';
@@ -66,8 +66,8 @@ export const vendorTodaySlice = createAppSlice({
     loadTodayAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const today = required(todayMenuSerializer(await getTodayAPI()));
-          const [forecast, tiffin] = await Promise.all([today ? getForecastAPI(today.date).then(raw => required(forecastSerializer(raw))).catch(() => null) : null, getTiffinTomorrowAPI().then(raw => required(tiffinTomorrowSerializer(raw))).catch(() => null)]);
+          const today = required(todayMenuSerializer(await fetchToday()));
+          const [forecast, tiffin] = await Promise.all([today ? fetchForecast(today.date).then(raw => required(forecastSerializer(raw))).catch(() => null) : null, fetchTiffinTomorrow().then(raw => required(tiffinTomorrowSerializer(raw))).catch(() => null)]);
           return { today, forecast, tiffin };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -95,7 +95,7 @@ export const vendorTodaySlice = createAppSlice({
       async (_: void, { getState, dispatch, rejectWithValue }) => {
         const { edits } = (getState() as { vendorToday: VendorTodaySliceState }).vendorToday;
         try {
-          const out = required(todayMenuSerializer(await setTodayAPI(Object.entries(edits).map(([itemId, e]) => ({ itemId, ...e })))));
+          const out = required(todayMenuSerializer(await setToday(Object.entries(edits).map(([itemId, e]) => ({ itemId, ...e })))));
           dispatch(menuChanged());
           return out;
         } catch (e) {

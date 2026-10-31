@@ -2,8 +2,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { createCollectionAPI, deleteCollectionAPI, getCollectionsAPI, renameCollectionAPI, reorderCollectionsAPI } from '../../networks/shopping/partner/productsNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { createCollection, deleteCollection, fetchCollections, renameCollection, reorderCollections } from '../../networks/shopping/partner/products';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { Collection } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { collectionListSerializer, collectionSerializer } from '../../serializers/shopping/catalogSerializer';
@@ -38,7 +38,7 @@ export const collectionsSlice = createAppSlice({
     loadCollectionsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(collectionListSerializer(await getCollectionsAPI()));
+          return required(collectionListSerializer(await fetchCollections()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -64,10 +64,10 @@ export const collectionsSlice = createAppSlice({
         { rejectWithValue },
       ) => {
         try {
-          if (change.kind === 'save') await (change.id ? renameCollectionAPI(change.id, change.name.trim()).then(raw => required(collectionSerializer(raw))) : createCollectionAPI(change.name.trim()).then(raw => required(collectionSerializer(raw))));
-          else if (change.kind === 'delete') await deleteCollectionAPI(change.id);
-          else return required(collectionListSerializer(await reorderCollectionsAPI(change.ids)));
-          return required(collectionListSerializer(await getCollectionsAPI()));
+          if (change.kind === 'save') await (change.id ? renameCollection(change.id, change.name.trim()).then(raw => required(collectionSerializer(raw))) : createCollection(change.name.trim()).then(raw => required(collectionSerializer(raw))));
+          else if (change.kind === 'delete') await deleteCollection(change.id);
+          else return required(collectionListSerializer(await reorderCollections(change.ids)));
+          return required(collectionListSerializer(await fetchCollections()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

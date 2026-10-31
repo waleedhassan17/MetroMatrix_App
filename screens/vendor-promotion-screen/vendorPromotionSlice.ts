@@ -8,9 +8,9 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { createPromotionAPI, deactivatePromotionAPI, deletePromotionAPI, getPromotionAPI, updatePromotionAPI } from '../../networks/food/vendor/promotionsNetwork';
-import { getMenuItemsAPI } from '../../networks/food/vendor/menuNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { createPromotion, deactivatePromotion, deletePromotion, fetchPromotion, updatePromotion } from '../../networks/food/vendor/promotions';
+import { fetchMenuItems } from '../../networks/food/vendor/menu';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { emptyPromotionForm, promotionForm, promotionInput, type PromotionForm } from '../../models/food/promotionModel';
 import type { FoodPromotion, PromotionKind, VendorMenuItem } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -67,7 +67,7 @@ export const vendorPromotionSlice = createAppSlice({
     loadPromotionAsync: create.asyncThunk(
       async (id: string | undefined, { rejectWithValue }) => {
         try {
-          const [promotion, items] = await Promise.all([id ? getPromotionAPI(id).then(raw => required(foodPromotionSerializer(raw))) : Promise.resolve(null), getMenuItemsAPI().then(raw => required(vendorMenuItemsSerializer(raw)))]);
+          const [promotion, items] = await Promise.all([id ? fetchPromotion(id).then(raw => required(foodPromotionSerializer(raw))) : Promise.resolve(null), fetchMenuItems().then(raw => required(vendorMenuItemsSerializer(raw)))]);
           return { promotion, dishes: items.map(i => ({ id: i.id, name: i.name })) };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -95,7 +95,7 @@ export const vendorPromotionSlice = createAppSlice({
         const { promotion, form } = (getState() as { vendorPromotion: VendorPromotionSliceState }).vendorPromotion;
         if (!form) return rejectWithValue({ message: 'Nothing to save.', code: null, details: null });
         try {
-          return promotion ? required(foodPromotionSerializer(await updatePromotionAPI(promotion.id, promotionInput(form)))) : required(foodPromotionSerializer(await createPromotionAPI(promotionInput(form))));
+          return promotion ? required(foodPromotionSerializer(await updatePromotion(promotion.id, promotionInput(form)))) : required(foodPromotionSerializer(await createPromotion(promotionInput(form))));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -122,7 +122,7 @@ export const vendorPromotionSlice = createAppSlice({
     deactivatePromotionAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(foodPromotionSerializer(await deactivatePromotionAPI(id)));
+          return required(foodPromotionSerializer(await deactivatePromotion(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -147,7 +147,7 @@ export const vendorPromotionSlice = createAppSlice({
     deletePromotionAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          await deletePromotionAPI(id);
+          await deletePromotion(id);
           return id;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

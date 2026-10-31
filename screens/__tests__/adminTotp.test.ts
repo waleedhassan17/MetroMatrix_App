@@ -5,8 +5,8 @@
 
 import type { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
-import { api } from '../../networks/network/apiHelpers';
-import { adminTotpConfirm, adminTotpEnrol } from '../../networks/auth/authNetwork';
+import { MainAxiosInstance } from '../../networks/network/network';
+import { adminTotpConfirm, adminTotpEnrol } from '../../networks/authcalls/adminTotp';
 import authReducer, { setPendingTotp } from '../../store/authSlice';
 import { signInSlice } from '../sign-in-screen/signInSlice';
 import { adminTotpSlice, verifyTotpAsync } from '../admin-totp-screen/adminTotpSlice';
@@ -57,19 +57,19 @@ const authResult = {
   tokens: { accessToken: 'acc', refreshToken: 'ref', expiresIn: 900 },
 };
 
-const original = api.defaults.adapter;
+const original = MainAxiosInstance.defaults.adapter;
 beforeEach(async () => {
   sent.length = 0;
   await clearTokens();
 });
 afterAll(() => {
-  api.defaults.adapter = original;
+  MainAxiosInstance.defaults.adapter = original;
 });
 
 describe('enrolment requests', () => {
   it('enrol: POST /admin/me/totp/enrol with the challenge as bearer and no body', async () => {
-    api.defaults.adapter = server(c =>
-      reply(c, 200, { data: { otpauthUri: 'otpauth://totp/x?secret=S', qrDataUrl: 'data:image/png;base64,AA', secret: 'S' } }),
+    MainAxiosInstance.defaults.adapter = server(c =>
+      reply(c, 200, { success: true, data: { otpauthUri: 'otpauth://totp/x?secret=S', qrDataUrl: 'data:image/png;base64,AA', secret: 'S' } }),
     );
     const enrolment = await adminTotpEnrol('challenge-1');
     expect(sent[0]).toMatchObject({ url: '/admin/me/totp/enrol', auth: 'Bearer challenge-1' });
@@ -78,7 +78,7 @@ describe('enrolment requests', () => {
   });
 
   it('confirm: only { code } in the body; reads { recoveryCodes, auth } and stores the session', async () => {
-    api.defaults.adapter = server(c => reply(c, 200, { data: { recoveryCodes: ['abcd-2345'], auth: authResult } }));
+    MainAxiosInstance.defaults.adapter = server(c => reply(c, 200, { success: true, data: { recoveryCodes: ['abcd-2345'], auth: authResult } }));
     const out = await adminTotpConfirm('challenge-1', '123456');
     expect(sent[0]).toMatchObject({ url: '/admin/me/totp/confirm', auth: 'Bearer challenge-1' });
     expect(JSON.parse(String(sent[0].data))).toEqual({ code: '123456' });
@@ -93,7 +93,7 @@ describe('a dead challenge', () => {
     ['401 UNAUTHORIZED', 401, 'UNAUTHORIZED', /timed out/],
     ['429 RATE_LIMITED', 429, 'RATE_LIMITED', /Too many incorrect codes/],
   ])('%s at the code step ends it: back to Sign In with the reason', async (_n, status, code, copy) => {
-    api.defaults.adapter = server(c => fail(c, status, code, { retryAfter: 600 }));
+    MainAxiosInstance.defaults.adapter = server(c => fail(c, status, code, { retryAfter: 600 }));
     const store = makeStore();
     store.dispatch(setPendingTotp(pending));
     await store.dispatch(verifyTotpAsync({ challengeToken: 'challenge-1', code: '000000' }));
@@ -104,7 +104,7 @@ describe('a dead challenge', () => {
   });
 
   it('403 TOTP_REQUIRED at the code step moves to enrolment; at enrolment, back to the code step', async () => {
-    api.defaults.adapter = server(c => fail(c, 403, 'TOTP_REQUIRED', { enrolmentRequired: true }));
+    MainAxiosInstance.defaults.adapter = server(c => fail(c, 403, 'TOTP_REQUIRED', { enrolmentRequired: true }));
     const store = makeStore();
     store.dispatch(setPendingTotp(pending));
     await store.dispatch(verifyTotpAsync({ challengeToken: 'challenge-1', code: '123456' }));
@@ -117,9 +117,9 @@ describe('a dead challenge', () => {
 
 describe('staff on the User door', () => {
   it('WRONG_PORTAL for a staff account is retried on the admin door and opens the TOTP step', async () => {
-    api.defaults.adapter = server((c, body) =>
+    MainAxiosInstance.defaults.adapter = server((c, body) =>
       body.portal === 'admin'
-        ? reply(c, 200, { data: { totpRequired: true, enrolmentRequired: false, challengeToken: 'challenge-2' } })
+        ? reply(c, 200, { success: true, data: { totpRequired: true, enrolmentRequired: false, challengeToken: 'challenge-2' } })
         : fail(c, 403, 'WRONG_PORTAL', { accountType: 'super_admin', portal: 'customer' }),
     );
     const store = makeStore();
@@ -130,7 +130,7 @@ describe('staff on the User door', () => {
   });
 
   it('a partner on the User door is not retried', async () => {
-    api.defaults.adapter = server(c => fail(c, 403, 'WRONG_PORTAL', { accountType: 'partner', portal: 'customer' }));
+    MainAxiosInstance.defaults.adapter = server(c => fail(c, 403, 'WRONG_PORTAL', { accountType: 'partner', portal: 'customer' }));
     await expect(signInAndOpen(makeStore().dispatch, 'customer', 'p@x.pk', 'Secret123')).rejects.toMatchObject({
       code: 'WRONG_PORTAL',
     });

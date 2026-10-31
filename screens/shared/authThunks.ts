@@ -10,8 +10,10 @@
 
 import type { Dispatch } from '@reduxjs/toolkit';
 import { resetAllState } from '../../store/resetAllState';
-import { authGoogle, authSignin, authSignup, type SignupPayload } from '../../networks/auth/authNetwork';
-import { ApiError, ERROR_CODES } from '../../networks/network/apiHelpers';
+import { authGoogle } from '../../networks/authcalls/google';
+import { authLogin } from '../../networks/authcalls/signin';
+import { authSignup, type SignupPayload } from '../../networks/authcalls/signup';
+import { ApiError, ERROR_CODES } from '../../networks/network/network';
 import { isStaffAccount } from '../../models/authDoors';
 import type { AuthResult, Portal } from '../../models/auth';
 import { setPendingTotp, setSession } from '../../store/authSlice';
@@ -30,10 +32,10 @@ const open = (dispatch: Dispatch, result: AuthResult) => {
  */
 const signinOnTheirDoor = async (portal: Extract<Portal, 'customer' | 'partner'>, email: string, password: string) => {
   try {
-    return await authSignin({ email, password, portal });
+    return await authLogin({ email, password, portal });
   } catch (e) {
     if (portal === 'customer' && e instanceof ApiError && e.code === ERROR_CODES.WRONG_PORTAL && isStaffAccount(e.details?.accountType)) {
-      return authSignin({ email, password, portal: 'admin' });
+      return authLogin({ email, password, portal: 'admin' });
     }
     throw e;
   }
@@ -72,7 +74,7 @@ export const signInAndOpen = async (
  * app (same portal); staff are pointed to the User sign-in.
  */
 export const riderSignInAndOpen = async (dispatch: Dispatch, username: string, password: string): Promise<'session'> => {
-  const outcome = await authSignin({ username, password, portal: 'partner' });
+  const outcome = await authLogin({ username, password, portal: 'partner' });
   if (outcome.kind !== 'session') {
     throw new ApiError('This is a staff account. Sign in as a User.', ERROR_CODES.WRONG_PORTAL, 403, { accountType: 'admin', portal: 'partner' });
   }

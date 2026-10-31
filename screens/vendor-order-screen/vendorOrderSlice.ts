@@ -7,26 +7,26 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { suggestRidersAPI } from '../../networks/food/vendor/ridersNetwork';
+import { suggestRiders } from '../../networks/food/vendor/riders';
 import {
-  acceptOrderAPI,
-  assignRiderAPI,
-  cancelVendorOrderAPI,
-  confirmPaymentAPI,
-  getVendorOrderAPI,
-  handedExternalAPI,
-  markCollectedAPI,
-  markDeliveredAPI,
-  markReadyAPI,
-  rejectOrderAPI,
-  rejectPaymentAPI,
-  startPreparingAPI,
-} from '../../networks/food/vendor/ordersNetwork';
-import { getKitchenSettingsAPI } from '../../networks/kitchen/costingNetwork';
-import { attachPackingPhotoAPI } from '../../networks/kitchen/packingNetwork';
+  acceptOrder,
+  assignRider,
+  cancelVendorOrder,
+  confirmPayment,
+  fetchVendorOrder,
+  handedExternal,
+  markCollected,
+  markDelivered,
+  markReady,
+  rejectOrder,
+  rejectPayment,
+  startPreparing,
+} from '../../networks/food/vendor/orders';
+import { fetchKitchenSettings } from '../../networks/kitchen/costing';
+import { attachPackingPhoto } from '../../networks/kitchen/packing';
 import { uploadImage } from '../../services/mediaUpload';
-import { getBatchSuggestionsAPI } from '../../networks/foodGrowth/batchingNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchBatchSuggestions } from '../../networks/foodGrowth/batching';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { BatchSuggestion, LocalFile, PackingPhotoRule, PackingResult, RiderSuggestion, VendorFoodOrder } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { vendorFoodOrderSerializer } from '../../serializers/food/orderSerializer';
@@ -96,27 +96,27 @@ const initialState: VendorOrderSliceState = {
 const run = (id: string, a: VendorOrderAct) => {
   switch (a.kind) {
     case 'accept':
-      return acceptOrderAPI(id, a.eta).then(raw => required(vendorFoodOrderSerializer(raw)));
+      return acceptOrder(id, a.eta).then(raw => required(vendorFoodOrderSerializer(raw)));
     case 'assign':
-      return assignRiderAPI(id, a.riderId).then(raw => required(vendorFoodOrderSerializer(raw)));
+      return assignRider(id, a.riderId).then(raw => required(vendorFoodOrderSerializer(raw)));
     case 'reject':
-      return rejectOrderAPI(id, a.reason).then(raw => required(vendorFoodOrderSerializer(raw)));
+      return rejectOrder(id, a.reason).then(raw => required(vendorFoodOrderSerializer(raw)));
     case 'cancel':
-      return cancelVendorOrderAPI(id, a.reason).then(raw => required(vendorFoodOrderSerializer(raw)));
+      return cancelVendorOrder(id, a.reason).then(raw => required(vendorFoodOrderSerializer(raw)));
     case 'preparing':
-      return startPreparingAPI(id).then(raw => required(vendorFoodOrderSerializer(raw)));
+      return startPreparing(id).then(raw => required(vendorFoodOrderSerializer(raw)));
     case 'ready':
-      return markReadyAPI(id).then(raw => required(vendorFoodOrderSerializer(raw)));
+      return markReady(id).then(raw => required(vendorFoodOrderSerializer(raw)));
     case 'handed-external':
-      return handedExternalAPI(id).then(raw => required(vendorFoodOrderSerializer(raw)));
+      return handedExternal(id).then(raw => required(vendorFoodOrderSerializer(raw)));
     case 'picked-up':
-      return markCollectedAPI(id).then(raw => required(vendorFoodOrderSerializer(raw)));
+      return markCollected(id).then(raw => required(vendorFoodOrderSerializer(raw)));
     case 'delivered':
-      return markDeliveredAPI(id, null).then(raw => required(vendorFoodOrderSerializer(raw)));
+      return markDelivered(id, null).then(raw => required(vendorFoodOrderSerializer(raw)));
     case 'confirm-payment':
-      return confirmPaymentAPI(id).then(raw => required(vendorFoodOrderSerializer(raw)));
+      return confirmPayment(id).then(raw => required(vendorFoodOrderSerializer(raw)));
     case 'reject-payment':
-      return rejectPaymentAPI(id, a.reason).then(raw => required(vendorFoodOrderSerializer(raw)));
+      return rejectPayment(id, a.reason).then(raw => required(vendorFoodOrderSerializer(raw)));
   }
 };
 
@@ -141,7 +141,7 @@ export const vendorOrderSlice = createAppSlice({
     loadSuggestionsAsync: create.asyncThunk(
       async (orderId: string, { rejectWithValue }) => {
         try {
-          const [riders, batch] = await Promise.all([suggestRidersAPI(orderId).then(raw => required(riderSuggestionsSerializer(raw))), getBatchSuggestionsAPI(orderId).then(raw => required(batchSuggestionsSerializer(raw))).catch(() => [] as BatchSuggestion[])]);
+          const [riders, batch] = await Promise.all([suggestRiders(orderId).then(raw => required(riderSuggestionsSerializer(raw))), fetchBatchSuggestions(orderId).then(raw => required(batchSuggestionsSerializer(raw))).catch(() => [] as BatchSuggestion[])]);
           return { riders, batch };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -168,7 +168,7 @@ export const vendorOrderSlice = createAppSlice({
     assignTogetherAsync: create.asyncThunk(
       async ({ orderIds, riderId }: { orderIds: string[]; riderId: string }, { rejectWithValue }) => {
         try {
-          for (const orderId of orderIds) await assignRiderAPI(orderId, riderId);
+          for (const orderId of orderIds) await assignRider(orderId, riderId);
           return orderIds.length;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -188,7 +188,7 @@ export const vendorOrderSlice = createAppSlice({
     loadPackingRuleAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return (required(kitchenSettingsSerializer(await getKitchenSettingsAPI())))?.packingPhoto ?? 'off';
+          return (required(kitchenSettingsSerializer(await fetchKitchenSettings())))?.packingPhoto ?? 'off';
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -205,8 +205,8 @@ export const vendorOrderSlice = createAppSlice({
       async ({ id, file }: { id: string; file: LocalFile }, { rejectWithValue }) => {
         try {
           const uploaded = await uploadImage(file, 'food_packing');
-          const result = required(packingResultSerializer(await attachPackingPhotoAPI(id, uploaded.url)));
-          const order = required(vendorFoodOrderSerializer(await getVendorOrderAPI(id)));
+          const result = required(packingResultSerializer(await attachPackingPhoto(id, uploaded.url)));
+          const order = required(vendorFoodOrderSerializer(await fetchVendorOrder(id)));
           return { result, order };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -233,7 +233,7 @@ export const vendorOrderSlice = createAppSlice({
     loadVendorOrderAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(vendorFoodOrderSerializer(await getVendorOrderAPI(id)));
+          return required(vendorFoodOrderSerializer(await fetchVendorOrder(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

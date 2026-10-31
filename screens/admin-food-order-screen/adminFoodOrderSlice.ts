@@ -1,8 +1,8 @@
 // MetroMatrix — Admin Food order slice: one order with every event, by id.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getAdminFoodOrderAPI } from '../../networks/admin/adminFoodNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchAdminFoodOrder } from '../../networks/admin/adminFood';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { AdminFoodOrder } from '../../models';
 import {
   NO_ERROR,
@@ -32,7 +32,7 @@ export const adminFoodOrderSlice = createAppSlice({
     loadAdminFoodOrderAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(adminFoodOrderSerializer(await getAdminFoodOrderAPI(id)));
+          return required(adminFoodOrderSerializer(await fetchAdminFoodOrder(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

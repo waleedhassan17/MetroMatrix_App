@@ -8,8 +8,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { cancelOrderAPI, confirmReceivedAPI, getOrderGroupAPI, requestCancellationAPI } from '../../networks/shopping/ordersNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { cancelOrder, confirmReceived, fetchOrderGroup, requestCancellation } from '../../networks/shopping/orders';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { OrderGroup } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { placeOrderAsync } from '../checkout-screen/checkoutSlice';
@@ -46,7 +46,7 @@ export const CANCEL_REASONS = ['Ordered by mistake', 'Found it cheaper elsewhere
 type Action = 'cancel' | 'request' | 'received';
 
 const act = async (kind: Action, orderId: string, reason: string) =>
-  kind === 'cancel' ? cancelOrderAPI(orderId, reason).then(raw => required(orderGroupSerializer(raw))) : kind === 'request' ? requestCancellationAPI(orderId, reason).then(raw => required(orderGroupSerializer(raw))) : confirmReceivedAPI(orderId).then(raw => required(orderGroupSerializer(raw)));
+  kind === 'cancel' ? cancelOrder(orderId, reason).then(raw => required(orderGroupSerializer(raw))) : kind === 'request' ? requestCancellation(orderId, reason).then(raw => required(orderGroupSerializer(raw))) : confirmReceived(orderId).then(raw => required(orderGroupSerializer(raw)));
 
 export const orderDetailSlice = createAppSlice({
   name: 'orderDetail',
@@ -69,7 +69,7 @@ export const orderDetailSlice = createAppSlice({
     loadOrderGroupAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return required(orderGroupSerializer(await getOrderGroupAPI(code)));
+          return required(orderGroupSerializer(await fetchOrderGroup(code)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

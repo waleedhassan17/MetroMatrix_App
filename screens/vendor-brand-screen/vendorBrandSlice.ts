@@ -6,8 +6,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getCuisinesAPI, getVendorProfileAPI, updateVendorProfileAPI } from '../../networks/food/vendor/profileNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchCuisines, fetchVendorProfile, updateVendorProfile } from '../../networks/food/vendor/profile';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { brandPatch, MAX_CUISINES, type VendorBrandForm } from '../../models/food/vendorModel';
 import type { FoodCuisine, LocalFile, VendorProfile } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -66,7 +66,7 @@ export const vendorBrandSlice = createAppSlice({
     loadVendorBrandAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [profile, cuisines] = await Promise.all([getVendorProfileAPI().then(raw => required(vendorProfileSerializer(raw))), getCuisinesAPI().then(raw => required(foodCuisinesSerializer(raw)))]);
+          const [profile, cuisines] = await Promise.all([fetchVendorProfile().then(raw => required(vendorProfileSerializer(raw))), fetchCuisines().then(raw => required(foodCuisinesSerializer(raw)))]);
           return { profile, cuisines };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -116,7 +116,7 @@ export const vendorBrandSlice = createAppSlice({
     saveVendorBrandAsync: create.asyncThunk(
       async (form: VendorBrandForm, { rejectWithValue }) => {
         try {
-          return required(vendorProfileSerializer(await updateVendorProfileAPI(brandPatch(form))));
+          return required(vendorProfileSerializer(await updateVendorProfile(brandPatch(form))));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

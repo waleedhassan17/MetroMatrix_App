@@ -2,8 +2,8 @@
 // at a glance, and tomorrow's tiffins per plan.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getTiffinTomorrowAPI, getMyTiffinPlansAPI, getTiffinSubscriptionsAPI } from '../../networks/foodGrowth/tiffinNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchTiffinTomorrow, fetchMyTiffinPlans, fetchTiffinSubscriptions } from '../../networks/foodGrowth/tiffin';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { TiffinInbox, TiffinPlan, TiffinTomorrow } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { tiffinPlansSerializer, tiffinInboxSerializer, tiffinTomorrowSerializer } from '../../serializers/kitchen/growthSerializer';
@@ -25,7 +25,7 @@ export const tiffinPlansSlice = createAppSlice({
     loadTiffinPlansAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [plans, inbox, tomorrow] = await Promise.all([getMyTiffinPlansAPI().then(raw => required(tiffinPlansSerializer(raw))), getTiffinSubscriptionsAPI().then(raw => required(tiffinInboxSerializer(raw))), getTiffinTomorrowAPI().then(raw => required(tiffinTomorrowSerializer(raw)))]);
+          const [plans, inbox, tomorrow] = await Promise.all([fetchMyTiffinPlans().then(raw => required(tiffinPlansSerializer(raw))), fetchTiffinSubscriptions().then(raw => required(tiffinInboxSerializer(raw))), fetchTiffinTomorrow().then(raw => required(tiffinTomorrowSerializer(raw)))]);
           return { plans, counts: inbox.counts, tomorrow };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

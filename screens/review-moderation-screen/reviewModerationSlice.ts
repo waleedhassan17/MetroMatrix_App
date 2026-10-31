@@ -3,8 +3,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { setReviewHiddenAPI } from '../../networks/admin/adminHealthNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { setReviewHidden } from '../../networks/admin/adminHealth';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { NO_ERROR, readRejection, type ServerError } from '../shared/formStatus';
 import { doctorReviewSerializer } from '../../serializers/health/discoverySerializer';
 
@@ -43,7 +43,7 @@ export const reviewModerationSlice = createAppSlice({
     moderateReviewAsync: create.asyncThunk(
       async ({ id, hide, reason }: { id: string; hide: boolean; reason: string | null }, { rejectWithValue }) => {
         try {
-          return required(doctorReviewSerializer(await setReviewHiddenAPI(id, hide, hide ? (reason ?? '').trim() : null)));
+          return required(doctorReviewSerializer(await setReviewHidden(id, hide, hide ? (reason ?? '').trim() : null)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

@@ -13,7 +13,7 @@ import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { usePagedList } from '../../hooks/usePagedList';
-import { getAdminFoodReviewsAPI } from '../../networks/admin/adminFoodNetwork';
+import { fetchAdminFoodReviews } from '../../networks/admin/adminFood';
 import { HIDE_REVIEW_REASONS, validateHideFoodReview } from '../../models/food/adminFoodModel';
 import { useStyles, type Theme } from '../../theme/index';
 import {
@@ -66,7 +66,7 @@ const AdminFoodReviews: React.FC<Props> = ({ route }) => {
   const s = useAppSelector(selectAdminFoodReviews);
   const list = usePagedList(
     (page, size) =>
-      getAdminFoodReviewsAPI({ hidden: s.hidden, maxRating: s.lowOnly ? 2 : undefined, vendorId: s.vendor?.id }, page, size),
+      fetchAdminFoodReviews({ hidden: s.hidden, maxRating: s.lowOnly ? 2 : undefined, vendorId: s.vendor?.id }, page, size),
     adminFoodReviewsPageSerializer,
     `admin-food-reviews|${s.hidden}|${s.lowOnly}|${s.vendor?.id}`,
   );

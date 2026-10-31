@@ -6,8 +6,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { approveSignatureAPI, getSignaturesAPI, removeSignatureAPI } from '../../networks/admin/adminKitchenNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { approveSignature, fetchSignatures, removeSignature } from '../../networks/admin/adminKitchen';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { SignatureDish, SignatureList, SignatureStatus } from '../../models';
 import {
   NO_ERROR,
@@ -64,7 +64,7 @@ export const adminKitchenSignaturesSlice = createAppSlice({
     loadSignaturesAsync: create.asyncThunk(
       async (tab: SignatureStatus, { rejectWithValue }) => {
         try {
-          return required(signatureListSerializer(await getSignaturesAPI(tab)));
+          return required(signatureListSerializer(await fetchSignatures(tab)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -88,9 +88,9 @@ export const adminKitchenSignaturesSlice = createAppSlice({
     reviewSignatureAsync: create.asyncThunk(
       async (input: { itemId: string; keep: boolean; note?: string; tab: SignatureStatus }, { rejectWithValue }) => {
         try {
-          if (input.keep) await approveSignatureAPI(input.itemId);
-          else await removeSignatureAPI(input.itemId, input.note ?? '');
-          return required(signatureListSerializer(await getSignaturesAPI(input.tab)));
+          if (input.keep) await approveSignature(input.itemId);
+          else await removeSignature(input.itemId, input.note ?? '');
+          return required(signatureListSerializer(await fetchSignatures(input.tab)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

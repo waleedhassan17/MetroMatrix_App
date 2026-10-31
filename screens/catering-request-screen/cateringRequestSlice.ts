@@ -3,8 +3,8 @@
 // kitchen's account, or the receipt sent back with a reason.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { confirmAdvanceAPI, declineCateringAPI, getCateringRequestAPI, rejectAdvanceAPI } from '../../networks/foodGrowth/cateringNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { confirmAdvance, declineCatering, fetchCateringRequest, rejectAdvance } from '../../networks/foodGrowth/catering';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { CateringRequest } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { cateringRequestSerializer } from '../../serializers/kitchen/growthSerializer';
@@ -28,7 +28,7 @@ export const cateringRequestSlice = createAppSlice({
     loadCateringRequestAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return required(cateringRequestSerializer(await getCateringRequestAPI(code)));
+          return required(cateringRequestSerializer(await fetchCateringRequest(code)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -51,7 +51,7 @@ export const cateringRequestSlice = createAppSlice({
     cateringActAsync: create.asyncThunk(
       async ({ code, act }: { code: string; act: CateringAct }, { rejectWithValue }) => {
         try {
-          return act.kind === 'decline' ? required(cateringRequestSerializer(await declineCateringAPI(code, act.reason))) : act.kind === 'confirm-advance' ? required(cateringRequestSerializer(await confirmAdvanceAPI(code))) : required(cateringRequestSerializer(await rejectAdvanceAPI(code, act.reason)));
+          return act.kind === 'decline' ? required(cateringRequestSerializer(await declineCatering(code, act.reason))) : act.kind === 'confirm-advance' ? required(cateringRequestSerializer(await confirmAdvance(code))) : required(cateringRequestSerializer(await rejectAdvance(code, act.reason)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

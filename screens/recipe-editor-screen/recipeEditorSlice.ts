@@ -5,9 +5,9 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { deleteRecipeAPI, getRecipeAPI, saveRecipeAPI } from '../../networks/kitchen/recipesNetwork';
-import { getStockAPI } from '../../networks/kitchen/stockNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { deleteRecipe, fetchRecipe, saveRecipe } from '../../networks/kitchen/recipes';
+import { fetchStock } from '../../networks/kitchen/stock';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { editableAmount } from '../../models/kitchen/stockModel';
 import { newLineKey } from '../../models/kitchen/purchaseModel';
 import type { DraftLine, RecipeDraft } from '../../models/kitchen/costingModel';
@@ -112,7 +112,7 @@ export const recipeEditorSlice = createAppSlice({
     loadRecipeEditorAsync: create.asyncThunk(
       async ({ itemId, variantId }: { itemId: string; variantId?: string | null }, { rejectWithValue }) => {
         try {
-          const [recipe, stock] = await Promise.all([getRecipeAPI(itemId, variantId).then(raw => required(recipeSerializer(raw))), getStockAPI('all', '').then(raw => required(stockListSerializer(raw)))]);
+          const [recipe, stock] = await Promise.all([fetchRecipe(itemId, variantId).then(raw => required(recipeSerializer(raw))), fetchStock('all', '').then(raw => required(stockListSerializer(raw)))]);
           return { recipe, ingredients: stock.items };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -144,7 +144,7 @@ export const recipeEditorSlice = createAppSlice({
     saveRecipeAsync: create.asyncThunk(
       async ({ itemId, variantId, input }: { itemId: string; variantId: string | null; input: RecipeInput }, { rejectWithValue }) => {
         try {
-          return required(recipeSerializer(await saveRecipeAPI(itemId, variantId, input)));
+          return required(recipeSerializer(await saveRecipe(itemId, variantId, input)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -169,7 +169,7 @@ export const recipeEditorSlice = createAppSlice({
     deleteRecipeAsync: create.asyncThunk(
       async ({ itemId, variantId }: { itemId: string; variantId: string | null }, { rejectWithValue }) => {
         try {
-          return required(recipeSerializer(await deleteRecipeAPI(itemId, variantId)));
+          return required(recipeSerializer(await deleteRecipe(itemId, variantId)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

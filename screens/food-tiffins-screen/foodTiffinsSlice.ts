@@ -1,8 +1,8 @@
 // MetroMatrix — Food Court: the customer's tiffin subscriptions, newest first.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getMyTiffinsAPI } from '../../networks/foodGrowth/tiffinNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchMyTiffins } from '../../networks/foodGrowth/tiffin';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { TiffinSubscription } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { tiffinSubscriptionsSerializer } from '../../serializers/kitchen/growthSerializer';
@@ -22,7 +22,7 @@ export const foodTiffinsSlice = createAppSlice({
     loadMyTiffinsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(tiffinSubscriptionsSerializer(await getMyTiffinsAPI()));
+          return required(tiffinSubscriptionsSerializer(await fetchMyTiffins()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

@@ -4,10 +4,10 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getStockAPI } from '../../networks/kitchen/stockNetwork';
-import { getRecipesAPI } from '../../networks/kitchen/recipesNetwork';
-import { logWasteAPI } from '../../networks/kitchen/wasteNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchStock } from '../../networks/kitchen/stock';
+import { fetchRecipes } from '../../networks/kitchen/recipes';
+import { logWaste } from '../../networks/kitchen/waste';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { dishLine, ingredientLine, wasteDraftFromVoice, type WasteDraftLine } from '../../models/kitchen/wasteModel';
 import type { Ingredient, VoiceQtyLine, WasteLineInput, WasteReason } from '../../models';
 import type { ValidationErrors } from '../../models/authModel';
@@ -84,7 +84,7 @@ export const wasteFormSlice = createAppSlice({
     loadWasteFormAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [stock, recipes] = await Promise.all([getStockAPI('all', '').then(raw => required(stockListSerializer(raw))), getRecipesAPI(false).then(raw => required(recipeListSerializer(raw)))]);
+          const [stock, recipes] = await Promise.all([fetchStock('all', '').then(raw => required(stockListSerializer(raw))), fetchRecipes(false).then(raw => required(recipeListSerializer(raw)))]);
           const seen = new Set<string>();
           const dishes = recipes.items.filter(r => !seen.has(r.itemId) && seen.add(r.itemId)).map(r => ({ itemId: r.itemId, name: r.name }));
           return { ingredients: stock.items, dishes };
@@ -113,7 +113,7 @@ export const wasteFormSlice = createAppSlice({
       async (input: WasteLineInput[], { getState, rejectWithValue }) => {
         const note = (getState() as { wasteForm: WasteFormSliceState }).wasteForm.note.trim();
         try {
-          return required(wasteSerializer(await logWasteAPI(input, note || undefined)));
+          return required(wasteSerializer(await logWaste(input, note || undefined)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

@@ -2,8 +2,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { createSupplierAPI, deleteSupplierAPI, getSuppliersAPI, updateSupplierAPI } from '../../networks/kitchen/purchasesNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { createSupplier, deleteSupplier, fetchSuppliers, updateSupplier } from '../../networks/kitchen/purchases';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { Supplier } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { suppliersSerializer, supplierSerializer } from '../../serializers/kitchen/stockSerializer';
@@ -40,7 +40,7 @@ export const suppliersSlice = createAppSlice({
     loadSuppliersAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(suppliersSerializer(await getSuppliersAPI()));
+          return required(suppliersSerializer(await fetchSuppliers()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -64,7 +64,7 @@ export const suppliersSlice = createAppSlice({
       async (d: SupplierDraft, { rejectWithValue }) => {
         try {
           const body = { name: d.name.trim(), phone: d.phone.trim() || null, note: d.note.trim() || null };
-          return d.id ? required(supplierSerializer(await updateSupplierAPI(d.id, body))) : required(supplierSerializer(await createSupplierAPI(body)));
+          return d.id ? required(supplierSerializer(await updateSupplier(d.id, body))) : required(supplierSerializer(await createSupplier(body)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -90,7 +90,7 @@ export const suppliersSlice = createAppSlice({
     deleteSupplierAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          await deleteSupplierAPI(id);
+          await deleteSupplier(id);
           return id;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

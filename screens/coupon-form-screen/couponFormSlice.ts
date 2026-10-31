@@ -2,8 +2,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { createCouponAPI, deleteCouponAPI, updateCouponAPI } from '../../networks/shopping/partner/couponsNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { createCoupon, deleteCoupon, updateCoupon } from '../../networks/shopping/partner/coupons';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { emptyCouponForm, normaliseCode, toCouponInput, type CouponForm } from '../../models/shopping/couponFormModel';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { couponSerializer } from '../../serializers/shopping/partnerSerializer';
@@ -39,7 +39,7 @@ export const couponFormSlice = createAppSlice({
     saveCouponAsync: create.asyncThunk(
       async ({ id, form }: { id: string | null; form: CouponForm }, { rejectWithValue }) => {
         try {
-          return id ? required(couponSerializer(await updateCouponAPI(id, toCouponInput(form)))) : required(couponSerializer(await createCouponAPI(toCouponInput(form))));
+          return id ? required(couponSerializer(await updateCoupon(id, toCouponInput(form)))) : required(couponSerializer(await createCoupon(toCouponInput(form))));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -62,7 +62,7 @@ export const couponFormSlice = createAppSlice({
     deleteCouponAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return await deleteCouponAPI(id);
+          return await deleteCoupon(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

@@ -3,10 +3,10 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { suggestCombosAPI } from '../../networks/kitchen/kitchenAiNetwork';
-import { createMenuItemAPI } from '../../networks/food/vendor/menuNetwork';
-import { getKitchenSettingsAPI } from '../../networks/kitchen/costingNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { suggestCombos } from '../../networks/kitchen/kitchenAi';
+import { createMenuItem } from '../../networks/food/vendor/menu';
+import { fetchKitchenSettings } from '../../networks/kitchen/costing';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { comboItemInput } from '../../models/kitchen/assistantModel';
 import type { ComboIdea, DraftCategory } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -38,7 +38,7 @@ export const aiCombosSlice = createAppSlice({
     suggestCombosAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [ideas, settings] = await Promise.all([suggestCombosAPI().then(raw => required(comboIdeasSerializer(raw))), getKitchenSettingsAPI().then(raw => required(kitchenSettingsSerializer(raw)))]);
+          const [ideas, settings] = await Promise.all([suggestCombos().then(raw => required(comboIdeasSerializer(raw))), fetchKitchenSettings().then(raw => required(kitchenSettingsSerializer(raw)))]);
           return { ...ideas, targetPct: settings.targetFoodCostPct };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -68,7 +68,7 @@ export const aiCombosSlice = createAppSlice({
     createComboAsync: create.asyncThunk(
       async ({ idea, categoryId, price }: { idea: ComboIdea; categoryId: string; price: number }, { rejectWithValue }) => {
         try {
-          return required(vendorMenuItemSerializer(await createMenuItemAPI(comboItemInput(idea, categoryId, price), [])));
+          return required(vendorMenuItemSerializer(await createMenuItem(comboItemInput(idea, categoryId, price), [])));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

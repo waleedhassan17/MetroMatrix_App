@@ -2,8 +2,8 @@
 // quotes, accepting the latest, cancelling; read again on focus.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { acceptQuoteAPI, cancelMyCateringAPI, getMyCateringRequestAPI } from '../../networks/foodGrowth/cateringNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { acceptQuote, cancelMyCatering, fetchMyCateringRequest } from '../../networks/foodGrowth/catering';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { CateringRequest } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { cateringRequestSerializer } from '../../serializers/kitchen/growthSerializer';
@@ -25,7 +25,7 @@ export const foodCateringRequestSlice = createAppSlice({
     loadMyCateringRequestAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return required(cateringRequestSerializer(await getMyCateringRequestAPI(code)));
+          return required(cateringRequestSerializer(await fetchMyCateringRequest(code)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -48,7 +48,7 @@ export const foodCateringRequestSlice = createAppSlice({
     myCateringActAsync: create.asyncThunk(
       async ({ code, act }: { code: string; act: { kind: 'accept'; version: number } | { kind: 'cancel' } }, { dispatch, rejectWithValue }) => {
         try {
-          return act.kind === 'accept' ? required(cateringRequestSerializer(await acceptQuoteAPI(code, act.version))) : required(cateringRequestSerializer(await cancelMyCateringAPI(code)));
+          return act.kind === 'accept' ? required(cateringRequestSerializer(await acceptQuote(code, act.version))) : required(cateringRequestSerializer(await cancelMyCatering(code)));
         } catch (e) {
           // A newer quote, or an expired one: read the request again so the screen shows it.
           void dispatch(loadMyCateringRequestAsync(code));

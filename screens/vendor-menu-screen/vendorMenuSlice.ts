@@ -7,10 +7,10 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getMenuCategoriesAPI, getMenuItemsAPI } from '../../networks/food/vendor/menuNetwork';
-import { getAvailabilityAPI, setAvailabilityAPI } from '../../networks/food/vendor/availabilityNetwork';
-import { getBoardHintsAPI } from '../../networks/kitchen/costingNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchMenuCategories, fetchMenuItems } from '../../networks/food/vendor/menu';
+import { fetchAvailability, setAvailability } from '../../networks/food/vendor/availability';
+import { fetchBoardHints } from '../../networks/kitchen/costing';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { AvailabilityItem, BoardHints, MenuCategory, VendorMenuItem } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { menuCategoriesSerializer, vendorMenuItemsSerializer, menuAvailabilitySerializer } from '../../serializers/food/menuSerializer';
@@ -64,7 +64,7 @@ export const vendorMenuSlice = createAppSlice({
     loadVendorMenuAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [categories, items, availability, stock] = await Promise.all([getMenuCategoriesAPI().then(raw => required(menuCategoriesSerializer(raw))), getMenuItemsAPI().then(raw => required(vendorMenuItemsSerializer(raw))), getAvailabilityAPI().then(raw => required(menuAvailabilitySerializer(raw))), getBoardHintsAPI().then(raw => required(boardHintsSerializer(raw))).catch(() => null)]);
+          const [categories, items, availability, stock] = await Promise.all([fetchMenuCategories().then(raw => required(menuCategoriesSerializer(raw))), fetchMenuItems().then(raw => required(vendorMenuItemsSerializer(raw))), fetchAvailability().then(raw => required(menuAvailabilitySerializer(raw))), fetchBoardHints().then(raw => required(boardHintsSerializer(raw))).catch(() => null)]);
           return { categories, items, availability, stock };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -93,7 +93,7 @@ export const vendorMenuSlice = createAppSlice({
     setDishAvailableAsync: create.asyncThunk(
       async (input: { itemId: string; isAvailable: boolean; until: string | null }, { rejectWithValue }) => {
         try {
-          return required(menuAvailabilitySerializer(await setAvailabilityAPI({ items: [{ itemId: input.itemId, isAvailable: input.isAvailable, ...(input.isAvailable ? null : { unavailableUntil: input.until }) }] })));
+          return required(menuAvailabilitySerializer(await setAvailability({ items: [{ itemId: input.itemId, isAvailable: input.isAvailable, ...(input.isAvailable ? null : { unavailableUntil: input.until }) }] })));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

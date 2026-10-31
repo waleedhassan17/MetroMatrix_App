@@ -3,9 +3,9 @@
 // leaves at once (the API keeps it away for a day).
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getInsightCardsAPI, getKitchenSummaryAPI, snoozeInsightCardAPI } from '../../networks/kitchen/insightsCardsNetwork';
-import { getAiUsageAPI } from '../../networks/kitchen/kitchenAiNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchInsightCards, fetchKitchenSummary, snoozeInsightCard } from '../../networks/kitchen/insightsCards';
+import { fetchAiUsage } from '../../networks/kitchen/kitchenAi';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { AiUsage, InsightCard, KitchenSummary } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { snoozedCardSerializer, kitchenHubSerializer } from '../../serializers/kitchen/insightSerializer';
@@ -28,7 +28,7 @@ export const kitchenHubSlice = createAppSlice({
       async (_: void, { rejectWithValue }) => {
         try {
           // The tiles, the cards and the assistant's meter, read together.
-          const [summary, cards, usage] = await Promise.all([getKitchenSummaryAPI(), getInsightCardsAPI(), getAiUsageAPI()]);
+          const [summary, cards, usage] = await Promise.all([fetchKitchenSummary(), fetchInsightCards(), fetchAiUsage()]);
           return required(kitchenHubSerializer({ summary, cards, usage }));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -54,7 +54,7 @@ export const kitchenHubSlice = createAppSlice({
     snoozeCardAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(snoozedCardSerializer(await snoozeInsightCardAPI(id)));
+          return required(snoozedCardSerializer(await snoozeInsightCard(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

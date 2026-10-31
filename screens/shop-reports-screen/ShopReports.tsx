@@ -12,7 +12,7 @@ import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { usePagedList } from '../../hooks/usePagedList';
-import { getReportsAPI } from '../../networks/admin/adminShopNetwork';
+import { fetchReports } from '../../networks/admin/adminShop';
 import { useStyles, useTheme, type Theme } from '../../theme/index';
 import { AppText, Button, Card, EmptyState, InlineNotice, ScreenShell, SegmentTabs, Sheet, SkeletonLines, StatusPill, TextField } from '../../Custom-Components/index';
 import type { AdminShopStackParamList, ReportStatus } from '../../models';
@@ -45,7 +45,7 @@ const ShopReports: React.FC<Props> = () => {
   const styles = useStyles(makeStyles);
   const { size } = useTheme();
   const s = useAppSelector(selectShopReports);
-  const list = usePagedList((page, sz) => getReportsAPI(s.status, page, sz), productReportPageSerializer, `reports|${s.status}`);
+  const list = usePagedList((page, sz) => fetchReports(s.status, page, sz), productReportPageSerializer, `reports|${s.status}`);
 
   const decide = async (d: { id: string; kind: 'dismiss' } | { id: string; kind: 'remove'; reason: string }) => {
     const r = await dispatch(decideReportAsync(d));

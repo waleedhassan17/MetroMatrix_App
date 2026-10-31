@@ -6,7 +6,7 @@
 // with signInAs: the dummy API has no sign-in route, so the session is
 // written straight into the dummy DB and its pair stored as a sign-in would.
 
-import { api, getAccessToken, refreshClient, setTokens } from '../apiHelpers';
+import { MainAxiosInstance, getAccessToken, RefreshAxiosInstance, setTokens } from '../network';
 import { authResultSerializer, sessionSerializer } from '../../../serializers/authSerializer';
 import { clearIntentionalSignOut } from '../../../utils/auth-events/authEvents';
 import type { AuthResult } from '../../../models/auth';
@@ -17,7 +17,7 @@ const DUMMY_BASE_URL = 'https://dummy.metromatrix.test/api/v1';
 
 /** Answer every request from the app's client with the dummy API. */
 export const installDummyApi = (): void => {
-  for (const client of [api, refreshClient]) {
+  for (const client of [MainAxiosInstance, RefreshAxiosInstance]) {
     client.defaults.adapter = mockAdapter;
     client.defaults.baseURL = DUMMY_BASE_URL;
   }

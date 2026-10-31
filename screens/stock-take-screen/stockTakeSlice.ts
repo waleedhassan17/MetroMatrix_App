@@ -4,8 +4,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getStockAPI, recordStockTakeAPI } from '../../networks/kitchen/stockNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchStock, recordStockTake } from '../../networks/kitchen/stock';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { Ingredient, StockTakeResult } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { stockListSerializer, stockTakeSerializer } from '../../serializers/kitchen/stockSerializer';
@@ -42,7 +42,7 @@ export const stockTakeSlice = createAppSlice({
     loadStockTakeAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(stockListSerializer(await getStockAPI('all', '')));
+          return required(stockListSerializer(await fetchStock('all', '')));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -65,7 +65,7 @@ export const stockTakeSlice = createAppSlice({
     saveStockTakeAsync: create.asyncThunk(
       async (lines: { ingredientId: string; counted: number }[], { rejectWithValue }) => {
         try {
-          return required(stockTakeSerializer(await recordStockTakeAPI(lines)));
+          return required(stockTakeSerializer(await recordStockTake(lines)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

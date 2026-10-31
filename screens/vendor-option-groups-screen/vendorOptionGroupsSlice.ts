@@ -5,9 +5,9 @@
 // a switch per choice for when it runs out today.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getOptionGroupsAPI } from '../../networks/food/vendor/menuNetwork';
-import { getAvailabilityAPI, setAvailabilityAPI } from '../../networks/food/vendor/availabilityNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchOptionGroups } from '../../networks/food/vendor/menu';
+import { fetchAvailability, setAvailability } from '../../networks/food/vendor/availability';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { OptionGroup } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { optionGroupsSerializer, menuAvailabilitySerializer } from '../../serializers/food/menuSerializer';
@@ -30,7 +30,7 @@ export const vendorOptionGroupsSlice = createAppSlice({
     loadOptionGroupsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [groups, availability] = await Promise.all([getOptionGroupsAPI().then(raw => required(optionGroupsSerializer(raw))), getAvailabilityAPI().then(raw => required(menuAvailabilitySerializer(raw)))]);
+          const [groups, availability] = await Promise.all([fetchOptionGroups().then(raw => required(optionGroupsSerializer(raw))), fetchAvailability().then(raw => required(menuAvailabilitySerializer(raw)))]);
           return { groups, available: Object.fromEntries(availability.options.map(o => [o.optionId, o.isAvailable])) };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -55,7 +55,7 @@ export const vendorOptionGroupsSlice = createAppSlice({
     setOptionAvailableAsync: create.asyncThunk(
       async ({ optionId, isAvailable }: { optionId: string; isAvailable: boolean }, { rejectWithValue }) => {
         try {
-          const a = required(menuAvailabilitySerializer(await setAvailabilityAPI({ options: [{ optionId, isAvailable }] })));
+          const a = required(menuAvailabilitySerializer(await setAvailability({ options: [{ optionId, isAvailable }] })));
           return Object.fromEntries(a.options.map(o => [o.optionId, o.isAvailable]));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

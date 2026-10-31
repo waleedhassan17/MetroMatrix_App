@@ -8,8 +8,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { adminTotpConfirm, adminTotpEnrol } from '../../networks/auth/authNetwork';
-import { toRejectedValue } from '../../networks/network/apiHelpers';
+import { adminTotpConfirm, adminTotpEnrol } from '../../networks/authcalls/adminTotp';
+import { toRejectedValue } from '../../networks/network/network';
 import type { Business, TotpEnrolment, User } from '../../models';
 import type { PendingTotp } from '../../store/authSlice';
 import { handleChallengeError } from '../shared/totpChallenge';

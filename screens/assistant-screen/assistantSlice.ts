@@ -1,8 +1,8 @@
 // MetroMatrix — Kitchen: the assistant's home. How many actions are left this month.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getAiUsageAPI } from '../../networks/kitchen/kitchenAiNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchAiUsage } from '../../networks/kitchen/kitchenAi';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { AiUsage } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { aiUsageSerializer } from '../../serializers/kitchen/insightSerializer';
@@ -22,7 +22,7 @@ export const assistantSlice = createAppSlice({
     loadAssistantAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(aiUsageSerializer(await getAiUsageAPI()));
+          return required(aiUsageSerializer(await fetchAiUsage()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

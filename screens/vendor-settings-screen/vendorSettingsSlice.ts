@@ -7,8 +7,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getVendorSettingsAPI, updateVendorSettingsAPI } from '../../networks/food/vendor/settingsNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchVendorSettings, updateVendorSettings } from '../../networks/food/vendor/settings';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { settingsForm, settingsPatch, type VendorSettingsForm } from '../../models/food/vendorModel';
 import type { VendorSettings } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -46,7 +46,7 @@ export const vendorSettingsSlice = createAppSlice({
     loadVendorSettingsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(vendorSettingsSerializer(await getVendorSettingsAPI()));
+          return required(vendorSettingsSerializer(await fetchVendorSettings()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -71,7 +71,7 @@ export const vendorSettingsSlice = createAppSlice({
     saveVendorSettingsAsync: create.asyncThunk(
       async (form: VendorSettingsForm, { rejectWithValue }) => {
         try {
-          return required(vendorSettingsSerializer(await updateVendorSettingsAPI(settingsPatch(form))));
+          return required(vendorSettingsSerializer(await updateVendorSettings(settingsPatch(form))));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

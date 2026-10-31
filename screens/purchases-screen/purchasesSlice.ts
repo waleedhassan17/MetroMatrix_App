@@ -2,8 +2,8 @@
 // (the list itself is paged: usePagedList), and a confirmed spoken purchase.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { createPurchaseAPI, getPriceWatchAPI, getPurchasesAPI } from '../../networks/kitchen/purchasesNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { createPurchase, fetchPriceWatch, fetchPurchases } from '../../networks/kitchen/purchases';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { purchaseFromVoice } from '../../models/kitchen/purchaseModel';
 import type { PriceWatch, VoiceQtyLine } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -30,7 +30,7 @@ export const purchasesSlice = createAppSlice({
       async (_: void, { rejectWithValue }) => {
         try {
           // This week's spend rides on the first page; the price watch beside it.
-          const [first, watch] = await Promise.all([getPurchasesAPI(1, 1), getPriceWatchAPI()]);
+          const [first, watch] = await Promise.all([fetchPurchases(1, 1), fetchPriceWatch()]);
           return required(purchasesOverviewSerializer({ first, watch }));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -55,7 +55,7 @@ export const purchasesSlice = createAppSlice({
     confirmSpokenPurchaseAsync: create.asyncThunk(
       async (lines: VoiceQtyLine[], { rejectWithValue }) => {
         try {
-          return required(purchaseSerializer(await createPurchaseAPI(purchaseFromVoice(lines))));
+          return required(purchaseSerializer(await createPurchase(purchaseFromVoice(lines))));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

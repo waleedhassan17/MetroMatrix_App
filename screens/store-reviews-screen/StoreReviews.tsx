@@ -12,7 +12,7 @@ import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { usePagedList } from '../../hooks/usePagedList';
-import { getPartnerReviewsAPI } from '../../networks/shopping/partner/partnerReviewsNetwork';
+import { fetchPartnerReviews } from '../../networks/shopping/partner/partnerReviews';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import { AppText, Button, ChoiceChip, Divider, EmptyState, InlineNotice, ScreenShell, Sheet, SkeletonLines, TextAction, TextField } from '../../Custom-Components/index';
 import { ReviewItem } from '../../Components/shopping/ReviewItem';
@@ -46,7 +46,7 @@ const StoreReviewsContent: React.FC<Props> = () => {
   const { size } = useTheme();
   const s = useAppSelector(selectStoreReviews);
   const list = usePagedList(
-    (page, sz) => getPartnerReviewsAPI({ rating: s.rating, unreplied: s.unrepliedOnly || undefined }, page, sz),
+    (page, sz) => fetchPartnerReviews({ rating: s.rating, unreplied: s.unrepliedOnly || undefined }, page, sz),
     partnerReviewPageSerializer,
     `store-reviews|${s.rating}|${s.unrepliedOnly}`,
   );

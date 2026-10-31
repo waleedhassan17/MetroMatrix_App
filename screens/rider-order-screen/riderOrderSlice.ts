@@ -7,8 +7,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { declineDeliveryAPI, getRiderOrderAPI, markRiderDeliveredAPI, riderStepAPI, type RiderStepAction } from '../../networks/food/rider/riderNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { declineDelivery, fetchRiderOrder, markRiderDelivered, riderStep, type RiderStepAction } from '../../networks/food/rider/rider';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { RiderOrder } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { riderOrderSerializer } from '../../serializers/food/riderSerializer';
@@ -53,7 +53,7 @@ export const riderOrderSlice = createAppSlice({
     loadRiderOrderAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(riderOrderSerializer(await getRiderOrderAPI(id)));
+          return required(riderOrderSerializer(await fetchRiderOrder(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -77,7 +77,7 @@ export const riderOrderSlice = createAppSlice({
     riderStepAsync: create.asyncThunk(
       async ({ id, step }: { id: string; step: RiderStepAction }, { rejectWithValue }) => {
         try {
-          return required(riderOrderSerializer(await riderStepAPI(id, step)));
+          return required(riderOrderSerializer(await riderStep(id, step)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -101,7 +101,7 @@ export const riderOrderSlice = createAppSlice({
     riderDeliveredAsync: create.asyncThunk(
       async ({ id, cash }: { id: string; cash: number | null }, { rejectWithValue }) => {
         try {
-          return required(riderOrderSerializer(await markRiderDeliveredAPI(id, cash)));
+          return required(riderOrderSerializer(await markRiderDelivered(id, cash)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -126,7 +126,7 @@ export const riderOrderSlice = createAppSlice({
     riderDeclineAsync: create.asyncThunk(
       async ({ id, reason }: { id: string; reason: string }, { rejectWithValue }) => {
         try {
-          await declineDeliveryAPI(id, reason);
+          await declineDelivery(id, reason);
           return id;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

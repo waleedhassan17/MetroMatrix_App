@@ -4,10 +4,10 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { checkPhotoAPI } from '../../networks/kitchen/kitchenAiNetwork';
-import { getMenuItemsAPI, updateMenuItemAPI } from '../../networks/food/vendor/menuNetwork';
+import { checkPhoto } from '../../networks/kitchen/kitchenAi';
+import { fetchMenuItems, updateMenuItem } from '../../networks/food/vendor/menu';
 import { uploadImage } from '../../services/mediaUpload';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { LocalFile, PhotoCheck, VendorMenuItem } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { vendorMenuItemsSerializer, vendorMenuItemSerializer } from '../../serializers/food/menuSerializer';
@@ -37,7 +37,7 @@ export const aiPhotoCheckSlice = createAppSlice({
     loadPhotoDishesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(vendorMenuItemsSerializer(await getMenuItemsAPI()));
+          return required(vendorMenuItemsSerializer(await fetchMenuItems()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -60,7 +60,7 @@ export const aiPhotoCheckSlice = createAppSlice({
       async ({ file, itemId }: { file: LocalFile; itemId: string | null }, { rejectWithValue }) => {
         try {
           const uploaded = await uploadImage(file, 'menu_item');
-          return required(photoCheckSerializer(await checkPhotoAPI(uploaded.url, itemId)));
+          return required(photoCheckSerializer(await checkPhoto(uploaded.url, itemId)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -86,7 +86,7 @@ export const aiPhotoCheckSlice = createAppSlice({
     applyPhotoAsync: create.asyncThunk(
       async ({ itemId, photoUrl }: { itemId: string; photoUrl: string }, { rejectWithValue }) => {
         try {
-          return required(vendorMenuItemSerializer(await updateMenuItemAPI(itemId, { photoUrl })));
+          return required(vendorMenuItemSerializer(await updateMenuItem(itemId, { photoUrl })));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

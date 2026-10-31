@@ -3,8 +3,8 @@
 // fewer boxes, and ending it early. Every move reads the box again.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { collectReservationAPI, confirmBoxPaymentAPI, endBoxAPI, getBoxAPI, markNoShowAPI, rejectBoxPaymentAPI, updateBoxAPI } from '../../networks/kitchen/surplusNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { collectReservation, confirmBoxPayment, endBox, fetchBox, markNoShow, rejectBoxPayment, updateBox } from '../../networks/kitchen/surplus';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { SurplusBoxDetail } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { reservationSerializer, surplusBoxSerializer, surplusBoxDetailSerializer } from '../../serializers/kitchen/surplusSerializer';
@@ -31,17 +31,17 @@ const initialState: BoxSliceState = { box: null, status: 'idle', error: NO_ERROR
 const run = (id: string, a: BoxAct) => {
   switch (a.kind) {
     case 'collect':
-      return collectReservationAPI(a.code).then(raw => required(reservationSerializer(raw)));
+      return collectReservation(a.code).then(raw => required(reservationSerializer(raw)));
     case 'no-show':
-      return markNoShowAPI(a.code).then(raw => required(reservationSerializer(raw)));
+      return markNoShow(a.code).then(raw => required(reservationSerializer(raw)));
     case 'confirm-payment':
-      return confirmBoxPaymentAPI(a.code).then(raw => required(reservationSerializer(raw)));
+      return confirmBoxPayment(a.code).then(raw => required(reservationSerializer(raw)));
     case 'reject-payment':
-      return rejectBoxPaymentAPI(a.code, a.reason).then(raw => required(reservationSerializer(raw)));
+      return rejectBoxPayment(a.code, a.reason).then(raw => required(reservationSerializer(raw)));
     case 'quantity':
-      return updateBoxAPI(id, { quantity: a.quantity }).then(raw => required(surplusBoxSerializer(raw)));
+      return updateBox(id, { quantity: a.quantity }).then(raw => required(surplusBoxSerializer(raw)));
     case 'end':
-      return endBoxAPI(id).then(raw => required(surplusBoxSerializer(raw)));
+      return endBox(id).then(raw => required(surplusBoxSerializer(raw)));
   }
 };
 
@@ -52,7 +52,7 @@ export const boxSlice = createAppSlice({
     loadBoxAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(surplusBoxDetailSerializer(await getBoxAPI(id)));
+          return required(surplusBoxDetailSerializer(await fetchBox(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -77,7 +77,7 @@ export const boxSlice = createAppSlice({
       async ({ id, act }: { id: string; act: BoxAct }, { rejectWithValue }) => {
         try {
           await run(id, act);
-          return required(surplusBoxDetailSerializer(await getBoxAPI(id)));
+          return required(surplusBoxDetailSerializer(await fetchBox(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

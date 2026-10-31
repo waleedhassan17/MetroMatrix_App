@@ -19,7 +19,7 @@ import { EXPERIMENT_STATUS, VERDICT } from '../../models/kitchen/kitchenStatusMo
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
 import { Image } from 'expo-image';
 import { AppText, Button, Card, Divider, InlineNotice, ProgressBar, ScreenShell, Sheet, SkeletonLines, StatusPill, TextField } from '../../Custom-Components/index';
-import type { ExperimentDecision } from '../../networks/foodGrowth/experimentsNetwork';
+import type { ExperimentDecision } from '../../networks/foodGrowth/experiments';
 import type { FoodVendorStackParamList } from '../../models';
 import { cdn } from '../../utils/cdn/cdn';
 import { formatWhen } from '../../utils/health-time/healthTime';

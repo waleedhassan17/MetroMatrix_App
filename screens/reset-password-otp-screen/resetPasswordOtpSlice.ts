@@ -11,8 +11,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { authVerifyResetOtp } from '../../networks/auth/authNetwork';
-import { toRejectedValue, ERROR_CODES } from '../../networks/network/apiHelpers';
+import { verifyResetOtp } from '../../networks/authcalls/forgotPassword';
+import { toRejectedValue, ERROR_CODES } from '../../networks/network/network';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 
 export interface ResetPasswordOtpSliceState {
@@ -54,7 +54,7 @@ export const resetPasswordOtpSlice = createAppSlice({
     verifyCodeAsync: create.asyncThunk(
       async ({ email, code }: { email: string; code: string }, { rejectWithValue }) => {
         try {
-          return await authVerifyResetOtp(email, code);
+          return await verifyResetOtp(email, code);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

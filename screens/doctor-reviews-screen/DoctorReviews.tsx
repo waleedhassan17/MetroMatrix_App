@@ -11,7 +11,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { usePagedList } from '../../hooks/usePagedList';
-import { getDoctorReviewsAPI } from '../../networks/health/reviewsNetwork';
+import { fetchDoctorReviews } from '../../networks/health/reviews';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import { ChoiceChip, Divider, DoctorReviewItem, EmptyState, InlineNotice, PageHeader, ReviewSummary, SkeletonLines } from '../../Custom-Components/index';
 import type { HomeStackParamList } from '../../models';
@@ -45,7 +45,7 @@ const DoctorReviewsContent: React.FC<Props> = ({ route }) => {
   const f = useAppSelector(selectDoctorReviewFilters);
   const entry = useAppSelector(st => selectDoctorEntry(st, doctorId));
   const profile = entry.profile;
-  const list = usePagedList((page, size) => getDoctorReviewsAPI(doctorId, f, page, size), doctorReviewPageSerializer, `reviews|${doctorId}|${f.kind}|${f.rating}|${f.sort}`);
+  const list = usePagedList((page, size) => fetchDoctorReviews(doctorId, f, page, size), doctorReviewPageSerializer, `reviews|${doctorId}|${f.kind}|${f.rating}|${f.sort}`);
 
   useEffect(() => {
     dispatch(resetReviewFilters());

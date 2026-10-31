@@ -2,8 +2,8 @@
 // (pickup today, nearest first).
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getSurplusNearbyAPI } from '../../networks/food/surplusNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchSurplusNearby } from '../../networks/food/surplus';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { FoodPoint, SurplusCard } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { surplusCardsSerializer } from '../../serializers/kitchen/surplusSerializer';
@@ -23,7 +23,7 @@ export const surplusListSlice = createAppSlice({
     loadSurplusListAsync: create.asyncThunk(
       async (at: Pick<FoodPoint, 'lat' | 'lng'>, { rejectWithValue }) => {
         try {
-          return required(surplusCardsSerializer(await getSurplusNearbyAPI(at)));
+          return required(surplusCardsSerializer(await fetchSurplusNearby(at)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

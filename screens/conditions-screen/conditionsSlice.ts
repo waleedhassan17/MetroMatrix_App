@@ -3,8 +3,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getAdminConditionsAPI, getAdminSpecialtiesAPI } from '../../networks/admin/adminHealthNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchAdminConditions, fetchAdminSpecialties } from '../../networks/admin/adminHealth';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { conditionInput, type ConditionForm } from '../../models/health/adminHealthModel';
 import type { AdminCondition, AdminSpecialty } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -57,7 +57,7 @@ export const conditionsSlice = createAppSlice({
       async (q: string, { getState, rejectWithValue }) => {
         try {
           const known = (getState() as { adminConditions: ConditionsSliceState }).adminConditions.specialties;
-          const [list, specialties] = await Promise.all([getAdminConditionsAPI(q.trim()).then(raw => required(adminConditionListSerializer(raw))), known.length ? Promise.resolve(known) : getAdminSpecialtiesAPI().then(raw => required(adminSpecialtyListSerializer(raw)))]);
+          const [list, specialties] = await Promise.all([fetchAdminConditions(q.trim()).then(raw => required(adminConditionListSerializer(raw))), known.length ? Promise.resolve(known) : fetchAdminSpecialties().then(raw => required(adminSpecialtyListSerializer(raw)))]);
           return { list, specialties };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -85,7 +85,7 @@ export const conditionsSlice = createAppSlice({
             const input = conditionInput(change.form);
             await (change.form.id ? updateCondition(change.form.id, input) : createCondition(input));
           } else await deleteCondition(change.id);
-          return required(adminConditionListSerializer(await getAdminConditionsAPI(change.query.trim())));
+          return required(adminConditionListSerializer(await fetchAdminConditions(change.query.trim())));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

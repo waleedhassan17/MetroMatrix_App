@@ -10,7 +10,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useBack } from '../../hooks/useBack';
 import { usePagedList } from '../../hooks/usePagedList';
 import { useHealthNav } from '../../hooks/useHealth';
-import { getPrescriptionsAPI } from '../../networks/health/prescriptionsNetwork';
+import { fetchPrescriptions } from '../../networks/health/prescriptions';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import { AppText, Card, EmptyState, IonIcon, InlineNotice, PageHeader, SkeletonLines } from '../../Custom-Components/index';
 import type { AccountStackParamList } from '../../models';
@@ -38,7 +38,7 @@ const PrescriptionListContent: React.FC<Props> = () => {
   const styles = useStyles(makeStyles);
   const { service, colors } = useTheme();
   const nav = useHealthNav();
-  const list = usePagedList((page, size) => getPrescriptionsAPI(page, size), prescriptionSummaryPageSerializer, 'prescriptions');
+  const list = usePagedList((page, size) => fetchPrescriptions(page, size), prescriptionSummaryPageSerializer, 'prescriptions');
 
   return (
     <View style={styles.root}>

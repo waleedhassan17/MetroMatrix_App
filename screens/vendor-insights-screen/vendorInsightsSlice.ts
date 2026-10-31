@@ -3,8 +3,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getFoodInsightsAPI } from '../../networks/food/vendor/insightsNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchFoodInsights } from '../../networks/food/vendor/insights';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { FoodInsights, FoodInsightsRange } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { foodInsightsSerializer } from '../../serializers/food/reviewSerializer';
@@ -29,7 +29,7 @@ export const vendorInsightsSlice = createAppSlice({
     loadFoodInsightsAsync: create.asyncThunk(
       async (range: FoodInsightsRange, { rejectWithValue }) => {
         try {
-          return required(foodInsightsSerializer(await getFoodInsightsAPI(range)));
+          return required(foodInsightsSerializer(await fetchFoodInsights(range)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

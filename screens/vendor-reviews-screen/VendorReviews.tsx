@@ -12,7 +12,7 @@ import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { usePagedList } from '../../hooks/usePagedList';
-import { getMyReviewsAPI } from '../../networks/food/vendor/reviewsNetwork';
+import { fetchMyReviews } from '../../networks/food/vendor/reviews';
 import { validateReply } from '../../models/food/reviewModel';
 import { selectBusiness } from '../../store/authSlice';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
@@ -48,7 +48,7 @@ const VendorReviewsContent: React.FC<Props> = () => {
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectVendorReviews);
   const business = useAppSelector(selectBusiness);
-  const list = usePagedList((page, size) => getMyReviewsAPI(s.unreplied, page, size), vendorReviewsPageSerializer, `vendor-reviews|${s.unreplied}`);
+  const list = usePagedList((page, size) => fetchMyReviews(s.unreplied, page, size), vendorReviewsPageSerializer, `vendor-reviews|${s.unreplied}`);
   const replyError = s.replyTouched ? validateReply(s.reply).reply : undefined;
   const replying = list.rows.find(r => r.id === s.replying) ?? null;
   const name = business?.name ?? 'Your kitchen';

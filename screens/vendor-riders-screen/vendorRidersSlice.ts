@@ -7,8 +7,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { createRiderAPI, getRidersAPI } from '../../networks/food/vendor/ridersNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { createRider, fetchRiders } from '../../networks/food/vendor/riders';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { normalizePkPhone } from '../../utils/phone/phone';
 import type { FoodRider, RiderCredential, RiderInput } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -65,7 +65,7 @@ export const vendorRidersSlice = createAppSlice({
     loadRidersAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(foodRidersSerializer(await getRidersAPI()));
+          return required(foodRidersSerializer(await fetchRiders()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -88,7 +88,7 @@ export const vendorRidersSlice = createAppSlice({
     createRiderAsync: create.asyncThunk(
       async (input: RiderInput, { rejectWithValue }) => {
         try {
-          return required(createdRiderSerializer(await createRiderAPI({
+          return required(createdRiderSerializer(await createRider({
             fullName: input.fullName.trim(),
             phone: input.phone ? (normalizePkPhone(input.phone) ?? null) : null,
             vehicle: input.vehicle,

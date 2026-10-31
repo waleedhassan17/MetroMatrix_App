@@ -4,8 +4,8 @@
 // Read by the address book, the address form (after a save) and Checkout.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { deleteAddressAPI, getAddressesAPI, setDefaultAddressAPI } from '../../networks/addresses/addressesNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { deleteAddress, fetchAddresses, setDefaultAddress } from '../../networks/addresses/addresses';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { Address } from '../../models';
 import { saveAddressAsync } from '../address-form-screen/addressFormSlice';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -28,7 +28,7 @@ export const addressBookSlice = createAppSlice({
     loadAddressesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(addressListSerializer(await getAddressesAPI()));
+          return required(addressListSerializer(await fetchAddresses()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -51,8 +51,8 @@ export const addressBookSlice = createAppSlice({
     setDefaultAddressAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          await setDefaultAddressAPI(id);
-          return required(addressListSerializer(await getAddressesAPI()));
+          await setDefaultAddress(id);
+          return required(addressListSerializer(await fetchAddresses()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -75,8 +75,8 @@ export const addressBookSlice = createAppSlice({
     deleteAddressAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          await deleteAddressAPI(id);
-          return required(addressListSerializer(await getAddressesAPI()));
+          await deleteAddress(id);
+          return required(addressListSerializer(await fetchAddresses()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

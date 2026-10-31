@@ -7,10 +7,10 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../store/createAppSlice';
 import { getAccessToken, getRefreshToken, clearTokens } from '../utils/storage_utils/storageUtils';
-import { authMe } from '../networks/auth/authNetwork';
-import { isNetworkError, refreshTokens, isDefinitiveSessionFailure } from '../networks/network/apiHelpers';
+import { me } from '../networks/authcalls/me';
+import { isNetworkError, refreshTokens, isDefinitiveSessionFailure } from '../networks/network/network';
 import { setSession, signOut } from '../store/authSlice';
-import { registerDeviceAPI } from '../networks/users/usersNetwork';
+import { registerDevice } from '../networks/users/users';
 import { setPushToken } from '../utils/storage_utils/storageUtils';
 import { obtainPushToken, pushPlatform } from '../notifications/push';
 
@@ -64,7 +64,7 @@ export const appContainerSlice = createAppSlice({
      *
      *   no tokens at all     → app ready, unauthenticated (Welcome)
      *   refresh token only   → refresh first, then as below
-     *   authMe OK            → setSession with the FRESH user + business
+     *   me OK            → setSession with the FRESH user + business
      *                          (role, verification, business status may all
      *                          have changed server-side)
      *   definitive failure   → tokens cleared, signed out → Welcome
@@ -85,7 +85,7 @@ export const appContainerSlice = createAppSlice({
           // The access token can be gone while the refresh token lives on
           // (cleared, or never stored): refresh instead of signing out.
           if (!access) await refreshTokens();
-          const session = await authMe();
+          const session = await me();
           dispatch(setSession(session));
           return 'restored';
         } catch (e) {
@@ -122,7 +122,7 @@ export const appContainerSlice = createAppSlice({
     refreshSession: create.asyncThunk(
       async (_: void, { dispatch }) => {
         try {
-          const session = await authMe();
+          const session = await me();
           dispatch(setSession(session));
           return true;
         } catch {
@@ -143,7 +143,7 @@ export const appContainerSlice = createAppSlice({
         try {
           const token = await obtainPushToken(ask);
           if (!token) return null;
-          await registerDeviceAPI(token, pushPlatform());
+          await registerDevice(token, pushPlatform());
           await setPushToken(token);
           return token;
         } catch {

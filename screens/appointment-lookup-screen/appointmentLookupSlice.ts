@@ -2,8 +2,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { lookupAppointmentAPI } from '../../networks/admin/adminHealthNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { lookupAppointment } from '../../networks/admin/adminHealth';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { AdminAppointment } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { adminAppointmentSerializer } from '../../serializers/health/adminHealthSerializer';
@@ -27,7 +27,7 @@ export const appointmentLookupSlice = createAppSlice({
     lookupAppointmentAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return required(adminAppointmentSerializer(await lookupAppointmentAPI(code)));
+          return required(adminAppointmentSerializer(await lookupAppointment(code)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

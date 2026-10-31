@@ -2,8 +2,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { addFamilyMemberAPI, updateFamilyMemberAPI } from '../../networks/health/familyNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { addFamilyMember, updateFamilyMember } from '../../networks/health/family';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { emptyFamilyMember } from '../../models/health/familyMemberModel';
 import type { FamilyMember, FamilyMemberInput } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -41,7 +41,7 @@ export const familyMemberFormSlice = createAppSlice({
       async ({ id, form }: { id: string | null; form: FamilyMemberInput }, { rejectWithValue }) => {
         try {
           const body = { ...form, name: form.name.trim(), phone: form.phone || null };
-          return id ? required(familyMemberSerializer(await updateFamilyMemberAPI(id, body))) : required(familyMemberSerializer(await addFamilyMemberAPI(body)));
+          return id ? required(familyMemberSerializer(await updateFamilyMember(id, body))) : required(familyMemberSerializer(await addFamilyMember(body)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

@@ -7,8 +7,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getProductAPI, reportProductAPI } from '../../networks/shopping/catalogNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchProduct, reportProduct } from '../../networks/shopping/catalog';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { ProductDetail } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { productDetailSerializer } from '../../serializers/shopping/catalogSerializer';
@@ -68,7 +68,7 @@ export const productDetailSlice = createAppSlice({
     loadProductAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(productDetailSerializer(await getProductAPI(id)));
+          return required(productDetailSerializer(await fetchProduct(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -93,7 +93,7 @@ export const productDetailSlice = createAppSlice({
     reportProductAsync: create.asyncThunk(
       async (input: { id: string; reason: string; details: string }, { rejectWithValue }) => {
         try {
-          return await reportProductAPI(input.id, { reason: input.reason, details: input.details.trim() || null });
+          return await reportProduct(input.id, { reason: input.reason, details: input.details.trim() || null });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

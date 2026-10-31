@@ -9,8 +9,8 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { resetAllState } from '../../store/resetAllState';
-import { authAdminTotp } from '../../networks/auth/authNetwork';
-import { toRejectedValue, ERROR_CODES } from '../../networks/network/apiHelpers';
+import { authAdminTotp } from '../../networks/authcalls/adminTotp';
+import { toRejectedValue, ERROR_CODES } from '../../networks/network/network';
 import { setSession, type PendingTotp } from '../../store/authSlice';
 import { handleChallengeError } from '../shared/totpChallenge';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';

@@ -10,7 +10,7 @@ import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useDebouncedValue, usePagedList } from '../../hooks/usePagedList';
-import { getPartnerOrdersAPI } from '../../networks/shopping/partner/partnerOrdersNetwork';
+import { fetchPartnerOrders } from '../../networks/shopping/partner/partnerOrders';
 import { PARTNER_SEGMENTS } from '../../models/shopping/orderStatusModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import { ChoiceChip, Divider, EmptyState, InlineNotice, ScreenShell, SkeletonLines, TextField } from '../../Custom-Components/index';
@@ -42,7 +42,7 @@ const StoreOrdersContent: React.FC = () => {
   const payments = s.view === 'payments';
   const list = usePagedList(
     (page, size) =>
-      getPartnerOrdersAPI({ segment: s.view === 'payments' ? 'new' : s.view, q: q || undefined, payment: payments ? 'proof_submitted' : undefined }, page, size),
+      fetchPartnerOrders({ segment: s.view === 'payments' ? 'new' : s.view, q: q || undefined, payment: payments ? 'proof_submitted' : undefined }, page, size),
     partnerOrderPageSerializer,
     `store-orders|${s.view}|${q}`,
   );

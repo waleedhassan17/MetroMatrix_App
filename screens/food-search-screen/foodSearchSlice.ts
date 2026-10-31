@@ -6,8 +6,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { searchFoodAPI } from '../../networks/food/discoveryNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { searchFood } from '../../networks/food/discovery';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { addRecentFoodSearch } from '../../store/preferencesSlice';
 import type { FoodSearchResult } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -52,7 +52,7 @@ export const foodSearchSlice = createAppSlice({
     searchFoodAsync: create.asyncThunk(
       async ({ q, lat, lng, remember, nutrition }: { q: string; lat: number; lng: number; remember?: boolean; nutrition?: FoodSearchSliceState['nutrition'] }, { dispatch, rejectWithValue }) => {
         try {
-          const result = required(foodSearchSerializer(await searchFoodAPI(q, lat, lng, nutrition)));
+          const result = required(foodSearchSerializer(await searchFood(q, lat, lng, nutrition)));
           if (remember) dispatch(addRecentFoodSearch(q));
           return result;
         } catch (e) {

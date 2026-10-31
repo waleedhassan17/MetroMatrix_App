@@ -5,7 +5,7 @@
 // here unless it is listed in KNOWN with the reason.
 
 import real from '../../../../serializers/__tests__/fixtures/health/real.json';
-import { api } from '../../apiHelpers';
+import { MainAxiosInstance } from '../../network';
 import { clearTokens } from '../../../../utils/storage_utils/storageUtils';
 import { getDb, resetMockDb } from '../mockDb';
 import { signInAs, installDummyApi } from '../testing';
@@ -31,7 +31,7 @@ const signInAdmin = async () => {
 /** The answer's `data`, or `{ error }` for a failure, as the fixtures keep them. */
 const call = async (method: 'get' | 'post' | 'put' | 'patch', url: string, body?: unknown, headers?: Record<string, string>): Promise<Body> => {
   try {
-    const res = method === 'get' ? await api.get(url) : await api[method](url, body, { headers });
+    const res = method === 'get' ? await MainAxiosInstance.get(url) : await MainAxiosInstance[method](url, body, { headers });
     return res.data as Body;
   } catch (e) {
     return ((e as { response?: { data?: Body } }).response?.data ?? { success: false }) as Body;

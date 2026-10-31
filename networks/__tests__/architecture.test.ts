@@ -1,32 +1,36 @@
-// The network layer keeps FinMatrix's architecture. Read from the sources:
-//   • networks/network/ holds one main network file, apiHelpers.ts (and
-//     the dummy API's test fixtures);
-//   • a network function makes ONE request, returns the raw body
-//     (`return response.data`) and throws `toApiError(e)` — named `…API`;
+// The network layer keeps Consultant_Mobile's architecture. Read from the sources:
+//   • networks/network/ holds one main network file, network.ts (and the
+//     dummy API's test fixtures): the API URL, the axios instance and the
+//     API.GET/POST/PUT/PATCH/DELETE functions every network file calls;
+//   • a network function makes ONE request through `API`, returns the raw
+//     body (`return response.data`) and throws `toApiError(e)`; its name is
+//     plain (`fetchCart`, `cancelOrder`), never `getXAPI`;
 //   • networks never serialize or fan out: no serializer imports, no
-//     Promise.all; slices (and the screens/**/shared compositions) do that.
-// The one exception, as in FinMatrix: auth/authNetwork.ts, the session layer.
+//     Promise.all; slices (and the screens/shared compositions) do that.
+// The exceptions: networks/authcalls/, the session layer (it stores the
+// tokens), and health/referenceIndex.ts, a session cache over two reads.
 
 import fs from 'fs';
 import path from 'path';
 import ts from 'typescript';
 
 const ROOT = path.join(__dirname, '..');
-const SESSION_LAYER = path.join(ROOT, 'auth', 'authNetwork.ts');
+const SESSION_LAYER = path.join(ROOT, 'authcalls');
+const NOT_NETWORK_FILES = [path.join(ROOT, 'health', 'referenceIndex.ts')];
 
 const networkFiles = (dir: string, out: string[] = []): string[] => {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, e.name);
     if (e.isDirectory()) {
-      if (e.name !== '__tests__' && e.name !== 'network') networkFiles(p, out);
-    } else if (/Network\.ts$/.test(e.name)) {
+      if (e.name !== '__tests__' && e.name !== 'network' && p !== SESSION_LAYER) networkFiles(p, out);
+    } else if (/\.ts$/.test(e.name) && !NOT_NETWORK_FILES.includes(p)) {
       out.push(p);
     }
   }
   return out;
 };
 
-const FILES = networkFiles(ROOT).filter(f => f !== SESSION_LAYER);
+const FILES = networkFiles(ROOT);
 const parse = (file: string) => ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
 const rel = (file: string) => path.relative(ROOT, file);
 
@@ -34,26 +38,26 @@ const isApiCall = (n: ts.Node): n is ts.CallExpression =>
   ts.isCallExpression(n) &&
   ts.isPropertyAccessExpression(n.expression) &&
   ts.isIdentifier(n.expression.expression) &&
-  n.expression.expression.text === 'api';
+  n.expression.expression.text === 'API';
 
-describe('the network layer (FinMatrix architecture)', () => {
+describe('the network layer (Consultant_Mobile architecture)', () => {
   it('has one main network file in networks/network', () => {
     const entries = fs.readdirSync(path.join(ROOT, 'network')).filter(e => !['mock', '__tests__'].includes(e));
-    expect(entries).toEqual(['apiHelpers.ts']);
+    expect(entries).toEqual(['network.ts']);
   });
 
   it('finds the network files', () => {
     expect(FILES.length).toBeGreaterThan(80);
   });
 
-  it('names every exported network function `…API`', () => {
+  it('names every exported network function plainly (fetchCart, never getCartAPI)', () => {
     const offenders: string[] = [];
     for (const file of FILES) {
       for (const st of parse(file).statements) {
         if (!ts.isVariableStatement(st) || !st.modifiers?.some(m => m.kind === ts.SyntaxKind.ExportKeyword)) continue;
         for (const d of st.declarationList.declarations) {
           const isFn = d.initializer && (ts.isArrowFunction(d.initializer) || ts.isFunctionExpression(d.initializer));
-          if (isFn && !d.name.getText().endsWith('API')) offenders.push(`${rel(file)}: ${d.name.getText()}`);
+          if (isFn && (/API$/.test(d.name.getText()) || /^get[A-Z]/.test(d.name.getText()))) offenders.push(`${rel(file)}: ${d.name.getText()}`);
         }
       }
     }
@@ -94,7 +98,7 @@ describe('the network layer (FinMatrix architecture)', () => {
         const text = fn.getText(sf);
         const name = fn.parent && ts.isVariableDeclaration(fn.parent) ? fn.parent.name.getText(sf) : '(function)';
         if (count !== 1) offenders.push(`${rel(file)}: ${name} makes ${count} requests`);
-        if (!/const response = await api\./.test(text) || !/return response\.data;/.test(text) || !/throw toApiError\(e\);/.test(text)) {
+        if (!/const response = await API\.(GET|POST|PUT|PATCH|DELETE)\(\{ URL: /.test(text) || !/return response\.data;/.test(text) || !/throw toApiError\(e\);/.test(text)) {
           offenders.push(`${rel(file)}: ${name} is not the thin form`);
         }
       }

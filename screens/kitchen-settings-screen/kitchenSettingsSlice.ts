@@ -3,8 +3,8 @@
 // announcements are this device's: preferences.)
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getKitchenSettingsAPI, updateKitchenSettingsAPI } from '../../networks/kitchen/costingNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchKitchenSettings, updateKitchenSettings } from '../../networks/kitchen/costing';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { KitchenSettings } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { kitchenSettingsSerializer } from '../../serializers/kitchen/recipeSerializer';
@@ -25,7 +25,7 @@ export const kitchenSettingsSlice = createAppSlice({
     loadKitchenSettingsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(kitchenSettingsSerializer(await getKitchenSettingsAPI()));
+          return required(kitchenSettingsSerializer(await fetchKitchenSettings()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -48,7 +48,7 @@ export const kitchenSettingsSlice = createAppSlice({
     saveKitchenSettingsAsync: create.asyncThunk(
       async (patch: Partial<KitchenSettings>, { rejectWithValue }) => {
         try {
-          return required(kitchenSettingsSerializer(await updateKitchenSettingsAPI(patch)));
+          return required(kitchenSettingsSerializer(await updateKitchenSettings(patch)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

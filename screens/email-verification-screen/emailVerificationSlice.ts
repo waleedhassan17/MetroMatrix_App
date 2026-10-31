@@ -15,8 +15,9 @@
 // always comes from the server's `retryAfter`.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { authMe, authResendVerification } from '../../networks/auth/authNetwork';
-import { toRejectedValue, ERROR_CODES, errorCopy } from '../../networks/network/apiHelpers';
+import { me } from '../../networks/authcalls/me';
+import { resendVerification } from '../../networks/authcalls/verifyEmail';
+import { toRejectedValue, ERROR_CODES, errorCopy } from '../../networks/network/network';
 import { retryAfterSerializer } from '../../serializers/authSerializer';
 import { setSession } from '../../store/authSlice';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -69,7 +70,7 @@ export const emailVerificationSlice = createAppSlice({
     checkVerifiedAsync: create.asyncThunk(
       async ({ silent: _silent }: { silent: boolean }, { dispatch, rejectWithValue }) => {
         try {
-          const session = await authMe();
+          const session = await me();
           if (!session.user.isEmailVerified) return false;
           dispatch(setSession(session));
           return true;
@@ -122,9 +123,9 @@ export const emailVerificationSlice = createAppSlice({
     resendAsync: create.asyncThunk(
       async (_: void, { dispatch, rejectWithValue }) => {
         try {
-          const outcome = await authResendVerification();
+          const outcome = await resendVerification();
           // Verified elsewhere in the meantime: move on instead of waiting.
-          if (outcome.alreadyVerified) dispatch(setSession(await authMe()));
+          if (outcome.alreadyVerified) dispatch(setSession(await me()));
           return outcome;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

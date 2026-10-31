@@ -3,9 +3,9 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getMenuItemsAPI } from '../../networks/food/vendor/menuNetwork';
-import { createTiffinPlanAPI, deleteTiffinPlanAPI, getMyTiffinPlanAPI, updateTiffinPlanAPI } from '../../networks/foodGrowth/tiffinNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchMenuItems } from '../../networks/food/vendor/menu';
+import { createTiffinPlan, deleteTiffinPlan, fetchMyTiffinPlan, updateTiffinPlan } from '../../networks/foodGrowth/tiffin';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { MEAL_WINDOWS, emptyPlanForm, formFromPlan, type TiffinPlanForm } from '../../models/kitchen/tiffinModel';
 import type { Meal, TiffinPlan, TiffinPlanInput, VendorMenuItem } from '../../models';
 import type { ValidationErrors } from '../../models/authModel';
@@ -72,7 +72,7 @@ export const tiffinPlanFormSlice = createAppSlice({
     loadPlanFormAsync: create.asyncThunk(
       async (id: string | null, { rejectWithValue }) => {
         try {
-          const [menu, plan] = await Promise.all([getMenuItemsAPI().then(raw => required(vendorMenuItemsSerializer(raw))), id ? getMyTiffinPlanAPI(id).then(raw => required(tiffinPlanSerializer(raw))) : Promise.resolve(null)]);
+          const [menu, plan] = await Promise.all([fetchMenuItems().then(raw => required(vendorMenuItemsSerializer(raw))), id ? fetchMyTiffinPlan(id).then(raw => required(tiffinPlanSerializer(raw))) : Promise.resolve(null)]);
           return { menu: menu.filter(i => i.isActive).map(i => ({ id: i.id, name: i.name, basePrice: i.basePrice })), plan };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -104,7 +104,7 @@ export const tiffinPlanFormSlice = createAppSlice({
     savePlanAsync: create.asyncThunk(
       async ({ id, input }: { id: string | null; input: TiffinPlanInput }, { rejectWithValue }) => {
         try {
-          return id ? required(tiffinPlanSerializer(await updateTiffinPlanAPI(id, input))) : required(tiffinPlanSerializer(await createTiffinPlanAPI(input)));
+          return id ? required(tiffinPlanSerializer(await updateTiffinPlan(id, input))) : required(tiffinPlanSerializer(await createTiffinPlan(input)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -127,7 +127,7 @@ export const tiffinPlanFormSlice = createAppSlice({
     removePlanAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(tiffinRemovedSerializer(await deleteTiffinPlanAPI(id)));
+          return required(tiffinRemovedSerializer(await deleteTiffinPlan(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

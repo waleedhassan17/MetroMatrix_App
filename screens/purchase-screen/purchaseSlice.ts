@@ -1,8 +1,8 @@
 // MetroMatrix — Kitchen: one purchase (its lines, supplier and receipt).
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getPurchaseAPI } from '../../networks/kitchen/purchasesNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchPurchase } from '../../networks/kitchen/purchases';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { Purchase } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { purchaseSerializer } from '../../serializers/kitchen/stockSerializer';
@@ -22,7 +22,7 @@ export const purchaseSlice = createAppSlice({
     loadPurchaseAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(purchaseSerializer(await getPurchaseAPI(id)));
+          return required(purchaseSerializer(await fetchPurchase(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

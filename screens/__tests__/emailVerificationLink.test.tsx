@@ -18,14 +18,14 @@ import {
 import { useVerificationPolling } from '../email-verification-screen/useVerificationPolling';
 import { verifyLinkAsync, verifySuccessSlice } from '../verify-success-screen/verifySuccessSlice';
 import { rewriteVerifyPath } from '../../navigators/linkingPaths';
-import { ApiError } from '../../networks/network/apiHelpers';
+import { ApiError } from '../../networks/network/network';
 import { clearTokens, setTokens } from '../../utils/storage_utils/storageUtils';
 import { makeUser } from '../../__fixtures__/users';
 
-jest.mock('../../networks/auth/authNetwork', () => ({
-  authMe: jest.fn(),
-  authVerifyEmail: jest.fn(),
-  authResendVerification: jest.fn(),
+jest.mock('../../networks/authcalls/me', () => ({ me: jest.fn() }));
+jest.mock('../../networks/authcalls/verifyEmail', () => ({
+  verifyEmail: jest.fn(),
+  resendVerification: jest.fn(),
 }));
 // Focus is the screen's concern; here the effect simply runs while mounted.
 jest.mock('@react-navigation/native', () => {
@@ -33,10 +33,9 @@ jest.mock('@react-navigation/native', () => {
   return { useFocusEffect: (cb: () => void | (() => void)) => useEffect(cb, [cb]) };
 });
 
-const network = jest.requireMock('../../networks/auth/authNetwork') as {
-  authMe: jest.Mock;
-  authVerifyEmail: jest.Mock;
-  authResendVerification: jest.Mock;
+const network = {
+  ...(jest.requireMock('../../networks/authcalls/me') as { me: jest.Mock }),
+  ...(jest.requireMock('../../networks/authcalls/verifyEmail') as { verifyEmail: jest.Mock; resendVerification: jest.Mock }),
 };
 
 const unverified = { user: makeUser({ isEmailVerified: false }), business: null };
@@ -65,7 +64,7 @@ describe('polling back-off', () => {
 describe('checkVerifiedAsync', () => {
   it('moves the session on once the account says verified', async () => {
     const store = makeStore();
-    network.authMe.mockResolvedValue(verified);
+    network.me.mockResolvedValue(verified);
     await store.dispatch(checkVerifiedAsync({ silent: true }));
     expect(store.getState().auth.user?.isEmailVerified).toBe(true);
     expect(store.getState().emailVerification.autoSignIn).toBe(true);
@@ -74,13 +73,13 @@ describe('checkVerifiedAsync', () => {
   it('a failed check counts toward the back-off, shows nothing when silent, and never signs out', async () => {
     const store = makeStore();
     store.dispatch({ type: 'auth/setSession', payload: unverified });
-    network.authMe.mockRejectedValue(new ApiError('Server is temporarily unavailable.', undefined, 503));
+    network.me.mockRejectedValue(new ApiError('Server is temporarily unavailable.', undefined, 503));
     await store.dispatch(checkVerifiedAsync({ silent: true }));
     await store.dispatch(checkVerifiedAsync({ silent: true }));
     expect(store.getState().emailVerification).toMatchObject({ failures: 2, error: { message: '' } });
     expect(store.getState().auth.isAuthenticated).toBe(true);
 
-    network.authMe.mockResolvedValue(unverified);
+    network.me.mockResolvedValue(unverified);
     await store.dispatch(checkVerifiedAsync({ silent: true }));
     expect(store.getState().emailVerification.failures).toBe(0);
   });
@@ -88,19 +87,19 @@ describe('checkVerifiedAsync', () => {
   it('only one check is on the wire at a time', async () => {
     const store = makeStore();
     let release!: (v: unknown) => void;
-    network.authMe.mockReturnValue(new Promise(r => (release = r)));
+    network.me.mockReturnValue(new Promise(r => (release = r)));
     const a = store.dispatch(checkVerifiedAsync({ silent: true }));
     const b = store.dispatch(checkVerifiedAsync({ silent: false }));
     release(unverified);
     await Promise.all([a, b]);
-    expect(network.authMe).toHaveBeenCalledTimes(1);
+    expect(network.me).toHaveBeenCalledTimes(1);
   });
 });
 
 describe('resendAsync', () => {
   it('RESEND_COOLDOWN restarts the countdown from retryAfter', async () => {
     const store = makeStore();
-    network.authResendVerification.mockRejectedValue(new ApiError('Wait', 'RESEND_COOLDOWN', 429, { retryAfter: 42 }));
+    network.resendVerification.mockRejectedValue(new ApiError('Wait', 'RESEND_COOLDOWN', 429, { retryAfter: 42 }));
     const before = Date.now();
     await store.dispatch(resendAsync());
     const at = store.getState().emailVerification.resendAvailableAt;
@@ -110,8 +109,8 @@ describe('resendAsync', () => {
 
   it('already verified: re-reads the account instead of waiting', async () => {
     const store = makeStore();
-    network.authResendVerification.mockResolvedValue({ retryAfter: 0, alreadyVerified: true });
-    network.authMe.mockResolvedValue(verified);
+    network.resendVerification.mockResolvedValue({ retryAfter: 0, alreadyVerified: true });
+    network.me.mockResolvedValue(verified);
     await store.dispatch(resendAsync());
     expect(store.getState().auth.user?.isEmailVerified).toBe(true);
   });
@@ -135,7 +134,7 @@ describe('useVerificationPolling', () => {
 
   it('re-checks every 5 s, on returning to the foreground, and stops when unmounted', async () => {
     const store = makeStore();
-    network.authMe.mockResolvedValue(unverified);
+    network.me.mockResolvedValue(unverified);
     let listener: ((s: string) => void) | undefined;
     const remove = jest.fn();
     jest.spyOn(AppState, 'addEventListener').mockImplementation((_e, fn) => {
@@ -151,18 +150,18 @@ describe('useVerificationPolling', () => {
         </Provider>,
       );
     });
-    expect(network.authMe).not.toHaveBeenCalled();
+    expect(network.me).not.toHaveBeenCalled();
     await flush(5000);
-    expect(network.authMe).toHaveBeenCalledTimes(1);
+    expect(network.me).toHaveBeenCalledTimes(1);
     await flush(5000);
-    expect(network.authMe).toHaveBeenCalledTimes(2);
+    expect(network.me).toHaveBeenCalledTimes(2);
 
     await act(async () => listener?.('active'));
-    expect(network.authMe).toHaveBeenCalledTimes(3);
+    expect(network.me).toHaveBeenCalledTimes(3);
 
     await act(async () => tree.unmount());
     await flush(30000);
-    expect(network.authMe).toHaveBeenCalledTimes(3);
+    expect(network.me).toHaveBeenCalledTimes(3);
     expect(remove).toHaveBeenCalled();
   });
 
@@ -176,7 +175,7 @@ describe('useVerificationPolling', () => {
       );
     });
     await flush(30000);
-    expect(network.authMe).not.toHaveBeenCalled();
+    expect(network.me).not.toHaveBeenCalled();
   });
 });
 
@@ -184,10 +183,10 @@ describe('verifyLinkAsync (the deep-link handler)', () => {
   it('?token= spends it; signed in, the account is re-read and the gate moves on', async () => {
     const store = makeStore();
     await setTokens('a', 'r');
-    network.authVerifyEmail.mockResolvedValue(verified);
-    network.authMe.mockResolvedValue(verified);
+    network.verifyEmail.mockResolvedValue(verified);
+    network.me.mockResolvedValue(verified);
     const r = await store.dispatch(verifyLinkAsync({ token: 'tok' }));
-    expect(network.authVerifyEmail).toHaveBeenCalledWith('tok');
+    expect(network.verifyEmail).toHaveBeenCalledWith('tok');
     expect(r.payload).toBe(true);
     expect(store.getState().auth.user?.isEmailVerified).toBe(true);
   });
@@ -195,29 +194,29 @@ describe('verifyLinkAsync (the deep-link handler)', () => {
   it('?verified=1 spends nothing', async () => {
     const store = makeStore();
     await setTokens('a', 'r');
-    network.authMe.mockResolvedValue(verified);
+    network.me.mockResolvedValue(verified);
     await store.dispatch(verifyLinkAsync({ verified: true }));
-    expect(network.authVerifyEmail).not.toHaveBeenCalled();
+    expect(network.verifyEmail).not.toHaveBeenCalled();
     expect(store.getState().verifySuccess.status).toBe('succeeded');
   });
 
   it('signed out: verified, and the screen offers Sign In', async () => {
     const store = makeStore();
-    network.authVerifyEmail.mockResolvedValue(verified);
+    network.verifyEmail.mockResolvedValue(verified);
     await store.dispatch(verifyLinkAsync({ token: 'tok' }));
     expect(store.getState().verifySuccess).toMatchObject({ status: 'succeeded', signedIn: false });
-    expect(network.authMe).not.toHaveBeenCalled();
+    expect(network.me).not.toHaveBeenCalled();
   });
 
   it('a failed token, signed in, re-reads the account before reporting a failure', async () => {
     const store = makeStore();
     await setTokens('a', 'r');
-    network.authVerifyEmail.mockRejectedValue(new ApiError('Expired', 'VERIFY_LINK_INVALID', 400));
-    network.authMe.mockResolvedValue(verified);
+    network.verifyEmail.mockRejectedValue(new ApiError('Expired', 'VERIFY_LINK_INVALID', 400));
+    network.me.mockResolvedValue(verified);
     await store.dispatch(verifyLinkAsync({ token: 'spent' }));
     expect(store.getState().verifySuccess.status).toBe('succeeded');
 
-    network.authMe.mockResolvedValue(unverified);
+    network.me.mockResolvedValue(unverified);
     await store.dispatch(verifyLinkAsync({ token: 'spent' }));
     expect(store.getState().verifySuccess).toMatchObject({ status: 'failed', error: { code: 'VERIFY_LINK_INVALID' } });
   });

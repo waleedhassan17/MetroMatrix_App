@@ -5,8 +5,8 @@
 // Health records' person filter and the symptom checker.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getFamilyAPI, removeFamilyMemberAPI } from '../../networks/health/familyNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchFamily, removeFamilyMember } from '../../networks/health/family';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { FamilyMember } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { saveFamilyMemberAsync } from '../family-member-form-screen/familyMemberFormSlice';
@@ -28,7 +28,7 @@ export const familySlice = createAppSlice({
     loadFamilyAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(familySerializer(await getFamilyAPI()));
+          return required(familySerializer(await fetchFamily()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -51,7 +51,7 @@ export const familySlice = createAppSlice({
     removeFamilyMemberAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          await removeFamilyMemberAPI(id);
+          await removeFamilyMember(id);
           return id;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

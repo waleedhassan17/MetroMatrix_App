@@ -7,8 +7,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { deleteLocationAPI, getPreviewAPI } from '../../networks/health/doctor/practiceNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { deleteLocation, fetchPreview } from '../../networks/health/doctor/practice';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { overlapsFrom, previewSerializer } from '../../serializers/health/doctorSerializer';
 import { DEFAULT_RANGE, copyToWeekdays, normaliseWeek } from '../../models/health/availabilityModel';
 import type { AvailabilityPreview, DoctorLocation, DoctorLocationInput, HoursOverlap, WeekDayHours } from '../../models';
@@ -195,7 +195,7 @@ export const availabilitySlice = createAppSlice({
     deleteLocationAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          await deleteLocationAPI(id);
+          await deleteLocation(id);
           return id;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -249,7 +249,7 @@ export const availabilitySlice = createAppSlice({
     loadPreviewAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(previewSerializer(await getPreviewAPI(7)));
+          return required(previewSerializer(await fetchPreview(7)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

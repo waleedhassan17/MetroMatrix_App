@@ -3,8 +3,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getMissingItemsAPI } from '../../networks/myKitchen/recipesNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchMissingItems } from '../../networks/myKitchen/recipes';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { MissingItem } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { missingItemsSerializer } from '../../serializers/myKitchen/myKitchenSerializer';
@@ -30,7 +30,7 @@ export const missingItemsSlice = createAppSlice({
     loadMissingItemsAsync: create.asyncThunk(
       async ({ id, servings }: { id: string; servings: number | null }, { rejectWithValue }) => {
         try {
-          return required(missingItemsSerializer(await getMissingItemsAPI(id, servings)));
+          return required(missingItemsSerializer(await fetchMissingItems(id, servings)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

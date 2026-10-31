@@ -7,8 +7,8 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import type { PayloadAction } from '@reduxjs/toolkit';
-import { getRiderAPI, getRiderCashForVendorAPI, recordHandoverAPI, resetRiderPasswordAPI, setRiderStatusAPI, updateRiderAPI } from '../../networks/food/vendor/ridersNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchRider, fetchRiderCashForVendor, recordHandover, resetRiderPassword, setRiderStatus, updateRider } from '../../networks/food/vendor/riders';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { FoodRider, RiderCash, RiderCredential, RiderInput } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { riderUpdated } from '../vendor-riders-screen/vendorRidersSlice';
@@ -65,7 +65,7 @@ export const riderDetailSlice = createAppSlice({
     loadRiderCashAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(riderCashSerializer(await getRiderCashForVendorAPI(id)));
+          return required(riderCashSerializer(await fetchRiderCashForVendor(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -82,7 +82,7 @@ export const riderDetailSlice = createAppSlice({
     recordHandoverAsync: create.asyncThunk(
       async ({ id, amount, note }: { id: string; amount: number; note: string | null }, { rejectWithValue }) => {
         try {
-          return required(riderCashSerializer(await recordHandoverAPI(id, amount, note)));
+          return required(riderCashSerializer(await recordHandover(id, amount, note)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -106,7 +106,7 @@ export const riderDetailSlice = createAppSlice({
     loadRiderAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(foodRiderSerializer(await getRiderAPI(id)));
+          return required(foodRiderSerializer(await fetchRider(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -131,7 +131,7 @@ export const riderDetailSlice = createAppSlice({
     setRiderStatusAsync: create.asyncThunk(
       async ({ id, status }: { id: string; status: 'active' | 'inactive' | 'on_leave' }, { dispatch, rejectWithValue }) => {
         try {
-          const rider = required(foodRiderSerializer(await setRiderStatusAPI(id, status)));
+          const rider = required(foodRiderSerializer(await setRiderStatus(id, status)));
           dispatch(riderUpdated(rider));
           return rider;
         } catch (e) {
@@ -156,7 +156,7 @@ export const riderDetailSlice = createAppSlice({
     saveRiderAsync: create.asyncThunk(
       async ({ id, input }: { id: string; input: Partial<RiderInput> }, { dispatch, rejectWithValue }) => {
         try {
-          const rider = required(foodRiderSerializer(await updateRiderAPI(id, input)));
+          const rider = required(foodRiderSerializer(await updateRider(id, input)));
           dispatch(riderUpdated(rider));
           return rider;
         } catch (e) {
@@ -181,7 +181,7 @@ export const riderDetailSlice = createAppSlice({
     resetRiderPasswordAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(riderCredentialSerializer(await resetRiderPasswordAPI(id)));
+          return required(riderCredentialSerializer(await resetRiderPassword(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

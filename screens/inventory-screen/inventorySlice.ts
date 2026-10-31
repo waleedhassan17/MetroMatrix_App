@@ -6,8 +6,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { bulkSetStockAPI, getMovementsAPI, setStockAPI } from '../../networks/shopping/partner/inventoryNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { bulkSetStock, fetchMovements, setStock } from '../../networks/shopping/partner/inventory';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { InventoryMovement, InventoryRow } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { inventoryRowSerializer, inventoryRowListSerializer, movementListSerializer } from '../../serializers/shopping/partnerSerializer';
@@ -70,7 +70,7 @@ export const inventorySlice = createAppSlice({
     saveStockAsync: create.asyncThunk(
       async ({ variantId, stock }: { variantId: string; stock: number }, { rejectWithValue }) => {
         try {
-          return required(inventoryRowSerializer(await setStockAPI(variantId, stock)));
+          return required(inventoryRowSerializer(await setStock(variantId, stock)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -95,7 +95,7 @@ export const inventorySlice = createAppSlice({
     bulkStockAsync: create.asyncThunk(
       async ({ variantIds, stock }: { variantIds: string[]; stock: number }, { rejectWithValue }) => {
         try {
-          return required(inventoryRowListSerializer(await bulkSetStockAPI(variantIds, stock)));
+          return required(inventoryRowListSerializer(await bulkSetStock(variantIds, stock)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -125,7 +125,7 @@ export const inventorySlice = createAppSlice({
     loadHistoryAsync: create.asyncThunk(
       async ({ variantId }: { variantId: string; label: string }, { rejectWithValue }) => {
         try {
-          return required(movementListSerializer(await getMovementsAPI(variantId)));
+          return required(movementListSerializer(await fetchMovements(variantId)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

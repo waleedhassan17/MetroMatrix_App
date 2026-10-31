@@ -6,10 +6,10 @@
 // asks the API for the room (Jitsi URL, or JaaS with a token).
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getAppointmentAPI } from '../../networks/health/appointmentsNetwork';
+import { fetchAppointment } from '../../networks/health/appointments';
 
-import { joinVideoAPI, joinVideoAsDoctorAPI } from '../../networks/health/videoNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { joinVideo, joinVideoAsDoctor } from '../../networks/health/video';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { VideoJoin } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { appointmentDetailSerializer } from '../../serializers/health/appointmentSerializer';
@@ -55,7 +55,7 @@ export const videoSlice = createAppSlice({
       async (t: VideoTarget, { rejectWithValue }): Promise<VideoVisit | ReturnType<typeof rejectWithValue>> => {
         try {
           if (t.code) {
-            const a = required(appointmentDetailSerializer(await getAppointmentAPI(t.code)));
+            const a = required(appointmentDetailSerializer(await fetchAppointment(t.code)));
             return { other: a.doctor.name, startAt: a.startAt, endAt: a.endAt, timezone: a.timezone, joinOpensAt: a.joinOpensAt, canJoin: a.flags.canJoinVideo, code: a.code };
           }
           const a = await getDoctorAppointment(t.appointmentId ?? '');
@@ -82,7 +82,7 @@ export const videoSlice = createAppSlice({
     joinRoomAsync: create.asyncThunk(
       async (t: VideoTarget, { rejectWithValue }) => {
         try {
-          return t.code ? required(videoJoinSerializer(await joinVideoAPI(t.code))) : required(videoJoinSerializer(await joinVideoAsDoctorAPI(t.appointmentId ?? '')));
+          return t.code ? required(videoJoinSerializer(await joinVideo(t.code))) : required(videoJoinSerializer(await joinVideoAsDoctor(t.appointmentId ?? '')));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

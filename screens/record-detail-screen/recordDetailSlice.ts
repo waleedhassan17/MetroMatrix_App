@@ -2,8 +2,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { deleteRecordAPI } from '../../networks/health/recordsNetwork';
-import { toRejectedValue } from '../../networks/network/apiHelpers';
+import { deleteRecord } from '../../networks/health/records';
+import { toRejectedValue } from '../../networks/network/network';
 import type { HealthRecord } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { getRecord } from '../shared/healthReads';
@@ -58,7 +58,7 @@ export const recordDetailSlice = createAppSlice({
     deleteRecordAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          await deleteRecordAPI(id);
+          await deleteRecord(id);
           return id;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

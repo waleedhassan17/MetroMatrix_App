@@ -9,8 +9,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getSurplusAPI, reserveSurplusAPI } from '../../networks/food/surplusNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchSurplus, reserveSurplus } from '../../networks/food/surplus';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { newUuid } from '../../utils/ids/ids';
 import type { BoxPaymentMethod, FoodPoint, SurplusDetail } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -61,7 +61,7 @@ export const foodSurplusSlice = createAppSlice({
     loadSurplusAsync: create.asyncThunk(
       async ({ id, at }: { id: string; at: Pick<FoodPoint, 'lat' | 'lng'> | null }, { rejectWithValue }) => {
         try {
-          return required(surplusDetailSerializer(await getSurplusAPI(id, at)));
+          return required(surplusDetailSerializer(await fetchSurplus(id, at)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -97,7 +97,7 @@ export const foodSurplusSlice = createAppSlice({
         const s = (getState() as { foodSurplus: FoodSurplusSliceState }).foodSurplus;
         if (!s.box) return rejectWithValue({ message: 'This Bachat Box is no longer available.', code: 'NOT_FOUND' });
         try {
-          const r = required(reservationSerializer(await reserveSurplusAPI(s.box.id, { quantity: s.quantity, paymentMethod: s.method }, s.idempotencyKey || newUuid())));
+          const r = required(reservationSerializer(await reserveSurplus(s.box.id, { quantity: s.quantity, paymentMethod: s.method }, s.idempotencyKey || newUuid())));
           dispatch(newSurplusKey());
           return r;
         } catch (e) {

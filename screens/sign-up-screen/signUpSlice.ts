@@ -6,7 +6,7 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { toRejectedValue } from '../../networks/network/apiHelpers';
+import { toRejectedValue } from '../../networks/network/network';
 import { toPkPhone } from '../../models/authModel';
 import { googleAndOpen, signUpAndOpen } from '../shared/authThunks';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';

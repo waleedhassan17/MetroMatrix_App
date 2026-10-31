@@ -6,7 +6,7 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { toRejectedValue } from '../../networks/network/apiHelpers';
+import { toRejectedValue } from '../../networks/network/network';
 import { toPkPhone } from '../../models/authModel';
 import { SUBTYPE_SERVICE } from '../../models/businessModel';
 import type { SubType } from '../../models';

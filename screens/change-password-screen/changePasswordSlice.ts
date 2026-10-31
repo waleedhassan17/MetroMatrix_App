@@ -6,13 +6,13 @@
 // instead, which the API checks belongs to this account.
 //
 // The API signs every device out, this one included, and returns a new pair
-// (authChangePassword stores it). The session is then replaced from
+// (changePassword stores it). The session is then replaced from
 // /auth/me as a whole, so the role and business stay the server's.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { authChangePassword } from '../../networks/auth/authNetwork';
-import { ApiError, toRejectedValue, ERROR_CODES } from '../../networks/network/apiHelpers';
+import { changePassword } from '../../networks/authcalls/changePassword';
+import { ApiError, toRejectedValue, ERROR_CODES } from '../../networks/network/network';
 import { getGoogleIdToken } from '../../services/googleAuth';
 import { setSession } from '../../store/authSlice';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -55,11 +55,11 @@ export const changePasswordSlice = createAppSlice({
         try {
           let session;
           if (currentPassword) {
-            session = await authChangePassword({ currentPassword, newPassword });
+            session = await changePassword({ currentPassword, newPassword });
           } else {
             const idToken = await getGoogleIdToken();
             if (!idToken) throw new ApiError('Confirm with Google to set your password.', ERROR_CODES.GOOGLE_CANCELLED);
-            session = await authChangePassword({ idToken, newPassword });
+            session = await changePassword({ idToken, newPassword });
           }
           dispatch(setSession(session));
           return true;

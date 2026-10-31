@@ -3,9 +3,9 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getMenuItemsAPI } from '../../networks/food/vendor/menuNetwork';
-import { draftDescriptionsAPI, saveDescriptionAPI } from '../../networks/kitchen/kitchenAiNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchMenuItems } from '../../networks/food/vendor/menu';
+import { draftDescriptions, saveDescription } from '../../networks/kitchen/kitchenAi';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { MAX_DESCRIPTION_DISHES, descriptionInput } from '../../models/kitchen/assistantModel';
 import type { DescriptionDraft, VendorMenuItem } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -65,7 +65,7 @@ export const aiDescriptionsSlice = createAppSlice({
     loadDescribeItemsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(vendorMenuItemsSerializer(await getMenuItemsAPI()));
+          return required(vendorMenuItemsSerializer(await fetchMenuItems()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -88,7 +88,7 @@ export const aiDescriptionsSlice = createAppSlice({
     draftDescriptionsAsync: create.asyncThunk(
       async (itemIds: string[], { rejectWithValue }) => {
         try {
-          return required(descriptionDraftsSerializer(await draftDescriptionsAPI(itemIds)));
+          return required(descriptionDraftsSerializer(await draftDescriptions(itemIds)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -113,7 +113,7 @@ export const aiDescriptionsSlice = createAppSlice({
     saveDescriptionAsync: create.asyncThunk(
       async ({ itemId, en, ur }: { itemId: string; en: string; ur: string }, { rejectWithValue }) => {
         try {
-          return required(vendorMenuItemSerializer(await saveDescriptionAPI(itemId, descriptionInput({ en, ur }))));
+          return required(vendorMenuItemSerializer(await saveDescription(itemId, descriptionInput({ en, ur }))));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

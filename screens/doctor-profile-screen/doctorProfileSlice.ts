@@ -8,8 +8,8 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 
-import { getDaysAPI, getSlotsAPI } from '../../networks/health/availabilityNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchDays, fetchSlots } from '../../networks/health/availability';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { DayAvailability, DoctorProfile, SlotDay } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { confirmBookingAsync } from '../book-appointment-sheet/bookAppointmentSlice';
@@ -102,9 +102,9 @@ export const doctorProfileSlice = createAppSlice({
     chooseLocationAsync: create.asyncThunk(
       async ({ doctorId, locationId, date }: { key: string; doctorId: string; locationId: string; date?: string }, { rejectWithValue }) => {
         try {
-          const days = required(daysSerializer(await getDaysAPI(doctorId, locationId, null, 14)));
+          const days = required(daysSerializer(await fetchDays(doctorId, locationId, null, 14)));
           const pick = (date && days.find(d => d.date === date)?.date) || days.find(d => d.slotCount > 0)?.date || days[0]?.date || null;
-          const day = pick ? required(slotDaySerializer(await getSlotsAPI(doctorId, locationId, pick))) : null;
+          const day = pick ? required(slotDaySerializer(await fetchSlots(doctorId, locationId, pick))) : null;
           return { days, day };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -141,7 +141,7 @@ export const doctorProfileSlice = createAppSlice({
     chooseDayAsync: create.asyncThunk(
       async ({ doctorId, locationId, date }: { key: string; doctorId: string; locationId: string; date: string }, { rejectWithValue }) => {
         try {
-          return required(slotDaySerializer(await getSlotsAPI(doctorId, locationId, date)));
+          return required(slotDaySerializer(await fetchSlots(doctorId, locationId, date)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

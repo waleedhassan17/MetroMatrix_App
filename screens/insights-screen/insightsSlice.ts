@@ -2,8 +2,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getInsightsAPI } from '../../networks/shopping/partner/insightsNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchInsights } from '../../networks/shopping/partner/insights';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { Insights, InsightsRange } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { insightsSerializer } from '../../serializers/shopping/partnerSerializer';
@@ -27,7 +27,7 @@ export const insightsSlice = createAppSlice({
     loadInsightsAsync: create.asyncThunk(
       async (range: InsightsRange, { rejectWithValue }) => {
         try {
-          return required(insightsSerializer(await getInsightsAPI(range)));
+          return required(insightsSerializer(await fetchInsights(range)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

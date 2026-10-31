@@ -7,8 +7,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { openSharedRecordAPI, type DoctorAction } from '../../networks/health/doctor/doctorAppointmentsNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { openSharedRecord, type DoctorAction } from '../../networks/health/doctor/doctorAppointments';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { DoctorAppointmentDetail } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { healthRecordSerializer } from '../../serializers/health/recordsSerializer';
@@ -98,7 +98,7 @@ export const doctorAppointmentSlice = createAppSlice({
     openSharedRecordAsync: create.asyncThunk(
       async ({ id, recordId }: { id: string; recordId: string }, { rejectWithValue }) => {
         try {
-          return required(healthRecordSerializer(await openSharedRecordAPI(id, recordId)));
+          return required(healthRecordSerializer(await openSharedRecord(id, recordId)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

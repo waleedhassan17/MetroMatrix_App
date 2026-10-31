@@ -13,7 +13,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useRiderChannel } from '../../hooks/useFoodLive';
 import { usePagedList } from '../../hooks/usePagedList';
-import { getRiderOrdersAPI } from '../../networks/food/rider/riderNetwork';
+import { fetchRiderOrders } from '../../networks/food/rider/rider';
 import { placeLine, riderVehicleLabel } from '../../models/food/vendorModel';
 import { dropOrderLabel } from '../../models/kitchen/reachModel';
 import { riderStepLabel } from '../../models/food/foodStatusModel';
@@ -106,7 +106,7 @@ const RiderDeliveriesContent: React.FC = () => {
     }, [dispatch, refetch]),
   );
   useRiderChannel(refetch);
-  const history = usePagedList((page, size) => getRiderOrdersAPI('history', page, size), riderOrdersPageSerializer, 'rider-history', { enabled: segment === 'history' });
+  const history = usePagedList((page, size) => fetchRiderOrders('history', page, size), riderOrdersPageSerializer, 'rider-history', { enabled: segment === 'history' });
 
   // Fixes go over the live connection, else the REST batch.
   useEffect(() => {

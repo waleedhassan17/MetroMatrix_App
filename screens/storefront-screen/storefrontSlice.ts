@@ -2,8 +2,8 @@
 // QR code, and this month's orders by where they came from.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getStorefrontAPI } from '../../networks/foodGrowth/storefrontNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchStorefront } from '../../networks/foodGrowth/storefront';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { Storefront } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { storefrontSerializer } from '../../serializers/kitchen/reachSerializer';
@@ -23,7 +23,7 @@ export const storefrontSlice = createAppSlice({
     loadStorefrontAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(storefrontSerializer(await getStorefrontAPI()));
+          return required(storefrontSerializer(await fetchStorefront()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

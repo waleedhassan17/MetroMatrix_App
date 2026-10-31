@@ -5,8 +5,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { requestReturnAPI } from '../../networks/shopping/returnsNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { requestReturn } from '../../networks/shopping/returns';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { LocalFile, ReturnInput, ReturnReason } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { pendingPhoto, photoFailed, photoProgress, photoUploaded, upload, type FormPhoto } from '../shared/photoUploads';
@@ -84,7 +84,7 @@ export const returnRequestSlice = createAppSlice({
     submitReturnAsync: create.asyncThunk(
       async ({ orderId, input }: { orderId: string; input: ReturnInput }, { rejectWithValue }) => {
         try {
-          return required(returnSerializer(await requestReturnAPI(orderId, input)));
+          return required(returnSerializer(await requestReturn(orderId, input)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

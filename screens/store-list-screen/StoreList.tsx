@@ -11,7 +11,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { useDebouncedValue, usePagedList } from '../../hooks/usePagedList';
 import { useShopNav } from '../../hooks/useShop';
-import { getStoresAPI } from '../../networks/shopping/catalogNetwork';
+import { fetchStores } from '../../networks/shopping/catalog';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import { Divider, EmptyState, InlineNotice, SkeletonLines, StoreCard, TextField } from '../../Custom-Components/index';
 import { ShopTopBar } from '../../Components/shopping/ShopParts';
@@ -43,7 +43,7 @@ const StoreListContent: React.FC<Props> = () => {
   const query = useAppSelector(selectStoreQuery);
   const q = useDebouncedValue(query.trim());
   const { openStore } = useShopNav();
-  const list = usePagedList((page, size) => getStoresAPI({ q: q || undefined }, page, size), storeSummaryPageSerializer, `stores|${q}`);
+  const list = usePagedList((page, size) => fetchStores({ q: q || undefined }, page, size), storeSummaryPageSerializer, `stores|${q}`);
 
   return (
     <View style={styles.root}>

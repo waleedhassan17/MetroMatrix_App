@@ -2,8 +2,8 @@
 // read without signing in.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getVendorPageAPI } from '../../networks/food/discoveryNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchVendorPage } from '../../networks/food/discovery';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { VendorPage } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { vendorPageSerializer } from '../../serializers/food/discoverySerializer';
@@ -24,7 +24,7 @@ export const publicStoreSlice = createAppSlice({
     loadPublicStoreAsync: create.asyncThunk(
       async (slug: string, { rejectWithValue }) => {
         try {
-          return required(vendorPageSerializer(await getVendorPageAPI(slug, null)));
+          return required(vendorPageSerializer(await fetchVendorPage(slug, null)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

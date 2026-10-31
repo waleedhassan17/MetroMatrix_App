@@ -10,12 +10,12 @@
 // them the home is the same (TODO(API_KITCHEN)).
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getFoodHomeAPI } from '../../networks/food/discoveryNetwork';
-import { getSurplusNearbyAPI } from '../../networks/food/surplusNetwork';
-import { getTiffinPlansNearAPI } from '../../networks/foodGrowth/tiffinNetwork';
-import { getIftarNearbyAPI } from '../../networks/foodGrowth/ramadanNetwork';
-import { getHealthyPicksAPI } from '../../networks/myKitchen/nutritionNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchFoodHome } from '../../networks/food/discovery';
+import { fetchSurplusNearby } from '../../networks/food/surplus';
+import { fetchTiffinPlansNear } from '../../networks/foodGrowth/tiffin';
+import { fetchIftarNearby } from '../../networks/foodGrowth/ramadan';
+import { fetchHealthyPicks } from '../../networks/myKitchen/nutrition';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { currentPoint } from '../../services/location';
 import { setFoodPoint } from '../../store/preferencesSlice';
 import type { FoodHome, HealthyPick, IftarKitchen, SurplusCard, TiffinPlan } from '../../models';
@@ -77,13 +77,13 @@ export const foodHomeSlice = createAppSlice({
         try {
           // The extras never hold the home back: a failure is an empty rail.
           const [home, surplus, tiffins, iftar, healthy] = await Promise.all([
-            getFoodHomeAPI(lat, lng).then(raw => required(foodHomeSerializer(raw))),
-            getSurplusNearbyAPI({ lat, lng }).then(raw => required(surplusCardsSerializer(raw))).catch(() => [] as SurplusCard[]),
-            getTiffinPlansNearAPI({ lat, lng }).then(raw => required(tiffinPlansSerializer(raw))).catch(() => [] as TiffinPlan[]),
-            getIftarNearbyAPI({ lat, lng }).then(raw => required(iftarNearbySerializer(raw)))
+            fetchFoodHome(lat, lng).then(raw => required(foodHomeSerializer(raw))),
+            fetchSurplusNearby({ lat, lng }).then(raw => required(surplusCardsSerializer(raw))).catch(() => [] as SurplusCard[]),
+            fetchTiffinPlansNear({ lat, lng }).then(raw => required(tiffinPlansSerializer(raw))).catch(() => [] as TiffinPlan[]),
+            fetchIftarNearby({ lat, lng }).then(raw => required(iftarNearbySerializer(raw)))
               .then(r => (r.state === 'active' ? r.items : []))
               .catch(() => [] as IftarKitchen[]),
-            getHealthyPicksAPI({ lat, lng }).then(raw => required(healthyPicksSerializer(raw))).catch(() => [] as HealthyPick[]),
+            fetchHealthyPicks({ lat, lng }).then(raw => required(healthyPicksSerializer(raw))).catch(() => [] as HealthyPick[]),
           ]);
           return { home, surplus, tiffins, iftar, healthy };
         } catch (e) {

@@ -1,8 +1,8 @@
 // MetroMatrix — Kitchen: the price watch (what the kitchen pays more for than the city).
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getPriceWatchAPI } from '../../networks/kitchen/purchasesNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchPriceWatch } from '../../networks/kitchen/purchases';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { PriceWatch } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { priceWatchSerializer } from '../../serializers/kitchen/stockSerializer';
@@ -22,7 +22,7 @@ export const priceWatchSlice = createAppSlice({
     loadPriceWatchAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(priceWatchSerializer(await getPriceWatchAPI()));
+          return required(priceWatchSerializer(await fetchPriceWatch()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

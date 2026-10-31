@@ -22,7 +22,7 @@
 
 import { io } from 'socket.io-client';
 import { API_BASE_URL } from '../../config/env';
-import { getAccessToken, refreshTokens } from '../../networks/network/apiHelpers';
+import { getAccessToken, refreshTokens } from '../../networks/network/network';
 import {
   REALTIME_AUTH_CODES,
   REALTIME_AUTH_EXPIRED,

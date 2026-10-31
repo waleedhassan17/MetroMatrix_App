@@ -8,7 +8,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { usePagedList } from '../../hooks/usePagedList';
-import { getPartnerReturnsAPI } from '../../networks/shopping/partner/partnerReturnsNetwork';
+import { fetchPartnerReturns } from '../../networks/shopping/partner/partnerReturns';
 import { RETURN_STATUS } from '../../models/shopping/orderStatusModel';
 import { returnReasonLabel } from '../../models/shopping/returnFormModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
@@ -39,7 +39,7 @@ const StoreReturnsContent: React.FC<Props> = ({ navigation }) => {
   const styles = useStyles(makeStyles);
   const { opacity } = useTheme();
   const s = useAppSelector(selectStoreReturns);
-  const list = usePagedList((page, size) => getPartnerReturnsAPI(s.openOnly ? 'open' : null, page, size), returnPageSerializer, `store-returns|${s.openOnly}`);
+  const list = usePagedList((page, size) => fetchPartnerReturns(s.openOnly ? 'open' : null, page, size), returnPageSerializer, `store-returns|${s.openOnly}`);
 
   return (
     <ScreenShell title="Returns" onBack={back} scroll={false}>

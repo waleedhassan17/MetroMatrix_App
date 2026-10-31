@@ -9,7 +9,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 
 import { uploadImage } from '../../services/mediaUpload';
-import { toRejectedValue } from '../../networks/network/apiHelpers';
+import { toRejectedValue } from '../../networks/network/network';
 import type { AppointmentDetail, HealthRecord, LocalFile, RecordInput, RecordType } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { createRecord, attachRecords } from '../shared/healthReads';

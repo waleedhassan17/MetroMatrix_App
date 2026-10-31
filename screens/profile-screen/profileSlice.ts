@@ -9,10 +9,10 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { resetAllState } from '../../store/resetAllState';
-import { authDeleteAccount } from '../../networks/auth/authNetwork';
-import { updateMeAPI } from '../../networks/users/usersNetwork';
+import { deleteAccount } from '../../networks/authcalls/deleteAccount';
+import { updateMe } from '../../networks/users/users';
 import { signUpload } from '../../services/mediaUpload';
-import { uploadToCloudinary, ApiError, toRejectedValue, ERROR_CODES, required } from '../../networks/network/apiHelpers';
+import { uploadToCloudinary, ApiError, toRejectedValue, ERROR_CODES, required } from '../../networks/network/network';
 import { getGoogleIdToken } from '../../services/googleAuth';
 import { nationalFromPkPhone, toPkPhone, updateMeBody } from '../../models/authModel';
 import { clearPushToken } from '../../utils/storage_utils/storageUtils';
@@ -105,7 +105,7 @@ export const profileSlice = createAppSlice({
     saveProfileAsync: create.asyncThunk(
       async ({ name, phone }: { name: string; phone: string }, { dispatch, rejectWithValue }) => {
         try {
-          const user = required(userResponseSerializer(await updateMeAPI(updateMeBody({ name, phone: toPkPhone(phone) ?? null }))));
+          const user = required(userResponseSerializer(await updateMe(updateMeBody({ name, phone: toPkPhone(phone) ?? null }))));
           dispatch(setUser(user));
           return user;
         } catch (e) {
@@ -135,7 +135,7 @@ export const profileSlice = createAppSlice({
         try {
           const signed = await signUpload('avatar');
           const uploaded = await uploadToCloudinary(file, signed, p => dispatch(setAvatarProgress(p)));
-          const user = required(userResponseSerializer(await updateMeAPI({ avatarUrl: uploaded.url })));
+          const user = required(userResponseSerializer(await updateMe({ avatarUrl: uploaded.url })));
           dispatch(setUser(user));
           return true;
         } catch (e) {
@@ -168,11 +168,11 @@ export const profileSlice = createAppSlice({
       async (confirmation: { password: string } | { google: true }, { dispatch, rejectWithValue }) => {
         try {
           if ('password' in confirmation) {
-            await authDeleteAccount({ password: confirmation.password });
+            await deleteAccount({ password: confirmation.password });
           } else {
             const idToken = await getGoogleIdToken();
             if (!idToken) throw new ApiError('Confirm with Google to delete your account.', ERROR_CODES.GOOGLE_CANCELLED);
-            await authDeleteAccount({ idToken });
+            await deleteAccount({ idToken });
           }
           markIntentionalSignOut();
           await clearPushToken();

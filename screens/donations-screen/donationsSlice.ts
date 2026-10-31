@@ -3,8 +3,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getDonationsAPI, logDonationAPI } from '../../networks/kitchen/wasteNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchDonations, logDonation } from '../../networks/kitchen/waste';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { Donations } from '../../models';
 import type { ValidationErrors } from '../../models/authModel';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -43,7 +43,7 @@ export const donationsSlice = createAppSlice({
     loadDonationsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(donationsSerializer(await getDonationsAPI()));
+          return required(donationsSerializer(await fetchDonations()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -66,7 +66,7 @@ export const donationsSlice = createAppSlice({
     logDonationAsync: create.asyncThunk(
       async (input: { meals: number; to: string; note?: string }, { dispatch, rejectWithValue }) => {
         try {
-          const d = required(donationSerializer(await logDonationAPI(input)));
+          const d = required(donationSerializer(await logDonation(input)));
           void dispatch(loadDonationsAsync());
           return d;
         } catch (e) {

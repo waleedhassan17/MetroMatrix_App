@@ -7,7 +7,7 @@
 // thin calls) and kept for the session;
 // staff edits to the taxonomy drop it (resetReferenceIndex).
 
-import { getConditionsAPI, getSpecialtiesAPI } from './discoveryNetwork';
+import { fetchConditions, fetchSpecialties } from './discovery';
 import { arr, bodyOf, isObject, str } from '../../serializers/serializerUtils';
 
 export interface ReferenceIndex {
@@ -19,7 +19,7 @@ export interface ReferenceIndex {
 let loading: Promise<ReferenceIndex> | null = null;
 
 const load = async (): Promise<ReferenceIndex> => {
-  const [specialties, conditions] = await Promise.all([getSpecialtiesAPI(null), getConditionsAPI()]);
+  const [specialties, conditions] = await Promise.all([fetchSpecialties(null), fetchConditions()]);
   const index: ReferenceIndex = { specialtyId: new Map(), specialtySlug: new Map(), conditionId: new Map() };
   for (const s of arr(bodyOf(specialties))) {
     if (!isObject(s) || !str(s.slug) || !str(s.id)) continue;

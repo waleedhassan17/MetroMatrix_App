@@ -4,9 +4,9 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { createBoxAPI, getBoxSuggestionAPI } from '../../networks/kitchen/surplusNetwork';
+import { createBox, fetchBoxSuggestion } from '../../networks/kitchen/surplus';
 import { uploadImage } from '../../services/mediaUpload';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { emptyBoxForm, formFromSuggestion, type BoxForm } from '../../models/kitchen/surplusModel';
 import type { LocalFile, SurplusBoxInput } from '../../models';
 import type { ValidationErrors } from '../../models/authModel';
@@ -50,7 +50,7 @@ export const boxFormSlice = createAppSlice({
     suggestBoxAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return (required(surplusSuggestionResponseSerializer(await getBoxSuggestionAPI()))).suggestion;
+          return (required(surplusSuggestionResponseSerializer(await fetchBoxSuggestion()))).suggestion;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -100,7 +100,7 @@ export const boxFormSlice = createAppSlice({
     createBoxAsync: create.asyncThunk(
       async (input: SurplusBoxInput, { rejectWithValue }) => {
         try {
-          return required(surplusBoxSerializer(await createBoxAPI(input)));
+          return required(surplusBoxSerializer(await createBox(input)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

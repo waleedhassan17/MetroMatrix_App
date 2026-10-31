@@ -9,9 +9,9 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { uploadImage } from '../../services/mediaUpload';
-import { interpretVoiceAPI } from '../../networks/ai/voiceNetwork';
+import { interpretVoice } from '../../networks/ai/voice';
 import { NO_ERROR, readRejection, type ServerError } from '../../screens/shared/formStatus';
 import type { Clip } from '../../services/voice/recorderShared';
 import type { VoiceContext, VoiceLanguage, VoiceResult } from '../../models/kitchen';
@@ -56,7 +56,7 @@ export const voiceSlice = createAppSlice({
       async ({ context, language, clip }: { context: VoiceContext; language: VoiceLanguage; clip: Clip }, { rejectWithValue }) => {
         try {
           const uploaded = await uploadImage(clip, 'voice_clip');
-          return required(voiceResultSerializer(await interpretVoiceAPI({ context, language, audioUrl: uploaded.url, durationMs: clip.durationMs })));
+          return required(voiceResultSerializer(await interpretVoice({ context, language, audioUrl: uploaded.url, durationMs: clip.durationMs })));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -83,7 +83,7 @@ export const voiceSlice = createAppSlice({
     interpretTextAsync: create.asyncThunk(
       async ({ context, language, text }: { context: VoiceContext; language: VoiceLanguage; text: string }, { rejectWithValue }) => {
         try {
-          return required(voiceResultSerializer(await interpretVoiceAPI({ context, language, text: text.trim() })));
+          return required(voiceResultSerializer(await interpretVoice({ context, language, text: text.trim() })));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

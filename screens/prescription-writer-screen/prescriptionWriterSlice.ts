@@ -9,8 +9,8 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 
-import { issuePrescriptionAPI, recentDiagnosesAPI, suggestMedicinesAPI } from '../../networks/health/doctor/prescriptionWriterNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { issuePrescription, recentDiagnoses, suggestMedicines } from '../../networks/health/doctor/prescriptionWriter';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { emptyMedicine, emptyPrescription, moveMedicine } from '../../models/health/prescriptionModel';
 import type { DoctorAppointmentDetail, DoctorOwnProfile, Medicine, MedicineSuggestion, PrescriptionInput } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -108,7 +108,7 @@ export const prescriptionWriterSlice = createAppSlice({
     startWriterAsync: create.asyncThunk(
       async (appointmentId: string, { rejectWithValue }) => {
         try {
-          const [appointment, diagnoses, profile] = await Promise.all([getDoctorAppointment(appointmentId), recentDiagnosesAPI().then(raw => required(recentDiagnosesSerializer(raw))), getOwnProfile()]);
+          const [appointment, diagnoses, profile] = await Promise.all([getDoctorAppointment(appointmentId), recentDiagnoses().then(raw => required(recentDiagnosesSerializer(raw))), getOwnProfile()]);
           return { appointment, diagnoses, profile };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -138,7 +138,7 @@ export const prescriptionWriterSlice = createAppSlice({
     suggestMedicineAsync: create.asyncThunk(
       async ({ q }: { row: number; q: string }, { rejectWithValue }) => {
         try {
-          return required(medicineSuggestionsSerializer(await suggestMedicinesAPI(q)));
+          return required(medicineSuggestionsSerializer(await suggestMedicines(q)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -154,7 +154,7 @@ export const prescriptionWriterSlice = createAppSlice({
     savePrescriptionAsync: create.asyncThunk(
       async ({ appointmentId, prescriptionId, input }: { appointmentId: string; prescriptionId: string | null; input: PrescriptionInput }, { rejectWithValue }) => {
         try {
-          return prescriptionId ? await updatePrescription(prescriptionId, input) : required(prescriptionSerializer(await issuePrescriptionAPI(appointmentId, input)));
+          return prescriptionId ? await updatePrescription(prescriptionId, input) : required(prescriptionSerializer(await issuePrescription(appointmentId, input)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

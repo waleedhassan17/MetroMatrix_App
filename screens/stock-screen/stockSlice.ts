@@ -5,10 +5,10 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getStockAPI, recordStockTakeAPI } from '../../networks/kitchen/stockNetwork';
-import { createPurchaseAPI } from '../../networks/kitchen/purchasesNetwork';
-import { logWasteAPI } from '../../networks/kitchen/wasteNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchStock, recordStockTake } from '../../networks/kitchen/stock';
+import { createPurchase } from '../../networks/kitchen/purchases';
+import { logWaste } from '../../networks/kitchen/waste';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { purchaseFromVoice } from '../../models/kitchen/purchaseModel';
 import { countFromVoice, wasteFromVoice } from '../../models/kitchen/stockModel';
 import type { StockList, StockSegment, VoiceAction } from '../../models';
@@ -41,7 +41,7 @@ export const stockSlice = createAppSlice({
     loadStockAsync: create.asyncThunk(
       async ({ segment, q }: { segment: StockSegment; q: string }, { rejectWithValue }) => {
         try {
-          return required(stockListSerializer(await getStockAPI(segment, q)));
+          return required(stockListSerializer(await fetchStock(segment, q)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -66,19 +66,19 @@ export const stockSlice = createAppSlice({
       async (action: VoiceAction, { rejectWithValue }) => {
         try {
           if (action.kind === 'purchase.add') {
-            const p = required(purchaseSerializer(await createPurchaseAPI(purchaseFromVoice(action.lines))));
+            const p = required(purchaseSerializer(await createPurchase(purchaseFromVoice(action.lines))));
             return `Purchase saved: ${p.lines.length} ${p.lines.length === 1 ? 'item' : 'items'}.`;
           }
           if (action.kind === 'waste.log') {
             const lines = wasteFromVoice(action.lines, action.reason);
             if (!lines.length) throw new Error('Add that ingredient to your stock first.');
-            await logWasteAPI(lines);
+            await logWaste(lines);
             return 'Waste logged.';
           }
           if (action.kind === 'stock.count') {
             const lines = countFromVoice(action.lines);
             if (!lines.length) throw new Error('Add that ingredient to your stock first.');
-            const r = required(stockTakeSerializer(await recordStockTakeAPI(lines)));
+            const r = required(stockTakeSerializer(await recordStockTake(lines)));
             return r.adjusted ? `Stock count saved: ${r.adjusted} changed.` : 'Stock count saved: it matched.';
           }
           throw new Error('That isn’t something Stock can do. Try the board or Today.');

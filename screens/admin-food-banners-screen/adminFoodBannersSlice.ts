@@ -2,8 +2,8 @@
 // off, and the order (the list is renumbered 0, 10, 20… as it now reads).
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getAdminFoodBannersAPI, updateFoodBannerAPI } from '../../networks/admin/adminFoodNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchAdminFoodBanners, updateFoodBanner } from '../../networks/admin/adminFood';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { AdminFoodBanner } from '../../models';
 import {
   NO_ERROR,
@@ -38,7 +38,7 @@ export const adminFoodBannersSlice = createAppSlice({
     loadFoodBannersAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(adminFoodBannersSerializer(await getAdminFoodBannersAPI()));
+          return required(adminFoodBannersSerializer(await fetchAdminFoodBanners()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -62,12 +62,12 @@ export const adminFoodBannersSlice = createAppSlice({
       async (change: Change, { rejectWithValue }) => {
         try {
           if (change.kind === 'toggle')
-            await updateFoodBannerAPI(change.banner.id, { isActive: !change.banner.isActive });
+            await updateFoodBanner(change.banner.id, { isActive: !change.banner.isActive });
           else {
             for (const [i, b] of change.banners.entries())
-              if (b.sort !== i * 10) await updateFoodBannerAPI(b.id, { sort: i * 10 });
+              if (b.sort !== i * 10) await updateFoodBanner(b.id, { sort: i * 10 });
           }
-          return required(adminFoodBannersSerializer(await getAdminFoodBannersAPI()));
+          return required(adminFoodBannersSerializer(await fetchAdminFoodBanners()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

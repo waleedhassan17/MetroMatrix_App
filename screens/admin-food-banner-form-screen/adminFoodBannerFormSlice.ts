@@ -8,14 +8,14 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import {
-  createFoodBannerAPI,
-  deleteFoodBannerAPI,
-  getAdminCuisinesAPI,
-  getAdminFoodVendorsAPI,
-  updateFoodBannerAPI,
-} from '../../networks/admin/adminFoodNetwork';
+  createFoodBanner,
+  deleteFoodBanner,
+  fetchAdminCuisines,
+  fetchAdminFoodVendors,
+  updateFoodBanner,
+} from '../../networks/admin/adminFood';
 import { uploadImage } from '../../services/mediaUpload';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type {
   AdminCuisine,
   AdminFoodBanner,
@@ -151,8 +151,8 @@ export const adminFoodBannerFormSlice = createAppSlice({
       async (_: void, { rejectWithValue }) => {
         try {
           const [vendors, cuisines] = await Promise.all([
-            getAdminFoodVendorsAPI({ status: 'live' }, 1, 100).then(raw => required(adminFoodVendorsPageSerializer(raw))),
-            getAdminCuisinesAPI().then(raw => required(adminCuisinesSerializer(raw))),
+            fetchAdminFoodVendors({ status: 'live' }, 1, 100).then(raw => required(adminFoodVendorsPageSerializer(raw))),
+            fetchAdminCuisines().then(raw => required(adminCuisinesSerializer(raw))),
           ]);
           return { vendors: vendors.items, cuisines: cuisines.filter(c => c.isActive) };
         } catch (e) {
@@ -200,7 +200,7 @@ export const adminFoodBannerFormSlice = createAppSlice({
         { rejectWithValue },
       ) => {
         try {
-          return id ? required(adminFoodBannerSerializer(await updateFoodBannerAPI(id, input))) : required(adminFoodBannerSerializer(await createFoodBannerAPI(input)));
+          return id ? required(adminFoodBannerSerializer(await updateFoodBanner(id, input))) : required(adminFoodBannerSerializer(await createFoodBanner(input)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -223,7 +223,7 @@ export const adminFoodBannerFormSlice = createAppSlice({
     deleteFoodBannerAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return await deleteFoodBannerAPI(id);
+          return await deleteFoodBanner(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

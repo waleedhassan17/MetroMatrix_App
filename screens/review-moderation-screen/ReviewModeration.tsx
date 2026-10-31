@@ -12,7 +12,7 @@ import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { usePagedList } from '../../hooks/usePagedList';
-import { getReviewsForModerationAPI } from '../../networks/admin/adminHealthNetwork';
+import { fetchReviewsForModeration } from '../../networks/admin/adminHealth';
 import { useStyles, type Theme } from '../../theme/index';
 import { AppText, Button, Card, ChoiceChip, DoctorReviewItem, EmptyState, InlineNotice, ScreenShell, SegmentTabs, Sheet, SkeletonLines, TextField } from '../../Custom-Components/index';
 import { validateHideReason } from '../../models/health/adminHealthModel';
@@ -44,7 +44,7 @@ const ReviewModeration: React.FC<Props> = () => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectReviewModeration);
-  const list = usePagedList((page, size) => getReviewsForModerationAPI(s.hidden, page, size), doctorReviewPageSerializer, `modreviews|${s.hidden}`);
+  const list = usePagedList((page, size) => fetchReviewsForModeration(s.hidden, page, size), doctorReviewPageSerializer, `modreviews|${s.hidden}`);
   const reasonError = s.reasonTouched ? validateHideReason(s.reason).reason : undefined;
 
   const moderate = async (r: DoctorReview, hide: boolean) => {

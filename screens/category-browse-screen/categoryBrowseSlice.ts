@@ -2,8 +2,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getCategoriesAPI } from '../../networks/shopping/catalogNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchCategories } from '../../networks/shopping/catalog';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { ShopCategory } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { categoryListSerializer } from '../../serializers/shopping/catalogSerializer';
@@ -27,7 +27,7 @@ export const categoryBrowseSlice = createAppSlice({
     loadCategoriesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(categoryListSerializer(await getCategoriesAPI()));
+          return required(categoryListSerializer(await fetchCategories()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

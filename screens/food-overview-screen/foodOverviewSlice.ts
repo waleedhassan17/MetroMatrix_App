@@ -3,9 +3,9 @@
 // dishes), which the assumed kitchen contract serves on its own routes.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getFoodOverviewAPI } from '../../networks/admin/adminFoodNetwork';
-import { getHygieneQueueAPI, getSignaturesAPI } from '../../networks/admin/adminKitchenNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchFoodOverview } from '../../networks/admin/adminFood';
+import { fetchHygieneQueue, fetchSignatures } from '../../networks/admin/adminKitchen';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { AdminFoodOverview } from '../../models';
 import {
   NO_ERROR,
@@ -34,7 +34,7 @@ export const foodOverviewSlice = createAppSlice({
     loadFoodOverviewAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(adminFoodOverviewSerializer(await getFoodOverviewAPI()));
+          return required(adminFoodOverviewSerializer(await fetchFoodOverview()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -59,7 +59,7 @@ export const foodOverviewSlice = createAppSlice({
     loadKitchenWaitingAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [hygiene, signatures] = await Promise.all([getHygieneQueueAPI('pending').then(raw => required(hygieneQueueSerializer(raw))), getSignaturesAPI('new').then(raw => required(signatureListSerializer(raw)))]);
+          const [hygiene, signatures] = await Promise.all([fetchHygieneQueue('pending').then(raw => required(hygieneQueueSerializer(raw))), fetchSignatures('new').then(raw => required(signatureListSerializer(raw)))]);
           return { hygiene: hygiene.length, signatures: signatures.counts.new };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

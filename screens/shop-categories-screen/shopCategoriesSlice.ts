@@ -2,8 +2,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { createCategoryAPI, deleteCategoryAPI, getAdminCategoriesAPI, reorderCategoriesAPI, updateCategoryAPI } from '../../networks/admin/adminShopNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { createCategory, deleteCategory, fetchAdminCategories, reorderCategories, updateCategory } from '../../networks/admin/adminShop';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { ShopCategory } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { categoryListSerializer, categorySerializer } from '../../serializers/shopping/catalogSerializer';
@@ -45,7 +45,7 @@ export const shopCategoriesSlice = createAppSlice({
     loadCategoriesTreeAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(categoryListSerializer(await getAdminCategoriesAPI()));
+          return required(categoryListSerializer(await fetchAdminCategories()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -69,10 +69,10 @@ export const shopCategoriesSlice = createAppSlice({
         try {
           if (change.kind === 'save') {
             const { id, parentId, name, icon } = change.sheet;
-            await (id ? updateCategoryAPI(id, { name: name.trim(), icon }).then(raw => required(categorySerializer(raw))) : createCategoryAPI({ name: name.trim(), icon, parentId }).then(raw => required(categorySerializer(raw))));
-          } else if (change.kind === 'delete') await deleteCategoryAPI(change.id);
-          else await reorderCategoriesAPI(change.parentId, change.ids);
-          return required(categoryListSerializer(await getAdminCategoriesAPI()));
+            await (id ? updateCategory(id, { name: name.trim(), icon }).then(raw => required(categorySerializer(raw))) : createCategory({ name: name.trim(), icon, parentId }).then(raw => required(categorySerializer(raw))));
+          } else if (change.kind === 'delete') await deleteCategory(change.id);
+          else await reorderCategories(change.parentId, change.ids);
+          return required(categoryListSerializer(await fetchAdminCategories()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

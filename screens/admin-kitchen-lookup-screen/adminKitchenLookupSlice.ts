@@ -6,8 +6,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { lookupGrowthCodeAPI } from '../../networks/admin/adminKitchenNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { lookupGrowthCode } from '../../networks/admin/adminKitchen';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { GrowthLookup } from '../../models';
 import {
   NO_ERROR,
@@ -42,7 +42,7 @@ export const adminKitchenLookupSlice = createAppSlice({
     lookupCodeAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return required(growthLookupSerializer(await lookupGrowthCodeAPI(code)));
+          return required(growthLookupSerializer(await lookupGrowthCode(code)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

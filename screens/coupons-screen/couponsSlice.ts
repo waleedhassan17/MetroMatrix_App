@@ -1,8 +1,8 @@
 // MetroMatrix — Coupons slice: the store's codes (the form edits one).
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getCouponsAPI } from '../../networks/shopping/partner/couponsNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchCoupons } from '../../networks/shopping/partner/coupons';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { Coupon } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { couponListSerializer } from '../../serializers/shopping/partnerSerializer';
@@ -22,7 +22,7 @@ export const couponsSlice = createAppSlice({
     loadCouponsListAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(couponListSerializer(await getCouponsAPI()));
+          return required(couponListSerializer(await fetchCoupons()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

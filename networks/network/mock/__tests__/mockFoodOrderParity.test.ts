@@ -10,7 +10,7 @@
 
 import ordersReal from '../../../../serializers/__tests__/fixtures/food/orders.json';
 import p8Real from '../../../../serializers/__tests__/fixtures/food/p8.json';
-import { api } from '../../apiHelpers';
+import { MainAxiosInstance } from '../../network';
 import { clearTokens } from '../../../../utils/storage_utils/storageUtils';
 import { resetMockDb } from '../mockDb';
 import { isAddition, shippedAdditions } from '../kitchen/foodAdditions';
@@ -30,7 +30,7 @@ const T0 = new Date('2026-10-15T10:00:00Z').getTime();
 
 const call = async (method: 'get' | 'post' | 'patch' | 'delete', url: string, body?: unknown, headers?: Record<string, string>): Promise<Body> => {
   try {
-    const res = method === 'get' || method === 'delete' ? await api[method](url, { headers }) : await api[method](url, body ?? {}, { headers });
+    const res = method === 'get' || method === 'delete' ? await MainAxiosInstance[method](url, { headers }) : await MainAxiosInstance[method](url, body ?? {}, { headers });
     return res.data as Body;
   } catch (e) {
     return ((e as { response?: { data?: Body } }).response?.data ?? { success: false }) as Body;

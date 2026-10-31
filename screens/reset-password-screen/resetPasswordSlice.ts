@@ -10,8 +10,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { authResetPassword } from '../../networks/auth/authNetwork';
-import { toRejectedValue } from '../../networks/network/apiHelpers';
+import { resetPassword } from '../../networks/authcalls/forgotPassword';
+import { toRejectedValue } from '../../networks/network/network';
 import { clearTokens } from '../../utils/storage_utils/storageUtils';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import type { Touched } from '../../utils/form-errors/formErrors';
@@ -53,7 +53,7 @@ export const resetPasswordSlice = createAppSlice({
     resetPasswordAsync: create.asyncThunk(
       async ({ resetToken, password }: { resetToken: string; password: string }, { rejectWithValue }) => {
         try {
-          await authResetPassword(resetToken, password);
+          await resetPassword(resetToken, password);
           await clearTokens();
           return true;
         } catch (e) {

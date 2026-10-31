@@ -14,9 +14,10 @@
 // unverified. Signed out: "Email verified, sign in to continue".
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { authMe, authVerifyEmail } from '../../networks/auth/authNetwork';
+import { me } from '../../networks/authcalls/me';
+import { verifyEmail } from '../../networks/authcalls/verifyEmail';
 import { getAccessToken } from '../../utils/storage_utils/storageUtils';
-import { toRejectedValue } from '../../networks/network/apiHelpers';
+import { toRejectedValue } from '../../networks/network/network';
 import { setSession } from '../../store/authSlice';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 
@@ -37,7 +38,7 @@ const initialState: VerifySuccessSliceState = { status: 'idle', signedIn: false,
 /** Signed in: the fresh account, or null when it can't be read. */
 const reReadSession = async () => {
   try {
-    return await authMe();
+    return await me();
   } catch {
     return null;
   }
@@ -51,7 +52,7 @@ export const verifySuccessSlice = createAppSlice({
       async ({ token, verified }: VerifyLinkArgs, { dispatch, rejectWithValue }) => {
         const signedIn = !!(await getAccessToken());
         try {
-          if (token) await authVerifyEmail(token);
+          if (token) await verifyEmail(token);
           else if (!verified) throw new Error('This verification link is incomplete. Request a new one.');
           if (signedIn) {
             const session = await reReadSession();

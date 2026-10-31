@@ -7,8 +7,8 @@
 // working now. History is a paged list (usePagedList).
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getRiderHomeAPI, getRiderOrdersAPI, setDutyAPI } from '../../networks/food/rider/riderNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchRiderHome, fetchRiderOrders, setDuty } from '../../networks/food/rider/rider';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { RiderHome, RiderOrder } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { riderHomeSerializer, riderOrdersPageSerializer, riderDutySerializer } from '../../serializers/food/riderSerializer';
@@ -33,7 +33,7 @@ export const riderHomeSlice = createAppSlice({
     loadRiderHomeAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(riderHomeSerializer(await getRiderHomeAPI()));
+          return required(riderHomeSerializer(await fetchRiderHome()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -57,7 +57,7 @@ export const riderHomeSlice = createAppSlice({
     loadRiderDeliveriesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return (required(riderOrdersPageSerializer(await getRiderOrdersAPI('active', 1, 50)))).items;
+          return (required(riderOrdersPageSerializer(await fetchRiderOrders('active', 1, 50)))).items;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -79,7 +79,7 @@ export const riderHomeSlice = createAppSlice({
     setDutyAsync: create.asyncThunk(
       async (onDuty: boolean, { rejectWithValue }) => {
         try {
-          return required(riderDutySerializer(await setDutyAPI(onDuty)));
+          return required(riderDutySerializer(await setDuty(onDuty)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

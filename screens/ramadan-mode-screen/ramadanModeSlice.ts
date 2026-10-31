@@ -2,8 +2,8 @@
 // kitchen keeps Ramadan hours, and its sehri and iftar windows.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getRamadanAPI, updateRamadanAPI } from '../../networks/foodGrowth/ramadanNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchRamadan, updateRamadan } from '../../networks/foodGrowth/ramadan';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { RamadanInput, RamadanSettings } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { ramadanSettingsSerializer } from '../../serializers/kitchen/reachSerializer';
@@ -25,7 +25,7 @@ export const ramadanModeSlice = createAppSlice({
     loadRamadanAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(ramadanSettingsSerializer(await getRamadanAPI()));
+          return required(ramadanSettingsSerializer(await fetchRamadan()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -48,7 +48,7 @@ export const ramadanModeSlice = createAppSlice({
     saveRamadanAsync: create.asyncThunk(
       async (input: RamadanInput, { rejectWithValue }) => {
         try {
-          return required(ramadanSettingsSerializer(await updateRamadanAPI(input)));
+          return required(ramadanSettingsSerializer(await updateRamadan(input)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

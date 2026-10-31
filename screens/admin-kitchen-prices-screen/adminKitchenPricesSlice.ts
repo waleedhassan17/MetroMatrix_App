@@ -6,8 +6,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getReferencePricesAPI, importReferencePricesAPI } from '../../networks/admin/adminKitchenNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchReferencePrices, importReferencePrices } from '../../networks/admin/adminKitchen';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { CsvImportResult, PriceImportRow, ReferencePriceList } from '../../models';
 import {
   NO_ERROR,
@@ -67,7 +67,7 @@ export const adminKitchenPricesSlice = createAppSlice({
     loadPricesAsync: create.asyncThunk(
       async (q: { city?: string | null; q?: string }, { rejectWithValue }) => {
         try {
-          return required(referencePricesSerializer(await getReferencePricesAPI({ city: q.city ?? undefined, q: q.q?.trim() || undefined })));
+          return required(referencePricesSerializer(await fetchReferencePrices({ city: q.city ?? undefined, q: q.q?.trim() || undefined })));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -92,7 +92,7 @@ export const adminKitchenPricesSlice = createAppSlice({
     checkPricesCsvAsync: create.asyncThunk(
       async (csv: string, { rejectWithValue }) => {
         try {
-          return required(priceImportSerializer(await importReferencePricesAPI(csv, true)));
+          return required(priceImportSerializer(await importReferencePrices(csv, true)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -116,8 +116,8 @@ export const adminKitchenPricesSlice = createAppSlice({
     importPricesCsvAsync: create.asyncThunk(
       async (input: { csv: string; city: string | null }, { rejectWithValue }) => {
         try {
-          const result = required(priceImportSerializer(await importReferencePricesAPI(input.csv, false)));
-          return { result, list: required(referencePricesSerializer(await getReferencePricesAPI({ city: input.city ?? undefined }))) };
+          const result = required(priceImportSerializer(await importReferencePrices(input.csv, false)));
+          return { result, list: required(referencePricesSerializer(await fetchReferencePrices({ city: input.city ?? undefined }))) };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

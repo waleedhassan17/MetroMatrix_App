@@ -7,8 +7,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getProductsAPI } from '../../networks/shopping/catalogNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchProducts } from '../../networks/shopping/catalog';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { DEFAULT_FILTERS, type ProductFilters } from '../../models/shopping/filterModel';
 import type { ProductQuery } from '../../models';
 import { productSummaryPageSerializer } from '../../serializers/shopping/catalogSerializer';
@@ -76,7 +76,7 @@ export const productListSlice = createAppSlice({
       async ({ query }: { key: string; query: ProductQuery }, { rejectWithValue }) => {
         try {
           // How many match: one row is enough to read the total.
-          return required(productSummaryPageSerializer(await getProductsAPI(query, 1, 1))).total;
+          return required(productSummaryPageSerializer(await fetchProducts(query, 1, 1))).total;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

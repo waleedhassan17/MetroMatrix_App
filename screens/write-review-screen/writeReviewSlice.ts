@@ -4,8 +4,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { writeReviewAPI } from '../../networks/shopping/reviewsNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { writeReview } from '../../networks/shopping/reviews';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { LocalFile, ReviewInput } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { pendingPhoto, photoFailed, photoProgress, photoUploaded, upload, type FormPhoto } from '../shared/photoUploads';
@@ -82,7 +82,7 @@ export const writeReviewSlice = createAppSlice({
     submitReviewAsync: create.asyncThunk(
       async ({ orderId, itemId, input }: { orderId: string; itemId: string; input: ReviewInput }, { rejectWithValue }) => {
         try {
-          return required(reviewSerializer(await writeReviewAPI(orderId, itemId, input)));
+          return required(reviewSerializer(await writeReview(orderId, itemId, input)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

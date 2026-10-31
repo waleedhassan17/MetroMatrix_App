@@ -8,8 +8,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { authForgotPassword } from '../../networks/auth/authNetwork';
-import { toRejectedValue, ERROR_CODES } from '../../networks/network/apiHelpers';
+import { forgotPassword } from '../../networks/authcalls/forgotPassword';
+import { toRejectedValue, ERROR_CODES } from '../../networks/network/network';
 import { retryAfterSerializer } from '../../serializers/authSerializer';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 
@@ -52,7 +52,7 @@ export const forgotPasswordSlice = createAppSlice({
     requestCodeAsync: create.asyncThunk(
       async (email: string, { rejectWithValue }) => {
         try {
-          await authForgotPassword(email);
+          await forgotPassword(email);
           return true;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

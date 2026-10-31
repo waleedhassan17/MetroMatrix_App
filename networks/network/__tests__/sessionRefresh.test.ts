@@ -3,20 +3,20 @@
 
 import { AxiosError } from 'axios';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
-import { ApiError, isDefinitiveSessionFailure, isTransient, NO_REFRESH_TOKEN } from '../apiHelpers';
+import { ApiError, isDefinitiveSessionFailure, isTransient, NO_REFRESH_TOKEN } from '../network';
 import { appContainerSlice, bootstrapSession } from '../../../Components/appContainerSlice';
 import { sessionEndedCopy } from '../../../Components/sessionEndedCopy';
 import authReducer from '../../../store/authSlice';
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '../../../utils/storage_utils/storageUtils';
 import { makeUser } from '../../../__fixtures__/users';
 
-jest.mock('../../auth/authNetwork', () => ({ authMe: jest.fn() }));
-jest.mock('../apiHelpers', () => ({
-  ...jest.requireActual('../apiHelpers'),
+jest.mock('../../authcalls/me', () => ({ me: jest.fn() }));
+jest.mock('../network', () => ({
+  ...jest.requireActual('../network'),
   refreshTokens: jest.fn(),
 }));
-const { authMe } = jest.requireMock('../../auth/authNetwork') as { authMe: jest.Mock };
-const { refreshTokens } = jest.requireMock('../apiHelpers') as { refreshTokens: jest.Mock };
+const { me } = jest.requireMock('../../authcalls/me') as { me: jest.Mock };
+const { refreshTokens } = jest.requireMock('../network') as { refreshTokens: jest.Mock };
 
 const http = (status: number, code?: string) =>
   new AxiosError(`HTTP ${status}`, 'ERR_BAD_RESPONSE', {} as never, null, {
@@ -70,7 +70,7 @@ describe('bootstrapSession', () => {
 
   it('restores a session', async () => {
     await setTokens('a', 'r');
-    authMe.mockResolvedValue(session);
+    me.mockResolvedValue(session);
     const store = makeStore();
     await store.dispatch(bootstrapSession());
     expect(store.getState().auth.isAuthenticated).toBe(true);
@@ -79,7 +79,7 @@ describe('bootstrapSession', () => {
 
   it('a 503 at cold start keeps the tokens and shows the server-down gate, not Welcome', async () => {
     await setTokens('a', 'r');
-    authMe.mockRejectedValue(http(503));
+    me.mockRejectedValue(http(503));
     const store = makeStore();
     await store.dispatch(bootstrapSession());
     expect(store.getState().appContainer).toMatchObject({ isAppReady: true, networkIsDown: true, downReason: 'server' });
@@ -89,7 +89,7 @@ describe('bootstrapSession', () => {
 
   it('offline at cold start: the offline gate, tokens kept', async () => {
     await setTokens('a', 'r');
-    authMe.mockRejectedValue(offline());
+    me.mockRejectedValue(offline());
     const store = makeStore();
     await store.dispatch(bootstrapSession());
     expect(store.getState().appContainer).toMatchObject({ networkIsDown: true, downReason: 'offline' });
@@ -98,7 +98,7 @@ describe('bootstrapSession', () => {
 
   it('a definitive failure signs out and clears the tokens', async () => {
     await setTokens('a', 'r');
-    authMe.mockRejectedValue(http(401, 'REFRESH_REUSED'));
+    me.mockRejectedValue(http(401, 'REFRESH_REUSED'));
     const store = makeStore();
     await store.dispatch(bootstrapSession());
     expect(store.getState().auth.isAuthenticated).toBe(false);
@@ -110,7 +110,7 @@ describe('bootstrapSession', () => {
     // Only the access token is gone.
     await setTokens('', 'r');
     refreshTokens.mockResolvedValue('a2');
-    authMe.mockResolvedValue(session);
+    me.mockResolvedValue(session);
     const store = makeStore();
     await store.dispatch(bootstrapSession());
     expect(refreshTokens).toHaveBeenCalledTimes(1);
@@ -120,7 +120,7 @@ describe('bootstrapSession', () => {
   it('nothing stored at all: signed out without a request', async () => {
     const store = makeStore();
     await store.dispatch(bootstrapSession());
-    expect(authMe).not.toHaveBeenCalled();
+    expect(me).not.toHaveBeenCalled();
     expect(store.getState().auth.isAuthenticated).toBe(false);
   });
 });

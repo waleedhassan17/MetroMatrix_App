@@ -2,8 +2,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { suggestProductsAPI } from '../../networks/shopping/catalogNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { suggestProducts } from '../../networks/shopping/catalog';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { SearchSuggestion } from '../../models';
 import type { FormStatus } from '../shared/formStatus';
 import { suggestionListSerializer } from '../../serializers/shopping/catalogSerializer';
@@ -35,7 +35,7 @@ export const shopSearchSlice = createAppSlice({
     suggestAsync: create.asyncThunk(
       async (q: string, { rejectWithValue }) => {
         try {
-          return required(suggestionListSerializer(await suggestProductsAPI(q)));
+          return required(suggestionListSerializer(await suggestProducts(q)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

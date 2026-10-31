@@ -7,10 +7,10 @@
 //                      admin isn't enrolled yet; at enrolment they already are
 
 import type { Dispatch } from '@reduxjs/toolkit';
-import type { RejectedApiError } from '../../networks/network/apiHelpers';
+import type { RejectedApiError } from '../../networks/network/network';
 import { endPendingTotp, setPendingTotp, type PendingTotp } from '../../store/authSlice';
 import { showError } from '../sign-in-screen/signInSlice';
-import { ERROR_CODES } from '../../networks/network/apiHelpers';
+import { ERROR_CODES } from '../../networks/network/network';
 
 /** Codes that mean the challenge itself is gone. */
 export const CHALLENGE_DEAD: readonly string[] = [ERROR_CODES.UNAUTHORIZED, ERROR_CODES.RATE_LIMITED];

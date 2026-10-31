@@ -7,12 +7,12 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import {
-  createCuisineAPI,
-  deleteCuisineAPI,
-  getAdminCuisinesAPI,
-  updateCuisineAPI,
-} from '../../networks/admin/adminFoodNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+  createCuisine,
+  deleteCuisine,
+  fetchAdminCuisines,
+  updateCuisine,
+} from '../../networks/admin/adminFood';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { cuisineSlug } from '../../models/food/adminFoodModel';
 import type { AdminCuisine, AdminCuisineInput } from '../../models';
 import {
@@ -100,7 +100,7 @@ export const adminFoodCuisinesSlice = createAppSlice({
     loadAdminCuisinesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(adminCuisinesSerializer(await getAdminCuisinesAPI()));
+          return required(adminCuisinesSerializer(await fetchAdminCuisines()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -131,12 +131,12 @@ export const adminFoodCuisinesSlice = createAppSlice({
               icon: change.sheet.icon,
               sort: Number(change.sheet.sort),
             };
-            if (change.sheet.id) await updateCuisineAPI(change.sheet.id, input);
-            else await createCuisineAPI(input);
+            if (change.sheet.id) await updateCuisine(change.sheet.id, input);
+            else await createCuisine(input);
           } else if (change.kind === 'active')
-            await updateCuisineAPI(change.id, { isActive: change.isActive });
-          else await deleteCuisineAPI(change.id);
-          return required(adminCuisinesSerializer(await getAdminCuisinesAPI()));
+            await updateCuisine(change.id, { isActive: change.isActive });
+          else await deleteCuisine(change.id);
+          return required(adminCuisinesSerializer(await fetchAdminCuisines()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

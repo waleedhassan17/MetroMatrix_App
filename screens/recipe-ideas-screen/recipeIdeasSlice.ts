@@ -3,8 +3,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { suggestHomeRecipesAPI } from '../../networks/myKitchen/recipesNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { suggestHomeRecipes } from '../../networks/myKitchen/recipes';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { RecipeIdea } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { recipeIdeasSerializer } from '../../serializers/myKitchen/myKitchenSerializer';
@@ -30,7 +30,7 @@ export const recipeIdeasSlice = createAppSlice({
     suggestRecipesAsync: create.asyncThunk(
       async (q: { language: 'en' | 'ur'; maxMinutes: number | null; servings: number }, { rejectWithValue }) => {
         try {
-          return required(recipeIdeasSerializer(await suggestHomeRecipesAPI(q)));
+          return required(recipeIdeasSerializer(await suggestHomeRecipes(q)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

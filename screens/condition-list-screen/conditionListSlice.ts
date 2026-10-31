@@ -2,8 +2,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getConditionsAPI } from '../../networks/health/discoveryNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchConditions } from '../../networks/health/discovery';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { Condition } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { conditionsSerializer } from '../../serializers/health/discoverySerializer';
@@ -27,7 +27,7 @@ export const conditionListSlice = createAppSlice({
     loadConditionsAsync: create.asyncThunk(
       async (q: string, { rejectWithValue }) => {
         try {
-          return required(conditionsSerializer(await getConditionsAPI(q || undefined)));
+          return required(conditionsSerializer(await fetchConditions(q || undefined)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

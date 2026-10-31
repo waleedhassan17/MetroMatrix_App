@@ -8,7 +8,7 @@
 
 import { realtime } from '../realtime/socketClient';
 import { REALTIME_SEND } from '../realtime/realtimeConfig';
-import { sendLocationBatchAPI } from '../../networks/food/rider/riderNetwork';
+import { sendLocationBatch } from '../../networks/food/rider/rider';
 import type { RiderLocationTransport } from './riderLocation';
 import type { RiderFix } from './riderLocationCore';
 
@@ -30,6 +30,6 @@ export const riderTransport: RiderLocationTransport = {
     return true;
   },
   async sendBatch(fixes) {
-    await sendLocationBatchAPI(fixes);
+    await sendLocationBatch(fixes);
   },
 };

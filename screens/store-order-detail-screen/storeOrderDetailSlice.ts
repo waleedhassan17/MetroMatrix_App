@@ -7,19 +7,19 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import {
-  approveCancellationAPI,
-  cancelPartnerOrderAPI,
-  confirmOrderAPI,
-  confirmPaymentAPI,
-  deliverOrderAPI,
-  getPartnerOrderAPI,
-  markCashCollectedAPI,
-  packOrderAPI,
-  rejectPaymentAPI,
-  saveInternalNoteAPI,
-  shipOrderAPI,
-} from '../../networks/shopping/partner/partnerOrdersNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+  approveCancellation,
+  cancelPartnerOrder,
+  confirmOrder,
+  confirmPayment,
+  deliverOrder,
+  fetchPartnerOrder,
+  markCashCollected,
+  packOrder,
+  rejectPayment,
+  saveInternalNote,
+  shipOrder,
+} from '../../networks/shopping/partner/partnerOrders';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { CourierKey, PartnerOrderAction, PartnerOrderDetail } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { partnerOrderDetailSerializer } from '../../serializers/shopping/partnerSerializer';
@@ -64,23 +64,23 @@ export type StoreOrderActionInput =
 const perform = (id: string, a: StoreOrderActionInput) => {
   switch (a.action) {
     case 'confirm':
-      return confirmOrderAPI(id).then(raw => required(partnerOrderDetailSerializer(raw)));
+      return confirmOrder(id).then(raw => required(partnerOrderDetailSerializer(raw)));
     case 'pack':
-      return packOrderAPI(id).then(raw => required(partnerOrderDetailSerializer(raw)));
+      return packOrder(id).then(raw => required(partnerOrderDetailSerializer(raw)));
     case 'ship':
-      return shipOrderAPI(id, { courier: a.courier, trackingRef: a.trackingRef.trim() }).then(raw => required(partnerOrderDetailSerializer(raw)));
+      return shipOrder(id, { courier: a.courier, trackingRef: a.trackingRef.trim() }).then(raw => required(partnerOrderDetailSerializer(raw)));
     case 'deliver':
-      return deliverOrderAPI(id).then(raw => required(partnerOrderDetailSerializer(raw)));
+      return deliverOrder(id).then(raw => required(partnerOrderDetailSerializer(raw)));
     case 'cancel':
-      return cancelPartnerOrderAPI(id, a.reason.trim()).then(raw => required(partnerOrderDetailSerializer(raw)));
+      return cancelPartnerOrder(id, a.reason.trim()).then(raw => required(partnerOrderDetailSerializer(raw)));
     case 'approve_cancellation':
-      return approveCancellationAPI(id).then(raw => required(partnerOrderDetailSerializer(raw)));
+      return approveCancellation(id).then(raw => required(partnerOrderDetailSerializer(raw)));
     case 'confirm_payment':
-      return confirmPaymentAPI(id).then(raw => required(partnerOrderDetailSerializer(raw)));
+      return confirmPayment(id).then(raw => required(partnerOrderDetailSerializer(raw)));
     case 'reject_payment':
-      return rejectPaymentAPI(id, a.reason.trim()).then(raw => required(partnerOrderDetailSerializer(raw)));
+      return rejectPayment(id, a.reason.trim()).then(raw => required(partnerOrderDetailSerializer(raw)));
     case 'cash_collected':
-      return markCashCollectedAPI(id).then(raw => required(partnerOrderDetailSerializer(raw)));
+      return markCashCollected(id).then(raw => required(partnerOrderDetailSerializer(raw)));
   }
 };
 
@@ -109,7 +109,7 @@ export const storeOrderDetailSlice = createAppSlice({
     loadStoreOrderAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(partnerOrderDetailSerializer(await getPartnerOrderAPI(id)));
+          return required(partnerOrderDetailSerializer(await fetchPartnerOrder(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -165,7 +165,7 @@ export const storeOrderDetailSlice = createAppSlice({
     saveNoteAsync: create.asyncThunk(
       async ({ id, note }: { id: string; note: string }, { rejectWithValue }) => {
         try {
-          return required(partnerOrderDetailSerializer(await saveInternalNoteAPI(id, note.trim())));
+          return required(partnerOrderDetailSerializer(await saveInternalNote(id, note.trim())));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

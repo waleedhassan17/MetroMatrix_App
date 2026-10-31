@@ -5,8 +5,8 @@
 // answers with the business (isListed), which the session takes on.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getCompletenessAPI } from '../../networks/health/doctor/profileNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchCompleteness } from '../../networks/health/doctor/profile';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { Completeness } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { setBusiness } from '../../store/authSlice';
@@ -29,7 +29,7 @@ export const practiceSetupSlice = createAppSlice({
     loadCompletenessAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(completenessSerializer(await getCompletenessAPI()));
+          return required(completenessSerializer(await fetchCompleteness()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

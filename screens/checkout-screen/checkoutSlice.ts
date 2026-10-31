@@ -14,8 +14,8 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { newUuid } from '../../utils/ids/ids';
-import { getAvailableCouponsAPI, placeOrderAPI, previewCheckoutAPI } from '../../networks/shopping/checkoutNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchAvailableCoupons, placeOrder, previewCheckout } from '../../networks/shopping/checkout';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { AvailableCoupon, CheckoutInput, CheckoutPreview, OrderGroup, PaymentMethod } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { checkoutPreviewSerializer, availableCouponListSerializer } from '../../serializers/shopping/cartSerializer';
@@ -117,7 +117,7 @@ export const checkoutSlice = createAppSlice({
     previewCheckoutAsync: create.asyncThunk(
       async (input: CheckoutInput, { rejectWithValue }) => {
         try {
-          return required(checkoutPreviewSerializer(await previewCheckoutAPI(input)));
+          return required(checkoutPreviewSerializer(await previewCheckout(input)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -145,7 +145,7 @@ export const checkoutSlice = createAppSlice({
     loadCouponsAsync: create.asyncThunk(
       async (storeId: string, { rejectWithValue }) => {
         try {
-          return required(availableCouponListSerializer(await getAvailableCouponsAPI(storeId)));
+          return required(availableCouponListSerializer(await fetchAvailableCoupons(storeId)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -168,7 +168,7 @@ export const checkoutSlice = createAppSlice({
     placeOrderAsync: create.asyncThunk(
       async ({ input, key }: { input: CheckoutInput; key: string }, { rejectWithValue }) => {
         try {
-          return required(orderGroupSerializer(await placeOrderAPI(input, key)));
+          return required(orderGroupSerializer(await placeOrder(input, key)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

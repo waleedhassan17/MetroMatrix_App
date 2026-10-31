@@ -1,6 +1,6 @@
 // Shared shapes for screen slices that submit a form to the API.
 
-import type { RejectedApiError } from '../../networks/network/apiHelpers';
+import type { RejectedApiError } from '../../networks/network/network';
 
 export type FormStatus = 'idle' | 'loading' | 'failed' | 'succeeded';
 

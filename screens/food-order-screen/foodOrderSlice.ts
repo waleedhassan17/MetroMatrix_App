@@ -9,8 +9,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { cancelFoodOrderAPI, getFoodOrderAPI, getFoodTrackingAPI } from '../../networks/food/ordersNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { cancelFoodOrder, fetchFoodOrder, fetchFoodTracking } from '../../networks/food/orders';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { isEnded } from '../../models/food/foodStatusModel';
 import type { FoodOrder, FoodRiderFix, FoodTracking } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -69,9 +69,9 @@ export const foodOrderSlice = createAppSlice({
     loadFoodOrderAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          const order = required(foodOrderSerializer(await getFoodOrderAPI(code)));
+          const order = required(foodOrderSerializer(await fetchFoodOrder(code)));
           // Tracking only matters while it's on its way.
-          const tracking = isEnded(order.status) ? null : required(foodTrackingSerializer(await getFoodTrackingAPI(code)));
+          const tracking = isEnded(order.status) ? null : required(foodTrackingSerializer(await fetchFoodTracking(code)));
           return { order, tracking };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -100,7 +100,7 @@ export const foodOrderSlice = createAppSlice({
     cancelFoodOrderAsync: create.asyncThunk(
       async ({ code, reason }: { code: string; reason: string | null }, { rejectWithValue }) => {
         try {
-          return required(foodOrderSerializer(await cancelFoodOrderAPI(code, reason)));
+          return required(foodOrderSerializer(await cancelFoodOrder(code, reason)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

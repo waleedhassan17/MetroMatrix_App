@@ -9,16 +9,16 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import {
-  addToFoodCartAPI,
-  clearFoodCartAPI,
-  getFoodCartAPI,
-  getVendorSlotsAPI,
-  removeFoodCartLineAPI,
-  setFoodCartModeAPI,
-  updateFoodCartLineAPI,
-} from '../../networks/food/cartNetwork';
-import { reorderFoodAPI } from '../../networks/food/ordersNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+  addToFoodCart,
+  clearFoodCart,
+  fetchFoodCart,
+  fetchVendorSlots,
+  removeFoodCartLine,
+  setFoodCartMode,
+  updateFoodCartLine,
+} from '../../networks/food/cart';
+import { reorderFood } from '../../networks/food/orders';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { EMPTY_FOOD_CART, foodCartSerializer, foodSlotsSerializer, reorderSerializer } from '../../serializers/food/orderSerializer';
 import type { FoodCart, FoodFulfilment, FoodSlots } from '../../models';
 import {
@@ -28,7 +28,7 @@ import {
   type ServerError,
 } from '../shared/formStatus';
 
-export type FoodLineInput = Parameters<typeof addToFoodCartAPI>[0];
+export type FoodLineInput = Parameters<typeof addToFoodCart>[0];
 
 export interface FoodBagSliceState {
   cart: FoodCart;
@@ -87,7 +87,7 @@ export const foodBagSlice = createAppSlice({
     loadFoodBagAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(foodCartSerializer(await getFoodCartAPI()));
+          return required(foodCartSerializer(await fetchFoodCart()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -114,7 +114,7 @@ export const foodBagSlice = createAppSlice({
         { rejectWithValue },
       ) => {
         try {
-          return required(foodCartSerializer(await addToFoodCartAPI(input, replace)));
+          return required(foodCartSerializer(await addToFoodCart(input, replace)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -148,7 +148,7 @@ export const foodBagSlice = createAppSlice({
     updateFoodLineAsync: create.asyncThunk(
       async ({ lineId, quantity }: { lineId: string; quantity: number }, { rejectWithValue }) => {
         try {
-          return required(foodCartSerializer(await updateFoodCartLineAPI(lineId, { quantity })));
+          return required(foodCartSerializer(await updateFoodCartLine(lineId, { quantity })));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -172,7 +172,7 @@ export const foodBagSlice = createAppSlice({
     removeFoodLineAsync: create.asyncThunk(
       async (lineId: string, { rejectWithValue }) => {
         try {
-          return required(foodCartSerializer(await removeFoodCartLineAPI(lineId)));
+          return required(foodCartSerializer(await removeFoodCartLine(lineId)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -199,7 +199,7 @@ export const foodBagSlice = createAppSlice({
         { rejectWithValue },
       ) => {
         try {
-          return required(foodCartSerializer(await setFoodCartModeAPI(input)));
+          return required(foodCartSerializer(await setFoodCartMode(input)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -226,7 +226,7 @@ export const foodBagSlice = createAppSlice({
     clearFoodBagAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await clearFoodCartAPI();
+          return await clearFoodCart();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -244,7 +244,7 @@ export const foodBagSlice = createAppSlice({
     loadFoodSlotsAsync: create.asyncThunk(
       async (vendor: string, { rejectWithValue }) => {
         try {
-          return required(foodSlotsSerializer(await getVendorSlotsAPI(vendor)));
+          return required(foodSlotsSerializer(await fetchVendorSlots(vendor)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -264,7 +264,7 @@ export const foodBagSlice = createAppSlice({
     reorderFoodAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return required(reorderSerializer(await reorderFoodAPI(code)));
+          return required(reorderSerializer(await reorderFood(code)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

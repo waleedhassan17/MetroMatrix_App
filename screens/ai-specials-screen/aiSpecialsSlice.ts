@@ -3,11 +3,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { suggestSpecialsAPI } from '../../networks/kitchen/kitchenAiNetwork';
-import { createMenuItemAPI, getMenuCategoriesAPI } from '../../networks/food/vendor/menuNetwork';
-import { saveRecipeAPI } from '../../networks/kitchen/recipesNetwork';
-import { getKitchenSettingsAPI } from '../../networks/kitchen/costingNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { suggestSpecials } from '../../networks/kitchen/kitchenAi';
+import { createMenuItem, fetchMenuCategories } from '../../networks/food/vendor/menu';
+import { saveRecipe } from '../../networks/kitchen/recipes';
+import { fetchKitchenSettings } from '../../networks/kitchen/costing';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { specialItemInput, specialRecipe } from '../../models/kitchen/assistantModel';
 import type { DraftCategory, MenuCategory, SpecialIdea } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -59,7 +59,7 @@ export const aiSpecialsSlice = createAppSlice({
     suggestSpecialsAsync: create.asyncThunk(
       async (ingredientIds: string[] | undefined, { rejectWithValue }) => {
         try {
-          const [ideas, categories, settings] = await Promise.all([suggestSpecialsAPI(ingredientIds).then(raw => required(specialIdeasSerializer(raw))), getMenuCategoriesAPI().then(raw => required(menuCategoriesSerializer(raw))), getKitchenSettingsAPI().then(raw => required(kitchenSettingsSerializer(raw)))]);
+          const [ideas, categories, settings] = await Promise.all([suggestSpecials(ingredientIds).then(raw => required(specialIdeasSerializer(raw))), fetchMenuCategories().then(raw => required(menuCategoriesSerializer(raw))), fetchKitchenSettings().then(raw => required(kitchenSettingsSerializer(raw)))]);
           return { ...ideas, categories, targetPct: settings.targetFoodCostPct };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -91,8 +91,8 @@ export const aiSpecialsSlice = createAppSlice({
     createSpecialAsync: create.asyncThunk(
       async ({ idea, categoryId, price }: { idea: SpecialIdea; categoryId: string; price: number }, { rejectWithValue }) => {
         try {
-          const item = required(vendorMenuItemSerializer(await createMenuItemAPI(specialItemInput(idea, categoryId, price), [])));
-          await saveRecipeAPI(item.id, null, specialRecipe(idea));
+          const item = required(vendorMenuItemSerializer(await createMenuItem(specialItemInput(idea, categoryId, price), [])));
+          await saveRecipe(item.id, null, specialRecipe(idea));
           return item;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

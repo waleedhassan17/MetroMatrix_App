@@ -7,9 +7,9 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 
-import { getConditionsAPI, getSpecialtiesAPI } from '../../networks/health/discoveryNetwork';
+import { fetchConditions, fetchSpecialties } from '../../networks/health/discovery';
 import { uploadImage } from '../../services/mediaUpload';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { ownProfilePatch } from '../../models/health/doctorProfileModel';
 import type { Condition, DoctorOwnProfile, LocalFile, Specialty } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -73,7 +73,7 @@ export const doctorProfileEditSlice = createAppSlice({
     loadOwnProfileAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [profile, specialties, conditions] = await Promise.all([getOwnProfile(), getSpecialtiesAPI(null).then(raw => required(specialtiesSerializer(raw))), getConditionsAPI().then(raw => required(conditionsSerializer(raw)))]);
+          const [profile, specialties, conditions] = await Promise.all([getOwnProfile(), fetchSpecialties(null).then(raw => required(specialtiesSerializer(raw))), fetchConditions().then(raw => required(conditionsSerializer(raw)))]);
           return { profile, specialties, conditions };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

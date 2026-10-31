@@ -8,8 +8,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { type DoctorAction } from '../../networks/health/doctor/doctorAppointmentsNetwork';
-import { toRejectedValue } from '../../networks/network/apiHelpers';
+import { type DoctorAction } from '../../networks/health/doctor/doctorAppointments';
+import { toRejectedValue } from '../../networks/network/network';
 import type { TodaySummary } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { actOnAppointment, completeAppointment, getToday } from '../shared/practiceReads';

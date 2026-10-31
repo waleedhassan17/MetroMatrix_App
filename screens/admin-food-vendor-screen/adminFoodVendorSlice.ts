@@ -9,13 +9,13 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import {
-  getAdminFoodVendorAPI,
-  recordFoodSafetyCheckAPI,
-  setVendorFeaturedAPI,
-  setVendorPlanOverridesAPI,
-  setVendorSuspendedAPI,
-} from '../../networks/admin/adminFoodNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+  fetchAdminFoodVendor,
+  recordFoodSafetyCheck,
+  setVendorFeatured,
+  setVendorPlanOverrides,
+  setVendorSuspended,
+} from '../../networks/admin/adminFood';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { AdminFoodVendor, PlanOverrides } from '../../models';
 import {
   NO_ERROR,
@@ -128,7 +128,7 @@ export const adminFoodVendorSlice = createAppSlice({
     loadAdminFoodVendorAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(adminFoodVendorSerializer(await getAdminFoodVendorAPI(id)));
+          return required(adminFoodVendorSerializer(await fetchAdminFoodVendor(id)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -159,12 +159,12 @@ export const adminFoodVendorSlice = createAppSlice({
         try {
           let featured: boolean | undefined;
           if (move.kind === 'feature')
-            featured = (required(adminFeaturedSerializer(await setVendorFeaturedAPI(id, move.featured)))).isFeatured;
-          else if (move.kind === 'suspend') await setVendorSuspendedAPI(id, move.suspend, move.reason);
+            featured = (required(adminFeaturedSerializer(await setVendorFeatured(id, move.featured)))).isFeatured;
+          else if (move.kind === 'suspend') await setVendorSuspended(id, move.suspend, move.reason);
           else if (move.kind === 'safety')
-            await recordFoodSafetyCheckAPI(move.branchId, move.outcome, move.note);
-          else await setVendorPlanOverridesAPI(id, move.overrides);
-          return { vendor: required(adminFoodVendorSerializer(await getAdminFoodVendorAPI(id))), featured };
+            await recordFoodSafetyCheck(move.branchId, move.outcome, move.note);
+          else await setVendorPlanOverrides(id, move.overrides);
+          return { vendor: required(adminFoodVendorSerializer(await fetchAdminFoodVendor(id))), featured };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

@@ -7,8 +7,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { createOptionGroupAPI, deleteOptionGroupAPI, getOptionGroupAPI, updateOptionGroupAPI } from '../../networks/food/vendor/menuNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { createOptionGroup, deleteOptionGroup, fetchOptionGroup, updateOptionGroup } from '../../networks/food/vendor/menu';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { emptyGroupForm, groupForm, groupInput, type GroupForm } from '../../models/food/menuModel';
 import type { OptionGroup } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -71,7 +71,7 @@ export const vendorOptionGroupSlice = createAppSlice({
     loadOptionGroupAsync: create.asyncThunk(
       async (id: string | undefined, { rejectWithValue }) => {
         try {
-          return id ? required(optionGroupSerializer(await getOptionGroupAPI(id))) : null;
+          return id ? required(optionGroupSerializer(await fetchOptionGroup(id))) : null;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -96,7 +96,7 @@ export const vendorOptionGroupSlice = createAppSlice({
         const { group, form } = (getState() as { vendorOptionGroup: VendorOptionGroupSliceState }).vendorOptionGroup;
         if (!form) return rejectWithValue({ message: 'Nothing to save.', code: null, details: null });
         try {
-          const saved = group ? required(optionGroupSerializer(await updateOptionGroupAPI(group.id, groupInput(form)))) : required(optionGroupSerializer(await createOptionGroupAPI(groupInput(form))));
+          const saved = group ? required(optionGroupSerializer(await updateOptionGroup(group.id, groupInput(form)))) : required(optionGroupSerializer(await createOptionGroup(groupInput(form))));
           dispatch(menuChanged());
           return saved;
         } catch (e) {
@@ -123,7 +123,7 @@ export const vendorOptionGroupSlice = createAppSlice({
     deleteOptionGroupAsync: create.asyncThunk(
       async (id: string, { dispatch, rejectWithValue }) => {
         try {
-          await deleteOptionGroupAPI(id);
+          await deleteOptionGroup(id);
           dispatch(menuChanged());
           return id;
         } catch (e) {

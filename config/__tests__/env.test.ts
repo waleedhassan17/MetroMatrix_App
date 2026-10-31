@@ -2,7 +2,7 @@
 // URL is a configuration error that sends nothing, never a silent mock.
 
 type Env = typeof import('../env');
-type Helpers = typeof import('../../networks/network/apiHelpers');
+type Helpers = typeof import('../../networks/network/network');
 
 // Restored key by key: replacing process.env itself would leave the modules
 // reading the old object.
@@ -21,7 +21,7 @@ const load = (opts: { dev: boolean; mock?: string; url?: string }) => {
   let helpers!: Helpers;
   jest.isolateModules(() => {
     env = require('../env');
-    helpers = require('../../networks/network/apiHelpers');
+    helpers = require('../../networks/network/network');
   });
   return { env, helpers };
 };
@@ -45,17 +45,17 @@ describe('env modes', () => {
     for (const dev of [false, true]) {
       const { env, helpers } = load({ dev, mock: '1', url: ' https://api.example.com/api/v1 ' });
       expect(env).toMatchObject({ CONFIG_ERROR: false, API_BASE_URL: 'https://api.example.com/api/v1' });
-      expect(helpers.api.defaults.baseURL).toBe('https://api.example.com/api/v1');
-      expect(helpers.api.defaults.adapter).not.toEqual(expect.any(Function));
+      expect(helpers.MainAxiosInstance.defaults.baseURL).toBe('https://api.example.com/api/v1');
+      expect(helpers.MainAxiosInstance.defaults.adapter).not.toEqual(expect.any(Function));
     }
   });
 
   it('with CONFIG_ERROR every request rejects with CONFIG_ERROR and nothing reaches the network', async () => {
     const { helpers } = load({ dev: false });
-    const err = await helpers.api.get('/auth/me').catch((e: unknown) => e);
+    const err = await helpers.MainAxiosInstance.get('/auth/me').catch((e: unknown) => e);
     expect(helpers.extractErrorCode(err)).toBe('CONFIG_ERROR');
     expect(helpers.isNetworkError(err)).toBe(false);
-    const refresh = await helpers.refreshClient.post('/auth/refresh-token', { refreshToken: 'r' }).catch((e: unknown) => e);
+    const refresh = await helpers.RefreshAxiosInstance.post('/auth/refresh-token', { refreshToken: 'r' }).catch((e: unknown) => e);
     expect(helpers.extractErrorCode(refresh)).toBe('CONFIG_ERROR');
   });
 

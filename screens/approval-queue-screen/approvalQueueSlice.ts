@@ -6,8 +6,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getBusinessesAPI } from '../../networks/admin/adminBusinessNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchBusinesses } from '../../networks/admin/adminBusiness';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { BusinessSummary, ServiceType } from '../../models';
 import { NO_ERROR, readRejection, type ServerError } from '../shared/formStatus';
 
@@ -58,7 +58,7 @@ export const approvalQueueSlice = createAppSlice({
       ) => {
         try {
           // The API pages by number; the queue's "load more" cursor is the next page.
-          const raw = await getBusinessesAPI({
+          const raw = await fetchBusinesses({
             status: 'pending_approval',
             serviceType: tab === 'all' ? undefined : tab,
             page: mode === 'more' ? Math.max(1, Number(cursor) || 1) : 1,

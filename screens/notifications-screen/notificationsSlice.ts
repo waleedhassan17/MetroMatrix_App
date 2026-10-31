@@ -5,8 +5,8 @@
 // count the home bell and the store's Today show, and marks things read.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { getUnreadCountAPI, markAllNotificationsReadAPI, markNotificationReadAPI } from '../../networks/notifications/notificationsNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchUnreadCount, markAllNotificationsRead, markNotificationRead } from '../../networks/notifications/notifications';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { unreadCountSerializer } from '../../serializers/notificationSerializer';
 
 export interface NotificationsSliceState {
@@ -22,7 +22,7 @@ export const notificationsSlice = createAppSlice({
     loadUnreadCountAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(unreadCountSerializer(await getUnreadCountAPI()));
+          return required(unreadCountSerializer(await fetchUnreadCount()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -36,9 +36,9 @@ export const notificationsSlice = createAppSlice({
     markReadAsync: create.asyncThunk(
       async (target: { ids: string[] } | { all: true }, { rejectWithValue }) => {
         try {
-          if ('all' in target) await markAllNotificationsReadAPI();
-          else await Promise.all(target.ids.map(id => markNotificationReadAPI(id)));
-          return required(unreadCountSerializer(await getUnreadCountAPI()));
+          if ('all' in target) await markAllNotificationsRead();
+          else await Promise.all(target.ids.map(id => markNotificationRead(id)));
+          return required(unreadCountSerializer(await fetchUnreadCount()));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

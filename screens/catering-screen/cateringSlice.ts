@@ -3,8 +3,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { getCateringCalendarAPI, getCateringSettingsAPI, getCateringRequestsAPI, updateCateringSettingsAPI } from '../../networks/foodGrowth/cateringNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { fetchCateringCalendar, fetchCateringSettings, fetchCateringRequests, updateCateringSettings } from '../../networks/foodGrowth/catering';
+import { toRejectedValue, required } from '../../networks/network/network';
 import type { CateringCalendar, CateringInbox, CateringSettings } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { cateringInboxSerializer, cateringSettingsSerializer, cateringCalendarSerializer } from '../../serializers/kitchen/growthSerializer';
@@ -35,7 +35,7 @@ export const cateringSlice = createAppSlice({
     loadCateringAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [inbox, settings] = await Promise.all([getCateringRequestsAPI().then(raw => required(cateringInboxSerializer(raw))), getCateringSettingsAPI().then(raw => required(cateringSettingsSerializer(raw)))]);
+          const [inbox, settings] = await Promise.all([fetchCateringRequests().then(raw => required(cateringInboxSerializer(raw))), fetchCateringSettings().then(raw => required(cateringSettingsSerializer(raw)))]);
           return { inbox, settings };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -60,7 +60,7 @@ export const cateringSlice = createAppSlice({
     loadCateringCalendarAsync: create.asyncThunk(
       async (month: string, { rejectWithValue }) => {
         try {
-          return required(cateringCalendarSerializer(await getCateringCalendarAPI(month)));
+          return required(cateringCalendarSerializer(await fetchCateringCalendar(month)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -80,7 +80,7 @@ export const cateringSlice = createAppSlice({
     saveCateringSettingsAsync: create.asyncThunk(
       async (patch: Partial<CateringSettings>, { rejectWithValue }) => {
         try {
-          return required(cateringSettingsSerializer(await updateCateringSettingsAPI(patch)));
+          return required(cateringSettingsSerializer(await updateCateringSettings(patch)));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

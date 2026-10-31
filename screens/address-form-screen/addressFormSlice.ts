@@ -4,8 +4,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { createAddressAPI, getAddressesAPI, updateAddressAPI } from '../../networks/addresses/addressesNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { createAddress, fetchAddresses, updateAddress } from '../../networks/addresses/addresses';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { emptyAddressForm, toAddressInput, type AddressForm } from '../../models/addressModel';
 import { locateBusiness } from '../../services/location';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -72,8 +72,8 @@ export const addressFormSlice = createAppSlice({
     saveAddressAsync: create.asyncThunk(
       async ({ id, form }: { id: string | null; form: AddressForm }, { rejectWithValue }) => {
         try {
-          const saved = id ? required(addressSerializer(await updateAddressAPI(id, toAddressInput(form)))) : required(addressSerializer(await createAddressAPI(toAddressInput(form))));
-          return { saved, all: required(addressListSerializer(await getAddressesAPI())) };
+          const saved = id ? required(addressSerializer(await updateAddress(id, toAddressInput(form)))) : required(addressSerializer(await createAddress(toAddressInput(form))));
+          return { saved, all: required(addressListSerializer(await fetchAddresses())) };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

@@ -8,9 +8,9 @@
 // open the partner app, Rejected or Suspended.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { authMe } from '../../networks/auth/authNetwork';
-import { getMyBusinessStatusAPI } from '../../networks/businesses/businessNetwork';
-import { toRejectedValue, required } from '../../networks/network/apiHelpers';
+import { me } from '../../networks/authcalls/me';
+import { fetchMyBusinessStatus } from '../../networks/businesses/business';
+import { toRejectedValue, required } from '../../networks/network/network';
 import { setSession } from '../../store/authSlice';
 import { NO_ERROR, readRejection, type ServerError } from '../shared/formStatus';
 import { businessStatusSerializer } from '../../serializers/businessSerializer';
@@ -45,8 +45,8 @@ export const providerApprovalPendingSlice = createAppSlice({
     checkStatusAsync: create.asyncThunk(
       async (_: { manual: boolean }, { dispatch, rejectWithValue }) => {
         try {
-          const info = required(businessStatusSerializer(await getMyBusinessStatusAPI()));
-          if (info.status !== 'pending_approval') dispatch(setSession(await authMe()));
+          const info = required(businessStatusSerializer(await fetchMyBusinessStatus()));
+          if (info.status !== 'pending_approval') dispatch(setSession(await me()));
           return info.status;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
