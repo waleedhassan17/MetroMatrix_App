@@ -8,7 +8,7 @@ Every app file that depends on it carries `TODO(API_SHOPPING)` (`grep -rn "TODO(
 
 Screens and slices should not change.
 
-**Tests:** the dummy API (`src/networks/network/mock/shop/`) implements every endpoint below for the flow tests (`installDummyApi()`, `mock/testing.ts`). The app itself talks to the real API, so this contract still has to be reconciled with the backend's `API_SHOPPING.md` (`TODO(API_SHOPPING)`).
+**Tests:** the dummy API (`networks/network/mock/shop/`) implements every endpoint below for the flow tests (`installDummyApi()`, `mock/testing.ts`). The app itself talks to the real API, so this contract still has to be reconciled with the backend's `API_SHOPPING.md` (`TODO(API_SHOPPING)`).
 
 ## Conventions
 
@@ -26,14 +26,14 @@ These are the NestJS backend's own conventions (`src/common/*` in the API repo).
 | JSON | camelCase fields; snake_case enum values; ISO-8601 UTC times named `…At`; flat `lat`/`lng`; phones `+92…`. |
 | Money | **Integer rupees** everywhere. Never floats, never paisa. The app formats only through `formatPKR`. |
 | Idempotency | `POST /shop/checkout` takes `Idempotency-Key: <uuid>`. A repeat with the same key (per user) replays the first response, status included. A repeat while the first request is still running gets `409 IDEMPOTENCY_IN_PROGRESS`. |
-| Uploads | `POST /media/sign-upload` (the real path, since `health/sync-1`) with `purpose` set to `product_image`, `store_branding` (logo and cover), `review_photo`, `return_photo`, `payment_proof` or (staff) `banner`. `mediaNetwork` maps the app's purposes to these. The app sends only the resulting `{ url, publicId }`. |
+| Uploads | `POST /media/sign-upload` (the real path, since `health/sync-1`) with `purpose` set to `product_image`, `store_branding` (logo and cover), `review_photo`, `return_photo`, `payment_proof` or (staff) `banner`. `media` maps the app's purposes to these. The app sends only the resulting `{ url, publicId }`. |
 | Atomic writes | A request that fails changes nothing. |
 
-The response types are in `src/types/shopping.ts`. The table cells below name those types; the serializers in `src/serializers/shopping/` map the wire shapes onto them.
+The response types are in `models/shopping.ts`. The table cells below name those types; the serializers in `serializers/shopping/` map the wire shapes onto them.
 
 ## Status values
 
-The app shows these only through `src/models/shopping/orderStatusModel.ts`, never raw.
+The app shows these only through `models/shopping/orderStatusModel.ts`, never raw.
 
 | Kind | Values |
 |---|---|
@@ -47,7 +47,7 @@ One checkout makes an **order group** (`MM-XXXXXX`), with one **store order** (`
 
 ## Catalogue: public (a token, if sent, personalises `isSaved`)
 
-| Function (`catalogNetwork`) | Method + path | 2xx `data` | Errors |
+| Function (`catalog`) | Method + path | 2xx `data` | Errors |
 |---|---|---|---|
 | `getShopHome` | `GET /shop/home` | `ShopHome { banners (live now, by position), categories (tree), featuredStores (the stores staff feature), newThisWeek }` | — |
 | `getCategories` | `GET /shop/categories` | `ShopCategory[]` tree. Each has `icon` (an Ionicons name), `productCount`, and `children`. | — |
@@ -61,7 +61,7 @@ One checkout makes an **order group** (`MM-XXXXXX`), with one **store order** (`
 
 ## Saved (wishlist)
 
-| Function (`wishlistNetwork`) | Method + path | 2xx `data` |
+| Function (`wishlist`) | Method + path | 2xx `data` |
 |---|---|---|
 | `listWishlist` | `GET /shop/wishlist?page` | `Paged<ProductSummary>`, newest first |
 | `getWishlistIds` | `GET /shop/wishlist/ids` | `string[]` (hearts on cards) |
@@ -70,7 +70,7 @@ One checkout makes an **order group** (`MM-XXXXXX`), with one **store order** (`
 
 ## Bag
 
-| Function (`cartNetwork`) | Method + path | Body | 2xx `data` | Errors |
+| Function (`cart`) | Method + path | Body | 2xx `data` | Errors |
 |---|---|---|---|---|
 | `getCart` | `GET /shop/cart` | — | `Cart` (below) | — |
 | `addToCart` | `POST /shop/cart/items` | `{ variantId, quantity }` | `Cart`. Merges with an existing line. | `409 OUT_OF_STOCK`, `409 QUANTITY_UNAVAILABLE { available }`, `409 STORE_PAUSED`, `404` |
@@ -89,7 +89,7 @@ One checkout makes an **order group** (`MM-XXXXXX`), with one **store order** (`
 
 ## Checkout
 
-| Function (`checkoutNetwork`) | Method + path | Body | 2xx `data` | Errors |
+| Function (`checkout`) | Method + path | Body | 2xx `data` | Errors |
 |---|---|---|---|---|
 | `previewCheckout` | `POST /shop/cart/preview` | `CheckoutInput { addressId, stores: [{ storeId, paymentMethod: 'cod'\|'transfer', couponCode?, note? }] }` | `CheckoutPreview` (below) | `422 ADDRESS_REQUIRED` |
 | `listAvailableCoupons` | `GET /shop/stores/:id/coupons/available` | — | `AvailableCoupon[] { code, label, minOrder, endsAt, shortBy }`. `shortBy` is the rupees still needed to reach `minOrder`. | — |
@@ -116,9 +116,9 @@ Each `PreviewStore` carries:
 | `requestCancellation` | `POST /shop/orders/:id/cancel-request` | `{ reason }` | `OrderGroup`. While `confirmed` or `packed`. | `409` |
 | `confirmReceived` | `POST /shop/orders/:id/received` | — | `OrderGroup`. While `shipped`. | `409` |
 | `submitPaymentProof` | `POST /shop/orders/:id/payment-proof` | `{ transactionId, imageUrl? }` | `OrderGroup` (`proof_submitted`) | `409` unless `awaiting_transfer` or `proof_rejected`; `VALIDATION_FAILED` |
-| `requestReturn` (`returnsNetwork`) | `POST /shop/orders/:id/returns` | `ReturnInput { reason, details, photos[], items: [{ orderItemId, quantity }] }` | `ReturnRequest` (201) | `409` unless delivered; `422 RETURN_WINDOW_CLOSED`; `409 RETURN_EXISTS`; `VALIDATION_FAILED` |
+| `requestReturn` (`returns`) | `POST /shop/orders/:id/returns` | `ReturnInput { reason, details, photos[], items: [{ orderItemId, quantity }] }` | `ReturnRequest` (201) | `409` unless delivered; `422 RETURN_WINDOW_CLOSED`; `409 RETURN_EXISTS`; `VALIDATION_FAILED` |
 | `listReturns` | `GET /shop/returns?page` | — | `Paged<ReturnRequest>` | — |
-| `writeReview` (`reviewsNetwork`) | `POST /shop/orders/:id/items/:itemId/review` | `ReviewInput { rating 1–5, title?, body, photos[] }` | `Review` (201) | `409 NOT_DELIVERED`, `409 ALREADY_REVIEWED`, `VALIDATION_FAILED` (10+ characters, or a photo) |
+| `writeReview` (`reviews`) | `POST /shop/orders/:id/items/:itemId/review` | `ReviewInput { rating 1–5, title?, body, photos[] }` | `Review` (201) | `409 NOT_DELIVERED`, `409 ALREADY_REVIEWED`, `VALIDATION_FAILED` (10+ characters, or a photo) |
 
 **`StoreOrder`** carries the flags the UI shows buttons from: `canCancel`, `canRequestCancel`, `canConfirmReceived`, `canReturn`, `canReview`.
 - It also carries `events` (the timeline), `shipment { courier, courierName, trackingRef }` and `returnWindowEndsAt`.
@@ -153,36 +153,36 @@ A newly approved store owner gets a storefront on first call. It starts with sen
 
 | Network | Method + path | Body | 2xx `data` | Errors |
 |---|---|---|---|---|
-| `storeNetwork.getPartnerSummary` | `GET /summary` | — | `PartnerSummary { storeName, storeSlug, isPaused, pauseMessage, counts { newOrders, toShip, paymentsToConfirm, returnsOpen, lowStock }, sales7d [{ date, amount }], recordedSales7d }` | — |
+| `store.getPartnerSummary` | `GET /summary` | — | `PartnerSummary { storeName, storeSlug, isPaused, pauseMessage, counts { newOrders, toShip, paymentsToConfirm, returnsOpen, lowStock }, sales7d [{ date, amount }], recordedSales7d }` | — |
 | `getStoreProfile` / `updateStoreProfile` | `GET`/`PATCH /store` | `{ tagline, about, logoUrl, coverUrl, brandColor, onBrandColor, socials, phone, whatsapp }` | `StoreProfile` | `400 BRAND_CONTRAST_LOW { ratio }` (below AA 4.5:1) |
 | `getStoreSettings` / `updateStoreSettings` | `GET`/`PATCH /store/settings` | `StoreSettings { shippingFee, freeShippingOver, nationwide, deliveryCities[], dispatchMinDays, dispatchMaxDays, returnWindowDays (0–30), codEnabled, codLimit, isPaused, pauseMessage }` | `StoreSettings` | `422 PAYMENT_ACCOUNT_REQUIRED` (turning COD off with no active account); `VALIDATION_FAILED` |
 | `pauseStore` / `resumeStore` | `POST /store/pause` `{ message }`, `POST /store/resume` | — | `StoreSettings` | — |
 | `list/create/update/deletePaymentAccount` | `GET`/`POST /payment-accounts`, `PATCH`/`DELETE /payment-accounts/:id` | `{ kind: raast\|jazzcash\|easypaisa\|bank, title, number, bankName?, isActive }` | `PaymentAccount` | `VALIDATION_FAILED` (IBAN `PK…` 24 characters; wallet `03XXXXXXXXX`); `422 PAYMENT_ACCOUNT_REQUIRED` (the last active account while COD is off) |
-| `partnerOrdersNetwork.listPartnerOrders` | `GET /orders?segment&q&payment&page` (`payment=proof_submitted`: every order with a transfer to check, whatever its segment) | — | `Paged<PartnerOrderRow> & { segmentCounts }` | — |
+| `partnerOrders.listPartnerOrders` | `GET /orders?segment&q&payment&page` (`payment=proof_submitted`: every order with a transfer to check, whatever its segment) | — | `Paged<PartnerOrderRow> & { segmentCounts }` | — |
 | `getPartnerOrder` | `GET /orders/:id` | — | `PartnerOrderDetail` (`StoreOrder` plus `customer { name, phone }`, `address`, `allowedActions[]`, `shipBlockedReason`, `internalNote`) | — |
 | `saveInternalNote` | `PATCH /orders/:id` | `{ internalNote }` | `PartnerOrderDetail` | — |
 | `confirm`, `pack`, `deliver`, `approveCancellation`, `markCashCollected` | `POST /orders/:id/{confirm,pack,deliver,approve-cancellation,cash-collected}` | — | `PartnerOrderDetail` | `409 INVALID_TRANSITION` |
 | `shipOrder` | `POST /orders/:id/ship` | `{ courier: tcs\|leopards\|mnp\|postex\|trax\|own_rider\|other, trackingRef }` | `PartnerOrderDetail` | `409 PAYMENT_NOT_CONFIRMED` (transfer not yet `paid`); `VALIDATION_FAILED` (reference of 4+ characters) |
 | `cancelPartnerOrder` | `POST /orders/:id/cancel` | `{ reason }` (5+ characters) | `PartnerOrderDetail`. Restocks and gives back coupon use. | `409` once shipped |
 | `confirmPayment` / `rejectPayment` | `POST /orders/:id/payment/confirm`, `POST /orders/:id/payment/reject` `{ reason }` | — | `PartnerOrderDetail`. A rejection gives the customer 24 h more. | `409` unless `proof_submitted` |
-| `productsNetwork.listPartnerProducts` | `GET /products?status=active\|draft\|archived&q&lowStock&page` | — | `Paged<PartnerProductRow>`. `q` matches name or SKU. | — |
+| `products.listPartnerProducts` | `GET /products?status=active\|draft\|archived&q&lowStock&page` | — | `Paged<PartnerProductRow>`. `q` matches name or SKU. | — |
 | `get/create/updatePartnerProduct` | `GET /products/:id`, `POST /products`, `PATCH /products/:id` | `PartnerProductInput { name, description, categoryId, collectionId, price, salePrice, status, images[{ url, publicId }] (8 max, first = cover), option1, option2, variants[{ id?, option1, option2, sku, stock, priceDelta }] }` | `PartnerProduct` (201 on create) | `422 PUBLISH_BLOCKED { fields }` (status `active` without a price, category, photo or stock); `VALIDATION_FAILED` (sale ≥ price, duplicate SKU) |
 | `setPartnerProductStatus` | `POST /products/:id/status` | `{ status }` | `PartnerProduct` | `422 PUBLISH_BLOCKED` |
 | `list/create/rename/delete/reorderCollections` | `GET`/`POST /collections`, `PATCH`/`DELETE /collections/:id`, `POST /collections/reorder { ids }` | `{ name }` | `Collection[]` or `Collection` (with `productCount`) | `409 COLLECTION_NOT_EMPTY { productCount }` |
-| `inventoryNetwork.listInventory` | `GET /inventory?q&lowStock&page` | — | `Paged<InventoryRow>`, lowest stock first | — |
+| `inventory.listInventory` | `GET /inventory?q&lowStock&page` | — | `Paged<InventoryRow>`, lowest stock first | — |
 | `setStock` | `PATCH /inventory/:variantId` | `{ stock, note? }` | `InventoryRow` | `VALIDATION_FAILED` |
 | `bulkSetStock` | `POST /inventory/bulk` | `{ variantIds, stock }` | `InventoryRow[]` | — |
 | `listMovements` | `GET /inventory/:variantId/movements` | — | `InventoryMovement[] { delta, stockAfter, reason: initial\|manual\|bulk\|order\|cancel\|return_restock, note, createdAt }` | — |
-| `couponsNetwork` | `GET`/`POST /coupons`, `PATCH`/`DELETE /coupons/:id` | `CouponInput { code (4–16, A–Z 0–9), type: percent\|fixed, value, minOrder, maxDiscount (percent only), startsAt, endsAt, usageLimit, perCustomerLimit, isActive }` | `Coupon` (with `usedCount` and `status: active\|scheduled\|expired\|used_up\|inactive`) | `409 COUPON_CODE_TAKEN`; `VALIDATION_FAILED` (percent of 90 at most) |
-| `partnerReturnsNetwork` | `GET /returns?status=open\|…&page`, `GET /returns/:id`, `POST /returns/:id/{approve { note? }, reject { note }, receive { restock: { [orderItemId]: boolean } }, refund { amount, reference }}` | — | `ReturnRequest` | `409 INVALID_TRANSITION`; `VALIDATION_FAILED` (refund between Rs 1 and the items' value) |
-| `partnerReviewsNetwork` | `GET /reviews?rating&unreplied&page`, `PUT /reviews/:id/reply { body }` | — | `PartnerReview` | `409 REPLY_LOCKED` (a reply can be edited for 24 h) |
-| `insightsNetwork.getInsights` | `GET /insights?range=7d\|30d\|90d` | — | `Insights { range, orders [{ date, count }], sales [{ date, amount }], recordedSales, orderCount, topProducts[], repeatCustomerPct, deliveredRatePct }`. **Delivered orders only.** | — |
+| `coupons` | `GET`/`POST /coupons`, `PATCH`/`DELETE /coupons/:id` | `CouponInput { code (4–16, A–Z 0–9), type: percent\|fixed, value, minOrder, maxDiscount (percent only), startsAt, endsAt, usageLimit, perCustomerLimit, isActive }` | `Coupon` (with `usedCount` and `status: active\|scheduled\|expired\|used_up\|inactive`) | `409 COUPON_CODE_TAKEN`; `VALIDATION_FAILED` (percent of 90 at most) |
+| `partnerReturns` | `GET /returns?status=open\|…&page`, `GET /returns/:id`, `POST /returns/:id/{approve { note? }, reject { note }, receive { restock: { [orderItemId]: boolean } }, refund { amount, reference }}` | — | `ReturnRequest` | `409 INVALID_TRANSITION`; `VALIDATION_FAILED` (refund between Rs 1 and the items' value) |
+| `partnerReviews` | `GET /reviews?rating&unreplied&page`, `PUT /reviews/:id/reply { body }` | — | `PartnerReview` | `409 REPLY_LOCKED` (a reply can be edited for 24 h) |
+| `insights.getInsights` | `GET /insights?range=7d\|30d\|90d` | — | `Insights { range, orders [{ date, count }], sales [{ date, amount }], recordedSales, orderCount, topProducts[], repeatCustomerPct, deliveredRatePct }`. **Delivered orders only.** | — |
 
 The UI calls a store's figures "Recorded sales" and states that MetroMatrix does not hold or process the money.
 
 ## Admin (`/admin/shop/*`, staff bearer)
 
-| Function (`adminShopNetwork`) | Method + path | Body | 2xx `data` | Errors |
+| Function (`adminShop`) | Method + path | Body | 2xx `data` | Errors |
 |---|---|---|---|---|
 | `getShopOverview` | `GET /overview` | — | `ShopOverview { stores, activeProducts, openReports, ordersToday }` | — |
 | `listAdminCategories`, `create/update/deleteCategory`, `reorderCategories` | `GET`/`POST /categories`, `PATCH`/`DELETE /categories/:id`, `POST /categories/reorder { ids }` | `{ name, icon, parentId? }` (two levels) | `ShopCategory` / tree | `409 CATEGORY_IN_USE { productCount }` |
@@ -194,7 +194,7 @@ The UI calls a store's figures "Recorded sales" and states that MetroMatrix does
 
 ## Server rules
 
-These are enforced by the dummy API and assumed of the real one. QA rows 10–31 depend on them, and `src/networks/network/mock/__tests__/mockShopFlows.test.ts` checks them.
+These are enforced by the dummy API and assumed of the real one. QA rows 10–31 depend on them, and `networks/network/mock/__tests__/mockShopFlows.test.ts` checks them.
 
 1. **Bag:**
    - Prices are re-read on every bag read; a change raises `PRICE_CHANGED` until acknowledged.

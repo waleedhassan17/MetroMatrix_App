@@ -4,8 +4,8 @@ The app sends a **Google ID token** to `POST /auth/google`. The API verifies the
 
 | Platform | How the token is obtained | Code |
 |---|---|---|
-| Android / iOS (dev or EAS build) | `@react-native-google-signin/google-signin`, `GoogleSignin.signIn()` | `src/services/googleAuth.ts` |
-| Web | Google Identity Services: the rendered button plus One Tap | `src/services/googleAuth.web.ts`, `src/components/auth/GoogleSignInButton.web.tsx` |
+| Android / iOS (dev or EAS build) | `@react-native-google-signin/google-signin`, `GoogleSignin.signIn()` | `services/googleAuth.ts` |
+| Web | Google Identity Services: the rendered button plus One Tap | `services/googleAuth.web.ts`, `Components/auth/GoogleSignInButton.web.tsx` |
 | Expo Go | **Not available.** The native module isn't in Expo Go. The button shows "Google sign-in needs the MetroMatrix app build" instead of crashing. | — |
 
 ## 1. Google Cloud console

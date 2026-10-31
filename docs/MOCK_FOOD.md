@@ -1,6 +1,6 @@
 # Dummy Food API
 
-While `src/config/env.ts` has no backend URL, the Food Court routes are answered by `src/networks/network/mock/food/`. They follow the Food API's committed routes in MetroMatrix-API (`src/modules/food`), with the same bodies, statuses, error codes and shapes.
+While `config/env.ts` has no backend URL, the Food Court routes are answered by `networks/network/mock/food/`. They follow the Food API's committed routes in MetroMatrix-API (`src/modules/food`), with the same bodies, statuses, error codes and shapes.
 
 `docs/API_FOOD.md` is a copy of the backend's contract (chunk4/p8). The parity tests replay real responses against the dummy API: the per-phase captures (`fixtures/food/vendor.json`, `menu.json`, `discovery.json`, `orders.json`) and the released API on its `seed:food` demo (`fixtures/food/p8.json`, made by `scripts/capture-food-fixtures.js`).
 
@@ -114,16 +114,16 @@ Seeded names are fictional. The logos are generated initials that stand in for a
 
 ## Tests
 
-- `src/serializers/__tests__/foodVendorRealResponses.test.ts` and `foodMenuRealResponses.test.ts`: real API responses (`fixtures/food/vendor.json` and `menu.json`, captured from a local backend with three demo vendors; tokens and passwords say "redacted") through the Food serializers.
-- `src/networks/network/mock/__tests__/mockFoodParity.test.ts`: every captured response has the same keys as the dummy API's answer to the same request.
+- `serializers/__tests__/foodVendorRealResponses.test.ts` and `foodMenuRealResponses.test.ts`: real API responses (`fixtures/food/vendor.json` and `menu.json`, captured from a local backend with three demo vendors; tokens and passwords say "redacted") through the Food serializers.
+- `networks/network/mock/__tests__/mockFoodParity.test.ts`: every captured response has the same keys as the dummy API's answer to the same request.
 - `foodDiscoveryRealResponses.test.ts` and `foodOrdersRealResponses.test.ts`: the discovery and ordering captures (`discovery.json`, `orders.json`).
-- `src/networks/network/mock/__tests__/mockFoodOrderParity.test.ts`: the captured ordering run (bag, deals, preview, checkout, the kitchen's moves, a transfer, cancels) replayed against the dummy API, key for key.
-- `src/networks/network/mock/__tests__/mockFoodVendorFlows.test.ts`, `mockFoodMenuFlows.test.ts`, `mockFoodDiscoveryFlows.test.ts` and `mockFoodOrderFlows.test.ts`: the rules above, driven through the app's real Food networks.
+- `networks/network/mock/__tests__/mockFoodOrderParity.test.ts`: the captured ordering run (bag, deals, preview, checkout, the kitchen's moves, a transfer, cancels) replayed against the dummy API, key for key.
+- `networks/network/mock/__tests__/mockFoodVendorFlows.test.ts`, `mockFoodMenuFlows.test.ts`, `mockFoodDiscoveryFlows.test.ts` and `mockFoodOrderFlows.test.ts`: the rules above, driven through the app's real Food networks.
 - `mockFoodRiderFlows.test.ts`: riders on orders (assignment, steps, cash and handover, handing back, location).
 - `mockFoodLive.test.ts`: the live channel (board sync, a new order, who may join an order's room, nothing from a failed write, the minute jobs).
 - `mockFoodReviewAdminFlows.test.ts`: reviews (once, after it arrived; replies; hidden reviews leave the rating), insights, and the staff console (feature, suspend, orders, cuisines in use, banners whose target is gone, plan overrides: seats, scheduled orders, insights).
-- `src/serializers/__tests__/foodReviewAdminRealResponses.test.ts`: the captured reviews, insights and staff-console responses through their serializers. `mockFoodOrderParity.test.ts` replays them too.
-- `src/serializers/__tests__/foodP8RealResponses.test.ts`: the released API's run (`p8.json`) through every Food serializer, with the contract's rules checked in what came back (the total is subtotal − deal + the kitchen's delivery fee and nothing else; a plan change takes effect at once).
+- `serializers/__tests__/foodReviewAdminRealResponses.test.ts`: the captured reviews, insights and staff-console responses through their serializers. `mockFoodOrderParity.test.ts` replays them too.
+- `serializers/__tests__/foodP8RealResponses.test.ts`: the released API's run (`p8.json`) through every Food serializer, with the contract's rules checked in what came back (the total is subtotal − deal + the kitchen's delivery fee and nothing else; a plan change takes effect at once).
 
 ## Refreshing the real capture
 
@@ -131,9 +131,9 @@ When the backend's `docs/API_FOOD.md` changes: copy it to `docs/`, update the ne
 
 ```bash
 BACKEND=~/MetroMatix-NestJS API=http://localhost:3000/api/v1 \
-  node scripts/capture-food-fixtures.js src/serializers/__tests__/fixtures/food/p8.json
+  node scripts/capture-food-fixtures.js serializers/__tests__/fixtures/food/p8.json
 npm run gates
 ```
 
 The parity tests fail on any key or error code the two disagree on. Run the capture while Smash Theory Burgers is open (it takes orders until 2 AM).
-- `src/serializers/__tests__/foodLiveSerializer.test.ts`: the socket's events through the live serializers.
+- `serializers/__tests__/foodLiveSerializer.test.ts`: the socket's events through the live serializers.

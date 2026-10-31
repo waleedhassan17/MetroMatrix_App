@@ -2,7 +2,7 @@
 
 > **Assumed, not released.** The backend (`~/MetroMatix-NestJS`) has no kitchen module yet. The
 > owner chose to build the app first on this contract (2026-10-19), as Shopping was. The app's
-> dummy API (`src/networks/network/mock/kitchen/`) implements every route here. Each place the
+> dummy API (`networks/network/mock/kitchen/`) implements every route here. Each place the
 > app depends on it is marked `TODO(API_KITCHEN)`. When the real `docs/API_KITCHEN.md` lands,
 > copy it to this folder and reconcile networks, serializers, models and the dummy API in one
 > pass (§10). Screens and slices do not change.
@@ -11,7 +11,7 @@
 > `docs/VOICE_ASSUMED.md` (voice entry, spoken announcements, the 40 test phrases).
 >
 > Every JSON example below marked `contract:` is checked key by key against the dummy API by
-> `src/networks/network/mock/__tests__/kitchenContract.test.ts`.
+> `networks/network/mock/__tests__/kitchenContract.test.ts`.
 
 **What this adds.**
 - Tools for a Food Court kitchen: stock, recipe costs, purchases, forecasts, the prep sheet,
@@ -62,7 +62,7 @@ Every ingredient names three things:
 A client sends what the cook typed, with a unit, and the server converts. The unit is either
 standard (`g`, `kg`, `pao` = 250 g, `ml`, `l`, `pc`, `dozen`) or one of the ingredient's own.
 
-The app words quantities only through `src/utils/units.ts`, the mirror of the API's
+The app words quantities only through `utils/units/units.ts`, the mirror of the API's
 `units.ts`: `7500` g is "7.5 kg", never "7500 g".
 
 ### 1.3 Money
@@ -3584,7 +3584,7 @@ A kitchen's monthly limit raised or lowered (`PUT /ai/quotas/b_resto { limit: 1 
 
 ## 5. Additions to API_FOOD shapes
 
-These are listed once in the app (`src/networks/network/mock/kitchen/foodAdditions.ts`). The
+These are listed once in the app (`networks/network/mock/kitchen/foodAdditions.ts`). The
 Food parity tests leave these keys out of their comparison. They **fail the day a real Food
 capture carries one**: it has shipped then, and is reconciled.
 
@@ -3721,7 +3721,7 @@ My Kitchen (5C):
 
 1. Copy it to `docs/API_KITCHEN.md`. Delete this file, and the `foodAdditions.ts` entries the
    real Food document now has.
-2. Update `src/networks/kitchen/*`, `src/serializers/kitchen/*`, `src/models/kitchen/*` and the
+2. Update `networks/kitchen/*`, `serializers/kitchen/*`, `models/kitchen/*` and the
    dummy API (`mock/kitchen/*`).
 3. Capture real responses into fixtures, and replace `kitchenContract.test.ts` with a parity
    test, as Food's.

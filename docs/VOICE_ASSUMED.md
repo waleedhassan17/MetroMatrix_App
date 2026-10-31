@@ -194,6 +194,6 @@ The dummy API sends `ttsUrl: null`.
 
 ## 6. When the real document arrives
 
-Copy it to `docs/VOICE.md`, then update `src/networks/ai/voiceNetwork.ts`,
-`src/serializers/ai/voiceSerializer.ts`, `src/models/kitchen/voiceModel.ts` and the dummy API.
+Copy it to `docs/VOICE.md`, then update `networks/ai/voice.ts`,
+`serializers/ai/voiceSerializer.ts`, `models/kitchen/voiceModel.ts` and the dummy API.
 Run the 40 phrases on a phone against the real API.

@@ -1,6 +1,6 @@
 # Auth and onboarding flows
 
-Every step of the FYP's sign-up, sign-in and onboarding journeys, mapped to the code that runs it and the API call behind it. Built from `src/navigations-maps/Auth.ts`, `src/navigators/sessionGate.ts`, the screens' slices and networks, and MetroMatrix_Backend `docs/API_AUTH.md`. Paths are relative to `API_BASE_URL` (`…/api/v1`).
+Every step of the FYP's sign-up, sign-in and onboarding journeys, mapped to the code that runs it and the API call behind it. Built from `navigations-maps/Auth.tsx`, `navigators/sessionGate.ts`, the screens' slices and networks, and MetroMatrix_Backend `docs/API_AUTH.md`. Paths are relative to `API_BASE_URL` (`…/api/v1`).
 
 Data path everywhere: **screen → slice → network → serializer**. Routes are the `ROUTES` names in `navigations-maps/Base.ts`.
 
@@ -55,7 +55,7 @@ A rider session restores to `unauthenticated`; riders are refused at sign-in (`W
 | Approved | role app (`sessionGate.partnerAppFor`) | — | — | Store → `StorePartnerNavigator`; doctor → `DoctorPartnerNavigator`, opening on PracticeSetup until `isListed` (`doctorRootRoute`); kitchen → `KitchenPartnerNavigator` (VendorSetup BLOCKED) | — |
 | Rejected | `Rejected` → "Edit and resubmit" → `PersonalInfo` (step 3 with the rejected kinds highlighted, or step 2) | — (reads `auth.business`) | — (the business from `GET /auth/me` / `GET /businesses/me`) | resubmit → `pending` | — |
 | Suspended | `Suspended` | — | — | mail to `EXPO_PUBLIC_SUPPORT_EMAIL` | — |
-| Suspended mid-session | any partner screen | `apiHelpers` interceptor → `emitBusinessStatusStale` | the 403 `BUSINESS_SUSPENDED`, then `GET /auth/me` | gate → `suspended` | — |
+| Suspended mid-session | any partner screen | `network.ts` interceptor → `emitBusinessStatusStale` | the 403 `BUSINESS_SUSPENDED`, then `GET /auth/me` | gate → `suspended` | — |
 
 ## 4. Staff (admin, super_admin)
 
@@ -81,7 +81,7 @@ A rider session restores to `unauthenticated`; riders are refused at sign-in (`W
 | Delete account | `Profile` (`profileSlice`) | `authDeleteAccount` → `DELETE /auth/account` `{password}` or `{idToken}` | `{deleted: true}` → signed out |
 | Push device | app start / sign-out | `PUT /users/me/devices {expoPushToken, platform}`; `DELETE /users/me/devices/:token` | `{removed}` |
 | Sign out | `useSignOut` | tokens cleared first, then (best effort) the device is unregistered and `authLogout` → `POST /auth/logout` (bearer, no body) | `resetAllState` → RoleSelection |
-| Session refresh | `apiHelpers` interceptor (single flight) | `POST /auth/refresh-token` `{refreshToken}` | new pair. Only `REFRESH_INVALID`, `REFRESH_REUSED`, `TOKEN_REVOKED`, `ACCOUNT_DISABLED` or no refresh token end the session; network errors and 5xx keep it |
+| Session refresh | `network.ts` interceptor (single flight) | `POST /auth/refresh-token` `{refreshToken}` | new pair. Only `REFRESH_INVALID`, `REFRESH_REUSED`, `TOKEN_REVOKED`, `ACCOUNT_DISABLED` or no refresh token end the session; network errors and 5xx keep it |
 
 ## 7. Known gaps (tracked in `D:\MetroMatrix\AUTH_PROGRESS.md`)
 

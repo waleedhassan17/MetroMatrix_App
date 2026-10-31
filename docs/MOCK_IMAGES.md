@@ -1,6 +1,6 @@
 # Dummy catalogue photos
 
-The dummy shop's product, store and banner photos (`src/networks/network/mock/shop/shopSeed.ts`, the `IMG` map) are loaded from Unsplash's image CDN. They are never bundled into the app. In mock mode `cdn()` (`src/utils/cdn.ts`) asks Unsplash for the rendered size.
+The dummy shop's product, store and banner photos (`networks/network/mock/shop/shopSeed.ts`, the `IMG` map) are loaded from Unsplash's image CDN. They are never bundled into the app. In mock mode `cdn()` (`utils/cdn/cdn.ts`) asks Unsplash for the rendered size.
 
 All are published under the [Unsplash License](https://unsplash.com/license): free for commercial and non-commercial use, with no permission or attribution required. They are listed here as a courtesy and so they can be swapped out.
 
@@ -88,7 +88,7 @@ All are published under the [Unsplash License](https://unsplash.com/license): fr
 
 # Health: demo doctors and banners
 
-The dummy Health API (`src/networks/network/mock/health/healthSeed.ts`) gives its fictional doctors portraits and its home banners photos, all from Unsplash under the same licence. Like the shop's photos, they are loaded from Unsplash's CDN, never bundled. The Health home's own card and tile photos are bundled; see `assets/images/health/CREDITS.md`.
+The dummy Health API (`networks/network/mock/health/healthSeed.ts`) gives its fictional doctors portraits and its home banners photos, all from Unsplash under the same licence. Like the shop's photos, they are loaded from Unsplash's CDN, never bundled. The Health home's own card and tile photos are bundled; see `assets/images/health/CREDITS.md`.
 
 - **Demo profiles:** every seeded doctor is fictional. Each one's `about` ends with "(Demo profile: this doctor is fictional.)". The portraits are stock photos of real people, matched to each doctor's gender, so use them only in demo and dev data. A real doctor's own uploaded photo always replaces them.
 - **Framing:** portraits ask Unsplash for a face-centred crop (`fit=facearea&facepad=3.2`); `cdn()` keeps that framing and changes only the size.
@@ -130,7 +130,7 @@ The dummy Health API (`src/networks/network/mock/health/healthSeed.ts`) gives it
 
 ## Food Court
 
-The dummy Food Court's vendor covers and dish photos (`src/networks/network/mock/food/foodImages.ts`, the `FOOD_IMG` map) are also loaded from Unsplash's image CDN. Each was checked on its photo page as free under the Unsplash License (not Unsplash+). They stand in for the photos a vendor uploads.
+The dummy Food Court's vendor covers and dish photos (`networks/network/mock/food/foodImages.ts`, the `FOOD_IMG` map) are also loaded from Unsplash's image CDN. Each was checked on its photo page as free under the Unsplash License (not Unsplash+). They stand in for the photos a vendor uploads.
 
 - **Vendor names:** seeded vendor names are fictional.
 - **Logos:** generated initials on the vendor's colour (placehold.co).

@@ -106,3 +106,80 @@ describe('the network layer (Consultant_Mobile architecture)', () => {
     expect(offenders).toEqual([]);
   });
 });
+
+// ─── The app around it (Consultant_Mobile's layout and slices) ───
+//   • every folder sits at the repo root: no src/, and imports are relative
+//     (no path aliases in tsconfig, babel or the code);
+//   • every screen has its own flat kebab-case folder,
+//     screens/<name>-screen/ (screens/shared and screens/__tests__ beside them);
+//   • a thunk returns what the network answered and its `fulfilled` reducer
+//     serializes it. A thunk may read an answer through a serializer only
+//     inside required(…): to decide its next call, or to hand app shapes to
+//     another slice (setUser, setBusiness).
+
+const REPO = path.join(ROOT, '..');
+const ALIAS = /^@(\/|screens\/|components\/|custom\/|store\/|networks\/|models\/|serializers\/|hooks\/|theme\/|utils\/|navigators\/|assets\/)/;
+const SKIP = ['node_modules', '.git', 'dist', 'android', 'ios', '.expo', 'scripts'];
+
+const sourceFiles = (dir: string, out: string[] = []): string[] => {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) {
+      if (!SKIP.includes(e.name)) sourceFiles(p, out);
+    } else if (/\.tsx?$/.test(e.name)) {
+      out.push(p);
+    }
+  }
+  return out;
+};
+
+describe("the app's layout and slices (Consultant_Mobile architecture)", () => {
+  it('keeps every folder at the repo root, with relative imports', () => {
+    expect(fs.existsSync(path.join(REPO, 'src'))).toBe(false);
+    const tsconfig = JSON.parse(fs.readFileSync(path.join(REPO, 'tsconfig.json'), 'utf8'));
+    expect(tsconfig.compilerOptions.paths).toBeUndefined();
+    expect(fs.readFileSync(path.join(REPO, 'babel.config.js'), 'utf8')).not.toMatch(/module-resolver/);
+    const offenders: string[] = [];
+    for (const file of sourceFiles(REPO)) {
+      for (const st of parse(file).statements) {
+        if ((ts.isImportDeclaration(st) || ts.isExportDeclaration(st)) && st.moduleSpecifier && ts.isStringLiteral(st.moduleSpecifier) && ALIAS.test(st.moduleSpecifier.text)) {
+          offenders.push(`${path.relative(REPO, file)}: ${st.moduleSpecifier.text}`);
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('gives every screen its own flat kebab-case folder (screens/<name>-screen/)', () => {
+    const folders = fs
+      .readdirSync(path.join(REPO, 'screens'), { withFileTypes: true })
+      .filter(e => e.isDirectory() && !['shared', '__tests__'].includes(e.name))
+      .map(e => e.name);
+    expect(folders.length).toBeGreaterThan(200);
+    expect(folders.filter(f => !/^[a-z0-9]+(-[a-z0-9]+)*-(screen|sheet)$/.test(f))).toEqual([]);
+    expect(folders.filter(f => fs.readdirSync(path.join(REPO, 'screens', f), { withFileTypes: true }).some(e => e.isDirectory()))).toEqual([]);
+  });
+
+  it('returns the raw body from every thunk; fulfilled serializes it', () => {
+    const offenders: string[] = [];
+    for (const file of sourceFiles(REPO).filter(f => /Slice\.ts$/.test(f))) {
+      const sf = parse(file);
+      const visit = (n: ts.Node) => {
+        if (ts.isCallExpression(n) && n.expression.getText(sf) === 'create.asyncThunk' && n.arguments[0]) {
+          const name = ts.isPropertyAssignment(n.parent) ? n.parent.name.getText(sf) : '(thunk)';
+          const inThunk = (m: ts.Node) => {
+            if (ts.isCallExpression(m) && ts.isIdentifier(m.expression) && /Serializer$/.test(m.expression.text)) {
+              const p = m.parent;
+              if (!(ts.isCallExpression(p) && p.expression.getText(sf) === 'required')) offenders.push(`${path.relative(REPO, file)}: ${name} serializes ${m.expression.text}`);
+            }
+            ts.forEachChild(m, inThunk);
+          };
+          inThunk(n.arguments[0]);
+        }
+        ts.forEachChild(n, visit);
+      };
+      visit(sf);
+    }
+    expect(offenders).toEqual([]);
+  });
+});

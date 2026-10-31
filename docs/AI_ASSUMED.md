@@ -79,7 +79,7 @@ Privacy:
 ```
 
 The app turns these into a plain note beside the form ("Assistant actions used up. You can
-still do this by hand. Your actions reset on 1 Nov 2026."): `src/models/kitchen/aiModel.ts`.
+still do this by hand. Your actions reset on 1 Nov 2026."): `models/kitchen/aiModel.ts`.
 
 ## 3. Drafts
 
@@ -375,6 +375,6 @@ It is in Urdu script, read right to left. The app's own words stay English (owne
 
 ## 5. When the real document arrives
 
-Copy it to `docs/AI.md`, then update `src/networks/kitchen/kitchenAiNetwork.ts`,
-`src/serializers/kitchen/insightSerializer.ts` (`aiUsageSerializer`, `receiptDraftSerializer`),
-`src/models/kitchen/aiModel.ts` and the dummy API. The drafts' confirm paths stay as they are.
+Copy it to `docs/AI.md`, then update `networks/kitchen/kitchenAi.ts`,
+`serializers/kitchen/insightSerializer.ts` (`aiUsageSerializer`, `receiptDraftSerializer`),
+`models/kitchen/aiModel.ts` and the dummy API. The drafts' confirm paths stay as they are.

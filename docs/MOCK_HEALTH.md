@@ -1,6 +1,6 @@
 # The dummy Healthcare API
 
-The app talks to the real API. In tests, Health requests are answered by the dummy API in `src/networks/network/mock/health/` (installed with `installDummyApi()`, `mock/testing.ts`). It speaks the **real** contract, MetroMatrix-API `docs/API_HEALTH.md` (copied in `docs/API_HEALTH.md`):
+The app talks to the real API. In tests, Health requests are answered by the dummy API in `networks/network/mock/health/` (installed with `installDummyApi()`, `mock/testing.ts`). It speaks the **real** contract, MetroMatrix-API `docs/API_HEALTH.md` (copied in `docs/API_HEALTH.md`):
 
 - the same paths (`/health`, `/health/doctor`, `/admin/health`);
 - the same request bodies and `Idempotency-Key` rules;
@@ -27,15 +27,15 @@ Three Jest suites guard the match. `npm run gates` runs them all.
 
 | Test | What it checks |
 |---|---|
-| `src/serializers/__tests__/healthRealResponses.test.ts` | Real responses from the backend go through the app's serializers. |
-| `src/networks/network/mock/__tests__/mockHealthParity.test.ts` | The dummy API answers each captured request with the same keys as the real one, at the top level and in the nested objects the app reads. A difference fails unless it is listed with its reason. An empty list or a `null` in the seed counts as data, not shape, so it is skipped. |
-| `src/networks/network/mock/__tests__/mockHealthFlows.test.ts` | The rules QA relies on, run through the real networks: booking, the slot race, reschedule, cancel, prepaid video, the doctor's queue, the prescription lock, reviews, overlaps, time off and the PMDC gate. |
+| `serializers/__tests__/healthRealResponses.test.ts` | Real responses from the backend go through the app's serializers. |
+| `networks/network/mock/__tests__/mockHealthParity.test.ts` | The dummy API answers each captured request with the same keys as the real one, at the top level and in the nested objects the app reads. A difference fails unless it is listed with its reason. An empty list or a `null` in the seed counts as data, not shape, so it is skipped. |
+| `networks/network/mock/__tests__/mockHealthFlows.test.ts` | The rules QA relies on, run through the real networks: booking, the slot race, reschedule, cancel, prepaid video, the doctor's queue, the prescription lock, reviews, overlaps, time off and the PMDC gate. |
 
-The real responses are `src/serializers/__tests__/fixtures/health/real.json`. They were captured from a local backend on the demo seed, then scrubbed and shortened. To refresh them after the backend changes:
+The real responses are `serializers/__tests__/fixtures/health/real.json`. They were captured from a local backend on the demo seed, then scrubbed and shortened. To refresh them after the backend changes:
 
 ```bash
 # in the backend: docker compose up -d --wait && npm run seed:health && npm run start:dev
-BACKEND=~/MetroMatix-NestJS node scripts/capture-health-fixtures.js src/serializers/__tests__/fixtures/health/real.json
+BACKEND=~/MetroMatix-NestJS node scripts/capture-health-fixtures.js serializers/__tests__/fixtures/health/real.json
 npm run gates
 ```
 

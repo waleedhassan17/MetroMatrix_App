@@ -32,9 +32,9 @@ As in FinMatrix, the app always talks to the real MetroMatrix API: there is no d
 2. In `.env.local` here: `EXPO_PUBLIC_API_URL=http://localhost:3000/api/v1` for web, or `http://<your LAN IP>:3000/api/v1` for a phone. Then `npm run start:clear`.
 3. Emails (the verification link, reset codes) land in Mailpit at http://localhost:8025. Staff sign in on the ordinary Sign In with the super admin from `seed:superadmin`, then set up an authenticator app.
 
-The auth requests are checked against the API's OpenAPI document (`docs/openapi.json`, `src/networks/__tests__/contract.test.ts`). With a running API, `src/__live__/live.test.ts` walks the auth flows against it.
+The auth requests are checked against the API's OpenAPI document (`docs/openapi.json`, `networks/__tests__/contract.test.ts`). With a running API, `__live__/live.test.ts` walks the auth flows against it.
 
-The dummy API in `src/networks/network/mock/` is test fixtures only: the Shopping, Health, Food and Kitchen routes the parity and flow tests run the networks against (`mock/testing.ts`).
+The dummy API in `networks/network/mock/` is test fixtures only: the Shopping, Health, Food and Kitchen routes the parity and flow tests run the networks against (`mock/testing.ts`).
 
 ## Status
 

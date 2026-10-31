@@ -10,7 +10,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 
 import { issuePrescription, recentDiagnoses, suggestMedicines } from '../../networks/health/doctor/prescriptionWriter';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { emptyMedicine, emptyPrescription, moveMedicine } from '../../models/health/prescriptionModel';
 import type { DoctorAppointmentDetail, DoctorOwnProfile, Medicine, MedicineSuggestion, PrescriptionInput } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';

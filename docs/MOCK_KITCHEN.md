@@ -1,6 +1,6 @@
 # The dummy Kitchen Intelligence API
 
-The app talks to the real API. In tests, everything Chunk 5 calls is answered by the dummy API in `src/networks/network/mock/kitchen/` (installed with `installDummyApi()`, `mock/testing.ts`). It covers:
+The app talks to the real API. In tests, everything Chunk 5 calls is answered by the dummy API in `networks/network/mock/kitchen/` (installed with `installDummyApi()`, `mock/testing.ts`). It covers:
 
 - the vendor's Kitchen: stock, recipes and costs, purchases, forecast and prep, waste, Bachat Box;
 - growth: tiffin, catering, Ramadan, the storefront and QR, demand, menu insights and tests, story and hygiene, batching;

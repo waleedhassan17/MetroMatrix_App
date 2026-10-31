@@ -11,7 +11,7 @@ Riders share their location with their own vendor while they are on duty, and wh
 | What | The phone's position, sent to MetroMatrix's API: when the rider has moved 10 m or more, and at least every 15 seconds on duty. |
 | Who sees it | The rider's own vendor (its live rider map) and the customer of the order they carry (the tracking map). A position older than two minutes isn't shown. |
 | Kept | The newest position on the rider, and a trail for each delivery, deleted after 14 days. |
-| Off switch | Off duty. A build can also ship with tracking off (`TRACKING_ENABLED` in `src/services/location/riderLocation.ts`), and the server can turn it off. |
+| Off switch | Off duty. A build can also ship with tracking off (`TRACKING_ENABLED` in `services/location/riderLocation.ts`), and the server can turn it off. |
 
 While it runs on Android, a foreground-service notification says **"MetroMatrix — on duty: Sharing your location with your vendor while you deliver."**
 

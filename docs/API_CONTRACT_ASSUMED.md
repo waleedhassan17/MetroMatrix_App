@@ -4,18 +4,18 @@ This was first written from the Chunk 1 brief, before the API existed. The auth,
 
 If the API changes, fix the network, serializer or model named in the **Where** column; screens and slices should not need to change.
 
-Base URL: `API_BASE_URL` (`src/config/env.ts`), e.g. `https://<heroku-app>.herokuapp.com/api/v1`.
+Base URL: `API_BASE_URL` (`config/env.ts`), e.g. `https://<heroku-app>.herokuapp.com/api/v1`.
 
-**Superseded for auth:** the auth, users, media, business and approval calls are connected to the real API: their contract is `docs/AUTH_CONTRACT.md` and `docs/openapi.json` (checked by `src/networks/__tests__/contract.test.ts`). The tables below are kept as history.
+**Superseded for auth:** the auth, users, media, business and approval calls are connected to the real API: their contract is `docs/AUTH_CONTRACT.md` and `docs/openapi.json` (checked by `networks/__tests__/contract.test.ts`). The tables below are kept as history.
 
 ## Conventions
 
 | Item | Assumed | Where |
 |---|---|---|
-| Success envelope | `{ "data": <payload> }` (a bare payload is also accepted) | `apiHelpers.unwrap` |
-| Error envelope | `{ "error": { "code": "SOME_CODE", "message": "Readable text", "details": { … } } }`. NestJS `{ message }` / `{ message: [] }` is also read. | `apiHelpers.extractErrorMessage/Code`, `toAuthError` |
-| Auth header | `Authorization: Bearer <accessToken>` | `apiHelpers` request interceptor |
-| Token pair | `{ "accessToken": "…", "refreshToken": "…" }`, either at the top level or under `tokens` | `apiHelpers.refreshTokens`, `authSerializer.tokensSerializer` |
+| Success envelope | `{ "data": <payload> }` (a bare payload is also accepted) | `network.ts.unwrap` |
+| Error envelope | `{ "error": { "code": "SOME_CODE", "message": "Readable text", "details": { … } } }`. NestJS `{ message }` / `{ message: [] }` is also read. | `network.ts.extractErrorMessage/Code`, `toAuthError` |
+| Auth header | `Authorization: Bearer <accessToken>` | `network.ts` request interceptor |
+| Token pair | `{ "accessToken": "…", "refreshToken": "…" }`, either at the top level or under `tokens` | `network.ts.refreshTokens`, `authSerializer.tokensSerializer` |
 | Dates | ISO-8601 strings | serializers |
 | Ids | strings | serializers |
 
@@ -23,7 +23,7 @@ Base URL: `API_BASE_URL` (`src/config/env.ts`), e.g. `https://<heroku-app>.herok
 
 | Type | Shape | Where |
 |---|---|---|
-| `UserRole` | `customer \| partner \| rider \| admin \| super_admin` | `src/types/auth.ts` |
+| `UserRole` | `customer \| partner \| rider \| admin \| super_admin` | `models/auth.ts` |
 | `Portal` | `customer \| partner \| admin` | ″ |
 | `ServiceType` | `shopping \| healthcare \| food` | ″ |
 | `SubType` | `store` (shopping) · `doctor` (healthcare) · `restaurant \| home_kitchen \| cloud_kitchen` (food) | ″ |
@@ -59,7 +59,7 @@ Base URL: `API_BASE_URL` (`src/config/env.ts`), e.g. `https://<heroku-app>.herok
 
 **Password policy** (`authModel.PASSWORD_POLICY`, the API's `IsStrongPassword`): 8–72 characters, with at least one lower-case letter, one upper-case letter and one number. The dummy API applies the same rule.
 
-**Errors** (`src/networks/network/errorCodes.ts`): screens compare against `ERROR_CODES`, never an inline string. `errorCopy(code, details)` is the person-facing text. `VALIDATION_FAILED` carries `details.fields` (`{ field: [messages] }`, read with `fieldErrors`). A 429's wait is in `details.retryAfter`, taken from the body or the `Retry-After` header.
+**Errors** (`networks/network/network.ts`): screens compare against `ERROR_CODES`, never an inline string. `errorCopy(code, details)` is the person-facing text. `VALIDATION_FAILED` carries `details.fields` (`{ field: [messages] }`, read with `fieldErrors`). A 429's wait is in `details.retryAfter`, taken from the body or the `Retry-After` header.
 
 **OTP:** 6 digits, 5 attempts, then `OTP_LOCKED`.
 
@@ -142,4 +142,4 @@ Enrol branch:
 
 ## Mock mode
 
-Retired for auth (2026-10-30). The app always talks to the real API; the dummy API in `src/networks/network/mock/` is test fixtures for Shopping, Health, Food and Kitchen only, and has no auth, users, media, business, approval or platform routes. A test signs in with `signInAs()` (`mock/testing.ts`), which writes a session for a seeded account (`mock/mockDb.ts`) straight into the dummy DB.
+Retired for auth (2026-10-30). The app always talks to the real API; the dummy API in `networks/network/mock/` is test fixtures for Shopping, Health, Food and Kitchen only, and has no auth, users, media, business, approval or platform routes. A test signs in with `signInAs()` (`mock/testing.ts`), which writes a session for a seeded account (`mock/mockDb.ts`) straight into the dummy DB.
