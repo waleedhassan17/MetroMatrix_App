@@ -225,7 +225,7 @@ describe('filters, addresses and paging', () => {
 });
 
 describe('variant picker', () => {
-  const v = (id: string, option1: string, option2: string, stock: number) => ({ id, option1, option2, sku: id, stock, price: 1000, compareAtPrice: null });
+  const v = (id: string, option1: string, option2: string, stock: number) => ({ id, option1, option2, sku: id, stock, lowStock: stock > 0 && stock <= 3, price: 1000, compareAtPrice: null });
   const p = {
     option1: { name: 'Size', values: ['S', 'M', 'L'], swatches: {} },
     option2: { name: 'Colour', values: ['Black', 'Rust'], swatches: {} },
@@ -246,7 +246,7 @@ describe('variant picker', () => {
   it('moves the other option when a choice would be sold out', () => {
     expect(choose(p, { option1: 'S', option2: 'Rust' }, 1, 'M')).toEqual({ option1: 'M', option2: 'Black' });
     expect(variantFor(p, { option1: 'M', option2: 'Black' })?.id).toBe('c');
-    expect(stockNote(variantFor(p, { option1: 'S', option2: 'Rust' })).text).toBe('Only 2 left');
+    expect(stockNote(variantFor(p, { option1: 'S', option2: 'Rust' })).text).toBe('Only a few left');
     expect(stockNote(null).tone).toBe('danger');
   });
 });

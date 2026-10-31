@@ -1,5 +1,7 @@
-// Every shopping serializer: the dummy API's real payloads map cleanly, and
-// malformed ones (wrong types, missing ids, junk) never throw or leak through.
+// Every shopping serializer: the dummy API's payloads (in the real API's
+// shapes) map cleanly, and malformed ones (wrong types, missing ids, junk)
+// never throw or leak through. The real API's own answers are checked in
+// shopRealResponses.test.ts.
 
 import * as admin from '../shopping/adminShopSerializer';
 import * as cart from '../shopping/cartSerializer';
@@ -10,13 +12,8 @@ import { paged, storeRefSerializer } from '../shopping/common';
 import { addressSerializer } from '../addressSerializer';
 import { notificationSerializer } from '../notificationSerializer';
 import { seedShop } from '../../networks/network/mock/shop/shopSeed';
-import {
-  cartView,
-  groupView,
-  productDetailView,
-  productSummaryView,
-  storeDetailView,
-} from '../../networks/network/mock/shop/shopLogic';
+import { cartWire, groupWire, productCard, productPage, storePage } from '../../networks/network/mock/shop/shopWire';
+import type { MockDb } from '../../networks/network/mock/mockDb';
 
 const JUNK: unknown[] = [null, undefined, 0, 42, '', 'text', true, [], [1, 2], {}, { id: 7 }, { id: '' }, { items: 'nope' }];
 
@@ -32,13 +29,13 @@ describe('malformed payloads', () => {
 
   it('drops records without an id instead of inventing one', () => {
     expect(catalog.productSummarySerializer({ name: 'No id' })).toBeNull();
-    expect(orders.storeOrderSerializer({ id: 'o1' })).toBeNull(); // no store
-    expect(orders.orderGroupSerializer({ code: 'MM-1', orders: [] })).toBeNull();
+    expect(orders.storeOrderSerializer({ code: 'MM-1-1', store: { id: 's' } })).toBeNull();
+    expect(orders.orderGroupSerializer({ code: 'MM-1', storeOrders: [] })).toBeNull();
     expect(addressSerializer({ id: 'a1' })).toBeNull();
   });
 
   it('coerces amounts to integer rupees and rejects bad colours and statuses', () => {
-    const p = catalog.productSummarySerializer({ id: 'p', name: 'Kurta', price: '2490.6', compareAtPrice: 1000, rating: 9 })!;
+    const p = catalog.productSummarySerializer({ id: 'p', name: 'Kurta', price: '2490.6', basePrice: 1000, onSale: true, ratingAvg: 9 })!;
     expect(p.price).toBe(2491);
     expect(p.compareAtPrice).toBeNull(); // not above the price
     expect(p.rating).toBe(5);
@@ -71,21 +68,20 @@ describe('the dummy API payloads', () => {
 
   it('map a product, its variants and its store', () => {
     const p = shop.products.find(x => x.id === 'p_l3')!;
-    const detail = catalog.productDetailSerializer(json(productDetailView(shop, p, 'u_customer')))!;
+    const detail = catalog.productDetailSerializer(json(productPage(shop, p, 'u_customer')))!;
     expect(detail.variants).toHaveLength(p.variants.length);
     expect(detail.option2?.swatches.Plum).toBe('#5B2A6E');
-    expect(catalog.productSummarySerializer(json(productSummaryView(shop, p)))?.storeName).toBe('Lawn & Loom');
-    const store = catalog.storeDetailSerializer(json(storeDetailView(shop, shop.stores[1])))!;
+    expect(catalog.productSummarySerializer(json(productCard(shop, p)))?.storeName).toBe('Lawn & Loom');
+    const store = catalog.storeDetailSerializer(json(storePage(shop, shop.stores[1])))!;
     expect(store.brandColor).toBe('#111827');
-    // The brand card: its story and what it sells, most stocked first.
+    // The brand card: its story and its collections.
     expect(store.about.length).toBeGreaterThan(10);
-    expect(store.categories.length).toBeGreaterThan(0);
     expect(store.collections.length).toBeGreaterThan(0);
   });
 
   it('map every seeded order group', () => {
     for (const g of shop.groups) {
-      const group = orders.orderGroupSerializer(json(groupView(shop, g)));
+      const group = orders.orderGroupSerializer(json(groupWire({ shop, users: [] } as unknown as MockDb, g)));
       expect(group?.code).toBe(g.code);
       expect(group!.total).toBe(group!.orders.reduce((s, o) => s + o.total, 0));
     }
@@ -94,7 +90,7 @@ describe('the dummy API payloads', () => {
   it('map a bag', () => {
     const line = { id: 'cl_1', userId: 'u_customer', productId: 'p_l1', variantId: 'p_l1_v0', quantity: 1, priceSeen: 1, addedAt: new Date().toISOString() };
     shop.cart.push(line);
-    const bag = cart.cartSerializer(json(cartView(shop, 'u_customer')));
+    const bag = cart.cartSerializer(json(cartWire(shop, 'u_customer')));
     expect(bag.groups[0].lines[0].warnings[0].code).toBe('PRICE_CHANGED');
     expect(bag.blocking).toBe(true);
   });

@@ -7,7 +7,7 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { fetchProduct, reportProduct } from '../../networks/shopping/catalog';
+import { fetchProduct, fetchRelatedProducts, fetchReviews, reportProduct } from '../../networks/shopping/catalog';
 import { toRejectedValue } from '../../networks/network/network';
 import type { ProductDetail } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -68,7 +68,14 @@ export const productDetailSlice = createAppSlice({
     loadProductAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return await fetchProduct(id);
+          // The first reviews and the related products are their own reads;
+          // either failing leaves the product page without that rail.
+          const [product, related, reviews] = await Promise.all([
+            fetchProduct(id),
+            fetchRelatedProducts(id).catch(() => null),
+            fetchReviews(id, {}, 1, 3).catch(() => null),
+          ]);
+          return { product, related, reviews };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -80,8 +87,8 @@ export const productDetailSlice = createAppSlice({
           e.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = productDetailSerializer(action.payload);
-          state.byId[action.meta.arg] = { product: payload, status: 'succeeded', error: NO_ERROR };
+          const { product, related, reviews } = action.payload;
+          state.byId[action.meta.arg] = { product: productDetailSerializer(product, related, reviews), status: 'succeeded', error: NO_ERROR };
         },
         rejected: (state, action) => {
           const e = (state.byId[action.meta.arg] ??= { ...EMPTY });

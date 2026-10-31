@@ -2,19 +2,19 @@
 // MetroMatrix — Order detail slice (keyed by order group code)
 // ═══════════════════════════════════════════════════════
 // One order group (what one checkout made) with its store orders, and the
-// customer's actions on them. Every action answers with the whole group, so
-// the screen always shows the server's state. Also read by Order placed,
-// Payment proof, Return request and Write review.
+// customer's actions on them. An action answers the store order it moved,
+// which takes its place in the group, so the screen shows the server's state.
+// Also read by Order placed, Payment proof, Return request and Write review.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { cancelOrder, confirmReceived, fetchOrderGroup, requestCancellation } from '../../networks/shopping/orders';
-import { toRejectedValue, required } from '../../networks/network/network';
-import type { OrderGroup } from '../../models';
+import { toRejectedValue } from '../../networks/network/network';
+import type { OrderGroup, StoreOrder } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { placeOrderAsync } from '../checkout-screen/checkoutSlice';
 import { submitPaymentProofAsync } from '../payment-proof-screen/paymentProofSlice';
-import { orderGroupSerializer } from '../../serializers/shopping/orderSerializer';
+import { orderGroupSerializer, storeOrderResponseSerializer } from '../../serializers/shopping/orderSerializer';
 
 export interface OrderGroupEntry {
   group: OrderGroup | null;
@@ -45,8 +45,18 @@ export const CANCEL_REASONS = ['Ordered by mistake', 'Found it cheaper elsewhere
 
 type Action = 'cancel' | 'request' | 'received';
 
-const act = async (kind: Action, orderId: string, reason: string) =>
-  kind === 'cancel' ? cancelOrder(orderId, reason).then(raw => required(orderGroupSerializer(raw))) : kind === 'request' ? requestCancellation(orderId, reason).then(raw => required(orderGroupSerializer(raw))) : confirmReceived(orderId).then(raw => required(orderGroupSerializer(raw)));
+const act = (kind: Action, orderId: string, reason: string) =>
+  kind === 'cancel' ? cancelOrder(orderId, reason) : kind === 'request' ? requestCancellation(orderId, reason) : confirmReceived(orderId);
+
+/** A store order the server answered takes its place in the group that holds it. */
+const putOrder = (state: OrderDetailSliceState, order: StoreOrder | null) => {
+  if (!order) return;
+  for (const entry of Object.values(state.byCode)) {
+    const g = entry.group;
+    const i = g ? g.orders.findIndex(o => o.id === order.id) : -1;
+    if (g && i >= 0) g.orders[i] = { ...order, groupCode: order.groupCode || g.code };
+  }
+};
 
 export const orderDetailSlice = createAppSlice({
   name: 'orderDetail',
@@ -108,7 +118,7 @@ export const orderDetailSlice = createAppSlice({
         fulfilled: (state, action) => {
           state.busyOrderId = null;
           state.cancelSheet.orderId = null;
-          state.byCode[action.payload.code] = { group: action.payload, status: 'succeeded', error: NO_ERROR };
+          putOrder(state, storeOrderResponseSerializer(action.payload));
         },
         rejected: (state, action) => {
           state.busyOrderId = null;
@@ -124,11 +134,9 @@ export const orderDetailSlice = createAppSlice({
       if (!payload) return;
       state.byCode[payload.code] = { group: payload, status: 'succeeded', error: NO_ERROR };
     });
-    // A sent payment proof answers with the whole group, too.
+    // A sent payment proof answers with its store order.
     builder.addCase(submitPaymentProofAsync.fulfilled, (state, action) => {
-          const payload = orderGroupSerializer(action.payload);
-      if (!payload) return;
-      state.byCode[payload.code] = { group: payload, status: 'succeeded', error: NO_ERROR };
+      putOrder(state, storeOrderResponseSerializer(action.payload));
     });
   },
   selectors: {

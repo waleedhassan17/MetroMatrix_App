@@ -1,0 +1,6234 @@
+{
+  "home": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "banners": [
+          {
+            "id": "1c03d1dd-0a17-4dbf-9fd4-c79ea993c40c",
+            "imageUrl": "https://placehold.co/1200x500/7F1D1D/FFFFFF/png?text=The+Eid+edit+is+here",
+            "title": "The Eid edit is here",
+            "subtitle": "Lawn, silk and khussas from Lahore Loom",
+            "targetType": "collection",
+            "targetId": "0321b18a-042b-4a50-ba39-884489828389"
+          },
+          {
+            "id": "14ca81db-b5f2-4649-945d-0a8956976501",
+            "imageUrl": "https://placehold.co/1200x500/B45309/FFFFFF/png?text=Craft+from+Multan+to+Swat",
+            "title": "Craft from Multan to Swat",
+            "subtitle": "Blue pottery, truck art and more at Haath Kaari",
+            "targetType": "store",
+            "targetId": "cc4762f7-2325-463b-a858-a5bd78401100"
+          },
+          {
+            "id": "97ad439e-9a90-4e6f-bb17-003c5033bf54",
+            "imageUrl": "https://placehold.co/1200x500/6D28D9/FFFFFF/png?text=Summer+skin%2C+sorted",
+            "title": "Summer skin, sorted",
+            "subtitle": "Sunscreen and light moisturisers",
+            "targetType": "category",
+            "targetId": "efbcefcb-4f2f-48c2-89a5-bc4446ec7bc0"
+          }
+        ],
+        "featuredStores": [
+          {
+            "id": "cc4762f7-2325-463b-a858-a5bd78401100",
+            "slug": "haath-kaari",
+            "name": "Haath Kaari",
+            "city": "Multan",
+            "tagline": "Craft from Multan, Hala and Swat",
+            "logoUrl": "https://placehold.co/400x400/B45309/FFFFFF/png?text=HK",
+            "coverUrl": "https://placehold.co/1200x500/B45309/FFFFFF/png?text=Haath+Kaari",
+            "brandColor": "#B45309",
+            "onBrandColor": "#FFFFFF",
+            "ratingAvg": 5,
+            "ratingCount": 2,
+            "isFeatured": true,
+            "productCount": 18
+          },
+          {
+            "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+            "slug": "lahore-loom",
+            "name": "Lahore Loom",
+            "city": "Lahore",
+            "tagline": "Hand-finished lawn, khaddar and kurtas",
+            "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL",
+            "coverUrl": "https://placehold.co/1200x500/7F1D1D/FFFFFF/png?text=Lahore+Loom",
+            "brandColor": "#7F1D1D",
+            "onBrandColor": "#FFFFFF",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "isFeatured": true,
+            "productCount": 18
+          }
+        ],
+        "newArrivals": [
+          {
+            "id": "43945e49-4064-4c10-a0c5-ca98cbac4fad",
+            "name": "Tomatoes",
+            "slug": "tomatoes",
+            "price": 160,
+            "basePrice": 160,
+            "salePrice": null,
+            "onSale": false,
+            "coverUrl": "https://placehold.co/800x800/166534/FFFFFF/png?text=Tomatoes",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "a477d258-da65-4904-817d-8943a9246159",
+              "slug": "taaza-mandi-online-demo",
+              "name": "Taaza Mandi Online (demo)"
+            }
+          },
+          {
+            "id": "be17e457-9aa6-4a9d-b25b-ab1c2849fd58",
+            "name": "Onions",
+            "slug": "onions",
+            "price": 120,
+            "basePrice": 120,
+            "salePrice": null,
+            "onSale": false,
+            "coverUrl": "https://placehold.co/800x800/166534/FFFFFF/png?text=Onions",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "a477d258-da65-4904-817d-8943a9246159",
+              "slug": "taaza-mandi-online-demo",
+              "name": "Taaza Mandi Online (demo)"
+            }
+          },
+          {
+            "id": "a4b1ac01-9579-4a6f-b8fe-7a0b5a5249fe",
+            "name": "Potatoes",
+            "slug": "potatoes",
+            "price": 90,
+            "basePrice": 90,
+            "salePrice": null,
+            "onSale": false,
+            "coverUrl": "https://placehold.co/800x800/166534/FFFFFF/png?text=Potatoes",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "a477d258-da65-4904-817d-8943a9246159",
+              "slug": "taaza-mandi-online-demo",
+              "name": "Taaza Mandi Online (demo)"
+            }
+          }
+        ],
+        "trending": [
+          {
+            "id": "67b66361-2bec-4a8e-a056-d0e4077d4497",
+            "name": "Hand-woven khes",
+            "slug": "hand-woven-khes",
+            "price": 3600,
+            "basePrice": 3600,
+            "salePrice": null,
+            "onSale": false,
+            "coverUrl": "https://placehold.co/800x800/B45309/FFFFFF/png?text=Hand-woven+khes",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "cc4762f7-2325-463b-a858-a5bd78401100",
+              "slug": "haath-kaari",
+              "name": "Haath Kaari"
+            }
+          },
+          {
+            "id": "6e1de8e9-e71f-43f8-b823-a08859f2da7a",
+            "name": "Paneer",
+            "slug": "paneer",
+            "price": 420,
+            "basePrice": 420,
+            "salePrice": null,
+            "onSale": false,
+            "coverUrl": "https://placehold.co/800x800/166534/FFFFFF/png?text=Paneer",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "a477d258-da65-4904-817d-8943a9246159",
+              "slug": "taaza-mandi-online-demo",
+              "name": "Taaza Mandi Online (demo)"
+            }
+          },
+          {
+            "id": "108e69f6-9e53-41f3-9513-ca5c99563a03",
+            "name": "Chinioti carved coaster set",
+            "slug": "chinioti-carved-coaster-set",
+            "price": 1600,
+            "basePrice": 1600,
+            "salePrice": null,
+            "onSale": false,
+            "coverUrl": "https://placehold.co/800x800/B45309/FFFFFF/png?text=Chinioti+carved+coaster+set",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "cc4762f7-2325-463b-a858-a5bd78401100",
+              "slug": "haath-kaari",
+              "name": "Haath Kaari"
+            }
+          }
+        ],
+        "categories": [
+          {
+            "id": "2d19167d-fd9f-44f9-b64b-17d67b34ba84",
+            "name": "Women",
+            "slug": "women",
+            "icon": "women",
+            "children": [
+              {
+                "id": "fae54e5c-7a4e-411f-83ca-6edcd3bbb7ef",
+                "name": "Kurtas & tunics",
+                "slug": "women-kurtas-tunics",
+                "icon": null
+              },
+              {
+                "id": "a52d3eff-4f4c-43e5-aa38-9ac7cc2d44e8",
+                "name": "Shalwar kameez",
+                "slug": "women-shalwar-kameez",
+                "icon": null
+              },
+              {
+                "id": "aca5a4f7-b740-4e11-9400-7598804713c3",
+                "name": "Dupattas & shawls",
+                "slug": "women-dupattas-shawls",
+                "icon": null
+              }
+            ]
+          },
+          {
+            "id": "36b57c09-8efe-4889-bab3-cf92a65e8fa0",
+            "name": "Men",
+            "slug": "men",
+            "icon": "men",
+            "children": [
+              {
+                "id": "918705c2-29f5-42e4-bdc5-28ae9c329e05",
+                "name": "Kurtas & shalwar kameez",
+                "slug": "men-kurtas-shalwar-kameez",
+                "icon": null
+              },
+              {
+                "id": "c50230bd-582c-4ff2-9f96-c26e9f44af39",
+                "name": "Shirts & T-shirts",
+                "slug": "men-shirts-tshirts",
+                "icon": null
+              },
+              {
+                "id": "126ac59d-34a2-4f0d-9bef-bb2e8db54e4a",
+                "name": "Trousers & jeans",
+                "slug": "men-trousers-jeans",
+                "icon": null
+              }
+            ]
+          },
+          {
+            "id": "68782602-734d-47bd-9d73-441dd209b90b",
+            "name": "Kids",
+            "slug": "kids",
+            "icon": "kids",
+            "children": [
+              {
+                "id": "0693d7b5-48e0-4fc9-b8f3-9534bd4cb46a",
+                "name": "Girls",
+                "slug": "kids-girls",
+                "icon": null
+              },
+              {
+                "id": "57b2a335-5126-4334-9d2e-a90971980b69",
+                "name": "Boys",
+                "slug": "kids-boys",
+                "icon": null
+              },
+              {
+                "id": "e97495be-cee0-4034-be93-b64e24084462",
+                "name": "Babies",
+                "slug": "kids-babies",
+                "icon": null
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "homeSignedIn": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "banners": [
+          {
+            "id": "1c03d1dd-0a17-4dbf-9fd4-c79ea993c40c",
+            "imageUrl": "https://placehold.co/1200x500/7F1D1D/FFFFFF/png?text=The+Eid+edit+is+here",
+            "title": "The Eid edit is here",
+            "subtitle": "Lawn, silk and khussas from Lahore Loom",
+            "targetType": "collection",
+            "targetId": "0321b18a-042b-4a50-ba39-884489828389"
+          },
+          {
+            "id": "14ca81db-b5f2-4649-945d-0a8956976501",
+            "imageUrl": "https://placehold.co/1200x500/B45309/FFFFFF/png?text=Craft+from+Multan+to+Swat",
+            "title": "Craft from Multan to Swat",
+            "subtitle": "Blue pottery, truck art and more at Haath Kaari",
+            "targetType": "store",
+            "targetId": "cc4762f7-2325-463b-a858-a5bd78401100"
+          },
+          {
+            "id": "97ad439e-9a90-4e6f-bb17-003c5033bf54",
+            "imageUrl": "https://placehold.co/1200x500/6D28D9/FFFFFF/png?text=Summer+skin%2C+sorted",
+            "title": "Summer skin, sorted",
+            "subtitle": "Sunscreen and light moisturisers",
+            "targetType": "category",
+            "targetId": "efbcefcb-4f2f-48c2-89a5-bc4446ec7bc0"
+          }
+        ],
+        "featuredStores": [
+          {
+            "id": "cc4762f7-2325-463b-a858-a5bd78401100",
+            "slug": "haath-kaari",
+            "name": "Haath Kaari",
+            "city": "Multan",
+            "tagline": "Craft from Multan, Hala and Swat",
+            "logoUrl": "https://placehold.co/400x400/B45309/FFFFFF/png?text=HK",
+            "coverUrl": "https://placehold.co/1200x500/B45309/FFFFFF/png?text=Haath+Kaari",
+            "brandColor": "#B45309",
+            "onBrandColor": "#FFFFFF",
+            "ratingAvg": 5,
+            "ratingCount": 2,
+            "isFeatured": true,
+            "productCount": 18
+          },
+          {
+            "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+            "slug": "lahore-loom",
+            "name": "Lahore Loom",
+            "city": "Lahore",
+            "tagline": "Hand-finished lawn, khaddar and kurtas",
+            "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL",
+            "coverUrl": "https://placehold.co/1200x500/7F1D1D/FFFFFF/png?text=Lahore+Loom",
+            "brandColor": "#7F1D1D",
+            "onBrandColor": "#FFFFFF",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "isFeatured": true,
+            "productCount": 18
+          }
+        ],
+        "newArrivals": [
+          {
+            "id": "43945e49-4064-4c10-a0c5-ca98cbac4fad",
+            "name": "Tomatoes",
+            "slug": "tomatoes",
+            "price": 160,
+            "basePrice": 160,
+            "salePrice": null,
+            "onSale": false,
+            "coverUrl": "https://placehold.co/800x800/166534/FFFFFF/png?text=Tomatoes",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "a477d258-da65-4904-817d-8943a9246159",
+              "slug": "taaza-mandi-online-demo",
+              "name": "Taaza Mandi Online (demo)"
+            },
+            "isWishlisted": false
+          },
+          {
+            "id": "be17e457-9aa6-4a9d-b25b-ab1c2849fd58",
+            "name": "Onions",
+            "slug": "onions",
+            "price": 120,
+            "basePrice": 120,
+            "salePrice": null,
+            "onSale": false,
+            "coverUrl": "https://placehold.co/800x800/166534/FFFFFF/png?text=Onions",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "a477d258-da65-4904-817d-8943a9246159",
+              "slug": "taaza-mandi-online-demo",
+              "name": "Taaza Mandi Online (demo)"
+            },
+            "isWishlisted": false
+          },
+          {
+            "id": "a4b1ac01-9579-4a6f-b8fe-7a0b5a5249fe",
+            "name": "Potatoes",
+            "slug": "potatoes",
+            "price": 90,
+            "basePrice": 90,
+            "salePrice": null,
+            "onSale": false,
+            "coverUrl": "https://placehold.co/800x800/166534/FFFFFF/png?text=Potatoes",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "a477d258-da65-4904-817d-8943a9246159",
+              "slug": "taaza-mandi-online-demo",
+              "name": "Taaza Mandi Online (demo)"
+            },
+            "isWishlisted": false
+          }
+        ],
+        "trending": [
+          {
+            "id": "67b66361-2bec-4a8e-a056-d0e4077d4497",
+            "name": "Hand-woven khes",
+            "slug": "hand-woven-khes",
+            "price": 3600,
+            "basePrice": 3600,
+            "salePrice": null,
+            "onSale": false,
+            "coverUrl": "https://placehold.co/800x800/B45309/FFFFFF/png?text=Hand-woven+khes",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "cc4762f7-2325-463b-a858-a5bd78401100",
+              "slug": "haath-kaari",
+              "name": "Haath Kaari"
+            },
+            "isWishlisted": false
+          },
+          {
+            "id": "6e1de8e9-e71f-43f8-b823-a08859f2da7a",
+            "name": "Paneer",
+            "slug": "paneer",
+            "price": 420,
+            "basePrice": 420,
+            "salePrice": null,
+            "onSale": false,
+            "coverUrl": "https://placehold.co/800x800/166534/FFFFFF/png?text=Paneer",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "a477d258-da65-4904-817d-8943a9246159",
+              "slug": "taaza-mandi-online-demo",
+              "name": "Taaza Mandi Online (demo)"
+            },
+            "isWishlisted": false
+          },
+          {
+            "id": "108e69f6-9e53-41f3-9513-ca5c99563a03",
+            "name": "Chinioti carved coaster set",
+            "slug": "chinioti-carved-coaster-set",
+            "price": 1600,
+            "basePrice": 1600,
+            "salePrice": null,
+            "onSale": false,
+            "coverUrl": "https://placehold.co/800x800/B45309/FFFFFF/png?text=Chinioti+carved+coaster+set",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "cc4762f7-2325-463b-a858-a5bd78401100",
+              "slug": "haath-kaari",
+              "name": "Haath Kaari"
+            },
+            "isWishlisted": false
+          }
+        ],
+        "categories": [
+          {
+            "id": "2d19167d-fd9f-44f9-b64b-17d67b34ba84",
+            "name": "Women",
+            "slug": "women",
+            "icon": "women",
+            "children": [
+              {
+                "id": "fae54e5c-7a4e-411f-83ca-6edcd3bbb7ef",
+                "name": "Kurtas & tunics",
+                "slug": "women-kurtas-tunics",
+                "icon": null
+              },
+              {
+                "id": "a52d3eff-4f4c-43e5-aa38-9ac7cc2d44e8",
+                "name": "Shalwar kameez",
+                "slug": "women-shalwar-kameez",
+                "icon": null
+              },
+              {
+                "id": "aca5a4f7-b740-4e11-9400-7598804713c3",
+                "name": "Dupattas & shawls",
+                "slug": "women-dupattas-shawls",
+                "icon": null
+              }
+            ]
+          },
+          {
+            "id": "36b57c09-8efe-4889-bab3-cf92a65e8fa0",
+            "name": "Men",
+            "slug": "men",
+            "icon": "men",
+            "children": [
+              {
+                "id": "918705c2-29f5-42e4-bdc5-28ae9c329e05",
+                "name": "Kurtas & shalwar kameez",
+                "slug": "men-kurtas-shalwar-kameez",
+                "icon": null
+              },
+              {
+                "id": "c50230bd-582c-4ff2-9f96-c26e9f44af39",
+                "name": "Shirts & T-shirts",
+                "slug": "men-shirts-tshirts",
+                "icon": null
+              },
+              {
+                "id": "126ac59d-34a2-4f0d-9bef-bb2e8db54e4a",
+                "name": "Trousers & jeans",
+                "slug": "men-trousers-jeans",
+                "icon": null
+              }
+            ]
+          },
+          {
+            "id": "68782602-734d-47bd-9d73-441dd209b90b",
+            "name": "Kids",
+            "slug": "kids",
+            "icon": "kids",
+            "children": [
+              {
+                "id": "0693d7b5-48e0-4fc9-b8f3-9534bd4cb46a",
+                "name": "Girls",
+                "slug": "kids-girls",
+                "icon": null
+              },
+              {
+                "id": "57b2a335-5126-4334-9d2e-a90971980b69",
+                "name": "Boys",
+                "slug": "kids-boys",
+                "icon": null
+              },
+              {
+                "id": "e97495be-cee0-4034-be93-b64e24084462",
+                "name": "Babies",
+                "slug": "kids-babies",
+                "icon": null
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "categories": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": [
+        {
+          "id": "2d19167d-fd9f-44f9-b64b-17d67b34ba84",
+          "name": "Women",
+          "slug": "women",
+          "icon": "women",
+          "children": [
+            {
+              "id": "fae54e5c-7a4e-411f-83ca-6edcd3bbb7ef",
+              "name": "Kurtas & tunics",
+              "slug": "women-kurtas-tunics",
+              "icon": null
+            },
+            {
+              "id": "a52d3eff-4f4c-43e5-aa38-9ac7cc2d44e8",
+              "name": "Shalwar kameez",
+              "slug": "women-shalwar-kameez",
+              "icon": null
+            },
+            {
+              "id": "aca5a4f7-b740-4e11-9400-7598804713c3",
+              "name": "Dupattas & shawls",
+              "slug": "women-dupattas-shawls",
+              "icon": null
+            }
+          ]
+        },
+        {
+          "id": "36b57c09-8efe-4889-bab3-cf92a65e8fa0",
+          "name": "Men",
+          "slug": "men",
+          "icon": "men",
+          "children": [
+            {
+              "id": "918705c2-29f5-42e4-bdc5-28ae9c329e05",
+              "name": "Kurtas & shalwar kameez",
+              "slug": "men-kurtas-shalwar-kameez",
+              "icon": null
+            },
+            {
+              "id": "c50230bd-582c-4ff2-9f96-c26e9f44af39",
+              "name": "Shirts & T-shirts",
+              "slug": "men-shirts-tshirts",
+              "icon": null
+            },
+            {
+              "id": "126ac59d-34a2-4f0d-9bef-bb2e8db54e4a",
+              "name": "Trousers & jeans",
+              "slug": "men-trousers-jeans",
+              "icon": null
+            }
+          ]
+        },
+        {
+          "id": "68782602-734d-47bd-9d73-441dd209b90b",
+          "name": "Kids",
+          "slug": "kids",
+          "icon": "kids",
+          "children": [
+            {
+              "id": "0693d7b5-48e0-4fc9-b8f3-9534bd4cb46a",
+              "name": "Girls",
+              "slug": "kids-girls",
+              "icon": null
+            },
+            {
+              "id": "57b2a335-5126-4334-9d2e-a90971980b69",
+              "name": "Boys",
+              "slug": "kids-boys",
+              "icon": null
+            },
+            {
+              "id": "e97495be-cee0-4034-be93-b64e24084462",
+              "name": "Babies",
+              "slug": "kids-babies",
+              "icon": null
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "stores": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "items": [
+          {
+            "id": "cc4762f7-2325-463b-a858-a5bd78401100",
+            "slug": "haath-kaari",
+            "name": "Haath Kaari",
+            "city": "Multan",
+            "tagline": "Craft from Multan, Hala and Swat",
+            "logoUrl": "https://placehold.co/400x400/B45309/FFFFFF/png?text=HK",
+            "coverUrl": "https://placehold.co/1200x500/B45309/FFFFFF/png?text=Haath+Kaari",
+            "brandColor": "#B45309",
+            "onBrandColor": "#FFFFFF",
+            "ratingAvg": 5,
+            "ratingCount": 2,
+            "isFeatured": true,
+            "productCount": 18
+          },
+          {
+            "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+            "slug": "lahore-loom",
+            "name": "Lahore Loom",
+            "city": "Lahore",
+            "tagline": "Hand-finished lawn, khaddar and kurtas",
+            "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL",
+            "coverUrl": "https://placehold.co/1200x500/7F1D1D/FFFFFF/png?text=Lahore+Loom",
+            "brandColor": "#7F1D1D",
+            "onBrandColor": "#FFFFFF",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "isFeatured": true,
+            "productCount": 18
+          },
+          {
+            "id": "a477d258-da65-4904-817d-8943a9246159",
+            "slug": "taaza-mandi-online-demo",
+            "name": "Taaza Mandi Online (demo)",
+            "city": "Lahore",
+            "tagline": "A fictional demo grocer — vegetables, dairy and staples",
+            "logoUrl": "https://placehold.co/400x400/166534/FFFFFF/png?text=TMO(",
+            "coverUrl": "https://placehold.co/1200x500/166534/FFFFFF/png?text=Taaza+Mandi+Online+(demo)",
+            "brandColor": "#166534",
+            "onBrandColor": "#FFFFFF",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "isFeatured": false,
+            "productCount": 20
+          }
+        ],
+        "total": 5,
+        "page": 1,
+        "pageSize": 3
+      }
+    }
+  },
+  "storesFeatured": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "items": [
+          {
+            "id": "cc4762f7-2325-463b-a858-a5bd78401100",
+            "slug": "haath-kaari",
+            "name": "Haath Kaari",
+            "city": "Multan",
+            "tagline": "Craft from Multan, Hala and Swat",
+            "logoUrl": "https://placehold.co/400x400/B45309/FFFFFF/png?text=HK",
+            "coverUrl": "https://placehold.co/1200x500/B45309/FFFFFF/png?text=Haath+Kaari",
+            "brandColor": "#B45309",
+            "onBrandColor": "#FFFFFF",
+            "ratingAvg": 5,
+            "ratingCount": 2,
+            "isFeatured": true,
+            "productCount": 18
+          },
+          {
+            "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+            "slug": "lahore-loom",
+            "name": "Lahore Loom",
+            "city": "Lahore",
+            "tagline": "Hand-finished lawn, khaddar and kurtas",
+            "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL",
+            "coverUrl": "https://placehold.co/1200x500/7F1D1D/FFFFFF/png?text=Lahore+Loom",
+            "brandColor": "#7F1D1D",
+            "onBrandColor": "#FFFFFF",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "isFeatured": true,
+            "productCount": 18
+          }
+        ],
+        "total": 2,
+        "page": 1,
+        "pageSize": 20
+      }
+    }
+  },
+  "storesInCity": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "items": [
+          {
+            "id": "cc4762f7-2325-463b-a858-a5bd78401100",
+            "slug": "haath-kaari",
+            "name": "Haath Kaari",
+            "city": "Multan",
+            "tagline": "Craft from Multan, Hala and Swat",
+            "logoUrl": "https://placehold.co/400x400/B45309/FFFFFF/png?text=HK",
+            "coverUrl": "https://placehold.co/1200x500/B45309/FFFFFF/png?text=Haath+Kaari",
+            "brandColor": "#B45309",
+            "onBrandColor": "#FFFFFF",
+            "ratingAvg": 5,
+            "ratingCount": 2,
+            "isFeatured": true,
+            "productCount": 18
+          },
+          {
+            "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+            "slug": "lahore-loom",
+            "name": "Lahore Loom",
+            "city": "Lahore",
+            "tagline": "Hand-finished lawn, khaddar and kurtas",
+            "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL",
+            "coverUrl": "https://placehold.co/1200x500/7F1D1D/FFFFFF/png?text=Lahore+Loom",
+            "brandColor": "#7F1D1D",
+            "onBrandColor": "#FFFFFF",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "isFeatured": true,
+            "productCount": 18
+          },
+          {
+            "id": "a477d258-da65-4904-817d-8943a9246159",
+            "slug": "taaza-mandi-online-demo",
+            "name": "Taaza Mandi Online (demo)",
+            "city": "Lahore",
+            "tagline": "A fictional demo grocer — vegetables, dairy and staples",
+            "logoUrl": "https://placehold.co/400x400/166534/FFFFFF/png?text=TMO(",
+            "coverUrl": "https://placehold.co/1200x500/166534/FFFFFF/png?text=Taaza+Mandi+Online+(demo)",
+            "brandColor": "#166534",
+            "onBrandColor": "#FFFFFF",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "isFeatured": false,
+            "productCount": 20
+          }
+        ],
+        "total": 5,
+        "page": 1,
+        "pageSize": 3
+      }
+    }
+  },
+  "store": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+        "slug": "lahore-loom",
+        "name": "Lahore Loom",
+        "city": "Lahore",
+        "tagline": "Hand-finished lawn, khaddar and kurtas",
+        "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL",
+        "coverUrl": "https://placehold.co/1200x500/7F1D1D/FFFFFF/png?text=Lahore+Loom",
+        "brandColor": "#7F1D1D",
+        "onBrandColor": "#FFFFFF",
+        "ratingAvg": 0,
+        "ratingCount": 0,
+        "isFeatured": true,
+        "productCount": 18,
+        "about": "A family workshop in Gulberg making ready-to-wear eastern clothing since 2009. Every piece is cut and finished in Lahore.",
+        "socials": {},
+        "collections": [
+          {
+            "id": "0321b18a-042b-4a50-ba39-884489828389",
+            "name": "Eid edit",
+            "slug": "eid-edit",
+            "productCount": 5
+          },
+          {
+            "id": "5daf463d-da77-4cc5-80ad-1e5390b3877a",
+            "name": "Winter khaddar",
+            "slug": "winter-khaddar",
+            "productCount": 3
+          }
+        ],
+        "policies": {
+          "shippingFlatFee": 200,
+          "freeShippingOver": 5000,
+          "returnWindowDays": 7,
+          "dispatchDaysMin": 1,
+          "dispatchDaysMax": 3,
+          "deliveryCities": [],
+          "paymentMethods": [
+            "cod",
+            "transfer"
+          ],
+          "codLimit": 15000,
+          "transferVia": [
+            "jazzcash",
+            "bank"
+          ]
+        }
+      }
+    }
+  },
+  "products": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "items": [
+          {
+            "id": "bb66980c-8939-4959-a17d-54461087f673",
+            "name": "Silk festive kurta",
+            "slug": "silk-festive-kurta",
+            "price": 7500,
+            "basePrice": 8900,
+            "salePrice": 7500,
+            "onSale": true,
+            "coverUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+              "slug": "lahore-loom",
+              "name": "Lahore Loom"
+            },
+            "isWishlisted": false
+          },
+          {
+            "id": "34a8c075-2c14-49ab-868a-9d0e5822ecd0",
+            "name": "Wash-and-wear shalwar kameez",
+            "slug": "wash-and-wear-shalwar-kameez",
+            "price": 4200,
+            "basePrice": 4600,
+            "salePrice": 4200,
+            "onSale": true,
+            "coverUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Wash-and-wear+shalwar+kameez",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+              "slug": "lahore-loom",
+              "name": "Lahore Loom"
+            },
+            "isWishlisted": false
+          },
+          {
+            "id": "72155c7a-848e-4d1d-8523-2a655744eb3e",
+            "name": "Wide-leg trousers",
+            "slug": "wide-leg-trousers",
+            "price": 2400,
+            "basePrice": 2400,
+            "salePrice": null,
+            "onSale": false,
+            "coverUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Wide-leg+trousers",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+              "slug": "lahore-loom",
+              "name": "Lahore Loom"
+            },
+            "isWishlisted": false
+          }
+        ],
+        "total": 18,
+        "page": 1,
+        "pageSize": 3
+      }
+    }
+  },
+  "productsSearch": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "items": [
+          {
+            "id": "0f7f9009-da26-4064-9439-2d8567d663e1",
+            "name": "Men's cotton kurta",
+            "slug": "mens-cotton-kurta",
+            "price": 3800,
+            "basePrice": 3800,
+            "salePrice": null,
+            "onSale": false,
+            "coverUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Men's+cotton+kurta",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+              "slug": "lahore-loom",
+              "name": "Lahore Loom"
+            }
+          },
+          {
+            "id": "bb66980c-8939-4959-a17d-54461087f673",
+            "name": "Silk festive kurta",
+            "slug": "silk-festive-kurta",
+            "price": 7500,
+            "basePrice": 8900,
+            "salePrice": 7500,
+            "onSale": true,
+            "coverUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+              "slug": "lahore-loom",
+              "name": "Lahore Loom"
+            }
+          },
+          {
+            "id": "259442e3-a024-4c6b-a95b-b3337ed15296",
+            "name": "Cotton straight kurta",
+            "slug": "cotton-straight-kurta",
+            "price": 2900,
+            "basePrice": 2900,
+            "salePrice": null,
+            "onSale": false,
+            "coverUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Cotton+straight+kurta",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+              "slug": "lahore-loom",
+              "name": "Lahore Loom"
+            }
+          }
+        ],
+        "total": 4,
+        "page": 1,
+        "pageSize": 3
+      }
+    }
+  },
+  "productsSorted": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "items": [
+          {
+            "id": "b5ccf350-e679-4cfe-a604-f6025421d326",
+            "name": "Green chillies",
+            "slug": "green-chillies",
+            "price": 40,
+            "basePrice": 40,
+            "salePrice": null,
+            "onSale": false,
+            "coverUrl": "https://placehold.co/800x800/166534/FFFFFF/png?text=Green+chillies",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "a477d258-da65-4904-817d-8943a9246159",
+              "slug": "taaza-mandi-online-demo",
+              "name": "Taaza Mandi Online (demo)"
+            }
+          },
+          {
+            "id": "3f3ee170-2063-41bc-b79c-d4463e721552",
+            "name": "Spinach (palak)",
+            "slug": "spinach-palak",
+            "price": 70,
+            "basePrice": 70,
+            "salePrice": null,
+            "onSale": false,
+            "coverUrl": "https://placehold.co/800x800/166534/FFFFFF/png?text=Spinach+(palak)",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "a477d258-da65-4904-817d-8943a9246159",
+              "slug": "taaza-mandi-online-demo",
+              "name": "Taaza Mandi Online (demo)"
+            }
+          },
+          {
+            "id": "a4b1ac01-9579-4a6f-b8fe-7a0b5a5249fe",
+            "name": "Potatoes",
+            "slug": "potatoes",
+            "price": 90,
+            "basePrice": 90,
+            "salePrice": null,
+            "onSale": false,
+            "coverUrl": "https://placehold.co/800x800/166534/FFFFFF/png?text=Potatoes",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "a477d258-da65-4904-817d-8943a9246159",
+              "slug": "taaza-mandi-online-demo",
+              "name": "Taaza Mandi Online (demo)"
+            }
+          }
+        ],
+        "total": 91,
+        "page": 1,
+        "pageSize": 3
+      }
+    }
+  },
+  "suggest": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "products": [
+          {
+            "id": "bb66980c-8939-4959-a17d-54461087f673",
+            "name": "Silk festive kurta",
+            "slug": "silk-festive-kurta",
+            "price": 7500,
+            "basePrice": 8900,
+            "salePrice": 7500,
+            "onSale": true,
+            "coverUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+              "slug": "lahore-loom",
+              "name": "Lahore Loom"
+            }
+          },
+          {
+            "id": "0f7f9009-da26-4064-9439-2d8567d663e1",
+            "name": "Men's cotton kurta",
+            "slug": "mens-cotton-kurta",
+            "price": 3800,
+            "basePrice": 3800,
+            "salePrice": null,
+            "onSale": false,
+            "coverUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Men's+cotton+kurta",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+              "slug": "lahore-loom",
+              "name": "Lahore Loom"
+            }
+          },
+          {
+            "id": "259442e3-a024-4c6b-a95b-b3337ed15296",
+            "name": "Cotton straight kurta",
+            "slug": "cotton-straight-kurta",
+            "price": 2900,
+            "basePrice": 2900,
+            "salePrice": null,
+            "onSale": false,
+            "coverUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Cotton+straight+kurta",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+              "slug": "lahore-loom",
+              "name": "Lahore Loom"
+            }
+          }
+        ],
+        "stores": []
+      }
+    }
+  },
+  "product": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "bb66980c-8939-4959-a17d-54461087f673",
+        "name": "Silk festive kurta",
+        "slug": "silk-festive-kurta",
+        "price": 7500,
+        "basePrice": 8900,
+        "salePrice": 7500,
+        "onSale": true,
+        "coverUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+        "ratingAvg": 0,
+        "ratingCount": 0,
+        "inStock": true,
+        "store": {
+          "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+          "slug": "lahore-loom",
+          "name": "Lahore Loom",
+          "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL",
+          "brandColor": "#7F1D1D",
+          "onBrandColor": "#FFFFFF",
+          "ratingAvg": 0,
+          "ratingCount": 0,
+          "returnWindowDays": 7,
+          "codEnabled": true,
+          "shippingFlatFee": 200,
+          "freeShippingOver": 5000,
+          "dispatchDaysMin": 1,
+          "dispatchDaysMax": 3
+        },
+        "description": "Raw silk with gota work on the yoke.",
+        "tags": [
+          "silk",
+          "festive",
+          "eid"
+        ],
+        "categoryId": "fae54e5c-7a4e-411f-83ca-6edcd3bbb7ef",
+        "collectionId": "0321b18a-042b-4a50-ba39-884489828389",
+        "pack": null,
+        "pricePer": null,
+        "images": [
+          {
+            "id": "16c68bd6-a5f4-4910-ab83-8e27b92e8c3b",
+            "url": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta"
+          }
+        ],
+        "options": {
+          "option1": [
+            "S",
+            "M",
+            "L"
+          ],
+          "option2": []
+        },
+        "variants": [
+          {
+            "id": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+            "option1": "S",
+            "option2": null,
+            "label": "S",
+            "colorHex": null,
+            "price": 7500,
+            "pack": null,
+            "pricePer": null,
+            "inStock": true,
+            "lowStock": true
+          },
+          {
+            "id": "a85fe877-03b9-4ade-8e20-745172eee95b",
+            "option1": "M",
+            "option2": null,
+            "label": "M",
+            "colorHex": null,
+            "price": 7500,
+            "pack": null,
+            "pricePer": null,
+            "inStock": true,
+            "lowStock": true
+          },
+          {
+            "id": "454f9a02-588a-432d-8b99-16a27b95f107",
+            "option1": "L",
+            "option2": null,
+            "label": "L",
+            "colorHex": null,
+            "price": 7500,
+            "pack": null,
+            "pricePer": null,
+            "inStock": true,
+            "lowStock": true
+          }
+        ],
+        "ratingBreakdown": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0
+        },
+        "isWishlisted": false
+      }
+    }
+  },
+  "productSignedOut": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "bb66980c-8939-4959-a17d-54461087f673",
+        "name": "Silk festive kurta",
+        "slug": "silk-festive-kurta",
+        "price": 7500,
+        "basePrice": 8900,
+        "salePrice": 7500,
+        "onSale": true,
+        "coverUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+        "ratingAvg": 0,
+        "ratingCount": 0,
+        "inStock": true,
+        "store": {
+          "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+          "slug": "lahore-loom",
+          "name": "Lahore Loom",
+          "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL",
+          "brandColor": "#7F1D1D",
+          "onBrandColor": "#FFFFFF",
+          "ratingAvg": 0,
+          "ratingCount": 0,
+          "returnWindowDays": 7,
+          "codEnabled": true,
+          "shippingFlatFee": 200,
+          "freeShippingOver": 5000,
+          "dispatchDaysMin": 1,
+          "dispatchDaysMax": 3
+        },
+        "description": "Raw silk with gota work on the yoke.",
+        "tags": [
+          "silk",
+          "festive",
+          "eid"
+        ],
+        "categoryId": "fae54e5c-7a4e-411f-83ca-6edcd3bbb7ef",
+        "collectionId": "0321b18a-042b-4a50-ba39-884489828389",
+        "pack": null,
+        "pricePer": null,
+        "images": [
+          {
+            "id": "16c68bd6-a5f4-4910-ab83-8e27b92e8c3b",
+            "url": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta"
+          }
+        ],
+        "options": {
+          "option1": [
+            "S",
+            "M",
+            "L"
+          ],
+          "option2": []
+        },
+        "variants": [
+          {
+            "id": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+            "option1": "S",
+            "option2": null,
+            "label": "S",
+            "colorHex": null,
+            "price": 7500,
+            "pack": null,
+            "pricePer": null,
+            "inStock": true,
+            "lowStock": true
+          },
+          {
+            "id": "a85fe877-03b9-4ade-8e20-745172eee95b",
+            "option1": "M",
+            "option2": null,
+            "label": "M",
+            "colorHex": null,
+            "price": 7500,
+            "pack": null,
+            "pricePer": null,
+            "inStock": true,
+            "lowStock": true
+          },
+          {
+            "id": "454f9a02-588a-432d-8b99-16a27b95f107",
+            "option1": "L",
+            "option2": null,
+            "label": "L",
+            "colorHex": null,
+            "price": 7500,
+            "pack": null,
+            "pricePer": null,
+            "inStock": true,
+            "lowStock": true
+          }
+        ],
+        "ratingBreakdown": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 0
+        },
+        "isWishlisted": false
+      }
+    }
+  },
+  "related": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": [
+        {
+          "id": "259442e3-a024-4c6b-a95b-b3337ed15296",
+          "name": "Cotton straight kurta",
+          "slug": "cotton-straight-kurta",
+          "price": 2900,
+          "basePrice": 2900,
+          "salePrice": null,
+          "onSale": false,
+          "coverUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Cotton+straight+kurta",
+          "ratingAvg": 0,
+          "ratingCount": 0,
+          "inStock": true,
+          "store": {
+            "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+            "slug": "lahore-loom",
+            "name": "Lahore Loom"
+          }
+        },
+        {
+          "id": "83e6eb3c-59bd-4bf3-accc-004e9e2a6cd8",
+          "name": "Embroidered lawn kurta",
+          "slug": "embroidered-lawn-kurta",
+          "price": 3900,
+          "basePrice": 4500,
+          "salePrice": 3900,
+          "onSale": true,
+          "coverUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Embroidered+lawn+kurta",
+          "ratingAvg": 0,
+          "ratingCount": 0,
+          "inStock": true,
+          "store": {
+            "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+            "slug": "lahore-loom",
+            "name": "Lahore Loom"
+          }
+        }
+      ]
+    }
+  },
+  "reviews": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "items": [],
+        "total": 0,
+        "page": 1,
+        "pageSize": 3,
+        "summary": {
+          "ratingAvg": 0,
+          "ratingCount": 0,
+          "breakdown": {
+            "1": 0,
+            "2": 0,
+            "3": 0,
+            "4": 0,
+            "5": 0
+          }
+        }
+      }
+    }
+  },
+  "reviewsMissingErr": {
+    "status": 404,
+    "body": {
+      "success": false,
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "Product not found."
+      }
+    }
+  },
+  "wishlistAdd": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "productId": "bb66980c-8939-4959-a17d-54461087f673",
+        "isWishlisted": true
+      }
+    }
+  },
+  "wishlist": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "items": [
+          {
+            "id": "bb66980c-8939-4959-a17d-54461087f673",
+            "name": "Silk festive kurta",
+            "slug": "silk-festive-kurta",
+            "price": 7500,
+            "basePrice": 8900,
+            "salePrice": 7500,
+            "onSale": true,
+            "coverUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "ratingAvg": 0,
+            "ratingCount": 0,
+            "inStock": true,
+            "store": {
+              "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+              "slug": "lahore-loom",
+              "name": "Lahore Loom"
+            },
+            "isWishlisted": true,
+            "available": true,
+            "savedAt": "2026-10-31T06:13:25.586Z"
+          }
+        ],
+        "total": 1,
+        "page": 1,
+        "pageSize": 3
+      }
+    }
+  },
+  "wishlistRemove": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "productId": "bb66980c-8939-4959-a17d-54461087f673",
+        "isWishlisted": false
+      }
+    }
+  },
+  "report": {
+    "status": 201,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "317be07e-07df-4564-a3bb-3a835ca18ce4",
+        "status": "open",
+        "reason": "misleading",
+        "createdAt": "2026-10-31T06:13:25.616Z"
+      }
+    }
+  },
+  "reportAgainErr": {
+    "status": 409,
+    "body": {
+      "success": false,
+      "error": {
+        "code": "CONFLICT",
+        "message": "You have already reported this product; our team is looking at it."
+      }
+    }
+  },
+  "address": {
+    "status": 201,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "5b4c9053-580c-4ecf-ac56-d68750872e6b",
+        "label": "home",
+        "fullName": "Ayesha Khan",
+        "phone": "+923000000000",
+        "city": "Lahore",
+        "area": "Gulberg III",
+        "line1": "House 12, Street 4",
+        "landmark": null,
+        "lat": null,
+        "lng": null,
+        "isDefault": true,
+        "createdAt": "2026-10-31T06:13:25.642Z",
+        "updatedAt": "2026-10-31T06:13:25.642Z"
+      }
+    }
+  },
+  "addressFar": {
+    "status": 201,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "6dc4bffb-ee69-4e9c-92cc-aec49495a7a4",
+        "label": "other",
+        "fullName": "Ayesha Khan",
+        "phone": "+923000000000",
+        "city": "Gilgit",
+        "area": "Jutial",
+        "line1": "House 4, Street 1",
+        "landmark": null,
+        "lat": null,
+        "lng": null,
+        "isDefault": false,
+        "createdAt": "2026-10-31T06:13:25.652Z",
+        "updatedAt": "2026-10-31T06:13:25.652Z"
+      }
+    }
+  },
+  "cartEmpty": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "stores": [],
+        "lineCount": 0,
+        "itemCount": 0,
+        "itemsTotal": 0,
+        "shippingTotal": 0,
+        "grandTotal": 0,
+        "hasWarnings": false
+      }
+    }
+  },
+  "cartAdd": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "stores": [
+          {
+            "store": {
+              "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+              "slug": "lahore-loom",
+              "name": "Lahore Loom",
+              "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL"
+            },
+            "isAvailable": true,
+            "warnings": [],
+            "items": [
+              {
+                "id": "cc3eafac-8234-4d96-a422-f3fe571666f7",
+                "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+                "productId": "bb66980c-8939-4959-a17d-54461087f673",
+                "productName": "Silk festive kurta",
+                "variantLabel": "S",
+                "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+                "unitPrice": 7500,
+                "priceAtAdd": 7500,
+                "quantity": 2,
+                "lineTotal": 15000,
+                "inStock": true,
+                "lowStock": true,
+                "maxQuantity": 3,
+                "warnings": []
+              }
+            ],
+            "subtotal": 15000,
+            "shippingFee": 0,
+            "total": 15000,
+            "freeShippingOver": 5000,
+            "amountToFreeShipping": 0
+          }
+        ],
+        "lineCount": 1,
+        "itemCount": 2,
+        "itemsTotal": 15000,
+        "shippingTotal": 0,
+        "grandTotal": 15000,
+        "hasWarnings": false,
+        "adjusted": null
+      }
+    }
+  },
+  "cartAddOtherStore": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "stores": [
+          {
+            "store": {
+              "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+              "slug": "lahore-loom",
+              "name": "Lahore Loom",
+              "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL"
+            },
+            "isAvailable": true,
+            "warnings": [],
+            "items": [
+              {
+                "id": "cc3eafac-8234-4d96-a422-f3fe571666f7",
+                "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+                "productId": "bb66980c-8939-4959-a17d-54461087f673",
+                "productName": "Silk festive kurta",
+                "variantLabel": "S",
+                "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+                "unitPrice": 7500,
+                "priceAtAdd": 7500,
+                "quantity": 2,
+                "lineTotal": 15000,
+                "inStock": true,
+                "lowStock": true,
+                "maxQuantity": 3,
+                "warnings": []
+              }
+            ],
+            "subtotal": 15000,
+            "shippingFee": 0,
+            "total": 15000,
+            "freeShippingOver": 5000,
+            "amountToFreeShipping": 0
+          },
+          {
+            "store": {
+              "id": "a477d258-da65-4904-817d-8943a9246159",
+              "slug": "taaza-mandi-online-demo",
+              "name": "Taaza Mandi Online (demo)",
+              "logoUrl": "https://placehold.co/400x400/166534/FFFFFF/png?text=TMO("
+            },
+            "isAvailable": true,
+            "warnings": [],
+            "items": [
+              {
+                "id": "7fad8520-865f-4d2d-a40b-53690ccfc140",
+                "variantId": "55ffaf75-50d4-438c-936a-049fc20b2a8e",
+                "productId": "6e1de8e9-e71f-43f8-b823-a08859f2da7a",
+                "productName": "Paneer",
+                "variantLabel": "Default",
+                "imageUrl": "https://placehold.co/800x800/166534/FFFFFF/png?text=Paneer",
+                "unitPrice": 420,
+                "priceAtAdd": 420,
+                "quantity": 1,
+                "lineTotal": 420,
+                "inStock": true,
+                "lowStock": false,
+                "maxQuantity": 20,
+                "warnings": []
+              }
+            ],
+            "subtotal": 420,
+            "shippingFee": 120,
+            "total": 540,
+            "freeShippingOver": 2500,
+            "amountToFreeShipping": 2080
+          }
+        ],
+        "lineCount": 2,
+        "itemCount": 3,
+        "itemsTotal": 15420,
+        "shippingTotal": 120,
+        "grandTotal": 15540,
+        "hasWarnings": false,
+        "adjusted": null
+      }
+    }
+  },
+  "cartAddCapped": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "stores": [
+          {
+            "store": {
+              "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+              "slug": "lahore-loom",
+              "name": "Lahore Loom",
+              "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL"
+            },
+            "isAvailable": true,
+            "warnings": [],
+            "items": [
+              {
+                "id": "cc3eafac-8234-4d96-a422-f3fe571666f7",
+                "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+                "productId": "bb66980c-8939-4959-a17d-54461087f673",
+                "productName": "Silk festive kurta",
+                "variantLabel": "S",
+                "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+                "unitPrice": 7500,
+                "priceAtAdd": 7500,
+                "quantity": 3,
+                "lineTotal": 22500,
+                "inStock": true,
+                "lowStock": true,
+                "maxQuantity": 3,
+                "warnings": []
+              }
+            ],
+            "subtotal": 22500,
+            "shippingFee": 0,
+            "total": 22500,
+            "freeShippingOver": 5000,
+            "amountToFreeShipping": 0
+          },
+          {
+            "store": {
+              "id": "a477d258-da65-4904-817d-8943a9246159",
+              "slug": "taaza-mandi-online-demo",
+              "name": "Taaza Mandi Online (demo)",
+              "logoUrl": "https://placehold.co/400x400/166534/FFFFFF/png?text=TMO("
+            },
+            "isAvailable": true,
+            "warnings": [],
+            "items": [
+              {
+                "id": "7fad8520-865f-4d2d-a40b-53690ccfc140",
+                "variantId": "55ffaf75-50d4-438c-936a-049fc20b2a8e",
+                "productId": "6e1de8e9-e71f-43f8-b823-a08859f2da7a",
+                "productName": "Paneer",
+                "variantLabel": "Default",
+                "imageUrl": "https://placehold.co/800x800/166534/FFFFFF/png?text=Paneer",
+                "unitPrice": 420,
+                "priceAtAdd": 420,
+                "quantity": 1,
+                "lineTotal": 420,
+                "inStock": true,
+                "lowStock": false,
+                "maxQuantity": 20,
+                "warnings": []
+              }
+            ],
+            "subtotal": 420,
+            "shippingFee": 120,
+            "total": 540,
+            "freeShippingOver": 2500,
+            "amountToFreeShipping": 2080
+          }
+        ],
+        "lineCount": 2,
+        "itemCount": 4,
+        "itemsTotal": 22920,
+        "shippingTotal": 120,
+        "grandTotal": 23040,
+        "hasWarnings": false,
+        "adjusted": {
+          "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+          "requested": 22,
+          "quantity": 3,
+          "reason": "stock"
+        }
+      }
+    }
+  },
+  "cartUpdate": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "stores": [
+          {
+            "store": {
+              "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+              "slug": "lahore-loom",
+              "name": "Lahore Loom",
+              "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL"
+            },
+            "isAvailable": true,
+            "warnings": [],
+            "items": [
+              {
+                "id": "cc3eafac-8234-4d96-a422-f3fe571666f7",
+                "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+                "productId": "bb66980c-8939-4959-a17d-54461087f673",
+                "productName": "Silk festive kurta",
+                "variantLabel": "S",
+                "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+                "unitPrice": 7500,
+                "priceAtAdd": 7500,
+                "quantity": 2,
+                "lineTotal": 15000,
+                "inStock": true,
+                "lowStock": true,
+                "maxQuantity": 3,
+                "warnings": []
+              }
+            ],
+            "subtotal": 15000,
+            "shippingFee": 0,
+            "total": 15000,
+            "freeShippingOver": 5000,
+            "amountToFreeShipping": 0
+          },
+          {
+            "store": {
+              "id": "a477d258-da65-4904-817d-8943a9246159",
+              "slug": "taaza-mandi-online-demo",
+              "name": "Taaza Mandi Online (demo)",
+              "logoUrl": "https://placehold.co/400x400/166534/FFFFFF/png?text=TMO("
+            },
+            "isAvailable": true,
+            "warnings": [],
+            "items": [
+              {
+                "id": "7fad8520-865f-4d2d-a40b-53690ccfc140",
+                "variantId": "55ffaf75-50d4-438c-936a-049fc20b2a8e",
+                "productId": "6e1de8e9-e71f-43f8-b823-a08859f2da7a",
+                "productName": "Paneer",
+                "variantLabel": "Default",
+                "imageUrl": "https://placehold.co/800x800/166534/FFFFFF/png?text=Paneer",
+                "unitPrice": 420,
+                "priceAtAdd": 420,
+                "quantity": 1,
+                "lineTotal": 420,
+                "inStock": true,
+                "lowStock": false,
+                "maxQuantity": 20,
+                "warnings": []
+              }
+            ],
+            "subtotal": 420,
+            "shippingFee": 120,
+            "total": 540,
+            "freeShippingOver": 2500,
+            "amountToFreeShipping": 2080
+          }
+        ],
+        "lineCount": 2,
+        "itemCount": 3,
+        "itemsTotal": 15420,
+        "shippingTotal": 120,
+        "grandTotal": 15540,
+        "hasWarnings": false,
+        "adjusted": null
+      }
+    }
+  },
+  "cart": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "stores": [
+          {
+            "store": {
+              "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+              "slug": "lahore-loom",
+              "name": "Lahore Loom",
+              "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL"
+            },
+            "isAvailable": true,
+            "warnings": [],
+            "items": [
+              {
+                "id": "cc3eafac-8234-4d96-a422-f3fe571666f7",
+                "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+                "productId": "bb66980c-8939-4959-a17d-54461087f673",
+                "productName": "Silk festive kurta",
+                "variantLabel": "S",
+                "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+                "unitPrice": 7500,
+                "priceAtAdd": 7500,
+                "quantity": 2,
+                "lineTotal": 15000,
+                "inStock": true,
+                "lowStock": true,
+                "maxQuantity": 3,
+                "warnings": []
+              }
+            ],
+            "subtotal": 15000,
+            "shippingFee": 0,
+            "total": 15000,
+            "freeShippingOver": 5000,
+            "amountToFreeShipping": 0
+          },
+          {
+            "store": {
+              "id": "a477d258-da65-4904-817d-8943a9246159",
+              "slug": "taaza-mandi-online-demo",
+              "name": "Taaza Mandi Online (demo)",
+              "logoUrl": "https://placehold.co/400x400/166534/FFFFFF/png?text=TMO("
+            },
+            "isAvailable": true,
+            "warnings": [],
+            "items": [
+              {
+                "id": "7fad8520-865f-4d2d-a40b-53690ccfc140",
+                "variantId": "55ffaf75-50d4-438c-936a-049fc20b2a8e",
+                "productId": "6e1de8e9-e71f-43f8-b823-a08859f2da7a",
+                "productName": "Paneer",
+                "variantLabel": "Default",
+                "imageUrl": "https://placehold.co/800x800/166534/FFFFFF/png?text=Paneer",
+                "unitPrice": 420,
+                "priceAtAdd": 420,
+                "quantity": 1,
+                "lineTotal": 420,
+                "inStock": true,
+                "lowStock": false,
+                "maxQuantity": 20,
+                "warnings": []
+              }
+            ],
+            "subtotal": 420,
+            "shippingFee": 120,
+            "total": 540,
+            "freeShippingOver": 2500,
+            "amountToFreeShipping": 2080
+          }
+        ],
+        "lineCount": 2,
+        "itemCount": 3,
+        "itemsTotal": 15420,
+        "shippingTotal": 120,
+        "grandTotal": 15540,
+        "hasWarnings": false
+      }
+    }
+  },
+  "preview": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "ok": true,
+        "issues": [],
+        "stores": [
+          {
+            "storeId": "23c24309-7049-4da4-982b-a93822dbbf46",
+            "storeSlug": "lahore-loom",
+            "storeName": "Lahore Loom",
+            "paymentMethod": "cod",
+            "couponCode": null,
+            "items": [
+              {
+                "cartItemId": "cc3eafac-8234-4d96-a422-f3fe571666f7",
+                "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+                "productId": "bb66980c-8939-4959-a17d-54461087f673",
+                "productName": "Silk festive kurta",
+                "variantLabel": "S",
+                "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+                "unitPrice": 7500,
+                "quantity": 2,
+                "lineTotal": 15000
+              }
+            ],
+            "subtotal": 15000,
+            "discount": 0,
+            "shippingFee": 0,
+            "total": 15000,
+            "transferVia": [],
+            "issues": [],
+            "warnings": []
+          },
+          {
+            "storeId": "a477d258-da65-4904-817d-8943a9246159",
+            "storeSlug": "taaza-mandi-online-demo",
+            "storeName": "Taaza Mandi Online (demo)",
+            "paymentMethod": "cod",
+            "couponCode": null,
+            "items": [
+              {
+                "cartItemId": "7fad8520-865f-4d2d-a40b-53690ccfc140",
+                "variantId": "55ffaf75-50d4-438c-936a-049fc20b2a8e",
+                "productId": "6e1de8e9-e71f-43f8-b823-a08859f2da7a",
+                "productName": "Paneer",
+                "variantLabel": "Default",
+                "imageUrl": "https://placehold.co/800x800/166534/FFFFFF/png?text=Paneer",
+                "unitPrice": 420,
+                "quantity": 1,
+                "lineTotal": 420
+              }
+            ],
+            "subtotal": 420,
+            "discount": 0,
+            "shippingFee": 120,
+            "total": 540,
+            "transferVia": [],
+            "issues": [],
+            "warnings": []
+          }
+        ],
+        "totals": {
+          "itemsTotal": 15420,
+          "discountTotal": 0,
+          "shippingTotal": 120,
+          "grandTotal": 15540
+        }
+      }
+    }
+  },
+  "previewFar": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "ok": false,
+        "issues": [],
+        "stores": [
+          {
+            "storeId": "23c24309-7049-4da4-982b-a93822dbbf46",
+            "storeSlug": "lahore-loom",
+            "storeName": "Lahore Loom",
+            "paymentMethod": "cod",
+            "couponCode": null,
+            "items": [
+              {
+                "cartItemId": "cc3eafac-8234-4d96-a422-f3fe571666f7",
+                "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+                "productId": "bb66980c-8939-4959-a17d-54461087f673",
+                "productName": "Silk festive kurta",
+                "variantLabel": "S",
+                "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+                "unitPrice": 7500,
+                "quantity": 2,
+                "lineTotal": 15000
+              }
+            ],
+            "subtotal": 15000,
+            "discount": 0,
+            "shippingFee": 0,
+            "total": 15000,
+            "transferVia": [],
+            "issues": [],
+            "warnings": []
+          },
+          {
+            "storeId": "a477d258-da65-4904-817d-8943a9246159",
+            "storeSlug": "taaza-mandi-online-demo",
+            "storeName": "Taaza Mandi Online (demo)",
+            "paymentMethod": "cod",
+            "couponCode": null,
+            "items": [
+              {
+                "cartItemId": "7fad8520-865f-4d2d-a40b-53690ccfc140",
+                "variantId": "55ffaf75-50d4-438c-936a-049fc20b2a8e",
+                "productId": "6e1de8e9-e71f-43f8-b823-a08859f2da7a",
+                "productName": "Paneer",
+                "variantLabel": "Default",
+                "imageUrl": "https://placehold.co/800x800/166534/FFFFFF/png?text=Paneer",
+                "unitPrice": 420,
+                "quantity": 1,
+                "lineTotal": 420
+              }
+            ],
+            "subtotal": 420,
+            "discount": 0,
+            "shippingFee": 120,
+            "total": 540,
+            "transferVia": [],
+            "issues": [
+              {
+                "code": "DELIVERY_UNAVAILABLE",
+                "message": "Taaza Mandi Online (demo) doesn't deliver to Gilgit.",
+                "details": {
+                  "storeId": "a477d258-da65-4904-817d-8943a9246159",
+                  "city": "Gilgit",
+                  "deliveryCities": [
+                    "Lahore",
+                    "Karachi"
+                  ]
+                }
+              }
+            ],
+            "warnings": []
+          }
+        ],
+        "totals": {
+          "itemsTotal": 15420,
+          "discountTotal": 0,
+          "shippingTotal": 120,
+          "grandTotal": 15540
+        }
+      }
+    }
+  },
+  "couponsAvailable": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "storeSubtotal": 15000,
+        "items": [
+          {
+            "code": "LOOM10",
+            "type": "percent",
+            "value": 10,
+            "minOrder": 0,
+            "maxDiscount": 800,
+            "endsAt": "2027-10-15T17:59:17.764Z",
+            "eligible": true,
+            "shortBy": 0,
+            "discount": 800
+          },
+          {
+            "code": "EID500",
+            "type": "fixed",
+            "value": 500,
+            "minOrder": 4000,
+            "maxDiscount": null,
+            "endsAt": "2027-10-15T17:59:17.766Z",
+            "eligible": true,
+            "shortBy": 0,
+            "discount": 500
+          }
+        ]
+      }
+    }
+  },
+  "cartRemove": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "stores": [
+          {
+            "store": {
+              "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+              "slug": "lahore-loom",
+              "name": "Lahore Loom",
+              "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL"
+            },
+            "isAvailable": true,
+            "warnings": [],
+            "items": [
+              {
+                "id": "cc3eafac-8234-4d96-a422-f3fe571666f7",
+                "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+                "productId": "bb66980c-8939-4959-a17d-54461087f673",
+                "productName": "Silk festive kurta",
+                "variantLabel": "S",
+                "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+                "unitPrice": 7500,
+                "priceAtAdd": 7500,
+                "quantity": 2,
+                "lineTotal": 15000,
+                "inStock": true,
+                "lowStock": true,
+                "maxQuantity": 3,
+                "warnings": []
+              }
+            ],
+            "subtotal": 15000,
+            "shippingFee": 0,
+            "total": 15000,
+            "freeShippingOver": 5000,
+            "amountToFreeShipping": 0
+          }
+        ],
+        "lineCount": 1,
+        "itemCount": 2,
+        "itemsTotal": 15000,
+        "shippingTotal": 0,
+        "grandTotal": 15000,
+        "hasWarnings": false,
+        "adjusted": null
+      }
+    }
+  },
+  "checkoutNoKeyErr": {
+    "status": 400,
+    "body": {
+      "success": false,
+      "error": {
+        "code": "IDEMPOTENCY_KEY_REQUIRED",
+        "message": "Send an Idempotency-Key header (a fresh UUID per attempt) so a retry can never place the order twice."
+      }
+    }
+  },
+  "checkout": {
+    "status": 201,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "327c5e21-b7ea-4535-8dc9-3be300b128ac",
+        "code": "MM-GM46TG",
+        "placedAt": "2026-10-31T06:13:25.775Z",
+        "address": {
+          "lat": null,
+          "lng": null,
+          "area": "Gulberg III",
+          "city": "Lahore",
+          "label": "home",
+          "line1": "House 12, Street 4",
+          "phone": "+923000000000",
+          "fullName": "Ayesha Khan",
+          "landmark": null
+        },
+        "itemsTotal": 15000,
+        "discountTotal": 0,
+        "shippingTotal": 0,
+        "grandTotal": 15000,
+        "storeOrders": [
+          {
+            "id": "104837e3-b5f8-4a5c-a916-a8e118d9c147",
+            "code": "MM-GM46TG-1",
+            "status": "placed",
+            "paymentMethod": "cod",
+            "paymentStatus": "cod_pending",
+            "subtotal": 15000,
+            "discount": 0,
+            "couponCode": null,
+            "shippingFee": 0,
+            "total": 15000,
+            "customerNote": "Ring the bell",
+            "items": [
+              {
+                "id": "e77a7090-3648-433a-9714-14377effa579",
+                "productId": "bb66980c-8939-4959-a17d-54461087f673",
+                "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+                "productName": "Silk festive kurta",
+                "variantLabel": "S",
+                "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+                "unitPrice": 7500,
+                "quantity": 2,
+                "lineTotal": 15000,
+                "returnedQty": 0,
+                "reviewed": false,
+                "canReview": false
+              }
+            ],
+            "payment": {
+              "method": "cod",
+              "status": "cod_pending",
+              "payBy": null,
+              "paidAt": null,
+              "paymentRef": null,
+              "proofUrl": null,
+              "rejectedReason": null,
+              "accounts": null,
+              "refundAmount": null,
+              "refundRef": null,
+              "refundedAt": null
+            },
+            "shipping": {
+              "courierName": null,
+              "trackingRef": null,
+              "riderName": null,
+              "riderPhone": null
+            },
+            "cancelReason": null,
+            "cancelledBy": null,
+            "cancelRequestedAt": null,
+            "returnWindowDays": 7,
+            "returnDeadline": null,
+            "placedAt": "2026-10-31T06:13:25.775Z",
+            "confirmedAt": null,
+            "packedAt": null,
+            "shippedAt": null,
+            "deliveredAt": null,
+            "completedAt": null,
+            "cancelledAt": null,
+            "events": [
+              {
+                "kind": "status",
+                "from": null,
+                "to": "placed",
+                "actorRole": "customer",
+                "note": null,
+                "at": "2026-10-31T06:13:25.791Z"
+              }
+            ],
+            "store": {
+              "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+              "slug": "lahore-loom",
+              "name": "Lahore Loom",
+              "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL"
+            },
+            "can": {
+              "cancel": true,
+              "requestCancel": false,
+              "submitPaymentProof": false,
+              "markReceived": false,
+              "requestReturn": false
+            }
+          }
+        ]
+      }
+    }
+  },
+  "checkoutTransfer": {
+    "status": 201,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "1bd9156e-5097-4b06-a102-e4f7bbf62d52",
+        "code": "MM-AADW6P",
+        "placedAt": "2026-10-31T06:13:25.823Z",
+        "address": {
+          "lat": null,
+          "lng": null,
+          "area": "Gulberg III",
+          "city": "Lahore",
+          "label": "home",
+          "line1": "House 12, Street 4",
+          "phone": "+923000000000",
+          "fullName": "Ayesha Khan",
+          "landmark": null
+        },
+        "itemsTotal": 7500,
+        "discountTotal": 0,
+        "shippingTotal": 0,
+        "grandTotal": 7500,
+        "storeOrders": [
+          {
+            "id": "10a44ba3-b6e9-4ec2-8a65-d43fe1eabe95",
+            "code": "MM-AADW6P-1",
+            "status": "placed",
+            "paymentMethod": "transfer",
+            "paymentStatus": "awaiting_transfer",
+            "subtotal": 7500,
+            "discount": 0,
+            "couponCode": null,
+            "shippingFee": 0,
+            "total": 7500,
+            "customerNote": null,
+            "items": [
+              {
+                "id": "89b88d5e-b5a2-47d7-94f3-7d99a3eee5f2",
+                "productId": "bb66980c-8939-4959-a17d-54461087f673",
+                "variantId": "a85fe877-03b9-4ade-8e20-745172eee95b",
+                "productName": "Silk festive kurta",
+                "variantLabel": "M",
+                "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+                "unitPrice": 7500,
+                "quantity": 1,
+                "lineTotal": 7500,
+                "returnedQty": 0,
+                "reviewed": false,
+                "canReview": false
+              }
+            ],
+            "payment": {
+              "method": "transfer",
+              "status": "awaiting_transfer",
+              "payBy": "2026-11-01T06:13:25.823Z",
+              "paidAt": null,
+              "paymentRef": null,
+              "proofUrl": null,
+              "rejectedReason": null,
+              "accounts": [
+                {
+                  "kind": "jazzcash",
+                  "bankName": null,
+                  "accountTitle": "Sana Iqbal",
+                  "accountNumber": "+920000000000"
+                },
+                {
+                  "kind": "bank",
+                  "bankName": "Meezan Bank",
+                  "accountTitle": "Lahore Loom",
+                  "accountNumber": "PK00TEST0000000000000000"
+                }
+              ],
+              "refundAmount": null,
+              "refundRef": null,
+              "refundedAt": null
+            },
+            "shipping": {
+              "courierName": null,
+              "trackingRef": null,
+              "riderName": null,
+              "riderPhone": null
+            },
+            "cancelReason": null,
+            "cancelledBy": null,
+            "cancelRequestedAt": null,
+            "returnWindowDays": 7,
+            "returnDeadline": null,
+            "placedAt": "2026-10-31T06:13:25.823Z",
+            "confirmedAt": null,
+            "packedAt": null,
+            "shippedAt": null,
+            "deliveredAt": null,
+            "completedAt": null,
+            "cancelledAt": null,
+            "events": [
+              {
+                "kind": "status",
+                "from": null,
+                "to": "placed",
+                "actorRole": "customer",
+                "note": null,
+                "at": "2026-10-31T06:13:25.838Z"
+              }
+            ],
+            "store": {
+              "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+              "slug": "lahore-loom",
+              "name": "Lahore Loom",
+              "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL"
+            },
+            "can": {
+              "cancel": true,
+              "requestCancel": false,
+              "submitPaymentProof": true,
+              "markReceived": false,
+              "requestReturn": false
+            }
+          }
+        ]
+      }
+    }
+  },
+  "checkoutC": {
+    "status": 201,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "83f8e555-2171-40bb-84a5-d963a8f10a3a",
+        "code": "MM-UN4A2G",
+        "placedAt": "2026-10-31T06:13:25.901Z",
+        "address": {
+          "lat": null,
+          "lng": null,
+          "area": "Gulberg III",
+          "city": "Lahore",
+          "label": "home",
+          "line1": "House 12, Street 4",
+          "phone": "+923000000000",
+          "fullName": "Ayesha Khan",
+          "landmark": null
+        },
+        "itemsTotal": 7500,
+        "discountTotal": 0,
+        "shippingTotal": 0,
+        "grandTotal": 7500,
+        "storeOrders": [
+          {
+            "id": "f67248d2-740e-46af-aa4a-dc9f88051eae",
+            "code": "MM-UN4A2G-1",
+            "status": "placed",
+            "paymentMethod": "cod",
+            "paymentStatus": "cod_pending",
+            "subtotal": 7500,
+            "discount": 0,
+            "couponCode": null,
+            "shippingFee": 0,
+            "total": 7500,
+            "customerNote": null,
+            "items": [
+              {
+                "id": "0a82373c-7eda-4413-b1db-a63d5fcf4f97",
+                "productId": "bb66980c-8939-4959-a17d-54461087f673",
+                "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+                "productName": "Silk festive kurta",
+                "variantLabel": "S",
+                "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+                "unitPrice": 7500,
+                "quantity": 1,
+                "lineTotal": 7500,
+                "returnedQty": 0,
+                "reviewed": false,
+                "canReview": false
+              }
+            ],
+            "payment": {
+              "method": "cod",
+              "status": "cod_pending",
+              "payBy": null,
+              "paidAt": null,
+              "paymentRef": null,
+              "proofUrl": null,
+              "rejectedReason": null,
+              "accounts": null,
+              "refundAmount": null,
+              "refundRef": null,
+              "refundedAt": null
+            },
+            "shipping": {
+              "courierName": null,
+              "trackingRef": null,
+              "riderName": null,
+              "riderPhone": null
+            },
+            "cancelReason": null,
+            "cancelledBy": null,
+            "cancelRequestedAt": null,
+            "returnWindowDays": 7,
+            "returnDeadline": null,
+            "placedAt": "2026-10-31T06:13:25.901Z",
+            "confirmedAt": null,
+            "packedAt": null,
+            "shippedAt": null,
+            "deliveredAt": null,
+            "completedAt": null,
+            "cancelledAt": null,
+            "events": [
+              {
+                "kind": "status",
+                "from": null,
+                "to": "placed",
+                "actorRole": "customer",
+                "note": null,
+                "at": "2026-10-31T06:13:25.910Z"
+              }
+            ],
+            "store": {
+              "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+              "slug": "lahore-loom",
+              "name": "Lahore Loom",
+              "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL"
+            },
+            "can": {
+              "cancel": true,
+              "requestCancel": false,
+              "submitPaymentProof": false,
+              "markReceived": false,
+              "requestReturn": false
+            }
+          }
+        ]
+      }
+    }
+  },
+  "customerCancel": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "f67248d2-740e-46af-aa4a-dc9f88051eae",
+        "code": "MM-UN4A2G-1",
+        "status": "cancelled",
+        "paymentMethod": "cod",
+        "paymentStatus": "void",
+        "subtotal": 7500,
+        "discount": 0,
+        "couponCode": null,
+        "shippingFee": 0,
+        "total": 7500,
+        "customerNote": null,
+        "items": [
+          {
+            "id": "0a82373c-7eda-4413-b1db-a63d5fcf4f97",
+            "productId": "bb66980c-8939-4959-a17d-54461087f673",
+            "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+            "productName": "Silk festive kurta",
+            "variantLabel": "S",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 1,
+            "lineTotal": 7500,
+            "returnedQty": 0,
+            "reviewed": false,
+            "canReview": false
+          }
+        ],
+        "payment": {
+          "method": "cod",
+          "status": "void",
+          "payBy": null,
+          "paidAt": null,
+          "paymentRef": null,
+          "proofUrl": null,
+          "rejectedReason": null,
+          "accounts": null,
+          "refundAmount": null,
+          "refundRef": null,
+          "refundedAt": null
+        },
+        "shipping": {
+          "courierName": null,
+          "trackingRef": null,
+          "riderName": null,
+          "riderPhone": null
+        },
+        "cancelReason": "Ordered the wrong size.",
+        "cancelledBy": "customer",
+        "cancelRequestedAt": null,
+        "returnWindowDays": 7,
+        "returnDeadline": null,
+        "placedAt": "2026-10-31T06:13:25.901Z",
+        "confirmedAt": null,
+        "packedAt": null,
+        "shippedAt": null,
+        "deliveredAt": null,
+        "completedAt": null,
+        "cancelledAt": "2026-10-31T06:13:25.928Z",
+        "events": [
+          {
+            "kind": "status",
+            "from": null,
+            "to": "placed",
+            "actorRole": "customer",
+            "note": null,
+            "at": "2026-10-31T06:13:25.910Z"
+          },
+          {
+            "kind": "status",
+            "from": "placed",
+            "to": "cancelled",
+            "actorRole": "customer",
+            "note": "Ordered the wrong size.",
+            "at": "2026-10-31T06:13:25.929Z"
+          },
+          {
+            "kind": "payment",
+            "from": "cod_pending",
+            "to": "void",
+            "actorRole": "customer",
+            "note": null,
+            "at": "2026-10-31T06:13:25.934Z"
+          }
+        ],
+        "groupCode": "MM-UN4A2G",
+        "store": {
+          "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+          "slug": "lahore-loom",
+          "name": "Lahore Loom",
+          "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL"
+        },
+        "can": {
+          "cancel": false,
+          "requestCancel": false,
+          "submitPaymentProof": false,
+          "markReceived": false,
+          "requestReturn": false
+        }
+      }
+    }
+  },
+  "checkoutD": {
+    "status": 201,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "28e90f60-29ff-4987-b755-5581643f8c77",
+        "code": "MM-SDT4XQ",
+        "placedAt": "2026-10-31T06:13:25.957Z",
+        "address": {
+          "lat": null,
+          "lng": null,
+          "area": "Gulberg III",
+          "city": "Lahore",
+          "label": "home",
+          "line1": "House 12, Street 4",
+          "phone": "+923000000000",
+          "fullName": "Ayesha Khan",
+          "landmark": null
+        },
+        "itemsTotal": 7500,
+        "discountTotal": 0,
+        "shippingTotal": 0,
+        "grandTotal": 7500,
+        "storeOrders": [
+          {
+            "id": "b3cea8f5-cd9a-4c6b-9e61-81fb97774b23",
+            "code": "MM-SDT4XQ-1",
+            "status": "placed",
+            "paymentMethod": "cod",
+            "paymentStatus": "cod_pending",
+            "subtotal": 7500,
+            "discount": 0,
+            "couponCode": null,
+            "shippingFee": 0,
+            "total": 7500,
+            "customerNote": null,
+            "items": [
+              {
+                "id": "6415579f-427e-4d83-b9f4-bd8567c56ad8",
+                "productId": "bb66980c-8939-4959-a17d-54461087f673",
+                "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+                "productName": "Silk festive kurta",
+                "variantLabel": "S",
+                "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+                "unitPrice": 7500,
+                "quantity": 1,
+                "lineTotal": 7500,
+                "returnedQty": 0,
+                "reviewed": false,
+                "canReview": false
+              }
+            ],
+            "payment": {
+              "method": "cod",
+              "status": "cod_pending",
+              "payBy": null,
+              "paidAt": null,
+              "paymentRef": null,
+              "proofUrl": null,
+              "rejectedReason": null,
+              "accounts": null,
+              "refundAmount": null,
+              "refundRef": null,
+              "refundedAt": null
+            },
+            "shipping": {
+              "courierName": null,
+              "trackingRef": null,
+              "riderName": null,
+              "riderPhone": null
+            },
+            "cancelReason": null,
+            "cancelledBy": null,
+            "cancelRequestedAt": null,
+            "returnWindowDays": 7,
+            "returnDeadline": null,
+            "placedAt": "2026-10-31T06:13:25.956Z",
+            "confirmedAt": null,
+            "packedAt": null,
+            "shippedAt": null,
+            "deliveredAt": null,
+            "completedAt": null,
+            "cancelledAt": null,
+            "events": [
+              {
+                "kind": "status",
+                "from": null,
+                "to": "placed",
+                "actorRole": "customer",
+                "note": null,
+                "at": "2026-10-31T06:13:25.965Z"
+              }
+            ],
+            "store": {
+              "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+              "slug": "lahore-loom",
+              "name": "Lahore Loom",
+              "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL"
+            },
+            "can": {
+              "cancel": true,
+              "requestCancel": false,
+              "submitPaymentProof": false,
+              "markReceived": false,
+              "requestReturn": false
+            }
+          }
+        ]
+      }
+    }
+  },
+  "partnerConfirmD": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "b3cea8f5-cd9a-4c6b-9e61-81fb97774b23",
+        "code": "MM-SDT4XQ-1",
+        "status": "confirmed",
+        "paymentMethod": "cod",
+        "paymentStatus": "cod_pending",
+        "subtotal": 7500,
+        "discount": 0,
+        "couponCode": null,
+        "shippingFee": 0,
+        "total": 7500,
+        "customerNote": null,
+        "items": [
+          {
+            "id": "6415579f-427e-4d83-b9f4-bd8567c56ad8",
+            "productId": "bb66980c-8939-4959-a17d-54461087f673",
+            "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+            "productName": "Silk festive kurta",
+            "variantLabel": "S",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 1,
+            "lineTotal": 7500,
+            "returnedQty": 0
+          }
+        ],
+        "payment": {
+          "method": "cod",
+          "status": "cod_pending",
+          "payBy": null,
+          "paidAt": null,
+          "paymentRef": null,
+          "proofUrl": null,
+          "rejectedReason": null,
+          "accounts": null,
+          "refundAmount": null,
+          "refundRef": null,
+          "refundedAt": null
+        },
+        "shipping": {
+          "courierName": null,
+          "trackingRef": null,
+          "riderName": null,
+          "riderPhone": null
+        },
+        "cancelReason": null,
+        "cancelledBy": null,
+        "cancelRequestedAt": null,
+        "returnWindowDays": 7,
+        "returnDeadline": null,
+        "placedAt": "2026-10-31T06:13:25.956Z",
+        "confirmedAt": "2026-10-31T06:13:25.980Z",
+        "packedAt": null,
+        "shippedAt": null,
+        "deliveredAt": null,
+        "completedAt": null,
+        "cancelledAt": null,
+        "events": [
+          {
+            "kind": "status",
+            "from": null,
+            "to": "placed",
+            "actorRole": "customer",
+            "note": null,
+            "at": "2026-10-31T06:13:25.965Z"
+          },
+          {
+            "kind": "status",
+            "from": "placed",
+            "to": "confirmed",
+            "actorRole": "store",
+            "note": null,
+            "at": "2026-10-31T06:13:25.981Z"
+          }
+        ],
+        "groupCode": "MM-SDT4XQ",
+        "customer": {
+          "name": "Ayesha Khan",
+          "phone": "+923000000000",
+          "address": {
+            "city": "Lahore",
+            "area": "Gulberg III",
+            "line1": "House 12, Street 4",
+            "landmark": null,
+            "lat": null,
+            "lng": null
+          }
+        },
+        "can": {
+          "moveTo": [
+            "packed",
+            "cancelled"
+          ]
+        }
+      }
+    }
+  },
+  "requestCancel": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "b3cea8f5-cd9a-4c6b-9e61-81fb97774b23",
+        "code": "MM-SDT4XQ-1",
+        "status": "confirmed",
+        "paymentMethod": "cod",
+        "paymentStatus": "cod_pending",
+        "subtotal": 7500,
+        "discount": 0,
+        "couponCode": null,
+        "shippingFee": 0,
+        "total": 7500,
+        "customerNote": null,
+        "items": [
+          {
+            "id": "6415579f-427e-4d83-b9f4-bd8567c56ad8",
+            "productId": "bb66980c-8939-4959-a17d-54461087f673",
+            "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+            "productName": "Silk festive kurta",
+            "variantLabel": "S",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 1,
+            "lineTotal": 7500,
+            "returnedQty": 0,
+            "reviewed": false,
+            "canReview": false
+          }
+        ],
+        "payment": {
+          "method": "cod",
+          "status": "cod_pending",
+          "payBy": null,
+          "paidAt": null,
+          "paymentRef": null,
+          "proofUrl": null,
+          "rejectedReason": null,
+          "accounts": null,
+          "refundAmount": null,
+          "refundRef": null,
+          "refundedAt": null
+        },
+        "shipping": {
+          "courierName": null,
+          "trackingRef": null,
+          "riderName": null,
+          "riderPhone": null
+        },
+        "cancelReason": null,
+        "cancelledBy": null,
+        "cancelRequestedAt": "2026-10-31T06:13:25.993Z",
+        "returnWindowDays": 7,
+        "returnDeadline": null,
+        "placedAt": "2026-10-31T06:13:25.956Z",
+        "confirmedAt": "2026-10-31T06:13:25.980Z",
+        "packedAt": null,
+        "shippedAt": null,
+        "deliveredAt": null,
+        "completedAt": null,
+        "cancelledAt": null,
+        "events": [
+          {
+            "kind": "status",
+            "from": null,
+            "to": "placed",
+            "actorRole": "customer",
+            "note": null,
+            "at": "2026-10-31T06:13:25.965Z"
+          },
+          {
+            "kind": "status",
+            "from": "placed",
+            "to": "confirmed",
+            "actorRole": "store",
+            "note": null,
+            "at": "2026-10-31T06:13:25.981Z"
+          },
+          {
+            "kind": "note",
+            "from": null,
+            "to": null,
+            "actorRole": "customer",
+            "note": "Cancellation requested: I no longer need it.",
+            "at": "2026-10-31T06:13:25.994Z"
+          }
+        ],
+        "groupCode": "MM-SDT4XQ",
+        "store": {
+          "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+          "slug": "lahore-loom",
+          "name": "Lahore Loom",
+          "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL"
+        },
+        "can": {
+          "cancel": false,
+          "requestCancel": false,
+          "submitPaymentProof": false,
+          "markReceived": false,
+          "requestReturn": false
+        }
+      }
+    }
+  },
+  "partnerCancel": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "b3cea8f5-cd9a-4c6b-9e61-81fb97774b23",
+        "code": "MM-SDT4XQ-1",
+        "status": "cancelled",
+        "paymentMethod": "cod",
+        "paymentStatus": "void",
+        "subtotal": 7500,
+        "discount": 0,
+        "couponCode": null,
+        "shippingFee": 0,
+        "total": 7500,
+        "customerNote": null,
+        "items": [
+          {
+            "id": "6415579f-427e-4d83-b9f4-bd8567c56ad8",
+            "productId": "bb66980c-8939-4959-a17d-54461087f673",
+            "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+            "productName": "Silk festive kurta",
+            "variantLabel": "S",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 1,
+            "lineTotal": 7500,
+            "returnedQty": 0
+          }
+        ],
+        "payment": {
+          "method": "cod",
+          "status": "void",
+          "payBy": null,
+          "paidAt": null,
+          "paymentRef": null,
+          "proofUrl": null,
+          "rejectedReason": null,
+          "accounts": null,
+          "refundAmount": null,
+          "refundRef": null,
+          "refundedAt": null
+        },
+        "shipping": {
+          "courierName": null,
+          "trackingRef": null,
+          "riderName": null,
+          "riderPhone": null
+        },
+        "cancelReason": "Cancelled at the customer’s request.",
+        "cancelledBy": "store",
+        "cancelRequestedAt": "2026-10-31T06:13:25.993Z",
+        "returnWindowDays": 7,
+        "returnDeadline": null,
+        "placedAt": "2026-10-31T06:13:25.956Z",
+        "confirmedAt": "2026-10-31T06:13:25.980Z",
+        "packedAt": null,
+        "shippedAt": null,
+        "deliveredAt": null,
+        "completedAt": null,
+        "cancelledAt": "2026-10-31T06:13:26.007Z",
+        "events": [
+          {
+            "kind": "status",
+            "from": null,
+            "to": "placed",
+            "actorRole": "customer",
+            "note": null,
+            "at": "2026-10-31T06:13:25.965Z"
+          },
+          {
+            "kind": "status",
+            "from": "placed",
+            "to": "confirmed",
+            "actorRole": "store",
+            "note": null,
+            "at": "2026-10-31T06:13:25.981Z"
+          },
+          {
+            "kind": "note",
+            "from": null,
+            "to": null,
+            "actorRole": "customer",
+            "note": "Cancellation requested: I no longer need it.",
+            "at": "2026-10-31T06:13:25.994Z"
+          }
+        ],
+        "groupCode": "MM-SDT4XQ",
+        "customer": {
+          "name": "Ayesha Khan",
+          "phone": "+923000000000",
+          "address": {
+            "city": "Lahore",
+            "area": "Gulberg III",
+            "line1": "House 12, Street 4",
+            "landmark": null,
+            "lat": null,
+            "lng": null
+          }
+        },
+        "can": {
+          "moveTo": []
+        }
+      }
+    }
+  },
+  "orders": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "items": [
+          {
+            "id": "1bd9156e-5097-4b06-a102-e4f7bbf62d52",
+            "code": "MM-AADW6P",
+            "placedAt": "2026-10-31T06:13:25.823Z",
+            "grandTotal": 7500,
+            "storeOrders": [
+              {
+                "id": "10a44ba3-b6e9-4ec2-8a65-d43fe1eabe95",
+                "code": "MM-AADW6P-1",
+                "store": {
+                  "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+                  "slug": "lahore-loom",
+                  "name": "Lahore Loom",
+                  "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL"
+                },
+                "status": "placed",
+                "paymentMethod": "transfer",
+                "paymentStatus": "awaiting_transfer",
+                "total": 7500,
+                "itemCount": 1,
+                "coverImageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta"
+              }
+            ]
+          },
+          {
+            "id": "327c5e21-b7ea-4535-8dc9-3be300b128ac",
+            "code": "MM-GM46TG",
+            "placedAt": "2026-10-31T06:13:25.775Z",
+            "grandTotal": 15000,
+            "storeOrders": [
+              {
+                "id": "104837e3-b5f8-4a5c-a916-a8e118d9c147",
+                "code": "MM-GM46TG-1",
+                "store": {
+                  "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+                  "slug": "lahore-loom",
+                  "name": "Lahore Loom",
+                  "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL"
+                },
+                "status": "placed",
+                "paymentMethod": "cod",
+                "paymentStatus": "cod_pending",
+                "total": 15000,
+                "itemCount": 2,
+                "coverImageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta"
+              }
+            ]
+          }
+        ],
+        "total": 2,
+        "page": 1,
+        "pageSize": 3
+      }
+    }
+  },
+  "ordersCancelled": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "items": [
+          {
+            "id": "28e90f60-29ff-4987-b755-5581643f8c77",
+            "code": "MM-SDT4XQ",
+            "placedAt": "2026-10-31T06:13:25.957Z",
+            "grandTotal": 7500,
+            "storeOrders": [
+              {
+                "id": "b3cea8f5-cd9a-4c6b-9e61-81fb97774b23",
+                "code": "MM-SDT4XQ-1",
+                "store": {
+                  "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+                  "slug": "lahore-loom",
+                  "name": "Lahore Loom",
+                  "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL"
+                },
+                "status": "cancelled",
+                "paymentMethod": "cod",
+                "paymentStatus": "void",
+                "total": 7500,
+                "itemCount": 1,
+                "coverImageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta"
+              }
+            ]
+          },
+          {
+            "id": "83f8e555-2171-40bb-84a5-d963a8f10a3a",
+            "code": "MM-UN4A2G",
+            "placedAt": "2026-10-31T06:13:25.901Z",
+            "grandTotal": 7500,
+            "storeOrders": [
+              {
+                "id": "f67248d2-740e-46af-aa4a-dc9f88051eae",
+                "code": "MM-UN4A2G-1",
+                "store": {
+                  "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+                  "slug": "lahore-loom",
+                  "name": "Lahore Loom",
+                  "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL"
+                },
+                "status": "cancelled",
+                "paymentMethod": "cod",
+                "paymentStatus": "void",
+                "total": 7500,
+                "itemCount": 1,
+                "coverImageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta"
+              }
+            ]
+          }
+        ],
+        "total": 2,
+        "page": 1,
+        "pageSize": 3
+      }
+    }
+  },
+  "orderGroup": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "327c5e21-b7ea-4535-8dc9-3be300b128ac",
+        "code": "MM-GM46TG",
+        "placedAt": "2026-10-31T06:13:25.775Z",
+        "address": {
+          "lat": null,
+          "lng": null,
+          "area": "Gulberg III",
+          "city": "Lahore",
+          "label": "home",
+          "line1": "House 12, Street 4",
+          "phone": "+923000000000",
+          "fullName": "Ayesha Khan",
+          "landmark": null
+        },
+        "itemsTotal": 15000,
+        "discountTotal": 0,
+        "shippingTotal": 0,
+        "grandTotal": 15000,
+        "storeOrders": [
+          {
+            "id": "104837e3-b5f8-4a5c-a916-a8e118d9c147",
+            "code": "MM-GM46TG-1",
+            "status": "placed",
+            "paymentMethod": "cod",
+            "paymentStatus": "cod_pending",
+            "subtotal": 15000,
+            "discount": 0,
+            "couponCode": null,
+            "shippingFee": 0,
+            "total": 15000,
+            "customerNote": "Ring the bell",
+            "items": [
+              {
+                "id": "e77a7090-3648-433a-9714-14377effa579",
+                "productId": "bb66980c-8939-4959-a17d-54461087f673",
+                "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+                "productName": "Silk festive kurta",
+                "variantLabel": "S",
+                "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+                "unitPrice": 7500,
+                "quantity": 2,
+                "lineTotal": 15000,
+                "returnedQty": 0,
+                "reviewed": false,
+                "canReview": false
+              }
+            ],
+            "payment": {
+              "method": "cod",
+              "status": "cod_pending",
+              "payBy": null,
+              "paidAt": null,
+              "paymentRef": null,
+              "proofUrl": null,
+              "rejectedReason": null,
+              "accounts": null,
+              "refundAmount": null,
+              "refundRef": null,
+              "refundedAt": null
+            },
+            "shipping": {
+              "courierName": null,
+              "trackingRef": null,
+              "riderName": null,
+              "riderPhone": null
+            },
+            "cancelReason": null,
+            "cancelledBy": null,
+            "cancelRequestedAt": null,
+            "returnWindowDays": 7,
+            "returnDeadline": null,
+            "placedAt": "2026-10-31T06:13:25.775Z",
+            "confirmedAt": null,
+            "packedAt": null,
+            "shippedAt": null,
+            "deliveredAt": null,
+            "completedAt": null,
+            "cancelledAt": null,
+            "events": [
+              {
+                "kind": "status",
+                "from": null,
+                "to": "placed",
+                "actorRole": "customer",
+                "note": null,
+                "at": "2026-10-31T06:13:25.791Z"
+              }
+            ],
+            "store": {
+              "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+              "slug": "lahore-loom",
+              "name": "Lahore Loom",
+              "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL"
+            },
+            "can": {
+              "cancel": true,
+              "requestCancel": false,
+              "submitPaymentProof": false,
+              "markReceived": false,
+              "requestReturn": false
+            }
+          }
+        ]
+      }
+    }
+  },
+  "storeOrder": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "104837e3-b5f8-4a5c-a916-a8e118d9c147",
+        "code": "MM-GM46TG-1",
+        "status": "placed",
+        "paymentMethod": "cod",
+        "paymentStatus": "cod_pending",
+        "subtotal": 15000,
+        "discount": 0,
+        "couponCode": null,
+        "shippingFee": 0,
+        "total": 15000,
+        "customerNote": "Ring the bell",
+        "items": [
+          {
+            "id": "e77a7090-3648-433a-9714-14377effa579",
+            "productId": "bb66980c-8939-4959-a17d-54461087f673",
+            "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+            "productName": "Silk festive kurta",
+            "variantLabel": "S",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 2,
+            "lineTotal": 15000,
+            "returnedQty": 0,
+            "reviewed": false,
+            "canReview": false
+          }
+        ],
+        "payment": {
+          "method": "cod",
+          "status": "cod_pending",
+          "payBy": null,
+          "paidAt": null,
+          "paymentRef": null,
+          "proofUrl": null,
+          "rejectedReason": null,
+          "accounts": null,
+          "refundAmount": null,
+          "refundRef": null,
+          "refundedAt": null
+        },
+        "shipping": {
+          "courierName": null,
+          "trackingRef": null,
+          "riderName": null,
+          "riderPhone": null
+        },
+        "cancelReason": null,
+        "cancelledBy": null,
+        "cancelRequestedAt": null,
+        "returnWindowDays": 7,
+        "returnDeadline": null,
+        "placedAt": "2026-10-31T06:13:25.775Z",
+        "confirmedAt": null,
+        "packedAt": null,
+        "shippedAt": null,
+        "deliveredAt": null,
+        "completedAt": null,
+        "cancelledAt": null,
+        "events": [
+          {
+            "kind": "status",
+            "from": null,
+            "to": "placed",
+            "actorRole": "customer",
+            "note": null,
+            "at": "2026-10-31T06:13:25.791Z"
+          }
+        ],
+        "groupCode": "MM-GM46TG",
+        "store": {
+          "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+          "slug": "lahore-loom",
+          "name": "Lahore Loom",
+          "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL"
+        },
+        "can": {
+          "cancel": true,
+          "requestCancel": false,
+          "submitPaymentProof": false,
+          "markReceived": false,
+          "requestReturn": false
+        }
+      }
+    }
+  },
+  "partnerOrders": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "items": [
+          {
+            "id": "10a44ba3-b6e9-4ec2-8a65-d43fe1eabe95",
+            "code": "MM-AADW6P-1",
+            "status": "placed",
+            "paymentMethod": "transfer",
+            "paymentStatus": "awaiting_transfer",
+            "total": 7500,
+            "itemCount": 1,
+            "customerName": "Ayesha Khan",
+            "city": "Lahore",
+            "payBy": "2026-11-01T06:13:25.823Z",
+            "cancelRequested": false,
+            "placedAt": "2026-10-31T06:13:25.823Z"
+          },
+          {
+            "id": "104837e3-b5f8-4a5c-a916-a8e118d9c147",
+            "code": "MM-GM46TG-1",
+            "status": "placed",
+            "paymentMethod": "cod",
+            "paymentStatus": "cod_pending",
+            "total": 15000,
+            "itemCount": 2,
+            "customerName": "Ayesha Khan",
+            "city": "Lahore",
+            "payBy": null,
+            "cancelRequested": false,
+            "placedAt": "2026-10-31T06:13:25.775Z"
+          }
+        ],
+        "total": 2,
+        "page": 1,
+        "pageSize": 3
+      }
+    }
+  },
+  "partnerOrdersProof": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "items": [
+          {
+            "id": "10a44ba3-b6e9-4ec2-8a65-d43fe1eabe95",
+            "code": "MM-AADW6P-1",
+            "status": "placed",
+            "paymentMethod": "transfer",
+            "paymentStatus": "awaiting_transfer",
+            "total": 7500,
+            "itemCount": 1,
+            "customerName": "Ayesha Khan",
+            "city": "Lahore",
+            "payBy": "2026-11-01T06:13:25.823Z",
+            "cancelRequested": false,
+            "placedAt": "2026-10-31T06:13:25.823Z"
+          }
+        ],
+        "total": 1,
+        "page": 1,
+        "pageSize": 3
+      }
+    }
+  },
+  "partnerOrder": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "104837e3-b5f8-4a5c-a916-a8e118d9c147",
+        "code": "MM-GM46TG-1",
+        "status": "placed",
+        "paymentMethod": "cod",
+        "paymentStatus": "cod_pending",
+        "subtotal": 15000,
+        "discount": 0,
+        "couponCode": null,
+        "shippingFee": 0,
+        "total": 15000,
+        "customerNote": "Ring the bell",
+        "items": [
+          {
+            "id": "e77a7090-3648-433a-9714-14377effa579",
+            "productId": "bb66980c-8939-4959-a17d-54461087f673",
+            "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+            "productName": "Silk festive kurta",
+            "variantLabel": "S",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 2,
+            "lineTotal": 15000,
+            "returnedQty": 0
+          }
+        ],
+        "payment": {
+          "method": "cod",
+          "status": "cod_pending",
+          "payBy": null,
+          "paidAt": null,
+          "paymentRef": null,
+          "proofUrl": null,
+          "rejectedReason": null,
+          "accounts": null,
+          "refundAmount": null,
+          "refundRef": null,
+          "refundedAt": null
+        },
+        "shipping": {
+          "courierName": null,
+          "trackingRef": null,
+          "riderName": null,
+          "riderPhone": null
+        },
+        "cancelReason": null,
+        "cancelledBy": null,
+        "cancelRequestedAt": null,
+        "returnWindowDays": 7,
+        "returnDeadline": null,
+        "placedAt": "2026-10-31T06:13:25.775Z",
+        "confirmedAt": null,
+        "packedAt": null,
+        "shippedAt": null,
+        "deliveredAt": null,
+        "completedAt": null,
+        "cancelledAt": null,
+        "events": [
+          {
+            "kind": "status",
+            "from": null,
+            "to": "placed",
+            "actorRole": "customer",
+            "note": null,
+            "at": "2026-10-31T06:13:25.791Z"
+          }
+        ],
+        "groupCode": "MM-GM46TG",
+        "customer": {
+          "name": "Ayesha Khan",
+          "phone": "+923000000000",
+          "address": {
+            "city": "Lahore",
+            "area": "Gulberg III",
+            "line1": "House 12, Street 4",
+            "landmark": null,
+            "lat": null,
+            "lng": null
+          }
+        },
+        "can": {
+          "moveTo": [
+            "confirmed",
+            "cancelled"
+          ]
+        }
+      }
+    }
+  },
+  "partnerConfirm": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "104837e3-b5f8-4a5c-a916-a8e118d9c147",
+        "code": "MM-GM46TG-1",
+        "status": "confirmed",
+        "paymentMethod": "cod",
+        "paymentStatus": "cod_pending",
+        "subtotal": 15000,
+        "discount": 0,
+        "couponCode": null,
+        "shippingFee": 0,
+        "total": 15000,
+        "customerNote": "Ring the bell",
+        "items": [
+          {
+            "id": "e77a7090-3648-433a-9714-14377effa579",
+            "productId": "bb66980c-8939-4959-a17d-54461087f673",
+            "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+            "productName": "Silk festive kurta",
+            "variantLabel": "S",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 2,
+            "lineTotal": 15000,
+            "returnedQty": 0
+          }
+        ],
+        "payment": {
+          "method": "cod",
+          "status": "cod_pending",
+          "payBy": null,
+          "paidAt": null,
+          "paymentRef": null,
+          "proofUrl": null,
+          "rejectedReason": null,
+          "accounts": null,
+          "refundAmount": null,
+          "refundRef": null,
+          "refundedAt": null
+        },
+        "shipping": {
+          "courierName": null,
+          "trackingRef": null,
+          "riderName": null,
+          "riderPhone": null
+        },
+        "cancelReason": null,
+        "cancelledBy": null,
+        "cancelRequestedAt": null,
+        "returnWindowDays": 7,
+        "returnDeadline": null,
+        "placedAt": "2026-10-31T06:13:25.775Z",
+        "confirmedAt": "2026-10-31T06:13:26.085Z",
+        "packedAt": null,
+        "shippedAt": null,
+        "deliveredAt": null,
+        "completedAt": null,
+        "cancelledAt": null,
+        "events": [
+          {
+            "kind": "status",
+            "from": null,
+            "to": "placed",
+            "actorRole": "customer",
+            "note": null,
+            "at": "2026-10-31T06:13:25.791Z"
+          },
+          {
+            "kind": "status",
+            "from": "placed",
+            "to": "confirmed",
+            "actorRole": "store",
+            "note": null,
+            "at": "2026-10-31T06:13:26.086Z"
+          }
+        ],
+        "groupCode": "MM-GM46TG",
+        "customer": {
+          "name": "Ayesha Khan",
+          "phone": "+923000000000",
+          "address": {
+            "city": "Lahore",
+            "area": "Gulberg III",
+            "line1": "House 12, Street 4",
+            "landmark": null,
+            "lat": null,
+            "lng": null
+          }
+        },
+        "can": {
+          "moveTo": [
+            "packed",
+            "cancelled"
+          ]
+        }
+      }
+    }
+  },
+  "partnerPack": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "104837e3-b5f8-4a5c-a916-a8e118d9c147",
+        "code": "MM-GM46TG-1",
+        "status": "packed",
+        "paymentMethod": "cod",
+        "paymentStatus": "cod_pending",
+        "subtotal": 15000,
+        "discount": 0,
+        "couponCode": null,
+        "shippingFee": 0,
+        "total": 15000,
+        "customerNote": "Ring the bell",
+        "items": [
+          {
+            "id": "e77a7090-3648-433a-9714-14377effa579",
+            "productId": "bb66980c-8939-4959-a17d-54461087f673",
+            "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+            "productName": "Silk festive kurta",
+            "variantLabel": "S",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 2,
+            "lineTotal": 15000,
+            "returnedQty": 0
+          }
+        ],
+        "payment": {
+          "method": "cod",
+          "status": "cod_pending",
+          "payBy": null,
+          "paidAt": null,
+          "paymentRef": null,
+          "proofUrl": null,
+          "rejectedReason": null,
+          "accounts": null,
+          "refundAmount": null,
+          "refundRef": null,
+          "refundedAt": null
+        },
+        "shipping": {
+          "courierName": null,
+          "trackingRef": null,
+          "riderName": null,
+          "riderPhone": null
+        },
+        "cancelReason": null,
+        "cancelledBy": null,
+        "cancelRequestedAt": null,
+        "returnWindowDays": 7,
+        "returnDeadline": null,
+        "placedAt": "2026-10-31T06:13:25.775Z",
+        "confirmedAt": "2026-10-31T06:13:26.085Z",
+        "packedAt": "2026-10-31T06:13:26.098Z",
+        "shippedAt": null,
+        "deliveredAt": null,
+        "completedAt": null,
+        "cancelledAt": null,
+        "events": [
+          {
+            "kind": "status",
+            "from": null,
+            "to": "placed",
+            "actorRole": "customer",
+            "note": null,
+            "at": "2026-10-31T06:13:25.791Z"
+          },
+          {
+            "kind": "status",
+            "from": "placed",
+            "to": "confirmed",
+            "actorRole": "store",
+            "note": null,
+            "at": "2026-10-31T06:13:26.086Z"
+          },
+          {
+            "kind": "status",
+            "from": "confirmed",
+            "to": "packed",
+            "actorRole": "store",
+            "note": null,
+            "at": "2026-10-31T06:13:26.100Z"
+          }
+        ],
+        "groupCode": "MM-GM46TG",
+        "customer": {
+          "name": "Ayesha Khan",
+          "phone": "+923000000000",
+          "address": {
+            "city": "Lahore",
+            "area": "Gulberg III",
+            "line1": "House 12, Street 4",
+            "landmark": null,
+            "lat": null,
+            "lng": null
+          }
+        },
+        "can": {
+          "moveTo": [
+            "shipped",
+            "cancelled"
+          ]
+        }
+      }
+    }
+  },
+  "partnerShip": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "104837e3-b5f8-4a5c-a916-a8e118d9c147",
+        "code": "MM-GM46TG-1",
+        "status": "shipped",
+        "paymentMethod": "cod",
+        "paymentStatus": "cod_pending",
+        "subtotal": 15000,
+        "discount": 0,
+        "couponCode": null,
+        "shippingFee": 0,
+        "total": 15000,
+        "customerNote": "Ring the bell",
+        "items": [
+          {
+            "id": "e77a7090-3648-433a-9714-14377effa579",
+            "productId": "bb66980c-8939-4959-a17d-54461087f673",
+            "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+            "productName": "Silk festive kurta",
+            "variantLabel": "S",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 2,
+            "lineTotal": 15000,
+            "returnedQty": 0
+          }
+        ],
+        "payment": {
+          "method": "cod",
+          "status": "cod_pending",
+          "payBy": null,
+          "paidAt": null,
+          "paymentRef": null,
+          "proofUrl": null,
+          "rejectedReason": null,
+          "accounts": null,
+          "refundAmount": null,
+          "refundRef": null,
+          "refundedAt": null
+        },
+        "shipping": {
+          "courierName": "TCS",
+          "trackingRef": "TCS-77120934",
+          "riderName": null,
+          "riderPhone": null
+        },
+        "cancelReason": null,
+        "cancelledBy": null,
+        "cancelRequestedAt": null,
+        "returnWindowDays": 7,
+        "returnDeadline": null,
+        "placedAt": "2026-10-31T06:13:25.775Z",
+        "confirmedAt": "2026-10-31T06:13:26.085Z",
+        "packedAt": "2026-10-31T06:13:26.098Z",
+        "shippedAt": "2026-10-31T06:13:26.112Z",
+        "deliveredAt": null,
+        "completedAt": null,
+        "cancelledAt": null,
+        "events": [
+          {
+            "kind": "status",
+            "from": null,
+            "to": "placed",
+            "actorRole": "customer",
+            "note": null,
+            "at": "2026-10-31T06:13:25.791Z"
+          },
+          {
+            "kind": "status",
+            "from": "placed",
+            "to": "confirmed",
+            "actorRole": "store",
+            "note": null,
+            "at": "2026-10-31T06:13:26.086Z"
+          },
+          {
+            "kind": "status",
+            "from": "confirmed",
+            "to": "packed",
+            "actorRole": "store",
+            "note": null,
+            "at": "2026-10-31T06:13:26.100Z"
+          }
+        ],
+        "groupCode": "MM-GM46TG",
+        "customer": {
+          "name": "Ayesha Khan",
+          "phone": "+923000000000",
+          "address": {
+            "city": "Lahore",
+            "area": "Gulberg III",
+            "line1": "House 12, Street 4",
+            "landmark": null,
+            "lat": null,
+            "lng": null
+          }
+        },
+        "can": {
+          "moveTo": [
+            "delivered"
+          ]
+        }
+      }
+    }
+  },
+  "partnerDeliver": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "104837e3-b5f8-4a5c-a916-a8e118d9c147",
+        "code": "MM-GM46TG-1",
+        "status": "delivered",
+        "paymentMethod": "cod",
+        "paymentStatus": "cod_pending",
+        "subtotal": 15000,
+        "discount": 0,
+        "couponCode": null,
+        "shippingFee": 0,
+        "total": 15000,
+        "customerNote": "Ring the bell",
+        "items": [
+          {
+            "id": "e77a7090-3648-433a-9714-14377effa579",
+            "productId": "bb66980c-8939-4959-a17d-54461087f673",
+            "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+            "productName": "Silk festive kurta",
+            "variantLabel": "S",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 2,
+            "lineTotal": 15000,
+            "returnedQty": 0
+          }
+        ],
+        "payment": {
+          "method": "cod",
+          "status": "cod_pending",
+          "payBy": null,
+          "paidAt": null,
+          "paymentRef": null,
+          "proofUrl": null,
+          "rejectedReason": null,
+          "accounts": null,
+          "refundAmount": null,
+          "refundRef": null,
+          "refundedAt": null
+        },
+        "shipping": {
+          "courierName": "TCS",
+          "trackingRef": "TCS-77120934",
+          "riderName": null,
+          "riderPhone": null
+        },
+        "cancelReason": null,
+        "cancelledBy": null,
+        "cancelRequestedAt": null,
+        "returnWindowDays": 7,
+        "returnDeadline": "2026-11-07T06:13:26.124Z",
+        "placedAt": "2026-10-31T06:13:25.775Z",
+        "confirmedAt": "2026-10-31T06:13:26.085Z",
+        "packedAt": "2026-10-31T06:13:26.098Z",
+        "shippedAt": "2026-10-31T06:13:26.112Z",
+        "deliveredAt": "2026-10-31T06:13:26.124Z",
+        "completedAt": null,
+        "cancelledAt": null,
+        "events": [
+          {
+            "kind": "status",
+            "from": null,
+            "to": "placed",
+            "actorRole": "customer",
+            "note": null,
+            "at": "2026-10-31T06:13:25.791Z"
+          },
+          {
+            "kind": "status",
+            "from": "placed",
+            "to": "confirmed",
+            "actorRole": "store",
+            "note": null,
+            "at": "2026-10-31T06:13:26.086Z"
+          },
+          {
+            "kind": "status",
+            "from": "confirmed",
+            "to": "packed",
+            "actorRole": "store",
+            "note": null,
+            "at": "2026-10-31T06:13:26.100Z"
+          }
+        ],
+        "groupCode": "MM-GM46TG",
+        "customer": {
+          "name": "Ayesha Khan",
+          "phone": "+923000000000",
+          "address": {
+            "city": "Lahore",
+            "area": "Gulberg III",
+            "line1": "House 12, Street 4",
+            "landmark": null,
+            "lat": null,
+            "lng": null
+          }
+        },
+        "can": {
+          "moveTo": []
+        }
+      }
+    }
+  },
+  "partnerCashCollected": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "104837e3-b5f8-4a5c-a916-a8e118d9c147",
+        "code": "MM-GM46TG-1",
+        "status": "delivered",
+        "paymentMethod": "cod",
+        "paymentStatus": "paid",
+        "subtotal": 15000,
+        "discount": 0,
+        "couponCode": null,
+        "shippingFee": 0,
+        "total": 15000,
+        "customerNote": "Ring the bell",
+        "items": [
+          {
+            "id": "e77a7090-3648-433a-9714-14377effa579",
+            "productId": "bb66980c-8939-4959-a17d-54461087f673",
+            "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+            "productName": "Silk festive kurta",
+            "variantLabel": "S",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 2,
+            "lineTotal": 15000,
+            "returnedQty": 0
+          }
+        ],
+        "payment": {
+          "method": "cod",
+          "status": "paid",
+          "payBy": null,
+          "paidAt": "2026-10-31T06:13:26.137Z",
+          "paymentRef": null,
+          "proofUrl": null,
+          "rejectedReason": null,
+          "accounts": null,
+          "refundAmount": null,
+          "refundRef": null,
+          "refundedAt": null
+        },
+        "shipping": {
+          "courierName": "TCS",
+          "trackingRef": "TCS-77120934",
+          "riderName": null,
+          "riderPhone": null
+        },
+        "cancelReason": null,
+        "cancelledBy": null,
+        "cancelRequestedAt": null,
+        "returnWindowDays": 7,
+        "returnDeadline": "2026-11-07T06:13:26.124Z",
+        "placedAt": "2026-10-31T06:13:25.775Z",
+        "confirmedAt": "2026-10-31T06:13:26.085Z",
+        "packedAt": "2026-10-31T06:13:26.098Z",
+        "shippedAt": "2026-10-31T06:13:26.112Z",
+        "deliveredAt": "2026-10-31T06:13:26.124Z",
+        "completedAt": null,
+        "cancelledAt": null,
+        "events": [
+          {
+            "kind": "status",
+            "from": null,
+            "to": "placed",
+            "actorRole": "customer",
+            "note": null,
+            "at": "2026-10-31T06:13:25.791Z"
+          },
+          {
+            "kind": "status",
+            "from": "placed",
+            "to": "confirmed",
+            "actorRole": "store",
+            "note": null,
+            "at": "2026-10-31T06:13:26.086Z"
+          },
+          {
+            "kind": "status",
+            "from": "confirmed",
+            "to": "packed",
+            "actorRole": "store",
+            "note": null,
+            "at": "2026-10-31T06:13:26.100Z"
+          }
+        ],
+        "groupCode": "MM-GM46TG",
+        "customer": {
+          "name": "Ayesha Khan",
+          "phone": "+923000000000",
+          "address": {
+            "city": "Lahore",
+            "area": "Gulberg III",
+            "line1": "House 12, Street 4",
+            "landmark": null,
+            "lat": null,
+            "lng": null
+          }
+        },
+        "can": {
+          "moveTo": []
+        }
+      }
+    }
+  },
+  "storeOrderDelivered": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "104837e3-b5f8-4a5c-a916-a8e118d9c147",
+        "code": "MM-GM46TG-1",
+        "status": "delivered",
+        "paymentMethod": "cod",
+        "paymentStatus": "paid",
+        "subtotal": 15000,
+        "discount": 0,
+        "couponCode": null,
+        "shippingFee": 0,
+        "total": 15000,
+        "customerNote": "Ring the bell",
+        "items": [
+          {
+            "id": "e77a7090-3648-433a-9714-14377effa579",
+            "productId": "bb66980c-8939-4959-a17d-54461087f673",
+            "variantId": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+            "productName": "Silk festive kurta",
+            "variantLabel": "S",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 2,
+            "lineTotal": 15000,
+            "returnedQty": 0,
+            "reviewed": false,
+            "canReview": true
+          }
+        ],
+        "payment": {
+          "method": "cod",
+          "status": "paid",
+          "payBy": null,
+          "paidAt": "2026-10-31T06:13:26.137Z",
+          "paymentRef": null,
+          "proofUrl": null,
+          "rejectedReason": null,
+          "accounts": null,
+          "refundAmount": null,
+          "refundRef": null,
+          "refundedAt": null
+        },
+        "shipping": {
+          "courierName": "TCS",
+          "trackingRef": "TCS-77120934",
+          "riderName": null,
+          "riderPhone": null
+        },
+        "cancelReason": null,
+        "cancelledBy": null,
+        "cancelRequestedAt": null,
+        "returnWindowDays": 7,
+        "returnDeadline": "2026-11-07T06:13:26.124Z",
+        "placedAt": "2026-10-31T06:13:25.775Z",
+        "confirmedAt": "2026-10-31T06:13:26.085Z",
+        "packedAt": "2026-10-31T06:13:26.098Z",
+        "shippedAt": "2026-10-31T06:13:26.112Z",
+        "deliveredAt": "2026-10-31T06:13:26.124Z",
+        "completedAt": null,
+        "cancelledAt": null,
+        "events": [
+          {
+            "kind": "status",
+            "from": null,
+            "to": "placed",
+            "actorRole": "customer",
+            "note": null,
+            "at": "2026-10-31T06:13:25.791Z"
+          },
+          {
+            "kind": "status",
+            "from": "placed",
+            "to": "confirmed",
+            "actorRole": "store",
+            "note": null,
+            "at": "2026-10-31T06:13:26.086Z"
+          },
+          {
+            "kind": "status",
+            "from": "confirmed",
+            "to": "packed",
+            "actorRole": "store",
+            "note": null,
+            "at": "2026-10-31T06:13:26.100Z"
+          }
+        ],
+        "groupCode": "MM-GM46TG",
+        "store": {
+          "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+          "slug": "lahore-loom",
+          "name": "Lahore Loom",
+          "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL"
+        },
+        "can": {
+          "cancel": false,
+          "requestCancel": false,
+          "submitPaymentProof": false,
+          "markReceived": false,
+          "requestReturn": true
+        }
+      }
+    }
+  },
+  "review": {
+    "status": 201,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "5e61ed4b-a8bc-4cdb-bdbb-93a21f7882a7",
+        "productId": "bb66980c-8939-4959-a17d-54461087f673",
+        "productName": "Silk festive kurta",
+        "orderItemId": "e77a7090-3648-433a-9714-14377effa579",
+        "rating": 5,
+        "text": "Lovely fabric, true to size.",
+        "photos": [],
+        "variantLabel": "S",
+        "author": {
+          "name": "Ayesha K.",
+          "avatarUrl": null
+        },
+        "storeReply": null,
+        "repliedAt": null,
+        "isHidden": false,
+        "createdAt": "2026-10-31T06:13:26.156Z"
+      }
+    }
+  },
+  "reviewAgainErr": {
+    "status": 409,
+    "body": {
+      "success": false,
+      "error": {
+        "code": "REVIEW_EXISTS",
+        "message": "You have already reviewed this item."
+      }
+    }
+  },
+  "returnRequest": {
+    "status": 201,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "80b2a1d4-2a79-4aee-8956-79f05a37c8b3",
+        "storeOrderId": "104837e3-b5f8-4a5c-a916-a8e118d9c147",
+        "storeOrderCode": "MM-GM46TG-1",
+        "store": {
+          "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+          "name": "Lahore Loom"
+        },
+        "status": "requested",
+        "reason": "size_issue",
+        "details": "Too tight across the shoulders.",
+        "photos": [],
+        "storeNote": null,
+        "items": [
+          {
+            "id": "3a5ee524-a93b-4183-b7ef-9ce749c7ae5c",
+            "orderItemId": "e77a7090-3648-433a-9714-14377effa579",
+            "productName": "Silk festive kurta",
+            "variantLabel": "S",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 1,
+            "restocked": null
+          }
+        ],
+        "value": 7500,
+        "refundAmount": null,
+        "refundRef": null,
+        "createdAt": "2026-10-31T06:13:26.176Z",
+        "decidedAt": null,
+        "receivedAt": null,
+        "refundedAt": null
+      }
+    }
+  },
+  "returns": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "items": [
+          {
+            "id": "80b2a1d4-2a79-4aee-8956-79f05a37c8b3",
+            "storeOrderId": "104837e3-b5f8-4a5c-a916-a8e118d9c147",
+            "storeOrderCode": "MM-GM46TG-1",
+            "store": {
+              "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+              "name": "Lahore Loom"
+            },
+            "status": "requested",
+            "reason": "size_issue",
+            "details": "Too tight across the shoulders.",
+            "photos": [],
+            "storeNote": null,
+            "items": [
+              {
+                "id": "3a5ee524-a93b-4183-b7ef-9ce749c7ae5c",
+                "orderItemId": "e77a7090-3648-433a-9714-14377effa579",
+                "productName": "Silk festive kurta",
+                "variantLabel": "S",
+                "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+                "unitPrice": 7500,
+                "quantity": 1,
+                "restocked": null
+              }
+            ],
+            "value": 7500,
+            "refundAmount": null,
+            "refundRef": null,
+            "createdAt": "2026-10-31T06:13:26.176Z",
+            "decidedAt": null,
+            "receivedAt": null,
+            "refundedAt": null
+          }
+        ],
+        "total": 1,
+        "page": 1,
+        "pageSize": 3
+      }
+    }
+  },
+  "return": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "80b2a1d4-2a79-4aee-8956-79f05a37c8b3",
+        "storeOrderId": "104837e3-b5f8-4a5c-a916-a8e118d9c147",
+        "storeOrderCode": "MM-GM46TG-1",
+        "store": {
+          "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+          "name": "Lahore Loom"
+        },
+        "status": "requested",
+        "reason": "size_issue",
+        "details": "Too tight across the shoulders.",
+        "photos": [],
+        "storeNote": null,
+        "items": [
+          {
+            "id": "3a5ee524-a93b-4183-b7ef-9ce749c7ae5c",
+            "orderItemId": "e77a7090-3648-433a-9714-14377effa579",
+            "productName": "Silk festive kurta",
+            "variantLabel": "S",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 1,
+            "restocked": null
+          }
+        ],
+        "value": 7500,
+        "refundAmount": null,
+        "refundRef": null,
+        "createdAt": "2026-10-31T06:13:26.176Z",
+        "decidedAt": null,
+        "receivedAt": null,
+        "refundedAt": null
+      }
+    }
+  },
+  "partnerReturns": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "items": [
+          {
+            "id": "80b2a1d4-2a79-4aee-8956-79f05a37c8b3",
+            "storeOrderId": "104837e3-b5f8-4a5c-a916-a8e118d9c147",
+            "storeOrderCode": "MM-GM46TG-1",
+            "store": {
+              "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+              "name": "Lahore Loom"
+            },
+            "customerName": "Ayesha Khan",
+            "status": "requested",
+            "reason": "size_issue",
+            "details": "Too tight across the shoulders.",
+            "photos": [],
+            "storeNote": null,
+            "items": [
+              {
+                "id": "3a5ee524-a93b-4183-b7ef-9ce749c7ae5c",
+                "orderItemId": "e77a7090-3648-433a-9714-14377effa579",
+                "productName": "Silk festive kurta",
+                "variantLabel": "S",
+                "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+                "unitPrice": 7500,
+                "quantity": 1,
+                "restocked": null
+              }
+            ],
+            "value": 7500,
+            "refundAmount": null,
+            "refundRef": null,
+            "createdAt": "2026-10-31T06:13:26.176Z",
+            "decidedAt": null,
+            "receivedAt": null,
+            "refundedAt": null
+          }
+        ],
+        "total": 1,
+        "page": 1,
+        "pageSize": 3
+      }
+    }
+  },
+  "partnerReturn": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "80b2a1d4-2a79-4aee-8956-79f05a37c8b3",
+        "storeOrderId": "104837e3-b5f8-4a5c-a916-a8e118d9c147",
+        "storeOrderCode": "MM-GM46TG-1",
+        "store": {
+          "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+          "name": "Lahore Loom"
+        },
+        "customerName": "Ayesha Khan",
+        "status": "requested",
+        "reason": "size_issue",
+        "details": "Too tight across the shoulders.",
+        "photos": [],
+        "storeNote": null,
+        "items": [
+          {
+            "id": "3a5ee524-a93b-4183-b7ef-9ce749c7ae5c",
+            "orderItemId": "e77a7090-3648-433a-9714-14377effa579",
+            "productName": "Silk festive kurta",
+            "variantLabel": "S",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 1,
+            "restocked": null
+          }
+        ],
+        "value": 7500,
+        "refundAmount": null,
+        "refundRef": null,
+        "createdAt": "2026-10-31T06:13:26.176Z",
+        "decidedAt": null,
+        "receivedAt": null,
+        "refundedAt": null
+      }
+    }
+  },
+  "returnApprove": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "80b2a1d4-2a79-4aee-8956-79f05a37c8b3",
+        "storeOrderId": "104837e3-b5f8-4a5c-a916-a8e118d9c147",
+        "storeOrderCode": "MM-GM46TG-1",
+        "store": {
+          "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+          "name": "Lahore Loom"
+        },
+        "customerName": "Ayesha Khan",
+        "status": "approved",
+        "reason": "size_issue",
+        "details": "Too tight across the shoulders.",
+        "photos": [],
+        "storeNote": "Send it back with the tag on.",
+        "items": [
+          {
+            "id": "3a5ee524-a93b-4183-b7ef-9ce749c7ae5c",
+            "orderItemId": "e77a7090-3648-433a-9714-14377effa579",
+            "productName": "Silk festive kurta",
+            "variantLabel": "S",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 1,
+            "restocked": null
+          }
+        ],
+        "value": 7500,
+        "refundAmount": null,
+        "refundRef": null,
+        "createdAt": "2026-10-31T06:13:26.176Z",
+        "decidedAt": "2026-10-31T06:13:26.253Z",
+        "receivedAt": null,
+        "refundedAt": null
+      }
+    }
+  },
+  "returnReceive": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "80b2a1d4-2a79-4aee-8956-79f05a37c8b3",
+        "storeOrderId": "104837e3-b5f8-4a5c-a916-a8e118d9c147",
+        "storeOrderCode": "MM-GM46TG-1",
+        "store": {
+          "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+          "name": "Lahore Loom"
+        },
+        "customerName": "Ayesha Khan",
+        "status": "received",
+        "reason": "size_issue",
+        "details": "Too tight across the shoulders.",
+        "photos": [],
+        "storeNote": "Send it back with the tag on.",
+        "items": [
+          {
+            "id": "3a5ee524-a93b-4183-b7ef-9ce749c7ae5c",
+            "orderItemId": "e77a7090-3648-433a-9714-14377effa579",
+            "productName": "Silk festive kurta",
+            "variantLabel": "S",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 1,
+            "restocked": true
+          }
+        ],
+        "value": 7500,
+        "refundAmount": null,
+        "refundRef": null,
+        "createdAt": "2026-10-31T06:13:26.176Z",
+        "decidedAt": "2026-10-31T06:13:26.253Z",
+        "receivedAt": "2026-10-31T06:13:26.283Z",
+        "refundedAt": null
+      }
+    }
+  },
+  "returnRefund": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "80b2a1d4-2a79-4aee-8956-79f05a37c8b3",
+        "storeOrderId": "104837e3-b5f8-4a5c-a916-a8e118d9c147",
+        "storeOrderCode": "MM-GM46TG-1",
+        "store": {
+          "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+          "name": "Lahore Loom"
+        },
+        "customerName": "Ayesha Khan",
+        "status": "refunded",
+        "reason": "size_issue",
+        "details": "Too tight across the shoulders.",
+        "photos": [],
+        "storeNote": "Send it back with the tag on.",
+        "items": [
+          {
+            "id": "3a5ee524-a93b-4183-b7ef-9ce749c7ae5c",
+            "orderItemId": "e77a7090-3648-433a-9714-14377effa579",
+            "productName": "Silk festive kurta",
+            "variantLabel": "S",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 1,
+            "restocked": true
+          }
+        ],
+        "value": 7500,
+        "refundAmount": 7500,
+        "refundRef": "RAAST-551023",
+        "createdAt": "2026-10-31T06:13:26.176Z",
+        "decidedAt": "2026-10-31T06:13:26.253Z",
+        "receivedAt": "2026-10-31T06:13:26.283Z",
+        "refundedAt": "2026-10-31T06:13:26.298Z"
+      }
+    }
+  },
+  "paymentProof": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "10a44ba3-b6e9-4ec2-8a65-d43fe1eabe95",
+        "code": "MM-AADW6P-1",
+        "status": "placed",
+        "paymentMethod": "transfer",
+        "paymentStatus": "proof_submitted",
+        "subtotal": 7500,
+        "discount": 0,
+        "couponCode": null,
+        "shippingFee": 0,
+        "total": 7500,
+        "customerNote": null,
+        "items": [
+          {
+            "id": "89b88d5e-b5a2-47d7-94f3-7d99a3eee5f2",
+            "productId": "bb66980c-8939-4959-a17d-54461087f673",
+            "variantId": "a85fe877-03b9-4ade-8e20-745172eee95b",
+            "productName": "Silk festive kurta",
+            "variantLabel": "M",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 1,
+            "lineTotal": 7500,
+            "returnedQty": 0,
+            "reviewed": false,
+            "canReview": false
+          }
+        ],
+        "payment": {
+          "method": "transfer",
+          "status": "proof_submitted",
+          "payBy": "2026-11-01T06:13:25.823Z",
+          "paidAt": null,
+          "paymentRef": "TXN 8812 3341",
+          "proofUrl": null,
+          "rejectedReason": null,
+          "accounts": [
+            {
+              "kind": "jazzcash",
+              "bankName": null,
+              "accountTitle": "Sana Iqbal",
+              "accountNumber": "+920000000000"
+            },
+            {
+              "kind": "bank",
+              "bankName": "Meezan Bank",
+              "accountTitle": "Lahore Loom",
+              "accountNumber": "PK00TEST0000000000000000"
+            }
+          ],
+          "refundAmount": null,
+          "refundRef": null,
+          "refundedAt": null
+        },
+        "shipping": {
+          "courierName": null,
+          "trackingRef": null,
+          "riderName": null,
+          "riderPhone": null
+        },
+        "cancelReason": null,
+        "cancelledBy": null,
+        "cancelRequestedAt": null,
+        "returnWindowDays": 7,
+        "returnDeadline": null,
+        "placedAt": "2026-10-31T06:13:25.823Z",
+        "confirmedAt": null,
+        "packedAt": null,
+        "shippedAt": null,
+        "deliveredAt": null,
+        "completedAt": null,
+        "cancelledAt": null,
+        "events": [
+          {
+            "kind": "status",
+            "from": null,
+            "to": "placed",
+            "actorRole": "customer",
+            "note": null,
+            "at": "2026-10-31T06:13:25.838Z"
+          },
+          {
+            "kind": "payment",
+            "from": "awaiting_transfer",
+            "to": "proof_submitted",
+            "actorRole": "customer",
+            "note": "TXN 8812 3341",
+            "at": "2026-10-31T06:13:26.309Z"
+          }
+        ],
+        "groupCode": "MM-AADW6P",
+        "store": {
+          "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+          "slug": "lahore-loom",
+          "name": "Lahore Loom",
+          "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL"
+        },
+        "can": {
+          "cancel": true,
+          "requestCancel": false,
+          "submitPaymentProof": false,
+          "markReceived": false,
+          "requestReturn": false
+        }
+      }
+    }
+  },
+  "partnerPaymentReject": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "10a44ba3-b6e9-4ec2-8a65-d43fe1eabe95",
+        "code": "MM-AADW6P-1",
+        "status": "placed",
+        "paymentMethod": "transfer",
+        "paymentStatus": "awaiting_transfer",
+        "subtotal": 7500,
+        "discount": 0,
+        "couponCode": null,
+        "shippingFee": 0,
+        "total": 7500,
+        "customerNote": null,
+        "items": [
+          {
+            "id": "89b88d5e-b5a2-47d7-94f3-7d99a3eee5f2",
+            "productId": "bb66980c-8939-4959-a17d-54461087f673",
+            "variantId": "a85fe877-03b9-4ade-8e20-745172eee95b",
+            "productName": "Silk festive kurta",
+            "variantLabel": "M",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 1,
+            "lineTotal": 7500,
+            "returnedQty": 0
+          }
+        ],
+        "payment": {
+          "method": "transfer",
+          "status": "awaiting_transfer",
+          "payBy": "2026-11-01T06:13:25.823Z",
+          "paidAt": null,
+          "paymentRef": "TXN 8812 3341",
+          "proofUrl": null,
+          "rejectedReason": "No transfer with that reference yet.",
+          "accounts": [
+            {
+              "kind": "jazzcash",
+              "bankName": null,
+              "accountTitle": "Sana Iqbal",
+              "accountNumber": "+920000000000"
+            },
+            {
+              "kind": "bank",
+              "bankName": "Meezan Bank",
+              "accountTitle": "Lahore Loom",
+              "accountNumber": "PK00TEST0000000000000000"
+            }
+          ],
+          "refundAmount": null,
+          "refundRef": null,
+          "refundedAt": null
+        },
+        "shipping": {
+          "courierName": null,
+          "trackingRef": null,
+          "riderName": null,
+          "riderPhone": null
+        },
+        "cancelReason": null,
+        "cancelledBy": null,
+        "cancelRequestedAt": null,
+        "returnWindowDays": 7,
+        "returnDeadline": null,
+        "placedAt": "2026-10-31T06:13:25.823Z",
+        "confirmedAt": null,
+        "packedAt": null,
+        "shippedAt": null,
+        "deliveredAt": null,
+        "completedAt": null,
+        "cancelledAt": null,
+        "events": [
+          {
+            "kind": "status",
+            "from": null,
+            "to": "placed",
+            "actorRole": "customer",
+            "note": null,
+            "at": "2026-10-31T06:13:25.838Z"
+          },
+          {
+            "kind": "payment",
+            "from": "awaiting_transfer",
+            "to": "proof_submitted",
+            "actorRole": "customer",
+            "note": "TXN 8812 3341",
+            "at": "2026-10-31T06:13:26.309Z"
+          },
+          {
+            "kind": "payment",
+            "from": "proof_submitted",
+            "to": "awaiting_transfer",
+            "actorRole": "store",
+            "note": "No transfer with that reference yet.",
+            "at": "2026-10-31T06:13:26.322Z"
+          }
+        ],
+        "groupCode": "MM-AADW6P",
+        "customer": {
+          "name": "Ayesha Khan",
+          "phone": "+923000000000",
+          "address": {
+            "city": "Lahore",
+            "area": "Gulberg III",
+            "line1": "House 12, Street 4",
+            "landmark": null,
+            "lat": null,
+            "lng": null
+          }
+        },
+        "can": {
+          "moveTo": [
+            "confirmed",
+            "cancelled"
+          ]
+        }
+      }
+    }
+  },
+  "paymentProofAgain": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "10a44ba3-b6e9-4ec2-8a65-d43fe1eabe95",
+        "code": "MM-AADW6P-1",
+        "status": "placed",
+        "paymentMethod": "transfer",
+        "paymentStatus": "proof_submitted",
+        "subtotal": 7500,
+        "discount": 0,
+        "couponCode": null,
+        "shippingFee": 0,
+        "total": 7500,
+        "customerNote": null,
+        "items": [
+          {
+            "id": "89b88d5e-b5a2-47d7-94f3-7d99a3eee5f2",
+            "productId": "bb66980c-8939-4959-a17d-54461087f673",
+            "variantId": "a85fe877-03b9-4ade-8e20-745172eee95b",
+            "productName": "Silk festive kurta",
+            "variantLabel": "M",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 1,
+            "lineTotal": 7500,
+            "returnedQty": 0,
+            "reviewed": false,
+            "canReview": false
+          }
+        ],
+        "payment": {
+          "method": "transfer",
+          "status": "proof_submitted",
+          "payBy": "2026-11-01T06:13:25.823Z",
+          "paidAt": null,
+          "paymentRef": "TXN 8812 3342",
+          "proofUrl": null,
+          "rejectedReason": null,
+          "accounts": [
+            {
+              "kind": "jazzcash",
+              "bankName": null,
+              "accountTitle": "Sana Iqbal",
+              "accountNumber": "+920000000000"
+            },
+            {
+              "kind": "bank",
+              "bankName": "Meezan Bank",
+              "accountTitle": "Lahore Loom",
+              "accountNumber": "PK00TEST0000000000000000"
+            }
+          ],
+          "refundAmount": null,
+          "refundRef": null,
+          "refundedAt": null
+        },
+        "shipping": {
+          "courierName": null,
+          "trackingRef": null,
+          "riderName": null,
+          "riderPhone": null
+        },
+        "cancelReason": null,
+        "cancelledBy": null,
+        "cancelRequestedAt": null,
+        "returnWindowDays": 7,
+        "returnDeadline": null,
+        "placedAt": "2026-10-31T06:13:25.823Z",
+        "confirmedAt": null,
+        "packedAt": null,
+        "shippedAt": null,
+        "deliveredAt": null,
+        "completedAt": null,
+        "cancelledAt": null,
+        "events": [
+          {
+            "kind": "status",
+            "from": null,
+            "to": "placed",
+            "actorRole": "customer",
+            "note": null,
+            "at": "2026-10-31T06:13:25.838Z"
+          },
+          {
+            "kind": "payment",
+            "from": "awaiting_transfer",
+            "to": "proof_submitted",
+            "actorRole": "customer",
+            "note": "TXN 8812 3341",
+            "at": "2026-10-31T06:13:26.309Z"
+          },
+          {
+            "kind": "payment",
+            "from": "proof_submitted",
+            "to": "awaiting_transfer",
+            "actorRole": "store",
+            "note": "No transfer with that reference yet.",
+            "at": "2026-10-31T06:13:26.322Z"
+          }
+        ],
+        "groupCode": "MM-AADW6P",
+        "store": {
+          "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+          "slug": "lahore-loom",
+          "name": "Lahore Loom",
+          "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL"
+        },
+        "can": {
+          "cancel": true,
+          "requestCancel": false,
+          "submitPaymentProof": false,
+          "markReceived": false,
+          "requestReturn": false
+        }
+      }
+    }
+  },
+  "partnerPaymentConfirm": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "10a44ba3-b6e9-4ec2-8a65-d43fe1eabe95",
+        "code": "MM-AADW6P-1",
+        "status": "placed",
+        "paymentMethod": "transfer",
+        "paymentStatus": "paid",
+        "subtotal": 7500,
+        "discount": 0,
+        "couponCode": null,
+        "shippingFee": 0,
+        "total": 7500,
+        "customerNote": null,
+        "items": [
+          {
+            "id": "89b88d5e-b5a2-47d7-94f3-7d99a3eee5f2",
+            "productId": "bb66980c-8939-4959-a17d-54461087f673",
+            "variantId": "a85fe877-03b9-4ade-8e20-745172eee95b",
+            "productName": "Silk festive kurta",
+            "variantLabel": "M",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 1,
+            "lineTotal": 7500,
+            "returnedQty": 0
+          }
+        ],
+        "payment": {
+          "method": "transfer",
+          "status": "paid",
+          "payBy": "2026-11-01T06:13:25.823Z",
+          "paidAt": "2026-10-31T06:13:26.344Z",
+          "paymentRef": "TXN 8812 3342",
+          "proofUrl": null,
+          "rejectedReason": null,
+          "accounts": [
+            {
+              "kind": "jazzcash",
+              "bankName": null,
+              "accountTitle": "Sana Iqbal",
+              "accountNumber": "+920000000000"
+            },
+            {
+              "kind": "bank",
+              "bankName": "Meezan Bank",
+              "accountTitle": "Lahore Loom",
+              "accountNumber": "PK00TEST0000000000000000"
+            }
+          ],
+          "refundAmount": null,
+          "refundRef": null,
+          "refundedAt": null
+        },
+        "shipping": {
+          "courierName": null,
+          "trackingRef": null,
+          "riderName": null,
+          "riderPhone": null
+        },
+        "cancelReason": null,
+        "cancelledBy": null,
+        "cancelRequestedAt": null,
+        "returnWindowDays": 7,
+        "returnDeadline": null,
+        "placedAt": "2026-10-31T06:13:25.823Z",
+        "confirmedAt": null,
+        "packedAt": null,
+        "shippedAt": null,
+        "deliveredAt": null,
+        "completedAt": null,
+        "cancelledAt": null,
+        "events": [
+          {
+            "kind": "status",
+            "from": null,
+            "to": "placed",
+            "actorRole": "customer",
+            "note": null,
+            "at": "2026-10-31T06:13:25.838Z"
+          },
+          {
+            "kind": "payment",
+            "from": "awaiting_transfer",
+            "to": "proof_submitted",
+            "actorRole": "customer",
+            "note": "TXN 8812 3341",
+            "at": "2026-10-31T06:13:26.309Z"
+          },
+          {
+            "kind": "payment",
+            "from": "proof_submitted",
+            "to": "awaiting_transfer",
+            "actorRole": "store",
+            "note": "No transfer with that reference yet.",
+            "at": "2026-10-31T06:13:26.322Z"
+          }
+        ],
+        "groupCode": "MM-AADW6P",
+        "customer": {
+          "name": "Ayesha Khan",
+          "phone": "+923000000000",
+          "address": {
+            "city": "Lahore",
+            "area": "Gulberg III",
+            "line1": "House 12, Street 4",
+            "landmark": null,
+            "lat": null,
+            "lng": null
+          }
+        },
+        "can": {
+          "moveTo": [
+            "confirmed",
+            "cancelled"
+          ]
+        }
+      }
+    }
+  },
+  "partnerCancelPaid": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "10a44ba3-b6e9-4ec2-8a65-d43fe1eabe95",
+        "code": "MM-AADW6P-1",
+        "status": "cancelled",
+        "paymentMethod": "transfer",
+        "paymentStatus": "refund_due",
+        "subtotal": 7500,
+        "discount": 0,
+        "couponCode": null,
+        "shippingFee": 0,
+        "total": 7500,
+        "customerNote": null,
+        "items": [
+          {
+            "id": "89b88d5e-b5a2-47d7-94f3-7d99a3eee5f2",
+            "productId": "bb66980c-8939-4959-a17d-54461087f673",
+            "variantId": "a85fe877-03b9-4ade-8e20-745172eee95b",
+            "productName": "Silk festive kurta",
+            "variantLabel": "M",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 1,
+            "lineTotal": 7500,
+            "returnedQty": 0
+          }
+        ],
+        "payment": {
+          "method": "transfer",
+          "status": "refund_due",
+          "payBy": "2026-11-01T06:13:25.823Z",
+          "paidAt": "2026-10-31T06:13:26.344Z",
+          "paymentRef": "TXN 8812 3342",
+          "proofUrl": null,
+          "rejectedReason": null,
+          "accounts": [
+            {
+              "kind": "jazzcash",
+              "bankName": null,
+              "accountTitle": "Sana Iqbal",
+              "accountNumber": "+920000000000"
+            },
+            {
+              "kind": "bank",
+              "bankName": "Meezan Bank",
+              "accountTitle": "Lahore Loom",
+              "accountNumber": "PK00TEST0000000000000000"
+            }
+          ],
+          "refundAmount": null,
+          "refundRef": null,
+          "refundedAt": null
+        },
+        "shipping": {
+          "courierName": null,
+          "trackingRef": null,
+          "riderName": null,
+          "riderPhone": null
+        },
+        "cancelReason": "This colour is out of stock.",
+        "cancelledBy": "store",
+        "cancelRequestedAt": null,
+        "returnWindowDays": 7,
+        "returnDeadline": null,
+        "placedAt": "2026-10-31T06:13:25.823Z",
+        "confirmedAt": null,
+        "packedAt": null,
+        "shippedAt": null,
+        "deliveredAt": null,
+        "completedAt": null,
+        "cancelledAt": "2026-10-31T06:13:26.356Z",
+        "events": [
+          {
+            "kind": "status",
+            "from": null,
+            "to": "placed",
+            "actorRole": "customer",
+            "note": null,
+            "at": "2026-10-31T06:13:25.838Z"
+          },
+          {
+            "kind": "payment",
+            "from": "awaiting_transfer",
+            "to": "proof_submitted",
+            "actorRole": "customer",
+            "note": "TXN 8812 3341",
+            "at": "2026-10-31T06:13:26.309Z"
+          },
+          {
+            "kind": "payment",
+            "from": "proof_submitted",
+            "to": "awaiting_transfer",
+            "actorRole": "store",
+            "note": "No transfer with that reference yet.",
+            "at": "2026-10-31T06:13:26.322Z"
+          }
+        ],
+        "groupCode": "MM-AADW6P",
+        "customer": {
+          "name": "Ayesha Khan",
+          "phone": "+923000000000",
+          "address": {
+            "city": "Lahore",
+            "area": "Gulberg III",
+            "line1": "House 12, Street 4",
+            "landmark": null,
+            "lat": null,
+            "lng": null
+          }
+        },
+        "can": {
+          "moveTo": []
+        }
+      }
+    }
+  },
+  "partnerRefund": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "10a44ba3-b6e9-4ec2-8a65-d43fe1eabe95",
+        "code": "MM-AADW6P-1",
+        "status": "cancelled",
+        "paymentMethod": "transfer",
+        "paymentStatus": "refunded",
+        "subtotal": 7500,
+        "discount": 0,
+        "couponCode": null,
+        "shippingFee": 0,
+        "total": 7500,
+        "customerNote": null,
+        "items": [
+          {
+            "id": "89b88d5e-b5a2-47d7-94f3-7d99a3eee5f2",
+            "productId": "bb66980c-8939-4959-a17d-54461087f673",
+            "variantId": "a85fe877-03b9-4ade-8e20-745172eee95b",
+            "productName": "Silk festive kurta",
+            "variantLabel": "M",
+            "imageUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "unitPrice": 7500,
+            "quantity": 1,
+            "lineTotal": 7500,
+            "returnedQty": 0
+          }
+        ],
+        "payment": {
+          "method": "transfer",
+          "status": "refunded",
+          "payBy": "2026-11-01T06:13:25.823Z",
+          "paidAt": "2026-10-31T06:13:26.344Z",
+          "paymentRef": "TXN 8812 3342",
+          "proofUrl": null,
+          "rejectedReason": null,
+          "accounts": [
+            {
+              "kind": "jazzcash",
+              "bankName": null,
+              "accountTitle": "Sana Iqbal",
+              "accountNumber": "+920000000000"
+            },
+            {
+              "kind": "bank",
+              "bankName": "Meezan Bank",
+              "accountTitle": "Lahore Loom",
+              "accountNumber": "PK00TEST0000000000000000"
+            }
+          ],
+          "refundAmount": 7500,
+          "refundRef": "RAAST-551099",
+          "refundedAt": "2026-10-31T06:13:26.372Z"
+        },
+        "shipping": {
+          "courierName": null,
+          "trackingRef": null,
+          "riderName": null,
+          "riderPhone": null
+        },
+        "cancelReason": "This colour is out of stock.",
+        "cancelledBy": "store",
+        "cancelRequestedAt": null,
+        "returnWindowDays": 7,
+        "returnDeadline": null,
+        "placedAt": "2026-10-31T06:13:25.823Z",
+        "confirmedAt": null,
+        "packedAt": null,
+        "shippedAt": null,
+        "deliveredAt": null,
+        "completedAt": null,
+        "cancelledAt": "2026-10-31T06:13:26.356Z",
+        "events": [
+          {
+            "kind": "status",
+            "from": null,
+            "to": "placed",
+            "actorRole": "customer",
+            "note": null,
+            "at": "2026-10-31T06:13:25.838Z"
+          },
+          {
+            "kind": "payment",
+            "from": "awaiting_transfer",
+            "to": "proof_submitted",
+            "actorRole": "customer",
+            "note": "TXN 8812 3341",
+            "at": "2026-10-31T06:13:26.309Z"
+          },
+          {
+            "kind": "payment",
+            "from": "proof_submitted",
+            "to": "awaiting_transfer",
+            "actorRole": "store",
+            "note": "No transfer with that reference yet.",
+            "at": "2026-10-31T06:13:26.322Z"
+          }
+        ],
+        "groupCode": "MM-AADW6P",
+        "customer": {
+          "name": "Ayesha Khan",
+          "phone": "+923000000000",
+          "address": {
+            "city": "Lahore",
+            "area": "Gulberg III",
+            "line1": "House 12, Street 4",
+            "landmark": null,
+            "lat": null,
+            "lng": null
+          }
+        },
+        "can": {
+          "moveTo": []
+        }
+      }
+    }
+  },
+  "dashboard": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "todayNewOrders": 4,
+        "newOrders": 0,
+        "toShip": 0,
+        "awaitingPaymentConfirmation": 0,
+        "refundsDue": 0,
+        "cancelRequests": 0,
+        "lowStockVariants": 21,
+        "openReturns": 0,
+        "unrepliedReviews": 1,
+        "rating": {
+          "avg": 5,
+          "count": 1
+        },
+        "recordedSales": {
+          "last7Days": 15000,
+          "last30Days": 29040
+        }
+      }
+    }
+  },
+  "insights": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "range": "30d",
+        "days": 30,
+        "ordersPerDay": [
+          {
+            "date": "2026-10-02",
+            "orders": 0
+          },
+          {
+            "date": "2026-10-03",
+            "orders": 0
+          },
+          {
+            "date": "2026-10-04",
+            "orders": 0
+          }
+        ],
+        "recordedSalesPerDay": [
+          {
+            "date": "2026-10-02",
+            "amount": 0
+          },
+          {
+            "date": "2026-10-03",
+            "amount": 0
+          },
+          {
+            "date": "2026-10-04",
+            "amount": 0
+          }
+        ],
+        "totals": {
+          "orders": 6,
+          "recordedSales": 29040
+        },
+        "topProducts": [
+          {
+            "productId": "83e6eb3c-59bd-4bf3-accc-004e9e2a6cd8",
+            "name": "Embroidered lawn kurta",
+            "units": 4,
+            "value": 15600
+          },
+          {
+            "productId": "bb66980c-8939-4959-a17d-54461087f673",
+            "name": "Silk festive kurta",
+            "units": 2,
+            "value": 15000
+          }
+        ],
+        "repeatCustomers": {
+          "customers": 3,
+          "repeat": 0,
+          "share": 0
+        },
+        "conversion": {
+          "placed": 6,
+          "delivered": 3,
+          "cancelled": 3,
+          "rate": 0.5
+        }
+      }
+    }
+  },
+  "storeProfile": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+        "slug": "lahore-loom",
+        "tagline": "Hand-finished lawn, khaddar and kurtas",
+        "about": "A family workshop in Gulberg making ready-to-wear eastern clothing since 2009. Every piece is cut and finished in Lahore.",
+        "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL",
+        "coverUrl": "https://placehold.co/1200x500/7F1D1D/FFFFFF/png?text=Lahore+Loom",
+        "brandColor": "#7F1D1D",
+        "onBrandColor": "#FFFFFF",
+        "socials": {},
+        "ratingAvg": 5,
+        "ratingCount": 1,
+        "isFeatured": true,
+        "isPaused": false,
+        "name": "Lahore Loom",
+        "city": "Lahore"
+      }
+    }
+  },
+  "storeProfileUpdate": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+        "slug": "lahore-loom",
+        "tagline": "Hand-finished lawn, khaddar and kurtas",
+        "about": "A family workshop in Gulberg making ready-to-wear eastern clothing since 2009. Every piece is cut and finished in Lahore.",
+        "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL",
+        "coverUrl": "https://placehold.co/1200x500/7F1D1D/FFFFFF/png?text=Lahore+Loom",
+        "brandColor": "#7F1D1D",
+        "onBrandColor": "#FFFFFF",
+        "socials": {},
+        "ratingAvg": 5,
+        "ratingCount": 1,
+        "isFeatured": true,
+        "isPaused": false,
+        "name": "Lahore Loom",
+        "city": "Lahore"
+      }
+    }
+  },
+  "storeProfileContrastErr": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "23c24309-7049-4da4-982b-a93822dbbf46",
+        "slug": "lahore-loom",
+        "tagline": "Hand-finished lawn, khaddar and kurtas",
+        "about": "A family workshop in Gulberg making ready-to-wear eastern clothing since 2009. Every piece is cut and finished in Lahore.",
+        "logoUrl": "https://placehold.co/400x400/7F1D1D/FFFFFF/png?text=LL",
+        "coverUrl": "https://placehold.co/1200x500/7F1D1D/FFFFFF/png?text=Lahore+Loom",
+        "brandColor": "#9CA3AF",
+        "onBrandColor": "#16151A",
+        "socials": {},
+        "ratingAvg": 5,
+        "ratingCount": 1,
+        "isFeatured": true,
+        "isPaused": false,
+        "name": "Lahore Loom",
+        "city": "Lahore"
+      }
+    }
+  },
+  "storeSettings": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "returnWindowDays": 7,
+        "codEnabled": true,
+        "codLimit": 15000,
+        "shippingFlatFee": 200,
+        "freeShippingOver": 5000,
+        "deliveryCities": [],
+        "dispatchDaysMin": 1,
+        "dispatchDaysMax": 3,
+        "isPaused": false,
+        "pauseMessage": null
+      }
+    }
+  },
+  "storeSettingsUpdate": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "returnWindowDays": 7,
+        "codEnabled": true,
+        "codLimit": 15000,
+        "shippingFlatFee": 200,
+        "freeShippingOver": 5000,
+        "deliveryCities": [],
+        "dispatchDaysMin": 1,
+        "dispatchDaysMax": 3,
+        "isPaused": false,
+        "pauseMessage": null
+      }
+    }
+  },
+  "paymentAccounts": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": [
+        {
+          "id": "dbf724d2-3a8d-4cdd-944d-28530ddccbee",
+          "kind": "jazzcash",
+          "accountTitle": "Sana Iqbal",
+          "accountNumber": "+920000000000",
+          "bankName": null,
+          "isActive": true,
+          "createdAt": "2026-10-15T17:59:17.479Z"
+        },
+        {
+          "id": "e37ed44b-545e-486e-9955-9f2696053165",
+          "kind": "bank",
+          "accountTitle": "Lahore Loom",
+          "accountNumber": "PK00TEST0000000000000000",
+          "bankName": "Meezan Bank",
+          "isActive": true,
+          "createdAt": "2026-10-15T17:59:17.479Z"
+        }
+      ]
+    }
+  },
+  "paymentAccountCreate": {
+    "status": 201,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "7ecdee4f-2ce6-4a1e-8e53-85960a525d58",
+        "kind": "jazzcash",
+        "accountTitle": "Lahore Loom",
+        "accountNumber": "+920000000000",
+        "bankName": null,
+        "isActive": true,
+        "createdAt": "2026-10-31T06:13:26.440Z"
+      }
+    }
+  },
+  "paymentAccountUpdate": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "7ecdee4f-2ce6-4a1e-8e53-85960a525d58",
+        "kind": "jazzcash",
+        "accountTitle": "Lahore Loom",
+        "accountNumber": "+920000000000",
+        "bankName": null,
+        "isActive": false,
+        "createdAt": "2026-10-31T06:13:26.440Z"
+      }
+    }
+  },
+  "paymentAccountDelete": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "removed": true
+      }
+    }
+  },
+  "collections": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": [
+        {
+          "id": "0321b18a-042b-4a50-ba39-884489828389",
+          "name": "Eid edit",
+          "slug": "eid-edit",
+          "sort": 0
+        },
+        {
+          "id": "5daf463d-da77-4cc5-80ad-1e5390b3877a",
+          "name": "Winter khaddar",
+          "slug": "winter-khaddar",
+          "sort": 1
+        }
+      ]
+    }
+  },
+  "collectionCreate": {
+    "status": 201,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "f17d35a9-d6de-4cd4-81bb-e6e2b4345fa6",
+        "name": "Capture edit",
+        "slug": "capture-edit",
+        "sort": 2
+      }
+    }
+  },
+  "collectionRename": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "f17d35a9-d6de-4cd4-81bb-e6e2b4345fa6",
+        "name": "Capture edit 2",
+        "slug": "capture-edit-2",
+        "sort": 2
+      }
+    }
+  },
+  "collectionReorder": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": [
+        {
+          "id": "f17d35a9-d6de-4cd4-81bb-e6e2b4345fa6",
+          "name": "Capture edit 2",
+          "slug": "capture-edit-2",
+          "sort": 0
+        },
+        {
+          "id": "0321b18a-042b-4a50-ba39-884489828389",
+          "name": "Eid edit",
+          "slug": "eid-edit",
+          "sort": 1
+        },
+        {
+          "id": "5daf463d-da77-4cc5-80ad-1e5390b3877a",
+          "name": "Winter khaddar",
+          "slug": "winter-khaddar",
+          "sort": 2
+        }
+      ]
+    }
+  },
+  "collectionDelete": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "removed": true
+      }
+    }
+  },
+  "partnerProducts": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "items": [
+          {
+            "id": "0ed7178a-2283-449d-9419-5e5c8901c37c",
+            "name": "Kids lawn frock",
+            "slug": "kids-lawn-frock",
+            "status": "active",
+            "basePrice": 2200,
+            "salePrice": 1900,
+            "price": 1900,
+            "categoryId": "0693d7b5-48e0-4fc9-b8f3-9534bd4cb46a",
+            "collectionId": null,
+            "coverUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Kids+lawn+frock",
+            "variantCount": 3,
+            "totalStock": 15,
+            "lowStock": false,
+            "soldCount": 3,
+            "ratingAvg": 0,
+            "updatedAt": "2026-10-15T17:59:17.479Z"
+          },
+          {
+            "id": "0f7f9009-da26-4064-9439-2d8567d663e1",
+            "name": "Men's cotton kurta",
+            "slug": "mens-cotton-kurta",
+            "status": "active",
+            "basePrice": 3800,
+            "salePrice": null,
+            "price": 3800,
+            "categoryId": "918705c2-29f5-42e4-bdc5-28ae9c329e05",
+            "collectionId": null,
+            "coverUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Men's+cotton+kurta",
+            "variantCount": 8,
+            "totalStock": 52,
+            "lowStock": false,
+            "soldCount": 23,
+            "ratingAvg": 0,
+            "updatedAt": "2026-10-15T17:59:17.479Z"
+          },
+          {
+            "id": "16bf5b1d-9b4d-4033-a4f2-8a388815f018",
+            "name": "Peshawari chappal",
+            "slug": "peshawari-chappal",
+            "status": "active",
+            "basePrice": 4800,
+            "salePrice": null,
+            "price": 4800,
+            "categoryId": "d469c052-5abe-47ef-ac22-70f9c04783ce",
+            "collectionId": null,
+            "coverUrl": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Peshawari+chappal",
+            "variantCount": 5,
+            "totalStock": 9,
+            "lowStock": true,
+            "soldCount": 28,
+            "ratingAvg": 0,
+            "updatedAt": "2026-10-15T17:59:17.479Z"
+          }
+        ],
+        "total": 18,
+        "page": 1,
+        "pageSize": 3
+      }
+    }
+  },
+  "partnerProduct": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "bb66980c-8939-4959-a17d-54461087f673",
+        "name": "Silk festive kurta",
+        "slug": "silk-festive-kurta",
+        "description": "Raw silk with gota work on the yoke.",
+        "categoryId": "fae54e5c-7a4e-411f-83ca-6edcd3bbb7ef",
+        "collectionId": "0321b18a-042b-4a50-ba39-884489828389",
+        "basePrice": 8900,
+        "salePrice": 7500,
+        "price": 7500,
+        "pack": null,
+        "pricePer": null,
+        "status": "active",
+        "removedReason": null,
+        "tags": [
+          "silk",
+          "festive",
+          "eid"
+        ],
+        "ratingAvg": 5,
+        "ratingCount": 1,
+        "soldCount": 40,
+        "publishedAt": "2026-10-15T12:59:17.639Z",
+        "createdAt": "2026-10-15T17:59:17.479Z",
+        "updatedAt": "2026-10-15T17:59:17.479Z",
+        "images": [
+          {
+            "id": "16c68bd6-a5f4-4910-ab83-8e27b92e8c3b",
+            "url": "https://placehold.co/800x800/7F1D1D/FFFFFF/png?text=Silk+festive+kurta",
+            "publicId": "metromatrix/development/70ef0795-2f66-4dec-b098-d7cc595ca948/product_image/seed-fashion-silk-festive-kurta-a636162e",
+            "sort": 0
+          }
+        ],
+        "variants": [
+          {
+            "id": "52afcdbe-26be-4dd6-9956-ff0524db423c",
+            "option1": "S",
+            "option2": null,
+            "label": "S",
+            "colorHex": null,
+            "sku": null,
+            "priceDelta": 0,
+            "price": 7500,
+            "pack": null,
+            "pricePer": null,
+            "stock": 2,
+            "isActive": true,
+            "lowStock": true
+          },
+          {
+            "id": "a85fe877-03b9-4ade-8e20-745172eee95b",
+            "option1": "M",
+            "option2": null,
+            "label": "M",
+            "colorHex": null,
+            "sku": null,
+            "priceDelta": 0,
+            "price": 7500,
+            "pack": null,
+            "pricePer": null,
+            "stock": 2,
+            "isActive": true,
+            "lowStock": true
+          },
+          {
+            "id": "454f9a02-588a-432d-8b99-16a27b95f107",
+            "option1": "L",
+            "option2": null,
+            "label": "L",
+            "colorHex": null,
+            "sku": null,
+            "priceDelta": 0,
+            "price": 7500,
+            "pack": null,
+            "pricePer": null,
+            "stock": 1,
+            "isActive": true,
+            "lowStock": true
+          }
+        ],
+        "totalStock": 5
+      }
+    }
+  },
+  "productCreate": {
+    "status": 201,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "77b79a94-2f72-4d44-9e51-753839c27b35",
+        "name": "Capture test kurta",
+        "slug": "capture-test-kurta",
+        "description": "A plain cotton kurta for the capture run.",
+        "categoryId": "fae54e5c-7a4e-411f-83ca-6edcd3bbb7ef",
+        "collectionId": null,
+        "basePrice": 2500,
+        "salePrice": null,
+        "price": 2500,
+        "pack": null,
+        "pricePer": null,
+        "status": "draft",
+        "removedReason": null,
+        "tags": [],
+        "ratingAvg": 0,
+        "ratingCount": 0,
+        "soldCount": 0,
+        "publishedAt": null,
+        "createdAt": "2026-10-31T06:13:26.509Z",
+        "updatedAt": "2026-10-31T06:13:26.509Z",
+        "images": [],
+        "variants": [
+          {
+            "id": "d2a39139-92bf-4612-8986-d2e331143b73",
+            "option1": "S",
+            "option2": null,
+            "label": "S",
+            "colorHex": null,
+            "sku": null,
+            "priceDelta": 0,
+            "price": 2500,
+            "pack": null,
+            "pricePer": null,
+            "stock": 3,
+            "isActive": true,
+            "lowStock": true
+          },
+          {
+            "id": "f8837269-0a49-4c2d-9c15-038fa21a8bda",
+            "option1": "M",
+            "option2": null,
+            "label": "M",
+            "colorHex": null,
+            "sku": null,
+            "priceDelta": 0,
+            "price": 2500,
+            "pack": null,
+            "pricePer": null,
+            "stock": 5,
+            "isActive": true,
+            "lowStock": false
+          }
+        ],
+        "totalStock": 8
+      }
+    }
+  },
+  "productPublishErr": {
+    "status": 400,
+    "body": {
+      "success": false,
+      "error": {
+        "code": "VALIDATION_FAILED",
+        "message": "Add at least one photo before publishing.",
+        "details": {
+          "fields": {
+            "images": [
+              "Add at least one photo before publishing."
+            ]
+          }
+        }
+      }
+    }
+  },
+  "productUpdate": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "77b79a94-2f72-4d44-9e51-753839c27b35",
+        "name": "Capture test kurta",
+        "slug": "capture-test-kurta",
+        "description": "A plain cotton kurta for the capture run.",
+        "categoryId": "fae54e5c-7a4e-411f-83ca-6edcd3bbb7ef",
+        "collectionId": null,
+        "basePrice": 2500,
+        "salePrice": 2200,
+        "price": 2200,
+        "pack": null,
+        "pricePer": null,
+        "status": "draft",
+        "removedReason": null,
+        "tags": [],
+        "ratingAvg": 0,
+        "ratingCount": 0,
+        "soldCount": 0,
+        "publishedAt": null,
+        "createdAt": "2026-10-31T06:13:26.509Z",
+        "updatedAt": "2026-10-31T06:13:26.537Z",
+        "images": [],
+        "variants": [
+          {
+            "id": "d2a39139-92bf-4612-8986-d2e331143b73",
+            "option1": "S",
+            "option2": null,
+            "label": "S",
+            "colorHex": null,
+            "sku": null,
+            "priceDelta": 0,
+            "price": 2200,
+            "pack": null,
+            "pricePer": null,
+            "stock": 4,
+            "isActive": true,
+            "lowStock": false
+          },
+          {
+            "id": "f8837269-0a49-4c2d-9c15-038fa21a8bda",
+            "option1": "M",
+            "option2": null,
+            "label": "M",
+            "colorHex": null,
+            "sku": null,
+            "priceDelta": 0,
+            "price": 2200,
+            "pack": null,
+            "pricePer": null,
+            "stock": 6,
+            "isActive": true,
+            "lowStock": false
+          }
+        ],
+        "totalStock": 10
+      }
+    }
+  },
+  "productDuplicate": {
+    "status": 201,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "e6a5efd5-071a-4213-b75d-90caadde409d",
+        "name": "Capture test kurta (copy)",
+        "slug": "capture-test-kurta-copy",
+        "description": "A plain cotton kurta for the capture run.",
+        "categoryId": "fae54e5c-7a4e-411f-83ca-6edcd3bbb7ef",
+        "collectionId": null,
+        "basePrice": 2500,
+        "salePrice": 2200,
+        "price": 2200,
+        "pack": null,
+        "pricePer": null,
+        "status": "draft",
+        "removedReason": null,
+        "tags": [],
+        "ratingAvg": 0,
+        "ratingCount": 0,
+        "soldCount": 0,
+        "publishedAt": null,
+        "createdAt": "2026-10-31T06:13:26.558Z",
+        "updatedAt": "2026-10-31T06:13:26.558Z",
+        "images": [],
+        "variants": [
+          {
+            "id": "5b49443a-2f9f-43f7-bbaa-d40982cea155",
+            "option1": "S",
+            "option2": null,
+            "label": "S",
+            "colorHex": null,
+            "sku": null,
+            "priceDelta": 0,
+            "price": 2200,
+            "pack": null,
+            "pricePer": null,
+            "stock": 0,
+            "isActive": true,
+            "lowStock": true
+          },
+          {
+            "id": "53ab4946-496e-4c69-839e-810a1a3b8f2e",
+            "option1": "M",
+            "option2": null,
+            "label": "M",
+            "colorHex": null,
+            "sku": null,
+            "priceDelta": 0,
+            "price": 2200,
+            "pack": null,
+            "pricePer": null,
+            "stock": 0,
+            "isActive": true,
+            "lowStock": true
+          }
+        ],
+        "totalStock": 0
+      }
+    }
+  },
+  "productDeleteCopy": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "archived": false,
+        "deleted": true
+      }
+    }
+  },
+  "productDelete": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "archived": false,
+        "deleted": true
+      }
+    }
+  },
+  "inventory": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "items": [
+          {
+            "variantId": "0b460b67-cbbd-44f8-9b93-9752cf57e9c5",
+            "productId": "16bf5b1d-9b4d-4033-a4f2-8a388815f018",
+            "productName": "Peshawari chappal",
+            "label": "43",
+            "sku": null,
+            "stock": 0,
+            "isActive": true,
+            "lowStock": true
+          },
+          {
+            "variantId": "0d786d69-13cc-492f-953b-d5f5cc346ae5",
+            "productId": "edc398ce-6b04-4979-a0d6-beab9e4ff7bf",
+            "productName": "Embellished khussa",
+            "label": "40",
+            "sku": null,
+            "stock": 1,
+            "isActive": true,
+            "lowStock": true
+          },
+          {
+            "variantId": "5a9a7f5c-393c-47b2-8fb9-81a32eda3c6f",
+            "productId": "2243a56d-a421-4d2e-a519-d1720fabdaa6",
+            "productName": "Jamawar waistcoat",
+            "label": "XL",
+            "sku": null,
+            "stock": 1,
+            "isActive": true,
+            "lowStock": true
+          }
+        ],
+        "total": 74,
+        "page": 1,
+        "pageSize": 3
+      }
+    }
+  },
+  "inventorySet": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "variantId": "0b460b67-cbbd-44f8-9b93-9752cf57e9c5",
+        "stock": 0
+      }
+    }
+  },
+  "inventoryDelta": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "variantId": "0b460b67-cbbd-44f8-9b93-9752cf57e9c5",
+        "stock": 0
+      }
+    }
+  },
+  "inventoryBulk": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "updated": 1,
+        "items": [
+          {
+            "variantId": "0b460b67-cbbd-44f8-9b93-9752cf57e9c5",
+            "stock": 0
+          }
+        ]
+      }
+    }
+  },
+  "movements": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "items": [],
+        "total": 0,
+        "page": 1,
+        "pageSize": 3
+      }
+    }
+  },
+  "coupons": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "items": [
+          {
+            "id": "89c243ef-424f-46ce-b452-176ac2539425",
+            "code": "PMMV9V4X6Q",
+            "type": "fixed",
+            "value": 300,
+            "minOrder": 2000,
+            "maxDiscount": null,
+            "startsAt": "2026-10-15T18:19:58.450Z",
+            "endsAt": "2026-10-22T18:19:58.429Z",
+            "usageLimit": null,
+            "perUserLimit": 1,
+            "usedCount": 0,
+            "isActive": false,
+            "state": "inactive",
+            "createdAt": "2026-10-15T18:19:58.452Z"
+          },
+          {
+            "id": "b66ce27e-f35f-4894-b584-1560c7bcd924",
+            "code": "PMMV9V1MJD",
+            "type": "fixed",
+            "value": 300,
+            "minOrder": 2000,
+            "maxDiscount": null,
+            "startsAt": "2026-10-15T18:17:24.847Z",
+            "endsAt": "2026-10-22T18:17:24.835Z",
+            "usageLimit": null,
+            "perUserLimit": 1,
+            "usedCount": 0,
+            "isActive": false,
+            "state": "inactive",
+            "createdAt": "2026-10-15T18:17:24.849Z"
+          },
+          {
+            "id": "670bc5f3-3709-4459-ab95-e5b026253760",
+            "code": "LOOM10",
+            "type": "percent",
+            "value": 10,
+            "minOrder": 0,
+            "maxDiscount": 800,
+            "startsAt": "2026-10-15T17:59:17.764Z",
+            "endsAt": "2027-10-15T17:59:17.764Z",
+            "usageLimit": null,
+            "perUserLimit": 3,
+            "usedCount": 2,
+            "isActive": true,
+            "state": "active",
+            "createdAt": "2026-10-15T17:59:17.479Z"
+          }
+        ],
+        "total": 4,
+        "page": 1,
+        "pageSize": 3
+      }
+    }
+  },
+  "couponCreate": {
+    "status": 201,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "ca43b89e-237e-4ca1-83c0-763349e8d3e4",
+        "code": "CAP09528",
+        "type": "percent",
+        "value": 10,
+        "minOrder": 1000,
+        "maxDiscount": 500,
+        "startsAt": "2026-10-31T06:13:26.630Z",
+        "endsAt": "2026-11-07T06:13:26.624Z",
+        "usageLimit": 50,
+        "perUserLimit": 1,
+        "usedCount": 0,
+        "isActive": true,
+        "state": "active",
+        "createdAt": "2026-10-31T06:13:26.634Z"
+      }
+    }
+  },
+  "coupon": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "ca43b89e-237e-4ca1-83c0-763349e8d3e4",
+        "code": "CAP09528",
+        "type": "percent",
+        "value": 10,
+        "minOrder": 1000,
+        "maxDiscount": 500,
+        "startsAt": "2026-10-31T06:13:26.630Z",
+        "endsAt": "2026-11-07T06:13:26.624Z",
+        "usageLimit": 50,
+        "perUserLimit": 1,
+        "usedCount": 0,
+        "isActive": true,
+        "state": "active",
+        "createdAt": "2026-10-31T06:13:26.634Z"
+      }
+    }
+  },
+  "couponUpdate": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "ca43b89e-237e-4ca1-83c0-763349e8d3e4",
+        "code": "CAP09528",
+        "type": "percent",
+        "value": 15,
+        "minOrder": 1000,
+        "maxDiscount": 500,
+        "startsAt": "2026-10-31T06:13:26.630Z",
+        "endsAt": "2026-11-07T06:13:26.624Z",
+        "usageLimit": 50,
+        "perUserLimit": 1,
+        "usedCount": 0,
+        "isActive": true,
+        "state": "active",
+        "createdAt": "2026-10-31T06:13:26.634Z"
+      }
+    }
+  },
+  "couponDeactivate": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "ca43b89e-237e-4ca1-83c0-763349e8d3e4",
+        "code": "CAP09528",
+        "type": "percent",
+        "value": 15,
+        "minOrder": 1000,
+        "maxDiscount": 500,
+        "startsAt": "2026-10-31T06:13:26.630Z",
+        "endsAt": "2026-11-07T06:13:26.624Z",
+        "usageLimit": 50,
+        "perUserLimit": 1,
+        "usedCount": 0,
+        "isActive": false,
+        "state": "inactive",
+        "createdAt": "2026-10-31T06:13:26.634Z"
+      }
+    }
+  },
+  "partnerReviews": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "items": [
+          {
+            "id": "5e61ed4b-a8bc-4cdb-bdbb-93a21f7882a7",
+            "productId": "bb66980c-8939-4959-a17d-54461087f673",
+            "productName": "Silk festive kurta",
+            "orderItemId": "e77a7090-3648-433a-9714-14377effa579",
+            "rating": 5,
+            "text": "Lovely fabric, true to size.",
+            "photos": [],
+            "variantLabel": "S",
+            "author": {
+              "name": "Ayesha K.",
+              "avatarUrl": null
+            },
+            "storeReply": null,
+            "repliedAt": null,
+            "isHidden": false,
+            "createdAt": "2026-10-31T06:13:26.156Z"
+          }
+        ],
+        "total": 1,
+        "page": 1,
+        "pageSize": 3
+      }
+    }
+  },
+  "reviewReply": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": {
+        "id": "5e61ed4b-a8bc-4cdb-bdbb-93a21f7882a7",
+        "productId": "bb66980c-8939-4959-a17d-54461087f673",
+        "productName": "Silk festive kurta",
+        "orderItemId": "e77a7090-3648-433a-9714-14377effa579",
+        "rating": 5,
+        "text": "Lovely fabric, true to size.",
+        "photos": [],
+        "variantLabel": "S",
+        "author": {
+          "name": "Ayesha K.",
+          "avatarUrl": null
+        },
+        "storeReply": "Thank you for shopping with us!",
+        "repliedAt": "2026-10-31T06:13:26.690Z",
+        "isHidden": false,
+        "createdAt": "2026-10-31T06:13:26.156Z"
+      }
+    }
+  }
+}

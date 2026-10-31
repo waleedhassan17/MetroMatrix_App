@@ -1,9 +1,11 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Dummy shop routes (every endpoint in API_SHOPPING_ASSUMED)
+// MetroMatrix — Dummy shop routes
 // ═══════════════════════════════════════════════════════
-// Registered on the mock server's router. Customer routes under /shop,
-// the store partner's under /partner/shop, staff under /admin/shop, plus
-// the core /addresses and /notifications.
+// Registered on the mock server's router. Customer routes under /shop speak
+// the real API (its paths, rules and error codes; shapes from shopWire,
+// pinned by mockShopParity). The store partner's under /partner/shop and
+// staff under /admin/shop still follow API_SHOPPING_ASSUMED. Plus the core
+// /addresses and /notifications.
 
 import type { MockBusiness, MockDb, MockUser } from '../mockDb';
 import type { MockAddress, MockOrder, MockProduct, MockStore, MockVariant } from './shopTypes';
@@ -11,9 +13,7 @@ import {
   ShopError,
   addEvent,
   allowedActions,
-  bagGroups,
   cancelOrder,
-  cartView,
   categoryAndChildren,
   categoryTree,
   couponView,
@@ -22,7 +22,6 @@ import {
   findVariant,
   firstName,
   groupSegment,
-  groupSummaryView,
   groupView,
   isListed,
   isoNow,
@@ -34,29 +33,44 @@ import {
   openReturnFor,
   partnerOrderRow,
   partnerOrderView,
-  previewFor,
   productById,
-  productDetailView,
   productHaystack,
-  productSummaryView,
   progressStatus,
   returnableQty,
   returnView,
   returnWindowEnd,
-  reviewSummaryView,
   reviewView,
   rupees,
   shipBlockedReason,
   storeById,
-  storeDetailView,
   storeOfOwner,
   storeSummaryView,
   totalStock,
   unitPrice,
   variantLabel,
-  couponStatus,
   type StoreChoice,
 } from './shopLogic';
+import {
+  LINE_MAX,
+  apiPaymentStatus,
+  apiStatus,
+  availableCouponsWire,
+  cartWire,
+  categoryTree as categoryTreeWire,
+  groupRowWire,
+  groupWire,
+  planFor,
+  planWire,
+  productCard,
+  productPage,
+  returnWire,
+  reviewSummary,
+  reviewWire,
+  storeCard,
+  storeOrderWire,
+  storePage,
+} from './shopWire';
+import type { ReturnReason } from '../../../../models/shopping';
 
 export interface ShopCtx {
   db: MockDb;
@@ -173,49 +187,66 @@ export function registerShopRoutes(kit: ShopKit) {
   };
 
   // ══ Catalogue (public) ══════════════════════════════
-  route('GET', '/shop/home', ({ db, now }) => {
+  // ─── Catalogue (public; a token personalises `isWishlisted`) ───
+  route('GET', '/shop/home', ctx => {
+    const { db, now } = ctx;
     const shop = db.shop;
+    const userId = optionalUser(ctx)?.id ?? null;
     const listed = shop.products.filter(isListed);
+    const targetOf = (b: (typeof shop.banners)[number]) => {
+      const t = b.target as { kind: string; slug?: string; id?: string };
+      if (t.kind === 'store') return { targetType: 'store', targetId: shop.stores.find(s => s.slug === t.slug || s.id === t.slug)?.id ?? null };
+      if (t.kind === 'none') return { targetType: 'none', targetId: null };
+      return { targetType: t.kind, targetId: t.id ?? null };
+    };
     return {
       banners: shop.banners
         .filter(b => b.isActive && Date.parse(b.startsAt) <= now && (!b.endsAt || Date.parse(b.endsAt) > now))
-        .sort((a, b) => a.position - b.position),
-      categories: categoryTree(shop),
-      // The stores staff feature (admin → Stores), in name order.
+        .sort((a, b) => a.position - b.position)
+        .map(b => ({ id: b.id, imageUrl: b.imageUrl, title: b.headline, subtitle: b.subhead, ...targetOf(b) })),
       featuredStores: shop.stores
-        .filter(s => s.isFeatured)
+        .filter(s => s.isFeatured && !s.isPaused)
         .sort((a, b) => a.name.localeCompare(b.name))
-        .map(s => storeSummaryView(shop, s)),
-      newThisWeek: [...listed]
+        .map(s => storeCard(shop, s)),
+      newArrivals: [...listed]
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
         .slice(0, 10)
-        .map(p => productSummaryView(shop, p)),
+        .map(p => productCard(shop, p, userId)),
+      trending: [...listed]
+        .sort((a, b) => b.trending - a.trending)
+        .slice(0, 10)
+        .map(p => productCard(shop, p, userId)),
+      categories: categoryTreeWire(shop),
     };
   });
 
-  route('GET', '/shop/categories', ({ db }) => categoryTree(db.shop));
+  route('GET', '/shop/categories', ({ db }) => categoryTreeWire(db.shop));
 
   route('GET', '/shop/stores', ({ db, query }) => {
     const shop = db.shop;
     const q = String(query.q ?? '').trim();
     const city = String(query.city ?? '').trim().toLowerCase();
+    const categoryIds = query.categoryId ? categoryAndChildren(shop, String(query.categoryId)) : null;
     const rows = shop.stores
+      .filter(s => !s.isPaused)
       .filter(s => !q || matchesQuery([...s.name.toLowerCase().split(/\W+/), ...s.tagline.toLowerCase().split(/\W+/)], q))
-      .filter(s => !city || s.city.toLowerCase() === city || s.settings.nationwide || s.settings.deliveryCities.some(c => c.toLowerCase() === city))
+      .filter(s => !city || delivers(s, city))
+      .filter(s => !bool(query.featured) || s.isFeatured)
+      .filter(s => !categoryIds || shop.products.some(p => p.storeId === s.id && isListed(p) && categoryIds.includes(p.categoryId ?? '')))
       .sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured) || a.name.localeCompare(b.name))
-      .map(s => storeSummaryView(shop, s));
+      .map(s => storeCard(shop, s));
     return paginate(rows, query);
   });
 
   route('GET', '/shop/stores/:slug', ({ db, params }) => {
     const slug = decodeURIComponent(params[0]);
     const store = db.shop.stores.find(s => s.slug === slug || s.id === slug);
-    if (!store) throw notFound('Store');
-    return storeDetailView(db.shop, store);
+    if (!store || store.isPaused) throw notFound('Store');
+    return storePage(db.shop, store);
   });
 
   const sortProducts = (rows: MockProduct[], sort: string, q: string, shop: MockDb['shop']) => {
-    const price = (p: MockProduct) => Math.min(...p.variants.map(v => unitPrice(p, v)));
+    const price = (p: MockProduct) => unitPrice(p, null);
     const rating = (p: MockProduct) => {
       const rs = shop.reviews.filter(r => r.productId === p.id);
       return rs.length ? rs.reduce((s, r) => s + r.rating, 0) / rs.length : 0;
@@ -229,10 +260,9 @@ export function registerShopRoutes(kit: ShopKit) {
         return rows.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
       case 'rating':
         return rows.sort((a, b) => rating(b) - rating(a));
-      case 'trending':
+      case 'popular':
         return rows.sort((a, b) => b.trending - a.trending);
       default:
-        // Relevance: exact name hits first, then what is selling.
         return rows.sort((a, b) => {
           const hit = (p: MockProduct) => (q && p.name.toLowerCase().includes(q.toLowerCase()) ? 1 : 0);
           return hit(b) - hit(a) || b.trending - a.trending;
@@ -240,8 +270,10 @@ export function registerShopRoutes(kit: ShopKit) {
     }
   };
 
-  route('GET', '/shop/products', ({ db, query }) => {
+  route('GET', '/shop/products', ctx => {
+    const { db, query } = ctx;
     const shop = db.shop;
+    const userId = optionalUser(ctx)?.id ?? null;
     const q = String(query.q ?? '').trim();
     const categoryIds = query.categoryId ? categoryAndChildren(shop, String(query.categoryId)) : null;
     const minPrice = num(query.minPrice);
@@ -249,10 +281,11 @@ export function registerShopRoutes(kit: ShopKit) {
     const minRating = num(query.minRating);
     const rows = shop.products.filter(p => {
       if (!isListed(p)) return false;
+      if (storeById(shop, p.storeId)?.isPaused) return false;
       if (query.storeId && p.storeId !== query.storeId) return false;
       if (categoryIds && !categoryIds.includes(p.categoryId ?? '')) return false;
       if (query.collectionId && p.collectionId !== query.collectionId) return false;
-      const price = Math.min(...p.variants.map(v => unitPrice(p, v)));
+      const price = unitPrice(p, null);
       if (minPrice !== null && price < minPrice) return false;
       if (maxPrice !== null && price > maxPrice) return false;
       if (bool(query.inStock) && totalStock(p) === 0) return false;
@@ -265,118 +298,122 @@ export function registerShopRoutes(kit: ShopKit) {
       if (q && !matchesQuery(productHaystack(shop, p), q)) return false;
       return true;
     });
-    return paginate(sortProducts(rows, String(query.sort ?? 'relevance'), q, shop).map(p => productSummaryView(shop, p)), query);
+    return paginate(sortProducts(rows, String(query.sort ?? 'relevance'), q, shop).map(p => productCard(shop, p, userId)), query);
   });
 
   route('GET', '/shop/products/suggest', ({ db, query }) => {
     const shop = db.shop;
     const q = String(query.q ?? '').trim();
-    if (q.length < 2) return [];
-    const products = shop.products
-      .filter(p => isListed(p) && matchesQuery(productHaystack(shop, p), q))
-      .sort((a, b) => b.trending - a.trending)
-      .slice(0, 5)
-      .map(p => ({ kind: 'product', id: p.id, label: p.name, query: p.name }));
-    const cats = shop.categories
-      .filter(c => matchesQuery(c.name.toLowerCase().split(/\W+/), q))
-      .slice(0, 2)
-      .map(c => ({ kind: 'category', id: c.id, label: c.name, query: c.name }));
-    const stores = shop.stores
-      .filter(s => matchesQuery(s.name.toLowerCase().split(/\W+/), q))
-      .slice(0, 2)
-      .map(s => ({ kind: 'store', id: s.slug, label: s.name, query: s.name }));
-    return [...cats, ...stores, ...products];
+    if (!q) throw bad('Type something to search for.', { q: 'Required' });
+    return {
+      products: shop.products
+        .filter(p => isListed(p) && matchesQuery(productHaystack(shop, p), q))
+        .sort((a, b) => b.trending - a.trending)
+        .slice(0, 5)
+        .map(p => productCard(shop, p)),
+      stores: shop.stores
+        .filter(s => !s.isPaused && matchesQuery(s.name.toLowerCase().split(/\W+/), q))
+        .slice(0, 3)
+        .map(s => storeCard(shop, s)),
+    };
   });
 
-  route('GET', '/shop/products/:id', ctx => {
-    const p = productById(ctx.db.shop, decodeURIComponent(ctx.params[0]));
-    if (!p || p.removed || p.status === 'draft') throw notFound('Product');
-    return productDetailView(ctx.db.shop, p, optionalUser(ctx)?.id ?? null);
+  const visibleProduct = (shop: MockDb['shop'], id: string) => {
+    const p = productById(shop, id);
+    if (!p || !isListed(p) || storeById(shop, p.storeId)?.isPaused) throw notFound('Product');
+    return p;
+  };
+
+  route('GET', '/shop/products/:id', ctx => productPage(ctx.db.shop, visibleProduct(ctx.db.shop, decodeURIComponent(ctx.params[0])), optionalUser(ctx)?.id ?? null));
+
+  route('GET', '/shop/products/:id/related', ctx => {
+    const shop = ctx.db.shop;
+    const p = visibleProduct(shop, decodeURIComponent(ctx.params[0]));
+    return shop.products
+      .filter(x => x.id !== p.id && isListed(x) && x.categoryId === p.categoryId)
+      .sort((a, b) => Number(a.storeId === p.storeId) - Number(b.storeId === p.storeId) || b.trending - a.trending)
+      .slice(0, 10)
+      .map(x => productCard(shop, x));
   });
 
   route('GET', '/shop/products/:id/reviews', ({ db, params, query }) => {
-    const id = decodeURIComponent(params[0]);
-    const all = db.shop.reviews.filter(r => r.productId === id).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const p = visibleProduct(db.shop, decodeURIComponent(params[0]));
+    const all = db.shop.reviews.filter(r => r.productId === p.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     const rating = num(query.rating);
     const rows = all.filter(r => (rating === null || r.rating === rating) && (!bool(query.withPhotos) || r.photos.length > 0));
-    return { ...paginate(rows.map(reviewView), query), summary: reviewSummaryView(all) };
+    return { ...paginate(rows.map(r => reviewWire(db.shop, r)), query), summary: reviewSummary(all) };
   });
+
+  const REPORT_REASONS = ['counterfeit', 'prohibited_item', 'misleading', 'offensive', 'wrong_category', 'other'];
 
   route('POST', '/shop/products/:id/report', ctx => {
     const user = requireUser(ctx);
+    const shop = ctx.db.shop;
     const id = decodeURIComponent(ctx.params[0]);
-    if (!productById(ctx.db.shop, id)) throw notFound('Product');
-    const reason = String(ctx.body.reason ?? '').trim();
-    if (!reason) throw bad('Choose a reason.', { reason: 'Choose a reason' });
-    ctx.db.shop.reports.push({
-      id: nextId(ctx.db.shop, 'rp'),
-      productId: id,
-      userId: user.id,
-      reason,
-      details: ctx.body.details ? String(ctx.body.details) : null,
-      status: 'open',
-      createdAt: isoNow(),
-    });
+    visibleProduct(shop, id);
+    const reason = String(ctx.body.reason ?? '');
+    if (!REPORT_REASONS.includes(reason)) throw bad('Choose a reason.', { reason: 'Choose a reason' });
+    if (shop.reports.some(r => r.productId === id && r.userId === user.id && r.status === 'open')) {
+      throw new ShopError(409, 'CONFLICT', 'You have already reported this product.');
+    }
+    const report = { id: nextId(shop, 'rp'), productId: id, userId: user.id, reason, details: ctx.body.details ? String(ctx.body.details) : null, status: 'open' as const, createdAt: isoNow() };
+    shop.reports.push(report);
     ctx.setStatus(201);
-    return { reported: true };
+    return { id: report.id, status: report.status, reason: report.reason, createdAt: report.createdAt };
   });
 
-  // ══ Wishlist ════════════════════════════════════════
+  // ─── Saved ───
   const wishlist = (db: MockDb, userId: string) => (db.shop.wishlist[userId] ??= []);
 
   route('GET', '/shop/wishlist', ctx => {
     const user = requireUser(ctx);
+    const shop = ctx.db.shop;
     const ids = [...wishlist(ctx.db, user.id)].reverse();
-    const rows = ids.map(id => productById(ctx.db.shop, id)).filter((p): p is MockProduct => !!p && !p.removed);
-    return paginate(rows.map(p => productSummaryView(ctx.db.shop, p)), ctx.query);
+    const rows = ids
+      .map(id => productById(shop, id))
+      .filter((p): p is MockProduct => !!p)
+      .map(p => ({ ...productCard(shop, p, user.id), available: isListed(p) && !storeById(shop, p.storeId)?.isPaused, savedAt: p.updatedAt }));
+    return paginate(rows, ctx.query);
   });
-  route('GET', '/shop/wishlist/ids', ctx => wishlist(ctx.db, requireUser(ctx).id));
-  route('PUT', '/shop/wishlist/:productId', ctx => {
+  route('POST', '/shop/wishlist/:productId', ctx => {
     const list = wishlist(ctx.db, requireUser(ctx).id);
     const id = decodeURIComponent(ctx.params[0]);
-    if (!productById(ctx.db.shop, id)) throw notFound('Product');
+    visibleProduct(ctx.db.shop, id);
     if (!list.includes(id)) list.push(id);
-    return { saved: true };
+    return { productId: id, isWishlisted: true };
   });
   route('DELETE', '/shop/wishlist/:productId', ctx => {
     const user = requireUser(ctx);
     const id = decodeURIComponent(ctx.params[0]);
     ctx.db.shop.wishlist[user.id] = wishlist(ctx.db, user.id).filter(x => x !== id);
-    return { removed: true };
+    return { productId: id, isWishlisted: false };
   });
 
-  // ══ Bag ═════════════════════════════════════════════
-  route('GET', '/shop/cart', ctx => cartView(ctx.db.shop, requireUser(ctx).id));
+  // ─── Bag (one bag across stores; lines 1–20; at most 50 lines) ───
+  route('GET', '/shop/cart', ctx => cartWire(ctx.db.shop, requireUser(ctx).id));
 
   route('POST', '/shop/cart/items', ctx => {
     const user = requireUser(ctx);
     const shop = ctx.db.shop;
     const found = findVariant(shop, String(ctx.body.variantId ?? ''));
-    const quantity = Math.max(1, int(ctx.body.quantity, 1));
+    const quantity = int(ctx.body.quantity, 1);
+    if (quantity < 1 || quantity > LINE_MAX) throw bad('Choose between 1 and 20.', { quantity: 'Between 1 and 20' });
     if (!found || !isListed(found.product)) throw new ShopError(404, 'NOT_FOUND', 'This item is no longer available.');
     const store = storeById(shop, found.product.storeId)!;
-    if (store.isPaused) throw new ShopError(409, 'STORE_PAUSED', store.pauseMessage || `${store.name} is taking a short break.`);
+    if (store.isPaused) throw new ShopError(409, 'STORE_UNAVAILABLE', store.pauseMessage || `${store.name} is taking a short break.`);
     if (found.variant.stock === 0) throw new ShopError(409, 'OUT_OF_STOCK', 'This option is sold out.');
     const line = shop.cart.find(l => l.userId === user.id && l.variantId === found.variant.id);
-    const wanted = (line?.quantity ?? 0) + quantity;
-    if (wanted > found.variant.stock) {
-      throw new ShopError(409, 'QUANTITY_UNAVAILABLE', `Only ${found.variant.stock} left of this option.`, { available: found.variant.stock });
-    }
+    const requested = (line?.quantity ?? 0) + quantity;
+    const cap = Math.min(LINE_MAX, found.variant.stock);
+    const next = Math.min(requested, cap);
+    const adjusted = next < requested ? { variantId: found.variant.id, requested, quantity: next, reason: found.variant.stock < LINE_MAX && found.variant.stock < requested ? 'stock' : 'max_per_line' } : null;
     if (line) {
-      line.quantity = wanted;
+      line.quantity = next;
       line.priceSeen = unitPrice(found.product, found.variant);
     } else {
-      shop.cart.push({
-        id: nextId(shop, 'cl'),
-        userId: user.id,
-        productId: found.product.id,
-        variantId: found.variant.id,
-        quantity,
-        priceSeen: unitPrice(found.product, found.variant),
-        addedAt: isoNow(),
-      });
+      shop.cart.push({ id: nextId(shop, 'cl'), userId: user.id, productId: found.product.id, variantId: found.variant.id, quantity: next, priceSeen: unitPrice(found.product, found.variant), addedAt: isoNow() });
     }
-    return cartView(shop, user.id);
+    return cartWire(shop, user.id, adjusted);
   });
 
   route('PATCH', '/shop/cart/items/:id', ctx => {
@@ -384,35 +421,31 @@ export function registerShopRoutes(kit: ShopKit) {
     const shop = ctx.db.shop;
     const line = shop.cart.find(l => l.id === decodeURIComponent(ctx.params[0]) && l.userId === user.id);
     if (!line) throw notFound('Bag item');
-    const quantity = int(ctx.body.quantity, line.quantity);
-    if (quantity < 1) throw bad('Quantity must be at least 1.', { quantity: 'At least 1' });
+    const requested = int(ctx.body.quantity, line.quantity);
+    if (requested < 1 || requested > LINE_MAX) throw bad('Choose between 1 and 20.', { quantity: 'Between 1 and 20' });
     const found = findVariant(shop, line.variantId);
-    if (found && quantity > found.variant.stock && quantity > line.quantity) {
-      throw new ShopError(409, 'QUANTITY_UNAVAILABLE', `Only ${found.variant.stock} left of this option.`, { available: found.variant.stock });
-    }
-    line.quantity = quantity;
-    return cartView(shop, user.id);
+    const cap = found ? Math.min(LINE_MAX, found.variant.stock) : requested;
+    line.quantity = Math.max(1, Math.min(requested, cap));
+    // Saving a line accepts its current price.
+    if (found) line.priceSeen = unitPrice(found.product, found.variant);
+    const adjusted = line.quantity < requested ? { variantId: line.variantId, requested, quantity: line.quantity, reason: 'stock' } : null;
+    return cartWire(shop, user.id, adjusted);
   });
 
   route('DELETE', '/shop/cart/items/:id', ctx => {
     const user = requireUser(ctx);
     const id = decodeURIComponent(ctx.params[0]);
     ctx.db.shop.cart = ctx.db.shop.cart.filter(l => !(l.id === id && l.userId === user.id));
-    return cartView(ctx.db.shop, user.id);
+    return cartWire(ctx.db.shop, user.id, null);
   });
 
-  route('POST', '/shop/cart/acknowledge', ctx => {
+  route('DELETE', '/shop/cart', ctx => {
     const user = requireUser(ctx);
-    const shop = ctx.db.shop;
-    const ids: string[] = Array.isArray(ctx.body.lineIds) ? ctx.body.lineIds : [];
-    for (const line of shop.cart.filter(l => l.userId === user.id && (!ids.length || ids.includes(l.id)))) {
-      const found = findVariant(shop, line.variantId);
-      if (found) line.priceSeen = unitPrice(found.product, found.variant);
-    }
-    return cartView(shop, user.id);
+    ctx.db.shop.cart = ctx.db.shop.cart.filter(l => l.userId !== user.id);
+    return cartWire(ctx.db.shop, user.id, null);
   });
 
-  // ══ Checkout ════════════════════════════════════════
+  // ─── Checkout ───
   const readChoices = (body: Record<string, any>): StoreChoice[] =>
     (Array.isArray(body.stores) ? body.stores : []).map((s: any) => ({
       storeId: String(s?.storeId ?? ''),
@@ -423,66 +456,49 @@ export function registerShopRoutes(kit: ShopKit) {
 
   const addressFor = (db: MockDb, userId: string, id: unknown): MockAddress => {
     const a = db.shop.addresses.find(x => x.id === id && x.userId === userId);
-    if (!a) throw new ShopError(422, 'ADDRESS_REQUIRED', 'Choose a delivery address.');
+    if (!a) throw notFound('Address');
     return a;
   };
 
   route('POST', '/shop/cart/preview', ctx => {
     const user = requireUser(ctx);
-    return previewFor(ctx.db, user.id, addressFor(ctx.db, user.id, ctx.body.addressId), readChoices(ctx.body)).view;
+    return planWire(planFor(ctx.db, user.id, addressFor(ctx.db, user.id, ctx.body.addressId).city, readChoices(ctx.body)));
   });
 
-  route('GET', '/shop/stores/:id/coupons/available', ctx => {
-    const user = requireUser(ctx);
-    const shop = ctx.db.shop;
-    const storeId = decodeURIComponent(ctx.params[0]);
-    const group = bagGroups(shop, user.id).find(g => g.store.id === storeId);
-    const itemsTotal = group ? group.states.reduce((s, x) => s + x.price * x.line.quantity, 0) : 0;
-    return shop.coupons
-      .filter(c => c.storeId === storeId && couponStatus(c) === 'active')
-      .filter(c => c.perCustomerLimit === null || (c.usedBy[user.id] ?? 0) < c.perCustomerLimit)
-      .map(c => ({
-        code: c.code,
-        label: c.type === 'percent' ? `${c.value}% off${c.maxDiscount ? `, up to ${rupees(c.maxDiscount)}` : ''}` : `${rupees(c.value)} off`,
-        minOrder: c.minOrder,
-        endsAt: c.endsAt,
-        shortBy: c.minOrder ? Math.max(0, c.minOrder - itemsTotal) : 0,
-      }));
-  });
+  route('GET', '/shop/stores/:id/coupons/available', ctx => availableCouponsWire(ctx.db.shop, decodeURIComponent(ctx.params[0]), requireUser(ctx).id));
 
   route('POST', '/shop/checkout', ctx => {
     const user = requireUser(ctx);
     const db = ctx.db;
     const shop = db.shop;
-    const key = ctx.headers['idempotency-key'] ?? ctx.headers['x-idempotency-key'];
-    const replayKey = key ? `${user.id}|${key}` : null;
-    if (replayKey && shop.idempotency[replayKey]) {
+    const key = ctx.headers['idempotency-key'];
+    if (!key) throw new ShopError(400, 'IDEMPOTENCY_KEY_REQUIRED', 'Checkout needs an Idempotency-Key.');
+    const replayKey = `${user.id}|${key}`;
+    if (shop.idempotency[replayKey]) {
       const stored = shop.idempotency[replayKey];
       ctx.setStatus(stored.status);
       return stored.payload;
     }
-
     const address = addressFor(db, user.id, ctx.body.addressId);
-    const preview = previewFor(db, user.id, address, readChoices(ctx.body));
-    if (!preview.stores.length) throw new ShopError(422, 'BAG_EMPTY', 'Your bag is empty.');
-
-    // Someone else may have bought the last one since the bag was loaded.
-    const short = preview.stores.flatMap(s => s.raw.states.filter(x => !x.variant || x.line.quantity > x.variant.stock).map(x => x.line.id));
-    if (short.length) throw new ShopError(409, 'OUT_OF_STOCK', 'Some items just sold out.', { lineIds: short });
-    if (!preview.view.canPlace) {
-      throw new ShopError(422, 'CHECKOUT_BLOCKED', 'Fix the highlighted stores to continue.', {
-        stores: preview.view.stores
-          .filter(s => s.error || s.couponError)
-          .map(s => ({ storeId: s.store.id, ...(s.error ?? s.couponError) })),
-      });
+    const choices = readChoices(ctx.body);
+    const plan = planFor(db, user.id, address.city, choices);
+    if (!plan.length) throw new ShopError(400, 'CART_EMPTY', 'Your bag is empty.');
+    const inCart = plan.map(p => p.raw.store.id);
+    const named = choices.map(c => c.storeId);
+    const missing = inCart.filter(id => !named.includes(id));
+    const unexpected = named.filter(id => !inCart.includes(id));
+    if (missing.length || unexpected.length) throw new ShopError(400, 'CHECKOUT_MISMATCH', 'Name every store in your bag once.', { missing, unexpected });
+    const first = plan.flatMap(p => p.wire.issues.map(i => ({ ...i, storeId: p.raw.store.id })))[0];
+    if (first) {
+      const status = ['STORE_UNAVAILABLE', 'OUT_OF_STOCK'].includes(first.code) ? 409 : 400;
+      throw new ShopError(status, first.code, first.message, { ...(first.details ?? {}), stores: plan.map(p => ({ storeId: p.raw.store.id, issues: p.wire.issues })) });
     }
 
     const groupCode = `MM-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
     const createdAt = isoNow();
     const orderIds: string[] = [];
-    preview.stores.forEach(({ raw }, i) => {
-      const { store, states, coupon, discount, shippingFee, itemsTotal, total, paymentMethod, choice } = raw;
-      const account = store.paymentAccounts.find(a => a.isActive) ?? null;
+    plan.forEach(({ raw }, i) => {
+      const { store, states, coupon, discount, shippingFee, subtotal, total, method, choice, accounts } = raw;
       const order: MockOrder = {
         id: nextId(shop, 'o'),
         code: `${groupCode}-${i + 1}`,
@@ -490,8 +506,8 @@ export function registerShopRoutes(kit: ShopKit) {
         userId: user.id,
         storeId: store.id,
         status: 'placed',
-        paymentMethod,
-        paymentStatus: paymentMethod === 'transfer' ? 'awaiting_transfer' : 'cod_pending',
+        paymentMethod: method,
+        paymentStatus: method === 'transfer' ? 'awaiting_transfer' : 'cod_pending',
         items: states.map(s => ({
           id: nextId(shop, 'oi'),
           productId: s.product!.id,
@@ -504,7 +520,7 @@ export function registerShopRoutes(kit: ShopKit) {
           returnedQty: 0,
           reviewed: false,
         })),
-        itemsTotal,
+        itemsTotal: subtotal,
         shippingFee,
         discount,
         total,
@@ -512,8 +528,8 @@ export function registerShopRoutes(kit: ShopKit) {
         note: choice?.note ?? null,
         shipment: null,
         events: [{ type: 'placed', note: null, createdAt }],
-        paymentAccountId: paymentMethod === 'transfer' ? (account?.id ?? null) : null,
-        payBy: paymentMethod === 'transfer' ? new Date(Date.now() + 24 * HOUR).toISOString() : null,
+        paymentAccountId: method === 'transfer' ? (accounts[0]?.id ?? null) : null,
+        payBy: method === 'transfer' ? new Date(Date.now() + 24 * HOUR).toISOString() : null,
         paymentProof: null,
         cancelReason: null,
         internalNote: null,
@@ -528,150 +544,171 @@ export function registerShopRoutes(kit: ShopKit) {
       shop.orders.push(order);
       orderIds.push(order.id);
       notify(shop, store.ownerId, 'new_order', `New order ${order.code}`,
-        `${firstName(user)} ordered ${order.items.reduce((n, x) => n + x.quantity, 0)} item(s) · ${paymentMethod === 'cod' ? 'Cash on delivery' : 'Transfer'}`,
+        `${firstName(user)} ordered ${order.items.reduce((n, x) => n + x.quantity, 0)} item(s) · ${method === 'cod' ? 'Cash on delivery' : 'Transfer'}`,
         { groupCode, orderId: order.id });
     });
     shop.groups.push({ code: groupCode, userId: user.id, address: { ...address }, orderIds, createdAt });
-    const placedLineIds = new Set(preview.stores.flatMap(s => s.raw.states.map(x => x.line.id)));
-    shop.cart = shop.cart.filter(l => !placedLineIds.has(l.id));
+    const placed = new Set(plan.flatMap(p => p.raw.states.map(x => x.line.id)));
+    shop.cart = shop.cart.filter(l => !placed.has(l.id));
     notify(shop, user.id, 'order_placed', `Order ${groupCode} placed`, 'We’ll keep you posted as each store updates it.', { groupCode });
 
-    const payload = groupView(shop, shop.groups[shop.groups.length - 1]);
+    const payload = groupWire(db, shop.groups[shop.groups.length - 1]);
     ctx.setStatus(201);
-    if (replayKey) shop.idempotency[replayKey] = { status: 201, payload };
+    shop.idempotency[replayKey] = { status: 201, payload };
     return payload;
   });
 
-  // ══ Customer orders ═════════════════════════════════
+  // ─── Orders ───
   route('GET', '/shop/orders', ctx => {
     const user = requireUser(ctx);
     const shop = ctx.db.shop;
-    const segment = String(ctx.query.segment ?? 'active');
+    const segment = ctx.query.status ? String(ctx.query.status) : null;
     const rows = shop.groups
-      .filter(g => g.userId === user.id && groupSegment(shop, g) === segment)
+      .filter(g => g.userId === user.id && (!segment || groupSegment(shop, g) === segment))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .map(g => groupSummaryView(shop, g));
+      .map(g => groupRowWire(ctx.db, g));
     return paginate(rows, ctx.query);
   });
 
-  const myGroup = (ctx: ShopCtx, user: MockUser) => {
+  route('GET', '/shop/orders/:groupCode', ctx => {
+    const user = requireUser(ctx);
     const g = ctx.db.shop.groups.find(x => x.code === decodeURIComponent(ctx.params[0]).toUpperCase() && x.userId === user.id);
     if (!g) throw notFound('Order');
-    return g;
-  };
-
-  route('GET', '/shop/orders/:groupCode', ctx => groupView(ctx.db.shop, myGroup(ctx, requireUser(ctx))));
+    return groupWire(ctx.db, g);
+  });
 
   const myOrder = (ctx: ShopCtx) => {
     const user = requireUser(ctx);
     const o = ctx.db.shop.orders.find(x => x.id === decodeURIComponent(ctx.params[0]) && x.userId === user.id);
     if (!o) throw notFound('Order');
-    return { user, order: o, group: ctx.db.shop.groups.find(g => g.code === o.groupCode)! };
+    return { user, order: o };
   };
 
   const transition = (o: MockOrder, from: string[], to: string) => {
-    if (!from.includes(o.status)) throw new ShopError(409, 'INVALID_TRANSITION', 'This order can’t do that any more.', { from: o.status, to });
+    if (!from.includes(o.status)) throw new ShopError(409, 'INVALID_TRANSITION', 'This order can’t do that any more.', { from: apiStatus(o), to, allowed: [] });
   };
 
-  route('POST', '/shop/orders/:id/cancel', ctx => {
-    const { order, group } = myOrder(ctx);
+  const reasonOf = (body: Record<string, any>) => {
+    const reason = String(body.reason ?? '').trim();
+    if (reason.length < 3) throw bad('Tell the store why (3 characters or more).', { reason: 'At least 3 characters' });
+    return reason;
+  };
+
+  route('GET', '/shop/store-orders/:id', ctx => storeOrderWire(ctx.db, myOrder(ctx).order, 'customer'));
+
+  route('POST', '/shop/store-orders/:id/cancel', ctx => {
+    const { order } = myOrder(ctx);
     transition(order, ['placed'], 'cancelled');
-    cancelOrder(ctx.db.shop, order, String(ctx.body.reason ?? '').trim() || 'Cancelled by the customer');
+    cancelOrder(ctx.db.shop, order, reasonOf(ctx.body));
     notify(ctx.db.shop, storeById(ctx.db.shop, order.storeId)!.ownerId, 'order_update', `${order.code} was cancelled`, 'The customer cancelled before you confirmed it.', { groupCode: order.groupCode, orderId: order.id });
-    return groupView(ctx.db.shop, group);
+    return storeOrderWire(ctx.db, order, 'customer');
   });
 
-  route('POST', '/shop/orders/:id/cancel-request', ctx => {
-    const { order, group } = myOrder(ctx);
-    transition(order, ['confirmed', 'packed'], 'cancellation_requested');
+  route('POST', '/shop/store-orders/:id/request-cancel', ctx => {
+    const { order } = myOrder(ctx);
+    if (order.status === 'cancellation_requested') throw new ShopError(409, 'CONFLICT', 'You have already asked the store to cancel this order.');
+    transition(order, ['confirmed', 'packed'], 'cancelled');
+    const reason = reasonOf(ctx.body);
     order.status = 'cancellation_requested';
-    addEvent(order, 'cancellation_requested', String(ctx.body.reason ?? '').trim() || null);
-    notify(ctx.db.shop, storeById(ctx.db.shop, order.storeId)!.ownerId, 'order_update', `Cancellation requested on ${order.code}`, String(ctx.body.reason ?? ''), { groupCode: order.groupCode, orderId: order.id });
-    return groupView(ctx.db.shop, group);
+    addEvent(order, 'cancellation_requested', reason);
+    notify(ctx.db.shop, storeById(ctx.db.shop, order.storeId)!.ownerId, 'order_update', `Cancellation requested on ${order.code}`, reason, { groupCode: order.groupCode, orderId: order.id });
+    return storeOrderWire(ctx.db, order, 'customer');
   });
 
-  route('POST', '/shop/orders/:id/received', ctx => {
-    const { order, group } = myOrder(ctx);
+  route('POST', '/shop/store-orders/:id/received', ctx => {
+    const { order } = myOrder(ctx);
     transition(order, ['shipped'], 'delivered');
     order.status = 'delivered';
     order.deliveredAt = isoNow();
     addEvent(order, 'delivered', 'Confirmed by the customer');
-    return groupView(ctx.db.shop, group);
+    return storeOrderWire(ctx.db, order, 'customer');
   });
 
-  route('POST', '/shop/orders/:id/payment-proof', ctx => {
-    const { order, group } = myOrder(ctx);
+  route('POST', '/shop/store-orders/:id/payment-proof', ctx => {
+    const { order } = myOrder(ctx);
     if (order.paymentMethod !== 'transfer' || !['awaiting_transfer', 'proof_rejected'].includes(order.paymentStatus) || order.status === 'cancelled') {
-      throw new ShopError(409, 'INVALID_TRANSITION', 'This order isn’t waiting for a payment.', { from: order.paymentStatus, to: 'proof_submitted' });
+      throw new ShopError(409, 'INVALID_TRANSITION', 'This order isn’t waiting for a payment.', { from: apiPaymentStatus(order), to: 'proof_submitted', allowed: [] });
     }
-    const transactionId = String(ctx.body.transactionId ?? '').trim().toUpperCase();
-    if (transactionId.length < 6) throw bad('Enter the transaction ID.', { transactionId: 'Enter the transaction ID' });
-    order.paymentProof = { transactionId, imageUrl: ctx.body.imageUrl ? String(ctx.body.imageUrl) : null, submittedAt: isoNow(), rejectionReason: null };
+    const paymentRef = String(ctx.body.paymentRef ?? '').trim();
+    if (paymentRef.length < 3) throw bad('Enter the transaction ID.', { paymentRef: 'Enter the transaction ID' });
+    order.paymentProof = { transactionId: paymentRef, imageUrl: ctx.body.proofUrl ? String(ctx.body.proofUrl) : null, submittedAt: isoNow(), rejectionReason: null };
     order.paymentStatus = 'proof_submitted';
-    addEvent(order, 'payment_proof_submitted', transactionId);
-    notify(ctx.db.shop, storeById(ctx.db.shop, order.storeId)!.ownerId, 'payment_proof', `Check a transfer for ${order.code}`, `${rupees(order.total)} · ${transactionId}`, { groupCode: order.groupCode, orderId: order.id });
-    return groupView(ctx.db.shop, group);
+    addEvent(order, 'payment_proof_submitted', paymentRef);
+    notify(ctx.db.shop, storeById(ctx.db.shop, order.storeId)!.ownerId, 'payment_proof', `Check a transfer for ${order.code}`, `${rupees(order.total)} · ${paymentRef}`, { groupCode: order.groupCode, orderId: order.id });
+    return storeOrderWire(ctx.db, order, 'customer');
   });
 
-  // ══ Returns & reviews (customer) ════════════════════
-  route('POST', '/shop/orders/:id/returns', ctx => {
+  // ─── Returns and reviews ───
+  const RETURN_REASONS = ['wrong_item', 'damaged', 'size_issue', 'not_as_described', 'other'];
+
+  route('POST', '/shop/store-orders/:id/returns', ctx => {
     const { user, order } = myOrder(ctx);
     const shop = ctx.db.shop;
-    if (order.status !== 'delivered') throw new ShopError(409, 'INVALID_TRANSITION', 'Only delivered orders can be returned.', { from: order.status, to: 'return' });
+    if (order.status !== 'delivered') throw new ShopError(409, 'INVALID_TRANSITION', 'Only delivered orders can be returned.', { from: apiStatus(order), to: 'returned', allowed: [] });
     const end = returnWindowEnd(shop, order);
-    if (!end || Date.parse(end) < ctx.now) throw new ShopError(422, 'RETURN_WINDOW_CLOSED', 'The return window for this order has closed.');
-    if (openReturnFor(shop, order.id)) throw new ShopError(409, 'RETURN_EXISTS', 'You already have a return open for this order.');
+    if (!end || Date.parse(end) < ctx.now) {
+      const store = storeById(shop, order.storeId)!;
+      throw new ShopError(400, 'RETURN_WINDOW_CLOSED', 'The return window for this order has closed.', { deliveredAt: order.deliveredAt, returnWindowDays: store.settings.returnWindowDays, closedAt: end });
+    }
+    if (openReturnFor(shop, order.id)) throw new ShopError(409, 'RETURN_ALREADY_OPEN', 'You already have a return open for this order.');
+    const reason = String(ctx.body.reason ?? '');
+    if (!RETURN_REASONS.includes(reason)) throw bad('Choose a reason.', { reason: 'Choose a reason' });
     const items = (Array.isArray(ctx.body.items) ? ctx.body.items : [])
       .map((i: any) => ({ orderItemId: String(i?.orderItemId ?? ''), quantity: int(i?.quantity) }))
       .filter((i: { quantity: number }) => i.quantity > 0);
     if (!items.length) throw bad('Choose at least one item.', { items: 'Choose at least one item' });
     for (const i of items) {
-      if (i.quantity > returnableQty(shop, order, i.orderItemId)) throw bad('That is more than you can return.', { items: 'Too many' });
+      if (i.quantity > returnableQty(shop, order, i.orderItemId)) throw bad('That is more than you can still return.', { items: 'Too many' });
     }
-    const details = String(ctx.body.details ?? '').trim();
-    if (details.length < 10) throw bad('Tell the store what went wrong.', { details: 'At least 10 characters' });
     const r = {
       id: nextId(shop, 'rt'),
       orderId: order.id,
       userId: user.id,
       storeId: order.storeId,
       status: 'requested' as const,
-      reason: ctx.body.reason ?? 'changed_mind',
-      details,
-      photos: (Array.isArray(ctx.body.photos) ? ctx.body.photos : []).slice(0, 4).map(String),
+      reason: reason as ReturnReason,
+      details: String(ctx.body.details ?? '').trim(),
+      photos: (Array.isArray(ctx.body.photos) ? ctx.body.photos : []).slice(0, 5).map(String),
       items,
       storeNote: null,
       refund: null,
       createdAt: isoNow(),
     };
     shop.returns.push(r);
-    addEvent(order, 'return_requested', details);
+    addEvent(order, 'return_requested', r.details || null);
     notify(shop, storeById(shop, order.storeId)!.ownerId, 'return_requested', `Return requested on ${order.code}`, `${items.length} item(s)`, { groupCode: order.groupCode, orderId: order.id, returnId: r.id });
     ctx.setStatus(201);
-    return returnView(ctx.db, r);
+    return returnWire(ctx.db, r, 'customer');
   });
 
   route('GET', '/shop/returns', ctx => {
     const user = requireUser(ctx);
+    const status = ctx.query.status ? String(ctx.query.status) : null;
     const rows = ctx.db.shop.returns
-      .filter(r => r.userId === user.id)
+      .filter(r => r.userId === user.id && (!status || r.status === status))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .map(r => returnView(ctx.db, r));
+      .map(r => returnWire(ctx.db, r, 'customer'));
     return paginate(rows, ctx.query);
   });
 
-  route('POST', '/shop/orders/:id/items/:itemId/review', ctx => {
-    const { user, order } = myOrder(ctx);
+  route('GET', '/shop/returns/:id', ctx => {
+    const user = requireUser(ctx);
+    const r = ctx.db.shop.returns.find(x => x.id === decodeURIComponent(ctx.params[0]) && x.userId === user.id);
+    if (!r) throw notFound('Return');
+    return returnWire(ctx.db, r, 'customer');
+  });
+
+  route('POST', '/shop/order-items/:id/review', ctx => {
+    const user = requireUser(ctx);
     const shop = ctx.db.shop;
-    const item = order.items.find(i => i.id === decodeURIComponent(ctx.params[1]));
-    if (!item) throw notFound('Item');
-    if (order.status !== 'delivered' && order.status !== 'returned') throw new ShopError(409, 'NOT_DELIVERED', 'You can review it once it’s delivered.');
-    if (item.reviewed) throw new ShopError(409, 'ALREADY_REVIEWED', 'You have already reviewed this item.');
+    const itemId = decodeURIComponent(ctx.params[0]);
+    const order = shop.orders.find(o => o.userId === user.id && o.items.some(i => i.id === itemId));
+    const item = order?.items.find(i => i.id === itemId);
+    if (!order || !item) throw notFound('Item');
+    if (order.status !== 'delivered' && order.status !== 'returned') throw new ShopError(403, 'REVIEW_NOT_ALLOWED', 'You can review it once it’s delivered.');
+    if (item.reviewed) throw new ShopError(409, 'REVIEW_EXISTS', 'You have already reviewed this item.');
     const rating = int(ctx.body.rating);
-    const body = String(ctx.body.body ?? '').trim();
-    const photos = (Array.isArray(ctx.body.photos) ? ctx.body.photos : []).slice(0, 4).map(String);
     if (rating < 1 || rating > 5) throw bad('Choose a rating.', { rating: '1 to 5' });
-    if (!photos.length && body.length < 10) throw bad('Write a little more, or add a photo.', { body: 'At least 10 characters' });
     const review = {
       id: nextId(shop, 'r'),
       productId: item.productId,
@@ -680,19 +717,18 @@ export function registerShopRoutes(kit: ShopKit) {
       authorName: `${firstName(user)} ${user.name.split(' ')[1]?.[0] ?? ''}.`.replace(' .', ''),
       orderItemId: item.id,
       rating,
-      title: ctx.body.title ? String(ctx.body.title).trim() : null,
-      body,
-      photos,
+      title: null,
+      body: String(ctx.body.text ?? '').trim(),
+      photos: (Array.isArray(ctx.body.photos) ? ctx.body.photos : []).slice(0, 5).map(String),
       createdAt: isoNow(),
       reply: null,
     };
     shop.reviews.push(review);
     item.reviewed = true;
     ctx.setStatus(201);
-    return reviewView(review);
+    return reviewWire(shop, review, true);
   });
 
-  // ══ Addresses (core) ════════════════════════════════
   const readAddress = (body: Record<string, any>) => {
     const a = {
       label: ['home', 'work', 'other'].includes(body.label) ? body.label : 'home',

@@ -69,7 +69,9 @@ export const useShopNav = () => {
         const t = b.target;
         if (t.kind === 'store') navigation.navigate('StorePage', { slug: t.slug });
         else if (t.kind === 'product') navigation.push('ProductDetail', { id: t.id });
-        else navigation.push('ProductList', { title: t.name || b.headline, categoryId: t.id });
+        else if (t.kind === 'category') navigation.push('ProductList', { title: t.name || b.headline, categoryId: t.id });
+        else if (t.kind === 'collection') navigation.push('ProductList', { title: b.headline, collectionId: t.id });
+        // A banner that points nowhere is only a picture.
       },
     }),
     [navigation],

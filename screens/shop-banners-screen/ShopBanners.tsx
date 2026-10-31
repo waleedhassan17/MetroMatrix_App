@@ -29,7 +29,15 @@ const makeStyles = ({ colors, space, size, radius }: Theme) =>
   });
 
 export const targetText = (b: AdminBanner) =>
-  b.target.kind === 'store' ? `Store · ${b.target.slug}` : b.target.kind === 'category' ? `Category · ${b.target.name || b.target.id}` : `Product · ${b.target.id}`;
+  b.target.kind === 'store'
+    ? `Store · ${b.target.slug}`
+    : b.target.kind === 'category'
+      ? `Category · ${b.target.name || b.target.id}`
+      : b.target.kind === 'collection'
+        ? `Collection · ${b.target.id}`
+        : b.target.kind === 'product'
+          ? `Product · ${b.target.id}`
+          : 'No link';
 
 const ShopBanners: React.FC<Props> = ({ navigation }) => {
   const { back } = useBack({ name: 'ShopOverview' });

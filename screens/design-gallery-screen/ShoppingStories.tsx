@@ -92,12 +92,12 @@ const DETAIL: ProductDetail = {
   option1: { name: 'Size', values: ['S', 'M', 'L'], swatches: {} },
   option2: { name: 'Colour', values: ['Rouge', 'Ink'], swatches: { Rouge: '#9F1239', Ink: '#1E293B' } },
   variants: [
-    { id: 'v1', option1: 'S', option2: 'Rouge', sku: 'S-R', stock: 0, price: 7190, compareAtPrice: 8990 },
-    { id: 'v2', option1: 'S', option2: 'Ink', sku: 'S-I', stock: 2, price: 7190, compareAtPrice: 8990 },
-    { id: 'v3', option1: 'M', option2: 'Rouge', sku: 'M-R', stock: 6, price: 7190, compareAtPrice: 8990 },
-    { id: 'v4', option1: 'M', option2: 'Ink', sku: 'M-I', stock: 0, price: 7190, compareAtPrice: 8990 },
-    { id: 'v5', option1: 'L', option2: 'Rouge', sku: 'L-R', stock: 0, price: 7190, compareAtPrice: 8990 },
-    { id: 'v6', option1: 'L', option2: 'Ink', sku: 'L-I', stock: 0, price: 7190, compareAtPrice: 8990 },
+    { id: 'v1', option1: 'S', option2: 'Rouge', sku: 'S-R', stock: 0, lowStock: false, price: 7190, compareAtPrice: 8990 },
+    { id: 'v2', option1: 'S', option2: 'Ink', sku: 'S-I', stock: 2, lowStock: true, price: 7190, compareAtPrice: 8990 },
+    { id: 'v3', option1: 'M', option2: 'Rouge', sku: 'M-R', stock: 6, lowStock: false, price: 7190, compareAtPrice: 8990 },
+    { id: 'v4', option1: 'M', option2: 'Ink', sku: 'M-I', stock: 0, lowStock: false, price: 7190, compareAtPrice: 8990 },
+    { id: 'v5', option1: 'L', option2: 'Rouge', sku: 'L-R', stock: 0, lowStock: false, price: 7190, compareAtPrice: 8990 },
+    { id: 'v6', option1: 'L', option2: 'Ink', sku: 'L-I', stock: 0, lowStock: false, price: 7190, compareAtPrice: 8990 },
   ],
   lowStock: true,
   store: {

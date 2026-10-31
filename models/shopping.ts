@@ -1,8 +1,9 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Shopping types (mirror docs/API_SHOPPING_ASSUMED.md)
+// MetroMatrix — Shopping types (the app's words for docs/API_SHOPPING.md)
 // ═══════════════════════════════════════════════════════
-// TODO(API_SHOPPING): reconcile with MetroMatrix-API docs/API_SHOPPING.md.
-// Money is INTEGER rupees everywhere; format only with utils/money/money.formatPKR.
+// The serializers in serializers/shopping/ map the real API's shapes onto
+// these. Money is INTEGER rupees everywhere; format only with
+// utils/money/money.formatPKR.
 
 import type { PaymentInstructions, PaymentProof } from './payments';
 
@@ -112,7 +113,9 @@ export interface ProductVariant {
   option1: string | null;
   option2: string | null;
   sku: string;
+  /** Customers see flags, never numbers: 0 sold out, 3 when the API says "low", else a line's 20. */
   stock: number;
+  lowStock: boolean;
   price: number;
   compareAtPrice: number | null;
 }
@@ -178,7 +181,9 @@ export interface ProductQuery {
 export type BannerTarget =
   | { kind: 'store'; slug: string }
   | { kind: 'category'; id: string; name: string }
-  | { kind: 'product'; id: string };
+  | { kind: 'collection'; id: string }
+  | { kind: 'product'; id: string }
+  | { kind: 'none' };
 
 export interface Banner {
   id: string;
@@ -360,7 +365,10 @@ export type PaymentStatus =
   | 'proof_rejected'
   | 'paid'
   | 'cash_collected'
-  | 'refunded';
+  | 'refund_due'
+  | 'refunded'
+  /** Cancelled before anything was paid. */
+  | 'void';
 
 export type OrderEventType =
   | OrderStatus
@@ -368,7 +376,8 @@ export type OrderEventType =
   | 'payment_confirmed'
   | 'payment_rejected'
   | 'cash_collected'
-  | 'return_requested';
+  | 'return_requested'
+  | 'refunded';
 
 export type CourierKey = 'tcs' | 'leopards' | 'mnp' | 'postex' | 'trax' | 'own_rider' | 'other';
 
@@ -454,9 +463,11 @@ export type OrderSegment = 'active' | 'completed' | 'cancelled';
 
 // ─── Returns & reviews ────────────────────────────────
 export type ReturnStatus = 'requested' | 'approved' | 'rejected' | 'received' | 'refunded';
-export type ReturnReason = 'size_issue' | 'damaged' | 'wrong_item' | 'not_as_described' | 'changed_mind';
+export type ReturnReason = 'size_issue' | 'damaged' | 'wrong_item' | 'not_as_described' | 'other';
 
 export interface ReturnItem {
+  /** The return line's own id (the store restocks by it). */
+  id: string;
   orderItemId: string;
   name: string;
   variantLabel: string;

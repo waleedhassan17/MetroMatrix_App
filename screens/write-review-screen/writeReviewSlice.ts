@@ -79,9 +79,9 @@ export const writeReviewSlice = createAppSlice({
     ),
 
     submitReviewAsync: create.asyncThunk(
-      async ({ orderId, itemId, input }: { orderId: string; itemId: string; input: ReviewInput }, { rejectWithValue }) => {
+      async ({ itemId, input }: { itemId: string; input: ReviewInput }, { rejectWithValue }) => {
         try {
-          return await writeReview(orderId, itemId, input);
+          return await writeReview(itemId, input);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

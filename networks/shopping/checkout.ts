@@ -1,16 +1,26 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Shopping Checkout Network (API_SHOPPING_ASSUMED.md)
+// MetroMatrix — Shopping Checkout Network (API_SHOPPING.md §4, §5.3)
 // ═══════════════════════════════════════════════════════
-// Live preview, coupons, and the one
-// idempotent "Place order".
-// TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
+// The live preview (the checkout code minus the writes), the coupons a store
+// offers this customer, and the one idempotent "Place order".
 
 import { API, toApiError } from '../network/network';
 import type { CheckoutInput } from '../../models/shopping';
 
+/** `{ addressId, stores: [{ storeId, paymentMethod, couponCode?, note? }] }`: an empty coupon or note is left out. */
+const checkoutBody = (input: CheckoutInput) => ({
+  addressId: input.addressId,
+  stores: input.stores.map(s => ({
+    storeId: s.storeId,
+    paymentMethod: s.paymentMethod,
+    ...(s.couponCode?.trim() ? { couponCode: s.couponCode.trim() } : null),
+    ...(s.note?.trim() ? { note: s.note.trim() } : null),
+  })),
+});
+
 export const previewCheckout = async (input: CheckoutInput): Promise<unknown> => {
   try {
-    const response = await API.POST({ URL: '/shop/cart/preview', data: input });
+    const response = await API.POST({ URL: '/shop/cart/preview', data: checkoutBody(input) });
     return response.data;
   } catch (e) {
     throw toApiError(e);
@@ -27,13 +37,13 @@ export const fetchAvailableCoupons = async (storeId: string): Promise<unknown> =
 };
 
 /**
- * The same `idempotencyKey` on a retry returns the order the first attempt
- * made — never a second one. Generate it when Checkout mounts; renew it only
- * after a success.
+ * Names every store in the bag exactly once. The `Idempotency-Key` is one
+ * attempt's: a retry with it replays the first answer, so a dropped
+ * connection never places twice.
  */
 export const placeOrder = async (input: CheckoutInput, idempotencyKey: string): Promise<unknown> => {
   try {
-    const response = await API.POST({ URL: '/shop/checkout', data: input, headers: { 'Idempotency-Key': idempotencyKey } });
+    const response = await API.POST({ URL: '/shop/checkout', data: checkoutBody(input), headers: { 'Idempotency-Key': idempotencyKey } });
     return response.data;
   } catch (e) {
     throw toApiError(e);

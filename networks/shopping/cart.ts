@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Shopping Cart Network (API_SHOPPING_ASSUMED.md)
+// MetroMatrix — Shopping Cart Network (API_SHOPPING.md §5.3)
 // ═══════════════════════════════════════════════════════
-// The server owns prices and totals; every
-// mutation answers with the whole recomputed bag.
-// TODO(API_SHOPPING): paths and shapes from docs/API_SHOPPING_ASSUMED.md.
+// The server owns prices and totals; every write answers with the whole
+// recomputed bag (CartView). A line holds 1–20; a quantity above the stock is
+// capped and reported in `adjusted`.
 
 import { API, toApiError } from '../network/network';
 
@@ -16,6 +16,7 @@ export const fetchCart = async (): Promise<unknown> => {
   }
 };
 
+/** The same variant merges into its line. */
 export const addToCart = async (variantId: string, quantity: number): Promise<unknown> => {
   try {
     const response = await API.POST({ URL: '/shop/cart/items', data: { variantId, quantity } });
@@ -25,6 +26,7 @@ export const addToCart = async (variantId: string, quantity: number): Promise<un
   }
 };
 
+/** Also accepts the line's current price: a PRICE_CHANGED warning clears once the customer has seen it. */
 export const updateCartLine = async (lineId: string, quantity: number): Promise<unknown> => {
   try {
     const response = await API.PATCH({ URL: `/shop/cart/items/${encodeURIComponent(lineId)}`, data: { quantity } });
@@ -43,10 +45,9 @@ export const removeCartLine = async (lineId: string): Promise<unknown> => {
   }
 };
 
-/** "Got it" on a price change: the line takes the new price. */
-export const acknowledgeCart = async (lineIds: string[]): Promise<unknown> => {
+export const clearCart = async (): Promise<unknown> => {
   try {
-    const response = await API.POST({ URL: '/shop/cart/acknowledge', data: { lineIds } });
+    const response = await API.DELETE({ URL: '/shop/cart' });
     return response.data;
   } catch (e) {
     throw toApiError(e);

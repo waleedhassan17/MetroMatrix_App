@@ -10,7 +10,7 @@ export const RETURN_REASONS: { key: ReturnReason; label: string }[] = [
   { key: 'damaged', label: 'Damaged' },
   { key: 'wrong_item', label: 'Wrong item' },
   { key: 'not_as_described', label: 'Not as described' },
-  { key: 'changed_mind', label: 'Changed my mind' },
+  { key: 'other', label: 'Something else' },
 ];
 
 export const returnReasonLabel = (r: ReturnReason) => RETURN_REASONS.find(x => x.key === r)?.label ?? 'Other';

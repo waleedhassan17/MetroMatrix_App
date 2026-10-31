@@ -7,7 +7,7 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { acknowledgeCart, addToCart, fetchCart, removeCartLine, updateCartLine } from '../../networks/shopping/cart';
+import { addToCart, fetchCart, removeCartLine, updateCartLine } from '../../networks/shopping/cart';
 import { toRejectedValue } from '../../networks/network/network';
 import { EMPTY_CART, cartSerializer } from '../../serializers/shopping/cartSerializer';
 import type { Cart } from '../../models';
@@ -155,9 +155,18 @@ export const bagSlice = createAppSlice({
     ),
 
     acknowledgeBagAsync: create.asyncThunk(
-      async (lineIds: string[], { rejectWithValue }) => {
+      // Saving a line's quantity accepts its current price: each line with a
+      // price change is saved as it is (none named: every such line), and the
+      // last answer is the whole bag.
+      async (lineIds: string[], { getState, rejectWithValue }) => {
         try {
-          return await acknowledgeCart(lineIds);
+          const { cart } = (getState() as { bag: BagSliceState }).bag;
+          const lines = cart.groups
+            .flatMap(g => g.lines)
+            .filter(l => (lineIds.length ? lineIds.includes(l.id) : l.warnings.some(w => w.code === 'PRICE_CHANGED')));
+          let latest: unknown = null;
+          for (const l of lines) latest = await updateCartLine(l.id, l.quantity);
+          return latest ?? (await fetchCart());
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

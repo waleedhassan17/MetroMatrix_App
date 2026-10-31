@@ -90,7 +90,7 @@ const ReturnRequestContent: React.FC<Props> = ({ route }) => {
     items: Object.entries(s.quantities)
       .filter(([, q]) => q > 0)
       .map(([orderItemId, quantity]) => ({ orderItemId, quantity })),
-    reason: s.reason ?? 'changed_mind',
+    reason: s.reason ?? 'other',
     details: s.details,
     photos: storedUrls(s.photos),
   };

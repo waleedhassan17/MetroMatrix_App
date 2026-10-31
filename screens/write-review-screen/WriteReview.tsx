@@ -80,7 +80,7 @@ const WriteReviewContent: React.FC<Props> = ({ route }) => {
       haptics.warning();
       return;
     }
-    const r = await dispatch(submitReviewAsync({ orderId, itemId, input }));
+    const r = await dispatch(submitReviewAsync({ itemId, input }));
     if (submitReviewAsync.fulfilled.match(r)) {
       haptics.success();
       void dispatch(loadOrderGroupAsync(groupCode));

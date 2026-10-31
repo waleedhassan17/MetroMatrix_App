@@ -15,7 +15,7 @@ export interface BannerForm {
   imageUrl: string;
   headline: string;
   subhead: string;
-  kind: 'store' | 'category' | 'product';
+  kind: 'store' | 'category' | 'product' | 'collection' | 'none';
   /** A store slug, a category id or a product id. */
   ref: string;
   /** YYYY-MM-DD */
@@ -55,7 +55,7 @@ export const fromBanner = (b: AdminBanner): BannerForm => ({
   headline: b.headline,
   subhead: b.subhead ?? '',
   kind: b.target.kind,
-  ref: b.target.kind === 'store' ? b.target.slug : b.target.id,
+  ref: b.target.kind === 'store' ? b.target.slug : b.target.kind === 'none' ? '' : b.target.id,
   startsAt: b.startsAt.slice(0, 10),
   endsAt: b.endsAt ? b.endsAt.slice(0, 10) : '',
   position: b.position,

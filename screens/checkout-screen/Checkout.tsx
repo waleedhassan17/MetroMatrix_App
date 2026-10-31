@@ -236,9 +236,11 @@ const CheckoutContent: React.FC<Props> = ({ navigation }) => {
         <Money label="Delivery" value={ps.shippingFee} free tone={ps.shippingFee === 0 ? 'success' : undefined} />
         {ps.discount ? <Money label="Coupon" value={-ps.discount} tone="success" /> : null}
         <Money label={`Pay ${ps.store.name}`} value={ps.total} strong />
-        <AppText variant="caption" tone="muted">
-          Ships in {ps.dispatchMinDays === ps.dispatchMaxDays ? ps.dispatchMaxDays : `${ps.dispatchMinDays}–${ps.dispatchMaxDays}`} days.
-        </AppText>
+        {ps.dispatchMaxDays > 0 ? (
+          <AppText variant="caption" tone="muted">
+            Ships in {ps.dispatchMinDays === ps.dispatchMaxDays ? ps.dispatchMaxDays : `${ps.dispatchMinDays}–${ps.dispatchMaxDays}`} days.
+          </AppText>
+        ) : null}
       </Card>
     );
   };

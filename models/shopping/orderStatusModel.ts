@@ -46,7 +46,9 @@ export const PAYMENT_STATUS: Record<PaymentStatus, StatusMeta> = {
   proof_rejected: { label: 'Payment not received', tone: 'danger', description: 'The store could not find your transfer.' },
   paid: { label: 'Paid', tone: 'success', description: 'The store has confirmed your payment.' },
   cash_collected: { label: 'Paid in cash', tone: 'success', description: 'Cash was collected on delivery.' },
+  refund_due: { label: 'Refund due', tone: 'warning', description: 'The store owes you a refund and will record it here.' },
   refunded: { label: 'Refunded', tone: 'neutral', description: 'The store has recorded a refund.' },
+  void: { label: 'No payment due', tone: 'neutral', description: 'The order was cancelled before anything was paid.' },
 };
 
 export const RETURN_STATUS: Record<ReturnStatus, StatusMeta> = {
@@ -88,6 +90,7 @@ const EVENT_LABEL: Record<OrderEventType, string> = {
   payment_rejected: 'Payment not received',
   cash_collected: 'Cash collected',
   return_requested: 'Return requested',
+  refunded: 'Refund recorded',
 };
 
 export const eventLabel = (type: OrderEventType): string => EVENT_LABEL[type] ?? 'Update';

@@ -4,7 +4,7 @@
 
 import { fetchAddresses } from '../../../addresses/addresses';
 import { fetchReports, removeReportedProduct } from '../../../admin/adminShop';
-import { acknowledgeCart, addToCart, fetchCart } from '../../../shopping/cart';
+import { addToCart, fetchCart, updateCartLine } from '../../../shopping/cart';
 import { fetchProduct } from '../../../shopping/catalog';
 import { placeOrder, previewCheckout } from '../../../shopping/checkout';
 import { cancelOrder, fetchOrderGroup, submitPaymentProof } from '../../../shopping/orders';
@@ -28,7 +28,7 @@ import { signInAs, installDummyApi } from '../testing';
 import { addressListSerializer } from '../../../../serializers/addressSerializer';
 import { productDetailSerializer, reviewSerializer } from '../../../../serializers/shopping/catalogSerializer';
 import { cartSerializer, checkoutPreviewSerializer } from '../../../../serializers/shopping/cartSerializer';
-import { orderGroupSerializer, returnSerializer } from '../../../../serializers/shopping/orderSerializer';
+import { orderGroupSerializer, returnSerializer, storeOrderResponseSerializer } from '../../../../serializers/shopping/orderSerializer';
 import { partnerOrderDetailSerializer, partnerProductRowPageSerializer, partnerProductSerializer } from '../../../../serializers/shopping/partnerSerializer';
 import { productReportPageSerializer } from '../../../../serializers/shopping/adminShopSerializer';
 
@@ -130,7 +130,7 @@ describe('bag → preview → checkout', () => {
     db.shop.products.flatMap(p => p.variants).find(v => v.id === kurta.id)!.stock = 0;
     const err = await failure(placeOrder(input, 'key-2').then(raw => required(orderGroupSerializer(raw))));
     expect(err.code).toBe('OUT_OF_STOCK');
-    expect(err.details.lineIds).toHaveLength(1);
+    expect(err.details.lines).toHaveLength(1);
   });
 
   it('flags a price change until the customer acknowledges it', async () => {
@@ -140,9 +140,12 @@ describe('bag → preview → checkout', () => {
     const bag = required(cartSerializer(await fetchCart()));
     expect(bag.blocking).toBe(true);
     expect(bag.groups[0].lines[0].warnings[0]).toMatchObject({ code: 'PRICE_CHANGED', previousPrice: 7190, currentPrice: 6990 });
-    expect((required(checkoutPreviewSerializer(await previewCheckout(input)))).stores[0].error?.code).toBe('BAG_NEEDS_ATTENTION');
+    // A price change is a warning, never an error: checkout charges the live price.
+    expect((required(checkoutPreviewSerializer(await previewCheckout(input)))).stores[0].error).toBeNull();
 
-    const cleared = required(cartSerializer(await acknowledgeCart([])));
+    // Saving the line as it is accepts the new price.
+    const line = bag.groups[0].lines[0];
+    const cleared = required(cartSerializer(await updateCartLine(line.id, line.quantity)));
     expect(cleared.blocking).toBe(false);
   });
 
@@ -155,7 +158,7 @@ describe('bag → preview → checkout', () => {
     // Lawn & Loom delivers nationwide.
     expect(preview.stores.find(s => s.store.id === 's_lawn')!.error).toBeNull();
     expect(preview.canPlace).toBe(false);
-    expect((await failure(placeOrder({ ...input, addressId: quetta.id }, 'key-3').then(raw => required(orderGroupSerializer(raw))))).code).toBe('CHECKOUT_BLOCKED');
+    expect((await failure(placeOrder({ ...input, addressId: quetta.id }, 'key-3').then(raw => required(orderGroupSerializer(raw))))).code).toBe('DELIVERY_UNAVAILABLE');
   });
 
   it('enforces a coupon usage limit across customers', async () => {
@@ -174,7 +177,7 @@ describe('bag → preview → checkout', () => {
     await addToCart(urban[1].id, 1);
     const hamza = (required(addressListSerializer(await fetchAddresses())))[0];
     const theirs = required(checkoutPreviewSerializer(await previewCheckout({ ...input, addressId: hamza.id })));
-    expect(theirs.stores[0].couponError?.code).toBe('COUPON_USED_UP');
+    expect(theirs.stores[0].couponError?.code).toBe('COUPON_LIMIT_REACHED');
   });
 
   it('puts the stock back when the customer cancels', async () => {
@@ -183,8 +186,8 @@ describe('bag → preview → checkout', () => {
     const group = required(orderGroupSerializer(await placeOrder(input, 'key-5')));
     const lawn = group.orders.find(o => o.store.id === 's_lawn')!;
     expect(lawn.canCancel).toBe(true);
-    const after = required(orderGroupSerializer(await cancelOrder(lawn.id, 'Ordered the wrong size')));
-    expect(after.orders.find(o => o.id === lawn.id)!.status).toBe('cancelled');
+    const after = required(storeOrderResponseSerializer(await cancelOrder(lawn.id, 'Ordered the wrong size')));
+    expect(after.status).toBe('cancelled');
     expect(await stockOf(kurta.id)).toBe(before);
   });
 });
@@ -202,8 +205,8 @@ describe('store partner: payment before shipping, then delivery and review', () 
     expect(blocked.code).toBe('PAYMENT_NOT_CONFIRMED');
 
     await signIn('customer@metromatrix.app');
-    const sent = required(orderGroupSerializer(await submitPaymentProof(order.id, { transactionId: 'rx-99887766', imageUrl: null })));
-    expect(sent.orders.find(o => o.id === order.id)!.paymentStatus).toBe('proof_submitted');
+    const sent = required(storeOrderResponseSerializer(await submitPaymentProof(order.id, { transactionId: 'rx-99887766', imageUrl: null })));
+    expect(sent.paymentStatus).toBe('proof_submitted');
 
     await signIn('volt@metromatrix.app', 'partner');
     await confirmPayment(order.id);
@@ -216,9 +219,9 @@ describe('store partner: payment before shipping, then delivery and review', () 
     const delivered = (required(orderGroupSerializer(await fetchOrderGroup(group.code)))).orders.find(o => o.id === order.id)!;
     expect(delivered).toMatchObject({ status: 'delivered', canReview: true, canReturn: true });
     const item = delivered.items[0];
-    await writeReview(order.id, item.id, { rating: 5, title: null, body: 'Great sound and battery.', photos: [] });
-    expect((await failure(writeReview(order.id, item.id, { rating: 4, title: null, body: 'Again, again.', photos: [] }).then(raw => required(reviewSerializer(raw))))).code).toBe(
-      'ALREADY_REVIEWED',
+    await writeReview(item.id, { rating: 5, title: null, body: 'Great sound and battery.', photos: [] });
+    expect((await failure(writeReview(item.id, { rating: 4, title: null, body: 'Again, again.', photos: [] }).then(raw => required(reviewSerializer(raw))))).code).toBe(
+      'REVIEW_EXISTS',
     );
   });
 
@@ -254,12 +257,13 @@ describe('store partner: payment before shipping, then delivery and review', () 
     expect((required(orderGroupSerializer(await fetchOrderGroup(group.code)))).orders.find(o => o.id === order.id)!.status).toBe('returned');
   });
 
-  it('a paused store takes no new items', async () => {
+  it('a paused store takes no new items, and its products leave the shop', async () => {
+    const kurta = inStock(required(productDetailSerializer(await fetchProduct('p_l1'))));
     await signIn('store@metromatrix.app', 'partner');
     await pauseStore('Back on Monday');
     await signIn('customer@metromatrix.app');
-    const kurta = inStock(required(productDetailSerializer(await fetchProduct('p_l1'))));
-    expect((await failure(addToCart(kurta.id, 1).then(raw => required(cartSerializer(raw))))).code).toBe('STORE_PAUSED');
+    expect((await failure(addToCart(kurta.id, 1).then(raw => required(cartSerializer(raw))))).code).toBe('STORE_UNAVAILABLE');
+    expect((await failure(fetchProduct('p_l1'))).code).toBe('NOT_FOUND');
   });
 
   it('a failed publish leaves nothing behind', async () => {

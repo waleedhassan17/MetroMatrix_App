@@ -52,9 +52,9 @@ export const choose = (p: Product, c: VariantChoice, which: 1 | 2, value: string
   return which === 1 ? { ...next, option2: fix } : { ...next, option1: fix };
 };
 
-/** "Only 2 left" / "In stock" / "Sold out" for the chosen variant. */
+/** "Only a few left" / "In stock" / "Sold out" for the chosen variant (the API sends flags, not counts). */
 export const stockNote = (v: ProductVariant | null): { text: string; tone: 'muted' | 'warning' | 'danger' } => {
   if (!v || v.stock <= 0) return { text: 'Sold out', tone: 'danger' };
-  if (v.stock <= 3) return { text: `Only ${v.stock} left`, tone: 'warning' };
+  if (v.lowStock) return { text: 'Only a few left', tone: 'warning' };
   return { text: 'In stock', tone: 'muted' };
 };
