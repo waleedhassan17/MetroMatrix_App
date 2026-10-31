@@ -7,7 +7,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { bulkSetStock, fetchMovements, setStock } from '../../networks/shopping/partner/inventory';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { InventoryMovement, InventoryRow } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { inventoryRowSerializer, inventoryRowListSerializer, movementListSerializer } from '../../serializers/shopping/partnerSerializer';

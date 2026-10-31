@@ -7,7 +7,7 @@
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchOptionGroups } from '../../networks/food/vendor/menu';
 import { fetchAvailability, setAvailability } from '../../networks/food/vendor/availability';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { OptionGroup } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { optionGroupsSerializer, menuAvailabilitySerializer } from '../../serializers/food/menuSerializer';
@@ -30,8 +30,8 @@ export const vendorOptionGroupsSlice = createAppSlice({
     loadOptionGroupsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [groups, availability] = await Promise.all([fetchOptionGroups().then(raw => required(optionGroupsSerializer(raw))), fetchAvailability().then(raw => required(menuAvailabilitySerializer(raw)))]);
-          return { groups, available: Object.fromEntries(availability.options.map(o => [o.optionId, o.isAvailable])) };
+          const [groups, availability] = await Promise.all([fetchOptionGroups(), fetchAvailability()]);
+          return { groups, availability };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -43,8 +43,8 @@ export const vendorOptionGroupsSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.status = 'succeeded';
-          state.groups = action.payload.groups;
-          state.available = action.payload.available;
+          state.groups = optionGroupsSerializer(action.payload.groups);
+          state.available = Object.fromEntries(menuAvailabilitySerializer(action.payload.availability).options.map(o => [o.optionId, o.isAvailable]));
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -55,8 +55,7 @@ export const vendorOptionGroupsSlice = createAppSlice({
     setOptionAvailableAsync: create.asyncThunk(
       async ({ optionId, isAvailable }: { optionId: string; isAvailable: boolean }, { rejectWithValue }) => {
         try {
-          const a = required(menuAvailabilitySerializer(await setAvailability({ options: [{ optionId, isAvailable }] })));
-          return Object.fromEntries(a.options.map(o => [o.optionId, o.isAvailable]));
+          return await setAvailability({ options: [{ optionId, isAvailable }] });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -69,7 +68,7 @@ export const vendorOptionGroupsSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.saving = state.saving.filter(id => id !== action.meta.arg.optionId);
-          state.available = action.payload;
+          state.available = Object.fromEntries(menuAvailabilitySerializer(action.payload).options.map(o => [o.optionId, o.isAvailable]));
         },
         rejected: (state, action) => {
           state.saving = state.saving.filter(id => id !== action.meta.arg.optionId);

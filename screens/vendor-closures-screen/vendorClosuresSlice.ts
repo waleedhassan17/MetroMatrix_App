@@ -7,7 +7,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { addClosure, fetchClosures, removeClosure } from '../../networks/food/vendor/settings';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { VendorClosure } from '../../models';
 import { PKT, addDays, zonedToIso } from '../../utils/health-time/healthTime';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';

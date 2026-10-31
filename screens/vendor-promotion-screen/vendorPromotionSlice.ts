@@ -10,7 +10,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { createPromotion, deactivatePromotion, deletePromotion, fetchPromotion, updatePromotion } from '../../networks/food/vendor/promotions';
 import { fetchMenuItems } from '../../networks/food/vendor/menu';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { emptyPromotionForm, promotionForm, promotionInput, type PromotionForm } from '../../models/food/promotionModel';
 import type { FoodPromotion, PromotionKind, VendorMenuItem } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -67,8 +67,8 @@ export const vendorPromotionSlice = createAppSlice({
     loadPromotionAsync: create.asyncThunk(
       async (id: string | undefined, { rejectWithValue }) => {
         try {
-          const [promotion, items] = await Promise.all([id ? fetchPromotion(id).then(raw => required(foodPromotionSerializer(raw))) : Promise.resolve(null), fetchMenuItems().then(raw => required(vendorMenuItemsSerializer(raw)))]);
-          return { promotion, dishes: items.map(i => ({ id: i.id, name: i.name })) };
+          const [promotion, items] = await Promise.all([id ? fetchPromotion(id) : Promise.resolve(null), fetchMenuItems()]);
+          return { promotion, items };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -78,10 +78,11 @@ export const vendorPromotionSlice = createAppSlice({
           Object.assign(state, initialState, { status: 'loading' });
         },
         fulfilled: (state, action) => {
+          const promotion = action.payload.promotion === null ? null : foodPromotionSerializer(action.payload.promotion);
           state.status = 'succeeded';
-          state.promotion = action.payload.promotion;
-          state.dishes = action.payload.dishes;
-          state.form = action.payload.promotion ? promotionForm(action.payload.promotion) : emptyPromotionForm();
+          state.promotion = promotion;
+          state.dishes = vendorMenuItemsSerializer(action.payload.items).map(i => ({ id: i.id, name: i.name }));
+          state.form = promotion ? promotionForm(promotion) : emptyPromotionForm();
         },
         rejected: (state, action) => {
           state.status = 'failed';

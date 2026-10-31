@@ -4,11 +4,11 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchDonations, logDonation } from '../../networks/kitchen/waste';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { Donations } from '../../models';
 import type { ValidationErrors } from '../../models/authModel';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { donationsSerializer, donationSerializer } from '../../serializers/kitchen/wasteSerializer';
+import { donationsSerializer } from '../../serializers/kitchen/wasteSerializer';
 
 export interface DonationForm {
   meals: string;
@@ -67,9 +67,9 @@ export const donationsSlice = createAppSlice({
     logDonationAsync: create.asyncThunk(
       async (input: { meals: number; to: string; note?: string }, { dispatch, rejectWithValue }) => {
         try {
-          const d = required(donationSerializer(await logDonation(input)));
+          const logged = await logDonation(input);
           void dispatch(loadDonationsAsync());
-          return d;
+          return logged;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

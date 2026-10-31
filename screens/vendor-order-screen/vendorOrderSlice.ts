@@ -141,7 +141,8 @@ export const vendorOrderSlice = createAppSlice({
     loadSuggestionsAsync: create.asyncThunk(
       async (orderId: string, { rejectWithValue }) => {
         try {
-          const [riders, batch] = await Promise.all([suggestRiders(orderId).then(raw => required(riderSuggestionsSerializer(raw))), fetchBatchSuggestions(orderId).then(raw => required(batchSuggestionsSerializer(raw))).catch(() => [] as BatchSuggestion[])]);
+          // Batching is a hint: a failure is no suggestion.
+          const [riders, batch] = await Promise.all([suggestRiders(orderId), fetchBatchSuggestions(orderId).catch(() => null)]);
           return { riders, batch };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -152,10 +153,11 @@ export const vendorOrderSlice = createAppSlice({
           state.suggestStatus = 'loading';
         },
         fulfilled: (state, action) => {
+          const batch = action.payload.batch === null ? [] : batchSuggestionsSerializer(action.payload.batch);
           state.suggestStatus = 'succeeded';
-          state.suggestions = action.payload.riders;
-          state.batch = action.payload.batch;
-          state.together = state.together.filter(x => action.payload.batch.some(b => b.orderId === x));
+          state.suggestions = riderSuggestionsSerializer(action.payload.riders);
+          state.batch = batch;
+          state.together = state.together.filter(x => batch.some(b => b.orderId === x));
         },
         rejected: (state, action) => {
           state.suggestStatus = 'failed';
@@ -188,14 +190,14 @@ export const vendorOrderSlice = createAppSlice({
     loadPackingRuleAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return (required(kitchenSettingsSerializer(await fetchKitchenSettings())))?.packingPhoto ?? 'off';
+          return await fetchKitchenSettings();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
       },
       {
         fulfilled: (state, action) => {
-          state.packingRule = action.payload;
+          state.packingRule = kitchenSettingsSerializer(action.payload)?.packingPhoto ?? 'off';
         },
       },
     ),
@@ -205,8 +207,8 @@ export const vendorOrderSlice = createAppSlice({
       async ({ id, file }: { id: string; file: LocalFile }, { rejectWithValue }) => {
         try {
           const uploaded = await uploadImage(file, 'food_packing');
-          const result = required(packingResultSerializer(await attachPackingPhoto(id, uploaded.url)));
-          const order = required(vendorFoodOrderSerializer(await fetchVendorOrder(id)));
+          const result = await attachPackingPhoto(id, uploaded.url);
+          const order = await fetchVendorOrder(id);
           return { result, order };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -219,9 +221,11 @@ export const vendorOrderSlice = createAppSlice({
           state.packingError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const result = packingResultSerializer(action.payload.result);
+          const order = vendorFoodOrderSerializer(action.payload.order);
           state.packingUploading = false;
-          state.packingCheck = action.payload.result?.check ?? null;
-          state.byId[action.meta.arg.id] = { order: action.payload.order, status: 'succeeded', error: NO_ERROR };
+          state.packingCheck = result?.check ?? null;
+          if (order) state.byId[action.meta.arg.id] = { order, status: 'succeeded', error: NO_ERROR };
         },
         rejected: (state, action) => {
           state.packingUploading = false;

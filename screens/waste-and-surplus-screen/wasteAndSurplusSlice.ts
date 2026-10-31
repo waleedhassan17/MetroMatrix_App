@@ -6,7 +6,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchWasteSummary, fetchWaste, logWaste } from '../../networks/kitchen/waste';
 import { collectReservation, fetchBoxSuggestion, fetchBoxes } from '../../networks/kitchen/surplus';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { normalizeCode } from '../../models/kitchen/surplusModel';
 import { wasteFromVoice } from '../../models/kitchen/stockModel';
 import type { SurplusBox, SurplusSuggestion, VoiceQtyLine, WasteEntry, WasteReason, WasteSummary } from '../../models';
@@ -66,8 +66,8 @@ export const wasteAndSurplusSlice = createAppSlice({
     loadWasteAndSurplusAsync: create.asyncThunk(
       async (range: '7d' | '30d', { rejectWithValue }) => {
         try {
-          const [summary, recent, live, suggestion] = await Promise.all([fetchWasteSummary(range).then(raw => required(wasteSummarySerializer(raw))), fetchWaste(1, 5).then(raw => required(wastePageSerializer(raw))), fetchBoxes('live').then(raw => required(surplusBoxesSerializer(raw))), fetchBoxSuggestion().then(raw => required(surplusSuggestionResponseSerializer(raw)))]);
-          return { summary, recent: recent.items, boxes: live, suggestion: suggestion.suggestion };
+          const [summary, recent, boxes, suggestion] = await Promise.all([fetchWasteSummary(range), fetchWaste(1, 5), fetchBoxes('live'), fetchBoxSuggestion()]);
+          return { summary, recent, boxes, suggestion };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -79,10 +79,10 @@ export const wasteAndSurplusSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.status = 'succeeded';
-          state.summary = action.payload.summary;
-          state.recent = action.payload.recent;
-          state.boxes = action.payload.boxes;
-          state.suggestion = action.payload.suggestion;
+          state.summary = wasteSummarySerializer(action.payload.summary);
+          state.recent = wastePageSerializer(action.payload.recent).items;
+          state.boxes = surplusBoxesSerializer(action.payload.boxes);
+          state.suggestion = surplusSuggestionResponseSerializer(action.payload.suggestion)?.suggestion ?? null;
         },
         rejected: (state, action) => {
           state.status = 'failed';

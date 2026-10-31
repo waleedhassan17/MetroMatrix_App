@@ -3,7 +3,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { createSupplier, deleteSupplier, fetchSuppliers, updateSupplier } from '../../networks/kitchen/purchases';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { Supplier } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { suppliersSerializer, supplierSerializer } from '../../serializers/kitchen/stockSerializer';

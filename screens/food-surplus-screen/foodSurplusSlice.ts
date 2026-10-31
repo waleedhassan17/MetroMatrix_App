@@ -10,7 +10,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchSurplus, reserveSurplus } from '../../networks/food/surplus';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { newUuid } from '../../utils/ids/ids';
 import type { BoxPaymentMethod, FoodPoint, SurplusDetail } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -25,6 +25,8 @@ export interface FoodSurplusSliceState {
   idempotencyKey: string;
   reserving: boolean;
   reserveError: ServerError;
+  /** The reservation just made. */
+  reserved: ReturnType<typeof reservationSerializer>;
 }
 
 const initialState: FoodSurplusSliceState = {
@@ -36,6 +38,7 @@ const initialState: FoodSurplusSliceState = {
   idempotencyKey: '',
   reserving: false,
   reserveError: NO_ERROR,
+  reserved: null,
 };
 
 export const foodSurplusSlice = createAppSlice({
@@ -98,9 +101,9 @@ export const foodSurplusSlice = createAppSlice({
         const s = (getState() as { foodSurplus: FoodSurplusSliceState }).foodSurplus;
         if (!s.box) return rejectWithValue({ message: 'This Bachat Box is no longer available.', code: 'NOT_FOUND' });
         try {
-          const r = required(reservationSerializer(await reserveSurplus(s.box.id, { quantity: s.quantity, paymentMethod: s.method }, s.idempotencyKey || newUuid())));
+          const reserved = await reserveSurplus(s.box.id, { quantity: s.quantity, paymentMethod: s.method }, s.idempotencyKey || newUuid());
           dispatch(newSurplusKey());
-          return r;
+          return reserved;
         } catch (e) {
           const err = toRejectedValue(e);
           // A definite answer (not a dropped connection) ends this attempt: the next tap is a new one.
@@ -113,8 +116,10 @@ export const foodSurplusSlice = createAppSlice({
           state.reserving = true;
           state.reserveError = NO_ERROR;
         },
-        fulfilled: state => {
+        fulfilled: (state, action) => {
+          const payload = reservationSerializer(action.payload);
           state.reserving = false;
+          state.reserved = payload;
         },
         rejected: (state, action) => {
           state.reserving = false;

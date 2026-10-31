@@ -5,7 +5,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchMenuItems } from '../../networks/food/vendor/menu';
 import { createTiffinPlan, deleteTiffinPlan, fetchMyTiffinPlan, updateTiffinPlan } from '../../networks/foodGrowth/tiffin';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { MEAL_WINDOWS, emptyPlanForm, formFromPlan, type TiffinPlanForm } from '../../models/kitchen/tiffinModel';
 import type { Meal, TiffinPlan, TiffinPlanInput, VendorMenuItem } from '../../models';
 import type { ValidationErrors } from '../../models/authModel';
@@ -75,8 +75,8 @@ export const tiffinPlanFormSlice = createAppSlice({
     loadPlanFormAsync: create.asyncThunk(
       async (id: string | null, { rejectWithValue }) => {
         try {
-          const [menu, plan] = await Promise.all([fetchMenuItems().then(raw => required(vendorMenuItemsSerializer(raw))), id ? fetchMyTiffinPlan(id).then(raw => required(tiffinPlanSerializer(raw))) : Promise.resolve(null)]);
-          return { menu: menu.filter(i => i.isActive).map(i => ({ id: i.id, name: i.name, basePrice: i.basePrice })), plan };
+          const [menu, plan] = await Promise.all([fetchMenuItems(), id ? fetchMyTiffinPlan(id) : Promise.resolve(null)]);
+          return { menu, plan };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -92,10 +92,13 @@ export const tiffinPlanFormSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const plan = action.payload.plan === null ? null : tiffinPlanSerializer(action.payload.plan);
           state.status = 'succeeded';
-          state.menu = action.payload.menu;
-          state.plan = action.payload.plan;
-          if (action.payload.plan) state.form = formFromPlan(action.payload.plan);
+          state.menu = vendorMenuItemsSerializer(action.payload.menu)
+            .filter(i => i.isActive)
+            .map(i => ({ id: i.id, name: i.name, basePrice: i.basePrice }));
+          state.plan = plan;
+          if (plan) state.form = formFromPlan(plan);
         },
         rejected: (state, action) => {
           state.status = 'failed';

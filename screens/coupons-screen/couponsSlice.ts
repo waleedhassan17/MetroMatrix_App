@@ -2,7 +2,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchCoupons } from '../../networks/shopping/partner/coupons';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { Coupon } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { couponListSerializer } from '../../serializers/shopping/partnerSerializer';

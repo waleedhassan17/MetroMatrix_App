@@ -5,11 +5,10 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { createAddress, fetchAddresses, updateAddress } from '../../networks/addresses/addresses';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { emptyAddressForm, toAddressInput, type AddressForm } from '../../models/addressModel';
 import { locateBusiness } from '../../services/location';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { addressSerializer, addressListSerializer } from '../../serializers/addressSerializer';
 
 export interface AddressFormSliceState {
   /** The address being edited, or null for a new one. */
@@ -72,8 +71,8 @@ export const addressFormSlice = createAppSlice({
     saveAddressAsync: create.asyncThunk(
       async ({ id, form }: { id: string | null; form: AddressForm }, { rejectWithValue }) => {
         try {
-          const saved = id ? required(addressSerializer(await updateAddress(id, toAddressInput(form)))) : required(addressSerializer(await createAddress(toAddressInput(form))));
-          return { saved, all: required(addressListSerializer(await fetchAddresses())) };
+          const saved = id ? await updateAddress(id, toAddressInput(form)) : await createAddress(toAddressInput(form));
+          return { saved, all: await fetchAddresses() };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

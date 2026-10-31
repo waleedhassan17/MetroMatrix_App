@@ -50,7 +50,6 @@ import {
   savedLocationSerializer,
   timeOffListSerializer,
 } from '../../serializers/health/doctorSerializer';
-import { prescriptionSerializer } from '../../serializers/health/recordsSerializer';
 import { titleKey } from '../../serializers/health/healthCommon';
 import { arr, bodiesOf, bodyOf, isObject, str } from '../../serializers/serializerUtils';
 import type {
@@ -225,8 +224,11 @@ export const publishProfile = async () => {
 
 // ─── Prescriptions ───────────────────────────────────
 
-/** `409 PRESCRIPTION_LOCKED` once the 24-hour edit window has passed: re-issued on its appointment. */
+/**
+ * `409 PRESCRIPTION_LOCKED` once the 24-hour edit window has passed: re-issued
+ * on its appointment. Answers the raw prescription (the slice serializes it).
+ */
 export const updatePrescription = async (id: string, input: PrescriptionInput) => {
   const code = prescriptionAppointmentCodeSerializer(await fetchDoctorPrescription(id));
-  return required(prescriptionSerializer(await issuePrescription(code, input)));
+  return await issuePrescription(code, input);
 };

@@ -4,7 +4,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchKitchenSettings, updateKitchenSettings } from '../../networks/kitchen/costing';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { KitchenSettings } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { kitchenSettingsSerializer } from '../../serializers/kitchen/recipeSerializer';

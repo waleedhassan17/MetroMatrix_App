@@ -16,7 +16,7 @@ import {
   setPartnerProductStatus,
   updatePartnerProduct,
 } from '../../networks/shopping/partner/products';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import {
   MAX_OPTION_VALUES,
   emptyProductForm,
@@ -143,7 +143,7 @@ export const productFormSlice = createAppSlice({
     loadProductFormAsync: create.asyncThunk(
       async (id: string | null, { rejectWithValue }) => {
         try {
-          const [product, categories, collections] = await Promise.all([id ? fetchPartnerProduct(id).then(raw => required(partnerProductSerializer(raw))) : Promise.resolve(null), fetchCategories().then(raw => required(categoryListSerializer(raw))), fetchCollections().then(raw => required(collectionListSerializer(raw)))]);
+          const [product, categories, collections] = await Promise.all([id ? fetchPartnerProduct(id) : Promise.resolve(null), fetchCategories(), fetchCollections()]);
           return { product, categories, collections };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -156,10 +156,11 @@ export const productFormSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const product = action.payload.product === null ? null : partnerProductSerializer(action.payload.product);
           state.loadStatus = 'succeeded';
-          state.categories = action.payload.categories;
-          state.collections = action.payload.collections;
-          const form = action.payload.product ? fromPartnerProduct(action.payload.product) : emptyProductForm();
+          state.categories = categoryListSerializer(action.payload.categories);
+          state.collections = collectionListSerializer(action.payload.collections);
+          const form = product ? fromPartnerProduct(product) : emptyProductForm();
           state.form = form;
           state.original = form;
         },

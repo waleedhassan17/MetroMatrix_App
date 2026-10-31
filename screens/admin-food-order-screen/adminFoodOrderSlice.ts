@@ -2,7 +2,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchAdminFoodOrder } from '../../networks/admin/adminFood';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { AdminFoodOrder } from '../../models';
 import {
   NO_ERROR,

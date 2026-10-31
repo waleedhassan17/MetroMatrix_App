@@ -6,7 +6,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchVendorSetup, goLive } from '../../networks/food/vendor/setup';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { VendorSetup } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { refreshSession } from '../../Components/appContainerSlice';

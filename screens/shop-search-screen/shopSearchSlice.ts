@@ -3,7 +3,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { suggestProducts } from '../../networks/shopping/catalog';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { SearchSuggestion } from '../../models';
 import type { FormStatus } from '../shared/formStatus';
 import { suggestionListSerializer } from '../../serializers/shopping/catalogSerializer';

@@ -3,7 +3,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { createPurchase, fetchPriceWatch, fetchPurchases } from '../../networks/kitchen/purchases';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { purchaseFromVoice } from '../../models/kitchen/purchaseModel';
 import type { PriceWatch, VoiceQtyLine } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -35,7 +35,7 @@ export const purchasesSlice = createAppSlice({
         try {
           // This week's spend rides on the first page; the price watch beside it.
           const [first, watch] = await Promise.all([fetchPurchases(1, 1), fetchPriceWatch()]);
-          return required(purchasesOverviewSerializer({ first, watch }));
+          return { first, watch };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -46,9 +46,11 @@ export const purchasesSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const overview = purchasesOverviewSerializer(action.payload);
           state.status = 'succeeded';
-          state.weekTotal = action.payload.weekTotal;
-          state.watch = action.payload.watch;
+          if (!overview) return;
+          state.weekTotal = overview.weekTotal;
+          state.watch = overview.watch;
         },
         rejected: (state, action) => {
           state.status = 'failed';

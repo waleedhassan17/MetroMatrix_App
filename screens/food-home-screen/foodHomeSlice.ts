@@ -15,7 +15,7 @@ import { fetchSurplusNearby } from '../../networks/food/surplus';
 import { fetchTiffinPlansNear } from '../../networks/foodGrowth/tiffin';
 import { fetchIftarNearby } from '../../networks/foodGrowth/ramadan';
 import { fetchHealthyPicks } from '../../networks/myKitchen/nutrition';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { currentPoint } from '../../services/location';
 import { setFoodPoint } from '../../store/preferencesSlice';
 import type { FoodHome, HealthyPick, IftarKitchen, SurplusCard, TiffinPlan } from '../../models';
@@ -77,13 +77,11 @@ export const foodHomeSlice = createAppSlice({
         try {
           // The extras never hold the home back: a failure is an empty rail.
           const [home, surplus, tiffins, iftar, healthy] = await Promise.all([
-            fetchFoodHome(lat, lng).then(raw => required(foodHomeSerializer(raw))),
-            fetchSurplusNearby({ lat, lng }).then(raw => required(surplusCardsSerializer(raw))).catch(() => [] as SurplusCard[]),
-            fetchTiffinPlansNear({ lat, lng }).then(raw => required(tiffinPlansSerializer(raw))).catch(() => [] as TiffinPlan[]),
-            fetchIftarNearby({ lat, lng }).then(raw => required(iftarNearbySerializer(raw)))
-              .then(r => (r.state === 'active' ? r.items : []))
-              .catch(() => [] as IftarKitchen[]),
-            fetchHealthyPicks({ lat, lng }).then(raw => required(healthyPicksSerializer(raw))).catch(() => [] as HealthyPick[]),
+            fetchFoodHome(lat, lng),
+            fetchSurplusNearby({ lat, lng }).catch(() => null),
+            fetchTiffinPlansNear({ lat, lng }).catch(() => null),
+            fetchIftarNearby({ lat, lng }).catch(() => null),
+            fetchHealthyPicks({ lat, lng }).catch(() => null),
           ]);
           return { home, surplus, tiffins, iftar, healthy };
         } catch (e) {
@@ -103,11 +101,13 @@ export const foodHomeSlice = createAppSlice({
         fulfilled: (state, action) => {
           state.status = 'succeeded';
           state.refreshing = false;
-          state.home = action.payload.home;
-          state.surplus = action.payload.surplus;
-          state.tiffins = action.payload.tiffins;
-          state.iftar = action.payload.iftar;
-          state.healthy = action.payload.healthy;
+          const { home, surplus, tiffins, iftar, healthy } = action.payload;
+          const iftarNearby = iftar === null ? null : iftarNearbySerializer(iftar);
+          state.home = foodHomeSerializer(home);
+          state.surplus = surplus === null ? [] : surplusCardsSerializer(surplus);
+          state.tiffins = tiffins === null ? [] : tiffinPlansSerializer(tiffins);
+          state.iftar = iftarNearby?.state === 'active' ? iftarNearby.items : [];
+          state.healthy = healthy === null ? [] : healthyPicksSerializer(healthy);
           state.builtFor = pointKey(action.meta.arg);
         },
         rejected: (state, action) => {

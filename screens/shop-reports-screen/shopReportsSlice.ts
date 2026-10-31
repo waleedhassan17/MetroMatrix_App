@@ -3,7 +3,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { dismissReport, removeReportedProduct } from '../../networks/admin/adminShop';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { ReportStatus } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { productReportSerializer } from '../../serializers/shopping/adminShopSerializer';

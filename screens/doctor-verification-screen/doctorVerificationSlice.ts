@@ -4,7 +4,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchDoctorsForVerification } from '../../networks/admin/adminHealth';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { AdminDoctor } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { adminDoctorListSerializer } from '../../serializers/health/adminHealthSerializer';

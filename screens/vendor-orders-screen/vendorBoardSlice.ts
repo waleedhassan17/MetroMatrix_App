@@ -26,6 +26,8 @@ import { boardHintsSerializer, announcementSerializer } from '../../serializers/
 export type BoardMove = 'preparing' | 'ready' | 'handed-external' | 'picked-up' | 'delivered';
 
 export interface VendorBoardSliceState {
+  /** The last order announcement read, for the screen to speak. */
+  announcement: ReturnType<typeof announcementSerializer>;
   cards: BoardCard[];
   status: FormStatus;
   error: ServerError;
@@ -51,6 +53,7 @@ export interface VendorBoardSliceState {
 }
 
 const initialState: VendorBoardSliceState = {
+  announcement: null,
   cards: [],
   status: 'idle',
   error: NO_ERROR,
@@ -131,10 +134,10 @@ export const vendorBoardSlice = createAppSlice({
     loadBoardAsync: create.asyncThunk(
       async (_: void, { dispatch, rejectWithValue }) => {
         try {
-          const [fresh, active] = await Promise.all([fetchBoard('new').then(raw => required(boardPageSerializer(raw))), fetchBoard('active').then(raw => required(boardPageSerializer(raw)))]);
+          const [fresh, active] = await Promise.all([fetchBoard('new'), fetchBoard('active')]);
           // Every board read reads the kitchen's side too.
           void dispatch(loadBoardHintsAsync());
-          return [...fresh.items, ...active.items];
+          return { fresh, active };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -145,8 +148,9 @@ export const vendorBoardSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const cards = [...boardPageSerializer(action.payload.fresh).items, ...boardPageSerializer(action.payload.active).items];
           state.status = 'succeeded';
-          state.cards = action.payload.filter(c => !!columnOf(c.status)).sort(byAge);
+          state.cards = cards.filter(c => !!columnOf(c.status)).sort(byAge);
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -202,7 +206,7 @@ export const vendorBoardSlice = createAppSlice({
     announceOrderAsync: create.asyncThunk(
       async ({ id, language }: { id: string; language: 'ur' | 'en' }, { rejectWithValue }) => {
         try {
-          return required(announcementSerializer(await fetchAnnouncement(id, language)));
+          return await fetchAnnouncement(id, language);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -211,16 +215,19 @@ export const vendorBoardSlice = createAppSlice({
         pending: (state, action) => {
           if (!state.announced.includes(action.meta.arg.id)) state.announced.push(action.meta.arg.id);
         },
+        fulfilled: (state, action) => {
+          state.announcement = announcementSerializer(action.payload);
+        },
       },
     ),
 
     acceptOrderAsync: create.asyncThunk(
       async ({ id, eta }: { id: string; eta: number }, { dispatch, rejectWithValue }) => {
         try {
-          const o = required(vendorFoodOrderSerializer(await acceptOrder(id, eta)));
+          const accepted = await acceptOrder(id, eta);
           // Accepting takes its recipes from stock: the tickets' stock notes change.
           void dispatch(loadBoardHintsAsync());
-          return o;
+          return accepted;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -231,9 +238,10 @@ export const vendorBoardSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const order = vendorFoodOrderSerializer(action.payload);
           state.busyId = null;
           state.acceptFor = null;
-          upsert(state, cardOfOrder(action.payload, state.cards.find(c => c.id === action.payload.id)));
+          if (order) upsert(state, cardOfOrder(order, state.cards.find(c => c.id === order.id)));
         },
         rejected: (state, action) => {
           state.busyId = null;
@@ -245,9 +253,9 @@ export const vendorBoardSlice = createAppSlice({
     rejectOrderAsync: create.asyncThunk(
       async ({ id, reason }: { id: string; reason: string }, { dispatch, rejectWithValue }) => {
         try {
-          const o = required(vendorFoodOrderSerializer(await rejectOrder(id, reason)));
+          const rejected = await rejectOrder(id, reason);
           void dispatch(loadBoardHintsAsync());
-          return o;
+          return rejected;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -258,9 +266,10 @@ export const vendorBoardSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const order = vendorFoodOrderSerializer(action.payload);
           state.busyId = null;
           state.rejectFor = null;
-          upsert(state, cardOfOrder(action.payload, undefined));
+          if (order) upsert(state, cardOfOrder(order, undefined));
         },
         rejected: (state, action) => {
           state.busyId = null;
@@ -312,9 +321,9 @@ export const vendorBoardSlice = createAppSlice({
     switchKitchenAsync: create.asyncThunk(
       async (to: { pause: string | null; reason?: PauseReason | null; resumeAt?: string | null } | { resume: true } | { busy: number }, { rejectWithValue }) => {
         try {
-          if ('resume' in to) return required(vendorProfileSerializer(await resumeOrders()));
-          if ('busy' in to) return required(vendorProfileSerializer(await setBusy(to.busy, to.busy ? new Date(Date.now() + 60 * 60_000).toISOString() : null)));
-          return required(vendorProfileSerializer(await pauseOrders(to.pause, { reason: to.reason, resumeAt: to.resumeAt })));
+          if ('resume' in to) return await resumeOrders();
+          if ('busy' in to) return await setBusy(to.busy, to.busy ? new Date(Date.now() + 60 * 60_000).toISOString() : null);
+          return await pauseOrders(to.pause, { reason: to.reason, resumeAt: to.resumeAt });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -325,9 +334,10 @@ export const vendorBoardSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const profile = vendorProfileSerializer(action.payload);
           state.switching = false;
           state.pauseOpen = false;
-          state.profile = action.payload;
+          if (profile) state.profile = profile;
         },
         rejected: (state, action) => {
           state.switching = false;

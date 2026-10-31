@@ -12,7 +12,7 @@ import { StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { BOX_PAYMENT, BOX_STATUS } from '../../models/kitchen/kitchenStatusModel';
 import { BACHAT_BOX, discountLabel } from '../../models/kitchen/surplusModel';
@@ -51,6 +51,7 @@ const FoodSurplusContent: React.FC<Props> = ({ navigation, route }) => {
   const { id } = route.params;
   const { back } = useBack({ name: 'FoodTabs' });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const { colors, size } = useTheme();
   const s = useAppSelector(selectFoodSurplus);
@@ -79,9 +80,10 @@ const FoodSurplusContent: React.FC<Props> = ({ navigation, route }) => {
   const reserve = async () => {
     haptics.press();
     const r = await dispatch(reserveSurplusAsync());
-    if (reserveSurplusAsync.fulfilled.match(r) && r.payload) {
+    const reserved = reserveSurplusAsync.fulfilled.match(r) ? selectFoodSurplus(appStore.getState()).reserved : null;
+    if (reserved) {
       haptics.success();
-      navigation.replace('FoodSurplusReserved', { code: r.payload.code, fresh: true });
+      navigation.replace('FoodSurplusReserved', { code: reserved.code, fresh: true });
     } else haptics.warning();
   };
 

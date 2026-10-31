@@ -8,7 +8,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchHygieneQueue, rejectHygiene, verifyHygiene } from '../../networks/admin/adminKitchen';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { HygieneReview } from '../../models';
 import {
   NO_ERROR,
@@ -67,7 +67,7 @@ export const adminKitchenHygieneSlice = createAppSlice({
     loadHygieneAsync: create.asyncThunk(
       async (tab: HygieneTab, { rejectWithValue }) => {
         try {
-          return { tab, items: required(hygieneQueueSerializer(await fetchHygieneQueue(tab))) };
+          return await fetchHygieneQueue(tab);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -79,8 +79,8 @@ export const adminKitchenHygieneSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.status = 'succeeded';
-          state.tab = action.payload.tab;
-          state.items = action.payload.items;
+          state.tab = action.meta.arg;
+          state.items = hygieneQueueSerializer(action.payload);
         },
         rejected: (state, action) => {
           state.status = 'failed';

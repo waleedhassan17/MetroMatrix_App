@@ -4,7 +4,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchFoodInsights } from '../../networks/food/vendor/insights';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { FoodInsights, FoodInsightsRange } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { foodInsightsSerializer } from '../../serializers/food/reviewSerializer';

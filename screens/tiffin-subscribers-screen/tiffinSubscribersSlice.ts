@@ -6,7 +6,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { confirmTiffinPayment, fetchMyTiffinPlan, fetchPlanSubscribers, fetchTiffinSubscriptions, moveSubscriber as moveSubscriberRequest, rejectTiffinPayment, type SubscriberMove } from '../../networks/foodGrowth/tiffin';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { TiffinInbox, TiffinPlan } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { tiffinInboxSerializer, tiffinPlanSerializer, tiffinSubscriptionSerializer } from '../../serializers/kitchen/growthSerializer';
@@ -14,8 +14,7 @@ import { tiffinInboxSerializer, tiffinPlanSerializer, tiffinSubscriptionSerializ
 export type SubscribersTab = 'pending' | 'active' | 'paused' | 'ended';
 
 /** A subscriber move: its kind is the path, the rest the body. */
-const moveSubscriber = async (code: string, { kind, ...body }: SubscriberMove) =>
-  required(tiffinSubscriptionSerializer(await moveSubscriberRequest(code, kind, body)));
+const moveSubscriber = async (code: string, { kind, ...body }: SubscriberMove) => await moveSubscriberRequest(code, kind, body);
 
 export type SubscriberAct = SubscriberMove | { kind: 'confirm-payment'; periodId: string } | { kind: 'reject-payment'; periodId: string; reason: string };
 
@@ -44,7 +43,7 @@ export const tiffinSubscribersSlice = createAppSlice({
     loadSubscribersAsync: create.asyncThunk(
       async (planId: string | null, { rejectWithValue }) => {
         try {
-          const [inbox, plan] = await Promise.all([planId ? fetchPlanSubscribers(planId).then(raw => required(tiffinInboxSerializer(raw))) : fetchTiffinSubscriptions().then(raw => required(tiffinInboxSerializer(raw))), planId ? fetchMyTiffinPlan(planId).then(raw => required(tiffinPlanSerializer(raw))) : Promise.resolve(null)]);
+          const [inbox, plan] = await Promise.all([planId ? fetchPlanSubscribers(planId) : fetchTiffinSubscriptions(), planId ? fetchMyTiffinPlan(planId) : Promise.resolve(null)]);
           return { inbox, plan };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -62,8 +61,8 @@ export const tiffinSubscribersSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.status = 'succeeded';
-          state.inbox = action.payload.inbox;
-          state.plan = action.payload.plan;
+          state.inbox = tiffinInboxSerializer(action.payload.inbox);
+          state.plan = action.payload.plan === null ? null : tiffinPlanSerializer(action.payload.plan);
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -75,7 +74,7 @@ export const tiffinSubscribersSlice = createAppSlice({
       async ({ code, act }: { code: string; act: SubscriberAct }, { getState, dispatch, rejectWithValue }) => {
         try {
           const out =
-            act.kind === 'confirm-payment' ? required(tiffinSubscriptionSerializer(await confirmTiffinPayment(act.periodId))) : act.kind === 'reject-payment' ? required(tiffinSubscriptionSerializer(await rejectTiffinPayment(act.periodId, act.reason))) : await moveSubscriber(code, act);
+            act.kind === 'confirm-payment' ? await confirmTiffinPayment(act.periodId) : act.kind === 'reject-payment' ? await rejectTiffinPayment(act.periodId, act.reason) : await moveSubscriber(code, act);
           void dispatch(loadSubscribersAsync((getState() as { tiffinSubscribers: TiffinSubscribersSliceState }).tiffinSubscribers.planId));
           return out;
         } catch (e) {
@@ -88,8 +87,9 @@ export const tiffinSubscribersSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const sub = tiffinSubscriptionSerializer(action.payload);
           state.acting = null;
-          if (state.inbox && action.payload) state.inbox.items = state.inbox.items.map(x => (x.code === action.payload!.code ? action.payload! : x));
+          if (state.inbox && sub) state.inbox.items = state.inbox.items.map(x => (x.code === sub.code ? sub : x));
         },
         rejected: (state, action) => {
           state.acting = null;

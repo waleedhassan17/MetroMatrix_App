@@ -12,7 +12,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { TIFFIN_PAY, WEEKDAY_LONG } from '../../models/kitchen/kitchenStatusModel';
 import { perMealLabel, priceLabel, scheduleLabel, startChoices } from '../../models/kitchen/tiffinModel';
@@ -51,6 +51,7 @@ const FoodTiffinPlanContent: React.FC<Props> = ({ navigation, route }) => {
   const { id } = route.params;
   const { back } = useBack({ name: 'FoodTabs' });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const { colors, size } = useTheme();
   const s = useAppSelector(selectFoodTiffinPlan);
@@ -85,9 +86,10 @@ const FoodTiffinPlanContent: React.FC<Props> = ({ navigation, route }) => {
   const subscribe = async () => {
     haptics.press();
     const r = await dispatch(subscribeTiffinAsync());
-    if (subscribeTiffinAsync.fulfilled.match(r) && r.payload) {
+    const subscribed = subscribeTiffinAsync.fulfilled.match(r) ? selectFoodTiffinPlan(appStore.getState()).subscribed : null;
+    if (subscribed) {
       haptics.success();
-      navigation.replace('FoodTiffin', { code: r.payload.code, fresh: true });
+      navigation.replace('FoodTiffin', { code: subscribed.code, fresh: true });
     } else haptics.warning();
   };
 

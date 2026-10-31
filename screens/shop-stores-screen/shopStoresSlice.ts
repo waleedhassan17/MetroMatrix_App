@@ -3,7 +3,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { setStoreFeatured } from '../../networks/admin/adminShop';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { NO_ERROR, readRejection, type ServerError } from '../shared/formStatus';
 import { storeSummarySerializer } from '../../serializers/shopping/catalogSerializer';
 

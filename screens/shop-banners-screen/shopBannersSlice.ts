@@ -2,7 +2,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchAdminBanners, updateBanner } from '../../networks/admin/adminShop';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { AdminBanner } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { adminBannerListSerializer } from '../../serializers/shopping/adminShopSerializer';

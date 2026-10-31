@@ -66,8 +66,10 @@ export const vendorTodaySlice = createAppSlice({
     loadTodayAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const today = required(todayMenuSerializer(await fetchToday()));
-          const [forecast, tiffin] = await Promise.all([today ? fetchForecast(today.date).then(raw => required(forecastSerializer(raw))).catch(() => null) : null, fetchTiffinTomorrow().then(raw => required(tiffinTomorrowSerializer(raw))).catch(() => null)]);
+          const today = await fetchToday();
+          // Today's date decides which forecast to read; both extras are hints (a failure is none).
+          const { date } = required(todayMenuSerializer(today));
+          const [forecast, tiffin] = await Promise.all([fetchForecast(date).catch(() => null), fetchTiffinTomorrow().catch(() => null)]);
           return { today, forecast, tiffin };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -80,9 +82,9 @@ export const vendorTodaySlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.status = 'succeeded';
-          state.today = action.payload.today;
-          state.forecast = action.payload.forecast;
-          state.tiffin = action.payload.tiffin;
+          state.today = todayMenuSerializer(action.payload.today);
+          state.forecast = action.payload.forecast === null ? null : forecastSerializer(action.payload.forecast);
+          state.tiffin = action.payload.tiffin === null ? null : tiffinTomorrowSerializer(action.payload.tiffin);
           state.edits = {};
         },
         rejected: (state, action) => {
@@ -95,9 +97,9 @@ export const vendorTodaySlice = createAppSlice({
       async (_: void, { getState, dispatch, rejectWithValue }) => {
         const { edits } = (getState() as { vendorToday: VendorTodaySliceState }).vendorToday;
         try {
-          const out = required(todayMenuSerializer(await setToday(Object.entries(edits).map(([itemId, e]) => ({ itemId, ...e })))));
+          const saved = await setToday(Object.entries(edits).map(([itemId, e]) => ({ itemId, ...e })));
           dispatch(menuChanged());
-          return out;
+          return saved;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -109,7 +111,7 @@ export const vendorTodaySlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.saving = false;
-          state.today = action.payload;
+          state.today = todayMenuSerializer(action.payload);
           state.edits = {};
         },
         rejected: (state, action) => {

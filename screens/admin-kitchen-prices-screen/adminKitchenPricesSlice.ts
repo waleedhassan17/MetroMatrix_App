@@ -7,7 +7,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchReferencePrices, importReferencePrices } from '../../networks/admin/adminKitchen';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { CsvImportResult, PriceImportRow, ReferencePriceList } from '../../models';
 import {
   NO_ERROR,
@@ -118,8 +118,8 @@ export const adminKitchenPricesSlice = createAppSlice({
     importPricesCsvAsync: create.asyncThunk(
       async (input: { csv: string; city: string | null }, { rejectWithValue }) => {
         try {
-          const result = required(priceImportSerializer(await importReferencePrices(input.csv, false)));
-          return { result, list: required(referencePricesSerializer(await fetchReferencePrices({ city: input.city ?? undefined }))) };
+          const result = await importReferencePrices(input.csv, false);
+          return { result, list: await fetchReferencePrices({ city: input.city ?? undefined }) };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -131,8 +131,8 @@ export const adminKitchenPricesSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.importing = false;
-          state.result = action.payload.result;
-          state.list = action.payload.list;
+          state.result = priceImportSerializer(action.payload.result);
+          state.list = referencePricesSerializer(action.payload.list);
           state.q = '';
           state.csv = '';
           state.fileName = null;

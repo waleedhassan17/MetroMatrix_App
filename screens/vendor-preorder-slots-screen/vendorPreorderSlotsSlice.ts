@@ -7,7 +7,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchPreorderSlots, savePreorderSlots } from '../../networks/food/vendor/availability';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { slotRow, slotsInput, type SlotRow } from '../../models/food/menuModel';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { preorderSlotsSerializer } from '../../serializers/food/menuSerializer';
@@ -44,7 +44,7 @@ export const vendorPreorderSlotsSlice = createAppSlice({
     loadPreorderSlotsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return (required(preorderSlotsSerializer(await fetchPreorderSlots()))).map(slotRow);
+          return await fetchPreorderSlots();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -55,9 +55,10 @@ export const vendorPreorderSlotsSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const rows = preorderSlotsSerializer(action.payload).map(slotRow);
           state.status = 'succeeded';
-          state.rows = action.payload;
-          state.saved = JSON.stringify(action.payload);
+          state.rows = rows;
+          state.saved = JSON.stringify(rows);
           state.submitted = false;
         },
         rejected: (state, action) => {
@@ -69,7 +70,7 @@ export const vendorPreorderSlotsSlice = createAppSlice({
     savePreorderSlotsAsync: create.asyncThunk(
       async (rows: SlotRow[], { rejectWithValue }) => {
         try {
-          return (required(preorderSlotsSerializer(await savePreorderSlots(slotsInput(rows))))).map(slotRow);
+          return await savePreorderSlots(slotsInput(rows));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -80,9 +81,10 @@ export const vendorPreorderSlotsSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const rows = preorderSlotsSerializer(action.payload).map(slotRow);
           state.saving = false;
-          state.rows = action.payload;
-          state.saved = JSON.stringify(action.payload);
+          state.rows = rows;
+          state.saved = JSON.stringify(rows);
           state.submitted = false;
         },
         rejected: (state, action) => {

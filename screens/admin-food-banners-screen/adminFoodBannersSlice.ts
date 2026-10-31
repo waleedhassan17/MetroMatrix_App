@@ -3,7 +3,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchAdminFoodBanners, updateFoodBanner } from '../../networks/admin/adminFood';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { AdminFoodBanner } from '../../models';
 import {
   NO_ERROR,

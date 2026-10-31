@@ -2,7 +2,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchMyCateringRequests } from '../../networks/foodGrowth/catering';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { CateringRequest } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { cateringRequestsSerializer } from '../../serializers/kitchen/growthSerializer';

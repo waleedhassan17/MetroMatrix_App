@@ -3,7 +3,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchStoreSettings, fetchPaymentAccounts, updateStoreSettings } from '../../networks/shopping/partner/store';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { StoreSettings } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { storeSettingsSerializer, paymentAccountListSerializer } from '../../serializers/shopping/partnerSerializer';
@@ -37,8 +37,8 @@ export const storeSettingsSlice = createAppSlice({
     loadStoreSettingsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [settings, accounts] = await Promise.all([fetchStoreSettings().then(raw => required(storeSettingsSerializer(raw))), fetchPaymentAccounts().then(raw => required(paymentAccountListSerializer(raw)))]);
-          return { settings, hasActiveAccount: accounts.some(a => a.isActive) };
+          const [settings, accounts] = await Promise.all([fetchStoreSettings(), fetchPaymentAccounts()]);
+          return { settings, accounts };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -49,8 +49,8 @@ export const storeSettingsSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.status = 'succeeded';
-          state.form = action.payload.settings;
-          state.hasActiveAccount = action.payload.hasActiveAccount;
+          state.form = storeSettingsSerializer(action.payload.settings);
+          state.hasActiveAccount = paymentAccountListSerializer(action.payload.accounts).some(a => a.isActive);
           state.submitted = false;
         },
         rejected: (state, action) => {

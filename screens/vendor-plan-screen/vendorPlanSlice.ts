@@ -1,7 +1,7 @@
 // MetroMatrix — Food vendor plan: the free Community plan and what's used of it.
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchVendorPlan } from '../../networks/food/vendor/plan';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { VendorPlan } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { vendorPlanSerializer } from '../../serializers/food/vendorSerializer';

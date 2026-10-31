@@ -9,7 +9,7 @@
 import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { useDebouncedValue } from '../../hooks/usePagedList';
 import {
@@ -70,6 +70,7 @@ const makeStyles = ({ space }: Theme) =>
 const AdminKitchenNutrition: React.FC<Props> = () => {
   const { back } = useBack({ name: 'FoodOverview' });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectAdminKitchenNutrition);
   const sheet = s.sheet;
@@ -103,7 +104,8 @@ const AdminKitchenNutrition: React.FC<Props> = () => {
     const r = await dispatch(importFoodsCsvAsync({ csv: s.csv, q }));
     if (importFoodsCsvAsync.fulfilled.match(r)) {
       haptics.success();
-      Toast.show({ type: 'success', text1: `${r.payload.result.imported} ${r.payload.result.imported === 1 ? 'food' : 'foods'} imported` });
+      const imported = selectAdminKitchenNutrition(appStore.getState()).result?.imported ?? 0;
+      Toast.show({ type: 'success', text1: `${imported} ${imported === 1 ? 'food' : 'foods'} imported` });
     } else haptics.warning();
   };
 

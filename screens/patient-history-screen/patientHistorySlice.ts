@@ -2,7 +2,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchPatientHistory } from '../../networks/health/doctor/patients';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { PatientHistory } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { patientHistorySerializer } from '../../serializers/health/doctorSerializer';

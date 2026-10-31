@@ -38,6 +38,8 @@ export interface VendorMenuItemSliceState {
   uploading: boolean;
   submitted: boolean;
   error: ServerError;
+  /** The copy duplicateMenuItemAsync just made. */
+  copied: ReturnType<typeof vendorMenuItemSerializer>;
 }
 
 const initialState: VendorMenuItemSliceState = {
@@ -50,6 +52,7 @@ const initialState: VendorMenuItemSliceState = {
   uploading: false,
   submitted: false,
   error: NO_ERROR,
+  copied: null,
 };
 
 type Field = Exclude<keyof ItemForm, 'variants' | 'groupIds' | 'tags' | 'days'>;
@@ -103,7 +106,7 @@ export const vendorMenuItemSlice = createAppSlice({
     loadMenuItemAsync: create.asyncThunk(
       async ({ id, categoryId }: { id?: string; categoryId?: string }, { rejectWithValue }) => {
         try {
-          const [item, categories, groups] = await Promise.all([id ? fetchMenuItem(id).then(raw => required(vendorMenuItemSerializer(raw))) : Promise.resolve(null), fetchMenuCategories().then(raw => required(menuCategoriesSerializer(raw))), fetchOptionGroups().then(raw => required(optionGroupsSerializer(raw)))]);
+          const [item, categories, groups] = await Promise.all([id ? fetchMenuItem(id) : Promise.resolve(null), fetchMenuCategories(), fetchOptionGroups()]);
           return { item, categories, groups, categoryId: categoryId ?? null };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -114,7 +117,10 @@ export const vendorMenuItemSlice = createAppSlice({
           Object.assign(state, initialState, { status: 'loading' });
         },
         fulfilled: (state, action) => {
-          const { item, categories, groups, categoryId } = action.payload;
+          const item = action.payload.item === null ? null : vendorMenuItemSerializer(action.payload.item);
+          const categories = menuCategoriesSerializer(action.payload.categories);
+          const groups = optionGroupsSerializer(action.payload.groups);
+          const { categoryId } = action.payload;
           state.status = 'succeeded';
           state.item = item;
           state.categories = categories;
@@ -157,22 +163,26 @@ export const vendorMenuItemSlice = createAppSlice({
         try {
           const input = itemInput(form);
           const sizes = variantsInput(form);
-          let saved: VendorMenuItem;
+          // Each step answers the whole dish: the last answer is returned; the
+          // ones before it are read only for what the next step needs (its id,
+          // its per-size option groups).
+          let raw: unknown;
           if (!item) {
-            saved = required(vendorMenuItemSerializer(await createMenuItem(input, sizes.map(({ name, price }) => ({ name, price })))));
-            if (form.groupIds.length) saved = required(vendorMenuItemSerializer(await saveItemGroups(saved.id, form.groupIds.map(groupId => ({ groupId })))));
+            raw = await createMenuItem(input, sizes.map(({ name, price }) => ({ name, price })));
+            const created = required(vendorMenuItemSerializer(raw));
+            if (form.groupIds.length) raw = await saveItemGroups(created.id, form.groupIds.map(groupId => ({ groupId })));
           } else {
-            saved = required(vendorMenuItemSerializer(await updateMenuItem(item.id, input)));
+            raw = await updateMenuItem(item.id, input);
             const before = item.variants.map(v => ({ id: v.id, name: v.name, price: v.price }));
-            if (!sameJson(before, sizes)) saved = required(vendorMenuItemSerializer(await saveItemVariants(item.id, sizes)));
+            if (!sameJson(before, sizes)) raw = await saveItemVariants(item.id, sizes);
             const allSizes = item.optionGroups.filter(l => !l.variantId).map(l => l.groupId);
             if (!sameJson(allSizes, form.groupIds)) {
-              const perSize = saved.optionGroups.filter(l => l.variantId).map(l => ({ groupId: l.groupId, variantId: l.variantId! }));
-              saved = required(vendorMenuItemSerializer(await saveItemGroups(item.id, [...form.groupIds.map(groupId => ({ groupId })), ...perSize])));
+              const perSize = required(vendorMenuItemSerializer(raw)).optionGroups.filter(l => l.variantId).map(l => ({ groupId: l.groupId, variantId: l.variantId! }));
+              raw = await saveItemGroups(item.id, [...form.groupIds.map(groupId => ({ groupId })), ...perSize]);
             }
           }
           dispatch(menuChanged());
-          return saved;
+          return raw;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -183,9 +193,11 @@ export const vendorMenuItemSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const saved = vendorMenuItemSerializer(action.payload);
           state.saving = false;
-          state.item = action.payload;
-          state.form = itemForm(action.payload);
+          if (!saved) return;
+          state.item = saved;
+          state.form = itemForm(saved);
           state.submitted = false;
         },
         rejected: (state, action) => {
@@ -221,7 +233,7 @@ export const vendorMenuItemSlice = createAppSlice({
     duplicateMenuItemAsync: create.asyncThunk(
       async (id: string, { dispatch, rejectWithValue }) => {
         try {
-          const copy = required(vendorMenuItemSerializer(await duplicateMenuItem(id)));
+          const copy = await duplicateMenuItem(id);
           dispatch(menuChanged());
           return copy;
         } catch (e) {
@@ -233,8 +245,10 @@ export const vendorMenuItemSlice = createAppSlice({
           state.saving = true;
           state.error = NO_ERROR;
         },
-        fulfilled: state => {
+        fulfilled: (state, action) => {
+          const payload = vendorMenuItemSerializer(action.payload);
           state.saving = false;
+          state.copied = payload;
         },
         rejected: (state, action) => {
           state.saving = false;

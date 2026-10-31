@@ -7,7 +7,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { searchFood } from '../../networks/food/discovery';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { addRecentFoodSearch } from '../../store/preferencesSlice';
 import type { FoodSearchResult } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -52,7 +52,7 @@ export const foodSearchSlice = createAppSlice({
     searchFoodAsync: create.asyncThunk(
       async ({ q, lat, lng, remember, nutrition }: { q: string; lat: number; lng: number; remember?: boolean; nutrition?: FoodSearchSliceState['nutrition'] }, { dispatch, rejectWithValue }) => {
         try {
-          const result = required(foodSearchSerializer(await searchFood(q, lat, lng, nutrition)));
+          const result = await searchFood(q, lat, lng, nutrition);
           if (remember) dispatch(addRecentFoodSearch(q));
           return result;
         } catch (e) {
@@ -68,11 +68,12 @@ export const foodSearchSlice = createAppSlice({
         fulfilled: (state, action) => {
           // An answer for words no longer in the box is dropped.
           if (action.meta.arg.q !== state.query) return;
+          const result = foodSearchSerializer(action.payload);
           state.status = 'succeeded';
-          state.result = action.payload;
+          state.result = result;
           // Open on the tab that has something.
-          if (!action.payload.vendors.length && action.payload.dishes.length) state.tab = 'dishes';
-          if (action.payload.vendors.length && !action.payload.dishes.length) state.tab = 'restaurants';
+          if (!result.vendors.length && result.dishes.length) state.tab = 'dishes';
+          if (result.vendors.length && !result.dishes.length) state.tab = 'restaurants';
         },
         rejected: (state, action) => {
           if (action.meta.arg.q !== state.query) return;

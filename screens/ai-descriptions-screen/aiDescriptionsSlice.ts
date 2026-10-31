@@ -5,7 +5,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchMenuItems } from '../../networks/food/vendor/menu';
 import { draftDescriptions, saveDescription } from '../../networks/kitchen/kitchenAi';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { MAX_DESCRIPTION_DISHES, descriptionInput } from '../../models/kitchen/assistantModel';
 import type { DescriptionDraft, VendorMenuItem } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';

@@ -9,7 +9,7 @@ import { createAppSlice } from '../../store/createAppSlice';
 
 import { fetchConditions, fetchSpecialties } from '../../networks/health/discovery';
 import { uploadImage } from '../../services/mediaUpload';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { ownProfilePatch } from '../../models/health/doctorProfileModel';
 import type { Condition, DoctorOwnProfile, LocalFile, Specialty } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -73,7 +73,7 @@ export const doctorProfileEditSlice = createAppSlice({
     loadOwnProfileAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [profile, specialties, conditions] = await Promise.all([getOwnProfile(), fetchSpecialties(null).then(raw => required(specialtiesSerializer(raw))), fetchConditions().then(raw => required(conditionsSerializer(raw)))]);
+          const [profile, specialties, conditions] = await Promise.all([getOwnProfile(), fetchSpecialties(null), fetchConditions()]);
           return { profile, specialties, conditions };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -87,8 +87,8 @@ export const doctorProfileEditSlice = createAppSlice({
         fulfilled: (state, action) => {
           state.status = 'succeeded';
           state.form = action.payload.profile;
-          state.specialties = action.payload.specialties;
-          state.conditions = action.payload.conditions;
+          state.specialties = specialtiesSerializer(action.payload.specialties);
+          state.conditions = conditionsSerializer(action.payload.conditions);
           state.touched = false;
         },
         rejected: (state, action) => {

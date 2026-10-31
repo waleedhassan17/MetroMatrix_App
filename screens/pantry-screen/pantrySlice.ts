@@ -15,11 +15,11 @@ import {
   savePantryReminders,
   markPantryUsed,
 } from '../../networks/myKitchen/pantry';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { emptyPantryForm, type PantryForm } from '../../models/myKitchen/pantryModel';
 import type { GroceryOrder, PantryLineInput, PantryList, PantryReminders, PantrySegment, PantryStats } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { pantryListSerializer, pantryStatsSerializer, pantryRemindersSerializer, pantryItemsSerializer, pantryUsedUpSerializer, pantryRemovedSerializer, groceryOrdersSerializer } from '../../serializers/myKitchen/myKitchenSerializer';
+import { pantryListSerializer, pantryStatsSerializer, pantryRemindersSerializer, pantryItemsSerializer, pantryUsedUpSerializer, groceryOrdersSerializer } from '../../serializers/myKitchen/myKitchenSerializer';
 
 export interface PantrySliceState {
   segment: PantrySegment;
@@ -166,7 +166,6 @@ export const pantrySlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = pantryRemovedSerializer(action.payload);
           state.acting = null;
           if (state.list) state.list.items = state.list.items.filter(i => i.id !== action.meta.arg);
         },

@@ -12,15 +12,11 @@ import { submitFoodPaymentProof } from '../../networks/food/orders';
 import { submitReservationProof } from '../../networks/food/surplus';
 import { submitTiffinProof } from '../../networks/foodGrowth/tiffin';
 import { submitAdvanceProof } from '../../networks/foodGrowth/catering';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { normaliseTransactionId } from '../../models/shopping/paymentProofModel';
 import type { LocalFile } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { pendingPhoto, photoFailed, photoKey, photoProgress, photoUploaded, upload, type FormPhoto } from '../shared/photoUploads';
-import { orderGroupSerializer } from '../../serializers/shopping/orderSerializer';
-import { foodOrderSerializer } from '../../serializers/food/orderSerializer';
-import { reservationSerializer } from '../../serializers/kitchen/surplusSerializer';
-import { tiffinSubscriptionSerializer, cateringRequestSerializer } from '../../serializers/kitchen/growthSerializer';
 import { submitAppointmentPaymentProof } from '../shared/healthReads';
 
 export interface PaymentProofSliceState {

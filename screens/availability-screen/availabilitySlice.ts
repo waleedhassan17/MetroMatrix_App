@@ -8,7 +8,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { deleteLocation, fetchPreview } from '../../networks/health/doctor/practice';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { overlapsFrom, previewSerializer } from '../../serializers/health/doctorSerializer';
 import { DEFAULT_RANGE, copyToWeekdays, normaliseWeek } from '../../models/health/availabilityModel';
 import type { AvailabilityPreview, DoctorLocation, DoctorLocationInput, HoursOverlap, WeekDayHours } from '../../models';

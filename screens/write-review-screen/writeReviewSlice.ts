@@ -5,11 +5,10 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { writeReview } from '../../networks/shopping/reviews';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { LocalFile, ReviewInput } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { pendingPhoto, photoFailed, photoProgress, photoUploaded, upload, type FormPhoto } from '../shared/photoUploads';
-import { reviewSerializer } from '../../serializers/shopping/catalogSerializer';
 
 export interface WriteReviewSliceState {
   itemId: string | null;

@@ -8,7 +8,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchRiderHome, fetchRiderOrders, setDuty } from '../../networks/food/rider/rider';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { RiderHome, RiderOrder } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { riderHomeSerializer, riderOrdersPageSerializer, riderDutySerializer } from '../../serializers/food/riderSerializer';
@@ -58,7 +58,7 @@ export const riderHomeSlice = createAppSlice({
     loadRiderDeliveriesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return (required(riderOrdersPageSerializer(await fetchRiderOrders('active', 1, 50)))).items;
+          return await fetchRiderOrders('active', 1, 50);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -69,7 +69,7 @@ export const riderHomeSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.activeStatus = 'succeeded';
-          state.active = action.payload;
+          state.active = riderOrdersPageSerializer(action.payload).items;
         },
         rejected: state => {
           state.activeStatus = 'failed';

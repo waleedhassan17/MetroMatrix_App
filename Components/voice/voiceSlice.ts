@@ -9,7 +9,7 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { uploadImage } from '../../services/mediaUpload';
 import { interpretVoice } from '../../networks/ai/voice';
 import { NO_ERROR, readRejection, type ServerError } from '../../screens/shared/formStatus';

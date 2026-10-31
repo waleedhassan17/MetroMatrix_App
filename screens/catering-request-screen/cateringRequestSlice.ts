@@ -4,7 +4,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { confirmAdvance, declineCatering, fetchCateringRequest, rejectAdvance } from '../../networks/foodGrowth/catering';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { CateringRequest } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { cateringRequestSerializer } from '../../serializers/kitchen/growthSerializer';
@@ -52,7 +52,7 @@ export const cateringRequestSlice = createAppSlice({
     cateringActAsync: create.asyncThunk(
       async ({ code, act }: { code: string; act: CateringAct }, { rejectWithValue }) => {
         try {
-          return act.kind === 'decline' ? required(cateringRequestSerializer(await declineCatering(code, act.reason))) : act.kind === 'confirm-advance' ? required(cateringRequestSerializer(await confirmAdvance(code))) : required(cateringRequestSerializer(await rejectAdvance(code, act.reason)));
+          return act.kind === 'decline' ? await declineCatering(code, act.reason) : act.kind === 'confirm-advance' ? await confirmAdvance(code) : await rejectAdvance(code, act.reason);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -63,8 +63,9 @@ export const cateringRequestSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const request = cateringRequestSerializer(action.payload);
           state.acting = false;
-          if (action.payload) state.byCode[action.payload.code] = action.payload;
+          if (request) state.byCode[request.code] = request;
         },
         rejected: (state, action) => {
           state.acting = false;

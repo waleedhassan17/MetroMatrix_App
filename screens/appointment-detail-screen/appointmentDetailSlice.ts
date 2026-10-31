@@ -198,9 +198,11 @@ export const appointmentDetailSlice = createAppSlice({
     openRescheduleAsync: create.asyncThunk(
       async ({ doctorId, locationId }: { doctorId: string; locationId: string }, { rejectWithValue }) => {
         try {
-          const days = required(daysSerializer(await fetchDays(doctorId, locationId, null, 14)));
-          const first = days.find(d => d.slotCount > 0)?.date ?? days[0]?.date ?? null;
-          const slots = first ? required(slotDaySerializer(await fetchSlots(doctorId, locationId, first))) : null;
+          const days = await fetchDays(doctorId, locationId, null, 14);
+          // The first day with room decides which slots to read.
+          const open = required(daysSerializer(days));
+          const first = open.find(d => d.slotCount > 0)?.date ?? open[0]?.date ?? null;
+          const slots = first ? await fetchSlots(doctorId, locationId, first) : null;
           return { days, slots };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -212,7 +214,8 @@ export const appointmentDetailSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const { days, slots } = action.payload;
+          const days = daysSerializer(action.payload.days);
+          const slots = action.payload.slots === null ? null : slotDaySerializer(action.payload.slots);
           state.reschedule = {
             ...state.reschedule,
             loading: false,

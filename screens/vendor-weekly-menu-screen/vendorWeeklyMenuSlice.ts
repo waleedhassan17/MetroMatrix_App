@@ -3,11 +3,11 @@
 // ═══════════════════════════════════════════════════════
 // Which days each dish is cooked: qorma every day, pulao on Fridays.
 
-import type { PayloadAction } from '@reduxjs/toolkit';
+import { current, type PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchMenuItems } from '../../networks/food/vendor/menu';
 import { saveWeeklyMenu } from '../../networks/food/vendor/availability';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { WeeklyMenuEntry } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { menuChanged } from '../vendor-menu-screen/vendorMenuSlice';
@@ -40,7 +40,7 @@ export const vendorWeeklyMenuSlice = createAppSlice({
     loadWeeklyMenuAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return (required(vendorMenuItemsSerializer(await fetchMenuItems()))).map(i => ({ itemId: i.id, name: i.name, days: i.days }));
+          return await fetchMenuItems();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -51,9 +51,10 @@ export const vendorWeeklyMenuSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const saved = vendorMenuItemsSerializer(action.payload).map(i => ({ itemId: i.id, name: i.name, days: i.days }));
           state.status = 'succeeded';
-          state.saved = action.payload;
-          state.days = daysById(action.payload);
+          state.saved = saved;
+          state.days = daysById(saved);
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -66,7 +67,8 @@ export const vendorWeeklyMenuSlice = createAppSlice({
         const { saved, days } = (getState() as { vendorWeeklyMenu: VendorWeeklyMenuSliceState }).vendorWeeklyMenu;
         const changed = saved.filter(r => JSON.stringify(r.days) !== JSON.stringify(days[r.itemId])).map(r => ({ itemId: r.itemId, days: days[r.itemId] }));
         try {
-          const out = changed.length ? required(weeklyMenuSerializer(await saveWeeklyMenu(changed))) : saved;
+          // Nothing changed: nothing is sent, and the form goes back to what is saved.
+          const out = changed.length ? await saveWeeklyMenu(changed) : null;
           dispatch(menuChanged());
           return out;
         } catch (e) {
@@ -79,9 +81,10 @@ export const vendorWeeklyMenuSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const saved = action.payload === null ? null : weeklyMenuSerializer(action.payload);
           state.saving = false;
-          state.saved = action.payload;
-          state.days = daysById(action.payload);
+          if (saved) state.saved = saved;
+          state.days = daysById(saved ?? current(state).saved);
         },
         rejected: (state, action) => {
           state.saving = false;

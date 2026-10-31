@@ -6,11 +6,10 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { requestReturn } from '../../networks/shopping/returns';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { LocalFile, ReturnInput, ReturnReason } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { pendingPhoto, photoFailed, photoProgress, photoUploaded, upload, type FormPhoto } from '../shared/photoUploads';
-import { returnSerializer } from '../../serializers/shopping/orderSerializer';
 
 export interface ReturnRequestSliceState {
   orderId: string | null;

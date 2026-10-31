@@ -7,7 +7,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { createMenuCategory, deleteMenuCategory, fetchMenuCategories, reorderMenuCategories, updateMenuCategory } from '../../networks/food/vendor/menu';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { CategoryForm } from '../../models/food/menuModel';
 import type { MenuCategory } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -159,9 +159,9 @@ export const vendorCategoriesSlice = createAppSlice({
         if (i < 0 || j < 0 || j >= list.length) return null;
         [list[i], list[j]] = [list[j], list[i]];
         try {
-          const out = required(menuCategoriesSerializer(await reorderMenuCategories(list)));
+          const reordered = await reorderMenuCategories(list);
           dispatch(menuChanged());
-          return out;
+          return reordered;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -174,7 +174,8 @@ export const vendorCategoriesSlice = createAppSlice({
           if (i >= 0 && j >= 0 && j < state.categories.length) [state.categories[i], state.categories[j]] = [state.categories[j], state.categories[i]];
         },
         fulfilled: (state, action) => {
-          if (action.payload) state.categories = action.payload;
+          // null: the move had nowhere to go, so nothing was sent.
+          if (action.payload !== null) state.categories = menuCategoriesSerializer(action.payload);
         },
         rejected: (state, action) => {
           state.error = readRejection(action, "The order didn't save.");

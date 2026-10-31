@@ -8,7 +8,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { openSharedRecord, type DoctorAction } from '../../networks/health/doctor/doctorAppointments';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { DoctorAppointmentDetail } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { healthRecordSerializer } from '../../serializers/health/recordsSerializer';

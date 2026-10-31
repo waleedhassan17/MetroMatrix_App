@@ -6,7 +6,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchUnreadCount, markAllNotificationsRead, markNotificationRead } from '../../networks/notifications/notifications';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { unreadCountSerializer } from '../../serializers/notificationSerializer';
 
 export interface NotificationsSliceState {

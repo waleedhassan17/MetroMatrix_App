@@ -8,7 +8,7 @@ import { createPurchase, fetchSuppliers } from '../../networks/kitchen/purchases
 import { fetchStock } from '../../networks/kitchen/stock';
 import { scanReceipt } from '../../networks/kitchen/kitchenAi';
 import { uploadImage } from '../../services/mediaUpload';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { emptyLine, linesFromReceipt, linesFromVoice, type DraftLine } from '../../models/kitchen/purchaseModel';
 import type { Ingredient, LocalFile, PurchaseInput, PurchaseSource, Supplier, VoiceQtyLine } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -95,8 +95,8 @@ export const purchaseFormSlice = createAppSlice({
     loadPurchaseFormAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [stock, suppliers] = await Promise.all([fetchStock('all', '').then(raw => required(stockListSerializer(raw))), fetchSuppliers().then(raw => required(suppliersSerializer(raw)))]);
-          return { ingredients: stock.items, suppliers };
+          const [stock, suppliers] = await Promise.all([fetchStock('all', ''), fetchSuppliers()]);
+          return { stock, suppliers };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -107,8 +107,8 @@ export const purchaseFormSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.status = 'succeeded';
-          state.ingredients = action.payload.ingredients;
-          state.suppliers = action.payload.suppliers;
+          state.ingredients = stockListSerializer(action.payload.stock)?.items ?? [];
+          state.suppliers = suppliersSerializer(action.payload.suppliers);
         },
         rejected: (state, action) => {
           state.status = 'failed';

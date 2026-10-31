@@ -7,7 +7,7 @@ import { createAppSlice } from '../../store/createAppSlice';
 import { checkPhoto } from '../../networks/kitchen/kitchenAi';
 import { fetchMenuItems, updateMenuItem } from '../../networks/food/vendor/menu';
 import { uploadImage } from '../../services/mediaUpload';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { LocalFile, PhotoCheck, VendorMenuItem } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { vendorMenuItemsSerializer, vendorMenuItemSerializer } from '../../serializers/food/menuSerializer';

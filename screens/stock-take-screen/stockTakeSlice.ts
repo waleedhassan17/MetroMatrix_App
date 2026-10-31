@@ -5,7 +5,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchStock, recordStockTake } from '../../networks/kitchen/stock';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { Ingredient, StockTakeResult } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { stockListSerializer, stockTakeSerializer } from '../../serializers/kitchen/stockSerializer';

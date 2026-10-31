@@ -14,7 +14,7 @@ import {
   rejectBusiness,
   suspendBusiness,
 } from '../../networks/admin/adminBusiness';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { cleanDocumentNotes } from '../../models/businessModel';
 import type { Business, BusinessWithOwner } from '../../models';
 import { removeFromQueue } from '../approval-queue-screen/approvalQueueSlice';
@@ -123,9 +123,8 @@ export const businessReviewSlice = createAppSlice({
                 : args.decision === 'suspend'
                   ? await suspendBusiness(args.id, (args.reason ?? '').trim())
                   : await reinstateBusiness(args.id, (args.reason ?? '').trim());
-          const business = required(businessSerializer(raw));
           dispatch(removeFromQueue(args.id));
-          return business;
+          return raw;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -136,7 +135,8 @@ export const businessReviewSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          withOwner(state, action.payload);
+          const business = businessSerializer(action.payload);
+          if (business) withOwner(state, business);
           state.lastDecision = action.meta.arg.decision;
           state.deciding = null;
           state.sheet = null;

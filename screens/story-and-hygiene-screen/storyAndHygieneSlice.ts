@@ -7,7 +7,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchHygiene, fetchStory, requestHygieneVerification, saveStory, setHygieneItem } from '../../networks/foodGrowth/story';
 import { uploadImage } from '../../services/mediaUpload';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { Hygiene, KitchenStory, LocalFile } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { storySerializer, hygieneSerializer } from '../../serializers/kitchen/reachSerializer';

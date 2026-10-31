@@ -5,7 +5,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchStoreProfile, updateStoreProfile } from '../../networks/shopping/partner/store';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { normaliseHex } from '../../models/shopping/storeModel';
 import type { LocalFile, StoreProfile, StoreProfileInput } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';

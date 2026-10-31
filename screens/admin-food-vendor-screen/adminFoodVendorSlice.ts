@@ -15,7 +15,7 @@ import {
   setVendorPlanOverrides,
   setVendorSuspended,
 } from '../../networks/admin/adminFood';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { AdminFoodVendor, PlanOverrides } from '../../models';
 import {
   NO_ERROR,
@@ -158,14 +158,13 @@ export const adminFoodVendorSlice = createAppSlice({
     moveVendorAsync: create.asyncThunk(
       async ({ id, move }: { id: string; move: Move }, { rejectWithValue }) => {
         try {
-          let featured: boolean | undefined;
-          if (move.kind === 'feature')
-            featured = (required(adminFeaturedSerializer(await setVendorFeatured(id, move.featured)))).isFeatured;
+          let featured: unknown;
+          if (move.kind === 'feature') featured = await setVendorFeatured(id, move.featured);
           else if (move.kind === 'suspend') await setVendorSuspended(id, move.suspend, move.reason);
           else if (move.kind === 'safety')
             await recordFoodSafetyCheck(move.branchId, move.outcome, move.note);
           else await setVendorPlanOverrides(id, move.overrides);
-          return { vendor: required(adminFoodVendorSerializer(await fetchAdminFoodVendor(id))), featured };
+          return { vendor: await fetchAdminFoodVendor(id), featured };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -176,16 +175,18 @@ export const adminFoodVendorSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const vendor = adminFoodVendorSerializer(action.payload.vendor);
+          const featured = action.payload.featured === undefined ? null : adminFeaturedSerializer(action.payload.featured);
           state.busy = null;
           // Only the sheet that made this move closes (a toggle never closes one).
           if (action.meta.arg.move.kind !== 'feature') state.sheet = null;
+          if (!vendor) return;
           state.byId[action.meta.arg.id] = {
-            vendor: action.payload.vendor,
+            vendor,
             status: 'succeeded',
             error: NO_ERROR,
           };
-          if (action.payload.featured !== undefined)
-            state.featured[action.meta.arg.id] = action.payload.featured;
+          if (featured) state.featured[action.meta.arg.id] = featured.isFeatured;
         },
         rejected: (state, action) => {
           state.busy = null;

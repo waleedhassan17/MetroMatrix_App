@@ -6,7 +6,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchRiderCash } from '../../networks/food/rider/rider';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { RiderCash } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { riderCashSerializer } from '../../serializers/food/riderSerializer';

@@ -265,7 +265,7 @@ describe('the doctor app', () => {
     expect(rx.followUpInDays).toBe(14);
     // Still editable for 24 hours after the visit, then locked.
     expect((await getDoctorAppointment(waiting.id)).actions.canWritePrescription).toBe(true);
-    const edited = await updatePrescription(rx.id, { diagnosis: 'Contact dermatitis (mild)', medicines: rx.medicines, tests: [], advice: 'Rest', followUpInDays: 14 });
+    const edited = required(prescriptionSerializer(await updatePrescription(rx.id, { diagnosis: 'Contact dermatitis (mild)', medicines: rx.medicines, tests: [], advice: 'Rest', followUpInDays: 14 })));
     expect(edited.diagnosis).toBe('Contact dermatitis (mild)');
 
     jest.setSystemTime(T0 + 25 * HOUR);

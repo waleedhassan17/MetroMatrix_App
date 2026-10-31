@@ -7,7 +7,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { approveSignature, fetchSignatures, removeSignature } from '../../networks/admin/adminKitchen';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { SignatureDish, SignatureList, SignatureStatus } from '../../models';
 import {
   NO_ERROR,

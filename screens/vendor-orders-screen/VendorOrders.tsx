@@ -18,7 +18,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useNow } from '../../hooks/useNow';
 import { useLayoutClass } from '../../hooks/useLayoutClass';
 import { useVendorBoard } from '../../hooks/useFoodLive';
@@ -85,6 +85,7 @@ const VendorOrders: React.FC = () => (
 const VendorOrdersContent: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const { space } = useTheme();
   const business = useAppSelector(selectBusiness);
@@ -116,7 +117,8 @@ const VendorOrdersContent: React.FC = () => {
         // Said out loud after the chime's first ring, once per order.
         if (spoken !== 'off' && c.status === 'placed' && !b.announced.includes(c.id)) {
           void dispatch(announceOrderAsync({ id: c.id, language: spoken })).then(r => {
-            if (announceOrderAsync.fulfilled.match(r) && r.payload) void announce(r.payload);
+            const announcement = announceOrderAsync.fulfilled.match(r) ? selectVendorBoard(appStore.getState()).announcement : null;
+            if (announcement) void announce(announcement);
           });
         }
       },

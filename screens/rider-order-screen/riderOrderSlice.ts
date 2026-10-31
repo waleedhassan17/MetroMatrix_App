@@ -8,7 +8,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { declineDelivery, fetchRiderOrder, markRiderDelivered, riderStep, type RiderStepAction } from '../../networks/food/rider/rider';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { RiderOrder } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { riderOrderSerializer } from '../../serializers/food/riderSerializer';

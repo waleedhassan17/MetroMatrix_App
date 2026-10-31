@@ -8,7 +8,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { createAlias, deleteAlias, fetchAliases, fetchIngredientKeys } from '../../networks/admin/adminKitchen';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { emptyAliasForm, type AliasForm } from '../../models/kitchen/adminKitchenModel';
 import type { IngredientAlias, IngredientKey } from '../../models';
 import {
@@ -17,7 +17,7 @@ import {
   type FormStatus,
   type ServerError,
 } from '../shared/formStatus';
-import { aliasesSerializer, ingredientKeysSerializer, aliasSerializer } from '../../serializers/kitchen/adminKitchenSerializer';
+import { aliasesSerializer, ingredientKeysSerializer } from '../../serializers/kitchen/adminKitchenSerializer';
 
 export interface AdminKitchenAliasesSliceState {
   q: string;
@@ -116,8 +116,8 @@ export const adminKitchenAliasesSlice = createAppSlice({
     saveAliasAsync: create.asyncThunk(
       async (input: { form: AliasForm; q: string }, { rejectWithValue }) => {
         try {
-          const a = required(aliasSerializer(await createAlias({ word: input.form.word, language: input.form.language, key: input.form.key })));
-          return { alias: a, list: required(aliasesSerializer(await fetchAliases(input.q.trim() || undefined))) };
+          await createAlias({ word: input.form.word, language: input.form.language, key: input.form.key });
+          return await fetchAliases(input.q.trim() || undefined);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -128,10 +128,11 @@ export const adminKitchenAliasesSlice = createAppSlice({
           state.saveError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const list = aliasesSerializer(action.payload);
           state.busy = false;
           state.sheet = null;
-          state.items = action.payload.list.items;
-          state.total = action.payload.list.total;
+          state.items = list.items;
+          state.total = list.total;
         },
         rejected: (state, action) => {
           state.busy = false;

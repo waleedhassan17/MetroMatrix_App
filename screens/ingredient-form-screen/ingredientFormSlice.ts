@@ -4,7 +4,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { createIngredient, fetchIngredient, updateIngredient } from '../../networks/kitchen/stock';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { customUnitRows, defaultUnit, type CustomUnitRow, type IngredientForm } from '../../models/kitchen/stockModel';
 import type { IngredientDetail, IngredientInput } from '../../models';
 import { UNITS, type BaseUnit } from '../../utils/units/units';

@@ -8,7 +8,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchVendorSettings, updateVendorSettings } from '../../networks/food/vendor/settings';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { settingsForm, settingsPatch, type VendorSettingsForm } from '../../models/food/vendorModel';
 import type { VendorSettings } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';

@@ -6,7 +6,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchCompleteness } from '../../networks/health/doctor/profile';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { Completeness } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { setBusiness } from '../../store/authSlice';

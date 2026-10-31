@@ -8,7 +8,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchItemSheet } from '../../networks/food/discovery';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { MAX_NOTE, MAX_QUANTITY, chooseVariant, initialSelection, toggleOption, type Selection } from '../../models/food/itemSelectionModel';
 import type { ItemSheet } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';

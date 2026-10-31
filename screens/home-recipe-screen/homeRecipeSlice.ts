@@ -3,7 +3,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchHomeRecipe } from '../../networks/myKitchen/recipes';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { HomeRecipe } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { homeRecipeSerializer } from '../../serializers/myKitchen/myKitchenSerializer';

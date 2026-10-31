@@ -15,7 +15,7 @@ import {
   updateFoodBanner,
 } from '../../networks/admin/adminFood';
 import { uploadImage } from '../../services/mediaUpload';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type {
   AdminCuisine,
   AdminFoodBanner,
@@ -30,7 +30,7 @@ import {
   type FormStatus,
   type ServerError,
 } from '../shared/formStatus';
-import { adminFoodVendorsPageSerializer, adminCuisinesSerializer, adminFoodBannerSerializer } from '../../serializers/food/adminFoodSerializer';
+import { adminFoodVendorsPageSerializer, adminCuisinesSerializer } from '../../serializers/food/adminFoodSerializer';
 
 export interface FoodBannerForm {
   imageUrl: string;
@@ -150,19 +150,16 @@ export const adminFoodBannerFormSlice = createAppSlice({
     loadFoodBannerChoicesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [vendors, cuisines] = await Promise.all([
-            fetchAdminFoodVendors({ status: 'live' }, 1, 100).then(raw => required(adminFoodVendorsPageSerializer(raw))),
-            fetchAdminCuisines().then(raw => required(adminCuisinesSerializer(raw))),
-          ]);
-          return { vendors: vendors.items, cuisines: cuisines.filter(c => c.isActive) };
+          const [vendors, cuisines] = await Promise.all([fetchAdminFoodVendors({ status: 'live' }, 1, 100), fetchAdminCuisines()]);
+          return { vendors, cuisines };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
       },
       {
         fulfilled: (state, action) => {
-          state.vendors = action.payload.vendors;
-          state.cuisines = action.payload.cuisines;
+          state.vendors = adminFoodVendorsPageSerializer(action.payload.vendors).items;
+          state.cuisines = adminCuisinesSerializer(action.payload.cuisines).filter(c => c.isActive);
         },
         rejected: (state, action) => {
           state.error = readRejection(action, "We couldn't load the vendors and cuisines.");

@@ -7,7 +7,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchWishlistIds, saveProduct, unsaveProduct } from '../../networks/shopping/wishlist';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { FormStatus } from '../shared/formStatus';
 import { wishlistIdsSerializer } from '../../serializers/shopping/catalogSerializer';
 

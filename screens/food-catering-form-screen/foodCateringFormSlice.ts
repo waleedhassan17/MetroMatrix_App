@@ -4,7 +4,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchCateringVendor, requestCatering } from '../../networks/foodGrowth/catering';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { emptyCateringForm, newDishKey, type CateringForm } from '../../models/kitchen/cateringModel';
 import type { CateringRequestInput, CateringVendor } from '../../models';
 import type { ValidationErrors } from '../../models/authModel';

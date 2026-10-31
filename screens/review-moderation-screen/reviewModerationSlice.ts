@@ -4,9 +4,8 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { setReviewHidden } from '../../networks/admin/adminHealth';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { NO_ERROR, readRejection, type ServerError } from '../shared/formStatus';
-import { doctorReviewSerializer } from '../../serializers/health/discoverySerializer';
 
 export interface ReviewModerationSliceState {
   hidden: boolean;

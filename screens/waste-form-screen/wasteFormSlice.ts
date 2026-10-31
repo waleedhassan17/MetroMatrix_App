@@ -7,7 +7,7 @@ import { createAppSlice } from '../../store/createAppSlice';
 import { fetchStock } from '../../networks/kitchen/stock';
 import { fetchRecipes } from '../../networks/kitchen/recipes';
 import { logWaste } from '../../networks/kitchen/waste';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { dishLine, ingredientLine, wasteDraftFromVoice, type WasteDraftLine } from '../../models/kitchen/wasteModel';
 import type { Ingredient, VoiceQtyLine, WasteLineInput, WasteReason } from '../../models';
 import type { ValidationErrors } from '../../models/authModel';
@@ -87,10 +87,8 @@ export const wasteFormSlice = createAppSlice({
     loadWasteFormAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [stock, recipes] = await Promise.all([fetchStock('all', '').then(raw => required(stockListSerializer(raw))), fetchRecipes(false).then(raw => required(recipeListSerializer(raw)))]);
-          const seen = new Set<string>();
-          const dishes = recipes.items.filter(r => !seen.has(r.itemId) && seen.add(r.itemId)).map(r => ({ itemId: r.itemId, name: r.name }));
-          return { ingredients: stock.items, dishes };
+          const [stock, recipes] = await Promise.all([fetchStock('all', ''), fetchRecipes(false)]);
+          return { stock, recipes };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -101,9 +99,12 @@ export const wasteFormSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const seen = new Set<string>();
           state.status = 'succeeded';
-          state.ingredients = action.payload.ingredients;
-          state.dishes = action.payload.dishes;
+          state.ingredients = stockListSerializer(action.payload.stock)?.items ?? [];
+          state.dishes = (recipeListSerializer(action.payload.recipes)?.items ?? [])
+            .filter(r => !seen.has(r.itemId) && seen.add(r.itemId))
+            .map(r => ({ itemId: r.itemId, name: r.name }));
         },
         rejected: (state, action) => {
           state.status = 'failed';

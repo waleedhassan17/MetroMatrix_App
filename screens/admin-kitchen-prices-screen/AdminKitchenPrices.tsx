@@ -9,7 +9,7 @@
 import React, { useEffect } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { useDebouncedValue } from '../../hooks/usePagedList';
 import {
@@ -61,6 +61,7 @@ const makeStyles = ({ space, gutter }: Theme) =>
 const AdminKitchenPrices: React.FC<Props> = () => {
   const { back } = useBack({ name: 'FoodOverview' });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectAdminKitchenPrices);
   const l = s.list;
@@ -85,7 +86,8 @@ const AdminKitchenPrices: React.FC<Props> = () => {
     const r = await dispatch(importPricesCsvAsync({ csv: s.csv, city: s.city }));
     if (importPricesCsvAsync.fulfilled.match(r)) {
       haptics.success();
-      Toast.show({ type: 'success', text1: `${r.payload.result.imported} ${r.payload.result.imported === 1 ? 'price' : 'prices'} imported` });
+      const imported = selectAdminKitchenPrices(appStore.getState()).result?.imported ?? 0;
+      Toast.show({ type: 'success', text1: `${imported} ${imported === 1 ? 'price' : 'prices'} imported` });
     } else haptics.warning();
   };
 

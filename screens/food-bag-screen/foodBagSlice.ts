@@ -18,7 +18,7 @@ import {
   updateFoodCartLine,
 } from '../../networks/food/cart';
 import { reorderFood } from '../../networks/food/orders';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { EMPTY_FOOD_CART, foodCartSerializer, foodSlotsSerializer, reorderSerializer } from '../../serializers/food/orderSerializer';
 import type { FoodCart, FoodFulfilment, FoodSlots } from '../../models';
 import {

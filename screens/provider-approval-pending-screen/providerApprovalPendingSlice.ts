@@ -45,9 +45,10 @@ export const providerApprovalPendingSlice = createAppSlice({
     checkStatusAsync: create.asyncThunk(
       async (_: { manual: boolean }, { dispatch, rejectWithValue }) => {
         try {
-          const info = required(businessStatusSerializer(await fetchMyBusinessStatus()));
-          if (info.status !== 'pending_approval') dispatch(setSession(await me()));
-          return info.status;
+          const status = await fetchMyBusinessStatus();
+          // A decision opens the app: the status decides whether to read the session again.
+          if (required(businessStatusSerializer(status)).status !== 'pending_approval') dispatch(setSession(await me()));
+          return status;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

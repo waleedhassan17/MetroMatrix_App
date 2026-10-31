@@ -3,7 +3,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchReviewInsights } from '../../networks/kitchen/kitchenAi';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { ReviewInsights } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { reviewInsightsSerializer } from '../../serializers/kitchen/assistantSerializer';

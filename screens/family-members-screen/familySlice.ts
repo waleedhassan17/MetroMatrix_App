@@ -6,7 +6,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchFamily, removeFamilyMember } from '../../networks/health/family';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { FamilyMember } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { saveFamilyMemberAsync } from '../family-member-form-screen/familyMemberFormSlice';

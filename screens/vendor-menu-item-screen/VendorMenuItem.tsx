@@ -10,7 +10,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { DAY_SHORT, ITEM_TAGS, ITEM_TAG_LABEL, MAX_VARIANTS, WEEK_ORDER, groupRuleLabel, validateItem } from '../../models/food/menuModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
@@ -87,6 +87,7 @@ const VendorMenuItemContent: React.FC<Props> = ({ route, navigation }) => {
   const categoryId = route.params?.categoryId;
   const { back } = useBack(menuPlace(useAppSelector(selectBusiness)?.subType === 'home_kitchen'));
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const { colors, size } = useTheme();
   const s = useAppSelector(selectVendorMenuItem);
@@ -145,9 +146,10 @@ const VendorMenuItemContent: React.FC<Props> = ({ route, navigation }) => {
 
   const duplicate = async () => {
     const r = await dispatch(duplicateMenuItemAsync(id!));
-    if (duplicateMenuItemAsync.fulfilled.match(r)) {
+    const copied = duplicateMenuItemAsync.fulfilled.match(r) ? selectVendorMenuItem(appStore.getState()).copied : null;
+    if (copied) {
       Toast.show({ type: 'success', text1: 'Copy added', text2: 'It stays hidden until you show it on the menu.' });
-      navigation.setParams({ id: r.payload.id });
+      navigation.setParams({ id: copied.id });
     }
   };
 

@@ -12,7 +12,7 @@ import {
   fetchCalendarEvents,
   updateCalendarEvent,
 } from '../../networks/admin/adminKitchen';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { emptyEventForm } from '../../models/kitchen/adminKitchenModel';
 import type { CalendarEvent, CalendarEventInput } from '../../models';
 import {

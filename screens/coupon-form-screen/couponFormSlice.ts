@@ -3,10 +3,9 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { createCoupon, deleteCoupon, updateCoupon } from '../../networks/shopping/partner/coupons';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { emptyCouponForm, normaliseCode, toCouponInput, type CouponForm } from '../../models/shopping/couponFormModel';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { couponSerializer } from '../../serializers/shopping/partnerSerializer';
 
 export interface CouponFormSliceState {
   id: string | null;

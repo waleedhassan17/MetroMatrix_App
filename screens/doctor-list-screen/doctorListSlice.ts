@@ -9,7 +9,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchDoctors } from '../../networks/health/discovery';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { baseQuery, clearFilters, toggleQuick, type QuickFilter } from '../../models/health/filterModel';
 import type { DoctorQuery } from '../../models';
 import { doctorCardPageSerializer } from '../../serializers/health/discoverySerializer';
@@ -81,7 +81,7 @@ export const doctorListSlice = createAppSlice({
     countDraftAsync: create.asyncThunk(
       async ({ query }: { key: string; query: DoctorQuery }, { rejectWithValue }) => {
         try {
-          return (required(doctorCardPageSerializer(await fetchDoctors(query, 1, 1)))).total;
+          return await fetchDoctors(query, 1, 1);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -89,7 +89,7 @@ export const doctorListSlice = createAppSlice({
       {
         fulfilled: (state, action) => {
           const v = state.views[action.meta.arg.key];
-          if (v && JSON.stringify(v.draft) === JSON.stringify(action.meta.arg.query)) v.draftTotal = action.payload;
+          if (v && JSON.stringify(v.draft) === JSON.stringify(action.meta.arg.query)) v.draftTotal = doctorCardPageSerializer(action.payload).total;
         },
       },
     ),

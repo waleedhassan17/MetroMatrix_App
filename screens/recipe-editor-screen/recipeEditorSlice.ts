@@ -7,7 +7,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { deleteRecipe, fetchRecipe, saveRecipe } from '../../networks/kitchen/recipes';
 import { fetchStock } from '../../networks/kitchen/stock';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { editableAmount } from '../../models/kitchen/stockModel';
 import { newLineKey } from '../../models/kitchen/purchaseModel';
 import type { DraftLine, RecipeDraft } from '../../models/kitchen/costingModel';
@@ -112,8 +112,8 @@ export const recipeEditorSlice = createAppSlice({
     loadRecipeEditorAsync: create.asyncThunk(
       async ({ itemId, variantId }: { itemId: string; variantId?: string | null }, { rejectWithValue }) => {
         try {
-          const [recipe, stock] = await Promise.all([fetchRecipe(itemId, variantId).then(raw => required(recipeSerializer(raw))), fetchStock('all', '').then(raw => required(stockListSerializer(raw)))]);
-          return { recipe, ingredients: stock.items };
+          const [recipe, stock] = await Promise.all([fetchRecipe(itemId, variantId), fetchStock('all', '')]);
+          return { recipe, stock };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -125,12 +125,14 @@ export const recipeEditorSlice = createAppSlice({
           if (state.itemId !== action.meta.arg.itemId) Object.assign(state, initialState, { status: 'loading' as FormStatus });
         },
         fulfilled: (state, action) => {
+          const recipe = recipeSerializer(action.payload.recipe);
           state.status = 'succeeded';
-          state.itemId = action.payload.recipe.itemId;
-          state.variantId = action.payload.recipe.variantId;
-          state.recipe = action.payload.recipe;
-          state.ingredients = action.payload.ingredients;
-          state.draft = draftOf(action.payload.recipe);
+          state.ingredients = stockListSerializer(action.payload.stock)?.items ?? [];
+          if (!recipe) return;
+          state.itemId = recipe.itemId;
+          state.variantId = recipe.variantId;
+          state.recipe = recipe;
+          state.draft = draftOf(recipe);
           state.dirty = false;
           state.lineErrors = {};
           state.touched = false;

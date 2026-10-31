@@ -7,12 +7,11 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { adjustForecast, fetchForecast, fetchForecastAccuracy, fetchPrepSheet, fetchShoppingList } from '../../networks/kitchen/forecast';
 import { setToday } from '../../networks/food/vendor/availability';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { plannedOf } from '../../models/kitchen/forecastModel';
 import type { Forecast, ForecastAccuracy, PrepSheet, ShoppingList } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { menuChanged } from '../vendor-menu-screen/vendorMenuSlice';
-import { todayMenuSerializer } from '../../serializers/food/menuSerializer';
 import { forecastSerializer, accuracySerializer, prepSheetSerializer, shoppingListSerializer, forecastItemSerializer } from '../../serializers/kitchen/forecastSerializer';
 
 export type ForecastTab = 'forecast' | 'prep' | 'shopping';
@@ -153,7 +152,7 @@ export const forecastAndPrepSlice = createAppSlice({
     adjustDishAsync: create.asyncThunk(
       async ({ date, itemId, adjusted }: { date: string; itemId: string; adjusted: number | null }, { dispatch, rejectWithValue }) => {
         try {
-          const item = required(forecastItemSerializer(await adjustForecast(date, itemId, adjusted)));
+          const item = await adjustForecast(date, itemId, adjusted);
           void dispatch(loadPrepAsync(date));
           void dispatch(loadShoppingAsync(date));
           return item;
@@ -167,9 +166,10 @@ export const forecastAndPrepSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const item = forecastItemSerializer(action.payload);
           state.adjusting = null;
           const f = state.forecast[action.meta.arg.date]?.data;
-          if (f && action.payload) f.items = f.items.map(i => (i.itemId === action.payload!.itemId ? action.payload! : i));
+          if (f && item) f.items = f.items.map(i => (i.itemId === item.itemId ? item : i));
         },
         rejected: (state, action) => {
           state.adjusting = null;
@@ -183,9 +183,9 @@ export const forecastAndPrepSlice = createAppSlice({
       async (date: string, { getState, dispatch, rejectWithValue }) => {
         const f = (getState() as { forecastAndPrep: ForecastAndPrepSliceState }).forecastAndPrep.forecast[date]?.data;
         try {
-          const out = required(todayMenuSerializer(await setToday((f?.items ?? []).map(i => ({ itemId: i.itemId, portions: plannedOf(i), cooking: true })))));
+          const today = await setToday((f?.items ?? []).map(i => ({ itemId: i.itemId, portions: plannedOf(i), cooking: true })));
           dispatch(menuChanged());
-          return out;
+          return today;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

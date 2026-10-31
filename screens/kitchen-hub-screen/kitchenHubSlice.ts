@@ -5,10 +5,10 @@
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchInsightCards, fetchKitchenSummary, snoozeInsightCard } from '../../networks/kitchen/insightsCards';
 import { fetchAiUsage } from '../../networks/kitchen/kitchenAi';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { AiUsage, InsightCard, KitchenSummary } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { snoozedCardSerializer, kitchenHubSerializer } from '../../serializers/kitchen/insightSerializer';
+import { kitchenHubSerializer } from '../../serializers/kitchen/insightSerializer';
 
 export interface KitchenHubSliceState {
   summary: KitchenSummary | null;
@@ -29,7 +29,7 @@ export const kitchenHubSlice = createAppSlice({
         try {
           // The tiles, the cards and the assistant's meter, read together.
           const [summary, cards, usage] = await Promise.all([fetchKitchenSummary(), fetchInsightCards(), fetchAiUsage()]);
-          return required(kitchenHubSerializer({ summary, cards, usage }));
+          return { summary, cards, usage };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -40,10 +40,12 @@ export const kitchenHubSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const hub = kitchenHubSerializer(action.payload);
           state.status = 'succeeded';
-          state.summary = action.payload.summary;
-          state.cards = action.payload.cards;
-          state.usage = action.payload.usage;
+          if (!hub) return;
+          state.summary = hub.summary;
+          state.cards = hub.cards;
+          state.usage = hub.usage;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -54,7 +56,7 @@ export const kitchenHubSlice = createAppSlice({
     snoozeCardAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(snoozedCardSerializer(await snoozeInsightCard(id)));
+          return await snoozeInsightCard(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

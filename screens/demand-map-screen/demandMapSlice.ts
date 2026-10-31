@@ -5,7 +5,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchDemand } from '../../networks/foodGrowth/demand';
 import { fetchCuisines } from '../../networks/food/vendor/profile';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { DemandMap, FoodCuisine } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { foodCuisinesSerializer } from '../../serializers/food/vendorSerializer';
@@ -33,7 +33,7 @@ export const demandMapSlice = createAppSlice({
     loadDemandAsync: create.asyncThunk(
       async (filter: { cuisine: string | null; hour: number | null; withCuisines?: boolean }, { rejectWithValue }) => {
         try {
-          const [data, cuisines] = await Promise.all([fetchDemand(filter).then(raw => required(demandMapSerializer(raw))), filter.withCuisines ? fetchCuisines().then(raw => required(foodCuisinesSerializer(raw))) : Promise.resolve(null)]);
+          const [data, cuisines] = await Promise.all([fetchDemand(filter), filter.withCuisines ? fetchCuisines() : Promise.resolve(null)]);
           return { data, cuisines };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -46,8 +46,8 @@ export const demandMapSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.status = 'succeeded';
-          state.data = action.payload.data;
-          if (action.payload.cuisines) state.cuisines = action.payload.cuisines;
+          state.data = demandMapSerializer(action.payload.data);
+          if (action.payload.cuisines) state.cuisines = foodCuisinesSerializer(action.payload.cuisines);
         },
         rejected: (state, action) => {
           state.status = 'failed';

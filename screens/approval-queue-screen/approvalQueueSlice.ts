@@ -7,7 +7,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchBusinesses } from '../../networks/admin/adminBusiness';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { BusinessSummary, ServiceType } from '../../models';
 import { NO_ERROR, readRejection, type ServerError } from '../shared/formStatus';
 
@@ -64,7 +64,7 @@ export const approvalQueueSlice = createAppSlice({
             page: mode === 'more' ? Math.max(1, Number(cursor) || 1) : 1,
             pageSize: QUEUE_PAGE_SIZE,
           });
-          return required(businessPageSerializer(raw));
+          return raw;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -77,10 +77,10 @@ export const approvalQueueSlice = createAppSlice({
           list.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const page = businessPageSerializer(action.payload);
           const list = state.lists[action.meta.arg.tab];
-          list.items =
-            action.meta.arg.mode === 'more' ? [...list.items, ...action.payload.items] : action.payload.items;
-          list.nextCursor = action.payload.nextCursor;
+          list.items = action.meta.arg.mode === 'more' ? [...list.items, ...page.items] : page.items;
+          list.nextCursor = page.nextCursor;
           list.status = 'loaded';
         },
         rejected: (state, action) => {

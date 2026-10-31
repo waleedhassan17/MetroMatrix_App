@@ -4,7 +4,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { cancelReservation, fetchReservation } from '../../networks/food/surplus';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { SurplusReservation } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { reservationSerializer } from '../../serializers/kitchen/surplusSerializer';

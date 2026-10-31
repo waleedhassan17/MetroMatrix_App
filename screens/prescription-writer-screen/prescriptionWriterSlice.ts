@@ -108,7 +108,7 @@ export const prescriptionWriterSlice = createAppSlice({
     startWriterAsync: create.asyncThunk(
       async (appointmentId: string, { rejectWithValue }) => {
         try {
-          const [appointment, diagnoses, profile] = await Promise.all([getDoctorAppointment(appointmentId), recentDiagnoses().then(raw => required(recentDiagnosesSerializer(raw))), getOwnProfile()]);
+          const [appointment, diagnoses, profile] = await Promise.all([getDoctorAppointment(appointmentId), recentDiagnoses(), getOwnProfile()]);
           return { appointment, diagnoses, profile };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -117,7 +117,8 @@ export const prescriptionWriterSlice = createAppSlice({
       {
         pending: state => ({ ...initialState, status: 'loading' as FormStatus, diagnoses: state.diagnoses }),
         fulfilled: (state, action) => {
-          const { appointment, diagnoses, profile } = action.payload;
+          const { appointment, profile } = action.payload;
+          const diagnoses = recentDiagnosesSerializer(action.payload.diagnoses);
           const rx = appointment.prescription;
           state.status = 'succeeded';
           state.appointment = appointment;
@@ -155,7 +156,7 @@ export const prescriptionWriterSlice = createAppSlice({
     savePrescriptionAsync: create.asyncThunk(
       async ({ appointmentId, prescriptionId, input }: { appointmentId: string; prescriptionId: string | null; input: PrescriptionInput }, { rejectWithValue }) => {
         try {
-          return prescriptionId ? await updatePrescription(prescriptionId, input) : required(prescriptionSerializer(await issuePrescription(appointmentId, input)));
+          return prescriptionId ? await updatePrescription(prescriptionId, input) : await issuePrescription(appointmentId, input);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -167,9 +168,11 @@ export const prescriptionWriterSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const rx = prescriptionSerializer(action.payload);
           state.saveStatus = 'succeeded';
-          state.prescriptionId = action.payload.id;
-          state.editableUntil = action.payload.editableUntil;
+          if (!rx) return;
+          state.prescriptionId = rx.id;
+          state.editableUntil = rx.editableUntil;
         },
         rejected: (state, action) => {
           state.saveStatus = 'failed';

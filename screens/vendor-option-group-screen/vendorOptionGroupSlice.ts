@@ -8,7 +8,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { createOptionGroup, deleteOptionGroup, fetchOptionGroup, updateOptionGroup } from '../../networks/food/vendor/menu';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { emptyGroupForm, groupForm, groupInput, type GroupForm } from '../../models/food/menuModel';
 import type { OptionGroup } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -71,7 +71,7 @@ export const vendorOptionGroupSlice = createAppSlice({
     loadOptionGroupAsync: create.asyncThunk(
       async (id: string | undefined, { rejectWithValue }) => {
         try {
-          return id ? required(optionGroupSerializer(await fetchOptionGroup(id))) : null;
+          return id ? await fetchOptionGroup(id) : null;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -81,9 +81,10 @@ export const vendorOptionGroupSlice = createAppSlice({
           Object.assign(state, initialState, { status: 'loading' });
         },
         fulfilled: (state, action) => {
+          const group = action.payload === null ? null : optionGroupSerializer(action.payload);
           state.status = 'succeeded';
-          state.group = action.payload;
-          state.form = action.payload ? groupForm(action.payload) : emptyGroupForm();
+          state.group = group;
+          state.form = group ? groupForm(group) : emptyGroupForm();
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -96,7 +97,7 @@ export const vendorOptionGroupSlice = createAppSlice({
         const { group, form } = (getState() as { vendorOptionGroup: VendorOptionGroupSliceState }).vendorOptionGroup;
         if (!form) return rejectWithValue({ message: 'Nothing to save.', code: null, details: null });
         try {
-          const saved = group ? required(optionGroupSerializer(await updateOptionGroup(group.id, groupInput(form)))) : required(optionGroupSerializer(await createOptionGroup(groupInput(form))));
+          const saved = group ? await updateOptionGroup(group.id, groupInput(form)) : await createOptionGroup(groupInput(form));
           dispatch(menuChanged());
           return saved;
         } catch (e) {
@@ -109,9 +110,11 @@ export const vendorOptionGroupSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const saved = optionGroupSerializer(action.payload);
           state.saving = false;
-          state.group = action.payload;
-          state.form = groupForm(action.payload);
+          if (!saved) return;
+          state.group = saved;
+          state.form = groupForm(saved);
           state.submitted = false;
         },
         rejected: (state, action) => {

@@ -6,7 +6,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { createBox, fetchBoxSuggestion } from '../../networks/kitchen/surplus';
 import { uploadImage } from '../../services/mediaUpload';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { emptyBoxForm, formFromSuggestion, type BoxForm } from '../../models/kitchen/surplusModel';
 import type { LocalFile, SurplusBoxInput } from '../../models';
 import type { ValidationErrors } from '../../models/authModel';
@@ -53,7 +53,7 @@ export const boxFormSlice = createAppSlice({
     suggestBoxAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return (required(surplusSuggestionResponseSerializer(await fetchBoxSuggestion()))).suggestion;
+          return await fetchBoxSuggestion();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -63,10 +63,11 @@ export const boxFormSlice = createAppSlice({
           state.suggesting = 'loading';
         },
         fulfilled: (state, action) => {
+          const suggestion = surplusSuggestionResponseSerializer(action.payload)?.suggestion;
           state.suggesting = 'succeeded';
-          if (action.payload) {
-            state.form = formFromSuggestion(action.payload);
-            state.basis = action.payload.basis;
+          if (suggestion) {
+            state.form = formFromSuggestion(suggestion);
+            state.basis = suggestion.basis;
           }
         },
         rejected: state => {

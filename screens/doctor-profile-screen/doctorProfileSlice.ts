@@ -102,9 +102,11 @@ export const doctorProfileSlice = createAppSlice({
     chooseLocationAsync: create.asyncThunk(
       async ({ doctorId, locationId, date }: { key: string; doctorId: string; locationId: string; date?: string }, { rejectWithValue }) => {
         try {
-          const days = required(daysSerializer(await fetchDays(doctorId, locationId, null, 14)));
-          const pick = (date && days.find(d => d.date === date)?.date) || days.find(d => d.slotCount > 0)?.date || days[0]?.date || null;
-          const day = pick ? required(slotDaySerializer(await fetchSlots(doctorId, locationId, pick))) : null;
+          const days = await fetchDays(doctorId, locationId, null, 14);
+          // The asked-for day, else the first with room, decides which slots to read.
+          const open = required(daysSerializer(days));
+          const pick = (date && open.find(d => d.date === date)?.date) || open.find(d => d.slotCount > 0)?.date || open[0]?.date || null;
+          const day = pick ? await fetchSlots(doctorId, locationId, pick) : null;
           return { days, day };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -124,10 +126,11 @@ export const doctorProfileSlice = createAppSlice({
         fulfilled: (state, action) => {
           const v = state.views[action.meta.arg.key];
           if (!v || v.locationId !== action.meta.arg.locationId) return;
+          const day = action.payload.day === null ? null : slotDaySerializer(action.payload.day);
           v.loading = false;
-          v.days = action.payload.days;
-          v.day = action.payload.day;
-          v.date = action.payload.day?.date ?? null;
+          v.days = daysSerializer(action.payload.days);
+          v.day = day;
+          v.date = day?.date ?? null;
         },
         rejected: (state, action) => {
           const v = state.views[action.meta.arg.key];

@@ -5,7 +5,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { deleteAddress, fetchAddresses, setDefaultAddress } from '../../networks/addresses/addresses';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { Address } from '../../models';
 import { saveAddressAsync } from '../address-form-screen/addressFormSlice';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -102,7 +102,7 @@ export const addressBookSlice = createAppSlice({
   }),
   extraReducers: builder => {
     builder.addCase(saveAddressAsync.fulfilled, (state, action) => {
-      state.addresses = action.payload.all;
+      state.addresses = addressListSerializer(action.payload.all);
       state.status = 'succeeded';
     });
   },

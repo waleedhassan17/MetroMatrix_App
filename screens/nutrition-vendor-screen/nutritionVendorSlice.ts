@@ -5,7 +5,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchVendorNutrition, searchNutritionFoods, setNutritionHidden } from '../../networks/kitchen/nutrition';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { NutritionFood, VendorNutrition } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { vendorNutritionSerializer, dishNutritionSerializer, nutritionFoodsSerializer } from '../../serializers/kitchen/assistantSerializer';

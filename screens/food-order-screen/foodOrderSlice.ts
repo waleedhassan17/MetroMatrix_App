@@ -69,9 +69,9 @@ export const foodOrderSlice = createAppSlice({
     loadFoodOrderAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          const order = required(foodOrderSerializer(await fetchFoodOrder(code)));
-          // Tracking only matters while it's on its way.
-          const tracking = isEnded(order.status) ? null : required(foodTrackingSerializer(await fetchFoodTracking(code)));
+          const order = await fetchFoodOrder(code);
+          // Tracking only matters while it's on its way: the status decides the next read.
+          const tracking = isEnded(required(foodOrderSerializer(order)).status) ? null : await fetchFoodTracking(code);
           return { order, tracking };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -86,8 +86,8 @@ export const foodOrderSlice = createAppSlice({
         fulfilled: (state, action) => {
           const e = entry(state, action.meta.arg);
           e.status = 'succeeded';
-          e.order = action.payload.order;
-          e.tracking = action.payload.tracking;
+          e.order = foodOrderSerializer(action.payload.order);
+          e.tracking = action.payload.tracking === null ? null : foodTrackingSerializer(action.payload.tracking);
         },
         rejected: (state, action) => {
           const e = entry(state, action.meta.arg);

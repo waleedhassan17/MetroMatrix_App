@@ -4,7 +4,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { suggest } from '../../networks/health/discovery';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { HealthSuggestions } from '../../models';
 import type { FormStatus } from '../shared/formStatus';
 import { suggestionsSerializer } from '../../serializers/health/discoverySerializer';

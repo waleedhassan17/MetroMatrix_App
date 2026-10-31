@@ -8,7 +8,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchPlatformDemand } from '../../networks/admin/adminKitchen';
 import { fetchAdminCuisines } from '../../networks/admin/adminFood';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { AdminCuisine, AdminDemandMap } from '../../models';
 import {
   NO_ERROR,
@@ -54,8 +54,8 @@ export const adminKitchenDemandSlice = createAppSlice({
       async (input: DemandFilter & { withCuisines: boolean }, { rejectWithValue }) => {
         try {
           const [data, cuisines] = await Promise.all([
-            fetchPlatformDemand({ city: input.city, cuisine: input.cuisine, hour: input.hour }).then(raw => required(adminDemandSerializer(raw))),
-            input.withCuisines ? fetchAdminCuisines().then(raw => required(adminCuisinesSerializer(raw))) : Promise.resolve(null),
+            fetchPlatformDemand({ city: input.city, cuisine: input.cuisine, hour: input.hour }),
+            input.withCuisines ? fetchAdminCuisines() : Promise.resolve(null),
           ]);
           return { data, cuisines };
         } catch (e) {
@@ -69,8 +69,8 @@ export const adminKitchenDemandSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.status = 'succeeded';
-          state.data = action.payload.data;
-          if (action.payload.cuisines) state.cuisines = action.payload.cuisines.filter(c => c.isActive);
+          state.data = adminDemandSerializer(action.payload.data);
+          if (action.payload.cuisines) state.cuisines = adminCuisinesSerializer(action.payload.cuisines).filter(c => c.isActive);
         },
         rejected: (state, action) => {
           state.status = 'failed';

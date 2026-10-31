@@ -2,7 +2,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchNutritionSummary } from '../../networks/myKitchen/nutrition';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { NutritionSummary } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { nutritionSummarySerializer } from '../../serializers/myKitchen/myKitchenSerializer';

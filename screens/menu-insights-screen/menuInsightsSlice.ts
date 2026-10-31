@@ -5,7 +5,7 @@
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchMenuInsights, fetchExperiments, startExperiment } from '../../networks/foodGrowth/experiments';
 import { uploadImage } from '../../services/mediaUpload';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { Experiment, ExperimentInput, MenuInsights } from '../../models';
 import type { LocalFile } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';

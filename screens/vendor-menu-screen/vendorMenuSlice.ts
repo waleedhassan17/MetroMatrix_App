@@ -10,7 +10,7 @@ import { createAppSlice } from '../../store/createAppSlice';
 import { fetchMenuCategories, fetchMenuItems } from '../../networks/food/vendor/menu';
 import { fetchAvailability, setAvailability } from '../../networks/food/vendor/availability';
 import { fetchBoardHints } from '../../networks/kitchen/costing';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { AvailabilityItem, BoardHints, MenuCategory, VendorMenuItem } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { menuCategoriesSerializer, vendorMenuItemsSerializer, menuAvailabilitySerializer } from '../../serializers/food/menuSerializer';

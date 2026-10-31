@@ -4,7 +4,7 @@
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchPartnerSummary, resumeStore } from '../../networks/shopping/partner/store';
 import { fetchPartnerOrders } from '../../networks/shopping/partner/partnerOrders';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { PartnerOrderRow, PartnerSummary } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { partnerSummarySerializer, partnerOrderPageSerializer } from '../../serializers/shopping/partnerSerializer';
@@ -27,8 +27,8 @@ export const storeTodaySlice = createAppSlice({
     loadTodayAsync: create.asyncThunk(
       async (_: { refresh: boolean }, { rejectWithValue }) => {
         try {
-          const [summary, recent] = await Promise.all([fetchPartnerSummary().then(raw => required(partnerSummarySerializer(raw))), fetchPartnerOrders({ segment: 'new' }, 1, 5).then(raw => required(partnerOrderPageSerializer(raw)))]);
-          return { summary, recent: recent.items };
+          const [summary, recent] = await Promise.all([fetchPartnerSummary(), fetchPartnerOrders({ segment: 'new' }, 1, 5)]);
+          return { summary, recent };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -42,8 +42,8 @@ export const storeTodaySlice = createAppSlice({
         fulfilled: (state, action) => {
           state.status = 'succeeded';
           state.refreshing = false;
-          state.summary = action.payload.summary;
-          state.recent = action.payload.recent;
+          state.summary = partnerSummarySerializer(action.payload.summary);
+          state.recent = partnerOrderPageSerializer(action.payload.recent).items;
         },
         rejected: (state, action) => {
           state.status = 'failed';

@@ -8,7 +8,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { acknowledgeCart, addToCart, fetchCart, removeCartLine, updateCartLine } from '../../networks/shopping/cart';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { EMPTY_CART, cartSerializer } from '../../serializers/shopping/cartSerializer';
 import type { Cart } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';

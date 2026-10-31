@@ -14,7 +14,7 @@ import { providerSelectionSlice } from '../provider-selection-screen/providerSel
 import { adminTotpSlice } from '../admin-totp-screen/adminTotpSlice';
 import { approvalQueueSlice } from '../approval-queue-screen/approvalQueueSlice';
 import { resetAllState } from '../../store/resetAllState';
-import type { Business, BusinessSummary } from '../../models/auth';
+import type { Business } from '../../models/auth';
 import { makeUser } from '../../__fixtures__/users';
 
 const init = <S>(reducer: (s: S | undefined, a: { type: string }) => S) => reducer(undefined, { type: '@@init' });
@@ -248,19 +248,21 @@ describe('adminTotpSlice (QA 20, 23)', () => {
 
 describe('approvalQueueSlice', () => {
   const { reducer, actions } = approvalQueueSlice;
-  const row = (id: string) => ({ id }) as BusinessSummary;
+  // The API's answer (a page of businesses); the slice serializes it.
+  const row = (id: string) => ({ id, subType: 'store', name: `Business ${id}`, status: 'pending_approval' });
+  const page = (items: unknown[], nextCursor: string | null) => ({ success: true, data: { items, nextCursor } });
 
   it('pages per tab and drops a decided row from every tab', () => {
     let s = reducer(
       init(reducer),
-      actions.loadQueueAsync.fulfilled({ items: [row('a'), row('b')], nextCursor: 'c2' }, 'r', {
+      actions.loadQueueAsync.fulfilled(page([row('a'), row('b')], 'c2'), 'r', {
         tab: 'all',
         mode: 'initial',
       }),
     );
     s = reducer(
       s,
-      actions.loadQueueAsync.fulfilled({ items: [row('c')], nextCursor: null }, 'r', {
+      actions.loadQueueAsync.fulfilled(page([row('c')], null), 'r', {
         tab: 'all',
         mode: 'more',
         cursor: 'c2',

@@ -3,7 +3,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchTiffinTomorrow, fetchMyTiffinPlans, fetchTiffinSubscriptions } from '../../networks/foodGrowth/tiffin';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { TiffinInbox, TiffinPlan, TiffinTomorrow } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { tiffinPlansSerializer, tiffinInboxSerializer, tiffinTomorrowSerializer } from '../../serializers/kitchen/growthSerializer';
@@ -25,8 +25,8 @@ export const tiffinPlansSlice = createAppSlice({
     loadTiffinPlansAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [plans, inbox, tomorrow] = await Promise.all([fetchMyTiffinPlans().then(raw => required(tiffinPlansSerializer(raw))), fetchTiffinSubscriptions().then(raw => required(tiffinInboxSerializer(raw))), fetchTiffinTomorrow().then(raw => required(tiffinTomorrowSerializer(raw)))]);
-          return { plans, counts: inbox.counts, tomorrow };
+          const [plans, inbox, tomorrow] = await Promise.all([fetchMyTiffinPlans(), fetchTiffinSubscriptions(), fetchTiffinTomorrow()]);
+          return { plans, inbox, tomorrow };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -38,9 +38,9 @@ export const tiffinPlansSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.status = 'succeeded';
-          state.plans = action.payload.plans;
-          state.counts = action.payload.counts;
-          state.tomorrow = action.payload.tomorrow;
+          state.plans = tiffinPlansSerializer(action.payload.plans);
+          state.counts = tiffinInboxSerializer(action.payload.inbox).counts;
+          state.tomorrow = tiffinTomorrowSerializer(action.payload.tomorrow);
         },
         rejected: (state, action) => {
           state.status = 'failed';

@@ -3,7 +3,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { decideExperiment, fetchExperiment, type ExperimentDecision } from '../../networks/foodGrowth/experiments';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { Experiment } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { experimentSerializer } from '../../serializers/kitchen/reachSerializer';

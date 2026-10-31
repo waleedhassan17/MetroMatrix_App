@@ -4,7 +4,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchAdminConditions, fetchAdminSpecialties } from '../../networks/admin/adminHealth';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { conditionInput, type ConditionForm } from '../../models/health/adminHealthModel';
 import type { AdminCondition, AdminSpecialty } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -57,7 +57,8 @@ export const conditionsSlice = createAppSlice({
       async (q: string, { getState, rejectWithValue }) => {
         try {
           const known = (getState() as { adminConditions: ConditionsSliceState }).adminConditions.specialties;
-          const [list, specialties] = await Promise.all([fetchAdminConditions(q.trim()).then(raw => required(adminConditionListSerializer(raw))), known.length ? Promise.resolve(known) : fetchAdminSpecialties().then(raw => required(adminSpecialtyListSerializer(raw)))]);
+          // The specialties are read once; after that the slice already has them.
+          const [list, specialties] = await Promise.all([fetchAdminConditions(q.trim()), known.length ? Promise.resolve(null) : fetchAdminSpecialties()]);
           return { list, specialties };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -69,8 +70,8 @@ export const conditionsSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.status = 'succeeded';
-          state.list = action.payload.list;
-          state.specialties = action.payload.specialties;
+          state.list = adminConditionListSerializer(action.payload.list);
+          if (action.payload.specialties !== null) state.specialties = adminSpecialtyListSerializer(action.payload.specialties);
         },
         rejected: (state, action) => {
           state.status = 'failed';

@@ -4,9 +4,8 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { setFoodReviewHidden } from '../../networks/admin/adminFood';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { NO_ERROR, readRejection, type ServerError } from '../shared/formStatus';
-import { adminHiddenSerializer } from '../../serializers/food/adminFoodSerializer';
 
 export interface AdminFoodReviewsSliceState {
   hidden: boolean;

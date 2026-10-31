@@ -3,7 +3,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchOwnReviewSummary, replyToReview } from '../../networks/health/doctor/doctorReviews';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { DoctorReview, DoctorReviewSummary } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { reviewSummarySerializer, doctorReviewSerializer } from '../../serializers/health/discoverySerializer';

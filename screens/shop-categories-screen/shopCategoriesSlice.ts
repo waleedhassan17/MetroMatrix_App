@@ -3,10 +3,10 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { createCategory, deleteCategory, fetchAdminCategories, reorderCategories, updateCategory } from '../../networks/admin/adminShop';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { ShopCategory } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { categoryListSerializer, categorySerializer } from '../../serializers/shopping/catalogSerializer';
+import { categoryListSerializer } from '../../serializers/shopping/catalogSerializer';
 
 export interface CategorySheet {
   /** '' a new one; an id to rename. */
@@ -70,10 +70,10 @@ export const shopCategoriesSlice = createAppSlice({
         try {
           if (change.kind === 'save') {
             const { id, parentId, name, icon } = change.sheet;
-            await (id ? updateCategory(id, { name: name.trim(), icon }).then(raw => required(categorySerializer(raw))) : createCategory({ name: name.trim(), icon, parentId }).then(raw => required(categorySerializer(raw))));
+            await (id ? updateCategory(id, { name: name.trim(), icon }) : createCategory({ name: name.trim(), icon, parentId }));
           } else if (change.kind === 'delete') await deleteCategory(change.id);
           else await reorderCategories(change.parentId, change.ids);
-          return required(categoryListSerializer(await fetchAdminCategories()));
+          return await fetchAdminCategories();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -85,7 +85,7 @@ export const shopCategoriesSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.busy = false;
-          state.tree = action.payload;
+          state.tree = categoryListSerializer(action.payload);
           state.sheet = null;
         },
         rejected: (state, action) => {

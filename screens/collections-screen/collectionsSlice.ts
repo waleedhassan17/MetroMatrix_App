@@ -3,10 +3,10 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { createCollection, deleteCollection, fetchCollections, renameCollection, reorderCollections } from '../../networks/shopping/partner/products';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { Collection } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { collectionListSerializer, collectionSerializer } from '../../serializers/shopping/catalogSerializer';
+import { collectionListSerializer } from '../../serializers/shopping/catalogSerializer';
 
 export interface CollectionsSliceState {
   collections: Collection[];
@@ -65,10 +65,10 @@ export const collectionsSlice = createAppSlice({
         { rejectWithValue },
       ) => {
         try {
-          if (change.kind === 'save') await (change.id ? renameCollection(change.id, change.name.trim()).then(raw => required(collectionSerializer(raw))) : createCollection(change.name.trim()).then(raw => required(collectionSerializer(raw))));
+          if (change.kind === 'save') await (change.id ? renameCollection(change.id, change.name.trim()) : createCollection(change.name.trim()));
           else if (change.kind === 'delete') await deleteCollection(change.id);
-          else return required(collectionListSerializer(await reorderCollections(change.ids)));
-          return required(collectionListSerializer(await fetchCollections()));
+          else return await reorderCollections(change.ids);
+          return await fetchCollections();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -80,7 +80,7 @@ export const collectionsSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.busy = null;
-          state.collections = action.payload;
+          state.collections = collectionListSerializer(action.payload);
           state.editing = null;
         },
         rejected: (state, action) => {

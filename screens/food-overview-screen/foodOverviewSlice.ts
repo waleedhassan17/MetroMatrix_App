@@ -5,7 +5,7 @@
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchFoodOverview } from '../../networks/admin/adminFood';
 import { fetchHygieneQueue, fetchSignatures } from '../../networks/admin/adminKitchen';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { AdminFoodOverview } from '../../models';
 import {
   NO_ERROR,
@@ -60,15 +60,18 @@ export const foodOverviewSlice = createAppSlice({
     loadKitchenWaitingAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [hygiene, signatures] = await Promise.all([fetchHygieneQueue('pending').then(raw => required(hygieneQueueSerializer(raw))), fetchSignatures('new').then(raw => required(signatureListSerializer(raw)))]);
-          return { hygiene: hygiene.length, signatures: signatures.counts.new };
+          const [hygiene, signatures] = await Promise.all([fetchHygieneQueue('pending'), fetchSignatures('new')]);
+          return { hygiene, signatures };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
       },
       {
         fulfilled: (state, action) => {
-          state.kitchen = action.payload;
+          state.kitchen = {
+            hygiene: hygieneQueueSerializer(action.payload.hygiene).length,
+            signatures: signatureListSerializer(action.payload.signatures).counts.new,
+          };
         },
       },
     ),

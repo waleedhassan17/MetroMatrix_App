@@ -10,7 +10,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { bookAppointment } from '../../networks/health/appointments';
 
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { alternativesFrom, appointmentDetailSerializer } from '../../serializers/health/appointmentSerializer';
 import { defaultPaymentFor } from '../../models/health/bookingModel';
 import type { AppointmentPaymentMethod, BookingInput, HealthRecord, PracticeLocation, ReasonTag } from '../../models';

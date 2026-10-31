@@ -3,7 +3,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchRamadan, updateRamadan } from '../../networks/foodGrowth/ramadan';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { RamadanInput, RamadanSettings } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { ramadanSettingsSerializer } from '../../serializers/kitchen/reachSerializer';

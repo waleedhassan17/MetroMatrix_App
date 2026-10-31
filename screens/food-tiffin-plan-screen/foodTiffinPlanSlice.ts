@@ -5,7 +5,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchTiffinPlan, subscribeTiffin } from '../../networks/foodGrowth/tiffin';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { newUuid } from '../../utils/ids/ids';
 import type { TiffinPayMethod, TiffinPlan } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -21,6 +21,8 @@ export interface FoodTiffinPlanSliceState {
   idempotencyKey: string;
   subscribing: boolean;
   subscribeError: ServerError;
+  /** The subscription just made. */
+  subscribed: ReturnType<typeof tiffinSubscriptionSerializer>;
 }
 
 const initialState: FoodTiffinPlanSliceState = {
@@ -33,6 +35,7 @@ const initialState: FoodTiffinPlanSliceState = {
   idempotencyKey: '',
   subscribing: false,
   subscribeError: NO_ERROR,
+  subscribed: null,
 };
 
 export const foodTiffinPlanSlice = createAppSlice({
@@ -84,9 +87,9 @@ export const foodTiffinPlanSlice = createAppSlice({
         const s = (getState() as { foodTiffinPlan: FoodTiffinPlanSliceState }).foodTiffinPlan;
         if (!s.plan || !s.startDate) return rejectWithValue({ message: 'Pick a day to start.', code: 'VALIDATION_FAILED', status: 400, details: null });
         try {
-          const out = required(tiffinSubscriptionSerializer(await subscribeTiffin(s.plan.id, { startDate: s.startDate, addressId: s.plan.mode === 'delivery' ? s.addressId : null, paymentMethod: s.payMethod }, s.idempotencyKey || newUuid())));
+          const subscribed = await subscribeTiffin(s.plan.id, { startDate: s.startDate, addressId: s.plan.mode === 'delivery' ? s.addressId : null, paymentMethod: s.payMethod }, s.idempotencyKey || newUuid());
           dispatch(newTiffinKey());
-          return out;
+          return subscribed;
         } catch (e) {
           const err = toRejectedValue(e);
           if (err.status) dispatch(newTiffinKey());
@@ -98,8 +101,10 @@ export const foodTiffinPlanSlice = createAppSlice({
           state.subscribing = true;
           state.subscribeError = NO_ERROR;
         },
-        fulfilled: state => {
+        fulfilled: (state, action) => {
+          const payload = tiffinSubscriptionSerializer(action.payload);
           state.subscribing = false;
+          state.subscribed = payload;
         },
         rejected: (state, action) => {
           state.subscribing = false;

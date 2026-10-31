@@ -6,7 +6,7 @@ import { createAppSlice } from '../../store/createAppSlice';
 import { suggestCombos } from '../../networks/kitchen/kitchenAi';
 import { createMenuItem } from '../../networks/food/vendor/menu';
 import { fetchKitchenSettings } from '../../networks/kitchen/costing';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { comboItemInput } from '../../models/kitchen/assistantModel';
 import type { ComboIdea, DraftCategory } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -38,8 +38,8 @@ export const aiCombosSlice = createAppSlice({
     suggestCombosAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [ideas, settings] = await Promise.all([suggestCombos().then(raw => required(comboIdeasSerializer(raw))), fetchKitchenSettings().then(raw => required(kitchenSettingsSerializer(raw)))]);
-          return { ...ideas, targetPct: settings.targetFoodCostPct };
+          const [ideas, settings] = await Promise.all([suggestCombos(), fetchKitchenSettings()]);
+          return { ideas, settings };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -51,11 +51,14 @@ export const aiCombosSlice = createAppSlice({
           state.createError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const ideas = comboIdeasSerializer(action.payload.ideas);
+          const settings = kitchenSettingsSerializer(action.payload.settings);
           state.status = 'succeeded';
-          state.ideas = action.payload.items;
-          state.category = action.payload.category;
-          state.targetPct = action.payload.targetPct;
-          state.prices = Object.fromEntries(action.payload.items.map(i => [i.id, String(i.bundlePrice)]));
+          if (!ideas || !settings) return;
+          state.ideas = ideas.items;
+          state.category = ideas.category;
+          state.targetPct = settings.targetFoodCostPct;
+          state.prices = Object.fromEntries(ideas.items.map(i => [i.id, String(i.bundlePrice)]));
           state.created = {};
         },
         rejected: (state, action) => {

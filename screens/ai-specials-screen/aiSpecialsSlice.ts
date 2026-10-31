@@ -59,8 +59,8 @@ export const aiSpecialsSlice = createAppSlice({
     suggestSpecialsAsync: create.asyncThunk(
       async (ingredientIds: string[] | undefined, { rejectWithValue }) => {
         try {
-          const [ideas, categories, settings] = await Promise.all([suggestSpecials(ingredientIds).then(raw => required(specialIdeasSerializer(raw))), fetchMenuCategories().then(raw => required(menuCategoriesSerializer(raw))), fetchKitchenSettings().then(raw => required(kitchenSettingsSerializer(raw)))]);
-          return { ...ideas, categories, targetPct: settings.targetFoodCostPct };
+          const [ideas, categories, settings] = await Promise.all([suggestSpecials(ingredientIds), fetchMenuCategories(), fetchKitchenSettings()]);
+          return { ideas, categories, settings };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -72,12 +72,15 @@ export const aiSpecialsSlice = createAppSlice({
           state.createError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const ideas = specialIdeasSerializer(action.payload.ideas);
+          const settings = kitchenSettingsSerializer(action.payload.settings);
           state.status = 'succeeded';
-          state.ideas = action.payload.items;
-          state.category = action.payload.category;
-          state.categories = action.payload.categories;
-          state.targetPct = action.payload.targetPct;
-          state.prices = Object.fromEntries(action.payload.items.map(i => [i.id, String(i.suggestedPrice)]));
+          if (!ideas || !settings) return;
+          state.ideas = ideas.items;
+          state.category = ideas.category;
+          state.categories = menuCategoriesSerializer(action.payload.categories);
+          state.targetPct = settings.targetFoodCostPct;
+          state.prices = Object.fromEntries(ideas.items.map(i => [i.id, String(i.suggestedPrice)]));
           state.picked = {};
           state.created = {};
         },
@@ -91,9 +94,10 @@ export const aiSpecialsSlice = createAppSlice({
     createSpecialAsync: create.asyncThunk(
       async ({ idea, categoryId, price }: { idea: SpecialIdea; categoryId: string; price: number }, { rejectWithValue }) => {
         try {
-          const item = required(vendorMenuItemSerializer(await createMenuItem(specialItemInput(idea, categoryId, price), [])));
-          await saveRecipe(item.id, null, specialRecipe(idea));
-          return item;
+          const created = await createMenuItem(specialItemInput(idea, categoryId, price), []);
+          // The recipe goes on the new dish: its id decides the next call.
+          await saveRecipe(required(vendorMenuItemSerializer(created)).id, null, specialRecipe(idea));
+          return created;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -104,8 +108,9 @@ export const aiSpecialsSlice = createAppSlice({
           state.createError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const item = vendorMenuItemSerializer(action.payload);
           state.creating = null;
-          state.created[action.meta.arg.idea.id] = action.payload.id;
+          if (item) state.created[action.meta.arg.idea.id] = item.id;
         },
         rejected: (state, action) => {
           state.creating = null;

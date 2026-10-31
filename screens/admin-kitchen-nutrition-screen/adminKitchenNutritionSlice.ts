@@ -13,7 +13,7 @@ import {
   fetchNutritionFoods,
   updateNutritionFood,
 } from '../../networks/admin/adminKitchen';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import {
   emptyNutritionFoodForm,
   foodKeyOf,
@@ -193,8 +193,8 @@ export const adminKitchenNutritionSlice = createAppSlice({
     importFoodsCsvAsync: create.asyncThunk(
       async (input: { csv: string; q: string }, { rejectWithValue }) => {
         try {
-          const result = required(nutritionFoodImportSerializer(await importNutritionFoods(input.csv, false)));
-          return { result, list: required(staffNutritionFoodsSerializer(await fetchNutritionFoods({ q: input.q.trim() || undefined, ...PAGE }))) };
+          const result = await importNutritionFoods(input.csv, false);
+          return { result, list: await fetchNutritionFoods({ q: input.q.trim() || undefined, ...PAGE }) };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -205,10 +205,11 @@ export const adminKitchenNutritionSlice = createAppSlice({
           state.importError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const list = staffNutritionFoodsSerializer(action.payload.list);
           state.importing = false;
-          state.result = action.payload.result;
-          state.items = action.payload.list.items;
-          state.total = action.payload.list.total;
+          state.result = nutritionFoodImportSerializer(action.payload.result);
+          state.items = list.items;
+          state.total = list.total;
           state.csv = '';
           state.fileName = null;
         },

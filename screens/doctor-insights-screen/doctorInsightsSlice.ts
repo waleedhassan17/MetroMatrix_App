@@ -2,7 +2,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchInsights } from '../../networks/health/doctor/doctorInsights';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { DoctorInsights, DoctorInsightsRange } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { insightsSerializer } from '../../serializers/health/doctorSerializer';

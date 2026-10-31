@@ -9,7 +9,7 @@ import { createAppSlice } from '../../store/createAppSlice';
 import { fetchAppointment } from '../../networks/health/appointments';
 
 import { joinVideo, joinVideoAsDoctor } from '../../networks/health/video';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { VideoJoin } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { appointmentDetailSerializer } from '../../serializers/health/appointmentSerializer';
@@ -52,14 +52,12 @@ export const videoSlice = createAppSlice({
       state.status = 'idle';
     }),
     loadVideoVisitAsync: create.asyncThunk(
-      async (t: VideoTarget, { rejectWithValue }): Promise<VideoVisit | ReturnType<typeof rejectWithValue>> => {
+      async (t: VideoTarget, { rejectWithValue }) => {
         try {
-          if (t.code) {
-            const a = required(appointmentDetailSerializer(await fetchAppointment(t.code)));
-            return { other: a.doctor.name, startAt: a.startAt, endAt: a.endAt, timezone: a.timezone, joinOpensAt: a.joinOpensAt, canJoin: a.flags.canJoinVideo, code: a.code };
-          }
-          const a = await getDoctorAppointment(t.appointmentId ?? '');
-          return { other: a.patient.name, startAt: a.startAt, endAt: a.endAt, timezone: a.timezone, joinOpensAt: a.joinOpensAt, canJoin: a.actions.canJoinVideo, code: a.code };
+          // The patient reads their appointment; the doctor reads the practice's
+          // (getDoctorAppointment answers it already shaped).
+          if (t.code) return { patient: await fetchAppointment(t.code) };
+          return { doctor: await getDoctorAppointment(t.appointmentId ?? '') };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -70,8 +68,11 @@ export const videoSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const { patient, doctor } = action.payload as { patient?: unknown; doctor?: Awaited<ReturnType<typeof getDoctorAppointment>> };
+          const a = patient === undefined ? null : appointmentDetailSerializer(patient);
           state.visitStatus = 'succeeded';
-          state.visit = action.payload as VideoVisit;
+          if (a) state.visit = { other: a.doctor.name, startAt: a.startAt, endAt: a.endAt, timezone: a.timezone, joinOpensAt: a.joinOpensAt, canJoin: a.flags.canJoinVideo, code: a.code };
+          else if (doctor) state.visit = { other: doctor.patient.name, startAt: doctor.startAt, endAt: doctor.endAt, timezone: doctor.timezone, joinOpensAt: doctor.joinOpensAt, canJoin: doctor.actions.canJoinVideo, code: doctor.code };
         },
         rejected: (state, action) => {
           state.visitStatus = 'failed';

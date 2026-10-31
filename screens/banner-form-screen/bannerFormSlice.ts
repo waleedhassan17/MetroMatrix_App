@@ -5,12 +5,11 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { createBanner, deleteBanner, fetchAdminCategories, fetchAdminStores, updateBanner } from '../../networks/admin/adminShop';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { AdminBanner, AdminBannerInput, LocalFile, ShopCategory, StoreSummary } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { upload } from '../shared/photoUploads';
 import { storeSummaryPageSerializer, categoryListSerializer } from '../../serializers/shopping/catalogSerializer';
-import { adminBannerSerializer } from '../../serializers/shopping/adminShopSerializer';
 
 export interface BannerForm {
   imageUrl: string;
@@ -123,16 +122,16 @@ export const bannerFormSlice = createAppSlice({
     loadBannerChoicesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [stores, categories] = await Promise.all([fetchAdminStores('', 1, 100).then(raw => required(storeSummaryPageSerializer(raw))), fetchAdminCategories().then(raw => required(categoryListSerializer(raw)))]);
-          return { stores: stores.items, categories };
+          const [stores, categories] = await Promise.all([fetchAdminStores('', 1, 100), fetchAdminCategories()]);
+          return { stores, categories };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
       },
       {
         fulfilled: (state, action) => {
-          state.stores = action.payload.stores;
-          state.categories = action.payload.categories;
+          state.stores = storeSummaryPageSerializer(action.payload.stores).items;
+          state.categories = categoryListSerializer(action.payload.categories);
         },
       },
     ),

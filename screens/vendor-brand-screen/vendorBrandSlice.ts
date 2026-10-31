@@ -7,7 +7,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchCuisines, fetchVendorProfile, updateVendorProfile } from '../../networks/food/vendor/profile';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { brandPatch, MAX_CUISINES, type VendorBrandForm } from '../../models/food/vendorModel';
 import type { FoodCuisine, LocalFile, VendorProfile } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';

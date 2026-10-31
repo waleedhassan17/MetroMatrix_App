@@ -6,7 +6,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchCateringRequest, sendQuote } from '../../networks/foodGrowth/catering';
 import { fetchMenuItems } from '../../networks/food/vendor/menu';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { draftFromRequest, newDishKey, type QuoteDraft } from '../../models/kitchen/cateringModel';
 import type { CateringRequest, QuoteInput, VendorMenuItem } from '../../models';
 import type { ValidationErrors } from '../../models/authModel';
@@ -60,8 +60,8 @@ export const quoteBuilderSlice = createAppSlice({
     loadQuoteBuilderAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          const [request, menu] = await Promise.all([fetchCateringRequest(code).then(raw => required(cateringRequestSerializer(raw))), fetchMenuItems().then(raw => required(vendorMenuItemsSerializer(raw)))]);
-          return { request, menu: menu.filter(i => i.isActive).map(i => ({ id: i.id, name: i.name, basePrice: i.basePrice })) };
+          const [request, menu] = await Promise.all([fetchCateringRequest(code), fetchMenuItems()]);
+          return { request, menu };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -78,10 +78,14 @@ export const quoteBuilderSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const request = cateringRequestSerializer(action.payload.request);
+          const menu = vendorMenuItemsSerializer(action.payload.menu)
+            .filter(i => i.isActive)
+            .map(i => ({ id: i.id, name: i.name, basePrice: i.basePrice }));
           state.status = 'succeeded';
-          state.request = action.payload.request;
-          state.menu = action.payload.menu;
-          if (action.payload.request) state.draft = draftFromRequest(action.payload.request, Object.fromEntries(action.payload.menu.map(m => [m.id, m.basePrice])));
+          state.request = request;
+          state.menu = menu;
+          if (request) state.draft = draftFromRequest(request, Object.fromEntries(menu.map(m => [m.id, m.basePrice])));
         },
         rejected: (state, action) => {
           state.status = 'failed';

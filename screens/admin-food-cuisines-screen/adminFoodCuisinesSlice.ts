@@ -12,7 +12,7 @@ import {
   fetchAdminCuisines,
   updateCuisine,
 } from '../../networks/admin/adminFood';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { cuisineSlug } from '../../models/food/adminFoodModel';
 import type { AdminCuisine, AdminCuisineInput } from '../../models';
 import {

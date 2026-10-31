@@ -8,7 +8,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchFeeBands, fetchVendorSettings, saveFeeBands } from '../../networks/food/vendor/settings';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import { MAX_FEE_BANDS, bandsFromForm, feeBandForm, type FeeBandForm } from '../../models/food/vendorModel';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { feeBandsSerializer, vendorSettingsSerializer } from '../../serializers/food/vendorSerializer';
