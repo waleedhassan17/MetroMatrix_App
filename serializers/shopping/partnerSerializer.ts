@@ -135,6 +135,7 @@ export const partnerOrderDetailSerializer = fromResponse((raw: unknown): Partner
       lng: lng !== null && Number.isFinite(lng) ? lng : null,
       isDefault: false,
     },
+    internalNote: strOrNull(raw.internalNote),
     allowedActions: allowed,
     shipBlockedReason: moves.includes('ship') && unpaidTransfer ? 'Confirm the customer’s transfer before you ship.' : null,
   };
@@ -305,7 +306,7 @@ export const insightsSerializer = fromResponse((raw: unknown): Insights => {
   };
 });
 
-/** The store's profile; WhatsApp is one of its links, and there is no public phone. */
+/** The store's profile; WhatsApp is one of its links, the phone its own field. */
 export const storeProfileSerializer = fromResponse((raw: unknown): StoreProfile | null => {
   if (!isObject(raw)) return null;
   const id = str(raw.id);
@@ -327,6 +328,7 @@ export const storeProfileSerializer = fromResponse((raw: unknown): StoreProfile 
       tiktok: strOrNull(s.tiktok),
       website: strOrNull(s.website),
     },
+    phone: strOrNull(raw.phone),
     whatsapp: strOrNull(s.whatsapp),
   };
 });

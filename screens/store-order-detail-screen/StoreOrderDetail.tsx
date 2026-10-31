@@ -5,7 +5,8 @@
 // and tracking) → Mark delivered. Only what the server allows now is shown.
 // A transfer must be checked in the store's own account before it ships;
 // a cancellation the customer asked for is approved here, and a refund that
-// is due is recorded once sent. The customer is a call or a WhatsApp away.
+// is due is recorded once sent. The customer is a call or a WhatsApp away;
+// the note is for the store only.
 
 import React, { useCallback, useState } from 'react';
 import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
@@ -46,9 +47,11 @@ import { formatPkPhoneForDisplay, isValidPkMobile } from '../../utils/phone/phon
 import {
   loadStoreOrderAsync,
   openStoreOrderSheet,
+  saveNoteAsync,
   selectStoreOrder,
   selectStoreOrderUi,
   setCourier,
+  setInternalNote,
   setOrderRefundAmount,
   setOrderRefundReference,
   setRiderName,
@@ -295,6 +298,17 @@ const StoreOrderDetailContent: React.FC<Props> = ({ route }) => {
         ) : null}
 
         <OrderTimeline order={order} />
+
+        <TextField
+          label="Private note (only your store sees it)"
+          value={ui.note}
+          onChangeText={t => dispatch(setInternalNote(t))}
+          multiline
+          placeholder="Packed by Ali, fragile …"
+        />
+        {ui.note !== (order.internalNote ?? '') ? (
+          <Button label="Save note" variant="secondary" size="sm" onPress={() => void dispatch(saveNoteAsync({ id, note: ui.note }))} loading={ui.busy === 'note'} />
+        ) : null}
 
         {can('cancel') ? (
           <Button label="Cancel this order" variant="ghost" onPress={() => dispatch(openStoreOrderSheet('cancel'))} fullWidth />

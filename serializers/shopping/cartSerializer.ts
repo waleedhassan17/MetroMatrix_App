@@ -116,7 +116,14 @@ const STORE_ERROR: Record<string, string> = {
 
 const previewStoreSerializer = (raw: unknown): PreviewStore | null => {
   if (!isObject(raw)) return null;
-  const store = storeRefSerializer({ id: raw.storeId, slug: raw.storeSlug, name: raw.storeName });
+  const store = storeRefSerializer({
+    id: raw.storeId,
+    slug: raw.storeSlug,
+    name: raw.storeName,
+    logoUrl: raw.storeLogoUrl,
+    brandColor: raw.storeBrandColor,
+    onBrandColor: raw.storeOnBrandColor,
+  });
   if (!store) return null;
   const lines = compact(arr(raw.items).map(cartLineSerializer));
   const issues = compact(arr(raw.issues).map(issueSerializer));

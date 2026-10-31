@@ -1,9 +1,8 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Admin Shop Network (API_SHOPPING.md)
 // ═══════════════════════════════════════════════════════
-// Categories, banners, reports (a removal is by product), the order lookup,
-// featured stores. The API has no overview or store list for staff: the
-// console counts from these lists and the public catalogue.
+// The overview, categories (and their order), banners, reports (a removal
+// is by product), the order lookup, the store list and featured stores.
 
 import { API, toApiError, clean, pageParams } from '../network/network';
 import type { AdminBannerInput, ReportStatus } from '../../models/shopping';
@@ -25,6 +24,15 @@ const bannerBody = (input: AdminBannerInput) => ({
 
 /** The app's "removed" is the API's "actioned". */
 const REPORT_STATUS: Record<ReportStatus, string> = { open: 'open', dismissed: 'dismissed', removed: 'actioned' };
+
+export const fetchShopOverview = async (): Promise<unknown> => {
+  try {
+    const response = await API.GET({ URL: `${BASE}/overview` });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
 
 export const fetchAdminCategories = async (): Promise<unknown> => {
   try {
@@ -51,6 +59,16 @@ export const updateCategory = async (id: string, input: { name?: string; icon?: 
     throw toApiError(e);
   }
 };
+/** One set of siblings (the top level, or one parent's children) in a new order; the rest follow. */
+export const reorderCategories = async (parentId: string | null, ids: string[]): Promise<unknown> => {
+  try {
+    const response = await API.PUT({ URL: `${BASE}/categories/order`, data: { parentId, ids } });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+
 /** Only an unused leaf can go; anything in use is switched off instead. */
 export const deleteCategory = async (id: string): Promise<unknown> => {
   try {
@@ -131,6 +149,16 @@ export const fetchAdminOrders = async (query: { code?: string; status?: string }
 export const fetchAdminOrder = async (id: string): Promise<unknown> => {
   try {
     const response = await API.GET({ URL: `${BASE}/orders/${encodeURIComponent(id)}` });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+
+/** Every store for staff, paused and suspended too; featured first. */
+export const fetchAdminStores = async (q: string, page: number, pageSize = 20): Promise<unknown> => {
+  try {
+    const response = await API.GET({ URL: `${BASE}/stores`, params: clean({ q: q || undefined, ...pageParams(page, pageSize) }) });
     return response.data;
   } catch (e) {
     throw toApiError(e);

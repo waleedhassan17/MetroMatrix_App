@@ -278,10 +278,11 @@ describe('the store partner', () => {
     const p = partnerProductSerializer(body('partnerProduct'))!;
     expect(p).toMatchObject({ name: 'Silk festive kurta', price: 8900, salePrice: 7500, status: 'active', option1: { name: 'Size', values: ['S', 'M', 'L'] }, option2: null });
     expect(p.images).toHaveLength(1);
+    // The capture sets each size to 3; S is read after an order of 2 and a returned 1.
     expect(p.variants.map(v => [v.option1, v.stock])).toEqual([
       ['S', 2],
-      ['M', 2],
-      ['L', 1],
+      ['M', 3],
+      ['L', 3],
     ]);
     expect(partnerProductSerializer(body('productCreate'))).toMatchObject({ name: 'Capture test kurta', status: 'draft', price: 2500, salePrice: null });
     expect(error('productPublishErr')).toMatchObject({ code: 'VALIDATION_FAILED', details: { fields: { images: ['Add at least one photo before publishing.'] } } });

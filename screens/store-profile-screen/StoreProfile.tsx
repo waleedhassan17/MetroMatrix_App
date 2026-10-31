@@ -140,6 +140,14 @@ const StoreProfileContent: React.FC<Props> = () => {
         </StoreBrandScope>
       </Card>
 
+      <TextField
+        label="Phone (optional)"
+        mode="phone"
+        value={(f.phone ?? '').replace(/^\+92/, '')}
+        onChangeText={v => dispatch(setProfileField({ field: 'phone', value: v ? `+92${v}` : null }))}
+        placeholder="300 1112233"
+        helper="Customers see a Call button only if you add one."
+      />
       <TextField label="WhatsApp" mode="phone" value={(f.whatsapp ?? '').replace(/^\+92/, '')} onChangeText={v => dispatch(setProfileField({ field: 'whatsapp', value: v ? `+92${v}` : null }))} placeholder="300 1112233" />
       <TextField label="Instagram" value={f.socials.instagram ?? ''} onChangeText={v => dispatch(setSocial({ key: 'instagram', value: v }))} autoCapitalize="none" placeholder="@yourstore" />
       <TextField label="Website" value={f.socials.website ?? ''} onChangeText={v => dispatch(setSocial({ key: 'website', value: v }))} autoCapitalize="none" keyboardType="url" placeholder="yourstore.pk" />

@@ -152,6 +152,10 @@ live('live Shopping run against the local API', () => {
   let cod: PartnerOrderDetail;
   let groupCode = '';
   let storeId = '';
+  /** The store's private note on the cash order: only the store ever sees it. */
+  const NOTE = 'Gift wrap: the customer asked twice.';
+  /** The demo stock this run buys from, as it found it: put back at the end. */
+  const found = new Map<string, number>();
 
   const asCustomer = () => hold(sessions.customer);
   const asStore = () => hold(sessions.store);
@@ -163,6 +167,11 @@ live('live Shopping run against the local API', () => {
     RefreshAxiosInstance.defaults.adapter = 'fetch';
   });
   beforeEach(() => clearTokens());
+  afterAll(async () => {
+    if (!found.size) return;
+    await asStore();
+    for (const [variantId, stock] of found) await inventory.setStock(variantId, stock);
+  });
 
   it('1. a new customer signs up, verifies, completes the profile and adds an address', async () => {
     await authSignup({ name: 'Live Shopper', email: EMAIL, phone: mobile(), password: PASSWORD, portal: 'customer' });
@@ -202,20 +211,26 @@ live('live Shopping run against the local API', () => {
   });
 
   it('3. fills the bag, previews, and places a cash order', async () => {
+    await asStore();
+    for (const x of required(partnerProductSerializer(await products.fetchPartnerProduct(product.id))).variants) if (x.id) found.set(x.id, x.stock);
     await asCustomer();
     const v = inStock(product);
     const bag = cartSerializer(await cart.addToCart(v.id, 1));
     const line = bag.groups.flatMap(g => g.lines).find(l => l.variantId === v.id)!;
     expect(line.quantity).toBe(1);
+    // The store is drawn in its own colours in the bag, the plan and the order.
+    const colours = { brandColor: product.store.brandColor, onBrandColor: product.store.onBrandColor };
+    expect(bag.groups.find(g => g.store.id === storeId)!.store).toMatchObject(colours);
     // The product page says only in stock or low; the bag line says how many it can hold.
     const want = Math.min(2, line.available);
     expect(cartSerializer(await cart.updateCartLine(line.id, want)).groups.flatMap(g => g.lines).find(l => l.id === line.id)!.quantity).toBe(want);
     const input: CheckoutInput = { addressId, stores: [{ storeId, paymentMethod: 'cod', couponCode: null, note: 'Ring the bell' }] };
     const plan = checkoutPreviewSerializer(await checkout.previewCheckout(input));
     expect(plan.canPlace).toBe(true);
+    expect(plan.stores[0].store).toMatchObject(colours);
     availableCouponListSerializer(await checkout.fetchAvailableCoupons(storeId));
     const group = required(orderGroupSerializer(await checkout.placeOrder(input, `live-${run}-cod`)));
-    expect(group.orders[0]).toMatchObject({ status: 'placed', paymentStatus: 'cod_pending', note: 'Ring the bell', canCancel: true });
+    expect(group.orders[0]).toMatchObject({ status: 'placed', paymentStatus: 'cod_pending', note: 'Ring the bell', canCancel: true, store: colours });
     groupCode = group.code;
     expect(required(orderGroupSummaryPageSerializer(await orders.fetchOrders('active', 1))).items.map(g => g.code)).toContain(groupCode);
     expect(required(orderGroupSerializer(await orders.fetchOrderGroup(groupCode))).orders).toHaveLength(1);
@@ -233,6 +248,7 @@ live('live Shopping run against the local API', () => {
     expect(fresh).toHaveLength(1);
     const id = fresh[0].id;
     expect((await storeView(partnerOrders.fetchPartnerOrder(id))).allowedActions).toEqual(['confirm', 'cancel']);
+    expect((await storeView(partnerOrders.saveInternalNote(id, NOTE))).internalNote).toBe(NOTE);
     expect((await storeView(partnerOrders.confirmOrder(id))).allowedActions).toEqual(['pack', 'cancel']);
     expect((await storeView(partnerOrders.packOrder(id))).allowedActions).toEqual(['ship', 'cancel']);
     const shipped = await storeView(partnerOrders.shipOrder(id, { courier: 'own_rider', riderName: 'Ali Raza', riderPhone: mobile() }));
@@ -240,12 +256,14 @@ live('live Shopping run against the local API', () => {
     expect(shipped.allowedActions).toEqual(['deliver']);
     expect((await storeView(partnerOrders.deliverOrder(id))).allowedActions).toEqual(['cash_collected']);
     cod = await storeView(partnerOrders.markCashCollected(id));
-    expect([cod.status, cod.paymentStatus, cod.allowedActions]).toEqual(['delivered', 'cash_collected', []]);
+    expect([cod.status, cod.paymentStatus, cod.allowedActions, cod.internalNote]).toEqual(['delivered', 'cash_collected', [], NOTE]);
   });
 
   it('5. the customer reviews the item and returns one; the store approves, restocks, refunds and replies', async () => {
     await asCustomer();
-    const order = required(storeOrderResponseSerializer(await orders.fetchStoreOrder(cod.id)));
+    const raw = await orders.fetchStoreOrder(cod.id);
+    expect(JSON.stringify(raw)).not.toContain(NOTE);
+    const order = required(storeOrderResponseSerializer(raw));
     expect([order.status, order.canReview, order.canReturn]).toEqual(['delivered', true, true]);
     const item = order.items[0];
     expect(reviewSerializer(await reviews.writeReview(item.id, { rating: 5, title: null, body: 'Lovely fabric, true to size.', photos: [] }))).toMatchObject({ rating: 5 });
@@ -254,6 +272,7 @@ live('live Shopping run against the local API', () => {
     expect(required(returnPageSerializer(await returns.fetchReturns(1))).items.map(r => r.id)).toContain(ret.id);
 
     await asStore();
+    expect((await storeView(partnerOrders.saveInternalNote(cod.id, ''))).internalNote).toBeNull();
     expect(required(returnPageSerializer(await partnerReturns.fetchPartnerReturns('requested', 1))).items.map(r => r.id)).toContain(ret.id);
     const approved = required(returnSerializer(await partnerReturns.approveReturn(ret.id, 'Send it back with the tag on.')));
     expect(approved.status).toBe('approved');
@@ -297,8 +316,15 @@ live('live Shopping run against the local API', () => {
     expect(pauseStateSerializer(await store.pauseStore('Back on Monday'))).toEqual({ isPaused: true, pauseMessage: 'Back on Monday' });
     expect(pauseStateSerializer(await store.resumeStore())).toEqual({ isPaused: false, pauseMessage: null });
     const profile = required(storeProfileSerializer(await store.fetchStoreProfile()));
-    const input = { tagline: profile.tagline, about: profile.about, logoUrl: profile.logoUrl, coverUrl: profile.coverUrl, brandColor: profile.brandColor, onBrandColor: profile.onBrandColor, socials: profile.socials, whatsapp: profile.whatsapp };
+    const input = { tagline: profile.tagline, about: profile.about, logoUrl: profile.logoUrl, coverUrl: profile.coverUrl, brandColor: profile.brandColor, onBrandColor: profile.onBrandColor, socials: profile.socials, phone: profile.phone, whatsapp: profile.whatsapp };
     expect(required(storeProfileSerializer(await store.updateStoreProfile(input, profile)))).toMatchObject({ tagline: profile.tagline, brandColor: profile.brandColor });
+    // A phone customers may call: on the storefront once the store adds one, then back as it was (the demo has none).
+    const phone = mobile();
+    expect(required(storeProfileSerializer(await store.updateStoreProfile({ ...input, phone }, profile))).phone).toBe(phone);
+    await asCustomer();
+    expect(required(storeDetailSerializer(await catalog.fetchStore('lahore-loom'))).phone).toBe(phone);
+    await asStore();
+    expect(required(storeProfileSerializer(await store.updateStoreProfile(input, profile))).phone).toBe(profile.phone);
     expect(paymentAccountListSerializer(await store.fetchPaymentAccounts()).length).toBeGreaterThan(0);
 
     const col = required(collectionSerializer(await products.createCollection(`Live ${run}`)));

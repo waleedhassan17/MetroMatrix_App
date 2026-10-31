@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════
 // The order, the actions the server allows on it now, and the sheets that
 // collect what an action needs (courier + tracking or the rider, a reason,
-// the refund sent).
+// the refund sent), and the store's private note.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
@@ -18,6 +18,7 @@ import {
   packOrder,
   recordOrderRefund,
   rejectPayment,
+  saveInternalNote,
   shipOrder,
   type ShipInput,
 } from '../../networks/shopping/partner/partnerOrders';
@@ -36,7 +37,7 @@ export type StoreOrderSheet = 'ship' | 'cancel' | 'reject_payment' | null;
 
 export interface StoreOrderDetailSliceState {
   byId: Record<string, StoreOrderEntry>;
-  busy: PartnerOrderAction | null;
+  busy: PartnerOrderAction | 'note' | null;
   actionError: ServerError;
   sheet: StoreOrderSheet;
   courier: CourierKey | null;
@@ -47,6 +48,8 @@ export interface StoreOrderDetailSliceState {
   reason: string;
   refundAmount: string;
   refundReference: string;
+  /** The private note being written (only the store sees it). */
+  note: string;
 }
 
 const EMPTY: StoreOrderEntry = { order: null, status: 'idle', error: NO_ERROR };
@@ -63,6 +66,7 @@ const initialState: StoreOrderDetailSliceState = {
   reason: '',
   refundAmount: '',
   refundReference: '',
+  note: '',
 };
 
 export type StoreOrderActionInput =
@@ -126,6 +130,9 @@ export const storeOrderDetailSlice = createAppSlice({
     setOrderRefundReference: create.reducer((state, action: PayloadAction<string>) => {
       state.refundReference = action.payload.toUpperCase().slice(0, 80);
     }),
+    setInternalNote: create.reducer((state, action: PayloadAction<string>) => {
+      state.note = action.payload.slice(0, 500);
+    }),
     loadStoreOrderAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
@@ -148,6 +155,7 @@ export const storeOrderDetailSlice = createAppSlice({
           if (first) {
             state.courier = payload.shipment?.courier ?? state.courier;
             state.refundAmount = String(payload.total);
+            state.note = payload.internalNote ?? '';
           }
         },
         rejected: (state, action) => {
@@ -185,6 +193,32 @@ export const storeOrderDetailSlice = createAppSlice({
         },
       },
     ),
+    saveNoteAsync: create.asyncThunk(
+      async ({ id, note }: { id: string; note: string }, { rejectWithValue }) => {
+        try {
+          return await saveInternalNote(id, note);
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        pending: state => {
+          state.busy = 'note';
+          state.actionError = NO_ERROR;
+        },
+        fulfilled: (state, action) => {
+          const payload = partnerOrderDetailSerializer(action.payload);
+          state.busy = null;
+          if (!payload) return;
+          state.byId[action.meta.arg.id] = { order: payload, status: 'succeeded', error: NO_ERROR };
+          state.note = payload.internalNote ?? '';
+        },
+        rejected: (state, action) => {
+          state.busy = null;
+          state.actionError = readRejection(action, "We couldn't save the note.");
+        },
+      },
+    ),
   }),
   selectors: {
     selectStoreOrder: (state, id: string): StoreOrderEntry => state.byId[id] ?? EMPTY,
@@ -201,7 +235,9 @@ export const {
   setStoreOrderReason,
   setOrderRefundAmount,
   setOrderRefundReference,
+  setInternalNote,
   loadStoreOrderAsync,
   storeOrderActionAsync,
+  saveNoteAsync,
 } = storeOrderDetailSlice.actions;
 export const { selectStoreOrder, selectStoreOrderUi } = storeOrderDetailSlice.selectors;

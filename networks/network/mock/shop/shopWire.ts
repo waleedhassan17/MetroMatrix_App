@@ -84,11 +84,24 @@ const socialsOf = (s: MockStore) => Object.fromEntries(Object.entries({ ...s.soc
 
 const deliveryCities = (s: MockStore) => (s.settings.nationwide ? [] : s.settings.deliveryCities);
 
+/** The store on a customer's order: its look, and the contact it chose to show. */
+const storeBrief = (s: MockStore) => ({
+  id: s.id,
+  slug: s.slug,
+  name: s.name,
+  logoUrl: s.logoUrl,
+  brandColor: s.brandColor,
+  onBrandColor: s.onBrandColor,
+  phone: s.phone,
+  whatsapp: s.whatsapp,
+});
+
 /** GET /shop/stores/:slug: never account numbers. */
 export const storePage = (shop: Shop, s: MockStore) => ({
   ...storeCard(shop, s),
   about: s.about,
   socials: socialsOf(s),
+  phone: s.phone,
   collections: shop.collections
     .filter(c => c.storeId === s.id)
     .sort((a, b) => a.position - b.position)
@@ -147,6 +160,8 @@ export const productPage = (shop: Shop, p: MockProduct, userId: string | null) =
       logoUrl: store.logoUrl,
       brandColor: store.brandColor,
       onBrandColor: store.onBrandColor,
+      phone: store.phone,
+      whatsapp: store.whatsapp,
       ...ratingOf(shop.reviews.filter(r => r.storeId === store.id)),
       returnWindowDays: store.settings.returnWindowDays,
       codEnabled: store.settings.codEnabled,
@@ -240,7 +255,7 @@ export const cartWire = (shop: Shop, userId: string, adjusted: Record<string, un
     const shippingFee = subtotal ? shippingFor(store, subtotal) : 0;
     const over = store.settings.freeShippingOver;
     return {
-      store: { id: store.id, slug: store.slug, name: store.name, logoUrl: store.logoUrl },
+      store: { id: store.id, slug: store.slug, name: store.name, logoUrl: store.logoUrl, brandColor: store.brandColor, onBrandColor: store.onBrandColor },
       isAvailable: !store.isPaused,
       warnings: store.isPaused ? [{ code: 'STORE_UNAVAILABLE', message: store.pauseMessage || `${store.name} is taking a short break.` }] : [],
       items: states.map(lineWire),
@@ -323,6 +338,9 @@ export const planFor = (db: MockDb, userId: string, city: string, choices: Store
         storeId: store.id,
         storeSlug: store.slug,
         storeName: store.name,
+        storeLogoUrl: store.logoUrl,
+        storeBrandColor: store.brandColor,
+        storeOnBrandColor: store.onBrandColor,
         paymentMethod: method,
         couponCode: coupon?.code ?? null,
         items: states.map(s => ({
@@ -488,7 +506,7 @@ export const storeOrderWire = (db: MockDb, o: MockOrder, view: 'customer' | 'gro
     const transferOpen = o.paymentMethod === 'transfer' && (o.paymentStatus === 'awaiting_transfer' || o.paymentStatus === 'proof_rejected') && o.status !== 'cancelled';
     return {
       ...common,
-      store: { id: store.id, slug: store.slug, name: store.name, logoUrl: store.logoUrl },
+      store: storeBrief(store),
       can: {
         cancel: o.status === 'placed',
         requestCancel: o.status === 'confirmed' || o.status === 'packed',
@@ -504,6 +522,7 @@ export const storeOrderWire = (db: MockDb, o: MockOrder, view: 'customer' | 'gro
   const moveTo = STORE_MOVES[apiStatus(o)] ?? [];
   return {
     ...common,
+    internalNote: o.internalNote,
     customer: {
       name: g?.address.fullName ?? customer?.name ?? 'Customer',
       phone: g?.address.phone ?? customer?.phone ?? '',
@@ -542,7 +561,7 @@ export const groupRowWire = (db: MockDb, g: MockGroup) => {
       return {
         id: o.id,
         code: o.code,
-        store: { id: s.id, slug: s.slug, name: s.name, logoUrl: s.logoUrl },
+        store: storeBrief(s),
         status: apiStatus(o),
         paymentMethod: o.paymentMethod,
         paymentStatus: apiPaymentStatus(o),
@@ -713,6 +732,7 @@ export const storeProfileWire = (shop: Shop, s: MockStore) => ({
   brandColor: s.brandColor,
   onBrandColor: s.onBrandColor,
   socials: socialsOf(s),
+  phone: s.phone,
   ...ratingOf(shop.reviews.filter(r => r.storeId === s.id)),
   isFeatured: s.isFeatured,
   isPaused: s.isPaused,

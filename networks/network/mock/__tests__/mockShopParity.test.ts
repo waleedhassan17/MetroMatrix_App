@@ -151,6 +151,8 @@ describe('the dummy Shopping API speaks the real API (store partner)', () => {
     out.push(...compare('insights', await call('get', '/shop/partner/insights?range=30d')));
     out.push(...compare('storeProfile', await call('get', '/shop/partner/store')));
     out.push(...compare('storeProfileUpdate', await call('patch', '/shop/partner/store', { tagline: 'Hand-finished lawn' })));
+    out.push(...compare('storeProfilePhone', await call('patch', '/shop/partner/store', { phone: '0300 0000000' })));
+    out.push(...compare('storeProfilePhoneCleared', await call('patch', '/shop/partner/store', { phone: null })));
     out.push(...compare('storeSettings', await call('get', '/shop/partner/store/settings')));
     out.push(...compare('storeSettingsUpdate', await call('patch', '/shop/partner/store/settings', { returnWindowDays: 7 })));
     out.push(...compare('paymentAccounts', await call('get', '/shop/partner/store/payment-accounts')));
@@ -202,6 +204,7 @@ describe('the dummy Shopping API speaks the real API (store partner)', () => {
     // A: cash, from placed to cash collected.
     out.push(...compare('partnerOrders', await call('get', '/shop/partner/orders?status=placed&page=1&pageSize=3')));
     out.push(...compare('partnerOrder', await call('get', `/shop/partner/orders/${a}`)));
+    out.push(...compare('partnerNote', await call('patch', `/shop/partner/orders/${a}/note`, { note: 'Packed by the parity run.' })));
     out.push(...compare('partnerConfirm', await call('post', `/shop/partner/orders/${a}/confirm`)));
     out.push(...compare('partnerPack', await call('post', `/shop/partner/orders/${a}/pack`)));
     out.push(...compare('partnerShip', await call('post', `/shop/partner/orders/${a}/ship`, { courierName: 'TCS', trackingRef: 'TCS-77120934' })));

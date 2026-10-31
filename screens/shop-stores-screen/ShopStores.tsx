@@ -8,7 +8,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { useDebouncedValue, usePagedList } from '../../hooks/usePagedList';
-import { fetchStores } from '../../networks/shopping/catalog';
+import { fetchAdminStores } from '../../networks/admin/adminShop';
 import { useStyles, type Theme } from '../../theme/index';
 import { Card, EmptyState, InlineNotice, ScreenShell, SkeletonLines, StoreMark, ToggleRow } from '../../Custom-Components/index';
 import { SearchField } from '../../Components/shopping/ShopParts';
@@ -32,8 +32,8 @@ const ShopStores: React.FC<Props> = () => {
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectShopStores);
   const q = useDebouncedValue(s.query.trim());
-  // The stores shoppers can see (the API has no staff store list); featuring one leads the Shopping home with it.
-  const list = usePagedList((page, sz) => fetchStores({ q: q || undefined }, page, sz), storeSummaryPageSerializer, `admin-stores|${q}`);
+  // Every store, paused and suspended too; featured first.
+  const list = usePagedList((page, sz) => fetchAdminStores(q, page, sz), storeSummaryPageSerializer, `admin-stores|${q}`);
 
   const toggle = async (id: string, featured: boolean) => {
     const r = await dispatch(setFeaturedAsync({ id, featured }));

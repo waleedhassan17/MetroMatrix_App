@@ -2,8 +2,7 @@
 // The stores and categories come along to name what each banner leads to.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { fetchAdminBanners, fetchAdminCategories, updateBanner } from '../../networks/admin/adminShop';
-import { fetchStores } from '../../networks/shopping/catalog';
+import { fetchAdminBanners, fetchAdminCategories, fetchAdminStores, updateBanner } from '../../networks/admin/adminShop';
 import { toRejectedValue } from '../../networks/network/network';
 import type { AdminBanner } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -20,7 +19,7 @@ export interface ShopBannersSliceState {
 const initialState: ShopBannersSliceState = { banners: [], status: 'idle', busy: false, error: NO_ERROR };
 
 const loadAll = async () => {
-  const [banners, stores, categories] = await Promise.all([fetchAdminBanners(), fetchStores({}, 1, 100), fetchAdminCategories()]);
+  const [banners, stores, categories] = await Promise.all([fetchAdminBanners(), fetchAdminStores('', 1, 100), fetchAdminCategories()]);
   return { banners, stores, categories };
 };
 

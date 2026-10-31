@@ -8,18 +8,16 @@ import { bannerSerializer } from './catalogSerializer';
 import { count, iso, isoOrNull, compact, money, paged } from './common';
 import { storeOrderSerializer } from './orderSerializer';
 
-const totalOf = (page: unknown) => (isObject(page) ? count(page.total) : 0);
-
-/** The console's four numbers, each a list's total (the API has no overview for staff). */
-export const shopOverviewSerializer = (parts: { stores: unknown; products: unknown; orders: unknown; reports: unknown }): ShopOverview => {
-  const raw = bodiesOf(isObject(parts) ? parts : { stores: null, products: null, orders: null, reports: null });
+/** GET /admin/shop/overview. */
+export const shopOverviewSerializer = fromResponse((raw: unknown): ShopOverview => {
+  const r = isObject(raw) ? raw : {};
   return {
-    stores: totalOf(raw.stores),
-    activeProducts: totalOf(raw.products),
-    openReports: totalOf(raw.reports),
-    orders: totalOf(raw.orders),
+    stores: count(r.stores),
+    activeProducts: count(r.activeProducts),
+    openReports: count(r.openReports),
+    ordersToday: count(r.ordersToday),
   };
-};
+});
 
 /** A banner with its schedule; the stores and categories name its target. */
 export const adminBannerSerializer = fromResponse(

@@ -127,9 +127,9 @@ export const storeDetailSerializer = fromResponse((raw: unknown): StoreDetail | 
     ...summary,
     about: str(raw.about),
     socials,
-    // The storefront has no public phone (StoreSocials has none): the store is reached on WhatsApp.
-    phone: null,
-    whatsapp: strOrNull(s.whatsapp),
+    // The store's own number (shown only once it sets one); the product page's store block carries both flat.
+    phone: strOrNull(raw.phone),
+    whatsapp: strOrNull(raw.whatsapp) ?? strOrNull(s.whatsapp),
     pauseMessage: strOrNull(raw.pauseMessage),
     // The store page nests them; the product page's store carries them flat.
     policies: policiesSerializer(isObject(raw.policies) ? raw.policies : raw),

@@ -23,6 +23,7 @@ const profileBody = (input: StoreProfileInput, before: Pick<StoreProfileInput, '
   socials: Object.fromEntries(
     Object.entries({ ...input.socials, whatsapp: input.whatsapp }).filter((e): e is [string, string] => !!e[1]?.trim()),
   ),
+  phone: input.phone?.trim() || null,
 });
 
 /** Nationwide is no city list; pausing is a setting too (the pause message only while paused). */

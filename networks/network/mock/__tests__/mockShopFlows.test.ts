@@ -3,9 +3,9 @@
 // payment before shipping, one review per item, returns and moderation.
 
 import { fetchAddresses } from '../../../addresses/addresses';
-import { createBanner, fetchAdminBanners, fetchAdminCategories, fetchAdminOrder, fetchAdminOrders, fetchReports, removeProduct, updateCategory } from '../../../admin/adminShop';
+import { createBanner, fetchAdminBanners, fetchAdminCategories, fetchAdminOrder, fetchAdminOrders, fetchReports, fetchShopOverview, removeProduct, reorderCategories } from '../../../admin/adminShop';
 import { addToCart, fetchCart, updateCartLine } from '../../../shopping/cart';
-import { fetchProduct, fetchProducts, fetchStores } from '../../../shopping/catalog';
+import { fetchProduct } from '../../../shopping/catalog';
 import { placeOrder, previewCheckout } from '../../../shopping/checkout';
 import { cancelOrder, fetchOrderGroup, submitPaymentProof } from '../../../shopping/orders';
 import { requestReturn } from '../../../shopping/returns';
@@ -327,19 +327,20 @@ describe('admin: moderation', () => {
     expect(await lookup('MM-NOPE99')).toBeNull();
   });
 
-  it('counts the overview from the lists the API has', async () => {
+  it('counts the overview: visible stores and products, open reports, orders placed today', async () => {
+    const { input } = await fillBag();
+    await placeOrder(input, 'key-overview');
     await signInAdmin();
-    const [stores, products, orders, reports] = await Promise.all([fetchStores({}, 1, 1), fetchProducts({}, 1, 1), fetchAdminOrders({}, 1, 1), fetchReports('open', 1, 1)]);
     const { shop } = await getDb();
-    expect(shopOverviewSerializer({ stores, products, orders, reports })).toEqual({
+    expect(shopOverviewSerializer(await fetchShopOverview())).toEqual({
       stores: shop.stores.filter(st => !st.isPaused).length,
       activeProducts: shop.products.filter(p => isListed(p) && !storeById(shop, p.storeId)?.isPaused).length,
-      orders: shop.orders.length,
+      ordersToday: 2,
       openReports: 1,
     });
   });
 
-  it('points a banner at a store by its id, and orders categories by sort', async () => {
+  it('points a banner at a store by its id, and puts a category first', async () => {
     await signInAdmin();
     await createBanner({
       imageUrl: 'https://img/winter.png',
@@ -356,8 +357,7 @@ describe('admin: moderation', () => {
 
     const tree = categoryListSerializer(await fetchAdminCategories());
     const [a, b] = tree;
-    await updateCategory(b.id, { sort: 0 });
-    await updateCategory(a.id, { sort: 1 });
-    expect(categoryListSerializer(await fetchAdminCategories()).slice(0, 2).map(c => c.id)).toEqual([b.id, a.id]);
+    const moved = categoryListSerializer(await reorderCategories(null, [b.id]));
+    expect(moved.slice(0, 2).map(c => c.id)).toEqual([b.id, a.id]);
   });
 });

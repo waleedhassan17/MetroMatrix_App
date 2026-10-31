@@ -32,7 +32,7 @@ const ShopOverview: React.FC<Props> = ({ navigation }) => {
   const stats: AdminStat[] = [
     { key: 'stores', icon: 'storefront-outline', tint: 'violet', value: o?.stores ?? null, label: 'Stores', hint: 'Approved on Shopping', onPress: () => navigation.navigate('ShopStores') },
     { key: 'products', icon: 'pricetags-outline', tint: 'blue', value: o?.activeProducts ?? null, label: 'Live products', hint: 'Shoppers can buy now' },
-    { key: 'orders', icon: 'receipt-outline', tint: 'accent', value: o?.orders ?? null, label: 'Orders', hint: 'Every Shopping order', onPress: () => navigation.navigate('OrderLookup') },
+    { key: 'orders', icon: 'receipt-outline', tint: 'accent', value: o?.ordersToday ?? null, label: 'Orders today', hint: 'Since midnight', onPress: () => navigation.navigate('OrderLookup') },
     { key: 'reports', icon: 'flag-outline', tint: 'amber', value: o?.openReports ?? null, label: 'Open reports', hint: o ? (o.openReports ? 'Waiting for a decision' : 'Nothing waiting') : null, onPress: () => navigation.navigate('ShopReports') },
   ];
 

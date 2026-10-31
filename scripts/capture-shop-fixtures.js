@@ -9,9 +9,12 @@
 // moves orders at Lahore Loom (one COD order all the way to a refunded
 // return, one transfer order through proof, rejection, confirmation and a
 // refund, two cancellations), and adds and removes a payment account, a
-// collection, a product and a coupon there. Re-seed afterwards if you need the
-// demo as it was. Staff routes (/admin/shop) are not captured: they need a
-// staff sign-in with an authenticator.
+// collection, a product and a coupon there (delete the shop.capture.* customers
+// to clear them). It leaves the demo store as it found it: the product it buys
+// is restocked for the run and its counts put back at the end (even when the
+// run fails), the store's colours go back after the contrast check, and the
+// store replies only to the run's own review. Staff routes (/admin/shop) are
+// not captured: they need a staff sign-in with an authenticator.
 //
 // Credentials come from the backend's git-ignored .env (SEED_DEMO_PASSWORD)
 // and are never printed. The output is scrubbed (tokens, passwords, emails,
@@ -36,6 +39,11 @@ const env = Object.fromEntries(
 );
 const DEMO = env.SEED_DEMO_PASSWORD;
 const out = {};
+/** Changes to the demo store itself, undone at the end of the run. */
+const undo = [];
+const putBack = async () => {
+  for (const f of undo.splice(0).reverse()) await f();
+};
 let keyN = 0;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const key = () => `capture-${Date.now()}-${keyN++}`;
@@ -129,6 +137,18 @@ const trim = v => {
   await get('productsSorted', '/shop/products?sort=price_asc&inStock=true&pageSize=3');
   await get('suggest', '/shop/products/suggest?q=kur');
   const productId = products.items[0].id;
+  // Earlier runs may have sold this product out: the store sets each size to 3 (the low-stock line, and just
+  // enough for the orders below: A takes 2, then C and D 1 each, C cancelled first), and its counts go back at
+  // the end.
+  const found = (await call('GET', `/shop/partner/products/${productId}`, { token: partner })).body.data.variants;
+  const setStock = async (id, setTo) => {
+    const r = await call('PATCH', `/shop/partner/inventory/${id}`, { token: partner, body: { setTo } });
+    if (r.status !== 200) throw new Error(`stock of ${id}: ${r.status} ${JSON.stringify(r.body).slice(0, 200)}`);
+  };
+  undo.push(async () => {
+    for (const v of found) await setStock(v.id, v.stock);
+  });
+  for (const v of found) await setStock(v.id, 3);
   const product = await get('product', `/shop/products/${productId}`, customer);
   await get('productSignedOut', `/shop/products/${productId}`);
   await get('related', `/shop/products/${productId}/related`);
@@ -195,6 +215,7 @@ const trim = v => {
   await get('partnerOrders', '/shop/partner/orders?status=placed&page=1&pageSize=3', partner);
   await get('partnerOrdersProof', '/shop/partner/orders?paymentStatus=awaiting_transfer&pageSize=3', partner);
   await get('partnerOrder', `/shop/partner/orders/${a1.id}`, partner);
+  await patch('partnerNote', `/shop/partner/orders/${a1.id}/note`, partner, { note: 'Packed by the capture run.' });
   await post('partnerConfirm', `/shop/partner/orders/${a1.id}/confirm`, partner);
   await post('partnerPack', `/shop/partner/orders/${a1.id}/pack`, partner);
   await post('partnerShip', `/shop/partner/orders/${a1.id}/ship`, partner, { courierName: 'TCS', trackingRef: 'TCS-77120934' });
@@ -202,7 +223,7 @@ const trim = v => {
   await post('partnerCashCollected', `/shop/partner/orders/${a1.id}/cash-collected`, partner);
   const delivered = await get('storeOrderDelivered', `/shop/store-orders/${a1.id}`, customer);
   const item = delivered.items[0];
-  await post('review', `/shop/order-items/${item.id}/review`, customer, { rating: 5, text: 'Lovely fabric, true to size.' });
+  const mine = await post('review', `/shop/order-items/${item.id}/review`, customer, { rating: 5, text: 'Lovely fabric, true to size.' });
   await post('reviewAgainErr', `/shop/order-items/${item.id}/review`, customer, { rating: 4 });
   const ret = await post('returnRequest', `/shop/store-orders/${a1.id}/returns`, customer, { items: [{ orderItemId: item.id, quantity: 1 }], reason: 'size_issue', details: 'Too tight across the shoulders.' });
   await get('returns', '/shop/returns?page=1&pageSize=3', customer);
@@ -227,7 +248,13 @@ const trim = v => {
   await get('insights', '/shop/partner/insights?range=30d', partner);
   const profile = await get('storeProfile', '/shop/partner/store', partner);
   await patch('storeProfileUpdate', '/shop/partner/store', partner, { tagline: profile.tagline });
+  // A phone customers may call: set, then cleared again (the demo store shows none).
+  await patch('storeProfilePhone', '/shop/partner/store', partner, { phone: '0300 0000000' });
+  await patch('storeProfilePhoneCleared', '/shop/partner/store', partner, { phone: null });
   await patch('storeProfileContrastErr', '/shop/partner/store', partner, { brandColor: '#9CA3AF' });
+  // The store's own colours again.
+  const colours = await call('PATCH', '/shop/partner/store', { token: partner, body: { brandColor: profile.brandColor, onBrandColor: profile.onBrandColor } });
+  if (colours.status !== 200) throw new Error(`colours: ${colours.status} ${JSON.stringify(colours.body).slice(0, 200)}`);
   const settings = await get('storeSettings', '/shop/partner/store/settings', partner);
   await patch('storeSettingsUpdate', '/shop/partner/store/settings', partner, { returnWindowDays: settings.returnWindowDays });
   await get('paymentAccounts', '/shop/partner/store/payment-accounts', partner);
@@ -281,14 +308,17 @@ const trim = v => {
     await patch('couponUpdate', `/shop/partner/coupons/${coupon.id}`, partner, { value: 15 });
     await post('couponDeactivate', `/shop/partner/coupons/${coupon.id}/deactivate`, partner);
   }
-  const reviews = await get('partnerReviews', '/shop/partner/reviews?unreplied=true&page=1&pageSize=3', partner);
-  if (reviews.items.length) await post('reviewReply', `/shop/partner/reviews/${reviews.items[0].id}/reply`, partner, { text: 'Thank you for shopping with us!' });
+  await get('partnerReviews', '/shop/partner/reviews?unreplied=true&page=1&pageSize=3', partner);
+  // On the run's own review: a reply can't be taken back.
+  if (mine) await post('reviewReply', `/shop/partner/reviews/${mine.id}/reply`, partner, { text: 'Thank you for shopping with us!' });
+  await putBack();
 
   const doc = scrub(trim(out));
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(OUT, JSON.stringify(doc, null, 2) + '\n');
   console.log(`${Object.keys(out).length} responses → ${OUT}`);
-})().catch(e => {
+})().catch(async e => {
   console.error(e);
+  await putBack().catch(err => console.error('putting the demo store back failed:', err));
   process.exit(1);
 });

@@ -66,6 +66,16 @@ const act = async (id: string, action: string, body?: object): Promise<unknown> 
   }
 };
 
+/** The store's private note on the order (blank clears it); customers never see it. */
+export const saveInternalNote = async (id: string, note: string): Promise<unknown> => {
+  try {
+    const response = await API.PATCH({ URL: `${BASE}/${encodeURIComponent(id)}/note`, data: { note: note.trim() || null } });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+
 export const confirmOrder = (id: string): Promise<unknown> => act(id, 'confirm');
 export const packOrder = (id: string): Promise<unknown> => act(id, 'pack');
 export const shipOrder = (id: string, input: ShipInput): Promise<unknown> => act(id, 'ship', shipBody(input));

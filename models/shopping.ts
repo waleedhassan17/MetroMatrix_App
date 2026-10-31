@@ -595,6 +595,8 @@ export type PartnerOrderAction =
 export interface PartnerOrderDetail extends StoreOrder {
   customer: { name: string; phone: string };
   address: Address;
+  /** The store's own note on the order; customers never see it. */
+  internalNote: string | null;
   allowedActions: PartnerOrderAction[];
   /** Why ship is not offered, when it isn't ("Confirm the transfer first"). */
   shipBlockedReason: string | null;
@@ -719,6 +721,8 @@ export interface StoreProfile {
   brandColor: string;
   onBrandColor: string;
   socials: StoreSocials;
+  /** A number customers may call; shown only once the store sets one. */
+  phone: string | null;
   whatsapp: string | null;
 }
 
@@ -740,12 +744,12 @@ export interface StoreSettings {
 
 
 // ─── Admin ────────────────────────────────────────────
-/** Counted from the lists the API has: visible stores, live products, every Shopping order, open reports. */
+/** GET /admin/shop/overview: stores and products customers can see, open reports, store orders placed today. */
 export interface ShopOverview {
   stores: number;
   activeProducts: number;
   openReports: number;
-  orders: number;
+  ordersToday: number;
 }
 
 export interface AdminBanner extends Banner {

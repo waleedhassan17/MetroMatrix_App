@@ -31,6 +31,7 @@ const toForm = (p: StoreProfile): StoreProfileInput => ({
   brandColor: p.brandColor,
   onBrandColor: p.onBrandColor,
   socials: p.socials,
+  phone: p.phone,
   whatsapp: p.whatsapp,
 });
 

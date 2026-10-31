@@ -78,6 +78,7 @@ import {
 } from './shopWire';
 import { COURIERS } from '../../../../models/shopping/orderStatusModel';
 import { onBrandFor as onBrandColorFor } from '../../../../models/shopping/storeModel';
+import { isValidPkPhone, normalizePkPhone } from '../../../../utils/phone/phone';
 import type { ReturnReason } from '../../../../models/shopping';
 
 export interface ShopCtx {
@@ -151,7 +152,8 @@ const ensureStore = (db: MockDb, user: MockUser, business: MockBusiness | null):
     onBrandColor: '#FFFFFF',
     city: business.city,
     socials: { instagram: null, facebook: null, tiktok: null, website: null },
-    phone: business.phone,
+    // A store shows a phone only once it sets one (never the business's own).
+    phone: null,
     whatsapp: business.phone,
     isFeatured: false,
     isPaused: false,
@@ -874,6 +876,10 @@ export function registerShopRoutes(kit: ShopKit) {
       store.brandColor = String(b.brandColor).toUpperCase();
       store.onBrandColor = onBrandFor(store.brandColor);
     }
+    if (b.phone !== undefined) {
+      if (b.phone !== null && !isValidPkPhone(String(b.phone))) throw bad('Enter a valid Pakistani phone number.', { phone: 'Enter a valid Pakistani phone number.' });
+      store.phone = b.phone === null ? null : normalizePkPhone(String(b.phone)) ?? null;
+    }
     if (b.socials !== undefined) {
       const given: Record<string, unknown> = b.socials ?? {};
       store.socials = Object.fromEntries(SOCIAL_KEYS.map(k => [k, given[k] ? String(given[k]) : null])) as MockStore['socials'];
@@ -986,6 +992,14 @@ export function registerShopRoutes(kit: ShopKit) {
   const storeView = (ctx: ShopCtx, o: MockOrder) => storeOrderWire(ctx.db, o, 'store');
 
   route('GET', `${P}/orders/:id`, ctx => storeView(ctx, storeOrder(ctx).order));
+  route('PATCH', `${P}/orders/:id/note`, ctx => {
+    const { order } = storeOrder(ctx);
+    const note = ctx.body.note;
+    if (note !== null && typeof note !== 'string') throw bad('note must be a string or null', { note: 'note must be a string or null' });
+    if (typeof note === 'string' && note.trim().length > 500) throw bad('note must be shorter than or equal to 500 characters', { note: 'At most 500 characters' });
+    order.internalNote = typeof note === 'string' ? note.trim() || null : null;
+    return storeView(ctx, order);
+  });
   route('POST', `${P}/orders/:id/confirm`, ctx => {
     const { store, order } = storeOrder(ctx);
     storeMove(order, 'confirmed');
@@ -1505,9 +1519,35 @@ export function registerShopRoutes(kit: ShopKit) {
   // store list: the console counts from these lists and the catalogue.
   const A = '/admin/shop';
 
+  route('GET', `${A}/overview`, ctx => {
+    requireAdmin(ctx);
+    const shop = ctx.db.shop;
+    const pkt = (iso: string | number) => new Date(new Date(iso).getTime() + 5 * HOUR).toISOString().slice(0, 10);
+    const visible = shop.stores.filter(s => !s.isPaused);
+    return {
+      stores: visible.length,
+      activeProducts: shop.products.filter(p => isListed(p) && visible.some(s => s.id === p.storeId)).length,
+      openReports: shop.reports.filter(r => r.status === 'open').length,
+      ordersToday: shop.orders.filter(o => pkt(o.createdAt) === pkt(ctx.now)).length,
+    };
+  });
+
   route('GET', `${A}/categories`, ctx => {
     requireAdmin(ctx);
     return adminCategoryTree(ctx.db.shop);
+  });
+  route('PUT', `${A}/categories/order`, ctx => {
+    requireAdmin(ctx);
+    const shop = ctx.db.shop;
+    const ids: string[] = Array.isArray(ctx.body.ids) ? ctx.body.ids.map(String) : [];
+    if (!ids.length) throw bad('ids must contain at least 1 elements', { ids: 'ids must contain at least 1 elements' });
+    if (new Set(ids).size !== ids.length) throw bad('Each category may appear once.', { ids: 'Each category may appear once.' });
+    const parentId = ctx.body.parentId ?? null;
+    const siblings = shop.categories.filter(c => c.parentId === parentId).sort((a, b) => a.position - b.position || a.name.localeCompare(b.name));
+    if (ids.some(id => !siblings.some(c => c.id === id))) throw notFound('Category');
+    const order = [...ids, ...siblings.map(c => c.id).filter(id => !ids.includes(id))];
+    order.forEach((id, i) => (shop.categories.find(c => c.id === id)!.position = i));
+    return adminCategoryTree(shop);
   });
   route('POST', `${A}/categories`, ctx => {
     requireAdmin(ctx);
@@ -1647,6 +1687,28 @@ export function registerShopRoutes(kit: ShopKit) {
     const o = ctx.db.shop.orders.find(x => x.id === decodeURIComponent(ctx.params[0]));
     if (!o) throw notFound('Order');
     return adminOrderWire(ctx.db, o);
+  });
+
+  route('GET', `${A}/stores`, ctx => {
+    requireAdmin(ctx);
+    const shop = ctx.db.shop;
+    const q = String(ctx.query.q ?? '').trim().toLowerCase();
+    const status = ctx.query.status ? String(ctx.query.status) : null;
+    if (status && !['live', 'paused', 'suspended'].includes(status)) throw bad('status must be live, paused or suspended', { status: 'Unknown status' });
+    const rows = shop.stores
+      .filter(s => !status || (status === 'paused' ? s.isPaused : status === 'live' ? !s.isPaused : false))
+      .map(s => ({ s, owner: ctx.db.users.find(u => u.id === s.ownerId) }))
+      .filter(({ s, owner }) => !q || [s.name, s.slug, s.city, owner?.email ?? ''].some(x => x.toLowerCase().includes(q)))
+      .sort((a, b) => Number(b.s.isFeatured) - Number(a.s.isFeatured) || a.s.name.localeCompare(b.s.name))
+      .map(({ s, owner }) => ({
+        ...storeCard(shop, s),
+        isPaused: s.isPaused,
+        businessStatus: 'approved',
+        ownerEmail: owner?.email ?? '',
+        createdAt: s.createdAt,
+      }))
+      .map(({ tagline: _t, coverUrl: _c, ...row }) => row);
+    return paginate(rows, ctx.query);
   });
 
   const featured = (ctx: ShopCtx, on: boolean) => {
