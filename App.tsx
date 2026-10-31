@@ -7,10 +7,10 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import * as SplashScreen from 'expo-splash-screen';
-import { store, persistor } from './src/store/store';
-import { ThemeProvider } from './src/theme';
-import AppContainer from './src/components/app-container/AppContainer';
-import ErrorBoundary from './src/components/shared/ErrorBoundary';
+import { store, persistor } from './store/store';
+import { ThemeProvider } from './theme';
+import AppContainer from './Components/app-container/AppContainer';
+import ErrorBoundary from './Components/shared/ErrorBoundary';
 
 // Keep the native splash up until AppContainer knows which navigator to
 // mount (bootstrapSession settled); the JS splash then plays over it. The app

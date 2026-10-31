@@ -1,7 +1,7 @@
 // Captures real Food Court responses (MetroMatrix-API docs/API_FOOD.md) from a
 // local backend seeded with `npm run seed:food`, as the app's fixture:
 //   BACKEND=~/MetroMatix-NestJS API=http://localhost:3000/api/v1 \
-//     node scripts/capture-food-fixtures.js src/serializers/__tests__/fixtures/food/p8.json
+//     node scripts/capture-food-fixtures.js serializers/__tests__/fixtures/food/p8.json
 // The names match the earlier per-phase captures (vendor.json, menu.json,
 // discovery.json, orders.json), so the parity tests replay this run too.
 //

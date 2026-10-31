@@ -1,5 +1,6 @@
 module.exports = {
   root: true,
+  ignorePatterns: ['node_modules/', 'dist/', 'android/', 'ios/', '.expo/', 'scripts/'],
   extends: [
     'plugin:react/recommended',
     'plugin:react-hooks/recommended',
@@ -34,7 +35,7 @@ module.exports = {
       },
       {
         selector: "Property[key.name='fontFamily'][value.type='Literal']",
-        message: 'Use a type role — src/theme/typography.ts is the one place a typeface is named.',
+        message: 'Use a type role — theme/typography.ts is the one place a typeface is named.',
       },
       {
         selector: "Literal[value=/^#[0-9A-Fa-f]{3,8}$/]",
@@ -45,7 +46,7 @@ module.exports = {
   overrides: [
     {
       // The theme DEFINES the tokens; raw values are the point there.
-      files: ['src/theme/**/*.ts', 'src/theme/**/*.tsx'],
+      files: ['theme/**/*.ts', 'theme/**/*.tsx'],
       rules: { 'no-restricted-syntax': 'off' },
     },
   ],

@@ -6,11 +6,11 @@
  * can gate CI on its own; the matching ESLint rule in .eslintrc.js gives the
  * same feedback in the editor.
  *
- * What it bans in src/screens, src/components, src/Custom-Components and
- * src/navigators:
+ * What it bans in screens, Components, Custom-Components and
+ * navigators:
  *   fontSize: 14            -> a type role          (...type.body)
  *   fontWeight: '600'       -> a type role
- *   fontFamily: 'Roboto'    -> a type role (src/theme/typography.ts)
+ *   fontFamily: 'Roboto'    -> a type role (theme/typography.ts)
  *   '#1B2A41' / rgba(...)   -> a colour token       (colors.brand)
  *   lineHeight / letterSpacing literals            -> a type role
  *   borderRadius: 12        -> radius.md
@@ -19,36 +19,36 @@
  * and rule 8 of CLAUDE.md:
  *   expo-linear-gradient    (no gradients as surfaces)
  *   emoji anywhere in UI code
- *   ActivityIndicator in src/screens (content loads with Skeleton)
+ *   ActivityIndicator in screens (content loads with Skeleton)
  *
- * Tokens are DEFINED in src/theme/**, which is outside the scanned roots.
+ * Tokens are DEFINED in theme/**, which is outside the scanned roots.
  * ALLOWED lists deliberate exceptions inside them; each needs a reason.
  */
 const fs = require('fs');
 const path = require('path');
 
-const ROOTS = ['src/screens', 'src/components', 'src/Custom-Components', 'src/navigators'];
+const ROOTS = ['screens', 'Components', 'Custom-Components', 'navigators'];
 
 const ALLOWED = new Map([
-  // ['src/path/File.tsx', 'reason this file may hold raw values'],
+  // ['path/File.tsx', 'reason this file may hold raw values'],
   [
-    'src/Custom-Components/PhotoScrim.tsx',
+    'Custom-Components/PhotoScrim.tsx',
     'the legibility scrim over service photos (both colours are theme tokens) — imagery, not a surface',
   ],
   [
-    'src/screens/Dev/DesignGallery/ShoppingStories.tsx',
+    'screens/Dev/DesignGallery/ShoppingStories.tsx',
     'demo STORE brand colours (data a store chooses, painted only through StoreBrandScope) — dev-only gallery',
   ],
   [
-    'src/Custom-Components/PageHeader.tsx',
+    'Custom-Components/PageHeader.tsx',
     "the FYP's module-page header the owner asked for on Shopping and Health (theme.header.gradient, AA-tested stops)",
   ],
   [
-    'src/Custom-Components/ServiceTabBar.tsx',
+    'Custom-Components/ServiceTabBar.tsx',
     "the FYP Health tab bar's selected-icon pill (theme.tabBar.gradient: the service's highlight → accent) — a 40×32 marker, not a surface",
   ],
   [
-    'src/screens/Onboarding/OnboardingScreen.tsx',
+    'screens/Onboarding/OnboardingScreen.tsx',
     "the onboarding preview card's header gradient, copied from the FYP app (its colours still come from the theme)",
   ],
 ]);
@@ -74,7 +74,7 @@ const RULES = [
   {
     re: /\bActivityIndicator\b/g,
     msg: 'spinner in a screen — load content with Skeleton (rule 8)',
-    roots: ['src/screens'],
+    roots: ['screens'],
   },
   { re: /fontWeight:\s*'\d00'/g, msg: 'hardcoded fontWeight — use a type role' },
   { re: /fontFamily:\s*'[^']+'/g, msg: 'hardcoded fontFamily — use a type role' },
@@ -125,7 +125,7 @@ for (const f of findings) {
   console.error(`    ${f.text.slice(0, 100)}`);
 }
 console.error(
-  '\nEvery value comes from src/theme (useTheme()). If a value genuinely belongs\n' +
+  '\nEvery value comes from theme (useTheme()). If a value genuinely belongs\n' +
     'outside the system, add the file to ALLOWED in this script with a reason.',
 );
 process.exit(1);

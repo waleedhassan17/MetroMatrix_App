@@ -1,7 +1,7 @@
 // Captures real Healthcare responses (MetroMatrix-API docs/API_HEALTH.md) from a
 // local, seeded backend as the app's serializer fixture:
 //   BACKEND=~/MetroMatix-NestJS node scripts/capture-health-fixtures.js \
-//     src/serializers/__tests__/fixtures/health/real.json
+//     serializers/__tests__/fixtures/health/real.json
 // The backend must run on :3000 with `npm run seed:health` applied; the run books,
 // moves, completes and cancels demo appointments in that (local) database. Credentials
 // come from its git-ignored Postman environment and are never printed. The
