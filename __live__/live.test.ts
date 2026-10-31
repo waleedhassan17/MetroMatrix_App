@@ -16,12 +16,8 @@
 //   k suspended mid-session → Suspended; reinstate l sign-out revokes; delete account
 //   b (in-app deep link) is run by hand on the emulator; h (rider) is BLOCKED.
 
-jest.mock('../config/env', () => ({
-  ...jest.requireActual('../config/env'),
-  API_BASE_URL: process.env.LIVE_API_URL ?? 'http://live.invalid/api/v1',
-  CONFIG_ERROR: false,
-}));
-
+// First: point network.ts at the live API before it loads.
+import './liveApiUrl';
 import { createHmac } from 'crypto';
 import { readFileSync } from 'fs';
 import { MainAxiosInstance, RefreshAxiosInstance, refreshTokens, toApiError, unwrap, required } from '../networks/network/network';

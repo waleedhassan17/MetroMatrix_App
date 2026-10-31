@@ -40,8 +40,8 @@ import {
   servicePausedReported,
   signupsPausedReported,
 } from '../store/platformConfigSlice';
+import { CONFIG_ERROR } from '../networks/network/network';
 import { ConfigErrorScreen } from './ConfigErrorScreen';
-import { CONFIG_ERROR } from '../config/env';
 import { rewriteVerifyPath } from '../navigators/linkingPaths';
 import { sessionEndedCopy } from './sessionEndedCopy';
 import { PushPrePrompt } from './PushPrePrompt';

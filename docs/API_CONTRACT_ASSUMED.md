@@ -4,7 +4,7 @@ This was first written from the Chunk 1 brief, before the API existed. The auth,
 
 If the API changes, fix the network, serializer or model named in the **Where** column; screens and slices should not need to change.
 
-Base URL: `API_BASE_URL` (`config/env.ts`), e.g. `https://<heroku-app>.herokuapp.com/api/v1`.
+Base URL: `API_URL` (`networks/network/network.ts`, from `EXPO_PUBLIC_API_URL`): the deployed `https://metromatrix-api.duckdns.org/api/v1`.
 
 **Superseded for auth:** the auth, users, media, business and approval calls are connected to the real API: their contract is `docs/AUTH_CONTRACT.md` and `docs/openapi.json` (checked by `networks/__tests__/contract.test.ts`). The tables below are kept as history.
 

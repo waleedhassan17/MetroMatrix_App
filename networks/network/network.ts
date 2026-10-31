@@ -10,7 +10,6 @@
 
 import { Platform } from 'react-native';
 import axios, { AxiosAdapter, AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import { API_BASE_URL, CONFIG_ERROR } from '../../config/env';
 import { setTokens, getAccessToken, getRefreshToken, clearTokens } from '../../utils/storage_utils/storageUtils';
 import {
   emitSessionExpired,
@@ -21,11 +20,17 @@ import {
 import type { LocalFile, SignedUpload, UploadedFile } from '../../models/auth';
 
 // ★ BACKEND BASE URL ★
-// EXPO_PUBLIC_API_URL, read by config/env.ts (the one module that reads
-// process.env), e.g. http://localhost:3000/api/v1 in .env.local. There is no
-// default: a build without it shows ConfigErrorScreen and sends nothing. On a
-// physical device use the machine's LAN address, not localhost.
-export const API_URL = API_BASE_URL;
+// The API, from the env: EXPO_PUBLIC_API_URL in .env.local (a release build
+// takes it from its eas.json profile). The deployed API is
+// https://metromatrix-api.duckdns.org/api/v1; the local one is
+// http://localhost:3000/api/v1 (on a phone, the machine's LAN address). There
+// is no default: a build without it shows ConfigErrorScreen and sends nothing.
+// Expo inlines EXPO_PUBLIC_* at build time, so this stays a static read.
+export const API_URL = process.env.EXPO_PUBLIC_API_URL?.trim() || '';
+
+/** No API URL: the app cannot work and says so (ConfigErrorScreen). */
+export const CONFIG_ERROR = !API_URL;
+
 const TIMEOUT = 30000;
 
 // Token storage lives in utils/storage_utils/storageUtils.ts; re-exported here so the domain

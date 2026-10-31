@@ -21,8 +21,7 @@
 // API's in-process one (networks/network/mock/mockRealtime.ts).
 
 import { io } from 'socket.io-client';
-import { API_BASE_URL } from '../../config/env';
-import { getAccessToken, refreshTokens } from '../../networks/network/network';
+import { API_URL, getAccessToken, refreshTokens } from '../../networks/network/network';
 import {
   REALTIME_AUTH_CODES,
   REALTIME_AUTH_EXPIRED,
@@ -275,7 +274,7 @@ export class RealtimeClient {
 const originOf = (base: string) => /^(https?:\/\/[^/]+)/i.exec(base)?.[1] ?? base;
 
 const socketIo = (): SocketLike => {
-  const s = io(`${originOf(API_BASE_URL)}${REALTIME_NAMESPACE}`, {
+  const s = io(`${originOf(API_URL)}${REALTIME_NAMESPACE}`, {
     path: REALTIME_PATH,
     transports: ['websocket'],
     autoConnect: false,

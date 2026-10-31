@@ -1,5 +1,5 @@
 // MetroMatrix — shown instead of the whole app when the build has no backend
-// URL (config/env.ts CONFIG_ERROR). Nothing is sent anywhere: the client
+// URL (networks/network/network.ts CONFIG_ERROR). Nothing is sent anywhere: the client
 // rejects every request, and there is nothing a person can do here but
 // reinstall or reach support. It also releases the native splash, which the
 // JS splash would otherwise have done.

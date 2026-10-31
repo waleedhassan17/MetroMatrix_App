@@ -5,14 +5,9 @@
 // /api/docs-json): the method and path template, every body field, and
 // every required field. Regenerate docs/openapi.json when the API changes.
 
+// First: the API URL network.ts reads when it loads (a real base URL, so no CONFIG_ERROR).
+import '../../__fixtures__/testApiUrl';
 import type { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-
-jest.mock('../../config/env', () => ({
-  ...jest.requireActual('../../config/env'),
-  API_BASE_URL: 'https://api.test/api/v1',
-  CONFIG_ERROR: false,
-}));
-
 import spec from '../../docs/openapi.json';
 import { MainAxiosInstance, RefreshAxiosInstance, refreshTokens } from '../network/network';
 import { setTokens } from '../../utils/storage_utils/storageUtils';

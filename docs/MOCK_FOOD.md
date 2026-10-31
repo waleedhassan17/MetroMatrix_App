@@ -1,6 +1,6 @@
 # Dummy Food API
 
-While `config/env.ts` has no backend URL, the Food Court routes are answered by `networks/network/mock/food/`. They follow the Food API's committed routes in MetroMatrix-API (`src/modules/food`), with the same bodies, statuses, error codes and shapes.
+In the tests, the Food Court routes are answered by `networks/network/mock/food/` (test fixtures only: every build talks to the real API). They follow the Food API's committed routes in MetroMatrix-API (`src/modules/food`), with the same bodies, statuses, error codes and shapes.
 
 `docs/API_FOOD.md` is a copy of the backend's contract (chunk4/p8). The parity tests replay real responses against the dummy API: the per-phase captures (`fixtures/food/vendor.json`, `menu.json`, `discovery.json`, `orders.json`) and the released API on its `seed:food` demo (`fixtures/food/p8.json`, made by `scripts/capture-food-fixtures.js`).
 

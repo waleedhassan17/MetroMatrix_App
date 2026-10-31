@@ -1,4 +1,4 @@
-// No backend URL here, so the client answers CONFIG_ERROR (config/env.ts).
+// No API URL here, so the client answers CONFIG_ERROR (networks/network/network.ts).
 // A test that runs networks against the dummy API installs it
 // (networks/network/mock/testing.ts); others stub axios themselves.
 

@@ -1,5 +1,6 @@
-// As in FinMatrix, every build talks to the real API: a build with no backend
-// URL is a configuration error that sends nothing, never a silent mock.
+// Every build talks to the real API: network.ts reads EXPO_PUBLIC_API_URL, and
+// a build with no URL is a configuration error that sends nothing, never a
+// silent mock.
 
 type Env = typeof import('../env');
 type Helpers = typeof import('../../networks/network/network');
@@ -36,15 +37,16 @@ afterEach(() => {
 
 describe('env modes', () => {
   it('a build without a URL is a configuration error, whatever else is set', () => {
-    expect(load({ dev: false }).env.CONFIG_ERROR).toBe(true);
+    expect(load({ dev: false }).helpers.CONFIG_ERROR).toBe(true);
     // The old dummy-API switch does nothing any more.
-    expect(load({ dev: true, mock: '1' }).env.CONFIG_ERROR).toBe(true);
+    expect(load({ dev: true, mock: '1' }).helpers.CONFIG_ERROR).toBe(true);
   });
 
   it('a build with a URL is configured and talks to it, with no adapter of its own', () => {
     for (const dev of [false, true]) {
-      const { env, helpers } = load({ dev, mock: '1', url: ' https://api.example.com/api/v1 ' });
-      expect(env).toMatchObject({ CONFIG_ERROR: false, API_BASE_URL: 'https://api.example.com/api/v1' });
+      const { helpers } = load({ dev, mock: '1', url: ' https://api.example.com/api/v1 ' });
+      expect(helpers.CONFIG_ERROR).toBe(false);
+      expect(helpers.API_URL).toBe('https://api.example.com/api/v1');
       expect(helpers.MainAxiosInstance.defaults.baseURL).toBe('https://api.example.com/api/v1');
       expect(helpers.MainAxiosInstance.defaults.adapter).not.toEqual(expect.any(Function));
     }

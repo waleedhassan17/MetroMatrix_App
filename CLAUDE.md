@@ -18,7 +18,7 @@ Copy the FYP's UX, never its code paths, Firebase setup or per-role duplicate ne
 
 ## Backend switch (one file)
 
-`config/env.ts` reads `EXPO_PUBLIC_API_URL` (`.env.local`, or the `eas.json` profile). The app always talks to the real MetroMatrix API through the one client: there is no dummy fallback in any build. With no URL the build is a configuration error: `ConfigErrorScreen` replaces the app and `api` rejects every request with `CONFIG_ERROR`. Never add a silent fallback.
+The main network file, `networks/network/network.ts`, reads `EXPO_PUBLIC_API_URL` as `API_URL` (`.env.local`, or the `eas.json` profile). The deployed API is `https://metromatrix-api.duckdns.org/api/v1` (the EC2 server; `.env.local`, `.env.example` and every `eas.json` profile name it); the local one is `http://localhost:3000/api/v1`. The app always talks to the real MetroMatrix API through the one client: there is no dummy fallback in any build. With no URL the build is a configuration error: `ConfigErrorScreen` replaces the app and `api` rejects every request with `CONFIG_ERROR`. Never add a silent fallback.
 
 The dummy API (`networks/network/mock/`) is test fixtures only: the Shopping, Health, Food and Kitchen routes with their seeds and server rules (`shop/`, `health/`, `food/` see `docs/MOCK_FOOD.md`, `kitchen/` see `docs/MOCK_KITCHEN.md`), which the parity and flow tests run the app's networks against. A test installs it with `installDummyApi()` and signs in with `signInAs()` (`mock/testing.ts`), which writes a session straight into the dummy DB. It has no auth, users, media, business, approval or platform routes: those are connected to the real API (`docs/AUTH_CONTRACT.md`, `docs/openapi.json`), and `networks/__tests__/contract.test.ts` checks every request the app sends them against `docs/openapi.json`. For a service not yet verified against the real API (Shopping, Kitchen), add the mock route with a new endpoint in the same change; Shop, Health, Food and Kitchen writes in the dummy API are all-or-nothing.
 
@@ -39,7 +39,7 @@ Expo Go runs everything except Google sign-in and push. Those need a dev build. 
 
 `android/` and `ios/` are generated (continuous native generation) and gitignored. `app.json` and its config plugins are the source of truth, so never hand-edit native folders.
 
-Set environment in `.env.local`; see `.env.example`. `config/env.ts` is the only module that reads `process.env`.
+Set environment in `.env.local`; see `.env.example`. `networks/network/network.ts` reads the API URL and `config/env.ts` the rest; nothing else reads `process.env`.
 
 ## Non-negotiable rules
 
@@ -63,7 +63,7 @@ Set environment in `.env.local`; see `.env.example`. `config/env.ts` is the only
    - Route names (`navigations-maps/Base.tsx` `ROUTES`) never change once shipped. Add new names; never rename one.
 4. **Tokens are stored only in `expo-secure-store`**, via `utils/storage_utils/storageUtils.ts` (with a `localStorage` fallback on web). `redux-persist` persists only `preferences` and `auth.hasSeenOnboarding`.
 5. **There is one main network file**, as in Consultant_Mobile: `networks/network/network.ts`, the only file in `networks/network/` besides the dummy API's test fixtures. It holds:
-   - the API URL (`API_URL`, from `config/env.ts`) and the axios instance (`MainAxiosInstance`; the refresh call has its own `RefreshAxiosInstance`, which skips the interceptors)
+   - the API URL (`API_URL`, read right here from `EXPO_PUBLIC_API_URL`; `CONFIG_ERROR` when it is missing) and the axios instance (`MainAxiosInstance`; the refresh call has its own `RefreshAxiosInstance`, which skips the interceptors)
    - the bearer interceptor, the envelope check (a 2xx body that isn't `{ success, … }` is `BAD_RESPONSE`), and the single-flight refresh queue with the session-ending rules (only `REFRESH_INVALID`, `REFRESH_REUSED`, `TOKEN_REVOKED` and `ACCOUNT_DISABLED` end a session)
    - the request functions every network file calls: `API.GET/POST/PUT/PATCH/DELETE({ URL, params, data, headers, …rest })`
    - the error codes (`ERROR_CODES`, `errorCopy`, `fieldErrors`), `extractErrorMessage`, `extractErrorCode`
@@ -102,7 +102,7 @@ The super admin can pause sign-ups, a service, AI, or put the platform in mainte
 ```
 App.tsx                      Providers only (Redux, PersistGate, gestures) + native-splash hold
 index.ts                     registerRootComponent
-config/env.ts                API_BASE_URL, GOOGLE_WEB_CLIENT_ID (the only process.env reads)
+config/env.ts                GOOGLE_WEB_CLIENT_ID, SUPPORT_EMAIL (with network.ts's API_URL, the only process.env reads)
 Components/                  AppContainer.tsx + appContainerSlice.ts (bootstrap/refresh/push), ConfigErrorScreen,
                              MaintenanceGate, OfflineGate, PushPrePrompt, sessionEndedCopy; and the feature parts:
   auth/                      AuthChrome (frame/header/tabs/badge), AuthFields, ChoiceCard, StepFlow, AuthErrorNotice, GoogleSignInButton(.web)
@@ -333,7 +333,7 @@ When a real document arrives, reconcile it in one pass:
 
 ## Testing on Expo / web
 
-- **Expo Go** (`npm start`): runs the whole app except native Google sign-in and push, against `EXPO_PUBLIC_API_URL` (a local API: `http://<LAN IP>:3000/api/v1` on a phone, `http://localhost:3000/api/v1` on web; the API's `CORS_ORIGINS` must list the web origin). Accounts come from the API's seeds (`npm run seed:superadmin`, `seed:shopping`, `seed:health`, `seed:food`, `seed:kitchen` in the backend). Video consultations open public meet.jit.si rooms in a WebView; on web they open in a new tab.
+- **Expo Go** (`npm start`): runs the whole app except native Google sign-in and push, against `EXPO_PUBLIC_API_URL` (the deployed `https://metromatrix-api.duckdns.org/api/v1`, or a local API: `http://<LAN IP>:3000/api/v1` on a phone, `http://localhost:3000/api/v1` on web; the API's `CORS_ORIGINS` must list the web origin). Accounts come from the API's seeds (`npm run seed:superadmin`, `seed:shopping`, `seed:health`, `seed:food`, `seed:kitchen` in the backend). Video consultations open public meet.jit.si rooms in a WebView; on web they open in a new tab.
 - **Web** (`npm run web`):
   - Google sign-in uses Google Identity Services and needs `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`.
   - Deep paths work, e.g. `/get-started`, `/sign-in`, `/provider/sign-in`, `/home/food`, `/shop`, `/shop/store/lawn-and-loom-7a1f3`, `/shop/product/p_l1`, `/orders/MM-24A7Q2`, `/store/orders/:id`, `/admin/shop`, `/health`, `/health/appointments`, `/health/doctor/:id`, `/health/appointment/:code`, `/shop/orders`, `/shop/bag`, `/profile/records`, `/doctor/appointments/:code`, `/admin/health`, `/vendor/orders`, `/vendor/menu`, `/vendor/menu/dish/:id`, `/vendor/today`, `/vendor/setup`, `/vendor/riders/:id`, `/rider/sign-in`, `/rider/deliveries`, `/food/vendor/:slug`, `/food/bag`, `/food/checkout`, `/food/order/:code`, `/food/saved`, `/vendor/deals`, `/vendor/orders/:id`, `/rider/deliveries/:id`, `/rider/cash`, `/food/order/:code/rate`, `/food/reviews/:id`, `/vendor/reviews`, `/vendor/insights`, `/admin/food` (+ `/vendors/:id`, `/orders/:id`, `/reviews`, `/cuisines`, `/banners`, `/kitchen/{assistant,prices,nutrition,words,calendar,hygiene,signatures,demand,lookup}`), and Chunk 5's `/vendor/kitchen` (+ `/stock`, `/recipes/:itemId`, `/purchases`, `/forecast`, `/waste`, `/settings`), `/vendor/assistant`, `/food/bachat-box`, `/food/tiffins`, `/food/my-kitchen` (+ `/recipes`), `/food/nutrition` (+ `/week`), `/s/:slug` (a kitchen's link: the public page signed out). The staff Profile tab is `/account`.
