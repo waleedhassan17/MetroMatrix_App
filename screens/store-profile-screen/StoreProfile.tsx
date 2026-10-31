@@ -12,7 +12,7 @@ import { Image } from 'expo-image';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
-import { BRAND_PRESETS, validateStoreProfile } from '../../models/shopping/storeModel';
+import { BRAND_PRESETS, onBrandFor, validateStoreProfile } from '../../models/shopping/storeModel';
 import { ServiceScope, StoreBrandScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import {
   AppText,
@@ -130,11 +130,11 @@ const StoreProfileContent: React.FC<Props> = () => {
           ))}
         </View>
         <TextField label="Or any colour (hex)" value={f.brandColor} onChangeText={v => dispatch(setProfileField({ field: 'brandColor', value: v }))} autoCapitalize="characters" autoCorrect={false} error={errors.brandColor} />
-        <StoreBrandScope brand={f.brandColor} onBrand={null}>
+        <StoreBrandScope brand={f.brandColor} onBrand={onBrandFor(f.brandColor)}>
           <View style={styles.preview}>
             <Button label="Add to bag" leftIcon="bag-add-outline" onPress={() => undefined} fullWidth />
             <AppText variant="small" tone="muted">
-              We pick the text colour on it, so your buttons always read.
+              We put white or dark text on it, whichever reads better.
             </AppText>
           </View>
         </StoreBrandScope>

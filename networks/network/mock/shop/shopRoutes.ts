@@ -77,6 +77,7 @@ import {
   storeSettingsWire,
 } from './shopWire';
 import { COURIERS } from '../../../../models/shopping/orderStatusModel';
+import { onBrandFor as onBrandColorFor } from '../../../../models/shopping/storeModel';
 import type { ReturnReason } from '../../../../models/shopping';
 
 export interface ShopCtx {
@@ -849,13 +850,14 @@ export function registerShopRoutes(kit: ShopKit) {
   });
 
   // Store profile & settings
-  /** The server picks the text colour on the brand: white where it reads, else ink. */
+  /** The server picks the text on the brand (white or ink, whichever reads better) and refuses a colour neither reads on. */
   const onBrandFor = (brand: string) => {
-    const lum = (hex: string) => {
-      const c = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
-      return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
-    };
-    return (1.05 / (lum(brand) + 0.05) >= 4.5 ? '#FFFFFF' : '#16151A');
+    const on = onBrandColorFor(brand);
+    if (!on) {
+      const message = 'That colour is too light or too mid-toned for readable text on it. Pick a darker or a brighter shade.';
+      throw bad(message, { brandColor: message });
+    }
+    return on;
   };
   const SOCIAL_KEYS = ['instagram', 'facebook', 'tiktok', 'website'] as const;
 

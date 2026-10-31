@@ -18,12 +18,24 @@ export const brandContrast = (brand: string, onBrand: string): { ratio: number; 
   return { ratio: Math.round(ratio * 10) / 10, passes: ratio >= AA_BODY };
 };
 
-/** The server picks the text colour on the brand, so any colour reads. */
+/**
+ * The text the API puts on a brand colour: white or its ink, whichever reads
+ * better, if that reaches AA (4.5:1); none means it refuses the colour.
+ */
+export const onBrandFor = (brand: string): '#FFFFFF' | '#16151A' | null => {
+  if (!HEX.test(brand)) return null;
+  const white = contrastRatio(brand, '#FFFFFF');
+  const ink = contrastRatio(brand, '#16151A');
+  const best = white >= ink ? { color: '#FFFFFF' as const, ratio: white } : { color: '#16151A' as const, ratio: ink };
+  return best.ratio >= AA_BODY ? best.color : null;
+};
+
 export const validateStoreProfile = (p: { tagline: string; about: string; brandColor: string }): ValidationErrors => {
   const errors: ValidationErrors = {};
   if (p.tagline.trim().length > 80) errors.tagline = 'Keep the tagline under 80 characters';
   if (p.about.trim().length > 1200) errors.about = 'Keep it under 1,200 characters';
   if (!HEX.test(p.brandColor)) errors.brandColor = 'Use a colour like #7A1F3D';
+  else if (!onBrandFor(p.brandColor)) errors.brandColor = 'That colour is too light or too mid-toned for readable text on it. Pick a darker or a brighter shade.';
   return errors;
 };
 

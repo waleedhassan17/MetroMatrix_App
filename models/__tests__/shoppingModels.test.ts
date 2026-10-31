@@ -16,7 +16,7 @@ import { normaliseTransactionId, validatePaymentProof } from '../shopping/paymen
 import { emptyProductForm, makeCover, movePhoto, salePreviewPercent, skuBaseFromName, syncVariants, validateProductForm } from '../shopping/productFormModel';
 import { returnDaysLeft, validateReturn } from '../shopping/returnFormModel';
 import { validateReview } from '../shopping/reviewFormModel';
-import { brandContrast, validatePaymentAccount, validateStoreSettings } from '../shopping/storeModel';
+import { brandContrast, onBrandFor, validatePaymentAccount, validateStoreSettings } from '../shopping/storeModel';
 import { buildMatrix, setAllStock, skuFor, totalStock } from '../shopping/variantMatrixModel';
 import { pushTapUrl } from '../../notifications/push';
 import { choose, initialChoice, isValueAvailable, stockNote, variantFor } from '../shopping/variantPickerModel';
@@ -193,6 +193,10 @@ describe('store settings and accounts', () => {
     expect(brandContrast('#7A1F3D', '#FFFFFF').passes).toBe(true);
     expect(brandContrast('#F5D90A', '#FFFFFF').passes).toBe(false);
     expect(brandContrast('red', '#FFFFFF').passes).toBe(false);
+    // The API's text on a brand: white or its ink, whichever reads better, or none (it refuses the colour).
+    expect(onBrandFor('#7F1D1D')).toBe('#FFFFFF');
+    expect(onBrandFor('#9CA3AF')).toBe('#16151A');
+    expect(onBrandFor('#777777')).toBeNull();
   });
 });
 

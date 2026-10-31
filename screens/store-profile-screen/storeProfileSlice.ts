@@ -96,9 +96,9 @@ export const storeProfileSlice = createAppSlice({
       },
     ),
     saveStoreProfileAsync: create.asyncThunk(
-      async (input: StoreProfileInput, { rejectWithValue }) => {
+      async (input: StoreProfileInput, { getState, rejectWithValue }) => {
         try {
-          return await updateStoreProfile(input);
+          return await updateStoreProfile(input, (getState() as { storeProfile: StoreProfileSliceState }).storeProfile.profile);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

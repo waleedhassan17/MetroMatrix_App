@@ -9,12 +9,16 @@ import { COD_NO_LIMIT } from '../../../models/shopping/storeModel';
 
 const BASE = '/shop/partner';
 
-/** The links the store set (StoreSocials keeps only those); the server picks the text colour on the brand. */
-const profileBody = (input: StoreProfileInput) => ({
+/**
+ * The links the store set (StoreSocials keeps only those); the server picks
+ * the text colour on the brand. The logo and cover go only when they changed:
+ * the API checks each one it is sent is the owner's own upload.
+ */
+const profileBody = (input: StoreProfileInput, before: Pick<StoreProfileInput, 'logoUrl' | 'coverUrl'> | null) => ({
   tagline: input.tagline.trim() || null,
   about: input.about.trim() || null,
-  logoUrl: input.logoUrl,
-  coverUrl: input.coverUrl,
+  ...(!before || input.logoUrl !== before.logoUrl ? { logoUrl: input.logoUrl } : {}),
+  ...(!before || input.coverUrl !== before.coverUrl ? { coverUrl: input.coverUrl } : {}),
   brandColor: input.brandColor,
   socials: Object.fromEntries(
     Object.entries({ ...input.socials, whatsapp: input.whatsapp }).filter((e): e is [string, string] => !!e[1]?.trim()),
@@ -60,9 +64,9 @@ export const fetchStoreProfile = async (): Promise<unknown> => {
     throw toApiError(e);
   }
 };
-export const updateStoreProfile = async (input: StoreProfileInput): Promise<unknown> => {
+export const updateStoreProfile = async (input: StoreProfileInput, before: Pick<StoreProfileInput, 'logoUrl' | 'coverUrl'> | null = null): Promise<unknown> => {
   try {
-    const response = await API.PATCH({ URL: `${BASE}/store`, data: profileBody(input) });
+    const response = await API.PATCH({ URL: `${BASE}/store`, data: profileBody(input, before) });
     return response.data;
   } catch (e) {
     throw toApiError(e);
