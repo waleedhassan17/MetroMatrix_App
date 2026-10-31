@@ -100,7 +100,7 @@ export const adminFoodCuisinesSlice = createAppSlice({
     loadAdminCuisinesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(adminCuisinesSerializer(await fetchAdminCuisines()));
+          return await fetchAdminCuisines();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -111,8 +111,9 @@ export const adminFoodCuisinesSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = adminCuisinesSerializer(action.payload);
           state.status = 'succeeded';
-          state.cuisines = action.payload;
+          state.cuisines = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -136,7 +137,7 @@ export const adminFoodCuisinesSlice = createAppSlice({
           } else if (change.kind === 'active')
             await updateCuisine(change.id, { isActive: change.isActive });
           else await deleteCuisine(change.id);
-          return required(adminCuisinesSerializer(await fetchAdminCuisines()));
+          return await fetchAdminCuisines();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -147,9 +148,10 @@ export const adminFoodCuisinesSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = adminCuisinesSerializer(action.payload);
           state.busy = false;
           state.sheet = null;
-          state.cuisines = action.payload;
+          state.cuisines = payload;
         },
         rejected: (state, action) => {
           state.busy = false;

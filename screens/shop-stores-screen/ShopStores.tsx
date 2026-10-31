@@ -5,7 +5,7 @@
 import React from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { useDebouncedValue, usePagedList } from '../../hooks/usePagedList';
 import { fetchAdminStores } from '../../networks/admin/adminShop';
@@ -28,6 +28,7 @@ const makeStyles = ({ space }: Theme) =>
 const ShopStores: React.FC<Props> = () => {
   const { back } = useBack({ name: 'ShopOverview' });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectShopStores);
   const q = useDebouncedValue(s.query.trim());
@@ -35,7 +36,8 @@ const ShopStores: React.FC<Props> = () => {
 
   const toggle = async (id: string, featured: boolean) => {
     const r = await dispatch(setFeaturedAsync({ id, featured }));
-    if (setFeaturedAsync.fulfilled.match(r)) list.setRows(rows => rows.map(x => (x.id === id ? r.payload : x)));
+    const updated = setFeaturedAsync.fulfilled.match(r) ? selectShopStores(appStore.getState()).updated : null;
+    if (updated) list.setRows(rows => rows.map(x => (x.id === id ? updated : x)));
   };
 
   return (

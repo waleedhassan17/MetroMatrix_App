@@ -22,7 +22,7 @@ export const healthOverviewSlice = createAppSlice({
     loadHealthOverviewAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(healthOverviewSerializer(await fetchHealthOverview()));
+          return await fetchHealthOverview();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -33,8 +33,9 @@ export const healthOverviewSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = healthOverviewSerializer(action.payload);
           state.status = 'succeeded';
-          state.overview = action.payload;
+          state.overview = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

@@ -23,7 +23,7 @@ export const doctorInsightsSlice = createAppSlice({
     loadInsightsAsync: create.asyncThunk(
       async (range: DoctorInsightsRange, { rejectWithValue }) => {
         try {
-          return required(insightsSerializer(await fetchInsights(range)));
+          return await fetchInsights(range);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -35,8 +35,9 @@ export const doctorInsightsSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = insightsSerializer(action.payload);
           state.status = 'succeeded';
-          state.insights = action.payload;
+          state.insights = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

@@ -24,7 +24,7 @@ export const publicStoreSlice = createAppSlice({
     loadPublicStoreAsync: create.asyncThunk(
       async (slug: string, { rejectWithValue }) => {
         try {
-          return required(vendorPageSerializer(await fetchVendorPage(slug, null)));
+          return await fetchVendorPage(slug, null);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -37,8 +37,9 @@ export const publicStoreSlice = createAppSlice({
           state.slug = action.meta.arg;
         },
         fulfilled: (state, action) => {
+          const payload = vendorPageSerializer(action.payload);
           state.status = 'succeeded';
-          state.page = action.payload;
+          state.page = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

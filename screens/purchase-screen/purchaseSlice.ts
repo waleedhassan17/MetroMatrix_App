@@ -22,7 +22,7 @@ export const purchaseSlice = createAppSlice({
     loadPurchaseAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(purchaseSerializer(await fetchPurchase(id)));
+          return await fetchPurchase(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -34,8 +34,9 @@ export const purchaseSlice = createAppSlice({
           if (state.purchase?.id !== action.meta.arg) state.purchase = null;
         },
         fulfilled: (state, action) => {
+          const payload = purchaseSerializer(action.payload);
           state.status = 'succeeded';
-          state.purchase = action.payload;
+          state.purchase = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

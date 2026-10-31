@@ -53,7 +53,7 @@ export const riderOrderSlice = createAppSlice({
     loadRiderOrderAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(riderOrderSerializer(await fetchRiderOrder(id)));
+          return await fetchRiderOrder(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -65,7 +65,11 @@ export const riderOrderSlice = createAppSlice({
           e.error = NO_ERROR;
           state.declinedId = null;
         },
-        fulfilled: (state, action) => put(state, action.payload),
+        fulfilled: (state, action) => {
+          const payload = riderOrderSerializer(action.payload);
+          if (!payload) return;
+          return put(state, payload);
+        },
         rejected: (state, action) => {
           const e = (state.byId[action.meta.arg] ??= { ...EMPTY });
           e.status = 'failed';
@@ -77,7 +81,7 @@ export const riderOrderSlice = createAppSlice({
     riderStepAsync: create.asyncThunk(
       async ({ id, step }: { id: string; step: RiderStepAction }, { rejectWithValue }) => {
         try {
-          return required(riderOrderSerializer(await riderStep(id, step)));
+          return await riderStep(id, step);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -88,8 +92,10 @@ export const riderOrderSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = riderOrderSerializer(action.payload);
           state.acting = null;
-          put(state, action.payload);
+          if (!payload) return;
+          put(state, payload);
         },
         rejected: (state, action) => {
           state.acting = null;
@@ -101,7 +107,7 @@ export const riderOrderSlice = createAppSlice({
     riderDeliveredAsync: create.asyncThunk(
       async ({ id, cash }: { id: string; cash: number | null }, { rejectWithValue }) => {
         try {
-          return required(riderOrderSerializer(await markRiderDelivered(id, cash)));
+          return await markRiderDelivered(id, cash);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -112,9 +118,11 @@ export const riderOrderSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = riderOrderSerializer(action.payload);
           state.acting = null;
           state.sheet = null;
-          put(state, action.payload);
+          if (!payload) return;
+          put(state, payload);
         },
         rejected: (state, action) => {
           state.acting = null;

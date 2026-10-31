@@ -27,7 +27,7 @@ export const nutritionSettingsSlice = createAppSlice({
     loadNutritionSettingsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(nutritionSettingsSerializer(await fetchNutritionSettings()));
+          return await fetchNutritionSettings();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -38,8 +38,9 @@ export const nutritionSettingsSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = nutritionSettingsSerializer(action.payload);
           state.status = 'succeeded';
-          state.settings = action.payload;
+          state.settings = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -50,7 +51,7 @@ export const nutritionSettingsSlice = createAppSlice({
     saveNutritionAsync: create.asyncThunk(
       async (patch: Parameters<typeof saveNutritionSettings>[0], { rejectWithValue }) => {
         try {
-          return required(nutritionSettingsSerializer(await saveNutritionSettings(patch)));
+          return await saveNutritionSettings(patch);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -61,8 +62,9 @@ export const nutritionSettingsSlice = createAppSlice({
           state.saveError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = nutritionSettingsSerializer(action.payload);
           state.saving = false;
-          state.settings = action.payload;
+          state.settings = payload;
         },
         rejected: (state, action) => {
           state.saving = false;
@@ -73,7 +75,7 @@ export const nutritionSettingsSlice = createAppSlice({
     deleteNutritionAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(nutritionSettingsResponseSerializer(await deleteNutritionData()));
+          return await deleteNutritionData();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -84,8 +86,9 @@ export const nutritionSettingsSlice = createAppSlice({
           state.saveError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = nutritionSettingsResponseSerializer(action.payload);
           state.deleting = false;
-          state.settings = action.payload;
+          state.settings = payload;
         },
         rejected: (state, action) => {
           state.deleting = false;

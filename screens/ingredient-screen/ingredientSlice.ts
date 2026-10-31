@@ -25,7 +25,7 @@ export const ingredientSlice = createAppSlice({
     loadIngredientAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(ingredientDetailSerializer(await fetchIngredient(id)));
+          return await fetchIngredient(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -38,8 +38,9 @@ export const ingredientSlice = createAppSlice({
           if (state.detail?.id !== action.meta.arg) state.detail = null;
         },
         fulfilled: (state, action) => {
+          const payload = ingredientDetailSerializer(action.payload);
           state.status = 'succeeded';
-          state.detail = action.payload;
+          state.detail = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

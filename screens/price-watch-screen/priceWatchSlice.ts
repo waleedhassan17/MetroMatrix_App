@@ -22,7 +22,7 @@ export const priceWatchSlice = createAppSlice({
     loadPriceWatchAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(priceWatchSerializer(await fetchPriceWatch()));
+          return await fetchPriceWatch();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -33,8 +33,9 @@ export const priceWatchSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = priceWatchSerializer(action.payload);
           state.status = 'succeeded';
-          state.watch = action.payload;
+          state.watch = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

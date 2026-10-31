@@ -11,7 +11,7 @@ import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { useHealthNav } from '../../hooks/useHealth';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
@@ -91,6 +91,7 @@ const AppointmentDetailContent: React.FC<Props> = ({ route, navigation }) => {
   const { code } = route.params;
   const { back } = useBack({ name: 'HealthTabs', params: { screen: 'AppointmentsTab' } });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const { service, colors } = useTheme();
   const nav = useHealthNav();
@@ -136,11 +137,12 @@ const AppointmentDetailContent: React.FC<Props> = ({ route, navigation }) => {
   const moveTo = async () => {
     if (!r.selected) return;
     const res = await dispatch(rescheduleAsync({ code, startAt: r.selected }));
-    if (rescheduleAsync.fulfilled.match(res)) {
+    const moved = rescheduleAsync.fulfilled.match(res) ? selectAppointmentState(appStore.getState()).rescheduled : null;
+    if (moved) {
       haptics.success();
       // The new time is a new appointment with its own code: show that one.
-      if (res.payload.code !== code) navigation.setParams({ code: res.payload.code });
-      Toast.show({ type: 'success', text1: 'Appointment moved', text2: formatWhen(res.payload.startAt, res.payload.timezone) });
+      if (moved.code !== code) navigation.setParams({ code: moved.code });
+      Toast.show({ type: 'success', text1: 'Appointment moved', text2: formatWhen(moved.startAt, moved.timezone) });
     } else haptics.warning();
   };
 

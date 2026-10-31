@@ -13,7 +13,7 @@ import { StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { EXPIRY_CHOICES, PANTRY_SEGMENTS, PANTRY_UNITS, expiryLine, pantryLineOf, pantryQty, statsLine, validatePantryForm } from '../../models/myKitchen/pantryModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
@@ -63,6 +63,7 @@ const Pantry: React.FC<Props> = props => (
 const PantryContent: React.FC<Props> = ({ navigation }) => {
   const { back } = useBack({ name: 'FoodTabs' });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectPantry);
   const today = useMemo(() => todayInZone(TZ), []);
@@ -81,7 +82,7 @@ const PantryContent: React.FC<Props> = ({ navigation }) => {
     const r = await dispatch(addPantryAsync({ lines: [pantryLineOf(s.form, today)], source: 'manual' }));
     if (addPantryAsync.fulfilled.match(r)) {
       haptics.success();
-      Toast.show({ type: 'success', text1: `${r.payload[0]?.name ?? 'It'} added` });
+      Toast.show({ type: 'success', text1: `${selectPantry(appStore.getState()).added[0]?.name ?? 'It'} added` });
       load();
     } else haptics.warning();
   };
@@ -91,8 +92,9 @@ const PantryContent: React.FC<Props> = ({ navigation }) => {
     if (a.kind !== 'pantry.add') return false;
     const r = await dispatch(addPantryAsync({ lines: a.lines.map(l => ({ name: l.name, key: l.key, qty: l.qty, unit: l.unit, expiresOn: l.expiresOn })), source: 'voice' }));
     if (addPantryAsync.fulfilled.match(r)) {
+      const { added } = selectPantry(appStore.getState());
       haptics.success();
-      Toast.show({ type: 'success', text1: `${r.payload.length} ${r.payload.length === 1 ? 'thing' : 'things'} added` });
+      Toast.show({ type: 'success', text1: `${added.length} ${added.length === 1 ? 'thing' : 'things'} added` });
       setSheet(null);
       load();
       return true;
@@ -105,7 +107,7 @@ const PantryContent: React.FC<Props> = ({ navigation }) => {
     const r = await dispatch(markUsedAsync(id));
     if (markUsedAsync.fulfilled.match(r)) {
       haptics.success();
-      Toast.show({ type: 'success', text1: `${name} used`, text2: r.payload.savedFromWaste ? 'Saved from waste.' : undefined });
+      Toast.show({ type: 'success', text1: `${name} used`, text2: selectPantry(appStore.getState()).usedUp?.savedFromWaste ? 'Saved from waste.' : undefined });
       load();
     }
   };
@@ -124,8 +126,9 @@ const PantryContent: React.FC<Props> = ({ navigation }) => {
   const addFromOrder = async (orderId: string, lineIds: string[]) => {
     const r = await dispatch(addFromOrderAsync({ orderId, lineIds }));
     if (addFromOrderAsync.fulfilled.match(r)) {
+      const { added } = selectPantry(appStore.getState());
       haptics.success();
-      Toast.show({ type: 'success', text1: `${r.payload.length} ${r.payload.length === 1 ? 'thing' : 'things'} added from your order` });
+      Toast.show({ type: 'success', text1: `${added.length} ${added.length === 1 ? 'thing' : 'things'} added from your order` });
       setSheet(null);
       load();
     }

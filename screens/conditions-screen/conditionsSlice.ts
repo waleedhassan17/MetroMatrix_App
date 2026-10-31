@@ -85,7 +85,7 @@ export const conditionsSlice = createAppSlice({
             const input = conditionInput(change.form);
             await (change.form.id ? updateCondition(change.form.id, input) : createCondition(input));
           } else await deleteCondition(change.id);
-          return required(adminConditionListSerializer(await fetchAdminConditions(change.query.trim())));
+          return await fetchAdminConditions(change.query.trim());
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -96,8 +96,9 @@ export const conditionsSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = adminConditionListSerializer(action.payload);
           state.busy = false;
-          state.list = action.payload;
+          state.list = payload;
           state.sheet = null;
         },
         rejected: (state, action) => {

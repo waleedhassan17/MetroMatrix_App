@@ -33,7 +33,7 @@ export const riderHomeSlice = createAppSlice({
     loadRiderHomeAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(riderHomeSerializer(await fetchRiderHome()));
+          return await fetchRiderHome();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -44,8 +44,9 @@ export const riderHomeSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = riderHomeSerializer(action.payload);
           state.status = 'succeeded';
-          state.home = action.payload;
+          state.home = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -79,7 +80,7 @@ export const riderHomeSlice = createAppSlice({
     setDutyAsync: create.asyncThunk(
       async (onDuty: boolean, { rejectWithValue }) => {
         try {
-          return required(riderDutySerializer(await setDuty(onDuty)));
+          return await setDuty(onDuty);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -90,8 +91,10 @@ export const riderHomeSlice = createAppSlice({
           state.dutyError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = riderDutySerializer(action.payload);
           state.dutyBusy = false;
-          if (state.home) state.home.rider.onDuty = action.payload;
+          if (!payload) return;
+          if (state.home) state.home.rider.onDuty = payload;
         },
         rejected: (state, action) => {
           state.dutyBusy = false;

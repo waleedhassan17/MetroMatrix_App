@@ -42,7 +42,7 @@ export const stockTakeSlice = createAppSlice({
     loadStockTakeAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(stockListSerializer(await fetchStock('all', '')));
+          return await fetchStock('all', '');
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -53,8 +53,10 @@ export const stockTakeSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = stockListSerializer(action.payload);
           state.status = 'succeeded';
-          state.ingredients = action.payload.items;
+          if (!payload) return;
+          state.ingredients = payload.items;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -65,7 +67,7 @@ export const stockTakeSlice = createAppSlice({
     saveStockTakeAsync: create.asyncThunk(
       async (lines: { ingredientId: string; counted: number }[], { rejectWithValue }) => {
         try {
-          return required(stockTakeSerializer(await recordStockTake(lines)));
+          return await recordStockTake(lines);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -76,8 +78,9 @@ export const stockTakeSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = stockTakeSerializer(action.payload);
           state.saving = false;
-          state.result = action.payload;
+          state.result = payload;
         },
         rejected: (state, action) => {
           state.saving = false;

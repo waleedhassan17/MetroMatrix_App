@@ -38,7 +38,7 @@ export const adminFoodBannersSlice = createAppSlice({
     loadFoodBannersAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(adminFoodBannersSerializer(await fetchAdminFoodBanners()));
+          return await fetchAdminFoodBanners();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -49,8 +49,9 @@ export const adminFoodBannersSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = adminFoodBannersSerializer(action.payload);
           state.status = 'succeeded';
-          state.banners = action.payload;
+          state.banners = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -67,7 +68,7 @@ export const adminFoodBannersSlice = createAppSlice({
             for (const [i, b] of change.banners.entries())
               if (b.sort !== i * 10) await updateFoodBanner(b.id, { sort: i * 10 });
           }
-          return required(adminFoodBannersSerializer(await fetchAdminFoodBanners()));
+          return await fetchAdminFoodBanners();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -78,8 +79,9 @@ export const adminFoodBannersSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = adminFoodBannersSerializer(action.payload);
           state.busy = false;
-          state.banners = action.payload;
+          state.banners = payload;
         },
         rejected: (state, action) => {
           state.busy = false;

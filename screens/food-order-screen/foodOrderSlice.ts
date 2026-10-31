@@ -100,7 +100,7 @@ export const foodOrderSlice = createAppSlice({
     cancelFoodOrderAsync: create.asyncThunk(
       async ({ code, reason }: { code: string; reason: string | null }, { rejectWithValue }) => {
         try {
-          return required(foodOrderSerializer(await cancelFoodOrder(code, reason)));
+          return await cancelFoodOrder(code, reason);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -111,10 +111,12 @@ export const foodOrderSlice = createAppSlice({
           state.cancelError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = foodOrderSerializer(action.payload);
           state.cancelling = false;
           state.cancelSheetOpen = false;
-          const e = entry(state, action.payload.code);
-          e.order = action.payload;
+          if (!payload) return;
+          const e = entry(state, payload.code);
+          e.order = payload;
           e.tracking = null;
         },
         rejected: (state, action) => {

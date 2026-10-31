@@ -65,7 +65,7 @@ export const adminFoodReviewsSlice = createAppSlice({
         { rejectWithValue },
       ) => {
         try {
-          return required(adminHiddenSerializer(await setFoodReviewHidden(id, hide, hide ? reason : null)));
+          return await setFoodReviewHidden(id, hide, hide ? reason : null);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

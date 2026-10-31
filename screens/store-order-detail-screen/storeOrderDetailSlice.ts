@@ -109,7 +109,7 @@ export const storeOrderDetailSlice = createAppSlice({
     loadStoreOrderAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(partnerOrderDetailSerializer(await fetchPartnerOrder(id)));
+          return await fetchPartnerOrder(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -121,11 +121,13 @@ export const storeOrderDetailSlice = createAppSlice({
           e.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = partnerOrderDetailSerializer(action.payload);
           const first = !state.byId[action.meta.arg]?.order;
-          state.byId[action.meta.arg] = { order: action.payload, status: 'succeeded', error: NO_ERROR };
+          if (!payload) return;
+          state.byId[action.meta.arg] = { order: payload, status: 'succeeded', error: NO_ERROR };
           if (first) {
-            state.note = action.payload.internalNote ?? '';
-            state.courier = action.payload.shipment?.courier ?? state.courier;
+            state.note = payload.internalNote ?? '';
+            state.courier = payload.shipment?.courier ?? state.courier;
           }
         },
         rejected: (state, action) => {
@@ -165,7 +167,7 @@ export const storeOrderDetailSlice = createAppSlice({
     saveNoteAsync: create.asyncThunk(
       async ({ id, note }: { id: string; note: string }, { rejectWithValue }) => {
         try {
-          return required(partnerOrderDetailSerializer(await saveInternalNote(id, note.trim())));
+          return await saveInternalNote(id, note.trim());
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -175,8 +177,9 @@ export const storeOrderDetailSlice = createAppSlice({
           state.busy = 'note';
         },
         fulfilled: (state, action) => {
+          const payload = partnerOrderDetailSerializer(action.payload);
           state.busy = null;
-          state.byId[action.meta.arg.id] = { order: action.payload, status: 'succeeded', error: NO_ERROR };
+          state.byId[action.meta.arg.id] = { order: payload, status: 'succeeded', error: NO_ERROR };
         },
         rejected: (state, action) => {
           state.busy = null;

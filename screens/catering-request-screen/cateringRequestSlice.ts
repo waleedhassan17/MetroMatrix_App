@@ -28,7 +28,7 @@ export const cateringRequestSlice = createAppSlice({
     loadCateringRequestAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return required(cateringRequestSerializer(await fetchCateringRequest(code)));
+          return await fetchCateringRequest(code);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -39,8 +39,9 @@ export const cateringRequestSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = cateringRequestSerializer(action.payload);
           state.status = 'succeeded';
-          if (action.payload) state.byCode[action.payload.code] = action.payload;
+          if (payload) state.byCode[payload.code] = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

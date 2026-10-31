@@ -22,7 +22,7 @@ export const couponsSlice = createAppSlice({
     loadCouponsListAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(couponListSerializer(await fetchCoupons()));
+          return await fetchCoupons();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -33,8 +33,9 @@ export const couponsSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = couponListSerializer(action.payload);
           state.status = 'succeeded';
-          state.coupons = action.payload;
+          state.coupons = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

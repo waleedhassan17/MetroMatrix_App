@@ -41,7 +41,7 @@ export const stockSlice = createAppSlice({
     loadStockAsync: create.asyncThunk(
       async ({ segment, q }: { segment: StockSegment; q: string }, { rejectWithValue }) => {
         try {
-          return required(stockListSerializer(await fetchStock(segment, q)));
+          return await fetchStock(segment, q);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -52,8 +52,9 @@ export const stockSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = stockListSerializer(action.payload);
           state.status = 'succeeded';
-          state.list = action.payload;
+          state.list = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

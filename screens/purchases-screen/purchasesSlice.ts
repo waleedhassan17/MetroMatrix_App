@@ -18,9 +18,13 @@ export interface PurchasesSliceState {
   confirmError: ServerError;
   /** Bumped after a purchase is saved here: the list reloads. */
   version: number;
+  /** The spoken purchase just saved. */
+  confirmed: ReturnType<typeof purchaseSerializer>;
 }
 
-const initialState: PurchasesSliceState = { weekTotal: null, watch: null, status: 'idle', error: NO_ERROR, confirming: false, confirmError: NO_ERROR, version: 0 };
+const initialState: PurchasesSliceState = { weekTotal: null, watch: null, status: 'idle', error: NO_ERROR, confirming: false, confirmError: NO_ERROR, version: 0 ,
+  confirmed: null,
+};
 
 export const purchasesSlice = createAppSlice({
   name: 'purchases',
@@ -55,7 +59,7 @@ export const purchasesSlice = createAppSlice({
     confirmSpokenPurchaseAsync: create.asyncThunk(
       async (lines: VoiceQtyLine[], { rejectWithValue }) => {
         try {
-          return required(purchaseSerializer(await createPurchase(purchaseFromVoice(lines))));
+          return await createPurchase(purchaseFromVoice(lines));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -65,9 +69,11 @@ export const purchasesSlice = createAppSlice({
           state.confirming = true;
           state.confirmError = NO_ERROR;
         },
-        fulfilled: state => {
+        fulfilled: (state, action) => {
+          const payload = purchaseSerializer(action.payload);
           state.confirming = false;
           state.version += 1;
+          state.confirmed = payload;
         },
         rejected: (state, action) => {
           state.confirming = false;

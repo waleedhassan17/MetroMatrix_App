@@ -21,7 +21,7 @@ export const vendorPlanSlice = createAppSlice({
     loadVendorPlanAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(vendorPlanSerializer(await fetchVendorPlan()));
+          return await fetchVendorPlan();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -32,8 +32,9 @@ export const vendorPlanSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = vendorPlanSerializer(action.payload);
           state.status = 'succeeded';
-          state.plan = action.payload;
+          state.plan = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

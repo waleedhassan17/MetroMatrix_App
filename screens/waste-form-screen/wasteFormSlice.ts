@@ -28,6 +28,8 @@ export interface WasteFormSliceState {
   lineErrors: Record<string, string>;
   saving: boolean;
   saveError: ServerError;
+  /** The waste just logged. */
+  saved: ReturnType<typeof wasteSerializer>;
 }
 
 const initialState: WasteFormSliceState = {
@@ -42,6 +44,7 @@ const initialState: WasteFormSliceState = {
   lineErrors: {},
   saving: false,
   saveError: NO_ERROR,
+  saved: null,
 };
 
 export const wasteFormSlice = createAppSlice({
@@ -113,7 +116,7 @@ export const wasteFormSlice = createAppSlice({
       async (input: WasteLineInput[], { getState, rejectWithValue }) => {
         const note = (getState() as { wasteForm: WasteFormSliceState }).wasteForm.note.trim();
         try {
-          return required(wasteSerializer(await logWaste(input, note || undefined)));
+          return await logWaste(input, note || undefined);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -125,8 +128,10 @@ export const wasteFormSlice = createAppSlice({
           state.errors = {};
           state.lineErrors = {};
         },
-        fulfilled: state => {
+        fulfilled: (state, action) => {
+          const payload = wasteSerializer(action.payload);
           state.saving = false;
+          state.saved = payload;
         },
         rejected: (state, action) => {
           state.saving = false;

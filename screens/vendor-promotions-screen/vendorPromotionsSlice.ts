@@ -26,7 +26,7 @@ export const vendorPromotionsSlice = createAppSlice({
     loadPromotionsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(foodPromotionsSerializer(await fetchPromotions()));
+          return await fetchPromotions();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -37,8 +37,9 @@ export const vendorPromotionsSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = foodPromotionsSerializer(action.payload);
           state.status = 'succeeded';
-          state.items = action.payload;
+          state.items = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

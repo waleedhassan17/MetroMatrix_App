@@ -65,7 +65,7 @@ export const aiDescriptionsSlice = createAppSlice({
     loadDescribeItemsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(vendorMenuItemsSerializer(await fetchMenuItems()));
+          return await fetchMenuItems();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -76,8 +76,9 @@ export const aiDescriptionsSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = vendorMenuItemsSerializer(action.payload);
           state.status = 'succeeded';
-          state.items = action.payload;
+          state.items = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -88,7 +89,7 @@ export const aiDescriptionsSlice = createAppSlice({
     draftDescriptionsAsync: create.asyncThunk(
       async (itemIds: string[], { rejectWithValue }) => {
         try {
-          return required(descriptionDraftsSerializer(await draftDescriptions(itemIds)));
+          return await draftDescriptions(itemIds);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -99,9 +100,10 @@ export const aiDescriptionsSlice = createAppSlice({
           state.draftError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = descriptionDraftsSerializer(action.payload);
           state.drafting = false;
-          state.drafts = action.payload;
-          state.edits = Object.fromEntries(action.payload.map(d => [d.itemId, { en: d.en, ur: d.ur }]));
+          state.drafts = payload;
+          state.edits = Object.fromEntries(payload.map(d => [d.itemId, { en: d.en, ur: d.ur }]));
           state.saved = [];
         },
         rejected: (state, action) => {
@@ -113,7 +115,7 @@ export const aiDescriptionsSlice = createAppSlice({
     saveDescriptionAsync: create.asyncThunk(
       async ({ itemId, en, ur }: { itemId: string; en: string; ur: string }, { rejectWithValue }) => {
         try {
-          return required(vendorMenuItemSerializer(await saveDescription(itemId, descriptionInput({ en, ur }))));
+          return await saveDescription(itemId, descriptionInput({ en, ur }));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -124,11 +126,13 @@ export const aiDescriptionsSlice = createAppSlice({
           state.saveError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = vendorMenuItemSerializer(action.payload);
           state.saving = null;
           state.saved.push(action.meta.arg.itemId);
           const d = state.drafts.find(x => x.itemId === action.meta.arg.itemId);
-          if (d) d.current = { en: action.payload.description, ur: descriptionInput(action.meta.arg).descriptionUr };
-          state.items = state.items.map(i => (i.id === action.payload.id ? action.payload : i));
+          if (!payload) return;
+          if (d) d.current = { en: payload.description, ur: descriptionInput(action.meta.arg).descriptionUr };
+          state.items = state.items.map(i => (i.id === payload.id ? payload : i));
         },
         rejected: (state, action) => {
           state.saving = null;

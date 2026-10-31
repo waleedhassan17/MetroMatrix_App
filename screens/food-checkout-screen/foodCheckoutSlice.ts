@@ -120,7 +120,7 @@ export const foodCheckoutSlice = createAppSlice({
     previewFoodCheckoutAsync: create.asyncThunk(
       async (input: Partial<FoodCheckoutInput>, { rejectWithValue }) => {
         try {
-          return required(foodPreviewSerializer(await previewFoodCart(input)));
+          return await previewFoodCart(input);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -131,8 +131,9 @@ export const foodCheckoutSlice = createAppSlice({
           state.previewError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = foodPreviewSerializer(action.payload);
           state.previewStatus = 'succeeded';
-          state.preview = action.payload;
+          state.preview = payload;
         },
         rejected: (state, action) => {
           state.previewStatus = 'failed';
@@ -144,7 +145,7 @@ export const foodCheckoutSlice = createAppSlice({
     placeFoodOrderAsync: create.asyncThunk(
       async ({ input, key }: { input: FoodCheckoutInput; key: string }, { rejectWithValue }) => {
         try {
-          return required(foodOrderSerializer(await placeFoodOrder(input, key)));
+          return await placeFoodOrder(input, key);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -155,7 +156,8 @@ export const foodCheckoutSlice = createAppSlice({
           state.placeError = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          Object.assign(state, initialState, { placeStatus: 'succeeded', placed: action.payload, addressId: state.addressId, paymentMethod: state.paymentMethod });
+          const payload = foodOrderSerializer(action.payload);
+          Object.assign(state, initialState, { placeStatus: 'succeeded', placed: payload, addressId: state.addressId, paymentMethod: state.paymentMethod });
         },
         rejected: (state, action) => {
           state.placeStatus = 'failed';

@@ -249,7 +249,7 @@ export const availabilitySlice = createAppSlice({
     loadPreviewAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(previewSerializer(await fetchPreview(7)));
+          return await fetchPreview(7);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -259,8 +259,9 @@ export const availabilitySlice = createAppSlice({
           state.previewStatus = 'loading';
         },
         fulfilled: (state, action) => {
+          const payload = previewSerializer(action.payload);
           state.previewStatus = 'succeeded';
-          state.preview = action.payload;
+          state.preview = payload;
         },
         rejected: (state, action) => {
           state.previewStatus = 'failed';

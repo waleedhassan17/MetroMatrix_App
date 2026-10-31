@@ -15,9 +15,13 @@ export interface FamilyMemberFormSliceState {
   touched: boolean;
   status: FormStatus;
   error: ServerError;
+  /** The member just saved. */
+  saved: ReturnType<typeof familyMemberSerializer>;
 }
 
-const initialState: FamilyMemberFormSliceState = { id: null, form: emptyFamilyMember(), touched: false, status: 'idle', error: NO_ERROR };
+const initialState: FamilyMemberFormSliceState = { id: null, form: emptyFamilyMember(), touched: false, status: 'idle', error: NO_ERROR ,
+  saved: null,
+};
 
 export const familyMemberFormSlice = createAppSlice({
   name: 'familyMemberForm',
@@ -41,7 +45,7 @@ export const familyMemberFormSlice = createAppSlice({
       async ({ id, form }: { id: string | null; form: FamilyMemberInput }, { rejectWithValue }) => {
         try {
           const body = { ...form, name: form.name.trim(), phone: form.phone || null };
-          return id ? required(familyMemberSerializer(await updateFamilyMember(id, body))) : required(familyMemberSerializer(await addFamilyMember(body)));
+          return id ? await updateFamilyMember(id, body) : await addFamilyMember(body);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -52,8 +56,10 @@ export const familyMemberFormSlice = createAppSlice({
           state.touched = true;
           state.error = NO_ERROR;
         },
-        fulfilled: state => {
+        fulfilled: (state, action) => {
+          const payload = familyMemberSerializer(action.payload);
           state.status = 'succeeded';
+          state.saved = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

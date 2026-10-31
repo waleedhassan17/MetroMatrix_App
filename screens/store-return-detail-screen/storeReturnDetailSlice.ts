@@ -64,7 +64,7 @@ export const storeReturnDetailSlice = createAppSlice({
     loadStoreReturnAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(returnSerializer(await fetchPartnerReturn(id)));
+          return await fetchPartnerReturn(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -75,13 +75,15 @@ export const storeReturnDetailSlice = createAppSlice({
           state.status = 'loading';
         },
         fulfilled: (state, action) => {
+          const payload = returnSerializer(action.payload);
           state.status = 'succeeded';
-          state.ret = action.payload;
+          if (!payload) return;
+          state.ret = payload;
           if (!Object.keys(state.restock).length) {
             // Restock by default; the store unticks a damaged item.
-            state.restock = Object.fromEntries(action.payload.items.map(i => [i.orderItemId, true]));
+            state.restock = Object.fromEntries(payload.items.map(i => [i.orderItemId, true]));
           }
-          if (!state.amount) state.amount = String(action.payload.items.reduce((s, i) => s + i.unitPrice * i.quantity, 0));
+          if (!state.amount) state.amount = String(payload.items.reduce((s, i) => s + i.unitPrice * i.quantity, 0));
         },
         rejected: (state, action) => {
           state.status = 'failed';

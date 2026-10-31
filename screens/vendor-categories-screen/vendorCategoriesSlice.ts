@@ -71,7 +71,7 @@ export const vendorCategoriesSlice = createAppSlice({
     loadCategoriesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(menuCategoriesSerializer(await fetchMenuCategories()));
+          return await fetchMenuCategories();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -82,8 +82,9 @@ export const vendorCategoriesSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = menuCategoriesSerializer(action.payload);
           state.status = 'succeeded';
-          state.categories = action.payload;
+          state.categories = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -100,7 +101,7 @@ export const vendorCategoriesSlice = createAppSlice({
           if (sheet.id) await updateMenuCategory(sheet.id, { name: sheet.form.name.trim(), ...window, isActive: sheet.isActive });
           else await createMenuCategory({ name: sheet.form.name.trim(), ...window });
           dispatch(menuChanged());
-          return required(menuCategoriesSerializer(await fetchMenuCategories()));
+          return await fetchMenuCategories();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -111,8 +112,9 @@ export const vendorCategoriesSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = menuCategoriesSerializer(action.payload);
           state.saving = false;
-          state.categories = action.payload;
+          state.categories = payload;
           state.sheet = null;
         },
         rejected: (state, action) => {
@@ -126,7 +128,7 @@ export const vendorCategoriesSlice = createAppSlice({
         try {
           await deleteMenuCategory(id);
           dispatch(menuChanged());
-          return required(menuCategoriesSerializer(await fetchMenuCategories()));
+          return await fetchMenuCategories();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -137,8 +139,9 @@ export const vendorCategoriesSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = menuCategoriesSerializer(action.payload);
           state.saving = false;
-          state.categories = action.payload;
+          state.categories = payload;
           state.sheet = null;
         },
         rejected: (state, action) => {

@@ -65,7 +65,7 @@ export const vendorRidersSlice = createAppSlice({
     loadRidersAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(foodRidersSerializer(await fetchRiders()));
+          return await fetchRiders();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -76,8 +76,9 @@ export const vendorRidersSlice = createAppSlice({
           if (state.sheet === 'closed') state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = foodRidersSerializer(action.payload);
           state.status = 'succeeded';
-          state.riders = action.payload;
+          state.riders = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -88,11 +89,11 @@ export const vendorRidersSlice = createAppSlice({
     createRiderAsync: create.asyncThunk(
       async (input: RiderInput, { rejectWithValue }) => {
         try {
-          return required(createdRiderSerializer(await createRider({
+          return await createRider({
             fullName: input.fullName.trim(),
             phone: input.phone ? (normalizePkPhone(input.phone) ?? null) : null,
             vehicle: input.vehicle,
-          })));
+          });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -103,9 +104,11 @@ export const vendorRidersSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = createdRiderSerializer(action.payload);
           state.saving = false;
-          state.riders = [action.payload.rider, ...state.riders.filter(r => r.id !== action.payload.rider.id)];
-          state.created = { name: action.payload.rider.fullName, credential: action.payload.credential };
+          if (!payload) return;
+          state.riders = [payload.rider, ...state.riders.filter(r => r.id !== payload.rider.id)];
+          state.created = { name: payload.rider.fullName, credential: payload.credential };
           state.sheet = 'credential';
         },
         rejected: (state, action) => {

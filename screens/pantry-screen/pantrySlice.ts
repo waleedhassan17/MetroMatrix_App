@@ -35,6 +35,10 @@ export interface PantrySliceState {
   orders: GroceryOrder[];
   ordersStatus: FormStatus;
   acting: string | null;
+  /** What the last add put in the pantry (by hand, by voice or from an order). */
+  added: ReturnType<typeof pantryItemsSerializer>;
+  /** The last item marked used. */
+  usedUp: ReturnType<typeof pantryUsedUpSerializer> | null;
 }
 
 const initialState: PantrySliceState = {
@@ -51,6 +55,8 @@ const initialState: PantrySliceState = {
   orders: [],
   ordersStatus: 'idle',
   acting: null,
+  added: [],
+  usedUp: null,
 };
 
 export const pantrySlice = createAppSlice({
@@ -71,7 +77,7 @@ export const pantrySlice = createAppSlice({
     loadPantryAsync: create.asyncThunk(
       async (segment: PantrySegment, { rejectWithValue }) => {
         try {
-          const [list, stats, reminders] = await Promise.all([fetchPantry(segment).then(raw => required(pantryListSerializer(raw))), fetchPantryStats().then(raw => required(pantryStatsSerializer(raw))), fetchPantryReminders().then(raw => required(pantryRemindersSerializer(raw)))]);
+          const [list, stats, reminders] = await Promise.all([fetchPantry(segment), fetchPantryStats(), fetchPantryReminders()]);
           return { list, stats, reminders };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -83,10 +89,11 @@ export const pantrySlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = { list: pantryListSerializer(action.payload.list), stats: pantryStatsSerializer(action.payload.stats), reminders: pantryRemindersSerializer(action.payload.reminders) };
           state.status = 'succeeded';
-          state.list = action.payload.list;
-          state.stats = action.payload.stats;
-          state.reminders = action.payload.reminders;
+          state.list = payload.list;
+          state.stats = payload.stats;
+          state.reminders = payload.reminders;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -98,7 +105,7 @@ export const pantrySlice = createAppSlice({
     addPantryAsync: create.asyncThunk(
       async ({ lines, source }: { lines: PantryLineInput[]; source: 'manual' | 'voice' }, { rejectWithValue }) => {
         try {
-          return required(pantryItemsSerializer(await addToPantry(lines, source)));
+          return await addToPantry(lines, source);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -108,9 +115,11 @@ export const pantrySlice = createAppSlice({
           state.saving = true;
           state.actionError = NO_ERROR;
         },
-        fulfilled: state => {
+        fulfilled: (state, action) => {
+          const payload = pantryItemsSerializer(action.payload);
           state.saving = false;
           state.formOpen = false;
+          state.added = payload;
         },
         rejected: (state, action) => {
           state.saving = false;
@@ -121,7 +130,7 @@ export const pantrySlice = createAppSlice({
     markUsedAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(pantryUsedUpSerializer(await markPantryUsed(id)));
+          return await markPantryUsed(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -132,8 +141,10 @@ export const pantrySlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = pantryUsedUpSerializer(action.payload);
           state.acting = null;
           if (state.list) state.list.items = state.list.items.filter(i => i.id !== action.meta.arg);
+          state.usedUp = payload;
         },
         rejected: (state, action) => {
           state.acting = null;
@@ -144,7 +155,7 @@ export const pantrySlice = createAppSlice({
     throwAwayAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(pantryRemovedSerializer(await removePantryItem(id)));
+          return await removePantryItem(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -155,6 +166,7 @@ export const pantrySlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = pantryRemovedSerializer(action.payload);
           state.acting = null;
           if (state.list) state.list.items = state.list.items.filter(i => i.id !== action.meta.arg);
         },
@@ -167,7 +179,7 @@ export const pantrySlice = createAppSlice({
     loadGroceryOrdersAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(groceryOrdersSerializer(await fetchGroceryOrders()));
+          return await fetchGroceryOrders();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -177,8 +189,9 @@ export const pantrySlice = createAppSlice({
           state.ordersStatus = 'loading';
         },
         fulfilled: (state, action) => {
+          const payload = groceryOrdersSerializer(action.payload);
           state.ordersStatus = 'succeeded';
-          state.orders = action.payload;
+          state.orders = payload;
         },
         rejected: (state, action) => {
           state.ordersStatus = 'failed';
@@ -189,7 +202,7 @@ export const pantrySlice = createAppSlice({
     addFromOrderAsync: create.asyncThunk(
       async ({ orderId, lineIds }: { orderId: string; lineIds: string[] }, { rejectWithValue }) => {
         try {
-          return required(pantryItemsSerializer(await addFromShoppingOrder(orderId, lineIds)));
+          return await addFromShoppingOrder(orderId, lineIds);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -199,8 +212,10 @@ export const pantrySlice = createAppSlice({
           state.acting = action.meta.arg.orderId;
           state.actionError = NO_ERROR;
         },
-        fulfilled: state => {
+        fulfilled: (state, action) => {
+          const payload = pantryItemsSerializer(action.payload);
           state.acting = null;
+          state.added = payload;
         },
         rejected: (state, action) => {
           state.acting = null;
@@ -211,14 +226,15 @@ export const pantrySlice = createAppSlice({
     saveRemindersAsync: create.asyncThunk(
       async (patch: Partial<PantryReminders>, { rejectWithValue }) => {
         try {
-          return required(pantryRemindersSerializer(await savePantryReminders(patch)));
+          return await savePantryReminders(patch);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
       },
       {
         fulfilled: (state, action) => {
-          state.reminders = action.payload;
+          const payload = pantryRemindersSerializer(action.payload);
+          state.reminders = payload;
         },
         rejected: (state, action) => {
           state.actionError = readRejection(action, "That didn't save.");

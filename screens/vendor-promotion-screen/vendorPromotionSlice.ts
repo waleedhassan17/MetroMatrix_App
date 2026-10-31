@@ -95,7 +95,7 @@ export const vendorPromotionSlice = createAppSlice({
         const { promotion, form } = (getState() as { vendorPromotion: VendorPromotionSliceState }).vendorPromotion;
         if (!form) return rejectWithValue({ message: 'Nothing to save.', code: null, details: null });
         try {
-          return promotion ? required(foodPromotionSerializer(await updatePromotion(promotion.id, promotionInput(form)))) : required(foodPromotionSerializer(await createPromotion(promotionInput(form))));
+          return promotion ? await updatePromotion(promotion.id, promotionInput(form)) : await createPromotion(promotionInput(form));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -106,9 +106,11 @@ export const vendorPromotionSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = foodPromotionSerializer(action.payload);
           state.saving = false;
-          state.promotion = action.payload;
-          state.form = promotionForm(action.payload);
+          if (!payload) return;
+          state.promotion = payload;
+          state.form = promotionForm(payload);
           state.submitted = false;
         },
         rejected: (state, action) => {
@@ -122,7 +124,7 @@ export const vendorPromotionSlice = createAppSlice({
     deactivatePromotionAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(foodPromotionSerializer(await deactivatePromotion(id)));
+          return await deactivatePromotion(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -133,9 +135,11 @@ export const vendorPromotionSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = foodPromotionSerializer(action.payload);
           state.saving = false;
-          state.promotion = action.payload;
-          state.form = promotionForm(action.payload);
+          if (!payload) return;
+          state.promotion = payload;
+          state.form = promotionForm(payload);
         },
         rejected: (state, action) => {
           state.saving = false;

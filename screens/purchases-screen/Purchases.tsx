@@ -10,7 +10,7 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { usePagedList } from '../../hooks/usePagedList';
 import { fetchPurchases } from '../../networks/kitchen/purchases';
@@ -51,6 +51,7 @@ const Purchases: React.FC<Props> = props => (
 const PurchasesContent: React.FC<Props> = ({ navigation }) => {
   const { back } = useBack({ name: 'VendorTabs' });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectPurchases);
   const list = usePagedList(fetchPurchases, purchasesPageSerializer, `kitchen-purchases|${s.version}`);
@@ -106,9 +107,10 @@ const PurchasesContent: React.FC<Props> = ({ navigation }) => {
             onConfirm={async a => {
               if (a.kind !== 'purchase.add') return false;
               const res = await dispatch(confirmSpokenPurchaseAsync(a.lines));
-              if (confirmSpokenPurchaseAsync.fulfilled.match(res)) {
+              const confirmed = confirmSpokenPurchaseAsync.fulfilled.match(res) ? selectPurchases(appStore.getState()).confirmed : null;
+              if (confirmed) {
                 haptics.success();
-                Toast.show({ type: 'success', text1: 'Purchase saved', text2: `${formatPKR(res.payload.total)} · stock updated` });
+                Toast.show({ type: 'success', text1: 'Purchase saved', text2: `${formatPKR(confirmed.total)} · stock updated` });
                 void dispatch(loadPurchasesOverviewAsync());
                 return true;
               }

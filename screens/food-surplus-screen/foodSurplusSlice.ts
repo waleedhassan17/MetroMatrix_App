@@ -61,7 +61,7 @@ export const foodSurplusSlice = createAppSlice({
     loadSurplusAsync: create.asyncThunk(
       async ({ id, at }: { id: string; at: Pick<FoodPoint, 'lat' | 'lng'> | null }, { rejectWithValue }) => {
         try {
-          return required(surplusDetailSerializer(await fetchSurplus(id, at)));
+          return await fetchSurplus(id, at);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -78,11 +78,12 @@ export const foodSurplusSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = surplusDetailSerializer(action.payload);
           state.status = 'succeeded';
-          state.box = action.payload;
-          if (action.payload) {
-            state.quantity = Math.max(1, Math.min(state.quantity, action.payload.maxPerCustomer, action.payload.left || 1));
-            if (!action.payload.paymentMethods.includes(state.method)) state.method = action.payload.paymentMethods[0] ?? 'pay_at_pickup';
+          state.box = payload;
+          if (payload) {
+            state.quantity = Math.max(1, Math.min(state.quantity, payload.maxPerCustomer, payload.left || 1));
+            if (!payload.paymentMethods.includes(state.method)) state.method = payload.paymentMethods[0] ?? 'pay_at_pickup';
           }
         },
         rejected: (state, action) => {

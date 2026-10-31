@@ -65,7 +65,7 @@ export const riderDetailSlice = createAppSlice({
     loadRiderCashAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(riderCashSerializer(await fetchRiderCashForVendor(id)));
+          return await fetchRiderCashForVendor(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -75,14 +75,15 @@ export const riderDetailSlice = createAppSlice({
           if (state.cash?.riderId !== action.meta.arg) state.cash = null;
         },
         fulfilled: (state, action) => {
-          state.cash = action.payload;
+          const payload = riderCashSerializer(action.payload);
+          state.cash = payload;
         },
       },
     ),
     recordHandoverAsync: create.asyncThunk(
       async ({ id, amount, note }: { id: string; amount: number; note: string | null }, { rejectWithValue }) => {
         try {
-          return required(riderCashSerializer(await recordHandover(id, amount, note)));
+          return await recordHandover(id, amount, note);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -93,9 +94,10 @@ export const riderDetailSlice = createAppSlice({
           state.handoverError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = riderCashSerializer(action.payload);
           state.handing = false;
           state.handoverOpen = false;
-          state.cash = action.payload;
+          state.cash = payload;
         },
         rejected: (state, action) => {
           state.handing = false;
@@ -106,7 +108,7 @@ export const riderDetailSlice = createAppSlice({
     loadRiderAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(foodRiderSerializer(await fetchRider(id)));
+          return await fetchRider(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -119,8 +121,9 @@ export const riderDetailSlice = createAppSlice({
           state.credential = null;
         },
         fulfilled: (state, action) => {
+          const payload = foodRiderSerializer(action.payload);
           state.status = 'succeeded';
-          state.rider = action.payload;
+          state.rider = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -181,7 +184,7 @@ export const riderDetailSlice = createAppSlice({
     resetRiderPasswordAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(riderCredentialSerializer(await resetRiderPassword(id)));
+          return await resetRiderPassword(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -192,8 +195,9 @@ export const riderDetailSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = riderCredentialSerializer(action.payload);
           state.busy = null;
-          state.credential = action.payload;
+          state.credential = payload;
         },
         rejected: (state, action) => {
           state.busy = null;

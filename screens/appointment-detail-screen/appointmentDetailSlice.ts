@@ -48,6 +48,8 @@ export interface AppointmentDetailSliceState {
   reschedule: RescheduleSheet;
   /** "Share more records": the patient's records, and which are picked. */
   recordsSheet: { open: boolean; records: HealthRecord[]; selected: string[]; loading: boolean };
+  /** The appointment a reschedule just made (a new code). */
+  rescheduled: ReturnType<typeof appointmentDetailSerializer>;
 }
 
 const EMPTY: AppointmentEntry = { appointment: null, status: 'idle', error: NO_ERROR };
@@ -70,6 +72,7 @@ const initialState: AppointmentDetailSliceState = {
   cancelSheet: { open: false, reason: null, note: '' },
   reschedule: NO_RESCHEDULE,
   recordsSheet: { open: false, records: [], selected: [], loading: false },
+  rescheduled: null,
 };
 
 const save = (state: AppointmentDetailSliceState, a: AppointmentDetail) => {
@@ -140,7 +143,7 @@ export const appointmentDetailSlice = createAppSlice({
     loadAppointmentAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return required(appointmentDetailSerializer(await fetchAppointment(code)));
+          return await fetchAppointment(code);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -151,7 +154,11 @@ export const appointmentDetailSlice = createAppSlice({
           e.status = 'loading';
           e.error = NO_ERROR;
         },
-        fulfilled: (state, action) => save(state, action.payload),
+        fulfilled: (state, action) => {
+          const payload = appointmentDetailSerializer(action.payload);
+          if (!payload) return;
+          return save(state, payload);
+        },
         rejected: (state, action) => {
           const e = (state.byCode[action.meta.arg] ??= { ...EMPTY });
           e.status = 'failed';
@@ -163,7 +170,7 @@ export const appointmentDetailSlice = createAppSlice({
     cancelAppointmentAsync: create.asyncThunk(
       async ({ code, reason, note }: { code: string; reason: CancelReason; note: string }, { rejectWithValue }) => {
         try {
-          return required(appointmentDetailSerializer(await cancelAppointment(code, reason, note.trim() || null)));
+          return await cancelAppointment(code, reason, note.trim() || null);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -174,9 +181,11 @@ export const appointmentDetailSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = appointmentDetailSerializer(action.payload);
           state.busy = null;
           state.cancelSheet.open = false;
-          save(state, action.payload);
+          if (!payload) return;
+          save(state, payload);
         },
         rejected: (state, action) => {
           state.busy = null;
@@ -224,7 +233,7 @@ export const appointmentDetailSlice = createAppSlice({
     rescheduleDayAsync: create.asyncThunk(
       async ({ doctorId, locationId, date }: { doctorId: string; locationId: string; date: string }, { rejectWithValue }) => {
         try {
-          return required(slotDaySerializer(await fetchSlots(doctorId, locationId, date)));
+          return await fetchSlots(doctorId, locationId, date);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -237,10 +246,12 @@ export const appointmentDetailSlice = createAppSlice({
           state.reschedule.alternatives = [];
         },
         fulfilled: (state, action) => {
+          const payload = slotDaySerializer(action.payload);
           state.reschedule.loading = false;
-          state.reschedule.slots = action.payload.slots;
-          state.reschedule.timezone = action.payload.timezone;
-          state.reschedule.nextAvailable = action.payload.nextAvailable;
+          if (!payload) return;
+          state.reschedule.slots = payload.slots;
+          state.reschedule.timezone = payload.timezone;
+          state.reschedule.nextAvailable = payload.nextAvailable;
         },
         rejected: (state, action) => {
           state.reschedule.loading = false;
@@ -252,7 +263,7 @@ export const appointmentDetailSlice = createAppSlice({
     rescheduleAsync: create.asyncThunk(
       async ({ code, startAt }: { code: string; startAt: string }, { rejectWithValue }) => {
         try {
-          return required(appointmentDetailSerializer(await rescheduleAppointment(code, startAt)));
+          return await rescheduleAppointment(code, startAt);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -264,9 +275,12 @@ export const appointmentDetailSlice = createAppSlice({
           state.reschedule.alternatives = [];
         },
         fulfilled: (state, action) => {
+          const payload = appointmentDetailSerializer(action.payload);
           state.busy = null;
           state.reschedule = NO_RESCHEDULE;
-          save(state, action.payload);
+          if (!payload) return;
+          save(state, payload);
+          state.rescheduled = payload;
         },
         rejected: (state, action) => {
           state.busy = null;
@@ -310,7 +324,11 @@ export const appointmentDetailSlice = createAppSlice({
     // A sent payment proof answers with the whole appointment.
     builder.addCase(submitAppointmentProofAsync.fulfilled, (state, action) => save(state, action.payload));
     // A booking opens Booking confirmed without a second request.
-    builder.addCase(confirmBookingAsync.fulfilled, (state, action) => save(state, action.payload));
+    builder.addCase(confirmBookingAsync.fulfilled, (state, action) => {
+          const payload = appointmentDetailSerializer(action.payload);
+          if (!payload) return;
+          return save(state, payload);
+        });
   },
   selectors: {
     selectAppointmentEntry: (state, code: string): AppointmentEntry => state.byCode[code] ?? EMPTY,

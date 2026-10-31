@@ -62,7 +62,7 @@ export const storeSettingsSlice = createAppSlice({
     saveStoreSettingsAsync: create.asyncThunk(
       async (input: StoreSettings, { rejectWithValue }) => {
         try {
-          return required(storeSettingsSerializer(await updateStoreSettings(input)));
+          return await updateStoreSettings(input);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -74,8 +74,9 @@ export const storeSettingsSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = storeSettingsSerializer(action.payload);
           state.saveStatus = 'succeeded';
-          state.form = action.payload;
+          state.form = payload;
         },
         rejected: (state, action) => {
           state.saveStatus = 'failed';

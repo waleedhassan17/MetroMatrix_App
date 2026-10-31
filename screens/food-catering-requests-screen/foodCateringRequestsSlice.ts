@@ -22,7 +22,7 @@ export const foodCateringRequestsSlice = createAppSlice({
     loadMyCateringAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(cateringRequestsSerializer(await fetchMyCateringRequests()));
+          return await fetchMyCateringRequests();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -33,8 +33,9 @@ export const foodCateringRequestsSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = cateringRequestsSerializer(action.payload);
           state.status = 'succeeded';
-          state.items = action.payload;
+          state.items = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

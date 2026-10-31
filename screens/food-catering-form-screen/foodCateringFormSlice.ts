@@ -20,9 +20,13 @@ export interface FoodCateringFormSliceState {
   error: ServerError;
   sending: boolean;
   sendError: ServerError;
+  /** The request just sent. */
+  sent: ReturnType<typeof cateringRequestSerializer>;
 }
 
-const initialState: FoodCateringFormSliceState = { slug: null, vendor: null, form: emptyCateringForm(), errors: {}, status: 'idle', error: NO_ERROR, sending: false, sendError: NO_ERROR };
+const initialState: FoodCateringFormSliceState = { slug: null, vendor: null, form: emptyCateringForm(), errors: {}, status: 'idle', error: NO_ERROR, sending: false, sendError: NO_ERROR ,
+  sent: null,
+};
 
 export const foodCateringFormSlice = createAppSlice({
   name: 'foodCateringForm',
@@ -51,7 +55,7 @@ export const foodCateringFormSlice = createAppSlice({
     loadCateringVendorAsync: create.asyncThunk(
       async (slug: string, { rejectWithValue }) => {
         try {
-          return required(cateringVendorSerializer(await fetchCateringVendor(slug)));
+          return await fetchCateringVendor(slug);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -69,10 +73,11 @@ export const foodCateringFormSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = cateringVendorSerializer(action.payload);
           state.status = 'succeeded';
-          state.vendor = action.payload;
-          if (action.payload && !state.form.date) state.form.date = action.payload.earliestDate;
-          if (action.payload && !action.payload.modes.includes(state.form.mode)) state.form.mode = action.payload.modes[0] ?? 'delivery';
+          state.vendor = payload;
+          if (payload && !state.form.date) state.form.date = payload.earliestDate;
+          if (payload && !payload.modes.includes(state.form.mode)) state.form.mode = payload.modes[0] ?? 'delivery';
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -83,7 +88,7 @@ export const foodCateringFormSlice = createAppSlice({
     sendCateringAsync: create.asyncThunk(
       async (input: CateringRequestInput, { rejectWithValue }) => {
         try {
-          return required(cateringRequestSerializer(await requestCatering(input)));
+          return await requestCatering(input);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -93,10 +98,12 @@ export const foodCateringFormSlice = createAppSlice({
           state.sending = true;
           state.sendError = NO_ERROR;
         },
-        fulfilled: state => {
+        fulfilled: (state, action) => {
+          const payload = cateringRequestSerializer(action.payload);
           state.sending = false;
           state.form = emptyCateringForm();
           state.slug = null;
+          state.sent = payload;
         },
         rejected: (state, action) => {
           state.sending = false;

@@ -11,9 +11,13 @@ export interface ShopStoresSliceState {
   query: string;
   busy: string | null;
   error: ServerError;
+  /** The store just featured or unfeatured, as the server has it now. */
+  updated: ReturnType<typeof storeSummarySerializer>;
 }
 
-const initialState: ShopStoresSliceState = { query: '', busy: null, error: NO_ERROR };
+const initialState: ShopStoresSliceState = { query: '', busy: null, error: NO_ERROR ,
+  updated: null,
+};
 
 export const shopStoresSlice = createAppSlice({
   name: 'shopStores',
@@ -25,7 +29,7 @@ export const shopStoresSlice = createAppSlice({
     setFeaturedAsync: create.asyncThunk(
       async ({ id, featured }: { id: string; featured: boolean }, { rejectWithValue }) => {
         try {
-          return required(storeSummarySerializer(await setStoreFeatured(id, featured)));
+          return await setStoreFeatured(id, featured);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -35,8 +39,10 @@ export const shopStoresSlice = createAppSlice({
           state.busy = action.meta.arg.id;
           state.error = NO_ERROR;
         },
-        fulfilled: state => {
+        fulfilled: (state, action) => {
+          const payload = storeSummarySerializer(action.payload);
           state.busy = null;
+          state.updated = payload;
         },
         rejected: (state, action) => {
           state.busy = null;

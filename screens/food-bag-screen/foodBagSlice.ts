@@ -47,6 +47,8 @@ export interface FoodBagSliceState {
   slots: FoodSlots | null;
   slotsFor: string | null;
   whenSheetOpen: boolean;
+  /** What the last reorder put back in the bag, and what it couldn't. */
+  reorder: ReturnType<typeof reorderSerializer> | null;
 }
 
 const initialState: FoodBagSliceState = {
@@ -62,6 +64,7 @@ const initialState: FoodBagSliceState = {
   slots: null,
   slotsFor: null,
   whenSheetOpen: false,
+  reorder: null,
 };
 
 export const foodBagSlice = createAppSlice({
@@ -87,7 +90,7 @@ export const foodBagSlice = createAppSlice({
     loadFoodBagAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(foodCartSerializer(await fetchFoodCart()));
+          return await fetchFoodCart();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -98,8 +101,10 @@ export const foodBagSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = foodCartSerializer(action.payload);
           state.status = 'succeeded';
-          state.cart = action.payload;
+          if (!payload) return;
+          state.cart = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -114,7 +119,7 @@ export const foodBagSlice = createAppSlice({
         { rejectWithValue },
       ) => {
         try {
-          return required(foodCartSerializer(await addToFoodCart(input, replace)));
+          return await addToFoodCart(input, replace);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -126,9 +131,11 @@ export const foodBagSlice = createAppSlice({
           state.otherVendor = null;
         },
         fulfilled: (state, action) => {
+          const payload = foodCartSerializer(action.payload);
           state.adding = false;
           state.status = 'succeeded';
-          state.cart = action.payload;
+          if (!payload) return;
+          state.cart = payload;
         },
         rejected: (state, action) => {
           state.adding = false;
@@ -148,7 +155,7 @@ export const foodBagSlice = createAppSlice({
     updateFoodLineAsync: create.asyncThunk(
       async ({ lineId, quantity }: { lineId: string; quantity: number }, { rejectWithValue }) => {
         try {
-          return required(foodCartSerializer(await updateFoodCartLine(lineId, { quantity })));
+          return await updateFoodCartLine(lineId, { quantity });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -159,8 +166,10 @@ export const foodBagSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = foodCartSerializer(action.payload);
           state.busyLineId = null;
-          state.cart = action.payload;
+          if (!payload) return;
+          state.cart = payload;
         },
         rejected: (state, action) => {
           state.busyLineId = null;
@@ -172,7 +181,7 @@ export const foodBagSlice = createAppSlice({
     removeFoodLineAsync: create.asyncThunk(
       async (lineId: string, { rejectWithValue }) => {
         try {
-          return required(foodCartSerializer(await removeFoodCartLine(lineId)));
+          return await removeFoodCartLine(lineId);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -183,8 +192,10 @@ export const foodBagSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = foodCartSerializer(action.payload);
           state.busyLineId = null;
-          state.cart = action.payload;
+          if (!payload) return;
+          state.cart = payload;
         },
         rejected: (state, action) => {
           state.busyLineId = null;
@@ -199,7 +210,7 @@ export const foodBagSlice = createAppSlice({
         { rejectWithValue },
       ) => {
         try {
-          return required(foodCartSerializer(await setFoodCartMode(input)));
+          return await setFoodCartMode(input);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -210,8 +221,10 @@ export const foodBagSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = foodCartSerializer(action.payload);
           state.modeBusy = false;
-          state.cart = action.payload;
+          if (!payload) return;
+          state.cart = payload;
           state.whenSheetOpen = false;
         },
         rejected: (state, action) => {
@@ -244,7 +257,7 @@ export const foodBagSlice = createAppSlice({
     loadFoodSlotsAsync: create.asyncThunk(
       async (vendor: string, { rejectWithValue }) => {
         try {
-          return required(foodSlotsSerializer(await fetchVendorSlots(vendor)));
+          return await fetchVendorSlots(vendor);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -255,7 +268,8 @@ export const foodBagSlice = createAppSlice({
           state.slotsFor = action.meta.arg;
         },
         fulfilled: (state, action) => {
-          if (state.slotsFor === action.meta.arg) state.slots = action.payload;
+          const payload = foodSlotsSerializer(action.payload);
+          if (state.slotsFor === action.meta.arg) state.slots = payload;
         },
       },
     ),
@@ -264,7 +278,7 @@ export const foodBagSlice = createAppSlice({
     reorderFoodAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return required(reorderSerializer(await reorderFood(code)));
+          return await reorderFood(code);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -274,8 +288,11 @@ export const foodBagSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          state.cart = action.payload.cart;
+          const payload = reorderSerializer(action.payload);
+          if (!payload) return;
+          state.cart = payload.cart;
           state.status = 'succeeded';
+          state.reorder = payload;
         },
         rejected: (state, action) => {
           state.actionError = readRejection(action, "We couldn't add those dishes again.");

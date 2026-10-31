@@ -22,7 +22,7 @@ export const surplusReservationsSlice = createAppSlice({
     loadMyReservationsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(reservationsSerializer(await fetchMyReservations()));
+          return await fetchMyReservations();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -33,8 +33,9 @@ export const surplusReservationsSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = reservationsSerializer(action.payload);
           state.status = 'succeeded';
-          state.items = action.payload;
+          state.items = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

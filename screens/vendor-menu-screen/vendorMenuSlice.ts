@@ -64,7 +64,7 @@ export const vendorMenuSlice = createAppSlice({
     loadVendorMenuAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [categories, items, availability, stock] = await Promise.all([fetchMenuCategories().then(raw => required(menuCategoriesSerializer(raw))), fetchMenuItems().then(raw => required(vendorMenuItemsSerializer(raw))), fetchAvailability().then(raw => required(menuAvailabilitySerializer(raw))), fetchBoardHints().then(raw => required(boardHintsSerializer(raw))).catch(() => null)]);
+          const [categories, items, availability, stock] = await Promise.all([fetchMenuCategories(), fetchMenuItems(), fetchAvailability(), fetchBoardHints().catch(() => null)]);
           return { categories, items, availability, stock };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -77,11 +77,12 @@ export const vendorMenuSlice = createAppSlice({
           state.stale = false;
         },
         fulfilled: (state, action) => {
+          const payload = { categories: menuCategoriesSerializer(action.payload.categories), items: vendorMenuItemsSerializer(action.payload.items), availability: menuAvailabilitySerializer(action.payload.availability), stock: action.payload.stock === null ? null : boardHintsSerializer(action.payload.stock) };
           state.status = 'succeeded';
-          state.categories = action.payload.categories;
-          state.items = action.payload.items;
-          state.availability = byId(action.payload.availability.items);
-          state.stock = action.payload.stock;
+          state.categories = payload.categories;
+          state.items = payload.items;
+          state.availability = byId(payload.availability.items);
+          state.stock = payload.stock;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -93,7 +94,7 @@ export const vendorMenuSlice = createAppSlice({
     setDishAvailableAsync: create.asyncThunk(
       async (input: { itemId: string; isAvailable: boolean; until: string | null }, { rejectWithValue }) => {
         try {
-          return required(menuAvailabilitySerializer(await setAvailability({ items: [{ itemId: input.itemId, isAvailable: input.isAvailable, ...(input.isAvailable ? null : { unavailableUntil: input.until }) }] })));
+          return await setAvailability({ items: [{ itemId: input.itemId, isAvailable: input.isAvailable, ...(input.isAvailable ? null : { unavailableUntil: input.until }) }] });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -108,8 +109,9 @@ export const vendorMenuSlice = createAppSlice({
           if (row) state.availability[itemId] = { ...row, isAvailable, unavailableUntil: isAvailable ? null : until };
         },
         fulfilled: (state, action) => {
+          const payload = menuAvailabilitySerializer(action.payload);
           state.saving = state.saving.filter(id => id !== action.meta.arg.itemId);
-          state.availability = byId(action.payload.items);
+          state.availability = byId(payload.items);
         },
         rejected: (state, action) => {
           const { itemId, isAvailable } = action.meta.arg;

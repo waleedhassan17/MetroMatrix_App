@@ -62,7 +62,7 @@ export const doctorVerificationSlice = createAppSlice({
     loadDoctorsForVerificationAsync: create.asyncThunk(
       async (filter: VerificationFilter, { rejectWithValue }) => {
         try {
-          return required(adminDoctorListSerializer(await fetchDoctorsForVerification(filter)));
+          return await fetchDoctorsForVerification(filter);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -73,8 +73,9 @@ export const doctorVerificationSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = adminDoctorListSerializer(action.payload);
           state.status = 'succeeded';
-          state.doctors = action.payload;
+          state.doctors = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

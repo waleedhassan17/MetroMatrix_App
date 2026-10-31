@@ -9,7 +9,7 @@ import React, { useEffect } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { CATEGORY_LABEL, CATEGORY_ORDER } from '../../models/kitchen/kitchenStatusModel';
 import { MAX_CUSTOM_UNITS, customUnitsOf, ingredientInput, validateIngredient } from '../../models/kitchen/stockModel';
@@ -54,6 +54,7 @@ const IngredientForm: React.FC<Props> = props => (
 const IngredientFormContent: React.FC<Props> = ({ navigation, route }) => {
   const { back } = useBack({ name: 'KitchenStock' });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectIngredientForm);
   const id = route.params?.id ?? null;
@@ -81,11 +82,12 @@ const IngredientFormContent: React.FC<Props> = ({ navigation, route }) => {
       return;
     }
     const res = await dispatch(saveIngredientAsync({ id, input: { ...ingredientInput(f), customUnits: custom.units } }));
-    if (saveIngredientAsync.fulfilled.match(res)) {
+    const saved = saveIngredientAsync.fulfilled.match(res) ? selectIngredientForm(appStore.getState()).saved : null;
+    if (saved) {
       haptics.success();
-      Toast.show({ type: 'success', text1: id ? 'Ingredient saved' : `${res.payload.name} added to your stock` });
+      Toast.show({ type: 'success', text1: id ? 'Ingredient saved' : `${saved.name} added to your stock` });
       if (id) back();
-      else navigation.replace('KitchenIngredient', { id: res.payload.id });
+      else navigation.replace('KitchenIngredient', { id: saved.id });
     } else haptics.warning();
   };
 

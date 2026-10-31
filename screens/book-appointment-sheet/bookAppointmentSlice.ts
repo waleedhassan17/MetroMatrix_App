@@ -143,7 +143,7 @@ export const bookAppointmentSlice = createAppSlice({
     confirmBookingAsync: create.asyncThunk(
       async ({ input, idempotencyKey }: { input: BookingInput; idempotencyKey: string }, { rejectWithValue }) => {
         try {
-          return required(appointmentDetailSerializer(await bookAppointment(input, idempotencyKey)));
+          return await bookAppointment(input, idempotencyKey);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -155,9 +155,11 @@ export const bookAppointmentSlice = createAppSlice({
           state.alternatives = [];
         },
         fulfilled: (state, action) => {
+          const payload = appointmentDetailSerializer(action.payload);
           state.status = 'succeeded';
           state.open = false;
-          state.bookedCode = action.payload.code;
+          if (!payload) return;
+          state.bookedCode = payload.code;
           // A new booking is a new attempt.
           state.idempotencyKey = '';
           state.reasonTags = [];

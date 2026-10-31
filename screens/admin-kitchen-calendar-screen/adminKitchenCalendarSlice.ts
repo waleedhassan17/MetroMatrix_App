@@ -74,7 +74,7 @@ export const adminKitchenCalendarSlice = createAppSlice({
     loadEventsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(calendarEventsSerializer(await fetchCalendarEvents()));
+          return await fetchCalendarEvents();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -85,8 +85,9 @@ export const adminKitchenCalendarSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = calendarEventsSerializer(action.payload);
           state.status = 'succeeded';
-          state.events = action.payload;
+          state.events = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -104,7 +105,7 @@ export const adminKitchenCalendarSlice = createAppSlice({
             if (id) await updateCalendarEvent(id, input);
             else await createCalendarEvent(input);
           }
-          return required(calendarEventsSerializer(await fetchCalendarEvents()));
+          return await fetchCalendarEvents();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -115,9 +116,10 @@ export const adminKitchenCalendarSlice = createAppSlice({
           state.saveError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = calendarEventsSerializer(action.payload);
           state.busy = false;
           state.sheet = null;
-          state.events = action.payload;
+          state.events = payload;
         },
         rejected: (state, action) => {
           state.busy = false;

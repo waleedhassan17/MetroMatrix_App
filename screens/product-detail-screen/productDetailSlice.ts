@@ -68,7 +68,7 @@ export const productDetailSlice = createAppSlice({
     loadProductAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(productDetailSerializer(await fetchProduct(id)));
+          return await fetchProduct(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -80,7 +80,8 @@ export const productDetailSlice = createAppSlice({
           e.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          state.byId[action.meta.arg] = { product: action.payload, status: 'succeeded', error: NO_ERROR };
+          const payload = productDetailSerializer(action.payload);
+          state.byId[action.meta.arg] = { product: payload, status: 'succeeded', error: NO_ERROR };
         },
         rejected: (state, action) => {
           const e = (state.byId[action.meta.arg] ??= { ...EMPTY });

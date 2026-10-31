@@ -23,6 +23,8 @@ export interface TiffinPlanFormSliceState {
   error: ServerError;
   saving: boolean;
   saveError: ServerError;
+  /** What removing the plan did (removed, or only taken off the page). */
+  removed: ReturnType<typeof tiffinRemovedSerializer> | null;
 }
 
 const initialState: TiffinPlanFormSliceState = {
@@ -35,6 +37,7 @@ const initialState: TiffinPlanFormSliceState = {
   error: NO_ERROR,
   saving: false,
   saveError: NO_ERROR,
+  removed: null,
 };
 
 export const tiffinPlanFormSlice = createAppSlice({
@@ -104,7 +107,7 @@ export const tiffinPlanFormSlice = createAppSlice({
     savePlanAsync: create.asyncThunk(
       async ({ id, input }: { id: string | null; input: TiffinPlanInput }, { rejectWithValue }) => {
         try {
-          return id ? required(tiffinPlanSerializer(await updateTiffinPlan(id, input))) : required(tiffinPlanSerializer(await createTiffinPlan(input)));
+          return id ? await updateTiffinPlan(id, input) : await createTiffinPlan(input);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -127,7 +130,7 @@ export const tiffinPlanFormSlice = createAppSlice({
     removePlanAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(tiffinRemovedSerializer(await deleteTiffinPlan(id)));
+          return await deleteTiffinPlan(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -137,8 +140,10 @@ export const tiffinPlanFormSlice = createAppSlice({
           state.saving = true;
           state.saveError = NO_ERROR;
         },
-        fulfilled: state => {
+        fulfilled: (state, action) => {
+          const payload = tiffinRemovedSerializer(action.payload);
           state.saving = false;
+          state.removed = payload;
         },
         rejected: (state, action) => {
           state.saving = false;

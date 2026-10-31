@@ -9,7 +9,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { CATERING_MODE, EVENT_TYPES, EVENT_TYPE_LABEL } from '../../models/kitchen/kitchenStatusModel';
 import { EVENT_TIMES, cateringInput, eventDates, timeLabel, validateCatering } from '../../models/kitchen/cateringModel';
@@ -65,6 +65,7 @@ const FoodCateringFormContent: React.FC<Props> = ({ navigation, route }) => {
   const { slug, name } = route.params;
   const { back } = useBack({ name: 'FoodVendor', params: { slug } });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   const s = useAppSelector(selectFoodCateringForm);
@@ -105,9 +106,10 @@ const FoodCateringFormContent: React.FC<Props> = ({ navigation, route }) => {
       return;
     }
     const r = await dispatch(sendCateringAsync(cateringInput(f, v.vendorId)));
-    if (sendCateringAsync.fulfilled.match(r) && r.payload) {
+    const sent = sendCateringAsync.fulfilled.match(r) ? selectFoodCateringForm(appStore.getState()).sent : null;
+    if (sent) {
       haptics.success();
-      navigation.replace('FoodCateringRequest', { code: r.payload.code, fresh: true });
+      navigation.replace('FoodCateringRequest', { code: sent.code, fresh: true });
     } else haptics.warning();
   };
 

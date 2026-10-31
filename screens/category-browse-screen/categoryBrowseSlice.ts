@@ -27,7 +27,7 @@ export const categoryBrowseSlice = createAppSlice({
     loadCategoriesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(categoryListSerializer(await fetchCategories()));
+          return await fetchCategories();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -38,9 +38,10 @@ export const categoryBrowseSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = categoryListSerializer(action.payload);
           state.status = 'succeeded';
-          state.categories = action.payload;
-          if (!state.selectedId || !action.payload.some(c => c.id === state.selectedId)) state.selectedId = action.payload[0]?.id ?? null;
+          state.categories = payload;
+          if (!state.selectedId || !payload.some(c => c.id === state.selectedId)) state.selectedId = payload[0]?.id ?? null;
         },
         rejected: (state, action) => {
           state.status = 'failed';

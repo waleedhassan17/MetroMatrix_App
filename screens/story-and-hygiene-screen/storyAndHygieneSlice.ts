@@ -62,7 +62,7 @@ export const storyAndHygieneSlice = createAppSlice({
     loadStoryAndHygieneAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [story, hygiene] = await Promise.all([fetchStory().then(raw => required(storySerializer(raw))), fetchHygiene().then(raw => required(hygieneSerializer(raw)))]);
+          const [story, hygiene] = await Promise.all([fetchStory(), fetchHygiene()]);
           return { story, hygiene };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -74,12 +74,13 @@ export const storyAndHygieneSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = { story: storySerializer(action.payload.story), hygiene: hygieneSerializer(action.payload.hygiene) };
           state.status = 'succeeded';
           // An edit in progress isn't thrown away by a refresh.
           const untouched = !state.story || JSON.stringify(state.form) === JSON.stringify(formOf(state.story));
-          state.story = action.payload.story;
-          if (untouched) state.form = formOf(action.payload.story);
-          state.hygiene = action.payload.hygiene;
+          state.story = payload.story;
+          if (untouched) state.form = formOf(payload.story);
+          state.hygiene = payload.hygiene;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -114,7 +115,7 @@ export const storyAndHygieneSlice = createAppSlice({
     saveStoryAsync: create.asyncThunk(
       async (form: StoryForm, { rejectWithValue }) => {
         try {
-          return required(storySerializer(await saveStory({ text: form.text.trim(), cookName: form.cookName.trim(), photoUrls: form.photoUrls, videoUrl: form.videoUrl })));
+          return await saveStory({ text: form.text.trim(), cookName: form.cookName.trim(), photoUrls: form.photoUrls, videoUrl: form.videoUrl });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -125,9 +126,10 @@ export const storyAndHygieneSlice = createAppSlice({
           state.saveError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = storySerializer(action.payload);
           state.saving = false;
-          state.story = action.payload;
-          state.form = formOf(action.payload);
+          state.story = payload;
+          state.form = formOf(payload);
         },
         rejected: (state, action) => {
           state.saving = false;
@@ -140,7 +142,7 @@ export const storyAndHygieneSlice = createAppSlice({
       async ({ key, done, file }: { key: string; done: boolean; file?: LocalFile }, { rejectWithValue }) => {
         try {
           const evidenceUrl = file ? (await uploadImage(file, 'hygiene_evidence')).url : undefined;
-          return required(hygieneSerializer(await setHygieneItem(key, { done, ...(evidenceUrl ? { evidenceUrl } : null) })));
+          return await setHygieneItem(key, { done, ...(evidenceUrl ? { evidenceUrl } : null) });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -151,8 +153,9 @@ export const storyAndHygieneSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = hygieneSerializer(action.payload);
           state.ticking = null;
-          state.hygiene = action.payload;
+          state.hygiene = payload;
         },
         rejected: (state, action) => {
           state.ticking = null;
@@ -163,7 +166,7 @@ export const storyAndHygieneSlice = createAppSlice({
     requestVerificationAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(hygieneSerializer(await requestHygieneVerification()));
+          return await requestHygieneVerification();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -174,8 +177,9 @@ export const storyAndHygieneSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = hygieneSerializer(action.payload);
           state.requesting = false;
-          state.hygiene = action.payload;
+          state.hygiene = payload;
         },
         rejected: (state, action) => {
           state.requesting = false;

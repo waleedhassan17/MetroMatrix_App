@@ -22,7 +22,7 @@ export const shopOverviewSlice = createAppSlice({
     loadShopOverviewAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(shopOverviewSerializer(await fetchShopOverview()));
+          return await fetchShopOverview();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -33,8 +33,9 @@ export const shopOverviewSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = shopOverviewSerializer(action.payload);
           state.status = 'succeeded';
-          state.overview = action.payload;
+          state.overview = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

@@ -9,7 +9,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { WASTE_REASONS, WASTE_REASON_LABEL } from '../../models/kitchen/kitchenStatusModel';
 import { defaultUnit, unitChoices, unitOfKey } from '../../models/kitchen/stockModel';
@@ -55,6 +55,7 @@ const WasteForm: React.FC<Props> = props => (
 const WasteFormContent: React.FC<Props> = () => {
   const { back } = useBack({ name: 'KitchenWaste' });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectWasteForm);
   /** Adding a line, or changing what one line is (its key). */
@@ -79,7 +80,8 @@ const WasteFormContent: React.FC<Props> = () => {
     const r = await dispatch(saveWasteAsync(input));
     if (saveWasteAsync.fulfilled.match(r)) {
       haptics.success();
-      Toast.show({ type: 'success', text1: 'Waste logged', text2: r.payload ? `${formatPKR(r.payload.cost)} · stock updated` : undefined });
+      const { saved } = selectWasteForm(appStore.getState());
+      Toast.show({ type: 'success', text1: 'Waste logged', text2: saved ? `${formatPKR(saved.cost)} · stock updated` : undefined });
       back();
     } else haptics.warning();
   };

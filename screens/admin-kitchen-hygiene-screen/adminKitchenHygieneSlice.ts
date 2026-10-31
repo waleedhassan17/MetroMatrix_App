@@ -94,7 +94,7 @@ export const adminKitchenHygieneSlice = createAppSlice({
         try {
           if (input.verify) await verifyHygiene(input.businessId);
           else await rejectHygiene(input.businessId, input.note ?? '');
-          return required(hygieneQueueSerializer(await fetchHygieneQueue('pending')));
+          return await fetchHygieneQueue('pending');
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -105,10 +105,11 @@ export const adminKitchenHygieneSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = hygieneQueueSerializer(action.payload);
           state.busy = false;
           state.noteOpen = false;
           state.tab = 'pending';
-          state.items = action.payload;
+          state.items = payload;
         },
         rejected: (state, action) => {
           state.busy = false;

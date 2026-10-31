@@ -10,7 +10,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { aiDownNote, isAiDown } from '../../models/kitchen/aiModel';
 import { CATEGORY_LABEL, CATEGORY_ORDER } from '../../models/kitchen/kitchenStatusModel';
@@ -85,6 +85,7 @@ const PurchaseForm: React.FC<Props> = props => (
 const PurchaseFormContent: React.FC<Props> = ({ navigation, route }) => {
   const { back } = useBack({ name: 'KitchenPurchases' });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   const s = useAppSelector(selectPurchaseForm);
@@ -123,10 +124,11 @@ const PurchaseFormContent: React.FC<Props> = ({ navigation, route }) => {
     }
     const date = addDays(todayInZone('Asia/Karachi'), -s.daysAgo);
     const res = await dispatch(savePurchaseAsync(purchaseInput(s.lines, s.source, { supplierId: s.supplierId, supplierName: s.supplierName, receiptUrl: s.receiptUrl, date })));
-    if (savePurchaseAsync.fulfilled.match(res)) {
+    const saved = savePurchaseAsync.fulfilled.match(res) ? selectPurchaseForm(appStore.getState()).saved : null;
+    if (saved) {
       haptics.success();
-      Toast.show({ type: 'success', text1: 'Purchase saved', text2: `${formatPKR(res.payload.total)} · stock updated` });
-      navigation.replace('KitchenPurchase', { id: res.payload.id });
+      Toast.show({ type: 'success', text1: 'Purchase saved', text2: `${formatPKR(saved.total)} · stock updated` });
+      navigation.replace('KitchenPurchase', { id: saved.id });
     } else haptics.warning();
   };
 

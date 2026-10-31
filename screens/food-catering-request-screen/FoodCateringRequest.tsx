@@ -12,7 +12,7 @@ import { StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { CATERING_MODE, CATERING_STATUS, EVENT_TYPE_LABEL } from '../../models/kitchen/kitchenStatusModel';
 import { advanceLine, latestQuote, quoteCardData, whenLine } from '../../models/kitchen/cateringModel';
@@ -46,6 +46,7 @@ const FoodCateringRequestContent: React.FC<Props> = ({ navigation, route }) => {
   const { code, fresh } = route.params;
   const { back } = useBack({ name: 'FoodCateringRequests' });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const ui = useAppSelector(selectFoodCateringUi);
   const r = useAppSelector(st => selectMyCateringRequest(st, code));
@@ -71,7 +72,8 @@ const FoodCateringRequestContent: React.FC<Props> = ({ navigation, route }) => {
     const res = await dispatch(myCateringActAsync({ code, act: { kind: 'accept', version } }));
     if (myCateringActAsync.fulfilled.match(res)) {
       haptics.success();
-      Toast.show({ type: 'success', text1: `Quote v${version} accepted`, text2: res.payload?.advance ? 'Pay the advance to confirm the day.' : 'Your dawat is confirmed.' });
+      const request = selectFoodCateringUi(appStore.getState()).byCode[code];
+      Toast.show({ type: 'success', text1: `Quote v${version} accepted`, text2: request?.advance ? 'Pay the advance to confirm the day.' : 'Your dawat is confirmed.' });
     } else haptics.warning();
   };
 

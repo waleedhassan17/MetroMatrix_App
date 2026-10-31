@@ -233,7 +233,7 @@ export const vendorOrderSlice = createAppSlice({
     loadVendorOrderAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(vendorFoodOrderSerializer(await fetchVendorOrder(id)));
+          return await fetchVendorOrder(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -245,7 +245,8 @@ export const vendorOrderSlice = createAppSlice({
           e.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          state.byId[action.meta.arg] = { order: action.payload, status: 'succeeded', error: NO_ERROR };
+          const payload = vendorFoodOrderSerializer(action.payload);
+          state.byId[action.meta.arg] = { order: payload, status: 'succeeded', error: NO_ERROR };
         },
         rejected: (state, action) => {
           const e = (state.byId[action.meta.arg] ??= { ...EMPTY });

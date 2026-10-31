@@ -9,7 +9,7 @@ import React from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { usePagedList } from '../../hooks/usePagedList';
 import { fetchMyReviews } from '../../networks/food/vendor/reviews';
@@ -45,6 +45,7 @@ const VendorReviews: React.FC<Props> = props => (
 const VendorReviewsContent: React.FC<Props> = () => {
   const { back } = useBack({ name: 'VendorTabs' });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectVendorReviews);
   const business = useAppSelector(selectBusiness);
@@ -60,9 +61,10 @@ const VendorReviewsContent: React.FC<Props> = () => {
       return;
     }
     const res = await dispatch(sendReplyAsync({ id: r.id, reply: s.reply }));
-    if (sendReplyAsync.fulfilled.match(res)) {
+    const replied = sendReplyAsync.fulfilled.match(res) ? selectVendorReviews(appStore.getState()).replied : null;
+    if (replied) {
       haptics.success();
-      list.setRows(rows => (s.unreplied ? rows.filter(x => x.id !== r.id) : rows.map(x => (x.id === r.id ? { ...x, vendorReply: res.payload.vendorReply, repliedAt: res.payload.repliedAt } : x))));
+      list.setRows(rows => (s.unreplied ? rows.filter(x => x.id !== r.id) : rows.map(x => (x.id === r.id ? { ...x, vendorReply: replied.vendorReply, repliedAt: replied.repliedAt } : x))));
       Toast.show({ type: 'success', text1: 'Reply posted', text2: 'It shows under the review on your page.' });
     } else haptics.warning();
   };

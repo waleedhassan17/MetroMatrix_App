@@ -11,6 +11,7 @@ import type { FamilyMember } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { saveFamilyMemberAsync } from '../family-member-form-screen/familyMemberFormSlice';
 import { familySerializer } from '../../serializers/health/recordsSerializer';
+import { familyMemberSerializer } from '../../serializers/health/recordsSerializer';
 
 export interface FamilySliceState {
   members: FamilyMember[];
@@ -28,7 +29,7 @@ export const familySlice = createAppSlice({
     loadFamilyAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(familySerializer(await fetchFamily()));
+          return await fetchFamily();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -39,7 +40,8 @@ export const familySlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          state.members = action.payload;
+          const payload = familySerializer(action.payload);
+          state.members = payload;
           state.status = 'succeeded';
         },
         rejected: (state, action) => {
@@ -75,9 +77,11 @@ export const familySlice = createAppSlice({
   }),
   extraReducers: builder => {
     builder.addCase(saveFamilyMemberAsync.fulfilled, (state, action) => {
-      const i = state.members.findIndex(m => m.id === action.payload.id);
-      if (i >= 0) state.members[i] = action.payload;
-      else state.members.push(action.payload);
+          const payload = familyMemberSerializer(action.payload);
+      if (!payload) return;
+      const i = state.members.findIndex(m => m.id === payload.id);
+      if (i >= 0) state.members[i] = payload;
+      else state.members.push(payload);
     });
   },
   selectors: {

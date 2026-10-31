@@ -98,7 +98,7 @@ export const doctorAppointmentSlice = createAppSlice({
     openSharedRecordAsync: create.asyncThunk(
       async ({ id, recordId }: { id: string; recordId: string }, { rejectWithValue }) => {
         try {
-          return required(healthRecordSerializer(await openSharedRecord(id, recordId)));
+          return await openSharedRecord(id, recordId);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -109,9 +109,11 @@ export const doctorAppointmentSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = healthRecordSerializer(action.payload);
           state.openingRecord = null;
           const record = state.byId[action.meta.arg.id]?.appointment?.records.find(r => r.id === action.meta.arg.recordId);
-          if (record) record.files = action.payload.files;
+          if (!payload) return;
+          if (record) record.files = payload.files;
         },
         rejected: (state, action) => {
           state.openingRecord = null;

@@ -23,7 +23,7 @@ export const homeRecipeSlice = createAppSlice({
     loadHomeRecipeAsync: create.asyncThunk(
       async ({ id, language, servings }: { id: string; language: 'en' | 'ur'; servings: number | null }, { rejectWithValue }) => {
         try {
-          return required(homeRecipeSerializer(await fetchHomeRecipe(id, language, servings)));
+          return await fetchHomeRecipe(id, language, servings);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -35,8 +35,9 @@ export const homeRecipeSlice = createAppSlice({
           if (state.recipe?.id !== action.meta.arg.id || state.recipe?.language !== action.meta.arg.language) state.recipe = null;
         },
         fulfilled: (state, action) => {
+          const payload = homeRecipeSerializer(action.payload);
           state.status = 'succeeded';
-          state.recipe = action.payload;
+          state.recipe = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

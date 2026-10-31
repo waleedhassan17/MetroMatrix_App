@@ -56,7 +56,7 @@ export const voiceSlice = createAppSlice({
       async ({ context, language, clip }: { context: VoiceContext; language: VoiceLanguage; clip: Clip }, { rejectWithValue }) => {
         try {
           const uploaded = await uploadImage(clip, 'voice_clip');
-          return required(voiceResultSerializer(await interpretVoice({ context, language, audioUrl: uploaded.url, durationMs: clip.durationMs })));
+          return await interpretVoice({ context, language, audioUrl: uploaded.url, durationMs: clip.durationMs });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -69,9 +69,10 @@ export const voiceSlice = createAppSlice({
           r.result = null;
         },
         fulfilled: (state, action) => {
+          const payload = voiceResultSerializer(action.payload);
           const r = runOf(state, action.meta.arg.context);
           r.status = 'result';
-          r.result = action.payload;
+          r.result = payload;
         },
         rejected: (state, action) => {
           const r = runOf(state, action.meta.arg.context);
@@ -83,7 +84,7 @@ export const voiceSlice = createAppSlice({
     interpretTextAsync: create.asyncThunk(
       async ({ context, language, text }: { context: VoiceContext; language: VoiceLanguage; text: string }, { rejectWithValue }) => {
         try {
-          return required(voiceResultSerializer(await interpretVoice({ context, language, text: text.trim() })));
+          return await interpretVoice({ context, language, text: text.trim() });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -96,9 +97,10 @@ export const voiceSlice = createAppSlice({
           r.result = null;
         },
         fulfilled: (state, action) => {
+          const payload = voiceResultSerializer(action.payload);
           const r = runOf(state, action.meta.arg.context);
           r.status = 'result';
-          r.result = action.payload;
+          r.result = payload;
           r.typing = false;
           r.typed = '';
         },

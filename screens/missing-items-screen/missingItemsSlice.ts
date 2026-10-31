@@ -30,7 +30,7 @@ export const missingItemsSlice = createAppSlice({
     loadMissingItemsAsync: create.asyncThunk(
       async ({ id, servings }: { id: string; servings: number | null }, { rejectWithValue }) => {
         try {
-          return required(missingItemsSerializer(await fetchMissingItems(id, servings)));
+          return await fetchMissingItems(id, servings);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -46,8 +46,9 @@ export const missingItemsSlice = createAppSlice({
           state.recipeId = action.meta.arg.id;
         },
         fulfilled: (state, action) => {
+          const payload = missingItemsSerializer(action.payload);
           state.status = 'succeeded';
-          state.items = action.payload;
+          state.items = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

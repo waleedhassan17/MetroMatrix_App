@@ -198,7 +198,7 @@ export const productFormSlice = createAppSlice({
       async ({ id, form, status }: { id: string | null; form: ProductForm; status: PartnerProductStatus }, { rejectWithValue }) => {
         try {
           const input = toProductInput(form, status);
-          return id ? required(partnerProductSerializer(await updatePartnerProduct(id, input))) : required(partnerProductSerializer(await createPartnerProduct(input)));
+          return id ? await updatePartnerProduct(id, input) : await createPartnerProduct(input);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -211,9 +211,11 @@ export const productFormSlice = createAppSlice({
           state.serverFields = {};
         },
         fulfilled: (state, action) => {
+          const payload = partnerProductSerializer(action.payload);
           state.saveStatus = 'succeeded';
-          state.productId = action.payload.id;
-          const form = fromPartnerProduct(action.payload);
+          if (!payload) return;
+          state.productId = payload.id;
+          const form = fromPartnerProduct(payload);
           state.form = form;
           state.original = form;
         },
@@ -228,7 +230,7 @@ export const productFormSlice = createAppSlice({
     setProductStatusAsync: create.asyncThunk(
       async ({ id, status }: { id: string; status: PartnerProductStatus }, { rejectWithValue }) => {
         try {
-          return required(partnerProductSerializer(await setPartnerProductStatus(id, status)));
+          return await setPartnerProductStatus(id, status);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -239,9 +241,11 @@ export const productFormSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = partnerProductSerializer(action.payload);
           state.saveStatus = 'succeeded';
-          state.form.status = action.payload.status;
-          state.original.status = action.payload.status;
+          if (!payload) return;
+          state.form.status = payload.status;
+          state.original.status = payload.status;
         },
         rejected: (state, action) => {
           state.saveStatus = 'failed';

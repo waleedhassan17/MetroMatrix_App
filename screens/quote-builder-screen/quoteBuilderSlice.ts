@@ -93,7 +93,7 @@ export const quoteBuilderSlice = createAppSlice({
     sendQuoteAsync: create.asyncThunk(
       async ({ code, input }: { code: string; input: QuoteInput }, { rejectWithValue }) => {
         try {
-          return required(cateringRequestSerializer(await sendQuote(code, input)));
+          return await sendQuote(code, input);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

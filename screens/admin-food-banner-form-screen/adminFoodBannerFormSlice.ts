@@ -200,7 +200,7 @@ export const adminFoodBannerFormSlice = createAppSlice({
         { rejectWithValue },
       ) => {
         try {
-          return id ? required(adminFoodBannerSerializer(await updateFoodBanner(id, input))) : required(adminFoodBannerSerializer(await createFoodBanner(input)));
+          return id ? await updateFoodBanner(id, input) : await createFoodBanner(input);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

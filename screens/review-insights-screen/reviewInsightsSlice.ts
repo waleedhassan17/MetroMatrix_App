@@ -23,7 +23,7 @@ export const reviewInsightsSlice = createAppSlice({
     loadReviewInsightsAsync: create.asyncThunk(
       async (week: string | null, { rejectWithValue }) => {
         try {
-          return required(reviewInsightsSerializer(await fetchReviewInsights(week)));
+          return await fetchReviewInsights(week);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -34,8 +34,9 @@ export const reviewInsightsSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = reviewInsightsSerializer(action.payload);
           state.status = 'succeeded';
-          state.data = action.payload;
+          state.data = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

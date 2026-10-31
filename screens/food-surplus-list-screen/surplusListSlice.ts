@@ -23,7 +23,7 @@ export const surplusListSlice = createAppSlice({
     loadSurplusListAsync: create.asyncThunk(
       async (at: Pick<FoodPoint, 'lat' | 'lng'>, { rejectWithValue }) => {
         try {
-          return required(surplusCardsSerializer(await fetchSurplusNearby(at)));
+          return await fetchSurplusNearby(at);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -34,8 +34,9 @@ export const surplusListSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = surplusCardsSerializer(action.payload);
           state.status = 'succeeded';
-          state.items = action.payload;
+          state.items = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

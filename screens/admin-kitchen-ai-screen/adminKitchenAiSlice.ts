@@ -68,7 +68,7 @@ export const adminKitchenAiSlice = createAppSlice({
     loadAiUsageAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(aiUsageReportSerializer(await fetchAiUsageReport()));
+          return await fetchAiUsageReport();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -79,8 +79,9 @@ export const adminKitchenAiSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = aiUsageReportSerializer(action.payload);
           state.status = 'succeeded';
-          state.report = action.payload;
+          state.report = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -94,7 +95,7 @@ export const adminKitchenAiSlice = createAppSlice({
         try {
           if (change.kind === 'enabled') await setAiEnabled(change.enabled);
           else await setAiQuota(change.ownerId, change.limit);
-          return required(aiUsageReportSerializer(await fetchAiUsageReport()));
+          return await fetchAiUsageReport();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -105,9 +106,10 @@ export const adminKitchenAiSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = aiUsageReportSerializer(action.payload);
           state.busy = false;
           state.sheet = null;
-          state.report = action.payload;
+          state.report = payload;
         },
         rejected: (state, action) => {
           state.busy = false;

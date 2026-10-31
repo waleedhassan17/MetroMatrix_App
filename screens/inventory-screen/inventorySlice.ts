@@ -70,7 +70,7 @@ export const inventorySlice = createAppSlice({
     saveStockAsync: create.asyncThunk(
       async ({ variantId, stock }: { variantId: string; stock: number }, { rejectWithValue }) => {
         try {
-          return required(inventoryRowSerializer(await setStock(variantId, stock)));
+          return await setStock(variantId, stock);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -81,9 +81,11 @@ export const inventorySlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = inventoryRowSerializer(action.payload);
           state.busy = null;
-          state.saved[action.payload.variantId] = action.payload;
-          delete state.drafts[action.payload.variantId];
+          if (!payload) return;
+          state.saved[payload.variantId] = payload;
+          delete state.drafts[payload.variantId];
         },
         rejected: (state, action) => {
           state.busy = null;
@@ -95,7 +97,7 @@ export const inventorySlice = createAppSlice({
     bulkStockAsync: create.asyncThunk(
       async ({ variantIds, stock }: { variantIds: string[]; stock: number }, { rejectWithValue }) => {
         try {
-          return required(inventoryRowListSerializer(await bulkSetStock(variantIds, stock)));
+          return await bulkSetStock(variantIds, stock);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -106,8 +108,9 @@ export const inventorySlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = inventoryRowListSerializer(action.payload);
           state.busy = null;
-          for (const row of action.payload) {
+          for (const row of payload) {
             state.saved[row.variantId] = row;
             delete state.drafts[row.variantId];
           }
@@ -125,7 +128,7 @@ export const inventorySlice = createAppSlice({
     loadHistoryAsync: create.asyncThunk(
       async ({ variantId }: { variantId: string; label: string }, { rejectWithValue }) => {
         try {
-          return required(movementListSerializer(await fetchMovements(variantId)));
+          return await fetchMovements(variantId);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -135,8 +138,9 @@ export const inventorySlice = createAppSlice({
           state.history = { variantId: action.meta.arg.variantId, label: action.meta.arg.label, movements: [], status: 'loading' };
         },
         fulfilled: (state, action) => {
+          const payload = movementListSerializer(action.payload);
           if (state.history.variantId !== action.meta.arg.variantId) return;
-          state.history.movements = action.payload;
+          state.history.movements = payload;
           state.history.status = 'succeeded';
         },
         rejected: state => {

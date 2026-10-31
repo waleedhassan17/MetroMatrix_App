@@ -35,7 +35,7 @@ export const healthHomeSlice = createAppSlice({
     loadHealthHomeAsync: create.asyncThunk(
       async ({ city }: { city: string | null; refresh?: boolean }, { rejectWithValue }) => {
         try {
-          return required(healthHomeSerializer(await fetchHealthHome(city)));
+          return await fetchHealthHome(city);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -49,7 +49,8 @@ export const healthHomeSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          state.home = action.payload;
+          const payload = healthHomeSerializer(action.payload);
+          state.home = payload;
           state.status = 'succeeded';
           state.refreshing = false;
         },

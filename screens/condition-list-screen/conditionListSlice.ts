@@ -27,7 +27,7 @@ export const conditionListSlice = createAppSlice({
     loadConditionsAsync: create.asyncThunk(
       async (q: string, { rejectWithValue }) => {
         try {
-          return required(conditionsSerializer(await fetchConditions(q || undefined)));
+          return await fetchConditions(q || undefined);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -38,8 +38,9 @@ export const conditionListSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = conditionsSerializer(action.payload);
           if (action.meta.arg !== state.query.trim()) return;
-          state.items = action.payload;
+          state.items = payload;
           state.status = 'succeeded';
         },
         rejected: (state, action) => {

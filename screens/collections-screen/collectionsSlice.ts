@@ -38,7 +38,7 @@ export const collectionsSlice = createAppSlice({
     loadCollectionsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(collectionListSerializer(await fetchCollections()));
+          return await fetchCollections();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -48,8 +48,9 @@ export const collectionsSlice = createAppSlice({
           state.status = 'loading';
         },
         fulfilled: (state, action) => {
+          const payload = collectionListSerializer(action.payload);
           state.status = 'succeeded';
-          state.collections = action.payload;
+          state.collections = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

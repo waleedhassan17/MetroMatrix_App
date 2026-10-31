@@ -7,7 +7,7 @@
 import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
 import { AppText, Button, ChoiceChip, InlineNotice, PatientPicker, ScreenShell, TextField } from '../../Custom-Components/index';
@@ -35,6 +35,7 @@ const SymptomChecker: React.FC<Props> = props => (
 const SymptomCheckerContent: React.FC<Props> = ({ navigation }) => {
   const { back } = useBack({ name: 'HealthHome' });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectSymptomChecker);
   const user = useAppSelector(selectUser);
@@ -59,7 +60,7 @@ const SymptomCheckerContent: React.FC<Props> = ({ navigation }) => {
       }),
     );
     if (checkSymptomsAsync.fulfilled.match(r)) {
-      if (r.payload.emergency) navigation.navigate('Emergency');
+      if (selectSymptomChecker(appStore.getState()).result?.emergency) navigation.navigate('Emergency');
       else navigation.navigate('SymptomResult');
     }
   };

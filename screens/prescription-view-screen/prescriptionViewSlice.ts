@@ -27,7 +27,7 @@ export const prescriptionViewSlice = createAppSlice({
     loadPrescriptionAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(prescriptionSerializer(await fetchPrescription(id)));
+          return await fetchPrescription(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -39,7 +39,8 @@ export const prescriptionViewSlice = createAppSlice({
           e.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          state.byId[action.meta.arg] = { prescription: action.payload, status: 'succeeded', error: NO_ERROR };
+          const payload = prescriptionSerializer(action.payload);
+          state.byId[action.meta.arg] = { prescription: payload, status: 'succeeded', error: NO_ERROR };
         },
         rejected: (state, action) => {
           const e = (state.byId[action.meta.arg] ??= { ...EMPTY });

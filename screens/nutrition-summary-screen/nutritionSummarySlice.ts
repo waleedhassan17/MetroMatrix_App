@@ -22,7 +22,7 @@ export const nutritionSummarySlice = createAppSlice({
     loadNutritionSummaryAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(nutritionSummarySerializer(await fetchNutritionSummary(7)));
+          return await fetchNutritionSummary(7);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -33,8 +33,9 @@ export const nutritionSummarySlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = nutritionSummarySerializer(action.payload);
           state.status = 'succeeded';
-          state.summary = action.payload;
+          state.summary = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

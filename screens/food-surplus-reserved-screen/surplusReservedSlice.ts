@@ -26,7 +26,7 @@ export const surplusReservedSlice = createAppSlice({
     loadReservationAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return required(reservationSerializer(await fetchReservation(code)));
+          return await fetchReservation(code);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -37,8 +37,9 @@ export const surplusReservedSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = reservationSerializer(action.payload);
           state.status = 'succeeded';
-          if (action.payload) state.byCode[action.payload.code] = action.payload;
+          if (payload) state.byCode[payload.code] = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -49,7 +50,7 @@ export const surplusReservedSlice = createAppSlice({
     cancelReservationAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return required(reservationSerializer(await cancelReservation(code)));
+          return await cancelReservation(code);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -60,8 +61,9 @@ export const surplusReservedSlice = createAppSlice({
           state.cancelError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = reservationSerializer(action.payload);
           state.cancelling = false;
-          if (action.payload) state.byCode[action.payload.code] = action.payload;
+          if (payload) state.byCode[payload.code] = payload;
         },
         rejected: (state, action) => {
           state.cancelling = false;

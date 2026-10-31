@@ -39,7 +39,7 @@ export const symptomCheckerSlice = createAppSlice({
     checkSymptomsAsync: create.asyncThunk(
       async (input: { text: string; age: number | null; gender: Gender | null }, { rejectWithValue }) => {
         try {
-          return required(symptomResultSerializer(await checkSymptoms(input)));
+          return await checkSymptoms(input);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -50,8 +50,9 @@ export const symptomCheckerSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = symptomResultSerializer(action.payload);
           state.status = 'succeeded';
-          state.result = action.payload;
+          state.result = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

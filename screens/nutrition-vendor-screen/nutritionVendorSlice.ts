@@ -53,7 +53,7 @@ export const nutritionVendorSlice = createAppSlice({
     loadVendorNutritionAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(vendorNutritionSerializer(await fetchVendorNutrition()));
+          return await fetchVendorNutrition();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -64,8 +64,9 @@ export const nutritionVendorSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = vendorNutritionSerializer(action.payload);
           state.status = 'succeeded';
-          state.data = action.payload;
+          state.data = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -76,7 +77,7 @@ export const nutritionVendorSlice = createAppSlice({
     setNutritionHiddenAsync: create.asyncThunk(
       async ({ itemId, hidden }: { itemId: string; hidden: boolean }, { rejectWithValue }) => {
         try {
-          return required(dishNutritionSerializer(await setNutritionHidden(itemId, hidden)));
+          return await setNutritionHidden(itemId, hidden);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -87,9 +88,11 @@ export const nutritionVendorSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = dishNutritionSerializer(action.payload);
           state.toggling = null;
+          if (!payload) return;
           if (state.data) {
-            state.data.items = state.data.items.map(i => (i.itemId === action.payload.itemId ? action.payload : i));
+            state.data.items = state.data.items.map(i => (i.itemId === payload.itemId ? payload : i));
             state.data.counts.hidden = state.data.items.filter(i => i.hidden).length;
           }
         },
@@ -104,7 +107,7 @@ export const nutritionVendorSlice = createAppSlice({
       async ({ ingredientId, foodId }: { ingredientId: string; foodId: string }, { rejectWithValue }) => {
         try {
           await updateIngredient(ingredientId, { nutritionFoodId: foodId });
-          return required(vendorNutritionSerializer(await fetchVendorNutrition()));
+          return await fetchVendorNutrition();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -115,8 +118,9 @@ export const nutritionVendorSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = vendorNutritionSerializer(action.payload);
           state.mapping = null;
-          state.data = action.payload;
+          state.data = payload;
           state.searchFor = null;
         },
         rejected: (state, action) => {
@@ -128,7 +132,7 @@ export const nutritionVendorSlice = createAppSlice({
     searchFoodsAsync: create.asyncThunk(
       async (q: string, { rejectWithValue }) => {
         try {
-          return required(nutritionFoodsSerializer(await searchNutritionFoods(q)));
+          return await searchNutritionFoods(q);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -138,8 +142,9 @@ export const nutritionVendorSlice = createAppSlice({
           state.searching = true;
         },
         fulfilled: (state, action) => {
+          const payload = nutritionFoodsSerializer(action.payload);
           state.searching = false;
-          state.foods = action.payload;
+          state.foods = payload;
         },
         rejected: state => {
           state.searching = false;

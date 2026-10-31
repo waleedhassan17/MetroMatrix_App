@@ -64,7 +64,7 @@ export const adminKitchenSignaturesSlice = createAppSlice({
     loadSignaturesAsync: create.asyncThunk(
       async (tab: SignatureStatus, { rejectWithValue }) => {
         try {
-          return required(signatureListSerializer(await fetchSignatures(tab)));
+          return await fetchSignatures(tab);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -75,8 +75,9 @@ export const adminKitchenSignaturesSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = signatureListSerializer(action.payload);
           state.status = 'succeeded';
-          state.list = action.payload;
+          state.list = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -90,7 +91,7 @@ export const adminKitchenSignaturesSlice = createAppSlice({
         try {
           if (input.keep) await approveSignature(input.itemId);
           else await removeSignature(input.itemId, input.note ?? '');
-          return required(signatureListSerializer(await fetchSignatures(input.tab)));
+          return await fetchSignatures(input.tab);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -101,9 +102,10 @@ export const adminKitchenSignaturesSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = signatureListSerializer(action.payload);
           state.busy = null;
           state.removing = null;
-          state.list = action.payload;
+          state.list = payload;
         },
         rejected: (state, action) => {
           state.busy = null;

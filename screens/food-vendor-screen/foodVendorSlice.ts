@@ -31,7 +31,7 @@ export const foodVendorSlice = createAppSlice({
     loadVendorPageAsync: create.asyncThunk(
       async ({ slug, at }: { slug: string; at: { lat: number; lng: number } | null }, { rejectWithValue }) => {
         try {
-          return required(vendorPageSerializer(await fetchVendorPage(slug, at)));
+          return await fetchVendorPage(slug, at);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -43,7 +43,8 @@ export const foodVendorSlice = createAppSlice({
           e.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          state.bySlug[action.meta.arg.slug] = { page: action.payload, status: 'succeeded', error: NO_ERROR };
+          const payload = vendorPageSerializer(action.payload);
+          state.bySlug[action.meta.arg.slug] = { page: payload, status: 'succeeded', error: NO_ERROR };
         },
         rejected: (state, action) => {
           const e = (state.bySlug[action.meta.arg.slug] ??= { ...EMPTY });

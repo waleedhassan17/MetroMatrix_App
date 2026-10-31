@@ -74,7 +74,7 @@ export const adminKitchenAliasesSlice = createAppSlice({
     loadAliasesAsync: create.asyncThunk(
       async (q: string, { rejectWithValue }) => {
         try {
-          return required(aliasesSerializer(await fetchAliases(q.trim() || undefined)));
+          return await fetchAliases(q.trim() || undefined);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -85,9 +85,10 @@ export const adminKitchenAliasesSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = aliasesSerializer(action.payload);
           state.status = 'succeeded';
-          state.items = action.payload.items;
-          state.total = action.payload.total;
+          state.items = payload.items;
+          state.total = payload.total;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -99,14 +100,15 @@ export const adminKitchenAliasesSlice = createAppSlice({
     searchKeysAsync: create.asyncThunk(
       async (q: string, { rejectWithValue }) => {
         try {
-          return required(ingredientKeysSerializer(await fetchIngredientKeys(q.trim() || undefined)));
+          return await fetchIngredientKeys(q.trim() || undefined);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
       },
       {
         fulfilled: (state, action) => {
-          state.keys = action.payload;
+          const payload = ingredientKeysSerializer(action.payload);
+          state.keys = payload;
         },
       },
     ),
@@ -142,7 +144,7 @@ export const adminKitchenAliasesSlice = createAppSlice({
       async (input: { id: string; q: string }, { rejectWithValue }) => {
         try {
           await deleteAlias(input.id);
-          return required(aliasesSerializer(await fetchAliases(input.q.trim() || undefined)));
+          return await fetchAliases(input.q.trim() || undefined);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -153,9 +155,10 @@ export const adminKitchenAliasesSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = aliasesSerializer(action.payload);
           state.busy = false;
-          state.items = action.payload.items;
-          state.total = action.payload.total;
+          state.items = payload.items;
+          state.total = payload.total;
         },
         rejected: (state, action) => {
           state.busy = false;

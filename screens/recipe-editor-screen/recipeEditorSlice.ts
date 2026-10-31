@@ -144,7 +144,7 @@ export const recipeEditorSlice = createAppSlice({
     saveRecipeAsync: create.asyncThunk(
       async ({ itemId, variantId, input }: { itemId: string; variantId: string | null; input: RecipeInput }, { rejectWithValue }) => {
         try {
-          return required(recipeSerializer(await saveRecipe(itemId, variantId, input)));
+          return await saveRecipe(itemId, variantId, input);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -155,9 +155,11 @@ export const recipeEditorSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = recipeSerializer(action.payload);
           state.saving = false;
-          state.recipe = action.payload;
-          state.draft = draftOf(action.payload);
+          if (!payload) return;
+          state.recipe = payload;
+          state.draft = draftOf(payload);
           state.dirty = false;
         },
         rejected: (state, action) => {
@@ -169,7 +171,7 @@ export const recipeEditorSlice = createAppSlice({
     deleteRecipeAsync: create.asyncThunk(
       async ({ itemId, variantId }: { itemId: string; variantId: string | null }, { rejectWithValue }) => {
         try {
-          return required(recipeSerializer(await deleteRecipe(itemId, variantId)));
+          return await deleteRecipe(itemId, variantId);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -179,9 +181,11 @@ export const recipeEditorSlice = createAppSlice({
           state.saving = true;
         },
         fulfilled: (state, action) => {
+          const payload = recipeSerializer(action.payload);
           state.saving = false;
-          state.recipe = action.payload;
-          state.draft = draftOf(action.payload);
+          if (!payload) return;
+          state.recipe = payload;
+          state.draft = draftOf(payload);
           state.dirty = false;
         },
         rejected: (state, action) => {

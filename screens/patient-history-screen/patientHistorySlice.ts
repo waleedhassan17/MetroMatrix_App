@@ -27,7 +27,7 @@ export const patientHistorySlice = createAppSlice({
     loadPatientHistoryAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(patientHistorySerializer(await fetchPatientHistory(id)));
+          return await fetchPatientHistory(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -38,7 +38,8 @@ export const patientHistorySlice = createAppSlice({
           e.status = 'loading';
         },
         fulfilled: (state, action) => {
-          state.byId[action.meta.arg] = { history: action.payload, status: 'succeeded', error: NO_ERROR };
+          const payload = patientHistorySerializer(action.payload);
+          state.byId[action.meta.arg] = { history: payload, status: 'succeeded', error: NO_ERROR };
         },
         rejected: (state, action) => {
           const e = (state.byId[action.meta.arg] ??= { ...EMPTY });

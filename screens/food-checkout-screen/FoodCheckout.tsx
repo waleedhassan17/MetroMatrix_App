@@ -13,7 +13,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { useDebouncedValue } from '../../hooks/usePagedList';
 import { formatAddress } from '../../models/addressModel';
@@ -97,6 +97,7 @@ const FoodCheckoutContent: React.FC<Props> = ({ navigation }) => {
   const { back } = useBack({ name: 'FoodBag' });
   const root = useNavigation<{ navigate: (name: string, params?: object) => void }>();
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const { service, colors, motion } = useTheme();
   const c = useAppSelector(selectFoodCheckout);
@@ -188,14 +189,15 @@ const FoodCheckoutContent: React.FC<Props> = ({ navigation }) => {
     // Came through the kitchen's own link or QR: the order says so (it counts as theirs).
     const source = storeSourceFor(storeSource, vendor?.slug, Date.now());
     const r = await dispatch(placeFoodOrderAsync({ input: { ...input, source }, key: c.idempotencyKey }));
-    if (placeFoodOrderAsync.fulfilled.match(r)) {
+    const placed = placeFoodOrderAsync.fulfilled.match(r) ? selectFoodCheckout(appStore.getState()).placed : null;
+    if (placed) {
       haptics.success();
       if (source) dispatch(setStoreSource(null));
       dispatch(setFoodBag(EMPTY_FOOD_CART));
       dispatch(newFoodCheckoutKey());
       // The bag and checkout leave the history: back from "Order placed"
       // returns to the menus, never to an empty bag or a used checkout.
-      const code = r.payload.code;
+      const code = placed.code;
       navigation.dispatch(state => {
         const routes = state.routes.filter(rt => rt.name !== 'FoodBag' && rt.name !== 'FoodCheckout');
         return CommonActions.reset({ ...state, routes: [...routes, { key: `FoodOrderPlaced-${code}`, name: 'FoodOrderPlaced', params: { code } }], index: routes.length });

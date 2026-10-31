@@ -10,7 +10,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { countsOf, defaultUnit, qtyLabel, unitChoices } from '../../models/kitchen/stockModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
@@ -50,6 +50,7 @@ const StockTake: React.FC<Props> = props => (
 const StockTakeContent: React.FC<Props> = ({ navigation, route }) => {
   const { back } = useBack({ name: 'KitchenStock' });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   const s = useAppSelector(selectStockTake);
@@ -75,8 +76,9 @@ const StockTakeContent: React.FC<Props> = ({ navigation, route }) => {
     }
     const res = await dispatch(saveStockTakeAsync(lines));
     if (saveStockTakeAsync.fulfilled.match(res)) {
+      const adjusted = selectStockTake(appStore.getState()).result?.adjusted ?? 0;
       haptics.success();
-      Toast.show({ type: 'success', text1: 'Count saved', text2: res.payload.adjusted ? `${res.payload.adjusted} ${res.payload.adjusted === 1 ? 'ingredient' : 'ingredients'} changed.` : 'Everything matched.' });
+      Toast.show({ type: 'success', text1: 'Count saved', text2: adjusted ? `${adjusted} ${adjusted === 1 ? 'ingredient' : 'ingredients'} changed.` : 'Everything matched.' });
       back();
     } else haptics.warning();
   };

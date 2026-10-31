@@ -52,7 +52,7 @@ export const storeProfileSlice = createAppSlice({
     loadStoreProfileAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(storeProfileSerializer(await fetchStoreProfile()));
+          return await fetchStoreProfile();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -62,9 +62,11 @@ export const storeProfileSlice = createAppSlice({
           state.status = 'loading';
         },
         fulfilled: (state, action) => {
+          const payload = storeProfileSerializer(action.payload);
           state.status = 'succeeded';
-          state.profile = action.payload;
-          state.form = toForm(action.payload);
+          if (!payload) return;
+          state.profile = payload;
+          state.form = toForm(payload);
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -97,7 +99,7 @@ export const storeProfileSlice = createAppSlice({
     saveStoreProfileAsync: create.asyncThunk(
       async (input: StoreProfileInput, { rejectWithValue }) => {
         try {
-          return required(storeProfileSerializer(await updateStoreProfile(input)));
+          return await updateStoreProfile(input);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -108,9 +110,11 @@ export const storeProfileSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = storeProfileSerializer(action.payload);
           state.saveStatus = 'succeeded';
-          state.profile = action.payload;
-          state.form = toForm(action.payload);
+          if (!payload) return;
+          state.profile = payload;
+          state.form = toForm(payload);
         },
         rejected: (state, action) => {
           state.saveStatus = 'failed';

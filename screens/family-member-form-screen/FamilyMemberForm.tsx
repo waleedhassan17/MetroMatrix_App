@@ -8,7 +8,7 @@ import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
 import { AppText, Button, ChoiceChip, DateField, InlineNotice, ScreenShell, TextField, dateKeyOf } from '../../Custom-Components/index';
@@ -41,6 +41,7 @@ const FamilyMemberForm: React.FC<Props> = props => (
 const FamilyMemberFormContent: React.FC<Props> = ({ route }) => {
   const { back } = useBack({ name: 'FamilyMembers' });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const id = route.params?.id ?? null;
   const member = useAppSelector(selectFamily).members.find(m => m.id === id) ?? null;
@@ -61,9 +62,10 @@ const FamilyMemberFormContent: React.FC<Props> = ({ route }) => {
       return;
     }
     const r = await dispatch(saveFamilyMemberAsync({ id, form: s.form }));
-    if (saveFamilyMemberAsync.fulfilled.match(r)) {
+    const saved = saveFamilyMemberAsync.fulfilled.match(r) ? selectFamilyForm(appStore.getState()).saved : null;
+    if (saved) {
       haptics.success();
-      Toast.show({ type: 'success', text1: id ? 'Saved' : `${r.payload.name} added`, text2: id ? undefined : 'You can book for them now.' });
+      Toast.show({ type: 'success', text1: id ? 'Saved' : `${saved.name} added`, text2: id ? undefined : 'You can book for them now.' });
       back();
     } else haptics.warning();
   };

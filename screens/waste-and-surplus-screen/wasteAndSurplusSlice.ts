@@ -27,6 +27,10 @@ export interface WasteAndSurplusSliceState {
   collectError: ServerError;
   logging: boolean;
   logError: ServerError;
+  /** The reservation just handed over. */
+  collected: ReturnType<typeof reservationSerializer>;
+  /** The waste just logged by voice. */
+  logged: ReturnType<typeof wasteSerializer>;
 }
 
 const initialState: WasteAndSurplusSliceState = {
@@ -42,6 +46,9 @@ const initialState: WasteAndSurplusSliceState = {
   collectError: NO_ERROR,
   logging: false,
   logError: NO_ERROR,
+  collected: null,
+
+  logged: null,
 };
 
 export const wasteAndSurplusSlice = createAppSlice({
@@ -89,7 +96,7 @@ export const wasteAndSurplusSlice = createAppSlice({
       async (_: void, { getState, rejectWithValue }) => {
         const code = normalizeCode((getState() as { wasteAndSurplus: WasteAndSurplusSliceState }).wasteAndSurplus.code);
         try {
-          return required(reservationSerializer(await collectReservation(code)));
+          return await collectReservation(code);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -99,9 +106,11 @@ export const wasteAndSurplusSlice = createAppSlice({
           state.collecting = true;
           state.collectError = NO_ERROR;
         },
-        fulfilled: state => {
+        fulfilled: (state, action) => {
+          const payload = reservationSerializer(action.payload);
           state.collecting = false;
           state.code = '';
+          state.collected = payload;
         },
         rejected: (state, action) => {
           state.collecting = false;
@@ -113,7 +122,7 @@ export const wasteAndSurplusSlice = createAppSlice({
     logSpokenWasteAsync: create.asyncThunk(
       async ({ lines, reason }: { lines: VoiceQtyLine[]; reason: WasteReason }, { rejectWithValue }) => {
         try {
-          return required(wasteSerializer(await logWaste(wasteFromVoice(lines, reason))));
+          return await logWaste(wasteFromVoice(lines, reason));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -124,8 +133,10 @@ export const wasteAndSurplusSlice = createAppSlice({
           state.logError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = wasteSerializer(action.payload);
           state.logging = false;
-          if (action.payload) state.recent = [action.payload, ...state.recent].slice(0, 5);
+          if (payload) state.recent = [payload, ...state.recent].slice(0, 5);
+          state.logged = payload;
         },
         rejected: (state, action) => {
           state.logging = false;

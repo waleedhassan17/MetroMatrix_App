@@ -52,7 +52,7 @@ export const boxSlice = createAppSlice({
     loadBoxAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(surplusBoxDetailSerializer(await fetchBox(id)));
+          return await fetchBox(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -64,8 +64,9 @@ export const boxSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = surplusBoxDetailSerializer(action.payload);
           state.status = 'succeeded';
-          state.box = action.payload;
+          state.box = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -77,7 +78,7 @@ export const boxSlice = createAppSlice({
       async ({ id, act }: { id: string; act: BoxAct }, { rejectWithValue }) => {
         try {
           await run(id, act);
-          return required(surplusBoxDetailSerializer(await fetchBox(id)));
+          return await fetchBox(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -89,8 +90,9 @@ export const boxSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = surplusBoxDetailSerializer(action.payload);
           state.acting = null;
-          state.box = action.payload;
+          state.box = payload;
         },
         rejected: (state, action) => {
           state.acting = null;

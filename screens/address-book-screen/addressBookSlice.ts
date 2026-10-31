@@ -28,7 +28,7 @@ export const addressBookSlice = createAppSlice({
     loadAddressesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(addressListSerializer(await fetchAddresses()));
+          return await fetchAddresses();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -39,8 +39,9 @@ export const addressBookSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = addressListSerializer(action.payload);
           state.status = 'succeeded';
-          state.addresses = action.payload;
+          state.addresses = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -52,7 +53,7 @@ export const addressBookSlice = createAppSlice({
       async (id: string, { rejectWithValue }) => {
         try {
           await setDefaultAddress(id);
-          return required(addressListSerializer(await fetchAddresses()));
+          return await fetchAddresses();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -63,8 +64,9 @@ export const addressBookSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = addressListSerializer(action.payload);
           state.busyId = null;
-          state.addresses = action.payload;
+          state.addresses = payload;
         },
         rejected: (state, action) => {
           state.busyId = null;
@@ -76,7 +78,7 @@ export const addressBookSlice = createAppSlice({
       async (id: string, { rejectWithValue }) => {
         try {
           await deleteAddress(id);
-          return required(addressListSerializer(await fetchAddresses()));
+          return await fetchAddresses();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -87,8 +89,9 @@ export const addressBookSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = addressListSerializer(action.payload);
           state.busyId = null;
-          state.addresses = action.payload;
+          state.addresses = payload;
         },
         rejected: (state, action) => {
           state.busyId = null;

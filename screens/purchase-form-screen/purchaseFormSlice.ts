@@ -31,6 +31,8 @@ export interface PurchaseFormSliceState {
   saving: boolean;
   error: ServerError;
   lineErrors: Record<string, string>;
+  /** The purchase just saved. */
+  saved: ReturnType<typeof purchaseSerializer>;
 }
 
 const initialState: PurchaseFormSliceState = {
@@ -48,6 +50,7 @@ const initialState: PurchaseFormSliceState = {
   saving: false,
   error: NO_ERROR,
   lineErrors: {},
+  saved: null,
 };
 
 const isBlank = (l: DraftLine) => !l.ingredientId && !l.name.trim() && !l.qty.trim() && !l.total.trim();
@@ -118,7 +121,7 @@ export const purchaseFormSlice = createAppSlice({
       async (file: LocalFile, { rejectWithValue }) => {
         try {
           const uploaded = await uploadImage(file, 'kitchen_receipt');
-          return required(receiptDraftSerializer(await scanReceipt(uploaded.url)));
+          return await scanReceipt(uploaded.url);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -129,13 +132,15 @@ export const purchaseFormSlice = createAppSlice({
           state.scanError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = receiptDraftSerializer(action.payload);
           state.scanning = false;
           state.source = 'receipt';
-          state.receiptUrl = action.payload.imageUrl;
-          state.lines = [...state.lines.filter(l => !isBlank(l)), ...linesFromReceipt(action.payload)];
-          const known = state.suppliers.find(s => s.name.toLowerCase() === (action.payload.supplierName ?? '').toLowerCase());
+          if (!payload) return;
+          state.receiptUrl = payload.imageUrl;
+          state.lines = [...state.lines.filter(l => !isBlank(l)), ...linesFromReceipt(payload)];
+          const known = state.suppliers.find(s => s.name.toLowerCase() === (payload.supplierName ?? '').toLowerCase());
           if (known) state.supplierId = known.id;
-          else if (action.payload.supplierName && !state.supplierId) state.supplierName = action.payload.supplierName;
+          else if (payload.supplierName && !state.supplierId) state.supplierName = payload.supplierName;
         },
         rejected: (state, action) => {
           state.scanning = false;
@@ -146,7 +151,7 @@ export const purchaseFormSlice = createAppSlice({
     savePurchaseAsync: create.asyncThunk(
       async (input: PurchaseInput, { rejectWithValue }) => {
         try {
-          return required(purchaseSerializer(await createPurchase(input)));
+          return await createPurchase(input);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -156,8 +161,10 @@ export const purchaseFormSlice = createAppSlice({
           state.saving = true;
           state.error = NO_ERROR;
         },
-        fulfilled: state => {
+        fulfilled: (state, action) => {
+          const payload = purchaseSerializer(action.payload);
           state.saving = false;
+          state.saved = payload;
         },
         rejected: (state, action) => {
           state.saving = false;

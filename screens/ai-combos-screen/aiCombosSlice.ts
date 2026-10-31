@@ -68,7 +68,7 @@ export const aiCombosSlice = createAppSlice({
     createComboAsync: create.asyncThunk(
       async ({ idea, categoryId, price }: { idea: ComboIdea; categoryId: string; price: number }, { rejectWithValue }) => {
         try {
-          return required(vendorMenuItemSerializer(await createMenuItem(comboItemInput(idea, categoryId, price), [])));
+          return await createMenuItem(comboItemInput(idea, categoryId, price), []);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -79,8 +79,10 @@ export const aiCombosSlice = createAppSlice({
           state.createError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = vendorMenuItemSerializer(action.payload);
           state.creating = null;
-          state.created[action.meta.arg.idea.id] = action.payload.id;
+          if (!payload) return;
+          state.created[action.meta.arg.idea.id] = payload.id;
         },
         rejected: (state, action) => {
           state.creating = null;

@@ -112,7 +112,7 @@ export const adminKitchenNutritionSlice = createAppSlice({
     loadFoodsAsync: create.asyncThunk(
       async (q: string, { rejectWithValue }) => {
         try {
-          return required(staffNutritionFoodsSerializer(await fetchNutritionFoods({ q: q.trim() || undefined, ...PAGE })));
+          return await fetchNutritionFoods({ q: q.trim() || undefined, ...PAGE });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -123,9 +123,10 @@ export const adminKitchenNutritionSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = staffNutritionFoodsSerializer(action.payload);
           state.status = 'succeeded';
-          state.items = action.payload.items;
-          state.total = action.payload.total;
+          state.items = payload.items;
+          state.total = payload.total;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -140,7 +141,7 @@ export const adminKitchenNutritionSlice = createAppSlice({
           const body = nutritionFoodInputOf(input.sheet.form);
           if (input.sheet.id) await updateNutritionFood(input.sheet.id, body);
           else await createNutritionFood({ ...body, key: input.sheet.form.key.trim() });
-          return required(staffNutritionFoodsSerializer(await fetchNutritionFoods({ q: input.q.trim() || undefined, ...PAGE })));
+          return await fetchNutritionFoods({ q: input.q.trim() || undefined, ...PAGE });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -151,10 +152,11 @@ export const adminKitchenNutritionSlice = createAppSlice({
           state.saveError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = staffNutritionFoodsSerializer(action.payload);
           state.busy = false;
           state.sheet = null;
-          state.items = action.payload.items;
-          state.total = action.payload.total;
+          state.items = payload.items;
+          state.total = payload.total;
         },
         rejected: (state, action) => {
           state.busy = false;
@@ -166,7 +168,7 @@ export const adminKitchenNutritionSlice = createAppSlice({
     checkFoodsCsvAsync: create.asyncThunk(
       async (csv: string, { rejectWithValue }) => {
         try {
-          return required(nutritionFoodImportSerializer(await importNutritionFoods(csv, true)));
+          return await importNutritionFoods(csv, true);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -177,8 +179,9 @@ export const adminKitchenNutritionSlice = createAppSlice({
           state.importError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = nutritionFoodImportSerializer(action.payload);
           state.checking = false;
-          state.result = action.payload;
+          state.result = payload;
         },
         rejected: (state, action) => {
           state.checking = false;

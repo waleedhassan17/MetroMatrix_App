@@ -10,7 +10,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { draftCost, draftLineCost, recipeInputOf, validateRecipe, type CostedIngredient, type DraftLine } from '../../models/kitchen/costingModel';
 import { unitChoices, unitOfKey } from '../../models/kitchen/stockModel';
@@ -68,6 +68,7 @@ const RecipeEditor: React.FC<Props> = props => (
 const RecipeEditorContent: React.FC<Props> = ({ navigation, route }) => {
   const { back } = useBack({ name: 'KitchenRecipes' });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectRecipeEditor);
   const { itemId, variantId } = route.params;
@@ -102,8 +103,9 @@ const RecipeEditorContent: React.FC<Props> = ({ navigation, route }) => {
     }
     const res = await dispatch(saveRecipeAsync({ itemId, variantId: r.variantId, input }));
     if (saveRecipeAsync.fulfilled.match(res)) {
+      const { recipe } = selectRecipeEditor(appStore.getState());
       haptics.success();
-      Toast.show({ type: 'success', text1: 'Recipe saved', text2: res.payload.cost ? `Cost to make ${res.payload.cost.toMake}. Stock now counts it.` : undefined });
+      Toast.show({ type: 'success', text1: 'Recipe saved', text2: recipe?.cost ? `Cost to make ${recipe.cost.toMake}. Stock now counts it.` : undefined });
     } else haptics.warning();
   };
 

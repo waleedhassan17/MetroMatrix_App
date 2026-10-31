@@ -43,7 +43,7 @@ export const reviewModerationSlice = createAppSlice({
     moderateReviewAsync: create.asyncThunk(
       async ({ id, hide, reason }: { id: string; hide: boolean; reason: string | null }, { rejectWithValue }) => {
         try {
-          return required(doctorReviewSerializer(await setReviewHidden(id, hide, hide ? (reason ?? '').trim() : null)));
+          return await setReviewHidden(id, hide, hide ? (reason ?? '').trim() : null);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

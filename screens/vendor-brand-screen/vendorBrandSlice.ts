@@ -66,7 +66,7 @@ export const vendorBrandSlice = createAppSlice({
     loadVendorBrandAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [profile, cuisines] = await Promise.all([fetchVendorProfile().then(raw => required(vendorProfileSerializer(raw))), fetchCuisines().then(raw => required(foodCuisinesSerializer(raw)))]);
+          const [profile, cuisines] = await Promise.all([fetchVendorProfile(), fetchCuisines()]);
           return { profile, cuisines };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -78,10 +78,12 @@ export const vendorBrandSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = { profile: vendorProfileSerializer(action.payload.profile), cuisines: foodCuisinesSerializer(action.payload.cuisines) };
           state.status = 'succeeded';
-          state.profile = action.payload.profile;
-          state.cuisines = action.payload.cuisines;
-          state.form = formOf(action.payload.profile);
+          if (!payload.profile) return;
+          state.profile = payload.profile;
+          state.cuisines = payload.cuisines;
+          state.form = formOf(payload.profile);
           state.submitted = false;
         },
         rejected: (state, action) => {
@@ -116,7 +118,7 @@ export const vendorBrandSlice = createAppSlice({
     saveVendorBrandAsync: create.asyncThunk(
       async (form: VendorBrandForm, { rejectWithValue }) => {
         try {
-          return required(vendorProfileSerializer(await updateVendorProfile(brandPatch(form))));
+          return await updateVendorProfile(brandPatch(form));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -127,9 +129,11 @@ export const vendorBrandSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = vendorProfileSerializer(action.payload);
           state.saving = false;
-          state.profile = action.payload;
-          state.form = formOf(action.payload);
+          if (!payload) return;
+          state.profile = payload;
+          state.form = formOf(payload);
         },
         rejected: (state, action) => {
           state.saving = false;

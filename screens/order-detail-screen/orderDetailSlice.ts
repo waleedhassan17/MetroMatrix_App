@@ -69,7 +69,7 @@ export const orderDetailSlice = createAppSlice({
     loadOrderGroupAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return required(orderGroupSerializer(await fetchOrderGroup(code)));
+          return await fetchOrderGroup(code);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -81,7 +81,8 @@ export const orderDetailSlice = createAppSlice({
           e.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          state.byCode[action.meta.arg] = { group: action.payload, status: 'succeeded', error: NO_ERROR };
+          const payload = orderGroupSerializer(action.payload);
+          state.byCode[action.meta.arg] = { group: payload, status: 'succeeded', error: NO_ERROR };
         },
         rejected: (state, action) => {
           const e = (state.byCode[action.meta.arg] ??= { ...EMPTY });
@@ -119,11 +120,15 @@ export const orderDetailSlice = createAppSlice({
   extraReducers: builder => {
     // A just-placed order opens without a second request.
     builder.addCase(placeOrderAsync.fulfilled, (state, action) => {
-      state.byCode[action.payload.code] = { group: action.payload, status: 'succeeded', error: NO_ERROR };
+          const payload = orderGroupSerializer(action.payload);
+      if (!payload) return;
+      state.byCode[payload.code] = { group: payload, status: 'succeeded', error: NO_ERROR };
     });
     // A sent payment proof answers with the whole group, too.
     builder.addCase(submitPaymentProofAsync.fulfilled, (state, action) => {
-      state.byCode[action.payload.code] = { group: action.payload, status: 'succeeded', error: NO_ERROR };
+          const payload = orderGroupSerializer(action.payload);
+      if (!payload) return;
+      state.byCode[payload.code] = { group: payload, status: 'succeeded', error: NO_ERROR };
     });
   },
   selectors: {

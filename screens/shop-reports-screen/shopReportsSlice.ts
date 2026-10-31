@@ -15,9 +15,13 @@ export interface ShopReportsSliceState {
   busy: string | null;
   action: FormStatus;
   error: ServerError;
+  /** The report just decided. */
+  decided: ReturnType<typeof productReportSerializer>;
 }
 
-const initialState: ShopReportsSliceState = { status: 'open', removing: null, reason: '', busy: null, action: 'idle', error: NO_ERROR };
+const initialState: ShopReportsSliceState = { status: 'open', removing: null, reason: '', busy: null, action: 'idle', error: NO_ERROR ,
+  decided: null,
+};
 
 export const shopReportsSlice = createAppSlice({
   name: 'shopReports',
@@ -37,7 +41,7 @@ export const shopReportsSlice = createAppSlice({
     decideReportAsync: create.asyncThunk(
       async (d: { id: string; kind: 'dismiss' } | { id: string; kind: 'remove'; reason: string }, { rejectWithValue }) => {
         try {
-          return d.kind === 'dismiss' ? required(productReportSerializer(await dismissReport(d.id))) : required(productReportSerializer(await removeReportedProduct(d.id, d.reason.trim())));
+          return d.kind === 'dismiss' ? await dismissReport(d.id) : await removeReportedProduct(d.id, d.reason.trim());
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -47,9 +51,11 @@ export const shopReportsSlice = createAppSlice({
           state.busy = action.meta.arg.id;
           state.error = NO_ERROR;
         },
-        fulfilled: state => {
+        fulfilled: (state, action) => {
+          const payload = productReportSerializer(action.payload);
           state.busy = null;
           state.removing = null;
+          state.decided = payload;
         },
         rejected: (state, action) => {
           state.busy = null;

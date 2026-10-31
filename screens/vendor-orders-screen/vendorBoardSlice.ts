@@ -159,14 +159,15 @@ export const vendorBoardSlice = createAppSlice({
     loadBoardHintsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(boardHintsSerializer(await fetchBoardHints()));
+          return await fetchBoardHints();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
       },
       {
         fulfilled: (state, action) => {
-          state.hints = action.payload;
+          const payload = boardHintsSerializer(action.payload);
+          state.hints = payload;
         },
       },
     ),
@@ -296,14 +297,15 @@ export const vendorBoardSlice = createAppSlice({
     loadKitchenAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(vendorProfileSerializer(await fetchVendorProfile()));
+          return await fetchVendorProfile();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
       },
       {
         fulfilled: (state, action) => {
-          state.profile = action.payload;
+          const payload = vendorProfileSerializer(action.payload);
+          state.profile = payload;
         },
       },
     ),

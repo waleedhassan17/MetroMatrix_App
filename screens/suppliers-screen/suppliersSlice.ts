@@ -40,7 +40,7 @@ export const suppliersSlice = createAppSlice({
     loadSuppliersAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(suppliersSerializer(await fetchSuppliers()));
+          return await fetchSuppliers();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -51,8 +51,9 @@ export const suppliersSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = suppliersSerializer(action.payload);
           state.status = 'succeeded';
-          state.suppliers = action.payload;
+          state.suppliers = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -64,7 +65,7 @@ export const suppliersSlice = createAppSlice({
       async (d: SupplierDraft, { rejectWithValue }) => {
         try {
           const body = { name: d.name.trim(), phone: d.phone.trim() || null, note: d.note.trim() || null };
-          return d.id ? required(supplierSerializer(await updateSupplier(d.id, body))) : required(supplierSerializer(await createSupplier(body)));
+          return d.id ? await updateSupplier(d.id, body) : await createSupplier(body);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -75,11 +76,13 @@ export const suppliersSlice = createAppSlice({
           state.saveError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = supplierSerializer(action.payload);
           state.saving = false;
           state.editing = null;
-          const at = state.suppliers.findIndex(x => x.id === action.payload.id);
-          if (at >= 0) state.suppliers[at] = action.payload;
-          else state.suppliers.push(action.payload);
+          if (!payload) return;
+          const at = state.suppliers.findIndex(x => x.id === payload.id);
+          if (at >= 0) state.suppliers[at] = payload;
+          else state.suppliers.push(payload);
         },
         rejected: (state, action) => {
           state.saving = false;

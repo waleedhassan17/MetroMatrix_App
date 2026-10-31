@@ -25,7 +25,7 @@ export const ramadanModeSlice = createAppSlice({
     loadRamadanAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(ramadanSettingsSerializer(await fetchRamadan()));
+          return await fetchRamadan();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -36,8 +36,9 @@ export const ramadanModeSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = ramadanSettingsSerializer(action.payload);
           state.status = 'succeeded';
-          state.data = action.payload;
+          state.data = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -48,7 +49,7 @@ export const ramadanModeSlice = createAppSlice({
     saveRamadanAsync: create.asyncThunk(
       async (input: RamadanInput, { rejectWithValue }) => {
         try {
-          return required(ramadanSettingsSerializer(await updateRamadan(input)));
+          return await updateRamadan(input);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -59,8 +60,9 @@ export const ramadanModeSlice = createAppSlice({
           state.saveError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = ramadanSettingsSerializer(action.payload);
           state.saving = false;
-          state.data = action.payload;
+          state.data = payload;
         },
         rejected: (state, action) => {
           state.saving = false;

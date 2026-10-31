@@ -29,7 +29,7 @@ export const vendorInsightsSlice = createAppSlice({
     loadFoodInsightsAsync: create.asyncThunk(
       async (range: FoodInsightsRange, { rejectWithValue }) => {
         try {
-          return required(foodInsightsSerializer(await fetchFoodInsights(range)));
+          return await fetchFoodInsights(range);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -40,8 +40,10 @@ export const vendorInsightsSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = foodInsightsSerializer(action.payload);
           state.status = 'succeeded';
-          state.byRange[action.meta.arg] = action.payload;
+          if (!payload) return;
+          state.byRange[action.meta.arg] = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

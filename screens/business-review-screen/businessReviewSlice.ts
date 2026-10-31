@@ -84,7 +84,7 @@ export const businessReviewSlice = createAppSlice({
     loadBusinessAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(businessWithOwnerSerializer(await fetchBusiness(id)));
+          return await fetchBusiness(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -95,8 +95,9 @@ export const businessReviewSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = businessWithOwnerSerializer(action.payload);
           state.loadStatus = 'succeeded';
-          state.business = action.payload;
+          state.business = payload;
         },
         rejected: (state, action) => {
           state.loadStatus = 'failed';

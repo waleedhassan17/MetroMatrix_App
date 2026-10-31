@@ -46,7 +46,7 @@ export const vendorSettingsSlice = createAppSlice({
     loadVendorSettingsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(vendorSettingsSerializer(await fetchVendorSettings()));
+          return await fetchVendorSettings();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -57,9 +57,11 @@ export const vendorSettingsSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = vendorSettingsSerializer(action.payload);
           state.status = 'succeeded';
-          state.settings = action.payload;
-          state.form = settingsForm(action.payload);
+          if (!payload) return;
+          state.settings = payload;
+          state.form = settingsForm(payload);
           state.submitted = false;
         },
         rejected: (state, action) => {
@@ -71,7 +73,7 @@ export const vendorSettingsSlice = createAppSlice({
     saveVendorSettingsAsync: create.asyncThunk(
       async (form: VendorSettingsForm, { rejectWithValue }) => {
         try {
-          return required(vendorSettingsSerializer(await updateVendorSettings(settingsPatch(form))));
+          return await updateVendorSettings(settingsPatch(form));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -82,9 +84,11 @@ export const vendorSettingsSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = vendorSettingsSerializer(action.payload);
           state.saving = false;
-          state.settings = action.payload;
-          state.form = settingsForm(action.payload);
+          if (!payload) return;
+          state.settings = payload;
+          state.form = settingsForm(payload);
         },
         rejected: (state, action) => {
           state.saving = false;

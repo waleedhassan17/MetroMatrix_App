@@ -46,7 +46,7 @@ export const specialtiesSlice = createAppSlice({
     loadSpecialtiesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(adminSpecialtyListSerializer(await fetchAdminSpecialties()));
+          return await fetchAdminSpecialties();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -56,8 +56,9 @@ export const specialtiesSlice = createAppSlice({
           state.status = 'loading';
         },
         fulfilled: (state, action) => {
+          const payload = adminSpecialtyListSerializer(action.payload);
           state.status = 'succeeded';
-          state.list = action.payload;
+          state.list = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -76,7 +77,7 @@ export const specialtiesSlice = createAppSlice({
             // Only the rows whose place changed are sent.
             for (const [i, x] of change.list.entries()) if (x.sort !== i + 1) await updateSpecialty(x.id, { sort: i + 1 });
           }
-          return required(adminSpecialtyListSerializer(await fetchAdminSpecialties()));
+          return await fetchAdminSpecialties();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -87,8 +88,9 @@ export const specialtiesSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = adminSpecialtyListSerializer(action.payload);
           state.busy = false;
-          state.list = action.payload;
+          state.list = payload;
           state.sheet = null;
         },
         rejected: (state, action) => {

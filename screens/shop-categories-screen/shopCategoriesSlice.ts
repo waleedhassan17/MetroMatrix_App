@@ -45,7 +45,7 @@ export const shopCategoriesSlice = createAppSlice({
     loadCategoriesTreeAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(categoryListSerializer(await fetchAdminCategories()));
+          return await fetchAdminCategories();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -55,8 +55,9 @@ export const shopCategoriesSlice = createAppSlice({
           state.status = 'loading';
         },
         fulfilled: (state, action) => {
+          const payload = categoryListSerializer(action.payload);
           state.status = 'succeeded';
-          state.tree = action.payload;
+          state.tree = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

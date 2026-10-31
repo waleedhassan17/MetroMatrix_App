@@ -21,11 +21,15 @@ export interface IngredientFormSliceState {
   error: ServerError;
   /** Has stock: the way it is counted can't change. */
   locked: boolean;
+  /** The ingredient just saved. */
+  saved: ReturnType<typeof ingredientDetailSerializer>;
 }
 
 const EMPTY: IngredientForm = { name: '', category: 'vegetables', baseUnit: 'g', dozens: false, par: '', parUnit: 'kg' };
 
-const initialState: IngredientFormSliceState = { editingId: null, form: EMPTY, customUnits: [], touched: false, status: 'idle', saving: false, error: NO_ERROR, locked: false };
+const initialState: IngredientFormSliceState = { editingId: null, form: EMPTY, customUnits: [], touched: false, status: 'idle', saving: false, error: NO_ERROR, locked: false ,
+  saved: null,
+};
 
 const formOf = (i: IngredientDetail): IngredientForm => {
   const parUnit = defaultUnit(i);
@@ -58,7 +62,7 @@ export const ingredientFormSlice = createAppSlice({
     loadIngredientForEditAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(ingredientDetailSerializer(await fetchIngredient(id)));
+          return await fetchIngredient(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -68,10 +72,12 @@ export const ingredientFormSlice = createAppSlice({
           Object.assign(state, initialState, { editingId: action.meta.arg, status: 'loading' as FormStatus });
         },
         fulfilled: (state, action) => {
+          const payload = ingredientDetailSerializer(action.payload);
           state.status = 'succeeded';
-          state.form = formOf(action.payload);
-          state.customUnits = customUnitRows(action.payload.customUnits, action.payload.baseUnit);
-          state.locked = action.payload.batches.length > 0 || action.payload.onHand !== 0;
+          if (!payload) return;
+          state.form = formOf(payload);
+          state.customUnits = customUnitRows(payload.customUnits, payload.baseUnit);
+          state.locked = payload.batches.length > 0 || payload.onHand !== 0;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -82,7 +88,7 @@ export const ingredientFormSlice = createAppSlice({
     saveIngredientAsync: create.asyncThunk(
       async ({ id, input }: { id: string | null; input: IngredientInput }, { rejectWithValue }) => {
         try {
-          return id ? required(ingredientDetailSerializer(await updateIngredient(id, input))) : required(ingredientDetailSerializer(await createIngredient(input)));
+          return id ? await updateIngredient(id, input) : await createIngredient(input);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -92,8 +98,10 @@ export const ingredientFormSlice = createAppSlice({
           state.saving = true;
           state.error = NO_ERROR;
         },
-        fulfilled: state => {
+        fulfilled: (state, action) => {
+          const payload = ingredientDetailSerializer(action.payload);
           state.saving = false;
+          state.saved = payload;
         },
         rejected: (state, action) => {
           state.saving = false;

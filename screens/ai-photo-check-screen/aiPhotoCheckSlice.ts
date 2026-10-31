@@ -37,7 +37,7 @@ export const aiPhotoCheckSlice = createAppSlice({
     loadPhotoDishesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(vendorMenuItemsSerializer(await fetchMenuItems()));
+          return await fetchMenuItems();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -47,8 +47,9 @@ export const aiPhotoCheckSlice = createAppSlice({
           state.status = 'loading';
         },
         fulfilled: (state, action) => {
+          const payload = vendorMenuItemsSerializer(action.payload);
           state.status = 'succeeded';
-          state.items = action.payload;
+          state.items = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -60,7 +61,7 @@ export const aiPhotoCheckSlice = createAppSlice({
       async ({ file, itemId }: { file: LocalFile; itemId: string | null }, { rejectWithValue }) => {
         try {
           const uploaded = await uploadImage(file, 'menu_item');
-          return required(photoCheckSerializer(await checkPhoto(uploaded.url, itemId)));
+          return await checkPhoto(uploaded.url, itemId);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -73,8 +74,9 @@ export const aiPhotoCheckSlice = createAppSlice({
           state.applied = false;
         },
         fulfilled: (state, action) => {
+          const payload = photoCheckSerializer(action.payload);
           state.checking = false;
-          state.result = action.payload;
+          state.result = payload;
         },
         rejected: (state, action) => {
           state.checking = false;
@@ -86,7 +88,7 @@ export const aiPhotoCheckSlice = createAppSlice({
     applyPhotoAsync: create.asyncThunk(
       async ({ itemId, photoUrl }: { itemId: string; photoUrl: string }, { rejectWithValue }) => {
         try {
-          return required(vendorMenuItemSerializer(await updateMenuItem(itemId, { photoUrl })));
+          return await updateMenuItem(itemId, { photoUrl });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -97,9 +99,11 @@ export const aiPhotoCheckSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = vendorMenuItemSerializer(action.payload);
           state.applying = false;
           state.applied = true;
-          state.items = state.items.map(i => (i.id === action.payload.id ? action.payload : i));
+          if (!payload) return;
+          state.items = state.items.map(i => (i.id === payload.id ? payload : i));
         },
         rejected: (state, action) => {
           state.applying = false;

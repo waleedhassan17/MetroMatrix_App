@@ -25,7 +25,7 @@ export const menuExperimentSlice = createAppSlice({
     loadExperimentAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(experimentSerializer(await fetchExperiment(id)));
+          return await fetchExperiment(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -38,8 +38,9 @@ export const menuExperimentSlice = createAppSlice({
           if (state.data?.id !== action.meta.arg) state.data = null;
         },
         fulfilled: (state, action) => {
+          const payload = experimentSerializer(action.payload);
           state.status = 'succeeded';
-          state.data = action.payload;
+          state.data = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -50,7 +51,7 @@ export const menuExperimentSlice = createAppSlice({
     decideExperimentAsync: create.asyncThunk(
       async ({ id, decision }: { id: string; decision: ExperimentDecision }, { rejectWithValue }) => {
         try {
-          return required(experimentSerializer(await decideExperiment(id, decision)));
+          return await decideExperiment(id, decision);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -61,8 +62,9 @@ export const menuExperimentSlice = createAppSlice({
           state.actError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = experimentSerializer(action.payload);
           state.acting = false;
-          state.data = action.payload;
+          state.data = payload;
         },
         rejected: (state, action) => {
           state.acting = false;

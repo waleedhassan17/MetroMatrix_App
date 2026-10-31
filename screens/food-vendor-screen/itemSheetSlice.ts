@@ -50,7 +50,7 @@ export const itemSheetSlice = createAppSlice({
     openItemSheetAsync: create.asyncThunk(
       async (itemId: string, { rejectWithValue }) => {
         try {
-          return required(itemSheetSerializer(await fetchItemSheet(itemId)));
+          return await fetchItemSheet(itemId);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -60,10 +60,12 @@ export const itemSheetSlice = createAppSlice({
           Object.assign(state, initialState, { itemId: action.meta.arg, status: 'loading' });
         },
         fulfilled: (state, action) => {
+          const payload = itemSheetSerializer(action.payload);
           if (state.itemId !== action.meta.arg) return;
           state.status = 'succeeded';
-          state.sheet = action.payload;
-          state.selection = initialSelection(action.payload);
+          if (!payload) return;
+          state.sheet = payload;
+          state.selection = initialSelection(payload);
         },
         rejected: (state, action) => {
           if (state.itemId !== action.meta.arg) return;

@@ -27,7 +27,7 @@ export const specialtyListSlice = createAppSlice({
     loadSpecialtiesAsync: create.asyncThunk(
       async (city: string | null, { rejectWithValue }) => {
         try {
-          return required(specialtiesSerializer(await fetchSpecialties(city)));
+          return await fetchSpecialties(city);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -38,7 +38,8 @@ export const specialtyListSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          state.items = action.payload;
+          const payload = specialtiesSerializer(action.payload);
+          state.items = payload;
           state.status = 'succeeded';
         },
         rejected: (state, action) => {

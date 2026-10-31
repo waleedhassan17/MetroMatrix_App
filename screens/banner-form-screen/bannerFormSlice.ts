@@ -161,7 +161,7 @@ export const bannerFormSlice = createAppSlice({
     saveBannerAsync: create.asyncThunk(
       async ({ id, input }: { id: string | null; input: AdminBannerInput }, { rejectWithValue }) => {
         try {
-          return id ? required(adminBannerSerializer(await updateBanner(id, input))) : required(adminBannerSerializer(await createBanner(input)));
+          return id ? await updateBanner(id, input) : await createBanner(input);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

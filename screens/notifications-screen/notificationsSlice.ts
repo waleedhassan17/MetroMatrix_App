@@ -22,14 +22,15 @@ export const notificationsSlice = createAppSlice({
     loadUnreadCountAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(unreadCountSerializer(await fetchUnreadCount()));
+          return await fetchUnreadCount();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
       },
       {
         fulfilled: (state, action) => {
-          state.unread = action.payload;
+          const payload = unreadCountSerializer(action.payload);
+          state.unread = payload;
         },
       },
     ),
@@ -38,7 +39,7 @@ export const notificationsSlice = createAppSlice({
         try {
           if ('all' in target) await markAllNotificationsRead();
           else await Promise.all(target.ids.map(id => markNotificationRead(id)));
-          return required(unreadCountSerializer(await fetchUnreadCount()));
+          return await fetchUnreadCount();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -48,7 +49,8 @@ export const notificationsSlice = createAppSlice({
           state.unread = 'all' in action.meta.arg ? 0 : Math.max(0, state.unread - action.meta.arg.ids.length);
         },
         fulfilled: (state, action) => {
-          state.unread = action.payload;
+          const payload = unreadCountSerializer(action.payload);
+          state.unread = payload;
         },
       },
     ),

@@ -141,7 +141,7 @@ export const doctorProfileSlice = createAppSlice({
     chooseDayAsync: create.asyncThunk(
       async ({ doctorId, locationId, date }: { key: string; doctorId: string; locationId: string; date: string }, { rejectWithValue }) => {
         try {
-          return required(slotDaySerializer(await fetchSlots(doctorId, locationId, date)));
+          return await fetchSlots(doctorId, locationId, date);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -156,10 +156,11 @@ export const doctorProfileSlice = createAppSlice({
           v.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = slotDaySerializer(action.payload);
           const v = state.views[action.meta.arg.key];
           if (!v || v.date !== action.meta.arg.date) return;
           v.loading = false;
-          v.day = action.payload;
+          v.day = payload;
         },
         rejected: (state, action) => {
           const v = state.views[action.meta.arg.key];

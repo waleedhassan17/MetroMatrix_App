@@ -28,7 +28,7 @@ export const vendorSetupSlice = createAppSlice({
     loadVendorSetupAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(vendorSetupSerializer(await fetchVendorSetup()));
+          return await fetchVendorSetup();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -39,8 +39,9 @@ export const vendorSetupSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = vendorSetupSerializer(action.payload);
           state.status = 'succeeded';
-          state.setup = action.payload;
+          state.setup = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -53,7 +54,7 @@ export const vendorSetupSlice = createAppSlice({
         try {
           await goLive();
           await dispatch(refreshSession());
-          return required(vendorSetupSerializer(await fetchVendorSetup()));
+          return await fetchVendorSetup();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -64,8 +65,9 @@ export const vendorSetupSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = vendorSetupSerializer(action.payload);
           state.goingLive = false;
-          state.setup = action.payload;
+          state.setup = payload;
         },
         rejected: (state, action) => {
           state.goingLive = false;

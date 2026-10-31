@@ -15,9 +15,13 @@ export interface MyReviewsSliceState {
   text: string;
   status: FormStatus;
   error: ServerError;
+  /** The review just replied to, as the server has it now. */
+  replied: ReturnType<typeof doctorReviewSerializer>;
 }
 
-const initialState: MyReviewsSliceState = { summary: null, unreplied: false, replying: null, text: '', status: 'idle', error: NO_ERROR };
+const initialState: MyReviewsSliceState = { summary: null, unreplied: false, replying: null, text: '', status: 'idle', error: NO_ERROR ,
+  replied: null,
+};
 
 export const myReviewsSlice = createAppSlice({
   name: 'myReviews',
@@ -37,21 +41,22 @@ export const myReviewsSlice = createAppSlice({
     loadReviewSummaryAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(reviewSummarySerializer(await fetchOwnReviewSummary()));
+          return await fetchOwnReviewSummary();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
       },
       {
         fulfilled: (state, action) => {
-          state.summary = action.payload;
+          const payload = reviewSummarySerializer(action.payload);
+          state.summary = payload;
         },
       },
     ),
     sendReplyAsync: create.asyncThunk(
       async ({ id, text }: { id: string; text: string }, { rejectWithValue }) => {
         try {
-          return required(doctorReviewSerializer(await replyToReview(id, text.trim())));
+          return await replyToReview(id, text.trim());
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -61,9 +66,11 @@ export const myReviewsSlice = createAppSlice({
           state.status = 'loading';
           state.error = NO_ERROR;
         },
-        fulfilled: state => {
+        fulfilled: (state, action) => {
+          const payload = doctorReviewSerializer(action.payload);
           state.status = 'succeeded';
           state.replying = null;
+          state.replied = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

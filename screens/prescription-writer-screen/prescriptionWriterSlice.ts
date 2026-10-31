@@ -138,16 +138,17 @@ export const prescriptionWriterSlice = createAppSlice({
     suggestMedicineAsync: create.asyncThunk(
       async ({ q }: { row: number; q: string }, { rejectWithValue }) => {
         try {
-          return required(medicineSuggestionsSerializer(await suggestMedicines(q)));
+          return await suggestMedicines(q);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
       },
       {
         fulfilled: (state, action) => {
+          const payload = medicineSuggestionsSerializer(action.payload);
           const m = state.form.medicines[action.meta.arg.row];
           // Only for what is still in that box.
-          if (m && m.name.trim() === action.meta.arg.q) state.suggestions = { row: action.meta.arg.row, items: action.payload };
+          if (m && m.name.trim() === action.meta.arg.q) state.suggestions = { row: action.meta.arg.row, items: payload };
         },
       },
     ),

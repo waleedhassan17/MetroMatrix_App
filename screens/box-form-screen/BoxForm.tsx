@@ -11,7 +11,7 @@ import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { BACHAT_BOX, MAX_BOX_QUANTITY, boxInput, discountLabel, pickupTimes, validateBox, withPickupFrom } from '../../models/kitchen/surplusModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
@@ -53,6 +53,7 @@ const BoxForm: React.FC<Props> = props => (
 const BoxFormContent: React.FC<Props> = ({ navigation, route }) => {
   const { back } = useBack({ name: 'KitchenWaste' });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectBoxForm);
   const f = s.form;
@@ -83,10 +84,11 @@ const BoxFormContent: React.FC<Props> = ({ navigation, route }) => {
       return;
     }
     const r = await dispatch(createBoxAsync(boxInput(f)));
-    if (createBoxAsync.fulfilled.match(r) && r.payload) {
+    const box = createBoxAsync.fulfilled.match(r) ? selectBoxForm(appStore.getState()).created : null;
+    if (box) {
       haptics.success();
-      Toast.show({ type: 'success', text1: `${BACHAT_BOX} is live`, text2: `Customers nearby can reserve it until ${formatSlot(r.payload.pickupTo, TZ)}.` });
-      navigation.replace('KitchenBox', { id: r.payload.id });
+      Toast.show({ type: 'success', text1: `${BACHAT_BOX} is live`, text2: `Customers nearby can reserve it until ${formatSlot(box.pickupTo, TZ)}.` });
+      navigation.replace('KitchenBox', { id: box.id });
     } else haptics.warning();
   };
 

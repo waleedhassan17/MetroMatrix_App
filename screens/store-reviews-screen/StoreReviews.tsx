@@ -9,7 +9,7 @@ import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { usePagedList } from '../../hooks/usePagedList';
 import { fetchPartnerReviews } from '../../networks/shopping/partner/partnerReviews';
@@ -42,6 +42,7 @@ const StoreReviews: React.FC<Props> = props => (
 const StoreReviewsContent: React.FC<Props> = () => {
   const { back } = useBack({ name: 'StoreTabs', params: { screen: 'MoreTab' } });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const { size } = useTheme();
   const s = useAppSelector(selectStoreReviews);
@@ -54,8 +55,9 @@ const StoreReviewsContent: React.FC<Props> = () => {
   const post = async () => {
     if (!s.replyFor) return;
     const r = await dispatch(postReplyAsync({ id: s.replyFor, body: s.reply }));
-    if (postReplyAsync.fulfilled.match(r)) {
-      list.setRows(rows => rows.map(x => (x.id === r.payload.id ? r.payload : x)));
+    const replied = postReplyAsync.fulfilled.match(r) ? selectStoreReviews(appStore.getState()).replied : null;
+    if (replied) {
+      list.setRows(rows => rows.map(x => (x.id === replied.id ? replied : x)));
       Toast.show({ type: 'success', text1: 'Reply posted', text2: 'You can edit it for 24 hours.' });
     }
   };

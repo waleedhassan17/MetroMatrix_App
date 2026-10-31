@@ -66,7 +66,7 @@ export const vendorClosuresSlice = createAppSlice({
     loadClosuresAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(closuresSerializer(await fetchClosures()));
+          return await fetchClosures();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -77,8 +77,9 @@ export const vendorClosuresSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = closuresSerializer(action.payload);
           state.status = 'succeeded';
-          state.closures = action.payload;
+          state.closures = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -95,7 +96,7 @@ export const vendorClosuresSlice = createAppSlice({
             endsAt: zonedToIso(addDays(form.to, 1), '00:00', PKT),
             reason: form.reason.trim() || null,
           });
-          return required(closuresSerializer(await fetchClosures()));
+          return await fetchClosures();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -106,8 +107,9 @@ export const vendorClosuresSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = closuresSerializer(action.payload);
           state.busy = false;
-          state.closures = action.payload;
+          state.closures = payload;
           state.sheet = false;
         },
         rejected: (state, action) => {

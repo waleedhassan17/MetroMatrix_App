@@ -13,7 +13,7 @@ import { StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { EXPERIMENT_DAY_CHOICES, canTestPrice, changeLine, priceBounds, progressLine, validateTestPrice } from '../../models/kitchen/reachModel';
 import { EXPERIMENT_STATUS, QUADRANT, QUADRANT_ORDER } from '../../models/kitchen/kitchenStatusModel';
@@ -49,6 +49,7 @@ const MenuInsights: React.FC<Props> = props => (
 const MenuInsightsContent: React.FC<Props> = ({ navigation, route }) => {
   const { back } = useBack({ name: 'VendorTabs', params: { screen: 'KitchenTab' } });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectMenuInsights);
   const [openId, setOpenId] = useState<string | null>(route.params?.itemId ?? null);
@@ -78,10 +79,11 @@ const MenuInsightsContent: React.FC<Props> = ({ navigation, route }) => {
           : { itemId: open.itemId, days: test.days, change: { kind: 'photo', file: test.file! } },
       ),
     );
-    if (startExperimentAsync.fulfilled.match(res)) {
+    const started = startExperimentAsync.fulfilled.match(res) ? selectMenuInsights(appStore.getState()).started : null;
+    if (started) {
       haptics.success();
       close();
-      Toast.show({ type: 'success', text1: `Testing ${res.payload.itemName}`, text2: `For ${res.payload.days} days. The result shows here when it ends.` });
+      Toast.show({ type: 'success', text1: `Testing ${started.itemName}`, text2: `For ${started.days} days. The result shows here when it ends.` });
     } else haptics.warning();
   };
 

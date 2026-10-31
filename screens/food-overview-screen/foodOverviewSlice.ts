@@ -34,7 +34,7 @@ export const foodOverviewSlice = createAppSlice({
     loadFoodOverviewAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(adminFoodOverviewSerializer(await fetchFoodOverview()));
+          return await fetchFoodOverview();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -45,8 +45,9 @@ export const foodOverviewSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = adminFoodOverviewSerializer(action.payload);
           state.status = 'succeeded';
-          state.overview = action.payload;
+          state.overview = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

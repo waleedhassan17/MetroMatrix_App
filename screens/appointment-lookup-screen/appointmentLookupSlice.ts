@@ -27,7 +27,7 @@ export const appointmentLookupSlice = createAppSlice({
     lookupAppointmentAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return required(adminAppointmentSerializer(await lookupAppointment(code)));
+          return await lookupAppointment(code);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -39,8 +39,9 @@ export const appointmentLookupSlice = createAppSlice({
           state.result = null;
         },
         fulfilled: (state, action) => {
+          const payload = adminAppointmentSerializer(action.payload);
           state.status = 'succeeded';
-          state.result = action.payload;
+          state.result = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

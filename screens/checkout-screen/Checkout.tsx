@@ -11,7 +11,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { CommonActions } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { useDebouncedValue } from '../../hooks/usePagedList';
 import { formatAddress } from '../../models/addressModel';
@@ -107,6 +107,7 @@ const Checkout: React.FC<Props> = props => (
 const CheckoutContent: React.FC<Props> = ({ navigation }) => {
   const { back } = useBack({ name: 'Bag' });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const { service, colors, motion } = useTheme();
   const c = useAppSelector(selectCheckout);
@@ -143,13 +144,14 @@ const CheckoutContent: React.FC<Props> = ({ navigation }) => {
     if (!input || !canPlace) return;
     haptics.press();
     const r = await dispatch(placeOrderAsync({ input, key: c.idempotencyKey }));
-    if (placeOrderAsync.fulfilled.match(r)) {
+    const placed = placeOrderAsync.fulfilled.match(r) ? selectCheckout(appStore.getState()).placed : null;
+    if (placed) {
       haptics.success();
       dispatch(newCheckoutKey());
       void dispatch(loadBagAsync());
       // The Bag and Checkout leave the history: back from "Order placed" returns
       // to where they were shopping, never to an empty Bag or a used checkout.
-      const groupCode = r.payload.code;
+      const groupCode = placed.code;
       navigation.dispatch(state => {
         const routes = state.routes.filter(rt => rt.name !== 'Bag' && rt.name !== 'Checkout');
         return CommonActions.reset({

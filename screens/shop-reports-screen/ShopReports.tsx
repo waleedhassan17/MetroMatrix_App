@@ -9,7 +9,7 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { usePagedList } from '../../hooks/usePagedList';
 import { fetchReports } from '../../networks/admin/adminShop';
@@ -42,6 +42,7 @@ const makeStyles = ({ colors, space, size, radius }: Theme) =>
 const ShopReports: React.FC<Props> = () => {
   const { back } = useBack({ name: 'ShopOverview' });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const { size } = useTheme();
   const s = useAppSelector(selectShopReports);
@@ -49,8 +50,9 @@ const ShopReports: React.FC<Props> = () => {
 
   const decide = async (d: { id: string; kind: 'dismiss' } | { id: string; kind: 'remove'; reason: string }) => {
     const r = await dispatch(decideReportAsync(d));
-    if (decideReportAsync.fulfilled.match(r)) {
-      list.setRows(rows => rows.filter(x => x.productId !== r.payload.productId));
+    const decided = decideReportAsync.fulfilled.match(r) ? selectShopReports(appStore.getState()).decided : null;
+    if (decided) {
+      list.setRows(rows => rows.filter(x => x.productId !== decided.productId));
       Toast.show({ type: 'success', text1: d.kind === 'dismiss' ? 'Report dismissed' : 'Product taken down', text2: d.kind === 'remove' ? 'The store has your reason.' : undefined });
     }
   };

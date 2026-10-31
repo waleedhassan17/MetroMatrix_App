@@ -35,7 +35,7 @@ export const healthSearchSlice = createAppSlice({
     healthSuggestAsync: create.asyncThunk(
       async (q: string, { rejectWithValue }) => {
         try {
-          return required(suggestionsSerializer(await suggest(q)));
+          return await suggest(q);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -45,10 +45,11 @@ export const healthSearchSlice = createAppSlice({
           state.status = 'loading';
         },
         fulfilled: (state, action) => {
+          const payload = suggestionsSerializer(action.payload);
           // Only the answer for what is in the box now.
           if (action.meta.arg !== state.query.trim()) return;
           state.status = 'succeeded';
-          state.suggestions = action.payload;
+          state.suggestions = payload;
           state.suggestedFor = action.meta.arg;
         },
         rejected: state => {

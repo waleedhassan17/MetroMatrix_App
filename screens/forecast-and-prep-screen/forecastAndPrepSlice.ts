@@ -72,7 +72,7 @@ export const forecastAndPrepSlice = createAppSlice({
     loadForecastAsync: create.asyncThunk(
       async (date: string, { rejectWithValue }) => {
         try {
-          const [forecast, accuracy] = await Promise.all([fetchForecast(date).then(raw => required(forecastSerializer(raw))), fetchForecastAccuracy().then(raw => required(accuracySerializer(raw)))]);
+          const [forecast, accuracy] = await Promise.all([fetchForecast(date), fetchForecastAccuracy()]);
           return { forecast, accuracy };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -85,8 +85,9 @@ export const forecastAndPrepSlice = createAppSlice({
           e.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          state.forecast[action.meta.arg] = { data: action.payload.forecast, status: 'succeeded', error: NO_ERROR };
-          state.accuracy = action.payload.accuracy;
+          const payload = { forecast: forecastSerializer(action.payload.forecast), accuracy: accuracySerializer(action.payload.accuracy) };
+          state.forecast[action.meta.arg] = { data: payload.forecast, status: 'succeeded', error: NO_ERROR };
+          state.accuracy = payload.accuracy;
         },
         rejected: (state, action) => {
           const e = (state.forecast[action.meta.arg] ??= { ...EMPTY });
@@ -99,7 +100,7 @@ export const forecastAndPrepSlice = createAppSlice({
     loadPrepAsync: create.asyncThunk(
       async (date: string, { rejectWithValue }) => {
         try {
-          return required(prepSheetSerializer(await fetchPrepSheet(date)));
+          return await fetchPrepSheet(date);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -111,7 +112,8 @@ export const forecastAndPrepSlice = createAppSlice({
           e.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          state.prep[action.meta.arg] = { data: action.payload, status: 'succeeded', error: NO_ERROR };
+          const payload = prepSheetSerializer(action.payload);
+          state.prep[action.meta.arg] = { data: payload, status: 'succeeded', error: NO_ERROR };
         },
         rejected: (state, action) => {
           const e = (state.prep[action.meta.arg] ??= { ...EMPTY });
@@ -124,7 +126,7 @@ export const forecastAndPrepSlice = createAppSlice({
     loadShoppingAsync: create.asyncThunk(
       async (date: string, { rejectWithValue }) => {
         try {
-          return required(shoppingListSerializer(await fetchShoppingList(date)));
+          return await fetchShoppingList(date);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -136,7 +138,8 @@ export const forecastAndPrepSlice = createAppSlice({
           e.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          state.shopping[action.meta.arg] = { data: action.payload, status: 'succeeded', error: NO_ERROR };
+          const payload = shoppingListSerializer(action.payload);
+          state.shopping[action.meta.arg] = { data: payload, status: 'succeeded', error: NO_ERROR };
         },
         rejected: (state, action) => {
           const e = (state.shopping[action.meta.arg] ??= { ...EMPTY });

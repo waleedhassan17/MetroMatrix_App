@@ -43,7 +43,7 @@ export const donationsSlice = createAppSlice({
     loadDonationsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(donationsSerializer(await fetchDonations()));
+          return await fetchDonations();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -54,8 +54,9 @@ export const donationsSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = donationsSerializer(action.payload);
           state.status = 'succeeded';
-          state.data = action.payload;
+          state.data = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

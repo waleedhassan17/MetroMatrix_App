@@ -117,7 +117,7 @@ export const checkoutSlice = createAppSlice({
     previewCheckoutAsync: create.asyncThunk(
       async (input: CheckoutInput, { rejectWithValue }) => {
         try {
-          return required(checkoutPreviewSerializer(await previewCheckout(input)));
+          return await previewCheckout(input);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -128,10 +128,11 @@ export const checkoutSlice = createAppSlice({
           state.previewError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = checkoutPreviewSerializer(action.payload);
           state.previewStatus = 'succeeded';
-          state.preview = action.payload;
+          state.preview = payload;
           // The server may fall back (COD over the store's limit): show what it will use.
-          for (const s of action.payload.stores) {
+          for (const s of payload.stores) {
             (state.choices[s.store.id] ??= blankChoice()).paymentMethod = s.paymentMethod;
           }
         },
@@ -145,7 +146,7 @@ export const checkoutSlice = createAppSlice({
     loadCouponsAsync: create.asyncThunk(
       async (storeId: string, { rejectWithValue }) => {
         try {
-          return required(availableCouponListSerializer(await fetchAvailableCoupons(storeId)));
+          return await fetchAvailableCoupons(storeId);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -155,9 +156,10 @@ export const checkoutSlice = createAppSlice({
           state.couponSheet.status = 'loading';
         },
         fulfilled: (state, action) => {
+          const payload = availableCouponListSerializer(action.payload);
           if (state.couponSheet.storeId !== action.meta.arg) return;
           state.couponSheet.status = 'succeeded';
-          state.couponSheet.coupons = action.payload;
+          state.couponSheet.coupons = payload;
         },
         rejected: state => {
           state.couponSheet.status = 'failed';
@@ -168,7 +170,7 @@ export const checkoutSlice = createAppSlice({
     placeOrderAsync: create.asyncThunk(
       async ({ input, key }: { input: CheckoutInput; key: string }, { rejectWithValue }) => {
         try {
-          return required(orderGroupSerializer(await placeOrder(input, key)));
+          return await placeOrder(input, key);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -179,8 +181,9 @@ export const checkoutSlice = createAppSlice({
           state.placeError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = orderGroupSerializer(action.payload);
           state.placeStatus = 'succeeded';
-          state.placed = action.payload;
+          state.placed = payload;
           state.choices = {};
           state.preview = null;
         },

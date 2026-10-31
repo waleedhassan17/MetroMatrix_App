@@ -28,7 +28,7 @@ export const recipesAndCostsSlice = createAppSlice({
     loadRecipesAsync: create.asyncThunk(
       async (needsRecipe: boolean, { rejectWithValue }) => {
         try {
-          return required(recipeListSerializer(await fetchRecipes(needsRecipe)));
+          return await fetchRecipes(needsRecipe);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -39,8 +39,9 @@ export const recipesAndCostsSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = recipeListSerializer(action.payload);
           state.status = 'succeeded';
-          state.list = action.payload;
+          state.list = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

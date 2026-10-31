@@ -27,7 +27,7 @@ export const savedSlice = createAppSlice({
     loadSavedIdsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(wishlistIdsSerializer(await fetchWishlistIds()));
+          return await fetchWishlistIds();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -37,8 +37,9 @@ export const savedSlice = createAppSlice({
           state.status = 'loading';
         },
         fulfilled: (state, action) => {
+          const payload = wishlistIdsSerializer(action.payload);
           state.status = 'succeeded';
-          state.ids = action.payload;
+          state.ids = payload;
         },
         rejected: state => {
           state.status = 'failed';

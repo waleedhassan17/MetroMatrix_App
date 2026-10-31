@@ -25,7 +25,7 @@ export const kitchenSettingsSlice = createAppSlice({
     loadKitchenSettingsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(kitchenSettingsSerializer(await fetchKitchenSettings()));
+          return await fetchKitchenSettings();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -36,8 +36,9 @@ export const kitchenSettingsSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = kitchenSettingsSerializer(action.payload);
           state.status = 'succeeded';
-          state.settings = action.payload;
+          state.settings = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -48,7 +49,7 @@ export const kitchenSettingsSlice = createAppSlice({
     saveKitchenSettingsAsync: create.asyncThunk(
       async (patch: Partial<KitchenSettings>, { rejectWithValue }) => {
         try {
-          return required(kitchenSettingsSerializer(await updateKitchenSettings(patch)));
+          return await updateKitchenSettings(patch);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -61,8 +62,9 @@ export const kitchenSettingsSlice = createAppSlice({
           if (state.settings) Object.assign(state.settings, action.meta.arg);
         },
         fulfilled: (state, action) => {
+          const payload = kitchenSettingsSerializer(action.payload);
           state.saving = false;
-          state.settings = action.payload;
+          state.settings = payload;
         },
         rejected: (state, action) => {
           state.saving = false;

@@ -34,7 +34,7 @@ export const shopBannersSlice = createAppSlice({
     loadBannersAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(adminBannerListSerializer(await fetchAdminBanners()));
+          return await fetchAdminBanners();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -44,8 +44,9 @@ export const shopBannersSlice = createAppSlice({
           state.status = 'loading';
         },
         fulfilled: (state, action) => {
+          const payload = adminBannerListSerializer(action.payload);
           state.status = 'succeeded';
-          state.banners = action.payload;
+          state.banners = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -61,7 +62,7 @@ export const shopBannersSlice = createAppSlice({
             await updateBanner(change.a.id, { ...input(change.a), position: change.b.position });
             await updateBanner(change.b.id, { ...input(change.b), position: change.a.position });
           } else await updateBanner(change.banner.id, { ...input(change.banner), isActive: !change.banner.isActive });
-          return required(adminBannerListSerializer(await fetchAdminBanners()));
+          return await fetchAdminBanners();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -72,8 +73,9 @@ export const shopBannersSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = adminBannerListSerializer(action.payload);
           state.busy = false;
-          state.banners = action.payload;
+          state.banners = payload;
         },
         rejected: (state, action) => {
           state.busy = false;

@@ -39,7 +39,7 @@ export const couponFormSlice = createAppSlice({
     saveCouponAsync: create.asyncThunk(
       async ({ id, form }: { id: string | null; form: CouponForm }, { rejectWithValue }) => {
         try {
-          return id ? required(couponSerializer(await updateCoupon(id, toCouponInput(form)))) : required(couponSerializer(await createCoupon(toCouponInput(form))));
+          return id ? await updateCoupon(id, toCouponInput(form)) : await createCoupon(toCouponInput(form));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

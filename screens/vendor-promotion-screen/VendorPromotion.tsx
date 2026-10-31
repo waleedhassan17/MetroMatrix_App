@@ -10,7 +10,7 @@ import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { PROMOTION_KINDS, PROMOTION_STATE, WEEKDAY_CHOICES, formLabel, validatePromotion } from '../../models/food/promotionModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
@@ -57,6 +57,7 @@ const VendorPromotionContent: React.FC<Props> = ({ route }) => {
   const id = route.params?.id;
   const { back } = useBack({ name: 'VendorPromotions' });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const { service } = useTheme();
   const s = useAppSelector(selectVendorPromotion);
@@ -90,7 +91,7 @@ const VendorPromotionContent: React.FC<Props> = ({ route }) => {
     const r = await dispatch(savePromotionAsync());
     if (savePromotionAsync.fulfilled.match(r)) {
       haptics.success();
-      Toast.show({ type: 'success', text1: id ? 'Deal saved' : 'Deal added', text2: r.payload.state === 'live' ? 'Customers can see it now.' : undefined });
+      Toast.show({ type: 'success', text1: id ? 'Deal saved' : 'Deal added', text2: selectVendorPromotion(appStore.getState()).promotion?.state === 'live' ? 'Customers can see it now.' : undefined });
       back();
     } else haptics.warning();
   };

@@ -9,7 +9,7 @@ import React, { useEffect } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { usePagedList } from '../../hooks/usePagedList';
 import { fetchOwnReviews } from '../../networks/health/doctor/doctorReviews';
@@ -41,6 +41,7 @@ const MyReviews: React.FC<Props> = props => (
 const MyReviewsContent: React.FC<Props> = () => {
   const { back } = useBack({ name: 'DoctorTabs', params: { screen: 'MoreTab' } });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectMyReviews);
   const now = useNow();
@@ -56,9 +57,10 @@ const MyReviewsContent: React.FC<Props> = () => {
       return;
     }
     const r = await dispatch(sendReplyAsync({ id: s.replying.id, text: s.text }));
-    if (sendReplyAsync.fulfilled.match(r)) {
+    const replied = sendReplyAsync.fulfilled.match(r) ? selectMyReviews(appStore.getState()).replied : null;
+    if (replied) {
       haptics.success();
-      list.setRows(rows => (s.unreplied ? rows.filter(x => x.id !== r.payload.id) : rows.map(x => (x.id === r.payload.id ? r.payload : x))));
+      list.setRows(rows => (s.unreplied ? rows.filter(x => x.id !== replied.id) : rows.map(x => (x.id === replied.id ? replied : x))));
       Toast.show({ type: 'success', text1: 'Reply posted', text2: 'Patients see it under the review.' });
     }
   };

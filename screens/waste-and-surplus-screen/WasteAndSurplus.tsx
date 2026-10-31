@@ -11,7 +11,7 @@ import { StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { BOX_STATUS, WASTE_REASON_LABEL } from '../../models/kitchen/kitchenStatusModel';
 import { BACHAT_BOX, discountLabel, isPickupCode } from '../../models/kitchen/surplusModel';
@@ -54,6 +54,7 @@ const WasteAndSurplus: React.FC<Props> = props => (
 const WasteAndSurplusContent: React.FC<Props> = ({ navigation }) => {
   const { back } = useBack({ name: 'VendorTabs', params: { screen: 'KitchenTab' } });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectWasteAndSurplus);
   const kitchen = useAppSelector(selectBusiness)?.name ?? 'Our kitchen';
@@ -66,9 +67,10 @@ const WasteAndSurplusContent: React.FC<Props> = ({ navigation }) => {
 
   const collect = async () => {
     const r = await dispatch(collectByCodeAsync());
-    if (collectByCodeAsync.fulfilled.match(r) && r.payload) {
+    const collected = collectByCodeAsync.fulfilled.match(r) ? selectWasteAndSurplus(appStore.getState()).collected : null;
+    if (collected) {
       haptics.success();
-      Toast.show({ type: 'success', text1: `Hand over ${r.payload.quantity === 1 ? '1 box' : `${r.payload.quantity} boxes`}`, text2: `${r.payload.customerName ?? 'Customer'} · ${r.payload.code}` });
+      Toast.show({ type: 'success', text1: `Hand over ${collected.quantity === 1 ? '1 box' : `${collected.quantity} boxes`}`, text2: `${collected.customerName ?? 'Customer'} · ${collected.code}` });
       load();
     } else haptics.warning();
   };
@@ -91,7 +93,8 @@ const WasteAndSurplusContent: React.FC<Props> = ({ navigation }) => {
             const r = await dispatch(logSpokenWasteAsync({ lines: a.lines, reason: a.reason }));
             if (logSpokenWasteAsync.fulfilled.match(r)) {
               haptics.success();
-              Toast.show({ type: 'success', text1: 'Waste logged', text2: r.payload ? `${formatPKR(r.payload.cost)} · stock updated` : undefined });
+              const { logged } = selectWasteAndSurplus(appStore.getState());
+              Toast.show({ type: 'success', text1: 'Waste logged', text2: logged ? `${formatPKR(logged.cost)} · stock updated` : undefined });
               load();
               return true;
             }

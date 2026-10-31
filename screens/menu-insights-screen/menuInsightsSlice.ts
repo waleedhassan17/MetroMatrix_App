@@ -18,9 +18,13 @@ export interface MenuInsightsSliceState {
   error: ServerError;
   starting: boolean;
   startError: ServerError;
+  /** The experiment just started. */
+  started: ReturnType<typeof experimentSerializer>;
 }
 
-const initialState: MenuInsightsSliceState = { data: null, experiments: [], status: 'idle', error: NO_ERROR, starting: false, startError: NO_ERROR };
+const initialState: MenuInsightsSliceState = { data: null, experiments: [], status: 'idle', error: NO_ERROR, starting: false, startError: NO_ERROR ,
+  started: null,
+};
 
 export const menuInsightsSlice = createAppSlice({
   name: 'menuInsights',
@@ -32,7 +36,7 @@ export const menuInsightsSlice = createAppSlice({
     loadMenuInsightsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [data, experiments] = await Promise.all([fetchMenuInsights().then(raw => required(menuInsightsSerializer(raw))), fetchExperiments().then(raw => required(experimentsSerializer(raw)))]);
+          const [data, experiments] = await Promise.all([fetchMenuInsights(), fetchExperiments()]);
           return { data, experiments };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -44,9 +48,10 @@ export const menuInsightsSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = { data: menuInsightsSerializer(action.payload.data), experiments: experimentsSerializer(action.payload.experiments) };
           state.status = 'succeeded';
-          state.data = action.payload.data;
-          state.experiments = action.payload.experiments;
+          state.data = payload.data;
+          state.experiments = payload.experiments;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -60,7 +65,7 @@ export const menuInsightsSlice = createAppSlice({
         try {
           const change: ExperimentInput['change'] =
             input.change.kind === 'price' ? input.change : { kind: 'photo', photoUrl: (await uploadImage(input.change.file, 'menu_item')).url };
-          return required(experimentSerializer(await startExperiment({ itemId: input.itemId, days: input.days, change })));
+          return await startExperiment({ itemId: input.itemId, days: input.days, change });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -71,13 +76,16 @@ export const menuInsightsSlice = createAppSlice({
           state.startError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = experimentSerializer(action.payload);
           state.starting = false;
-          state.experiments = [action.payload, ...state.experiments.filter(e => e.id !== action.payload.id)];
-          const item = state.data?.items.find(i => i.itemId === action.payload.itemId);
+          if (!payload) return;
+          state.experiments = [payload, ...state.experiments.filter(e => e.id !== payload.id)];
+          const item = state.data?.items.find(i => i.itemId === payload.itemId);
           if (item) {
             item.experimentRunning = true;
-            if (action.payload.change.kind === 'price') item.price = action.payload.change.price;
+            if (payload.change.kind === 'price') item.price = payload.change.price;
           }
+          state.started = payload;
         },
         rejected: (state, action) => {
           state.starting = false;

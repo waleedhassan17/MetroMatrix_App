@@ -56,7 +56,7 @@ export const storeTodaySlice = createAppSlice({
       async (_: void, { rejectWithValue }) => {
         try {
           await resumeStore();
-          return required(partnerSummarySerializer(await fetchPartnerSummary()));
+          return await fetchPartnerSummary();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -66,8 +66,9 @@ export const storeTodaySlice = createAppSlice({
           state.resuming = true;
         },
         fulfilled: (state, action) => {
+          const payload = partnerSummarySerializer(action.payload);
           state.resuming = false;
-          state.summary = action.payload;
+          state.summary = payload;
         },
         rejected: (state, action) => {
           state.resuming = false;

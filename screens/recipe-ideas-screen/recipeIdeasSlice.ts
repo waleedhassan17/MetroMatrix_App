@@ -30,7 +30,7 @@ export const recipeIdeasSlice = createAppSlice({
     suggestRecipesAsync: create.asyncThunk(
       async (q: { language: 'en' | 'ur'; maxMinutes: number | null; servings: number }, { rejectWithValue }) => {
         try {
-          return required(recipeIdeasSerializer(await suggestHomeRecipes(q)));
+          return await suggestHomeRecipes(q);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -41,8 +41,9 @@ export const recipeIdeasSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = recipeIdeasSerializer(action.payload);
           state.status = 'succeeded';
-          state.ideas = action.payload;
+          state.ideas = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

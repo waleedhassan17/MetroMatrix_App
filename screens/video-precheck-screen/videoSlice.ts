@@ -82,7 +82,7 @@ export const videoSlice = createAppSlice({
     joinRoomAsync: create.asyncThunk(
       async (t: VideoTarget, { rejectWithValue }) => {
         try {
-          return t.code ? required(videoJoinSerializer(await joinVideo(t.code))) : required(videoJoinSerializer(await joinVideoAsDoctor(t.appointmentId ?? '')));
+          return t.code ? await joinVideo(t.code) : await joinVideoAsDoctor(t.appointmentId ?? '');
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -93,8 +93,9 @@ export const videoSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = videoJoinSerializer(action.payload);
           state.status = 'succeeded';
-          state.room = action.payload;
+          state.room = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

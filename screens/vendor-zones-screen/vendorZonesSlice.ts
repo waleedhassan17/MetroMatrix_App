@@ -62,7 +62,7 @@ export const vendorZonesSlice = createAppSlice({
     loadZonesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [bands, settings] = await Promise.all([fetchFeeBands().then(raw => required(feeBandsSerializer(raw))), fetchVendorSettings().then(raw => required(vendorSettingsSerializer(raw)))]);
+          const [bands, settings] = await Promise.all([fetchFeeBands(), fetchVendorSettings()]);
           return { bands, settings };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -74,8 +74,10 @@ export const vendorZonesSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const { bands, settings } = action.payload;
+          const payload = { bands: feeBandsSerializer(action.payload.bands), settings: vendorSettingsSerializer(action.payload.settings) };
+          const { bands, settings } = payload;
           state.status = 'succeeded';
+          if (!settings) return;
           state.rows = bands.map(feeBandForm);
           state.maxRadiusKm = settings.maxRadiusKm;
           const { lat, lng } = settings.location;
@@ -92,7 +94,7 @@ export const vendorZonesSlice = createAppSlice({
     saveZonesAsync: create.asyncThunk(
       async (rows: FeeBandForm[], { rejectWithValue }) => {
         try {
-          return required(feeBandsSerializer(await saveFeeBands(bandsFromForm(rows))));
+          return await saveFeeBands(bandsFromForm(rows));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -103,8 +105,9 @@ export const vendorZonesSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = feeBandsSerializer(action.payload);
           state.saving = false;
-          state.rows = action.payload.map(feeBandForm);
+          state.rows = payload.map(feeBandForm);
           state.dirty = false;
         },
         rejected: (state, action) => {

@@ -27,7 +27,7 @@ export const orderLookupSlice = createAppSlice({
     lookupOrderAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return required(orderLookupSerializer(await lookupOrder(code)));
+          return await lookupOrder(code);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -39,8 +39,9 @@ export const orderLookupSlice = createAppSlice({
           state.result = null;
         },
         fulfilled: (state, action) => {
+          const payload = orderLookupSerializer(action.payload);
           state.status = 'succeeded';
-          state.result = action.payload;
+          state.result = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

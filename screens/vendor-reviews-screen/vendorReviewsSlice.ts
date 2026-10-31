@@ -17,9 +17,13 @@ export interface VendorReviewsSliceState {
   replyTouched: boolean;
   busy: boolean;
   error: ServerError;
+  /** The review just replied to, as the server has it now. */
+  replied: ReturnType<typeof foodReviewSerializer>;
 }
 
-const initialState: VendorReviewsSliceState = { unreplied: true, replying: null, reply: '', replyTouched: false, busy: false, error: NO_ERROR };
+const initialState: VendorReviewsSliceState = { unreplied: true, replying: null, reply: '', replyTouched: false, busy: false, error: NO_ERROR ,
+  replied: null,
+};
 
 export const vendorReviewsSlice = createAppSlice({
   name: 'vendorReviews',
@@ -44,7 +48,7 @@ export const vendorReviewsSlice = createAppSlice({
     sendReplyAsync: create.asyncThunk(
       async ({ id, reply }: { id: string; reply: string }, { rejectWithValue }) => {
         try {
-          return required(foodReviewSerializer(await replyToReview(id, reply)));
+          return await replyToReview(id, reply);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -54,10 +58,12 @@ export const vendorReviewsSlice = createAppSlice({
           state.busy = true;
           state.error = NO_ERROR;
         },
-        fulfilled: state => {
+        fulfilled: (state, action) => {
+          const payload = foodReviewSerializer(action.payload);
           state.busy = false;
           state.replying = null;
           state.reply = '';
+          state.replied = payload;
         },
         rejected: (state, action) => {
           state.busy = false;

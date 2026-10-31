@@ -29,7 +29,7 @@ export const foodFavouritesSlice = createAppSlice({
     loadFavouritesAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(foodFavouritesSerializer(await fetchFavourites()));
+          return await fetchFavourites();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -40,9 +40,10 @@ export const foodFavouritesSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = foodFavouritesSerializer(action.payload);
           state.status = 'succeeded';
-          state.items = action.payload;
-          state.savedIds = action.payload.map(f => f.id);
+          state.items = payload;
+          state.savedIds = payload.map(f => f.id);
         },
         rejected: (state, action) => {
           state.status = 'failed';

@@ -13,7 +13,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { useNow } from '../../hooks/useNow';
 import { useOrderChannel } from '../../hooks/useFoodLive';
@@ -45,7 +45,7 @@ import { formatSlot } from '../../utils/health-time/healthTime';
 import { callNumber } from '../../utils/maps/maps';
 import { formatPKR } from '../../utils/money/money';
 import { formatPkPhoneForDisplay } from '../../utils/phone/phone';
-import { reorderFoodAsync } from '../food-bag-screen/foodBagSlice';
+import { reorderFoodAsync, selectFoodBag } from '../food-bag-screen/foodBagSlice';
 import { cancelFoodOrderAsync, foodOrderChanged, foodRiderMoved, loadFoodOrderAsync, selectFoodOrderEntry, selectFoodOrderUi, setCancelSheet } from './foodOrderSlice';
 
 type Props = NativeStackScreenProps<FoodAppParamList, 'FoodOrder'>;
@@ -88,6 +88,7 @@ const FoodOrderContent: React.FC<Props> = ({ route, navigation }) => {
   const { code } = route.params;
   const { back } = useBack({ name: 'FoodTabs', params: { screen: 'FoodOrdersTab' } });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const { colors, service, size } = useTheme();
   const { order: o, tracking, status, error } = useAppSelector(st => selectFoodOrderEntry(st, code));
@@ -146,14 +147,15 @@ const FoodOrderContent: React.FC<Props> = ({ route, navigation }) => {
 
   const reorder = async () => {
     const r = await dispatch(reorderFoodAsync(code));
-    if (reorderFoodAsync.fulfilled.match(r)) {
-      const { dropped, priceChanges } = r.payload;
+    const reorder = reorderFoodAsync.fulfilled.match(r) ? selectFoodBag(appStore.getState()).reorder : null;
+    if (reorder) {
+      const { dropped, priceChanges } = reorder;
       Toast.show({
         type: dropped ? 'info' : 'success',
-        text1: r.payload.cart.empty ? 'None of those dishes can be ordered now' : 'Back in your bag',
+        text1: reorder.cart.empty ? 'None of those dishes can be ordered now' : 'Back in your bag',
         text2: dropped ? `${dropped} ${dropped === 1 ? 'dish isn’t' : 'dishes aren’t'} available now.` : priceChanges ? 'Some prices have changed since.' : undefined,
       });
-      if (!r.payload.cart.empty) navigation.navigate('FoodBag');
+      if (!reorder.cart.empty) navigation.navigate('FoodBag');
     } else Toast.show({ type: 'error', text1: 'We couldn’t add those dishes again' });
   };
 

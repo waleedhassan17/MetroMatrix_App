@@ -78,7 +78,7 @@ export const paymentProofSlice = createAppSlice({
     submitPaymentProofAsync: create.asyncThunk(
       async ({ orderId, transactionId, imageUrl }: { orderId: string; transactionId: string; imageUrl: string | null }, { rejectWithValue }) => {
         try {
-          return required(orderGroupSerializer(await submitPaymentProof(orderId, { transactionId: normaliseTransactionId(transactionId), imageUrl })));
+          return await submitPaymentProof(orderId, { transactionId: normaliseTransactionId(transactionId), imageUrl });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -128,7 +128,7 @@ export const paymentProofSlice = createAppSlice({
     submitFoodProofAsync: create.asyncThunk(
       async ({ code, transactionId, imageUrl }: { code: string; transactionId: string; imageUrl: string | null }, { rejectWithValue }) => {
         try {
-          return required(foodOrderSerializer(await submitFoodPaymentProof(code, { paymentRef: normaliseTransactionId(transactionId), proofUrl: imageUrl })));
+          return await submitFoodPaymentProof(code, { paymentRef: normaliseTransactionId(transactionId), proofUrl: imageUrl });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -153,7 +153,7 @@ export const paymentProofSlice = createAppSlice({
     submitSurplusProofAsync: create.asyncThunk(
       async ({ code, transactionId, imageUrl }: { code: string; transactionId: string; imageUrl: string | null }, { rejectWithValue }) => {
         try {
-          return required(reservationSerializer(await submitReservationProof(code, { transactionId: normaliseTransactionId(transactionId), imageUrl })));
+          return await submitReservationProof(code, { transactionId: normaliseTransactionId(transactionId), imageUrl });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -177,7 +177,7 @@ export const paymentProofSlice = createAppSlice({
     submitTiffinProofAsync: create.asyncThunk(
       async ({ periodId, transactionId, imageUrl }: { periodId: string; transactionId: string; imageUrl: string | null }, { rejectWithValue }) => {
         try {
-          return required(tiffinSubscriptionSerializer(await submitTiffinProof(periodId, { transactionId: normaliseTransactionId(transactionId), imageUrl })));
+          return await submitTiffinProof(periodId, { transactionId: normaliseTransactionId(transactionId), imageUrl });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -201,7 +201,7 @@ export const paymentProofSlice = createAppSlice({
     submitAdvanceProofAsync: create.asyncThunk(
       async ({ code, transactionId, imageUrl }: { code: string; transactionId: string; imageUrl: string | null }, { rejectWithValue }) => {
         try {
-          return required(cateringRequestSerializer(await submitAdvanceProof(code, { transactionId: normaliseTransactionId(transactionId), imageUrl })));
+          return await submitAdvanceProof(code, { transactionId: normaliseTransactionId(transactionId), imageUrl });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

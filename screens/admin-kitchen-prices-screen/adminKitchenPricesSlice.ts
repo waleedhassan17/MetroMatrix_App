@@ -67,7 +67,7 @@ export const adminKitchenPricesSlice = createAppSlice({
     loadPricesAsync: create.asyncThunk(
       async (q: { city?: string | null; q?: string }, { rejectWithValue }) => {
         try {
-          return required(referencePricesSerializer(await fetchReferencePrices({ city: q.city ?? undefined, q: q.q?.trim() || undefined })));
+          return await fetchReferencePrices({ city: q.city ?? undefined, q: q.q?.trim() || undefined });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -78,9 +78,10 @@ export const adminKitchenPricesSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = referencePricesSerializer(action.payload);
           state.status = 'succeeded';
-          state.list = action.payload;
-          state.city = action.payload.city;
+          state.list = payload;
+          state.city = payload.city;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -92,7 +93,7 @@ export const adminKitchenPricesSlice = createAppSlice({
     checkPricesCsvAsync: create.asyncThunk(
       async (csv: string, { rejectWithValue }) => {
         try {
-          return required(priceImportSerializer(await importReferencePrices(csv, true)));
+          return await importReferencePrices(csv, true);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -103,8 +104,9 @@ export const adminKitchenPricesSlice = createAppSlice({
           state.importError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = priceImportSerializer(action.payload);
           state.checking = false;
-          state.result = action.payload;
+          state.result = payload;
         },
         rejected: (state, action) => {
           state.checking = false;

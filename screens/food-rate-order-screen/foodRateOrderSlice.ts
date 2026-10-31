@@ -90,7 +90,7 @@ export const foodRateOrderSlice = createAppSlice({
     submitFoodRatingAsync: create.asyncThunk(
       async ({ code, input }: { code: string; input: FoodReviewInput }, { rejectWithValue }) => {
         try {
-          return required(foodReviewSerializer(await reviewFoodOrder(code, input)));
+          return await reviewFoodOrder(code, input);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

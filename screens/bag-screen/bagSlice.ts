@@ -53,7 +53,7 @@ export const bagSlice = createAppSlice({
     loadBagAsync: create.asyncThunk(
       async (_: { refresh: boolean } | undefined, { rejectWithValue }) => {
         try {
-          return required(cartSerializer(await fetchCart()));
+          return await fetchCart();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -65,9 +65,10 @@ export const bagSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = cartSerializer(action.payload);
           state.status = 'succeeded';
           state.refreshing = false;
-          state.cart = action.payload;
+          state.cart = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -80,7 +81,7 @@ export const bagSlice = createAppSlice({
     addToBagAsync: create.asyncThunk(
       async ({ variantId, quantity }: { variantId: string; quantity: number }, { rejectWithValue }) => {
         try {
-          return required(cartSerializer(await addToCart(variantId, quantity)));
+          return await addToCart(variantId, quantity);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -91,8 +92,9 @@ export const bagSlice = createAppSlice({
           state.addError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = cartSerializer(action.payload);
           state.adding = false;
-          state.cart = action.payload;
+          state.cart = payload;
           state.status = 'succeeded';
         },
         rejected: (state, action) => {
@@ -105,7 +107,7 @@ export const bagSlice = createAppSlice({
     updateLineAsync: create.asyncThunk(
       async ({ lineId, quantity }: { lineId: string; quantity: number }, { rejectWithValue }) => {
         try {
-          return required(cartSerializer(await updateCartLine(lineId, quantity)));
+          return await updateCartLine(lineId, quantity);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -116,8 +118,9 @@ export const bagSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = cartSerializer(action.payload);
           state.busyLineId = null;
-          state.cart = action.payload;
+          state.cart = payload;
         },
         rejected: (state, action) => {
           state.busyLineId = null;
@@ -129,7 +132,7 @@ export const bagSlice = createAppSlice({
     removeLineAsync: create.asyncThunk(
       async (lineId: string, { rejectWithValue }) => {
         try {
-          return required(cartSerializer(await removeCartLine(lineId)));
+          return await removeCartLine(lineId);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -140,8 +143,9 @@ export const bagSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = cartSerializer(action.payload);
           state.busyLineId = null;
-          state.cart = action.payload;
+          state.cart = payload;
         },
         rejected: (state, action) => {
           state.busyLineId = null;
@@ -153,14 +157,15 @@ export const bagSlice = createAppSlice({
     acknowledgeBagAsync: create.asyncThunk(
       async (lineIds: string[], { rejectWithValue }) => {
         try {
-          return required(cartSerializer(await acknowledgeCart(lineIds)));
+          return await acknowledgeCart(lineIds);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
       },
       {
         fulfilled: (state, action) => {
-          state.cart = action.payload;
+          const payload = cartSerializer(action.payload);
+          state.cart = payload;
         },
         rejected: (state, action) => {
           state.actionError = readRejection(action, "We couldn't update your bag.");

@@ -25,7 +25,7 @@ export const foodCateringRequestSlice = createAppSlice({
     loadMyCateringRequestAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return required(cateringRequestSerializer(await fetchMyCateringRequest(code)));
+          return await fetchMyCateringRequest(code);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -36,8 +36,9 @@ export const foodCateringRequestSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = cateringRequestSerializer(action.payload);
           state.status = 'succeeded';
-          if (action.payload) state.byCode[action.payload.code] = action.payload;
+          if (payload) state.byCode[payload.code] = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -48,7 +49,7 @@ export const foodCateringRequestSlice = createAppSlice({
     myCateringActAsync: create.asyncThunk(
       async ({ code, act }: { code: string; act: { kind: 'accept'; version: number } | { kind: 'cancel' } }, { dispatch, rejectWithValue }) => {
         try {
-          return act.kind === 'accept' ? required(cateringRequestSerializer(await acceptQuote(code, act.version))) : required(cateringRequestSerializer(await cancelMyCatering(code)));
+          return act.kind === 'accept' ? await acceptQuote(code, act.version) : await cancelMyCatering(code);
         } catch (e) {
           // A newer quote, or an expired one: read the request again so the screen shows it.
           void dispatch(loadMyCateringRequestAsync(code));
@@ -61,8 +62,9 @@ export const foodCateringRequestSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = cateringRequestSerializer(action.payload);
           state.acting = false;
-          if (action.payload) state.byCode[action.payload.code] = action.payload;
+          if (payload) state.byCode[payload.code] = payload;
         },
         rejected: (state, action) => {
           state.acting = false;

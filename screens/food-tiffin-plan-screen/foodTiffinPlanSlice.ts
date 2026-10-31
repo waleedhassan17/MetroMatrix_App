@@ -52,7 +52,7 @@ export const foodTiffinPlanSlice = createAppSlice({
     loadTiffinPlanAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return required(tiffinPlanSerializer(await fetchTiffinPlan(id)));
+          return await fetchTiffinPlan(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -68,9 +68,10 @@ export const foodTiffinPlanSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = tiffinPlanSerializer(action.payload);
           state.status = 'succeeded';
-          state.plan = action.payload;
-          if (action.payload && (!state.startDate || state.startDate < (action.payload.nextStart ?? ''))) state.startDate = action.payload.nextStart;
+          state.plan = payload;
+          if (payload && (!state.startDate || state.startDate < (payload.nextStart ?? ''))) state.startDate = payload.nextStart;
         },
         rejected: (state, action) => {
           state.status = 'failed';

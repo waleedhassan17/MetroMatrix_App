@@ -14,9 +14,13 @@ export interface StoreReviewsSliceState {
   reply: string;
   status: FormStatus;
   error: ServerError;
+  /** The review just replied to, as the server has it now. */
+  replied: ReturnType<typeof partnerReviewSerializer>;
 }
 
-const initialState: StoreReviewsSliceState = { rating: null, unrepliedOnly: false, replyFor: null, reply: '', status: 'idle', error: NO_ERROR };
+const initialState: StoreReviewsSliceState = { rating: null, unrepliedOnly: false, replyFor: null, reply: '', status: 'idle', error: NO_ERROR ,
+  replied: null,
+};
 
 export const storeReviewsSlice = createAppSlice({
   name: 'storeReviews',
@@ -39,7 +43,7 @@ export const storeReviewsSlice = createAppSlice({
     postReplyAsync: create.asyncThunk(
       async ({ id, body }: { id: string; body: string }, { rejectWithValue }) => {
         try {
-          return required(partnerReviewSerializer(await replyToReview(id, body.trim())));
+          return await replyToReview(id, body.trim());
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -49,9 +53,11 @@ export const storeReviewsSlice = createAppSlice({
           state.status = 'loading';
           state.error = NO_ERROR;
         },
-        fulfilled: state => {
+        fulfilled: (state, action) => {
+          const payload = partnerReviewSerializer(action.payload);
           state.status = 'succeeded';
           state.replyFor = null;
+          state.replied = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

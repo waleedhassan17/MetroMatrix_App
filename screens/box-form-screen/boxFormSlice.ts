@@ -22,6 +22,8 @@ export interface BoxFormSliceState {
   uploading: boolean;
   saving: boolean;
   error: ServerError;
+  /** The box just put live (createBoxAsync). */
+  created: ReturnType<typeof surplusBoxSerializer>;
 }
 
 const initialState: BoxFormSliceState = {
@@ -32,6 +34,7 @@ const initialState: BoxFormSliceState = {
   uploading: false,
   saving: false,
   error: NO_ERROR,
+  created: null,
 };
 
 export const boxFormSlice = createAppSlice({
@@ -100,7 +103,7 @@ export const boxFormSlice = createAppSlice({
     createBoxAsync: create.asyncThunk(
       async (input: SurplusBoxInput, { rejectWithValue }) => {
         try {
-          return required(surplusBoxSerializer(await createBox(input)));
+          return await createBox(input);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -110,8 +113,10 @@ export const boxFormSlice = createAppSlice({
           state.saving = true;
           state.error = NO_ERROR;
         },
-        fulfilled: state => {
+        fulfilled: (state, action) => {
+          const payload = surplusBoxSerializer(action.payload);
           state.saving = false;
+          state.created = payload;
         },
         rejected: (state, action) => {
           state.saving = false;

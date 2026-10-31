@@ -39,7 +39,7 @@ export const shoppingHomeSlice = createAppSlice({
     loadShoppingHomeAsync: create.asyncThunk(
       async (_: { refresh: boolean }, { rejectWithValue }) => {
         try {
-          return required(shopHomeSerializer(await fetchShopHome()));
+          return await fetchShopHome();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -51,9 +51,10 @@ export const shoppingHomeSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = shopHomeSerializer(action.payload);
           state.status = 'succeeded';
           state.refreshing = false;
-          state.home = action.payload;
+          state.home = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

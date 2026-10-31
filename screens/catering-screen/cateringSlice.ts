@@ -35,7 +35,7 @@ export const cateringSlice = createAppSlice({
     loadCateringAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [inbox, settings] = await Promise.all([fetchCateringRequests().then(raw => required(cateringInboxSerializer(raw))), fetchCateringSettings().then(raw => required(cateringSettingsSerializer(raw)))]);
+          const [inbox, settings] = await Promise.all([fetchCateringRequests(), fetchCateringSettings()]);
           return { inbox, settings };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -47,9 +47,10 @@ export const cateringSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = { inbox: cateringInboxSerializer(action.payload.inbox), settings: cateringSettingsSerializer(action.payload.settings) };
           state.status = 'succeeded';
-          state.inbox = action.payload.inbox;
-          state.settings = action.payload.settings;
+          state.inbox = payload.inbox;
+          state.settings = payload.settings;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -60,7 +61,7 @@ export const cateringSlice = createAppSlice({
     loadCateringCalendarAsync: create.asyncThunk(
       async (month: string, { rejectWithValue }) => {
         try {
-          return required(cateringCalendarSerializer(await fetchCateringCalendar(month)));
+          return await fetchCateringCalendar(month);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -70,7 +71,8 @@ export const cateringSlice = createAppSlice({
           state.month = action.meta.arg;
         },
         fulfilled: (state, action) => {
-          state.calendar = action.payload;
+          const payload = cateringCalendarSerializer(action.payload);
+          state.calendar = payload;
         },
         rejected: (state, action) => {
           state.error = readRejection(action, "The calendar didn't load.");
@@ -80,7 +82,7 @@ export const cateringSlice = createAppSlice({
     saveCateringSettingsAsync: create.asyncThunk(
       async (patch: Partial<CateringSettings>, { rejectWithValue }) => {
         try {
-          return required(cateringSettingsSerializer(await updateCateringSettings(patch)));
+          return await updateCateringSettings(patch);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -91,8 +93,9 @@ export const cateringSlice = createAppSlice({
           state.saveError = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = cateringSettingsSerializer(action.payload);
           state.saving = false;
-          state.settings = action.payload;
+          state.settings = payload;
         },
         rejected: (state, action) => {
           state.saving = false;

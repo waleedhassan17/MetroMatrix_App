@@ -29,7 +29,7 @@ export const practiceSetupSlice = createAppSlice({
     loadCompletenessAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(completenessSerializer(await fetchCompleteness()));
+          return await fetchCompleteness();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -40,8 +40,9 @@ export const practiceSetupSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = completenessSerializer(action.payload);
           state.status = 'succeeded';
-          state.completeness = action.payload;
+          state.completeness = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

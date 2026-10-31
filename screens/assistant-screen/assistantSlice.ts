@@ -22,7 +22,7 @@ export const assistantSlice = createAppSlice({
     loadAssistantAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(aiUsageSerializer(await fetchAiUsage()));
+          return await fetchAiUsage();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -33,8 +33,9 @@ export const assistantSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = aiUsageSerializer(action.payload);
           state.status = 'succeeded';
-          state.usage = action.payload;
+          state.usage = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

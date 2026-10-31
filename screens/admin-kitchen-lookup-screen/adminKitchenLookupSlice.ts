@@ -42,7 +42,7 @@ export const adminKitchenLookupSlice = createAppSlice({
     lookupCodeAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return required(growthLookupSerializer(await lookupGrowthCode(code)));
+          return await lookupGrowthCode(code);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -53,8 +53,9 @@ export const adminKitchenLookupSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = growthLookupSerializer(action.payload);
           state.status = 'succeeded';
-          state.result = action.payload;
+          state.result = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

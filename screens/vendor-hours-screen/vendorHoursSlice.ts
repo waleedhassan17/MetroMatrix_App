@@ -70,7 +70,7 @@ export const vendorHoursSlice = createAppSlice({
     loadHoursAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(hoursSerializer(await fetchHours()));
+          return await fetchHours();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -81,8 +81,9 @@ export const vendorHoursSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = hoursSerializer(action.payload);
           state.status = 'succeeded';
-          state.ranges = action.payload.map(r => ({ weekday: r.weekday, opensAt: r.opensAt, closesAt: r.closesAt }));
+          state.ranges = payload.map(r => ({ weekday: r.weekday, opensAt: r.opensAt, closesAt: r.closesAt }));
           state.dirty = false;
           state.submitted = false;
         },
@@ -95,7 +96,7 @@ export const vendorHoursSlice = createAppSlice({
     saveHoursAsync: create.asyncThunk(
       async (ranges: HoursRow[], { rejectWithValue }) => {
         try {
-          return required(hoursSerializer(await saveHours(ranges)));
+          return await saveHours(ranges);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -106,8 +107,9 @@ export const vendorHoursSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = hoursSerializer(action.payload);
           state.saving = false;
-          state.ranges = action.payload.map(r => ({ weekday: r.weekday, opensAt: r.opensAt, closesAt: r.closesAt }));
+          state.ranges = payload.map(r => ({ weekday: r.weekday, opensAt: r.opensAt, closesAt: r.closesAt }));
           state.dirty = false;
         },
         rejected: (state, action) => {

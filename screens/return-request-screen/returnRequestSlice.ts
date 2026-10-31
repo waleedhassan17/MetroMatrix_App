@@ -84,7 +84,7 @@ export const returnRequestSlice = createAppSlice({
     submitReturnAsync: create.asyncThunk(
       async ({ orderId, input }: { orderId: string; input: ReturnInput }, { rejectWithValue }) => {
         try {
-          return required(returnSerializer(await requestReturn(orderId, input)));
+          return await requestReturn(orderId, input);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

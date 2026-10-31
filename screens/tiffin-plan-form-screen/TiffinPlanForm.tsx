@@ -11,7 +11,7 @@ import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { CUTOFF_CHOICES, MAX_PLAN_DISHES, WEEKDAYS, cutoffChoiceLabel, draftPerMeal, planInput, validatePlan } from '../../models/kitchen/tiffinModel';
 import { MEAL_LABEL, WEEKDAY_LONG, WEEKDAY_SHORT } from '../../models/kitchen/kitchenStatusModel';
@@ -57,6 +57,7 @@ const TiffinPlanFormContent: React.FC<Props> = ({ navigation, route }) => {
   const id = route.params?.id ?? null;
   const { back } = useBack({ name: 'GrowthTiffin' });
   const dispatch = useAppDispatch();
+  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const { space } = useTheme();
   const s = useAppSelector(selectTiffinPlanForm);
@@ -263,7 +264,7 @@ const TiffinPlanFormContent: React.FC<Props> = ({ navigation, route }) => {
               const r = await dispatch(removePlanAsync(id));
               if (removePlanAsync.fulfilled.match(r)) {
                 setStopping(false);
-                Toast.show({ type: 'success', text1: r.payload.removed ? 'Plan removed' : 'Plan taken off your page' });
+                Toast.show({ type: 'success', text1: selectTiffinPlanForm(appStore.getState()).removed?.removed ? 'Plan removed' : 'Plan taken off your page' });
                 navigation.navigate('GrowthTiffin');
               }
             }}

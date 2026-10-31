@@ -26,7 +26,7 @@ export const riderCashSlice = createAppSlice({
     loadRiderCashAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return required(riderCashSerializer(await fetchRiderCash()));
+          return await fetchRiderCash();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -37,8 +37,9 @@ export const riderCashSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          const payload = riderCashSerializer(action.payload);
           state.status = 'succeeded';
-          state.cash = action.payload;
+          state.cash = payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';
