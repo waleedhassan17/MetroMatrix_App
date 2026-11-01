@@ -4,6 +4,7 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
+import type { BaseUnit } from '../../utils/units/units';
 import { fetchStock, recordStockTake } from '../../networks/kitchen/stock';
 import { toRejectedValue } from '../../networks/network/network';
 import type { Ingredient, StockTakeResult } from '../../models';
@@ -65,7 +66,7 @@ export const stockTakeSlice = createAppSlice({
       },
     ),
     saveStockTakeAsync: create.asyncThunk(
-      async (lines: { ingredientId: string; counted: number }[], { rejectWithValue }) => {
+      async (lines: { ingredientId: string; counted: number; baseUnit: BaseUnit }[], { rejectWithValue }) => {
         try {
           return await recordStockTake(lines);
         } catch (e) {

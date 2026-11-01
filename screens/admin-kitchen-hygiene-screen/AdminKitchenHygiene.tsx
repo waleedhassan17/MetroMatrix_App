@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════
 // Kitchens that ticked their hygiene checklist and asked MetroMatrix to
 // verify it, oldest first; the verified ones and the ones sent back with a
-// note sit in their own tabs. A row opens the checklist and its photos.
+// note sit in their own tabs. A row opens the checklist and the story's photos.
 
 import React, { useCallback, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -22,9 +22,8 @@ import { loadHygieneAsync, selectAdminKitchenHygiene, setHygieneTab, type Hygien
 type Props = NativeStackScreenProps<AdminFoodStackParamList, 'AdminKitchenHygiene'>;
 
 const TABS: { key: HygieneTab; label: string }[] = [
-  { key: 'pending', label: 'Waiting' },
+  { key: 'self_declared', label: 'To verify' },
   { key: 'verified', label: 'Verified' },
-  { key: 'rejected', label: 'Sent back' },
 ];
 
 const makeStyles = ({ space }: Theme) => StyleSheet.create({ list: { gap: space.s12 } });
@@ -37,7 +36,7 @@ const AdminKitchenHygiene: React.FC<Props> = ({ navigation, route }) => {
 
   // A link from the overview opens a tab once.
   useEffect(() => {
-    if (route.params?.status) dispatch(setHygieneTab(route.params.status));
+    if (route.params?.status) dispatch(setHygieneTab(route.params.status === 'verified' ? 'verified' : 'self_declared'));
   }, [dispatch, route.params?.status]);
 
   const load = useCallback(() => void dispatch(loadHygieneAsync(s.tab)), [dispatch, s.tab]);
@@ -63,16 +62,16 @@ const AdminKitchenHygiene: React.FC<Props> = ({ navigation, route }) => {
             mark={{ icon: 'shield-checkmark-outline', tint: h.status === 'verified' ? 'accent' : 'amber' }}
             lines={[
               `${h.vendor?.isHomeKitchen ? 'Home kitchen' : 'Kitchen'} · ${done(h.items)}`,
-              h.status === 'pending' && h.requestedAt ? `Asked on ${formatDate(h.requestedAt)}` : h.reviewedAt ? `Reviewed on ${formatDate(h.reviewedAt)}` : null,
+              h.status === 'self_declared' && h.requestedAt ? `Ticked on ${formatDate(h.requestedAt)}` : h.reviewedAt ? `Verified on ${formatDate(h.reviewedAt)}` : null,
               h.note ? `Note: ${h.note}` : null,
             ]}
-            pill={{ label: h.status === 'pending' ? 'Waiting' : HYGIENE_STATUS[h.status].vendorLabel, tone: HYGIENE_STATUS[h.status].tone }}
+            pill={{ label: h.status === 'self_declared' ? 'To verify' : HYGIENE_STATUS[h.status].vendorLabel, tone: HYGIENE_STATUS[h.status].tone }}
             onPress={() => navigation.navigate('AdminKitchenHygieneReview', { businessId: h.businessId, name: h.vendor?.name })}
           />
         ))}
       </View>
       {s.status === 'succeeded' && !s.items.length ? (
-        <AppText variant="body">{s.tab === 'pending' ? 'No kitchen is waiting for a check.' : s.tab === 'verified' ? 'No kitchen verified yet.' : 'No kitchen sent back.'}</AppText>
+        <AppText variant="body">{s.tab === 'self_declared' ? 'No kitchen is waiting for a check.' : 'No kitchen verified yet.'}</AppText>
       ) : null}
     </ScreenShell>
   );

@@ -11,6 +11,9 @@ import type { TiffinPayMethod, TiffinPlan } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { tiffinPlanSerializer, tiffinSubscriptionSerializer } from '../../serializers/kitchen/growthSerializer';
 
+/** The address choice that means collecting it (a plan the kitchen delivers or hands over). */
+export const PICKUP = 'pickup';
+
 export interface FoodTiffinPlanSliceState {
   plan: TiffinPlan | null;
   status: FormStatus;
@@ -87,7 +90,7 @@ export const foodTiffinPlanSlice = createAppSlice({
         const s = (getState() as { foodTiffinPlan: FoodTiffinPlanSliceState }).foodTiffinPlan;
         if (!s.plan || !s.startDate) return rejectWithValue({ message: 'Pick a day to start.', code: 'VALIDATION_FAILED', status: 400, details: null });
         try {
-          const subscribed = await subscribeTiffin(s.plan.id, { startDate: s.startDate, addressId: s.plan.mode === 'delivery' ? s.addressId : null, paymentMethod: s.payMethod }, s.idempotencyKey || newUuid());
+          const subscribed = await subscribeTiffin(s.plan.id, { startDate: s.startDate, addressId: s.plan.mode === 'pickup' || s.addressId === PICKUP ? null : s.addressId, paymentMethod: s.payMethod }, s.idempotencyKey || newUuid());
           dispatch(newTiffinKey());
           return subscribed;
         } catch (e) {

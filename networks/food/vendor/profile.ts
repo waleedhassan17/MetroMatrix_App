@@ -30,13 +30,14 @@ export const updateVendorProfile = async (input: VendorProfileInput): Promise<un
 
 /**
  * Hidden from lists while paused; the vendor's own link shows the message.
- * `reason` (never shown to customers) and `resumeAt` (the pause lifts by
- * itself) are Kitchen Intelligence's additions (docs/API_KITCHEN_ASSUMED.md §5;
- * TODO(API_KITCHEN)).
+ * `reason` (never shown to customers) and an end (`minutes` from now, 5–720:
+ * the pause lifts by itself) are Kitchen Intelligence's outage pause
+ * (docs/API_KITCHEN.md §9).
  */
 export const pauseOrders = async (message: string | null, more: { reason?: PauseReason | null; resumeAt?: string | null } = {}): Promise<unknown> => {
   try {
-    const response = await API.POST({ URL: '/food/vendor/pause', data: clean({ message, reason: more.reason, resumeAt: more.resumeAt }) });
+    const minutes = more.resumeAt ? Math.min(720, Math.max(5, Math.round((Date.parse(more.resumeAt) - Date.now()) / 60_000))) : undefined;
+    const response = await API.POST({ URL: '/food/vendor/pause', data: clean({ message, reason: more.reason, minutes }) });
     return response.data;
   } catch (e) {
     throw toApiError(e);

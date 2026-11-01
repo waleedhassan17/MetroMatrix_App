@@ -5,35 +5,27 @@
 // top rated, fastest, home kitchens…), or "not delivering here yet" with the
 // pick-up places nearby. The point itself is a device preference
 // (preferences.foodPoint); the list under the rails is paged by the screen.
-// Bachat Boxes nearby (tonight's surplus, for pickup), home-cooked tiffin
-// plans and, in Ramadan, kitchens keeping iftar hours ride along; without
-// them the home is the same (TODO(API_KITCHEN)).
+// Bachat Boxes nearby (tonight's surplus, for pickup) and, for people who
+// turned calories on, kitchens with lighter dishes ride along; without them
+// the home is the same. Tiffin and iftar kitchens are the home's own rails.
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchFoodHome } from '../../networks/food/discovery';
 import { fetchSurplusNearby } from '../../networks/food/surplus';
-import { fetchTiffinPlansNear } from '../../networks/foodGrowth/tiffin';
-import { fetchIftarNearby } from '../../networks/foodGrowth/ramadan';
 import { fetchHealthyPicks } from '../../networks/myKitchen/nutrition';
 import { toRejectedValue } from '../../networks/network/network';
 import { currentPoint } from '../../services/location';
 import { setFoodPoint } from '../../store/preferencesSlice';
-import type { FoodHome, HealthyPick, IftarKitchen, SurplusCard, TiffinPlan } from '../../models';
+import type { FoodHome, SurplusCard, VendorCard } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { foodHomeSerializer } from '../../serializers/food/discoverySerializer';
+import { foodHomeSerializer, vendorCardsPageSerializer } from '../../serializers/food/discoverySerializer';
 import { surplusCardsSerializer } from '../../serializers/kitchen/surplusSerializer';
-import { tiffinPlansSerializer } from '../../serializers/kitchen/growthSerializer';
-import { iftarNearbySerializer } from '../../serializers/kitchen/reachSerializer';
-import { healthyPicksSerializer } from '../../serializers/myKitchen/myKitchenSerializer';
 
 export interface FoodHomeSliceState {
   home: FoodHome | null;
   surplus: SurplusCard[];
-  tiffins: TiffinPlan[];
-  /** Kitchens keeping iftar hours nearby (in Ramadan only). */
-  iftar: IftarKitchen[];
-  /** Meals under 600 kcal or high in protein (shown only to people who turned calories on). */
-  healthy: HealthyPick[];
+  /** Kitchens with dishes under 600 kcal (shown only to people who turned calories on). */
+  healthy: VendorCard[];
   /** "lat,lng" the home was built for. */
   builtFor: string | null;
   status: FormStatus;
@@ -47,8 +39,6 @@ export interface FoodHomeSliceState {
 const initialState: FoodHomeSliceState = {
   home: null,
   surplus: [],
-  tiffins: [],
-  iftar: [],
   healthy: [],
   builtFor: null,
   status: 'idle',
@@ -76,14 +66,12 @@ export const foodHomeSlice = createAppSlice({
       async ({ lat, lng }: { lat: number; lng: number; refresh?: boolean }, { rejectWithValue }) => {
         try {
           // The extras never hold the home back: a failure is an empty rail.
-          const [home, surplus, tiffins, iftar, healthy] = await Promise.all([
+          const [home, surplus, healthy] = await Promise.all([
             fetchFoodHome(lat, lng),
             fetchSurplusNearby({ lat, lng }).catch(() => null),
-            fetchTiffinPlansNear({ lat, lng }).catch(() => null),
-            fetchIftarNearby({ lat, lng }).catch(() => null),
             fetchHealthyPicks({ lat, lng }).catch(() => null),
           ]);
-          return { home, surplus, tiffins, iftar, healthy };
+          return { home, surplus, healthy };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -101,13 +89,10 @@ export const foodHomeSlice = createAppSlice({
         fulfilled: (state, action) => {
           state.status = 'succeeded';
           state.refreshing = false;
-          const { home, surplus, tiffins, iftar, healthy } = action.payload;
-          const iftarNearby = iftar === null ? null : iftarNearbySerializer(iftar);
+          const { home, surplus, healthy } = action.payload;
           state.home = foodHomeSerializer(home);
           state.surplus = surplus === null ? [] : surplusCardsSerializer(surplus);
-          state.tiffins = tiffins === null ? [] : tiffinPlansSerializer(tiffins);
-          state.iftar = iftarNearby?.state === 'active' ? iftarNearby.items : [];
-          state.healthy = healthy === null ? [] : healthyPicksSerializer(healthy);
+          state.healthy = healthy === null ? [] : vendorCardsPageSerializer(healthy).items.slice(0, 10);
           state.builtFor = pointKey(action.meta.arg);
         },
         rejected: (state, action) => {

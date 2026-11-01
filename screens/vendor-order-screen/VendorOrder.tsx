@@ -7,7 +7,7 @@
 // reference to check against the kitchen's own account — and the moves the
 // server allows now. Live: read again whenever the order changes. When the
 // kitchen asks for a packing photo (Kitchen settings), "Ready" waits for it;
-// the assistant's look at it is advice only (TODO(API_KITCHEN)).
+// the assistant's look at it is advice only (docs/API_KITCHEN.md).
 
 import React, { useCallback, useEffect } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
@@ -156,12 +156,12 @@ const VendorOrderContent: React.FC<Props> = ({ route }) => {
   const beforePickup = !o.rider || ['assigned', 'accepted_by_rider', 'arrived_at_branch'].includes(o.rider.step);
   const canAccept = o.actions.status.includes('accepted');
   const a = o.address;
-  // The packing photo: asked for before Ready (required), or offered (optional).
+  // The packing photo: asked for before the order leaves (required: on its way or picked up), or offered (optional).
   const packingOn = ui.packingRule === 'optional' || ui.packingRule === 'required';
   const beforeLeaving = ['accepted', 'preparing', 'ready'].includes(o.status);
-  const photoFirst = ui.packingRule === 'required' && !o.packedPhotoUrl && o.actions.status.includes('ready');
+  const photoFirst = ui.packingRule === 'required' && !o.packedPhotoUrl && (o.actions.status.includes('on_the_way') || o.actions.status.includes('picked_up'));
   const showPacking = (packingOn && beforeLeaving) || !!o.packedPhotoUrl;
-  const shownMoves = photoFirst ? moves.filter(m => m !== 'ready') : moves;
+  const shownMoves = photoFirst ? moves.filter(m => m !== 'on_the_way' && m !== 'picked_up') : moves;
   const addPacking = async (how: 'camera' | 'library') => {
     const file = how === 'camera' ? await takePhoto() : await pickImageFromLibrary();
     if (!file) return;
@@ -224,7 +224,7 @@ const VendorOrderContent: React.FC<Props> = ({ route }) => {
             <AppText variant="title">Packing photo</AppText>
             <AppText variant="small" tone="muted">
               {ui.packingRule === 'required' && !o.packedPhotoUrl
-                ? 'Take it before you mark the order ready. The customer sees it on their order.'
+                ? 'Take it before the order leaves the kitchen. The customer sees it on their order.'
                 : 'The customer sees it on their order.'}
             </AppText>
             {o.packedPhotoUrl ? <Image source={{ uri: o.packedPhotoUrl }} style={styles.packed} contentFit="cover" accessibilityLabel={`Order ${o.code}, packed`} /> : null}

@@ -76,7 +76,7 @@ export interface VendorBranch {
   foodSafetyCheckedAt: string | null;
   isPaused: boolean;
   pauseMessage: string | null;
-  /** Why the kitchen paused (only the kitchen sees it) and when the pause lifts by itself. TODO(API_KITCHEN): an addition. */
+  /** Why the kitchen paused (only the kitchen sees it) and when the pause lifts by itself. docs/API_KITCHEN.md §9. */
   pauseReason: PauseReason | null;
   resumeAt: string | null;
   busy: VendorBusy | null;
@@ -271,7 +271,7 @@ export interface RiderOrder {
   codCollected: number | null;
   readyAt: string | null;
   promisedAt: string | null;
-  /** On a run of two or more of the kitchen's orders (§5; TODO(API_KITCHEN)). */
+  /** On a run of two or more of the kitchen's orders (docs/API_KITCHEN.md). */
   dropOrder: { position: number; of: number } | null;
 }
 
@@ -491,7 +491,7 @@ export interface VendorCard {
   fulfilment: { delivery: boolean; pickup: boolean };
   preorderOnly: boolean;
   openState: { open: boolean; paused: boolean; label: string; opensAt: string | null };
-  /** Kitchen Intelligence's addition (§5; TODO(API_KITCHEN)). */
+  /** Kitchen Intelligence's addition (docs/API_KITCHEN.md). */
   badges: VendorBadge[];
 }
 
@@ -507,6 +507,9 @@ export interface FoodHome {
   fastest: VendorCard[];
   newOnFoodCourt: VendorCard[];
   freeDelivery: VendorCard[];
+  /** Kitchen Intelligence's rails (present only when not empty): iftar hours today, a tiffin with a free place. */
+  iftarNearYou: VendorCard[];
+  tiffinNearYou: VendorCard[];
 }
 
 export type VendorSort = 'recommended' | 'distance' | 'rating' | 'delivery_time' | 'delivery_fee';
@@ -548,7 +551,7 @@ export interface DishCard {
   /** "6 left today" when few remain. */
   remainingLabel: string | null;
   sold30d: number;
-  /** Per order as sold; shown only when the customer turned calories on (Kitchen Intelligence, TODO(API_KITCHEN)). */
+  /** Per order as sold; shown only when the customer turned calories on (Kitchen Intelligence, docs/API_KITCHEN.md). */
   nutrition: DishFacts | null;
 }
 
@@ -583,14 +586,15 @@ export interface VendorPage extends VendorCard {
   ratingSummary: FoodRatingSummary | null;
   menu: MenuSection[];
   popular: DishCard[];
-  /** Kitchen Intelligence's additions (docs/API_KITCHEN_ASSUMED.md §5; TODO(API_KITCHEN)). */
+  /** Kitchen Intelligence's additions (docs/API_KITCHEN.md). */
   tiffinPlans: TiffinPlanCard[];
   catering: { open: boolean; minGuests: number; leadDays: number } | null;
   story: Omit<KitchenStory, 'updatedAt'> | null;
   hygiene: { status: HygieneStatus; checkedAt: string | null };
   signatureItemIds: string[];
   /** While the kitchen keeps Ramadan hours. */
-  ramadan: { sehri: { from: string; to: string }; iftar: { from: string; to: string }; iftarPreorderOnly: boolean } | null;
+  /** Today's Ramadan hours (inside the calendar's Ramadan); a kitchen may keep only one of the two. */
+  ramadan: { sehri: { from: string; to: string } | null; iftar: { from: string; to: string } | null; iftarPreorderOnly: boolean } | null;
 }
 
 export interface SheetOption {
@@ -617,7 +621,7 @@ export interface ItemSheet {
   id: string;
   name: string;
   description: string | null;
-  /** The Urdu description beside the English one (Kitchen Intelligence, TODO(API_KITCHEN)). */
+  /** The Urdu description beside the English one (Kitchen Intelligence, docs/API_KITCHEN.md). */
   descriptionUr: string | null;
   photoUrl: string | null;
   tags: ItemTag[];
@@ -651,7 +655,7 @@ export interface FoodSearchResult {
 // ─── Ordering: the bag, checkout, orders (customer and vendor) ─────────────
 export type FoodFulfilment = 'delivery' | 'pickup';
 /** Customers always pay the vendor directly. */
-/** `tiffin_plan`: a tiffin day, paid with its period (Kitchen Intelligence; TODO(API_KITCHEN)). */
+/** `tiffin_plan`: a tiffin day, paid with its period (Kitchen Intelligence, docs/API_KITCHEN.md). */
 export type FoodPaymentMethod = 'cod' | 'transfer' | 'pay_at_pickup' | 'tiffin_plan';
 export type FoodOrderStatus = 'placed' | 'accepted' | 'preparing' | 'ready' | 'on_the_way' | 'delivered' | 'picked_up' | 'rejected' | 'auto_rejected' | 'cancelled';
 export type FoodPaymentStatus = 'cod_pending' | 'unpaid' | 'awaiting_transfer' | 'proof_submitted' | 'paid' | 'void' | 'refund_due' | 'refunded';
@@ -767,7 +771,7 @@ export interface FoodCheckoutInput {
   building: string | null;
   floor: string | null;
   riderInstructions: string | null;
-  /** The kitchen's own link or QR the order came through (§5; TODO(API_KITCHEN)). */
+  /** The kitchen's own link or QR the order came through (docs/API_KITCHEN.md). */
   source?: StoreSource | null;
 }
 
@@ -863,7 +867,7 @@ export interface FoodOrder {
   canCancel: boolean;
   canReview: boolean;
   canReorder: boolean;
-  /** Kitchen Intelligence's additions (docs/API_KITCHEN_ASSUMED.md §5; TODO(API_KITCHEN)). */
+  /** Kitchen Intelligence's additions (docs/API_KITCHEN.md). */
   packedPhotoUrl: string | null;
   origin: FoodOrderOrigin;
 }
@@ -953,7 +957,7 @@ export interface BoardCard {
   customerName: string | null;
   riderId: string | null;
   handedToExternal: boolean;
-  /** Kitchen Intelligence's additions (TODO(API_KITCHEN)). */
+  /** Kitchen Intelligence's additions (docs/API_KITCHEN.md). */
   packedPhotoUrl: string | null;
   origin: FoodOrderOrigin;
 }

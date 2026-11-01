@@ -26,7 +26,6 @@ import { arr, bool, isObject, num, str, strOrNull, fromResponse } from '../seria
 import { foodCuisinesSerializer } from './vendorSerializer';
 import { ITEM_TAGS } from './menuSerializer';
 import { foodHomeBannersSerializer, ratingSummarySerializer } from './reviewSerializer';
-import { tiffinPlanCardSerializer } from '../kitchen/growthSerializer';
 import { dishFactsSerializer } from '../myKitchen/myKitchenSerializer';
 
 const compact = <T>(xs: (T | null)[]): T[] => xs.filter((x): x is T => x !== null);
@@ -82,7 +81,7 @@ export const vendorCardSerializer = (raw: unknown): VendorCard | null => {
     fulfilment: { delivery: f.delivery !== false, pickup: bool(f.pickup) },
     preorderOnly: bool(raw.preorderOnly),
     openState: { open: bool(o.open), paused: bool(o.paused), label: str(o.label, bool(o.open) ? 'Open' : 'Closed'), opensAt: isoOrNull(o.opensAt) },
-    // Kitchen Intelligence's addition (TODO(API_KITCHEN)).
+    // Kitchen Intelligence's addition (docs/API_KITCHEN.md).
     badges: arr(raw.badges).filter((b): b is VendorBadge => VENDOR_BADGES.includes(b as VendorBadge)),
   };
 };
@@ -103,6 +102,8 @@ export const foodHomeSerializer = fromResponse((raw: unknown): FoodHome | null =
     fastest: cards(raw.fastest),
     newOnFoodCourt: cards(raw.newOnFoodCourt),
     freeDelivery: cards(raw.freeDelivery),
+    iftarNearYou: cards(raw.iftarNearYou),
+    tiffinNearYou: cards(raw.tiffinNearYou),
   };
 });
 
@@ -114,7 +115,8 @@ export const vendorCardsPageSerializer = fromResponse((raw: unknown): Paged<Vend
   return { items: cards(r.items), page, pageSize, total };
 });
 
-export const dishCardSerializer = (raw: unknown): DishCard | null => {
+/** A dish card; its estimated numbers come from the vendor page's `nutritionByItem` when given. */
+export const dishCardSerializer = (raw: unknown, nutritionByItem: Record<string, unknown> = {}): DishCard | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
   return {
     id: str(raw.id),
@@ -133,13 +135,13 @@ export const dishCardSerializer = (raw: unknown): DishCard | null => {
     remainingToday: intOrNull(raw.remainingToday),
     remainingLabel: strOrNull(raw.remainingLabel),
     sold30d: Math.max(0, Math.round(num(raw.sold30d))),
-    nutrition: dishFactsSerializer(raw.nutrition),
+    nutrition: dishFactsSerializer(raw.nutrition ?? nutritionByItem[str(raw.id)]),
   };
 };
 
-const sectionSerializer = (raw: unknown): MenuSection | null => {
+const sectionSerializer = (raw: unknown, nutritionByItem: Record<string, unknown>): MenuSection | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
-  const items = compact(arr(raw.items).map(dishCardSerializer));
+  const items = compact(arr(raw.items).map(x => dishCardSerializer(x, nutritionByItem)));
   if (!items.length) return null;
   return {
     id: str(raw.id),
@@ -179,27 +181,28 @@ export const vendorPageSerializer = fromResponse((raw: unknown): VendorPage | nu
     acceptsCod: raw.acceptsCod !== false,
     deals: compact(arr(raw.deals).map(dealSerializer)),
     ratingSummary: ratingSummarySerializer(raw.ratingSummary),
-    menu: compact(arr(raw.menu).map(sectionSerializer)),
-    popular: compact(arr(raw.popular).map(dishCardSerializer)),
-    // Kitchen Intelligence's additions (TODO(API_KITCHEN)).
-    tiffinPlans: compact(arr(raw.tiffinPlans).map(tiffinPlanCardSerializer)),
-    catering: isObject(raw.catering)
-      ? { open: bool(raw.catering.open), minGuests: Math.max(0, Math.round(num(raw.catering.minGuests))), leadDays: Math.max(0, Math.round(num(raw.catering.leadDays))) }
-      : null,
-    story:
-      isObject(raw.story) && str(raw.story.text)
-        ? { text: str(raw.story.text), cookName: str(raw.story.cookName), photoUrls: arr(raw.story.photoUrls).map(u => str(u)).filter(Boolean), videoUrl: strOrNull(raw.story.videoUrl) }
-        : null,
-    hygiene: {
-      status: isObject(raw.hygiene) && HYGIENE.includes(raw.hygiene.status as HygieneStatus) ? (raw.hygiene.status as HygieneStatus) : 'none',
-      checkedAt: isObject(raw.hygiene) ? isoOrNull(raw.hygiene.checkedAt) : null,
-    },
-    signatureItemIds: arr(raw.signatureItemIds).map(x => str(x)).filter(Boolean),
+    menu: compact(arr(raw.menu).map(x => sectionSerializer(x, isObject(raw.nutritionByItem) ? raw.nutritionByItem : {}))),
+    popular: compact(arr(raw.popular).map(x => dishCardSerializer(x, isObject(raw.nutritionByItem) ? raw.nutritionByItem : {}))),
+    // Kitchen Intelligence's additions (docs/API_KITCHEN.md §23, §24, §34): the story with its
+    // hygiene, signature dishes, today's Ramadan hours. Tiffin plans and catering are their own reads.
+    tiffinPlans: [],
+    catering: null,
+    story: (() => {
+      const st = isObject(raw.story) ? raw.story : null;
+      return st && (str(st.story) || str(st.cookName))
+        ? { text: str(st.story), cookName: str(st.cookName), photoUrls: arr(st.photos).map(u => (isObject(u) ? str(u.url) : str(u))).filter(Boolean), videoUrl: strOrNull(st.videoUrl) }
+        : null;
+    })(),
+    hygiene: (() => {
+      const h = isObject(raw.story) && isObject(raw.story.hygiene) ? raw.story.hygiene : null;
+      return { status: h && HYGIENE.includes(h.status as HygieneStatus) ? (h.status as HygieneStatus) : 'none', checkedAt: h ? isoOrNull(h.verifiedAt) : null };
+    })(),
+    signatureItemIds: arr(raw.signatureDishes).map(x => (isObject(x) ? str(x.itemId) : '')).filter(Boolean),
     ramadan: (() => {
       const r = isObject(raw.ramadan) ? raw.ramadan : null;
       const sehri = r ? hhmmPair(r.sehri) : null;
       const iftar = r ? hhmmPair(r.iftar) : null;
-      return r && sehri && iftar ? { sehri, iftar, iftarPreorderOnly: bool(r.iftarPreorderOnly) } : null;
+      return r && (sehri || iftar) ? { sehri, iftar, iftarPreorderOnly: bool(r.iftarPreorderOnly) } : null;
     })(),
   };
 });

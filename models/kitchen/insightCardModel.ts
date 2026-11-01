@@ -27,6 +27,14 @@ const KIND_ICON: Record<string, IonName> = {
   tiffin_pending: 'calendar-outline',
   catering_new: 'people-outline',
   signature_removed: 'ribbon-outline',
+  // The API's kinds (docs/API_KITCHEN.md §7).
+  food_cost_rising: 'trending-up-outline',
+  price_above_reference: 'pricetag-outline',
+  reference_rising: 'trending-up-outline',
+  sold_out_by_stock: 'close-circle-outline',
+  waste_spike: 'trash-outline',
+  forecast_gap: 'cart-outline',
+  surplus_suggestion: 'gift-outline',
 };
 
 const SEVERITY_ICON: Record<InsightSeverity, IonName> = {
@@ -50,7 +58,7 @@ const str = (v: unknown) => (typeof v === 'string' ? v : typeof v === 'number' ?
 const strs = (v: unknown) => (Array.isArray(v) ? v.map(String) : undefined);
 
 const TARGETS: Record<InsightActionKind, (p: InsightCard['action']['params']) => CardTarget> = {
-  open_stock: () => ({ screen: ROUTES.KITCHEN_STOCK }),
+  open_stock: p => ({ screen: ROUTES.KITCHEN_STOCK, params: str(p.segment) ? { segment: str(p.segment) } : undefined }),
   open_ingredient: p => ({ screen: ROUTES.KITCHEN_INGREDIENT, params: { id: str(p.ingredientId) } }),
   add_purchase: () => ({ screen: ROUTES.KITCHEN_PURCHASE_FORM, params: {} }),
   stock_take: p => ({ screen: ROUTES.KITCHEN_STOCK_TAKE, params: { ingredientIds: strs(p.ingredientIds) } }),
@@ -66,6 +74,8 @@ const TARGETS: Record<InsightActionKind, (p: InsightCard['action']['params']) =>
   open_review_insights: () => ({ screen: ROUTES.KITCHEN_REVIEW_INSIGHTS }),
   open_tiffin: p => ({ screen: ROUTES.GROWTH_TIFFIN_SUBSCRIBERS, params: { status: str(p.status) ?? 'pending' } }),
   open_catering: p => (str(p.code) ? { screen: ROUTES.GROWTH_CATERING_REQUEST, params: { code: str(p.code) } } : { screen: ROUTES.GROWTH_CATERING }),
+  open_price_watch: () => ({ screen: ROUTES.KITCHEN_PRICE_WATCH }),
+  open_waste: () => ({ screen: ROUTES.KITCHEN_WASTE }),
 };
 
 /** Lets later milestones point an action at their own screen (Assistant, Tiffin, Demand map …). */

@@ -11,7 +11,7 @@ import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { CUTOFF_CHOICES, MAX_PLAN_DISHES, WEEKDAYS, cutoffChoiceLabel, draftPerMeal, planInput, validatePlan } from '../../models/kitchen/tiffinModel';
 import { MEAL_LABEL, WEEKDAY_LONG, WEEKDAY_SHORT } from '../../models/kitchen/kitchenStatusModel';
@@ -57,7 +57,6 @@ const TiffinPlanFormContent: React.FC<Props> = ({ navigation, route }) => {
   const id = route.params?.id ?? null;
   const { back } = useBack({ name: 'GrowthTiffin' });
   const dispatch = useAppDispatch();
-  const appStore = useAppStore();
   const styles = useStyles(makeStyles);
   const { space } = useTheme();
   const s = useAppSelector(selectTiffinPlanForm);
@@ -156,6 +155,7 @@ const TiffinPlanFormContent: React.FC<Props> = ({ navigation, route }) => {
         options={[
           { key: 'delivery', label: 'Delivered' },
           { key: 'pickup', label: 'Collected' },
+          { key: 'both', label: 'Either' },
         ]}
         value={f.mode}
         onChange={mode => dispatch(editPlanForm({ mode }))}
@@ -173,15 +173,15 @@ const TiffinPlanFormContent: React.FC<Props> = ({ navigation, route }) => {
 
       <AppText variant="sectionTitle">Skipping a day</AppText>
       <AppText variant="small" tone="muted">
-        Customers can skip a day until this cut-off; after it, the day’s tiffins go on your board. Skipped meals come off their next period.
+        Customers can skip a day until this time the evening before; after it, the day’s tiffins go on your board.
       </AppText>
       <View style={styles.chips}>
         {CUTOFF_CHOICES.map(h => (
-          <ChoiceChip key={h} label={`${h} h`} selected={f.skipCutoffHours === h} onPress={() => dispatch(editPlanForm({ skipCutoffHours: h }))} />
+          <ChoiceChip key={h} label={`${((h + 11) % 12) + 1} PM`} selected={f.skipCutoffHour === h} onPress={() => dispatch(editPlanForm({ skipCutoffHour: h }))} />
         ))}
       </View>
       <AppText variant="caption" tone="muted">
-        {cutoffChoiceLabel(f.skipCutoffHours, f.from)}
+        {cutoffChoiceLabel(f.skipCutoffHour)}
       </AppText>
 
       <AppText variant="sectionTitle">What you cook</AppText>
@@ -252,11 +252,11 @@ const TiffinPlanFormContent: React.FC<Props> = ({ navigation, route }) => {
       <Sheet
         visible={stopping}
         onClose={() => setStopping(false)}
-        title="Remove this plan?"
-        subtitle="A plan people are on can’t be removed: stop it taking new subscribers instead, and end theirs."
+        title="Take this plan off your page?"
+        subtitle="No one new can subscribe. People already on it keep their tiffin until you end theirs."
         footer={
           <Button
-            label="Remove it"
+            label="Take it off"
             variant="destructive"
             loading={s.saving}
             onPress={async () => {
@@ -264,7 +264,7 @@ const TiffinPlanFormContent: React.FC<Props> = ({ navigation, route }) => {
               const r = await dispatch(removePlanAsync(id));
               if (removePlanAsync.fulfilled.match(r)) {
                 setStopping(false);
-                Toast.show({ type: 'success', text1: selectTiffinPlanForm(appStore.getState()).removed?.removed ? 'Plan removed' : 'Plan taken off your page' });
+                Toast.show({ type: 'success', text1: 'Plan taken off your page' });
                 navigation.navigate('GrowthTiffin');
               }
             }}

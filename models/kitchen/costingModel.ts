@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Cost to make, live while a recipe card is edited
 // ═══════════════════════════════════════════════════════
-// The server's rule (docs/API_KITCHEN_ASSUMED.md §3.3), mirrored so the
+// The server's rule (docs/API_KITCHEN.md §3.3), mirrored so the
 // editor answers as the cook types: ingredients ÷ the servings they make,
 // plus packaging per serving, at what the kitchen paid. Whole rupees for
 // the card; the saved recipe's cost (the server's) replaces this one.
@@ -116,7 +116,7 @@ export const recipeInputOf = (d: RecipeDraft, byId: Record<string, CostedIngredi
     xs.map(l => {
       const qty = baseOfLine(l, byId);
       if (!qty || qty <= 0) lineErrors[l.key] = 'Enter how much';
-      return { ingredientId: l.ingredientId, qty: qty ?? 0 };
+      return { ingredientId: l.ingredientId, qty: qty ?? 0, baseUnit: byId[l.ingredientId]?.baseUnit ?? 'g' };
     });
   const input: RecipeInput = {
     yield: Math.round(Number(d.yield) || 0),

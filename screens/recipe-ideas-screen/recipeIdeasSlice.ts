@@ -28,9 +28,10 @@ export const recipeIdeasSlice = createAppSlice({
       Object.assign(state, action.payload);
     }),
     suggestRecipesAsync: create.asyncThunk(
-      async (q: { language: 'en' | 'ur'; maxMinutes: number | null; servings: number }, { rejectWithValue }) => {
+      // The suggestions are the pantry's; the time and language are applied here.
+      async (_: { language: 'en' | 'ur'; maxMinutes: number | null; servings: number }, { rejectWithValue }) => {
         try {
-          return await suggestHomeRecipes(q);
+          return await suggestHomeRecipes();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -41,7 +42,7 @@ export const recipeIdeasSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = recipeIdeasSerializer(action.payload);
+          const payload = recipeIdeasSerializer(action.payload, action.meta.arg.maxMinutes);
           state.status = 'succeeded';
           state.ideas = payload;
         },

@@ -56,7 +56,7 @@ export const voiceSlice = createAppSlice({
       async ({ context, language, clip }: { context: VoiceContext; language: VoiceLanguage; clip: Clip }, { rejectWithValue }) => {
         try {
           const uploaded = await uploadImage(clip, 'voice_clip');
-          return await interpretVoice({ context, language, audioUrl: uploaded.url, durationMs: clip.durationMs });
+          return await interpretVoice({ context, language, audioUrl: uploaded.url, publicId: uploaded.publicId, durationMs: clip.durationMs });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -97,7 +97,7 @@ export const voiceSlice = createAppSlice({
           r.result = null;
         },
         fulfilled: (state, action) => {
-          const payload = voiceResultSerializer(action.payload);
+          const payload = voiceResultSerializer(action.payload, 'text');
           const r = runOf(state, action.meta.arg.context);
           r.status = 'result';
           r.result = payload;

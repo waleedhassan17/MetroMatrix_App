@@ -121,10 +121,8 @@ export const resultLines = (e: Pick<Experiment, 'result' | 'change'>) => {
   if (!e.result) return [];
   const { before, during } = e.result;
   const n = (x: number) => (Number.isInteger(x) ? String(x) : x.toFixed(1));
-  return [
-    { label: 'Orders a day', before: n(before.perDay), during: n(during.perDay) },
-    { label: 'Recorded sales a day', before: formatPKR(before.salesPerDay), during: formatPKR(during.salesPerDay) },
-  ];
+  // The API compares the dish with the median of its category's other dishes, a day.
+  return [{ label: 'Sold a day', before: n(before.perDay), during: n(during.perDay) }];
 };
 
 export const changeLine = (e: Pick<Experiment, 'change'>) =>
@@ -167,3 +165,12 @@ export const batchLine = (b: Pick<BatchSuggestion, 'extraKm' | 'sameDirection'>)
   `${b.sameDirection ? 'Same way · ' : ''}${b.extraKm < 0.1 ? 'next door' : `${b.extraKm.toFixed(1)} km from this drop`}`;
 
 export const dropOrderLabel = (d: { position: number; of: number } | null) => (d ? `Drop ${d.position} of ${d.of}` : null);
+
+/** What an experiment changed, written in its notes ("Price Rs 60 → Rs 50", "New photo"); a decision is added at the end (" · Kept"). */
+export const experimentNotes = (change: { kind: 'price'; price: number; oldPrice: number } | { kind: 'photo' }) =>
+  change.kind === 'price' ? `Price Rs ${change.oldPrice} → Rs ${change.price}` : 'New photo';
+
+/** What the kitchen decides once a test has run (or to stop it early). */
+export type ExperimentDecision = { kind: 'keep' } | { kind: 'adjust'; price: number } | { kind: 'drop' } | { kind: 'stop' };
+
+export const DECISION_NOTE: Record<Exclude<ExperimentDecision['kind'], 'stop'>, string> = { keep: 'Kept', adjust: 'Adjusted', drop: 'Dropped' };

@@ -126,7 +126,7 @@ export const unavailableLabel = (reason: string | null, from?: string | null): s
     case 'not_today':
       return 'Not on today’s menu';
     case 'ingredients':
-      // The kitchen ran out of what it is made with (Kitchen Intelligence: TODO(API_KITCHEN)).
+      // The kitchen ran out of what it is made with (Kitchen Intelligence, docs/API_KITCHEN.md).
       return 'Sold out for now';
     default:
       return 'Not available right now';

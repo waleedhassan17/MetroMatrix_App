@@ -5,7 +5,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { deleteRecipe, fetchRecipe, saveRecipe } from '../../networks/kitchen/recipes';
+import { deleteRecipe, fetchCosting, fetchRecipe, saveRecipe, setSignature as setSignatureRequest } from '../../networks/kitchen/recipes';
+import { fetchMenuItem, fetchOptionGroups } from '../../networks/food/vendor/menu';
 import { fetchStock } from '../../networks/kitchen/stock';
 import { toRejectedValue } from '../../networks/network/network';
 import { editableAmount } from '../../models/kitchen/stockModel';
@@ -71,6 +72,24 @@ const linesIn = (d: RecipeDraft, section: LineSection): DraftLine[] => {
   return d.addOns[id];
 };
 
+/** The editor's four reads: the card (null before one is saved), its dish, the option groups, the costing; and the stock to pick from. */
+const readEditor = async (itemId: string, variantId: string | null) => {
+  const [card, item, groups, costing, stock] = await Promise.all([fetchRecipe(itemId, variantId), fetchMenuItem(itemId), fetchOptionGroups(), fetchCosting(), fetchStock('all', '')]);
+  return { card, item, groups, costing, stock };
+};
+
+/** A recipe read (or saved) becomes the editor's draft. */
+const showRecipe = (state: RecipeEditorSliceState, recipe: Recipe | null) => {
+  if (!recipe) return;
+  state.itemId = recipe.itemId;
+  state.variantId = recipe.variantId;
+  state.recipe = recipe;
+  state.draft = draftOf(recipe);
+  state.dirty = false;
+  state.lineErrors = {};
+  state.touched = false;
+};
+
 export const recipeEditorSlice = createAppSlice({
   name: 'recipeEditor',
   initialState,
@@ -112,8 +131,7 @@ export const recipeEditorSlice = createAppSlice({
     loadRecipeEditorAsync: create.asyncThunk(
       async ({ itemId, variantId }: { itemId: string; variantId?: string | null }, { rejectWithValue }) => {
         try {
-          const [recipe, stock] = await Promise.all([fetchRecipe(itemId, variantId), fetchStock('all', '')]);
-          return { recipe, stock };
+          return await readEditor(itemId, variantId ?? null);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -125,17 +143,9 @@ export const recipeEditorSlice = createAppSlice({
           if (state.itemId !== action.meta.arg.itemId) Object.assign(state, initialState, { status: 'loading' as FormStatus });
         },
         fulfilled: (state, action) => {
-          const recipe = recipeSerializer(action.payload.recipe);
           state.status = 'succeeded';
           state.ingredients = stockListSerializer(action.payload.stock)?.items ?? [];
-          if (!recipe) return;
-          state.itemId = recipe.itemId;
-          state.variantId = recipe.variantId;
-          state.recipe = recipe;
-          state.draft = draftOf(recipe);
-          state.dirty = false;
-          state.lineErrors = {};
-          state.touched = false;
+          showRecipe(state, recipeSerializer(action.payload, action.meta.arg.variantId ?? null));
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -144,9 +154,13 @@ export const recipeEditorSlice = createAppSlice({
       },
     ),
     saveRecipeAsync: create.asyncThunk(
-      async ({ itemId, variantId, input }: { itemId: string; variantId: string | null; input: RecipeInput }, { rejectWithValue }) => {
+      async ({ itemId, variantId, input }: { itemId: string; variantId: string | null; input: RecipeInput }, { getState, rejectWithValue }) => {
+        const was = (getState() as { recipeEditor: RecipeEditorSliceState }).recipeEditor.recipe?.signature;
         try {
-          return await saveRecipe(itemId, variantId, input);
+          await saveRecipe(itemId, variantId, input);
+          // The signature claim is its own request, sent when it changed.
+          if (input.signature.on !== !!was?.on || (input.signature.on && (input.signature.creatorName ?? '') !== (was?.creatorName ?? ''))) await setSignatureRequest(itemId, variantId, input.signature);
+          return await readEditor(itemId, variantId);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -157,12 +171,8 @@ export const recipeEditorSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = recipeSerializer(action.payload);
           state.saving = false;
-          if (!payload) return;
-          state.recipe = payload;
-          state.draft = draftOf(payload);
-          state.dirty = false;
+          showRecipe(state, recipeSerializer(action.payload, action.meta.arg.variantId));
         },
         rejected: (state, action) => {
           state.saving = false;
@@ -173,7 +183,8 @@ export const recipeEditorSlice = createAppSlice({
     deleteRecipeAsync: create.asyncThunk(
       async ({ itemId, variantId }: { itemId: string; variantId: string | null }, { rejectWithValue }) => {
         try {
-          return await deleteRecipe(itemId, variantId);
+          await deleteRecipe(itemId, variantId);
+          return await readEditor(itemId, variantId);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -183,12 +194,8 @@ export const recipeEditorSlice = createAppSlice({
           state.saving = true;
         },
         fulfilled: (state, action) => {
-          const payload = recipeSerializer(action.payload);
           state.saving = false;
-          if (!payload) return;
-          state.recipe = payload;
-          state.draft = draftOf(payload);
-          state.dirty = false;
+          showRecipe(state, recipeSerializer(action.payload, action.meta.arg.variantId));
         },
         rejected: (state, action) => {
           state.saving = false;

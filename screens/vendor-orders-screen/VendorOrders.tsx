@@ -8,7 +8,7 @@
 // switches — busy (+15 min for an hour), pause (with a private reason and
 // when it lifts by itself) — sit on top. Live over the socket; read again
 // after reconnects and every few seconds while it's down. The screen stays
-// awake while the board is open. The kitchen's side (TODO(API_KITCHEN)):
+// awake while the board is open. The kitchen's side (docs/API_KITCHEN.md):
 // a new order is spoken out loud after the chime (Settings: Urdu, English
 // or off), the mic in the header answers orders by voice, tickets say when
 // stock runs low, the usual prep time is offered first, and "Ready" waits

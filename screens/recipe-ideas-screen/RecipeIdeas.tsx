@@ -84,7 +84,7 @@ const RecipeIdeasContent: React.FC<Props> = ({ navigation }) => {
         <RecipeSuggestionCard
           key={r.id}
           recipe={{
-            title: r.title,
+            title: s.language === 'ur' && r.titleUr ? r.titleUr : r.title,
             minutes: r.minutes,
             servings: r.servings,
             have: r.have,

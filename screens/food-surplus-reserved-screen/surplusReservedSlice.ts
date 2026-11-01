@@ -3,11 +3,11 @@
 // kitchen collects it, confirms a transfer, or marks a no-show.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { cancelReservation, fetchReservation } from '../../networks/food/surplus';
-import { toRejectedValue } from '../../networks/network/network';
+import { cancelReservation, fetchMyReservations } from '../../networks/food/surplus';
+import { required, toRejectedValue } from '../../networks/network/network';
 import type { SurplusReservation } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { reservationSerializer } from '../../serializers/kitchen/surplusSerializer';
+import { myReservationSerializer, reservationSerializer } from '../../serializers/kitchen/surplusSerializer';
 
 export interface SurplusReservedSliceState {
   byCode: Record<string, SurplusReservation>;
@@ -26,7 +26,8 @@ export const surplusReservedSlice = createAppSlice({
     loadReservationAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return await fetchReservation(code);
+          // There is no single read: the customer's reservations hold it.
+          return await fetchMyReservations();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -37,9 +38,10 @@ export const surplusReservedSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = reservationSerializer(action.payload);
-          state.status = 'succeeded';
+          const payload = myReservationSerializer(action.payload, action.meta.arg.toUpperCase());
+          state.status = payload ? 'succeeded' : 'failed';
           if (payload) state.byCode[payload.code] = payload;
+          else state.error = { ...NO_ERROR, code: 'NOT_FOUND', message: 'This reservation isn’t one of yours.' };
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -48,9 +50,11 @@ export const surplusReservedSlice = createAppSlice({
       },
     ),
     cancelReservationAsync: create.asyncThunk(
-      async (code: string, { rejectWithValue }) => {
+      async (code: string, { getState, rejectWithValue }) => {
         try {
-          return await cancelReservation(code);
+          const held = (getState() as { surplusReserved: SurplusReservedSliceState }).surplusReserved.byCode[code];
+          const id = held?.id ?? required(myReservationSerializer(await fetchMyReservations(), code)).id;
+          return await cancelReservation(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

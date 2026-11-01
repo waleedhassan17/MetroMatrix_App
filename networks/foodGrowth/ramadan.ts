@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Food Growth Ramadan Network (API_KITCHEN_ASSUMED.md)
+// MetroMatrix — Ramadan Network (docs/API_KITCHEN.md §21)
 // ═══════════════════════════════════════════════════════
-// Ramadan hours for the kitchen, and "Iftar near you".
-// docs/API_KITCHEN_ASSUMED.md §2.11, §3.11 (TODO(API_KITCHEN): an assumed contract).
+// The kitchen's sehri and iftar windows. Customers find iftar near them on
+// the Food home's `iftarNearYou` rail.
 
 import { API, toApiError } from '../network/network';
 import type { RamadanInput } from '../../models/kitchen';
@@ -16,19 +16,18 @@ export const fetchRamadan = async (): Promise<unknown> => {
   }
 };
 
-/** `409 RAMADAN_NOT_ACTIVE { event, opensOn }` outside the event and the month before it. */
+/** The whole settings: a window is both ends or neither (null clears it). */
 export const updateRamadan = async (input: RamadanInput): Promise<unknown> => {
   try {
-    const response = await API.PUT({ URL: '/food/vendor/ramadan', data: input });
-    return response.data;
-  } catch (e) {
-    throw toApiError(e);
-  }
-};
-
-export const fetchIftarNearby = async (point: { lat: number; lng: number }): Promise<unknown> => {
-  try {
-    const response = await API.GET({ URL: '/food/ramadan/iftar', params: point });
+    const data = {
+      enabled: input.enabled ?? false,
+      sehriFrom: input.sehri?.from ?? null,
+      sehriTo: input.sehri?.to ?? null,
+      iftarFrom: input.iftar?.from ?? null,
+      iftarTo: input.iftar?.to ?? null,
+      iftarPreorderOnly: input.iftarPreorderOnly ?? false,
+    };
+    const response = await API.PUT({ URL: '/food/vendor/ramadan', data });
     return response.data;
   } catch (e) {
     throw toApiError(e);

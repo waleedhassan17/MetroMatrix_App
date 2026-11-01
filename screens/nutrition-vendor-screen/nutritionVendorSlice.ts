@@ -4,12 +4,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { fetchVendorNutrition, searchNutritionFoods, setNutritionHidden } from '../../networks/kitchen/nutrition';
+import { fetchNutritionMapping, fetchVendorNutrition, searchNutritionFoods, setNutritionHidden, setNutritionMapping } from '../../networks/kitchen/nutrition';
 import { toRejectedValue } from '../../networks/network/network';
 import type { NutritionFood, VendorNutrition } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { vendorNutritionSerializer, dishNutritionSerializer, nutritionFoodsSerializer } from '../../serializers/kitchen/assistantSerializer';
-import { updateIngredient } from '../../networks/kitchen/stock';
 
 export interface NutritionVendorSliceState {
   data: VendorNutrition | null;
@@ -38,6 +37,12 @@ const initialState: NutritionVendorSliceState = {
   searching: false,
 };
 
+/** The dishes with their numbers, and how the ingredients map to reference foods. */
+const readNutrition = async () => {
+  const [items, mapping] = await Promise.all([fetchVendorNutrition(), fetchNutritionMapping()]);
+  return { items, mapping };
+};
+
 export const nutritionVendorSlice = createAppSlice({
   name: 'nutritionVendor',
   initialState,
@@ -53,7 +58,7 @@ export const nutritionVendorSlice = createAppSlice({
     loadVendorNutritionAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await fetchVendorNutrition();
+          return await readNutrition();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -92,7 +97,7 @@ export const nutritionVendorSlice = createAppSlice({
           state.toggling = null;
           if (!payload) return;
           if (state.data) {
-            state.data.items = state.data.items.map(i => (i.itemId === payload.itemId ? payload : i));
+            state.data.items = state.data.items.map(i => (i.itemId === payload.itemId ? { ...payload, name: payload.name || i.name } : i));
             state.data.counts.hidden = state.data.items.filter(i => i.hidden).length;
           }
         },
@@ -106,8 +111,8 @@ export const nutritionVendorSlice = createAppSlice({
     mapIngredientAsync: create.asyncThunk(
       async ({ ingredientId, foodId }: { ingredientId: string; foodId: string }, { rejectWithValue }) => {
         try {
-          await updateIngredient(ingredientId, { nutritionFoodId: foodId });
-          return await fetchVendorNutrition();
+          await setNutritionMapping(ingredientId, foodId);
+          return await readNutrition();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

@@ -1,13 +1,14 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Food Growth Story Network (API_KITCHEN_ASSUMED.md)
+// MetroMatrix — Kitchen Story Network (docs/API_KITCHEN.md §23)
 // ═══════════════════════════════════════════════════════
-// The kitchen's story, and its hygiene checklist.
-// docs/API_KITCHEN_ASSUMED.md §2.14, §3.13 (TODO(API_KITCHEN): an assumed contract).
+// The story and the hygiene checklist are one record: a save sends both
+// (anything left out is cleared). A complete checklist is self-declared at
+// once; staff verify it after a visit or a video call.
 
-import { API, toApiError } from '../network/network';
+import { API, toApiError, clean } from '../network/network';
+import type { HygieneChecklist, KitchenStory } from '../../models/kitchen';
 
-const enc = encodeURIComponent;
-
+/** The story, the checklist, the hygiene status and badge. */
 export const fetchStory = async (): Promise<unknown> => {
   try {
     const response = await API.GET({ URL: '/food/vendor/story' });
@@ -17,37 +18,14 @@ export const fetchStory = async (): Promise<unknown> => {
   }
 };
 
-export const saveStory = async (input: { text: string; cookName: string; photoUrls: string[]; videoUrl: string | null }): Promise<unknown> => {
+export const saveStory = async (story: Pick<KitchenStory, 'text' | 'cookName' | 'photoUrls' | 'videoUrl'>, checklist: HygieneChecklist): Promise<unknown> => {
   try {
-    const response = await API.PUT({ URL: '/food/vendor/story', data: input });
-    return response.data;
-  } catch (e) {
-    throw toApiError(e);
-  }
-};
-
-export const fetchHygiene = async (): Promise<unknown> => {
-  try {
-    const response = await API.GET({ URL: '/food/vendor/hygiene' });
-    return response.data;
-  } catch (e) {
-    throw toApiError(e);
-  }
-};
-
-export const setHygieneItem = async (key: string, input: { done: boolean; evidenceUrl?: string | null }): Promise<unknown> => {
-  try {
-    const response = await API.PUT({ URL: `/food/vendor/hygiene/items/${enc(key)}`, data: input });
-    return response.data;
-  } catch (e) {
-    throw toApiError(e);
-  }
-};
-
-/** `422 HYGIENE_INCOMPLETE { missing }` until every item is ticked. */
-export const requestHygieneVerification = async (): Promise<unknown> => {
-  try {
-    const response = await API.POST({ URL: '/food/vendor/hygiene/request-verification' });
+    const data = {
+      ...clean({ story: story.text.trim(), cookName: story.cookName.trim(), videoUrl: story.videoUrl }),
+      photos: story.photoUrls,
+      hygieneChecklist: { ...checklist, pestControlOn: checklist.pestControlOn ?? null },
+    };
+    const response = await API.PUT({ URL: '/food/vendor/story', data });
     return response.data;
   } catch (e) {
     throw toApiError(e);

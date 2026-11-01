@@ -94,9 +94,9 @@ const BoxContent: React.FC<Props> = ({ route }) => {
   const ticket = (r: SurplusReservation) => {
     const pay = boxPaymentStatus(r.payment.status);
     const transferPending = r.payment.method === 'transfer' && r.payment.status !== 'paid';
-    const busy = s.acting === r.code;
+    const busy = s.acting === r.id;
     return (
-      <Card key={r.code}>
+      <Card key={r.id}>
         <View style={styles.gap}>
           <View style={styles.row}>
             <View style={styles.grow}>
@@ -125,11 +125,11 @@ const BoxContent: React.FC<Props> = ({ route }) => {
               <View style={styles.actions}>
                 {r.payment.status === 'proof_submitted' ? (
                   <View style={styles.half}>
-                    <Button label="Not received" variant="secondary" size="sm" onPress={() => setRejectFor(r.code)} disabled={busy} fullWidth />
+                    <Button label="Not received" variant="secondary" size="sm" onPress={() => setRejectFor(r.id)} disabled={busy} fullWidth />
                   </View>
                 ) : null}
                 <View style={styles.half}>
-                  <Button label="The money is in" size="sm" loading={busy} onPress={() => void act({ kind: 'confirm-payment', code: r.code }, 'Transfer confirmed')} fullWidth />
+                  <Button label="The money is in" size="sm" loading={busy} onPress={() => void act({ kind: 'confirm-payment', id: r.id }, 'Transfer confirmed')} fullWidth />
                 </View>
               </View>
             ) : (
@@ -137,7 +137,7 @@ const BoxContent: React.FC<Props> = ({ route }) => {
                 label={r.payment.method === 'pay_at_pickup' ? `Collected · ${formatPKR(r.total)} in cash` : 'Collected'}
                 size="sm"
                 loading={busy}
-                onPress={() => void act({ kind: 'collect', code: r.code }, 'Handed over')}
+                onPress={() => void act({ kind: 'collect', id: r.id, code: r.code }, 'Handed over')}
                 fullWidth
               />
             )
@@ -146,7 +146,7 @@ const BoxContent: React.FC<Props> = ({ route }) => {
               {`Collected at ${formatSlot(r.collectedAt, TZ)}`}
             </AppText>
           ) : null}
-          {r.status === 'reserved' && started ? <TextAction label="They didn’t come" tone="muted" onPress={() => void act({ kind: 'no-show', code: r.code }, 'Marked as not collected')} disabled={busy} /> : null}
+          {r.status === 'reserved' && started ? <TextAction label="They didn’t come" tone="muted" onPress={() => void act({ kind: 'no-show', id: r.id }, 'Marked as not collected')} disabled={busy} /> : null}
         </View>
       </Card>
     );
@@ -183,7 +183,7 @@ const BoxContent: React.FC<Props> = ({ route }) => {
                 icon="remove"
                 tone="muted"
                 onPress={() => void act({ kind: 'quantity', quantity: b.quantity - 1 }, `${b.quantity - 1} boxes`)}
-                disabled={s.acting === 'box' || b.quantity <= Math.max(1, b.reserved) || b.status !== 'live'}
+                disabled={s.acting === 'box' || b.quantity <= Math.max(1, b.quantity - b.left) || b.status !== 'live'}
                 accessibilityLabel="One box fewer"
               />
               <AppText variant="h2">{String(b.quantity)}</AppText>
@@ -218,7 +218,7 @@ const BoxContent: React.FC<Props> = ({ route }) => {
             variant="destructive"
             loading={s.acting === 'box'}
             onPress={async () => {
-              if (await act({ kind: 'end' }, 'Ended')) setEnding(false);
+              if (await act({ kind: 'end', taken: b.quantity - b.left }, 'Ended')) setEnding(false);
             }}
             fullWidth
           />
@@ -237,7 +237,7 @@ const BoxContent: React.FC<Props> = ({ route }) => {
             multiple={false}
             disabled={s.acting !== null}
             onPress={async () => {
-              if (rejectFor && (await act({ kind: 'reject-payment', code: rejectFor, reason }, 'The customer has been told'))) setRejectFor(null);
+              if (rejectFor && (await act({ kind: 'reject-payment', id: rejectFor, reason }, 'The customer has been told'))) setRejectFor(null);
             }}
           />
         ))}

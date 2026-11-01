@@ -4,8 +4,8 @@
 // The API counts stock in base units — grams, millilitres, pieces — and
 // this module is the only place that turns them into words a cook reads:
 // "7.5 kg", "750 g", "2 dozen", "1.5 L". Never a big number of grams.
-// The dummy API counts with this same module, so the two can't drift.
-// TODO(API_KITCHEN): mirror of the API's units.ts (docs/API_KITCHEN_ASSUMED.md §1.2).
+// The API keeps the same base units (docs/API_KITCHEN.md §1: the backend's
+// kitchen units: g, ml and piece; kg, litre and dozen convert to them).
 //
 // Like money.ts: no Intl (Hermes builds differ), grouping by hand.
 

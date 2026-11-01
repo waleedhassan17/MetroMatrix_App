@@ -50,15 +50,14 @@ export const STOCK_SEGMENTS: { key: 'all' | 'low' | 'expiring' | 'negative'; lab
 ];
 
 export const CATEGORY_LABEL: Record<IngredientCategory, string> = {
-  meat_poultry: 'Meat and poultry',
-  vegetables: 'Vegetables',
-  fruit: 'Fruit',
+  meat: 'Meat and poultry',
+  vegetable: 'Vegetables and fruit',
   dairy: 'Dairy and eggs',
-  grains_flour: 'Rice, flour and daal',
-  spices: 'Spices',
-  oils_ghee: 'Oil and ghee',
+  grain: 'Rice, flour and daal',
+  spice: 'Spices',
+  oil: 'Oil and ghee',
   bakery: 'Bread and buns',
-  drinks: 'Drinks',
+  beverage: 'Drinks',
   packaging: 'Packaging',
   other: 'Other',
 };
@@ -82,8 +81,8 @@ export const RECIPE_STATUS: Record<RecipeStatus, { label: string; tone: KitchenT
 export const WASTE_REASON_LABEL: Record<WasteReason, string> = {
   expired: 'Expired',
   spoiled: 'Went bad',
-  burnt: 'Burnt',
-  dropped: 'Dropped or spilled',
+  overcooked: 'Overcooked or burnt',
+  returned: 'Sent back',
   leftover: 'Left over',
   other: 'Other',
 };
@@ -142,6 +141,7 @@ export const BOX_PAYMENT_STATUS: Partial<Record<FoodPaymentStatus, { label: stri
   proof_submitted: { label: 'Receipt sent, waiting for the kitchen', vendorLabel: 'Check the transfer', tone: 'warning' },
   paid: { label: 'Paid', vendorLabel: 'Paid', tone: 'success' },
   void: { label: 'Nothing to pay', vendorLabel: 'No payment', tone: 'neutral' },
+  refund_due: { label: 'The kitchen sends your money back', vendorLabel: 'Send the money back', tone: 'warning' },
 };
 
 export const boxPaymentStatus = (s: FoodPaymentStatus) => BOX_PAYMENT_STATUS[s] ?? { label: 'Payment', vendorLabel: 'Payment', tone: 'neutral' as KitchenTone };
@@ -170,6 +170,7 @@ export const TIFFIN_DAY: Record<TiffinDayState, { label: string; tone: KitchenTo
   paused: { label: 'Paused', tone: 'neutral' },
   ordered: { label: 'Being made', tone: 'accent' },
   delivered: { label: 'Delivered', tone: 'success' },
+  missed: { label: 'Not received', tone: 'warning' },
   cancelled: { label: 'Didn’t go out', tone: 'warning' },
   ended: { label: 'Ended', tone: 'neutral' },
   none: { label: 'No delivery', tone: 'neutral' },
@@ -182,15 +183,11 @@ export const TIFFIN_PAY: Record<TiffinPayMethod, { label: string; hint: string }
 
 // ── Catering (5B) ──
 export const EVENT_TYPE_LABEL: Record<EventType, string> = {
-  mehndi: 'Mehndi',
-  baraat: 'Baraat',
-  walima: 'Walima',
-  birthday: 'Birthday',
-  aqiqah: 'Aqiqah',
-  milad: 'Milad',
-  quran_khwani: 'Quran khwani',
+  dawat: 'Dawat at home',
+  wedding: 'Wedding (mehndi, baraat, walima)',
   office: 'Office event',
-  family: 'Family dinner',
+  birthday: 'Birthday',
+  milad: 'Milad or Quran khwani',
   other: 'Something else',
 };
 
@@ -206,9 +203,11 @@ export const CATERING_STATUS: Record<CateringStatus, { label: string; vendorLabe
   requested: { label: 'Waiting for a quote', vendorLabel: 'New', tone: 'warning' },
   quoted: { label: 'Quote to look at', vendorLabel: 'Quoted', tone: 'accent' },
   accepted: { label: 'Advance to pay', vendorLabel: 'Accepted, advance due', tone: 'warning' },
+  advance_proof: { label: 'Receipt sent, waiting for the kitchen', vendorLabel: 'Check the advance', tone: 'warning' },
   confirmed: { label: 'Confirmed', vendorLabel: 'Confirmed', tone: 'success' },
   declined: { label: 'The kitchen can’t take it', vendorLabel: 'Declined', tone: 'neutral' },
   cancelled: { label: 'Cancelled', vendorLabel: 'Cancelled', tone: 'neutral' },
+  expired: { label: 'The quote ran out', vendorLabel: 'Quote ran out', tone: 'neutral' },
   completed: { label: 'Done', vendorLabel: 'Done', tone: 'neutral' },
 };
 

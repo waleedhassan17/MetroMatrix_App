@@ -21,7 +21,7 @@ import {
   nutritionFoodInputOf,
   type NutritionFoodForm,
 } from '../../models/kitchen/adminKitchenModel';
-import type { CsvImportResult, NutritionFoodImportRow, StaffNutritionFood } from '../../models';
+import type { CsvImportResult, StaffNutritionFood } from '../../models';
 import {
   NO_ERROR,
   readRejection,
@@ -50,7 +50,7 @@ export interface AdminKitchenNutritionSliceState {
   saveError: ServerError;
   csv: string;
   fileName: string | null;
-  result: CsvImportResult<NutritionFoodImportRow> | null;
+  result: CsvImportResult | null;
   checking: boolean;
   importing: boolean;
   importError: ServerError;

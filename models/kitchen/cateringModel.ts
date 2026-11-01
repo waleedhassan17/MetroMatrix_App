@@ -12,7 +12,7 @@ import { addDays, formatDayShort, formatWhen, zonedToIso } from '../../utils/hea
 import { formatPKR, parseRupees } from '../../utils/money/money';
 import { EVENT_TYPE_LABEL, QUOTE_STATE } from './kitchenStatusModel';
 
-export const MAX_GUESTS = 2000;
+export const MAX_GUESTS = 5000;
 export const MAX_DISHES = 20;
 export const ADVANCE_CHOICES = [0, 25, 30, 50];
 export const VALID_DAY_CHOICES = [2, 5, 7];
@@ -31,7 +31,7 @@ export const timeLabel = (hhmm: string) => {
   return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
 };
 
-/** "Aqiqah · 60 guests · Sat 31 Oct, 7:30 PM". */
+/** "Dawat at home · 60 guests · Sat 31 Oct, 7:30 PM". */
 export const eventLine = (r: Pick<CateringRequest, 'eventType' | 'guests' | 'date' | 'time'>) =>
   `${EVENT_TYPE_LABEL[r.eventType]} · ${r.guests} guests · ${formatDayShort(r.date)}, ${timeLabel(r.time)}`;
 
@@ -66,7 +66,7 @@ export interface CateringForm {
   notes: string;
 }
 
-export const emptyCateringForm = (): CateringForm => ({ date: null, time: '19:30', guests: '', eventType: 'family', dishes: [], budget: '', mode: 'delivery', addressId: null, notes: '' });
+export const emptyCateringForm = (): CateringForm => ({ date: null, time: '19:30', guests: '', eventType: 'dawat', dishes: [], budget: '', mode: 'delivery', addressId: null, notes: '' });
 
 /** The days to pick from: from the earliest the kitchen allows, eight weeks of them. */
 export const eventDates = (v: Pick<CateringVendor, 'earliestDate'>, count = 56) => (v.earliestDate ? Array.from({ length: count }, (_, n) => addDays(v.earliestDate, n)) : []);

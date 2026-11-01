@@ -38,7 +38,7 @@ export const ForecastBar: React.FC<ForecastBarProps> = ({ item, max, onAdjust, b
   const at = barPositions(item, max);
   const planned = plannedOf(item);
   const own = adjustmentLabel(item);
-  const fixed = item.fixed.tiffin + item.fixed.catering;
+  const fixed = item.fixed;
   const current = item.adjusted ?? item.expected;
   return (
     <View style={styles.root}>

@@ -94,24 +94,26 @@ export interface CountRow {
   ingredientId: string;
   typed: string;
   unit: StandardUnit | CustomUnit;
+  /** The ingredient's own base unit (what the count is sent in). */
+  baseUnit: BaseUnit;
 }
 
 /** Rows the cook filled in → the API's counts (base units); empty rows are left out. */
-export const countsOf = (rows: CountRow[]): { lines: { ingredientId: string; counted: number }[]; errors: Record<string, string> } => {
+export const countsOf = (rows: CountRow[]): { lines: { ingredientId: string; counted: number; baseUnit: BaseUnit }[]; errors: Record<string, string> } => {
   const errors: Record<string, string> = {};
-  const lines: { ingredientId: string; counted: number }[] = [];
+  const lines: { ingredientId: string; counted: number; baseUnit: BaseUnit }[] = [];
   for (const r of rows) {
     if (!r.typed.trim()) continue;
     const n = parseAmount(r.typed);
     if (n === null) errors[r.ingredientId] = 'Enter a number';
-    else lines.push({ ingredientId: r.ingredientId, counted: toBase(n, r.unit) });
+    else lines.push({ ingredientId: r.ingredientId, counted: toBase(n, r.unit), baseUnit: r.baseUnit });
   }
   return { lines, errors };
 };
 
 /** A confirmed spoken count → the stock take's lines (only ingredients the kitchen stocks). */
 export const countFromVoice = (lines: VoiceQtyLine[]) =>
-  lines.filter(l => l.ingredientId).map(l => ({ ingredientId: l.ingredientId!, counted: toBase(l.qty, l.unit) }));
+  lines.filter(l => l.ingredientId).map(l => ({ ingredientId: l.ingredientId!, counted: toBase(l.qty, l.unit), baseUnit: UNITS[l.unit].base }));
 
 /** A confirmed spoken waste → waste lines (only ingredients the kitchen stocks). */
 export const wasteFromVoice = (lines: VoiceQtyLine[], reason: WasteReason): WasteLineInput[] =>

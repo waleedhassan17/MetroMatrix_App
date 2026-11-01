@@ -1,14 +1,14 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Food Growth Batching Network (API_KITCHEN_ASSUMED.md)
+// MetroMatrix — Rider Batching Network (docs/API_KITCHEN.md §27)
 // ═══════════════════════════════════════════════════════
-// Orders that could ride with this one.
-// docs/API_KITCHEN_ASSUMED.md §2.14, §3.13 (TODO(API_KITCHEN): an assumed contract).
+// Riders for an order, with the other ready orders a rider could take on the
+// same trip (`batchWith`: within 2 km and 45°). Assignment stays manual.
 
 import { API, toApiError } from '../network/network';
 
 export const fetchBatchSuggestions = async (orderId: string): Promise<unknown> => {
   try {
-    const response = await API.GET({ URL: `/food/vendor/orders/${encodeURIComponent(orderId)}/batch-suggestions` });
+    const response = await API.GET({ URL: '/food/vendor/riders/suggest', params: { orderId } });
     return response.data;
   } catch (e) {
     throw toApiError(e);

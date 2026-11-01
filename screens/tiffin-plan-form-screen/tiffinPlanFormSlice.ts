@@ -4,14 +4,14 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchMenuItems } from '../../networks/food/vendor/menu';
-import { createTiffinPlan, deleteTiffinPlan, fetchMyTiffinPlan, updateTiffinPlan } from '../../networks/foodGrowth/tiffin';
+import { createTiffinPlan, fetchMyTiffinPlan, updateTiffinPlan } from '../../networks/foodGrowth/tiffin';
 import { toRejectedValue } from '../../networks/network/network';
-import { MEAL_WINDOWS, emptyPlanForm, formFromPlan, type TiffinPlanForm } from '../../models/kitchen/tiffinModel';
+import { MEAL_WINDOWS, emptyPlanForm, formFromPlan, planInput, type TiffinPlanForm } from '../../models/kitchen/tiffinModel';
 import type { Meal, TiffinPlan, TiffinPlanInput, VendorMenuItem } from '../../models';
 import type { ValidationErrors } from '../../models/authModel';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { vendorMenuItemsSerializer } from '../../serializers/food/menuSerializer';
-import { tiffinPlanSerializer, tiffinRemovedSerializer } from '../../serializers/kitchen/growthSerializer';
+import { tiffinPlanSerializer } from '../../serializers/kitchen/growthSerializer';
 
 export interface TiffinPlanFormSliceState {
   planId: string | null;
@@ -23,8 +23,8 @@ export interface TiffinPlanFormSliceState {
   error: ServerError;
   saving: boolean;
   saveError: ServerError;
-  /** What removing the plan did (removed, or only taken off the page). */
-  removed: ReturnType<typeof tiffinRemovedSerializer> | null;
+  /** The plan just taken off the kitchen's page (removePlanAsync): a plan is never deleted, only stopped. */
+  removed: TiffinPlan | null;
 }
 
 const initialState: TiffinPlanFormSliceState = {
@@ -131,9 +131,12 @@ export const tiffinPlanFormSlice = createAppSlice({
     ),
 
     removePlanAsync: create.asyncThunk(
-      async (id: string, { rejectWithValue }) => {
+      async (id: string, { getState, rejectWithValue }) => {
+        const plan = (getState() as { tiffinPlanForm: TiffinPlanFormSliceState }).tiffinPlanForm.plan;
+        if (!plan || plan.id !== id) return rejectWithValue({ message: 'Open the plan again, then take it off.', code: 'NOT_FOUND', details: null });
         try {
-          return await deleteTiffinPlan(id);
+          // A PUT replaces the whole plan: the same plan, not taking anyone new.
+          return await updateTiffinPlan(id, { ...planInput(formFromPlan(plan)), photoUrl: plan.photoUrl, isActive: false });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -144,7 +147,7 @@ export const tiffinPlanFormSlice = createAppSlice({
           state.saveError = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = tiffinRemovedSerializer(action.payload);
+          const payload = tiffinPlanSerializer(action.payload);
           state.saving = false;
           state.removed = payload;
         },

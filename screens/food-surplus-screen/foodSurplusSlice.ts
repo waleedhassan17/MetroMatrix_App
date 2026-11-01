@@ -5,11 +5,11 @@
 // many are left. Reserving takes an Idempotency-Key — one per attempt,
 // kept for its retries, so a retry never reserves twice — and answers
 // "someone just reserved the last one" plainly (409 SURPLUS_SOLD_OUT).
-// TODO(API_KITCHEN): docs/API_KITCHEN_ASSUMED.md §4.4.
+// docs/API_KITCHEN.md §10.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { fetchSurplus, reserveSurplus } from '../../networks/food/surplus';
+import { fetchMyReservations, fetchSurplus, reserveSurplus } from '../../networks/food/surplus';
 import { toRejectedValue } from '../../networks/network/network';
 import { newUuid } from '../../utils/ids/ids';
 import type { BoxPaymentMethod, FoodPoint, SurplusDetail } from '../../models';
@@ -64,7 +64,9 @@ export const foodSurplusSlice = createAppSlice({
     loadSurplusAsync: create.asyncThunk(
       async ({ id, at }: { id: string; at: Pick<FoodPoint, 'lat' | 'lng'> | null }, { rejectWithValue }) => {
         try {
-          return await fetchSurplus(id, at);
+          // The codes already held for this box come from the customer's reservations (none when signed out).
+          const [box, mine] = await Promise.all([fetchSurplus(id, at), fetchMyReservations().catch(() => null)]);
+          return { box, mine };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -82,7 +84,8 @@ export const foodSurplusSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           const payload = surplusDetailSerializer(action.payload);
-          state.status = 'succeeded';
+          state.status = payload ? 'succeeded' : 'failed';
+          if (!payload) state.error = { ...NO_ERROR, code: 'NOT_FOUND', message: 'This Bachat Box is no longer available.' };
           state.box = payload;
           if (payload) {
             state.quantity = Math.max(1, Math.min(state.quantity, payload.maxPerCustomer, payload.left || 1));
@@ -125,7 +128,7 @@ export const foodSurplusSlice = createAppSlice({
           state.reserving = false;
           state.reserveError = readRejection(action, "We couldn't reserve it. Try again.");
           // Sold out under us: the box's own numbers follow.
-          const left = (state.reserveError.details as { left?: number } | null)?.left;
+          const left = (state.reserveError.details as { remaining?: number } | null)?.remaining;
           if (state.box && state.reserveError.code === 'SURPLUS_SOLD_OUT' && typeof left === 'number') {
             state.box.left = left;
             if (left <= 0) state.box.status = 'sold_out';

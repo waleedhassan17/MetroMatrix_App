@@ -3,11 +3,11 @@
 // person turned them on.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { deleteNutritionData, fetchNutritionSettings, saveNutritionSettings } from '../../networks/myKitchen/nutrition';
-import { toRejectedValue } from '../../networks/network/network';
+import { deleteNutritionProfile, fetchNutritionProfile, saveNutritionProfile } from '../../networks/myKitchen/nutrition';
+import { toApiError, toRejectedValue } from '../../networks/network/network';
 import type { NutritionSettings } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { nutritionSettingsSerializer, nutritionSettingsResponseSerializer } from '../../serializers/myKitchen/myKitchenSerializer';
+import { nutritionSettingsSerializer } from '../../serializers/myKitchen/myKitchenSerializer';
 
 export interface NutritionSettingsSliceState {
   settings: NutritionSettings | null;
@@ -18,6 +18,11 @@ export interface NutritionSettingsSliceState {
   saveError: ServerError;
 }
 
+/** What the screen changes at once. */
+export type NutritionPatch = Partial<Pick<NutritionSettings, 'enabled' | 'showCalories' | 'goal' | 'metrics' | 'manualTargetKcal'>>;
+
+const OFF: NutritionSettings = { enabled: false, showCalories: false, goal: 'eat_better', metrics: null, manualTargetKcal: null, targetKcal: null, updatedAt: null };
+
 const initialState: NutritionSettingsSliceState = { settings: null, status: 'idle', error: NO_ERROR, saving: false, deleting: false, saveError: NO_ERROR };
 
 export const nutritionSettingsSlice = createAppSlice({
@@ -27,8 +32,10 @@ export const nutritionSettingsSlice = createAppSlice({
     loadNutritionSettingsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await fetchNutritionSettings();
+          return await fetchNutritionProfile();
         } catch (e) {
+          // No profile is nutrition off.
+          if (toApiError(e).status === 404) return null;
           return rejectWithValue(toRejectedValue(e));
         }
       },
@@ -49,9 +56,16 @@ export const nutritionSettingsSlice = createAppSlice({
       },
     ),
     saveNutritionAsync: create.asyncThunk(
-      async (patch: Parameters<typeof saveNutritionSettings>[0], { rejectWithValue }) => {
+      async (patch: NutritionPatch, { getState, rejectWithValue }) => {
+        const was = (getState() as { nutritionSettings: NutritionSettingsSliceState }).nutritionSettings.settings;
+        const next = { ...(was ?? OFF), ...patch };
         try {
-          return await saveNutritionSettings(patch);
+          // Off is no profile at all; on is the whole profile (calories stay hidden until shown).
+          if (!next.enabled) {
+            if (was?.enabled) await deleteNutritionProfile();
+            return null;
+          }
+          return await saveNutritionProfile({ goal: next.goal, metrics: next.metrics, manualTargetKcal: next.manualTargetKcal, showCalories: was?.enabled ? next.showCalories : !!patch.showCalories });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -75,7 +89,8 @@ export const nutritionSettingsSlice = createAppSlice({
     deleteNutritionAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await deleteNutritionData();
+          await deleteNutritionProfile();
+          return null;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -86,7 +101,7 @@ export const nutritionSettingsSlice = createAppSlice({
           state.saveError = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = nutritionSettingsResponseSerializer(action.payload);
+          const payload = nutritionSettingsSerializer(action.payload);
           state.deleting = false;
           state.settings = payload;
         },

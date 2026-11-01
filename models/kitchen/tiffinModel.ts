@@ -15,7 +15,8 @@ import { MEAL_LABEL, WEEKDAY_LONG, WEEKDAY_SHORT } from './kitchenStatusModel';
 
 export const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
 export const MAX_PLAN_DISHES = 4;
-export const CUTOFF_CHOICES = [4, 6, 10, 12, 14, 24];
+/** The hour (kitchen time, the evening before) a day's changes close. */
+export const CUTOFF_CHOICES = [18, 19, 20, 21, 22];
 export const MAX_START_DAYS = 30;
 
 /** "Every day", "Mon to Fri", "Mon, Wed, Fri". */
@@ -28,8 +29,8 @@ export const daysLabel = (days: number[]) => {
 
 export const scheduleLabel = (p: { meal: Meal; days: number[] }) => `${MEAL_LABEL[p.meal]} · ${daysLabel(p.days)}`;
 
-/** "Rs 2,300 a week", "Rs 10,800 for 4 weeks". */
-export const priceLabel = (p: { price: number; period: TiffinPeriodKind }) => (p.period === 'week' ? `${formatPKR(p.price)} a week` : `${formatPKR(p.price)} for 4 weeks`);
+/** "Rs 2,300 a week", "Rs 9,800 a month". */
+export const priceLabel = (p: { price: number; period: TiffinPeriodKind }) => (p.period === 'week' ? `${formatPKR(p.price)} a week` : `${formatPKR(p.price)} a month`);
 
 export const perMealLabel = (p: { perMeal: number }) => `${formatPKR(p.perMeal)} a meal`;
 
@@ -58,9 +59,8 @@ export const cutoffLabel = (cutoffAt: string | null, tz: string) => (cutoffAt ? 
 /** "16 Oct – 22 Oct". */
 export const periodLabel = (x: Pick<TiffinPeriod, 'from' | 'to'>) => `${formatDayShort(x.from).replace(/^\w+ /, '')} – ${formatDayShort(x.to).replace(/^\w+ /, '')}`;
 
-/** What the period costs, and why it is less: "Rs 1,840 (Rs 460 off for 1 skipped meal)". */
-export const periodAmountLabel = (x: Pick<TiffinPeriod, 'amount' | 'credit'>, perMeal: number) =>
-  x.credit ? `${formatPKR(x.amount)} (${formatPKR(x.credit * perMeal)} off for ${x.credit} skipped ${x.credit === 1 ? 'meal' : 'meals'})` : formatPKR(x.amount);
+/** What the period costs (the plan's price: a skipped day is a day off, not money back). */
+export const periodAmountLabel = (x: Pick<TiffinPeriod, 'amount'>) => formatPKR(x.amount);
 
 // ── The month ──
 export const monthOf = (date: string) => date.slice(0, 7);
@@ -98,7 +98,7 @@ export interface TiffinPlanForm {
   from: string;
   to: string;
   capacity: string;
-  skipCutoffHours: number;
+  skipCutoffHour: number;
   /** weekday → the dishes (menu ids) and a note. */
   rotation: Record<number, { itemIds: string[]; note: string }>;
 }
@@ -119,7 +119,7 @@ export const emptyPlanForm = (): TiffinPlanForm => ({
   mode: 'delivery',
   ...MEAL_WINDOWS.lunch,
   capacity: '20',
-  skipCutoffHours: 12,
+  skipCutoffHour: 20,
   rotation: {},
 });
 
@@ -134,7 +134,7 @@ export const formFromPlan = (p: TiffinPlan): TiffinPlanForm => ({
   from: p.window.from,
   to: p.window.to,
   capacity: String(p.capacity),
-  skipCutoffHours: p.skipCutoffHours,
+  skipCutoffHour: p.skipCutoffHour,
   rotation: Object.fromEntries(p.rotation.map(r => [r.weekday, { itemIds: r.dishes.map(d => d.itemId), note: r.note ?? '' }])),
 });
 
@@ -174,7 +174,7 @@ export const planInput = (f: TiffinPlanForm): TiffinPlanInput => ({
   mode: f.mode,
   window: { from: normaliseTime(f.from), to: normaliseTime(f.to) },
   capacity: Number(f.capacity),
-  skipCutoffHours: f.skipCutoffHours,
+  skipCutoffHour: f.skipCutoffHour,
   rotation: [...f.days]
     .sort((a, b) => a - b)
     .map(weekday => ({ weekday, itemIds: (f.rotation[weekday]?.itemIds ?? []).slice(0, MAX_PLAN_DISHES), note: f.rotation[weekday]?.note.trim() || null })),
@@ -183,17 +183,10 @@ export const planInput = (f: TiffinPlanForm): TiffinPlanInput => ({
 /** What a plan works out at per meal, while the form is typed. */
 export const draftPerMeal = (f: Pick<TiffinPlanForm, 'price' | 'days' | 'period'>) => {
   const price = parseRupees(f.price);
-  const meals = f.days.length * (f.period === 'week' ? 1 : 4);
+  // A month averages 52/12 weeks.
+  const meals = f.period === 'week' ? f.days.length : Math.round((f.days.length * 52) / 12);
   return price && meals ? Math.round(price / meals) : null;
 };
 
-export const cutoffChoiceLabel = (hours: number, from: string) => {
-  const [h, m] = from.split(':').map(Number);
-  if (!Number.isFinite(h)) return `${hours} hours before`;
-  const total = h * 60 + (m || 0) - hours * 60;
-  const day = total < 0 ? 'the day before' : 'that day';
-  const mins = ((total % 1440) + 1440) % 1440;
-  const hh = Math.floor(mins / 60);
-  const label = `${((hh + 11) % 12) + 1}:${String(mins % 60).padStart(2, '0')} ${hh < 12 ? 'AM' : 'PM'}`;
-  return `${hours} hours before (${label}, ${day})`;
-};
+/** "8:00 PM the evening before". */
+export const cutoffChoiceLabel = (hour: number) => `${((hour + 11) % 12) + 1}:00 ${hour < 12 ? 'AM' : 'PM'} the evening before`;

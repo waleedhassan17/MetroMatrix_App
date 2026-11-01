@@ -2,9 +2,10 @@
 // MetroMatrix — Admin Kitchen: the assistant
 // ═══════════════════════════════════════════════════════
 // The last 30 days of voice and AI drafts across Food Court: how many, how
-// many failed, how long they took, by feature and by kitchen or customer.
-// The switch turns the assistant off for everyone (the manual forms stay);
-// a kitchen's or customer's monthly limit can be raised or lowered.
+// many failed, how long they took, by feature and by kitchen. The switch
+// turns the assistant off for everyone (the manual forms stay); it is a
+// platform setting, confirmed with the admin's authenticator code. A
+// kitchen's monthly allowance is its plan's, changed on its page.
 
 import React, { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -12,39 +13,13 @@ import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
-import {
-  PLAN_LIMIT,
-  aiFeatureLabel,
-  failedLabel,
-  quotaLine,
-  secondsLabel,
-  validateQuota,
-} from '../../models/kitchen/adminKitchenModel';
-import { formatDayShort } from '../../utils/health-time/healthTime';
+import { aiFeatureLabel, failedLabel, secondsLabel } from '../../models/kitchen/adminKitchenModel';
 import { useStyles, type Theme } from '../../theme/index';
-import {
-  AppText,
-  Button,
-  Card,
-  Divider,
-  InlineNotice,
-  ScreenShell,
-  Sheet,
-  SkeletonLines,
-  TextField,
-  ToggleRow,
-} from '../../Custom-Components/index';
+import { AppText, Button, Card, Divider, InlineNotice, ScreenShell, Sheet, SkeletonLines, TextField, ToggleRow } from '../../Custom-Components/index';
 import { RowCard, SectionHead, StatGrid, type AdminStat } from '../../Components/admin/AdminParts';
 import type { AdminFoodStackParamList } from '../../models';
 import { haptics } from '../../utils/haptics/haptics';
-import {
-  changeAiAsync,
-  loadAiUsageAsync,
-  markQuotaSubmitted,
-  openQuotaSheet,
-  selectAdminKitchenAi,
-  setQuotaLimit,
-} from './adminKitchenAiSlice';
+import { loadAiUsageAsync, openSwitchSheet, selectAdminKitchenAi, setSwitchCode, switchAiAsync } from './adminKitchenAiSlice';
 
 type Props = NativeStackScreenProps<AdminFoodStackParamList, 'AdminKitchenAi'>;
 
@@ -63,18 +38,13 @@ const AdminKitchenAi: React.FC<Props> = () => {
   const s = useAppSelector(selectAdminKitchenAi);
   const r = s.report;
   const sheet = s.sheet;
-  const errors = sheet && s.submitted ? validateQuota(sheet.limit) : {};
 
   const load = useCallback(() => void dispatch(loadAiUsageAsync()), [dispatch]);
   useFocusEffect(load);
 
-  const saveQuota = (limit: string) => {
-    if (!sheet) return;
-    dispatch(markQuotaSubmitted());
-    if (Object.keys(validateQuota(limit)).length) return haptics.warning();
-    void dispatch(
-      changeAiAsync({ kind: 'quota', ownerId: sheet.ownerId, limit: limit.trim() ? Number(limit) : null }),
-    );
+  const confirm = () => {
+    if (!sheet || sheet.code.length !== 6) return haptics.warning();
+    void dispatch(switchAiAsync(sheet));
   };
 
   const stats: AdminStat[] = [
@@ -87,31 +57,22 @@ const AdminKitchenAi: React.FC<Props> = () => {
       label: 'Failed',
       hint: r ? `${n(r.totals.failures)} of ${n(r.totals.actions)}` : null,
     },
-    { key: 'p50', icon: 'time-outline', tint: 'blue', value: r ? secondsLabel(r.totals.p50Ms) : null, label: 'Typical answer', hint: 'Half are quicker' },
-    { key: 'p95', icon: 'hourglass-outline', tint: 'amber', value: r ? secondsLabel(r.totals.p95Ms) : null, label: 'Slowest 5%', hint: 'Take this long or more' },
+    { key: 'cached', icon: 'flash-outline', tint: 'blue', value: r ? n(r.totals.cached) : null, label: 'Answered from cache', hint: 'No model call' },
   ];
 
   return (
-    <ScreenShell
-      title="The assistant"
-      subtitle={r ? `${formatDayShort(r.from)} – ${formatDayShort(r.to)}` : 'Voice and AI drafts'}
-      onBack={back}
-      refreshing={s.status === 'loading' && !!r}
-      onRefresh={load}>
-      {s.status === 'failed' ? (
-        <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} />
-      ) : null}
-      {s.actionError.message && !sheet ? <InlineNotice message={s.actionError.message} /> : null}
+    <ScreenShell title="The assistant" subtitle={r ? `The last ${r.days} days` : 'Voice and AI drafts'} onBack={back} refreshing={s.status === 'loading' && !!r} onRefresh={load}>
+      {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : null}
       {!r && s.status !== 'failed' ? <SkeletonLines lines={10} /> : null}
       {r ? (
         <>
           <Card>
             <ToggleRow
               label="Assistant on for everyone"
-              helper="Off: voice and drafts stop for every kitchen and customer. The ordinary forms stay."
+              helper={`Off: voice and drafts stop for every kitchen and customer. The ordinary forms stay.${r.model ? ` Model: ${r.model}.` : ' No model is set up on the server.'}`}
               value={r.enabled}
               disabled={s.busy}
-              onChange={v => void dispatch(changeAiAsync({ kind: 'enabled', enabled: v }))}
+              onChange={v => dispatch(openSwitchSheet(v))}
             />
           </Card>
           <StatGrid stats={stats} />
@@ -126,53 +87,43 @@ const AdminKitchenAi: React.FC<Props> = () => {
                     <View style={styles.row}>
                       <AppText variant="bodyStrong">{aiFeatureLabel(f.feature)}</AppText>
                       <AppText variant="small" tone="muted">
-                        {`${n(f.actions)} ${f.actions === 1 ? 'action' : 'actions'} · ${failedLabel(f.failures, f.actions)} · ${secondsLabel(f.avgMs)} on average`}
+                        {`${n(f.actions)} ${f.actions === 1 ? 'action' : 'actions'} · ${failedLabel(f.failures, f.actions)} · typically ${secondsLabel(f.p50Ms)}, slowest ${secondsLabel(f.p95Ms)}`}
                       </AppText>
                     </View>
                   </View>
                 ))
               ) : (
-                <AppText variant="body">No assistant actions in these 30 days.</AppText>
+                <AppText variant="body">{`No assistant actions in these ${r.days} days.`}</AppText>
               )}
             </Card>
           </View>
 
           <View style={styles.section}>
-            <SectionHead title="By kitchen and customer" />
-            {r.byOwner.map(o => (
+            <SectionHead title="By kitchen" />
+            {r.byBusiness.map(b => (
               <RowCard
-                key={o.ownerId}
-                title={o.name}
-                mark={o.kind === 'kitchen' ? { icon: 'storefront-outline', tint: 'violet' } : { icon: 'person-outline', tint: 'blue' }}
-                lines={[
-                  `${o.kind === 'kitchen' ? 'Kitchen' : 'Customer'} · ${quotaLine(o)}`,
-                  `${n(o.actions)} in these 30 days · ${failedLabel(o.failures, o.actions)}`,
-                ]}
-                pill={o.override !== null ? { label: 'Own limit', tone: 'accent' } : undefined}
-                onPress={() => dispatch(openQuotaSheet(o))}
-                accessibilityLabel={`${o.name}, ${quotaLine(o)}. Change the monthly limit`}
+                key={b.businessId}
+                title={b.name}
+                mark={{ icon: 'storefront-outline', tint: 'violet' }}
+                lines={[`${n(b.actions)} in these ${r.days} days · ${failedLabel(b.failures, b.actions)}`]}
+                accessibilityLabel={`${b.name}, ${n(b.actions)} actions`}
               />
             ))}
+            <AppText variant="caption" tone="muted">
+              A kitchen’s monthly allowance comes with its plan: change it on its page in Food → Vendors.
+            </AppText>
           </View>
         </>
       ) : null}
 
       <Sheet
         visible={!!sheet}
-        onClose={() => dispatch(openQuotaSheet(null))}
-        title={sheet ? `${sheet.name}'s monthly limit` : 'Monthly limit'}
-        subtitle={sheet ? `The plan's is ${PLAN_LIMIT[sheet.kind]} assistant actions a month. Voice has its own daily cap.` : undefined}
-        footer={<Button label="Save" loading={s.busy} onPress={() => saveQuota(sheet?.limit ?? '')} fullWidth />}>
+        onClose={() => dispatch(openSwitchSheet(null))}
+        title={sheet?.enabled ? 'Turn the assistant on' : 'Turn the assistant off'}
+        subtitle="A platform setting: confirm it with the code from your authenticator app."
+        footer={<Button label="Confirm" loading={s.busy} disabled={(sheet?.code.length ?? 0) !== 6} onPress={confirm} fullWidth />}>
         {s.actionError.message ? <InlineNotice message={s.actionError.message} /> : null}
-        <TextField
-          label="Actions a month"
-          mode="numeric"
-          value={sheet?.limit ?? ''}
-          onChangeText={t => dispatch(setQuotaLimit(t))}
-          helper="Leave empty for the plan's limit."
-          error={errors.limit}
-        />
-        <Button label="Use the plan's limit" variant="ghost" disabled={s.busy} onPress={() => saveQuota('')} fullWidth />
+        <TextField label="6-digit code" mode="numeric" value={sheet?.code ?? ''} onChangeText={t => dispatch(setSwitchCode(t))} autoCorrect={false} />
       </Sheet>
     </ScreenShell>
   );

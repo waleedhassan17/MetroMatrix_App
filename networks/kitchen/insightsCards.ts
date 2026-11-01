@@ -1,14 +1,13 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Kitchen Insights Cards Network (API_KITCHEN_ASSUMED.md)
+// MetroMatrix — Kitchen Insights Cards Network (docs/API_KITCHEN.md §7)
 // ═══════════════════════════════════════════════════════
-// The hub's numbers and its insight cards.
-// docs/API_KITCHEN_ASSUMED.md §4.1 (TODO(API_KITCHEN): an assumed contract).
+// The Kitchen tab's numbers and its insight cards.
 
 import { API, toApiError } from '../network/network';
 
 const enc = encodeURIComponent;
 
-/** The hub's tiles: today's numbers (the hub reads them with the cards and the AI meter). */
+/** The Kitchen tab's numbers in one read (the hub reads them with the cards and the AI meter). */
 export const fetchKitchenSummary = async (): Promise<unknown> => {
   try {
     const response = await API.GET({ URL: '/food/vendor/kitchen/summary' });
@@ -27,9 +26,10 @@ export const fetchInsightCards = async (): Promise<unknown> => {
   }
 };
 
-export const snoozeInsightCard = async (id: string): Promise<unknown> => {
+/** Away for 24 hours, by the card's key. */
+export const snoozeInsightCard = async (key: string): Promise<unknown> => {
   try {
-    const response = await API.POST({ URL: `/food/vendor/kitchen/insights/cards/${enc(id)}/snooze` });
+    const response = await API.POST({ URL: `/food/vendor/kitchen/insights/cards/${enc(key)}/snooze` });
     return response.data;
   } catch (e) {
     throw toApiError(e);

@@ -2,11 +2,12 @@
 // quotes, accepting the latest, cancelling; read again on focus.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { acceptQuote, cancelMyCatering, fetchMyCateringRequest } from '../../networks/foodGrowth/catering';
+import { acceptQuote, cancelMyCatering, fetchMyCateringRequests } from '../../networks/foodGrowth/catering';
+import { myCateringId } from '../shared/growthReads';
 import { toRejectedValue } from '../../networks/network/network';
 import type { CateringRequest } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { cateringRequestSerializer } from '../../serializers/kitchen/growthSerializer';
+import { cateringRequestByCodeSerializer, cateringRequestSerializer } from '../../serializers/kitchen/growthSerializer';
 
 export interface FoodCateringRequestSliceState {
   byCode: Record<string, CateringRequest>;
@@ -25,7 +26,8 @@ export const foodCateringRequestSlice = createAppSlice({
     loadMyCateringRequestAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return await fetchMyCateringRequest(code);
+          // The customer's list holds each request whole.
+          return await fetchMyCateringRequests();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -36,9 +38,10 @@ export const foodCateringRequestSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = cateringRequestSerializer(action.payload);
-          state.status = 'succeeded';
+          const payload = cateringRequestByCodeSerializer(action.payload, action.meta.arg);
+          state.status = payload ? 'succeeded' : 'failed';
           if (payload) state.byCode[payload.code] = payload;
+          else state.error = { ...NO_ERROR, code: 'NOT_FOUND', message: 'This request isn’t one of yours.' };
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -47,9 +50,10 @@ export const foodCateringRequestSlice = createAppSlice({
       },
     ),
     myCateringActAsync: create.asyncThunk(
-      async ({ code, act }: { code: string; act: { kind: 'accept'; version: number } | { kind: 'cancel' } }, { dispatch, rejectWithValue }) => {
+      async ({ code, act }: { code: string; act: { kind: 'accept'; version: number } | { kind: 'cancel'; reason: string } }, { dispatch, getState, rejectWithValue }) => {
         try {
-          return act.kind === 'accept' ? await acceptQuote(code, act.version) : await cancelMyCatering(code);
+          const id = (getState() as { foodCateringRequest: FoodCateringRequestSliceState }).foodCateringRequest.byCode[code.toUpperCase()]?.id ?? (await myCateringId(code));
+          return act.kind === 'accept' ? await acceptQuote(id, act.version) : await cancelMyCatering(id, act.reason);
         } catch (e) {
           // A newer quote, or an expired one: read the request again so the screen shows it.
           void dispatch(loadMyCateringRequestAsync(code));

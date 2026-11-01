@@ -111,7 +111,7 @@ export const riderOrderSerializer = fromResponse((raw: unknown): RiderOrder | nu
     codCollected: numOrNull(raw.codCollected),
     readyAt: isoOrNull(raw.readyAt),
     promisedAt: isoOrNull(raw.promisedAt),
-    // Kitchen Intelligence's addition (TODO(API_KITCHEN)).
+    // Kitchen Intelligence's addition (docs/API_KITCHEN.md).
     dropOrder: isObject(raw.dropOrder) && num(raw.dropOrder.of) >= 2 ? { position: Math.max(1, Math.round(num(raw.dropOrder.position, 1))), of: Math.round(num(raw.dropOrder.of)) } : null,
   };
 });

@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════
 // One change to one dish (a price or a photo) and how it went: while it
 // runs, the days so far (it can be stopped early, putting the old one
-// back); at the end, orders and recorded sales a day before and during, a
+// back); at the end, how many it sold a day against its category's other dishes, a
 // plain verdict, and the kitchen's choice: keep it, adjust the price, or go
 // back. Nothing changes until the kitchen chooses.
 
@@ -19,7 +19,7 @@ import { EXPERIMENT_STATUS, VERDICT } from '../../models/kitchen/kitchenStatusMo
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
 import { Image } from 'expo-image';
 import { AppText, Button, Card, Divider, InlineNotice, ProgressBar, ScreenShell, Sheet, SkeletonLines, StatusPill, TextField } from '../../Custom-Components/index';
-import type { ExperimentDecision } from '../../networks/foodGrowth/experiments';
+import type { ExperimentDecision } from '../../models/kitchen/reachModel';
 import type { FoodVendorStackParamList } from '../../models';
 import { cdn } from '../../utils/cdn/cdn';
 import { formatWhen } from '../../utils/health-time/healthTime';
@@ -102,7 +102,7 @@ const MenuExperimentContent: React.FC<Props> = ({ route }) => {
           <AppText variant="small" tone="muted">
             {`${progressLine(e)} · ${formatWhen(e.startedAt, TZ)} to ${formatWhen(e.endsAt, TZ)}`}
           </AppText>
-          {e.change.kind === 'photo' ? (
+          {e.change.kind === 'photo' && e.change.photoUrl ? (
             <View style={styles.photos}>
               <View style={styles.photo}>
                 <Image source={cdn(e.change.oldPhotoUrl, { w: 320 }) ?? undefined} style={styles.image} contentFit="cover" accessibilityLabel="The old photo" />
@@ -130,10 +130,10 @@ const MenuExperimentContent: React.FC<Props> = ({ route }) => {
                 A day
               </AppText>
               <AppText variant="caption" tone="muted" style={styles.cell} align="right">
-                Before
+                Its category
               </AppText>
               <AppText variant="caption" tone="muted" style={styles.cell} align="right">
-                During
+                This dish
               </AppText>
             </View>
             {resultLines(e).map(l => (
@@ -177,7 +177,7 @@ const MenuExperimentContent: React.FC<Props> = ({ route }) => {
           {e.change.kind === 'price' ? (
             <Button label="Adjust the price" variant={verdict === 'adjust' ? 'primary' : 'secondary'} onPress={() => setAdjusting(String(Math.round((e.change.kind === 'price' ? e.change.oldPrice + e.change.price : 0) / 20) * 10))} fullWidth />
           ) : null}
-          <Button label={e.change.kind === 'price' ? `Go back to ${formatPKR(oldPrice)}` : 'Go back to the old photo'} variant={verdict === 'drop' ? 'primary' : 'secondary'} loading={s.acting} onPress={() => void decide({ kind: 'drop' })} fullWidth />
+          <Button label={e.change.kind === 'price' ? `Go back to ${formatPKR(oldPrice)}` : 'Drop it (put the old photo back on the dish)'} variant={verdict === 'drop' ? 'primary' : 'secondary'} loading={s.acting} onPress={() => void decide({ kind: 'drop' })} fullWidth />
         </View>
       ) : null}
       {e.status === 'running' ? <Button label="Stop the test early" variant="secondary" onPress={() => setStopping(true)} fullWidth /> : null}

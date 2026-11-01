@@ -2,9 +2,9 @@
 // MetroMatrix — the staff console's CSV import
 // ═══════════════════════════════════════════════════════
 // Choose a file or paste the text; "Check the file" runs the server's dry
-// run, which names every bad row; the first rows show what the import
-// would do. "Import" is offered only when every row is fine, and the
-// server takes the whole file or none of it. Tokens only.
+// run, which names every bad row and says what the import would cover.
+// "Import" is offered only when every row is fine, and the server takes
+// the whole file or none of it. Tokens only.
 
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -12,15 +12,6 @@ import { canImport, importSummary } from '../../models/kitchen/adminKitchenModel
 import { useStyles, type Theme } from '../../theme/index';
 import { AppText, Button, Card, Divider, InlineNotice, StatusPill, TextField } from '../../Custom-Components/index';
 import type { CsvImportResult } from '../../models';
-
-type PillTone = React.ComponentProps<typeof StatusPill>['tone'];
-
-export interface CsvPreviewRow {
-  key: string;
-  title: string;
-  line: string;
-  pill?: { label: string; tone: PillTone };
-}
 
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
@@ -30,7 +21,7 @@ const makeStyles = ({ space }: Theme) =>
     grow: { flex: 1, gap: space.s4 },
   });
 
-export const CsvImport = <T,>({
+export const CsvImport = ({
   columns,
   example,
   csv,
@@ -44,7 +35,6 @@ export const CsvImport = <T,>({
   importing,
   error,
   formError,
-  previewOf,
 }: {
   columns: string[];
   /** One sample data row, shown under the columns. */
@@ -55,13 +45,12 @@ export const CsvImport = <T,>({
   onPickFile: () => void;
   onCheck: () => void;
   onImport: () => void;
-  result: CsvImportResult<T> | null;
+  result: CsvImportResult | null;
   checking: boolean;
   importing: boolean;
   error: string;
   /** The text's own problem (no header, no rows), before it is sent. */
   formError?: string;
-  previewOf: (row: T) => CsvPreviewRow;
 }) => {
   const styles = useStyles(makeStyles);
   const ready = canImport(result);
@@ -115,36 +104,17 @@ export const CsvImport = <T,>({
                     <View style={styles.row}>
                       <StatusPill label={`Row ${e.row}`} tone="danger" />
                       <AppText variant="small" style={styles.grow}>
-                        {`${e.field}: ${e.message}`}
+                        {e.field ? `${e.field}: ${e.message}` : e.message}
                       </AppText>
                     </View>
                   </View>
                 ))}
               </View>
             ) : null}
-            {result.preview.length ? (
-              <View>
-                <AppText variant="overline" tone="muted">
-                  {result.dryRun ? 'What it would do' : 'Imported'}
-                </AppText>
-                {result.preview.map((r, n) => {
-                  const p = previewOf(r);
-                  return (
-                    <View key={p.key}>
-                      {n ? <Divider /> : null}
-                      <View style={styles.row}>
-                        <View style={styles.grow}>
-                          <AppText variant="body">{p.title}</AppText>
-                          <AppText variant="small" tone="muted">
-                            {p.line}
-                          </AppText>
-                        </View>
-                        {p.pill ? <StatusPill label={p.pill.label} tone={p.pill.tone} /> : null}
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
+            {result.summary ? (
+              <AppText variant="small" tone="muted">
+                {`${result.dryRun ? 'It would import' : 'Imported'}: ${result.summary}.`}
+              </AppText>
             ) : null}
             {result.dryRun ? (
               <Button

@@ -3,7 +3,8 @@
 // kitchen's account, or the receipt sent back with a reason.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { confirmAdvance, declineCatering, fetchCateringRequest, rejectAdvance } from '../../networks/foodGrowth/catering';
+import { confirmAdvance, declineCatering, rejectAdvance } from '../../networks/foodGrowth/catering';
+import { fetchKitchenCateringByCode, kitchenCateringId } from '../shared/growthReads';
 import { toRejectedValue } from '../../networks/network/network';
 import type { CateringRequest } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -28,7 +29,7 @@ export const cateringRequestSlice = createAppSlice({
     loadCateringRequestAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          return await fetchCateringRequest(code);
+          return await fetchKitchenCateringByCode(code);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -50,9 +51,10 @@ export const cateringRequestSlice = createAppSlice({
       },
     ),
     cateringActAsync: create.asyncThunk(
-      async ({ code, act }: { code: string; act: CateringAct }, { rejectWithValue }) => {
+      async ({ code, act }: { code: string; act: CateringAct }, { getState, rejectWithValue }) => {
         try {
-          return act.kind === 'decline' ? await declineCatering(code, act.reason) : act.kind === 'confirm-advance' ? await confirmAdvance(code) : await rejectAdvance(code, act.reason);
+          const id = (getState() as { cateringRequest: CateringRequestSliceState }).cateringRequest.byCode[code.toUpperCase()]?.id ?? (await kitchenCateringId(code));
+          return act.kind === 'decline' ? await declineCatering(id, act.reason) : act.kind === 'confirm-advance' ? await confirmAdvance(id) : await rejectAdvance(id, act.reason);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

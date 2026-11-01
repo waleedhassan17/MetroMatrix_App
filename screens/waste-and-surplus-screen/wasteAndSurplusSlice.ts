@@ -4,15 +4,15 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { fetchWasteSummary, fetchWaste, logWaste } from '../../networks/kitchen/waste';
-import { collectReservation, fetchBoxSuggestion, fetchBoxes } from '../../networks/kitchen/surplus';
-import { toRejectedValue } from '../../networks/network/network';
+import { fetchDonations, fetchWasteSummary, fetchWaste, logWaste } from '../../networks/kitchen/waste';
+import { collectReservation, fetchBoxReservations, fetchBoxSuggestion, fetchBoxes } from '../../networks/kitchen/surplus';
+import { ApiError, required, toRejectedValue } from '../../networks/network/network';
 import { normalizeCode } from '../../models/kitchen/surplusModel';
 import { wasteFromVoice } from '../../models/kitchen/stockModel';
 import type { SurplusBox, SurplusSuggestion, VoiceQtyLine, WasteEntry, WasteReason, WasteSummary } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { wasteSummarySerializer, wastePageSerializer, wasteSerializer } from '../../serializers/kitchen/wasteSerializer';
-import { surplusBoxesSerializer, surplusSuggestionResponseSerializer, reservationSerializer } from '../../serializers/kitchen/surplusSerializer';
+import { wasteSummarySerializer, wastePageSerializer, wasteSerializer, wasteBatchSerializer } from '../../serializers/kitchen/wasteSerializer';
+import { liveBoxesSerializer, surplusSuggestionSerializer, reservationSerializer, reservationsSerializer } from '../../serializers/kitchen/surplusSerializer';
 
 export interface WasteAndSurplusSliceState {
   range: '7d' | '30d';
@@ -66,8 +66,8 @@ export const wasteAndSurplusSlice = createAppSlice({
     loadWasteAndSurplusAsync: create.asyncThunk(
       async (range: '7d' | '30d', { rejectWithValue }) => {
         try {
-          const [summary, recent, boxes, suggestion] = await Promise.all([fetchWasteSummary(range), fetchWaste(1, 5), fetchBoxes('live'), fetchBoxSuggestion()]);
-          return { summary, recent, boxes, suggestion };
+          const [summary, donations, recent, boxes, suggestion] = await Promise.all([fetchWasteSummary(range), fetchDonations(), fetchWaste(1, 5), fetchBoxes(), fetchBoxSuggestion()]);
+          return { summary, donations, recent, boxes, suggestion };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -79,10 +79,10 @@ export const wasteAndSurplusSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.status = 'succeeded';
-          state.summary = wasteSummarySerializer(action.payload.summary);
+          state.summary = wasteSummarySerializer({ summary: action.payload.summary, donations: action.payload.donations });
           state.recent = wastePageSerializer(action.payload.recent).items;
-          state.boxes = surplusBoxesSerializer(action.payload.boxes);
-          state.suggestion = surplusSuggestionResponseSerializer(action.payload.suggestion)?.suggestion ?? null;
+          state.boxes = liveBoxesSerializer(action.payload.boxes);
+          state.suggestion = surplusSuggestionSerializer(action.payload.suggestion);
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -96,7 +96,11 @@ export const wasteAndSurplusSlice = createAppSlice({
       async (_: void, { getState, rejectWithValue }) => {
         const code = normalizeCode((getState() as { wasteAndSurplus: WasteAndSurplusSliceState }).wasteAndSurplus.code);
         try {
-          return await collectReservation(code);
+          // The counter knows the code, the API the reservation: find it among those still to collect.
+          const waiting = required(reservationsSerializer(await fetchBoxReservations(undefined, 'reserved')));
+          const r = waiting.find(x => x.code === code);
+          if (!r) throw new ApiError(`No reservation to collect has the code ${code}.`, 'NOT_FOUND', 404);
+          return await collectReservation(r.id, code);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -122,7 +126,10 @@ export const wasteAndSurplusSlice = createAppSlice({
     logSpokenWasteAsync: create.asyncThunk(
       async ({ lines, reason }: { lines: VoiceQtyLine[]; reason: WasteReason }, { rejectWithValue }) => {
         try {
-          return await logWaste(wasteFromVoice(lines, reason));
+          // One entry per line, as the API keeps them.
+          const saved: unknown[] = [];
+          for (const line of wasteFromVoice(lines, reason)) saved.push(await logWaste(line));
+          return saved;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -133,10 +140,10 @@ export const wasteAndSurplusSlice = createAppSlice({
           state.logError = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = wasteSerializer(action.payload);
+          const entries = action.payload.map(x => wasteSerializer(x)).filter(x => x !== null);
           state.logging = false;
-          if (payload) state.recent = [payload, ...state.recent].slice(0, 5);
-          state.logged = payload;
+          state.recent = [...[...entries].reverse(), ...state.recent].slice(0, 5);
+          state.logged = wasteBatchSerializer(action.payload);
         },
         rejected: (state, action) => {
           state.logging = false;

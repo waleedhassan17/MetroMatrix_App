@@ -1,16 +1,18 @@
 // MetroMatrix — Kitchen growth: the kitchen's story and its hygiene
-// checklist. The story form (text, the cook's name, photos, one short
-// video, uploaded first), each checklist item with optional evidence, and
-// asking MetroMatrix to verify it.
+// checklist, one record in the API. The story form (text, the cook's name,
+// photos, one short video, uploaded first) and the checklist's ticks: every
+// save sends both whole. A complete checklist is self-declared at once;
+// staff verify it after a visit or a video call.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { fetchHygiene, fetchStory, requestHygieneVerification, saveStory, setHygieneItem } from '../../networks/foodGrowth/story';
+import { fetchStory, saveStory } from '../../networks/foodGrowth/story';
 import { uploadImage } from '../../services/mediaUpload';
 import { toRejectedValue } from '../../networks/network/network';
 import type { Hygiene, KitchenStory, LocalFile } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { storySerializer, hygieneSerializer } from '../../serializers/kitchen/reachSerializer';
+import { storySerializer, hygieneSerializer, hygieneChecklistOf } from '../../serializers/kitchen/reachSerializer';
+import { PKT, todayInZone } from '../../utils/health-time/healthTime';
 
 export type StoryForm = Pick<KitchenStory, 'text' | 'cookName' | 'photoUrls' | 'videoUrl'>;
 
@@ -62,8 +64,7 @@ export const storyAndHygieneSlice = createAppSlice({
     loadStoryAndHygieneAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [story, hygiene] = await Promise.all([fetchStory(), fetchHygiene()]);
-          return { story, hygiene };
+          return await fetchStory();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -74,7 +75,7 @@ export const storyAndHygieneSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = { story: storySerializer(action.payload.story), hygiene: hygieneSerializer(action.payload.hygiene) };
+          const payload = { story: storySerializer(action.payload), hygiene: hygieneSerializer(action.payload) };
           state.status = 'succeeded';
           // An edit in progress isn't thrown away by a refresh.
           const untouched = !state.story || JSON.stringify(state.form) === JSON.stringify(formOf(state.story));
@@ -89,9 +90,9 @@ export const storyAndHygieneSlice = createAppSlice({
       },
     ),
     uploadStoryMediaAsync: create.asyncThunk(
-      async ({ file }: { file: LocalFile; kind: 'photo' | 'video' }, { rejectWithValue }) => {
+      async ({ file, kind }: { file: LocalFile; kind: 'photo' | 'video' }, { rejectWithValue }) => {
         try {
-          return (await uploadImage(file, 'food_story')).url;
+          return (await uploadImage(file, kind === 'video' ? 'food_story_video' : 'food_story')).url;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -113,9 +114,10 @@ export const storyAndHygieneSlice = createAppSlice({
       },
     ),
     saveStoryAsync: create.asyncThunk(
-      async (form: StoryForm, { rejectWithValue }) => {
+      async (form: StoryForm, { getState, rejectWithValue }) => {
+        const hygiene = (getState() as { storyAndHygiene: StoryAndHygieneSliceState }).storyAndHygiene.hygiene;
         try {
-          return await saveStory({ text: form.text.trim(), cookName: form.cookName.trim(), photoUrls: form.photoUrls, videoUrl: form.videoUrl });
+          return await saveStory({ text: form.text.trim(), cookName: form.cookName.trim(), photoUrls: form.photoUrls, videoUrl: form.videoUrl }, hygieneChecklistOf(hygiene));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -130,6 +132,7 @@ export const storyAndHygieneSlice = createAppSlice({
           state.saving = false;
           state.story = payload;
           state.form = formOf(payload);
+          state.hygiene = hygieneSerializer(action.payload);
         },
         rejected: (state, action) => {
           state.saving = false;
@@ -137,12 +140,15 @@ export const storyAndHygieneSlice = createAppSlice({
         },
       },
     ),
-    /** Tick or untick an item; with a photo, it is uploaded first as its evidence. */
+    /** Tick or untick an item (pest control: done today): the story is saved with it, as it stands. */
     setHygieneItemAsync: create.asyncThunk(
-      async ({ key, done, file }: { key: string; done: boolean; file?: LocalFile }, { rejectWithValue }) => {
+      async ({ key, done }: { key: string; done: boolean }, { getState, rejectWithValue }) => {
+        const st = (getState() as { storyAndHygiene: StoryAndHygieneSliceState }).storyAndHygiene;
+        const checklist = hygieneChecklistOf(st.hygiene);
+        const next = key === 'pestControlOn' ? { ...checklist, pestControlOn: done ? todayInZone(PKT) : null } : { ...checklist, [key]: done };
+        const story = st.story ?? { text: '', cookName: '', photoUrls: [], videoUrl: null };
         try {
-          const evidenceUrl = file ? (await uploadImage(file, 'hygiene_evidence')).url : undefined;
-          return await setHygieneItem(key, { done, ...(evidenceUrl ? { evidenceUrl } : null) });
+          return await saveStory({ text: story.text, cookName: story.cookName, photoUrls: story.photoUrls, videoUrl: story.videoUrl }, next);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -153,37 +159,12 @@ export const storyAndHygieneSlice = createAppSlice({
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = hygieneSerializer(action.payload);
           state.ticking = null;
-          state.hygiene = payload;
+          state.hygiene = hygieneSerializer(action.payload);
         },
         rejected: (state, action) => {
           state.ticking = null;
           state.actionError = readRejection(action, "That didn't save.");
-        },
-      },
-    ),
-    requestVerificationAsync: create.asyncThunk(
-      async (_: void, { rejectWithValue }) => {
-        try {
-          return await requestHygieneVerification();
-        } catch (e) {
-          return rejectWithValue(toRejectedValue(e));
-        }
-      },
-      {
-        pending: state => {
-          state.requesting = true;
-          state.actionError = NO_ERROR;
-        },
-        fulfilled: (state, action) => {
-          const payload = hygieneSerializer(action.payload);
-          state.requesting = false;
-          state.hygiene = payload;
-        },
-        rejected: (state, action) => {
-          state.requesting = false;
-          state.actionError = readRejection(action, "The request didn't send.");
         },
       },
     ),
@@ -193,5 +174,5 @@ export const storyAndHygieneSlice = createAppSlice({
   },
 });
 
-export const { setStoryField, removeStoryPhoto, loadStoryAndHygieneAsync, uploadStoryMediaAsync, saveStoryAsync, setHygieneItemAsync, requestVerificationAsync } = storyAndHygieneSlice.actions;
+export const { setStoryField, removeStoryPhoto, loadStoryAndHygieneAsync, uploadStoryMediaAsync, saveStoryAsync, setHygieneItemAsync } = storyAndHygieneSlice.actions;
 export const { selectStoryAndHygiene } = storyAndHygieneSlice.selectors;

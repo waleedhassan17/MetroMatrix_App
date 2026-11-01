@@ -2,7 +2,7 @@
 // dishes that use it), and deleting it.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { deleteIngredient, fetchIngredient } from '../../networks/kitchen/stock';
+import { deleteIngredient, fetchIngredient, fetchIngredientBatches, fetchIngredientMovements } from '../../networks/kitchen/stock';
 import { toRejectedValue } from '../../networks/network/network';
 import type { IngredientDetail } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -25,7 +25,9 @@ export const ingredientSlice = createAppSlice({
     loadIngredientAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return await fetchIngredient(id);
+          // The ingredient, its batches (oldest first) and its latest moves.
+          const [ingredient, batches, movements] = await Promise.all([fetchIngredient(id), fetchIngredientBatches(id), fetchIngredientMovements(id)]);
+          return { ingredient, batches, movements };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

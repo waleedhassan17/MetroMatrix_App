@@ -4,10 +4,11 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { createPurchase, fetchSuppliers } from '../../networks/kitchen/purchases';
+import { fetchSuppliers } from '../../networks/kitchen/purchases';
 import { fetchStock } from '../../networks/kitchen/stock';
 import { scanReceipt } from '../../networks/kitchen/kitchenAi';
 import { uploadImage } from '../../services/mediaUpload';
+import { savePurchase } from '../shared/kitchenWrites';
 import { toRejectedValue } from '../../networks/network/network';
 import { emptyLine, linesFromReceipt, linesFromVoice, type DraftLine } from '../../models/kitchen/purchaseModel';
 import type { Ingredient, LocalFile, PurchaseInput, PurchaseSource, Supplier, VoiceQtyLine } from '../../models';
@@ -151,7 +152,7 @@ export const purchaseFormSlice = createAppSlice({
     savePurchaseAsync: create.asyncThunk(
       async (input: PurchaseInput, { rejectWithValue }) => {
         try {
-          return await createPurchase(input);
+          return await savePurchase(input);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

@@ -5,7 +5,7 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { confirmTiffinPayment, fetchMyTiffinPlan, fetchPlanSubscribers, fetchTiffinSubscriptions, moveSubscriber as moveSubscriberRequest, rejectTiffinPayment, type SubscriberMove } from '../../networks/foodGrowth/tiffin';
+import { confirmTiffinPayment, fetchMyTiffinPlan, fetchTiffinSubscriptions, moveSubscriber as moveSubscriberRequest, rejectTiffinPayment, type SubscriberMove } from '../../networks/foodGrowth/tiffin';
 import { toRejectedValue } from '../../networks/network/network';
 import type { TiffinInbox, TiffinPlan } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -43,7 +43,7 @@ export const tiffinSubscribersSlice = createAppSlice({
     loadSubscribersAsync: create.asyncThunk(
       async (planId: string | null, { rejectWithValue }) => {
         try {
-          const [inbox, plan] = await Promise.all([planId ? fetchPlanSubscribers(planId) : fetchTiffinSubscriptions(), planId ? fetchMyTiffinPlan(planId) : Promise.resolve(null)]);
+          const [inbox, plan] = await Promise.all([fetchTiffinSubscriptions(planId ? { planId } : {}), planId ? fetchMyTiffinPlan(planId) : Promise.resolve(null)]);
           return { inbox, plan };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

@@ -22,7 +22,7 @@ export const nutritionSummarySlice = createAppSlice({
     loadNutritionSummaryAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await fetchNutritionSummary(7);
+          return await fetchNutritionSummary('7d');
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

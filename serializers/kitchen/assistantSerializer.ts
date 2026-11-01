@@ -1,8 +1,9 @@
 // MetroMatrix — Kitchen serializers: the assistant's drafts (5C), review themes and nutrition.
-// docs/AI_ASSUMED.md §3.1 (TODO(API_AI)), docs/API_KITCHEN_ASSUMED.md §4.7 (TODO(API_KITCHEN)).
+// docs/API_KITCHEN.md §31–33. Every draft is a draft: the kitchen sends the ordinary request.
 
 import type {
   ComboIdea,
+  Cost,
   DescriptionDraft,
   DishNutrition,
   DraftCategory,
@@ -10,155 +11,189 @@ import type {
   NutritionMethod,
   PhotoCheck,
   PhotoTipKind,
-  PhotoVerdict,
   ReviewInsights,
   ReviewTheme,
-  ReviewThemeKey,
   SpecialIdea,
-  UnmappedIngredient,
   VendorNutrition,
 } from '../../models/kitchen';
-import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
-import { costSerializer, count, dateOrNull, list, numOrNull } from './kitchenCommon';
+import { arr, bodiesOf, bool, isObject, num, str, strOrNull, fromResponse } from '../serializerUtils';
+import { count, dateOrNull, list, numOrNull } from './kitchenCommon';
+import { vendorMenuItemSerializer } from '../food/menuSerializer';
 
 const strings = (raw: unknown) => arr(raw).filter((x): x is string => typeof x === 'string' && !!x);
-const THEME_KEYS: readonly ReviewThemeKey[] = ['taste', 'fresh', 'portion', 'packing', 'value', 'late', 'cold', 'spice', 'small', 'spill'];
-const VERDICTS: readonly PhotoVerdict[] = ['good', 'ok', 'retake'];
-const TIP_KINDS: readonly PhotoTipKind[] = ['light', 'framing', 'background', 'focus'];
-const METHODS: readonly NutritionMethod[] = ['recipe', 'ai_estimate', 'none'];
-const PERS: readonly NutritionFood['per'][] = ['g100', 'ml100', 'piece'];
 
 export const draftCategorySerializer = (raw: unknown): DraftCategory | null => (isObject(raw) && str(raw.id) ? { id: str(raw.id), name: str(raw.name) } : null);
 
-const descriptionSerializer = (raw: unknown): DescriptionDraft | null => {
-  if (!isObject(raw) || !str(raw.itemId)) return null;
+/** POST /ai/describe: the draft (English and Urdu script) beside what the menu says now. Nothing is saved. */
+export const descriptionDraftSerializer = fromResponse((raw: unknown): DescriptionDraft | null => {
+  if (!isObject(raw) || !str(raw.itemId) || !isObject(raw.draft)) return null;
   const c = isObject(raw.current) ? raw.current : {};
-  return { itemId: str(raw.itemId), name: str(raw.name), current: { en: strOrNull(c.en), ur: strOrNull(c.ur) }, en: str(raw.en), ur: str(raw.ur) };
-};
-
-export const descriptionDraftsSerializer = fromResponse((raw: unknown): DescriptionDraft[] => list(isObject(raw) ? raw.items : raw, descriptionSerializer));
-
-const specialSerializer = (raw: unknown): SpecialIdea | null => {
-  if (!isObject(raw) || !str(raw.title)) return null;
-  const cost = costSerializer(raw.cost);
-  if (!cost) return null;
   return {
-    id: str(raw.id, str(raw.title)),
-    title: str(raw.title),
-    description: str(raw.description),
-    uses: strings(raw.uses),
-    usesExpiring: strings(raw.usesExpiring),
-    lines: list(raw.lines, l => (isObject(l) && str(l.ingredientId) && num(l.qty) > 0 ? { ingredientId: str(l.ingredientId), qty: num(l.qty) } : null)),
-    suggestedPrice: count(raw.suggestedPrice),
-    cost,
+    itemId: str(raw.itemId),
+    name: str(raw.name),
+    current: { en: strOrNull(c.description), ur: strOrNull(c.descriptionUr) },
+    en: str(raw.draft.description),
+    ur: str(raw.draft.descriptionUr),
   };
-};
-
-export const specialIdeasSerializer = fromResponse((raw: unknown): { items: SpecialIdea[]; category: DraftCategory | null } => {
-  const r = isObject(raw) ? raw : {};
-  return { items: list(r.items, specialSerializer), category: draftCategorySerializer(r.category) };
 });
 
-const comboSerializer = (raw: unknown): ComboIdea | null => {
-  if (!isObject(raw)) return null;
-  const itemIds = strings(raw.itemIds);
-  if (itemIds.length < 2) return null;
-  return {
-    id: str(raw.id, itemIds.join('+')),
-    itemIds,
-    names: strings(raw.names),
-    orderedTogether: count(raw.orderedTogether),
-    regularPrice: count(raw.regularPrice),
-    bundlePrice: count(raw.bundlePrice),
-    cost: costSerializer(raw.cost),
-  };
+/** Several drafts asked for one dish at a time. */
+export const descriptionDraftsSerializer = (raws: unknown[]): DescriptionDraft[] => raws.map(x => descriptionDraftSerializer(x)).filter((x): x is DescriptionDraft => x !== null);
+
+/** A cost from the API's numbers: what it costs to make a serving and what the kitchen keeps. */
+const costOf = (toMake: number, sellPrice: number, foodCostPct: number, targetPct: number): Cost => {
+  const keep = sellPrice - toMake;
+  return { toMake, sellPrice, keep, keepPct: sellPrice ? Math.round((keep / sellPrice) * 100) : 0, foodCostPct: Math.round(foodCostPct), overTarget: foodCostPct > targetPct };
 };
 
+/** POST /ai/specials: dishes from what expires in the next 3 days, costed and priced. */
+export const specialIdeasSerializer = fromResponse((raw: unknown): { items: SpecialIdea[]; category: DraftCategory | null; message: string | null } => {
+  const r = isObject(raw) ? raw : {};
+  const target = count(r.targetFoodCostPct) || 35;
+  const items = list(r.ideas, i => {
+    if (!isObject(i) || !str(i.name)) return null;
+    const lines = list(i.lines, l => (isObject(l) && str(l.ingredientId) && num(l.qty) > 0 ? l : null));
+    const price = count(i.suggestedPrice);
+    const servings = Math.max(1, count(i.servings));
+    return {
+      id: str(i.name),
+      title: str(i.name),
+      description: str(i.description),
+      uses: lines.map(l => str(l.name)),
+      usesExpiring: lines.filter(l => bool(l.expiring)).map(l => str(l.name)),
+      lines: lines.map(l => ({ ingredientId: str(l.ingredientId), qty: num(l.qty), unit: str(l.unit) })),
+      servings,
+      why: strOrNull(i.why),
+      suggestedPrice: price,
+      cost: costOf(Math.round(num(i.costPerServing)), price, num(i.foodCostPct), target),
+    };
+  });
+  return { items, category: null, message: strOrNull(r.message) };
+});
+
+/** POST /ai/specials/create answers `{ item, recipe }`: the new dish. */
+export const createdSpecialSerializer = fromResponse((raw: unknown) => vendorMenuItemSerializer(isObject(raw) ? raw.item : null));
+
+/** POST /ai/combos: pairs ordered together, a bundle price and its draft dish (never created for you). */
 export const comboIdeasSerializer = fromResponse((raw: unknown): { items: ComboIdea[]; category: DraftCategory | null } => {
   const r = isObject(raw) ? raw : {};
-  return { items: list(r.items, comboSerializer), category: draftCategorySerializer(r.category) };
+  const items = list(r.combos, c => {
+    if (!isObject(c)) return null;
+    const dishes = list(c.items, x => (isObject(x) && str(x.itemId) ? x : null));
+    if (dishes.length < 2) return null;
+    const bundle = count(c.bundlePrice);
+    const draft = isObject(c.draft) && isObject(c.draft.body) ? c.draft.body : {};
+    return {
+      id: str(c.key) || dishes.map(d => str(d.itemId)).join('+'),
+      itemIds: dishes.map(d => str(d.itemId)),
+      names: dishes.map(d => str(d.name)),
+      name: str(c.name),
+      description: strOrNull(c.description) ?? strOrNull(draft.description),
+      orderedTogether: count(c.together),
+      regularPrice: count(c.price),
+      bundlePrice: bundle,
+      cost: c.cost === null || c.cost === undefined ? null : costOf(Math.round(num(c.cost)), bundle, num(c.foodCostPct), 35),
+      categoryId: strOrNull(draft.categoryId),
+    };
+  });
+  return { items, category: null };
 });
 
-export const photoCheckSerializer = fromResponse((raw: unknown): PhotoCheck | null => {
-  if (!isObject(raw)) return null;
+const TIP_KIND: Record<string, PhotoTipKind> = { dark: 'light', overexposed: 'light', flat: 'background', blurry: 'focus' };
+
+/** POST /ai/photo-check: measured on the server (light, contrast, focus, framing), with the model's tips when AI is on. */
+export const photoCheckSerializer = fromResponse((raw: unknown, imageUrl: string = ''): PhotoCheck | null => {
+  if (!isObject(raw) || raw.score === undefined) return null;
+  const score = Math.max(0, Math.min(100, Math.round(num(raw.score))));
+  const problems = strings(raw.problems);
+  const tips = strings(raw.tips).map((text, n) => ({ kind: TIP_KIND[problems[n]] ?? ('framing' as PhotoTipKind), text }));
+  const extra = strings(raw.aiTips).map(text => ({ kind: 'framing' as PhotoTipKind, text }));
+  return { imageUrl, score, verdict: score >= 80 ? 'good' : score >= 60 ? 'ok' : 'retake', tips: [...tips, ...extra].slice(0, 6) };
+});
+
+/** GET /review-insights: a week's themes (anonymised; the latest unless another is picked), and the weeks there are. */
+export const reviewInsightsSerializer = fromResponse((raw: unknown, week: string | null = null): ReviewInsights | null => {
+  if (!isObject(raw) || !isObject(raw.latest)) return null;
+  const entries = [raw.latest, ...arr(raw.history)].filter(isObject).filter(e => dateOrNull(e.periodStart));
+  const l = (week && entries.find(e => dateOrNull(e.periodStart) === week)) || raw.latest;
+  const start = dateOrNull(l.periodStart);
+  if (!start) return null;
+  const themes = list(l.themes, t =>
+    isObject(t) && str(t.theme)
+      ? { key: str(t.theme), label: str(t.theme).replace(/^./, c => c.toUpperCase()), tone: t.sentiment === 'negative' ? 'negative' : 'positive', count: count(t.count), snippets: strings(t.examples).slice(0, 3) }
+      : null,
+  ) as ReviewTheme[];
   return {
-    imageUrl: str(raw.imageUrl),
-    score: Math.max(0, Math.min(100, Math.round(num(raw.score)))),
-    verdict: oneOf(raw.verdict, VERDICTS, 'ok'),
-    tips: list(raw.tips, t => (isObject(t) && str(t.text) ? { kind: oneOf(t.kind, TIP_KINDS, 'framing'), text: str(t.text) } : null)),
+    week: start,
+    from: start,
+    to: dateOrNull(l.periodEnd) ?? start,
+    reviewCount: count(l.reviewCount),
+    weeks: entries.map(e => ({ week: dateOrNull(e.periodStart)!, count: count(e.reviewCount) })),
+    themes,
   };
 });
 
-const themeSerializer = (raw: unknown): ReviewTheme | null =>
-  isObject(raw) && THEME_KEYS.includes(raw.key as ReviewThemeKey)
-    ? {
-        key: raw.key as ReviewThemeKey,
-        label: str(raw.label),
-        tone: raw.tone === 'negative' ? 'negative' : 'positive',
-        count: count(raw.count),
-        snippets: strings(raw.snippets).slice(0, 3),
-      }
-    : null;
+/** How far the next insight is: new written reviews since the last, of the 5 it needs. */
+export const reviewInsightsWaitSerializer = fromResponse((raw: unknown) => (isObject(raw) ? { newReviews: count(raw.newReviews), needed: count(raw.needed) || 5 } : null));
 
-export const reviewInsightsSerializer = fromResponse((raw: unknown): ReviewInsights | null => {
-  if (!isObject(raw)) return null;
-  const week = dateOrNull(raw.week);
-  if (!week) return null;
-  return {
-    week,
-    from: dateOrNull(raw.from) ?? week,
-    to: dateOrNull(raw.to) ?? week,
-    reviewCount: count(raw.reviewCount),
-    weeks: list(raw.weeks, w => (isObject(w) && dateOrNull(w.week) ? { week: dateOrNull(w.week)!, count: count(w.count) } : null)),
-    themes: list(raw.themes, themeSerializer),
-  };
-});
+const METHOD: Record<string, NutritionMethod> = { recipe: 'recipe', ai: 'ai_estimate', ai_estimate: 'ai_estimate', estimate: 'ai_estimate', none: 'none' };
 
 const macro = (v: unknown) => {
   const n = numOrNull(v);
   return n === null ? null : Math.max(0, Math.round(n));
 };
 
-export const dishNutritionSerializer = fromResponse((raw: unknown): DishNutrition | null => {
+/** A dish's estimated numbers: a row of GET /nutrition/items, or GET /nutrition/items/:id. */
+export const dishNutritionSerializer = fromResponse((raw: unknown, name: string = ''): DishNutrition | null => {
   if (!isObject(raw) || !str(raw.itemId)) return null;
-  const method = oneOf(raw.method, METHODS, 'none');
+  const n = isObject(raw.nutrition) ? raw.nutrition : raw;
+  const per = isObject(n.perServing) ? n.perServing : n;
+  const method = METHOD[str(n.method)] ?? (macro(per.kcal) === null ? 'none' : 'recipe');
+  const recipe = isObject(raw.recipe) ? raw.recipe : {};
   return {
     itemId: str(raw.itemId),
-    name: str(raw.name),
-    kcal: method === 'none' ? null : macro(raw.kcal),
-    protein: method === 'none' ? null : macro(raw.protein),
-    carbs: method === 'none' ? null : macro(raw.carbs),
-    fat: method === 'none' ? null : macro(raw.fat),
+    name: str(raw.name) || name,
+    kcal: method === 'none' ? null : macro(per.kcal),
+    protein: method === 'none' ? null : macro(per.proteinG),
+    carbs: method === 'none' ? null : macro(per.carbsG),
+    fat: method === 'none' ? null : macro(per.fatG),
     method,
-    confidence: Math.max(0, Math.min(1, num(raw.confidence))),
-    hidden: bool(raw.hidden),
-    missing: strings(raw.missing),
+    confidence: Math.max(0, Math.min(1, num(n.confidence, method === 'recipe' ? 0.9 : 0.4))),
+    hidden: bool(n.hidden),
+    missing: list(recipe.unmapped, u => (isObject(u) ? str(u.name) : typeof u === 'string' ? u : null)),
   };
 });
 
-const unmappedSerializer = (raw: unknown): UnmappedIngredient | null =>
-  isObject(raw) && str(raw.ingredientId)
-    ? {
-        ingredientId: str(raw.ingredientId),
-        name: str(raw.name),
-        usedIn: strings(raw.usedIn),
-        suggestions: list(raw.suggestions, x => (isObject(x) && str(x.foodId) ? { foodId: str(x.foodId), name: str(x.name), per: oneOf(x.per, PERS, 'g100') } : null)),
-      }
-    : null;
-
-export const vendorNutritionSerializer = fromResponse((raw: unknown): VendorNutrition => {
-  const r = isObject(raw) ? raw : {};
-  const c = isObject(r.counts) ? r.counts : {};
+/** The kitchen's dishes with their numbers, and its ingredients without a reference food (with the suggestions). */
+export const vendorNutritionSerializer = (parts: { items: unknown; mapping: unknown }): VendorNutrition => {
+  const raw = bodiesOf(parts);
+  const items = list(isObject(raw.items) ? raw.items.items : raw.items, x => dishNutritionSerializer(x));
+  const mapping = list(isObject(raw.mapping) ? raw.mapping.items : raw.mapping, m => (isObject(m) && str(m.ingredientId) ? m : null));
+  const unmapped = mapping
+    .filter(m => !isObject(m.food) || m.status === 'suggested')
+    .map(m => ({
+      ingredientId: str(m.ingredientId),
+      name: str(m.name),
+      usedIn: [],
+      suggestions: isObject(m.suggestion) && str(m.suggestion.id) ? [{ foodId: str(m.suggestion.id), name: str(m.suggestion.name), per: 'g100' as const }] : [],
+    }));
   return {
-    counts: { recipe: count(c.recipe), estimate: count(c.estimate), none: count(c.none), hidden: count(c.hidden) },
-    items: list(r.items, dishNutritionSerializer),
-    unmapped: list(r.unmapped, unmappedSerializer),
+    counts: {
+      recipe: items.filter(i => i.method === 'recipe').length,
+      estimate: items.filter(i => i.method === 'ai_estimate').length,
+      none: items.filter(i => i.method === 'none').length,
+      hidden: items.filter(i => i.hidden).length,
+    },
+    items,
+    unmapped,
   };
-});
+};
 
-const foodSerializer = (raw: unknown): NutritionFood | null =>
-  isObject(raw) && str(raw.id)
-    ? { id: str(raw.id), name: str(raw.name), per: oneOf(raw.per, PERS, 'g100'), kcal: num(raw.kcal), protein: num(raw.protein), carbs: num(raw.carbs), fat: num(raw.fat) }
-    : null;
+/** The reference foods (per 100 g, or a piece when it has a piece weight). */
+const foodSerializer = (raw: unknown): NutritionFood | null => {
+  if (!isObject(raw) || !str(raw.id)) return null;
+  const p = isObject(raw.per100g) ? raw.per100g : {};
+  return { id: str(raw.id), name: str(raw.name), per: 'g100', kcal: num(p.kcal), protein: num(p.proteinG), carbs: num(p.carbsG), fat: num(p.fatG) };
+};
 
 export const nutritionFoodsSerializer = fromResponse((raw: unknown): NutritionFood[] => list(isObject(raw) ? raw.items : raw, foodSerializer));

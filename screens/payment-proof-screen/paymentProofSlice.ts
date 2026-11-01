@@ -9,15 +9,17 @@ import { createAppSlice } from '../../store/createAppSlice';
 import { submitPaymentProof } from '../../networks/shopping/orders';
 
 import { submitFoodPaymentProof } from '../../networks/food/orders';
-import { submitReservationProof } from '../../networks/food/surplus';
+import { fetchMyReservations, submitReservationProof } from '../../networks/food/surplus';
+import { myReservationSerializer } from '../../serializers/kitchen/surplusSerializer';
 import { submitTiffinProof } from '../../networks/foodGrowth/tiffin';
 import { submitAdvanceProof } from '../../networks/foodGrowth/catering';
-import { toRejectedValue } from '../../networks/network/network';
+import { required, toRejectedValue } from '../../networks/network/network';
 import { normaliseTransactionId } from '../../models/shopping/paymentProofModel';
 import type { LocalFile } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { pendingPhoto, photoFailed, photoKey, photoProgress, photoUploaded, upload, type FormPhoto } from '../shared/photoUploads';
 import { submitAppointmentPaymentProof } from '../shared/healthReads';
+import { myCateringId } from '../shared/growthReads';
 
 export interface PaymentProofSliceState {
   /** The order or appointment being paid for. */
@@ -145,11 +147,12 @@ export const paymentProofSlice = createAppSlice({
       },
     ),
 
-    // POST /food/surplus/reservations/:code/payment-proof (a Bachat Box; TODO(API_KITCHEN)).
+    // POST /food/surplus/reservations/:id/payment-proof (a Bachat Box, found by the customer's code).
     submitSurplusProofAsync: create.asyncThunk(
       async ({ code, transactionId, imageUrl }: { code: string; transactionId: string; imageUrl: string | null }, { rejectWithValue }) => {
         try {
-          return await submitReservationProof(code, { transactionId: normaliseTransactionId(transactionId), imageUrl });
+          const r = required(myReservationSerializer(await fetchMyReservations(), code));
+          return await submitReservationProof(r.id, { transactionId: normaliseTransactionId(transactionId), imageUrl });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -169,7 +172,7 @@ export const paymentProofSlice = createAppSlice({
         },
       },
     ),
-    // POST /food/tiffin/periods/:id/payment-proof (a tiffin period; TODO(API_KITCHEN)).
+    // POST /food/tiffin/subscriptions/:id/payment-proof (the period now due).
     submitTiffinProofAsync: create.asyncThunk(
       async ({ periodId, transactionId, imageUrl }: { periodId: string; transactionId: string; imageUrl: string | null }, { rejectWithValue }) => {
         try {
@@ -193,11 +196,11 @@ export const paymentProofSlice = createAppSlice({
         },
       },
     ),
-    // POST /food/catering/requests/:code/advance-proof (a dawat's advance; TODO(API_KITCHEN)).
+    // POST /food/catering/:id/advance-proof (a dawat's advance).
     submitAdvanceProofAsync: create.asyncThunk(
       async ({ code, transactionId, imageUrl }: { code: string; transactionId: string; imageUrl: string | null }, { rejectWithValue }) => {
         try {
-          return await submitAdvanceProof(code, { transactionId: normaliseTransactionId(transactionId), imageUrl });
+          return await submitAdvanceProof(await myCateringId(code), { transactionId: normaliseTransactionId(transactionId), imageUrl });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

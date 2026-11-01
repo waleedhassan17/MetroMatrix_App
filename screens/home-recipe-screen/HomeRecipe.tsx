@@ -71,13 +71,15 @@ const HomeRecipeContent: React.FC<Props> = ({ navigation, route }) => {
   }
 
   const ur = r.language === 'ur';
+  // Urdu was picked: the title in Urdu (the steps are written in English).
+  const title = language === 'ur' && r.titleUr ? r.titleUr : r.title;
   const text = ur ? styles.rtl : undefined;
   const missing = r.ingredients.filter(i => !i.have);
 
   if (stepAt !== null) {
     const last = stepAt >= r.steps.length - 1;
     return (
-      <ScreenShell title={r.title} subtitle={`Step ${stepAt + 1} of ${r.steps.length}`} onBack={() => setStepAt(null)}>
+      <ScreenShell title={title} subtitle={`Step ${stepAt + 1} of ${r.steps.length}`} onBack={() => setStepAt(null)}>
         <Card>
           <AppText variant="h1" style={text} accessibilityLanguage={ur ? 'ur' : 'en'}>
             {r.steps[stepAt]}
@@ -99,7 +101,7 @@ const HomeRecipeContent: React.FC<Props> = ({ navigation, route }) => {
   }
 
   return (
-    <ScreenShell title={r.title} subtitle={`${r.minutes} min · for ${r.servings}`} onBack={back} refreshing={s.status === 'loading'} onRefresh={load}>
+    <ScreenShell title={title} subtitle={`${r.minutes} min · for ${r.servings}`} onBack={back} refreshing={s.status === 'loading'} onRefresh={load}>
       {showCalories && r.nutrition ? (
         <AppText variant="small" tone="muted">{`About ${r.nutrition.kcal} kcal a serving (estimated)`}</AppText>
       ) : null}
@@ -116,7 +118,7 @@ const HomeRecipeContent: React.FC<Props> = ({ navigation, route }) => {
                   {i.name}
                 </AppText>
                 {i.usesExpiring ? <StatusPill label="Use soon" tone="warning" /> : null}
-                <AppText variant="bodyStrong">{formatQty(i.qty, i.unit, { dozens: i.key === 'egg' })}</AppText>
+                {i.qty !== null ? <AppText variant="bodyStrong">{formatQty(i.qty, i.unit, { dozens: i.key === 'egg' })}</AppText> : null}
               </View>
             </View>
           ))}

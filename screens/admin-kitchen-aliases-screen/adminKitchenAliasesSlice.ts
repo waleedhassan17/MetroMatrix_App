@@ -7,7 +7,7 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { createAlias, deleteAlias, fetchAliases, fetchIngredientKeys } from '../../networks/admin/adminKitchen';
+import { createAlias, deleteAlias, fetchAliases } from '../../networks/admin/adminKitchen';
 import { toRejectedValue } from '../../networks/network/network';
 import { emptyAliasForm, type AliasForm } from '../../models/kitchen/adminKitchenModel';
 import type { IngredientAlias, IngredientKey } from '../../models';
@@ -64,8 +64,14 @@ export const adminKitchenAliasesSlice = createAppSlice({
     setAliasForm: create.reducer((state, action: PayloadAction<Partial<AliasForm>>) => {
       if (state.sheet) state.sheet = { ...state.sheet, ...action.payload };
     }),
+    /** What it means, typed: a canonical name already in use is offered, and a new one can be typed in full. */
     setKeyQuery: create.reducer((state, action: PayloadAction<string>) => {
       state.keyQuery = action.payload;
+      const key = action.payload.trim().toLowerCase();
+      if (state.sheet) {
+        state.sheet.key = key;
+        state.sheet.keyName = key;
+      }
     }),
     markAliasSubmitted: create.reducer(state => {
       state.submitted = true;
@@ -100,7 +106,8 @@ export const adminKitchenAliasesSlice = createAppSlice({
     searchKeysAsync: create.asyncThunk(
       async (q: string, { rejectWithValue }) => {
         try {
-          return await fetchIngredientKeys(q.trim() || undefined);
+          // The canonical names the words already point to, matching what is typed.
+          return await fetchAliases(q.trim() || undefined);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

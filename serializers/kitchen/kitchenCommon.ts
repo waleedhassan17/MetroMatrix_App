@@ -1,29 +1,19 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Kitchen serializers: the shared readers
 // ═══════════════════════════════════════════════════════
-// Base units, a counting (unit, dozens, the kitchen's own units), a cost
-// card and lists of rows the app can't read dropped. Defensive like every
-// serializer: a missing field is a sensible default, never a crash.
-// TODO(API_KITCHEN): docs/API_KITCHEN_ASSUMED.md §2.
+// Base units (the API's `piece` is the app's `pc`), a counting (unit, dozens,
+// the kitchen's own units), dates (a timestamp is read as its day in
+// Pakistan) and lists of rows the app can't read dropped. Defensive like
+// every serializer: a missing field is a sensible default, never a crash.
+// docs/API_KITCHEN.md §1.
 
 import type { Cost, Counting, IngredientCategory, TransferPayment } from '../../models/kitchen';
 import type { FoodPaymentStatus, FoodTransferAccount } from '../../models/food';
 import { BASE_UNITS, STANDARD_UNITS, type BaseUnit, type StandardUnit } from '../../utils/units/units';
 import { arr, bool, isObject, num, oneOf, str, strOrNull } from '../serializerUtils';
+import { dateInZone } from '../../utils/health-time/healthTime';
 
-export const INGREDIENT_CATEGORIES: readonly IngredientCategory[] = [
-  'meat_poultry',
-  'vegetables',
-  'fruit',
-  'dairy',
-  'grains_flour',
-  'spices',
-  'oils_ghee',
-  'bakery',
-  'drinks',
-  'packaging',
-  'other',
-];
+export const INGREDIENT_CATEGORIES: readonly IngredientCategory[] = ['meat', 'vegetable', 'dairy', 'spice', 'grain', 'oil', 'bakery', 'beverage', 'packaging', 'other'];
 
 export const compact = <T>(xs: (T | null)[]): T[] => xs.filter((x): x is T => x !== null);
 export const list = <T>(raw: unknown, f: (x: unknown) => T | null): T[] => compact(arr(raw).map(f));
@@ -38,15 +28,21 @@ export const intOrNull = (v: unknown): number | null => {
 };
 export const pct = (v: unknown) => Math.max(0, Math.min(100, Math.round(num(v))));
 
-export const baseUnit = (v: unknown): BaseUnit => oneOf(v, BASE_UNITS, 'g');
+export const baseUnit = (v: unknown): BaseUnit => oneOf(v === 'piece' ? 'pc' : v, BASE_UNITS, 'g');
 export const standardUnit = (v: unknown, fallback: StandardUnit = 'kg'): StandardUnit => oneOf(v, STANDARD_UNITS, fallback);
 export const category = (v: unknown): IngredientCategory => oneOf(v, INGREDIENT_CATEGORIES, 'other');
 
-export const countingOf = (raw: Record<string, unknown>): Counting => ({
-  baseUnit: baseUnit(raw.baseUnit),
-  dozens: bool(raw.dozens),
-  customUnits: list(raw.customUnits, u => (isObject(u) && str(u.name) && num(u.base) > 0 ? { name: str(u.name), base: Math.round(num(u.base)) } : null)),
-});
+/** A unit, a dozen for anything counted in pieces, and the kitchen's own units ({ name, factor } on the wire). */
+export const countingOf = (raw: Record<string, unknown>): Counting => {
+  const unit = baseUnit(raw.baseUnit);
+  return {
+    baseUnit: unit,
+    dozens: unit === 'pc' || (Array.isArray(raw.units) && raw.units.includes('dozen')),
+    customUnits: list(raw.customUnits, u =>
+      isObject(u) && str(u.name) && num(u.factor ?? u.base) > 0 ? { name: str(u.name), base: Math.round(num(u.factor ?? u.base)) } : null,
+    ),
+  };
+};
 
 export const costSerializer = (raw: unknown): Cost | null => {
   if (!isObject(raw)) return null;
@@ -60,10 +56,11 @@ export const costSerializer = (raw: unknown): Cost | null => {
   };
 };
 
-/** "YYYY-MM-DD", or null. */
+/** "YYYY-MM-DD", or null. A timestamp is read as its day in Pakistan (some views send dates that way). */
 export const dateOrNull = (v: unknown): string | null => {
   const s = str(v);
-  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  return /^\d{4}-\d{2}-\d{2}T/.test(s) && Number.isFinite(Date.parse(s)) ? dateInZone(s, 'Asia/Karachi') : null;
 };
 
 // ── Payments to the kitchen's own account (Bachat Box, tiffin periods, catering advances) ──

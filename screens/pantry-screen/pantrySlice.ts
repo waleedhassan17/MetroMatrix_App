@@ -6,12 +6,14 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import {
   addFromShoppingOrder,
-  addToPantry,
+  addPantryItem,
+  addPantryItems,
+  fetchExpiringPantry,
   fetchPantryReminders,
   fetchPantryStats,
   fetchGroceryOrders,
   fetchPantry,
-  removePantryItem,
+  discardPantryItem,
   savePantryReminders,
   markPantryUsed,
 } from '../../networks/myKitchen/pantry';
@@ -77,8 +79,9 @@ export const pantrySlice = createAppSlice({
     loadPantryAsync: create.asyncThunk(
       async (segment: PantrySegment, { rejectWithValue }) => {
         try {
-          const [list, stats, reminders] = await Promise.all([fetchPantry(segment), fetchPantryStats(), fetchPantryReminders()]);
-          return { list, stats, reminders };
+          // What is in it, what expires soon and what has expired (the tabs' counts), the month's numbers, reminders.
+          const [active, expiring, expired, stats, reminders] = await Promise.all([fetchPantry('active'), fetchExpiringPantry(), fetchPantry('expired'), fetchPantryStats(), fetchPantryReminders()]);
+          return { items: segment === 'use_soon' ? expiring : segment === 'expired' ? expired : active, active, expiring, expired, stats, reminders };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -89,7 +92,7 @@ export const pantrySlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = { list: pantryListSerializer(action.payload.list), stats: pantryStatsSerializer(action.payload.stats), reminders: pantryRemindersSerializer(action.payload.reminders) };
+          const payload = { list: pantryListSerializer(action.payload), stats: pantryStatsSerializer(action.payload), reminders: pantryRemindersSerializer(action.payload.reminders) };
           state.status = 'succeeded';
           state.list = payload.list;
           state.stats = payload.stats;
@@ -103,9 +106,9 @@ export const pantrySlice = createAppSlice({
     ),
     /** From the form or a voice draft. */
     addPantryAsync: create.asyncThunk(
-      async ({ lines, source }: { lines: PantryLineInput[]; source: 'manual' | 'voice' }, { rejectWithValue }) => {
+      async ({ lines }: { lines: PantryLineInput[]; source: 'manual' | 'voice' }, { rejectWithValue }) => {
         try {
-          return await addToPantry(lines, source);
+          return await (lines.length === 1 ? addPantryItem(lines[0]) : addPantryItems(lines));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -155,7 +158,8 @@ export const pantrySlice = createAppSlice({
     throwAwayAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return await removePantryItem(id);
+          // Thrown away: it counts as waste (a mistake is deleted from its own row).
+          return await discardPantryItem(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -199,9 +203,11 @@ export const pantrySlice = createAppSlice({
       },
     ),
     addFromOrderAsync: create.asyncThunk(
-      async ({ orderId, lineIds }: { orderId: string; lineIds: string[] }, { rejectWithValue }) => {
+      async ({ lineIds }: { orderId: string; lineIds: string[] }, { getState, rejectWithValue }) => {
+        const orders = (getState() as { pantry: PantrySliceState }).pantry.orders;
+        const lines = orders.flatMap(o => o.lines).filter(l => lineIds.includes(l.lineId));
         try {
-          return await addFromShoppingOrder(orderId, lineIds);
+          return await addFromShoppingOrder(lines.map(l => ({ storeOrderItemId: l.lineId, expiresOn: l.suggestedExpiresOn })));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

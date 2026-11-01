@@ -11,7 +11,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { TARGET_RANGE } from '../../models/kitchen/costingModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, IconButton, InlineNotice, ScreenShell, SegmentTabs, SkeletonLines, ToggleRow } from '../../Custom-Components/index';
+import { AppText, Button, Card, IconButton, InlineNotice, ScreenShell, SegmentTabs, SkeletonLines } from '../../Custom-Components/index';
 import { SectionHead } from '../../Components/admin/AdminParts';
 import { selectAnnounce, setAnnounce, type AnnounceLanguage } from '../../store/preferencesSlice';
 import { announce, hasDeviceVoice } from '../../services/announcer';
@@ -19,7 +19,6 @@ import type { PackingPhotoRule } from '../../models';
 import { loadKitchenSettingsAsync, saveKitchenSettingsAsync, selectKitchenSettings } from './kitchenSettingsSlice';
 
 const PACKING: { key: PackingPhotoRule; label: string }[] = [
-  { key: 'off', label: 'Off' },
   { key: 'optional', label: 'Optional' },
   { key: 'required', label: 'Required' },
 ];
@@ -31,7 +30,6 @@ const ANNOUNCE: { key: AnnounceLanguage; label: string }[] = [
 ];
 
 const PACKING_HINT: Record<PackingPhotoRule, string> = {
-  off: 'No photo step.',
   optional: 'The order page offers a photo before ready.',
   required: 'An order can’t be marked ready without a photo of it packed.',
 };
@@ -89,12 +87,10 @@ const KitchenSettingsContent: React.FC = () => {
           <View style={styles.group}>
             <SectionHead title="Stock" />
             <Card>
-              <ToggleRow
-                label="Sell out by stock"
-                helper="When the stock can’t make one more serving, customers see the dish as out of stock until you buy more."
-                value={k.autoSellOut}
-                onChange={autoSellOut => void dispatch(saveKitchenSettingsAsync({ autoSellOut }))}
-              />
+              <AppText variant="bodyStrong">Dishes sell out by stock</AppText>
+              <AppText variant="small" tone="muted">
+                When the stock can’t make one more serving of a dish with a recipe, customers see it as out of stock until you buy more.
+              </AppText>
             </Card>
           </View>
           <View style={styles.group}>

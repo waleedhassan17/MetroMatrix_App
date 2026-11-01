@@ -21,7 +21,7 @@ export const defaultForecastDate = (today: string) => addDays(today, 1);
 export const dayLabel = (date: string, today: string) => (date === today ? 'Today' : date === addDays(today, 1) ? 'Tomorrow' : formatDayShort(date));
 
 /** What the kitchen plans to make: the cook's number if set, else the forecast's, plus fixed tiffin and catering demand. */
-export const plannedOf = (i: Pick<ForecastItem, 'adjusted' | 'expected' | 'fixed'>) => (i.adjusted ?? i.expected) + i.fixed.tiffin + i.fixed.catering;
+export const plannedOf = (i: Pick<ForecastItem, 'adjusted' | 'expected' | 'fixed'>) => (i.adjusted ?? i.expected) + i.fixed;
 
 export const rangeLabel = (i: Pick<ForecastItem, 'low' | 'high'>) => (i.low === i.high ? `${i.low}` : `${i.low}–${i.high}`);
 
@@ -30,8 +30,11 @@ export const expectedLine = (i: ForecastItem) => `Expected ${i.expected} (${rang
 export const LEARNING_TITLE = 'Learning your patterns';
 export const LEARNING_BODY = 'With two weeks of orders the ranges narrow. Until then, adjust them to what you know.';
 
+/** The API forecasts each dish's portions (not orders): "Tomorrow: about 84 portions across 6 dishes". */
 export const forecastHeadline = (f: Forecast, today: string) =>
-  `${dayLabel(f.date, today)}: about ${f.orders.expected} orders (${f.orders.low}–${f.orders.high})`;
+  f.items.length
+    ? `${dayLabel(f.date, today)}: about ${f.dishes} ${f.dishes === 1 ? 'portion' : 'portions'} across ${f.items.length} ${f.items.length === 1 ? 'dish' : 'dishes'}`
+    : `${dayLabel(f.date, today)}: no forecast yet`;
 
 /** The accuracy badge, or null while it can't be measured. */
 export const accuracyBadge = (a: ForecastAccuracy | null) => (a && a.accuracyPct !== null ? `Last ${a.days} days: ${a.accuracyPct}% accurate` : null);

@@ -229,10 +229,13 @@ const TIMESTAMPS = ['acceptedAt', 'preparingAt', 'readyAt', 'pickedUpAt', 'deliv
 
 const ORIGINS = ['app', 'link', 'qr', 'tiffin', 'catering'] as const;
 
-/** Kitchen Intelligence's additions to an order (absent from the released API: the app's defaults). TODO(API_KITCHEN). */
+/**
+ * Kitchen Intelligence's additions to an order view (docs/API_KITCHEN.md §11): the packing photo.
+ * Where an order came from (a link, a QR) is kept on the order but not in its views: `app` until it is.
+ */
 const kitchenExtras = (raw: Record<string, unknown>): Pick<FoodOrder, 'packedPhotoUrl' | 'origin'> => {
   const o = isObject(raw.origin) ? raw.origin : {};
-  return { packedPhotoUrl: strOrNull(raw.packedPhotoUrl), origin: { kind: oneOf(o.kind, ORIGINS, 'app'), ref: strOrNull(o.ref) } };
+  return { packedPhotoUrl: strOrNull(raw.packingPhotoUrl), origin: { kind: oneOf(o.kind, ORIGINS, 'app'), ref: strOrNull(o.ref) } };
 };
 
 export const foodOrderSerializer = fromResponse((raw: unknown): FoodOrder | null => {

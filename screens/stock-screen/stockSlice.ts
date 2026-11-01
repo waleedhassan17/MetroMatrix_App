@@ -6,8 +6,9 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchStock, recordStockTake } from '../../networks/kitchen/stock';
-import { createPurchase } from '../../networks/kitchen/purchases';
 import { logWaste } from '../../networks/kitchen/waste';
+import { confirmVoiceAction } from '../../networks/ai/voice';
+import { savePurchase } from '../shared/kitchenWrites';
 import { toRejectedValue, required } from '../../networks/network/network';
 import { purchaseFromVoice } from '../../models/kitchen/purchaseModel';
 import { countFromVoice, wasteFromVoice } from '../../models/kitchen/stockModel';
@@ -66,14 +67,19 @@ export const stockSlice = createAppSlice({
     confirmStockVoiceAsync: create.asyncThunk(
       async (action: VoiceAction, { rejectWithValue }) => {
         try {
+          // The API's own request, when it proposed one, goes as it came.
+          if (action.request) {
+            await confirmVoiceAction(action.request);
+            return action.kind === 'stock.count' ? 'Stock count saved.' : action.kind === 'waste.log' ? 'Waste logged.' : action.kind === 'purchase.add' ? 'Purchase saved.' : 'Done.';
+          }
           if (action.kind === 'purchase.add') {
-            const p = required(purchaseSerializer(await createPurchase(purchaseFromVoice(action.lines))));
+            const p = required(purchaseSerializer(await savePurchase(purchaseFromVoice(action.lines))));
             return `Purchase saved: ${p.lines.length} ${p.lines.length === 1 ? 'item' : 'items'}.`;
           }
           if (action.kind === 'waste.log') {
             const lines = wasteFromVoice(action.lines, action.reason);
             if (!lines.length) throw new Error('Add that ingredient to your stock first.');
-            await logWaste(lines);
+            for (const line of lines) await logWaste(line);
             return 'Waste logged.';
           }
           if (action.kind === 'stock.count') {

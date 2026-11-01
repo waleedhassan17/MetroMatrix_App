@@ -66,10 +66,10 @@ export interface VendorOrderSliceState {
   assignOpen: boolean;
   suggestions: RiderSuggestion[];
   suggestStatus: FormStatus;
-  /** Orders that could ride with this one (TODO(API_KITCHEN)), and the ones picked to go too. */
+  /** Orders that could ride with this one (docs/API_KITCHEN.md), and the ones picked to go too. */
   batch: BatchSuggestion[];
   together: string[];
-  /** The kitchen's packing-photo rule (TODO(API_KITCHEN)), and the photo being taken. */
+  /** The kitchen's packing-photo rule (docs/API_KITCHEN.md), and the photo being taken. */
   packingRule: PackingPhotoRule | null;
   packingUploading: boolean;
   packingCheck: PackingResult['check'];
@@ -197,7 +197,7 @@ export const vendorOrderSlice = createAppSlice({
       },
       {
         fulfilled: (state, action) => {
-          state.packingRule = kitchenSettingsSerializer(action.payload)?.packingPhoto ?? 'off';
+          state.packingRule = kitchenSettingsSerializer(action.payload)?.packingPhoto ?? 'optional';
         },
       },
     ),

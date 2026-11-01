@@ -29,10 +29,11 @@ import { loadMyTiffinAsync, selectFoodTiffinUi, selectMyTiffin, selectTiffinCale
 type Props = NativeStackScreenProps<FoodAppParamList, 'FoodTiffin'>;
 
 const TZ = 'Asia/Karachi';
-const PAUSE_FOR: { label: string; days: number | null }[] = [
-  { label: 'Until I resume', days: null },
+/** A pause always has an end (the API keeps it to that day); resume any time before. */
+const PAUSE_FOR: { label: string; days: number }[] = [
   { label: 'One week', days: 7 },
   { label: 'Two weeks', days: 14 },
+  { label: 'One month', days: 30 },
 ];
 
 const makeStyles = ({ space, radius, colors, size }: Theme) =>
@@ -220,7 +221,7 @@ const FoodTiffinContent: React.FC<Props> = ({ navigation, route }) => {
         x.period.payment.method === 'transfer' && x.period.payment.accounts?.length ? (
           <>
             <AppText variant="small" tone="muted">
-              {`${periodLabel(x.period)}: ${periodAmountLabel(x.period, x.plan.perMeal)}`}
+              {`${periodLabel(x.period)}: ${periodAmountLabel(x.period)}`}
             </AppText>
             <TransferCard
               vendorName={x.vendor.name}
@@ -240,7 +241,7 @@ const FoodTiffinContent: React.FC<Props> = ({ navigation, route }) => {
                 <AppText variant="title">{periodLabel(x.period)}</AppText>
                 {pay ? <StatusPill label={pay.label} tone={pay.tone} /> : null}
               </View>
-              <AppText variant="body">{periodAmountLabel(x.period, x.plan.perMeal)}</AppText>
+              <AppText variant="body">{periodAmountLabel(x.period)}</AppText>
               {x.period.payment.status === 'unpaid' ? (
                 <AppText variant="small" tone="muted">{`Pay ${formatPKR(x.period.amount)} in cash with the first delivery of the period.`}</AppText>
               ) : null}
@@ -298,7 +299,7 @@ const FoodTiffinContent: React.FC<Props> = ({ navigation, route }) => {
             selected={false}
             multiple={false}
             disabled={ui.busy === 'sub'}
-            onPress={() => void act({ kind: 'pause', until: p.days === null ? null : addDays(today, p.days) }, 'Paused')}
+            onPress={() => void act({ kind: 'pause', until: addDays(today, p.days) }, 'Paused')}
           />
         ))}
       </Sheet>

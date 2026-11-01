@@ -1,13 +1,14 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Admin Kitchen: hygiene checks slice
 // ═══════════════════════════════════════════════════════
-// The kitchens that asked staff to verify their hygiene checklist (and the
-// ones already verified or sent back), and the review: verify, or say what
-// needs fixing. The review screen reads this slice.
+// The kitchens whose hygiene checklist is complete (self-declared, waiting for
+// staff) and the ones verified, and the review: verify after a visit or a
+// video call, or take a verification back with a reason. The review screen
+// reads this slice.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { fetchHygieneQueue, rejectHygiene, verifyHygiene } from '../../networks/admin/adminKitchen';
+import { fetchHygieneQueue, revokeHygiene, verifyHygiene } from '../../networks/admin/adminKitchen';
 import { toRejectedValue } from '../../networks/network/network';
 import type { HygieneReview } from '../../models';
 import {
@@ -16,9 +17,9 @@ import {
   type FormStatus,
   type ServerError,
 } from '../shared/formStatus';
-import { hygieneQueueSerializer } from '../../serializers/kitchen/reachSerializer';
+import { hygieneQueueSerializer } from '../../serializers/kitchen/adminKitchenSerializer';
 
-export type HygieneTab = 'pending' | 'verified' | 'rejected';
+export type HygieneTab = 'self_declared' | 'verified';
 
 export interface AdminKitchenHygieneSliceState {
   tab: HygieneTab;
@@ -33,7 +34,7 @@ export interface AdminKitchenHygieneSliceState {
 }
 
 const initialState: AdminKitchenHygieneSliceState = {
-  tab: 'pending',
+  tab: 'self_declared',
   items: [],
   status: 'idle',
   error: NO_ERROR,
@@ -90,11 +91,11 @@ export const adminKitchenHygieneSlice = createAppSlice({
     ),
 
     reviewHygieneAsync: create.asyncThunk(
-      async (input: { businessId: string; verify: boolean; note?: string }, { rejectWithValue }) => {
+      async (input: { brandId: string; verify: boolean; method?: 'visit' | 'video_call'; note?: string }, { rejectWithValue }) => {
         try {
-          if (input.verify) await verifyHygiene(input.businessId);
-          else await rejectHygiene(input.businessId, input.note ?? '');
-          return await fetchHygieneQueue('pending');
+          if (input.verify) await verifyHygiene(input.brandId, input.method ?? 'visit', input.note);
+          else await revokeHygiene(input.brandId, input.note ?? '');
+          return await fetchHygieneQueue(input.verify ? 'verified' : 'self_declared');
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -108,7 +109,7 @@ export const adminKitchenHygieneSlice = createAppSlice({
           const payload = hygieneQueueSerializer(action.payload);
           state.busy = false;
           state.noteOpen = false;
-          state.tab = 'pending';
+          state.tab = action.meta.arg.verify ? 'verified' : 'self_declared';
           state.items = payload;
         },
         rejected: (state, action) => {

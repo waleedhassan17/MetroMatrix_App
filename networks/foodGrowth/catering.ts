@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Food Growth Catering Network (API_KITCHEN_ASSUMED.md)
+// MetroMatrix — Catering Network (docs/API_KITCHEN.md §20)
 // ═══════════════════════════════════════════════════════
-// Catering ("Plan a dawat"), for customers and the kitchen.
-// docs/API_KITCHEN_ASSUMED.md §2.10, §3.10, §4.6 (TODO(API_KITCHEN): an assumed contract).
+// A kitchen's catering page, a customer's requests, the kitchen's quotes and
+// settings. Requests go by id (the CT- code is what people read).
 
 import { API, toApiError, clean } from '../network/network';
 import type { CateringRequestInput, CateringSettings, QuoteInput } from '../../models/kitchen';
@@ -10,7 +10,7 @@ import type { CateringRequestInput, CateringSettings, QuoteInput } from '../../m
 const enc = encodeURIComponent;
 
 // ── Customers ──
-/** What a kitchen takes, and its menu to choose from (by brand id or slug). */
+/** Open or not, the party size and notice, how it can be served, the menu. */
 export const fetchCateringVendor = async (vendor: string): Promise<unknown> => {
   try {
     const response = await API.GET({ URL: `/food/catering/vendors/${enc(vendor)}` });
@@ -22,7 +22,19 @@ export const fetchCateringVendor = async (vendor: string): Promise<unknown> => {
 
 export const requestCatering = async (input: CateringRequestInput): Promise<unknown> => {
   try {
-    const response = await API.POST({ URL: '/food/catering/requests', data: clean({ ...input }) });
+    const data = clean({
+      vendorId: input.vendorId,
+      eventDate: input.date,
+      eventTime: input.time,
+      guests: input.guests,
+      eventType: input.eventType,
+      requestedItems: input.dishes.map(d => clean({ menuItemId: d.itemId, name: d.name?.trim(), qty: d.qty })),
+      budget: input.budget,
+      fulfilment: input.mode,
+      addressId: input.mode === 'pickup' ? undefined : input.addressId,
+      notes: input.notes?.trim(),
+    });
+    const response = await API.POST({ URL: '/food/catering', data });
     return response.data;
   } catch (e) {
     throw toApiError(e);
@@ -31,43 +43,47 @@ export const requestCatering = async (input: CateringRequestInput): Promise<unkn
 
 export const fetchMyCateringRequests = async (): Promise<unknown> => {
   try {
-    const response = await API.GET({ URL: '/food/catering/requests' });
+    const response = await API.GET({ URL: '/food/catering' });
     return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
-export const fetchMyCateringRequest = async (code: string): Promise<unknown> => {
+export const fetchMyCateringRequest = async (id: string): Promise<unknown> => {
   try {
-    const response = await API.GET({ URL: `/food/catering/requests/${enc(code)}` });
+    const response = await API.GET({ URL: `/food/catering/${enc(id)}` });
     return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
-export const acceptQuote = async (code: string, version: number): Promise<unknown> => {
+/** Only the newest version, before `validUntil`. */
+export const acceptQuote = async (id: string, version: number): Promise<unknown> => {
   try {
-    const response = await API.POST({ URL: `/food/catering/requests/${enc(code)}/quotes/${version}/accept` });
+    const response = await API.POST({ URL: `/food/catering/${enc(id)}/accept`, data: { version } });
     return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
-export const submitAdvanceProof = async (code: string, input: { transactionId: string; imageUrl: string | null }): Promise<unknown> => {
+/** The advance's transfer receipt (a payment_proof upload of yours). */
+export const submitAdvanceProof = async (id: string, input: { transactionId: string; imageUrl: string | null; publicId?: string | null }): Promise<unknown> => {
   try {
-    const response = await API.POST({ URL: `/food/catering/requests/${enc(code)}/advance-proof`, data: input });
+    const data = clean({ proofUrl: input.imageUrl, publicId: input.publicId, ref: input.transactionId.trim() });
+    const response = await API.POST({ URL: `/food/catering/${enc(id)}/advance-proof`, data });
     return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
-export const cancelMyCatering = async (code: string, reason?: string): Promise<unknown> => {
+/** Until it is confirmed. */
+export const cancelMyCatering = async (id: string, reason: string): Promise<unknown> => {
   try {
-    const response = await API.POST({ URL: `/food/catering/requests/${enc(code)}/cancel`, data: clean({ reason }) });
+    const response = await API.POST({ URL: `/food/catering/${enc(id)}/cancel`, data: { reason: reason.trim() } });
     return response.data;
   } catch (e) {
     throw toApiError(e);
@@ -93,63 +109,65 @@ export const updateCateringSettings = async (patch: Partial<CateringSettings>): 
   }
 };
 
-export const fetchCateringRequests = async (status?: 'new' | 'quoted' | 'confirmed' | 'past'): Promise<unknown> => {
+/** Every request (by event date, at most 200), or those in one state. */
+export const fetchCateringRequests = async (status?: string): Promise<unknown> => {
   try {
-    const response = await API.GET({ URL: '/food/vendor/catering/requests', params: clean({ status }) });
+    const response = await API.GET({ URL: '/food/vendor/catering', params: clean({ status }) });
     return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
-export const fetchCateringRequest = async (code: string): Promise<unknown> => {
+export const fetchCateringRequest = async (id: string): Promise<unknown> => {
   try {
-    const response = await API.GET({ URL: `/food/vendor/catering/requests/${enc(code)}` });
+    const response = await API.GET({ URL: `/food/vendor/catering/${enc(id)}` });
     return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
-export const sendQuote = async (code: string, input: QuoteInput): Promise<unknown> => {
+/** A new version every time; earlier ones can no longer be accepted. */
+export const sendQuote = async (id: string, input: QuoteInput): Promise<unknown> => {
   try {
-    const response = await API.POST({ URL: `/food/vendor/catering/requests/${enc(code)}/quotes`, data: input });
+    const data = clean({
+      lines: input.lines.map(l => clean({ menuItemId: l.itemId, name: (l.name ?? '').trim(), qty: l.qty, unitPrice: l.unitPrice })),
+      deliveryFee: input.deliveryFee,
+      advancePct: input.advancePct,
+      validUntil: input.validUntil,
+      notes: input.notes?.trim(),
+    });
+    const response = await API.POST({ URL: `/food/vendor/catering/${enc(id)}/quote`, data: { ...data, advancePct: input.advancePct, deliveryFee: input.deliveryFee } });
     return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
-export const declineCatering = async (code: string, reason: string): Promise<unknown> => {
+export const declineCatering = async (id: string, reason: string): Promise<unknown> => {
   try {
-    const response = await API.POST({ URL: `/food/vendor/catering/requests/${enc(code)}/decline`, data: { reason: reason.trim() } });
+    const response = await API.POST({ URL: `/food/vendor/catering/${enc(id)}/decline`, data: { reason: reason.trim() } });
     return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
-export const confirmAdvance = async (code: string): Promise<unknown> => {
+/** The advance reached your account: confirmed. */
+export const confirmAdvance = async (id: string): Promise<unknown> => {
   try {
-    const response = await API.POST({ URL: `/food/vendor/catering/requests/${enc(code)}/advance/confirm` });
+    const response = await API.POST({ URL: `/food/vendor/catering/${enc(id)}/advance/confirm` });
     return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
-export const rejectAdvance = async (code: string, reason: string): Promise<unknown> => {
+/** Back to accepted, with the reason. */
+export const rejectAdvance = async (id: string, reason: string): Promise<unknown> => {
   try {
-    const response = await API.POST({ URL: `/food/vendor/catering/requests/${enc(code)}/advance/reject`, data: { reason: reason.trim() } });
-    return response.data;
-  } catch (e) {
-    throw toApiError(e);
-  }
-};
-
-export const fetchCateringCalendar = async (month: string): Promise<unknown> => {
-  try {
-    const response = await API.GET({ URL: '/food/vendor/catering/calendar', params: { month } });
+    const response = await API.POST({ URL: `/food/vendor/catering/${enc(id)}/advance/reject`, data: { reason: reason.trim() } });
     return response.data;
   } catch (e) {
     throw toApiError(e);

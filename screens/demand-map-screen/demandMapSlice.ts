@@ -3,7 +3,7 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { fetchDemand } from '../../networks/foodGrowth/demand';
+import { fetchDemandCurve, fetchDemandMap } from '../../networks/foodGrowth/demand';
 import { fetchCuisines } from '../../networks/food/vendor/profile';
 import { toRejectedValue } from '../../networks/network/network';
 import type { DemandMap, FoodCuisine } from '../../models';
@@ -33,7 +33,9 @@ export const demandMapSlice = createAppSlice({
     loadDemandAsync: create.asyncThunk(
       async (filter: { cuisine: string | null; hour: number | null; withCuisines?: boolean }, { rejectWithValue }) => {
         try {
-          const [data, cuisines] = await Promise.all([fetchDemand(filter), filter.withCuisines ? fetchCuisines() : Promise.resolve(null)]);
+          // The map (filtered by cuisine and hour) and the hours (the kitchen's own orders, and like kitchens').
+          const [map, curve, cuisines] = await Promise.all([fetchDemandMap({ cuisineId: filter.cuisine, hour: filter.hour }), fetchDemandCurve(), filter.withCuisines ? fetchCuisines() : Promise.resolve(null)]);
+          const data = { map, curve };
           return { data, cuisines };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));

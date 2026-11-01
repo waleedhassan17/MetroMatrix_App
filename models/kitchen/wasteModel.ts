@@ -4,7 +4,7 @@
 // A line is an ingredient (an amount in a unit the cook picks) or a cooked
 // dish (whole servings: its recipe comes out of stock). One reason for the
 // entry, as a cook logs it after the event. Mirrors the API's limits
-// (docs/API_KITCHEN_ASSUMED.md §4.3).
+// (docs/API_KITCHEN.md §4.3).
 
 import type { VoiceQtyLine, WasteLineInput, WasteReason, WasteSummary } from '../kitchen';
 import type { ValidationErrors } from '../authModel';

@@ -3,8 +3,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { createIngredient, fetchIngredient, updateIngredient } from '../../networks/kitchen/stock';
-import { toRejectedValue } from '../../networks/network/network';
+import { createIngredient, fetchIngredient, fetchIngredientBatches, setIngredientReference, updateIngredient } from '../../networks/kitchen/stock';
+import { required, toRejectedValue } from '../../networks/network/network';
 import { customUnitRows, defaultUnit, type CustomUnitRow, type IngredientForm } from '../../models/kitchen/stockModel';
 import type { IngredientDetail, IngredientInput } from '../../models';
 import { UNITS, type BaseUnit } from '../../utils/units/units';
@@ -25,7 +25,7 @@ export interface IngredientFormSliceState {
   saved: ReturnType<typeof ingredientDetailSerializer>;
 }
 
-const EMPTY: IngredientForm = { name: '', category: 'vegetables', baseUnit: 'g', dozens: false, par: '', parUnit: 'kg' };
+const EMPTY: IngredientForm = { name: '', category: 'vegetable', baseUnit: 'g', dozens: false, par: '', parUnit: 'kg' };
 
 const initialState: IngredientFormSliceState = { editingId: null, form: EMPTY, customUnits: [], touched: false, status: 'idle', saving: false, error: NO_ERROR, locked: false ,
   saved: null,
@@ -62,7 +62,9 @@ export const ingredientFormSlice = createAppSlice({
     loadIngredientForEditAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return await fetchIngredient(id);
+          // Its batches say whether the base unit can still change.
+          const [ingredient, batches] = await Promise.all([fetchIngredient(id), fetchIngredientBatches(id)]);
+          return { ingredient, batches };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -88,7 +90,11 @@ export const ingredientFormSlice = createAppSlice({
     saveIngredientAsync: create.asyncThunk(
       async ({ id, input }: { id: string | null; input: IngredientInput }, { rejectWithValue }) => {
         try {
-          return id ? await updateIngredient(id, input) : await createIngredient(input);
+          const saved = id ? await updateIngredient(id, input, input.baseUnit) : await createIngredient(input);
+          // The reference price is its own request: linked when chosen, unlinked when cleared.
+          const savedId = id ?? required(ingredientDetailSerializer({ ingredient: saved })).id;
+          if (input.priceRefKey !== undefined) return await setIngredientReference(savedId, input.priceRefKey);
+          return saved;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -99,7 +105,7 @@ export const ingredientFormSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = ingredientDetailSerializer(action.payload);
+          const payload = ingredientDetailSerializer({ ingredient: action.payload });
           state.saving = false;
           state.saved = payload;
         },

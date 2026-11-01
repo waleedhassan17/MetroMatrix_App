@@ -44,7 +44,7 @@ export interface VendorBoardSliceState {
   /** The kitchen's switches. */
   profile: VendorProfile | null;
   switching: boolean;
-  /** The kitchen's side (TODO(API_KITCHEN)): dishes low or out by stock, the usual prep time, the packing-photo rule. */
+  /** The kitchen's side (docs/API_KITCHEN.md): dishes low or out by stock, the usual prep time, the packing-photo rule. */
   hints: BoardHints | null;
   /** The pause sheet (a private reason, and when it lifts by itself). */
   pauseOpen: boolean;

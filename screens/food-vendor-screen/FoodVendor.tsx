@@ -314,8 +314,8 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
                 <IonIcon name="moon-outline" size="md" color={colors.inkMuted} />
                 <View style={styles.dawat}>
                   <AppText variant="title">Ramadan hours</AppText>
-                  <AppText variant="small">{`Sehri ${windowText(page.ramadan.sehri)}`}</AppText>
-                  <AppText variant="small">{`Iftar ${windowText(page.ramadan.iftar)}${page.ramadan.iftarPreorderOnly ? ' · order ahead' : ''}`}</AppText>
+                  {page.ramadan.sehri ? <AppText variant="small">{`Sehri ${windowText(page.ramadan.sehri)}`}</AppText> : null}
+                  {page.ramadan.iftar ? <AppText variant="small">{`Iftar ${windowText(page.ramadan.iftar)}${page.ramadan.iftarPreorderOnly ? ' · order ahead' : ''}`}</AppText> : null}
                 </View>
               </View>
             </Card>

@@ -6,7 +6,7 @@
 // a deal on the menu at the bundle price. Nutrition is said with how it was
 // worked out and how sure it is; review weeks read "12–18 Oct".
 
-import type { ComboIdea, Cost, DishNutrition, NutritionMethod, PhotoTipKind, PhotoVerdict, RecipeInput, SpecialIdea } from '../kitchen';
+import type { ComboIdea, Cost, DishNutrition, NutritionMethod, PhotoTipKind, PhotoVerdict } from '../kitchen';
 import type { MenuItemInput } from '../food';
 import type { ValidationErrors } from '../authModel';
 import { formatPKR, parseRupees } from '../../utils/money/money';
@@ -43,28 +43,6 @@ export const repriced = (cost: Pick<Cost, 'toMake'>, raw: string, targetPct: num
   const p = parseRupees(raw);
   return p === null ? null : costCard(cost.toMake, p, targetPct);
 };
-
-export const specialItemInput = (s: Pick<SpecialIdea, 'title' | 'description'>, categoryId: string, price: number): MenuItemInput => ({
-  categoryId,
-  name: s.title.slice(0, 120),
-  description: s.description || null,
-  photoUrl: null,
-  basePrice: price,
-  tags: [],
-  isDeal: false,
-  serves: 1,
-  days: EVERY_DAY,
-  // A draft dish: hidden until the cook turns it on in the menu.
-  isActive: false,
-});
-
-export const specialRecipe = (s: Pick<SpecialIdea, 'lines'>): RecipeInput => ({
-  yield: 1,
-  lines: s.lines.map(l => ({ ingredientId: l.ingredientId, qty: Math.round(l.qty) })),
-  addOns: [],
-  packaging: [],
-  signature: { on: false, creatorName: null },
-});
 
 export const comboTitle = (c: Pick<ComboIdea, 'names'>) => c.names.join(' + ').slice(0, 120);
 

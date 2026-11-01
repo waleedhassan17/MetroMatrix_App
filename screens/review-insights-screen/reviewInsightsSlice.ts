@@ -21,9 +21,10 @@ export const reviewInsightsSlice = createAppSlice({
   initialState,
   reducers: create => ({
     loadReviewInsightsAsync: create.asyncThunk(
-      async (week: string | null, { rejectWithValue }) => {
+      async (_week: string | null, { rejectWithValue }) => {
         try {
-          return await fetchReviewInsights(week);
+          // The latest week and the ones before come together; the week is picked when reading it.
+          return await fetchReviewInsights();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -34,7 +35,7 @@ export const reviewInsightsSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = reviewInsightsSerializer(action.payload);
+          const payload = reviewInsightsSerializer(action.payload, action.meta.arg);
           state.status = 'succeeded';
           state.data = payload;
         },

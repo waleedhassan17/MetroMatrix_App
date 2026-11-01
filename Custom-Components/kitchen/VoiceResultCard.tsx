@@ -60,10 +60,10 @@ export const VoiceResultCard: React.FC<VoiceResultCardProps> = ({ result, onConf
           </AppText>
         ) : (
           <AppText variant="body" tone="muted">
-            We couldn’t turn that into an action. Try again, or fill the form by hand.
+            {result.note ?? 'We couldn’t turn that into an action. Try again, or fill the form by hand.'}
           </AppText>
         )}
-        {warnings.map(w => (
+        {[...warnings, ...(action && result.note ? [result.note] : [])].map(w => (
           <AppText key={w} variant="small" tone="warning">
             {w}
           </AppText>

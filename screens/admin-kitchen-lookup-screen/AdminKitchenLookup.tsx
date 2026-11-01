@@ -1,9 +1,10 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Admin Kitchen: find a tiffin or catering
+// MetroMatrix — Admin Kitchen: find a tiffin, a dawat or an order
 // ═══════════════════════════════════════════════════════
-// For a dispute: type the code a customer or kitchen gives (TF-… or
-// CT-…) and see it as the kitchen sees it: who, what, when, its state and
-// where its payment stands. Read only; customers pay kitchens directly.
+// For a dispute: type the code a customer or kitchen gives (CT-… for a
+// dawat, FC-… for an order, or a tiffin's id) and see who, what, when, its
+// state and where its payment stands. Read only; customers pay kitchens
+// directly.
 
 import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -11,14 +12,9 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { validateLookupCode } from '../../models/kitchen/adminKitchenModel';
-import { CATERING_STATUS, EVENT_TYPE_LABEL, TIFFIN_STATUS, tiffinPaymentStatus } from '../../models/kitchen/kitchenStatusModel';
-import { latestQuote, whenLine } from '../../models/kitchen/cateringModel';
-import { periodLabel, priceLabel, scheduleLabel } from '../../models/kitchen/tiffinModel';
-import { formatDayShort } from '../../utils/health-time/healthTime';
-import { formatPKR } from '../../utils/money/money';
 import { useStyles, type Theme } from '../../theme/index';
 import { AppText, Button, Card, Divider, InlineNotice, ScreenShell, StatusPill, TextField } from '../../Custom-Components/index';
-import type { AdminFoodStackParamList, CateringRequest, TiffinSubscription } from '../../models';
+import type { AdminFoodStackParamList, GrowthLookup } from '../../models';
 import { haptics } from '../../utils/haptics/haptics';
 import { lookupCodeAsync, markLookupSubmitted, selectAdminKitchenLookup, setLookupCode } from './adminKitchenLookupSlice';
 
@@ -31,6 +27,8 @@ const makeStyles = ({ space }: Theme) =>
     grow: { flex: 1, gap: space.s4 },
     line: { flexDirection: 'row', justifyContent: 'space-between', gap: space.s12, paddingVertical: space.s4 },
   });
+
+const KIND_LABEL: Record<GrowthLookup['kind'], string> = { tiffin: 'Tiffin', catering: 'Dawat', order: 'Order' };
 
 const Line: React.FC<{ label: string; value: string | null | undefined }> = ({ label, value }) => {
   const styles = useStyles(makeStyles);
@@ -46,80 +44,25 @@ const Line: React.FC<{ label: string; value: string | null | undefined }> = ({ l
   ) : null;
 };
 
-const TiffinCard: React.FC<{ t: TiffinSubscription }> = ({ t }) => {
+const ResultCard: React.FC<{ r: GrowthLookup }> = ({ r }) => {
   const styles = useStyles(makeStyles);
-  const pay = t.period ? tiffinPaymentStatus(t.period.payment.status) : null;
   return (
     <Card>
       <View style={styles.gap}>
         <View style={styles.head}>
           <View style={styles.grow}>
             <AppText variant="overline" tone="muted">
-              {`Tiffin · ${t.code}`}
+              {`${KIND_LABEL[r.kind]} · ${r.code}`}
             </AppText>
-            <AppText variant="title">{t.plan.name}</AppText>
+            <AppText variant="title">{r.vendor}</AppText>
           </View>
-          <StatusPill label={TIFFIN_STATUS[t.status].vendorLabel} tone={TIFFIN_STATUS[t.status].tone} />
+          <StatusPill label={r.status.replace(/_/g, ' ')} />
         </View>
         <Divider />
-        <Line label="Kitchen" value={`${t.vendor.name}${t.vendor.phone ? ` · ${t.vendor.phone}` : ''}`} />
-        <Line label="Customer" value={t.customer ? `${t.customer.name}${t.customer.phone ? ` · ${t.customer.phone}` : ''}` : null} />
-        <Line label="Plan" value={`${scheduleLabel(t.plan)} · ${priceLabel(t.plan)}`} />
-        <Line label="Started" value={formatDayShort(t.startDate)} />
-        <Line label="Ended" value={t.endDate ? formatDayShort(t.endDate) : null} />
-        <Line label="Next delivery" value={t.nextDelivery ? `${formatDayShort(t.nextDelivery.date)}${t.nextDelivery.dishes.length ? ` · ${t.nextDelivery.dishes.join(', ')}` : ''}` : null} />
-        <Line label="Paused" value={t.pausedFrom ? `${formatDayShort(t.pausedFrom)}${t.pausedUntil ? ` – ${formatDayShort(t.pausedUntil)}` : ''}` : null} />
-        {t.period && pay ? (
-          <>
-            <Divider />
-            <View style={styles.head}>
-              <View style={styles.grow}>
-                <AppText variant="bodyStrong">{`This period · ${periodLabel(t.period)}`}</AppText>
-                <AppText variant="small" tone="muted">
-                  {`${t.period.meals} meals · ${formatPKR(t.period.amount)}`}
-                </AppText>
-              </View>
-              <StatusPill label={pay.vendorLabel} tone={pay.tone} />
-            </View>
-          </>
-        ) : null}
-        <Line label="Declined because" value={t.declineReason} />
-        <Line label="Ended because" value={t.endReason} />
-      </View>
-    </Card>
-  );
-};
-
-const CateringCard: React.FC<{ c: CateringRequest }> = ({ c }) => {
-  const styles = useStyles(makeStyles);
-  const q = latestQuote(c);
-  return (
-    <Card>
-      <View style={styles.gap}>
-        <View style={styles.head}>
-          <View style={styles.grow}>
-            <AppText variant="overline" tone="muted">
-              {`Catering · ${c.code}`}
-            </AppText>
-            <AppText variant="title">{EVENT_TYPE_LABEL[c.eventType]}</AppText>
-            <AppText variant="small" tone="muted">
-              {whenLine(c)}
-            </AppText>
-          </View>
-          <StatusPill label={CATERING_STATUS[c.status].vendorLabel} tone={CATERING_STATUS[c.status].tone} />
-        </View>
-        <Divider />
-        <Line label="Kitchen" value={`${c.vendor.name}${c.vendor.phone ? ` · ${c.vendor.phone}` : ''}`} />
-        <Line label="Customer" value={c.customer ? `${c.customer.name}${c.customer.phone ? ` · ${c.customer.phone}` : ''}` : null} />
-        <Line label="Asked for" value={c.dishes.map(d => `${d.qty} × ${d.name}`).join(', ')} />
-        <Line label="Budget" value={c.budget ? formatPKR(c.budget) : null} />
-        <Line
-          label={q ? `Quote ${q.version}${c.acceptedVersion === q.version ? ' (accepted)' : ''}` : 'Quote'}
-          value={q ? `${formatPKR(q.total)} · ${q.advancePct}% advance (${formatPKR(q.advance)})` : 'No quote yet'}
-        />
-        <Line label="Advance" value={c.advance ? `${formatPKR(c.advance.amount)} · ${tiffinPaymentStatus(c.advance.status).vendorLabel}` : null} />
-        <Line label="Declined because" value={c.declineReason} />
-        <Line label="Cancelled because" value={c.cancelReason} />
+        <Line label="Customer" value={r.customer} />
+        {r.lines.map(l => (
+          <Line key={l.label} label={l.label} value={l.value} />
+        ))}
       </View>
     </Card>
   );
@@ -146,22 +89,21 @@ const AdminKitchenLookup: React.FC<Props> = ({ route }) => {
   };
 
   return (
-    <ScreenShell title="Find a tiffin or catering" subtitle="By the code the customer or kitchen gives you" onBack={back}>
+    <ScreenShell title="Find a tiffin, dawat or order" subtitle="By the code the customer or kitchen gives you" onBack={back}>
       <TextField
         label="Code"
         value={s.code}
         onChangeText={t => dispatch(setLookupCode(t))}
         autoCapitalize="characters"
         autoCorrect={false}
-        placeholder="TF-HMZ4K2 or CT-MHD7Q4"
+        placeholder="CT-MHD7Q4 or FC-7KQ2PX"
         returnKeyType="search"
         onSubmitEditing={find}
         error={errors.code}
       />
       <Button label="Find it" leftIcon="search-outline" loading={s.status === 'loading'} onPress={find} fullWidth />
       {s.status === 'failed' ? <InlineNotice tone={s.error.code === 'NOT_FOUND' ? 'info' : 'error'} message={s.error.message} /> : null}
-      {s.result?.kind === 'tiffin' ? <TiffinCard t={s.result.tiffin} /> : null}
-      {s.result?.kind === 'catering' ? <CateringCard c={s.result.catering} /> : null}
+      {s.result ? <ResultCard r={s.result} /> : null}
       <AppText variant="caption" tone="muted">
         MetroMatrix takes no commission: customers pay the kitchen directly, so payments here are what the kitchen recorded.
       </AppText>

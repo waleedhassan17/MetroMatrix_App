@@ -1,35 +1,25 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — My Kitchen Recipes Network (API_KITCHEN_ASSUMED.md)
+// MetroMatrix — Home Recipes Network (docs/API_KITCHEN.md §35)
 // ═══════════════════════════════════════════════════════
-// Recipe ideas from the pantry, a recipe, and its
-// missing items priced from Shopping's grocers.
-// docs/API_KITCHEN_ASSUMED.md §2.15 (TODO(API_KITCHEN), TODO(API_AI): ideas are an assistant action).
+// Recipes from the pantry (what expires first leads; AI or the recipe book),
+// each whole in the answer, and Shopping's grocery options for what is
+// missing. Nothing is added to the bag for the person.
 
 import { API, toApiError, clean } from '../network/network';
 
-const enc = encodeURIComponent;
-
-export const suggestHomeRecipes = async (q: { language: 'en' | 'ur'; maxMinutes?: number | null; servings?: number | null }): Promise<unknown> => {
+export const suggestHomeRecipes = async (): Promise<unknown> => {
   try {
-    const response = await API.POST({ URL: '/my-kitchen/recipes/suggest', data: clean({ ...q }) });
+    const response = await API.POST({ URL: '/my-kitchen/recipes/suggest' });
     return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
-export const fetchHomeRecipe = async (id: string, language: 'en' | 'ur', servings?: number | null): Promise<unknown> => {
+/** Grocery products for each missing item, cheapest per kg / l / piece first. */
+export const fetchMissingItems = async (names: string[], city?: string | null): Promise<unknown> => {
   try {
-    const response = await API.GET({ URL: `/my-kitchen/recipes/${enc(id)}`, params: clean({ language, servings }) });
-    return response.data;
-  } catch (e) {
-    throw toApiError(e);
-  }
-};
-
-export const fetchMissingItems = async (id: string, servings?: number | null): Promise<unknown> => {
-  try {
-    const response = await API.GET({ URL: `/my-kitchen/recipes/${enc(id)}/missing-items`, params: clean({ servings }) });
+    const response = await API.POST({ URL: '/my-kitchen/missing-to-bag', data: clean({ items: names.map(name => ({ name })), city }) });
     return response.data;
   } catch (e) {
     throw toApiError(e);

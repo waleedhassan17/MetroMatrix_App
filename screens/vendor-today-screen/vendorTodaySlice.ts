@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════
 // What is cooking today and how many plates: setting portions resets what is
 // left; a dish switched off is off for today only. Changes collect locally
-// and go up together. The kitchen's forecast for today (TODO(API_KITCHEN))
+// and go up together. The kitchen's forecast for today (docs/API_KITCHEN.md)
 // offers its numbers as portions in one tap; spoken portions land the same way.
 
 import { createSelector, type PayloadAction } from '@reduxjs/toolkit';
@@ -83,7 +83,7 @@ export const vendorTodaySlice = createAppSlice({
         fulfilled: (state, action) => {
           state.status = 'succeeded';
           state.today = todayMenuSerializer(action.payload.today);
-          state.forecast = action.payload.forecast === null ? null : forecastSerializer(action.payload.forecast);
+          state.forecast = action.payload.forecast === null ? null : forecastSerializer({ forecast: action.payload.forecast });
           state.tiffin = action.payload.tiffin === null ? null : tiffinTomorrowSerializer(action.payload.tiffin);
           state.edits = {};
         },

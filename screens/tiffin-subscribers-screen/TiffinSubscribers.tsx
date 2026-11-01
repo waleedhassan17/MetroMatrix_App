@@ -20,7 +20,7 @@ import { ServiceScope, useStyles, type Theme } from '../../theme/index';
 import { AppText, Button, Card, ChoiceChip, EmptyState, IconButton, InlineNotice, ScreenShell, Sheet, SkeletonLines, StatusPill, TextAction } from '../../Custom-Components/index';
 import { ChoiceLine } from '../../Custom-Components/food/ChoiceLine';
 import type { FoodVendorStackParamList, TiffinSubscription } from '../../models';
-import { formatDayShort } from '../../utils/health-time/healthTime';
+import { PKT, addDays, formatDayShort, todayInZone } from '../../utils/health-time/healthTime';
 import { formatPkPhoneForDisplay } from '../../utils/phone/phone';
 import { callNumber } from '../../utils/maps/maps';
 import { haptics } from '../../utils/haptics/haptics';
@@ -29,6 +29,8 @@ import { loadSubscribersAsync, selectTiffinSubscribers, setSubscribersTab, subsc
 type Props = NativeStackScreenProps<FoodVendorStackParamList, 'GrowthTiffinSubscribers'>;
 
 const DECLINE_REASONS = ['The plan is full', 'We don’t deliver to that area', 'We can’t start on that day'];
+/** What the customer is told when the kitchen ends their tiffin. */
+const END_REASON = 'The kitchen ended this tiffin.';
 
 const inTab = (s: TiffinSubscription, tab: SubscribersTab) => (tab === 'ended' ? ['ended', 'cancelled', 'declined'].includes(s.status) : s.status === tab);
 
@@ -111,11 +113,11 @@ const TiffinSubscribersContent: React.FC<Props> = ({ navigation, route }) => {
           </View>
           {x.period ? (
             <AppText variant="small">
-              {`${periodLabel(x.period)}: ${periodAmountLabel(x.period, x.plan.perMeal)}${x.period.payment.reference ? ` · ref ${x.period.payment.reference}` : ''}`}
+              {`${periodLabel(x.period)}: ${periodAmountLabel(x.period)}${x.period.payment.reference ? ` · ref ${x.period.payment.reference}` : ''}`}
             </AppText>
           ) : (
             <AppText variant="small" tone="muted">
-              {scheduleLabel(x.plan)} · {x.plan.mode === 'delivery' ? 'Delivered' : 'Collected'} · pays by {x.paymentMethod === 'transfer' ? 'transfer' : 'cash'}
+              {scheduleLabel(x.plan)} · {x.address ? 'Delivered' : 'Collected'} · pays by {x.paymentMethod === 'transfer' ? 'transfer' : 'cash'}
             </AppText>
           )}
           {x.nextDelivery && x.status !== 'pending' ? (
@@ -160,13 +162,13 @@ const TiffinSubscribersContent: React.FC<Props> = ({ navigation, route }) => {
           ) : null}
           {x.status === 'active' ? (
             <View style={styles.actions}>
-              <TextAction label="Pause" icon="pause-outline" onPress={() => void act(x.code, { kind: 'pause' }, 'Paused until you resume it')} disabled={busy} />
-              <TextAction label="End" tone="danger" onPress={() => void act(x.code, { kind: 'end' }, 'Subscription ended')} disabled={busy} />
+              <TextAction label="Pause a week" icon="pause-outline" onPress={() => void act(x.code, { kind: 'pause', until: addDays(todayInZone(PKT), 7) }, 'Paused for a week')} disabled={busy} />
+              <TextAction label="End" tone="danger" onPress={() => void act(x.code, { kind: 'end', reason: END_REASON }, 'Subscription ended')} disabled={busy} />
             </View>
           ) : x.status === 'paused' ? (
             <View style={styles.actions}>
               <TextAction label="Resume" icon="play-outline" onPress={() => void act(x.code, { kind: 'resume' }, 'Resumed')} disabled={busy} />
-              <TextAction label="End" tone="danger" onPress={() => void act(x.code, { kind: 'end' }, 'Subscription ended')} disabled={busy} />
+              <TextAction label="End" tone="danger" onPress={() => void act(x.code, { kind: 'end', reason: END_REASON }, 'Subscription ended')} disabled={busy} />
             </View>
           ) : null}
         </View>

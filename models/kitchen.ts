@@ -1,26 +1,16 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Kitchen Intelligence (Chunk 5): the app's own shapes
 // ═══════════════════════════════════════════════════════
-// What the serializers make of docs/API_KITCHEN_ASSUMED.md, docs/AI_ASSUMED.md
-// and docs/VOICE_ASSUMED.md. Quantities stay in base units (g, ml, pieces)
+// What the serializers make of docs/API_KITCHEN.md, docs/AI.md
+// and docs/VOICE.md. Quantities stay in base units (g, ml, pieces)
 // and are worded only by utils/units/units; money is whole rupees, shown only
-// through formatPKR. TODO(API_KITCHEN): an assumed contract.
+// through formatPKR.
 
 import type { BaseUnit, CustomUnit, StandardUnit } from '../utils/units/units';
 import type { FoodPaymentStatus, FoodTransferAccount } from './food';
 
-export type IngredientCategory =
-  | 'meat_poultry'
-  | 'vegetables'
-  | 'fruit'
-  | 'dairy'
-  | 'grains_flour'
-  | 'spices'
-  | 'oils_ghee'
-  | 'bakery'
-  | 'drinks'
-  | 'packaging'
-  | 'other';
+/** The API's ingredient categories (docs/API_KITCHEN.md §2). */
+export type IngredientCategory = 'meat' | 'vegetable' | 'dairy' | 'spice' | 'grain' | 'oil' | 'bakery' | 'beverage' | 'packaging' | 'other';
 
 export type StockState = 'ok' | 'low' | 'out' | 'negative';
 export type StockSegment = 'all' | 'low' | 'expiring' | 'negative';
@@ -35,6 +25,8 @@ export interface Counting {
 export interface Ingredient extends Counting {
   id: string;
   name: string;
+  /** The Urdu-script name (voice and search read it). */
+  nameUr: string | null;
   category: IngredientCategory;
   onHand: number;
   parLevel: number | null;
@@ -64,12 +56,19 @@ export interface StockList {
 
 export interface IngredientInput {
   name: string;
+  /** The Urdu-script name voice and the board read. */
+  nameUr?: string | null;
   category: IngredientCategory;
   baseUnit: BaseUnit;
   dozens?: boolean;
   customUnits?: CustomUnit[];
+  /** Base units. */
   parLevel?: number | null;
+  /** What is on the shelf when it is first added (base units). */
+  openingStock?: { qty: number; totalCost?: number; expiresOn?: string } | null;
+  /** The PBS item it is compared with (set with its own request). */
   priceRefKey?: string | null;
+  /** The nutrition food it maps to (set with its own request). */
   nutritionFoodId?: string | null;
 }
 
@@ -85,7 +84,8 @@ export interface Supplier {
   name: string;
   phone: string | null;
   note: string | null;
-  purchaseCount: number;
+  /** Rupees spent with them in the last 30 days. */
+  spent30d: number;
   lastPurchaseOn: string | null;
 }
 
@@ -98,7 +98,10 @@ export interface Purchase {
   source: PurchaseSource;
   receiptUrl: string | null;
   total: number;
+  note: string | null;
+  /** In the list, only the first few lines' names come (the purchase itself has them all). */
   lines: { id: string; ingredientId: string; name: string; baseUnit: BaseUnit; dozens: boolean; qty: number; total: number; costPerBase: number; expiresOn: string | null }[];
+  lineCount: number;
   createdAt: string;
 }
 
@@ -115,9 +118,12 @@ export interface PurchaseLineInput {
 export interface PurchaseInput {
   date?: string;
   supplierId?: string | null;
+  /** A supplier not on the list yet: created before the purchase. */
   supplierName?: string | null;
   source: PurchaseSource;
   receiptUrl?: string | null;
+  receiptPublicId?: string | null;
+  note?: string | null;
   lines: PurchaseLineInput[];
 }
 
@@ -203,19 +209,28 @@ export interface Recipe {
   updatedAt: string | null;
 }
 
-export interface RecipeInput {
-  yield: number;
-  lines: { ingredientId: string; qty: number }[];
-  addOns: { optionId: string; lines: { ingredientId: string; qty: number }[] }[];
-  packaging: { ingredientId: string; qty: number }[];
-  signature: { on: boolean; creatorName: string | null };
+/** A recipe line in the ingredient's base unit. */
+export interface RecipeLineInput {
+  ingredientId: string;
+  qty: number;
+  baseUnit: BaseUnit;
 }
 
-export type PackingPhotoRule = 'off' | 'optional' | 'required';
+export interface RecipeInput {
+  yield: number;
+  lines: RecipeLineInput[];
+  addOns: { optionId: string; lines: RecipeLineInput[] }[];
+  packaging: RecipeLineInput[];
+  signature: { on: boolean; creatorName: string | null };
+  notes?: string | null;
+}
 
+/** A packing photo is always possible; `required` stops the hand-over without one. */
+export type PackingPhotoRule = 'optional' | 'required';
+
+/** The API sells a dish out by stock whenever its recipe can't make one more. */
 export interface KitchenSettings {
   targetFoodCostPct: number;
-  autoSellOut: boolean;
   packingPhoto: PackingPhotoRule;
 }
 
@@ -237,7 +252,9 @@ export type InsightActionKind =
   | 'open_experiment'
   | 'open_review_insights'
   | 'open_tiffin'
-  | 'open_catering';
+  | 'open_catering'
+  | 'open_price_watch'
+  | 'open_waste';
 
 export interface InsightCard {
   id: string;
@@ -278,6 +295,8 @@ export interface BoardHints {
 
 // ── Forecast and prep ──
 export interface ForecastItem {
+  /** The forecast row (a dish on a day): what an adjustment names. */
+  id: string;
   itemId: string;
   name: string;
   photoUrl: string | null;
@@ -286,7 +305,8 @@ export interface ForecastItem {
   high: number;
   learning: boolean;
   adjusted: number | null;
-  fixed: { tiffin: number; catering: number };
+  /** Portions already certain (tiffin meals and catering), which the API counts together. */
+  fixed: number;
   planned: number;
 }
 
@@ -321,7 +341,7 @@ export interface ShoppingList {
 }
 
 // ── Waste, donations ──
-export type WasteReason = 'expired' | 'spoiled' | 'burnt' | 'dropped' | 'leftover' | 'other';
+export type WasteReason = 'expired' | 'spoiled' | 'overcooked' | 'returned' | 'leftover' | 'other';
 
 export interface WasteEntry {
   id: string;
@@ -383,10 +403,11 @@ export interface SurplusBox {
   pickupTo: string;
   pickupLabel: string;
   status: BoxStatus;
-  createdAt: string;
 }
 
 export interface SurplusReservation {
+  /** What the kitchen's moves and the customer's cancel and receipt name. */
+  id: string;
   code: string;
   status: ReservationStatus;
   quantity: number;
@@ -494,7 +515,16 @@ export interface VoiceQtyLine {
   total: number | null;
 }
 
-export type VoiceAction =
+/** The exact request the API proposes for a spoken command; Confirm sends it as it came. */
+export interface VoiceRequest {
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  path: string;
+  body: unknown;
+  /** The API's own words for it ("Purchase: Tomato 2 kg Rs 500 — Rs 500"). */
+  summary: string;
+}
+
+export type VoiceAction = (
   | { kind: 'order.accept'; orderId: string; code: string; etaMinutes: number | null }
   | { kind: 'order.reject'; orderId: string; code: string; reason: string }
   | { kind: 'order.ready'; orderId: string; code: string }
@@ -505,7 +535,8 @@ export type VoiceAction =
   | { kind: 'stock.count'; lines: VoiceQtyLine[] }
   | { kind: 'portions.set'; lines: { itemId: string; name: string; portions: number }[] }
   | { kind: 'search'; query: string }
-  | { kind: 'pantry.add'; lines: { key: string | null; name: string; qty: number; unit: StandardUnit; expiresOn: string | null }[] };
+  | { kind: 'pantry.add'; lines: { key: string | null; name: string; qty: number; unit: StandardUnit; expiresOn: string | null }[] }
+) & { request?: VoiceRequest | null };
 
 export interface VoiceResult {
   id: string;
@@ -515,12 +546,15 @@ export interface VoiceResult {
   action: VoiceAction | null;
   alternatives: { transcript: string; action: VoiceAction }[];
   heard: 'audio' | 'text';
+  /** Why nothing can be done yet ("No new orders to accept.", "Add the price for each line"). */
+  note: string | null;
 }
 
 // ── Growth (5B): tiffin ──
 export type Meal = 'breakfast' | 'lunch' | 'dinner';
 export type TiffinPeriodKind = 'week' | 'month';
-export type TiffinMode = 'delivery' | 'pickup';
+/** `both`: the customer picks delivery or pickup when subscribing. */
+export type TiffinMode = 'delivery' | 'pickup' | 'both';
 
 /** "HH:mm" in kitchen time, and the words ("12:30 PM – 1:30 PM"). */
 export interface TiffinWindow {
@@ -547,7 +581,8 @@ export interface TiffinPlan {
   capacity: number;
   subscribers: number;
   seatsLeft: number;
-  skipCutoffHours: number;
+  /** Changes for a day close at this hour (0–23) the evening before, kitchen time. */
+  skipCutoffHour: number;
   rotation: { weekday: number; dishes: { itemId: string; name: string; photoUrl: string | null }[]; note: string | null }[];
   photoUrl: string | null;
   isActive: boolean;
@@ -579,7 +614,7 @@ export interface TiffinPlanInput {
   mode: TiffinMode;
   window: { from: string; to: string };
   capacity: number;
-  skipCutoffHours: number;
+  skipCutoffHour: number;
   rotation: { weekday: number; itemIds: string[]; note: string | null }[];
   photoUrl?: string | null;
   isActive?: boolean;
@@ -603,8 +638,6 @@ export interface TiffinPeriod {
   from: string;
   to: string;
   meals: number;
-  /** Meals skipped in the period before, taken off this one. */
-  credit: number;
   amount: number;
   payment: TransferPayment<TiffinPayMethod>;
 }
@@ -612,7 +645,7 @@ export interface TiffinPeriod {
 export interface TiffinSubscription {
   code: string;
   status: TiffinStatus;
-  plan: { id: string; name: string; meal: Meal; days: number[]; period: TiffinPeriodKind; price: number; perMeal: number; mode: TiffinMode; window: TiffinWindow; skipCutoffHours: number };
+  plan: { id: string; name: string; meal: Meal; days: number[]; period: TiffinPeriodKind; price: number; perMeal: number; mode: TiffinMode; window: TiffinWindow; skipCutoffHour: number };
   vendor: { id: string; slug: string; name: string; logoUrl: string | null; phone: string | null };
   /** The kitchen's view only. */
   customer: { name: string; phone: string | null } | null;
@@ -637,7 +670,7 @@ export interface TiffinInbox {
   items: TiffinSubscription[];
 }
 
-export type TiffinDayState = 'before_start' | 'off' | 'pending' | 'upcoming' | 'skipped' | 'paused' | 'ordered' | 'delivered' | 'cancelled' | 'ended' | 'none';
+export type TiffinDayState = 'before_start' | 'off' | 'pending' | 'upcoming' | 'skipped' | 'paused' | 'ordered' | 'delivered' | 'missed' | 'cancelled' | 'ended' | 'none';
 
 export interface TiffinDay {
   date: string;
@@ -671,9 +704,10 @@ export interface TiffinTomorrow {
 }
 
 // ── Growth (5B): catering ──
-export type EventType = 'mehndi' | 'baraat' | 'walima' | 'birthday' | 'aqiqah' | 'milad' | 'quran_khwani' | 'office' | 'family' | 'other';
+export type EventType = 'dawat' | 'wedding' | 'office' | 'birthday' | 'milad' | 'other';
 export type CateringMode = 'delivery' | 'pickup' | 'on_site';
-export type CateringStatus = 'requested' | 'quoted' | 'accepted' | 'confirmed' | 'declined' | 'cancelled' | 'completed';
+/** `advance_proof`: the customer sent the advance's receipt; `expired`: the quote ran out unanswered. */
+export type CateringStatus = 'requested' | 'quoted' | 'accepted' | 'advance_proof' | 'confirmed' | 'declined' | 'cancelled' | 'expired' | 'completed';
 export type QuoteState = 'current' | 'outdated' | 'expired' | 'accepted';
 
 export interface QuoteLine {
@@ -699,6 +733,8 @@ export interface CateringQuote {
 }
 
 export interface CateringRequest {
+  /** What every move names; `code` (CT-…) is what people read out. */
+  id: string;
   code: string;
   status: CateringStatus;
   vendor: { id: string; slug: string; name: string; logoUrl: string | null; phone: string | null };
@@ -947,6 +983,16 @@ export interface Hygiene {
   canRequest: boolean;
 }
 
+/** The hygiene checklist as the API keeps it (with the story): five ticks and the last pest control date. */
+export interface HygieneChecklist {
+  gloves: boolean;
+  hairnet: boolean;
+  cleanWater: boolean;
+  fridgeTempLog: boolean;
+  separateBoards: boolean;
+  pestControlOn: string | null;
+}
+
 export interface BatchSuggestion {
   orderId: string;
   code: string;
@@ -955,7 +1001,7 @@ export interface BatchSuggestion {
   readyAt: string | null;
 }
 
-/** A vendor card's badges (docs/API_KITCHEN_ASSUMED.md §3.13). */
+/** A vendor card's badges (docs/API_KITCHEN.md §3.13). */
 export type VendorBadge = 'signature' | 'hygiene_verified' | 'hygiene_self_declared' | 'home_kitchen' | 'bachat_today' | 'under_600' | 'high_protein';
 
 // ── The assistant (5C): drafts, review themes, nutrition ──
@@ -979,8 +1025,11 @@ export interface SpecialIdea {
   description: string;
   uses: string[];
   usesExpiring: string[];
-  /** A serving's ingredients (base units): its recipe card once created. */
-  lines: { ingredientId: string; qty: number }[];
+  /** The recipe's ingredients as the API counts them: its card once created. */
+  lines: { ingredientId: string; qty: number; unit: string }[];
+  /** Servings the recipe makes. */
+  servings: number;
+  why: string | null;
   suggestedPrice: number;
   cost: Cost;
 }
@@ -989,7 +1038,12 @@ export interface ComboIdea {
   id: string;
   itemIds: string[];
   names: string[];
-  /** Orders in the last 30 days with both. */
+  /** The bundle's name ("Dish A + Dish B" without AI) and its menu line. */
+  name: string;
+  description: string | null;
+  /** The menu category its draft goes in. */
+  categoryId: string | null;
+  /** Orders in the last 60 days with both. */
   orderedTogether: number;
   regularPrice: number;
   bundlePrice: number;
@@ -1007,7 +1061,8 @@ export interface PhotoCheck {
   tips: { kind: PhotoTipKind; text: string }[];
 }
 
-export type ReviewThemeKey = 'taste' | 'fresh' | 'portion' | 'packing' | 'value' | 'late' | 'cold' | 'spice' | 'small' | 'spill';
+/** The theme's own words, as the API names it ("cold food"). */
+export type ReviewThemeKey = string;
 
 export interface ReviewTheme {
   key: ReviewThemeKey;

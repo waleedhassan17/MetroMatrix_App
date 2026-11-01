@@ -98,6 +98,9 @@ const PaymentProofContent: React.FC<Props> = ({ route }) => {
 
   const error = validatePaymentProof(s.transactionId).transactionId;
   const busy = uploading(s.photos);
+  // A kitchen's Bachat Box, tiffin and dawat receipts are checked from the screenshot.
+  const needsPhoto = !!(surplusCode || tiffinPeriodId || cateringCode);
+  const noPhoto = needsPhoto && !storedUrls(s.photos).length;
 
   const addPhoto = async () => {
     const file = await pickImageFromLibrary();
@@ -106,7 +109,7 @@ const PaymentProofContent: React.FC<Props> = ({ route }) => {
 
   const submit = async () => {
     dispatch(touchTransactionId());
-    if (error || busy) {
+    if (error || busy || noPhoto) {
       haptics.warning();
       return;
     }
@@ -188,8 +191,13 @@ const PaymentProofContent: React.FC<Props> = ({ route }) => {
         placeholder="RX99887766"
       />
       <Card>
-        <AppText variant="label">Screenshot of the receipt (optional)</AppText>
+        <AppText variant="label">{needsPhoto ? 'Screenshot of the receipt' : 'Screenshot of the receipt (optional)'}</AppText>
         <PhotoStrip photos={s.photos} max={1} onAdd={() => void addPhoto()} onRemove={key => dispatch(removeProofPhoto(key))} addLabel="Add the receipt" />
+        {s.touched && noPhoto ? (
+          <AppText variant="small" tone="danger">
+            Add the screenshot: the kitchen checks it against their account.
+          </AppText>
+        ) : null}
       </Card>
       <AppText variant="small" tone="muted">
         {appointmentCode

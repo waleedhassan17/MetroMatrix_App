@@ -3,13 +3,13 @@
 // cancelling; read again on focus as the kitchen approves and confirms.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { cancelMyTiffin, fetchMyTiffin, fetchTiffinCalendar, pauseMyTiffin, resumeMyTiffin, skipTiffinDay } from '../../networks/foodGrowth/tiffin';
+import { cancelMyTiffin, fetchMyTiffins, fetchTiffinCalendar, pauseMyTiffin, resumeMyTiffin, skipTiffinDay } from '../../networks/foodGrowth/tiffin';
 import { toRejectedValue } from '../../networks/network/network';
 import type { TiffinCalendar, TiffinSubscription } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { tiffinSubscriptionSerializer, tiffinCalendarSerializer, tiffinDaySerializer } from '../../serializers/kitchen/growthSerializer';
+import { myTiffinSerializer, tiffinSubscriptionSerializer, tiffinCalendarSerializer } from '../../serializers/kitchen/growthSerializer';
 
-export type TiffinAct = { kind: 'pause'; until: string | null } | { kind: 'resume' } | { kind: 'cancel' };
+export type TiffinAct = { kind: 'pause'; until: string } | { kind: 'resume' } | { kind: 'cancel' };
 
 export interface FoodTiffinSliceState {
   byCode: Record<string, TiffinSubscription>;
@@ -31,7 +31,8 @@ export const foodTiffinSlice = createAppSlice({
     loadMyTiffinAsync: create.asyncThunk(
       async ({ code, month }: { code: string; month: string }, { rejectWithValue }) => {
         try {
-          const [sub, calendar] = await Promise.all([fetchMyTiffin(code), fetchTiffinCalendar(code, month)]);
+          // The customer's subscriptions hold this one (`code` is its id).
+          const [sub, calendar] = await Promise.all([fetchMyTiffins(), fetchTiffinCalendar(code, month)]);
           return { sub, calendar };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -43,10 +44,11 @@ export const foodTiffinSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = { sub: tiffinSubscriptionSerializer(action.payload.sub), calendar: tiffinCalendarSerializer(action.payload.calendar) };
-          state.status = 'succeeded';
+          const payload = { sub: myTiffinSerializer(action.payload.sub, action.meta.arg.code), calendar: tiffinCalendarSerializer(action.payload.calendar) };
+          state.status = payload.sub ? 'succeeded' : 'failed';
           if (payload.sub) state.byCode[payload.sub.code] = payload.sub;
-          state.calendars[`${action.meta.arg.code.toUpperCase()}|${action.meta.arg.month}`] = payload.calendar;
+          else state.error = { ...NO_ERROR, code: 'NOT_FOUND', message: 'This tiffin isn’t one of yours.' };
+          state.calendars[`${action.meta.arg.code}|${action.meta.arg.month}`] = payload.calendar;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -57,9 +59,10 @@ export const foodTiffinSlice = createAppSlice({
     tiffinDayAsync: create.asyncThunk(
       async ({ code, date, skip }: { code: string; date: string; skip: boolean }, { rejectWithValue }) => {
         try {
-          const day = await skipTiffinDay(code, date, skip);
-          const sub = await fetchMyTiffin(code);
-          return { day, sub };
+          // The subscription comes back; the month is read again for the day's new state.
+          const sub = await skipTiffinDay(code, date, skip);
+          const calendar = await fetchTiffinCalendar(code, date.slice(0, 7));
+          return { sub, calendar };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -71,11 +74,9 @@ export const foodTiffinSlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.busy = null;
-          const day = tiffinDaySerializer(action.payload.day);
           const sub = tiffinSubscriptionSerializer(action.payload.sub);
           if (sub) state.byCode[sub.code] = sub;
-          const cal = day ? state.calendars[`${action.meta.arg.code.toUpperCase()}|${day.date.slice(0, 7)}`] : undefined;
-          if (cal && day) cal.days = cal.days.map(d => (d.date === day.date ? day : d));
+          state.calendars[`${action.meta.arg.code}|${action.meta.arg.date.slice(0, 7)}`] = tiffinCalendarSerializer(action.payload.calendar);
         },
         rejected: (state, action) => {
           state.busy = null;
@@ -110,8 +111,8 @@ export const foodTiffinSlice = createAppSlice({
   }),
   selectors: {
     selectFoodTiffinUi: state => state,
-    selectMyTiffin: (state, code: string): TiffinSubscription | null => state.byCode[code.toUpperCase()] ?? null,
-    selectTiffinCalendar: (state, code: string, month: string): TiffinCalendar | null => state.calendars[`${code.toUpperCase()}|${month}`] ?? null,
+    selectMyTiffin: (state, code: string): TiffinSubscription | null => state.byCode[code] ?? null,
+    selectTiffinCalendar: (state, code: string, month: string): TiffinCalendar | null => state.calendars[`${code}|${month}`] ?? null,
   },
 });
 

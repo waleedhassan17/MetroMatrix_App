@@ -60,7 +60,7 @@ const AdminKitchenDemand: React.FC<Props> = () => {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipBar} contentContainerStyle={styles.chips}>
         <ChoiceChip label="All food" selected={!s.cuisine} onPress={() => pick({ cuisine: null })} />
         {s.cuisines.map(c => (
-          <ChoiceChip key={c.slug} label={c.name} selected={s.cuisine === c.slug} onPress={() => pick({ cuisine: c.slug })} />
+          <ChoiceChip key={c.id} label={c.name} selected={s.cuisine === c.id} onPress={() => pick({ cuisine: c.id })} />
         ))}
       </ScrollView>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipBar} contentContainerStyle={styles.chips}>

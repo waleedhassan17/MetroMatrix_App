@@ -2,7 +2,8 @@
 // (the list itself is paged: usePagedList), and a confirmed spoken purchase.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { createPurchase, fetchPriceWatch, fetchPurchases } from '../../networks/kitchen/purchases';
+import { fetchPriceWatch, fetchPurchases } from '../../networks/kitchen/purchases';
+import { savePurchase } from '../shared/kitchenWrites';
 import { toRejectedValue } from '../../networks/network/network';
 import { purchaseFromVoice } from '../../models/kitchen/purchaseModel';
 import type { PriceWatch, VoiceQtyLine } from '../../models';
@@ -61,7 +62,7 @@ export const purchasesSlice = createAppSlice({
     confirmSpokenPurchaseAsync: create.asyncThunk(
       async (lines: VoiceQtyLine[], { rejectWithValue }) => {
         try {
-          return await createPurchase(purchaseFromVoice(lines));
+          return await savePurchase(purchaseFromVoice(lines));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

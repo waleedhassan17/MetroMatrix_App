@@ -4,12 +4,14 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchMenuInsights, fetchExperiments, startExperiment } from '../../networks/foodGrowth/experiments';
+import { updateMenuItem } from '../../networks/food/vendor/menu';
 import { uploadImage } from '../../services/mediaUpload';
 import { toRejectedValue } from '../../networks/network/network';
-import type { Experiment, ExperimentInput, MenuInsights } from '../../models';
+import type { Experiment, MenuInsights } from '../../models';
 import type { LocalFile } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { menuInsightsSerializer, experimentsSerializer, experimentSerializer } from '../../serializers/kitchen/reachSerializer';
+import { experimentNotes } from '../../models/kitchen/reachModel';
 
 export interface MenuInsightsSliceState {
   data: MenuInsights | null;
@@ -48,7 +50,7 @@ export const menuInsightsSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = { data: menuInsightsSerializer(action.payload.data), experiments: experimentsSerializer(action.payload.experiments) };
+          const payload = { data: menuInsightsSerializer(action.payload), experiments: experimentsSerializer(action.payload.experiments) };
           state.status = 'succeeded';
           state.data = payload.data;
           state.experiments = payload.experiments;
@@ -59,13 +61,21 @@ export const menuInsightsSlice = createAppSlice({
         },
       },
     ),
-    /** A price test, or a photo test with the new photo picked on the phone (uploaded first). */
+    /**
+     * A price test, or a photo test with the new photo picked on the phone (uploaded first): the dish
+     * changes first (the ordinary dish PATCH), then the experiment starts with what changed in its notes.
+     */
     startExperimentAsync: create.asyncThunk(
-      async (input: { itemId: string; days: number; change: { kind: 'price'; price: number } | { kind: 'photo'; file: LocalFile } }, { rejectWithValue }) => {
+      async (input: { itemId: string; days: number; change: { kind: 'price'; price: number } | { kind: 'photo'; file: LocalFile } }, { getState, rejectWithValue }) => {
+        const was = (getState() as { menuInsights: MenuInsightsSliceState }).menuInsights.data?.items.find(i => i.itemId === input.itemId);
         try {
-          const change: ExperimentInput['change'] =
-            input.change.kind === 'price' ? input.change : { kind: 'photo', photoUrl: (await uploadImage(input.change.file, 'menu_item')).url };
-          return await startExperiment({ itemId: input.itemId, days: input.days, change });
+          if (input.change.kind === 'price') {
+            await updateMenuItem(input.itemId, { basePrice: input.change.price });
+            return await startExperiment({ itemId: input.itemId, days: input.days, notes: experimentNotes({ kind: 'price', price: input.change.price, oldPrice: was?.price ?? input.change.price }) });
+          }
+          const photoUrl = (await uploadImage(input.change.file, 'menu_item')).url;
+          await updateMenuItem(input.itemId, { photoUrl });
+          return await startExperiment({ itemId: input.itemId, days: input.days, notes: experimentNotes({ kind: 'photo' }) });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

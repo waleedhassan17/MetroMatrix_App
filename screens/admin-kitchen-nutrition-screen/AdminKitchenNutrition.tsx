@@ -13,10 +13,7 @@ import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useRedu
 import { useBack } from '../../hooks/useBack';
 import { useDebouncedValue } from '../../hooks/usePagedList';
 import {
-  CHANGE_LABEL,
   NUTRITION_COLUMNS,
-  PERS,
-  PER_LABEL,
   macrosLine,
   validateCsvText,
   validateNutritionFood,
@@ -26,7 +23,6 @@ import {
   AppText,
   Button,
   Card,
-  ChoiceChip,
   Divider,
   InlineNotice,
   ScreenShell,
@@ -140,7 +136,7 @@ const AdminKitchenNutrition: React.FC<Props> = () => {
                     {macrosLine(x)}
                   </AppText>
                   <AppText variant="caption" tone="muted">
-                    {`${x.key} · ${x.usedBy ? `${x.usedBy} kitchen ${x.usedBy === 1 ? 'ingredient' : 'ingredients'}` : 'not used yet'}`}
+                    {[x.key, x.group, x.source === 'usda_sr_legacy' ? 'USDA' : 'Added by staff', x.isActive ? null : 'Switched off'].filter(Boolean).join(' · ')}
                   </AppText>
                   <TextAction label="Edit" onPress={() => dispatch(openFoodSheet(x))} />
                 </View>
@@ -154,7 +150,7 @@ const AdminKitchenNutrition: React.FC<Props> = () => {
 
       <CsvImport
         columns={NUTRITION_COLUMNS}
-        example="khoya,Khoya,g100,421,14.6,25,30"
+        example="khoya,Khoya,کھویا,Dairy and Egg Products,421,14.6,25,30,0,80,"
         csv={s.csv}
         fileName={s.fileName}
         onChangeCsv={t => dispatch(setFoodsCsv({ csv: t, fileName: null }))}
@@ -169,7 +165,6 @@ const AdminKitchenNutrition: React.FC<Props> = () => {
         importing={s.importing}
         error={s.importError.message}
         formError={csvError}
-        previewOf={r => ({ key: `${r.row}`, title: `${r.name} (${r.key})`, line: macrosLine(r), pill: CHANGE_LABEL[r.change] })}
       />
 
       <Sheet
@@ -190,11 +185,9 @@ const AdminKitchenNutrition: React.FC<Props> = () => {
             error={errors.key}
           />
         ) : null}
-        <View style={styles.chips}>
-          {PERS.map(p => (
-            <ChoiceChip key={p} label={PER_LABEL[p]} selected={f?.per === p} onPress={() => dispatch(setFoodForm({ per: p }))} />
-          ))}
-        </View>
+        <AppText variant="small" tone="muted">
+          Per 100 g.
+        </AppText>
         <View style={styles.two}>
           {macro('kcal', 'kcal')}
           {macro('protein', 'Protein (g)')}

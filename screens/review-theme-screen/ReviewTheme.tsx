@@ -1,29 +1,27 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Kitchen assistant: the reviews behind a theme
+// MetroMatrix — Kitchen assistant: one theme of the reviews
 // ═══════════════════════════════════════════════════════
-// Every review of the week that said it ("Took too long"), newest first,
-// with a way to the reviews page to reply. A paged list (usePagedList).
+// What the week's reviews said about it ("cold food"): how many, and the
+// anonymised lines the theme came from. Themes are read from reviews with
+// names and numbers taken out, so they never point back to one review; the
+// reviews page is where the kitchen replies.
 
 import React from 'react';
-import { FlatList, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
-import { usePagedList } from '../../hooks/usePagedList';
-import { fetchReviewsByTheme } from '../../networks/food/vendor/reviews';
 import { weekLabel } from '../../models/kitchen/assistantModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { Divider, EmptyState, InlineNotice, ScreenShell, SkeletonLines, TextAction } from '../../Custom-Components/index';
-import { FoodReviewItem } from '../../Custom-Components/food/FoodReviewItem';
+import { AppText, Card, EmptyState, ScreenShell, StatusPill, TextAction } from '../../Custom-Components/index';
 import type { FoodVendorStackParamList } from '../../models';
-import { selectBusiness } from '../../store/authSlice';
-import { vendorReviewsPageSerializer } from '../../serializers/food/reviewSerializer';
+import { selectReviewInsights } from '../review-insights-screen/reviewInsightsSlice';
 
 type Props = NativeStackScreenProps<FoodVendorStackParamList, 'KitchenReviewTheme'>;
 
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
-    list: { paddingBottom: space.s40, gap: space.s4 },
+    gap: { gap: space.s8 },
   });
 
 const ReviewTheme: React.FC<Props> = props => (
@@ -36,31 +34,34 @@ const ReviewThemeContent: React.FC<Props> = ({ navigation, route }) => {
   const { theme, label, week } = route.params;
   const { back } = useBack({ name: 'KitchenReviewInsights' });
   const styles = useStyles(makeStyles);
-  const name = useAppSelector(selectBusiness)?.name ?? 'Your kitchen';
-  const list = usePagedList((page, size) => fetchReviewsByTheme(theme, week ?? null, page, size), vendorReviewsPageSerializer, `review-theme|${theme}|${week ?? ''}`);
+  const t = useAppSelector(selectReviewInsights).data?.themes.find(x => x.key === theme) ?? null;
 
   return (
-    <ScreenShell title={label ?? 'Reviews'} subtitle={week ? weekLabel(week) : undefined} onBack={back} scroll={false}>
-      <FlatList
-        data={list.rows}
-        keyExtractor={r => r.id}
-        contentContainerStyle={styles.list}
-        onRefresh={list.refresh}
-        refreshing={list.isRefreshing}
-        onEndReached={list.loadMore}
-        ItemSeparatorComponent={Divider}
-        renderItem={({ item: r }) => <FoodReviewItem review={r} vendorName={name} context={r.orderCode ? `Order ${r.orderCode}` : undefined} />}
-        ListEmptyComponent={
-          list.isLoading ? (
-            <SkeletonLines lines={6} />
-          ) : list.error ? (
-            <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
-          ) : (
-            <EmptyState icon="message-square" title="No reviews here" body="None of that week’s reviews said this." />
-          )
-        }
-        ListFooterComponent={<TextAction label="Reply on your reviews page" icon="chatbubble-outline" onPress={() => navigation.navigate('VendorReviews')} />}
-      />
+    <ScreenShell title={label ?? t?.label ?? 'Reviews'} subtitle={week ? weekLabel(week) : undefined} onBack={back}>
+      {t ? (
+        <Card>
+          <View style={styles.gap}>
+            <StatusPill label={`${t.count} ${t.count === 1 ? 'review' : 'reviews'} · ${t.tone === 'negative' ? 'to fix' : 'liked'}`} tone={t.tone === 'negative' ? 'warning' : 'success'} />
+            {t.snippets.length ? (
+              t.snippets.map(x => (
+                <AppText key={x} variant="body">
+                  {`“${x}”`}
+                </AppText>
+              ))
+            ) : (
+              <AppText variant="small" tone="muted">
+                No lines to show for this theme.
+              </AppText>
+            )}
+            <AppText variant="caption" tone="muted">
+              Names and numbers are taken out of the reviews first.
+            </AppText>
+          </View>
+        </Card>
+      ) : (
+        <EmptyState icon="message-square" title="This theme has moved on" body="Open the week’s themes again to see the latest." />
+      )}
+      <TextAction label="Reply on your reviews page" icon="chatbubble-outline" onPress={() => navigation.navigate('VendorReviews')} />
     </ScreenShell>
   );
 };

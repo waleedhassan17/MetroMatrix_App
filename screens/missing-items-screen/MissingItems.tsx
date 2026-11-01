@@ -76,7 +76,7 @@ const MissingItemsContent: React.FC<Props> = ({ route }) => {
           <View style={styles.gap}>
             <View style={styles.tight}>
               <AppText variant="title">{m.name}</AppText>
-              <AppText variant="small" tone="muted">{`The recipe needs ${formatQty(m.need.qty, m.need.unit)}`}</AppText>
+              {m.need ? <AppText variant="small" tone="muted">{`The recipe needs ${formatQty(m.need.qty, m.need.unit)}`}</AppText> : null}
             </View>
             {!m.options.length ? (
               <AppText variant="small" tone="muted">

@@ -62,7 +62,7 @@ export const fetchItemSheet = async (id: string): Promise<unknown> => {
   }
 };
 
-/** `nutrition`: only dishes under 600 kcal or high in protein (Kitchen Intelligence, TODO(API_KITCHEN)). */
+/** `nutrition`: only dishes under 600 kcal or high in protein (Kitchen Intelligence, docs/API_KITCHEN.md). */
 export const searchFood = async (q: string, lat: number, lng: number, nutrition?: 'under_600' | 'high_protein' | null): Promise<unknown> => {
   try {
     const response = await API.GET({ URL: '/food/search', params: { q, ...point(lat, lng), ...(nutrition ? { nutrition } : null) } });

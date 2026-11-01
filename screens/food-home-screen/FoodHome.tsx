@@ -8,7 +8,7 @@
 // commission, so the fee shown is the vendor's own.
 
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useServiceNav } from '../../hooks/useServiceNav';
@@ -16,9 +16,7 @@ import { usePagedList } from '../../hooks/usePagedList';
 import { fetchVendors } from '../../networks/food/discovery';
 import { RAILS, pointOfAddress } from '../../models/food/discoveryModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Divider, EmptyState, IconButton, IonIcon, InlineNotice, ListRow, MciIcon, PageHeader, Sheet, Skeleton, TiffinPlanCard } from '../../Custom-Components/index';
-import { planCardData } from '../../models/kitchen/tiffinModel';
-import { formatPKR } from '../../utils/money/money';
+import { AppText, Button, Card, Divider, EmptyState, IconButton, IonIcon, InlineNotice, ListRow, MciIcon, PageHeader, Sheet, Skeleton } from '../../Custom-Components/index';
 import { loadNutritionSettingsAsync, selectNutritionSettings } from '../nutrition-settings-screen/nutritionSettingsSlice';
 import { VendorCard } from '../../Custom-Components/food/VendorCard';
 import { CuisineRail, FoodHomeSkeleton, FoodSearchButton, FoodSection, SurplusRail, VendorRail } from '../../Components/food/FoodParts';
@@ -109,13 +107,10 @@ const FoodHomeContent: React.FC = () => {
     </FoodSection>
   ) : null;
 
-  const tiffinRail = s.tiffins.length ? (
+  // Kitchen Intelligence's rails: a tiffin with a free place, iftar hours today (the vendor page shows the plans and hours).
+  const tiffinRail = home?.tiffinNearYou.length ? (
     <FoodSection title="Home-cooked tiffins" subtitle="The same meal on set days, paid to the kitchen by the week or month">
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
-        {s.tiffins.slice(0, 8).map(t => (
-          <TiffinPlanCard key={t.id} plan={planCardData(t)} rail onPress={() => navigation.navigate('FoodTiffinPlan', { id: t.id })} />
-        ))}
-      </ScrollView>
+      <VendorRail vendors={home.tiffinNearYou} onOpen={open} />
     </FoodSection>
   ) : null;
 
@@ -138,45 +133,14 @@ const FoodHomeContent: React.FC = () => {
 
   const healthyRail =
     showCalories && s.healthy.length ? (
-      <FoodSection title="Healthy picks" subtitle="Under 600 kcal, or high in protein (estimated, per person)">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
-          {s.healthy.map(h => (
-            <Card key={h.itemId} onPress={() => navigation.navigate('FoodVendor', { slug: h.vendor.slug, dish: h.itemId })} accessibilityLabel={`${h.name} from ${h.vendor.name}, ${h.kcal} kcal, ${h.protein} grams protein`}>
-              <View style={styles.pick}>
-                <AppText variant="bodyStrong" numberOfLines={2}>
-                  {h.name}
-                </AppText>
-                <AppText variant="small" tone="muted" numberOfLines={1}>
-                  {h.vendor.name}
-                </AppText>
-                <AppText variant="small">{`${h.kcal.toLocaleString('en-US')} kcal · ${h.protein} g protein`}</AppText>
-                <AppText variant="small" tone="accentDeep">
-                  {formatPKR(h.price)}
-                </AppText>
-              </View>
-            </Card>
-          ))}
-        </ScrollView>
+      <FoodSection title="Lighter choices" subtitle="Kitchens with dishes under 600 kcal (estimated, per person)">
+        <VendorRail vendors={s.healthy} onOpen={open} />
       </FoodSection>
     ) : null;
 
-  const iftarRail = s.iftar.length ? (
-    <FoodSection title="Iftar near you" subtitle="Kitchens keeping Ramadan hours">
-      <View style={styles.padded}>
-        <Card padded="horizontal">
-          {s.iftar.slice(0, 6).map((k, n) => (
-            <View key={k.vendorId}>
-              {n ? <Divider /> : null}
-              <ListRow
-                title={k.name}
-                subtitle={`Iftar ${k.iftar.label}${k.preorderOnly ? ' · order ahead' : ''}${k.distanceKm !== null ? ` · ${k.distanceKm} km` : ''}`}
-                leftIcon="moon-outline"
-                onPress={() => navigation.navigate('FoodVendor', { slug: k.slug })}
-              />
-            </View>
-          ))}
-        </Card>
-      </View>
+  const iftarRail = home?.iftarNearYou.length ? (
+    <FoodSection title="Iftar near you" subtitle="Kitchens keeping Ramadan hours today">
+      <VendorRail vendors={home.iftarNearYou} onOpen={open} />
     </FoodSection>
   ) : null;
 

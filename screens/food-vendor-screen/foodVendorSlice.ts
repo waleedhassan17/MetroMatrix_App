@@ -6,10 +6,12 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchVendorPage } from '../../networks/food/discovery';
+import { fetchTiffinPlans } from '../../networks/foodGrowth/tiffin';
+import { fetchCateringVendor } from '../../networks/foodGrowth/catering';
 import { toRejectedValue } from '../../networks/network/network';
 import type { VendorPage } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { vendorPageSerializer } from '../../serializers/food/discoverySerializer';
+import { vendorPageWithKitchenSerializer } from '../../serializers/kitchen/growthSerializer';
 
 export interface VendorPageEntry {
   page: VendorPage | null;
@@ -31,7 +33,9 @@ export const foodVendorSlice = createAppSlice({
     loadVendorPageAsync: create.asyncThunk(
       async ({ slug, at }: { slug: string; at: { lat: number; lng: number } | null }, { rejectWithValue }) => {
         try {
-          return await fetchVendorPage(slug, at);
+          // The page, and Kitchen Intelligence's own reads beside it (a kitchen without them is the same page).
+          const [page, tiffinPlans, catering] = await Promise.all([fetchVendorPage(slug, at), fetchTiffinPlans(slug).catch(() => null), fetchCateringVendor(slug).catch(() => null)]);
+          return { page, tiffinPlans, catering };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -43,7 +47,7 @@ export const foodVendorSlice = createAppSlice({
           e.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = vendorPageSerializer(action.payload);
+          const payload = vendorPageWithKitchenSerializer(action.payload);
           state.bySlug[action.meta.arg.slug] = { page: payload, status: 'succeeded', error: NO_ERROR };
         },
         rejected: (state, action) => {

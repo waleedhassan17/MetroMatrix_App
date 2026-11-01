@@ -3,11 +3,13 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { fetchMissingItems } from '../../networks/myKitchen/recipes';
-import { toRejectedValue } from '../../networks/network/network';
+import { fetchMissingItems, suggestHomeRecipes } from '../../networks/myKitchen/recipes';
+import { required, toRejectedValue } from '../../networks/network/network';
 import type { MissingItem } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { missingItemsSerializer } from '../../serializers/myKitchen/myKitchenSerializer';
+import { homeRecipeSerializer, missingItemsSerializer } from '../../serializers/myKitchen/myKitchenSerializer';
+import type { HomeRecipeSliceState } from '../home-recipe-screen/homeRecipeSlice';
+import type { RecipeIdeasSliceState } from '../recipe-ideas-screen/recipeIdeasSlice';
 
 export interface MissingItemsSliceState {
   recipeId: string | null;
@@ -28,9 +30,13 @@ export const missingItemsSlice = createAppSlice({
       if (!state.added.includes(action.payload)) state.added.push(action.payload);
     }),
     loadMissingItemsAsync: create.asyncThunk(
-      async ({ id, servings }: { id: string; servings: number | null }, { rejectWithValue }) => {
+      async ({ id }: { id: string; servings: number | null }, { getState, rejectWithValue }) => {
+        // The recipe's missing names: from the recipe or ideas already read, else the suggestions again.
+        const st = getState() as { homeRecipe: HomeRecipeSliceState; recipeIdeas: RecipeIdeasSliceState };
+        const known = st.homeRecipe.recipe?.id === id ? st.homeRecipe.recipe.ingredients.filter(i => !i.have).map(i => i.name) : st.recipeIdeas.ideas.find(r => r.id === id)?.missing;
         try {
-          return await fetchMissingItems(id, servings);
+          const names = known ?? required(homeRecipeSerializer(await suggestHomeRecipes(), id)).ingredients.filter(i => !i.have).map(i => i.name);
+          return await fetchMissingItems(names);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

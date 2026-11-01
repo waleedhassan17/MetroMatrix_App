@@ -29,7 +29,7 @@ import type { PauseReason } from '../../models/kitchen';
 import { arr, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 
 export const KITCHEN_KINDS: readonly KitchenKind[] = ['restaurant', 'home_kitchen', 'cloud_kitchen'];
-/** TODO(API_KITCHEN): the pause body's `reason` (docs/API_KITCHEN_ASSUMED.md, additions). */
+/** The outage pause's reasons (docs/API_KITCHEN.md §9): the kitchen's own note, never shown to customers. */
 const PAUSE_REASONS: readonly PauseReason[] = ['gas', 'electricity', 'weather', 'staff', 'stock', 'other'];
 const ACCOUNT_KINDS: readonly PaymentAccountKind[] = ['raast', 'jazzcash', 'easypaisa', 'bank'];
 
@@ -104,7 +104,7 @@ const branchSerializer = (raw: unknown): VendorBranch => {
     isPaused: bool(r.isPaused),
     pauseMessage: strOrNull(r.pauseMessage),
     pauseReason: r.pauseReason ? oneOf(r.pauseReason, PAUSE_REASONS, 'other') : null,
-    resumeAt: isoOrNull(r.resumeAt),
+    resumeAt: isoOrNull(r.autoResumeAt ?? r.resumeAt),
     busy: busySerializer(r.busy),
     openState: openStateSerializer(r.openState),
   };

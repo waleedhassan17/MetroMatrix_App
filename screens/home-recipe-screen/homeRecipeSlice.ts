@@ -1,8 +1,8 @@
-// MetroMatrix — My Kitchen: one recipe, in English or Urdu, scaled to how
-// many it's for, with what the kitchen has marked.
+// MetroMatrix — My Kitchen: one suggested recipe (its pantry items, what's
+// missing, the steps), read from the suggestions (cached on the server).
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { fetchHomeRecipe } from '../../networks/myKitchen/recipes';
+import { suggestHomeRecipes } from '../../networks/myKitchen/recipes';
 import { toRejectedValue } from '../../networks/network/network';
 import type { HomeRecipe } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -21,9 +21,9 @@ export const homeRecipeSlice = createAppSlice({
   initialState,
   reducers: create => ({
     loadHomeRecipeAsync: create.asyncThunk(
-      async ({ id, language, servings }: { id: string; language: 'en' | 'ur'; servings: number | null }, { rejectWithValue }) => {
+      async (_: { id: string; language: 'en' | 'ur'; servings: number | null }, { rejectWithValue }) => {
         try {
-          return await fetchHomeRecipe(id, language, servings);
+          return await suggestHomeRecipes();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -32,12 +32,13 @@ export const homeRecipeSlice = createAppSlice({
         pending: (state, action) => {
           state.status = 'loading';
           state.error = NO_ERROR;
-          if (state.recipe?.id !== action.meta.arg.id || state.recipe?.language !== action.meta.arg.language) state.recipe = null;
+          if (state.recipe?.id !== action.meta.arg.id) state.recipe = null;
         },
         fulfilled: (state, action) => {
-          const payload = homeRecipeSerializer(action.payload);
-          state.status = 'succeeded';
+          const payload = homeRecipeSerializer(action.payload, action.meta.arg.id);
+          state.status = payload ? 'succeeded' : 'failed';
           state.recipe = payload;
+          if (!payload) state.error = { ...NO_ERROR, code: 'NOT_FOUND', message: 'That recipe isn’t suggested any more. Your pantry has changed.' };
         },
         rejected: (state, action) => {
           state.status = 'failed';

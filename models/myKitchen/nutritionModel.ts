@@ -17,7 +17,13 @@ export const GOAL: Record<NutritionGoal, { label: string; hint: string }> = {
 };
 export const GOALS = Object.keys(GOAL) as NutritionGoal[];
 
-export const ACTIVITY: Record<Activity, string> = { low: 'Mostly sitting', moderate: 'On my feet some of the day', high: 'Active most days' };
+export const ACTIVITY: Record<Activity, string> = {
+  sedentary: 'Mostly sitting',
+  light: 'A little walking',
+  moderate: 'On my feet some of the day',
+  active: 'Active most days',
+  very_active: 'Hard physical work or training',
+};
 export const ACTIVITIES = Object.keys(ACTIVITY) as Activity[];
 
 export interface MetricsForm {

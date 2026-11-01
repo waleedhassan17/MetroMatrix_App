@@ -3,46 +3,54 @@
 // fewer boxes, and ending it early. Every move reads the box again.
 
 import { createAppSlice } from '../../store/createAppSlice';
-import { collectReservation, confirmBoxPayment, endBox, fetchBox, markNoShow, rejectBoxPayment, updateBox } from '../../networks/kitchen/surplus';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { cancelBox, collectReservation, confirmBoxPayment, fetchBoxReservations, fetchBoxes, markNoShow, rejectBoxPayment, updateBox } from '../../networks/kitchen/surplus';
+import { toRejectedValue } from '../../networks/network/network';
 import type { SurplusBoxDetail } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { reservationSerializer, surplusBoxSerializer, surplusBoxDetailSerializer } from '../../serializers/kitchen/surplusSerializer';
+import { surplusBoxDetailSerializer } from '../../serializers/kitchen/surplusSerializer';
 
+/** Reservation moves name the reservation (`id`); collecting also checks the code the customer shows. */
 export type BoxAct =
-  | { kind: 'collect'; code: string }
-  | { kind: 'no-show'; code: string }
-  | { kind: 'confirm-payment'; code: string }
-  | { kind: 'reject-payment'; code: string; reason: string }
+  | { kind: 'collect'; id: string; code: string }
+  | { kind: 'no-show'; id: string }
+  | { kind: 'confirm-payment'; id: string }
+  | { kind: 'reject-payment'; id: string; reason: string }
   | { kind: 'quantity'; quantity: number }
-  | { kind: 'end' };
+  /** `taken`: boxes already reserved or collected. With none, the box comes down; else it closes at that. */
+  | { kind: 'end'; taken: number };
 
 export interface BoxSliceState {
   box: SurplusBoxDetail | null;
   status: FormStatus;
   error: ServerError;
-  /** The reservation code (or 'box') a move is in flight for. */
+  /** The reservation id (or 'box') a move is in flight for. */
   acting: string | null;
   actionError: ServerError;
 }
 
 const initialState: BoxSliceState = { box: null, status: 'idle', error: NO_ERROR, acting: null, actionError: NO_ERROR };
 
-const run = (id: string, a: BoxAct) => {
+const run = (id: string, a: BoxAct): Promise<unknown> => {
   switch (a.kind) {
     case 'collect':
-      return collectReservation(a.code).then(raw => required(reservationSerializer(raw)));
+      return collectReservation(a.id, a.code);
     case 'no-show':
-      return markNoShow(a.code).then(raw => required(reservationSerializer(raw)));
+      return markNoShow(a.id);
     case 'confirm-payment':
-      return confirmBoxPayment(a.code).then(raw => required(reservationSerializer(raw)));
+      return confirmBoxPayment(a.id);
     case 'reject-payment':
-      return rejectBoxPayment(a.code, a.reason).then(raw => required(reservationSerializer(raw)));
+      return rejectBoxPayment(a.id, a.reason);
     case 'quantity':
-      return updateBox(id, { quantity: a.quantity }).then(raw => required(surplusBoxSerializer(raw)));
+      return updateBox(id, { quantity: a.quantity });
     case 'end':
-      return endBox(id).then(raw => required(surplusBoxSerializer(raw)));
+      return a.taken > 0 ? updateBox(id, { quantity: a.taken }) : cancelBox(id);
   }
+};
+
+/** The box (from the kitchen's list; there is no single read) and its reservations. */
+const readBox = async (id: string) => {
+  const [boxes, reservations] = await Promise.all([fetchBoxes(), fetchBoxReservations(id)]);
+  return { boxes, reservations };
 };
 
 export const boxSlice = createAppSlice({
@@ -52,7 +60,7 @@ export const boxSlice = createAppSlice({
     loadBoxAsync: create.asyncThunk(
       async (id: string, { rejectWithValue }) => {
         try {
-          return await fetchBox(id);
+          return await readBox(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -64,9 +72,10 @@ export const boxSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = surplusBoxDetailSerializer(action.payload);
-          state.status = 'succeeded';
+          const payload = surplusBoxDetailSerializer(action.payload, action.meta.arg);
+          state.status = payload ? 'succeeded' : 'failed';
           state.box = payload;
+          if (!payload) state.error = { ...NO_ERROR, code: 'NOT_FOUND', message: 'This Bachat Box isn’t one of yours any more.' };
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -78,7 +87,7 @@ export const boxSlice = createAppSlice({
       async ({ id, act }: { id: string; act: BoxAct }, { rejectWithValue }) => {
         try {
           await run(id, act);
-          return await fetchBox(id);
+          return await readBox(id);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -86,13 +95,13 @@ export const boxSlice = createAppSlice({
       {
         pending: (state, action) => {
           const a = action.meta.arg.act;
-          state.acting = 'code' in a ? a.code : 'box';
+          state.acting = 'id' in a ? a.id : 'box';
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = surplusBoxDetailSerializer(action.payload);
+          const payload = surplusBoxDetailSerializer(action.payload, action.meta.arg.id);
           state.acting = null;
-          state.box = payload;
+          if (payload) state.box = payload;
         },
         rejected: (state, action) => {
           state.acting = null;

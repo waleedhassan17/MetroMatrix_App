@@ -1,15 +1,14 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Food Growth Storefront Network (API_KITCHEN_ASSUMED.md)
+// MetroMatrix — Storefront Network (docs/API_KITCHEN.md §22)
 // ═══════════════════════════════════════════════════════
 // The kitchen's own link and QR, and the orders they brought.
-// docs/API_KITCHEN_ASSUMED.md §2.12 (TODO(API_KITCHEN): an assumed contract). The public page
-// itself is the ordinary vendor page (`GET /food/vendors/:slug`).
 
 import { API, toApiError } from '../network/network';
 
-export const fetchStorefront = async (): Promise<unknown> => {
+/** `days` 7–90 (default 30). */
+export const fetchStorefront = async (days = 30): Promise<unknown> => {
   try {
-    const response = await API.GET({ URL: '/food/vendor/storefront' });
+    const response = await API.GET({ URL: '/food/vendor/storefront', params: { days } });
     return response.data;
   } catch (e) {
     throw toApiError(e);

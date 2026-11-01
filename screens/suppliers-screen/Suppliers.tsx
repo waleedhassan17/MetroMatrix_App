@@ -12,6 +12,7 @@ import { ServiceScope, useStyles, type Theme } from '../../theme/index';
 import { Button, EmptyState, InlineNotice, ScreenShell, Sheet, SkeletonLines, TextAction, TextField } from '../../Custom-Components/index';
 import { RowCard } from '../../Components/admin/AdminParts';
 import { formatDayFull } from '../../utils/health-time/healthTime';
+import { formatPKR } from '../../utils/money/money';
 import { haptics } from '../../utils/haptics/haptics';
 import { deleteSupplierAsync, editSupplier, loadSuppliersAsync, saveSupplierAsync, selectSuppliers, setSupplierDraft } from './suppliersSlice';
 
@@ -63,7 +64,7 @@ const SuppliersContent: React.FC = () => {
           <RowCard
             title={x.name}
             mark={{ name: x.name }}
-            lines={[x.phone, x.note, x.purchaseCount ? `${x.purchaseCount} ${x.purchaseCount === 1 ? 'purchase' : 'purchases'}${x.lastPurchaseOn ? `, last on ${formatDayFull(x.lastPurchaseOn)}` : ''}` : 'No purchases yet']}
+            lines={[x.phone, x.note, x.spent30d ? `${formatPKR(x.spent30d)} in the last 30 days${x.lastPurchaseOn ? `, last on ${formatDayFull(x.lastPurchaseOn)}` : ''}` : x.lastPurchaseOn ? `Last bought on ${formatDayFull(x.lastPurchaseOn)}` : 'No purchases yet']}
             onPress={() => dispatch(editSupplier({ id: x.id, name: x.name, phone: x.phone ?? '', note: x.note ?? '' }))}
           />
         )}

@@ -5,7 +5,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchStock } from '../../networks/kitchen/stock';
-import { fetchRecipes } from '../../networks/kitchen/recipes';
+import { fetchCosting } from '../../networks/kitchen/recipes';
 import { logWaste } from '../../networks/kitchen/waste';
 import { toRejectedValue } from '../../networks/network/network';
 import { dishLine, ingredientLine, wasteDraftFromVoice, type WasteDraftLine } from '../../models/kitchen/wasteModel';
@@ -14,7 +14,7 @@ import type { ValidationErrors } from '../../models/authModel';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { stockListSerializer } from '../../serializers/kitchen/stockSerializer';
 import { recipeListSerializer } from '../../serializers/kitchen/recipeSerializer';
-import { wasteSerializer } from '../../serializers/kitchen/wasteSerializer';
+import { wasteSerializer, wasteBatchSerializer } from '../../serializers/kitchen/wasteSerializer';
 
 export interface WasteFormSliceState {
   ingredients: Ingredient[];
@@ -87,7 +87,7 @@ export const wasteFormSlice = createAppSlice({
     loadWasteFormAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [stock, recipes] = await Promise.all([fetchStock('all', ''), fetchRecipes(false)]);
+          const [stock, recipes] = await Promise.all([fetchStock('all', ''), fetchCosting()]);
           return { stock, recipes };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -102,7 +102,7 @@ export const wasteFormSlice = createAppSlice({
           const seen = new Set<string>();
           state.status = 'succeeded';
           state.ingredients = stockListSerializer(action.payload.stock)?.items ?? [];
-          state.dishes = (recipeListSerializer(action.payload.recipes)?.items ?? [])
+          state.dishes = (recipeListSerializer({ costing: action.payload.recipes })?.items ?? [])
             .filter(r => !seen.has(r.itemId) && seen.add(r.itemId))
             .map(r => ({ itemId: r.itemId, name: r.name }));
         },
@@ -117,7 +117,10 @@ export const wasteFormSlice = createAppSlice({
       async (input: WasteLineInput[], { getState, rejectWithValue }) => {
         const note = (getState() as { wasteForm: WasteFormSliceState }).wasteForm.note.trim();
         try {
-          return await logWaste(input, note || undefined);
+          // One entry per line, as the API keeps them; the note goes on each.
+          const saved: unknown[] = [];
+          for (const line of input) saved.push(await logWaste(line, note || undefined));
+          return saved;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -130,7 +133,7 @@ export const wasteFormSlice = createAppSlice({
           state.lineErrors = {};
         },
         fulfilled: (state, action) => {
-          const payload = wasteSerializer(action.payload);
+          const payload = wasteBatchSerializer(action.payload);
           state.saving = false;
           state.saved = payload;
         },

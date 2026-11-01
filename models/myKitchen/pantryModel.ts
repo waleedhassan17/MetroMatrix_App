@@ -68,12 +68,12 @@ export const pantryLineOf = (f: PantryForm, today: string): PantryLineInput => (
 /** The units that fit a thing already in the pantry (to use some of it). */
 export const unitsOfItem = (unit: BaseUnit): StandardUnit[] => unitsFor(unit);
 
-/** "7 things saved from waste this month" (nothing to say before the first). */
+/** "7 things saved from waste in the last 30 days" (nothing to say before the first). */
 export const statsLine = (s: Pick<PantryStats, 'savedFromWaste' | 'used'>) =>
   s.savedFromWaste
-    ? `${s.savedFromWaste} ${s.savedFromWaste === 1 ? 'thing' : 'things'} saved from waste this month`
+    ? `${s.savedFromWaste} ${s.savedFromWaste === 1 ? 'thing' : 'things'} saved from waste in the last 30 days`
     : s.used
-      ? `${s.used} ${s.used === 1 ? 'thing' : 'things'} used up this month`
+      ? `${s.used} ${s.used === 1 ? 'thing' : 'things'} used up in the last 30 days`
       : 'Use what expires first, and it counts here.';
 
 /** "Rs 160 · 1 kg · Rs 160 / kg". */

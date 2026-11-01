@@ -46,7 +46,7 @@ const FoodCateringRequestsContent: React.FC<Props> = ({ navigation }) => {
       {s.status === 'loading' && !s.items.length ? (
         <SkeletonLines lines={6} />
       ) : !s.items.length && s.status === 'succeeded' ? (
-        <EmptyState icon="users" title="No dawat requests yet" body="Planning a mehndi, an aqiqah or an office lunch? Ask a kitchen from its page: “Plan a dawat”." />
+        <EmptyState icon="users" title="No dawat requests yet" body="Planning a dawat, a wedding or an office lunch? Ask a kitchen from its page: “Plan a dawat”." />
       ) : (
         <View style={styles.list}>
           {s.items.map(r => {

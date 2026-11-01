@@ -1,38 +1,36 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Admin Kitchen: city prices slice
 // ═══════════════════════════════════════════════════════
-// A city's latest week of reference prices (what Price watch compares a
-// kitchen's purchases with), and the CSV import: a dry run, then the import.
+// The PBS items Price watch compares a kitchen's purchases with (in how many
+// cities, the latest week loaded), and the CSV import: a dry run, then the import.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { fetchReferencePrices, importReferencePrices } from '../../networks/admin/adminKitchen';
+import { fetchReferenceItems, importReferencePrices } from '../../networks/admin/adminKitchen';
 import { toRejectedValue } from '../../networks/network/network';
-import type { CsvImportResult, PriceImportRow, ReferencePriceList } from '../../models';
+import type { CsvImportResult, ReferenceItem } from '../../models';
 import {
   NO_ERROR,
   readRejection,
   type FormStatus,
   type ServerError,
 } from '../shared/formStatus';
-import { referencePricesSerializer, priceImportSerializer } from '../../serializers/kitchen/adminKitchenSerializer';
+import { referenceItemsSerializer, priceImportSerializer } from '../../serializers/kitchen/adminKitchenSerializer';
 
 export interface AdminKitchenPricesSliceState {
-  city: string | null;
   q: string;
-  list: ReferencePriceList | null;
+  list: ReferenceItem[] | null;
   status: FormStatus;
   error: ServerError;
   csv: string;
   fileName: string | null;
-  result: CsvImportResult<PriceImportRow> | null;
+  result: CsvImportResult | null;
   checking: boolean;
   importing: boolean;
   importError: ServerError;
 }
 
 const initialState: AdminKitchenPricesSliceState = {
-  city: null,
   q: '',
   list: null,
   status: 'idle',
@@ -49,8 +47,7 @@ export const adminKitchenPricesSlice = createAppSlice({
   name: 'adminKitchenPrices',
   initialState,
   reducers: create => ({
-    setPricesFilter: create.reducer((state, action: PayloadAction<{ city?: string; q?: string }>) => {
-      if (action.payload.city !== undefined) state.city = action.payload.city;
+    setPricesFilter: create.reducer((state, action: PayloadAction<{ q?: string }>) => {
       if (action.payload.q !== undefined) state.q = action.payload.q;
     }),
     setPricesCsv: create.reducer((state, action: PayloadAction<{ csv: string; fileName?: string | null }>) => {
@@ -65,9 +62,9 @@ export const adminKitchenPricesSlice = createAppSlice({
     }),
 
     loadPricesAsync: create.asyncThunk(
-      async (q: { city?: string | null; q?: string }, { rejectWithValue }) => {
+      async (q: { q?: string }, { rejectWithValue }) => {
         try {
-          return await fetchReferencePrices({ city: q.city ?? undefined, q: q.q?.trim() || undefined });
+          return await fetchReferenceItems(q.q ?? '');
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -78,10 +75,8 @@ export const adminKitchenPricesSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = referencePricesSerializer(action.payload);
           state.status = 'succeeded';
-          state.list = payload;
-          state.city = payload.city;
+          state.list = referenceItemsSerializer(action.payload);
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -116,10 +111,10 @@ export const adminKitchenPricesSlice = createAppSlice({
     ),
 
     importPricesCsvAsync: create.asyncThunk(
-      async (input: { csv: string; city: string | null }, { rejectWithValue }) => {
+      async (input: { csv: string }, { rejectWithValue }) => {
         try {
           const result = await importReferencePrices(input.csv, false);
-          return { result, list: await fetchReferencePrices({ city: input.city ?? undefined }) };
+          return { result, list: await fetchReferenceItems() };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -132,7 +127,7 @@ export const adminKitchenPricesSlice = createAppSlice({
         fulfilled: (state, action) => {
           state.importing = false;
           state.result = priceImportSerializer(action.payload.result);
-          state.list = referencePricesSerializer(action.payload.list);
+          state.list = referenceItemsSerializer(action.payload.list);
           state.q = '';
           state.csv = '';
           state.fileName = null;

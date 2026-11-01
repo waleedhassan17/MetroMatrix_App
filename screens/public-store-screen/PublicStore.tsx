@@ -100,7 +100,7 @@ const PublicStoreContent: React.FC<Props> = ({ navigation, route }) => {
         <Card>
           <View style={styles.section}>
             <AppText variant="title">Ramadan hours</AppText>
-            <AppText variant="small">{`Sehri ${windowText(page.ramadan.sehri)} · Iftar ${windowText(page.ramadan.iftar)}`}</AppText>
+            <AppText variant="small">{[page.ramadan.sehri ? `Sehri ${windowText(page.ramadan.sehri)}` : null, page.ramadan.iftar ? `Iftar ${windowText(page.ramadan.iftar)}` : null].filter(Boolean).join(' · ')}</AppText>
           </View>
         </Card>
       ) : null}

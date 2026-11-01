@@ -1,53 +1,63 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — My Kitchen Nutrition Network (API_KITCHEN_ASSUMED.md)
+// MetroMatrix — My Nutrition Network (docs/API_KITCHEN.md §34)
 // ═══════════════════════════════════════════════════════
-// Food Court's healthy picks.
-// docs/API_KITCHEN_ASSUMED.md §2.15 (TODO(API_KITCHEN): an assumed contract).
+// The opt-in profile (no profile: nutrition is off; deleting it removes all
+// of it), the summary of food ordered on MetroMatrix, and kitchens with
+// lighter dishes. No kitchen ever reads any of it.
 
-import { API, toApiError } from '../network/network';
-import type { NutritionSettings } from '../../models/myKitchen';
+import { API, toApiError, clean } from '../network/network';
+import type { BodyMetrics, NutritionGoal } from '../../models/myKitchen';
 
-export const fetchNutritionSettings = async (): Promise<unknown> => {
+/** 404 NOT_FOUND when there is no profile (nutrition is off). */
+export const fetchNutritionProfile = async (): Promise<unknown> => {
   try {
-    const response = await API.GET({ URL: '/my-kitchen/nutrition/settings' });
+    const response = await API.GET({ URL: '/food/me/nutrition/profile' });
     return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
-export const saveNutritionSettings = async (patch: Partial<Pick<NutritionSettings, 'enabled' | 'showCalories' | 'goal' | 'metrics' | 'manualTargetKcal'>>): Promise<unknown> => {
+/** Your own target, or the Mifflin-St Jeor one from your details, or none ("eat better": maintain, no target). */
+export const saveNutritionProfile = async (input: { goal: NutritionGoal; metrics: BodyMetrics | null; manualTargetKcal: number | null; showCalories: boolean }): Promise<unknown> => {
   try {
-    const response = await API.PUT({ URL: '/my-kitchen/nutrition/settings', data: patch });
+    const data = {
+      goal: input.goal === 'eat_better' ? 'maintain' : input.goal,
+      showCalories: input.showCalories,
+      ...(input.manualTargetKcal ? { manualTargetKcal: input.manualTargetKcal } : {}),
+      ...(input.goal !== 'eat_better' && !input.manualTargetKcal && input.metrics ? clean({ ...input.metrics }) : {}),
+    };
+    const response = await API.PUT({ URL: '/food/me/nutrition/profile', data });
     return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
-/** Everything: settings and body numbers. */
-export const deleteNutritionData = async (): Promise<unknown> => {
+/** "Delete my nutrition data": the profile row goes. */
+export const deleteNutritionProfile = async (): Promise<unknown> => {
   try {
-    const response = await API.DELETE({ URL: '/my-kitchen/nutrition' });
+    const response = await API.DELETE({ URL: '/food/me/nutrition/profile' });
     return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
-/** `409 NUTRITION_OFF` while nutrition is off. */
-export const fetchNutritionSummary = async (days = 7): Promise<unknown> => {
+/** Estimated, from delivered and picked-up food orders only. */
+export const fetchNutritionSummary = async (range: '7d' | '30d' = '7d'): Promise<unknown> => {
   try {
-    const response = await API.GET({ URL: '/my-kitchen/nutrition/summary', params: { days } });
+    const response = await API.GET({ URL: '/food/me/nutrition/summary', params: { range } });
     return response.data;
   } catch (e) {
     throw toApiError(e);
   }
 };
 
+/** Kitchens near you with at least one visible dish under 600 kcal. */
 export const fetchHealthyPicks = async (point: { lat: number; lng: number }): Promise<unknown> => {
   try {
-    const response = await API.GET({ URL: '/food/healthy-picks', params: point });
+    const response = await API.GET({ URL: '/food/vendors', params: { lat: point.lat, lng: point.lng, maxKcal: 600 } });
     return response.data;
   } catch (e) {
     throw toApiError(e);

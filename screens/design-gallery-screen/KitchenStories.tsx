@@ -48,7 +48,8 @@ const CARDS: InsightCardData[] = [
 const ing = (over: Partial<Ingredient>): Ingredient => ({
   id: 'i',
   name: 'Tomato',
-  category: 'vegetables',
+  nameUr: null,
+  category: 'vegetable',
   baseUnit: 'g',
   dozens: false,
   customUnits: [],
@@ -65,16 +66,16 @@ const ing = (over: Partial<Ingredient>): Ingredient => ({
 });
 
 const STOCK: Ingredient[] = [
-  ing({ id: '1', name: 'Chicken (curry cut)', category: 'meat_poultry', onHand: 16000, parLevel: 10000, state: 'ok', expiring: { on: addDays(TODAY, 1), qty: 4000 } }),
+  ing({ id: '1', name: 'Chicken (curry cut)', category: 'meat', onHand: 16000, parLevel: 10000, state: 'ok', expiring: { on: addDays(TODAY, 1), qty: 4000 } }),
   ing({ id: '2', name: 'Yoghurt', category: 'dairy', onHand: 1500, parLevel: 4000, state: 'low', expiring: { on: addDays(TODAY, 2), qty: 1500 } }),
   ing({ id: '3', name: 'Cream', category: 'dairy', onHand: -200, parLevel: 1000, state: 'negative' }),
   ing({ id: '4', name: 'Eggs', baseUnit: 'pc', dozens: true, onHand: 24, parLevel: 36, state: 'low' }),
 ];
 
 const FORECAST: ForecastItem[] = [
-  { itemId: 'a', name: 'Chicken Biryani', photoUrl: null, expected: 42, low: 35, high: 49, learning: false, adjusted: null, fixed: { tiffin: 0, catering: 0 }, planned: 42 },
-  { itemId: 'b', name: 'Seekh Kebab (4 pcs)', photoUrl: null, expected: 18, low: 13, high: 24, learning: false, adjusted: 22, fixed: { tiffin: 0, catering: 0 }, planned: 22 },
-  { itemId: 'c', name: 'Chicken qorma with 2 roti', photoUrl: null, expected: 11, low: 5, high: 18, learning: true, adjusted: null, fixed: { tiffin: 4, catering: 0 }, planned: 15 },
+  { id: 'fa', itemId: 'a', name: 'Chicken Biryani', photoUrl: null, expected: 42, low: 35, high: 49, learning: false, adjusted: null, fixed: 0, planned: 42 },
+  { id: 'fb', itemId: 'b', name: 'Seekh Kebab (4 pcs)', photoUrl: null, expected: 18, low: 13, high: 24, learning: false, adjusted: 22, fixed: 0, planned: 22 },
+  { id: 'fc', itemId: 'c', name: 'Chicken qorma with 2 roti', photoUrl: null, expected: 11, low: 5, high: 18, learning: true, adjusted: null, fixed: 4, planned: 15 },
 ];
 
 const BOX: SurplusCardData = {
@@ -100,6 +101,7 @@ const RESULT: VoiceResult = {
   action: { kind: 'purchase.add', lines: [{ ingredientId: 'i', key: 'tomato', name: 'Tomato', qty: 5, unit: 'kg', total: 1200 }] },
   alternatives: [],
   heard: 'audio',
+  note: null,
 };
 
 const UNSURE: VoiceResult = {
@@ -110,6 +112,7 @@ const UNSURE: VoiceResult = {
   action: { kind: 'order.accept', orderId: 'o1', code: 'FC-NBNWXT', etaMinutes: null },
   alternatives: [{ transcript: 'accept karo (FC-7KQ2PX)', action: { kind: 'order.accept', orderId: 'o2', code: 'FC-7KQ2PX', etaMinutes: null } }],
   heard: 'text',
+  note: null,
 };
 
 const CELLS = Array.from({ length: 12 }, (_, n) => {

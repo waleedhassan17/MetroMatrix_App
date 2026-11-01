@@ -4,7 +4,7 @@
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchFoodOverview } from '../../networks/admin/adminFood';
-import { fetchHygieneQueue, fetchSignatures } from '../../networks/admin/adminKitchen';
+import { fetchHygieneQueue } from '../../networks/admin/adminKitchen';
 import { toRejectedValue } from '../../networks/network/network';
 import type { AdminFoodOverview } from '../../models';
 import {
@@ -14,8 +14,7 @@ import {
   type ServerError,
 } from '../shared/formStatus';
 import { adminFoodOverviewSerializer } from '../../serializers/food/adminFoodSerializer';
-import { hygieneQueueSerializer } from '../../serializers/kitchen/reachSerializer';
-import { signatureListSerializer } from '../../serializers/kitchen/adminKitchenSerializer';
+import { hygieneQueueSerializer } from '../../serializers/kitchen/adminKitchenSerializer';
 
 export interface FoodOverviewSliceState {
   overview: AdminFoodOverview | null;
@@ -56,12 +55,11 @@ export const foodOverviewSlice = createAppSlice({
       },
     ),
 
-    // TODO(API_KITCHEN): one overview route would serve these counts.
+    // What waits on staff in the Kitchen tools: complete hygiene checklists to verify (signature claims go live on their own).
     loadKitchenWaitingAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          const [hygiene, signatures] = await Promise.all([fetchHygieneQueue('pending'), fetchSignatures('new')]);
-          return { hygiene, signatures };
+          return { hygiene: await fetchHygieneQueue('self_declared') };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -70,7 +68,7 @@ export const foodOverviewSlice = createAppSlice({
         fulfilled: (state, action) => {
           state.kitchen = {
             hygiene: hygieneQueueSerializer(action.payload.hygiene).length,
-            signatures: signatureListSerializer(action.payload.signatures).counts.new,
+            signatures: 0,
           };
         },
       },

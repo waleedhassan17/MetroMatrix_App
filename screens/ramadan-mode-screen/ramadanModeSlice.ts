@@ -47,9 +47,17 @@ export const ramadanModeSlice = createAppSlice({
       },
     ),
     saveRamadanAsync: create.asyncThunk(
-      async (input: RamadanInput, { rejectWithValue }) => {
+      async (input: RamadanInput, { getState, rejectWithValue }) => {
+        // A PUT replaces the whole: what changed, over what is saved.
+        const d = (getState() as { ramadanMode: RamadanModeSliceState }).ramadanMode.data;
+        const win = (w: { from: string; to: string } | undefined) => (w?.from && w.to ? { from: w.from, to: w.to } : undefined);
         try {
-          return await updateRamadan(input);
+          return await updateRamadan({
+            enabled: input.enabled ?? d?.enabled ?? false,
+            sehri: 'sehri' in input ? input.sehri : win(d?.sehri),
+            iftar: 'iftar' in input ? input.iftar : win(d?.iftar),
+            iftarPreorderOnly: input.iftarPreorderOnly ?? d?.iftarPreorderOnly ?? false,
+          });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

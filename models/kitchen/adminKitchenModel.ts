@@ -5,7 +5,7 @@
 // rate said plainly, a reference price per unit, a nutrition food's form,
 // an alias, a calendar event, a signature dish's state, a CSV dry run's
 // summary, and the checks each form runs before it is sent. The limits are
-// the assumed API's own (docs/API_KITCHEN_ASSUMED.md §4.8).
+// the assumed API's own (docs/API_KITCHEN.md §4.8).
 
 import type {
   AliasLanguage,
@@ -15,11 +15,9 @@ import type {
   CsvImportResult,
   NutritionFoodInput,
   NutritionPer,
-  PriceUnit,
-  ReferencePriceList,
+  ReferenceItem,
   SignatureStatus,
 } from '../kitchenAdmin';
-import { formatPKR } from '../../utils/money/money';
 import { formatDayShort } from '../../utils/health-time/healthTime';
 import type { KitchenTone } from './kitchenStatusModel';
 
@@ -47,53 +45,25 @@ export const secondsLabel = (ms: number) => (ms < 100 ? 'under 0.1 s' : `${(ms /
 /** "2% failed", "none failed". */
 export const failedLabel = (failures: number, actions: number) => (!failures ? 'none failed' : `${Math.max(1, Math.round((failures / Math.max(1, actions)) * 100))}% failed`);
 
-export const MAX_QUOTA = 100_000;
 
-/** The plan's monthly assistant actions (docs/AI_ASSUMED.md): a Community kitchen's, a customer's. */
-export const PLAN_LIMIT: Record<'kitchen' | 'customer', number> = { kitchen: 300, customer: 30 };
-
-/** A monthly limit staff type in: a whole number from 0, or empty for the plan's. */
-export const validateQuota = (raw: string): Errors => {
-  const t = raw.trim();
-  if (!t) return {};
-  return /^\d+$/.test(t) && Number(t) <= MAX_QUOTA ? {} : { limit: `A whole number from 0 to ${MAX_QUOTA.toLocaleString('en-US')}` };
-};
-
-export const quotaLine = (o: { usedThisMonth: number; limit: number; override: number | null }) =>
-  `${o.usedThisMonth.toLocaleString('en-US')} of ${o.limit.toLocaleString('en-US')} this month${o.override !== null ? ' · staff limit' : ''}`;
-
-// ── The city price list ──
-export const PRICE_UNIT_LABEL: Record<PriceUnit, string> = { kg: 'kg', l: 'litre', pc: 'piece' };
-
-/** "Rs 171 / kg". */
-export const unitPrice = (price: number, unit: PriceUnit) => `${formatPKR(price)} / ${PRICE_UNIT_LABEL[unit]}`;
-
-/** "Up 22% in 4 weeks", "Down 3% in 4 weeks", "Same as 4 weeks ago", or null with no history. */
-export const changeLine = (pct: number | null) => (pct === null ? null : pct === 0 ? 'Same as 4 weeks ago' : `${pct > 0 ? 'Up' : 'Down'} ${Math.abs(pct)}% in 4 weeks`);
-
-export const changeTone = (pct: number | null): KitchenTone => (pct === null || Math.abs(pct) < 10 ? 'neutral' : pct > 0 ? 'warning' : 'success');
-
-export const weekLine = (l: Pick<ReferencePriceList, 'week' | 'city'>) => (l.week ? `${l.city} · the week of ${formatDayShort(l.week)}` : `${l.city} · no prices yet`);
+/** "Kg · 3 cities · the week ending Thu 15 Oct", or "no prices yet". */
+export const referenceLine = (i: Pick<ReferenceItem, 'unit' | 'cities' | 'latestWeek'>) =>
+  i.latestWeek ? `${i.unit} · ${i.cities} ${i.cities === 1 ? 'city' : 'cities'} · the week ending ${formatDayShort(i.latestWeek)}` : `${i.unit} · no prices yet`;
 
 // ── CSV imports ──
-export const PRICE_COLUMNS = ['key', 'city', 'week', 'price'];
-export const NUTRITION_COLUMNS = ['key', 'name', 'per', 'kcal', 'protein', 'carbs', 'fat'];
+/** The backend's headers (docs/API_KITCHEN.md §13, §36). */
+export const PRICE_COLUMNS = ['week_ending', 'city', 'item', 'unit', 'price'];
+export const NUTRITION_COLUMNS = ['key', 'name', 'name_ur', 'food_group', 'kcal', 'protein_g', 'carbs_g', 'fat_g', 'fibre_g', 'sodium_mg', 'piece_grams'];
 export const MAX_CSV_ROWS = 2000;
 
 /** "3 rows · 1 ready · 2 with problems". */
-export const importSummary = (r: Pick<CsvImportResult<unknown>, 'rows' | 'valid'>) => {
+export const importSummary = (r: Pick<CsvImportResult, 'rows' | 'valid'>) => {
   const bad = r.rows - r.valid;
   return `${r.rows} ${r.rows === 1 ? 'row' : 'rows'} · ${r.valid} ready${bad ? ` · ${bad} with problems` : ''}`;
 };
 
 /** Every row is fine: the import can go. */
-export const canImport = (r: Pick<CsvImportResult<unknown>, 'rows' | 'valid' | 'errors'> | null) => !!r && r.rows > 0 && r.valid === r.rows && !r.errors.length;
-
-export const CHANGE_LABEL: Record<'new' | 'update' | 'same', { label: string; tone: KitchenTone }> = {
-  new: { label: 'New', tone: 'accent' },
-  update: { label: 'Changes', tone: 'warning' },
-  same: { label: 'No change', tone: 'neutral' },
-};
+export const canImport = (r: Pick<CsvImportResult, 'rows' | 'valid' | 'errors'> | null) => !!r && r.rows > 0 && r.valid === r.rows && !r.errors.length;
 
 /** What a CSV needs before it is sent. */
 export const validateCsvText = (csv: string, columns: string[]): Errors => {
@@ -109,7 +79,6 @@ export const validateCsvText = (csv: string, columns: string[]): Errors => {
 
 // ── Nutrition foods ──
 export const PER_LABEL: Record<NutritionPer, string> = { g100: 'per 100 g', ml100: 'per 100 ml', piece: 'per piece' };
-export const PERS: NutritionPer[] = ['g100', 'ml100', 'piece'];
 
 export interface NutritionFoodForm {
   key: string;
@@ -126,40 +95,41 @@ export const emptyNutritionFoodForm = (): NutritionFoodForm => ({ key: '', name:
 export const nutritionFoodFormOf = (f: NutritionFoodInput & { key: string }): NutritionFoodForm => ({
   key: f.key,
   name: f.name,
-  per: f.per,
+  per: 'g100',
   kcal: String(f.kcal),
   protein: String(f.protein),
   carbs: String(f.carbs),
   fat: String(f.fat),
 });
 
-/** "spinach_palak" from "Spinach (palak)". */
+/** "spinach-palak" from "Spinach (palak)". */
 export const foodKeyOf = (name: string) =>
   name
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '')
-    .slice(0, 40);
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
 
 export const validateNutritionFood = (f: NutritionFoodForm, isNew: boolean): Errors => {
   const e: Errors = {};
-  if (isNew && !/^[a-z][a-z0-9_]{1,39}$/.test(f.key.trim())) e.key = 'Lower-case letters, digits and _ (2 to 40)';
+  if (isNew && !/^[a-z0-9][a-z0-9-]{1,59}$/.test(f.key.trim())) e.key = 'Lower-case letters, digits and dashes (2 to 60)';
   const name = f.name.trim();
   if (name.length < 2 || name.length > 60) e.name = 'A name, 2 to 60 characters';
   const check = (field: 'kcal' | 'protein' | 'carbs' | 'fat', max: number) => {
     const v = Number(f[field]);
     if (f[field].trim() === '' || !Number.isFinite(v) || v < 0 || v > max) e[field] = `0 to ${max}`;
   };
-  check('kcal', 2000);
-  check('protein', 200);
-  check('carbs', 200);
-  check('fat', 200);
+  // Per 100 g (the API's limits).
+  check('kcal', 950);
+  check('protein', 100);
+  check('carbs', 100);
+  check('fat', 100);
   return e;
 };
 
+/** Values are per 100 g (the API keeps no other base). */
 export const nutritionFoodInputOf = (f: NutritionFoodForm): NutritionFoodInput => ({
   name: f.name.trim(),
-  per: f.per,
   kcal: Number(f.kcal),
   protein: Number(f.protein),
   carbs: Number(f.carbs),
@@ -171,8 +141,8 @@ export const macrosLine = (f: { per: NutritionPer; kcal: number; protein: number
   `${f.kcal} kcal · ${f.protein} g protein · ${f.carbs} g carbs · ${f.fat} g fat, ${PER_LABEL[f.per]}`;
 
 // ── Aliases ──
-export const ALIAS_LANGUAGE_LABEL: Record<AliasLanguage, string> = { roman_ur: 'Roman Urdu', ur: 'Urdu', en: 'English' };
-export const ALIAS_LANGUAGES: AliasLanguage[] = ['roman_ur', 'ur', 'en'];
+export const ALIAS_LANGUAGE_LABEL: Record<AliasLanguage, string> = { roman: 'Roman Urdu', ur: 'Urdu', en: 'English' };
+export const ALIAS_LANGUAGES: AliasLanguage[] = ['roman', 'ur', 'en'];
 
 export interface AliasForm {
   word: string;
@@ -181,7 +151,7 @@ export interface AliasForm {
   keyName: string;
 }
 
-export const emptyAliasForm = (): AliasForm => ({ word: '', language: 'roman_ur', key: '', keyName: '' });
+export const emptyAliasForm = (): AliasForm => ({ word: '', language: 'roman', key: '', keyName: '' });
 
 export const validateAlias = (f: AliasForm): Errors => {
   const e: Errors = {};
@@ -190,13 +160,13 @@ export const validateAlias = (f: AliasForm): Errors => {
   else if (w.length > 40) e.word = 'Up to 40 characters';
   else if (f.language === 'ur' && !/[؀-ۿ]/.test(w)) e.word = 'Urdu words are written in Urdu script';
   else if (f.language !== 'ur' && /[؀-ۿ]/.test(w)) e.word = 'Pick Urdu for a word in Urdu script';
-  if (!f.key) e.key = 'Pick the ingredient it means';
+  if (!f.key.trim()) e.key = 'The ingredient it means, in English (for example “tomato”)';
   return e;
 };
 
 // ── Calendar events ──
-export const EVENT_KIND_LABEL: Record<CalendarEventKind, string> = { ramadan: 'Ramadan', eid: 'Eid', other: 'Other' };
-export const EVENT_KINDS: CalendarEventKind[] = ['ramadan', 'eid', 'other'];
+export const EVENT_KIND_LABEL: Record<CalendarEventKind, string> = { ramadan: 'Ramadan', eid: 'Eid', public_holiday: 'Public holiday', other: 'Other' };
+export const EVENT_KINDS: CalendarEventKind[] = ['ramadan', 'eid', 'public_holiday', 'other'];
 export const MAX_EVENT_DAYS = 40;
 
 export const EVENT_STATE: Record<CalendarEvent['state'], { label: string; tone: KitchenTone }> = {
@@ -223,15 +193,14 @@ export const validateEvent = (f: CalendarEventInput): Errors => {
 };
 
 // ── Signature dishes ──
+/** A claim is live as soon as a kitchen makes it; staff take one down with a reason. */
 export const SIGNATURE_STATUS: Record<SignatureStatus, { label: string; tone: KitchenTone }> = {
-  new: { label: 'New', tone: 'accent' },
-  approved: { label: 'Kept', tone: 'success' },
+  claimed: { label: 'Live', tone: 'success' },
   removed: { label: 'Taken off', tone: 'neutral' },
 };
 
 export const SIGNATURE_TABS: { key: SignatureStatus; label: string }[] = [
-  { key: 'new', label: 'New' },
-  { key: 'approved', label: 'Kept' },
+  { key: 'claimed', label: 'Live' },
   { key: 'removed', label: 'Taken off' },
 ];
 
@@ -242,5 +211,8 @@ export const validateStaffNote = (note: string): Errors => {
 };
 
 // ── A code looked up ──
+/** A catering code (CT-…), an order code (FC-…), or a tiffin subscription's id. */
 export const validateLookupCode = (code: string): Errors =>
-  /^(TF|CT)-[A-Z0-9]{4,10}$/i.test(code.trim()) ? {} : { code: 'A tiffin code (TF-…) or a catering code (CT-…)' };
+  /^(CT|FC)-[A-Z0-9]{4,10}$/i.test(code.trim()) || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(code.trim())
+    ? {}
+    : { code: 'A catering code (CT-…), an order code (FC-…) or a tiffin’s id' };

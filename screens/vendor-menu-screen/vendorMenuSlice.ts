@@ -29,7 +29,7 @@ export interface VendorMenuSliceState {
   saving: string[];
   /** Bumped by the editors so the tab reloads when it is next in view. */
   stale: boolean;
-  /** Dishes low on stock or out of it by their recipes (TODO(API_KITCHEN); null when the kitchen side is unavailable). */
+  /** Dishes low on stock or out of it by their recipes (docs/API_KITCHEN.md; null when the kitchen side is unavailable). */
   stock: BoardHints | null;
 }
 

@@ -11,7 +11,7 @@ import { emptyBoxForm, formFromSuggestion, type BoxForm } from '../../models/kit
 import type { LocalFile, SurplusBoxInput } from '../../models';
 import type { ValidationErrors } from '../../models/authModel';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { surplusSuggestionResponseSerializer, surplusBoxSerializer } from '../../serializers/kitchen/surplusSerializer';
+import { surplusSuggestionSerializer, surplusBoxSerializer } from '../../serializers/kitchen/surplusSerializer';
 
 export interface BoxFormSliceState {
   form: BoxForm;
@@ -63,7 +63,7 @@ export const boxFormSlice = createAppSlice({
           state.suggesting = 'loading';
         },
         fulfilled: (state, action) => {
-          const suggestion = surplusSuggestionResponseSerializer(action.payload)?.suggestion;
+          const suggestion = surplusSuggestionSerializer(action.payload);
           state.suggesting = 'succeeded';
           if (suggestion) {
             state.form = formFromSuggestion(suggestion);

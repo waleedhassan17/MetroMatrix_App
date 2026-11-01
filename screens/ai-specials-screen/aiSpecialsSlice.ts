@@ -1,18 +1,17 @@
 // MetroMatrix — Kitchen assistant: today's specials. Ideas from what expires
-// soonest, priced; one becomes a hidden new dish with its recipe card.
+// soonest, priced; one becomes a hidden new dish with its recipe card (one
+// request: the assistant's create route).
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { suggestSpecials } from '../../networks/kitchen/kitchenAi';
-import { createMenuItem, fetchMenuCategories } from '../../networks/food/vendor/menu';
-import { saveRecipe } from '../../networks/kitchen/recipes';
+import { createSpecial, suggestSpecials } from '../../networks/kitchen/kitchenAi';
+import { fetchMenuCategories } from '../../networks/food/vendor/menu';
 import { fetchKitchenSettings } from '../../networks/kitchen/costing';
-import { toRejectedValue, required } from '../../networks/network/network';
-import { specialItemInput, specialRecipe } from '../../models/kitchen/assistantModel';
+import { toRejectedValue } from '../../networks/network/network';
 import type { DraftCategory, MenuCategory, SpecialIdea } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { menuCategoriesSerializer, vendorMenuItemSerializer } from '../../serializers/food/menuSerializer';
-import { specialIdeasSerializer } from '../../serializers/kitchen/assistantSerializer';
+import { menuCategoriesSerializer } from '../../serializers/food/menuSerializer';
+import { createdSpecialSerializer, specialIdeasSerializer } from '../../serializers/kitchen/assistantSerializer';
 import { kitchenSettingsSerializer } from '../../serializers/kitchen/recipeSerializer';
 
 export interface AiSpecialsSliceState {
@@ -90,14 +89,11 @@ export const aiSpecialsSlice = createAppSlice({
         },
       },
     ),
-    /** The ordinary routes: a new dish (hidden), then its recipe card. */
+    /** A new dish (hidden until the cook turns it on) with the idea's recipe card. */
     createSpecialAsync: create.asyncThunk(
       async ({ idea, categoryId, price }: { idea: SpecialIdea; categoryId: string; price: number }, { rejectWithValue }) => {
         try {
-          const created = await createMenuItem(specialItemInput(idea, categoryId, price), []);
-          // The recipe goes on the new dish: its id decides the next call.
-          await saveRecipe(required(vendorMenuItemSerializer(created)).id, null, specialRecipe(idea));
-          return created;
+          return await createSpecial({ name: idea.title, description: idea.description || null, basePrice: price, categoryId, servings: idea.servings, lines: idea.lines });
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -108,7 +104,7 @@ export const aiSpecialsSlice = createAppSlice({
           state.createError = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const item = vendorMenuItemSerializer(action.payload);
+          const item = createdSpecialSerializer(action.payload);
           state.creating = null;
           if (item) state.created[action.meta.arg.idea.id] = item.id;
         },

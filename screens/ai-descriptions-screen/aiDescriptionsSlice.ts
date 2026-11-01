@@ -4,7 +4,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchMenuItems } from '../../networks/food/vendor/menu';
-import { draftDescriptions, saveDescription } from '../../networks/kitchen/kitchenAi';
+import { draftDescription, saveDescription } from '../../networks/kitchen/kitchenAi';
 import { toRejectedValue } from '../../networks/network/network';
 import { MAX_DESCRIPTION_DISHES, descriptionInput } from '../../models/kitchen/assistantModel';
 import type { DescriptionDraft, VendorMenuItem } from '../../models';
@@ -89,7 +89,10 @@ export const aiDescriptionsSlice = createAppSlice({
     draftDescriptionsAsync: create.asyncThunk(
       async (itemIds: string[], { rejectWithValue }) => {
         try {
-          return await draftDescriptions(itemIds);
+          // One dish at a time (each is a smart action); a dish the check refused stops the run with its manual way.
+          const drafts: unknown[] = [];
+          for (const id of itemIds) drafts.push(await draftDescription(id));
+          return drafts;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

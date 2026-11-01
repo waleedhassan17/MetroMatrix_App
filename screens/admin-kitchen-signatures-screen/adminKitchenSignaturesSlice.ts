@@ -6,7 +6,7 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { approveSignature, fetchSignatures, removeSignature } from '../../networks/admin/adminKitchen';
+import { fetchSignatures, removeSignature } from '../../networks/admin/adminKitchen';
 import { toRejectedValue } from '../../networks/network/network';
 import type { SignatureDish, SignatureList, SignatureStatus } from '../../models';
 import {
@@ -22,7 +22,7 @@ export interface AdminKitchenSignaturesSliceState {
   list: SignatureList | null;
   status: FormStatus;
   error: ServerError;
-  removing: Pick<SignatureDish, 'itemId' | 'name'> | null;
+  removing: Pick<SignatureDish, 'recipeCardId' | 'name'> | null;
   note: string;
   submitted: boolean;
   busy: string | null;
@@ -30,7 +30,7 @@ export interface AdminKitchenSignaturesSliceState {
 }
 
 const initialState: AdminKitchenSignaturesSliceState = {
-  tab: 'new',
+  tab: 'claimed',
   list: null,
   status: 'idle',
   error: NO_ERROR,
@@ -48,7 +48,7 @@ export const adminKitchenSignaturesSlice = createAppSlice({
     setSignaturesTab: create.reducer((state, action: PayloadAction<SignatureStatus>) => {
       state.tab = action.payload;
     }),
-    openRemoveNote: create.reducer((state, action: PayloadAction<Pick<SignatureDish, 'itemId' | 'name'> | null>) => {
+    openRemoveNote: create.reducer((state, action: PayloadAction<Pick<SignatureDish, 'recipeCardId' | 'name'> | null>) => {
       state.removing = action.payload;
       state.note = '';
       state.submitted = false;
@@ -62,9 +62,11 @@ export const adminKitchenSignaturesSlice = createAppSlice({
     }),
 
     loadSignaturesAsync: create.asyncThunk(
-      async (tab: SignatureStatus, { rejectWithValue }) => {
+      async (_tab: SignatureStatus, { rejectWithValue }) => {
         try {
-          return await fetchSignatures(tab);
+          // Both lists, for the tabs' counts.
+          const [claimed, removed] = await Promise.all([fetchSignatures('claimed'), fetchSignatures('removed')]);
+          return { claimed, removed };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -75,9 +77,8 @@ export const adminKitchenSignaturesSlice = createAppSlice({
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = signatureListSerializer(action.payload);
           state.status = 'succeeded';
-          state.list = payload;
+          state.list = signatureListSerializer(action.payload, action.meta.arg);
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -87,25 +88,25 @@ export const adminKitchenSignaturesSlice = createAppSlice({
     ),
 
     reviewSignatureAsync: create.asyncThunk(
-      async (input: { itemId: string; keep: boolean; note?: string; tab: SignatureStatus }, { rejectWithValue }) => {
+      /** A claim is live on its own; staff take one down with a reason the kitchen is told. */
+      async (input: { recipeCardId: string; note: string; tab: SignatureStatus }, { rejectWithValue }) => {
         try {
-          if (input.keep) await approveSignature(input.itemId);
-          else await removeSignature(input.itemId, input.note ?? '');
-          return await fetchSignatures(input.tab);
+          await removeSignature(input.recipeCardId, input.note);
+          const [claimed, removed] = await Promise.all([fetchSignatures('claimed'), fetchSignatures('removed')]);
+          return { claimed, removed };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
       },
       {
         pending: (state, action) => {
-          state.busy = action.meta.arg.itemId;
+          state.busy = action.meta.arg.recipeCardId;
           state.actionError = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          const payload = signatureListSerializer(action.payload);
           state.busy = null;
           state.removing = null;
-          state.list = payload;
+          state.list = signatureListSerializer(action.payload, action.meta.arg.tab);
         },
         rejected: (state, action) => {
           state.busy = null;

@@ -62,7 +62,7 @@ const AdminKitchenSignatures: React.FC<Props> = () => {
     if (!s.removing) return;
     dispatch(markRemoveSubmitted());
     if (Object.keys(validateStaffNote(s.note)).length) return haptics.warning();
-    void dispatch(reviewSignatureAsync({ itemId: s.removing.itemId, keep: false, note: s.note, tab: s.tab }));
+    void dispatch(reviewSignatureAsync({ recipeCardId: s.removing.recipeCardId, note: s.note, tab: s.tab }));
   };
 
   const tabs = SIGNATURE_TABS.map(t => ({ key: t.key, label: l ? `${t.label} · ${l.counts[t.key]}` : t.label }));
@@ -81,32 +81,26 @@ const AdminKitchenSignatures: React.FC<Props> = () => {
       <View style={styles.list}>
         {l?.items.map(d => (
           <RowCard
-            key={d.itemId}
+            key={d.recipeCardId}
             title={d.name}
             mark={{ icon: 'ribbon-outline', tint: 'amber' }}
             lines={[
               d.vendor?.name,
-              d.creatorName ? `By ${d.creatorName}` : null,
-              d.reviewedAt && d.status !== 'new' ? `${SIGNATURE_STATUS[d.status].label} on ${formatDate(d.reviewedAt)}` : null,
+              d.creatorName ? `By ${d.creatorName}${d.since ? `, since ${formatDate(d.since)}` : ''}` : null,
+              d.reviewedAt ? `${SIGNATURE_STATUS[d.status].label} on ${formatDate(d.reviewedAt)}` : null,
               d.note ? `Note: ${d.note}` : null,
             ]}
             pill={SIGNATURE_STATUS[d.status]}>
             {d.status !== 'removed' ? (
               <View style={styles.actions}>
-                {d.status === 'new' ? (
-                  <TextAction
-                    label={s.busy === d.itemId ? 'Keeping…' : 'Keep it'}
-                    onPress={() => void dispatch(reviewSignatureAsync({ itemId: d.itemId, keep: true, tab: s.tab }))}
-                  />
-                ) : null}
-                <TextAction label="Take the label off" tone="danger" onPress={() => dispatch(openRemoveNote({ itemId: d.itemId, name: d.name }))} />
+                <TextAction label="Take the label off" tone="danger" onPress={() => dispatch(openRemoveNote({ recipeCardId: d.recipeCardId, name: d.name }))} />
               </View>
             ) : null}
           </RowCard>
         ))}
       </View>
       {l && !l.items.length ? (
-        <AppText variant="body">{s.tab === 'new' ? 'No new signature dishes to look at.' : s.tab === 'approved' ? 'None kept yet.' : 'No labels taken off.'}</AppText>
+        <AppText variant="body">{s.tab === 'claimed' ? 'No kitchen claims a signature dish yet.' : 'No labels taken off.'}</AppText>
       ) : null}
 
       <Sheet

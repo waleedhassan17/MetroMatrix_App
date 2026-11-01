@@ -4,7 +4,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { fetchCateringRequest, sendQuote } from '../../networks/foodGrowth/catering';
+import { sendQuote } from '../../networks/foodGrowth/catering';
+import { fetchKitchenCateringByCode, kitchenCateringId } from '../shared/growthReads';
 import { fetchMenuItems } from '../../networks/food/vendor/menu';
 import { toRejectedValue } from '../../networks/network/network';
 import { draftFromRequest, newDishKey, type QuoteDraft } from '../../models/kitchen/cateringModel';
@@ -60,7 +61,7 @@ export const quoteBuilderSlice = createAppSlice({
     loadQuoteBuilderAsync: create.asyncThunk(
       async (code: string, { rejectWithValue }) => {
         try {
-          const [request, menu] = await Promise.all([fetchCateringRequest(code), fetchMenuItems()]);
+          const [request, menu] = await Promise.all([fetchKitchenCateringByCode(code), fetchMenuItems()]);
           return { request, menu };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -97,7 +98,7 @@ export const quoteBuilderSlice = createAppSlice({
     sendQuoteAsync: create.asyncThunk(
       async ({ code, input }: { code: string; input: QuoteInput }, { rejectWithValue }) => {
         try {
-          return await sendQuote(code, input);
+          return await sendQuote(await kitchenCateringId(code), input);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

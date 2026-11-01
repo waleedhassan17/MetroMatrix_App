@@ -1,5 +1,6 @@
 // MetroMatrix — Kitchen serializers: tiffin and catering (5B).
-// docs/API_KITCHEN_ASSUMED.md §2.9, §2.10 (TODO(API_KITCHEN): an assumed contract).
+// docs/API_KITCHEN.md §19, §20. A subscription goes by its id (the app's `code`); weekdays
+// arrive 0 Sunday … 6 Saturday and are read as ISO; a period's money is the plan's price.
 
 import type {
   CateringCalendar,
@@ -21,32 +22,51 @@ import type {
   TiffinPeriod,
   TiffinPlan,
   TiffinPlanCard,
+  TiffinPeriodKind,
   TiffinStatus,
   TiffinSubscription,
   TiffinTomorrow,
   TiffinWindow,
 } from '../../models/kitchen';
-import { arr, bool, isObject, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
-import { PAY_STATUSES, count, dateOrNull, list, numOrNull, transferPaymentSerializer } from './kitchenCommon';
+import type { FoodPaymentStatus } from '../../models/food';
+import { addDays, isoWeekday, PKT, todayInZone, zonedToIso } from '../../utils/health-time/healthTime';
+import { arr, bodiesOf, bool, enumList as enumListOf, isObject, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
+import { vendorPageSerializer } from '../food/discoverySerializer';
+import type { VendorPage } from '../../models/food';
+import { count, dateOrNull, list, numOrNull, transferAccountSerializer } from './kitchenCommon';
 
 export const MEALS: readonly Meal[] = ['breakfast', 'lunch', 'dinner'];
-const PERIODS = ['week', 'month'] as const;
-const MODES = ['delivery', 'pickup'] as const;
-const TIFFIN_STATUSES: readonly TiffinStatus[] = ['pending', 'active', 'paused', 'declined', 'ended', 'cancelled'];
-const TIFFIN_PAY: readonly TiffinPayMethod[] = ['transfer', 'cash'];
-const DAY_STATES: readonly TiffinDayState[] = ['before_start', 'off', 'pending', 'upcoming', 'skipped', 'paused', 'ordered', 'delivered', 'cancelled', 'ended', 'none'];
-export const EVENT_TYPES: readonly EventType[] = ['mehndi', 'baraat', 'walima', 'birthday', 'aqiqah', 'milad', 'quran_khwani', 'office', 'family', 'other'];
+const MODES = ['delivery', 'pickup', 'both'] as const;
+const DAY_STATES: readonly TiffinDayState[] = ['before_start', 'off', 'pending', 'upcoming', 'skipped', 'paused', 'ordered', 'delivered', 'missed', 'cancelled', 'ended', 'none'];
+export const EVENT_TYPES: readonly EventType[] = ['dawat', 'wedding', 'office', 'birthday', 'milad', 'other'];
 const CATERING_MODES: readonly CateringMode[] = ['delivery', 'pickup', 'on_site'];
-const CATERING_STATUSES: readonly CateringStatus[] = ['requested', 'quoted', 'accepted', 'confirmed', 'declined', 'cancelled', 'completed'];
-const QUOTE_STATES: readonly QuoteState[] = ['current', 'outdated', 'expired', 'accepted'];
+const CATERING_STATUSES: readonly CateringStatus[] = ['requested', 'quoted', 'accepted', 'advance_proof', 'confirmed', 'declined', 'cancelled', 'expired', 'completed'];
 
-const weekdays = (raw: unknown) => arr(raw).map(Number).filter(d => Number.isInteger(d) && d >= 1 && d <= 7);
-const strings = (raw: unknown) => arr(raw).filter((x): x is string => typeof x === 'string');
+/** The API's weekdays (0 Sunday … 6 Saturday) → ISO (1 Monday … 7 Sunday). */
+const isoDay = (d: unknown) => (Number(d) === 0 ? 7 : Number(d));
+const weekdays = (raw: unknown) =>
+  arr(raw)
+    .map(isoDay)
+    .filter(d => Number.isInteger(d) && d >= 1 && d <= 7)
+    .sort((a, b) => a - b);
+const PERIOD: Record<string, TiffinPeriodKind> = { weekly: 'week', monthly: 'month' };
+const TIFFIN_STATUS: Record<string, TiffinStatus> = { requested: 'pending', active: 'active', paused: 'paused', declined: 'declined', ended: 'ended', cancelled: 'cancelled' };
+const TIFFIN_PAY: Record<string, TiffinPayMethod> = { cash_weekly: 'cash', transfer_per_period: 'transfer' };
+
+/** "12:30" → "12:30 PM". */
+const clock = (hhmm: string) => {
+  const [h, m] = hhmm.split(':').map(Number);
+  return Number.isFinite(h) ? `${((h + 11) % 12) + 1}:${String(m || 0).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}` : hhmm;
+};
 
 const windowSerializer = (raw: unknown): TiffinWindow => {
   const w = isObject(raw) ? raw : {};
-  return { from: str(w.from), to: str(w.to), label: str(w.label) };
+  const from = str(w.from).slice(0, 5);
+  const to = str(w.to).slice(0, 5);
+  return { from, to, label: from && to ? `${clock(from)} – ${clock(to)}` : '' };
 };
+
+const dishNames = (raw: unknown) => list(raw, d => (isObject(d) && str(d.name) ? (count(d.quantity) > 1 ? `${count(d.quantity)} × ${str(d.name)}` : str(d.name)) : null));
 
 const placeSerializer = (raw: unknown) =>
   isObject(raw) ? { line1: strOrNull(raw.line1), area: strOrNull(raw.area), city: strOrNull(raw.city), lat: numOrNull(raw.lat), lng: numOrNull(raw.lng) } : null;
@@ -58,119 +78,152 @@ const vendorSerializer = (raw: unknown) => {
   return { id: str(v.id), slug: str(v.slug), name: str(v.name), logoUrl: strOrNull(v.logoUrl), phone: strOrNull(v.phone) };
 };
 
+/** A plan's meals in one period: its days in a week, or a month's average of them. */
+const mealsIn = (days: number[], period: TiffinPeriodKind) => (period === 'week' ? days.length : Math.round((days.length * 52) / 12));
+
+/** The first day it serves from today (Pakistan time): a new subscription's earliest start. */
+const firstServed = (days: number[], now: number) => {
+  const today = todayInZone(PKT, now);
+  for (let i = 0; i < 8; i++) {
+    const d = addDays(today, i);
+    if (days.includes(isoWeekday(d))) return d;
+  }
+  return null;
+};
+
 // ── Tiffin ──
-export const tiffinPlanSerializer = fromResponse((raw: unknown): TiffinPlan | null => {
+/** A plan: the kitchen's own (its counts), or as customers see it (its kitchen, the dishes by name). */
+export const tiffinPlanSerializer = fromResponse((raw: unknown, now: number = Date.now()): TiffinPlan | null => {
   if (!isObject(raw) || !str(raw.id)) return null;
   const v = isObject(raw.vendor) ? raw.vendor : {};
+  const days = weekdays(raw.days);
+  const period = PERIOD[str(raw.period)] ?? 'week';
+  const price = count(raw.pricePerPeriod);
   return {
     id: str(raw.id),
-    vendor: { id: str(v.id), slug: str(v.slug), name: str(v.name), logoUrl: strOrNull(v.logoUrl), isHomeKitchen: bool(v.isHomeKitchen) },
+    vendor: { id: str(v.id) || str(raw.brandId), slug: str(v.slug), name: str(v.name), logoUrl: strOrNull(v.logoUrl), isHomeKitchen: bool(v.isHomeKitchen) },
     name: str(raw.name),
     description: strOrNull(raw.description),
     meal: oneOf(raw.meal, MEALS, 'lunch'),
-    days: weekdays(raw.days),
-    period: oneOf(raw.period, PERIODS, 'week'),
-    price: count(raw.price),
-    perMeal: count(raw.perMeal),
-    mealsPerPeriod: count(raw.mealsPerPeriod),
-    mode: oneOf(raw.mode, MODES, 'delivery'),
-    window: windowSerializer(raw.window),
+    days,
+    period,
+    price,
+    perMeal: count(raw.mealValue),
+    mealsPerPeriod: mealsIn(days, period),
+    mode: oneOf(raw.deliveryMode, MODES, 'delivery'),
+    window: windowSerializer(raw.deliveryWindow),
     capacity: count(raw.capacity),
     subscribers: count(raw.subscribers),
     seatsLeft: count(raw.seatsLeft),
-    skipCutoffHours: count(raw.skipCutoffHours),
-    rotation: list(raw.rotation, r =>
-      isObject(r)
-        ? {
-            weekday: count(r.weekday),
-            dishes: list(r.dishes, d => (isObject(d) && str(d.itemId) ? { itemId: str(d.itemId), name: str(d.name), photoUrl: strOrNull(d.photoUrl) } : null)),
-            note: strOrNull(r.note),
-          }
-        : null,
-    ),
+    skipCutoffHour: Math.min(23, count(raw.skipCutoffHour ?? 20)),
+    rotation: list(raw.rotation, r => {
+      if (!isObject(r)) return null;
+      const named = new Map(list(r.dishes, d => (isObject(d) && str(d.itemId) ? ([str(d.itemId), str(d.name)] as const) : null)));
+      return {
+        weekday: isoDay(r.weekday),
+        dishes: arr(r.menuItemIds)
+          .map(id => str(id))
+          .filter(Boolean)
+          .map(itemId => ({ itemId, name: named.get(itemId) ?? '', photoUrl: null })),
+        note: strOrNull(r.note),
+      };
+    }).sort((a, b) => a.weekday - b.weekday),
     photoUrl: strOrNull(raw.photoUrl),
     isActive: raw.isActive !== false,
-    nextStart: dateOrNull(raw.nextStart),
+    nextStart: bool(raw.full) || raw.isActive === false ? null : firstServed(days, now),
   };
 });
 
-export const tiffinPlansSerializer = fromResponse((raw: unknown): TiffinPlan[] => list(isObject(raw) ? raw.items : raw, tiffinPlanSerializer));
+export const tiffinPlansSerializer = fromResponse((raw: unknown): TiffinPlan[] => list(raw, x => tiffinPlanSerializer(x)));
 
-/** A plan on the vendor page (an addition to API_FOOD's VendorPage). */
-export const tiffinPlanCardSerializer = (raw: unknown): TiffinPlanCard | null =>
-  isObject(raw) && str(raw.id)
-    ? {
-        id: str(raw.id),
-        name: str(raw.name),
-        meal: oneOf(raw.meal, MEALS, 'lunch'),
-        days: weekdays(raw.days),
-        period: oneOf(raw.period, PERIODS, 'week'),
-        price: count(raw.price),
-        perMeal: count(raw.perMeal),
-        window: str(raw.window),
-        seatsLeft: count(raw.seatsLeft),
-        photoUrl: strOrNull(raw.photoUrl),
-      }
-    : null;
+/** A plan on the vendor page. */
+export const tiffinPlanCardSerializer = (raw: unknown): TiffinPlanCard | null => {
+  const p = tiffinPlanSerializer(raw);
+  return p ? { id: p.id, name: p.name, meal: p.meal, days: p.days, period: p.period, price: p.price, perMeal: p.perMeal, window: p.window.label, seatsLeft: p.seatsLeft, photoUrl: p.photoUrl } : null;
+};
 
-const periodSerializer = (raw: unknown): TiffinPeriod | null =>
-  isObject(raw) && str(raw.id)
-    ? {
-        id: str(raw.id),
-        from: dateOrNull(raw.from) ?? '',
-        to: dateOrNull(raw.to) ?? '',
-        meals: count(raw.meals),
-        credit: count(raw.credit),
-        amount: count(raw.amount),
-        payment: transferPaymentSerializer(raw.payment, TIFFIN_PAY, 'cash'),
-      }
-    : null;
-
-export const tiffinSubscriptionSerializer = fromResponse((raw: unknown): TiffinSubscription | null => {
-  if (!isObject(raw) || !str(raw.code)) return null;
-  const p = isObject(raw.plan) ? raw.plan : {};
-  const next = isObject(raw.nextDelivery) ? raw.nextDelivery : null;
+/** The period now running and how it stands (`due` is unpaid: cash at the first meal, or a transfer to send). */
+const periodSerializer = (raw: Record<string, unknown>, method: TiffinPayMethod, plan: { price: number; days: number[]; period: TiffinPeriodKind }): TiffinPeriod | null => {
+  const p = isObject(raw.period) ? raw.period : null;
+  if (!p || !dateOrNull(p.start)) return null;
+  const due = p.paymentStatus === 'due';
+  const status: FoodPaymentStatus = p.paymentStatus === 'paid' ? 'paid' : p.paymentStatus === 'proof_submitted' ? 'proof_submitted' : method === 'transfer' ? 'awaiting_transfer' : 'unpaid';
   return {
-    code: str(raw.code),
-    status: oneOf(raw.status, TIFFIN_STATUSES, 'pending'),
+    id: str(raw.id),
+    from: dateOrNull(p.start)!,
+    to: dateOrNull(p.end) ?? '',
+    meals: mealsIn(plan.days, plan.period),
+    amount: plan.price,
+    payment: {
+      method,
+      status,
+      payBy: null,
+      accounts: Array.isArray(raw.payTo) && raw.payTo.length ? list(raw.payTo, transferAccountSerializer) : null,
+      reference: strOrNull(raw.paymentRef),
+      proofUrl: null,
+      // A refused receipt sends the period back to due, with the kitchen's reason.
+      rejectedReason: due && bool(raw.hasProof) ? strOrNull(raw.reason) : null,
+    },
+  };
+};
+
+/** A subscription, as the customer (its plan, kitchen, what can be done) or the kitchen (its customer) sees it. */
+export const tiffinSubscriptionSerializer = fromResponse((raw: unknown): TiffinSubscription | null => {
+  if (!isObject(raw) || !str(raw.id)) return null;
+  const p = isObject(raw.plan) ? raw.plan : {};
+  const status = TIFFIN_STATUS[str(raw.status)] ?? 'pending';
+  const days = weekdays(p.days);
+  const period = PERIOD[str(p.period)] ?? 'week';
+  const price = count(p.pricePerPeriod);
+  const method = TIFFIN_PAY[str(raw.paymentMethod)] ?? 'cash';
+  const can = isObject(raw.can) ? raw.can : {};
+  const next = dateOrNull(raw.nextMeal);
+  return {
+    code: str(raw.id),
+    status,
     plan: {
-      id: str(p.id),
-      name: str(p.name),
+      id: str(p.id) || str(raw.planId),
+      name: str(p.name) || str(raw.planName),
       meal: oneOf(p.meal, MEALS, 'lunch'),
-      days: weekdays(p.days),
-      period: oneOf(p.period, PERIODS, 'week'),
-      price: count(p.price),
-      perMeal: count(p.perMeal),
-      mode: oneOf(p.mode, MODES, 'delivery'),
-      window: windowSerializer(p.window),
-      skipCutoffHours: count(p.skipCutoffHours),
+      days,
+      period,
+      price,
+      perMeal: count(p.mealValue),
+      mode: oneOf(p.deliveryMode, MODES, 'delivery'),
+      window: windowSerializer(p.deliveryWindow),
+      skipCutoffHour: Math.min(23, count(p.skipCutoffHour ?? 20)),
     },
     vendor: vendorSerializer(raw.vendor),
     customer: personSerializer(raw.customer),
-    startDate: dateOrNull(raw.startDate) ?? '',
-    endDate: dateOrNull(raw.endDate),
-    nextDelivery: next && dateOrNull(next.date) ? { date: dateOrNull(next.date)!, dishes: strings(next.dishes), cutoffAt: strOrNull(next.cutoffAt) } : null,
+    startDate: dateOrNull(raw.startsOn) ?? '',
+    endDate: null,
+    nextDelivery: next && (status === 'active' || status === 'pending') ? { date: next, dishes: dishNames(raw.nextDishes), cutoffAt: strOrNull(raw.nextCutoffAt) } : null,
     address: placeSerializer(raw.address),
-    paymentMethod: oneOf(raw.paymentMethod, TIFFIN_PAY, 'cash'),
-    period: periodSerializer(raw.period),
-    pausedFrom: dateOrNull(raw.pausedFrom),
+    paymentMethod: method,
+    period: periodSerializer(raw, method, { price, days, period }),
+    pausedFrom: null,
     pausedUntil: dateOrNull(raw.pausedUntil),
-    declineReason: strOrNull(raw.declineReason),
-    endReason: strOrNull(raw.endReason),
-    canPause: bool(raw.canPause),
-    canResume: bool(raw.canResume),
-    canCancel: bool(raw.canCancel),
-    createdAt: str(raw.createdAt),
+    declineReason: status === 'declined' ? strOrNull(raw.reason) : null,
+    endReason: status === 'cancelled' || status === 'ended' ? strOrNull(raw.reason) : null,
+    canPause: bool(can.pause),
+    canResume: bool(can.resume),
+    canCancel: bool(can.cancel),
+    createdAt: str(raw.approvedAt),
   };
 });
 
-export const tiffinSubscriptionsSerializer = fromResponse((raw: unknown): TiffinSubscription[] => list(isObject(raw) ? raw.items : raw, tiffinSubscriptionSerializer));
+export const tiffinSubscriptionsSerializer = fromResponse((raw: unknown): TiffinSubscription[] => list(raw, tiffinSubscriptionSerializer));
 
+/** One of the customer's subscriptions, by its id. */
+export const myTiffinSerializer = fromResponse((raw: unknown, id: string): TiffinSubscription | null => list(raw, tiffinSubscriptionSerializer).find(x => x.code === id) ?? null);
+
+/** The kitchen's subscribers, counted (requests to approve, receipts to check). */
 export const tiffinInboxSerializer = fromResponse((raw: unknown): TiffinInbox => {
-  const c = isObject(raw) && isObject(raw.counts) ? raw.counts : {};
+  const items = tiffinSubscriptionsSerializer(raw);
+  const n = (f: (x: TiffinSubscription) => boolean) => items.filter(f).length;
   return {
-    counts: { pending: count(c.pending), active: count(c.active), paused: count(c.paused), toCheck: count(c.toCheck) },
-    items: tiffinSubscriptionsSerializer(raw),
+    counts: { pending: n(x => x.status === 'pending'), active: n(x => x.status === 'active'), paused: n(x => x.status === 'paused'), toCheck: n(x => x.period?.payment.status === 'proof_submitted') },
+    items,
   };
 });
 
@@ -179,7 +232,7 @@ export const tiffinDaySerializer = fromResponse((raw: unknown): TiffinDay | null
     ? {
         date: dateOrNull(raw.date)!,
         state: oneOf(raw.state, DAY_STATES, 'none'),
-        dishes: strings(raw.dishes),
+        dishes: dishNames(raw.dishes),
         cutoffAt: strOrNull(raw.cutoffAt),
         canSkip: bool(raw.canSkip),
         canUnskip: bool(raw.canUnskip),
@@ -192,6 +245,7 @@ export const tiffinCalendarSerializer = fromResponse((raw: unknown): TiffinCalen
   return { month: str(r.month), days: list(r.days, tiffinDaySerializer) };
 });
 
+/** Tomorrow's tiffins per plan (counts and dishes; who gets them is the subscribers' list). */
 export const tiffinTomorrowSerializer = fromResponse((raw: unknown): TiffinTomorrow => {
   const r = isObject(raw) ? raw : {};
   return {
@@ -202,17 +256,13 @@ export const tiffinTomorrowSerializer = fromResponse((raw: unknown): TiffinTomor
             planId: str(p.planId),
             name: str(p.name),
             meal: oneOf(p.meal, MEALS, 'lunch'),
-            window: str(p.window),
-            dishes: strings(p.dishes),
-            count: count(p.count),
+            window: windowSerializer(p.window).label,
+            dishes: dishNames(p.dishes),
+            count: count(p.meals),
             skipped: count(p.skipped),
-            paused: count(p.paused),
+            paused: 0,
             cutoffAt: str(p.cutoffAt),
-            deliveries: list(p.deliveries, d =>
-              isObject(d) && str(d.code)
-                ? { code: str(d.code), customerName: str(d.customerName, 'Customer'), area: strOrNull(d.area), state: oneOf(d.state, DAY_STATES, 'none'), orderCode: strOrNull(d.orderCode) }
-                : null,
-            ),
+            deliveries: [],
           }
         : null,
     ),
@@ -220,65 +270,144 @@ export const tiffinTomorrowSerializer = fromResponse((raw: unknown): TiffinTomor
 });
 
 // ── Catering ──
-const quoteSerializer = (raw: unknown): CateringQuote | null =>
-  isObject(raw) && Number.isInteger(Number(raw.version))
-    ? {
-        version: count(raw.version),
-        lines: list(raw.lines, l =>
-          isObject(l) ? { itemId: strOrNull(l.itemId), name: str(l.name), qty: count(l.qty), unitPrice: count(l.unitPrice), total: count(l.total) } : null,
-        ),
-        subtotal: count(raw.subtotal),
-        deliveryFee: count(raw.deliveryFee),
-        total: count(raw.total),
-        advancePct: count(raw.advancePct),
-        advance: count(raw.advance),
-        validUntil: str(raw.validUntil),
-        notes: strOrNull(raw.notes),
-        createdAt: str(raw.createdAt),
-        state: oneOf(raw.state, QUOTE_STATES, 'outdated'),
-      }
-    : null;
+/** Quote lines, priced per line. */
+const quoteLines = (raw: unknown) =>
+  list(raw, l => {
+    if (!isObject(l) || !str(l.name)) return null;
+    const qty = count(l.qty);
+    const unitPrice = count(l.unitPrice);
+    return { itemId: strOrNull(l.menuItemId), name: str(l.name), qty, unitPrice, total: qty * unitPrice };
+  });
 
-export const cateringRequestSerializer = fromResponse((raw: unknown): CateringRequest | null => {
-  if (!isObject(raw) || !str(raw.code)) return null;
-  const adv = isObject(raw.advance) ? raw.advance : null;
-  const pay = adv ? transferPaymentSerializer(adv, ['transfer'], 'transfer') : null;
+const quoteState = (version: number, latest: number, accepted: number | null, validUntil: string, now: number): QuoteState =>
+  accepted === version ? 'accepted' : version !== latest ? 'outdated' : Date.parse(validUntil) <= now ? 'expired' : 'current';
+
+/** The latest quote in full, and the earlier versions by their totals. */
+const quotesOf = (raw: Record<string, unknown>, now: number): CateringQuote[] => {
+  const q = isObject(raw.quote) ? raw.quote : null;
+  const accepted = numOrNull(raw.acceptedVersion);
+  const latest = q ? count(q.version) : 0;
+  const full: CateringQuote[] = q
+    ? (() => {
+        const lines = quoteLines(q.lines);
+        return [
+          {
+            version: latest,
+            lines,
+            subtotal: lines.reduce((n, l) => n + l.total, 0),
+            deliveryFee: count(q.deliveryFee),
+            total: count(q.total),
+            advancePct: count(q.advancePct),
+            advance: count(q.advance),
+            validUntil: str(q.validUntil),
+            notes: strOrNull(q.notes),
+            createdAt: '',
+            state: quoteState(latest, latest, accepted, str(q.validUntil), now),
+          },
+        ];
+      })()
+    : [];
+  const older = list(raw.versions, v =>
+    isObject(v) && count(v.version) && count(v.version) !== latest
+      ? {
+          version: count(v.version),
+          lines: [],
+          subtotal: count(v.total),
+          deliveryFee: 0,
+          total: count(v.total),
+          advancePct: 0,
+          advance: 0,
+          validUntil: str(v.validUntil),
+          notes: null,
+          createdAt: '',
+          state: quoteState(count(v.version), latest, accepted, str(v.validUntil), now),
+        }
+      : null,
+  );
+  return [...full, ...older];
+};
+
+/** Where the advance stands: sent to the kitchen's own account, then confirmed by them. */
+const ADVANCE: Partial<Record<CateringStatus, FoodPaymentStatus>> = { accepted: 'awaiting_transfer', advance_proof: 'proof_submitted', confirmed: 'paid', completed: 'paid' };
+
+/** A dawat request, as the customer (its kitchen) or the kitchen (its customer, the receipt) sees it. */
+export const cateringRequestSerializer = fromResponse((raw: unknown, now: number = Date.now()): CateringRequest | null => {
+  if (!isObject(raw) || !str(raw.id) || !str(raw.code)) return null;
+  const status = oneOf(raw.status, CATERING_STATUSES, 'requested');
+  const quotes = quotesOf(raw, now);
+  const current = quotes[0] ?? null;
+  const accepted = numOrNull(raw.acceptedVersion);
+  const date = dateOrNull(raw.eventDate) ?? '';
+  const time = str(raw.eventTime).slice(0, 5);
+  const advanceStatus = ADVANCE[status];
+  const download = isObject(raw.advanceProofDownload) ? strOrNull(raw.advanceProofDownload.downloadUrl) : null;
+  const reason = strOrNull(raw.reason);
   return {
+    id: str(raw.id),
     code: str(raw.code),
-    status: oneOf(raw.status, CATERING_STATUSES, 'requested'),
-    vendor: vendorSerializer(raw.vendor),
+    status,
+    vendor: (() => {
+      const v = isObject(raw.vendor) ? raw.vendor : {};
+      return { id: str(v.id) || str(v.slug), slug: str(v.slug), name: str(v.name), logoUrl: strOrNull(v.logoUrl), phone: strOrNull(v.phone) };
+    })(),
     customer: personSerializer(raw.customer),
-    date: dateOrNull(raw.date) ?? '',
-    time: str(raw.time),
-    startsAt: str(raw.startsAt),
+    date,
+    time,
+    startsAt: date && time ? zonedToIso(date, time, PKT) : '',
     guests: count(raw.guests),
     eventType: oneOf(raw.eventType, EVENT_TYPES, 'other'),
-    dishes: list(raw.dishes, d => (isObject(d) && str(d.name) ? { itemId: strOrNull(d.itemId), name: str(d.name), qty: count(d.qty) } : null)),
+    dishes: list(raw.requestedItems, d => (isObject(d) && str(d.name) ? { itemId: strOrNull(d.menuItemId), name: str(d.name), qty: count(d.qty) } : null)),
     budget: numOrNull(raw.budget),
-    mode: oneOf(raw.mode, CATERING_MODES, 'delivery'),
+    mode: oneOf(raw.fulfilment, CATERING_MODES, 'delivery'),
     address: placeSerializer(raw.address),
     notes: strOrNull(raw.notes),
-    quotes: list(raw.quotes, quoteSerializer),
-    acceptedVersion: numOrNull(raw.acceptedVersion),
-    advance: adv && pay
-      ? { amount: count(adv.amount), status: oneOf(adv.status, PAY_STATUSES, 'awaiting_transfer'), payBy: pay.payBy, accounts: pay.accounts, reference: pay.reference, proofUrl: pay.proofUrl, rejectedReason: pay.rejectedReason }
-      : null,
-    balance: numOrNull(raw.balance),
-    declineReason: strOrNull(raw.declineReason),
-    cancelReason: strOrNull(raw.cancelReason),
-    canAccept: bool(raw.canAccept),
-    canCancel: bool(raw.canCancel),
-    canQuote: bool(raw.canQuote),
-    createdAt: str(raw.createdAt),
-    updatedAt: str(raw.updatedAt),
+    quotes,
+    acceptedVersion: accepted,
+    advance:
+      advanceStatus && numOrNull(raw.advance) !== null
+        ? {
+            amount: count(raw.advance),
+            status: advanceStatus,
+            payBy: null,
+            accounts: Array.isArray(raw.payTo) && raw.payTo.length ? list(raw.payTo, transferAccountSerializer) : null,
+            reference: strOrNull(raw.advanceRef),
+            proofUrl: download,
+            // A refused receipt sends it back to accepted, with the kitchen's reason.
+            rejectedReason: status === 'accepted' && bool(raw.hasAdvanceProof) ? reason : null,
+          }
+        : null,
+    balance: accepted !== null && current ? Math.max(0, current.total - count(raw.advance)) : null,
+    declineReason: status === 'declined' ? reason : null,
+    cancelReason: status === 'cancelled' ? reason : null,
+    canAccept: status === 'quoted' && current?.state === 'current',
+    canCancel: ['requested', 'quoted', 'accepted', 'advance_proof'].includes(status),
+    canQuote: ['requested', 'quoted'].includes(status),
+    createdAt: '',
+    updatedAt: '',
   };
 });
 
-export const cateringRequestsSerializer = fromResponse((raw: unknown): CateringRequest[] => list(isObject(raw) ? raw.items : raw, cateringRequestSerializer));
+export const cateringRequestsSerializer = fromResponse((raw: unknown): CateringRequest[] => list(raw, x => cateringRequestSerializer(x)));
 
+/** A request found by the code people read (CT-…) among a list of them. */
+export const cateringRequestByCodeSerializer = fromResponse((raw: unknown, code: string): CateringRequest | null =>
+  list(raw, x => cateringRequestSerializer(x)).find(r => r.code === code.toUpperCase()) ?? null);
+
+const PAST: CateringStatus[] = ['completed', 'declined', 'cancelled', 'expired'];
+
+/** The kitchen's requests, counted: new, quoted (waiting on the customer), confirmed, past. */
 export const cateringInboxSerializer = fromResponse((raw: unknown): CateringInbox => {
-  const c = isObject(raw) && isObject(raw.counts) ? raw.counts : {};
-  return { counts: { new: count(c.new), quoted: count(c.quoted), confirmed: count(c.confirmed), past: count(c.past) }, items: cateringRequestsSerializer(raw) };
+  const items = cateringRequestsSerializer(raw);
+  const n = (f: (r: CateringRequest) => boolean) => items.filter(f).length;
+  return {
+    counts: {
+      new: n(r => r.status === 'requested'),
+      quoted: n(r => ['quoted', 'accepted', 'advance_proof'].includes(r.status)),
+      confirmed: n(r => r.status === 'confirmed'),
+      past: n(r => PAST.includes(r.status)),
+    },
+    items,
+  };
 });
 
 export const cateringVendorSerializer = fromResponse((raw: unknown): CateringVendor | null =>
@@ -286,37 +415,44 @@ export const cateringVendorSerializer = fromResponse((raw: unknown): CateringVen
     ? {
         vendorId: str(raw.vendorId),
         open: bool(raw.open),
-        minGuests: count(raw.minGuests),
+        minGuests: Math.max(1, count(raw.minGuests)),
         leadDays: count(raw.leadDays),
         earliestDate: dateOrNull(raw.earliestDate) ?? '',
-        modes: arr(raw.modes).map(m => oneOf(m, CATERING_MODES, 'delivery')),
+        modes: enumListOf(raw.fulfilments, CATERING_MODES),
         menu: list(raw.menu, m => (isObject(m) && str(m.itemId) ? { itemId: str(m.itemId), name: str(m.name), price: count(m.price), photoUrl: strOrNull(m.photoUrl) } : null)),
       }
     : null);
 
-export const cateringCalendarSerializer = fromResponse((raw: unknown): CateringCalendar => {
-  const r = isObject(raw) ? raw : {};
+/** The month's dawats, by day, from the kitchen's requests (those still on: requested to confirmed). */
+export const cateringCalendarSerializer = fromResponse((raw: unknown, month: string): CateringCalendar => {
+  const live = cateringRequestsSerializer(raw).filter(r => r.date.startsWith(month) && !['declined', 'cancelled', 'expired'].includes(r.status));
+  const days = [...new Set(live.map(r => r.date))].sort();
   return {
-    month: str(r.month),
-    days: list(r.days, d =>
-      isObject(d) && dateOrNull(d.date)
-        ? {
-            date: dateOrNull(d.date)!,
-            events: list(d.events, e =>
-              isObject(e) && str(e.code)
-                ? { code: str(e.code), time: str(e.time), guests: count(e.guests), eventType: oneOf(e.eventType, EVENT_TYPES, 'other'), status: oneOf(e.status, CATERING_STATUSES, 'confirmed'), customerName: str(e.customerName, 'Customer') }
-                : null,
-            ),
-          }
-        : null,
-    ),
+    month,
+    days: days.map(date => ({
+      date,
+      events: live
+        .filter(r => r.date === date)
+        .sort((a, b) => a.time.localeCompare(b.time))
+        .map(r => ({ code: r.code, time: r.time, guests: r.guests, eventType: r.eventType, status: r.status, customerName: r.customer?.name ?? 'Customer' })),
+    })),
   };
 });
 
 export const cateringSettingsSerializer = fromResponse((raw: unknown): CateringSettings => {
   const r = isObject(raw) ? raw : {};
-  return { open: bool(r.open), minGuests: count(r.minGuests), leadDays: count(r.leadDays) };
+  return { open: bool(r.open), minGuests: Math.max(1, count(r.minGuests) || 1), leadDays: count(r.leadDays) };
 });
 
-/** A tiffin plan removed. */
-export const tiffinRemovedSerializer = fromResponse(raw => ({ removed: !!(raw as { removed?: boolean })?.removed }));
+/** The vendor page with its tiffin plans (open ones) and whether it takes dawats, read beside it. */
+export const vendorPageWithKitchenSerializer = (parts: { page: unknown; tiffinPlans: unknown; catering: unknown }): VendorPage | null => {
+  const raw = bodiesOf(parts);
+  const page = vendorPageSerializer(raw.page);
+  if (!page) return null;
+  const c = cateringVendorSerializer(raw.catering);
+  return {
+    ...page,
+    tiffinPlans: list(raw.tiffinPlans, x => tiffinPlanCardSerializer(x)),
+    catering: c ? { open: c.open, minGuests: c.minGuests, leadDays: c.leadDays } : null,
+  };
+};

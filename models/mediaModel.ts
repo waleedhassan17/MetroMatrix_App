@@ -24,14 +24,14 @@ export type UploadPurpose =
   | 'food_logo'
   | 'food_cover'
   | 'menu_item'
-  // Kitchen Intelligence (TODO(API_KITCHEN): the API has no purpose of its own
-  // for a surplus box or hygiene photo; both go where its stories do)
+  // Kitchen Intelligence: a Bachat Box and a tiffin plan show dish photos (`menu_item`),
+  // a story its photos and one video (`kitchen_story`, `kitchen_video`)
   | 'voice_clip'
   | 'kitchen_receipt'
   | 'food_packing'
   | 'food_surplus'
   | 'food_story'
-  | 'hygiene_evidence';
+  | 'food_story_video';
 
 /** The app's purposes → the API's (one store branding folder; doctors' note files are `medical_note`). */
 export const API_PURPOSE: Record<UploadPurpose, string> = {
@@ -53,7 +53,8 @@ export const API_PURPOSE: Record<UploadPurpose, string> = {
   voice_clip: 'voice_audio',
   kitchen_receipt: 'receipt',
   food_packing: 'packing_proof',
-  food_surplus: 'kitchen_story',
+  /** A Bachat Box (and a tiffin plan) shows a dish photo of the kitchen's own. */
+  food_surplus: 'menu_item',
   food_story: 'kitchen_story',
-  hygiene_evidence: 'kitchen_story',
+  food_story_video: 'kitchen_video',
 };

@@ -17,7 +17,7 @@ import { useBack } from '../../hooks/useBack';
 import { CATERING_MODE, CATERING_STATUS, EVENT_TYPE_LABEL } from '../../models/kitchen/kitchenStatusModel';
 import { advanceLine, latestQuote, quoteCardData, whenLine } from '../../models/kitchen/cateringModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, InlineNotice, QuoteCard, ScreenShell, Sheet, SkeletonLines, StatusPill } from '../../Custom-Components/index';
+import { AppText, Button, Card, ChoiceChip, InlineNotice, QuoteCard, ScreenShell, Sheet, SkeletonLines, StatusPill } from '../../Custom-Components/index';
 import { TransferCard } from '../../Custom-Components/food/TransferCard';
 import type { FoodAppParamList } from '../../models';
 import { formatWhen } from '../../utils/health-time/healthTime';
@@ -28,12 +28,14 @@ import { loadMyCateringRequestAsync, myCateringActAsync, selectFoodCateringUi, s
 type Props = NativeStackScreenProps<FoodAppParamList, 'FoodCateringRequest'>;
 
 const TZ = 'Asia/Karachi';
+const CANCEL_REASONS = ['Plans changed', 'Found another kitchen', 'The quote is over my budget'];
 
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
     gap: { gap: space.s8 },
     row: { flexDirection: 'row', justifyContent: 'space-between', gap: space.s12 },
     grow: { flex: 1, minWidth: 0 },
+    reasons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
   });
 
 const FoodCateringRequest: React.FC<Props> = props => (
@@ -51,6 +53,7 @@ const FoodCateringRequestContent: React.FC<Props> = ({ navigation, route }) => {
   const ui = useAppSelector(selectFoodCateringUi);
   const r = useAppSelector(st => selectMyCateringRequest(st, code));
   const [cancelling, setCancelling] = useState(false);
+  const [cancelReason, setCancelReason] = useState(CANCEL_REASONS[0]);
 
   const load = useCallback(() => void dispatch(loadMyCateringRequestAsync(code)), [dispatch, code]);
   useFocusEffect(load);
@@ -159,7 +162,7 @@ const FoodCateringRequestContent: React.FC<Props> = ({ navigation, route }) => {
             variant="destructive"
             loading={ui.acting}
             onPress={async () => {
-              const res = await dispatch(myCateringActAsync({ code, act: { kind: 'cancel' } }));
+              const res = await dispatch(myCateringActAsync({ code, act: { kind: 'cancel', reason: cancelReason } }));
               if (myCateringActAsync.fulfilled.match(res)) {
                 setCancelling(false);
                 Toast.show({ type: 'success', text1: 'Cancelled' });
@@ -168,6 +171,14 @@ const FoodCateringRequestContent: React.FC<Props> = ({ navigation, route }) => {
             fullWidth
           />
         }>
+        <AppText variant="small" tone="muted">
+          The kitchen is told why.
+        </AppText>
+        <View style={styles.reasons}>
+          {CANCEL_REASONS.map(x => (
+            <ChoiceChip key={x} label={x} selected={cancelReason === x} onPress={() => setCancelReason(x)} />
+          ))}
+        </View>
         <Button label="Keep it" variant="secondary" onPress={() => setCancelling(false)} fullWidth />
       </Sheet>
     </ScreenShell>

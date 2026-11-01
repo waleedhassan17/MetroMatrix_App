@@ -7,7 +7,7 @@
 // the phone has no Urdu voice, the API's recorded clip (`ttsUrl`, played
 // with expo-audio); if there is neither, the chime alone — and Settings
 // says "This phone has no Urdu voice". Never throws; one at a time.
-// TODO(API_VOICE): the API's clip (docs/VOICE_ASSUMED.md §5) is null in the dummy API.
+// The API makes the clip only with TTS_PROVIDER=google (docs/VOICE.md, the announcement); off by default.
 
 import * as Speech from 'expo-speech';
 import { createAudioPlayer, type AudioPlayer } from 'expo-audio';

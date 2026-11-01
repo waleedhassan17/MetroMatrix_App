@@ -6,7 +6,7 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { fetchPlatformDemand } from '../../networks/admin/adminKitchen';
+import { fetchPlatformDemand, fetchDemandCities } from '../../networks/admin/adminKitchen';
 import { fetchAdminCuisines } from '../../networks/admin/adminFood';
 import { toRejectedValue } from '../../networks/network/network';
 import type { AdminCuisine, AdminDemandMap } from '../../models';
@@ -53,11 +53,12 @@ export const adminKitchenDemandSlice = createAppSlice({
     loadAdminDemandAsync: create.asyncThunk(
       async (input: DemandFilter & { withCuisines: boolean }, { rejectWithValue }) => {
         try {
-          const [data, cuisines] = await Promise.all([
-            fetchPlatformDemand({ city: input.city, cuisine: input.cuisine, hour: input.hour }),
+          const [map, cities, cuisines] = await Promise.all([
+            fetchPlatformDemand({ city: input.city, cuisineId: input.cuisine, hour: input.hour }),
+            fetchDemandCities(),
             input.withCuisines ? fetchAdminCuisines() : Promise.resolve(null),
           ]);
-          return { data, cuisines };
+          return { data: { map, cities }, cuisines };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

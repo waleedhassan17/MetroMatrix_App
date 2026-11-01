@@ -29,7 +29,7 @@ export const MAX_PURCHASE_LINES = 40;
 let seq = 0;
 export const newLineKey = () => `line-${Date.now().toString(36)}-${++seq}`;
 
-export const emptyLine = (): DraftLine => ({ key: newLineKey(), ingredientId: null, name: '', category: 'vegetables', baseUnit: 'g', qty: '', unit: 'kg', total: '', expiresOn: null });
+export const emptyLine = (): DraftLine => ({ key: newLineKey(), ingredientId: null, name: '', category: 'vegetable', baseUnit: 'g', qty: '', unit: 'kg', total: '', expiresOn: null });
 
 const baseOfUnit = (unit: string): BaseUnit => {
   const u = parseUnit(unit) ?? (unit in UNITS ? (unit as StandardUnit) : null);
@@ -44,7 +44,7 @@ export const linesFromReceipt = (d: ReceiptDraft): DraftLine[] =>
       key: newLineKey(),
       ingredientId: l.match?.ingredientId ?? null,
       name: l.match?.name ?? l.name,
-      category: 'vegetables',
+      category: 'vegetable',
       baseUnit: UNITS[unit].base,
       qty: String(l.qty),
       unit,
@@ -59,7 +59,7 @@ export const linesFromVoice = (lines: VoiceQtyLine[]): DraftLine[] =>
     key: newLineKey(),
     ingredientId: l.ingredientId,
     name: l.name,
-    category: 'vegetables',
+    category: 'vegetable',
     baseUnit: baseOfUnit(l.unit),
     qty: String(l.qty),
     unit: l.unit,

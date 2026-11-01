@@ -3,7 +3,7 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { fetchCateringCalendar, fetchCateringSettings, fetchCateringRequests, updateCateringSettings } from '../../networks/foodGrowth/catering';
+import { fetchCateringSettings, fetchCateringRequests, updateCateringSettings } from '../../networks/foodGrowth/catering';
 import { toRejectedValue } from '../../networks/network/network';
 import type { CateringCalendar, CateringInbox, CateringSettings } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -61,7 +61,8 @@ export const cateringSlice = createAppSlice({
     loadCateringCalendarAsync: create.asyncThunk(
       async (month: string, { rejectWithValue }) => {
         try {
-          return await fetchCateringCalendar(month);
+          // The month is read from the kitchen's requests (there is no calendar route).
+          return await fetchCateringRequests();
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -71,7 +72,7 @@ export const cateringSlice = createAppSlice({
           state.month = action.meta.arg;
         },
         fulfilled: (state, action) => {
-          const payload = cateringCalendarSerializer(action.payload);
+          const payload = cateringCalendarSerializer(action.payload, action.meta.arg);
           state.calendar = payload;
         },
         rejected: (state, action) => {

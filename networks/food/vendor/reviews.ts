@@ -18,16 +18,6 @@ export const fetchMyReviews = async (unreplied: boolean, page: number, pageSize:
   }
 };
 
-/** A review theme's reviews (`theme`, `week`: Kitchen Intelligence's additions, TODO(API_KITCHEN)). */
-export const fetchReviewsByTheme = async (theme: string, week: string | null, page: number, pageSize: number): Promise<unknown> => {
-  try {
-    const response = await API.GET({ URL: '/food/vendor/reviews', params: { theme, ...(week ? { week } : null), ...pageParams(page, pageSize) } });
-    return response.data;
-  } catch (e) {
-    throw toApiError(e);
-  }
-};
-
 export const replyToReview = async (id: string, reply: string): Promise<unknown> => {
   try {
     const response = await API.POST({ URL: `/food/vendor/reviews/${enc(id)}/reply`, data: { reply: reply.trim() } });

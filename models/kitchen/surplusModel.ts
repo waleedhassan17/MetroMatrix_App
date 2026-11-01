@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════
 // A box is tonight's surplus at least 20% under what it is worth, picked
 // up today in a window of at least 30 minutes. Mirrors the API's rules
-// (docs/API_KITCHEN_ASSUMED.md §3.6) so the form says what's wrong first.
+// (docs/API_KITCHEN.md §3.6) so the form says what's wrong first.
 
 import type { SurplusBoxInput, SurplusSuggestion } from '../kitchen';
 import type { ValidationErrors } from '../authModel';
@@ -11,7 +11,9 @@ import { parseRupees } from '../../utils/money/money';
 import { addDays, formatSlot, todayInZone, zonedToIso } from '../../utils/health-time/healthTime';
 
 export const MIN_DISCOUNT = 0.2;
-export const MAX_BOX_QUANTITY = 50;
+export const MAX_BOX_QUANTITY = 200;
+/** Boxes one reservation may take (the API's ReserveDto), so more people get one. */
+export const MAX_PER_RESERVATION = 10;
 export const MIN_WINDOW_MINUTES = 30;
 export const BACHAT_BOX = 'Bachat Box';
 

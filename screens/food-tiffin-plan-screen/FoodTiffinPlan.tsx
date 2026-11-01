@@ -15,7 +15,7 @@ import { Image } from 'expo-image';
 import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { TIFFIN_PAY, WEEKDAY_LONG } from '../../models/kitchen/kitchenStatusModel';
-import { perMealLabel, priceLabel, scheduleLabel, startChoices } from '../../models/kitchen/tiffinModel';
+import { cutoffChoiceLabel, perMealLabel, priceLabel, scheduleLabel, startChoices } from '../../models/kitchen/tiffinModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import { AppText, Button, Card, ChoiceChip, Divider, IonIcon, InlineNotice, ScreenShell, SkeletonLines, StatusPill, TextAction } from '../../Custom-Components/index';
 import { ChoiceLine } from '../../Custom-Components/food/ChoiceLine';
@@ -24,7 +24,7 @@ import { cdn } from '../../utils/cdn/cdn';
 import { formatDayChip } from '../../utils/health-time/healthTime';
 import { haptics } from '../../utils/haptics/haptics';
 import { loadAddressesAsync, selectAddressBook } from '../address-book-screen/addressBookSlice';
-import { chooseTiffin, loadTiffinPlanAsync, newTiffinKey, selectFoodTiffinPlan, subscribeTiffinAsync } from './foodTiffinPlanSlice';
+import { PICKUP, chooseTiffin, loadTiffinPlanAsync, newTiffinKey, selectFoodTiffinPlan, subscribeTiffinAsync } from './foodTiffinPlanSlice';
 
 type Props = NativeStackScreenProps<FoodAppParamList, 'FoodTiffinPlan'>;
 
@@ -119,7 +119,7 @@ const FoodTiffinPlanContent: React.FC<Props> = ({ navigation, route }) => {
           </View>
           <AppText variant="h2">{`${priceLabel(p)}`}</AppText>
           <AppText variant="small" tone="muted">
-            {`${perMealLabel(p)} · ${p.mealsPerPeriod} meals · ${p.mode === 'delivery' ? 'Delivered' : 'Collected'} ${p.window.label}`}
+            {`${perMealLabel(p)} · ${p.mealsPerPeriod} meals · ${p.mode === 'delivery' ? 'Delivered' : p.mode === 'pickup' ? 'Collected' : 'Delivered or collected'} ${p.window.label}`}
           </AppText>
           {p.description ? <AppText variant="body">{p.description}</AppText> : null}
         </View>
@@ -144,7 +144,7 @@ const FoodTiffinPlanContent: React.FC<Props> = ({ navigation, route }) => {
         <Card>
           <View style={styles.gap}>
             {[
-              ['calendar-outline', `Skip any day until ${p.skipCutoffHours} hours before it arrives. Skipped meals come off your next period.`],
+              ['calendar-outline', `Skip any day until ${cutoffChoiceLabel(p.skipCutoffHour)}.`],
               ['pause-outline', 'Pause it while you travel, or cancel any time.'],
               ['wallet-outline', 'You pay the kitchen directly for each period. MetroMatrix takes no commission.'],
             ].map(([icon, text]) => (
@@ -173,9 +173,19 @@ const FoodTiffinPlanContent: React.FC<Props> = ({ navigation, route }) => {
               </AppText>
             )}
 
-            {p.mode === 'delivery' ? (
+            {p.mode !== 'pickup' ? (
               <View style={styles.gap}>
-                <AppText variant="sectionTitle">Deliver to</AppText>
+                <AppText variant="sectionTitle">{p.mode === 'both' ? 'Delivered, or collected' : 'Deliver to'}</AppText>
+                {p.mode === 'both' ? (
+                  <ChoiceLine
+                    label="I’ll collect it"
+                    note={`From ${p.vendor.name}, ${p.window.label}`}
+                    price={null}
+                    selected={s.addressId === PICKUP}
+                    multiple={false}
+                    onPress={() => dispatch(chooseTiffin({ addressId: PICKUP }))}
+                  />
+                ) : null}
                 {pinned.map(a => (
                   <ChoiceLine
                     key={a.id}

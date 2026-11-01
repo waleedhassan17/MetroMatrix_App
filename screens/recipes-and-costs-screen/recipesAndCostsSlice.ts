@@ -3,7 +3,8 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { fetchRecipes } from '../../networks/kitchen/recipes';
+import { fetchCosting } from '../../networks/kitchen/recipes';
+import { fetchMenuCategories, fetchMenuItems } from '../../networks/food/vendor/menu';
 import { toRejectedValue } from '../../networks/network/network';
 import type { RecipeList } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -26,9 +27,11 @@ export const recipesAndCostsSlice = createAppSlice({
       state.needsRecipe = action.payload;
     }),
     loadRecipesAsync: create.asyncThunk(
-      async (needsRecipe: boolean, { rejectWithValue }) => {
+      async (_needsRecipe: boolean, { rejectWithValue }) => {
         try {
-          return await fetchRecipes(needsRecipe);
+          // The costing (every dish and size), with the menu's photos and categories.
+          const [costing, menu, categories] = await Promise.all([fetchCosting(), fetchMenuItems(), fetchMenuCategories()]);
+          return { costing, menu, categories };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -41,7 +44,8 @@ export const recipesAndCostsSlice = createAppSlice({
         fulfilled: (state, action) => {
           const payload = recipeListSerializer(action.payload);
           state.status = 'succeeded';
-          state.list = payload;
+          // "Needs a recipe": the dishes without one.
+          state.list = payload && action.meta.arg ? { ...payload, items: payload.items.filter(i => i.status === 'missing') } : payload;
         },
         rejected: (state, action) => {
           state.status = 'failed';

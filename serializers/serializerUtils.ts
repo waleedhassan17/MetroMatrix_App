@@ -40,8 +40,8 @@ export const bodyOf = (payload: unknown): unknown =>
   isObject(payload) && typeof payload.success === 'boolean' && 'data' in payload ? payload.data : payload;
 
 /** Several answers read together (a thunk's Promise.all): each part's body. */
-export const bodiesOf = <K extends string>(parts: Record<K, unknown>): Record<K, unknown> =>
-  Object.fromEntries(Object.entries(parts).map(([k, v]) => [k, bodyOf(v)])) as Record<K, unknown>;
+export const bodiesOf = <T extends Record<string, unknown>>(parts: T): { [K in keyof T]-?: unknown } =>
+  Object.fromEntries(Object.entries(parts).map(([k, v]) => [k, bodyOf(v)])) as { [K in keyof T]-?: unknown };
 
 /**
  * A response serializer, FinMatrix's `customerListSerializer(payload)`: it

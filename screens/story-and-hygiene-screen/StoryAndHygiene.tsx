@@ -3,9 +3,9 @@
 // ═══════════════════════════════════════════════════════
 // The story customers read on the kitchen's page: who cooks, a few lines,
 // up to six photos and one short video. Then the hygiene checklist: six
-// plain items, each ticked (a photo is optional evidence). With all six the
-// kitchen is "self-declared"; it can ask MetroMatrix to verify it, and the
-// "Hygiene verified" badge shows only once staff have.
+// plain items, each ticked (pest control by its date). With all six the
+// kitchen is "self-declared"; staff verify it after a visit or a video call,
+// and the "Hygiene verified" badge shows only once they have.
 
 import React, { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -14,19 +14,18 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
-import { MAX_STORY_PHOTOS, STORY_MAX, hygieneProgress, requestBlocker, validateStory } from '../../models/kitchen/reachModel';
+import { MAX_STORY_PHOTOS, STORY_MAX, hygieneProgress, validateStory } from '../../models/kitchen/reachModel';
 import { HYGIENE_STATUS } from '../../models/kitchen/kitchenStatusModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
 import { AppText, Button, Card, Checkbox, Divider, InlineNotice, PhotoStrip, ProgressBar, ScreenShell, SkeletonLines, StatusPill, TextAction, TextField } from '../../Custom-Components/index';
 import { SectionHead } from '../../Components/admin/AdminParts';
 import type { FoodVendorStackParamList } from '../../models';
-import { pickImageFromLibrary, pickVideoFromLibrary, takePhoto } from '../../utils/pickers/pickers';
+import { pickImageFromLibrary, pickVideoFromLibrary } from '../../utils/pickers/pickers';
 import { formatOn } from '../../utils/health-time/healthTime';
 import { haptics } from '../../utils/haptics/haptics';
 import {
   loadStoryAndHygieneAsync,
   removeStoryPhoto,
-  requestVerificationAsync,
   saveStoryAsync,
   selectStoryAndHygiene,
   setHygieneItemAsync,
@@ -74,7 +73,6 @@ const StoryAndHygieneContent: React.FC<Props> = ({ route }) => {
   const errors = validateStory(f);
   const dirty = JSON.stringify(f) !== JSON.stringify({ text: s.story.text, cookName: s.story.cookName, photoUrls: s.story.photoUrls, videoUrl: s.story.videoUrl });
   const progress = hygieneProgress(h);
-  const blocker = requestBlocker(h);
 
   const addPhoto = async () => {
     const file = await pickImageFromLibrary();
@@ -90,18 +88,6 @@ const StoryAndHygieneContent: React.FC<Props> = ({ route }) => {
     if (saveStoryAsync.fulfilled.match(res)) {
       haptics.success();
       Toast.show({ type: 'success', text1: 'Story saved', text2: 'Customers see it on your page.' });
-    } else haptics.warning();
-  };
-  const evidence = async (key: string, camera: boolean) => {
-    const file = camera ? await takePhoto() : await pickImageFromLibrary();
-    if (file) void dispatch(setHygieneItemAsync({ key, done: true, file }));
-  };
-  const request = async () => {
-    haptics.press();
-    const res = await dispatch(requestVerificationAsync());
-    if (requestVerificationAsync.fulfilled.match(res)) {
-      haptics.success();
-      Toast.show({ type: 'success', text1: 'Verification requested', text2: 'MetroMatrix staff will look at your checklist.' });
     } else haptics.warning();
   };
 
@@ -178,10 +164,8 @@ const StoryAndHygieneContent: React.FC<Props> = ({ route }) => {
                 />
                 <View style={styles.itemActions}>
                   <AppText variant="small" tone="muted">
-                    {s.ticking === i.key ? 'Saving…' : i.evidenceUrl ? 'Photo added' : 'Photo optional'}
+                    {s.ticking === i.key ? 'Saving…' : i.key === 'pestControlOn' && i.evidenceUrl ? `Last done ${formatOn(i.evidenceUrl)}` : ''}
                   </AppText>
-                  <TextAction label={i.evidenceUrl ? 'Replace the photo' : 'Take a photo'} onPress={() => void evidence(i.key, true)} />
-                  <TextAction label="From your photos" onPress={() => void evidence(i.key, false)} />
                 </View>
               </View>
             </View>
@@ -194,20 +178,10 @@ const StoryAndHygieneContent: React.FC<Props> = ({ route }) => {
           <AppText variant="small" tone="muted">
             {h.status === 'verified'
               ? `Your page shows “Hygiene verified”${h.reviewedAt ? ` since ${formatOn(h.reviewedAt)}` : ''}.`
-              : 'Until then your page shows “Hygiene self-declared”. Staff check your checklist and photos, then your page shows “Hygiene verified”.'}
+              : 'With every item ticked your page shows “Hygiene self-declared”. Staff verify it after a visit or a video call, then it shows “Hygiene verified”.'}
           </AppText>
         </View>
       </Card>
-      {h.status !== 'verified' ? (
-        <>
-          <Button label={h.status === 'pending' ? 'Verification requested' : 'Request verification'} loading={s.requesting} disabled={!!blocker} onPress={() => void request()} fullWidth />
-          {blocker ? (
-            <AppText variant="small" tone="muted">
-              {blocker}
-            </AppText>
-          ) : null}
-        </>
-      ) : null}
     </View>
   );
 

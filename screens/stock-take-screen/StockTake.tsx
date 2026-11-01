@@ -68,7 +68,7 @@ const StockTakeContent: React.FC<Props> = ({ navigation, route }) => {
   const filled = Object.values(s.typed).filter(t => t.trim()).length;
 
   const save = async () => {
-    const { lines, errors } = countsOf(rows.map(i => ({ ingredientId: i.id, typed: s.typed[i.id] ?? '', unit: unitOf(i).unit })));
+    const { lines, errors } = countsOf(rows.map(i => ({ ingredientId: i.id, typed: s.typed[i.id] ?? '', unit: unitOf(i).unit, baseUnit: i.baseUnit })));
     if (Object.keys(errors).length || !lines.length) {
       dispatch(setRowErrors(errors));
       haptics.warning();
