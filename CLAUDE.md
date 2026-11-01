@@ -20,7 +20,7 @@ Copy the FYP's UX, never its code paths, Firebase setup or per-role duplicate ne
 
 The main network file, `networks/network/network.ts`, reads `EXPO_PUBLIC_API_URL` as `API_URL` (`.env.local`, or the `eas.json` profile). The deployed API is `https://metromatrix-api.duckdns.org/api/v1` (the EC2 server; `.env.local`, `.env.example` and every `eas.json` profile name it); the local one is `http://localhost:3000/api/v1`. The app always talks to the real MetroMatrix API through the one client: there is no dummy fallback in any build. With no URL the build is a configuration error: `ConfigErrorScreen` replaces the app and `api` rejects every request with `CONFIG_ERROR`. Never add a silent fallback.
 
-The dummy API (`networks/network/mock/`) is test fixtures only: the Shopping, Health, Food and Kitchen routes with their seeds and server rules (`shop/`, `health/`, `food/` see `docs/MOCK_FOOD.md`, `kitchen/` see `docs/MOCK_KITCHEN.md`), which the parity and flow tests run the app's networks against. A test installs it with `installDummyApi()` and signs in with `signInAs()` (`mock/testing.ts`), which writes a session straight into the dummy DB. It has no auth, users, media, business, approval or platform routes: those are connected to the real API (`docs/AUTH_CONTRACT.md`, `docs/openapi.json`), and `networks/__tests__/contract.test.ts` checks every request the app sends them against `docs/openapi.json` (`shopContract.test.ts` does the same for Shopping, addresses and notifications). For a service not yet verified against the real API (Kitchen), add the mock route with a new endpoint in the same change; Shop, Health, Food and Kitchen writes in the dummy API are all-or-nothing.
+The dummy API (`networks/network/mock/`) is test fixtures only: the Shopping, Health and Food routes with their seeds and server rules (`shop/`, `health/`, `food/` see `docs/MOCK_FOOD.md`), which the parity and flow tests run the app's networks against. A test installs it with `installDummyApi()` and signs in with `signInAs()` (`mock/testing.ts`), which writes a session straight into the dummy DB. It has no auth, users, media, business, approval or platform routes: those are connected to the real API (`docs/AUTH_CONTRACT.md`, `docs/openapi.json`), and `networks/__tests__/contract.test.ts` checks every request the app sends them against `docs/openapi.json` (`shopContract.test.ts` does the same for Shopping, addresses and notifications; `kitchenContract.test.ts` for Kitchen Intelligence, which has no dummy routes). Shop, Health and Food writes in the dummy API are all-or-nothing.
 
 ## Commands
 
@@ -49,7 +49,7 @@ Set environment in `.env.local`; see `.env.example`. `networks/network/network.t
    - **A thunk returns what the network answered** (`return await fetchCart();`); for several routes, a record of the raw parts (`return { profile, cuisines }` from a `Promise.all`). Its `fulfilled` reducer serializes and shapes them; a listener in another slice (`builder.addCase(x.fulfilled)`) serializes too. A thunk reads an answer through a serializer only inside `required(…)`: to decide its next call (the first open day before its slots), or to hand app shapes to another slice (`dispatch(setUser(required(userResponseSerializer(raw))))`), so other slices only ever hold app shapes.
    - **Serializers** take the envelope: they are wrapped with `fromResponse` (`serializers/serializerUtils.ts`), which opens `{ success, data }` and passes further arguments through. A malformed answer never reaches a slice: the response interceptor refuses a 2xx body that isn't the envelope (`BAD_RESPONSE`), and a serializer that finds nothing readable answers `null`, so `fulfilled` keeps what the slice has (`if (!payload) return;` after its status updates).
    - **A screen that needs what a thunk just saved** (a toast naming it, the new code to open, a row to replace) reads it from the slice, never the raw payload: `fulfilled` keeps it in state (`saved`, `created`, `placed` …) and the screen reads `selectX(appStore.getState()).saved` (`useAppStore`, `hooks/useReduxHooks.ts`).
-   - Flows several slices share live in `screens/shared/` (`authThunks`, `practiceReads`, `healthReads`, `taxonomyWrites`). The doctor and patient compositions chain dependent requests and the reference index's slug lookups, which a reducer cannot run, so they answer app shapes.
+   - Flows several slices share live in `screens/shared/` (`authThunks`, `practiceReads`, `healthReads`, `taxonomyWrites`, `growthReads`, `kitchenWrites`). The doctor and patient compositions chain dependent requests and the reference index's slug lookups, which a reducer cannot run, so they answer app shapes.
    - The session layer is `networks/authcalls/`, one file per call as in Consultant_Mobile (`signin.ts` `authLogin` + `refreshAccessToken`, `signup.ts`, `me.ts` `me`, `logout.ts` `logoutUser`, `forgotPassword.ts`, `verifyEmail.ts`, `google.ts`, `changePassword.ts`, `deleteAccount.ts`, `adminTotp.ts`, and `session.ts` for the token helpers): it stores tokens and answers the session.
    - Validation lives in `models/<domain>Model.ts` as pure functions returning `{ field: message }`.
    - Screens never import axios, never call networks directly, and never shape API data.
@@ -166,11 +166,6 @@ networks/
                              usernames, portions), foodDiscovery (quotes, cards), foodOrders (deals, the checkout planner,
                              the order and payment machines, the minute jobs), foodWire, foodRoutes + foodMenuRoutes +
                              foodDiscoveryRoutes + foodOrderRoutes, foodRealtime (the gateway on the dummy socket)
-  network/mock/kitchen/      the dummy Kitchen Intelligence API (docs/MOCK_KITCHEN.md): kitchenSeed (4 demo kitchens' stock,
-                             recipes and 10 weeks of sales; city prices, nutrition foods, words), kitchenLogic (FIFO, costing,
-                             auto sell-out), forecastLogic, insightCards, tiffin/growth/ai/assistant/myKitchen logic,
-                             voiceStandIn + aiStandIns (no network), one routes file per area (+ adminKitchenRoutes),
-                             foodAdditions (the keys added to API_FOOD shapes), kitchenIndex (registers it, Food's hooks)
   network/mock/mockRealtime  the in-process stand-in for the Food socket in tests (same surface as the real client)
   authcalls/                 the session layer, one file per /auth call (signin, signup, me, logout, forgotPassword,
                              verifyEmail, google, changePassword, deleteAccount, adminTotp; session.ts)
@@ -187,7 +182,7 @@ networks/
 notifications/               push (registration, the pre-prompt's ask, push-tap routing)
 screens/<name>-screen/       <Name>.tsx + <name>Slice.ts, one flat folder per screen (232), e.g. sign-in-screen,
                              health-home-screen, food-checkout-screen; book-appointment-sheet (a sheet over DoctorProfile);
-                             shared/ (authThunks, formStatus, totpChallenge, healthReads, practiceReads, taxonomyWrites,
+                             shared/ (authThunks, formStatus, totpChallenge, healthReads, practiceReads, taxonomyWrites, growthReads, kitchenWrites,
                              photoUploads); __tests__/
 serializers/                 defensive backend → app mapping, one file per domain (shopping/ and health/ per resource;
                              health/healthCommon holds every Health wire map); __tests__/fixtures/{health,food,shop}/ real API responses;
@@ -212,10 +207,9 @@ utils/<name>/                one folder per util: storage_utils/storageUtils (to
 __live__/, __fixtures__/     the live suite against a running API; shared test fixtures
 scripts/check-design-tokens.js, capture-health-fixtures.js, capture-food-fixtures.js, capture-shop-fixtures.js and
                              capture-shop-staff-fixtures.js (real responses → the serializer fixtures)
-docs/                        API_CONTRACT_ASSUMED.md, API_SHOPPING.md, API_HEALTH.md and API_FOOD.md (copies of
+docs/                        API_CONTRACT_ASSUMED.md, API_SHOPPING.md, API_HEALTH.md, API_FOOD.md, API_KITCHEN.md, AI.md and VOICE.md (copies of
                              the backend's), MOCK_HEALTH.md, MOCK_FOOD.md, MOCK_IMAGES.md, GOOGLE_SIGNIN.md,
-                             PLAY_BACKGROUND_LOCATION.md, FOOD_DEVICE_CHECKS.md; API_KITCHEN_ASSUMED.md, AI_ASSUMED.md,
-                             VOICE_ASSUMED.md (Chunk 5's assumed contract), MOCK_KITCHEN.md, KITCHEN_DEVICE_CHECKS.md
+                             PLAY_BACKGROUND_LOCATION.md, FOOD_DEVICE_CHECKS.md, KITCHEN_DEVICE_CHECKS.md
 assets/images/               FYP icon + splash mark; services/ and health/ (card photos — sources in each CREDITS.md)
 ```
 
@@ -272,7 +266,7 @@ const styles = useStyles(makeStyles); // memoised on the active theme (mode + se
   - `AI_UNAVAILABLE` and `AI_QUOTA_REACHED` are never fatal: the screen shows the manual path inline, with the reset date (`aiModel`).
   - Bachat Box, tiffin, catering, hygiene and experiment wording only from `kitchenStatusModel`.
   - Urdu content reads right to left (`utils/script`) and carries `accessibilityLanguage="ur"`.
-  - The demand map never shows an area under 10 searches and never ties a search to a person.
+  - The demand map never shows an area under 10 searches (the API's own floor is 5) and never ties a search to a person.
   - Nutrition is off until the customer turns it on, kitchens never see it, its wording never praises or blames, and "Delete my nutrition data" removes all of it.
   - Insight cards are the `InlineNotice` look (a tinted icon well, no side strip), at most five, ranked by severity.
 - Onboarding: everything on a slide, including the primary button, wears that slide's colour.
@@ -324,12 +318,13 @@ Every network call is built from MetroMatrix-API `docs/API_AUTH.md` / `docs/API_
   - A store's phone is opt-in (its profile; shown only once set), the store's private order note is `internalNote` (only the store's view carries it), and the staff console has `GET /admin/shop/overview`, `GET /admin/shop/stores` and `PUT /admin/shop/categories/order`.
   - When the backend's document changes: copy it, update the networks, serializers, models and the dummy API (`shop/shopWire.ts` builds the answers), capture again (`scripts/capture-shop-fixtures.js` against a local backend with `seed:shopping`), and run the gates. `mockShopParity` fails on any key or outcome the dummy and the capture disagree on. Staff views are captured from the backend's own e2e run on its throwaway database (`scripts/capture-shop-staff-fixtures.js`, the response probe), since staff sign in with an authenticator.
 
-- **Kitchen Intelligence runs on an assumed contract** (Chunk 5, owner's decision 2026-10-19): `docs/API_KITCHEN_ASSUMED.md`, `docs/AI_ASSUMED.md` and `docs/VOICE_ASSUMED.md`, written in API_FOOD's conventions (whole rupees; quantities in base units g/ml/pc; branch-local dates; `Idempotency-Key` on reservations and subscriptions). The backend now has its Kitchen module and its own `docs/API_KITCHEN.md`, `AI.md` and `VOICE.md`: reconciling with them is the next step.
-  - Paths: `/food/vendor/kitchen`, `/food/vendor/{surplus,tiffin,catering,ramadan,storefront,demand,menu-insights,experiments,story,hygiene,ai,nutrition}`, `/food/{surplus,tiffin,catering,ramadan}`, `/ai/voice/interpret`, `/my-kitchen`, `/admin/kitchen`.
-  - Voice never writes: it answers a proposed action, and the app's Confirm calls the ordinary endpoint.
-  - Keys added to API_FOOD shapes live in one list (`mock/kitchen/foodAdditions.ts`, doc §5); the Food parity tests leave them out and assert they're absent from the real capture.
-  - `kitchenContract.test.ts` keeps the three documents and the dummy API one thing: every `<!-- contract: name -->` example has the answer's keys, and every request it runs is documented. Add an example whenever you add a route.
-  - Dependencies are marked `TODO(API_KITCHEN)`, `TODO(API_AI)` or `TODO(API_VOICE)`; Daily Basket's grocery `netQuantity` is the real API's product `pack` (API_SHOPPING.md §5.6).
+- **Kitchen Intelligence is on the real contract** (`kitchen/p1`–`p4`, 2026-11-01; backend `kitchen/k1`–`k5`): `docs/API_KITCHEN.md`, `docs/AI.md` and `docs/VOICE.md` are copies of the backend's (whole rupees; quantities in base units g/ml/piece; branch-local dates; `Idempotency-Key` on reservations and subscriptions).
+  - Paths: `/food/vendor/kitchen` (stock, recipes and costing, purchases, forecast and prep, waste, Bachat Box boxes and reservations, cards, `ai/*`, `nutrition/*`, experiments, menu engineering, packing proof), `/food/vendor/{tiffin,catering,ramadan,story,storefront,demand-map,demand-curve,pause}`, `/food/{surplus,tiffin,catering}`, `/food/me/nutrition`, `/my-kitchen`, `/ai/{voice,announce,usage}`, `/admin/{kitchen,nutrition,ai}`, `/admin/food/{hygiene,calendar-events,signatures,demand-map,lookup}` and the AI switch, `PATCH /admin/settings` (`ai.enabled`, with a TOTP code).
+  - The backend's rules win where it fixes one: dishes sell out by stock always; the packing photo is optional or required (before the order leaves); signature claims go live without approval (staff take one down); hygiene is the story's checklist (self-declared, then staff verify after a visit or a video call); a tiffin's cut-off is a clock hour the evening before, a pause always has an end, and a skipped day is a day off (no credits); dawat types are the backend's six.
+  - Voice never writes: `/ai/voice` answers `proposedAction` (the exact request), and Confirm sends it as it came (`confirmVoiceAction`), or the ordinary endpoint.
+  - People read codes (BB-, CT-) and the API names ids: slices find the id from the list (`screens/shared/growthReads`); a purchase naming a new supplier or ingredient creates them first (`screens/shared/kitchenWrites`).
+  - Tests: `serializers/__tests__/kitchenRealResponses.test.ts` reads real answers (`fixtures/kitchen/real.json` from `scripts/capture-kitchen-fixtures.js` on a local `seed:food` + `seed:kitchen` API with AI off; `staff.json` from the backend's e2e run, `scripts/capture-kitchen-staff-fixtures.js`). `networks/__tests__/kitchenContract.test.ts` runs every Kitchen network function and checks its request against `docs/openapi.json` and the DTO fields (`fixtures/dtoFields.json`, `scripts/kitchen-dto-fields.py`); a new function fails it until it has a case. There is no dummy Kitchen API.
+  - When the backend's documents change: copy them and openapi.json, regenerate dtoFields.json, update the networks, serializers and models, capture again, and run the gates.
 
 When a real document arrives, reconcile it in one pass:
 - update the networks, serializers and models (and the dummy API);

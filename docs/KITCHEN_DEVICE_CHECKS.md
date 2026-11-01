@@ -1,13 +1,13 @@
 # Kitchen Intelligence: checks on a phone
 
-The gates, the contract and flow tests and the web walks cover what a browser can show. The web walks use a fake microphone, a typed phrase or a sample recording, and the dummy API's stand-ins for speech and AI.
+The gates (the Kitchen contract test against the API's openapi.json and DTOs, the serializers against real captured answers), the live suite and the web walks cover what a browser can show. A local API runs with AI off, so voice is understood by its rules (typed phrases) and the assistant answers `AI_UNAVAILABLE` with the manual way.
 
 The checks below need a real phone:
 
 - The ones marked **build** also need a development or store build. Expo Go can't register universal links or remote push.
-- The ones marked **API** need the real Kitchen, AI and voice APIs. The dummy API answers a recording with a sample phrase, and has no server voice (`ttsUrl` is `null`).
+- The ones marked **API** need the API with AI on (a model key, `AI_ENABLED=true`), and speech to text for recordings. The server voice (`ttsUrl`) needs `TTS_PROVIDER=google`.
 
-Use the seeded accounts in `docs/MOCK_FOOD.md` and `docs/MOCK_KITCHEN.md`. Staff are `admin@metromatrix.app` (`Admin2026`, code `123456`).
+Use the backend's demo accounts (`npm run seed:food` and `seed:kitchen`; the password is the backend's `SEED_DEMO_PASSWORD`). Staff sign in with their own authenticator.
 
 ## Voice
 
@@ -16,7 +16,7 @@ Use the seeded accounts in `docs/MOCK_FOOD.md` and `docs/MOCK_KITCHEN.md`. Staff
 - [ ] The level meter moves with your voice and stays still in silence.
 - [ ] The language chip (Urdu, English, Auto) is remembered after the app restarts.
 - [ ] In Expo Go on Android and iOS, a recording uploads and the confirm card appears. After it, music or a call from another app comes back as normal (the audio session is released).
-- [ ] **API:** speak five of the 40 phrases in `docs/VOICE_ASSUMED.md` in a busy kitchen: one in Urdu script, two in Roman Urdu, two in English. Check each card's action before Confirm. Below the confidence line, "Did you mean…" offers the alternatives.
+- [ ] **API:** speak five of the phrases in `docs/VOICE.md` in a busy kitchen: one in Urdu script, two in Roman Urdu, two in English. Check each card's action before Confirm. Below the confidence line, "Did you mean…" offers the alternatives.
 - [ ] **API:** an Urdu transcript reads right to left on the card.
 
 ## Announcements

@@ -34,7 +34,7 @@ As in FinMatrix, the app always talks to the real MetroMatrix API: there is no d
 
 The auth requests are checked against the API's OpenAPI document (`docs/openapi.json`, `networks/__tests__/contract.test.ts`). With a running API, `__live__/live.test.ts` walks the auth flows against it.
 
-The dummy API in `networks/network/mock/` is test fixtures only: the Shopping, Health, Food and Kitchen routes the parity and flow tests run the networks against (`mock/testing.ts`).
+The dummy API in `networks/network/mock/` is test fixtures only: the Shopping, Health and Food routes the parity and flow tests run the networks against (`mock/testing.ts`). Kitchen Intelligence is checked against the real API's answers and openapi.json instead.
 
 ## Status
 
@@ -47,7 +47,7 @@ The dummy API in `networks/network/mock/` is test fixtures only: the Shopping, H
 - **Store app:** Today, orders (payment check, ship with tracking), products with sizes and colours, inventory, collections, coupons, returns, reviews, insights, store profile, settings and payment accounts. MetroMatrix never holds a store's money: "Recorded sales" are records only.
 - **Partner apps:** doctor and kitchen landing screens; their tools arrive with Health and Food.
 - **Admin console:** the approval queue and business review, plus a Shopping tab (reports, categories, banners, featured stores, order lookup).
-- **API contracts.** Auth, Shopping, Healthcare and Food Court run on MetroMatrix-API's real contracts ([docs/AUTH_CONTRACT.md](docs/AUTH_CONTRACT.md), [docs/API_SHOPPING.md](docs/API_SHOPPING.md), [docs/API_HEALTH.md](docs/API_HEALTH.md), [docs/API_FOOD.md](docs/API_FOOD.md), [docs/openapi.json](docs/openapi.json)); Kitchen Intelligence still runs on an assumed one ([docs/API_KITCHEN_ASSUMED.md](docs/API_KITCHEN_ASSUMED.md)).
+- **API contracts.** Every service runs on MetroMatrix-API's real contracts ([docs/AUTH_CONTRACT.md](docs/AUTH_CONTRACT.md), [docs/API_SHOPPING.md](docs/API_SHOPPING.md), [docs/API_HEALTH.md](docs/API_HEALTH.md), [docs/API_FOOD.md](docs/API_FOOD.md), Kitchen Intelligence's [docs/API_KITCHEN.md](docs/API_KITCHEN.md), [docs/AI.md](docs/AI.md) and [docs/VOICE.md](docs/VOICE.md), [docs/openapi.json](docs/openapi.json)).
 - **Before release:**
   - confirm the support email
   - set the iOS Google URL scheme (`app.json`)
