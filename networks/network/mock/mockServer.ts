@@ -2,7 +2,7 @@
 // MetroMatrix — Dummy API server (an axios adapter), tests only
 // ═══════════════════════════════════════════════════════
 // The app always talks to the real API (config/env.ts). This adapter is
-// test fixtures: the Shopping, Health, Food and Kitchen routes, answering as
+// test fixtures: the Shopping, Health and Food routes, answering as
 // their documents say the real backend does:
 //   success  { success: true, data: <payload> }       2xx
 //   failure  { success: false, error: { code, message, details } }  4xx
@@ -27,7 +27,6 @@ import { registerShopRoutes } from './shop/shopRoutes';
 import { registerHealthRoutes } from './health/healthRoutes';
 import { registerFoodRoutes } from './food/foodRoutes';
 import { foodSessionOf } from './food/foodLogic';
-import { registerKitchen } from './kitchen/kitchenIndex';
 
 // ─── Plumbing ────────────────────────────────────────
 // One error type for every route; the shop routes throw the same class.
@@ -183,17 +182,6 @@ const foodKit = registerFoodRoutes({
   requirePartnerBusiness: ctx => requirePartnerBusiness(ctx),
   requireAdmin,
   revokeSessions,
-});
-
-// ── Kitchen Intelligence (assumed contract, Chunk 5) — see ./kitchen/ ──
-registerKitchen(foodKit, {
-  requireUser,
-  optionalUser: ctx => {
-    const session = ctx.token ? ctx.db.access[ctx.token] : undefined;
-    if (!session || session.expiresAt < ctx.now) return null;
-    return ctx.db.users.find(u => u.id === session.userId) ?? null;
-  },
-  requireAdmin,
 });
 
 // ─── The adapter ─────────────────────────────────────

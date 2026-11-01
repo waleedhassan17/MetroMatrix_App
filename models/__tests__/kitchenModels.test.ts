@@ -31,7 +31,7 @@ describe('cost to make', () => {
   });
 
   it('checks a recipe card before it is saved', () => {
-    const ok = { yield: 1, lines: [{ ingredientId: 'a', qty: 10 }], addOns: [], packaging: [], signature: { on: false, creatorName: null } };
+    const ok = { yield: 1, lines: [{ ingredientId: 'a', qty: 10, baseUnit: 'g' as const }], addOns: [], packaging: [], signature: { on: false, creatorName: null } };
     expect(validateRecipe(ok)).toEqual({});
     expect(validateRecipe({ ...ok, lines: [] }).lines).toBeTruthy();
     expect(validateRecipe({ ...ok, signature: { on: true, creatorName: ' ' } }).creatorName).toBeTruthy();
@@ -73,16 +73,16 @@ describe('stock amounts', () => {
   });
 
   it('builds an ingredient and a stock take from the forms', () => {
-    const f = { name: ' Shimla mirch ', category: 'vegetables' as const, baseUnit: 'g' as const, dozens: false, par: '2', parUnit: 'kg' as const };
+    const f = { name: ' Shimla mirch ', category: 'vegetable' as const, baseUnit: 'g' as const, dozens: false, par: '2', parUnit: 'kg' as const };
     expect(validateIngredient(f)).toEqual({});
-    expect(ingredientInput(f)).toEqual({ name: 'Shimla mirch', category: 'vegetables', baseUnit: 'g', dozens: false, parLevel: 2000 });
+    expect(ingredientInput(f)).toEqual({ name: 'Shimla mirch', category: 'vegetable', baseUnit: 'g', dozens: false, parLevel: 2000 });
     expect(validateIngredient({ ...f, parUnit: 'l' }).par).toBeTruthy();
     const c = countsOf([
-      { ingredientId: 'a', typed: '4.5', unit: 'kg' },
-      { ingredientId: 'b', typed: '', unit: 'kg' },
-      { ingredientId: 'c', typed: 'x', unit: 'kg' },
+      { ingredientId: 'a', typed: '4.5', unit: 'kg', baseUnit: 'g' },
+      { ingredientId: 'b', typed: '', unit: 'kg', baseUnit: 'g' },
+      { ingredientId: 'c', typed: 'x', unit: 'kg', baseUnit: 'g' },
     ]);
-    expect(c.lines).toEqual([{ ingredientId: 'a', counted: 4500 }]);
+    expect(c.lines).toEqual([{ ingredientId: 'a', counted: 4500, baseUnit: 'g' }]);
     expect(Object.keys(c.errors)).toEqual(['c']);
   });
 });
@@ -104,7 +104,7 @@ describe('purchases', () => {
     expect(scanned.map(l => l.ingredientId)).toEqual(['ing_tomato', null]);
     expect(draftTotal(scanned)).toBe(1430);
     const input = purchaseInput(scanned, 'receipt', { supplierName: 'Anwar Sabzi Wala', receiptUrl: 'x' });
-    expect(input.lines[1]).toEqual({ newIngredient: { name: 'Shimla mirch', category: 'vegetables', baseUnit: 'g' }, qty: 1, unit: 'kg', total: 280 });
+    expect(input.lines[1]).toEqual({ newIngredient: { name: 'Shimla mirch', category: 'vegetable', baseUnit: 'g' }, qty: 1, unit: 'kg', total: 280 });
     expect(input.supplierName).toBe('Anwar Sabzi Wala');
   });
 
@@ -116,7 +116,7 @@ describe('purchases', () => {
 });
 
 describe('forecasts', () => {
-  const item = { itemId: 'x', name: 'Biryani', photoUrl: null, expected: 42, low: 35, high: 49, learning: false, adjusted: null, fixed: { tiffin: 3, catering: 0 }, planned: 45 };
+  const item = { itemId: 'x', name: 'Biryani', photoUrl: null, expected: 42, low: 35, high: 49, learning: false, adjusted: null, fixed: 3, planned: 45 };
   it('plans the cook’s number plus fixed demand, and says the change', () => {
     expect(plannedOf(item)).toBe(45);
     expect(plannedOf({ ...item, adjusted: 50 })).toBe(53);
@@ -166,7 +166,7 @@ describe('voice', () => {
 
   it('flags what to check, and when it is unsure', () => {
     expect(actionWarnings({ kind: 'purchase.add', lines: [{ ingredientId: null, key: null, name: 'Shimla mirch', qty: 1, unit: 'kg', total: null }] })).toHaveLength(2);
-    const r = { id: 'v', transcript: 'x', language: 'en' as const, confidence: 0.6, action: { kind: 'vendor.busy' as const, extraMinutes: 15 }, alternatives: [], heard: 'text' as const };
+    const r = { id: 'v', transcript: 'x', language: 'en' as const, confidence: 0.6, action: { kind: 'vendor.busy' as const, extraMinutes: 15 }, alternatives: [], heard: 'text' as const, note: null };
     expect(isUnsure(r)).toBe(true);
     expect(isUnsure({ ...r, confidence: 0.9 })).toBe(false);
   });

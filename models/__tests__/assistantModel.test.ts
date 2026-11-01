@@ -8,8 +8,6 @@ import {
   nutritionLine,
   repriced,
   savingLine,
-  specialItemInput,
-  specialRecipe,
   validateDescription,
   validateDraftPrice,
   weekLabel,
@@ -23,10 +21,7 @@ describe('confirming drafts', () => {
     expect(descriptionInput({ en: '  Fresh naan. ', ur: '' })).toEqual({ description: 'Fresh naan.', descriptionUr: null });
   });
 
-  it('adds a special hidden, with its recipe card, and a combo as a deal', () => {
-    const special = specialItemInput({ title: 'Chicken tikka plate', description: 'Chargrilled.' }, 'mc_bbq', 870);
-    expect(special).toMatchObject({ categoryId: 'mc_bbq', name: 'Chicken tikka plate', basePrice: 870, isActive: false, isDeal: false });
-    expect(specialRecipe({ lines: [{ ingredientId: 'ing_bb_chicken', qty: 220.4 }] })).toMatchObject({ yield: 1, lines: [{ ingredientId: 'ing_bb_chicken', qty: 220 }] });
+  it('adds a combo as a deal', () => {
     const combo = comboItemInput({ names: ['Chicken Biryani', 'Naan'] }, 'mc_deals', 630);
     expect(combo).toMatchObject({ name: 'Chicken Biryani + Naan', description: 'Chicken Biryani and Naan together.', isDeal: true, isActive: true, basePrice: 630 });
   });
@@ -57,25 +52,21 @@ describe('weeks and nutrition', () => {
 });
 
 describe('the assistant’s serializers', () => {
-  it('keeps no numbers for a dish not worked out, and drops ideas without a cost', () => {
+  it('keeps no numbers for a dish not worked out, and drops ideas without a name', () => {
     expect(dishNutritionSerializer({ itemId: 'mi_x', name: 'X', method: 'none', kcal: 500 })).toMatchObject({ kcal: null, method: 'none' });
-    expect(specialIdeasSerializer({ items: [{ title: 'No cost' }, { title: 'Kheer', cost: { toMake: 69, sellPrice: 200, keep: 131 } }] }).items.map(i => i.title)).toEqual(['Kheer']);
+    expect(dishNutritionSerializer({ itemId: 'mi_y', nutrition: { perServing: { kcal: 591, proteinG: 46.6 }, method: 'recipe' } }, 'Qorma')).toMatchObject({ name: 'Qorma', kcal: 591, protein: 47, method: 'recipe' });
+    const ideas = specialIdeasSerializer({ targetFoodCostPct: 35, ideas: [{ description: 'no name' }, { name: 'Kheer', servings: 4, costPerServing: 69, suggestedPrice: 200, foodCostPct: 34.5, lines: [{ ingredientId: 'i1', name: 'Milk', qty: 1, unit: 'l', expiring: true }] }] });
+    expect(ideas.items.map(i => i.title)).toEqual(['Kheer']);
+    expect(ideas.items[0]).toMatchObject({ servings: 4, usesExpiring: ['Milk'], cost: { toMake: 69, keep: 131, overTarget: false }, lines: [{ ingredientId: 'i1', qty: 1, unit: 'l' }] });
   });
 
-  it('drops a review theme it doesn’t know', () => {
-    const r = reviewInsightsSerializer({ week: '2026-10-12', themes: [{ key: 'late', label: 'Took too long', tone: 'negative', count: 3 }, { key: 'weird', count: 1 }] });
-    expect(r?.themes.map(t => t.key)).toEqual(['late']);
-  });
-});
-
-describe('the dummy photo check', () => {
-  it('always gives tips, whatever the address hashes to', () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { photoCheck } = require('../../networks/network/mock/kitchen/assistantLogic') as typeof import('../../networks/network/mock/kitchen/assistantLogic');
-    for (let n = 0; n < 300; n++) {
-      const r = photoCheck(`blob:http://localhost:8093/${n.toString(36)}-${n * 7919}`);
-      expect(r.tips.length).toBeGreaterThan(0);
-      expect(r.tips.every(t => typeof t.text === 'string')).toBe(true);
-    }
+  it('reads a week of review themes (anonymised), the latest or one picked', () => {
+    const raw = {
+      latest: { periodStart: '2026-10-19', periodEnd: '2026-10-25', reviewCount: 8, themes: [{ theme: 'cold food', sentiment: 'negative', count: 3, examples: ['came cold'] }] },
+      history: [{ periodStart: '2026-10-12', periodEnd: '2026-10-18', reviewCount: 5, themes: [] }],
+    };
+    expect(reviewInsightsSerializer(raw)).toMatchObject({ week: '2026-10-19', reviewCount: 8, themes: [{ key: 'cold food', label: 'Cold food', tone: 'negative', count: 3, snippets: ['came cold'] }], weeks: [{ week: '2026-10-19', count: 8 }, { week: '2026-10-12', count: 5 }] });
+    expect(reviewInsightsSerializer(raw, '2026-10-12')?.week).toBe('2026-10-12');
+    expect(reviewInsightsSerializer({ latest: null, newReviews: 2 })).toBeNull();
   });
 });

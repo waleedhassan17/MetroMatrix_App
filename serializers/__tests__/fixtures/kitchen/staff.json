@@ -1,0 +1,2659 @@
+{
+  "GET /food/vendor/kitchen/forecast": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "from": "2026-11-01",
+          "to": "2026-11-01",
+          "learning": true,
+          "items": [
+            {
+              "id": "f97ce90c-d01e-4b7c-a36b-96db61f67cc0",
+              "itemId": "4b84ad72-75d1-437f-a7c4-f3bd3c9c6570",
+              "name": "Chicken Karahi",
+              "date": "2026-11-01",
+              "expected": 0,
+              "low": 0,
+              "high": 0,
+              "method": "learning",
+              "label": "Learning your patterns",
+              "adjusted": null,
+              "basis": {
+                "base": 0,
+                "event": 1,
+                "trend": 1,
+                "samples": 7
+              },
+              "generatedAt": "2026-11-01T06:37:42.032Z"
+            },
+            {
+              "id": "212f191b-6fa4-4c47-9382-a3406ea31ebc",
+              "itemId": "0b35bd20-1b16-4602-aff2-c6fae7ef65ed",
+              "name": "Daal Roti",
+              "date": "2026-11-01",
+              "expected": 1,
+              "low": 0.5,
+              "high": 1.6,
+              "method": "learning",
+              "label": "Learning your patterns",
+              "adjusted": null,
+              "basis": {
+                "base": 1,
+                "event": 1,
+                "trend": 1,
+                "samples": 7
+              },
+              "generatedAt": "2026-11-01T06:37:42.032Z"
+            }
+          ],
+          "accuracy": {
+            "recent": [],
+            "mape14d": null
+          }
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "from": "2026-11-01",
+          "to": "2026-11-02",
+          "learning": true,
+          "items": [
+            {
+              "id": "d89716d5-8730-4af5-b00b-ee87f5cc6923",
+              "itemId": "a9f7732a-c677-4dc9-8d2f-26e293fb2988",
+              "name": "Chicken Karahi",
+              "date": "2026-11-01",
+              "expected": 0,
+              "low": 0,
+              "high": 0,
+              "method": "learning",
+              "label": "Learning your patterns",
+              "adjusted": null,
+              "basis": {
+                "base": 0,
+                "event": 1,
+                "trend": 1,
+                "samples": 0
+              },
+              "generatedAt": "2026-11-01T06:37:42.207Z"
+            },
+            {
+              "id": "b6e4e045-f523-4e8e-a050-8e8d150f7a08",
+              "itemId": "1dee1878-efff-4515-a129-6fecb24e5689",
+              "name": "Pulao",
+              "date": "2026-11-01",
+              "expected": 0,
+              "low": 0,
+              "high": 0,
+              "method": "learning",
+              "label": "Learning your patterns",
+              "adjusted": null,
+              "basis": {
+                "base": 0,
+                "event": 1,
+                "trend": 1,
+                "samples": 0
+              },
+              "generatedAt": "2026-11-01T06:37:42.207Z"
+            },
+            {
+              "id": "d7417cbd-6e3e-44a8-9032-31f4ebd4166d",
+              "itemId": "a9f7732a-c677-4dc9-8d2f-26e293fb2988",
+              "name": "Chicken Karahi",
+              "date": "2026-11-02",
+              "expected": 0,
+              "low": 0,
+              "high": 0,
+              "method": "learning",
+              "label": "Learning your patterns",
+              "adjusted": null,
+              "basis": {
+                "base": 0,
+                "event": 1,
+                "trend": 1,
+                "samples": 0
+              },
+              "generatedAt": "2026-11-01T06:37:42.207Z"
+            }
+          ],
+          "accuracy": {
+            "recent": [],
+            "mape14d": null
+          }
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "from": "2026-11-01",
+          "to": "2026-11-02",
+          "learning": true,
+          "items": [
+            {
+              "id": "9edceb1c-db28-42ea-b409-a423918247c9",
+              "itemId": "221f649a-66bb-48e1-b7f9-9bf0abbb5a14",
+              "name": "Chicken Karahi",
+              "date": "2026-11-01",
+              "expected": 0,
+              "low": 0,
+              "high": 0,
+              "method": "learning",
+              "label": "Learning your patterns",
+              "adjusted": null,
+              "basis": {
+                "base": 0,
+                "event": 1,
+                "trend": 1,
+                "samples": 0
+              },
+              "generatedAt": "2026-11-01T06:37:42.400Z"
+            },
+            {
+              "id": "c3852459-1ee9-49c8-929c-b965f0d47b74",
+              "itemId": "ec6301e5-f9c6-44cb-8d80-942694949cdb",
+              "name": "Puri Plate",
+              "date": "2026-11-01",
+              "expected": 0,
+              "low": 0,
+              "high": 0,
+              "method": "learning",
+              "label": "Learning your patterns",
+              "adjusted": null,
+              "basis": {
+                "base": 0,
+                "event": 1,
+                "trend": 1,
+                "samples": 0
+              },
+              "generatedAt": "2026-11-01T06:37:42.400Z"
+            },
+            {
+              "id": "99707e90-524a-429d-a3d7-0795085626fa",
+              "itemId": "221f649a-66bb-48e1-b7f9-9bf0abbb5a14",
+              "name": "Chicken Karahi",
+              "date": "2026-11-02",
+              "expected": 0,
+              "low": 0,
+              "high": 0,
+              "method": "learning",
+              "label": "Learning your patterns",
+              "adjusted": null,
+              "basis": {
+                "base": 0,
+                "event": 1,
+                "trend": 1,
+                "samples": 0
+              },
+              "generatedAt": "2026-11-01T06:37:42.400Z"
+            }
+          ],
+          "accuracy": {
+            "recent": [],
+            "mape14d": null
+          }
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "from": "2026-11-01",
+          "to": "2026-11-07",
+          "learning": true,
+          "items": [
+            {
+              "id": "b8e453ae-f3c4-4e2a-9997-f0fbfe46588d",
+              "itemId": "93f0870a-0a96-48db-8e53-7ecfd9856f93",
+              "name": "Chicken Karahi",
+              "date": "2026-11-01",
+              "expected": 0.7,
+              "low": 0.4,
+              "high": 1.1,
+              "method": "learning",
+              "label": "Learning your patterns",
+              "adjusted": null,
+              "basis": {
+                "base": 0.7,
+                "event": 1,
+                "trend": 1,
+                "samples": 7
+              },
+              "generatedAt": "2026-11-01T06:37:52.096Z"
+            },
+            {
+              "id": "25d6d9aa-35cc-4e83-8e71-ac89b6ac16a9",
+              "itemId": "93f0870a-0a96-48db-8e53-7ecfd9856f93",
+              "name": "Chicken Karahi",
+              "date": "2026-11-02",
+              "expected": 0.7,
+              "low": 0.4,
+              "high": 1.1,
+              "method": "learning",
+              "label": "Learning your patterns",
+              "adjusted": null,
+              "basis": {
+                "base": 0.7,
+                "event": 1,
+                "trend": 1,
+                "samples": 7
+              },
+              "generatedAt": "2026-11-01T06:37:52.096Z"
+            },
+            {
+              "id": "d891b253-28e1-4dde-ade5-f277b60c33bc",
+              "itemId": "93f0870a-0a96-48db-8e53-7ecfd9856f93",
+              "name": "Chicken Karahi",
+              "date": "2026-11-03",
+              "expected": 0.7,
+              "low": 0.4,
+              "high": 1.1,
+              "method": "learning",
+              "label": "Learning your patterns",
+              "adjusted": null,
+              "basis": {
+                "base": 0.7,
+                "event": 1,
+                "trend": 1,
+                "samples": 7
+              },
+              "generatedAt": "2026-11-01T06:37:52.096Z"
+            }
+          ],
+          "accuracy": {
+            "recent": [],
+            "mape14d": null
+          }
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "from": "2026-11-01",
+          "to": "2026-11-02",
+          "learning": true,
+          "items": [
+            {
+              "id": "9266cad8-7fac-4c40-ba3a-8104daf3cd08",
+              "itemId": "5651bbde-52f7-4cff-8ec8-bacd5365aa71",
+              "name": "Chicken Karahi",
+              "date": "2026-11-01",
+              "expected": 0,
+              "low": 0,
+              "high": 0,
+              "method": "learning",
+              "label": "Learning your patterns",
+              "adjusted": null,
+              "basis": {
+                "base": 0,
+                "event": 1,
+                "trend": 1,
+                "samples": 0
+              },
+              "generatedAt": "2026-11-01T06:37:52.446Z"
+            },
+            {
+              "id": "37eb9b61-7b86-4cd8-a0a1-19b90368f48f",
+              "itemId": "941d9324-364f-40a1-836c-4c0b466dc54f",
+              "name": "Chicken Biryani",
+              "date": "2026-11-01",
+              "expected": 0,
+              "low": 0,
+              "high": 0,
+              "method": "learning",
+              "label": "Learning your patterns",
+              "adjusted": null,
+              "basis": {
+                "base": 0,
+                "event": 1,
+                "trend": 1,
+                "samples": 0
+              },
+              "generatedAt": "2026-11-01T06:37:52.446Z"
+            },
+            {
+              "id": "a2c7c2dd-c05c-4b4e-a106-5c22f2f1aa36",
+              "itemId": "5651bbde-52f7-4cff-8ec8-bacd5365aa71",
+              "name": "Chicken Karahi",
+              "date": "2026-11-02",
+              "expected": 0,
+              "low": 0,
+              "high": 0,
+              "method": "learning",
+              "label": "Learning your patterns",
+              "adjusted": null,
+              "basis": {
+                "base": 0,
+                "event": 1,
+                "trend": 1,
+                "samples": 0
+              },
+              "generatedAt": "2026-11-01T06:37:52.446Z"
+            }
+          ],
+          "accuracy": {
+            "recent": [],
+            "mape14d": null
+          }
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "from": "2026-11-01",
+          "to": "2026-11-02",
+          "learning": true,
+          "items": [
+            {
+              "id": "8366f810-cc5e-46f7-8153-087a5db08e6d",
+              "itemId": "4119e950-20a6-4d8d-8cd6-be629dd838a7",
+              "name": "Chicken Karahi",
+              "date": "2026-11-01",
+              "expected": 0,
+              "low": 0,
+              "high": 0,
+              "method": "learning",
+              "label": "Learning your patterns",
+              "adjusted": null,
+              "basis": {
+                "base": 0,
+                "event": 1,
+                "trend": 1,
+                "samples": 0
+              },
+              "generatedAt": "2026-11-01T06:37:52.693Z"
+            },
+            {
+              "id": "60a2896d-30c6-4676-b034-f99ee3652cb2",
+              "itemId": "4119e950-20a6-4d8d-8cd6-be629dd838a7",
+              "name": "Chicken Karahi",
+              "date": "2026-11-02",
+              "expected": 0,
+              "low": 0,
+              "high": 0,
+              "method": "learning",
+              "label": "Learning your patterns",
+              "adjusted": null,
+              "basis": {
+                "base": 0,
+                "event": 1,
+                "trend": 1,
+                "samples": 0
+              },
+              "generatedAt": "2026-11-01T06:37:52.693Z"
+            }
+          ],
+          "accuracy": {
+            "recent": [],
+            "mape14d": null
+          }
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "from": "2026-11-01",
+          "to": "2026-11-07",
+          "learning": true,
+          "items": [
+            {
+              "id": "12fc0fa5-f436-4f86-8fa1-9ea0b0eb8065",
+              "itemId": "e48eec36-41b4-4c56-934e-de3018e4381d",
+              "name": "Chicken Karahi",
+              "date": "2026-11-01",
+              "expected": 0,
+              "low": 0,
+              "high": 0,
+              "method": "learning",
+              "label": "Learning your patterns",
+              "adjusted": null,
+              "basis": {
+                "base": 0,
+                "event": 1,
+                "trend": 1,
+                "samples": 0
+              },
+              "generatedAt": "2026-11-01T06:37:55.381Z"
+            },
+            {
+              "id": "df9ded1f-823c-46b4-90fb-28d9f052c087",
+              "itemId": "e48eec36-41b4-4c56-934e-de3018e4381d",
+              "name": "Chicken Karahi",
+              "date": "2026-11-02",
+              "expected": 0,
+              "low": 0,
+              "high": 0,
+              "method": "learning",
+              "label": "Learning your patterns",
+              "adjusted": null,
+              "basis": {
+                "base": 0,
+                "event": 1,
+                "trend": 1,
+                "samples": 0
+              },
+              "generatedAt": "2026-11-01T06:37:55.381Z"
+            },
+            {
+              "id": "6ac230cf-5811-4554-b21a-b7b9fb199b56",
+              "itemId": "e48eec36-41b4-4c56-934e-de3018e4381d",
+              "name": "Chicken Karahi",
+              "date": "2026-11-03",
+              "expected": 0,
+              "low": 0,
+              "high": 0,
+              "method": "learning",
+              "label": "Learning your patterns",
+              "adjusted": null,
+              "basis": {
+                "base": 0,
+                "event": 1,
+                "trend": 1,
+                "samples": 0
+              },
+              "generatedAt": "2026-11-01T06:37:55.381Z"
+            }
+          ],
+          "accuracy": {
+            "recent": [
+              {
+                "date": "2026-10-31",
+                "mape": 100,
+                "items": 1
+              }
+            ],
+            "mape14d": 100
+          }
+        }
+      }
+    }
+  ],
+  "GET /food/vendor/kitchen/prep-sheet": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "date": "2026-11-02",
+          "dishes": [
+            {
+              "itemId": "a9f7732a-c677-4dc9-8d2f-26e293fb2988",
+              "name": "Chicken Karahi",
+              "planned": 0,
+              "forecast": 0,
+              "adjusted": null,
+              "extra": 0,
+              "hasRecipe": false
+            },
+            {
+              "itemId": "1dee1878-efff-4515-a129-6fecb24e5689",
+              "name": "Pulao",
+              "planned": 12,
+              "forecast": 0,
+              "adjusted": 12,
+              "extra": 0,
+              "hasRecipe": true
+            }
+          ],
+          "ingredients": [
+            {
+              "category": "grain",
+              "lines": [
+                {
+                  "ingredientId": "56c1a75e-112d-469b-af04-14259b616a24",
+                  "name": "Rice",
+                  "need": 2160,
+                  "needDisplay": {
+                    "qty": 2.16,
+                    "unit": "kg"
+                  },
+                  "inStock": 0,
+                  "inStockDisplay": {
+                    "qty": 0,
+                    "unit": "g"
+                  },
+                  "short": 2160,
+                  "shortDisplay": {
+                    "qty": 2.16,
+                    "unit": "kg"
+                  }
+                }
+              ]
+            }
+          ],
+          "dishesWithoutRecipe": []
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "date": "2026-11-02",
+          "dishes": [
+            {
+              "itemId": "5651bbde-52f7-4cff-8ec8-bacd5365aa71",
+              "name": "Chicken Karahi",
+              "planned": 0,
+              "forecast": 0,
+              "adjusted": null,
+              "extra": 0,
+              "hasRecipe": false
+            },
+            {
+              "itemId": "941d9324-364f-40a1-836c-4c0b466dc54f",
+              "name": "Chicken Biryani",
+              "planned": 10,
+              "forecast": 0,
+              "adjusted": 10,
+              "extra": 0,
+              "hasRecipe": true
+            }
+          ],
+          "ingredients": [
+            {
+              "category": "meat",
+              "lines": [
+                {
+                  "ingredientId": "cc6016b5-b0b7-4f50-a98e-5895b50b8362",
+                  "name": "Chicken",
+                  "need": 2000,
+                  "needDisplay": {
+                    "qty": 2,
+                    "unit": "kg"
+                  },
+                  "inStock": 2000,
+                  "inStockDisplay": {
+                    "qty": 2,
+                    "unit": "kg"
+                  },
+                  "short": 0,
+                  "shortDisplay": {
+                    "qty": 0,
+                    "unit": "g"
+                  }
+                }
+              ]
+            },
+            {
+              "category": "grain",
+              "lines": [
+                {
+                  "ingredientId": "905b08dc-2bba-44a8-9328-7e6adf0cc715",
+                  "name": "Rice",
+                  "need": 2500,
+                  "needDisplay": {
+                    "qty": 2.5,
+                    "unit": "kg"
+                  },
+                  "inStock": 1000,
+                  "inStockDisplay": {
+                    "qty": 1,
+                    "unit": "kg"
+                  },
+                  "short": 1500,
+                  "shortDisplay": {
+                    "qty": 1.5,
+                    "unit": "kg"
+                  }
+                }
+              ]
+            }
+          ],
+          "dishesWithoutRecipe": []
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "date": "2026-11-02",
+          "dishes": [
+            {
+              "itemId": "5e1a3f8b-808f-4f26-8a9f-f96e85eac91c",
+              "name": "Daal Chawal 12",
+              "planned": 2,
+              "forecast": null,
+              "adjusted": null,
+              "extra": 2,
+              "hasRecipe": false
+            }
+          ],
+          "ingredients": [],
+          "dishesWithoutRecipe": [
+            {
+              "itemId": "5e1a3f8b-808f-4f26-8a9f-f96e85eac91c",
+              "name": "Daal Chawal 12"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "date": "2026-11-02",
+          "dishes": [
+            {
+              "itemId": "4762ca40-f1ab-42c3-907e-96007733afa8",
+              "name": "Chicken Karahi",
+              "planned": 10,
+              "forecast": null,
+              "adjusted": null,
+              "extra": 10,
+              "hasRecipe": false
+            },
+            {
+              "itemId": "3802da67-c872-4adc-85df-24ad971fd69c",
+              "name": "Mutton Pulao Deg",
+              "planned": 2,
+              "forecast": null,
+              "adjusted": null,
+              "extra": 2,
+              "hasRecipe": false
+            }
+          ],
+          "ingredients": [],
+          "dishesWithoutRecipe": [
+            {
+              "itemId": "4762ca40-f1ab-42c3-907e-96007733afa8",
+              "name": "Chicken Karahi"
+            },
+            {
+              "itemId": "3802da67-c872-4adc-85df-24ad971fd69c",
+              "name": "Mutton Pulao Deg"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "GET /food/vendor/kitchen/shopping-list": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "date": "2026-11-02",
+          "bufferPct": 10,
+          "lines": [
+            {
+              "ingredientId": "fc4f0c53-7485-4197-b4d6-1ec742eaafb4",
+              "name": "Flour",
+              "category": "grain",
+              "need": 2000,
+              "inStock": 500,
+              "parLevel": null,
+              "toBuy": 1700,
+              "toBuyDisplay": {
+                "qty": 1.7,
+                "unit": "kg"
+              },
+              "reason": "plan"
+            }
+          ],
+          "text": "Shopping list — Mon 2 Nov\n• Flour: 1.7 kg",
+          "whatsappUrl": "https://wa.me/?text=Shopping%20list%20%E2%80%94%20Mon%202%20Nov%0A%E2%80%A2%20Flour%3A%201.7%20kg"
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "date": "2026-11-02",
+          "bufferPct": 10,
+          "lines": [
+            {
+              "ingredientId": "905b08dc-2bba-44a8-9328-7e6adf0cc715",
+              "name": "Rice",
+              "category": "grain",
+              "need": 2500,
+              "inStock": 1000,
+              "parLevel": null,
+              "toBuy": 1750,
+              "toBuyDisplay": {
+                "qty": 1.75,
+                "unit": "kg"
+              },
+              "reason": "plan"
+            },
+            {
+              "ingredientId": "cc6016b5-b0b7-4f50-a98e-5895b50b8362",
+              "name": "Chicken",
+              "category": "meat",
+              "need": 2000,
+              "inStock": 2000,
+              "parLevel": 3000,
+              "toBuy": 3000,
+              "toBuyDisplay": {
+                "qty": 3,
+                "unit": "kg"
+              },
+              "reason": "par_level"
+            }
+          ],
+          "text": "Shopping list — Mon 2 Nov\n• Rice: 1.75 kg\n• Chicken: 3 kg",
+          "whatsappUrl": "https://wa.me/?text=Shopping%20list%20%E2%80%94%20Mon%202%20Nov%0A%E2%80%A2%20Rice%3A%201.75%20kg%0A%E2%80%A2%20Chicken%3A%203%20kg"
+        }
+      }
+    }
+  ],
+  "POST /admin/food/calendar-events": [
+    {
+      "status": 201,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "cb2fef06-93e3-4d53-8a13-57544d61b376",
+          "kind": "ramadan",
+          "name": "Ramadan (QA)",
+          "startsOn": "2026-11-02",
+          "endsOn": "2026-11-03",
+          "city": "Abbottabad",
+          "createdAt": "2026-11-01T06:37:45.961Z",
+          "updatedAt": "2026-11-01T06:37:45.961Z"
+        }
+      }
+    },
+    {
+      "status": 201,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "57698f07-d021-43b3-b46d-302de9394fa4",
+          "kind": "ramadan",
+          "name": "Ramadan (test)",
+          "startsOn": "2026-10-31",
+          "endsOn": "2026-11-04",
+          "city": "Quetta",
+          "createdAt": "2026-11-01T06:38:31.195Z",
+          "updatedAt": "2026-11-01T06:38:31.195Z"
+        }
+      }
+    },
+    {
+      "status": 201,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "5fe4db96-db88-4e2e-83ca-d12a5afe927c",
+          "kind": "eid",
+          "name": "Eid ul Fitr (test)",
+          "startsOn": "2026-11-21",
+          "endsOn": "2026-11-23",
+          "city": null,
+          "createdAt": "2026-11-01T06:38:31.461Z",
+          "updatedAt": "2026-11-01T06:38:31.461Z"
+        }
+      }
+    }
+  ],
+  "DELETE /admin/food/calendar-events/:id": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "removed": true
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "removed": true
+        }
+      }
+    }
+  ],
+  "GET /food/vendor/storefront": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "slug": "qa-storefront-36e33",
+          "url": "http://localhost:8081/s/qa-storefront-36e33",
+          "links": {
+            "storefront": "http://localhost:8081/s/qa-storefront-36e33?src=storefront",
+            "qr": "http://localhost:8081/s/qa-storefront-36e33?src=qr",
+            "campaignExample": "http://localhost:8081/s/qa-storefront-36e33?src=qr&c=flyer"
+          },
+          "qr": {
+            "payload": "http://localhost:8081/s/qa-storefront-36e33?src=qr"
+          },
+          "ordersYouBrought": {
+            "days": 30,
+            "orders": 1,
+            "revenue": 1699,
+            "customers": 1,
+            "newCustomers": 1,
+            "share": 100,
+            "storefront": {
+              "orders": 0,
+              "revenue": 0
+            },
+            "qr": {
+              "orders": 1,
+              "revenue": 1699
+            },
+            "campaigns": [
+              {
+                "source": "qr",
+                "campaign": "counter",
+                "orders": 1,
+                "revenue": 1699
+              }
+            ]
+          },
+          "bySource": {
+            "app": {
+              "orders": 0,
+              "revenue": 0
+            },
+            "storefront": {
+              "orders": 0,
+              "revenue": 0
+            },
+            "qr": {
+              "orders": 1,
+              "revenue": 1699
+            },
+            "tiffin": {
+              "orders": 0,
+              "revenue": 0
+            },
+            "catering": {
+              "orders": 0,
+              "revenue": 0
+            },
+            "surplus": {
+              "orders": 0,
+              "revenue": 0
+            }
+          },
+          "note": "Zero commission on every order, wherever it came from."
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "slug": "storefront-kitchen-800f5",
+          "url": "http://localhost:8081/s/storefront-kitchen-800f5",
+          "links": {
+            "storefront": "http://localhost:8081/s/storefront-kitchen-800f5?src=storefront",
+            "qr": "http://localhost:8081/s/storefront-kitchen-800f5?src=qr",
+            "campaignExample": "http://localhost:8081/s/storefront-kitchen-800f5?src=qr&c=flyer"
+          },
+          "qr": {
+            "payload": "http://localhost:8081/s/storefront-kitchen-800f5?src=qr"
+          },
+          "ordersYouBrought": {
+            "days": 30,
+            "orders": 2,
+            "revenue": 3398,
+            "customers": 2,
+            "newCustomers": 1,
+            "share": 50,
+            "storefront": {
+              "orders": 1,
+              "revenue": 1699
+            },
+            "qr": {
+              "orders": 1,
+              "revenue": 1699
+            },
+            "campaigns": [
+              {
+                "source": "qr",
+                "campaign": "flyer-oct",
+                "orders": 1,
+                "revenue": 1699
+              }
+            ]
+          },
+          "bySource": {
+            "app": {
+              "orders": 2,
+              "revenue": 3398
+            },
+            "storefront": {
+              "orders": 1,
+              "revenue": 1699
+            },
+            "qr": {
+              "orders": 1,
+              "revenue": 1699
+            },
+            "tiffin": {
+              "orders": 0,
+              "revenue": 0
+            },
+            "catering": {
+              "orders": 0,
+              "revenue": 0
+            },
+            "surplus": {
+              "orders": 0,
+              "revenue": 0
+            }
+          },
+          "note": "Zero commission on every order, wherever it came from."
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "slug": "storefront-kitchen-800f5",
+          "url": "http://localhost:8081/s/storefront-kitchen-800f5",
+          "links": {
+            "storefront": "http://localhost:8081/s/storefront-kitchen-800f5?src=storefront",
+            "qr": "http://localhost:8081/s/storefront-kitchen-800f5?src=qr",
+            "campaignExample": "http://localhost:8081/s/storefront-kitchen-800f5?src=qr&c=flyer"
+          },
+          "qr": {
+            "payload": "http://localhost:8081/s/storefront-kitchen-800f5?src=qr"
+          },
+          "ordersYouBrought": {
+            "days": 7,
+            "orders": 1,
+            "revenue": 1699,
+            "customers": 1,
+            "newCustomers": 0,
+            "share": 33.3,
+            "storefront": {
+              "orders": 1,
+              "revenue": 1699
+            },
+            "qr": {
+              "orders": 0,
+              "revenue": 0
+            },
+            "campaigns": []
+          },
+          "bySource": {
+            "app": {
+              "orders": 2,
+              "revenue": 3398
+            },
+            "storefront": {
+              "orders": 1,
+              "revenue": 1699
+            },
+            "qr": {
+              "orders": 0,
+              "revenue": 0
+            },
+            "tiffin": {
+              "orders": 0,
+              "revenue": 0
+            },
+            "catering": {
+              "orders": 0,
+              "revenue": 0
+            },
+            "surplus": {
+              "orders": 0,
+              "revenue": 0
+            }
+          },
+          "note": "Zero commission on every order, wherever it came from."
+        }
+      }
+    }
+  ],
+  "GET /food/vendor/demand-map": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "city": "Abbottabad",
+          "week": "2026-10-26",
+          "weeks": [
+            "2026-10-26"
+          ],
+          "k": 5,
+          "filters": {
+            "cuisineId": null,
+            "hour": null
+          },
+          "cells": [
+            {
+              "geohash6": "twh445",
+              "center": {
+                "lat": 34.121,
+                "lng": 73.218
+              },
+              "bounds": {
+                "south": 34.1180419921875,
+                "west": 73.212890625,
+                "north": 34.12353515625,
+                "east": 73.223876953125
+              },
+              "searches": 5,
+              "zeroResultShare": 1,
+              "closedShare": 0,
+              "unmetSearches": 5,
+              "orders": 0,
+              "distanceKm": 1.4,
+              "inYourZone": true
+            }
+          ],
+          "hidden": 1,
+          "topQueries": [
+            {
+              "query": "sushi",
+              "searches": 8,
+              "zeroResultShare": 1,
+              "closedShare": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "city": "Gilgit",
+          "week": "2026-10-26",
+          "weeks": [
+            "2026-10-26"
+          ],
+          "k": 5,
+          "filters": {
+            "cuisineId": null,
+            "hour": null
+          },
+          "cells": [
+            {
+              "geohash6": "twkue2",
+              "center": {
+                "lat": 35.95,
+                "lng": 74.328
+              },
+              "bounds": {
+                "south": 35.947265625,
+                "west": 74.322509765625,
+                "north": 35.9527587890625,
+                "east": 74.33349609375
+              },
+              "searches": 6,
+              "zeroResultShare": 1,
+              "closedShare": 0,
+              "unmetSearches": 6,
+              "orders": 1,
+              "distanceKm": 3.7,
+              "inYourZone": true
+            }
+          ],
+          "hidden": 2,
+          "topQueries": [
+            {
+              "query": "pizza",
+              "searches": 9,
+              "zeroResultShare": 1,
+              "closedShare": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "city": "Gilgit",
+          "week": "2026-10-26",
+          "weeks": [
+            "2026-10-26"
+          ],
+          "k": 5,
+          "filters": {
+            "cuisineId": null,
+            "hour": 11
+          },
+          "cells": [
+            {
+              "geohash6": "twkue2",
+              "center": {
+                "lat": 35.95,
+                "lng": 74.328
+              },
+              "bounds": {
+                "south": 35.947265625,
+                "west": 74.322509765625,
+                "north": 35.9527587890625,
+                "east": 74.33349609375
+              },
+              "searches": 6,
+              "zeroResultShare": 1,
+              "closedShare": 0,
+              "unmetSearches": 6,
+              "orders": 1,
+              "distanceKm": 3.7,
+              "inYourZone": true
+            }
+          ],
+          "hidden": 2,
+          "topQueries": [
+            {
+              "query": "pizza",
+              "searches": 9,
+              "zeroResultShare": 1,
+              "closedShare": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "city": "Gilgit",
+          "week": "2026-10-26",
+          "weeks": [
+            "2026-10-26"
+          ],
+          "k": 5,
+          "filters": {
+            "cuisineId": null,
+            "hour": 23
+          },
+          "cells": [],
+          "hidden": 0,
+          "topQueries": [
+            {
+              "query": "pizza",
+              "searches": 9,
+              "zeroResultShare": 1,
+              "closedShare": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "city": "Lahore",
+          "week": null,
+          "weeks": [],
+          "k": 5,
+          "filters": {
+            "cuisineId": null,
+            "hour": null
+          },
+          "cells": [],
+          "hidden": 0,
+          "topQueries": []
+        }
+      }
+    }
+  ],
+  "GET /admin/food/demand-map": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "city": "Abbottabad",
+          "week": "2026-10-26",
+          "weeks": [
+            "2026-10-26"
+          ],
+          "k": 5,
+          "filters": {
+            "cuisineId": null,
+            "hour": null
+          },
+          "cells": [
+            {
+              "geohash6": "twh445",
+              "center": {
+                "lat": 34.121,
+                "lng": 73.218
+              },
+              "bounds": {
+                "south": 34.1180419921875,
+                "west": 73.212890625,
+                "north": 34.12353515625,
+                "east": 73.223876953125
+              },
+              "searches": 5,
+              "zeroResultShare": 1,
+              "closedShare": 0,
+              "unmetSearches": 5,
+              "orders": 0
+            }
+          ],
+          "hidden": 1,
+          "topQueries": [
+            {
+              "query": "sushi",
+              "searches": 8,
+              "zeroResultShare": 1,
+              "closedShare": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "city": "Gilgit",
+          "week": "2026-10-26",
+          "weeks": [
+            "2026-10-26"
+          ],
+          "k": 5,
+          "filters": {
+            "cuisineId": null,
+            "hour": null
+          },
+          "cells": [
+            {
+              "geohash6": "twkue2",
+              "center": {
+                "lat": 35.95,
+                "lng": 74.328
+              },
+              "bounds": {
+                "south": 35.947265625,
+                "west": 74.322509765625,
+                "north": 35.9527587890625,
+                "east": 74.33349609375
+              },
+              "searches": 6,
+              "zeroResultShare": 1,
+              "closedShare": 0,
+              "unmetSearches": 6,
+              "orders": 1
+            }
+          ],
+          "hidden": 2,
+          "topQueries": [
+            {
+              "query": "pizza",
+              "searches": 9,
+              "zeroResultShare": 1,
+              "closedShare": 0
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "GET /food/vendor/kitchen/menu-engineering": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "days": 30,
+          "targetFoodCostPct": 35,
+          "medianQty": 6.5,
+          "medianMargin": 225,
+          "counts": {
+            "star": 1,
+            "plowhorse": 1,
+            "puzzle": 1,
+            "dog": 1
+          },
+          "items": [
+            {
+              "itemId": "ff713327-a96d-4430-8f3f-de7aaf598553",
+              "name": "Karahi QA 9",
+              "qty": 12,
+              "margin": 300,
+              "price": 500,
+              "cost": 200,
+              "foodCostPct": 40,
+              "popular": true,
+              "profitable": true,
+              "quadrant": "star",
+              "action": "feature",
+              "label": "Star",
+              "advice": "Popular and profitable — keep it prominent and feature it."
+            },
+            {
+              "itemId": "2ebf6b65-29b2-45a6-83f5-1ecd358ae41c",
+              "name": "Daal QA 10",
+              "qty": 9,
+              "margin": 150,
+              "price": 250,
+              "cost": 100,
+              "foodCostPct": 40,
+              "popular": true,
+              "profitable": false,
+              "quadrant": "plowhorse",
+              "action": "reprice",
+              "label": "Plowhorse",
+              "advice": "Popular, low margin — reprice a little or trim the recipe cost."
+            },
+            {
+              "itemId": "d05c601a-4760-41f2-9101-0b57b165ae37",
+              "name": "Pulao QA 11",
+              "qty": 4,
+              "margin": 420,
+              "price": 600,
+              "cost": 180,
+              "foodCostPct": 30,
+              "popular": false,
+              "profitable": true,
+              "quadrant": "puzzle",
+              "action": "redescribe_or_bundle",
+              "label": "Puzzle",
+              "advice": "Profitable, rarely ordered — a better photo and description, or bundle it."
+            }
+          ],
+          "needsRecipe": [
+            {
+              "itemId": "933f25e3-b15d-4ed4-8aba-bd99ce105674",
+              "name": "Chicken Karahi",
+              "qty": 0,
+              "message": "Add a recipe card to analyse"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "days": 30,
+          "targetFoodCostPct": 35,
+          "medianQty": 6.5,
+          "medianMargin": 225,
+          "counts": {
+            "star": 1,
+            "plowhorse": 1,
+            "puzzle": 1,
+            "dog": 1
+          },
+          "items": [
+            {
+              "itemId": "9cd15e46-542d-4f1a-827d-fe78dfeb0a13",
+              "name": "Karahi 1",
+              "qty": 12,
+              "margin": 300,
+              "price": 500,
+              "cost": 200,
+              "foodCostPct": 40,
+              "popular": true,
+              "profitable": true,
+              "quadrant": "star",
+              "action": "feature",
+              "label": "Star",
+              "advice": "Popular and profitable — keep it prominent and feature it."
+            },
+            {
+              "itemId": "a1049d86-e0a9-414a-be94-ba96e9ab8703",
+              "name": "Daal 2",
+              "qty": 9,
+              "margin": 150,
+              "price": 250,
+              "cost": 100,
+              "foodCostPct": 40,
+              "popular": true,
+              "profitable": false,
+              "quadrant": "plowhorse",
+              "action": "reprice",
+              "label": "Plowhorse",
+              "advice": "Popular, low margin — reprice a little or trim the recipe cost."
+            },
+            {
+              "itemId": "639987fe-fdab-41ca-b71b-d187308be10e",
+              "name": "Pulao 3",
+              "qty": 4,
+              "margin": 420,
+              "price": 600,
+              "cost": 180,
+              "foodCostPct": 30,
+              "popular": false,
+              "profitable": true,
+              "quadrant": "puzzle",
+              "action": "redescribe_or_bundle",
+              "label": "Puzzle",
+              "advice": "Profitable, rarely ordered — a better photo and description, or bundle it."
+            }
+          ],
+          "needsRecipe": [
+            {
+              "itemId": "995e2ccb-0910-4824-aefb-7a95b5c44d0a",
+              "name": "Chicken Karahi",
+              "qty": 0,
+              "message": "Add a recipe card to analyse"
+            },
+            {
+              "itemId": "3ae77a01-c8e4-4f05-b09e-dd7c86c4ed26",
+              "name": "Kheer 5",
+              "qty": 7,
+              "message": "Add a recipe card to analyse"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "POST /admin/kitchen/reference-prices/import": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": 1,
+          "prices": 1,
+          "cities": [
+            "Abbottabad"
+          ],
+          "weeks": [
+            "2026-10-15"
+          ],
+          "rejected": 0,
+          "errors": [],
+          "dryRun": true
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": 2,
+          "prices": 5,
+          "cities": [
+            "Lahore",
+            "Karachi"
+          ],
+          "weeks": [
+            "2026-10-08",
+            "2026-10-15"
+          ],
+          "rejected": 1,
+          "errors": [
+            {
+              "line": 7,
+              "error": "unit \"tin\" isn't one we can compare (kg, g, litre, ml, dozen, piece)"
+            }
+          ],
+          "dryRun": false
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": 1,
+          "prices": 1,
+          "cities": [
+            "Lahore"
+          ],
+          "weeks": [
+            "2026-10-15"
+          ],
+          "rejected": 1,
+          "errors": [
+            {
+              "line": 3,
+              "error": "unit \"bushel\" isn't one we can compare (kg, g, litre, ml, dozen, piece)"
+            }
+          ],
+          "dryRun": true
+        }
+      }
+    }
+  ],
+  "GET /food/vendor/kitchen/portions/suggestions": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "date": "2026-11-02",
+          "items": [
+            {
+              "itemId": "4119e950-20a6-4d8d-8cd6-be629dd838a7",
+              "name": "Chicken Karahi",
+              "suggested": 6,
+              "fromForecast": 9,
+              "fromStock": 6,
+              "cappedByStock": true,
+              "current": 20
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "GET /food/vendor/kitchen/eta-accuracy": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "orders": 0,
+          "onTime": 0,
+          "onTimePct": null,
+          "avgLateMinutes": null,
+          "configuredPrepMinutes": 20,
+          "learned": [
+            {
+              "hour": 11,
+              "size": "1-2",
+              "p50": 30,
+              "p75": 35,
+              "samples": 20,
+              "inUse": true
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "GET /food/vendor/tiffin/tomorrow": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "date": "2026-11-02",
+          "meals": 2,
+          "plans": [
+            {
+              "planId": "1ed66750-7871-4aff-9bc9-02e7ce7d7ee1",
+              "name": "Office lunch",
+              "meal": "lunch",
+              "window": {
+                "from": "12:30",
+                "to": "13:30"
+              },
+              "meals": 2,
+              "skipped": 0,
+              "dishes": [
+                {
+                  "itemId": "5e1a3f8b-808f-4f26-8a9f-f96e85eac91c",
+                  "name": "Daal Chawal 12",
+                  "quantity": 2
+                }
+              ],
+              "note": null,
+              "cutoffAt": "2026-11-01T15:00:00.000Z"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "date": "2026-11-02",
+          "meals": 1,
+          "plans": [
+            {
+              "planId": "1ed66750-7871-4aff-9bc9-02e7ce7d7ee1",
+              "name": "Office lunch",
+              "meal": "lunch",
+              "window": {
+                "from": "12:30",
+                "to": "13:30"
+              },
+              "meals": 1,
+              "skipped": 1,
+              "dishes": [
+                {
+                  "itemId": "5e1a3f8b-808f-4f26-8a9f-f96e85eac91c",
+                  "name": "Daal Chawal 12",
+                  "quantity": 1
+                }
+              ],
+              "note": null,
+              "cutoffAt": "2026-11-01T15:00:00.000Z"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "date": "2026-11-03",
+          "meals": 1,
+          "plans": [
+            {
+              "planId": "1ed66750-7871-4aff-9bc9-02e7ce7d7ee1",
+              "name": "Office lunch",
+              "meal": "lunch",
+              "window": {
+                "from": "12:30",
+                "to": "13:30"
+              },
+              "meals": 1,
+              "skipped": 1,
+              "dishes": [
+                {
+                  "itemId": "98d97719-2846-4d88-b0b9-10f185a25737",
+                  "name": "Chicken Karahi",
+                  "quantity": 1
+                }
+              ],
+              "note": null,
+              "cutoffAt": "2026-11-02T15:00:00.000Z"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "date": "2026-11-04",
+          "meals": 2,
+          "plans": [
+            {
+              "planId": "1ed66750-7871-4aff-9bc9-02e7ce7d7ee1",
+              "name": "Office lunch",
+              "meal": "lunch",
+              "window": {
+                "from": "12:30",
+                "to": "13:30"
+              },
+              "meals": 2,
+              "skipped": 0,
+              "dishes": [
+                {
+                  "itemId": "5e1a3f8b-808f-4f26-8a9f-f96e85eac91c",
+                  "name": "Daal Chawal 12",
+                  "quantity": 2
+                }
+              ],
+              "note": null,
+              "cutoffAt": "2026-11-03T15:00:00.000Z"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "GET /food/vendor/kitchen/review-insights": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "latest": {
+            "id": "edc7661c-dca7-4570-aa8e-b180ceea92df",
+            "periodStart": "2026-11-01",
+            "periodEnd": "2026-11-01",
+            "reviewCount": 5,
+            "method": "lexicon",
+            "headline": "This week: 3 reviews mention cold food",
+            "themes": [
+              {
+                "count": 3,
+                "theme": "cold food",
+                "examples": [
+                  "Everything came cold and very late",
+                  "Karahi was mazedar but thanda by the time it came"
+                ],
+                "sentiment": "negative"
+              },
+              {
+                "count": 3,
+                "theme": "tasty food",
+                "examples": [
+                  "Tasty food, quick delivery",
+                  "Delicious and fresh"
+                ],
+                "sentiment": "positive"
+              },
+              {
+                "count": 1,
+                "theme": "late delivery",
+                "examples": [
+                  "Everything came cold and very late"
+                ],
+                "sentiment": "negative"
+              }
+            ],
+            "computedAt": "2026-11-01T06:38:18.439Z"
+          },
+          "history": [],
+          "newReviews": 0,
+          "needed": 5
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "latest": {
+            "id": "9428ca25-f14d-4423-a5de-32b4239dca8b",
+            "periodStart": "2026-11-01",
+            "periodEnd": "2026-11-02",
+            "reviewCount": 5,
+            "method": "ai",
+            "headline": "This week: 5 reviews mention too much oil",
+            "themes": [
+              {
+                "count": 5,
+                "theme": "too much oil",
+                "examples": [
+                  "Too much oil in the karahi, order 0"
+                ],
+                "sentiment": "negative"
+              }
+            ],
+            "computedAt": "2026-11-01T06:38:19.287Z"
+          },
+          "history": [
+            {
+              "id": "edc7661c-dca7-4570-aa8e-b180ceea92df",
+              "periodStart": "2026-11-01",
+              "periodEnd": "2026-11-01",
+              "reviewCount": 5,
+              "method": "lexicon",
+              "headline": "This week: 3 reviews mention cold food",
+              "themes": [
+                {
+                  "count": 3,
+                  "theme": "cold food",
+                  "examples": [
+                    "Everything came cold and very late",
+                    "Karahi was mazedar but thanda by the time it came"
+                  ],
+                  "sentiment": "negative"
+                },
+                {
+                  "count": 3,
+                  "theme": "tasty food",
+                  "examples": [
+                    "Tasty food, quick delivery",
+                    "Delicious and fresh"
+                  ],
+                  "sentiment": "positive"
+                },
+                {
+                  "count": 1,
+                  "theme": "late delivery",
+                  "examples": [
+                    "Everything came cold and very late"
+                  ],
+                  "sentiment": "negative"
+                }
+              ],
+              "computedAt": "2026-11-01T06:38:18.439Z"
+            }
+          ],
+          "newReviews": 0,
+          "needed": 5
+        }
+      }
+    }
+  ],
+  "GET /admin/food/demand-map/cities": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "city": "Gilgit",
+              "latestWeek": "2026-10-26",
+              "searches": 11
+            },
+            {
+              "city": "Abbottabad",
+              "latestWeek": "2026-10-26",
+              "searches": 8
+            },
+            {
+              "city": "Lahore",
+              "latestWeek": "2026-10-26",
+              "searches": 1
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "GET /food/vendor/demand-curve": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "weeks": 8,
+          "city": "Gilgit",
+          "timezone": "Asia/Karachi",
+          "own": {
+            "orders": [
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0
+              ]
+            ],
+            "peaks": [
+              {
+                "weekday": 0,
+                "hour": 11,
+                "orders": 1
+              }
+            ]
+          },
+          "area": null,
+          "areaNote": "Not enough kitchens like yours in Gilgit yet to show an anonymous curve."
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "weeks": 4,
+          "city": "Gilgit",
+          "timezone": "Asia/Karachi",
+          "own": {
+            "orders": [
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0
+              ]
+            ],
+            "peaks": [
+              {
+                "weekday": 0,
+                "hour": 11,
+                "orders": 1
+              }
+            ]
+          },
+          "area": {
+            "kitchens": 3,
+            "orders": [
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0
+              ]
+            ],
+            "perKitchen": [
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0
+              ]
+            ],
+            "peaks": [
+              {
+                "weekday": 0,
+                "hour": 11,
+                "orders": 3
+              }
+            ]
+          },
+          "areaNote": "Orders at 3 other kitchens in Gilgit that cook what you cook."
+        }
+      }
+    }
+  ],
+  "PATCH /admin/food/calendar-events/:id": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "5fe4db96-db88-4e2e-83ca-d12a5afe927c",
+          "kind": "eid",
+          "name": "Eid ul Fitr (test)",
+          "startsOn": "2026-11-21",
+          "endsOn": "2026-11-22",
+          "city": null,
+          "createdAt": "2026-11-01T06:38:31.461Z",
+          "updatedAt": "2026-11-01T06:38:31.472Z"
+        }
+      }
+    }
+  ],
+  "GET /admin/food/calendar-events": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": "57698f07-d021-43b3-b46d-302de9394fa4",
+              "kind": "ramadan",
+              "name": "Ramadan (test)",
+              "startsOn": "2026-10-31",
+              "endsOn": "2026-11-04",
+              "city": "Quetta",
+              "createdAt": "2026-11-01T06:38:31.195Z",
+              "updatedAt": "2026-11-01T06:38:31.195Z"
+            }
+          ],
+          "total": 1,
+          "page": 1,
+          "pageSize": 20
+        }
+      }
+    }
+  ],
+  "GET /admin/food/hygiene": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "brandId": "af19f6af-481e-4d77-bf7a-481a1b613d05",
+              "businessId": "845161dd-92e1-4a1b-a5ad-a529fd0445bd",
+              "name": "Story Kitchen",
+              "slug": "story-kitchen-52e13",
+              "city": "Quetta",
+              "cookName": "Ammi Jaan",
+              "checklist": {
+                "gloves": true,
+                "hairnet": true,
+                "cleanWater": true,
+                "fridgeTempLog": true,
+                "pestControlOn": "2026-10-02",
+                "separateBoards": true
+              },
+              "status": "self_declared",
+              "declaredAt": "2026-11-01T06:38:33.355Z",
+              "verifiedAt": null,
+              "verifiedMethod": null,
+              "verifiedNote": null,
+              "photos": [
+                "https://res.cloudinary.com/metromatrix-test/image/upload/v1712345678/metromatrix/test/2bf3f572-f153-4059-90dd-f2324e8f5762/kitchen_story/a7.jpg"
+              ],
+              "videoUrl": null
+            }
+          ],
+          "total": 1,
+          "page": 1,
+          "pageSize": 20
+        }
+      }
+    }
+  ],
+  "POST /admin/food/hygiene/:id/verify": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "brandId": "af19f6af-481e-4d77-bf7a-481a1b613d05",
+          "status": "verified",
+          "checklist": {
+            "gloves": true,
+            "hairnet": true,
+            "cleanWater": true,
+            "fridgeTempLog": true,
+            "pestControlOn": "2026-10-02",
+            "separateBoards": true
+          },
+          "declaredAt": "2026-11-01T06:38:33.355Z",
+          "verifiedAt": "2026-11-01T06:38:33.433Z",
+          "verifiedMethod": "video_call",
+          "verifiedNote": "Walked through the kitchen on a call"
+        }
+      }
+    }
+  ],
+  "GET /admin/food/signatures": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "recipeCardId": "47e498ec-5947-400b-ab68-56e32a631d06",
+              "itemId": "52aef071-c713-4a5a-8f42-ac72cfa288d0",
+              "variantId": null,
+              "item": "Chicken Karahi",
+              "variant": null,
+              "brandId": "1fa6e04b-aeb3-4f83-a1b4-71b759871c61",
+              "brand": "Signature Kitchen",
+              "slug": "signature-kitchen-6b290",
+              "by": "Ustad Rafiq",
+              "since": "2015-06-01",
+              "removedAt": null,
+              "removedReason": null
+            }
+          ],
+          "total": 1,
+          "page": 1,
+          "pageSize": 20
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "recipeCardId": "47e498ec-5947-400b-ab68-56e32a631d06",
+              "itemId": "52aef071-c713-4a5a-8f42-ac72cfa288d0",
+              "variantId": null,
+              "item": "Chicken Karahi",
+              "variant": null,
+              "brandId": "1fa6e04b-aeb3-4f83-a1b4-71b759871c61",
+              "brand": "Signature Kitchen",
+              "slug": "signature-kitchen-6b290",
+              "by": "Ustad Rafiq",
+              "since": "2015-06-01",
+              "removedAt": "2026-11-01T06:38:33.815Z",
+              "removedReason": "A copy of a well-known chain’s recipe"
+            }
+          ],
+          "total": 1,
+          "page": 1,
+          "pageSize": 20
+        }
+      }
+    }
+  ],
+  "POST /admin/food/signatures/:id/remove": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "recipeCardId": "47e498ec-5947-400b-ab68-56e32a631d06",
+          "isSignature": false,
+          "removedReason": "A copy of a well-known chain’s recipe"
+        }
+      }
+    }
+  ],
+  "GET /admin/nutrition/foods": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": "4d956142-bb6d-4128-b935-00094554f829",
+              "key": "apricots-raw",
+              "name": "Apricots, raw",
+              "nameUr": null,
+              "group": "Fruits and Fruit Juices",
+              "per100g": {
+                "kcal": 48,
+                "proteinG": 1.4,
+                "carbsG": 11.12,
+                "fatG": 0.39,
+                "fibreG": 2,
+                "sodiumMg": 1
+              },
+              "pieceGrams": null,
+              "source": "usda_sr_legacy",
+              "fdcId": 171697,
+              "note": null,
+              "isActive": true,
+              "canonicals": []
+            }
+          ],
+          "total": 1,
+          "page": 1,
+          "pageSize": 20
+        }
+      }
+    }
+  ],
+  "POST /admin/nutrition/foods": [
+    {
+      "status": 201,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "654e0cd9-4cf3-4f90-8d19-e2f3cb25c61c",
+          "key": "nihari-masala-house-blend",
+          "name": "Nihari masala (house blend)",
+          "nameUr": null,
+          "group": "Spices and Herbs",
+          "per100g": {
+            "kcal": 330,
+            "proteinG": 12,
+            "carbsG": 50,
+            "fatG": 10,
+            "fibreG": 20,
+            "sodiumMg": 4000
+          },
+          "pieceGrams": null,
+          "source": "staff",
+          "fdcId": null,
+          "note": null
+        }
+      }
+    }
+  ],
+  "PATCH /admin/nutrition/foods/:id": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "4d956142-bb6d-4128-b935-00094554f829",
+          "key": "apricots-raw",
+          "name": "Apricots, raw",
+          "nameUr": "خوبانی",
+          "group": "Fruits and Fruit Juices",
+          "per100g": {
+            "kcal": 48,
+            "proteinG": 1.4,
+            "carbsG": 11.12,
+            "fatG": 0.39,
+            "fibreG": 2,
+            "sodiumMg": 1
+          },
+          "pieceGrams": null,
+          "source": "staff",
+          "fdcId": 171697,
+          "note": null
+        }
+      }
+    }
+  ],
+  "DELETE /admin/nutrition/foods/:id": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "654e0cd9-4cf3-4f90-8d19-e2f3cb25c61c",
+          "isActive": false
+        }
+      }
+    }
+  ],
+  "POST /admin/nutrition/foods/import": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "inserted": 1,
+          "updated": 1,
+          "rejected": 2,
+          "errors": [
+            {
+              "line": 4,
+              "error": "key: lower-case letters, digits and dashes"
+            },
+            {
+              "line": 5,
+              "error": "protein + carbs + fat is over 100 g"
+            }
+          ],
+          "dryRun": false
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "inserted": 1,
+          "updated": 0,
+          "rejected": 1,
+          "errors": [
+            {
+              "line": 3,
+              "error": "key: lower-case letters, digits and dashes"
+            }
+          ],
+          "dryRun": true
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "inserted": 1,
+          "updated": 0,
+          "rejected": 1,
+          "errors": [
+            {
+              "line": 3,
+              "error": "key: lower-case letters, digits and dashes"
+            }
+          ],
+          "dryRun": false
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "inserted": 0,
+          "updated": 1,
+          "rejected": 1,
+          "errors": [
+            {
+              "line": 3,
+              "error": "key: lower-case letters, digits and dashes"
+            }
+          ],
+          "dryRun": true
+        }
+      }
+    }
+  ],
+  "GET /admin/kitchen/aliases": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": "22db52aa-6dbd-4fcc-b182-0de8f49d3c54",
+              "alias": "tamatar",
+              "canonical": "tomato",
+              "lang": "roman"
+            },
+            {
+              "id": "bad3eb6d-881d-404c-aa48-d16f6e9e9bbd",
+              "alias": "timatar",
+              "canonical": "tomato",
+              "lang": "roman"
+            },
+            {
+              "id": "0c0cd66a-5eba-4803-93d1-64bd358a8130",
+              "alias": "tomato",
+              "canonical": "tomato",
+              "lang": "en"
+            }
+          ],
+          "total": 5,
+          "page": 1,
+          "pageSize": 20,
+          "canonicals": 100
+        }
+      }
+    }
+  ],
+  "POST /admin/kitchen/aliases": [
+    {
+      "status": 201,
+      "body": {
+        "success": true,
+        "data": {
+          "id": "ae809db6-f482-4f7a-9968-6e2a722a00f6",
+          "alias": "laal tamatar",
+          "canonical": "tomato",
+          "lang": "roman"
+        }
+      }
+    }
+  ],
+  "DELETE /admin/kitchen/aliases/:id": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "removed": true
+        }
+      }
+    }
+  ],
+  "GET /admin/ai/usage": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "days": 7,
+          "totals": {
+            "calls": 41,
+            "ok": 31,
+            "cached": 3,
+            "failures": 10,
+            "tokensIn": 516,
+            "tokensOut": 344,
+            "audioSeconds": 21
+          },
+          "byFeature": [
+            {
+              "feature": "voice",
+              "calls": 22,
+              "ok": 15,
+              "cached": 1,
+              "invalid": 3,
+              "timeout": 1,
+              "quota": 3,
+              "error": 0,
+              "p50Ms": 2,
+              "p95Ms": 5,
+              "tokens": 400
+            },
+            {
+              "feature": "menu_assistant",
+              "calls": 4,
+              "ok": 3,
+              "cached": 1,
+              "invalid": 1,
+              "timeout": 0,
+              "quota": 0,
+              "error": 0,
+              "p50Ms": 25,
+              "p95Ms": 29,
+              "tokens": 120
+            },
+            {
+              "feature": "pantry_recipes",
+              "calls": 3,
+              "ok": 2,
+              "cached": 1,
+              "invalid": 1,
+              "timeout": 0,
+              "quota": 0,
+              "error": 0,
+              "p50Ms": 2,
+              "p95Ms": 3,
+              "tokens": 60
+            }
+          ],
+          "byBusiness": [
+            {
+              "businessId": "1282711c-b308-4bfd-82a3-7a4068d0dbc7",
+              "name": "Voice Quota Kitchen",
+              "calls": 3,
+              "failures": 2
+            },
+            {
+              "businessId": "4ed691e4-6eb6-4a10-a8c8-d541b831eeca",
+              "name": "Packing Kitchen",
+              "calls": 2,
+              "failures": 1
+            },
+            {
+              "businessId": "762490f8-6b1c-4cb3-a096-c48201e1289e",
+              "name": "Voice Cache Kitchen",
+              "calls": 2,
+              "failures": 0
+            }
+          ],
+          "failures": [
+            {
+              "at": "2026-11-01T06:38:45.773Z",
+              "feature": "pantry_recipes",
+              "promptId": "pantry_recipes",
+              "promptVersion": 1,
+              "status": "invalid",
+              "latencyMs": 2,
+              "businessId": null
+            },
+            {
+              "at": "2026-11-01T06:38:29.151Z",
+              "feature": "voice",
+              "promptId": "voice_intent",
+              "promptVersion": 3,
+              "status": "invalid",
+              "latencyMs": 2,
+              "businessId": null
+            },
+            {
+              "at": "2026-11-01T06:38:27.952Z",
+              "feature": "voice",
+              "promptId": "voice_intent",
+              "promptVersion": 3,
+              "status": "timeout",
+              "latencyMs": 153,
+              "businessId": "3d76b6f1-948b-4e98-8199-12184b864d35"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "GET /admin/ai/prompts": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "items": [
+            {
+              "id": "combos",
+              "version": 1,
+              "feature": "combos",
+              "title": "Dishes ordered together → combo names and one-line descriptions",
+              "length": 864,
+              "calls30d": 1,
+              "ok30d": 1,
+              "olderVersionCalls30d": 0
+            },
+            {
+              "id": "describe",
+              "version": 1,
+              "feature": "menu_assistant",
+              "title": "Dish → English and Urdu menu descriptions (a draft)",
+              "length": 1411,
+              "calls30d": 4,
+              "ok30d": 3,
+              "olderVersionCalls30d": 0
+            },
+            {
+              "id": "nutrition_estimate",
+              "version": 1,
+              "feature": "nutrition",
+              "title": "Dish without a usable recipe card → a rough per-serving nutrition estimate",
+              "length": 1008,
+              "calls30d": 2,
+              "ok30d": 2,
+              "olderVersionCalls30d": 0
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "GET /admin/ai/settings": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "enabled": true,
+          "features": "all",
+          "timeoutMs": 12000,
+          "model": "gemini-3.5-flash",
+          "providerConfigured": true,
+          "sttProvider": "gemini",
+          "ttsProvider": "none"
+        }
+      }
+    }
+  ],
+  "GET /admin/food/lookup": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "kind": "order",
+          "id": "b533fa4f-611b-42d9-b5ce-1cad2a7ad4f5",
+          "code": "FC-NBA3R9",
+          "status": "placed",
+          "source": "qr",
+          "campaign": null,
+          "payment_method": "cod",
+          "payment_status": "cod_pending",
+          "total": 1699,
+          "prepaid_amount": 0,
+          "scheduled_for": null,
+          "created_at": "2026-11-01T06:38:49.122Z",
+          "brand_id": "e889662e-90f7-44f6-b15a-fc7747182b6b",
+          "vendor": "Admin Lookup Kitchen",
+          "customer": "Test User",
+          "catering_code": null,
+          "tiffin_subscription_id": null
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "kind": "catering",
+          "id": "89651254-20be-4356-af11-4cad470629cf",
+          "code": "CT-PP43P2",
+          "status": "requested",
+          "event_date": "2026-11-10",
+          "guests": 30,
+          "event_type": "birthday",
+          "fulfilment": "pickup",
+          "accepted_version": null,
+          "food_order_id": null,
+          "created_at": "2026-11-01T06:38:49.183Z",
+          "brand_id": "e889662e-90f7-44f6-b15a-fc7747182b6b",
+          "vendor": "Admin Lookup Kitchen",
+          "customer": "Test User",
+          "customer_email": "someone@example.com",
+          "quotes": null
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "kind": "tiffin",
+          "id": "72713c2d-e678-4cbb-b652-0d0054f929a8",
+          "status": "requested",
+          "payment_method": "cash_weekly",
+          "period_payment_status": "due",
+          "starts_on": "2026-11-03",
+          "period_start": null,
+          "period_end": null,
+          "plan": "Lookup lunch",
+          "brand_id": "e889662e-90f7-44f6-b15a-fc7747182b6b",
+          "vendor": "Admin Lookup Kitchen",
+          "customer": "Test User",
+          "customer_email": "someone@example.com",
+          "deliveries": 0,
+          "missed": 0
+        }
+      }
+    }
+  ]
+}

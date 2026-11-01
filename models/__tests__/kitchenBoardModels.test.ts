@@ -11,7 +11,7 @@ const hints = (more: Partial<BoardHints> = {}): BoardHints => ({
   lowStock: [{ itemId: 'mi_karahi', name: 'Chicken Karahi', servingsLeft: 2 }],
   soldOutByStock: [],
   prepHint: null,
-  packingPhoto: 'off',
+  packingPhoto: 'optional',
   ...more,
 });
 
@@ -106,6 +106,7 @@ describe('Bachat Box pickup times', () => {
 
 describe('prep, shopping and Today', () => {
   const item = (more: Partial<ForecastItem>): ForecastItem => ({
+    id: 'f_a',
     itemId: 'mi_a',
     name: 'Aloo Gosht',
     photoUrl: null,
@@ -114,7 +115,7 @@ describe('prep, shopping and Today', () => {
     high: 15,
     learning: false,
     adjusted: null,
-    fixed: { tiffin: 0, catering: 0 },
+    fixed: 0,
     planned: 12,
     ...more,
   });
@@ -123,7 +124,7 @@ describe('prep, shopping and Today', () => {
     const g = prepGroups({
       date: '2026-10-20',
       dishes: [{ itemId: 'mi_a', name: 'Aloo Gosht', servings: 12 }],
-      groups: [{ key: 'meat_poultry', title: 'Meat and poultry', lines: [{ ingredientId: 'ing_mutton', name: 'Mutton', qty: 2400, baseUnit: 'g', dozens: false, forItems: ['Aloo Gosht'] }] }],
+      groups: [{ key: 'meat', title: 'Meat and poultry', lines: [{ ingredientId: 'ing_mutton', name: 'Mutton', qty: 2400, baseUnit: 'g', dozens: false, forItems: ['Aloo Gosht'] }] }],
       shareText: '',
     });
     expect(g[0].lines[0]).toEqual({ id: '2026-10-20|ing_mutton', name: 'Mutton', qtyLabel: '2.4 kg', sub: 'For Aloo Gosht' });

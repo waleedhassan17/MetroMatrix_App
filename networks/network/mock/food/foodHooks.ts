@@ -1,12 +1,11 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Where Kitchen Intelligence plugs into the dummy Food API
 // ═══════════════════════════════════════════════════════
-// The Food mock speaks the real docs/API_FOOD.md. Chunk 5's assumed kitchen
-// API (../kitchen/) adds a few things to it — stock that sells a dish out,
-// a packing photo before "ready", where an order came from — through these
-// hooks, so Food itself stays exactly the released contract and, with no
-// kitchen installed (the defaults), behaves as it did.
-// Every key a hook adds to a Food shape is listed in ../kitchen/foodAdditions.ts.
+// The Food mock speaks the real docs/API_FOOD.md. These hooks are where an
+// extension could add to it (stock that sells a dish out, a packing photo,
+// where an order came from); Kitchen Intelligence is checked against the real
+// API instead (serializers/__tests__/kitchenRealResponses.test.ts), so the
+// defaults stay: Food behaves exactly as the released contract.
 
 import type { MockDb } from '../mockDb';
 import type { MockFoodOrder, MockFoodReview, MockFoodVendor, MockMenuItem } from './foodTypes';

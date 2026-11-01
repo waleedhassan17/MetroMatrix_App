@@ -103,8 +103,6 @@ export function registerFoodRoutes(kit: FoodKit) {
       }
       const food = JSON.stringify(ctx.db.food);
       const users = JSON.stringify(ctx.db.users);
-      // Kitchen rows change with Food writes (stock deducted on accept).
-      const kitchen = JSON.stringify(ctx.db.kitchen ?? null);
       try {
         const out = handler(ctx);
         flushEmits();
@@ -113,7 +111,6 @@ export function registerFoodRoutes(kit: FoodKit) {
         dropEmits();
         ctx.db.food = JSON.parse(food);
         ctx.db.users = JSON.parse(users);
-        ctx.db.kitchen = JSON.parse(kitchen);
         throw e;
       }
     });

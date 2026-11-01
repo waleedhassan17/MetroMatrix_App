@@ -1,0 +1,1247 @@
+{
+"DELETE /api/v1/auth/account": [
+"idToken",
+"password"
+],
+"PATCH /api/v1/addresses/{id}": [],
+"PATCH /api/v1/admin/admins/{id}/permissions": [
+"permissions",
+"totpCode"
+],
+"PATCH /api/v1/admin/food/banners/{id}": [],
+"PATCH /api/v1/admin/food/calendar-events/{id}": [
+"city",
+"endsOn",
+"kind",
+"name",
+"startsOn"
+],
+"PATCH /api/v1/admin/food/cuisines/{id}": [],
+"PATCH /api/v1/admin/food/vendors/{id}/plan": [
+"overrides",
+"planKey"
+],
+"PATCH /api/v1/admin/health/banners/{id}": [],
+"PATCH /api/v1/admin/health/conditions/{id}": [],
+"PATCH /api/v1/admin/health/specialties/{id}": [],
+"PATCH /api/v1/admin/nutrition/foods/{id}": [
+"canonicals",
+"carbsG",
+"fatG",
+"fibreG",
+"foodGroup",
+"kcal",
+"name",
+"nameUr",
+"note",
+"pieceGrams",
+"proteinG",
+"sodiumMg"
+],
+"PATCH /api/v1/admin/settings": [
+"totpCode",
+"values"
+],
+"PATCH /api/v1/admin/shop/banners/{id}": [],
+"PATCH /api/v1/admin/shop/categories/{id}": [
+"availableFrom",
+"availableTo",
+"isActive",
+"name"
+],
+"PATCH /api/v1/businesses/me": [],
+"PATCH /api/v1/food/cart": [
+"fulfilment",
+"scheduledFor"
+],
+"PATCH /api/v1/food/cart/items/{id}": [
+"notes",
+"optionIds",
+"quantity",
+"variantId"
+],
+"PATCH /api/v1/food/rider/duty": [
+"onDuty"
+],
+"PATCH /api/v1/food/vendor/availability": [
+"items",
+"options"
+],
+"PATCH /api/v1/food/vendor/catering/settings": [
+"leadDays",
+"minGuests",
+"open"
+],
+"PATCH /api/v1/food/vendor/kitchen/experiments/{id}": [
+"endsOn",
+"notes"
+],
+"PATCH /api/v1/food/vendor/kitchen/forecast/{id}": [
+"adjusted"
+],
+"PATCH /api/v1/food/vendor/kitchen/ingredients/{id}": [
+"baseUnit",
+"category",
+"customUnits",
+"isActive",
+"name",
+"nameUr",
+"parLevel"
+],
+"PATCH /api/v1/food/vendor/kitchen/ingredients/{id}/reference": [
+"referenceItemId"
+],
+"PATCH /api/v1/food/vendor/kitchen/nutrition/items/{itemId}": [
+"hidden"
+],
+"PATCH /api/v1/food/vendor/kitchen/purchases/{id}": [
+"note",
+"purchasedAt",
+"supplierId"
+],
+"PATCH /api/v1/food/vendor/kitchen/settings": [
+"requirePackingPhoto",
+"targetFoodCostPct"
+],
+"PATCH /api/v1/food/vendor/kitchen/suppliers/{id}": [
+"isActive",
+"name",
+"notes",
+"phone"
+],
+"PATCH /api/v1/food/vendor/kitchen/surplus-boxes/{id}": [
+"contentsHint",
+"description",
+"photoUrl",
+"pickupTo",
+"price",
+"quantity",
+"title"
+],
+"PATCH /api/v1/food/vendor/menu/categories/{id}": [
+"availableFrom",
+"availableTo",
+"isActive",
+"name"
+],
+"PATCH /api/v1/food/vendor/menu/items/{id}": [
+"basePrice",
+"categoryId",
+"days",
+"description",
+"descriptionUr",
+"isActive",
+"isDeal",
+"name",
+"nameUr",
+"photoUrl",
+"serves",
+"tags"
+],
+"PATCH /api/v1/food/vendor/payment-accounts/{id}": [
+"accountTitle",
+"bankName",
+"isActive"
+],
+"PATCH /api/v1/food/vendor/profile": [
+"brandColor",
+"coverUrl",
+"cuisineIds",
+"logoUrl",
+"name",
+"priceLevel",
+"tagline"
+],
+"PATCH /api/v1/food/vendor/promotions/{id}": [],
+"PATCH /api/v1/food/vendor/riders/{id}": [
+"fullName",
+"phone",
+"vehicle"
+],
+"PATCH /api/v1/food/vendor/riders/{id}/status": [
+"status"
+],
+"PATCH /api/v1/food/vendor/settings": [
+"totpCode",
+"values"
+],
+"PATCH /api/v1/food/vendor/today": [
+"items"
+],
+"PATCH /api/v1/health/doctor/locations/{id}": [
+"addressLine",
+"area",
+"city",
+"fee",
+"instructions",
+"isActive",
+"lat",
+"lng",
+"name",
+"phone",
+"slotMinutes",
+"timezone"
+],
+"PATCH /api/v1/health/doctor/payment-accounts/{id}": [
+"accountTitle",
+"bankName",
+"isActive"
+],
+"PATCH /api/v1/health/doctor/profile": [
+"about",
+"bookingWindowDays",
+"cancelCutoffMinutes",
+"conditionIds",
+"experiences",
+"fullName",
+"gender",
+"isAccepting",
+"languages",
+"minNoticeMinutes",
+"photoUrl",
+"pmdcNumber",
+"practicingSince",
+"primarySpecialtyId",
+"qualifications",
+"secondarySpecialtyIds",
+"services",
+"title",
+"videoPrepayRequired"
+],
+"PATCH /api/v1/health/family-members/{id}": [],
+"PATCH /api/v1/health/records/{id}": [
+"files",
+"notes",
+"recordDate",
+"title",
+"type"
+],
+"PATCH /api/v1/my-kitchen/pantry/{id}": [
+"expiresOn",
+"name",
+"notes",
+"qty",
+"unit"
+],
+"PATCH /api/v1/shop/cart/items/{id}": [
+"notes",
+"optionIds",
+"quantity",
+"variantId"
+],
+"PATCH /api/v1/shop/partner/collections/reorder": [
+"ids"
+],
+"PATCH /api/v1/shop/partner/collections/{id}": [],
+"PATCH /api/v1/shop/partner/coupons/{id}": [
+"endsAt",
+"isActive",
+"maxDiscount",
+"minOrder",
+"perUserLimit",
+"startsAt",
+"type",
+"usageLimit",
+"value"
+],
+"PATCH /api/v1/shop/partner/inventory/{variantId}": [
+"delta",
+"setTo"
+],
+"PATCH /api/v1/shop/partner/orders/{id}/note": [
+"note"
+],
+"PATCH /api/v1/shop/partner/products/{id}": [
+"basePrice",
+"categoryId",
+"collectionId",
+"description",
+"images",
+"name",
+"packQty",
+"packUnit",
+"salePrice",
+"status",
+"tags",
+"variants"
+],
+"PATCH /api/v1/shop/partner/store": [
+"about",
+"brandColor",
+"coverUrl",
+"logoUrl",
+"phone",
+"socials",
+"tagline"
+],
+"PATCH /api/v1/shop/partner/store/payment-accounts/{id}": [],
+"PATCH /api/v1/shop/partner/store/settings": [
+"codEnabled",
+"codLimit",
+"deliveryCities",
+"dispatchDaysMax",
+"dispatchDaysMin",
+"freeShippingOver",
+"isPaused",
+"pauseMessage",
+"returnWindowDays",
+"shippingFlatFee"
+],
+"PATCH /api/v1/users/me": [
+"avatarUrl",
+"displayName",
+"phone"
+],
+"PATCH /api/v1/users/me/profile": [
+"avatarUrl",
+"city",
+"dateOfBirth",
+"gender",
+"postalCode",
+"streetAddress"
+],
+"POST /api/v1/addresses": [
+"area",
+"city",
+"fullName",
+"isDefault",
+"label",
+"landmark",
+"lat",
+"line1",
+"lng",
+"phone"
+],
+"POST /api/v1/admin/admins": [
+"displayName",
+"email",
+"permissions",
+"totpCode"
+],
+"POST /api/v1/admin/admins/{id}/disable": [
+"reason",
+"totpCode"
+],
+"POST /api/v1/admin/admins/{id}/enable": [
+"totpCode"
+],
+"POST /api/v1/admin/admins/{id}/reset-password": [
+"totpCode"
+],
+"POST /api/v1/admin/admins/{id}/reset-totp": [
+"totpCode"
+],
+"POST /api/v1/admin/broadcasts": [
+"audience",
+"body",
+"deepLink",
+"service",
+"title",
+"totpCode"
+],
+"POST /api/v1/admin/businesses/{id}/reinstate": [
+"reason"
+],
+"POST /api/v1/admin/businesses/{id}/reject": [
+"documentNotes",
+"reason"
+],
+"POST /api/v1/admin/businesses/{id}/suspend": [
+"reason"
+],
+"POST /api/v1/admin/food/banners": [
+"city",
+"endsAt",
+"imageUrl",
+"isActive",
+"sort",
+"startsAt",
+"subtitle",
+"targetId",
+"targetQuery",
+"targetType",
+"title"
+],
+"POST /api/v1/admin/food/branches/{id}/food-safety-check": [
+"note",
+"outcome"
+],
+"POST /api/v1/admin/food/calendar-events": [
+"city",
+"endsOn",
+"kind",
+"name",
+"startsOn"
+],
+"POST /api/v1/admin/food/cuisines": [
+"icon",
+"name",
+"slug",
+"sort"
+],
+"POST /api/v1/admin/food/hygiene/{brandId}/revoke": [
+"reason"
+],
+"POST /api/v1/admin/food/hygiene/{brandId}/verify": [
+"method",
+"note"
+],
+"POST /api/v1/admin/food/reviews/{id}/hide": [
+"reason"
+],
+"POST /api/v1/admin/food/signatures/{recipeCardId}/remove": [
+"reason"
+],
+"POST /api/v1/admin/food/vendors/{id}/reinstate": [
+"reason"
+],
+"POST /api/v1/admin/food/vendors/{id}/suspend": [
+"reason"
+],
+"POST /api/v1/admin/health/appointments/{code}/cancel": [
+"reason"
+],
+"POST /api/v1/admin/health/banners": [
+"city",
+"endsAt",
+"imageUrl",
+"isActive",
+"sort",
+"startsAt",
+"subtitle",
+"targetId",
+"targetScreen",
+"targetType",
+"title"
+],
+"POST /api/v1/admin/health/conditions": [
+"aliases",
+"icon",
+"isCommon",
+"name",
+"nameUr",
+"slug"
+],
+"POST /api/v1/admin/health/doctors/{id}/pmdc-unverify": [
+"reason"
+],
+"POST /api/v1/admin/health/doctors/{id}/pmdc-verify": [
+"note"
+],
+"POST /api/v1/admin/health/doctors/{id}/unlist": [
+"reason"
+],
+"POST /api/v1/admin/health/reviews/{id}/hide": [
+"reason"
+],
+"POST /api/v1/admin/health/specialties": [
+"description",
+"icon",
+"keywords",
+"name",
+"nameUr",
+"slug",
+"sort"
+],
+"POST /api/v1/admin/kitchen/aliases": [
+"alias",
+"canonical",
+"lang"
+],
+"POST /api/v1/admin/kitchen/reference-prices/import": [
+"csv",
+"dryRun"
+],
+"POST /api/v1/admin/me/recovery-codes": [
+"totpCode"
+],
+"POST /api/v1/admin/me/totp/confirm": [
+"code",
+"currentCode"
+],
+"POST /api/v1/admin/nutrition/foods": [
+"canonicals",
+"carbsG",
+"fatG",
+"fibreG",
+"foodGroup",
+"kcal",
+"key",
+"name",
+"nameUr",
+"note",
+"pieceGrams",
+"proteinG",
+"sodiumMg"
+],
+"POST /api/v1/admin/nutrition/foods/import": [
+"csv",
+"dryRun"
+],
+"POST /api/v1/admin/shop/banners": [
+"endsAt",
+"imageUrl",
+"isActive",
+"sort",
+"startsAt",
+"subtitle",
+"targetId",
+"targetType",
+"title"
+],
+"POST /api/v1/admin/shop/categories": [
+"icon",
+"name",
+"parentId",
+"slug",
+"sort"
+],
+"POST /api/v1/admin/shop/products/{id}/remove": [
+"reason"
+],
+"POST /api/v1/admin/shop/reports/{id}/dismiss": [
+"note"
+],
+"POST /api/v1/admin/shop/reviews/{id}/hide": [
+"reason"
+],
+"POST /api/v1/admin/users/{id}/disable": [
+"reason"
+],
+"POST /api/v1/ai/voice": [
+"audioUrl",
+"context",
+"durationSeconds",
+"languageHint",
+"publicId",
+"text"
+],
+"POST /api/v1/auth/admin/totp": [
+"challengeToken",
+"code",
+"recoveryCode"
+],
+"POST /api/v1/auth/change-password": [
+"currentPassword",
+"idToken",
+"newPassword"
+],
+"POST /api/v1/auth/forgot-password": [
+"email"
+],
+"POST /api/v1/auth/google": [
+"idToken"
+],
+"POST /api/v1/auth/refresh-token": [
+"refreshToken"
+],
+"POST /api/v1/auth/reset-password": [
+"password",
+"resetToken"
+],
+"POST /api/v1/auth/signin": [
+"email",
+"identifier",
+"password",
+"portal"
+],
+"POST /api/v1/auth/signup": [
+"displayName",
+"email",
+"password",
+"phone",
+"role"
+],
+"POST /api/v1/auth/verify-email": [
+"token"
+],
+"POST /api/v1/auth/verify-otp": [
+"email",
+"otp"
+],
+"POST /api/v1/businesses": [
+"addressLine",
+"city",
+"lat",
+"lng",
+"name",
+"phone",
+"pmdcNumber",
+"serviceType",
+"subType"
+],
+"POST /api/v1/businesses/me/documents": [
+"kind",
+"publicId",
+"url"
+],
+"POST /api/v1/food/cart/items": [
+"itemId",
+"notes",
+"optionIds",
+"quantity",
+"variantId",
+"vendorId"
+],
+"POST /api/v1/food/cart/preview": [
+"addressId",
+"building",
+"cutlery",
+"floor",
+"note",
+"paymentMethod",
+"promoCode",
+"riderInstructions"
+],
+"POST /api/v1/food/catering": [
+"addressId",
+"budget",
+"eventDate",
+"eventTime",
+"eventType",
+"fulfilment",
+"guests",
+"notes",
+"requestedItems",
+"vendorId"
+],
+"POST /api/v1/food/catering/{id}/accept": [
+"version"
+],
+"POST /api/v1/food/catering/{id}/advance-proof": [
+"proofUrl",
+"publicId",
+"ref"
+],
+"POST /api/v1/food/catering/{id}/cancel": [
+"reason"
+],
+"POST /api/v1/food/checkout": [
+"addressId",
+"building",
+"campaign",
+"cutlery",
+"floor",
+"note",
+"paymentMethod",
+"promoCode",
+"riderInstructions",
+"source"
+],
+"POST /api/v1/food/orders/{code}/cancel": [
+"reason"
+],
+"POST /api/v1/food/orders/{code}/payment-proof": [
+"paymentRef",
+"proofUrl"
+],
+"POST /api/v1/food/orders/{code}/review": [
+"deliveryRating",
+"foodRating",
+"photos",
+"tags",
+"text"
+],
+"POST /api/v1/food/rider/location": [
+"points"
+],
+"POST /api/v1/food/rider/orders/{id}/decline": [
+"reason"
+],
+"POST /api/v1/food/rider/orders/{id}/delivered": [
+"codCollected"
+],
+"POST /api/v1/food/rider/orders/{id}/packing-proof": [
+"photoUrl",
+"publicId"
+],
+"POST /api/v1/food/surplus/reservations/{id}/payment-proof": [
+"proofUrl",
+"publicId",
+"ref"
+],
+"POST /api/v1/food/surplus/{boxId}/reserve": [
+"paymentMethod",
+"quantity"
+],
+"POST /api/v1/food/tiffin/subscribe": [
+"addressId",
+"fulfilment",
+"paymentMethod",
+"planId",
+"startsOn"
+],
+"POST /api/v1/food/tiffin/subscriptions/{id}/pause": [
+"until"
+],
+"POST /api/v1/food/tiffin/subscriptions/{id}/payment-proof": [
+"proofUrl",
+"publicId",
+"ref"
+],
+"POST /api/v1/food/tiffin/subscriptions/{id}/skip": [
+"date"
+],
+"POST /api/v1/food/tiffin/subscriptions/{id}/unskip": [
+"date"
+],
+"POST /api/v1/food/vendor/busy": [
+"extraMinutes",
+"until"
+],
+"POST /api/v1/food/vendor/catering/{id}/advance/reject": [
+"reason"
+],
+"POST /api/v1/food/vendor/catering/{id}/decline": [
+"reason"
+],
+"POST /api/v1/food/vendor/catering/{id}/quote": [
+"advancePct",
+"deliveryFee",
+"lines",
+"notes",
+"validUntil"
+],
+"POST /api/v1/food/vendor/closures": [
+"endsAt",
+"reason",
+"startsAt"
+],
+"POST /api/v1/food/vendor/kitchen/ai/describe": [
+"itemId"
+],
+"POST /api/v1/food/vendor/kitchen/ai/photo-check": [
+"imageUrl",
+"itemId"
+],
+"POST /api/v1/food/vendor/kitchen/ai/specials": [
+"ingredientIds"
+],
+"POST /api/v1/food/vendor/kitchen/ai/specials/create": [
+"basePrice",
+"categoryId",
+"description",
+"lines",
+"name",
+"servings"
+],
+"POST /api/v1/food/vendor/kitchen/donations": [
+"meals",
+"notes",
+"organisation",
+"photoUrl"
+],
+"POST /api/v1/food/vendor/kitchen/experiments": [
+"days",
+"itemId",
+"notes",
+"startsOn"
+],
+"POST /api/v1/food/vendor/kitchen/ingredients": [
+"baseUnit",
+"category",
+"customUnits",
+"name",
+"nameUr",
+"openingStock",
+"parLevel"
+],
+"POST /api/v1/food/vendor/kitchen/orders/{id}/packing-proof": [
+"photoUrl",
+"publicId"
+],
+"POST /api/v1/food/vendor/kitchen/portions/apply-suggestion": [
+"date"
+],
+"POST /api/v1/food/vendor/kitchen/purchases": [
+"lines",
+"note",
+"purchasedAt",
+"receiptPublicId",
+"receiptUrl",
+"source",
+"supplierId"
+],
+"POST /api/v1/food/vendor/kitchen/purchases/scan": [
+"imageUrl",
+"publicId"
+],
+"POST /api/v1/food/vendor/kitchen/stock/count": [
+"lines",
+"note"
+],
+"POST /api/v1/food/vendor/kitchen/suppliers": [
+"name",
+"notes",
+"phone"
+],
+"POST /api/v1/food/vendor/kitchen/surplus-boxes": [
+"contentsHint",
+"description",
+"originalValue",
+"photoUrl",
+"pickupFrom",
+"pickupTo",
+"price",
+"quantity",
+"tags",
+"title"
+],
+"POST /api/v1/food/vendor/kitchen/surplus-reservations/{id}/collected": [
+"code"
+],
+"POST /api/v1/food/vendor/kitchen/surplus-reservations/{id}/payment/reject": [
+"reason"
+],
+"POST /api/v1/food/vendor/kitchen/waste": [
+"ingredientId",
+"menuItemId",
+"note",
+"qty",
+"reason",
+"unit"
+],
+"POST /api/v1/food/vendor/menu/categories": [
+"availableFrom",
+"availableTo",
+"isActive",
+"name"
+],
+"POST /api/v1/food/vendor/menu/items": [
+"basePrice",
+"categoryId",
+"days",
+"description",
+"descriptionUr",
+"isActive",
+"isDeal",
+"name",
+"nameUr",
+"photoUrl",
+"serves",
+"tags",
+"variants"
+],
+"POST /api/v1/food/vendor/menu/option-groups": [
+"maxSelect",
+"minSelect",
+"name",
+"options"
+],
+"POST /api/v1/food/vendor/orders/{id}/accept": [
+"etaMinutes"
+],
+"POST /api/v1/food/vendor/orders/{id}/assign": [
+"riderId"
+],
+"POST /api/v1/food/vendor/orders/{id}/cancel": [
+"reason"
+],
+"POST /api/v1/food/vendor/orders/{id}/delivered": [
+"codCollected"
+],
+"POST /api/v1/food/vendor/orders/{id}/payment/reject": [
+"reason"
+],
+"POST /api/v1/food/vendor/orders/{id}/reject": [
+"reason"
+],
+"POST /api/v1/food/vendor/pause": [
+"message",
+"minutes",
+"reason"
+],
+"POST /api/v1/food/vendor/payment-accounts": [
+"accountNumber",
+"accountTitle",
+"bankName",
+"isActive",
+"kind"
+],
+"POST /api/v1/food/vendor/promotions": [
+"code",
+"endsAt",
+"firstOrderOnly",
+"isActive",
+"itemIds",
+"kind",
+"maxDiscount",
+"minOrder",
+"perUserLimit",
+"startsAt",
+"timeFrom",
+"timeTo",
+"title",
+"usageLimit",
+"value",
+"weekdays"
+],
+"POST /api/v1/food/vendor/reviews/{id}/reply": [
+"text"
+],
+"POST /api/v1/food/vendor/riders": [
+"fullName",
+"phone",
+"vehicle"
+],
+"POST /api/v1/food/vendor/riders/{id}/handover": [
+"amount",
+"note"
+],
+"POST /api/v1/food/vendor/tiffin/plans": [
+"capacity",
+"days",
+"deliveryMode",
+"deliveryWindowFrom",
+"deliveryWindowTo",
+"description",
+"isActive",
+"meal",
+"name",
+"period",
+"photoUrl",
+"pricePerPeriod",
+"rotation",
+"skipCutoffHour"
+],
+"POST /api/v1/food/vendor/tiffin/subscriptions/{id}/decline": [
+"reason"
+],
+"POST /api/v1/food/vendor/tiffin/subscriptions/{id}/end": [
+"reason"
+],
+"POST /api/v1/food/vendor/tiffin/subscriptions/{id}/pause": [
+"until"
+],
+"POST /api/v1/food/vendor/tiffin/subscriptions/{id}/payment/reject": [
+"reason"
+],
+"POST /api/v1/health/appointments": [
+"attachmentRecordIds",
+"doctorId",
+"familyMemberId",
+"fee",
+"locationId",
+"paymentMethod",
+"reason",
+"startsAt",
+"symptoms"
+],
+"POST /api/v1/health/appointments/{code}/attachments": [
+"recordIds"
+],
+"POST /api/v1/health/appointments/{code}/cancel": [
+"reason"
+],
+"POST /api/v1/health/appointments/{code}/payment-proof": [
+"paymentRef",
+"proofUrl"
+],
+"POST /api/v1/health/appointments/{code}/reschedule": [
+"startsAt"
+],
+"POST /api/v1/health/appointments/{code}/review": [
+"diagnosis",
+"environment",
+"isAnonymous",
+"overall",
+"recommend",
+"staff",
+"tags",
+"text"
+],
+"POST /api/v1/health/doctor/appointments/{code}/cancel": [
+"reason"
+],
+"POST /api/v1/health/doctor/appointments/{code}/complete": [
+"paymentCollected"
+],
+"POST /api/v1/health/doctor/appointments/{code}/payment/reject": [
+"reason"
+],
+"POST /api/v1/health/doctor/appointments/{code}/prescription": [
+"advice",
+"diagnosis",
+"followUpInDays",
+"medicines",
+"tests"
+],
+"POST /api/v1/health/doctor/appointments/{code}/refund": [
+"refundRef"
+],
+"POST /api/v1/health/doctor/locations": [
+"addressLine",
+"area",
+"city",
+"fee",
+"instructions",
+"kind",
+"lat",
+"lng",
+"name",
+"phone",
+"slotMinutes",
+"timezone"
+],
+"POST /api/v1/health/doctor/payment-accounts": [
+"accountNumber",
+"accountTitle",
+"bankName",
+"isActive",
+"kind"
+],
+"POST /api/v1/health/doctor/reviews/{id}/reply": [
+"text"
+],
+"POST /api/v1/health/doctor/time-off": [
+"cancelAffected",
+"endsAt",
+"locationId",
+"reason",
+"startsAt"
+],
+"POST /api/v1/health/family-members": [
+"dateOfBirth",
+"fullName",
+"gender",
+"phone",
+"relation"
+],
+"POST /api/v1/health/records": [
+"familyMemberId",
+"files",
+"notes",
+"recordDate",
+"title",
+"type"
+],
+"POST /api/v1/health/symptom-checker": [
+"age",
+"familyMemberId",
+"gender",
+"text"
+],
+"POST /api/v1/media/sign-upload": [
+"purpose"
+],
+"POST /api/v1/my-kitchen/missing-to-bag": [
+"city",
+"items"
+],
+"POST /api/v1/my-kitchen/pantry": [
+"expiresOn",
+"name",
+"notes",
+"qty",
+"unit"
+],
+"POST /api/v1/my-kitchen/pantry/batch": [
+"items"
+],
+"POST /api/v1/my-kitchen/pantry/from-orders": [
+"lines"
+],
+"POST /api/v1/shop/cart/items": [
+"itemId",
+"notes",
+"optionIds",
+"quantity",
+"variantId",
+"vendorId"
+],
+"POST /api/v1/shop/cart/preview": [
+"addressId",
+"stores"
+],
+"POST /api/v1/shop/checkout": [
+"addressId",
+"stores"
+],
+"POST /api/v1/shop/order-items/{id}/review": [
+"diagnosis",
+"environment",
+"isAnonymous",
+"overall",
+"recommend",
+"staff",
+"tags",
+"text"
+],
+"POST /api/v1/shop/partner/collections": [
+"name"
+],
+"POST /api/v1/shop/partner/coupons": [
+"code",
+"endsAt",
+"maxDiscount",
+"minOrder",
+"perUserLimit",
+"startsAt",
+"type",
+"usageLimit",
+"value"
+],
+"POST /api/v1/shop/partner/orders/{id}/cancel": [
+"reason"
+],
+"POST /api/v1/shop/partner/orders/{id}/payment/reject": [
+"reason"
+],
+"POST /api/v1/shop/partner/orders/{id}/refund": [
+"refundRef"
+],
+"POST /api/v1/shop/partner/orders/{id}/reject": [
+"reason"
+],
+"POST /api/v1/shop/partner/orders/{id}/ship": [
+"courierName",
+"riderName",
+"riderPhone",
+"trackingRef"
+],
+"POST /api/v1/shop/partner/products": [
+"basePrice",
+"categoryId",
+"collectionId",
+"description",
+"images",
+"name",
+"packQty",
+"packUnit",
+"salePrice",
+"status",
+"tags",
+"variants"
+],
+"POST /api/v1/shop/partner/returns/{id}/approve": [
+"note"
+],
+"POST /api/v1/shop/partner/returns/{id}/receive": [
+"items"
+],
+"POST /api/v1/shop/partner/returns/{id}/refund": [
+"amount",
+"refundRef"
+],
+"POST /api/v1/shop/partner/returns/{id}/reject": [
+"note"
+],
+"POST /api/v1/shop/partner/reviews/{id}/reply": [
+"text"
+],
+"POST /api/v1/shop/partner/store/payment-accounts": [
+"accountNumber",
+"accountTitle",
+"bankName",
+"isActive",
+"kind"
+],
+"POST /api/v1/shop/products/{id}/report": [
+"details",
+"reason"
+],
+"POST /api/v1/shop/store-orders/{id}/cancel": [
+"reason"
+],
+"POST /api/v1/shop/store-orders/{id}/payment-proof": [
+"paymentRef",
+"proofUrl"
+],
+"POST /api/v1/shop/store-orders/{id}/request-cancel": [
+"reason"
+],
+"POST /api/v1/shop/store-orders/{id}/returns": [
+"details",
+"items",
+"photos",
+"reason"
+],
+"PUT /api/v1/admin/health/banners/order": [
+"ids"
+],
+"PUT /api/v1/admin/shop/categories/order": [
+"ids",
+"parentId"
+],
+"PUT /api/v1/food/me/nutrition/profile": [
+"activity",
+"age",
+"goal",
+"heightCm",
+"manualTargetKcal",
+"sex",
+"showCalories",
+"weightKg"
+],
+"PUT /api/v1/food/vendor/kitchen/items/{itemId}/recipe": [
+"lines",
+"notes",
+"yieldServings"
+],
+"PUT /api/v1/food/vendor/kitchen/items/{itemId}/signature": [
+"by",
+"isSignature",
+"since"
+],
+"PUT /api/v1/food/vendor/kitchen/nutrition/mapping/{ingredientId}": [
+"nutritionFoodId",
+"pieceGrams"
+],
+"PUT /api/v1/food/vendor/menu/categories/reorder": [
+"ids"
+],
+"PUT /api/v1/food/vendor/menu/items/reorder": [
+"ids"
+],
+"PUT /api/v1/food/vendor/menu/option-groups/{id}": [
+"maxSelect",
+"minSelect",
+"name",
+"options"
+],
+"PUT /api/v1/food/vendor/ramadan": [
+"enabled",
+"iftarFrom",
+"iftarPreorderOnly",
+"iftarTo",
+"notes",
+"sehriFrom",
+"sehriTo"
+],
+"PUT /api/v1/food/vendor/story": [
+"cookName",
+"hygieneChecklist",
+"photos",
+"story",
+"videoUrl"
+],
+"PUT /api/v1/food/vendor/tiffin/plans/{id}": [
+"capacity",
+"days",
+"deliveryMode",
+"deliveryWindowFrom",
+"deliveryWindowTo",
+"description",
+"isActive",
+"meal",
+"name",
+"period",
+"photoUrl",
+"pricePerPeriod",
+"rotation",
+"skipCutoffHour"
+],
+"PUT /api/v1/health/doctor/appointments/{code}/notes": [
+"files",
+"text"
+],
+"PUT /api/v1/my-kitchen/pantry/reminders": [
+"daysBefore",
+"enabled",
+"time"
+],
+"PUT /api/v1/users/me/devices": [
+"expoPushToken",
+"platform"
+]
+}

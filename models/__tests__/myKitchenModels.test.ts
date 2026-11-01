@@ -23,8 +23,8 @@ describe('the pantry', () => {
   });
 
   it('counts the month plainly, and prices groceries per unit', () => {
-    expect(statsLine({ savedFromWaste: 7, used: 9 })).toBe('7 things saved from waste this month');
-    expect(statsLine({ savedFromWaste: 0, used: 1 })).toBe('1 thing used up this month');
+    expect(statsLine({ savedFromWaste: 7, used: 9 })).toBe('7 things saved from waste in the last 30 days');
+    expect(statsLine({ savedFromWaste: 0, used: 1 })).toBe('1 thing used up in the last 30 days');
     expect(optionLine({ price: 1550, netQuantity: { qty: 10000, unit: 'g' }, pricePerUnit: { amount: 155, per: 'kg' } })).toBe('Rs 1,550 · 10 kg · Rs 155 / kg');
   });
 
@@ -35,17 +35,18 @@ describe('the pantry', () => {
   });
 
   it('reads a pantry defensively', () => {
-    const p = pantryListSerializer({ counts: { all: 1 }, items: [{ id: 'pn_1', name: 'Milk', qty: 1000, unit: 'ml', state: 'odd' }, { name: 'no id' }] });
-    expect(p.counts).toEqual({ all: 1, use_soon: 0, expired: 0 });
+    const milk = { id: 'pn_1', name: 'doodh', canonical: 'milk', qty: 1, unit: 'l', daysLeft: 2, expiring: true, status: 'active', createdAt: '2026-10-31T19:48:06.196Z' };
+    const p = pantryListSerializer({ items: { items: [milk, { name: 'no id' }], total: 1 }, active: { items: [milk], total: 1 }, expiring: { days: 3, items: [milk] }, expired: { items: [], total: 0 } });
+    expect(p.counts).toEqual({ all: 1, use_soon: 1, expired: 0 });
     expect(p.items).toHaveLength(1);
-    expect(p.items[0]).toMatchObject({ state: 'fresh', unit: 'ml', expiresOn: null });
+    expect(p.items[0]).toMatchObject({ key: 'milk', qty: 1000, unit: 'ml', state: 'use_soon', expiresOn: null, addedAt: '2026-10-31T19:48:06.196Z' });
   });
 });
 
 describe('nutrition', () => {
   it('checks body numbers and an own target', () => {
     expect(validateMetrics({ sex: 'female', age: '12', heightCm: '163', weightKg: '62', activity: 'moderate' })).toEqual({ age: 'Age 14 to 100' });
-    expect(metricsOf({ sex: 'male', age: '40', heightCm: '175', weightKg: '80.5', activity: 'low' })).toEqual({ sex: 'male', age: 40, heightCm: 175, weightKg: 80.5, activity: 'low' });
+    expect(metricsOf({ sex: 'male', age: '40', heightCm: '175', weightKg: '80.5', activity: 'light' })).toEqual({ sex: 'male', age: 40, heightCm: 175, weightKg: 80.5, activity: 'light' });
     expect(validateManualTarget('900')).toBe('A daily target of 1,000 to 5,000 kcal');
     expect(validateManualTarget('1800')).toBeNull();
   });
@@ -64,8 +65,10 @@ describe('nutrition', () => {
   it('gives a dish that serves more as a person’s share', () => {
     expect(dishFactsLine({ kcal: 494, protein: 49, serves: 1 })).toBe('About 494 kcal · 49 g protein');
     expect(dishFactsLine({ kcal: 1923, protein: 122, serves: 2 })).toBe('About 962 kcal a person · 61 g protein');
-    expect(dishFactsSerializer({ kcal: 1923, protein: 122, carbs: 40, fat: 140, method: 'recipe', serves: 2 })).toMatchObject({ serves: 2 });
-    expect(dishFactsSerializer({ kcal: 500, protein: 20, carbs: 40, fat: 20, method: 'recipe' })).toMatchObject({ serves: 1 });
+    // The item sheet's numbers are per serving already.
+    expect(dishFactsSerializer({ perServing: { kcal: 1030, proteinG: 46.4, carbsG: 133.8, fatG: 33.2 }, method: 'recipe' })).toMatchObject({ kcal: 1030, protein: 46, serves: 1, method: 'recipe' });
+    expect(dishFactsSerializer({ perServing: { kcal: 500, proteinG: 20 }, method: 'ai_estimate' })).toMatchObject({ method: 'ai_estimate' });
+    expect(dishFactsSerializer(null)).toBeNull();
   });
 
   it('never shows calories while nutrition is off', () => {

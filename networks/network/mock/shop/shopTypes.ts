@@ -104,7 +104,7 @@ export interface MockProduct {
   /**
    * Groceries (Daily Basket): what one unit holds, and the kitchen ingredient
    * it is. Kitchen Intelligence's price compare reads them; the real API's
-   * counterpart is a product's `pack` (API_SHOPPING.md §5.6), TODO(API_KITCHEN).
+   * counterpart is a product's `pack` (API_SHOPPING.md §5.6).
    */
   netQuantity?: { qty: number; unit: 'g' | 'ml' | 'pc' };
   ingredientKey?: string;

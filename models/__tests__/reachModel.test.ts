@@ -78,18 +78,24 @@ describe('demand', () => {
 
   it('never draws a cell under the minimum, and fills the day to 24 hours', () => {
     const d = demandMapSerializer({
-      minCount: 10,
-      cells: [
-        { geohash: 'ttsg7c', sw: { lat: 31.51, lng: 74.34 }, ne: { lat: 31.52, lng: 74.35 }, searches: 53, unmetShare: 0.23 },
-        { geohash: 'ttsg7d', sw: { lat: 31.52, lng: 74.34 }, ne: { lat: 31.53, lng: 74.35 }, searches: 4, unmetShare: 1 },
-        { geohash: 'broken' },
-      ],
-      hourCurve: { area: [0.5, 2], own: [] },
+      map: {
+        k: 5,
+        cells: [
+          { geohash6: 'ttsg7c', bounds: { south: 31.51, west: 74.34, north: 31.52, east: 74.35 }, searches: 53, unmetSearches: 12 },
+          // The API's floor is 5; the app's is 10.
+          { geohash6: 'ttsg7d', bounds: { south: 31.52, west: 74.34, north: 31.53, east: 74.35 }, searches: 7, unmetSearches: 7 },
+          { geohash6: 'broken' },
+        ],
+        hidden: 2,
+      },
+      curve: { own: { orders: [[0, 2], [0, 4]] }, area: null },
     });
     expect(d.cells.map(c => c.geohash)).toEqual(['ttsg7c']);
+    expect(d.cells[0].unmetShare).toBeCloseTo(12 / 53);
+    expect(d).toMatchObject({ minCount: 10, hidden: 3, total: 60 });
     expect(d.hourCurve.area).toHaveLength(24);
-    expect(d.hourCurve.area.slice(0, 2)).toEqual([0.5, 1]);
-    expect(d.center).toBeNull();
+    expect(d.hourCurve.own[1]).toBe(1);
+    expect(d.hourCurve.area.slice(0, 2)).toEqual([0, 0]);
   });
 });
 
@@ -101,26 +107,26 @@ describe('menu tests', () => {
     expect(validateTestPrice('abc', 900)).toBe('A price in whole rupees');
   });
 
-  it('reads a result as orders and recorded sales a day', () => {
+  it('reads a result against the category, and the decision from its notes', () => {
     const e = experimentSerializer({
       id: 'ex_1',
       itemId: 'mi_seekh',
-      itemName: 'Seekh Kebab (4 pcs)',
-      change: { kind: 'price', price: 990, oldPrice: 900 },
+      item: 'Seekh Kebab (4 pcs)',
+      startsOn: '2026-10-19',
+      endsOn: '2026-10-21',
       days: 3,
-      status: 'done',
-      progress: { daysIn: 3, days: 3 },
-      result: { verdict: 'keep', before: { perDay: 7, salesPerDay: 6300 }, during: { perDay: 7.3, salesPerDay: 7227 } },
+      status: 'completed',
+      notes: 'Price Rs 900 → Rs 990 · Kept',
+      result: { days: 3, itemDaily: 7.3, categoryMedianDaily: 7, price: 990, recommendation: 'keep' },
     })!;
-    expect(resultLines(e)).toEqual([
-      { label: 'Orders a day', before: '7', during: '7.3' },
-      { label: 'Recorded sales a day', before: 'Rs 6,300', during: 'Rs 7,227' },
-    ]);
+    expect(e).toMatchObject({ itemName: 'Seekh Kebab (4 pcs)', status: 'kept', change: { kind: 'price', oldPrice: 900, price: 990 }, progress: { daysIn: 3, days: 3 }, result: { verdict: 'keep' } });
+    expect(resultLines(e)).toEqual([{ label: 'Sold a day', before: '7', during: '7.3' }]);
   });
 
   it('puts a dish without a recipe card in no group', () => {
-    const m = menuInsightsSerializer({ items: [{ itemId: 'mi_deal', name: 'Solo deal', keep: null, quadrant: 'star', suggestion: { kind: 'recipe', text: 'Add its recipe card' } }] });
-    expect(m.items[0]).toMatchObject({ quadrant: 'unknown', profit: null, keep: null });
+    const m = menuInsightsSerializer({ data: { days: 30, items: [{ itemId: 'mi_k', name: 'Karahi', qty: 40, margin: 300, price: 1400, quadrant: 'star', action: 'feature', advice: 'Keep it prominent' }], needsRecipe: [{ itemId: 'mi_deal', name: 'Solo deal' }] } });
+    expect(m.items[0]).toMatchObject({ quadrant: 'star', keep: 300, sold: 40, suggestion: { kind: 'keep', text: 'Keep it prominent' } });
+    expect(m.items[1]).toMatchObject({ quadrant: 'unknown', profit: null, keep: null, suggestion: { kind: 'recipe' } });
   });
 });
 

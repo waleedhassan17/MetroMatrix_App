@@ -11,10 +11,11 @@ describe('tiffin words', () => {
     expect(daysLabel([1, 3, 5])).toBe('Mon, Wed, Fri');
     expect(daysLabel([1, 2, 3, 4, 5, 6, 7])).toBe('Every day');
     expect(priceLabel({ price: 2300, period: 'week' })).toBe('Rs 2,300 a week');
-    expect(priceLabel({ price: 10800, period: 'month' })).toBe('Rs 10,800 for 4 weeks');
-    expect(periodAmountLabel({ amount: 1840, credit: 1 }, 460)).toBe('Rs 1,840 (Rs 460 off for 1 skipped meal)');
-    expect(cutoffChoiceLabel(14, '12:30')).toBe('14 hours before (10:30 PM, the day before)');
-    expect(cutoffChoiceLabel(4, '19:30')).toBe('4 hours before (3:30 PM, that day)');
+    expect(priceLabel({ price: 10800, period: 'month' })).toBe('Rs 10,800 a month');
+    // A skipped day is a day off, never money back.
+    expect(periodAmountLabel({ amount: 1840 })).toBe('Rs 1,840');
+    expect(cutoffChoiceLabel(20)).toBe('8:00 PM the evening before');
+    expect(cutoffChoiceLabel(22)).toBe('10:00 PM the evening before');
   });
 
   it('offers plan days from the earliest open one', () => {
@@ -45,6 +46,7 @@ describe('tiffin words', () => {
 describe('catering', () => {
   const vendor = { minGuests: 20, earliestDate: '2026-10-17' };
   const request = (more: Partial<CateringRequest> = {}): CateringRequest => ({
+    id: 'cr_1',
     code: 'CT-AAAAAA',
     status: 'requested',
     vendor: { id: 'fb', slug: 'bb', name: 'Biryani Bazaar', logoUrl: null, phone: null },
@@ -53,7 +55,7 @@ describe('catering', () => {
     time: '19:30',
     startsAt: '2026-10-31T14:30:00.000Z',
     guests: 60,
-    eventType: 'aqiqah',
+    eventType: 'dawat',
     dishes: [
       { itemId: 'mi_b', name: 'Chicken Biryani', qty: 60 },
       { itemId: null, name: 'Zarda', qty: 60 },
@@ -82,7 +84,7 @@ describe('catering', () => {
     const ok = { ...f, guests: '60', dishes: [{ key: 'a', itemId: 'mi_b', name: 'Chicken Biryani', qty: '60' }, { key: 'b', itemId: null, name: 'Zarda', qty: '60' }] };
     expect(validateCatering(ok, vendor)).toEqual({});
     expect(cateringInput(ok, 'fb_resto')).toMatchObject({ vendorId: 'fb_resto', guests: 60, dishes: [{ itemId: 'mi_b', qty: 60 }, { name: 'Zarda', qty: 60 }], budget: null, addressId: 'ad_1' });
-    expect(eventLine(request())).toBe('Aqiqah · 60 guests · Sat 31 Oct, 7:30 PM');
+    expect(eventLine(request())).toBe('Dawat at home · 60 guests · Sat 31 Oct, 7:30 PM');
   });
 
   it('starts a quote from the request at menu prices, adds it up, and keeps it open before the event', () => {
