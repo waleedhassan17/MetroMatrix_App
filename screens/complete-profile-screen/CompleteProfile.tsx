@@ -11,7 +11,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useSignOut } from '../../hooks/useSignOut';
 import { hasErrors, MIN_AGE, validateLocationStep, validatePersonalStep } from '../../models/authModel';
-import { CITIES } from '../../models/businessModel';
+import { CITIES, TYPED_CITY_HINT, typedCity } from '../../models/businessModel';
 import { visibleErrors } from '../../utils/form-errors/formErrors';
 import { haptics } from '../../utils/haptics/haptics';
 import { pickImageFromLibrary, takePhoto } from '../../utils/pickers/pickers';
@@ -19,12 +19,12 @@ import { useStyles, type Theme } from '../../theme/index';
 import {
   AppText,
   Avatar,
-  BottomSheetPicker,
   Button,
   DateField,
   InlineNotice,
   PickerField,
   ProgressBar,
+  SearchPicker,
   TextField,
   dateKeyOf,
 } from '../../Custom-Components/index';
@@ -195,12 +195,16 @@ const CompleteProfile: React.FC = () => {
             autoComplete="postal-code"
             maxLength={5}
           />
-          <BottomSheetPicker
+          <SearchPicker
             visible={cityOpen}
             onClose={() => setCityOpen(false)}
             title="Select City"
             options={CITIES}
             value={s.city || null}
+            searchLabel="Search or type your city"
+            placeholder="e.g. Lahore"
+            custom={typedCity}
+            customHint={TYPED_CITY_HINT}
             onSelect={v => {
               dispatch(setField({ field: 'city', value: v }));
               dispatch(touch('city'));

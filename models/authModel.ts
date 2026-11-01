@@ -8,6 +8,7 @@
 
 import { isValidPkMobile, normalizePkPhone, PK_MOBILE_MESSAGE } from '../utils/phone/phone';
 import type { Gender } from './auth';
+import { cityError } from './businessModel';
 
 export interface ValidationErrors {
   [field: string]: string;
@@ -220,7 +221,8 @@ export const validateLocationStep = (data: LocationStepData): ValidationErrors =
   const errors: ValidationErrors = {};
   if (!data.streetAddress.trim()) errors.streetAddress = 'Street address is required';
   else if (data.streetAddress.trim().length < 5) errors.streetAddress = 'Add your street and area';
-  if (!data.city) errors.city = 'Select your city';
+  const city = data.city ? cityError(data.city) : 'Select your city';
+  if (city) errors.city = city;
   if (data.postalCode && !/^\d{5}$/.test(data.postalCode.trim())) errors.postalCode = 'Postal codes are 5 digits';
   return errors;
 };

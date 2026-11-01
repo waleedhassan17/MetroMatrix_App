@@ -4,6 +4,7 @@
 
 import type { Address, AddressInput, AddressLabel } from './shopping';
 import type { ValidationErrors } from './authModel';
+import { cityError } from './businessModel';
 import { isValidPkMobile, PK_MOBILE_MESSAGE } from '../utils/phone/phone';
 
 export const ADDRESS_LABELS: { key: AddressLabel; label: string; icon: 'home-outline' | 'briefcase-outline' | 'location-outline' }[] = [
@@ -18,7 +19,8 @@ export const validateAddress = (a: AddressInput): ValidationErrors => {
   const errors: ValidationErrors = {};
   if (a.fullName.trim().length < 2) errors.fullName = 'Enter the name of who receives it';
   if (!isValidPkMobile(a.phone)) errors.phone = PK_MOBILE_MESSAGE;
-  if (!a.city) errors.city = 'Choose a city';
+  const city = a.city ? cityError(a.city) : 'Choose a city';
+  if (city) errors.city = city;
   if (a.area.trim().length < 2) errors.area = 'Enter the area or block';
   if (a.line1.trim().length < 5) errors.line1 = 'Enter the house, street and block';
   return errors;

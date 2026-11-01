@@ -110,6 +110,11 @@ describe('CompleteProfile steps', () => {
       postalCode: 'Postal codes are 5 digits',
     });
   });
+
+  it('location: a city typed in, not in the list, is fine when it is letters', () => {
+    expect(validateLocationStep({ streetAddress: '12 Main Boulevard', city: 'Sahiwal', postalCode: '' })).toEqual({});
+    expect(validateLocationStep({ streetAddress: '12 Main Boulevard', city: 'X', postalCode: '' })).toEqual({ city: 'Enter the full city name' });
+  });
 });
 
 describe('validateOtp', () => {

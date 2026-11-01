@@ -1,5 +1,6 @@
 import {
   BUSINESS_FORM_SCHEMA,
+  CITIES,
   DOCUMENT_LABELS,
   DOCUMENT_REQUIREMENTS,
   SERVICE_SUBTYPES,
@@ -7,6 +8,8 @@ import {
   allDetailFields,
   businessProfileToPayload,
   businessToProfileForm,
+  cityError,
+  cityName,
   cleanDocumentNotes,
   documentSlots,
   emptyBusinessProfile,
@@ -15,6 +18,7 @@ import {
   missingDocuments,
   providerTypeLabel,
   requirementLabel,
+  typedCity,
   validateBusinessProfile,
   validateDecisionReason,
   type BusinessProfileForm,
@@ -171,6 +175,41 @@ describe('validateBusinessProfile', () => {
 
   it('asks for a real address', () => {
     expect(validateBusinessProfile('store', filled({ address: 'abc' })).address).toBe('Add the street and area');
+  });
+
+  it('takes a city the list does not have, as the API does (2–60 letters)', () => {
+    expect(validateBusinessProfile('store', filled({ city: 'Okara' }))).toEqual({});
+    expect(validateBusinessProfile('store', filled({ city: 'Okara 2' })).city).toBe('Use letters only');
+  });
+});
+
+describe('cities (the pickers: listed, or typed)', () => {
+  it('a typed listed city takes its listed spelling', () => {
+    expect(cityName('  lahore ')).toBe('Lahore');
+    expect(cityName('ISLAMABAD')).toBe('Islamabad');
+  });
+
+  it('any other city is trimmed, single-spaced and capitalised', () => {
+    expect(cityName('dera  ghazi khan')).toBe('Dera Ghazi Khan');
+    expect(cityName("mandi bahauddin")).toBe('Mandi Bahauddin');
+    expect(cityName('tando-adam')).toBe('Tando-Adam');
+  });
+
+  it("cityError follows the API's 2–60 characters, in letters", () => {
+    expect(cityError('Okara')).toBeUndefined();
+    expect(cityError("D.I. Khan")).toBeUndefined();
+    expect(cityError('')).toBeUndefined();
+    expect(cityError('K')).toBe('Enter the full city name');
+    expect(cityError('A'.repeat(61))).toBe('Use at most 60 characters');
+    expect(cityError('54000')).toBe('Use letters only');
+  });
+
+  it('typedCity is what SearchPicker offers to use, or null', () => {
+    expect(typedCity('okara')).toBe('Okara');
+    expect(typedCity('lahore')).toBe('Lahore');
+    expect(typedCity('1')).toBeNull();
+    expect(typedCity('   ')).toBeNull();
+    expect(CITIES.every(c => typedCity(c.value) === c.value)).toBe(true);
   });
 });
 

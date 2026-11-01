@@ -1,12 +1,14 @@
-// BottomSheetPicker — choose one value from a list, in a Sheet. Pair it with
-// a PickerField that shows the current choice and opens the sheet.
+// BottomSheetPicker — choose one value from a list, in a ModalSheet. Pair it
+// with a PickerField that shows the current choice and opens the sheet. A
+// picker is a plain Modal on every platform, so it opens wherever the app runs
+// (Expo Go on Android included); SearchPicker adds a search and typed values.
 
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { AppText } from './AppText';
 import { Icon } from './Icon';
-import { Sheet } from './Sheet';
+import { ModalSheet } from './ModalSheet';
 
 export interface PickerOption<V extends string> {
   value: V;
@@ -49,6 +51,37 @@ const makeStyles = ({ space, size, colors, radius, elevation }: Theme) =>
     fieldRoot: { gap: space.s8 },
   });
 
+/** One choice in a picker: its label (and description), ticked when chosen. */
+export const PickerOptionRow: React.FC<{
+  label: string;
+  description?: string;
+  selected: boolean;
+  onPress: () => void;
+}> = ({ label, description, selected, onPress }) => {
+  const styles = useStyles(makeStyles);
+  const { service } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="radio"
+      aria-checked={selected}
+      accessibilityLabel={label}
+      style={[styles.option, selected && { backgroundColor: service.accentSoft }]}>
+      <View style={styles.optionText}>
+        <AppText variant="title" tone={selected ? 'accentDeep' : 'ink'}>
+          {label}
+        </AppText>
+        {description ? (
+          <AppText variant="small" tone="muted">
+            {description}
+          </AppText>
+        ) : null}
+      </View>
+      {selected ? <Icon name="check" size="md" color={service.accentDeep} /> : null}
+    </Pressable>
+  );
+};
+
 export function BottomSheetPicker<V extends string>({
   visible,
   onClose,
@@ -57,40 +90,23 @@ export function BottomSheetPicker<V extends string>({
   value,
   onSelect,
 }: BottomSheetPickerProps<V>) {
-  const styles = useStyles(makeStyles);
-  const { service } = useTheme();
   return (
-    <Sheet visible={visible} onClose={onClose} title={title}>
+    <ModalSheet visible={visible} onClose={onClose} title={title}>
       <View accessibilityRole="radiogroup">
-        {options.map(option => {
-          const selected = option.value === value;
-          return (
-            <Pressable
-              key={option.value}
-              onPress={() => {
-                onSelect(option.value);
-                onClose();
-              }}
-              accessibilityRole="radio"
-              aria-checked={selected}
-              accessibilityLabel={option.label}
-              style={[styles.option, selected && { backgroundColor: service.accentSoft }]}>
-              <View style={styles.optionText}>
-                <AppText variant="title" tone={selected ? 'accentDeep' : 'ink'}>
-                  {option.label}
-                </AppText>
-                {option.description ? (
-                  <AppText variant="small" tone="muted">
-                    {option.description}
-                  </AppText>
-                ) : null}
-              </View>
-              {selected ? <Icon name="check" size="md" color={service.accentDeep} /> : null}
-            </Pressable>
-          );
-        })}
+        {options.map(option => (
+          <PickerOptionRow
+            key={option.value}
+            label={option.label}
+            description={option.description}
+            selected={option.value === value}
+            onPress={() => {
+              onSelect(option.value);
+              onClose();
+            }}
+          />
+        ))}
       </View>
-    </Sheet>
+    </ModalSheet>
   );
 }
 

@@ -16,11 +16,13 @@ import {
   CITIES,
   DOCUMENT_LABELS,
   SUBTYPE_SERVICE,
+  TYPED_CITY_HINT,
   allDetailFields,
   documentSlots,
   missingDocuments,
   providerTypeLabel,
   requirementLabel,
+  typedCity,
   validateBusinessProfile,
   type DetailFieldSpec,
   type DocumentSlot,
@@ -38,6 +40,7 @@ import {
   InlineNotice,
   ListRow,
   PickerField,
+  SearchPicker,
   Sheet,
   TextField,
   type DocumentTileState,
@@ -347,12 +350,16 @@ const PersonalInfo: React.FC<Props> = ({ route, navigation }) => {
             />
             {schema.details.map(detailField)}
 
-            <BottomSheetPicker
+            <SearchPicker
               visible={s.picker === 'city'}
               onClose={() => dispatch(openPicker(null))}
               title="Select City"
               options={CITIES}
               value={s.form.city || null}
+              searchLabel="Search or type your city"
+              placeholder="e.g. Lahore"
+              custom={typedCity}
+              customHint={TYPED_CITY_HINT}
               onSelect={value => {
                 dispatch(setCoreField({ field: 'city', value }));
                 dispatch(touch('city'));

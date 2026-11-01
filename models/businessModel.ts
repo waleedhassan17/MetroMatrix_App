@@ -191,6 +191,40 @@ export const CITIES = options([
   'Hyderabad',
 ]);
 
+/** The API keeps a city as 2–60 characters of free text (profile, address, business). */
+export const CITY_MAX = 60;
+const CITY_PATTERN = /^[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F .'-]*$/;
+
+/**
+ * A city as someone typed it: the listed spelling when it is one of CITIES
+ * ("lahore" → "Lahore"), else trimmed, single-spaced and capitalised
+ * ("dera ghazi  khan" → "Dera Ghazi Khan").
+ */
+export const cityName = (raw: string): string => {
+  const text = raw.trim().replace(/\s+/g, ' ');
+  const listed = CITIES.find(c => c.value.toLowerCase() === text.toLowerCase());
+  if (listed) return listed.value;
+  return text.replace(/(^|[\s-])([a-z\u00E0-\u00FF])/g, (_, sep: string, ch: string) => sep + ch.toUpperCase());
+};
+
+/** Why a city can't be saved, or undefined. Empty is the form's own "required" message. */
+export const cityError = (city: string): string | undefined => {
+  const text = city.trim();
+  if (!text) return undefined;
+  if (text.length < 2) return 'Enter the full city name';
+  if (text.length > CITY_MAX) return `Use at most ${CITY_MAX} characters`;
+  if (!CITY_PATTERN.test(text)) return 'Use letters only';
+  return undefined;
+};
+
+/** A typed city that can be saved (SearchPicker's `custom`), or null. */
+export const typedCity = (raw: string): string | null => {
+  const city = cityName(raw);
+  return city && !cityError(city) ? city : null;
+};
+
+export const TYPED_CITY_HINT = 'Type the city name in letters, e.g. Okara.';
+
 export const STORE_CATEGORIES = options(['Grocery', 'Fashion', 'Electronics', 'Home and living', 'Beauty', 'Pharmacy', 'Other']);
 
 export const SPECIALTIES = options([
@@ -314,7 +348,8 @@ export const validateBusinessProfile = (subType: SubType, form: BusinessProfileF
   if (!form.name.trim()) errors.name = `${schema.nameLabel} is required`;
   else if (form.name.trim().length < 2) errors.name = 'Use at least 2 characters';
 
-  if (!form.city) errors.city = 'Choose a city';
+  const city = form.city ? cityError(form.city) : 'Choose a city';
+  if (city) errors.city = city;
   if (!form.address.trim()) errors.address = `${schema.addressLabel} is required`;
   else if (form.address.trim().length < 5) errors.address = 'Add the street and area';
 

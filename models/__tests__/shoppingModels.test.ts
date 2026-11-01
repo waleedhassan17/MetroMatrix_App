@@ -215,6 +215,8 @@ describe('filters, addresses and paging', () => {
     const a = { label: 'home' as const, fullName: 'Ayesha Khan', phone: '+923001234567', city: 'Lahore', area: 'Gulberg III', line1: '12 Main Boulevard', landmark: null, lat: null, lng: null };
     expect(validateAddress(a)).toEqual({});
     expect(Object.keys(validateAddress({ ...a, phone: '123', line1: '' })).sort()).toEqual(['line1', 'phone']);
+    expect(validateAddress({ ...a, city: 'Bahawalpur' })).toEqual({});
+    expect(validateAddress({ ...a, city: '' }).city).toBe('Choose a city');
   });
 
   it('appends pages without duplicates and knows when to stop', () => {

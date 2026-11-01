@@ -13,15 +13,15 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { ADDRESS_LABELS, emptyAddressForm, fromAddress, validateAddressForm, type AddressForm } from '../../models/addressModel';
 import { hasErrors } from '../../models/authModel';
-import { CITIES } from '../../models/businessModel';
+import { CITIES, TYPED_CITY_HINT, typedCity } from '../../models/businessModel';
 import { PageHeaderScope, useStyles, type Theme } from '../../theme/index';
 import {
-  BottomSheetPicker,
   Button,
   ChoiceChip,
   InlineNotice,
   PickerField,
   ScreenShell,
+  SearchPicker,
   TextAction,
   TextField,
   ToggleRow,
@@ -152,12 +152,16 @@ const AddressFormContent: React.FC<Props> = ({ route }) => {
       />
       <ToggleRow label="Make this my default" value={f.isDefault} onChange={v => set('isDefault', v)} />
 
-      <BottomSheetPicker
+      <SearchPicker
         visible={cityOpen}
         onClose={() => setCityOpen(false)}
         title="Choose a city"
         options={CITIES}
         value={f.city || null}
+        searchLabel="Search or type the city"
+        placeholder="e.g. Lahore"
+        custom={typedCity}
+        customHint={TYPED_CITY_HINT}
         onSelect={v => {
           set('city', v);
           touch('city');

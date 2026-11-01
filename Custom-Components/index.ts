@@ -27,6 +27,8 @@ export * from './ScreenShell';
 export * from './ServiceTabBar';
 export * from './SegmentTabs';
 export * from './Sheet';
+export * from './ModalSheet';
+export * from './SearchPicker';
 export * from './Skeleton';
 export * from './StatusPill';
 export * from './StatusTimeline';
