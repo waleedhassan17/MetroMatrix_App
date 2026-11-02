@@ -58,9 +58,10 @@ jest.mock('../../screens/admin-totp-screen/AdminTotp', () => ({ __esModule: true
 jest.mock('../../screens/admin-two-factor-enrol-screen/AdminTwoFactorEnrol', () => ({ __esModule: true, default: () => null }));
 jest.mock('../../screens/design-gallery-screen/DesignGallery', () => ({ __esModule: true, default: () => null }));
 
-const titles = (gate: Gate, hasSeenOnboarding = true) => gateRoutes(gate, hasSeenOnboarding).map(r => r.title);
+const titles = (gate: Gate) => gateRoutes(gate).map(r => r.title);
 
 const SIGNED_OUT = [
+  ROUTES.ONBOARDING,
   ROUTES.ROLE_SELECTION,
   ROUTES.PROVIDER_SELECTION,
   ROUTES.SIGN_IN,
@@ -100,15 +101,15 @@ const SHARED: Record<string, string> = {
 };
 
 describe('gateRoutes: the stack each gate mounts', () => {
-  it('signed out: Role Selection and the sign-in / sign-up / reset screens, with Onboarding only until seen', () => {
+  it('signed out: Onboarding every time, then Role Selection and the sign-in / sign-up / reset screens', () => {
     expect(titles('unauthenticated')).toEqual(SIGNED_OUT);
-    expect(titles('unauthenticated', false)).toEqual([ROUTES.ONBOARDING, ...SIGNED_OUT]);
+    expect(titles('unauthenticated')[0]).toBe(ROUTES.ONBOARDING);
   });
 
   it.each(Object.entries(GATED))('%s mounts exactly its own screens', (gate, expected) => {
     expect(titles(gate as Gate)).toEqual(expected);
     // Onboarding belongs to the signed-out stack only.
-    expect(titles(gate as Gate, false)).toEqual(expected);
+    expect(titles(gate as Gate)).not.toContain(ROUTES.ONBOARDING);
   });
 
   it('a role gate never renders BaseNavigator; if asked, it falls back to signed out', () => {
@@ -139,10 +140,10 @@ describe('gateRoutes: no gate can reach another gate’s screens', () => {
     const gatedOnly = Object.values(GATED)
       .flat()
       .filter(s => !SHARED[s]);
-    for (const screen of gatedOnly) expect(titles('unauthenticated', false)).not.toContain(screen);
+    for (const screen of gatedOnly) expect(titles('unauthenticated')).not.toContain(screen);
   });
 
-  it('sign-out (resetAllState, then signOut) lands on Role Selection; "Use a different account" on Sign In', () => {
+  it('sign-out (resetAllState, then signOut) lands on Onboarding; "Use a different account" on Sign In', () => {
     const signedIn = authSlice.reducer(
       undefined,
       setSession({ user: makeUser({ role: 'partner' }), business: { status: 'approved', subType: 'store' } as Business }),
@@ -152,13 +153,13 @@ describe('gateRoutes: no gate can reach another gate’s screens', () => {
     const out = authSlice.reducer(authSlice.reducer(signedIn, resetAllState()), signOut(undefined));
     const gate = resolveGate(gateInputOf(out, {}));
     expect(gate).toBe('unauthenticated');
-    // Onboarding is not shown again, so the stack opens on Role Selection.
+    // No landing asked for, so the stack opens on its first route: Onboarding.
     expect(out.signedOutLanding).toBeNull();
-    expect(titles(gate, out.hasSeenOnboarding)[0]).toBe(ROUTES.ROLE_SELECTION);
+    expect(titles(gate)[0]).toBe(ROUTES.ONBOARDING);
 
     const other = authSlice.reducer(authSlice.reducer(signedIn, resetAllState()), signOut({ landing: 'SignIn' }));
     expect(other.signedOutLanding).toBe(ROUTES.SIGN_IN);
-    expect(titles(resolveGate(gateInputOf(other, {})), other.hasSeenOnboarding)).toContain(ROUTES.SIGN_IN);
+    expect(titles(resolveGate(gateInputOf(other, {})))).toContain(ROUTES.SIGN_IN);
   });
 
   it('a partner under review cannot step back into setup, and a suspended one into anything', () => {

@@ -15,8 +15,9 @@
 // pink on Food, blue on Healthcare, orange on Shopping.
 //
 // No entrance animation: the only moving element is the page indicator, and
-// it moves because the user's finger moves. Shown once (hasSeenOnboarding);
-// every exit opens Role Selection.
+// it moves because the user's finger moves. Shown whenever the user has to
+// sign in (after every splash and every sign-out); every exit replaces it
+// with Role Selection.
 
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
@@ -31,8 +32,8 @@ import {
   type NativeSyntheticEvent,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAppDispatch } from '../../hooks/useReduxHooks';
 import {
   BRAND_GRADIENT,
   SERVICE_PALETTES,
@@ -45,7 +46,7 @@ import {
 } from '../../theme/index';
 import { AppText, Button, IonIcon, type IonName } from '../../Custom-Components/index';
 import { BrandMark, BrandWordmark } from '../../Components/brand';
-import { setOnboardingSeen } from '../../store/authSlice';
+import type { RootStackParamList } from '../../models';
 
 // ── Slide data ───────────────────────────────────────
 
@@ -360,8 +361,9 @@ const PreviewCard: React.FC<{ slide: Slide }> = ({ slide }) => {
 
 // ── Screen ───────────────────────────────────────────
 
-const Onboarding: React.FC = () => {
-  const dispatch = useAppDispatch();
+type Props = NativeStackScreenProps<RootStackParamList, 'Onboarding'>;
+
+const Onboarding: React.FC<Props> = ({ navigation }) => {
   const styles = useStyles(makeStyles);
   const { size, space } = useTheme();
   const { width } = useWindowDimensions();
@@ -411,7 +413,7 @@ const Onboarding: React.FC = () => {
   );
 
   /** The ONE way out — Get started, Skip and Sign in all open Role Selection. */
-  const finish = useCallback(() => dispatch(setOnboardingSeen()), [dispatch]);
+  const finish = useCallback(() => navigation.replace('RoleSelection'), [navigation]);
 
   const onPrimary = () => {
     if (isLast) return finish();

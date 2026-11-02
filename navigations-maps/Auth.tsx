@@ -7,7 +7,7 @@
 // Route names come from ./Base.ts and must never change.
 //
 // The FYP app's flow:
-//   Splash (overlay) → Onboarding (first launch) → Role Selection
+//   Splash (overlay) → Onboarding (every time) → Role Selection
 //     User     → Sign In / Sign Up → Email Verification → Complete Profile
 //     Provider → Provider Selection → Provider Sign In / Sign Up
 //                → Email Verification → Personal Info → Approval Pending
@@ -146,7 +146,8 @@ const GATE_BRANCHES: Partial<Record<Gate, IRoute[]>> = {
 /**
  * The routes BaseNavigator mounts for a gate: the whole stack, so Back can
  * only move within the branch. Any other gate (a role app's, which
- * BaseNavigator never shows) falls back to the signed-out branch.
+ * BaseNavigator never shows) falls back to the signed-out branch, which
+ * always opens on Onboarding: after every splash and every sign-out.
  */
-export const gateRoutes = (gate: Gate, hasSeenOnboarding: boolean): IRoute[] =>
-  GATE_BRANCHES[gate] ?? [...(!hasSeenOnboarding ? [ONBOARDING_ROUTE] : []), ...UNAUTHENTICATED_ROUTES];
+export const gateRoutes = (gate: Gate): IRoute[] =>
+  GATE_BRANCHES[gate] ?? [ONBOARDING_ROUTE, ...UNAUTHENTICATED_ROUTES];

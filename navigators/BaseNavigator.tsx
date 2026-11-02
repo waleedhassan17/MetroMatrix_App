@@ -6,7 +6,7 @@
 // the admin console — is decided by AppContainer.renderNavigator(); this
 // navigator only shows the gate branch resolveGate() picks:
 //
-//   1. not authenticated      → onboarding (if unseen) + Role Selection …
+//   1. not authenticated      → onboarding + Role Selection …
 //   2. pending TOTP           → admin TOTP (or first-time enrolment)
 //   3. email not verified     → Email Verification
 //   4. user, profile pending  → Complete Profile
@@ -38,7 +38,7 @@ const BaseNavigator: React.FC = () => {
   const skippedProfile = useAppSelector(selectSkippedProfile);
   const gate: Gate = resolveGate(gateInputOf(auth, skippedProfile));
 
-  const routes: IRoute[] = gateRoutes(gate, auth.hasSeenOnboarding);
+  const routes: IRoute[] = gateRoutes(gate);
 
   // A first-time admin enrols an authenticator before the code step; a
   // provider whose service isn't known yet chooses it first; every other

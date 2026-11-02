@@ -6,7 +6,7 @@
 // order is written once and unit-tested (navigators/__tests__/sessionGate).
 //
 // ORDER MATTERS — each step assumes the ones above it have passed:
-//   1. not authenticated   → onboarding (first launch) + Role Selection and
+//   1. not authenticated   → onboarding + Role Selection and
 //                            sign-in. A pending staff TOTP challenge is a
 //                            sub-state of this: no tokens exist until the
 //                            second factor is accepted.

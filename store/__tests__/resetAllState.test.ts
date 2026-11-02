@@ -1,16 +1,15 @@
 import { store } from '../store';
 import { resetAllState } from '../resetAllState';
 import { setLastService } from '../preferencesSlice';
-import { setOnboardingSeen, setSession } from '../authSlice';
+import { setSession } from '../authSlice';
 import { setPreviewService } from '../../screens/design-gallery-screen/designGallerySlice';
 import type { User } from '../../models/auth';
 
 const user = { id: 'u1', role: 'customer', isEmailVerified: true } as User;
 
 describe('RESET_ALL_STATE at the root reducer', () => {
-  it('wipes account-scoped slices and keeps the shell, preferences and onboarding flag', () => {
+  it('wipes account-scoped slices (auth among them) and keeps the shell and preferences', () => {
     store.dispatch(setLastService('healthcare'));
-    store.dispatch(setOnboardingSeen());
     store.dispatch(setSession({ user, business: null }));
     store.dispatch(setPreviewService('food'));
     const readyBefore = store.getState().appContainer;
@@ -24,7 +23,6 @@ describe('RESET_ALL_STATE at the root reducer', () => {
     expect(state.auth.isAuthenticated).toBe(false);
     // device-scoped: survives
     expect(state.preferences.lastService).toBe('healthcare');
-    expect(state.auth.hasSeenOnboarding).toBe(true);
     expect(state.appContainer).toBe(readyBefore);
   });
 });

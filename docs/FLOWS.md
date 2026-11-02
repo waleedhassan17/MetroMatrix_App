@@ -10,7 +10,7 @@ Data path everywhere: **screen → slice → network → serializer**. Routes ar
 
 | # | Condition | Gate | Routes (`navigations-maps/Auth.ts`) | First screen |
 |---|---|---|---|---|
-| 1 | No session | `unauthenticated` | `UNAUTHENTICATED_ROUTES` (+ `Onboarding` on first launch) | Onboarding, then RoleSelection |
+| 1 | No session | `unauthenticated` | `Onboarding` + `UNAUTHENTICATED_ROUTES` | Onboarding, then RoleSelection |
 | 2 | Staff sign-in challenge pending (no tokens yet) | `totp` | `ADMIN_TOTP_ROUTES` | AdminTwoFactorEnrol (first sign-in), otherwise AdminTotp |
 | 3 | `user.isEmailVerified !== true` | `verify` | `EMAIL_VERIFY_ROUTES` | EmailVerification |
 | 4 | Customer, profile incomplete and not skipped | `completeProfile` | `COMPLETE_PROFILE_ROUTES` | CompleteProfile |
@@ -26,7 +26,7 @@ A rider session restores to `unauthenticated`; riders are refused at sign-in (`W
 
 | Step | Route / screen | Slice | Network → endpoint | Success | Errors handled |
 |---|---|---|---|---|---|
-| Onboarding (first launch) | `Onboarding` | auth (`hasSeenOnboarding`) | — | — | — |
+| Onboarding (every signed-out launch and sign-out) | `Onboarding` | — | — | — | — |
 | Pick "User" | `RoleSelection` | `roleSelectionSlice` | — | — | — |
 | Sign up | `SignUp` | `signUpSlice` → `shared/authThunks` | `authSignup` → `POST /auth/signup` `{email, password, displayName, phone?, role}` | 201 `AuthResult` (unverified); tokens stored; gate → `verify` | 409 `EMAIL_EXISTS`, 400 `VALIDATION_FAILED` (fields), 429 |
 | Sign in | `SignIn` | `signInSlice` → `signInAndOpen` | `authSignin` → `POST /auth/signin` | 200 session | 401 `INVALID_CREDENTIALS` (also during lockout), `WRONG_PORTAL` (opens the right door from `details.accountType`; staff retried on the admin door), `WRONG_APP` (rider), 403 `ACCOUNT_DISABLED`, 429 |

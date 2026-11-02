@@ -1,17 +1,16 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Global Auth Slice (createAppSlice pattern)
 // ═══════════════════════════════════════════════════════
-// Holds global auth state only: the session user, their business (partners),
-// the admin TOTP challenge between sign-in steps, and the onboarding flag.
-// Per-screen form state and thunks live in their own co-located slices.
+// Holds global auth state only: the session user, their business (partners)
+// and the admin TOTP challenge between sign-in steps. Per-screen form state
+// and thunks live in their own co-located slices.
 //
-// Persistence: only `hasSeenOnboarding` is written to disk (nested
-// persistReducer in store.ts). The session is rebuilt from the secure-store
-// token by appContainer's bootstrapSession on every cold start.
+// Persistence: none. The session is rebuilt from the secure-store token by
+// appContainer's bootstrapSession on every cold start, and RESET_ALL_STATE
+// wipes this slice at the root like any account-scoped one.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from './createAppSlice';
-import { resetAllState } from './resetAllState';
 import type { Business, User } from '../models/auth';
 
 export interface PendingTotp {
@@ -28,9 +27,8 @@ export interface AuthSliceState {
   user: User | null;
   business: Business | null;
   isAuthenticated: boolean;
-  hasSeenOnboarding: boolean;
   pendingTotp: PendingTotp | null;
-  /** "Use a different account" lands on Sign In; any other sign-out on Role Selection. */
+  /** "Use a different account" lands on Sign In; any other sign-out on Onboarding. */
   signedOutLanding: SignedOutLanding | null;
 }
 
@@ -38,16 +36,9 @@ const initialState: AuthSliceState = {
   user: null,
   business: null,
   isAuthenticated: false,
-  hasSeenOnboarding: false,
   pendingTotp: null,
   signedOutLanding: null,
 };
-
-/** Back to a signed-out session, keeping what belongs to the install. */
-const toSignedOut = (state: AuthSliceState): AuthSliceState => ({
-  ...initialState,
-  hasSeenOnboarding: state.hasSeenOnboarding,
-});
 
 export const authSlice = createAppSlice({
   name: 'auth',
@@ -61,8 +52,6 @@ export const authSlice = createAppSlice({
         state.isAuthenticated = true;
         state.pendingTotp = null;
         state.signedOutLanding = null;
-        // Anyone who has signed in has, by definition, seen the app's pitch.
-        state.hasSeenOnboarding = true;
       },
     ),
     setUser: create.reducer((state, action: PayloadAction<User>) => {
@@ -79,27 +68,16 @@ export const authSlice = createAppSlice({
       state.pendingTotp = null;
       state.signedOutLanding = 'SignIn';
     }),
-    signOut: create.reducer((state, action: PayloadAction<{ landing?: SignedOutLanding } | undefined>) => ({
-      ...toSignedOut(state),
+    signOut: create.reducer((_state, action: PayloadAction<{ landing?: SignedOutLanding } | undefined>) => ({
+      ...initialState,
       signedOutLanding: action.payload?.landing ?? null,
     })),
-    setOnboardingSeen: create.reducer(state => {
-      state.hasSeenOnboarding = true;
-    }),
   }),
-
-  // RESET_ALL_STATE reaches this slice like any other, but a returning user
-  // must not see onboarding again — so auth resets itself rather than being
-  // dropped wholesale at the root.
-  extraReducers: builder => {
-    builder.addCase(resetAllState, state => toSignedOut(state));
-  },
 
   selectors: {
     selectUser: state => state.user,
     selectBusiness: state => state.business,
     selectIsAuthenticated: state => state.isAuthenticated,
-    selectHasSeenOnboarding: state => state.hasSeenOnboarding,
     selectPendingTotp: state => state.pendingTotp,
     selectRole: state => state.user?.role ?? null,
     selectIsEmailVerified: state => state.user?.isEmailVerified ?? false,
@@ -108,14 +86,12 @@ export const authSlice = createAppSlice({
   },
 });
 
-export const { setSession, setUser, setBusiness, setPendingTotp, endPendingTotp, signOut, setOnboardingSeen } =
-  authSlice.actions;
+export const { setSession, setUser, setBusiness, setPendingTotp, endPendingTotp, signOut } = authSlice.actions;
 
 export const {
   selectUser,
   selectBusiness,
   selectIsAuthenticated,
-  selectHasSeenOnboarding,
   selectPendingTotp,
   selectRole,
   selectIsEmailVerified,

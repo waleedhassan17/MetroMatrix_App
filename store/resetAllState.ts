@@ -7,8 +7,8 @@
 // "account-scoped slices" would inevitably miss the next one added.
 //
 // What survives (SHELL_SLICES in store.ts): `appContainer` and `preferences`,
-// which describe the app process and the device, not the account. `auth`
-// handles the action itself so `hasSeenOnboarding` outlives every session.
+// which describe the app process and the device, not the account. `auth` is
+// account-scoped like the rest, so every sign-out opens on Onboarding again.
 
 import { createAction } from '@reduxjs/toolkit';
 

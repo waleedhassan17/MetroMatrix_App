@@ -1,14 +1,12 @@
 import reducer, {
   authSlice,
   setBusiness,
-  setOnboardingSeen,
   setPendingTotp,
   setSession,
   setUser,
   signOut,
   type AuthSliceState,
 } from '../authSlice';
-import { resetAllState } from '../resetAllState';
 import type { Business, User } from '../../models/auth';
 import { makeUser } from '../../__fixtures__/users';
 
@@ -19,25 +17,23 @@ const business = { id: 'b1', status: 'pending_approval', serviceType: 'food' } a
 const initial = reducer(undefined, { type: '@@init' });
 
 describe('authSlice reducers', () => {
-  it('starts signed out and onboarding unseen', () => {
+  it('starts signed out', () => {
     expect(initial).toEqual({
       user: null,
       business: null,
       isAuthenticated: false,
-      hasSeenOnboarding: false,
       pendingTotp: null,
       signedOutLanding: null,
     });
   });
 
-  it('setSession opens a session, clears a pending TOTP and marks onboarding seen', () => {
+  it('setSession opens a session and clears a pending TOTP', () => {
     const withTotp = reducer(initial, setPendingTotp({ challengeToken: 'c', enrolled: true, email: 'a@x.com' }));
     const state = reducer(withTotp, setSession({ user, business }));
     expect(state).toEqual({
       user,
       business,
       isAuthenticated: true,
-      hasSeenOnboarding: true,
       pendingTotp: null,
       signedOutLanding: null,
     });
@@ -58,16 +54,12 @@ describe('authSlice reducers', () => {
     expect(reducer(state, setPendingTotp(null)).pendingTotp).toBeNull();
   });
 
-  it.each([
-    ['signOut', signOut()],
-    ['RESET_ALL_STATE', resetAllState()],
-  ])('%s wipes the session but keeps hasSeenOnboarding', (_name, action) => {
-    const session = reducer(reducer(initial, setOnboardingSeen()), setSession({ user, business }));
-    expect(reducer(session, action)).toEqual({
+  it('signOut wipes the whole session', () => {
+    const session = reducer(initial, setSession({ user, business }));
+    expect(reducer(session, signOut())).toEqual({
       user: null,
       business: null,
       isAuthenticated: false,
-      hasSeenOnboarding: true,
       pendingTotp: null,
       signedOutLanding: null,
     });

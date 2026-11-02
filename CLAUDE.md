@@ -61,7 +61,7 @@ Set environment in `.env.local`; see `.env.example`. `networks/network/network.t
    - `AppContainer.renderNavigator()` decides which top-level navigator mounts.
    - `BaseNavigator` holds the session-gate branches.
    - Route names (`navigations-maps/Base.tsx` `ROUTES`) never change once shipped. Add new names; never rename one.
-4. **Tokens are stored only in `expo-secure-store`**, via `utils/storage_utils/storageUtils.ts` (with a `localStorage` fallback on web). `redux-persist` persists only `preferences` and `auth.hasSeenOnboarding`.
+4. **Tokens are stored only in `expo-secure-store`**, via `utils/storage_utils/storageUtils.ts` (with a `localStorage` fallback on web). `redux-persist` persists only `preferences` and `providerSelection.pending`; nothing in `auth` reaches disk.
 5. **There is one main network file**, as in Consultant_Mobile: `networks/network/network.ts`, the only file in `networks/network/` besides the dummy API's test fixtures. It holds:
    - the API URL (`API_URL`, read right here from `EXPO_PUBLIC_API_URL`; `CONFIG_ERROR` when it is missing) and the axios instance (`MainAxiosInstance`; the refresh call has its own `RefreshAxiosInstance`, which skips the interceptors)
    - the bearer interceptor, the envelope check (a 2xx body that isn't `{ success, … }` is `BAD_RESPONSE`), and the single-flight refresh queue with the session-ending rules (only `REFRESH_INVALID`, `REFRESH_REUSED`, `TOKEN_REVOKED` and `ACCOUNT_DISABLED` end a session)
@@ -74,7 +74,7 @@ Set environment in `.env.local`; see `.env.example`. `networks/network/network.t
 6. **Root reset.**
    - `resetAllState()` (`app/RESET_ALL_STATE`) is handled at the root reducer and wipes every account-scoped slice on sign-in and sign-out.
    - `appContainer` and `preferences` survive.
-   - `auth` resets itself but keeps `hasSeenOnboarding`.
+   - `auth` is wiped like any account-scoped slice: there is no "seen onboarding" flag.
    - A new slice is account-scoped by default; nobody has to add it to a list.
 7. **No raw design values** in `screens`, `Components`, `Custom-Components` or `navigators`. Every colour, size, radius, font, shadow and duration comes from `useTheme()`. `npm run check:tokens` enforces this and must pass.
 8. **Banned in the UI:**
@@ -276,7 +276,7 @@ const styles = useStyles(makeStyles); // memoised on the active theme (mode + se
 
 The order matters. It lives in ONE pure function, `resolveGate()` in `navigators/sessionGate.ts`, which has its own unit test. BaseNavigator and AppContainer both call it:
 
-1. not authenticated → Onboarding (first launch only) + Role Selection, Provider Selection, SignIn/SignUp, ProviderSignIn/ProviderSignUp, ForgotPassword → ResetPasswordOTP → ResetPassword
+1. not authenticated → Onboarding (after every splash and every sign-out; "Use a different account" lands on SignIn) + Role Selection, Provider Selection, SignIn/SignUp, ProviderSignIn/ProviderSignUp, ForgotPassword → ResetPasswordOTP → ResetPassword
 2. pending TOTP (staff sign in on the ordinary SignIn; the API answers `WRONG_PORTAL` there and `signInAndOpen` retries on the admin portal) → AdminTotp, or AdminTwoFactorEnrol on a first sign-in
 3. email not verified → EmailVerification (a link: the screen polls /auth/me; VerifySuccess handles metromatrix://verify-email?token=… and ?verified=1, also registered while signed out)
 4. customer whose profile is incomplete → CompleteProfile (3 steps)

@@ -242,18 +242,11 @@ import { foodCateringFormSlice } from '../screens/food-catering-form-screen/food
 import { foodCateringRequestsSlice } from '../screens/food-catering-requests-screen/foodCateringRequestsSlice';
 import { foodCateringRequestSlice } from '../screens/food-catering-request-screen/foodCateringRequestSlice';
 
-// `auth` is persisted through its OWN persistReducer so that exactly one
-// field reaches disk. The session (user, business, tokens) is never
+// The provider's pick is persisted through its OWN persistReducer so that
+// exactly one field reaches disk: only `pending`, so a new provider who
+// restarts before PersonalInfo still has the type they chose. `auth` is never
 // persisted: tokens live in secure-store and the user is re-fetched from
 // /auth/me by bootstrapSession on every cold start.
-const authPersistConfig = {
-  key: 'auth',
-  storage: AsyncStorage,
-  whitelist: ['hasSeenOnboarding'],
-};
-
-// Same pattern for the provider's pick: only `pending` reaches disk, so a new
-// provider who restarts before PersonalInfo still has the type they chose.
 const providerSelectionPersistConfig = {
   key: 'providerSelection',
   storage: AsyncStorage,
@@ -261,7 +254,7 @@ const providerSelectionPersistConfig = {
 };
 
 const rootReducer = combineReducers({
-  auth: persistReducer(authPersistConfig, authReducer),
+  auth: authReducer,
   preferences: preferencesSlice.reducer,
   appContainer: appContainerSlice.reducer,
   realtime: realtimeSlice.reducer,
@@ -494,14 +487,10 @@ type RootReducerState = ReturnType<typeof rootReducer>;
 // while AppContainer stays mounted would leave the app on the native splash
 // forever, on every sign-out AND on the 401 session-expired bridge.
 //
-// `auth` is passed through as well, but it is NOT a survivor: authSlice
-// handles RESET_ALL_STATE itself (back to signed-out, keeping
-// hasSeenOnboarding) — passing it through also keeps its `_persist` marker.
-//
 // `platformConfig` describes the platform (GET /config), not the account: a
 // sign-out must not forget that the platform is in maintenance.
 // `providerSelection` is the same: it clears itself on reset.
-const SHELL_SLICES = ['appContainer', 'preferences', 'auth', 'platformConfig', 'providerSelection'] as const;
+const SHELL_SLICES = ['appContainer', 'preferences', 'platformConfig', 'providerSelection'] as const;
 
 // Applied at the root so a slice added later is account-scoped by default —
 // nobody has to remember to add it to a reset list.
@@ -519,8 +508,8 @@ const appReducer: typeof rootReducer = (state, action) => {
 const persistConfig = {
   key: 'metromatrix-root',
   storage: AsyncStorage,
-  // Only device preferences at the root. `auth` persists its one field via
-  // its nested config above; everything else is refetched from the API.
+  // Only device preferences at the root. `providerSelection` persists its one
+  // field via its nested config above; everything else is refetched from the API.
   whitelist: ['preferences'],
   stateReconciler: autoMergeLevel2 as any,
 };
