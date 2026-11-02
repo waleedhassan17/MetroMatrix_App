@@ -8,7 +8,6 @@
 import React, { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Image } from 'expo-image';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
@@ -17,19 +16,19 @@ import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index
 import {
   AppText,
   Button,
-  Card,
+  BagGroupSkeleton,
   ChoiceChip,
   Divider,
   InlineNotice,
   IonIcon,
+  LineItemRow,
   PhotoStrip,
   QuantityStepper,
   ScreenShell,
-  SkeletonLines,
+  SectionCard,
   TextField,
 } from '../../Custom-Components/index';
 import type { OrdersStackParamList, ReturnInput } from '../../models';
-import { cdn } from '../../utils/cdn/cdn';
 import { haptics } from '../../utils/haptics/haptics';
 import { pickImageFromLibrary } from '../../utils/pickers/pickers';
 import { loadOrderGroupAsync, selectOrderGroup } from '../order-detail-screen/orderDetailSlice';
@@ -48,13 +47,9 @@ import {
 
 type Props = NativeStackScreenProps<OrdersStackParamList, 'ReturnRequest'>;
 
-const makeStyles = ({ colors, space, size, radius }: Theme) =>
+const makeStyles = ({ space, size }: Theme) =>
   StyleSheet.create({
-    item: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
-    thumb: { width: size.thumb, aspectRatio: size.productAspect, borderRadius: radius.sm, backgroundColor: colors.surfaceSunk },
-    grow: { flex: 1, gap: space.s4 },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
-    group: { gap: space.s8 },
     check: { minWidth: size.touch, minHeight: size.touch, alignItems: 'center', justifyContent: 'center' },
   });
 
@@ -68,7 +63,7 @@ const ReturnRequestContent: React.FC<Props> = ({ route }) => {
   const { back } = useBack({ name: 'OrderDetail', params: { groupCode: route.params.groupCode } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { service, colors, size } = useTheme();
+  const { service, colors } = useTheme();
   const { orderId, groupCode } = route.params;
   const s = useAppSelector(selectReturnRequest);
   const order = useAppSelector(st => selectOrderGroup(st, groupCode)).group?.orders.find(o => o.id === orderId) ?? null;
@@ -80,7 +75,7 @@ const ReturnRequestContent: React.FC<Props> = ({ route }) => {
   if (!order) {
     return (
       <ScreenShell title="Return items" onBack={back}>
-        <SkeletonLines lines={6} />
+        <BagGroupSkeleton />
       </ScreenShell>
     );
   }
@@ -127,40 +122,37 @@ const ReturnRequestContent: React.FC<Props> = ({ route }) => {
       footer={<Button label="Request return" onPress={() => void submit()} loading={s.status === 'loading'} disabled={busy} fullWidth />}>
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
 
-      <Card invalid={!!show('items')}>
-        <AppText variant="label">Which items?</AppText>
+      <SectionCard title="Which items?" subtitle="Tick each one you're sending back." icon="cube-outline" invalid={!!show('items')}>
         {items.map((it, i) => {
           const q = s.quantities[it.id] ?? 0;
           return (
-            <View key={it.id}>
+            <React.Fragment key={it.id}>
               {i > 0 ? <Divider /> : null}
-              <View style={styles.item}>
-                <Pressable
-                  onPress={() => dispatch(setReturnQuantity({ itemId: it.id, quantity: q ? 0 : it.returnableQuantity }))}
-                  style={styles.check}
-                  accessibilityRole="checkbox"
-                  aria-checked={q > 0}
-                  accessibilityLabel={`Return ${it.name}`}>
-                  <IonIcon name={q ? 'checkbox' : 'square-outline'} size="lg" color={q ? service.accent : colors.lineStrong} />
-                </Pressable>
-                {it.imageUrl ? (
-                  <Image source={{ uri: cdn(it.imageUrl, { w: size.thumb, h: size.thumb / size.productAspect }) ?? undefined }} style={styles.thumb} contentFit="cover" />
+              <LineItemRow
+                imageUrl={it.imageUrl}
+                name={it.name}
+                meta={it.variantLabel || null}
+                right={
+                  <Pressable
+                    onPress={() => dispatch(setReturnQuantity({ itemId: it.id, quantity: q ? 0 : it.returnableQuantity }))}
+                    style={styles.check}
+                    accessibilityRole="checkbox"
+                    aria-checked={q > 0}
+                    accessibilityLabel={`Return ${it.name}`}>
+                    <IonIcon name={q ? 'checkbox' : 'square-outline'} size="lg" color={q ? service.accent : colors.lineStrong} />
+                  </Pressable>
+                }>
+                {q > 0 && it.returnableQuantity > 1 ? (
+                  <QuantityStepper
+                    value={q}
+                    min={1}
+                    max={it.returnableQuantity}
+                    onChange={n => dispatch(setReturnQuantity({ itemId: it.id, quantity: n }))}
+                    label={`How many ${it.name} to return`}
+                  />
                 ) : null}
-                <View style={styles.grow}>
-                  <AppText variant="small" numberOfLines={2}>
-                    {it.name}
-                  </AppText>
-                  {it.variantLabel ? (
-                    <AppText variant="caption" tone="muted">
-                      {it.variantLabel}
-                    </AppText>
-                  ) : null}
-                  {q > 0 && it.returnableQuantity > 1 ? (
-                    <QuantityStepper value={q} min={1} max={it.returnableQuantity} onChange={n => dispatch(setReturnQuantity({ itemId: it.id, quantity: n }))} label={`How many ${it.name} to return`} />
-                  ) : null}
-                </View>
-              </View>
-            </View>
+              </LineItemRow>
+            </React.Fragment>
           );
         })}
         {show('items') ? (
@@ -168,10 +160,9 @@ const ReturnRequestContent: React.FC<Props> = ({ route }) => {
             {show('items')}
           </AppText>
         ) : null}
-      </Card>
+      </SectionCard>
 
-      <View style={styles.group}>
-        <AppText variant="label">Why are you returning it?</AppText>
+      <SectionCard title="Why are you returning it?" icon="help-circle-outline" invalid={!!show('reason')}>
         <View style={styles.chips}>
           {RETURN_REASONS.map(r => (
             <ChoiceChip key={r.key} label={r.label} selected={s.reason === r.key} onPress={() => dispatch(setReturnReason(r.key))} />
@@ -182,20 +173,19 @@ const ReturnRequestContent: React.FC<Props> = ({ route }) => {
             {show('reason')}
           </AppText>
         ) : null}
-      </View>
+        <TextField
+          label="What happened?"
+          value={s.details}
+          onChangeText={t => dispatch(setReturnDetails(t))}
+          error={show('details')}
+          multiline
+          helper="The store reads this before approving."
+        />
+      </SectionCard>
 
-      <TextField
-        label="What happened?"
-        value={s.details}
-        onChangeText={t => dispatch(setReturnDetails(t))}
-        error={show('details')}
-        multiline
-        helper="The store reads this before approving."
-      />
-      <View style={styles.group}>
-        <AppText variant="label">Photos (helpful if it arrived damaged or wrong)</AppText>
+      <SectionCard title="Photos" subtitle="Helpful if it arrived damaged or wrong." icon="camera-outline">
         <PhotoStrip photos={s.photos} max={MAX_RETURN_PHOTOS} onAdd={() => void addPhoto()} onRemove={key => dispatch(removeReturnPhoto(key))} />
-      </View>
+      </SectionCard>
     </ScreenShell>
   );
 };

@@ -34,12 +34,17 @@ const ShopOrdersScreen: React.FC<Props> = ({ navigation, route }) => {
   const go = navigation as unknown as { navigate: (name: string, params?: object) => void };
 
   return (
-    <ScreenShell title="Orders" subtitle="Track every order, store by store" scroll={false}>
-      <View style={styles.chips}>
-        {SHOP_SEGMENTS.map(sg => (
-          <ChoiceChip key={sg.key} label={sg.label} selected={segment === sg.key} onPress={() => dispatch(setOrdersSegment(sg.key))} />
-        ))}
-      </View>
+    <ScreenShell
+      title="Orders"
+      subtitle="Track every order, store by store"
+      scroll={false}
+      headerContent={
+        <View style={styles.chips}>
+          {SHOP_SEGMENTS.map(sg => (
+            <ChoiceChip key={sg.key} label={sg.label} selected={segment === sg.key} onPress={() => dispatch(setOrdersSegment(sg.key))} />
+          ))}
+        </View>
+      }>
       <ShopOrders segment={segment} onOpen={groupCode => go.navigate('OrderDetail', { groupCode })} onShop={() => navigation.navigate('ShopHomeTab')} />
     </ScreenShell>
   );
