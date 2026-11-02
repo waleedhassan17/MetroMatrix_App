@@ -212,8 +212,10 @@ export const radius = {
   lg: 16,
   /** Bottom sheets and the single hero. */
   xl: 20,
-  /** The module page header's rounded foot (the FYP's 24). */
-  header: 24,
+  /** The module page header's rounded foot (the FYP's R.sheet, 20). */
+  header: 20,
+  /** The white search field inside the gradient header (the FYP's R.control). */
+  control: 10,
   pill: 999,
 } as const;
 
@@ -227,7 +229,7 @@ export const size = {
   /** sm: compact buttons · md: the FYP's 50 pt buttons · lg: the FYP's 56 pt inputs. */
   control: { sm: 36, md: 50, lg: 56 },
   /** hero: the glyph on a kitchen card's art panel. */
-  icon: { sm: 16, md: 20, lg: 24, xl: 32, hero: 56 },
+  icon: { sm: 16, field: 18, md: 20, lg: 24, xl: 32, hero: 56 },
   avatar: { sm: 32, md: 44, lg: 64, xl: 96 },
   /** The white ring around the avatar on the profile hero (the FYP's 3 px). */
   avatarRing: 3,
@@ -282,6 +284,24 @@ export const size = {
   // ── Shopping ──
   /** Product photos are portrait 4:5 (width / height), as fashion catalogues shoot. */
   productAspect: 0.8,
+  /** The product card's photo: the FYP's 3:4 apparel crop. */
+  productPhotoAspect: 0.75,
+  /** The product card's info block, so a row of cards lines up (grows with large text). */
+  productInfo: 122,
+  /** The heart's white circle on a product photo. */
+  heartWell: 30,
+  /** "Shop by category": the FYP's photo tile. */
+  categoryTile: { width: 84, height: 100 },
+  /** A store page's cover hero (the FYP BrandStore's). */
+  storeHero: 200,
+  /** Checkout's step progress bar. */
+  stepBar: 8,
+  /** Order placed: the success ring and its disc. */
+  successRing: 108,
+  successDisc: 72,
+  /** The store app: a stat tile's icon well, and a quick action's tile. */
+  statWell: 32,
+  actionTile: 40,
   /** Home banners and store covers. */
   bannerAspect: 2,
   coverAspect: 2.4,
@@ -297,8 +317,8 @@ export const size = {
   countBadge: 18,
   /** Category tile glyph well. */
   categoryWell: 56,
-  /** The bag line thumbnail (4:5). */
-  lineThumb: 64,
+  /** A line item's thumbnail (4:5): the Bag, checkout, orders (the FYP's 72). */
+  lineThumb: 72,
   // ── Food Court ──
   /** A vendor card's food photo (list), and the narrower rail card's. */
   vendorPhotoAspect: 2.1,

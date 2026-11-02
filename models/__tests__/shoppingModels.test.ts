@@ -9,8 +9,10 @@ import {
   needsPayment,
   ORDER_STATUS,
   orderTimeline,
+  partnerHeadline,
   PAYMENT_STATUS,
   RETURN_STATUS,
+  storeOrderHeadline,
 } from '../shopping/orderStatusModel';
 import { normaliseTransactionId, validatePaymentProof } from '../shopping/paymentProofModel';
 import { emptyProductForm, makeCover, movePhoto, salePreviewPercent, skuBaseFromName, syncVariants, validateProductForm } from '../shopping/productFormModel';
@@ -42,6 +44,44 @@ describe('orderStatusModel', () => {
     expect(groupHeadline([o('delivered'), o('shipped')]).label).toBe('Shipped');
     expect(groupHeadline([o('cancelled'), o('delivered')]).label).toBe('Delivered');
     expect(needsPayment(o('cancelled', 'awaiting_transfer', 'transfer'))).toBe(false);
+  });
+
+  it('paints statuses in families the customer and the store share', () => {
+    const tones = (map: Record<string, { tone: string }>) => Object.fromEntries(Object.entries(map).map(([k, v]) => [k, v.tone]));
+    expect(tones(ORDER_STATUS)).toEqual({
+      placed: 'warning',
+      confirmed: 'info',
+      packed: 'info',
+      shipped: 'accent',
+      delivered: 'success',
+      cancelled: 'danger',
+      cancellation_requested: 'warning',
+      returned: 'neutral',
+    });
+    expect(PAYMENT_STATUS.proof_submitted.tone).toBe('info');
+    expect(PAYMENT_STATUS.proof_rejected.tone).toBe('danger');
+    expect(RETURN_STATUS.approved.tone).toBe('info');
+    expect(RETURN_STATUS.refunded.tone).toBe('success');
+  });
+
+  it('gives every order ONE pill: what is owed before where it is', () => {
+    const o = (status: any, paymentStatus: any = 'cod_pending', paymentMethod: any = 'cod') => ({ status, paymentStatus, paymentMethod }) as any;
+    // The customer.
+    expect(storeOrderHeadline(o('placed', 'awaiting_transfer', 'transfer')).label).toBe('Payment needed');
+    expect(storeOrderHeadline(o('placed', 'proof_rejected', 'transfer')).label).toBe('Payment not received');
+    expect(storeOrderHeadline(o('placed', 'proof_submitted', 'transfer')).label).toBe('Payment in review');
+    expect(storeOrderHeadline(o('cancelled', 'refund_due', 'transfer')).label).toBe('Refund due');
+    expect(storeOrderHeadline(o('shipped')).label).toBe('Shipped');
+    expect(storeOrderHeadline(o('cancelled', 'awaiting_transfer', 'transfer')).label).toBe('Cancelled');
+    // The store.
+    expect(partnerHeadline(o('placed', 'proof_submitted', 'transfer'))).toEqual(expect.objectContaining({ label: 'Check payment', tone: 'warning' }));
+    expect(partnerHeadline(o('cancelled', 'refund_due', 'transfer')).label).toBe('Refund due');
+    expect(partnerHeadline(o('placed', 'awaiting_transfer', 'transfer')).label).toBe('Awaiting payment');
+    expect(partnerHeadline(o('delivered', 'paid', 'transfer')).label).toBe('Delivered');
+    expect(partnerHeadline(o('cancelled', 'proof_submitted', 'transfer')).label).toBe('Cancelled');
+    for (const meta of [partnerHeadline(o('placed', 'proof_submitted', 'transfer')), partnerHeadline(o('placed', 'awaiting_transfer', 'transfer'))]) {
+      expect(meta.label.slice(1)).toBe(meta.label.slice(1).toLowerCase());
+    }
   });
 
   it('draws the journey, with the courier on Shipped and a failed step on cancel', () => {

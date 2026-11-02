@@ -1,41 +1,46 @@
-// EmptyState — a serif headline, one line, one action.
+// EmptyState — a glyph in the service's soft well (the FYP's), a headline,
+// one line, one action. `ion` takes an Ionicons glyph (Shopping's set).
 
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { AppText } from './AppText';
 import { Button } from './Button';
-import { Icon, type IconName } from './Icon';
+import { Icon, IonIcon, type IconName, type IonName } from './Icon';
 
 export interface EmptyStateProps {
   title: string;
   body: string;
   icon?: IconName;
+  ion?: IonName;
   action?: { label: string; onPress: () => void };
 }
 
-const makeStyles = ({ space, colors, size, radius }: Theme) =>
+const makeStyles = ({ space, size, radius }: Theme) =>
   StyleSheet.create({
     root: { alignItems: 'center', paddingVertical: space.s40, gap: space.s16 },
     badge: {
       width: size.avatar.lg,
       height: size.avatar.lg,
       borderRadius: radius.pill,
-      backgroundColor: colors.surfaceSunk,
       alignItems: 'center',
       justifyContent: 'center',
     },
     text: { gap: space.s8, alignItems: 'center' },
   });
 
-export const EmptyState: React.FC<EmptyStateProps> = ({ title, body, icon, action }) => {
+export const EmptyState: React.FC<EmptyStateProps> = ({ title, body, icon, ion, action }) => {
   const styles = useStyles(makeStyles);
   const { service } = useTheme();
   return (
     <View style={styles.root}>
-      {icon ? (
-        <View style={styles.badge}>
-          <Icon name={icon} size="lg" color={service.accent} />
+      {icon || ion ? (
+        <View style={[styles.badge, { backgroundColor: service.accentSoft }]}>
+          {ion ? (
+            <IonIcon name={ion} size="xl" color={service.accentDeep} />
+          ) : icon ? (
+            <Icon name={icon} size="lg" color={service.accentDeep} />
+          ) : null}
         </View>
       ) : null}
       <View style={styles.text}>

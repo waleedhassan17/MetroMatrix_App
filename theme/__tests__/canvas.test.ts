@@ -38,7 +38,7 @@ describe('screen ground', () => {
 
   it('Orders and the account pages wear the gradient header in their scope colour, on the same white', () => {
     const neutral = withGradientHeader(getTheme('neutral'));
-    expect(neutral.header).toEqual({ tone: 'gradient', gradient: headerGradient('neutral') });
+    expect(neutral.header).toEqual({ tone: 'gradient', gradient: headerGradient('neutral'), actions: 'glyph' });
     expect(neutral.colors.canvas.toUpperCase()).toBe(WHITE);
     // Cached, so styles memoise; a gradient theme is returned as it is.
     expect(withGradientHeader(getTheme('neutral'))).toBe(neutral);

@@ -13,7 +13,7 @@ import { IonIcon, MciIcon, type MciName } from '../../Custom-Components/Icon';
 import { Skeleton } from '../../Custom-Components/Skeleton';
 import { TextAction } from '../../Custom-Components/TextAction';
 import { VendorCard } from '../../Custom-Components/food/VendorCard';
-import { useOnGradient } from '../../Custom-Components/headerInk';
+import { useHeaderFieldStyle, useOnGradient } from '../../Custom-Components/headerInk';
 import { SurplusCard } from '../../Custom-Components/kitchen/SurplusCard';
 import type { FoodCuisine, VendorCard as VendorCardData } from '../../models/food';
 import type { SurplusCard as SurplusCardData } from '../../models/kitchen';
@@ -68,7 +68,6 @@ const makeStyles = ({ colors, space, size, radius, gutter, type }: Theme) =>
     searchInput: { flex: 1, ...type.input, color: colors.ink, paddingVertical: space.s0, outlineWidth: 0, outlineStyle: 'solid' },
     // Inside the gradient header: the header gives the gutter; the pill is white.
     searchWrapOnGradient: { paddingHorizontal: space.s0, paddingVertical: space.s0, backgroundColor: 'transparent' },
-    searchOnGradient: { backgroundColor: colors.surface },
     section: { gap: space.s12 },
     sectionHead: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: space.s12, paddingHorizontal: gutter },
     sectionText: { flex: 1, gap: space.s4 },
@@ -86,10 +85,11 @@ export const FoodSearchButton: React.FC<{ onPress: () => void }> = ({ onPress })
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   const onGradient = useOnGradient();
+  const field = useHeaderFieldStyle();
   return (
     <View style={[styles.searchWrap, onGradient && styles.searchWrapOnGradient]}>
-      <Pressable onPress={onPress} style={[styles.search, onGradient && styles.searchOnGradient]} accessibilityRole="search" accessibilityLabel="Search dishes and restaurants">
-        <IonIcon name="search" size="md" color={colors.inkMuted} />
+      <Pressable onPress={onPress} style={[styles.search, onGradient && field]} accessibilityRole="search" accessibilityLabel="Search dishes and restaurants">
+        <IonIcon name="search" size={onGradient ? 'field' : 'md'} color={onGradient ? colors.inkFaint : colors.inkMuted} />
         <AppText variant="body" tone="faint">
           Search dishes and restaurants
         </AppText>
@@ -103,10 +103,11 @@ export const FoodSearchField: React.FC<{ value: string; onChange: (v: string) =>
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   const onGradient = useOnGradient();
+  const field = useHeaderFieldStyle();
   return (
     <View style={[styles.searchWrap, onGradient && styles.searchWrapOnGradient]}>
-      <View style={[styles.search, onGradient && styles.searchOnGradient]}>
-        <IonIcon name="search" size="md" color={colors.inkMuted} />
+      <View style={[styles.search, onGradient && field]}>
+        <IonIcon name="search" size={onGradient ? 'field' : 'md'} color={onGradient ? colors.inkFaint : colors.inkMuted} />
         <TextInput
           value={value}
           onChangeText={onChange}

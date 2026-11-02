@@ -1,5 +1,6 @@
 // Skeleton — the loading state for content. A sunk shape whose opacity
-// breathes; never a gradient sweep, never a centred spinner.
+// breathes (and holds still under reduce motion or a screen reader); never a
+// gradient sweep, never a centred spinner.
 
 import React, { useEffect } from 'react';
 import { StyleSheet, View, type DimensionValue } from 'react-native';
@@ -11,6 +12,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useStyles, useTheme, type Theme } from '../theme';
+import { useCalmMotion } from '../hooks/useCalmMotion';
 
 export interface SkeletonProps {
   width?: DimensionValue;
@@ -24,15 +26,20 @@ const makeStyles = ({ colors }: Theme) =>
 export const Skeleton: React.FC<SkeletonProps> = ({ width = '100%', height, shape = 'sm' }) => {
   const styles = useStyles(makeStyles);
   const { radius, motion, opacity, type } = useTheme();
+  const calm = useCalmMotion();
   const pulse = useSharedValue<number>(opacity.skeletonHigh);
 
   useEffect(() => {
+    if (calm) {
+      pulse.set(opacity.skeletonHigh);
+      return;
+    }
     pulse.set(withRepeat(
       withTiming(opacity.skeletonLow, { duration: motion.pulse.duration, easing: Easing.inOut(Easing.quad) }),
       -1,
       true,
     ));
-  }, [pulse, opacity.skeletonLow, motion.pulse.duration]);
+  }, [pulse, opacity.skeletonLow, opacity.skeletonHigh, motion.pulse.duration, calm]);
 
   const animated = useAnimatedStyle(() => ({ opacity: pulse.value }));
   return (

@@ -3,12 +3,21 @@
 // ═══════════════════════════════════════════════════════
 // Raw status strings never reach the UI: every label, tone and line of
 // explanation comes from here, for StatusPill, OrderTimeline and the lists.
+//
+// Tones are families, the same in the customer's and the store's apps:
+//   waiting      warning  placed, a cancel or return asked for, a transfer or refund owed
+//   in progress  info     confirmed, packed, a transfer being checked, a return under way
+//   on the way   accent   shipped
+//   done         success  delivered, paid, refunded to the customer
+//   stopped      danger   cancelled, a transfer not found, a return declined
+//   neutral               cash on delivery, returned, no payment due
 
 import type {
   CourierKey,
   OrderEventType,
   OrderGroupSummary,
   OrderStatus,
+  PartnerOrderRow,
   PartnerOrderSegment,
   PaymentMethod,
   PaymentStatus,
@@ -16,7 +25,7 @@ import type {
   StoreOrder,
 } from '../shopping';
 
-export type StatusTone = 'neutral' | 'accent' | 'success' | 'warning' | 'danger';
+export type StatusTone = 'neutral' | 'accent' | 'info' | 'success' | 'warning' | 'danger';
 
 export interface StatusMeta {
   label: string;
@@ -25,9 +34,9 @@ export interface StatusMeta {
 }
 
 export const ORDER_STATUS: Record<OrderStatus, StatusMeta> = {
-  placed: { label: 'Placed', tone: 'accent', description: 'The store will confirm your order soon.' },
-  confirmed: { label: 'Confirmed', tone: 'accent', description: 'The store has accepted your order.' },
-  packed: { label: 'Packed', tone: 'accent', description: 'Your items are packed and ready to ship.' },
+  placed: { label: 'Placed', tone: 'warning', description: 'The store will confirm your order soon.' },
+  confirmed: { label: 'Confirmed', tone: 'info', description: 'The store has accepted your order.' },
+  packed: { label: 'Packed', tone: 'info', description: 'Your items are packed and ready to ship.' },
   shipped: { label: 'Shipped', tone: 'accent', description: 'On its way with the courier.' },
   delivered: { label: 'Delivered', tone: 'success', description: 'Delivered to your address.' },
   cancelled: { label: 'Cancelled', tone: 'danger', description: 'This order was cancelled.' },
@@ -42,7 +51,7 @@ export const ORDER_STATUS: Record<OrderStatus, StatusMeta> = {
 export const PAYMENT_STATUS: Record<PaymentStatus, StatusMeta> = {
   cod_pending: { label: 'Cash on delivery', tone: 'neutral', description: 'Pay the rider when it arrives.' },
   awaiting_transfer: { label: 'Payment needed', tone: 'warning', description: 'Transfer the amount, then share the transaction ID.' },
-  proof_submitted: { label: 'Payment in review', tone: 'accent', description: 'The store is checking your transfer.' },
+  proof_submitted: { label: 'Payment in review', tone: 'info', description: 'The store is checking your transfer.' },
   proof_rejected: { label: 'Payment not received', tone: 'danger', description: 'The store could not find your transfer.' },
   paid: { label: 'Paid', tone: 'success', description: 'The store has confirmed your payment.' },
   cash_collected: { label: 'Paid in cash', tone: 'success', description: 'Cash was collected on delivery.' },
@@ -53,9 +62,9 @@ export const PAYMENT_STATUS: Record<PaymentStatus, StatusMeta> = {
 
 export const RETURN_STATUS: Record<ReturnStatus, StatusMeta> = {
   requested: { label: 'Return requested', tone: 'warning', description: 'The store will review your request.' },
-  approved: { label: 'Return approved', tone: 'accent', description: 'Send the items back as the store instructs.' },
+  approved: { label: 'Return approved', tone: 'info', description: 'Send the items back as the store instructs.' },
   rejected: { label: 'Return declined', tone: 'danger', description: 'The store declined this return.' },
-  received: { label: 'Items received', tone: 'accent', description: 'The store has your items back.' },
+  received: { label: 'Items received', tone: 'info', description: 'The store has your items back.' },
   refunded: { label: 'Refunded', tone: 'success', description: 'The store has recorded your refund.' },
 };
 
@@ -124,6 +133,18 @@ export const groupHeadline = (orders: OrderGroupSummary['orders']): StatusMeta =
   }
   const ranked = [...orders].sort((a, b) => URGENCY.indexOf(a.status) - URGENCY.indexOf(b.status));
   return ORDER_STATUS[ranked[0]?.status ?? 'placed'];
+};
+
+/**
+ * The ONE pill a store order shows the customer: what they owe beats where
+ * the parcel is (a transfer to send or resend, one being checked, a refund
+ * coming), then the order's own status.
+ */
+export const storeOrderHeadline = (o: Pick<StoreOrder, 'status' | 'paymentMethod' | 'paymentStatus'>): StatusMeta => {
+  if (needsPayment(o)) return PAYMENT_STATUS[o.paymentStatus];
+  if (o.paymentStatus === 'proof_submitted' && o.status !== 'cancelled') return PAYMENT_STATUS.proof_submitted;
+  if (o.paymentStatus === 'refund_due') return PAYMENT_STATUS.refund_due;
+  return ORDER_STATUS[o.status];
 };
 
 export type TimelineState = 'done' | 'current' | 'upcoming' | 'failed';
@@ -196,6 +217,30 @@ export const PARTNER_SEGMENTS: { key: PartnerOrderSegment; label: string }[] = [
   { key: 'completed', label: 'Completed' },
   { key: 'cancelled', label: 'Cancelled' },
 ];
+
+const PARTNER_CHECK_PAYMENT: StatusMeta = {
+  label: 'Check payment',
+  tone: 'warning',
+  description: 'The customer has sent a transfer. Check your account, then confirm it.',
+};
+
+const PARTNER_AWAITING_TRANSFER: StatusMeta = {
+  label: 'Awaiting payment',
+  tone: 'neutral',
+  description: 'The customer has not sent the transfer yet.',
+};
+
+/**
+ * The ONE pill an order shows in the store's lists: a transfer to check
+ * comes first, then a refund the store owes, then a transfer not yet sent,
+ * then the order's own status.
+ */
+export const partnerHeadline = (row: Pick<PartnerOrderRow, 'status' | 'paymentMethod' | 'paymentStatus'>): StatusMeta => {
+  if (row.status !== 'cancelled' && row.paymentStatus === 'proof_submitted') return PARTNER_CHECK_PAYMENT;
+  if (row.paymentStatus === 'refund_due') return PAYMENT_STATUS.refund_due;
+  if (needsPayment(row) && row.paymentStatus === 'awaiting_transfer') return PARTNER_AWAITING_TRANSFER;
+  return ORDER_STATUS[row.status];
+};
 
 /** A store order's code is its group's and its place in it: MM-24A7Q2-1 belongs to MM-24A7Q2. */
 export const groupCodeOf = (storeOrderCode: string | null | undefined): string | null => storeOrderCode?.match(/^(.+)-\d+$/)?.[1] ?? null;

@@ -23,7 +23,7 @@ import {
   ProductCardSkeleton,
   type EmptyStateProps,
 } from '../../Custom-Components/index';
-import { useOnGradient } from '../../Custom-Components/headerInk';
+import { useHeaderFieldStyle, useOnGradient } from '../../Custom-Components/headerInk';
 import { useBagCount, useSaved, useShopNav } from '../../hooks/useShop';
 import { useCalmMotion } from '../../hooks/useCalmMotion';
 import type { PagedList } from '../../hooks/usePagedList';
@@ -44,23 +44,20 @@ const makeStyles = ({ colors, space, size, radius, gutter, type, elevation }: Th
     section: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingHorizontal: gutter, gap: space.s12 },
     sectionText: { flex: 1, gap: space.s4 },
     seeAll: { minHeight: size.touch, justifyContent: 'center' },
-    pill: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space.s8,
+    pill: { flexDirection: 'row', alignItems: 'center', gap: space.s8 },
+    // On a white page: the FYP search box, white with a line and a soft shadow.
+    pillOnPage: {
       height: size.control.md,
       marginHorizontal: gutter,
       paddingHorizontal: space.s16,
       borderRadius: radius.pill,
-      // The FYP search box: white, a line, a soft shadow.
       backgroundColor: colors.surface,
       ...elevation.card,
       borderColor: colors.line,
     },
-    pillOnGradient: { marginHorizontal: space.s0, backgroundColor: colors.surface, borderColor: colors.surface },
-    pillText: { ...type.input, color: colors.inkFaint, flex: 1 },
+    pillText: { ...type.body, color: colors.inkFaint, flex: 1 },
     pillHint: { flex: 1 },
-    pillInput: { ...type.input, color: colors.ink, flex: 1, paddingVertical: space.s0, outlineWidth: 0, outlineStyle: 'solid' },
+    pillInput: { ...type.body, color: colors.ink, flex: 1, paddingVertical: space.s0, outlineWidth: 0, outlineStyle: 'solid' },
     // Two columns with the page gutter outside and space.s12 between them:
     // each cell carries gutter on its outer side and half the gap inside.
     cellLeft: { flex: 1, paddingLeft: gutter, paddingRight: space.s12 / 2, paddingBottom: space.s24 },
@@ -164,10 +161,11 @@ export const SearchPill: React.FC<{ label: string; onPress: () => void; style?: 
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   const onGradient = useOnGradient();
+  const field = useHeaderFieldStyle();
   const { hint, fade } = useRotatingHint(hints);
   return (
-    <Pressable onPress={onPress} accessibilityRole="search" accessibilityLabel={label} style={[styles.pill, onGradient && styles.pillOnGradient, style]}>
-      <IonIcon name="search" size="md" color={colors.inkMuted} />
+    <Pressable onPress={onPress} accessibilityRole="search" accessibilityLabel={label} style={[styles.pill, onGradient ? field : styles.pillOnPage, style]}>
+      <IonIcon name="search" size={onGradient ? 'field' : 'md'} color={onGradient ? colors.inkFaint : colors.inkMuted} />
       <Animated.View style={[styles.pillHint, { opacity: fade }]}>
         <AppText style={styles.pillText} numberOfLines={1}>
           {hint ?? label}
@@ -211,9 +209,10 @@ export const SearchField: React.FC<{
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   const onGradient = useOnGradient();
+  const field = useHeaderFieldStyle();
   return (
-    <View style={[styles.pill, onGradient && styles.pillOnGradient, style]}>
-      <IonIcon name="search" size="md" color={colors.inkMuted} />
+    <View style={[styles.pill, onGradient ? field : styles.pillOnPage, style]}>
+      <IonIcon name="search" size={onGradient ? 'field' : 'md'} color={onGradient ? colors.inkFaint : colors.inkMuted} />
       <TextInput
         value={value}
         onChangeText={onChange}

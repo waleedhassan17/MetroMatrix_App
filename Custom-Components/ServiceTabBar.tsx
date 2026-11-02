@@ -72,7 +72,8 @@ export const ServiceTabBar: React.FC<ServiceTabBarProps> = ({ items, activeIndex
     <View style={[styles.bar, styles[variant], { paddingBottom: Math.max(insets.bottom, space.s8) }]} accessibilityRole="tablist">
       {items.map((item, i) => {
         const focused = i === activeIndex;
-        const tint = focused ? (variant === 'softPill' ? service.accentDeep : service.accent) : colors.inkFaint;
+        // At rest in inkMuted: the faint grey misses AA at a tab label's size.
+        const tint = focused ? (variant === 'softPill' ? service.accentDeep : service.accent) : colors.inkMuted;
         const glyph = (
           <View>
             <IonIcon

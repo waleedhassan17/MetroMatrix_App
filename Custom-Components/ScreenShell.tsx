@@ -3,7 +3,8 @@
 // ═══════════════════════════════════════════════════════
 // Safe area, canvas ground, keyboard avoidance, scroll (with pull-to-refresh)
 // and the page header, plus an optional StickyCTA footer. Content gets the
-// 24 px gutter and a 16 px rhythm unless `padded={false}`.
+// 20 px gutter and a 16 px rhythm unless `padded={false}`, and starts 20
+// under the gradient header whether it scrolls or not.
 //
 // The header follows the module (theme.header): a white bar whose large
 // title collapses into it on scroll, or — on Shopping and Health pages — the
@@ -24,6 +25,8 @@ export interface ScreenShellProps {
   subtitle?: string;
   eyebrow?: string;
   onBack?: () => void;
+  /** Gradient header only: a mark before the title (a store's logo on its dashboard). */
+  headerLeading?: React.ReactNode;
   headerRight?: React.ReactNode;
   /** Gradient header only: content inside it, under the title (search pill, chips, segments). */
   headerContent?: React.ReactNode;
@@ -57,6 +60,7 @@ export const ScreenShell: React.FC<ScreenShellProps> = ({
   subtitle,
   eyebrow,
   onBack,
+  headerLeading,
   headerRight,
   headerContent,
   headerScrolls = false,
@@ -84,7 +88,14 @@ export const ScreenShell: React.FC<ScreenShellProps> = ({
     title && !gradient ? <LargeTitleBlock title={title} subtitle={subtitle} eyebrow={eyebrow} scrollY={scrollY} /> : null;
   const body = <View style={padded ? styles.padded : null}>{children}</View>;
   const pageHeader = (
-    <PageHeader title={title} subtitle={subtitle} eyebrow={eyebrow} onBack={onBack} right={headerRight} safeTop={!scrolling}>
+    <PageHeader
+      title={title}
+      subtitle={subtitle}
+      eyebrow={eyebrow}
+      onBack={onBack}
+      leading={headerLeading}
+      right={headerRight}
+      safeTop={!scrolling}>
       {headerContent}
     </PageHeader>
   );
@@ -123,7 +134,8 @@ export const ScreenShell: React.FC<ScreenShellProps> = ({
             {body}
           </Animated.ScrollView>
         ) : (
-          <View style={[styles.flex, styles.content, gradient && { paddingTop: space.s16 }]}>
+          // Under the gradient a list lays out its own bottom padding.
+          <View style={[styles.flex, gradient ? { paddingTop: space.s20 } : styles.content]}>
             {titleBlock}
             <View style={[styles.flex, padded ? styles.padded : null]}>{children}</View>
           </View>

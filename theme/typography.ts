@@ -34,6 +34,8 @@ export type TypeRole =
   | 'tabActive'
   | 'tabSmall'
   | 'pageTitle'
+  | 'pageSubtitle'
+  | 'price'
   | 'sectionTitle';
 
 export type TypeScale = Record<TypeRole, TextStyle>;
@@ -90,8 +92,12 @@ export const type: TypeScale = {
   tab: font('500', 11, 14, 0.1),
   tabActive: font('700', 11, 14, 0.1),
   tabSmall: font('700', 10, 12),
-  /** The module page header's title (the FYP's bold white header title). */
-  pageTitle: font('800', 24, 30, -0.5),
+  /** The module page header's title: one line, the FYP's 26 / 700 (T.title). */
+  pageTitle: font('700', 26, 32, -0.5),
+  /** The line under it (the FYP header's 13 / 500 T.label). */
+  pageSubtitle: font('500', 13, 16),
+  /** A product page's price (the FYP's 24 / 700). */
+  price: font('700', 24, 30, -0.3),
   /** A page's section heads: "Find by specialty", "Featured brands" (the FYP's 19 / 800). */
   sectionTitle: font('800', 19, 24, -0.4),
 };

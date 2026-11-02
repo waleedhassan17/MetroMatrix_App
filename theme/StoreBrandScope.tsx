@@ -70,7 +70,7 @@ export const storeTheme = (brand: string | null | undefined, onBrand: string | n
   service: storePalette(brand, onBrand),
   // Inside a store the bar is white with the store's colour as a rule under
   // it (the FYP's BrandHeader): a vendor's hex behind a title can't be trusted.
-  header: { tone: 'surface', gradient: SHOPPING.header.gradient },
+  header: { ...SHOPPING.header, tone: 'surface' },
 });
 
 export const StoreBrandScope: React.FC<{

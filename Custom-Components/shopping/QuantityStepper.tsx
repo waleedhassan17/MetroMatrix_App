@@ -1,5 +1,6 @@
-// QuantityStepper — − n +, clamped to [min, max]. An adjustable control for
-// screen readers (swipe up / down changes it).
+// QuantityStepper — − n +, clamped to [min, max], in the FYP's bordered
+// rounded square. An adjustable control for screen readers (swipe up / down
+// changes it). `compact` narrows the buttons (a row's stock).
 
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -25,12 +26,13 @@ const makeStyles = ({ colors, radius, space, size }: Theme) =>
       flexDirection: 'row',
       alignItems: 'center',
       alignSelf: 'flex-start',
-      borderRadius: radius.pill,
+      borderRadius: radius.md,
       borderWidth: size.border,
       borderColor: colors.line,
       backgroundColor: colors.surface,
     },
     button: { width: size.touch, height: size.control.sm, alignItems: 'center', justifyContent: 'center' },
+    buttonCompact: { width: size.control.sm },
     value: { minWidth: space.s24, alignItems: 'center' },
   });
 
@@ -41,6 +43,7 @@ export const QuantityStepper: React.FC<QuantityStepperProps> = ({
   max = 99,
   disabled,
   label = 'Quantity',
+  compact,
 }) => {
   const styles = useStyles(makeStyles);
   const { colors, opacity } = useTheme();
@@ -66,7 +69,8 @@ export const QuantityStepper: React.FC<QuantityStepperProps> = ({
         onPress={() => set(value - 1)}
         disabled={!canDown}
         accessibilityLabel="Fewer"
-        style={({ pressed }) => [styles.button, pressed && { opacity: opacity.pressed }]}>
+        hitSlop={compact ? 4 : undefined}
+        style={({ pressed }) => [styles.button, compact && styles.buttonCompact, pressed && { opacity: opacity.pressed }]}>
         <IonIcon name="remove" size="md" color={canDown ? colors.ink : colors.inkFaint} />
       </Pressable>
       <View style={styles.value}>
@@ -76,7 +80,8 @@ export const QuantityStepper: React.FC<QuantityStepperProps> = ({
         onPress={() => set(value + 1)}
         disabled={!canUp}
         accessibilityLabel="More"
-        style={({ pressed }) => [styles.button, pressed && { opacity: opacity.pressed }]}>
+        hitSlop={compact ? 4 : undefined}
+        style={({ pressed }) => [styles.button, compact && styles.buttonCompact, pressed && { opacity: opacity.pressed }]}>
         <IonIcon name="add" size="md" color={canUp ? colors.ink : colors.inkFaint} />
       </Pressable>
     </View>

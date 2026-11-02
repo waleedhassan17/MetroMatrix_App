@@ -22,11 +22,29 @@ const RIGHT_END = { x: 1, y: 0 };
  */
 export const PhotoScrim: React.FC<{
   strength?: 'soft' | 'strong';
+  /**
+   * `top`: a short dark fade from the top edge, under the status bar and the
+   * floating buttons of a photo-top page (product, store), so the clock and
+   * the white circles read on a pale photo.
+   */
+  edge?: 'top';
   /** `right`: the ground runs in from the left edge (words left, photo right). */
   ground?: { from: string; to: string; direction?: 'down' | 'right' };
-}> = ({ strength = 'soft', ground }) => {
+}> = ({ strength = 'soft', edge, ground }) => {
   const { colors } = useTheme();
   const strong = strength === 'strong';
+  if (edge === 'top') {
+    return (
+      <LinearGradient
+        pointerEvents="none"
+        colors={[colors.scrimMid, colors.scrimClear]}
+        locations={[0, 1]}
+        start={DOWN_START}
+        end={DOWN_END}
+        style={StyleSheet.absoluteFill}
+      />
+    );
+  }
   if (ground) {
     const right = ground.direction === 'right';
     return (

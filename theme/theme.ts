@@ -39,7 +39,20 @@ export interface HeaderStyle {
   tone: 'surface' | 'gradient';
   /** Both stops carry white text at AA (contrast.test). */
   gradient: [string, string];
+  /**
+   * How the header's actions sit on the gradient: bare white glyphs, or
+   * Shopping's 40 pt white circles with the glyph in ink (the FYP's
+   * ShoppingHeaderAction). Never a screen's choice.
+   */
+  actions: 'glyph' | 'circle';
 }
+
+const HEADER_ACTIONS: Record<ServiceName, HeaderStyle['actions']> = {
+  neutral: 'glyph',
+  healthcare: 'glyph',
+  shopping: 'circle',
+  food: 'glyph',
+};
 
 export interface Theme {
   mode: ColorMode;
@@ -115,6 +128,7 @@ const build = (serviceName: ServiceName): Theme => {
     header: {
       tone: GRADIENT_HEADERS.includes(serviceName) ? 'gradient' : 'surface',
       gradient: headerGradient(serviceName),
+      actions: HEADER_ACTIONS[serviceName],
     },
     maxFontScale: clinical ? CLINICAL_FONT_SCALE : MAX_FONT_SCALE,
     rowTint: ROW_TINTS,
@@ -159,7 +173,7 @@ export const withGradientHeader = (theme: Theme): Theme => {
   if (theme.header.tone === 'gradient') return theme;
   let t = WITH_GRADIENT.get(theme);
   if (!t) {
-    t = { ...theme, header: { tone: 'gradient', gradient: headerGradient(theme.serviceName) } };
+    t = { ...theme, header: { ...theme.header, tone: 'gradient', gradient: headerGradient(theme.serviceName) } };
     WITH_GRADIENT.set(theme, t);
   }
   return t;

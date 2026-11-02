@@ -3,7 +3,8 @@
 //
 // It is a white card like the others: a hairline border, ink text, and the
 // tone carried only by a small tinted icon well — never a coloured fill or a
-// coloured strip down its side.
+// coloured strip down its side. `embedded` drops the frame for a notice that
+// already sits inside a card (no card inside a card).
 
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -19,6 +20,8 @@ export interface InlineNoticeProps {
   title?: string;
   message: string;
   action?: { label: string; onPress: () => void };
+  /** Inside a card: the icon well and the words, without a frame of its own. */
+  embedded?: boolean;
 }
 
 const makeStyles = ({ colors, space, radius, size }: Theme) =>
@@ -33,11 +36,12 @@ const makeStyles = ({ colors, space, radius, size }: Theme) =>
       borderWidth: size.hairline,
       borderColor: colors.line,
     },
+    embedded: { padding: space.s0, borderWidth: space.s0 },
     well: { width: size.subTypeTile, height: size.subTypeTile, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
     body: { flex: 1, gap: space.s4, alignItems: 'flex-start', justifyContent: 'center', minHeight: size.subTypeTile },
   });
 
-export const InlineNotice: React.FC<InlineNoticeProps> = ({ tone = 'error', title, message, action }) => {
+export const InlineNotice: React.FC<InlineNoticeProps> = ({ tone = 'error', title, message, action, embedded }) => {
   const styles = useStyles(makeStyles);
   const { colors, service } = useTheme();
   const look: Record<NoticeTone, { bg: string; fg: string; icon: IconName }> = {
@@ -48,7 +52,7 @@ export const InlineNotice: React.FC<InlineNoticeProps> = ({ tone = 'error', titl
   };
   const l = look[tone];
   return (
-    <View style={styles.root} accessibilityRole="alert" accessibilityLiveRegion="polite">
+    <View style={[styles.root, embedded && styles.embedded]} accessibilityRole="alert" accessibilityLiveRegion="polite">
       <View style={[styles.well, { backgroundColor: l.bg }]}>
         <Icon name={l.icon} size="md" color={l.fg} />
       </View>

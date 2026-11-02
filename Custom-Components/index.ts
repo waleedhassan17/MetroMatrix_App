@@ -29,6 +29,7 @@ export * from './SegmentTabs';
 export * from './Sheet';
 export * from './ModalSheet';
 export * from './SearchPicker';
+export * from './SectionCard';
 export * from './Skeleton';
 export * from './StatusPill';
 export * from './StatusTimeline';
