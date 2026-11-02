@@ -1,60 +1,65 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — A product
 // ═══════════════════════════════════════════════════════
-// Photos first, in the store's colours. Then what a buyer needs to decide:
-// price and saving, the options in stock, how and when it arrives, what it
-// is, and what other buyers said — and one way to act: Add to bag.
+// The FYP's product page, in the store's colours: the photos full bleed under
+// white circles (back; share, the heart, the Bag), then what a buyer needs
+// to decide: the store, the name, the rating, the price and the one saving,
+// the sizes and colours to choose right here, and when it ships, what
+// delivery costs and the returns. Description and reviews sit in tabs. The
+// bar at the foot keeps the price in view and adds the chosen size and
+// colour to the Bag in one tap. Once the photos scroll away the white bar
+// with the store's rule takes over from the circles.
 
 import React, { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, Share, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { useSaved, useShopBootstrap, useShopNav } from '../../hooks/useShop';
-import { policyLines } from '../../models/shopping/storePolicyModel';
-import { stockNote } from '../../models/shopping/variantPickerModel';
+import { policyHighlights } from '../../models/shopping/storePolicyModel';
+import { choose, initialChoice, stockNote, variantFor, type VariantChoice } from '../../models/shopping/variantPickerModel';
 import { ServiceScope, StoreBrandScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import {
   AppText,
   Button,
-  Card,
   ChoiceChip,
+  CtaBar,
   Divider,
+  EmptyState,
   IconButton,
   ImageGallery,
   ImageViewer,
   InlineNotice,
   IonIcon,
+  PhotoScrim,
   PriceTag,
   ProductCard,
+  ProductDetailSkeleton,
+  QuantityStepper,
   RatingBreakdown,
+  SegmentTabs,
   Sheet,
-  Skeleton,
-  SkeletonLines,
   Stars,
   StickyCTA,
   StoreMark,
   TextField,
-  VariantSheet,
+  VariantOptions,
 } from '../../Custom-Components/index';
 import { ReviewItem } from '../../Components/shopping/ReviewItem';
-import { SectionError, ShopSection, ShopTopBar } from '../../Components/shopping/ShopParts';
+import { PhotoTopBar, PolicyStrip, SectionError, ShopSection, ShopTopBar } from '../../Components/shopping/ShopParts';
 import type { ProductDetail, ShopBrowseParamList } from '../../models';
 import { haptics } from '../../utils/haptics/haptics';
-import { discountPercent } from '../../utils/money/money';
 import { addToBagAsync, selectBag } from '../bag-screen/bagSlice';
 import {
   REPORT_REASONS,
   closeReport,
-  closeVariantSheet,
   loadProductAsync,
   openReport,
-  openVariantSheet,
   reportProductAsync,
   selectProductEntry,
   selectReport,
-  selectVariantSheetFor,
   setReportDetails,
   setReportReason,
 } from './productDetailSlice';
@@ -66,15 +71,16 @@ const makeStyles = ({ colors, space, size, gutter }: Theme) =>
     root: { flex: 1, backgroundColor: colors.canvas },
     content: { paddingBottom: space.s40, gap: space.s24 },
     body: { paddingHorizontal: gutter, gap: space.s12 },
+    facts: { paddingHorizontal: gutter, paddingTop: space.s20, gap: space.s8 },
     store: { flexDirection: 'row', alignItems: 'center', gap: space.s8, minHeight: size.touch, alignSelf: 'flex-start' },
     rating: { flexDirection: 'row', alignItems: 'center', gap: space.s8, minHeight: size.touch, alignSelf: 'flex-start' },
-    options: { gap: space.s8 },
+    qty: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
-    policy: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
-    rail: { paddingHorizontal: gutter, gap: space.s12 },
+    rail: { paddingHorizontal: gutter, paddingBottom: space.s4, gap: space.s12 },
+    group: { gap: space.s12 },
     report: { alignSelf: 'center', minHeight: size.touch, justifyContent: 'center' },
-    skeleton: { gap: space.s16 },
-    skeletonPad: { paddingHorizontal: gutter, gap: space.s12 },
+    fade: { position: 'absolute', top: space.s0, left: space.s0, right: space.s0 },
+    bar: { position: 'absolute', top: space.s0, left: space.s0, right: space.s0 },
   });
 
 const ProductDetailScreen: React.FC<Props> = props => {
@@ -89,56 +95,69 @@ const ProductDetailScreen: React.FC<Props> = props => {
   );
 };
 
-const OptionsPreview: React.FC<{ product: ProductDetail; onOpen: () => void }> = ({ product, onOpen }) => {
-  const styles = useStyles(makeStyles);
-  const options = [product.option1, product.option2].filter(Boolean) as NonNullable<ProductDetail['option1']>[];
-  if (!options.length) return null;
-  return (
-    <View style={styles.options}>
-      {options.map(o => (
-        <View key={o.name} style={styles.options}>
-          <AppText variant="label">
-            {o.name} · {o.values.length} {o.values.length === 1 ? 'option' : 'options'}
-          </AppText>
-          <View style={styles.chips}>
-            {o.values.map(v => {
-              const any = product.variants.some(x => (o === product.option1 ? x.option1 : x.option2) === v && x.stock > 0);
-              return <ChoiceChip key={v} label={v} swatch={o.swatches[v]} disabled={!any} onPress={onOpen} />;
-            })}
-          </View>
-        </View>
-      ))}
-    </View>
-  );
-};
+type Tab = 'about' | 'reviews';
 
-const ProductDetailContent: React.FC<Props> = ({ navigation, route }) => {
+const ProductDetailContent: React.FC<Props> = props => {
   const { back } = useBack({ name: 'ShoppingHome' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { service, size, opacity } = useTheme();
-  const { id } = route.params;
+  const { id } = props.route.params;
   const e = useAppSelector(s => selectProductEntry(s, id));
-  const sheetFor = useAppSelector(selectVariantSheetFor);
-  const report = useAppSelector(selectReport);
-  const bag = useAppSelector(selectBag);
-  const nav = useShopNav();
-  const saved = useSaved();
-  const [aboutOpen, setAboutOpen] = useState(false);
-  const [photo, setPhoto] = useState<string | null>(null);
   useShopBootstrap();
 
   useEffect(() => {
     void dispatch(loadProductAsync(id));
   }, [dispatch, id]);
 
-  const p = e.product;
+  if (!e.product) {
+    return (
+      <View style={styles.root}>
+        <ShopTopBar onBack={back} />
+        {e.status === 'failed' ? (
+          <SectionError message={e.error.message} onRetry={() => void dispatch(loadProductAsync(id))} />
+        ) : (
+          <ProductDetailSkeleton />
+        )}
+      </View>
+    );
+  }
+  // Keyed by product: a related product pushed over this one starts its own choice.
+  return <ProductBody key={e.product.id} {...props} product={e.product} back={back} />;
+};
 
-  const add = async (variantId: string, quantity: number) => {
-    const r = await dispatch(addToBagAsync({ variantId, quantity }));
+const ProductBody: React.FC<Props & { product: ProductDetail; back: () => void }> = ({ navigation, product: p, back }) => {
+  const dispatch = useAppDispatch();
+  const styles = useStyles(makeStyles);
+  const { service, size, opacity, space } = useTheme();
+  const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const report = useAppSelector(selectReport);
+  const bag = useAppSelector(selectBag);
+  const nav = useShopNav();
+  const saved = useSaved();
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>('about');
+  // The choice is the page's own (as the sheet's was): the first size and colour in stock.
+  const [choice, setChoice] = useState<VariantChoice>(() => initialChoice(p));
+  const [quantity, setQuantity] = useState(1);
+  // The photos have scrolled away: the white bar takes over from the circles.
+  const [pastPhotos, setPastPhotos] = useState(false);
+
+  const variant = variantFor(p, choice);
+  const stock = variant?.stock ?? 0;
+  const qty = Math.min(quantity, Math.max(1, stock));
+  const price = variant?.price ?? p.price;
+  const was = variant?.compareAtPrice ?? p.compareAtPrice;
+  const note = stockNote(variant);
+  const paused = p.store.isPaused;
+  const canAdd = !!variant && stock > 0 && !paused;
+  const handOver = width / size.productPhotoAspect - insets.top - size.headerBar;
+
+  const add = async () => {
+    if (!variant) return;
+    const r = await dispatch(addToBagAsync({ variantId: variant.id, quantity: qty }));
     if (addToBagAsync.fulfilled.match(r)) {
       haptics.success();
-      dispatch(closeVariantSheet());
       Toast.show({ type: 'success', text1: 'Added to your bag', text2: 'Tap to view your bag.', onPress: () => { Toast.hide(); nav.openBag(); } });
     } else {
       haptics.warning();
@@ -147,97 +166,91 @@ const ProductDetailContent: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const share = () => {
-    if (!p) return;
     void Share.share({ message: `${p.name} from ${p.store.name}, on MetroMatrix: metromatrix://shop/product/${p.id}` });
   };
 
   const sendReport = async () => {
-    if (!p || !report.reason) return;
+    if (!report.reason) return;
     const r = await dispatch(reportProductAsync({ id: p.id, reason: report.reason, details: report.details }));
     if (reportProductAsync.fulfilled.match(r)) {
       Toast.show({ type: 'success', text1: 'Thanks for telling us', text2: 'MetroMatrix will review this product.' });
     }
   };
 
-  const right = p ? (
+  const isSaved = saved.isSaved(p.id);
+  const actions = (appearance: 'circle' | undefined) => (
     <>
-      <IconButton icon="share-outline" onPress={share} accessibilityLabel="Share" />
+      <IconButton icon="share-outline" appearance={appearance} onPress={share} accessibilityLabel="Share" />
       <IconButton
-        icon={saved.isSaved(p.id) ? 'heart' : 'heart-outline'}
+        icon={isSaved ? 'heart' : 'heart-outline'}
+        appearance={appearance}
         onPress={() => void saved.toggle(p.id)}
-        accessibilityLabel={saved.isSaved(p.id) ? 'Remove from Saved' : 'Save'}
+        accessibilityLabel={isSaved ? 'Remove from Saved' : 'Save'}
       />
     </>
-  ) : null;
-
-  if (!p) {
-    return (
-      <View style={styles.root}>
-        <ShopTopBar onBack={back} />
-        {e.status === 'failed' ? (
-          <SectionError message={e.error.message} onRetry={() => void dispatch(loadProductAsync(id))} />
-        ) : (
-          <View style={styles.skeleton}>
-            <Skeleton height={size.storeCard} shape="sm" />
-            <View style={styles.skeletonPad}>
-              <SkeletonLines lines={5} />
-            </View>
-          </View>
-        )}
-      </View>
-    );
-  }
-
-  const off = discountPercent(p.price, p.compareAtPrice);
-  const inStock = p.variants.some(v => v.stock > 0);
-  const lowest = p.variants.filter(v => v.stock > 0).sort((a, b) => a.stock - b.stock)[0] ?? null;
-  const note = inStock ? (p.lowStock ? stockNote(lowest) : null) : stockNote(null);
-  const paused = p.store.isPaused;
+  );
+  const openReviews = () => navigation.push('ProductReviews', { productId: p.id, name: p.name });
+  const reviews = p.reviewSummary.count;
 
   return (
     <View style={styles.root}>
-      <ShopTopBar onBack={back} right={right} />
-      <ScrollView contentContainerStyle={styles.content}>
-        <ImageGallery images={p.images} title={p.name} badge={off ? `−${off}%` : null} />
+      <ScrollView
+        contentContainerStyle={styles.content}
+        onScroll={ev => setPastPhotos(ev.nativeEvent.contentOffset.y > handOver)}
+        scrollEventThrottle={32}>
+        <View>
+          <ImageGallery images={p.images} title={p.name} />
+          <View style={[styles.fade, { height: insets.top + size.headerWell + space.s24 }]} pointerEvents="none">
+            <PhotoScrim edge="top" />
+          </View>
+        </View>
 
-        <View style={styles.body}>
+        <View style={styles.facts}>
           <Pressable
             onPress={() => nav.openStore(p.store.slug, p.store.name)}
             style={({ pressed }) => [styles.store, pressed && { opacity: opacity.pressed }]}
             accessibilityRole="link"
             accessibilityLabel={`Sold by ${p.store.name}. Visit the store`}>
-            <StoreMark store={p.store} small />
-            <AppText variant="small" tone="accentDeep">
+            <StoreMark store={p.store} size="sm" />
+            <AppText variant="overline" tone="accentDeep">
               {p.store.name}
             </AppText>
             <IonIcon name="chevron-forward" size="sm" color={service.accentDeep} />
           </Pressable>
-          <AppText variant="h1" accessibilityRole="header">
+          <AppText variant="cardTitle" accessibilityRole="header">
             {p.name}
           </AppText>
-          {p.reviewSummary.count ? (
+          {reviews ? (
             <Pressable
-              onPress={() => navigation.push('ProductReviews', { productId: p.id, name: p.name })}
+              onPress={openReviews}
               style={styles.rating}
               accessibilityRole="link"
-              accessibilityLabel={`Rated ${p.reviewSummary.average.toFixed(1)} from ${p.reviewSummary.count} reviews. Read them`}>
+              accessibilityLabel={`Rated ${p.reviewSummary.average.toFixed(1)} from ${reviews} reviews. Read them`}>
               <Stars rating={p.reviewSummary.average} />
               <AppText variant="small" tone="muted">
-                {p.reviewSummary.average.toFixed(1)} · {p.reviewSummary.count} {p.reviewSummary.count === 1 ? 'review' : 'reviews'}
+                {p.reviewSummary.average.toFixed(1)} · {reviews} {reviews === 1 ? 'review' : 'reviews'}
               </AppText>
             </Pressable>
           ) : null}
-          <PriceTag price={p.price} compareAtPrice={p.compareAtPrice} size="lg" />
-          {note ? (
+          <PriceTag price={price} compareAtPrice={was} size="lg" />
+          {note.tone !== 'muted' ? (
             <AppText variant="small" tone={note.tone}>
               {note.text}
             </AppText>
           ) : null}
         </View>
 
-        <View style={styles.body}>
-          <OptionsPreview product={p} onOpen={() => dispatch(openVariantSheet(p.id))} />
-        </View>
+        {p.option1 || p.option2 || stock > 1 ? (
+          <View style={styles.body}>
+            <VariantOptions product={p} choice={choice} onChoose={(which, value) => setChoice(c => choose(p, c, which, value))} />
+            {stock > 0 ? (
+              <View style={styles.qty}>
+                <AppText variant="label">Quantity</AppText>
+                <QuantityStepper value={qty} onChange={setQuantity} max={Math.max(1, stock)} label={`Quantity of ${p.name}`} />
+              </View>
+            ) : null}
+          </View>
+        ) : null}
 
         <View style={styles.body}>
           {paused ? (
@@ -247,36 +260,25 @@ const ProductDetailContent: React.FC<Props> = ({ navigation, route }) => {
               message={p.store.pauseMessage ?? "You can't order from this store right now."}
             />
           ) : null}
-          <Card>
-            {policyLines(p.store.policies).map(l => (
-              <View key={l.icon} style={styles.policy}>
-                <IonIcon name={l.icon} size="md" color={service.accentDeep} />
-                <AppText variant="small">{l.text}</AppText>
-              </View>
-            ))}
-          </Card>
+          <PolicyStrip lines={policyHighlights(p.store.policies)} />
         </View>
 
-        {p.description ? (
-          <View style={styles.body}>
-            <AppText variant="h2">About this product</AppText>
-            <AppText variant="body" tone="muted" numberOfLines={aboutOpen ? undefined : 4}>
-              {p.description}
-            </AppText>
-            {p.description.length > 180 ? (
-              <Pressable onPress={() => setAboutOpen(o => !o)} accessibilityRole="button" style={styles.rating}>
-                <AppText variant="small" tone="accentDeep">
-                  {aboutOpen ? 'Show less' : 'Read more'}
-                </AppText>
-              </Pressable>
-            ) : null}
-          </View>
-        ) : null}
-
         <View style={styles.body}>
-          <AppText variant="h2">Reviews</AppText>
-          {p.reviewSummary.count ? (
-            <>
+          <SegmentTabs<Tab>
+            options={[
+              { key: 'about', label: 'Description' },
+              { key: 'reviews', label: reviews ? `Reviews (${reviews})` : 'Reviews' },
+            ]}
+            value={tab}
+            onChange={setTab}
+            accessibilityLabel="About this product"
+          />
+          {tab === 'about' ? (
+            <AppText variant="body" tone="muted">
+              {p.description || `${p.store.name} hasn't added a description yet.`}
+            </AppText>
+          ) : reviews ? (
+            <View style={styles.group}>
               <RatingBreakdown summary={p.reviewSummary} />
               {p.topReviews.map((r, i) => (
                 <View key={r.id}>
@@ -284,22 +286,15 @@ const ProductDetailContent: React.FC<Props> = ({ navigation, route }) => {
                   <ReviewItem review={r} storeName={p.store.name} onPhoto={setPhoto} />
                 </View>
               ))}
-              <Button
-                label={`See all ${p.reviewSummary.count} reviews`}
-                variant="secondary"
-                onPress={() => navigation.push('ProductReviews', { productId: p.id, name: p.name })}
-                fullWidth
-              />
-            </>
+              <Button label={`See all ${reviews} reviews`} variant="secondary" onPress={openReviews} fullWidth />
+            </View>
           ) : (
-            <AppText variant="body" tone="muted">
-              No reviews yet. Buyers can review it once it’s delivered.
-            </AppText>
+            <EmptyState ion="chatbubble-ellipses-outline" title="No reviews yet" body="Buyers can review it once it's delivered." />
           )}
         </View>
 
         {p.related.length ? (
-          <View style={styles.options}>
+          <View style={styles.group}>
             <ShopSection title="You may also like" />
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
               {p.related.map(r => (
@@ -323,23 +318,28 @@ const ProductDetailContent: React.FC<Props> = ({ navigation, route }) => {
         </Pressable>
       </ScrollView>
 
+      {pastPhotos ? (
+        <View style={styles.bar}>
+          <ShopTopBar title={p.name} onBack={back} right={actions(undefined)} />
+        </View>
+      ) : (
+        <PhotoTopBar onBack={back} right={actions('circle')} />
+      )}
+
       <StickyCTA>
-        <Button
-          label={paused ? 'Store is taking a break' : inStock ? 'Add to bag' : 'Sold out'}
-          leftIcon={inStock && !paused ? 'bag-add-outline' : undefined}
-          onPress={() => dispatch(openVariantSheet(p.id))}
-          disabled={!inStock || paused}
-          fullWidth
+        <CtaBar
+          label={qty > 1 ? `Total for ${qty}` : 'Price'}
+          amount={price * qty}
+          compareAt={was && was > price ? was * qty : null}
+          action={{
+            label: paused ? 'Taking a break' : stock > 0 ? 'Add to bag' : 'Sold out',
+            leftIcon: canAdd ? 'bag-add-outline' : undefined,
+            onPress: () => void add(),
+            disabled: !canAdd,
+            loading: bag.adding,
+          }}
         />
       </StickyCTA>
-
-      <VariantSheet
-        product={p}
-        visible={sheetFor === p.id}
-        onClose={() => dispatch(closeVariantSheet())}
-        onConfirm={(variantId, qty) => void add(variantId, qty)}
-        busy={bag.adding}
-      />
 
       <Sheet
         visible={report.productId === p.id}

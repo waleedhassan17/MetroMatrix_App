@@ -1,8 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // ImageGallery — the product's photos, full width, paged, then zoomable
 // ═══════════════════════════════════════════════════════
-// Swipe between photos (4:5); the dots say where you are; a tap opens the
-// photo full screen with pinch-to-zoom (ImageViewer).
+// Swipe between photos (the FYP's 3:4, full bleed); white dots on the photo
+// say where you are, the current one stretched; a tap opens the photo full
+// screen with pinch-to-zoom (ImageViewer).
 
 import React, { useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
@@ -14,19 +15,17 @@ import { ImageViewer } from '../ImageViewer';
 
 const makeStyles = ({ colors, radius, space, size }: Theme) =>
   StyleSheet.create({
-    image: { aspectRatio: size.productAspect, backgroundColor: colors.surfaceSunk },
+    image: { aspectRatio: size.productPhotoAspect, backgroundColor: colors.surfaceSunk },
     dots: {
       position: 'absolute',
-      bottom: space.s12,
+      bottom: space.s16,
       alignSelf: 'center',
       flexDirection: 'row',
+      alignItems: 'center',
       gap: space.s4,
-      paddingHorizontal: space.s8,
-      paddingVertical: space.s4,
-      borderRadius: radius.pill,
-      backgroundColor: colors.glass,
     },
-    dot: { width: size.pageDot, height: size.pageDot, borderRadius: radius.pill, backgroundColor: colors.line },
+    dot: { width: size.pageDot, height: size.pageDot, borderRadius: radius.pill, backgroundColor: colors.onScrimLine },
+    dotActive: { width: size.pageDotActive, backgroundColor: colors.onScrim },
     badge: {
       position: 'absolute',
       top: space.s16,
@@ -44,7 +43,7 @@ export const ImageGallery: React.FC<{ images: string[]; title: string; badge?: s
   width: fixed,
 }) => {
   const styles = useStyles(makeStyles);
-  const { service, colors, size, motion } = useTheme();
+  const { service, size, motion, elevation } = useTheme();
   const window = useWindowDimensions();
   const width = fixed ?? window.width;
   const [index, setIndex] = useState(0);
@@ -74,7 +73,7 @@ export const ImageGallery: React.FC<{ images: string[]; title: string; badge?: s
             accessibilityLabel={`${title}, photo ${i + 1} of ${photos.length}. Open full screen`}>
             {item ? (
               <Image
-                source={{ uri: cdn(item, { w: width, h: width / size.productAspect }) ?? undefined }}
+                source={{ uri: cdn(item, { w: width, h: width / size.productPhotoAspect }) ?? undefined }}
                 style={[styles.image, { width }]}
                 contentFit="cover"
                 transition={motion.imageFade}
@@ -95,7 +94,7 @@ export const ImageGallery: React.FC<{ images: string[]; title: string; badge?: s
       {photos.length > 1 ? (
         <View style={styles.dots} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           {photos.map((_, i) => (
-            <View key={i} style={[styles.dot, i === index && { backgroundColor: colors.ink }]} />
+            <View key={i} style={[styles.dot, i === index && styles.dotActive, elevation.input]} />
           ))}
         </View>
       ) : null}
