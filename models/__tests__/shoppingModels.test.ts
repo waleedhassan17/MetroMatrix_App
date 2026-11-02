@@ -14,6 +14,7 @@ import {
   RETURN_STATUS,
   storeOrderHeadline,
 } from '../shopping/orderStatusModel';
+import { CHECKOUT_STEPS, stepBlocker } from '../shopping/checkoutStepModel';
 import { normaliseTransactionId, validatePaymentProof } from '../shopping/paymentProofModel';
 import { emptyProductForm, makeCover, movePhoto, salePreviewPercent, skuBaseFromName, syncVariants, validateProductForm } from '../shopping/productFormModel';
 import { returnDaysLeft, validateReturn } from '../shopping/returnFormModel';
@@ -106,6 +107,31 @@ describe('orderStatusModel', () => {
 
     const delivered = orderTimeline({ status: 'delivered', events: [], shipment: null }, fmt);
     expect(delivered[4].state).toBe('done');
+  });
+});
+
+describe('checkout steps', () => {
+  const store = (name: string, error: { code: string; message: string } | null = null) => ({ store: { name }, error }) as any;
+  const preview = (stores: any[], canPlace = true) => ({ stores, canPlace });
+
+  it('names three steps', () => {
+    expect(CHECKOUT_STEPS).toEqual(['Deliver to', 'Payment', 'Review']);
+  });
+
+  it('asks for an address first, and says which store will not deliver there', () => {
+    expect(stepBlocker(0, { hasAddress: false, preview: null, stale: false })).toMatch(/address/);
+    expect(stepBlocker(0, { hasAddress: true, preview: null, stale: true })).toBeNull();
+    expect(stepBlocker(0, { hasAddress: true, preview: preview([store('Lahore Loom', { code: 'CITY_NOT_SERVED', message: '' })]), stale: false })).toBe(
+      "Lahore Loom doesn't deliver to this address.",
+    );
+  });
+
+  it('waits for settled totals, then for every store to be fine', () => {
+    expect(stepBlocker(1, { hasAddress: true, preview: preview([store('A')]), stale: true })).toMatch(/totals/);
+    expect(stepBlocker(1, { hasAddress: true, preview: preview([store('A', { code: 'STORE_PAUSED', message: '' })]), stale: false })).toMatch(/Fix/);
+    expect(stepBlocker(1, { hasAddress: true, preview: preview([store('A')]), stale: false })).toBeNull();
+    expect(stepBlocker(2, { hasAddress: true, preview: preview([store('A')], false), stale: false })).toMatch(/bag/);
+    expect(stepBlocker(2, { hasAddress: true, preview: preview([store('A')]), stale: false })).toBeNull();
   });
 });
 

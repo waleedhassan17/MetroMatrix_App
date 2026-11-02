@@ -1,42 +1,42 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Checkout (one screen)
+// MetroMatrix — Checkout (one screen, three steps)
 // ═══════════════════════════════════════════════════════
-// Where it goes, then each store's part: how you'll pay that store, a coupon
-// of theirs, a note to them, and what they charge. MetroMatrix takes no
-// commission and never holds the money: cash goes to the rider, transfers
-// go to the store's own account.
+// The FYP's stepped checkout: where it goes; how you'll pay each store (a
+// coupon of theirs, a note to them); then the whole order to check, with
+// its photos and what each store charges, before placing it. The step card
+// under the header says where you are; back (the header's, Android's, the
+// browser's) steps back before it leaves. MetroMatrix takes no commission
+// and never holds the money: cash goes to the rider, transfers go to the
+// store's own account.
 
-import React, { useEffect, useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { CommonActions } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { useDebouncedValue } from '../../hooks/usePagedList';
-import { formatAddress } from '../../models/addressModel';
+import { CHECKOUT_STEPS, stepBlocker, type CheckoutStep } from '../../models/shopping/checkoutStepModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import {
   AppText,
   Button,
-  Card,
+  CheckoutSkeleton,
   Divider,
-  IconButton,
   InlineNotice,
-  IonIcon,
-  PaymentMethodPicker,
   Sheet,
   SkeletonLines,
+  StepCard,
   StickyCTA,
-  StoreMark,
   TextAction,
   TextField,
 } from '../../Custom-Components/index';
 import { ShopTopBar } from '../../Components/shopping/ShopParts';
-import type { CartGroup, PreviewStore, ShopBrowseParamList } from '../../models';
+import type { ShopBrowseParamList } from '../../models';
 import { haptics } from '../../utils/haptics/haptics';
 import { formatPKR } from '../../utils/money/money';
-import { formatPkPhoneForDisplay } from '../../utils/phone/phone';
+import { AddressStep, PaymentStep, ReviewStep } from './CheckoutSteps';
 import { loadAddressesAsync, selectAddressBook } from '../address-book-screen/addressBookSlice';
 import { loadBagAsync, selectBag } from '../bag-screen/bagSlice';
 import {
@@ -50,7 +50,6 @@ import {
   placeOrderAsync,
   previewCheckoutAsync,
   selectCheckout,
-  setAddressSheet,
   setCouponInput,
   setStoreNote,
   toCheckoutInput,
@@ -58,45 +57,13 @@ import {
 
 type Props = NativeStackScreenProps<ShopBrowseParamList, 'Checkout'>;
 
-const makeStyles = ({ colors, space, size, radius, gutter }: Theme) =>
+const makeStyles = ({ colors, space, gutter }: Theme) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.canvas },
-    content: { paddingHorizontal: gutter, paddingTop: space.s8, paddingBottom: space.s40, gap: space.s16 },
-    head: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
-    grow: { flex: 1 },
-    row: { flexDirection: 'row', justifyContent: 'space-between', gap: space.s12 },
-    coupon: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space.s8,
-      paddingHorizontal: space.s12,
-      minHeight: size.control.md,
-      borderRadius: radius.md,
-      borderWidth: size.border,
-      borderStyle: 'dashed',
-      borderColor: colors.lineStrong,
-    },
-    thumbs: { flexDirection: 'row', gap: space.s4 },
+    content: { paddingHorizontal: gutter, paddingTop: space.s20, paddingBottom: space.s40, gap: space.s16 },
     couponRow: { gap: space.s4, paddingVertical: space.s12 },
     couponHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.s12 },
-    applyRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.s8 },
-    addressRow: { flexDirection: 'row', alignItems: 'center', gap: space.s12, paddingVertical: space.s12 },
-    sectionTitle: { marginTop: space.s8 },
   });
-
-const Money: React.FC<{ label: string; value: number; tone?: 'success'; strong?: boolean; free?: boolean }> = ({ label, value, tone, strong, free }) => {
-  const styles = useStyles(makeStyles);
-  return (
-    <View style={styles.row}>
-      <AppText variant={strong ? 'title' : 'body'} tone={strong ? 'ink' : 'muted'}>
-        {label}
-      </AppText>
-      <AppText variant={strong ? 'title' : 'body'} tone={tone ?? 'ink'}>
-        {free && value === 0 ? 'Free' : formatPKR(value)}
-      </AppText>
-    </View>
-  );
-};
 
 const Checkout: React.FC<Props> = props => (
   <ServiceScope service="shopping">
@@ -109,8 +76,30 @@ const CheckoutContent: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const appStore = useAppStore();
   const styles = useStyles(makeStyles);
-  const { service, colors, motion } = useTheme();
+  const { motion } = useTheme();
   const c = useAppSelector(selectCheckout);
+  const [step, setStep] = useState<CheckoutStep>(0);
+  // Back walks the steps before it leaves (the place-order reset and a sold-out bounce go through).
+  const stepRef = useRef(step);
+  useEffect(() => {
+    stepRef.current = step;
+  }, [step]);
+  const leaving = useRef(false);
+  const scroll = useRef<ScrollView>(null);
+  const go = (next: CheckoutStep) => {
+    setStep(next);
+    scroll.current?.scrollTo({ y: 0, animated: false });
+  };
+  useEffect(
+    () =>
+      navigation.addListener('beforeRemove', ev => {
+        const type = ev.data.action.type;
+        if (leaving.current || stepRef.current === 0 || (type !== 'GO_BACK' && type !== 'POP')) return;
+        ev.preventDefault();
+        setStep(s => (s > 0 ? ((s - 1) as CheckoutStep) : s));
+      }),
+    [navigation],
+  );
   const bag = useAppSelector(selectBag);
   const book = useAppSelector(selectAddressBook);
 
@@ -136,9 +125,9 @@ const CheckoutContent: React.FC<Props> = ({ navigation }) => {
   }, [settled, storeIds.length, dispatch]);
 
   const preview = c.preview;
-  const groupOf = (storeId: string): CartGroup | undefined => bag.cart.groups.find(g => g.store.id === storeId);
   const stale = !preview || settled !== (input ? JSON.stringify(input) : '') || c.previewStatus === 'loading';
   const canPlace = !!address && !!preview?.canPlace && !stale && c.placeStatus !== 'loading';
+  const blocker = stepBlocker(step, { hasAddress: !!address, preview, stale });
 
   const place = async () => {
     if (!input || !canPlace) return;
@@ -167,6 +156,7 @@ const CheckoutContent: React.FC<Props> = ({ navigation }) => {
     if (code === 'OUT_OF_STOCK') {
       Toast.show({ type: 'error', text1: 'Something just sold out', text2: 'Check your bag, then try again.' });
       void dispatch(loadBagAsync());
+      leaving.current = true;
       back();
     } else if (code === 'CHECKOUT_BLOCKED') {
       void dispatch(previewCheckoutAsync(input));
@@ -178,179 +168,73 @@ const CheckoutContent: React.FC<Props> = ({ navigation }) => {
     if (couponStore) void dispatch(loadCouponsAsync(couponStore));
   }, [couponStore, dispatch]);
 
-  // A render function, not a component: a component made here would remount
-  // on every keystroke and drop the note field's focus.
-  const renderStore = (ps: PreviewStore) => {
-    const group = groupOf(ps.store.id);
-    const choice = c.choices[ps.store.id];
-    return (
-      <Card key={ps.store.id} invalid={!!ps.error}>
-        <View style={styles.head}>
-          <StoreMark store={ps.store} small />
-          <AppText variant="title" style={styles.grow} numberOfLines={1}>
-            {ps.store.name}
-          </AppText>
-          <AppText variant="small" tone="muted">
-            {ps.lineCount} {ps.lineCount === 1 ? 'item' : 'items'}
-          </AppText>
-        </View>
-        {group ? (
-          <AppText variant="small" tone="muted" numberOfLines={2}>
-            {group.lines.map(l => `${l.quantity} × ${l.name}${l.variantLabel ? ` (${l.variantLabel})` : ''}`).join(', ')}
-          </AppText>
-        ) : null}
-        {ps.error ? <InlineNotice title={ps.error.message} message={ps.error.code === 'CITY_NOT_SERVED' ? 'Choose another address, or remove this store’s items from your bag.' : 'Go back to your bag to fix it.'} /> : null}
-
-        <AppText variant="label">How you’ll pay {ps.store.name}</AppText>
-        <PaymentMethodPicker
-          options={ps.paymentOptions}
-          value={choice?.paymentMethod ?? ps.paymentMethod}
-          onChange={method => dispatch(choosePayment({ storeId: ps.store.id, method }))}
-        />
-
-        {ps.couponCode ? (
-          <View style={[styles.coupon, { borderColor: ps.couponError ? colors.danger : service.accent }]}>
-            <IonIcon name="pricetag-outline" size="md" color={ps.couponError ? colors.danger : service.accentDeep} />
-            <View style={styles.grow}>
-              <AppText variant="bodyStrong">{ps.couponCode}</AppText>
-              <AppText variant="caption" tone={ps.couponError ? 'danger' : 'success'}>
-                {ps.couponError ? ps.couponError.message : `You save ${formatPKR(ps.discount)}`}
-              </AppText>
-            </View>
-            <IconButton icon="close" tone="muted" onPress={() => dispatch(applyCoupon({ storeId: ps.store.id, code: null }))} accessibilityLabel={`Remove coupon ${ps.couponCode}`} />
-          </View>
-        ) : (
-          <TextAction label={`Add a ${ps.store.name} coupon`} icon="pricetag-outline" onPress={() => dispatch(openCouponSheet(ps.store.id))} />
-        )}
-
-        <TextField
-          label={`Note for ${ps.store.name} (optional)`}
-          value={choice?.note ?? ''}
-          onChangeText={note => dispatch(setStoreNote({ storeId: ps.store.id, note }))}
-          placeholder="Gift wrap, delivery time …"
-          maxLength={300}
-        />
-
-        <Divider />
-        <Money label="Items" value={ps.itemsTotal} />
-        <Money label="Delivery" value={ps.shippingFee} free tone={ps.shippingFee === 0 ? 'success' : undefined} />
-        {ps.discount ? <Money label="Coupon" value={-ps.discount} tone="success" /> : null}
-        <Money label={`Pay ${ps.store.name}`} value={ps.total} strong />
-        {ps.dispatchMaxDays > 0 ? (
-          <AppText variant="caption" tone="muted">
-            Ships in {ps.dispatchMinDays === ps.dispatchMaxDays ? ps.dispatchMaxDays : `${ps.dispatchMinDays}–${ps.dispatchMaxDays}`} days.
-          </AppText>
-        ) : null}
-      </Card>
-    );
-  };
+  const loadingAddresses = book.status === 'loading' && !book.addresses.length;
 
   return (
     <View style={styles.root}>
-      <ShopTopBar title="Checkout" onBack={back} showBag={false} />
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <AppText variant="h2">Deliver to</AppText>
-        {book.status === 'loading' && !book.addresses.length ? (
-          <SkeletonLines lines={3} />
-        ) : address ? (
-          <Card onPress={() => dispatch(setAddressSheet(true))} accessibilityLabel={`Deliver to ${address.fullName}, ${formatAddress(address)}. Change`}>
-            <View style={styles.head}>
-              <IonIcon name="location-outline" size="lg" color={service.accentDeep} />
-              <View style={styles.grow}>
-                <AppText variant="bodyStrong">{address.fullName}</AppText>
-                <AppText variant="small" tone="muted">
-                  {formatAddress(address)}
-                </AppText>
-                <AppText variant="small" tone="muted">
-                  {formatPkPhoneForDisplay(address.phone)}
-                </AppText>
-              </View>
-              <AppText variant="small" tone="accentDeep">
-                Change
-              </AppText>
-            </View>
-          </Card>
-        ) : (
-          <Card>
-            <AppText variant="body" tone="muted">
-              Add the address the stores should deliver to.
-            </AppText>
-            <Button label="Add an address" leftIcon="add" variant="secondary" onPress={() => navigation.navigate('AddressForm')} />
-          </Card>
-        )}
+      <ShopTopBar
+        title="Checkout"
+        subtitle={`Step ${step + 1} of ${CHECKOUT_STEPS.length} · ${CHECKOUT_STEPS[step]}`}
+        onBack={back}
+        showBag={false}
+      />
+      <ScrollView ref={scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <StepCard steps={[...CHECKOUT_STEPS]} index={step} onStep={i => go(i as CheckoutStep)} />
 
         {c.previewError.message ? <InlineNotice message={c.previewError.message} /> : null}
         {c.placeError.message && c.placeError.code !== 'OUT_OF_STOCK' ? <InlineNotice message={c.placeError.message} /> : null}
 
-        <AppText variant="h2" style={styles.sectionTitle}>
-          Your order
-        </AppText>
-        {preview ? preview.stores.map(renderStore) : address ? <SkeletonLines lines={8} /> : null}
-
-        {preview && preview.stores.length > 1 ? (
-          <Card>
-            <Money label="Items" value={preview.itemsTotal} />
-            <Money label="Delivery" value={preview.shippingTotal} free tone={preview.shippingTotal === 0 ? 'success' : undefined} />
-            {preview.discountTotal ? <Money label="Coupons" value={-preview.discountTotal} tone="success" /> : null}
-            <Divider />
-            <Money label="Total" value={preview.total} strong />
-            <AppText variant="caption" tone="muted">
-              Each store confirms, ships and is paid separately.
-            </AppText>
-          </Card>
-        ) : null}
+        {loadingAddresses ? (
+          <CheckoutSkeleton />
+        ) : step === 0 ? (
+          <AddressStep
+            addresses={book.addresses}
+            chosenId={address?.id ?? null}
+            onChoose={id => dispatch(chooseAddress(id))}
+            onAdd={() => navigation.navigate('AddressForm')}
+            preview={stale ? null : preview}
+          />
+        ) : !preview || !address ? (
+          <CheckoutSkeleton />
+        ) : step === 1 ? (
+          <PaymentStep
+            stores={preview.stores}
+            choices={c.choices}
+            onPay={(storeId, method) => dispatch(choosePayment({ storeId, method }))}
+            onAddCoupon={storeId => dispatch(openCouponSheet(storeId))}
+            onRemoveCoupon={storeId => dispatch(applyCoupon({ storeId, code: null }))}
+            onNote={(storeId, note) => dispatch(setStoreNote({ storeId, note }))}
+          />
+        ) : (
+          <ReviewStep address={address} preview={preview} choices={c.choices} onChangeAddress={() => go(0)} onChangePayment={() => go(1)} />
+        )}
       </ScrollView>
 
       <StickyCTA>
-        <Button
-          label={preview && !stale ? `Place order · ${formatPKR(preview.total)}` : 'Place order'}
-          onPress={() => void place()}
-          loading={c.placeStatus === 'loading'}
-          disabled={!canPlace}
-          fullWidth
-        />
+        {blocker && !(stale && c.previewStatus === 'loading') ? (
+          <AppText variant="caption" tone="muted" align="center">
+            {blocker}
+          </AppText>
+        ) : null}
+        {step < 2 ? (
+          <Button label="Continue" rightIon="arrow-forward" onPress={() => go((step + 1) as CheckoutStep)} disabled={!!blocker} fullWidth />
+        ) : (
+          <Button
+            label={preview && !stale ? `Place order · ${formatPKR(preview.total)}` : 'Place order'}
+            onPress={() => void place()}
+            loading={c.placeStatus === 'loading'}
+            disabled={!canPlace}
+            fullWidth
+          />
+        )}
       </StickyCTA>
-
-      <Sheet visible={c.addressSheetOpen} onClose={() => dispatch(setAddressSheet(false))} title="Deliver to">
-        {book.addresses.map((a, i) => (
-          <View key={a.id}>
-            {i > 0 ? <Divider /> : null}
-            <Pressable
-              onPress={() => dispatch(chooseAddress(a.id))}
-              style={styles.addressRow}
-              accessibilityRole="radio"
-              aria-checked={a.id === address?.id}
-              accessibilityLabel={`${a.fullName}, ${formatAddress(a)}`}>
-              <IonIcon name={a.id === address?.id ? 'radio-button-on' : 'radio-button-off'} size="md" color={a.id === address?.id ? service.accent : colors.lineStrong} />
-              <View style={styles.grow}>
-                <AppText variant="bodyStrong">{a.fullName}</AppText>
-                <AppText variant="small" tone="muted">
-                  {formatAddress(a)}
-                </AppText>
-              </View>
-            </Pressable>
-          </View>
-        ))}
-        <TextAction
-          label="Add a new address"
-          icon="add"
-          onPress={() => {
-            dispatch(setAddressSheet(false));
-            navigation.navigate('AddressForm');
-          }}
-        />
-      </Sheet>
 
       <Sheet
         visible={!!couponStore}
         onClose={() => dispatch(closeCouponSheet())}
         title="Coupons"
         subtitle={couponStore ? `From ${preview?.stores.find(s => s.store.id === couponStore)?.store.name ?? 'this store'}` : undefined}>
-        <View style={styles.applyRow}>
-          <View style={styles.grow}>
-            <TextField label="Coupon code" value={c.couponSheet.input} onChangeText={t => dispatch(setCouponInput(t))} autoCapitalize="characters" placeholder="LAWN10" />
-          </View>
-        </View>
+        <TextField label="Coupon code" value={c.couponSheet.input} onChangeText={t => dispatch(setCouponInput(t))} autoCapitalize="characters" placeholder="LAWN10" />
         <Button
           label="Apply"
           variant="secondary"

@@ -4,7 +4,8 @@
 // Grouped by store, because each store prices delivery, ships and confirms
 // on its own. Whatever changed since you added it (price, stock, a store
 // taking a break) is said on the line, and checkout waits until it's dealt
-// with. Totals are always the server's.
+// with. The foot keeps the one total in view (always the server's) beside
+// Checkout, the FYP's bar.
 
 import React, { useCallback } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
@@ -16,7 +17,7 @@ import { useBack } from '../../hooks/useBack';
 import { useIsTabRoot } from '../../hooks/useServiceNav';
 import { useShopNav } from '../../hooks/useShop';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, CartStoreGroup, EmptyState, InlineNotice, SkeletonLines, StickyCTA } from '../../Custom-Components/index';
+import { AppText, BagGroupSkeleton, CartStoreGroup, CtaBar, EmptyState, InlineNotice, StickyCTA } from '../../Custom-Components/index';
 import { SectionError, ShopTopBar } from '../../Components/shopping/ShopParts';
 import type { CartLine, ShopBrowseParamList } from '../../models';
 import { formatPKR } from '../../utils/money/money';
@@ -27,8 +28,7 @@ type Props = NativeStackScreenProps<ShopBrowseParamList, 'Bag'>;
 const makeStyles = ({ colors, space, gutter }: Theme) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.canvas },
-    content: { paddingHorizontal: gutter, paddingTop: space.s8, paddingBottom: space.s40, gap: space.s16 },
-    total: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+    content: { paddingHorizontal: gutter, paddingTop: space.s20, paddingBottom: space.s40, gap: space.s16 },
   });
 
 const Bag: React.FC<Props> = props => (
@@ -75,17 +75,29 @@ const BagContent: React.FC<Props> = ({ navigation }) => {
 
   return (
     <View style={styles.root}>
-      <ShopTopBar title="Bag" onBack={asTab ? undefined : back} showBag={false} />
+      <ShopTopBar
+        title="Bag"
+        subtitle={
+          cart.groups.length
+            ? `${cart.itemCount} ${cart.itemCount === 1 ? 'item' : 'items'} from ${cart.groups.length} ${cart.groups.length === 1 ? 'store' : 'stores'}`
+            : undefined
+        }
+        onBack={asTab ? undefined : back}
+        showBag={false}
+      />
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={b.refreshing} onRefresh={() => void dispatch(loadBagAsync({ refresh: true }))} tintColor={service.accent} />}>
         {b.status === 'failed' && !cart.groups.length ? (
           <SectionError message={b.error.message} onRetry={() => void dispatch(loadBagAsync())} />
         ) : b.status === 'loading' && !cart.groups.length && !b.refreshing ? (
-          <SkeletonLines lines={6} />
+          <>
+            <BagGroupSkeleton />
+            <BagGroupSkeleton />
+          </>
         ) : !cart.groups.length ? (
           <EmptyState
-            icon="shopping-bag"
+            ion="bag-handle-outline"
             title="Your bag is empty"
             body="Add something you love from any store. Each store delivers its own items."
             action={{ label: 'Start shopping', onPress: () => root.navigate('ShopTabs', { screen: 'ShopHomeTab' }) }}
@@ -118,23 +130,16 @@ const BagContent: React.FC<Props> = ({ navigation }) => {
 
       {cart.groups.length ? (
         <StickyCTA>
-          <View style={styles.total}>
-            <AppText variant="body" tone="muted">
-              {cart.itemCount} {cart.itemCount === 1 ? 'item' : 'items'} · delivery {cart.shippingTotal ? formatPKR(cart.shippingTotal) : 'free'}
-            </AppText>
-            <AppText variant="title">{formatPKR(cart.total)}</AppText>
-          </View>
           {otherProblems ? (
             <AppText variant="caption" tone="danger">
-              Remove sold-out items, lower quantities above what’s left, or wait for paused stores.
+              Fix the items marked above to check out.
             </AppText>
           ) : null}
-          <Button
-            label="Checkout"
-            rightIon="arrow-forward"
-            onPress={() => navigation.navigate('Checkout')}
-            disabled={cart.blocking}
-            fullWidth
+          <CtaBar
+            label="Total"
+            amount={cart.total}
+            note={`${cart.itemCount} ${cart.itemCount === 1 ? 'item' : 'items'} · delivery ${cart.shippingTotal ? formatPKR(cart.shippingTotal) : 'free'}`}
+            action={{ label: 'Checkout', rightIon: 'arrow-forward', onPress: () => navigation.navigate('Checkout'), disabled: cart.blocking }}
           />
         </StickyCTA>
       ) : null}
