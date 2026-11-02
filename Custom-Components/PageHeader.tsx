@@ -57,8 +57,6 @@ const makeStyles = ({ space, radius, size, gutter }: Theme) =>
     back: { marginLeft: -space.s12, marginRight: -space.s8 },
     text: { flex: 1, gap: space.s4 },
     right: { flexDirection: 'row', alignItems: 'center' },
-    // Bare glyphs keep their 44 pt targets; the gutter lines up with the glyph.
-    rightGlyph: { marginRight: -space.s12 },
     rightCircle: { gap: space.s8 },
     inner: { gap: space.s12 },
   });
@@ -114,7 +112,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         </View>
         {right ? (
           <OnGradientContext.Provider value>
-            <View style={[styles.right, header.actions === 'circle' ? styles.rightCircle : styles.rightGlyph]}>{right}</View>
+            <View style={[styles.right, header.actions === 'circle' && styles.rightCircle]}>{right}</View>
           </OnGradientContext.Provider>
         ) : null}
       </View>

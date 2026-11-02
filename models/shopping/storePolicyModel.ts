@@ -46,6 +46,16 @@ export const policyLines = (p: StorePolicies): PolicyLine[] => [
   { icon: 'wallet-outline', text: paymentText(p) },
 ];
 
+/**
+ * The three a shopper weighs before buying (a page's policy strip): when it
+ * ships, what delivery costs, and returns. The rest is a tap away.
+ */
+export const policyHighlights = (p: StorePolicies): PolicyLine[] => [
+  { icon: 'time-outline', text: dispatchText(p) },
+  { icon: 'car-outline', text: p.shippingFee === 0 ? 'Free delivery' : `${formatPKR(p.shippingFee)} delivery` },
+  { icon: 'return-down-back-outline', text: returnsText(p.returnWindowDays) },
+];
+
 /** wa.me wants the number without + or spaces. */
 export const whatsappUrl = (phone: string, text?: string) =>
   `https://wa.me/${phone.replace(/\D/g, '')}${text ? `?text=${encodeURIComponent(text)}` : ''}`;

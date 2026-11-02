@@ -30,12 +30,15 @@ export interface PaymentInstructionsCardProps {
   onPaid?: () => void;
   /** Who is paid directly: the store (Shopping) or the doctor (Health). */
   payee?: 'store' | 'doctor';
+  /** Inside a card already (a store's order): the same content without a frame. */
+  embedded?: boolean;
 }
 
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
     row: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
     rowText: { flex: 1, gap: space.s4 },
+    embedded: { gap: space.s16 },
   });
 
 export const CopyRow: React.FC<{ label: string; value: string; display?: string }> = ({ label, value, display }) => {
@@ -65,11 +68,19 @@ export const CopyRow: React.FC<{ label: string; value: string; display?: string 
   );
 };
 
-export const PaymentInstructionsCard: React.FC<PaymentInstructionsCardProps> = ({ instructions, status, proof, onPaid, payee = 'store' }) => {
+export const PaymentInstructionsCard: React.FC<PaymentInstructionsCardProps> = ({
+  instructions,
+  status,
+  proof,
+  onPaid,
+  payee = 'store',
+  embedded,
+}) => {
   const left = timeLeft(instructions.payBy);
   const owed = status === 'awaiting_transfer' || status === 'proof_rejected';
+  const Frame = embedded ? EmbeddedFrame : Card;
   return (
-    <Card>
+    <Frame>
       <View>
         <AppText variant="title">
           {owed ? `Send ${formatPKR(instructions.amount)}` : status === 'proof_submitted' ? 'Payment in review' : 'Payment'}
@@ -83,7 +94,12 @@ export const PaymentInstructionsCard: React.FC<PaymentInstructionsCardProps> = (
         </AppText>
       </View>
       {status === 'proof_rejected' && proof?.rejectionReason ? (
-        <InlineNotice tone={payee === 'doctor' ? 'warning' : 'error'} title={`The ${payee} couldn't find your payment`} message={proof.rejectionReason} />
+        <InlineNotice
+          tone={payee === 'doctor' ? 'warning' : 'error'}
+          title={`The ${payee} couldn't find your payment`}
+          message={proof.rejectionReason}
+          embedded={embedded}
+        />
       ) : null}
       {owed ? (
         <>
@@ -95,8 +111,14 @@ export const PaymentInstructionsCard: React.FC<PaymentInstructionsCardProps> = (
           {onPaid ? <Button label="I've paid" onPress={onPaid} leftIcon="checkmark-circle-outline" fullWidth /> : null}
         </>
       ) : null}
-    </Card>
+    </Frame>
   );
+};
+
+/** The embedded look: the card's own rhythm, without its frame. */
+const EmbeddedFrame: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const styles = useStyles(makeStyles);
+  return <View style={styles.embedded}>{children}</View>;
 };
 
 export default PaymentInstructionsCard;

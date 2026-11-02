@@ -21,11 +21,13 @@ const makeStyles = ({ colors, radius, space, size, elevation }: Theme) =>
     mark: {
       width: size.storeLogo,
       height: size.storeLogo,
-      borderRadius: radius.md,
+      borderRadius: radius.pill,
       alignItems: 'center',
       justifyContent: 'center',
       overflow: 'hidden',
     },
+    // The hero's mark sits in a white ring on a photo or the gradient.
+    ring: { borderWidth: size.avatarRing, borderColor: colors.surface },
     logo: { width: '100%', height: '100%' },
     featured: {
       position: 'absolute',
@@ -47,21 +49,34 @@ export const storeInitials = (name: string): string =>
     .map(w => (w.match(/[A-Za-z0-9]/) ?? [''])[0].toUpperCase())
     .join('');
 
-/** A store's logo, or its initials on its brand colour. */
-export const StoreMark: React.FC<{ store: Pick<StoreSummary, 'name' | 'logoUrl' | 'brandColor' | 'onBrandColor'>; small?: boolean }> = ({
-  store,
-  small,
-}) => {
+export type StoreMarkSize = 'sm' | 'md' | 'lg' | 'hero';
+
+/**
+ * A store's logo, or its initials on its brand colour: one round mark
+ * everywhere (28 in a list's head row, 40 in a card, 56 on a page, and the
+ * 52 hero mark in a white ring on a cover or the gradient header).
+ */
+export const StoreMark: React.FC<{
+  store: Pick<StoreSummary, 'name' | 'logoUrl' | 'brandColor'> & { onBrandColor?: string | null };
+  size?: StoreMarkSize;
+  /** @deprecated use size="sm" */
+  small?: boolean;
+}> = ({ store, size: markSize, small }) => {
   const styles = useStyles(makeStyles);
   const { size, type } = useTheme();
   const palette = storePalette(store.brandColor, store.onBrandColor);
-  const side = small ? size.storeLogoSmall : size.storeLogo;
+  const which: StoreMarkSize = markSize ?? (small ? 'sm' : 'lg');
+  const side = { sm: size.storeLogoSmall, md: size.logoMark, lg: size.storeLogo, hero: size.brandRingInner }[which];
+  const initials = which === 'sm' ? type.micro : which === 'md' ? type.chip : type.title;
   return (
-    <View style={[styles.mark, { width: side, height: side, backgroundColor: palette.accent }]}>
+    <View
+      style={[styles.mark, which === 'hero' && styles.ring, { width: side, height: side, backgroundColor: palette.accent }]}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants">
       {store.logoUrl ? (
-        <Image source={{ uri: cdn(store.logoUrl, { w: side, h: side }) ?? undefined }} style={styles.logo} contentFit="cover" />
+        <Image source={{ uri: cdn(store.logoUrl, { w: side * 2, h: side * 2 }) ?? undefined }} style={styles.logo} contentFit="cover" />
       ) : (
-        <AppText style={[small ? type.micro : type.title, { color: palette.onAccent }]}>{storeInitials(store.name)}</AppText>
+        <AppText style={[initials, { color: palette.onAccent }]}>{storeInitials(store.name)}</AppText>
       )}
     </View>
   );
@@ -141,7 +156,7 @@ export const StoreCard: React.FC<{ store: StoreSummary; onPress: () => void; var
         ) : null}
       </View>
       <View style={styles.body}>
-        <StoreMark store={store} small />
+        <StoreMark store={store} size="md" />
         <View style={styles.text}>
           <AppText variant="title" numberOfLines={1}>
             {store.name}

@@ -1,10 +1,13 @@
 // ═══════════════════════════════════════════════════════
-// ProductCard — the catalogue's unit: a 4:5 photo first, then the facts
+// ProductCard — the catalogue's unit: the FYP's framed card
 // ═══════════════════════════════════════════════════════
-// The photo leads (it sells the product); the sale percentage and the heart
-// float on it in glass so they read on any image. Below: the store, the
-// name in two lines at most, the price, and the rating when there is one.
-// A sold-out product stays visible but says so.
+// A white card with a soft shadow: the 3:4 photo first (it sells the
+// product), then the facts in a block of a fixed least height, so a row of
+// cards lines up whatever the names. On the photo: ONE badge (the sale, else
+// "NEW") and the heart in a white circle. Below: the store in small accent
+// capitals, the name in two lines at most, the price in the accent with the
+// struck "was" price, and the rating when there is one. A sold-out product
+// stays visible but veiled.
 
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -30,20 +33,18 @@ export interface ProductCardProps {
 }
 
 /** The image width requested from the CDN when a grid cell's width is unknown. */
-const GRID_IMAGE = 200;
+const GRID_IMAGE = 240;
 
-const makeStyles = ({ colors, radius, space, size, opacity }: Theme) =>
+const makeStyles = ({ colors, radius, space, size, elevation }: Theme) =>
   StyleSheet.create({
-    root: { gap: space.s8 },
-    frame: {
-      width: '100%',
-      aspectRatio: size.productAspect,
-      borderRadius: radius.md,
-      overflow: 'hidden',
-      backgroundColor: colors.surfaceSunk,
-    },
+    // The shadow lives on the outer frame; the inner one clips the photo to the
+    // corners (a clip on the shadowed view would cut the shadow off on iOS).
+    card: { borderRadius: radius.lg, backgroundColor: colors.surface, ...elevation.card },
+    clip: { borderRadius: radius.lg, overflow: 'hidden' },
+    frame: { width: '100%', aspectRatio: size.productPhotoAspect, backgroundColor: colors.surfaceSunk },
     image: { width: '100%', height: '100%' },
-    soldOut: { opacity: opacity.soldOut },
+    veil: { ...StyleSheet.absoluteFillObject, backgroundColor: colors.scrimMid, alignItems: 'center', justifyContent: 'center' },
+    tag: { paddingHorizontal: space.s8, paddingVertical: space.s4, borderRadius: radius.sm, backgroundColor: colors.glass },
     badge: {
       position: 'absolute',
       top: space.s8,
@@ -62,23 +63,16 @@ const makeStyles = ({ colors, radius, space, size, opacity }: Theme) =>
       justifyContent: 'center',
     },
     heartWell: {
-      width: size.chevronWell,
-      height: size.chevronWell,
+      width: size.heartWell,
+      height: size.heartWell,
       borderRadius: radius.pill,
       backgroundColor: colors.glass,
       alignItems: 'center',
       justifyContent: 'center',
+      ...elevation.input,
     },
-    stockTag: {
-      position: 'absolute',
-      left: space.s8,
-      bottom: space.s8,
-      paddingHorizontal: space.s8,
-      paddingVertical: space.s4,
-      borderRadius: radius.sm,
-      backgroundColor: colors.glass,
-    },
-    text: { gap: space.s4 },
+    info: { minHeight: size.productInfo, padding: space.s12, gap: space.s4, justifyContent: 'space-between' },
+    group: { gap: space.s4 },
     rating: { flexDirection: 'row', alignItems: 'center', gap: space.s4 },
   });
 
@@ -93,15 +87,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const styles = useStyles(makeStyles);
   const { colors, service, opacity, size, motion } = useTheme();
   const off = discountPercent(product.price, product.compareAtPrice);
-  const uri = cdn(product.imageUrl, {
-    w: width ?? GRID_IMAGE,
-    h: (width ?? GRID_IMAGE) / size.productAspect,
-  });
+  const w = width ?? GRID_IMAGE;
+  const uri = cdn(product.imageUrl, { w, h: w / size.productPhotoAspect });
   const label = [
     product.name,
     showStore ? product.storeName : null,
     formatPKR(product.price),
     off ? `${off}% off` : null,
+    product.ratingCount > 0 ? `rated ${product.rating.toFixed(1)}` : null,
     product.inStock ? null : 'sold out',
   ]
     .filter(Boolean)
@@ -109,57 +102,58 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   // The heart is the card's sibling, not its child: one button may not hold another.
   return (
-    <View style={width ? { width } : null}>
+    <View style={[styles.card, width ? { width } : null]}>
       <Pressable
         onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel={label}
-        style={({ pressed }) => [styles.root, pressed && { opacity: opacity.pressed }]}>
+        style={({ pressed }) => [styles.clip, pressed && { opacity: opacity.pressed }]}>
         <View style={styles.frame}>
           {uri ? (
-            <Image
-              source={{ uri }}
-              style={[styles.image, !product.inStock && styles.soldOut]}
-              contentFit="cover"
-              transition={motion.imageFade}
-              recyclingKey={product.id}
-            />
+            <Image source={{ uri }} style={styles.image} contentFit="cover" transition={motion.imageFade} recyclingKey={product.id} />
           ) : null}
-          {off > 0 ? (
+          {!product.inStock ? (
+            <View style={styles.veil}>
+              <View style={styles.tag}>
+                <AppText variant="chip">Sold out</AppText>
+              </View>
+            </View>
+          ) : off > 0 ? (
             <View style={[styles.badge, { backgroundColor: service.accent }]}>
               <AppText variant="chip" tone="onAccent">
                 −{off}%
               </AppText>
             </View>
           ) : product.isNew ? (
-            <View style={[styles.badge, { backgroundColor: colors.glass }]}>
-              <AppText variant="tag">NEW</AppText>
-            </View>
-          ) : null}
-          {!product.inStock ? (
-            <View style={styles.stockTag}>
-              <AppText variant="chip">Sold out</AppText>
-            </View>
-          ) : null}
-        </View>
-        <View style={styles.text}>
-          {showStore && product.storeName ? (
-            <AppText variant="caption" tone="muted" numberOfLines={1}>
-              {product.storeName}
-            </AppText>
-          ) : null}
-          <AppText variant="small" numberOfLines={2}>
-            {product.name}
-          </AppText>
-          <PriceTag price={product.price} compareAtPrice={product.compareAtPrice} />
-          {product.ratingCount > 0 ? (
-            <View style={styles.rating}>
-              <IonIcon name="star" size="sm" color={colors.star} />
-              <AppText variant="caption" tone="muted">
-                {product.rating.toFixed(1)} ({product.ratingCount})
+            <View style={[styles.badge, { backgroundColor: colors.ink }]}>
+              <AppText variant="tag" tone="onScrim">
+                NEW
               </AppText>
             </View>
           ) : null}
+        </View>
+        <View style={styles.info}>
+          <View style={styles.group}>
+            {showStore && product.storeName ? (
+              <AppText variant="overline" tone="accentDeep" numberOfLines={1}>
+                {product.storeName}
+              </AppText>
+            ) : null}
+            <AppText variant="small" numberOfLines={2}>
+              {product.name}
+            </AppText>
+          </View>
+          <View style={styles.group}>
+            <PriceTag price={product.price} compareAtPrice={product.compareAtPrice} />
+            {product.ratingCount > 0 ? (
+              <View style={styles.rating}>
+                <IonIcon name="star" size="sm" color={colors.star} />
+                <AppText variant="caption" tone="muted">
+                  {product.rating.toFixed(1)} ({product.ratingCount})
+                </AppText>
+              </View>
+            ) : null}
+          </View>
         </View>
       </Pressable>
       {onToggleSave ? (
@@ -171,11 +165,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           aria-selected={!!saved}
           accessibilityLabel={saved ? `Remove ${product.name} from Saved` : `Save ${product.name}`}>
           <View style={styles.heartWell}>
-            <IonIcon
-              name={saved ? 'heart' : 'heart-outline'}
-              size="md"
-              color={saved ? colors.danger : colors.ink}
-            />
+            <IonIcon name={saved ? 'heart' : 'heart-outline'} size="sm" color={saved ? colors.danger : colors.ink} />
           </View>
         </Pressable>
       ) : null}
@@ -187,12 +177,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 export const ProductCardSkeleton: React.FC<{ width?: number }> = ({ width }) => {
   const styles = useStyles(makeStyles);
   return (
-    <View style={[styles.root, width ? { width } : null]}>
-      <View style={styles.frame} />
-      <View style={styles.text}>
-        <Skeleton width="50%" />
-        <Skeleton width="90%" />
-        <Skeleton width="40%" />
+    <View style={[styles.card, width ? { width } : null]}>
+      <View style={styles.clip}>
+        <View style={styles.frame} />
+        <View style={styles.info}>
+          <View style={styles.group}>
+            <Skeleton width="45%" />
+            <Skeleton width="90%" />
+          </View>
+          <Skeleton width="40%" />
+        </View>
       </View>
     </View>
   );

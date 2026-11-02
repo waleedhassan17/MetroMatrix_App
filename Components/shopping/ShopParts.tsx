@@ -1,9 +1,10 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Shopping screen parts (customer)
 // ═══════════════════════════════════════════════════════
-// The pieces every Shopping screen shares: the top bar with the Bag, a
-// section header, the search pill, the home's banner carousel, and the
-// two-column product grid the server pages.
+// The pieces every Shopping screen shares: the top bar with the Bag, the
+// floating buttons over a photo top, a section header, the search pill, the
+// home's banner carousel, a page's policy strip, and the two-column product
+// grid the server pages.
 
 import React, { useEffect, useState } from 'react';
 import { Animated, Pressable, StyleSheet, TextInput, View, type ViewStyle } from 'react-native';
@@ -12,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MAX_FONT_SCALE, useStyles, useTheme, type Theme } from '../../theme/index';
 import {
   AppText,
+  Card,
   CountIconButton,
   EmptyState,
   IconButton,
@@ -23,6 +25,8 @@ import {
   ProductCardSkeleton,
   type EmptyStateProps,
 } from '../../Custom-Components/index';
+import { useBarStyle } from '../../hooks/useBarStyle';
+import type { PolicyLine } from '../../models/shopping/storePolicyModel';
 import { useHeaderFieldStyle, useOnGradient } from '../../Custom-Components/headerInk';
 import { useBagCount, useSaved, useShopNav } from '../../hooks/useShop';
 import { useCalmMotion } from '../../hooks/useCalmMotion';
@@ -41,9 +45,31 @@ const makeStyles = ({ colors, space, size, radius, gutter, type, elevation }: Th
     barRuled: { borderBottomWidth: size.focusBorder },
     barTitle: { flex: 1, paddingHorizontal: space.s4 },
     barSide: { flexDirection: 'row', alignItems: 'center' },
-    section: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingHorizontal: gutter, gap: space.s12 },
+    section: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.s12 },
+    sectionInset: { paddingHorizontal: gutter },
     sectionText: { flex: 1, gap: space.s4 },
-    seeAll: { minHeight: size.touch, justifyContent: 'center' },
+    // "View all": the FYP's soft accent pill.
+    seeAll: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space.s4,
+      paddingHorizontal: space.s12,
+      paddingVertical: space.s4,
+      borderRadius: radius.pill,
+    },
+    photoTop: {
+      position: 'absolute',
+      left: space.s0,
+      right: space.s0,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: gutter,
+    },
+    photoTopEnd: { flexDirection: 'row', alignItems: 'center', gap: space.s8 },
+    policy: { flexDirection: 'row', alignItems: 'flex-start' },
+    policyItem: { flex: 1, alignItems: 'center', gap: space.s4, paddingHorizontal: space.s4 },
+    policyRule: { width: size.hairline, alignSelf: 'stretch', backgroundColor: colors.line },
     pill: { flexDirection: 'row', alignItems: 'center', gap: space.s8 },
     // On a white page: the FYP search box, white with a line and a soft shadow.
     pillOnPage: {
@@ -60,8 +86,9 @@ const makeStyles = ({ colors, space, size, radius, gutter, type, elevation }: Th
     pillInput: { ...type.body, color: colors.ink, flex: 1, paddingVertical: space.s0, outlineWidth: 0, outlineStyle: 'solid' },
     // Two columns with the page gutter outside and space.s12 between them:
     // each cell carries gutter on its outer side and half the gap inside.
-    cellLeft: { flex: 1, paddingLeft: gutter, paddingRight: space.s12 / 2, paddingBottom: space.s24 },
-    cellRight: { flex: 1, paddingLeft: space.s12 / 2, paddingRight: gutter, paddingBottom: space.s24 },
+    cellLeft: { flex: 1, paddingLeft: gutter, paddingRight: space.s12 / 2, paddingBottom: space.s12 },
+    cellRight: { flex: 1, paddingLeft: space.s12 / 2, paddingRight: gutter, paddingBottom: space.s12 },
+    topPad: { height: space.s20 },
     skeletonGrid: { flexDirection: 'row', flexWrap: 'wrap' },
     skeletonCell: { width: '50%' },
     footer: { paddingHorizontal: gutter, paddingBottom: space.s40, gap: space.s12 },
@@ -121,15 +148,24 @@ export const ShopTopBar: React.FC<{
 };
 
 // ─── Section header ───────────────────────────────────
-export const ShopSection: React.FC<{ title: string; subtitle?: string; onSeeAll?: () => void; seeAllLabel?: string }> = ({
-  title,
-  subtitle,
-  onSeeAll,
-  seeAllLabel = 'See all',
-}) => {
+/**
+ * The ONE section head on Shopping pages (sectionTitle, 19 / 800), with a
+ * muted line under it and "View all" as the FYP's soft accent pill. `inset`
+ * adds the gutter (a full-bleed page); inside a padded ScreenShell pass false.
+ */
+export const ShopSection: React.FC<{
+  title: string;
+  subtitle?: string;
+  onSeeAll?: () => void;
+  seeAllLabel?: string;
+  inset?: boolean;
+  /** Anything else at the head's end (a count, "Clear all"). */
+  trailing?: React.ReactNode;
+}> = ({ title, subtitle, onSeeAll, seeAllLabel = 'View all', inset = true, trailing }) => {
   const styles = useStyles(makeStyles);
+  const { service, opacity } = useTheme();
   return (
-    <View style={styles.section}>
+    <View style={[styles.section, inset && styles.sectionInset]}>
       <View style={styles.sectionText}>
         <AppText variant="sectionTitle" accessibilityRole="header">
           {title}
@@ -140,14 +176,74 @@ export const ShopSection: React.FC<{ title: string; subtitle?: string; onSeeAll?
           </AppText>
         ) : null}
       </View>
+      {trailing ?? null}
       {onSeeAll ? (
-        <Pressable onPress={onSeeAll} accessibilityRole="link" accessibilityLabel={`${seeAllLabel}: ${title}`} style={styles.seeAll} hitSlop={8}>
-          <AppText variant="small" tone="accentDeep">
+        <Pressable
+          onPress={onSeeAll}
+          accessibilityRole="link"
+          accessibilityLabel={`${seeAllLabel}: ${title}`}
+          hitSlop={10}
+          style={({ pressed }) => [styles.seeAll, { backgroundColor: service.accentSoft }, pressed && { opacity: opacity.pressed }]}>
+          <AppText variant="chip" tone="accentDeep">
             {seeAllLabel}
           </AppText>
+          <IonIcon name="chevron-forward" size="sm" color={service.accentDeep} />
         </Pressable>
       ) : null}
     </View>
+  );
+};
+
+// ─── Photo top bar ────────────────────────────────────
+/**
+ * The FYP's floating buttons over a page that opens on a photo (a product,
+ * a store's cover): back on the left, white circles on the right, under the
+ * status bar. The page lays a top fade (PhotoScrim edge="top") under them.
+ */
+export const PhotoTopBar: React.FC<{
+  onBack?: () => void;
+  /** More circles before the Bag (share, the heart, search). */
+  right?: React.ReactNode;
+  showBag?: boolean;
+}> = ({ onBack, right, showBag = true }) => {
+  const styles = useStyles(makeStyles);
+  const insets = useSafeAreaInsets();
+  const { space } = useTheme();
+  const count = useBagCount();
+  const { openBag } = useShopNav();
+  useBarStyle(true);
+  return (
+    <View style={[styles.photoTop, { top: insets.top + space.s8 }]} pointerEvents="box-none">
+      {onBack ? <IconButton icon="chevron-back" appearance="circle" onPress={onBack} accessibilityLabel="Back" /> : <View />}
+      <View style={styles.photoTopEnd}>
+        {right}
+        {showBag ? <CountIconButton icon="bag-handle-outline" appearance="circle" count={count} onPress={openBag} label="Bag" /> : null}
+      </View>
+    </View>
+  );
+};
+
+// ─── Policy strip ─────────────────────────────────────
+/** When it ships, what delivery costs, returns: three columns in one card. */
+export const PolicyStrip: React.FC<{ lines: PolicyLine[] }> = ({ lines }) => {
+  const styles = useStyles(makeStyles);
+  const { service } = useTheme();
+  return (
+    <Card>
+      <View style={styles.policy} accessible accessibilityLabel={lines.map(l => l.text).join('. ')}>
+        {lines.map((l, i) => (
+          <React.Fragment key={l.text}>
+            {i > 0 ? <View style={styles.policyRule} /> : null}
+            <View style={styles.policyItem}>
+              <IonIcon name={l.icon} size="md" color={service.accentDeep} />
+              <AppText variant="caption" align="center" numberOfLines={2}>
+                {l.text}
+              </AppText>
+            </View>
+          </React.Fragment>
+        ))}
+      </View>
+    </Card>
   );
 };
 
@@ -258,6 +354,8 @@ export const ProductGridSkeleton: React.FC<{ count?: number }> = ({ count = 4 })
 export interface ProductGridProps {
   list: PagedList<ProductSummary>;
   header?: React.ReactElement;
+  /** 20 above the first row when no header sits there (under the page header). */
+  topPad?: boolean;
   empty: EmptyStateProps;
   showStore?: boolean;
   onRemoveFromSaved?: (productId: string) => void;
@@ -267,7 +365,7 @@ export interface ProductGridProps {
  * Two columns, loaded a page at a time as you scroll (FlashList). The header
  * scrolls with the grid; while the first page loads, skeleton cards stand in.
  */
-export const ProductGrid: React.FC<ProductGridProps> = ({ list, header, empty, showStore = true, onRemoveFromSaved }) => {
+export const ProductGrid: React.FC<ProductGridProps> = ({ list, header, topPad, empty, showStore = true, onRemoveFromSaved }) => {
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   const { openProduct } = useShopNav();
@@ -294,7 +392,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ list, header, empty, s
       data={list.rows}
       numColumns={2}
       keyExtractor={p => p.id}
-      ListHeaderComponent={header}
+      ListHeaderComponent={header ?? (topPad ? <View style={styles.topPad} /> : undefined)}
       ListFooterComponent={footer}
       onEndReached={list.loadMore}
       onEndReachedThreshold={0.6}

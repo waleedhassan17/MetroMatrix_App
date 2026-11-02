@@ -15,6 +15,11 @@ import {
   CategoryTile,
   ChoiceChip,
   CountIconButton,
+  CtaBar,
+  LineItemRow,
+  MoneyRows,
+  StepCard,
+  StoreHeadRow,
   FilterSheet,
   ImageGallery,
   LineChart,
@@ -252,6 +257,27 @@ export const ShoppingStories: React.FC = () => {
           value={method}
           onChange={setMethod}
         />
+        <PaymentMethodPicker
+          layout="tiles"
+          options={[
+            { method: 'cod', available: true, reason: null },
+            { method: 'transfer', available: true, reason: null },
+          ]}
+          value={method}
+          onChange={setMethod}
+        />
+        <StepCard steps={['Deliver to', 'Payment', 'Review']} index={1} onStep={() => undefined} />
+        <StoreHeadRow store={GROUP.store} meta="2 items · Pay Rs 7,440" onPress={() => undefined} />
+        <LineItemRow imageUrl={PRODUCT.imageUrl} name={PRODUCT.name} meta="Size M · Rouge · × 1" price={formatPKR(PRODUCT.price)} />
+        <MoneyRows
+          rows={[
+            { label: 'Items', value: 7190 },
+            { label: 'Delivery', value: 0, kind: 'free' },
+            { label: 'Coupon LOOM10', value: 719, kind: 'discount' },
+            { label: 'Pay Lawn & Loom', value: 6471, kind: 'total' },
+          ]}
+        />
+        <CtaBar label="Total" amount={7440} note="2 items · delivery Rs 250" action={{ label: 'Checkout', onPress: () => undefined, rightIon: 'arrow-forward' }} />
         <PaymentInstructionsCard
           instructions={{ kind: 'raast', accountTitle: 'Lawn and Loom', accountNumber: '03001112233', bankName: null, amount: 7440, payBy: PAY_BY }}
           status="proof_rejected"

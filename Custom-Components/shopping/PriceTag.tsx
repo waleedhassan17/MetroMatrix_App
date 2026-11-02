@@ -1,5 +1,6 @@
-// PriceTag — what you pay now, the struck "was" price, and (large) the
-// saving. Money only ever through formatPKR.
+// PriceTag — what you pay now (in the accent's deep step, the FYP's orange
+// price; a store's own colour inside its page), the struck "was" price, and
+// (large) the saving. Money only ever through formatPKR.
 
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -33,7 +34,9 @@ export const PriceTag: React.FC<PriceTagProps> = ({ price, compareAtPrice, size 
   const label = `${formatPKR(price)}${was ? `, was ${formatPKR(was)}` : ''}`;
   return (
     <View style={styles.row} accessible accessibilityLabel={label}>
-      <AppText variant={size === 'lg' ? 'h1' : size === 'md' ? 'title' : 'bodyStrong'}>{formatPKR(price)}</AppText>
+      <AppText variant={size === 'lg' ? 'price' : size === 'md' ? 'title' : 'bodyStrong'} tone="accentDeep">
+        {formatPKR(price)}
+      </AppText>
       {was ? (
         <AppText variant={size === 'lg' ? 'body' : 'caption'} tone="muted" style={styles.was}>
           {formatPKR(was)}

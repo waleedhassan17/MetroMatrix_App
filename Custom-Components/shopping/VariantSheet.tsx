@@ -13,8 +13,7 @@ import type { ProductDetail } from '../../models/shopping';
 import { cdn } from '../../utils/cdn/cdn';
 import {
   choose,
-  initialChoice,
-  isValueAvailable,
+  initialChoice as firstChoice,
   stockNote,
   variantFor,
   type VariantChoice,
@@ -22,9 +21,9 @@ import {
 import { AppText } from '../AppText';
 import { Button } from '../Button';
 import { Sheet } from '../Sheet';
-import { ChoiceChip } from './ChoiceChip';
 import { PriceTag } from './PriceTag';
 import { QuantityStepper } from './QuantityStepper';
+import { VariantOptions } from './VariantOptions';
 
 export interface VariantSheetProps {
   product: ProductDetail;
@@ -35,6 +34,8 @@ export interface VariantSheetProps {
   confirmLabel?: string;
   /** Open on this variant if it is in stock. */
   initialVariantId?: string | null;
+  /** Or on this choice (the product page's own), kept as it is. */
+  initialChoice?: VariantChoice;
 }
 
 const makeStyles = ({ colors, radius, space, size }: Theme) =>
@@ -43,12 +44,10 @@ const makeStyles = ({ colors, radius, space, size }: Theme) =>
     thumb: {
       width: size.lineThumb,
       aspectRatio: size.productAspect,
-      borderRadius: radius.sm,
+      borderRadius: radius.md,
       backgroundColor: colors.surfaceSunk,
     },
     headText: { flex: 1, gap: space.s4 },
-    group: { gap: space.s8 },
-    chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
     qty: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   });
 
@@ -72,10 +71,11 @@ const VariantSheetBody: React.FC<VariantSheetProps> = ({
   busy,
   confirmLabel = 'Add to bag',
   initialVariantId,
+  initialChoice,
 }) => {
   const styles = useStyles(makeStyles);
   const { size } = useTheme();
-  const [choice, setChoice] = useState<VariantChoice>(() => initialChoice(product, initialVariantId));
+  const [choice, setChoice] = useState<VariantChoice>(() => initialChoice ?? firstChoice(product, initialVariantId));
   const [quantity, setQuantity] = useState(1);
   const variant = variantFor(product, choice);
   const stock = variant?.stock ?? 0;
@@ -113,46 +113,7 @@ const VariantSheetBody: React.FC<VariantSheetProps> = ({
         </View>
       </View>
 
-      {product.option1 ? (
-        <View style={styles.group}>
-          <AppText variant="label">
-            {product.option1.name}
-            {choice.option1 ? `: ${choice.option1}` : ''}
-          </AppText>
-          <View style={styles.chips}>
-            {product.option1.values.map(value => (
-              <ChoiceChip
-                key={value}
-                label={value}
-                selected={choice.option1 === value}
-                disabled={!isValueAvailable(product, 1, value, { option1: null, option2: null })}
-                onPress={() => pick(1, value)}
-              />
-            ))}
-          </View>
-        </View>
-      ) : null}
-
-      {product.option2 ? (
-        <View style={styles.group}>
-          <AppText variant="label">
-            {product.option2.name}
-            {choice.option2 ? `: ${choice.option2}` : ''}
-          </AppText>
-          <View style={styles.chips}>
-            {product.option2.values.map(value => (
-              <ChoiceChip
-                key={value}
-                label={value}
-                swatch={product.option2?.swatches[value]}
-                selected={choice.option2 === value}
-                disabled={!isValueAvailable(product, 2, value, choice)}
-                onPress={() => pick(2, value)}
-              />
-            ))}
-          </View>
-        </View>
-      ) : null}
+      <VariantOptions product={product} choice={choice} onChoose={pick} />
 
       <View style={styles.qty}>
         <AppText variant="label">Quantity</AppText>
