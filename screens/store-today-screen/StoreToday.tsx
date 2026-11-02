@@ -141,9 +141,15 @@ const StoreTodayContent: React.FC = () => {
               </View>
               <TextAction label="Insights" icon="stats-chart-outline" onPress={() => navigation.navigate('Insights')} />
             </View>
-            <BarChart data={sum.sales7d.map(d => ({ label: dayjs(d.date).format('ddd'), value: d.amount }))} format={formatPKR} />
+            {sum.recordedSales7d > 0 ? (
+              <BarChart data={sum.sales7d.map(d => ({ label: dayjs(d.date).format('ddd'), value: d.amount }))} format={formatPKR} />
+            ) : (
+              <AppText variant="small" tone="muted">
+                No sales recorded this week yet. They show here as you mark orders delivered.
+              </AppText>
+            )}
             <AppText variant="caption" tone="muted">
-              From orders you marked delivered. MetroMatrix does not hold or process your money.
+              MetroMatrix does not hold or process your money.
             </AppText>
           </Card>
 

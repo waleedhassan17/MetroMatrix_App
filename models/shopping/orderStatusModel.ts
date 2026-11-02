@@ -230,17 +230,46 @@ const PARTNER_AWAITING_TRANSFER: StatusMeta = {
   description: 'The customer has not sent the transfer yet.',
 };
 
+/** What each order status asks of the store (its pill keeps the customer's label). */
+const PARTNER_ORDER_LINE: Record<OrderStatus, string> = {
+  placed: 'New. Confirm it, or cancel it if you can’t fill it.',
+  confirmed: 'Confirmed. Pack it next.',
+  packed: 'Packed. Ship it with a courier or your own rider.',
+  shipped: 'On its way to the customer.',
+  delivered: 'Delivered. The customer can still ask to return items within your return window.',
+  cancelled: 'This order was cancelled.',
+  cancellation_requested: 'The customer asked to cancel. Approve it, or carry on with the order.',
+  returned: 'Items from this order came back.',
+};
+
+const PARTNER_REFUND_DUE: StatusMeta = {
+  ...PAYMENT_STATUS.refund_due,
+  description: 'You owe the customer a refund. Send it, then record it here.',
+};
+
 /**
  * The ONE pill an order shows in the store's lists: a transfer to check
  * comes first, then a refund the store owes, then a transfer not yet sent,
- * then the order's own status.
+ * then the order's own status. The line under it speaks to the store.
  */
 export const partnerHeadline = (row: Pick<PartnerOrderRow, 'status' | 'paymentMethod' | 'paymentStatus'>): StatusMeta => {
   if (row.status !== 'cancelled' && row.paymentStatus === 'proof_submitted') return PARTNER_CHECK_PAYMENT;
-  if (row.paymentStatus === 'refund_due') return PAYMENT_STATUS.refund_due;
+  if (row.paymentStatus === 'refund_due') return PARTNER_REFUND_DUE;
   if (needsPayment(row) && row.paymentStatus === 'awaiting_transfer') return PARTNER_AWAITING_TRANSFER;
-  return ORDER_STATUS[row.status];
+  return { ...ORDER_STATUS[row.status], description: PARTNER_ORDER_LINE[row.status] };
 };
+
+/** What each return status asks of the store (its pill keeps the shared label). */
+const PARTNER_RETURN_LINE: Record<ReturnStatus, string> = {
+  requested: 'Approve it with instructions, or decline it with a reason.',
+  approved: 'Approved. Mark the items received when they reach you.',
+  rejected: 'You declined this return.',
+  received: 'The items are back. Send the refund, then record it.',
+  refunded: 'Refund recorded. This return is done.',
+};
+
+/** A return as the store reads it: the shared pill, a line that speaks to the store. */
+export const partnerReturnStatus = (status: ReturnStatus): StatusMeta => ({ ...RETURN_STATUS[status], description: PARTNER_RETURN_LINE[status] });
 
 /** A store order's code is its group's and its place in it: MM-24A7Q2-1 belongs to MM-24A7Q2. */
 export const groupCodeOf = (storeOrderCode: string | null | undefined): string | null => storeOrderCode?.match(/^(.+)-\d+$/)?.[1] ?? null;

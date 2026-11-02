@@ -83,6 +83,10 @@ describe('orderStatusModel', () => {
     for (const meta of [partnerHeadline(o('placed', 'proof_submitted', 'transfer')), partnerHeadline(o('placed', 'awaiting_transfer', 'transfer'))]) {
       expect(meta.label.slice(1)).toBe(meta.label.slice(1).toLowerCase());
     }
+    // The store reads lines written to the store, never the customer's ("your address", "owes you").
+    for (const st of ORDER_STATUSES) expect(partnerHeadline(o(st)).description).not.toMatch(/your (address|order)|owes you/i);
+    expect(partnerHeadline(o('cancelled', 'refund_due', 'transfer')).description).toMatch(/You owe the customer/);
+    expect(partnerHeadline(o('delivered')).label).toBe(ORDER_STATUS.delivered.label);
   });
 
   it('draws the journey, with the courier on Shipped and a failed step on cancel', () => {

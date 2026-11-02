@@ -71,8 +71,8 @@ const makeStyles = ({ colors, space, size, radius }: Theme) =>
     thumb: { width: size.storeLogo, height: size.storeLogo, borderRadius: radius.md, backgroundColor: colors.surfaceSunk },
     check: { width: size.storeLogo, height: size.storeLogo, alignItems: 'center', justifyContent: 'center' },
     text: { flex: 1, gap: space.s4 },
-    stock: { width: size.stockField },
-    foot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.s12 },
+    stock: { width: size.stockField, gap: space.s8 },
+    foot: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
     list: { paddingBottom: space.s40 },
     gap: { height: space.s12 },
     footer: { paddingTop: space.s12 },
@@ -133,28 +133,29 @@ const InventoryContent: React.FC<Props> = ({ route }) => {
             <AppText variant="caption" tone="muted" numberOfLines={1}>
               {[row.variantLabel, row.sku].filter(Boolean).join(' · ')}
             </AppText>
-            {level ? <StatusPill label={level.label} tone={level.tone} /> : null}
+            <View style={styles.foot}>
+              {level ? <StatusPill label={level.label} tone={level.tone} /> : null}
+              <TextAction
+                label="History"
+                icon="time-outline"
+                tone="muted"
+                accessibilityLabel={`Stock history of ${row.productName} ${row.variantLabel}`}
+                onPress={() => void dispatch(loadHistoryAsync({ variantId: row.variantId, label: `${row.productName} · ${row.variantLabel}` }))}
+              />
+            </View>
           </View>
           <View style={styles.stock}>
             <TextField
-              label="Stock"
+              label={`Stock of ${row.productName} ${row.variantLabel}`}
+              hideLabel
               mode="numeric"
               value={draft ?? String(row.stock)}
               onChangeText={v => dispatch(setStockDraft({ variantId: row.variantId, value: v }))}
-              accessibilityLabel={`Stock of ${row.productName} ${row.variantLabel}`}
             />
+            {changed ? (
+              <Button label="Save" size="sm" onPress={() => void dispatch(saveStockAsync({ variantId: row.variantId, stock: Number(draft) }))} loading={s.busy === row.variantId} />
+            ) : null}
           </View>
-        </View>
-        <View style={styles.foot}>
-          <TextAction
-            label="History"
-            icon="time-outline"
-            tone="muted"
-            onPress={() => void dispatch(loadHistoryAsync({ variantId: row.variantId, label: `${row.productName} · ${row.variantLabel}` }))}
-          />
-          {changed ? (
-            <Button label="Save" size="sm" onPress={() => void dispatch(saveStockAsync({ variantId: row.variantId, stock: Number(draft) }))} loading={s.busy === row.variantId} />
-          ) : null}
         </View>
       </Card>
     );

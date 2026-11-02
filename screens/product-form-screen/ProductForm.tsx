@@ -91,8 +91,10 @@ const makeStyles = ({ colors, space, size, radius }: Theme) =>
     group: { gap: space.s8 },
     variant: { gap: space.s8 },
     variantRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space.s8 },
-    variantName: { flex: 1, paddingBottom: space.s16 },
+    variantName: { flex: 1, alignSelf: 'center' },
     stock: { width: size.stockField },
+    tableHead: { flexDirection: 'row', alignItems: 'center', gap: space.s8 },
+    moreSpace: { width: size.touch },
     footer: { flexDirection: 'row', gap: space.s12 },
     head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     loading: { gap: space.s16 },
@@ -381,20 +383,37 @@ const ProductFormContent: React.FC<Props> = ({ navigation, route }) => {
             </View>
           </>
         ) : null}
+        {f.hasOptions && f.variants.length ? (
+          <View style={styles.tableHead}>
+            <AppText variant="overline" tone="muted" style={styles.variantName}>
+              Combination
+            </AppText>
+            <AppText variant="overline" tone="muted" style={styles.stock}>
+              Stock
+            </AppText>
+            <View style={styles.moreSpace} />
+          </View>
+        ) : null}
         {f.variants.map((v, i) => {
           const open = !!more[v.key] || !f.hasOptions;
           return (
             <View key={v.key} style={styles.variant}>
               {f.hasOptions && i > 0 ? <Divider /> : null}
               {f.hasOptions ? (
-                <View style={styles.variantRow}>
+                <View style={[styles.variantRow, styles.tableHead]}>
                   <View style={styles.variantName}>
                     <AppText variant="bodyStrong" numberOfLines={1}>
                       {variantLabel(v.option1, v.option2) || 'Default'}
                     </AppText>
                   </View>
                   <View style={styles.stock}>
-                    <TextField label="Stock" mode="numeric" value={v.stock} onChangeText={t => dispatch(setVariantField({ key: v.key, field: 'stock', value: t }))} />
+                    <TextField
+                      label={`Stock of ${variantLabel(v.option1, v.option2) || 'this option'}`}
+                      hideLabel
+                      mode="numeric"
+                      value={v.stock}
+                      onChangeText={t => dispatch(setVariantField({ key: v.key, field: 'stock', value: t }))}
+                    />
                   </View>
                   <IconButton
                     icon={open ? 'chevron-up' : 'ellipsis-horizontal'}

@@ -11,9 +11,22 @@ import { useStyles, useTheme, type Theme } from '../../theme';
 import { AppText } from '../AppText';
 import { IonIcon, type IonName } from '../Icon';
 
-/** The API picks the glyph; anything Ionicons doesn't know becomes a tag. */
+/** The API's own icon keys (women, kids, grocery …) as the glyphs that read as them. */
+const CATEGORY_ICON_KEYS: Record<string, IonName> = {
+  women: 'woman-outline',
+  men: 'man-outline',
+  kids: 'happy-outline',
+  beauty: 'sparkles-outline',
+  home: 'home-outline',
+  accessories: 'watch-outline',
+  handmade: 'color-palette-outline',
+  electronics: 'headset-outline',
+  grocery: 'basket-outline',
+};
+
+/** The API picks the glyph (an Ionicons name or one of its keys); anything else becomes a tag. */
 export const categoryIcon = (name: string): IonName =>
-  (name in Ionicons.glyphMap ? name : 'pricetag-outline') as IonName;
+  CATEGORY_ICON_KEYS[name] ?? ((name in Ionicons.glyphMap ? name : 'pricetag-outline') as IonName);
 
 const makeStyles = ({ colors, radius, space, size, elevation }: Theme) =>
   StyleSheet.create({

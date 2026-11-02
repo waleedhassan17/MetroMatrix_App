@@ -13,7 +13,7 @@ import { Image } from 'expo-image';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
-import { RETURN_STATUS } from '../../models/shopping/orderStatusModel';
+import { partnerReturnStatus } from '../../models/shopping/orderStatusModel';
 import { returnReasonLabel } from '../../models/shopping/returnFormModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import {
@@ -99,7 +99,7 @@ const StoreReturnDetailContent: React.FC<Props> = ({ route }) => {
     );
   }
 
-  const st = RETURN_STATUS[r.status];
+  const st = partnerReturnStatus(r.status);
   const max = r.items.reduce((n, i) => n + i.unitPrice * i.quantity, 0);
 
   const refundOk = !!Number(s.amount) && Number(s.amount) <= max && s.reference.trim().length >= 4;

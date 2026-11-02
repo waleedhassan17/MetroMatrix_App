@@ -32,6 +32,8 @@ export type TextFieldMode = 'text' | 'email' | 'password' | 'phone' | 'numeric';
 export interface TextFieldProps
   extends Omit<TextInputProps, 'style' | 'placeholderTextColor' | 'secureTextEntry' | 'onChangeText'> {
   label: string;
+  /** In a table with its own column head: the label still names the field for screen readers. */
+  hideLabel?: boolean;
   value: string;
   onChangeText: (text: string) => void;
   mode?: TextFieldMode;
@@ -91,6 +93,7 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(
   (
     {
       label,
+      hideLabel,
       value,
       onChangeText,
       mode = 'text',
@@ -128,9 +131,11 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(
 
     return (
       <View style={[styles.root, containerStyle]}>
-        <AppText variant="label" tone={error ? 'danger' : 'ink'}>
-          {label}
-        </AppText>
+        {hideLabel ? null : (
+          <AppText variant="label" tone={error ? 'danger' : 'ink'}>
+            {label}
+          </AppText>
+        )}
         <View
           style={[
             styles.box,
