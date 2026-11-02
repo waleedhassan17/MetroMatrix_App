@@ -249,6 +249,7 @@ describe('the store partner', () => {
   it('reads Today from the dashboard, the store, its settings and a week of insights', () => {
     const t = partnerSummarySerializer({ dashboard: body('dashboard'), store: body('storeProfile'), settings: body('storeSettings'), insights: body('insights') });
     expect(t).toMatchObject({ storeName: 'Lahore Loom', storeSlug: 'lahore-loom', isPaused: false, pauseMessage: null, recordedSales7d: 15000 });
+    expect(t).toMatchObject({ logoUrl: expect.stringContaining('LL'), brandColor: '#7F1D1D', onBrandColor: '#FFFFFF' });
     expect(t.counts).toEqual({ newOrders: 0, toShip: 0, paymentsToConfirm: 0, refundsDue: 0, cancelRequests: 0, returnsOpen: 0, lowStock: 21 });
     expect(t.sales7d[0]).toEqual({ date: '2026-10-02', amount: 0 });
   });

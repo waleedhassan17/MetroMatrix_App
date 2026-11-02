@@ -1,9 +1,11 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — The store's orders
 // ═══════════════════════════════════════════════════════
-// By where they are: New, To pack, To ship, Shipped, Done, Cancelled (with
-// counts), or every transfer waiting to be checked. Search by order code or
-// customer. Refreshes itself every 30 s while on screen.
+// By where they are: New, To pack, To ship, Shipped, Done, Cancelled, or
+// every transfer waiting to be checked and refund to record (the dashboard's
+// counts on the chips). The search and the chips sit in the header; each
+// order is a raised card with ONE pill. Refreshes itself every 30 s while on
+// screen, and refreshes the Orders tab's count when it opens.
 
 import React, { useCallback } from 'react';
 import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
@@ -13,17 +15,23 @@ import { useDebouncedValue, usePagedList } from '../../hooks/usePagedList';
 import { fetchPartnerOrders } from '../../networks/shopping/partner/partnerOrders';
 import { PARTNER_SEGMENTS } from '../../models/shopping/orderStatusModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { ChoiceChip, Divider, EmptyState, InlineNotice, ScreenShell, SkeletonLines, TextField } from '../../Custom-Components/index';
-import { PartnerOrderRowView } from '../../Components/shopping/StoreParts';
-import { selectStoreOrders, setStoreOrdersQuery, setStoreOrdersView } from './storeOrdersSlice';
+import { ChoiceChip, EmptyState, InlineNotice, RowCardSkeleton, RowCardsSkeleton, ScreenShell } from '../../Custom-Components/index';
+import { SearchField } from '../../Components/shopping/ShopParts';
+import { PartnerOrderCard } from '../../Components/shopping/StoreParts';
+import { loadTodayAsync, selectStoreToday } from '../store-today-screen/storeTodaySlice';
+import { selectStoreOrders, setStoreOrdersQuery, setStoreOrdersView, type StoreOrdersView } from './storeOrdersSlice';
 import { partnerOrderPageSerializer } from '../../serializers/shopping/partnerSerializer';
 
 type Nav = { navigate: (name: string, params?: object) => void };
 
-const makeStyles = ({ space }: Theme) =>
+const makeStyles = ({ space, gutter }: Theme) =>
   StyleSheet.create({
-    chips: { gap: space.s8 },
+    // The chips run edge to edge under the field.
+    chipRail: { marginHorizontal: -gutter },
+    chips: { gap: space.s8, paddingHorizontal: gutter },
     list: { paddingBottom: space.s40 },
+    gap: { height: space.s12 },
+    footer: { paddingTop: space.s12 },
   });
 
 const StoreOrders: React.FC = () => (
@@ -38,6 +46,7 @@ const StoreOrdersContent: React.FC = () => {
   const { motion } = useTheme();
   const navigation = useNavigation<Nav>();
   const s = useAppSelector(selectStoreOrders);
+  const counts = useAppSelector(selectStoreToday).summary?.counts;
   const q = useDebouncedValue(s.query.trim());
   const payments = s.view === 'payments';
   const refunds = s.view === 'refunds';
@@ -58,50 +67,53 @@ const StoreOrdersContent: React.FC = () => {
   const { poll } = list;
   useFocusEffect(
     useCallback(() => {
+      void dispatch(loadTodayAsync({ refresh: false }));
       const t = setInterval(poll, motion.ordersPoll);
       return () => clearInterval(t);
-    }, [poll, motion.ordersPoll]),
+    }, [poll, motion.ordersPoll, dispatch]),
   );
 
+  const chip = (view: StoreOrdersView, label: string, count?: number) => (
+    <ChoiceChip key={view} label={label} count={count} selected={s.view === view} onPress={() => dispatch(setStoreOrdersView(view))} />
+  );
+  const segment = (key: string) => PARTNER_SEGMENTS.find(sg => sg.key === key)?.label ?? key;
+
   return (
-    <ScreenShell title="Orders" scroll={false}>
-      <TextField
-        label="Search orders"
-        value={s.query}
-        onChangeText={t => dispatch(setStoreOrdersQuery(t))}
-        icon="search"
-        placeholder="Order code or customer"
-        clearable
-        autoCapitalize="characters"
-        autoCorrect={false}
-      />
-      <View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-          {PARTNER_SEGMENTS.map(sg => (
-            <ChoiceChip key={sg.key} label={sg.label} selected={s.view === sg.key} onPress={() => dispatch(setStoreOrdersView(sg.key))} />
-          ))}
-          <ChoiceChip label="Payments to check" icon="card-outline" selected={payments} onPress={() => dispatch(setStoreOrdersView('payments'))} />
-          <ChoiceChip label="Refunds to record" icon="return-down-back-outline" selected={refunds} onPress={() => dispatch(setStoreOrdersView('refunds'))} />
-        </ScrollView>
-      </View>
+    <ScreenShell
+      title="Orders"
+      subtitle={counts ? `${counts.newOrders} new · ${counts.toShip} to ship` : undefined}
+      scroll={false}
+      headerContent={
+        <>
+          <SearchField value={s.query} onChange={t => dispatch(setStoreOrdersQuery(t))} placeholder="Order code or customer" />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRail} contentContainerStyle={styles.chips}>
+            {chip('new', segment('new'), counts?.newOrders)}
+            {chip('payments', 'Payments to check', counts?.paymentsToConfirm)}
+            {chip('to_pack', segment('to_pack'))}
+            {chip('to_ship', segment('to_ship'), counts?.toShip)}
+            {chip('refunds', 'Refunds to record', counts?.refundsDue)}
+            {PARTNER_SEGMENTS.filter(sg => !['new', 'to_pack', 'to_ship'].includes(sg.key)).map(sg => chip(sg.key, sg.label))}
+          </ScrollView>
+        </>
+      }>
       <FlatList
         data={list.rows}
         keyExtractor={o => o.id}
         contentContainerStyle={styles.list}
-        ItemSeparatorComponent={Divider}
+        ItemSeparatorComponent={() => <View style={styles.gap} />}
         onEndReached={list.loadMore}
         onEndReachedThreshold={0.5}
         onRefresh={list.refresh}
         refreshing={list.isRefreshing}
-        renderItem={({ item }) => <PartnerOrderRowView order={item} onPress={() => navigation.navigate('StoreOrderDetail', { id: item.id, code: item.code })} />}
+        renderItem={({ item }) => <PartnerOrderCard order={item} onPress={() => navigation.navigate('StoreOrderDetail', { id: item.id, code: item.code })} />}
         ListEmptyComponent={
           list.isLoading ? (
-            <SkeletonLines lines={6} />
+            <RowCardsSkeleton />
           ) : list.error ? (
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
             <EmptyState
-              icon="inbox"
+              ion="receipt-outline"
               title={q ? `No orders match "${q}"` : payments ? 'No payments to check' : refunds ? 'No refunds to record' : 'Nothing here'}
               body={
                 payments
@@ -113,7 +125,13 @@ const StoreOrdersContent: React.FC = () => {
             />
           )
         }
-        ListFooterComponent={list.isLoadingMore ? <SkeletonLines lines={2} /> : null}
+        ListFooterComponent={
+          list.isLoadingMore ? (
+            <View style={styles.footer}>
+              <RowCardSkeleton />
+            </View>
+          ) : null
+        }
       />
     </ScreenShell>
   );

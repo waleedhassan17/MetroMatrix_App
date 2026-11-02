@@ -2,10 +2,11 @@
 // MetroMatrix — The store partner's app
 // ═══════════════════════════════════════════════════════
 // Four tabs (Today · Orders · Products · More) at the root of a stack;
-// every tool pushes over the tabs.
+// every tool pushes over the tabs. Orders counts the new orders waiting.
 
 import type { IRoute, ITabRoute } from './types';
 import { ROUTES } from './Base';
+import { useStoreNewOrders } from '../hooks/useStorePartner';
 
 import StoreToday from '../screens/store-today-screen/StoreToday';
 import StoreOrders from '../screens/store-orders-screen/StoreOrders';
@@ -30,7 +31,7 @@ import Notifications from '../screens/notifications-screen/Notifications';
 
 export const STORE_PARTNER_TABS: ITabRoute[] = [
   { title: ROUTES.HOME_TAB, component: StoreToday, label: 'Today', icon: 'today-outline', iconActive: 'today' },
-  { title: ROUTES.ORDERS_TAB, component: StoreOrders, label: 'Orders', icon: 'receipt-outline', iconActive: 'receipt' },
+  { title: ROUTES.ORDERS_TAB, component: StoreOrders, label: 'Orders', icon: 'receipt-outline', iconActive: 'receipt', useBadge: useStoreNewOrders },
   { title: ROUTES.PRODUCTS_TAB, component: StoreProducts, label: 'Products', icon: 'pricetags-outline', iconActive: 'pricetags' },
   { title: ROUTES.MORE_TAB, component: StoreMore, label: 'More', icon: 'grid-outline', iconActive: 'grid' },
 ];

@@ -1,20 +1,22 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — The store's products
 // ═══════════════════════════════════════════════════════
-// Live, drafts and hidden, searchable by name or SKU, with stock at a
-// glance. Tap one to edit; add a new one from the top.
+// Live, drafts and hidden, searchable by name or SKU (both in the header),
+// each a raised card with its photo, price and stock; a pill only when
+// something needs a look (low, out, a draft). Tap one to edit; add a new one
+// from the header.
 
 import React from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Image } from 'expo-image';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useDebouncedValue, usePagedList } from '../../hooks/usePagedList';
 import { fetchPartnerProducts } from '../../networks/shopping/partner/products';
-import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, Divider, EmptyState, InlineNotice, ScreenShell, SegmentTabs, SkeletonLines, StatusPill, TextField } from '../../Custom-Components/index';
+import { ServiceScope, useStyles, type Theme } from '../../theme/index';
+import { EmptyState, IconButton, InlineNotice, RowCardSkeleton, RowCardsSkeleton, ScreenShell, SegmentTabs } from '../../Custom-Components/index';
+import { RowCard } from '../../Components/admin/AdminParts';
+import { SearchField } from '../../Components/shopping/ShopParts';
 import type { PartnerProductRow, PartnerProductStatus } from '../../models';
-import { cdn } from '../../utils/cdn/cdn';
 import { formatPKR } from '../../utils/money/money';
 import { selectStoreProducts, setProductsQuery, setProductsShelf } from './storeProductsSlice';
 import { partnerProductRowPageSerializer } from '../../serializers/shopping/partnerSerializer';
@@ -27,50 +29,37 @@ const SHELVES: { key: PartnerProductStatus; label: string }[] = [
   { key: 'archived', label: 'Hidden' },
 ];
 
-const makeStyles = ({ colors, space, size, radius }: Theme) =>
+const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
-    row: { flexDirection: 'row', alignItems: 'center', gap: space.s12, paddingVertical: space.s12 },
-    thumb: { width: size.thumb, aspectRatio: size.productAspect, borderRadius: radius.sm, backgroundColor: colors.surfaceSunk },
-    text: { flex: 1, gap: space.s4 },
     list: { paddingBottom: space.s40 },
+    gap: { height: space.s12 },
+    footer: { paddingTop: space.s12 },
   });
 
-const stockLine = (p: PartnerProductRow): { text: string; tone: 'success' | 'warning' | 'danger' } =>
-  p.totalStock === 0
-    ? { text: 'Out of stock', tone: 'danger' }
-    : p.lowStock
-      ? { text: `${p.totalStock} in stock · some options low`, tone: 'warning' }
-      : { text: `${p.totalStock} in stock`, tone: 'success' };
+/** Stock in plain words, and a pill only when it needs a look. */
+const stockOf = (p: PartnerProductRow): { line: string; pill: { label: string; tone: 'warning' | 'danger' | 'neutral' } | null } => {
+  const options = p.variantCount > 1 ? ` · ${p.variantCount} options` : '';
+  if (p.totalStock === 0) return { line: `Out of stock${options}`, pill: { label: 'Out', tone: 'danger' } };
+  if (p.lowStock) return { line: `${p.totalStock} in stock · some options low${options}`, pill: { label: 'Low', tone: 'warning' } };
+  return { line: `${p.totalStock} in stock${options}`, pill: p.status === 'draft' ? { label: 'Draft', tone: 'neutral' } : null };
+};
 
 const ProductRow: React.FC<{ product: PartnerProductRow; onPress: () => void }> = ({ product, onPress }) => {
-  const styles = useStyles(makeStyles);
-  const { size, opacity } = useTheme();
-  const stock = stockLine(product);
+  const stock = stockOf(product);
+  const price = product.salePrice
+    ? `${formatPKR(product.salePrice)} · was ${formatPKR(product.price)}`
+    : product.price
+      ? formatPKR(product.price)
+      : 'No price yet';
   return (
-    <Pressable
+    <RowCard
+      mark={{ image: product.imageUrl }}
+      title={product.name || 'Untitled product'}
+      lines={[price, stock.line]}
+      pill={stock.pill ?? undefined}
+      chevron
       onPress={onPress}
-      style={({ pressed }) => [styles.row, pressed && { opacity: opacity.pressed }]}
-      accessibilityRole="button"
-      accessibilityLabel={`${product.name || 'Untitled product'}, ${formatPKR(product.salePrice ?? product.price)}, ${stock.text}`}>
-      {product.imageUrl ? (
-        <Image source={{ uri: cdn(product.imageUrl, { w: size.thumb, h: size.thumb / size.productAspect }) ?? undefined }} style={styles.thumb} contentFit="cover" />
-      ) : (
-        <View style={styles.thumb} />
-      )}
-      <View style={styles.text}>
-        <AppText variant="bodyStrong" numberOfLines={2}>
-          {product.name || 'Untitled product'}
-        </AppText>
-        <AppText variant="small">
-          {product.salePrice ? `${formatPKR(product.salePrice)} (was ${formatPKR(product.price)})` : product.price ? formatPKR(product.price) : 'No price yet'}
-        </AppText>
-        <AppText variant="caption" tone={stock.tone}>
-          {stock.text}
-          {product.variantCount > 1 ? ` · ${product.variantCount} options` : ''}
-        </AppText>
-      </View>
-      {product.status === 'draft' ? <StatusPill label="Draft" /> : null}
-    </Pressable>
+    />
   );
 };
 
@@ -91,15 +80,20 @@ const StoreProductsContent: React.FC = () => {
   return (
     <ScreenShell
       title="Products"
+      subtitle={list.total ? `${list.total} ${list.total === 1 ? 'product' : 'products'}` : undefined}
       scroll={false}
-      headerRight={<Button label="Add" size="sm" leftIcon="add" onPress={() => navigation.navigate('ProductForm')} />}>
-      <SegmentTabs options={SHELVES} value={s.status} onChange={k => dispatch(setProductsShelf(k))} accessibilityLabel="Shelf" />
-      <TextField label="Search" value={s.query} onChangeText={t => dispatch(setProductsQuery(t))} icon="search" placeholder="Name or SKU" clearable autoCorrect={false} />
+      headerRight={<IconButton icon="add" onPress={() => navigation.navigate('ProductForm')} accessibilityLabel="Add a product" />}
+      headerContent={
+        <>
+          <SegmentTabs options={SHELVES} value={s.status} onChange={k => dispatch(setProductsShelf(k))} accessibilityLabel="Shelf" />
+          <SearchField value={s.query} onChange={t => dispatch(setProductsQuery(t))} placeholder="Name or SKU" />
+        </>
+      }>
       <FlatList
         data={list.rows}
         keyExtractor={p => p.id}
         contentContainerStyle={styles.list}
-        ItemSeparatorComponent={Divider}
+        ItemSeparatorComponent={() => <View style={styles.gap} />}
         onEndReached={list.loadMore}
         onEndReachedThreshold={0.5}
         onRefresh={list.refresh}
@@ -107,19 +101,25 @@ const StoreProductsContent: React.FC = () => {
         renderItem={({ item }) => <ProductRow product={item} onPress={() => navigation.navigate('ProductForm', { id: item.id })} />}
         ListEmptyComponent={
           list.isLoading ? (
-            <SkeletonLines lines={6} />
+            <RowCardsSkeleton />
           ) : list.error ? (
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
             <EmptyState
-              icon="package"
+              ion="pricetags-outline"
               title={q ? `Nothing matches "${q}"` : s.status === 'active' ? 'Nothing live yet' : s.status === 'draft' ? 'No drafts' : 'Nothing hidden'}
               body={s.status === 'active' ? 'Add your first product: photos, a price and stock, and it’s on sale.' : 'They’ll show here.'}
               action={s.status === 'active' && !q ? { label: 'Add a product', onPress: () => navigation.navigate('ProductForm') } : undefined}
             />
           )
         }
-        ListFooterComponent={list.isLoadingMore ? <SkeletonLines lines={2} /> : null}
+        ListFooterComponent={
+          list.isLoadingMore ? (
+            <View style={styles.footer}>
+              <RowCardSkeleton />
+            </View>
+          ) : null
+        }
       />
     </ScreenShell>
   );

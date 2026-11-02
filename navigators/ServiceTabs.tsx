@@ -2,9 +2,9 @@
 // MetroMatrix — ServiceTabs: a service app's bottom tabs from an ITabRoute[]
 // ═══════════════════════════════════════════════════════
 // Dumb mapper for the customer's service apps (Health, Shopping, Food
-// Court). The bar is ServiceTabBar, in the look the enclosing ServiceScope's
-// theme names (the FYP's per-module bars). Back from any tab goes to the
-// first one, then out of the service.
+// Court) and the store's app. The bar is ServiceTabBar, in the look the
+// enclosing ServiceScope's theme names (the FYP's per-module bars). Back from
+// any tab goes to the first one, then out of the service.
 
 import React from 'react';
 import { createBottomTabNavigator, type BottomTabBarProps } from '@react-navigation/bottom-tabs';

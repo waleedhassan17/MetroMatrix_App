@@ -84,7 +84,8 @@ export interface Theme {
  *   gradientPill  Health — the selected icon white on a small gradient pill
  *   tint          Shopping — a rounded, lifted bar; the selected tab in accent
  *   softPill      Home services (our Food Court) — a soft accent pill
- *   pill          the partner and staff apps' bar (RouteTabs)
+ *   pill          the doctor, Food vendor, rider and staff apps' bar (RouteTabs);
+ *                 the store's app wears Shopping's `tint` bar (ServiceTabs)
  */
 export type TabBarVariant = 'pill' | 'gradientPill' | 'tint' | 'softPill';
 export interface TabBarStyle {

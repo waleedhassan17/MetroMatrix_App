@@ -1,5 +1,7 @@
 // MetroMatrix — the approved store partner's app: a stack whose first screen
 // is the four tabs, with every tool pushed over them (navigations-maps/StorePartner.tsx).
+// The tabs are Shopping's own bar (ServiceTabs: the FYP's lifted, rounded
+// bar), with the new orders counted on Orders.
 
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -8,11 +10,11 @@ import { ServicePausedGate } from '../Components/platform/ServicePausedGate';
 import type { StorePartnerStackParamList } from '../models';
 import { ROUTES } from '../navigations-maps/Base';
 import { STORE_PARTNER_STACK_ROUTES, STORE_PARTNER_TABS } from '../navigations-maps/StorePartner';
-import { RouteTabs } from './RouteTabs';
+import { ServiceTabs } from './ServiceTabs';
 
 const Stack = createNativeStackNavigator<StorePartnerStackParamList>();
 
-const StoreTabs: React.FC = () => <RouteTabs id="StorePartnerTabs" routes={STORE_PARTNER_TABS} />;
+const StoreTabs: React.FC = () => <ServiceTabs id="StorePartnerTabs" routes={STORE_PARTNER_TABS} />;
 
 const StorePartnerNavigator: React.FC = () => (
   <ServiceScope service="shopping">

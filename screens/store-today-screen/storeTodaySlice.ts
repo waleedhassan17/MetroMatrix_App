@@ -89,8 +89,10 @@ export const storeTodaySlice = createAppSlice({
   }),
   selectors: {
     selectStoreToday: state => state,
+    /** New orders waiting (the Orders tab's badge). */
+    selectNewOrderCount: state => state.summary?.counts.newOrders ?? 0,
   },
 });
 
 export const { loadTodayAsync, resumeStoreAsync } = storeTodaySlice.actions;
-export const { selectStoreToday } = storeTodaySlice.selectors;
+export const { selectStoreToday, selectNewOrderCount } = storeTodaySlice.selectors;

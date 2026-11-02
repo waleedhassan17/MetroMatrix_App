@@ -549,6 +549,10 @@ export interface AppNotification {
 export interface PartnerSummary {
   storeName: string;
   storeSlug: string;
+  /** The store's mark on its dashboard (the store's own profile). */
+  logoUrl: string | null;
+  brandColor: string;
+  onBrandColor: string;
   isPaused: boolean;
   pauseMessage: string | null;
   counts: {

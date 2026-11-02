@@ -52,6 +52,9 @@ export const partnerSummarySerializer = (parts: { dashboard: unknown; store: unk
   return {
     storeName: str(store.name, 'Your store'),
     storeSlug: str(store.slug),
+    logoUrl: strOrNull(store.logoUrl),
+    brandColor: color(store.brandColor, BRAND_FALLBACK.brand),
+    onBrandColor: color(store.onBrandColor, BRAND_FALLBACK.onBrand),
     isPaused: bool(settings.isPaused, bool(store.isPaused)),
     pauseMessage: strOrNull(settings.pauseMessage),
     counts: {
