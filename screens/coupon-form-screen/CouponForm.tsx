@@ -13,7 +13,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { couponValueLabel, emptyCouponForm, fromCoupon, generateCode, toCouponInput, validateCouponForm } from '../../models/shopping/couponFormModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, DateField, InlineNotice, ScreenShell, SegmentTabs, TextAction, TextField, ToggleRow } from '../../Custom-Components/index';
+import { Button, DateField, InlineNotice, ScreenShell, SectionCard, SegmentTabs, TextAction, TextField, ToggleRow } from '../../Custom-Components/index';
 import type { CouponType, StorePartnerStackParamList } from '../../models';
 import { Alert } from '../../utils/alert/alert';
 import { haptics } from '../../utils/haptics/haptics';
@@ -31,6 +31,7 @@ const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
     two: { flexDirection: 'row', gap: space.s12 },
     half: { flex: 1 },
+    center: { alignSelf: 'center' },
   });
 
 const CouponForm: React.FC<Props> = props => (
@@ -94,58 +95,65 @@ const CouponFormContent: React.FC<Props> = ({ route }) => {
       onBack={back}
       footer={<Button label="Save coupon" onPress={() => void save()} loading={s.status === 'loading'} fullWidth />}>
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
-      <TextField
-        label="Code"
-        value={f.code}
-        onChangeText={v => set('code', v)}
-        error={errors.code}
-        autoCapitalize="characters"
-        autoCorrect={false}
-        placeholder="EID15"
-        editable={!id}
-        helper={id ? 'A code stays the same once it’s made.' : '4 to 16 letters or digits. Customers type this.'}
-      />
-      {id ? null : <TextAction label="Make one up for me" icon="shuffle-outline" onPress={() => set('code', generateCode())} />}
-      <SegmentTabs options={TYPES} value={f.type} onChange={t => set('type', t)} accessibilityLabel="Discount type" />
-      <View style={styles.two}>
-        <View style={styles.half}>
-          <TextField label={f.type === 'percent' ? 'Percent off' : 'Rupees off'} mode="numeric" value={f.value} onChangeText={v => set('value', v)} error={errors.value} placeholder={f.type === 'percent' ? '15' : '500'} />
-        </View>
-        {f.type === 'percent' ? (
-          <View style={styles.half}>
-            <TextField label="Cap (Rs, optional)" mode="numeric" value={f.maxDiscount} onChangeText={v => set('maxDiscount', v)} error={errors.maxDiscount} placeholder="1000" />
-          </View>
-        ) : null}
-      </View>
-      <TextField label="Minimum order (Rs, optional)" mode="numeric" value={f.minOrder} onChangeText={v => set('minOrder', v)} placeholder="3000" />
-      <View style={styles.two}>
-        <View style={styles.half}>
-          <DateField label="Starts" value={f.startsAt} onChange={v => set('startsAt', v)} error={errors.startsAt} />
-        </View>
-        <View style={styles.half}>
-          <DateField label="Ends" value={f.endsAt} onChange={v => set('endsAt', v)} min={f.startsAt || undefined} error={errors.endsAt} />
-        </View>
-      </View>
-      <View style={styles.two}>
-        <View style={styles.half}>
-          <TextField label="Uses in all" mode="numeric" value={f.usageLimit} onChangeText={v => set('usageLimit', v)} error={errors.usageLimit} placeholder="No limit" />
-        </View>
-        <View style={styles.half}>
-          <TextField label="Per customer" mode="numeric" value={f.perCustomerLimit} onChangeText={v => set('perCustomerLimit', v)} error={errors.perCustomerLimit} placeholder="1" />
-        </View>
-      </View>
-      <ToggleRow label="Active" helper="Turn it off to pause it; you can turn it on again." value={f.isActive} onChange={v => set('isActive', v)} />
       {preview && f.code ? (
-        <Card>
-          <AppText variant="small" tone="muted">
-            Customers see
-          </AppText>
-          <AppText variant="title">
-            {f.code} · {preview}
-          </AppText>
-        </Card>
+        <SectionCard title={`${f.code} · ${preview}`} subtitle="What customers see at checkout" icon="pricetag-outline" />
       ) : null}
-      {s.id && f.isActive ? <Button label="Turn off this coupon" variant="ghost" onPress={() => void turnOff()} fullWidth /> : null}
+
+      <SectionCard title="The code" icon="key-outline" invalid={!!errors.code}>
+        <TextField
+          label="Code"
+          value={f.code}
+          onChangeText={v => set('code', v)}
+          error={errors.code}
+          autoCapitalize="characters"
+          autoCorrect={false}
+          placeholder="EID15"
+          editable={!id}
+          helper={id ? 'A code stays the same once it’s made.' : '4 to 16 letters or digits. Customers type this.'}
+        />
+        {id ? null : <TextAction label="Make one up for me" icon="shuffle-outline" onPress={() => set('code', generateCode())} />}
+      </SectionCard>
+
+      <SectionCard title="The discount" icon="cash-outline" invalid={!!(errors.value || errors.maxDiscount)}>
+        <SegmentTabs options={TYPES} value={f.type} onChange={t => set('type', t)} accessibilityLabel="Discount type" />
+        <View style={styles.two}>
+          <View style={styles.half}>
+            <TextField label={f.type === 'percent' ? 'Percent off' : 'Rupees off'} mode="numeric" value={f.value} onChangeText={v => set('value', v)} error={errors.value} placeholder={f.type === 'percent' ? '15' : '500'} />
+          </View>
+          {f.type === 'percent' ? (
+            <View style={styles.half}>
+              <TextField label="Cap (Rs, optional)" mode="numeric" value={f.maxDiscount} onChangeText={v => set('maxDiscount', v)} error={errors.maxDiscount} placeholder="1000" />
+            </View>
+          ) : null}
+        </View>
+        <TextField label="Minimum order (Rs, optional)" mode="numeric" value={f.minOrder} onChangeText={v => set('minOrder', v)} placeholder="3000" />
+      </SectionCard>
+
+      <SectionCard title="When and how often" icon="calendar-outline" invalid={!!(errors.startsAt || errors.endsAt || errors.usageLimit || errors.perCustomerLimit)}>
+        <View style={styles.two}>
+          <View style={styles.half}>
+            <DateField label="Starts" value={f.startsAt} onChange={v => set('startsAt', v)} error={errors.startsAt} />
+          </View>
+          <View style={styles.half}>
+            <DateField label="Ends" value={f.endsAt} onChange={v => set('endsAt', v)} min={f.startsAt || undefined} error={errors.endsAt} />
+          </View>
+        </View>
+        <View style={styles.two}>
+          <View style={styles.half}>
+            <TextField label="Uses in all" mode="numeric" value={f.usageLimit} onChangeText={v => set('usageLimit', v)} error={errors.usageLimit} placeholder="No limit" />
+          </View>
+          <View style={styles.half}>
+            <TextField label="Per customer" mode="numeric" value={f.perCustomerLimit} onChangeText={v => set('perCustomerLimit', v)} error={errors.perCustomerLimit} placeholder="1" />
+          </View>
+        </View>
+        <ToggleRow label="Active" helper="Turn it off to pause it; you can turn it on again." value={f.isActive} onChange={v => set('isActive', v)} />
+      </SectionCard>
+
+      {s.id && f.isActive ? (
+        <View style={styles.center}>
+          <TextAction label="Turn off this coupon" tone="danger" onPress={() => void turnOff()} />
+        </View>
+      ) : null}
     </ScreenShell>
   );
 };

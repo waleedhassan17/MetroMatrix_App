@@ -14,7 +14,7 @@ import { useBack } from '../../hooks/useBack';
 import { CITIES } from '../../models/businessModel';
 import { validateStoreSettings } from '../../models/shopping/storeModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, ChoiceChip, InlineNotice, ScreenShell, SkeletonLines, TextAction, TextField, ToggleRow } from '../../Custom-Components/index';
+import { AppText, Button, ChoiceChip, InlineNotice, ScreenShell, SectionCard, SkeletonLines, TextAction, TextField, ToggleRow } from '../../Custom-Components/index';
 import type { StorePartnerStackParamList, StoreSettings } from '../../models';
 import { haptics } from '../../utils/haptics/haptics';
 import { parseRupees } from '../../utils/money/money';
@@ -49,7 +49,11 @@ const StoreSettingsContent: React.FC<Props> = ({ navigation }) => {
   if (!f) {
     return (
       <ScreenShell title="Settings" onBack={back}>
-        {s.status === 'failed' ? <InlineNotice message={s.error.message} /> : <SkeletonLines lines={8} />}
+        {s.status === 'failed' ? (
+          <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadStoreSettingsAsync()) }} />
+        ) : (
+          <SkeletonLines lines={8} />
+        )}
       </ScreenShell>
     );
   }
@@ -75,8 +79,7 @@ const StoreSettingsContent: React.FC<Props> = ({ navigation }) => {
     <ScreenShell title="Settings" onBack={back} footer={<Button label="Save settings" onPress={() => void save()} loading={s.saveStatus === 'loading'} fullWidth />}>
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
 
-      <Card>
-        <AppText variant="title">Delivery</AppText>
+      <SectionCard title="Delivery" icon="car-outline">
         <ToggleRow label="Deliver anywhere in Pakistan" value={f.nationwide} onChange={v => set('nationwide', v)} />
         {!f.nationwide ? (
           <>
@@ -116,10 +119,9 @@ const StoreSettingsContent: React.FC<Props> = ({ navigation }) => {
             <TextField label="(max days)" mode="numeric" value={String(f.dispatchMaxDays)} onChangeText={t => set('dispatchMaxDays', num(t))} error={errors.dispatch} />
           </View>
         </View>
-      </Card>
+      </SectionCard>
 
-      <Card>
-        <AppText variant="title">Returns</AppText>
+      <SectionCard title="Returns" icon="return-down-back-outline">
         <TextField
           label="Days to return after delivery"
           mode="numeric"
@@ -128,10 +130,9 @@ const StoreSettingsContent: React.FC<Props> = ({ navigation }) => {
           error={errors.returnWindowDays}
           helper="0 means no returns. At most 30."
         />
-      </Card>
+      </SectionCard>
 
-      <Card>
-        <AppText variant="title">Payment</AppText>
+      <SectionCard title="Payment" icon="wallet-outline">
         <ToggleRow label="Cash on delivery" helper="The rider collects the cash." value={f.codEnabled} onChange={v => set('codEnabled', v)} />
         {errors.codEnabled ? <InlineNotice message={errors.codEnabled} action={{ label: 'Add an account', onPress: () => navigation.navigate('PaymentAccounts') }} /> : null}
         {f.codEnabled ? (
@@ -146,10 +147,9 @@ const StoreSettingsContent: React.FC<Props> = ({ navigation }) => {
           />
         ) : null}
         <TextAction label="Accounts customers pay by transfer" icon="card-outline" onPress={() => navigation.navigate('PaymentAccounts')} />
-      </Card>
+      </SectionCard>
 
-      <Card>
-        <AppText variant="title">Take a break</AppText>
+      <SectionCard title="Take a break" icon="pause-circle-outline">
         <ToggleRow label="Pause my store" helper="Customers can browse but not order." value={f.isPaused} onChange={v => set('isPaused', v)} />
         {f.isPaused ? (
           <TextField
@@ -160,7 +160,7 @@ const StoreSettingsContent: React.FC<Props> = ({ navigation }) => {
             error={errors.pauseMessage}
           />
         ) : null}
-      </Card>
+      </SectionCard>
     </ScreenShell>
   );
 };

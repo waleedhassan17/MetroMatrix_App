@@ -17,10 +17,11 @@ import { ServiceScope, StoreBrandScope, useStyles, useTheme, type Theme } from '
 import {
   AppText,
   Button,
-  Card,
+  Divider,
   IonIcon,
   InlineNotice,
   ScreenShell,
+  SectionCard,
   SkeletonLines,
   StoreMark,
   TextAction,
@@ -66,7 +67,11 @@ const StoreProfileContent: React.FC<Props> = () => {
   if (!f || !s.profile) {
     return (
       <ScreenShell title="Store profile" onBack={back}>
-        {s.status === 'failed' ? <InlineNotice message={s.error.message} /> : <SkeletonLines lines={8} />}
+        {s.status === 'failed' ? (
+          <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadStoreProfileAsync()) }} />
+        ) : (
+          <SkeletonLines lines={8} />
+        )}
       </ScreenShell>
     );
   }
@@ -98,25 +103,30 @@ const StoreProfileContent: React.FC<Props> = () => {
       footer={<Button label="Save profile" onPress={() => void save()} loading={s.saveStatus === 'loading'} disabled={!!s.uploading} fullWidth />}>
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
 
-      <Pressable onPress={() => void pick('cover')} style={styles.cover} accessibilityRole="button" accessibilityLabel="Change the cover photo">
-        {f.coverUrl ? <Image source={{ uri: cdn(f.coverUrl, { w: size.storeCard * 1.5 }) ?? undefined }} style={styles.coverImage} contentFit="cover" /> : null}
-        {!f.coverUrl ? <IonIcon name="image-outline" size="xl" color={colors.inkFaint} /> : null}
-      </Pressable>
-      <TextAction label={s.uploading === 'cover' ? 'Uploading the cover…' : f.coverUrl ? 'Change the cover' : 'Add a cover photo'} icon="image-outline" onPress={() => void pick('cover')} disabled={!!s.uploading} />
+      <SectionCard title="Cover and logo" subtitle="The top of your store page." icon="image-outline">
+        <Pressable onPress={() => void pick('cover')} style={styles.cover} accessibilityRole="button" accessibilityLabel="Change the cover photo">
+          {f.coverUrl ? <Image source={{ uri: cdn(f.coverUrl, { w: size.storeCard * 1.5 }) ?? undefined }} style={styles.coverImage} contentFit="cover" /> : null}
+          {!f.coverUrl ? <IonIcon name="image-outline" size="xl" color={colors.inkFaint} /> : null}
+        </Pressable>
+        <TextAction
+          label={s.uploading === 'cover' ? 'Uploading the cover…' : f.coverUrl ? 'Change the cover' : 'Add a cover photo'}
+          icon="image-outline"
+          onPress={() => void pick('cover')}
+          disabled={!!s.uploading}
+        />
+        <Divider />
+        <View style={styles.row}>
+          <StoreMark store={{ name: s.profile.name, logoUrl: f.logoUrl, brandColor: f.brandColor, onBrandColor: f.onBrandColor }} />
+          <TextAction label={s.uploading === 'logo' ? 'Uploading…' : f.logoUrl ? 'Change logo' : 'Add a logo'} icon="camera-outline" onPress={() => void pick('logo')} disabled={!!s.uploading} />
+        </View>
+      </SectionCard>
 
-      <View style={styles.row}>
-        <StoreMark store={{ name: s.profile.name, logoUrl: f.logoUrl, brandColor: f.brandColor, onBrandColor: f.onBrandColor }} />
-        <TextAction label={s.uploading === 'logo' ? 'Uploading…' : f.logoUrl ? 'Change logo' : 'Add a logo'} icon="camera-outline" onPress={() => void pick('logo')} disabled={!!s.uploading} />
-      </View>
+      <SectionCard title="About" icon="document-text-outline" invalid={!!(errors.tagline || errors.about)}>
+        <TextField label="Tagline" value={f.tagline} onChangeText={v => dispatch(setProfileField({ field: 'tagline', value: v }))} error={errors.tagline} maxLength={80} placeholder="Hand-finished eastern wear from Lahore" />
+        <TextField label="About your store" value={f.about} onChangeText={v => dispatch(setProfileField({ field: 'about', value: v }))} error={errors.about} multiline maxLength={1200} />
+      </SectionCard>
 
-      <TextField label="Tagline" value={f.tagline} onChangeText={v => dispatch(setProfileField({ field: 'tagline', value: v }))} error={errors.tagline} maxLength={80} placeholder="Hand-finished eastern wear from Lahore" />
-      <TextField label="About your store" value={f.about} onChangeText={v => dispatch(setProfileField({ field: 'about', value: v }))} error={errors.about} multiline maxLength={1200} />
-
-      <Card>
-        <AppText variant="title">Brand colour</AppText>
-        <AppText variant="small" tone="muted">
-          Your store page, buttons and product pages use it.
-        </AppText>
+      <SectionCard title="Brand colour" subtitle="Your store page, buttons and product pages use it." icon="color-palette-outline" invalid={!!errors.brandColor}>
         <View style={styles.swatches}>
           {BRAND_PRESETS.map(hex => (
             <Pressable
@@ -138,19 +148,26 @@ const StoreProfileContent: React.FC<Props> = () => {
             </AppText>
           </View>
         </StoreBrandScope>
-      </Card>
+      </SectionCard>
 
-      <TextField
-        label="Phone (optional)"
-        mode="phone"
-        value={(f.phone ?? '').replace(/^\+92/, '')}
-        onChangeText={v => dispatch(setProfileField({ field: 'phone', value: v ? `+92${v}` : null }))}
-        placeholder="300 1112233"
-        helper="Customers see a Call button only if you add one."
-      />
-      <TextField label="WhatsApp" mode="phone" value={(f.whatsapp ?? '').replace(/^\+92/, '')} onChangeText={v => dispatch(setProfileField({ field: 'whatsapp', value: v ? `+92${v}` : null }))} placeholder="300 1112233" />
-      <TextField label="Instagram" value={f.socials.instagram ?? ''} onChangeText={v => dispatch(setSocial({ key: 'instagram', value: v }))} autoCapitalize="none" placeholder="@yourstore" />
-      <TextField label="Website" value={f.socials.website ?? ''} onChangeText={v => dispatch(setSocial({ key: 'website', value: v }))} autoCapitalize="none" keyboardType="url" placeholder="yourstore.pk" />
+      <SectionCard title="Contact" subtitle="Customers see a Call button only if you add a phone." icon="call-outline">
+        <TextField
+          label="Phone (optional)"
+          mode="phone"
+          value={(f.phone ?? '').replace(/^\+92/, '')}
+          onChangeText={v => dispatch(setProfileField({ field: 'phone', value: v ? `+92${v}` : null }))}
+          placeholder="300 1112233"
+        />
+        <TextField
+          label="WhatsApp"
+          mode="phone"
+          value={(f.whatsapp ?? '').replace(/^\+92/, '')}
+          onChangeText={v => dispatch(setProfileField({ field: 'whatsapp', value: v ? `+92${v}` : null }))}
+          placeholder="300 1112233"
+        />
+        <TextField label="Instagram" value={f.socials.instagram ?? ''} onChangeText={v => dispatch(setSocial({ key: 'instagram', value: v }))} autoCapitalize="none" placeholder="@yourstore" />
+        <TextField label="Website" value={f.socials.website ?? ''} onChangeText={v => dispatch(setSocial({ key: 'website', value: v }))} autoCapitalize="none" keyboardType="url" placeholder="yourstore.pk" />
+      </SectionCard>
     </ScreenShell>
   );
 };

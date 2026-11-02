@@ -5,14 +5,15 @@
 // whether it works right now. Customers see active ones at checkout.
 
 import React, { useCallback } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { COUPON_STATUS_LABEL, couponValueLabel } from '../../models/shopping/couponFormModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, EmptyState, InlineNotice, ScreenShell, SkeletonLines, StatusPill } from '../../Custom-Components/index';
+import { Button, EmptyState, InlineNotice, RowCardsSkeleton, ScreenShell } from '../../Custom-Components/index';
+import { RowCard } from '../../Components/admin/AdminParts';
 import type { Coupon, StorePartnerStackParamList } from '../../models';
 import { formatDate } from '../../utils/dates/dates';
 import { formatPKR } from '../../utils/money/money';
@@ -23,7 +24,6 @@ type Props = NativeStackScreenProps<StorePartnerStackParamList, 'Coupons'>;
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
     list: { gap: space.s12, paddingBottom: space.s40 },
-    head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   });
 
 const usage = (c: Coupon) => `${c.usedCount}${c.usageLimit ? ` of ${c.usageLimit}` : ''} used`;
@@ -50,6 +50,7 @@ const CouponsContent: React.FC<Props> = ({ navigation }) => {
   return (
     <ScreenShell
       title="Coupons"
+      subtitle="Codes customers use at checkout"
       onBack={back}
       scroll={false}
       footer={<Button label="New coupon" leftIcon="add" onPress={() => navigation.navigate('CouponForm')} fullWidth />}>
@@ -60,28 +61,22 @@ const CouponsContent: React.FC<Props> = ({ navigation }) => {
         renderItem={({ item: c }) => {
           const st = COUPON_STATUS_LABEL[c.status];
           return (
-            <Card onPress={() => navigation.navigate('CouponForm', { id: c.id })} accessibilityLabel={`${c.code}, ${couponValueLabel(c)}, ${st.label}`}>
-              <View style={styles.head}>
-                <AppText variant="title">{c.code}</AppText>
-                <StatusPill label={st.label} tone={st.tone} />
-              </View>
-              <AppText variant="body">
-                {couponValueLabel(c)}
-                {c.minOrder ? ` on ${formatPKR(c.minOrder)} or more` : ''}
-              </AppText>
-              <AppText variant="small" tone="muted">
-                {couponWindow(c)} · {usage(c)}
-              </AppText>
-            </Card>
+            <RowCard
+              mark={{ icon: 'pricetag-outline', tint: 'rose' }}
+              title={c.code}
+              lines={[`${couponValueLabel(c)}${c.minOrder ? ` on ${formatPKR(c.minOrder)} or more` : ''}`, `${couponWindow(c)} · ${usage(c)}`]}
+              pill={{ label: st.label, tone: st.tone }}
+              onPress={() => navigation.navigate('CouponForm', { id: c.id })}
+            />
           );
         }}
         ListEmptyComponent={
           s.status === 'loading' ? (
-            <SkeletonLines lines={5} />
+            <RowCardsSkeleton count={3} />
           ) : s.status === 'failed' ? (
             <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadCouponsListAsync()) }} />
           ) : (
-            <EmptyState icon="tag" title="No coupons yet" body="A code like EID15 brings customers back. You choose the discount, the minimum and the dates." />
+            <EmptyState ion="pricetag-outline" title="No coupons yet" body="A code like EID15 brings customers back. You choose the discount, the minimum and the dates." />
           )
         }
       />

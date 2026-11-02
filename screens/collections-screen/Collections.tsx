@@ -11,7 +11,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Divider, EmptyState, IconButton, InlineNotice, ScreenShell, Sheet, SkeletonLines, TextAction, TextField } from '../../Custom-Components/index';
+import { AppText, Button, Card, Divider, EmptyState, IconButton, InlineNotice, RowCardsSkeleton, ScreenShell, Sheet, TextAction, TextField } from '../../Custom-Components/index';
 import type { Collection, StorePartnerStackParamList } from '../../models';
 import { Alert } from '../../utils/alert/alert';
 import {
@@ -27,7 +27,7 @@ type Props = NativeStackScreenProps<StorePartnerStackParamList, 'Collections'>;
 
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
-    row: { flexDirection: 'row', alignItems: 'center', gap: space.s4, paddingVertical: space.s8 },
+    row: { flexDirection: 'row', alignItems: 'center', gap: space.s4, paddingVertical: space.s12 },
     text: { flex: 1, gap: space.s4 },
     actions: { flexDirection: 'row', gap: space.s16 },
   });
@@ -68,13 +68,15 @@ const CollectionsContent: React.FC<Props> = () => {
       subtitle="The shelves on your store page, in this order."
       onBack={back}
       footer={<Button label="New collection" leftIcon="add" onPress={() => dispatch(openCollectionSheet(null))} fullWidth />}>
-      {s.error.message && s.editing === null ? <InlineNotice message={s.error.message} /> : null}
+      {s.error.message && s.editing === null ? (
+        <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadCollectionsAsync()) }} />
+      ) : null}
       {s.status === 'loading' && !list.length ? (
-        <SkeletonLines lines={5} />
+        <RowCardsSkeleton count={3} />
       ) : !list.length ? (
-        <EmptyState icon="folder" title="No collections yet" body="Group products the way you'd arrange a shop window: new arrivals, Eid edit, basics." />
+        <EmptyState ion="albums-outline" title="No collections yet" body="Group products the way you'd arrange a shop window: new arrivals, Eid edit, basics." />
       ) : (
-        <Card>
+        <Card padded="horizontal">
           {list.map((c, i) => (
             <View key={c.id}>
               {i > 0 ? <Divider /> : null}

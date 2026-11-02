@@ -14,7 +14,7 @@ import { useBack } from '../../hooks/useBack';
 import { usePagedList } from '../../hooks/usePagedList';
 import { fetchPartnerReviews } from '../../networks/shopping/partner/partnerReviews';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, ChoiceChip, Divider, EmptyState, InlineNotice, ScreenShell, Sheet, SkeletonLines, TextAction, TextField } from '../../Custom-Components/index';
+import { AppText, Button, Card, ChoiceChip, Divider, EmptyState, InlineNotice, RowCardsSkeleton, ScreenShell, Sheet, TextAction, TextField } from '../../Custom-Components/index';
 import { ReviewItem } from '../../Components/shopping/ReviewItem';
 import type { PartnerReview, StorePartnerStackParamList } from '../../models';
 import { cdn } from '../../utils/cdn/cdn';
@@ -23,11 +23,13 @@ import { partnerReviewPageSerializer } from '../../serializers/shopping/partnerS
 
 type Props = NativeStackScreenProps<StorePartnerStackParamList, 'StoreReviews'>;
 
-const makeStyles = ({ colors, space, size, radius }: Theme) =>
+const makeStyles = ({ colors, space, size, radius, gutter }: Theme) =>
   StyleSheet.create({
-    chips: { gap: space.s8 },
+    chipRail: { marginHorizontal: -gutter },
+    chips: { gap: space.s8, paddingHorizontal: gutter },
     list: { paddingBottom: space.s40 },
-    product: { flexDirection: 'row', alignItems: 'center', gap: space.s8, paddingTop: space.s16 },
+    gap: { height: space.s12 },
+    product: { flexDirection: 'row', alignItems: 'center', gap: space.s8 },
     thumb: { width: size.storeLogoSmall, height: size.storeLogoSmall, borderRadius: radius.sm, backgroundColor: colors.surfaceSunk },
   });
 
@@ -63,46 +65,51 @@ const StoreReviewsContent: React.FC<Props> = () => {
   };
 
   return (
-    <ScreenShell title="Reviews" onBack={back} scroll={false}>
-      <View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+    <ScreenShell
+      title="Reviews"
+      subtitle="What buyers said, and your replies"
+      onBack={back}
+      scroll={false}
+      headerContent={
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRail} contentContainerStyle={styles.chips}>
           <ChoiceChip label="Not replied" selected={s.unrepliedOnly} onPress={() => dispatch(setUnrepliedOnly(!s.unrepliedOnly))} />
           {[5, 4, 3, 2, 1].map(n => (
             <ChoiceChip key={n} label={`${n} stars`} icon="star" selected={s.rating === n} onPress={() => dispatch(setReviewsRating(s.rating === n ? null : n))} />
           ))}
         </ScrollView>
-      </View>
+      }>
       <FlatList
         data={list.rows}
         keyExtractor={r => r.id}
         contentContainerStyle={styles.list}
-        ItemSeparatorComponent={Divider}
+        ItemSeparatorComponent={() => <View style={styles.gap} />}
         onEndReached={list.loadMore}
         onRefresh={list.refresh}
         refreshing={list.isRefreshing}
         renderItem={({ item: r }) => (
-          <View>
+          <Card>
             <View style={styles.product}>
-              {r.productImage ? <Image source={{ uri: cdn(r.productImage, { w: size.storeLogoSmall }) ?? undefined }} style={styles.thumb} contentFit="cover" /> : null}
+              {r.productImage ? <Image source={{ uri: cdn(r.productImage, { w: size.storeLogoSmall * 2 }) ?? undefined }} style={styles.thumb} contentFit="cover" /> : null}
               <AppText variant="small" tone="muted" numberOfLines={1}>
                 {r.productName}
               </AppText>
             </View>
+            <Divider />
             <ReviewItem review={r} storeName="You" />
             {!r.reply ? (
               <TextAction label="Reply" icon="chatbubble-outline" onPress={() => dispatch(openReply({ id: r.id, body: '' }))} />
             ) : canEdit(r) ? (
-              <TextAction label="Edit reply" onPress={() => dispatch(openReply({ id: r.id, body: r.reply!.body }))} />
+              <TextAction label="Edit reply" icon="create-outline" onPress={() => dispatch(openReply({ id: r.id, body: r.reply!.body }))} />
             ) : null}
-          </View>
+          </Card>
         )}
         ListEmptyComponent={
           list.isLoading ? (
-            <SkeletonLines lines={6} />
+            <RowCardsSkeleton count={3} />
           ) : list.error ? (
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
-            <EmptyState icon="message-circle" title="No reviews here" body="Customers review items after delivery." />
+            <EmptyState ion="chatbubbles-outline" title="No reviews here" body="Customers review items after delivery." />
           )
         }
       />

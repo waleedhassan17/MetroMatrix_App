@@ -75,7 +75,7 @@ const OrderLookup: React.FC<Props> = ({ route }) => {
             return (
               <Card key={o.id}>
                 <View style={styles.head}>
-                  <StoreMark store={o.store} small />
+                  <StoreMark store={o.store} size="sm" />
                   <View style={styles.grow}>
                     <AppText variant="title">{o.store.name}</AppText>
                     <AppText variant="caption" tone="muted">

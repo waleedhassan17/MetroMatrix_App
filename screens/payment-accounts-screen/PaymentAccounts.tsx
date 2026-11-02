@@ -12,7 +12,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { PAYMENT_ACCOUNT_KINDS, accountKindLabel, validatePaymentAccount } from '../../models/shopping/storeModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, ChoiceChip, EmptyState, InlineNotice, ScreenShell, Sheet, SkeletonLines, StatusPill, TextAction, TextField } from '../../Custom-Components/index';
+import { AppText, Button, ChoiceChip, EmptyState, InlineNotice, ScreenShell, SectionCard, Sheet, SkeletonLines, StatusPill, TextAction, TextField } from '../../Custom-Components/index';
 import type { PaymentAccount, StorePartnerStackParamList } from '../../models';
 import { Alert } from '../../utils/alert/alert';
 import {
@@ -29,7 +29,6 @@ type Props = NativeStackScreenProps<StorePartnerStackParamList, 'PaymentAccounts
 
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
-    head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     actions: { flexDirection: 'row', gap: space.s16 },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
   });
@@ -87,18 +86,20 @@ const PaymentAccountsContent: React.FC<Props> = () => {
       subtitle={`${who} who pay by transfer send money here, straight to you.`}
       onBack={back}
       footer={<Button label="Add an account" leftIcon="add" onPress={() => dispatch(openAccountSheet(null))} fullWidth />}>
-      {s.error.message && s.editing === null ? <InlineNotice message={s.error.message} /> : null}
+      {s.error.message && s.editing === null ? (
+        <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadAccountsAsync()) }} />
+      ) : null}
       {s.status === 'loading' && !s.accounts.length ? (
         <SkeletonLines lines={4} />
       ) : !s.accounts.length ? (
         <EmptyState icon="credit-card" title="No accounts yet" body={EMPTY_BODY[service ?? 'shopping']} />
       ) : (
         s.accounts.map(a => (
-          <Card key={a.id}>
-            <View style={styles.head}>
-              <AppText variant="title">{accountKindLabel(a.kind)}</AppText>
-              <StatusPill label={a.isActive ? `Shown to ${who.toLowerCase()}` : 'Off'} tone={a.isActive ? 'success' : 'neutral'} />
-            </View>
+          <SectionCard
+            key={a.id}
+            title={accountKindLabel(a.kind)}
+            icon="card-outline"
+            action={<StatusPill label={a.isActive ? `Shown to ${who.toLowerCase()}` : 'Off'} tone={a.isActive ? 'success' : 'neutral'} />}>
             <AppText variant="bodyStrong">{a.title}</AppText>
             <AppText variant="body" tone="muted">
               {masked(a.number)}
@@ -109,7 +110,7 @@ const PaymentAccountsContent: React.FC<Props> = () => {
               <TextAction label={a.isActive ? 'Turn off' : 'Turn on'} onPress={() => void dispatch(changeAccountAsync({ kind: 'toggle', account: a }))} disabled={!!s.busy} />
               <TextAction label="Remove" tone="danger" onPress={() => remove(a)} disabled={!!s.busy} />
             </View>
-          </Card>
+          </SectionCard>
         ))
       )}
 

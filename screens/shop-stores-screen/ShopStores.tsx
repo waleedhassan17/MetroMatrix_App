@@ -57,7 +57,7 @@ const ShopStores: React.FC<Props> = () => {
         renderItem={({ item: st }) => (
           <Card>
             <View style={styles.row}>
-              <StoreMark store={st} small />
+              <StoreMark store={st} size="sm" />
               <View style={styles.grow}>
                 <ToggleRow label={st.name} helper={`${st.city} · ${st.productCount} products${st.isPaused ? ' · paused' : ''}`} value={st.isFeatured} onChange={v => void toggle(st.id, v)} disabled={s.busy === st.id} />
               </View>

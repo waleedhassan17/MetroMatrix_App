@@ -59,13 +59,11 @@ export type StoreMarkSize = 'sm' | 'md' | 'lg' | 'hero';
 export const StoreMark: React.FC<{
   store: Pick<StoreSummary, 'name' | 'logoUrl' | 'brandColor'> & { onBrandColor?: string | null };
   size?: StoreMarkSize;
-  /** @deprecated use size="sm" */
-  small?: boolean;
-}> = ({ store, size: markSize, small }) => {
+}> = ({ store, size: markSize = 'lg' }) => {
   const styles = useStyles(makeStyles);
   const { size, type } = useTheme();
   const palette = storePalette(store.brandColor, store.onBrandColor);
-  const which: StoreMarkSize = markSize ?? (small ? 'sm' : 'lg');
+  const which = markSize;
   const side = { sm: size.storeLogoSmall, md: size.logoMark, lg: size.storeLogo, hero: size.brandRingInner }[which];
   const initials = which === 'sm' ? type.micro : which === 'md' ? type.chip : type.title;
   return (
