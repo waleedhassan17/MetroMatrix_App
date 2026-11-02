@@ -1,12 +1,13 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — A store order (the partner's side)
 // ═══════════════════════════════════════════════════════
-// The next step is the one big button: Confirm → Mark packed → Ship (courier
-// and tracking) → Mark delivered. Only what the server allows now is shown.
-// A transfer must be checked in the store's own account before it ships;
-// a cancellation the customer asked for is approved here, and a refund that
-// is due is recorded once sent. The customer is a call or a WhatsApp away;
-// the note is for the store only.
+// The FYP's process-order page, as titled cards: where it stands (ONE pill),
+// a transfer to check, a refund to record, who it ships to and how they pay,
+// the items and what the customer pays, shipping and notes, and the journey.
+// The next step is the one big button, pinned at the foot: Confirm → Mark
+// packed → Ship (courier and tracking) → Mark delivered (or, for a transfer
+// waiting, "It's in my account"). Only what the server allows now is shown.
+// The customer is a call or a WhatsApp away; the note is for the store only.
 
 import React, { useCallback, useState } from 'react';
 import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
@@ -17,22 +18,24 @@ import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { formatAddress } from '../../models/addressModel';
-import { COURIERS, ORDER_STATUS, PAYMENT_METHOD_LABEL, PAYMENT_STATUS } from '../../models/shopping/orderStatusModel';
+import { COURIERS, PAYMENT_METHOD_LABEL, PAYMENT_STATUS, partnerHeadline } from '../../models/shopping/orderStatusModel';
 import { whatsappUrl } from '../../models/shopping/storePolicyModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import {
   AppText,
+  BagGroupSkeleton,
   Button,
-  Card,
   ChoiceChip,
   Divider,
   ImageViewer,
   InlineNotice,
   IonIcon,
+  LineItemRow,
+  MoneyRows,
   OrderTimeline,
   ScreenShell,
+  SectionCard,
   Sheet,
-  SkeletonLines,
   StatusPill,
   TextAction,
   TextField,
@@ -89,19 +92,15 @@ const DONE: Partial<Record<PartnerOrderAction, string>> = {
 
 const makeStyles = ({ colors, space, size, radius }: Theme) =>
   StyleSheet.create({
-    pills: { flexDirection: 'row', gap: space.s8, flexWrap: 'wrap' },
-    row: { flexDirection: 'row', justifyContent: 'space-between', gap: space.s12 },
-    item: { flexDirection: 'row', gap: space.s12, alignItems: 'center' },
-    itemWrap: { gap: space.s12 },
-    thumb: { width: size.thumb, aspectRatio: size.productAspect, borderRadius: radius.sm, backgroundColor: colors.surfaceSunk },
+    row: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
     grow: { flex: 1, gap: space.s4 },
     contact: { flexDirection: 'row', gap: space.s16, flexWrap: 'wrap' },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
     proof: { width: size.tile * 2, aspectRatio: size.productAspect, borderRadius: radius.md, backgroundColor: colors.surfaceSunk },
     scroll: { gap: space.s16, paddingBottom: space.s40 },
-    actions: { gap: space.s8 },
     two: { flexDirection: 'row', gap: space.s12 },
     half: { flex: 1 },
+    cancel: { alignSelf: 'center' },
   });
 
 const StoreOrderDetail: React.FC<Props> = props => (
@@ -114,7 +113,7 @@ const StoreOrderDetailContent: React.FC<Props> = ({ route }) => {
   const { back } = useBack({ name: 'StoreTabs', params: { screen: 'OrdersTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { size, service } = useTheme();
+  const { size, service, rowTint } = useTheme();
   const { id } = route.params;
   const e = useAppSelector(s => selectStoreOrder(s, id));
   const ui = useAppSelector(selectStoreOrderUi);
@@ -143,6 +142,8 @@ const StoreOrderDetailContent: React.FC<Props> = ({ route }) => {
 
   const next = o ? NEXT.find(n => o.allowedActions.includes(n.action)) : undefined;
   const can = (a: PartnerOrderAction) => !!o?.allowedActions.includes(a);
+  // A transfer waiting to be checked comes first at the foot.
+  const checkProof = !!o && o.paymentStatus === 'proof_submitted' && !!o.paymentProof && can('confirm_payment');
 
   const onNext = () => {
     if (!o || !next) return;
@@ -153,18 +154,16 @@ const StoreOrderDetailContent: React.FC<Props> = ({ route }) => {
   };
 
   const renderBody = (order: PartnerOrderDetail) => {
-    const status = ORDER_STATUS[order.status];
+    const head = partnerHeadline(order);
     const pay = PAYMENT_STATUS[order.paymentStatus];
     const proof = order.paymentProof;
     return (
       <>
-        <View style={styles.pills}>
-          <StatusPill label={status.label} tone={status.tone} />
-          <StatusPill label={pay.label} tone={pay.tone} />
-        </View>
-        <AppText variant="small" tone="muted">
-          Placed {formatDateTime(order.createdAt)} · {PAYMENT_METHOD_LABEL[order.paymentMethod]}
-        </AppText>
+        <SectionCard title="Order status" subtitle={`Placed ${formatDateTime(order.createdAt)}`} action={<StatusPill label={head.label} tone={head.tone} />}>
+          <AppText variant="small" tone="muted">
+            {head.description}
+          </AppText>
+        </SectionCard>
         {ui.actionError.message ? <InlineNotice message={ui.actionError.message} /> : null}
         {order.status === 'cancellation_requested' ? (
           <InlineNotice
@@ -176,34 +175,33 @@ const StoreOrderDetailContent: React.FC<Props> = ({ route }) => {
         {order.shipBlockedReason ? <InlineNotice tone="warning" title="Not ready to ship" message={order.shipBlockedReason} /> : null}
 
         {order.paymentStatus === 'proof_submitted' && proof ? (
-          <Card selected>
-            <AppText variant="title">Check this transfer</AppText>
-            <AppText variant="body">
-              {formatPKR(order.total)} · transaction <AppText variant="bodyStrong">{proof.transactionId}</AppText>
-            </AppText>
-            <AppText variant="small" tone="muted">
-              Sent {formatDateTime(proof.submittedAt)}. Confirm only once you see it in your own account.
-            </AppText>
-            {proof.imageUrl ? (
-              <Pressable onPress={() => setProofOpen(true)} accessibilityRole="imagebutton" accessibilityLabel="Open the receipt">
-                <Image source={{ uri: cdn(proof.imageUrl, { w: size.tile * 2 }) ?? undefined }} style={styles.proof} contentFit="cover" />
-              </Pressable>
-            ) : null}
-            <View style={styles.actions}>
-              <Button label="It’s in my account" leftIcon="checkmark-circle-outline" onPress={() => void run({ action: 'confirm_payment' })} loading={ui.busy === 'confirm_payment'} fullWidth />
-              <Button label="I can’t find it" variant="secondary" onPress={() => dispatch(openStoreOrderSheet('reject_payment'))} fullWidth />
+          <SectionCard title="Check this transfer" subtitle="Confirm only once you see it in your own account." icon="card-outline" tint={rowTint.amber} selected>
+            <View style={styles.row}>
+              <View style={styles.grow}>
+                <AppText variant="h2">{formatPKR(order.total)}</AppText>
+                <AppText variant="small" tone="muted">
+                  Transaction <AppText variant="small">{proof.transactionId}</AppText>
+                </AppText>
+                <AppText variant="caption" tone="muted">
+                  Sent {formatDateTime(proof.submittedAt)}
+                </AppText>
+              </View>
+              {proof.imageUrl ? (
+                <Pressable onPress={() => setProofOpen(true)} accessibilityRole="imagebutton" accessibilityLabel="Open the receipt">
+                  <Image source={{ uri: cdn(proof.imageUrl, { w: size.tile * 2 }) ?? undefined }} style={styles.proof} contentFit="cover" />
+                </Pressable>
+              ) : null}
             </View>
-          </Card>
+          </SectionCard>
         ) : null}
 
-        {next ? <Button label={next.label} onPress={onNext} loading={ui.busy === next.action} fullWidth /> : null}
-
         {can('refund') ? (
-          <Card selected>
-            <AppText variant="title">Record the refund you sent</AppText>
-            <AppText variant="small" tone="muted">
-              {order.customer.name} paid {formatPKR(order.total)} before the order was cancelled. Send it back, then note it here.
-            </AppText>
+          <SectionCard
+            title="Record the refund you sent"
+            subtitle={`${order.customer.name} paid ${formatPKR(order.total)} before the order was cancelled. Send it back, then note it here.`}
+            icon="cash-outline"
+            tint={rowTint.amber}
+            selected>
             <View style={styles.two}>
               <View style={styles.half}>
                 <TextField label="Amount (Rs)" mode="numeric" value={ui.refundAmount} onChangeText={t => dispatch(setOrderRefundAmount(t))} helper={`Up to ${formatPKR(order.total)}`} />
@@ -219,73 +217,67 @@ const StoreOrderDetailContent: React.FC<Props> = ({ route }) => {
               loading={ui.busy === 'refund'}
               fullWidth
             />
-          </Card>
+          </SectionCard>
         ) : null}
 
-        <Card>
-          <AppText variant="title">{order.customer.name}</AppText>
-          <AppText variant="small" tone="muted">
-            {formatAddress(order.address)}
-            {order.address.landmark ? ` · ${order.address.landmark}` : ''}
-          </AppText>
-          <AppText variant="small" tone="muted">
-            {formatPkPhoneForDisplay(order.customer.phone)}
-          </AppText>
+        <SectionCard title="Ship to" icon="location-outline" tint={rowTint.blue}>
+          <View style={styles.grow}>
+            <AppText variant="bodyStrong">{order.customer.name}</AppText>
+            <AppText variant="small" tone="muted">
+              {formatAddress(order.address)}
+              {order.address.landmark ? ` · ${order.address.landmark}` : ''}
+            </AppText>
+            <AppText variant="small" tone="muted">
+              {formatPkPhoneForDisplay(order.customer.phone)}
+            </AppText>
+          </View>
           <View style={styles.contact}>
             <TextAction label="Call" icon="call-outline" onPress={() => void Linking.openURL(`tel:${order.customer.phone}`)} />
-            <TextAction label="WhatsApp" icon="logo-whatsapp" onPress={() => void Linking.openURL(whatsappUrl(order.customer.phone, `Hi ${order.customer.name}, about your order ${order.code}.`))} />
+            <TextAction
+              label="WhatsApp"
+              icon="logo-whatsapp"
+              onPress={() => void Linking.openURL(whatsappUrl(order.customer.phone, `Hi ${order.customer.name}, about your order ${order.code}.`))}
+            />
           </View>
-          {order.note ? (
-            <InlineNotice tone="info" title="Note from the customer" message={order.note} />
-          ) : null}
-        </Card>
-
-        <Card>
-          {order.items.map((it, i) => (
-            <View key={it.id} style={styles.itemWrap}>
-              {i > 0 ? <Divider /> : null}
-              <View style={styles.item}>
-                {it.imageUrl ? (
-                  <Image source={{ uri: cdn(it.imageUrl, { w: size.thumb, h: size.thumb / size.productAspect }) ?? undefined }} style={styles.thumb} contentFit="cover" />
-                ) : (
-                  <View style={styles.thumb} />
-                )}
-                <View style={styles.grow}>
-                  <AppText variant="small" numberOfLines={2}>
-                    {it.name}
-                  </AppText>
-                  <AppText variant="caption" tone="muted">
-                    {[it.variantLabel, `${it.quantity} × ${formatPKR(it.unitPrice)}`].filter(Boolean).join(' · ')}
-                  </AppText>
-                </View>
-                <AppText variant="bodyStrong">{formatPKR(it.lineTotal)}</AppText>
-              </View>
-            </View>
-          ))}
           <Divider />
           <View style={styles.row}>
-            <AppText variant="body" tone="muted">
-              Delivery
-            </AppText>
-            <AppText variant="body">{order.shippingFee ? formatPKR(order.shippingFee) : 'Free'}</AppText>
-          </View>
-          {order.discount ? (
-            <View style={styles.row}>
-              <AppText variant="body" tone="muted">
-                Coupon {order.couponCode}
+            <IonIcon name="wallet-outline" size="md" color={service.accentDeep} />
+            <View style={styles.grow}>
+              <AppText variant="overline" tone="muted">
+                Payment
               </AppText>
-              <AppText variant="body">{formatPKR(-order.discount)}</AppText>
+              <AppText variant="bodyStrong">{PAYMENT_METHOD_LABEL[order.paymentMethod]}</AppText>
             </View>
-          ) : null}
-          <View style={styles.row}>
-            <AppText variant="title">Customer pays</AppText>
-            <AppText variant="title">{formatPKR(order.total)}</AppText>
+            <StatusPill label={pay.label} tone={pay.tone} />
           </View>
-        </Card>
+        </SectionCard>
 
-        {order.shipment ? (
-          <Card>
-            <View style={styles.item}>
+        <SectionCard title={`Items (${order.items.reduce((n, it) => n + it.quantity, 0)})`} icon="bag-handle-outline" tint={rowTint.violet}>
+          {order.items.map((it, i) => (
+            <React.Fragment key={it.id}>
+              {i > 0 ? <Divider /> : null}
+              <LineItemRow
+                imageUrl={it.imageUrl}
+                name={it.name}
+                meta={[it.variantLabel, `${it.quantity} × ${formatPKR(it.unitPrice)}`].filter(Boolean).join(' · ')}
+                price={formatPKR(it.lineTotal)}
+                priceTone="ink"
+              />
+            </React.Fragment>
+          ))}
+          <MoneyRows
+            rows={[
+              { label: 'Items', value: order.itemsTotal },
+              { label: 'Delivery', value: order.shippingFee, kind: 'free' },
+              order.discount ? { label: `Coupon ${order.couponCode ?? ''}`.trim(), value: order.discount, kind: 'discount' } : null,
+              { label: 'Customer pays', value: order.total, kind: 'total' },
+            ]}
+          />
+        </SectionCard>
+
+        <SectionCard title="Shipping and notes" icon="cube-outline" tint={rowTint.grey}>
+          {order.shipment ? (
+            <View style={styles.row}>
               <IonIcon name="cube-outline" size="lg" color={service.accentDeep} />
               <View style={styles.grow}>
                 <AppText variant="small" tone="muted">
@@ -294,25 +286,28 @@ const StoreOrderDetailContent: React.FC<Props> = ({ route }) => {
                 <AppText variant="bodyStrong">{order.shipment.trackingRef}</AppText>
               </View>
             </View>
-          </Card>
-        ) : null}
+          ) : null}
+          {order.note ? <InlineNotice embedded tone="info" title="Note from the customer" message={order.note} /> : null}
+          <TextField
+            label="Private note (only your store sees it)"
+            value={ui.note}
+            onChangeText={t => dispatch(setInternalNote(t))}
+            multiline
+            placeholder="Packed by Ali, fragile …"
+          />
+          {ui.note !== (order.internalNote ?? '') ? (
+            <TextAction
+              label={ui.busy === 'note' ? 'Saving…' : 'Save note'}
+              icon="checkmark"
+              disabled={ui.busy === 'note'}
+              onPress={() => void dispatch(saveNoteAsync({ id, note: ui.note }))}
+            />
+          ) : null}
+        </SectionCard>
 
-        <OrderTimeline order={order} />
-
-        <TextField
-          label="Private note (only your store sees it)"
-          value={ui.note}
-          onChangeText={t => dispatch(setInternalNote(t))}
-          multiline
-          placeholder="Packed by Ali, fragile …"
-        />
-        {ui.note !== (order.internalNote ?? '') ? (
-          <Button label="Save note" variant="secondary" size="sm" onPress={() => void dispatch(saveNoteAsync({ id, note: ui.note }))} loading={ui.busy === 'note'} />
-        ) : null}
-
-        {can('cancel') ? (
-          <Button label="Cancel this order" variant="ghost" onPress={() => dispatch(openStoreOrderSheet('cancel'))} fullWidth />
-        ) : null}
+        <SectionCard title="Journey" icon="git-commit-outline" tint={rowTint.blue}>
+          <OrderTimeline order={order} />
+        </SectionCard>
       </>
     );
   };
@@ -331,12 +326,41 @@ const StoreOrderDetailContent: React.FC<Props> = ({ route }) => {
   };
 
   return (
-    <ScreenShell title={route.params.code ?? o?.code ?? 'Order'} onBack={back} scroll={false}>
+    <ScreenShell
+      title={route.params.code ?? o?.code ?? 'Order'}
+      subtitle={o ? `${o.customer.name} · ${formatPKR(o.total)}` : undefined}
+      onBack={back}
+      scroll={false}
+      footer={
+        o && (checkProof || next || can('cancel')) ? (
+          <>
+            {checkProof ? (
+              <>
+                <Button
+                  label="It’s in my account"
+                  leftIcon="checkmark-circle-outline"
+                  onPress={() => void run({ action: 'confirm_payment' })}
+                  loading={ui.busy === 'confirm_payment'}
+                  fullWidth
+                />
+                <Button label="I can’t find it" variant="secondary" onPress={() => dispatch(openStoreOrderSheet('reject_payment'))} fullWidth />
+              </>
+            ) : next ? (
+              <Button label={next.label} onPress={onNext} loading={ui.busy === next.action} fullWidth />
+            ) : null}
+            {can('cancel') ? (
+              <View style={styles.cancel}>
+                <TextAction label="Cancel this order" tone="danger" onPress={() => dispatch(openStoreOrderSheet('cancel'))} />
+              </View>
+            ) : null}
+          </>
+        ) : undefined
+      }>
       {!o ? (
         e.status === 'failed' ? (
           <InlineNotice message={e.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadStoreOrderAsync(id)) }} />
         ) : (
-          <SkeletonLines lines={8} />
+          <BagGroupSkeleton />
         )
       ) : (
         <ScrollView

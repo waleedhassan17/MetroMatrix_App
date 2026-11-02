@@ -1,9 +1,11 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Inventory (stock per size and colour)
 // ═══════════════════════════════════════════════════════
-// Lowest stock first. Type a new count and save it; pick several rows to
-// set them all at once; a row's history shows every change (orders,
-// cancellations, restocked returns, your edits).
+// Lowest stock first, each size and colour on its own card (a pill only when
+// it's low or out). Type a new count and save it; pick several to set them
+// all at once; a row's history shows every change (orders, cancellations,
+// restocked returns, your edits). The search and the low-stock filter sit in
+// the header.
 
 import React, { useEffect } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
@@ -17,10 +19,14 @@ import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index
 import {
   AppText,
   Button,
+  Card,
+  ChoiceChip,
   Divider,
   EmptyState,
   InlineNotice,
   IonIcon,
+  RowCardSkeleton,
+  RowCardsSkeleton,
   ScreenShell,
   Sheet,
   SkeletonLines,
@@ -28,8 +34,9 @@ import {
   StickyCTA,
   TextAction,
   TextField,
-  ToggleRow,
 } from '../../Custom-Components/index';
+import { SearchField } from '../../Components/shopping/ShopParts';
+import { selectStoreToday } from '../store-today-screen/storeTodaySlice';
 import type { InventoryMovement, InventoryRow, MovementReason, StorePartnerStackParamList } from '../../models';
 import { cdn } from '../../utils/cdn/cdn';
 import { formatDateTime } from '../../utils/dates/dates';
@@ -60,11 +67,16 @@ const REASON: Record<MovementReason, string> = {
 
 const makeStyles = ({ colors, space, size, radius }: Theme) =>
   StyleSheet.create({
-    row: { flexDirection: 'row', alignItems: 'center', gap: space.s12, paddingVertical: space.s12 },
-    thumb: { width: size.storeLogo, height: size.storeLogo, borderRadius: radius.sm, backgroundColor: colors.surfaceSunk },
+    row: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
+    thumb: { width: size.storeLogo, height: size.storeLogo, borderRadius: radius.md, backgroundColor: colors.surfaceSunk },
+    check: { width: size.storeLogo, height: size.storeLogo, alignItems: 'center', justifyContent: 'center' },
     text: { flex: 1, gap: space.s4 },
-    stock: { width: size.stockField, gap: space.s4 },
+    stock: { width: size.stockField },
+    foot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.s12 },
     list: { paddingBottom: space.s40 },
+    gap: { height: space.s12 },
+    footer: { paddingTop: space.s12 },
+    chips: { flexDirection: 'row', gap: space.s8 },
     head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     move: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: space.s8 },
   });
@@ -81,6 +93,7 @@ const InventoryContent: React.FC<Props> = ({ route }) => {
   const styles = useStyles(makeStyles);
   const { service, colors, size } = useTheme();
   const s = useAppSelector(selectInventory);
+  const lowCount = useAppSelector(selectStoreToday).summary?.counts.lowStock;
   const q = useDebouncedValue(s.query.trim());
   const list = usePagedList((page, sz) => fetchInventory({ q: q || undefined, lowStock: s.lowOnly || undefined }, page, sz), inventoryRowPageSerializer, `inventory|${q}|${s.lowOnly}`, {
     keyOf: r => r.variantId,
@@ -95,59 +108,80 @@ const InventoryContent: React.FC<Props> = ({ route }) => {
     const draft = s.drafts[row.variantId];
     const changed = draft !== undefined && draft !== '' && Number(draft) !== row.stock;
     const picked = s.selected.includes(row.variantId);
+    const level = row.stock === 0 ? { label: 'Out', tone: 'danger' as const } : row.lowStock ? { label: 'Low', tone: 'warning' as const } : null;
     return (
-      <View style={styles.row}>
-        {s.selecting ? (
-          <Pressable onPress={() => dispatch(toggleSelected(row.variantId))} accessibilityRole="checkbox" aria-checked={picked} accessibilityLabel={`Select ${row.productName} ${row.variantLabel}`}>
-            <IonIcon name={picked ? 'checkbox' : 'square-outline'} size="lg" color={picked ? service.accent : colors.lineStrong} />
-          </Pressable>
-        ) : row.imageUrl ? (
-          <Image source={{ uri: cdn(row.imageUrl, { w: size.storeLogo, h: size.storeLogo }) ?? undefined }} style={styles.thumb} contentFit="cover" />
-        ) : (
-          <View style={styles.thumb} />
-        )}
-        <View style={styles.text}>
-          <AppText variant="small" numberOfLines={1}>
-            {row.productName}
-          </AppText>
-          <AppText variant="caption" tone="muted">
-            {row.variantLabel} · {row.sku}
-          </AppText>
-          <View style={styles.head}>
-            <StatusPill label={row.stock === 0 ? 'Out' : row.lowStock ? 'Low' : 'OK'} tone={row.stock === 0 ? 'danger' : row.lowStock ? 'warning' : 'success'} />
-            <TextAction label="History" onPress={() => void dispatch(loadHistoryAsync({ variantId: row.variantId, label: `${row.productName} · ${row.variantLabel}` }))} />
+      <Card>
+        <View style={styles.row}>
+          {s.selecting ? (
+            <Pressable
+              onPress={() => dispatch(toggleSelected(row.variantId))}
+              style={styles.check}
+              accessibilityRole="checkbox"
+              aria-checked={picked}
+              accessibilityLabel={`Select ${row.productName} ${row.variantLabel}`}>
+              <IonIcon name={picked ? 'checkbox' : 'square-outline'} size="lg" color={picked ? service.accent : colors.lineStrong} />
+            </Pressable>
+          ) : row.imageUrl ? (
+            <Image source={{ uri: cdn(row.imageUrl, { w: size.storeLogo * 2, h: size.storeLogo * 2 }) ?? undefined }} style={styles.thumb} contentFit="cover" />
+          ) : (
+            <View style={styles.thumb} />
+          )}
+          <View style={styles.text}>
+            <AppText variant="bodyStrong" numberOfLines={1}>
+              {row.productName}
+            </AppText>
+            <AppText variant="caption" tone="muted" numberOfLines={1}>
+              {[row.variantLabel, row.sku].filter(Boolean).join(' · ')}
+            </AppText>
+            {level ? <StatusPill label={level.label} tone={level.tone} /> : null}
+          </View>
+          <View style={styles.stock}>
+            <TextField
+              label="Stock"
+              mode="numeric"
+              value={draft ?? String(row.stock)}
+              onChangeText={v => dispatch(setStockDraft({ variantId: row.variantId, value: v }))}
+              accessibilityLabel={`Stock of ${row.productName} ${row.variantLabel}`}
+            />
           </View>
         </View>
-        <View style={styles.stock}>
-          <TextField
-            label="Stock"
-            mode="numeric"
-            value={draft ?? String(row.stock)}
-            onChangeText={v => dispatch(setStockDraft({ variantId: row.variantId, value: v }))}
-            accessibilityLabel={`Stock of ${row.productName} ${row.variantLabel}`}
+        <View style={styles.foot}>
+          <TextAction
+            label="History"
+            icon="time-outline"
+            tone="muted"
+            onPress={() => void dispatch(loadHistoryAsync({ variantId: row.variantId, label: `${row.productName} · ${row.variantLabel}` }))}
           />
           {changed ? (
             <Button label="Save" size="sm" onPress={() => void dispatch(saveStockAsync({ variantId: row.variantId, stock: Number(draft) }))} loading={s.busy === row.variantId} />
           ) : null}
         </View>
-      </View>
+      </Card>
     );
   };
 
   return (
     <ScreenShell
       title="Inventory"
+      subtitle="Stock for every size and colour"
       onBack={back}
       scroll={false}
-      headerRight={<TextAction label={s.selecting ? 'Done' : 'Select'} onPress={() => dispatch(toggleSelecting())} />}>
-      <TextField label="Search" value={s.query} onChangeText={t => dispatch(setInventoryQuery(t))} icon="search" placeholder="Product or SKU" clearable autoCorrect={false} />
-      <ToggleRow label="Only low and out of stock" value={s.lowOnly} onChange={v => dispatch(setLowOnly(v))} />
-      {s.error.message ? <InlineNotice message={s.error.message} /> : null}
+      headerRight={<TextAction label={s.selecting ? 'Done' : 'Select'} onPress={() => dispatch(toggleSelecting())} />}
+      headerContent={
+        <>
+          <SearchField value={s.query} onChange={t => dispatch(setInventoryQuery(t))} placeholder="Product or SKU" />
+          <View style={styles.chips}>
+            <ChoiceChip label="All" selected={!s.lowOnly} onPress={() => dispatch(setLowOnly(false))} />
+            <ChoiceChip label="Low and out" count={lowCount} selected={s.lowOnly} onPress={() => dispatch(setLowOnly(true))} />
+          </View>
+        </>
+      }>
+      {s.error.message ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: list.reload }} /> : null}
       <FlatList
         data={list.rows}
         keyExtractor={r => r.variantId}
         contentContainerStyle={styles.list}
-        ItemSeparatorComponent={Divider}
+        ItemSeparatorComponent={() => <View style={styles.gap} />}
         onEndReached={list.loadMore}
         onEndReachedThreshold={0.5}
         onRefresh={list.refresh}
@@ -156,14 +190,20 @@ const InventoryContent: React.FC<Props> = ({ route }) => {
         renderItem={({ item }) => renderRow(item)}
         ListEmptyComponent={
           list.isLoading ? (
-            <SkeletonLines lines={6} />
+            <RowCardsSkeleton />
           ) : list.error ? (
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
-            <EmptyState icon="layers" title={s.lowOnly ? 'Nothing low on stock' : 'No stock to show'} body={s.lowOnly ? 'Every option has more than 3 left.' : 'Add products to track their stock.'} />
+            <EmptyState ion="layers-outline" title={s.lowOnly ? 'Nothing low on stock' : 'No stock to show'} body={s.lowOnly ? 'Every option has more than 3 left.' : 'Add products to track their stock.'} />
           )
         }
-        ListFooterComponent={list.isLoadingMore ? <SkeletonLines lines={2} /> : null}
+        ListFooterComponent={
+          list.isLoadingMore ? (
+            <View style={styles.footer}>
+              <RowCardSkeleton />
+            </View>
+          ) : null
+        }
       />
       {s.selecting && s.selected.length ? (
         <StickyCTA>

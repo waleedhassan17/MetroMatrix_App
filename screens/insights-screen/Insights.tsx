@@ -14,7 +14,20 @@ import dayjs from 'dayjs';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, BarChart, Card, Divider, InlineNotice, LineChart, ScreenShell, SegmentTabs, SkeletonLines } from '../../Custom-Components/index';
+import {
+  AppText,
+  BarChart,
+  Divider,
+  EmptyState,
+  InlineNotice,
+  LineChart,
+  RowCardsSkeleton,
+  ScreenShell,
+  SectionCard,
+  SegmentTabs,
+  StatGridSkeleton,
+} from '../../Custom-Components/index';
+import { StatGrid } from '../../Components/admin/AdminParts';
 import type { InsightsRange, StorePartnerStackParamList } from '../../models';
 import { cdn } from '../../utils/cdn/cdn';
 import { formatPKR } from '../../utils/money/money';
@@ -30,24 +43,11 @@ const RANGES: { key: InsightsRange; label: string }[] = [
 
 const makeStyles = ({ colors, space, size, radius }: Theme) =>
   StyleSheet.create({
-    tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s12 },
-    tile: { flexGrow: 1, flexBasis: '40%', gap: space.s4, padding: space.s16, borderRadius: radius.lg, borderWidth: size.hairline, borderColor: colors.line },
     product: { flexDirection: 'row', alignItems: 'center', gap: space.s12, paddingVertical: space.s8 },
-    thumb: { width: size.storeLogo, height: size.storeLogo, borderRadius: radius.sm, backgroundColor: colors.surfaceSunk },
+    rank: { width: size.markSmall, height: size.markSmall, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
+    thumb: { width: size.storeLogo, height: size.storeLogo, borderRadius: radius.md, backgroundColor: colors.surfaceSunk },
     grow: { flex: 1, gap: space.s4 },
   });
-
-const Tile: React.FC<{ label: string; value: string }> = ({ label, value }) => {
-  const styles = useStyles(makeStyles);
-  return (
-    <View style={styles.tile} accessible accessibilityLabel={`${label}: ${value}`}>
-      <AppText variant="small" tone="muted">
-        {label}
-      </AppText>
-      <AppText variant="h2">{value}</AppText>
-    </View>
-  );
-};
 
 const Insights: React.FC<Props> = props => (
   <ServiceScope service="shopping">
@@ -59,7 +59,7 @@ const InsightsContent: React.FC<Props> = () => {
   const { back } = useBack({ name: 'StoreTabs', params: { screen: 'MoreTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { size } = useTheme();
+  const { size, service } = useTheme();
   const s = useAppSelector(selectInsights);
   const d = s.data?.range === s.range ? s.data : null;
 
@@ -71,36 +71,56 @@ const InsightsContent: React.FC<Props> = () => {
   const avg = d && d.orderCount ? Math.round(d.recordedSales / d.orderCount) : 0;
 
   return (
-    <ScreenShell title="Insights" onBack={back}>
-      <SegmentTabs options={RANGES} value={s.range} onChange={r => dispatch(setInsightsRange(r))} accessibilityLabel="Range" />
+    <ScreenShell
+      title="Insights"
+      subtitle="From orders you marked delivered"
+      onBack={back}
+      headerContent={<SegmentTabs options={RANGES} value={s.range} onChange={r => dispatch(setInsightsRange(r))} accessibilityLabel="Range" />}>
       {s.error.message ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadInsightsAsync(s.range)) }} /> : null}
       {!d ? (
-        <SkeletonLines lines={10} />
+        <>
+          <StatGridSkeleton count={4} />
+          <RowCardsSkeleton count={2} />
+        </>
       ) : (
         <>
-          <View style={styles.tiles}>
-            <Tile label="Recorded sales" value={formatPKR(d.recordedSales)} />
-            <Tile label="Orders delivered" value={String(d.orderCount)} />
-            <Tile label="Average order" value={formatPKR(avg)} />
-            <Tile label="Repeat customers" value={`${d.repeatCustomerPct}%`} />
-            <Tile label="Orders delivered, of placed" value={`${d.deliveredRatePct}%`} />
-          </View>
-          <Card>
-            <AppText variant="title">Recorded sales</AppText>
+          <StatGrid
+            stats={[
+              { key: 'sales', icon: 'cash-outline', tint: 'accent', value: formatPKR(d.recordedSales), label: 'Recorded sales' },
+              {
+                key: 'orders',
+                icon: 'cube-outline',
+                tint: 'blue',
+                value: d.orderCount,
+                label: 'Orders delivered',
+                hint: `${d.deliveredRatePct}% of those placed`,
+              },
+              { key: 'avg', icon: 'receipt-outline', tint: 'violet', value: formatPKR(avg), label: 'Average order' },
+              { key: 'repeat', icon: 'people-outline', tint: 'rose', value: `${d.repeatCustomerPct}%`, label: 'Repeat customers' },
+            ]}
+          />
+          <SectionCard title="Recorded sales" icon="trending-up-outline">
             <LineChart data={d.sales.map(p => ({ label: label(p.date), value: p.amount }))} format={formatPKR} />
-          </Card>
-          <Card>
-            <AppText variant="title">Orders delivered</AppText>
+          </SectionCard>
+          <SectionCard title="Orders delivered" icon="bar-chart-outline">
             <BarChart data={d.orders.map(p => ({ label: label(p.date), value: p.count }))} />
-          </Card>
-          <Card>
-            <AppText variant="title">Best sellers</AppText>
+          </SectionCard>
+          <SectionCard title="Best sellers" icon="trophy-outline">
             {d.topProducts.length ? (
               d.topProducts.map((p, i) => (
                 <View key={p.productId}>
                   {i > 0 ? <Divider /> : null}
                   <View style={styles.product}>
-                    {p.imageUrl ? <Image source={{ uri: cdn(p.imageUrl, { w: size.storeLogo }) ?? undefined }} style={styles.thumb} contentFit="cover" /> : <View style={styles.thumb} />}
+                    <View style={[styles.rank, { backgroundColor: service.accentSoft }]}>
+                      <AppText variant="chip" tone="accentDeep">
+                        {i + 1}
+                      </AppText>
+                    </View>
+                    {p.imageUrl ? (
+                      <Image source={{ uri: cdn(p.imageUrl, { w: size.storeLogo * 2 }) ?? undefined }} style={styles.thumb} contentFit="cover" />
+                    ) : (
+                      <View style={styles.thumb} />
+                    )}
                     <View style={styles.grow}>
                       <AppText variant="small" numberOfLines={1}>
                         {p.name}
@@ -114,11 +134,9 @@ const InsightsContent: React.FC<Props> = () => {
                 </View>
               ))
             ) : (
-              <AppText variant="body" tone="muted">
-                Nothing delivered in this period yet.
-              </AppText>
+              <EmptyState ion="trophy-outline" title="Nothing delivered yet" body="Your best sellers show here once orders are delivered." />
             )}
-          </Card>
+          </SectionCard>
           <AppText variant="caption" tone="muted">
             Recorded sales are orders you marked delivered, at the price the customer paid. MetroMatrix does not hold or process your money.
           </AppText>
