@@ -356,6 +356,8 @@ export interface ProductGridProps {
   header?: React.ReactElement;
   /** 20 above the first row when no header sits there (under the page header). */
   topPad?: boolean;
+  /** The grid's scroll position (a photo-top page swaps its floating bar for the white one). */
+  onScrollY?: (y: number) => void;
   empty: EmptyStateProps;
   showStore?: boolean;
   onRemoveFromSaved?: (productId: string) => void;
@@ -365,7 +367,7 @@ export interface ProductGridProps {
  * Two columns, loaded a page at a time as you scroll (FlashList). The header
  * scrolls with the grid; while the first page loads, skeleton cards stand in.
  */
-export const ProductGrid: React.FC<ProductGridProps> = ({ list, header, topPad, empty, showStore = true, onRemoveFromSaved }) => {
+export const ProductGrid: React.FC<ProductGridProps> = ({ list, header, topPad, onScrollY, empty, showStore = true, onRemoveFromSaved }) => {
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   const { openProduct } = useShopNav();
@@ -393,6 +395,8 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ list, header, topPad, 
       numColumns={2}
       keyExtractor={p => p.id}
       ListHeaderComponent={header ?? (topPad ? <View style={styles.topPad} /> : undefined)}
+      onScroll={onScrollY ? e => onScrollY(e.nativeEvent.contentOffset.y) : undefined}
+      scrollEventThrottle={onScrollY ? 32 : undefined}
       ListFooterComponent={footer}
       onEndReached={list.loadMore}
       onEndReachedThreshold={0.6}

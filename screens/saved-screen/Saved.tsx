@@ -38,12 +38,17 @@ const SavedContent: React.FC<Props> = () => {
 
   return (
     <View style={styles.root}>
-      <ShopTopBar title="Saved" onBack={canGoBack && !asTab ? back : undefined} />
+      <ShopTopBar
+        title="Saved"
+        subtitle={list.rows.length ? `${list.total} saved ${list.total === 1 ? 'item' : 'items'}` : undefined}
+        onBack={canGoBack && !asTab ? back : undefined}
+      />
       <ProductGrid
         list={list}
+        topPad
         onRemoveFromSaved={id => list.setRows(rows => rows.filter(r => r.id !== id))}
         empty={{
-          icon: 'heart',
+          ion: 'heart-outline',
           title: 'Nothing saved yet',
           body: 'Tap the heart on anything you like, and it waits for you here.',
           action: { label: 'Start shopping', onPress: () => root.navigate('ShopTabs', { screen: 'ShopHomeTab' }) },

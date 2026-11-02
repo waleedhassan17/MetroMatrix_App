@@ -44,7 +44,7 @@ type Props = NativeStackScreenProps<ShopBrowseParamList, 'ProductList'>;
 const makeStyles = ({ colors, space, size, radius, gutter }: Theme) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.canvas },
-    header: { gap: space.s12, paddingTop: space.s8, paddingBottom: space.s16 },
+    header: { gap: space.s12, paddingTop: space.s16, paddingBottom: space.s16 },
     toolbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: gutter, gap: space.s12 },
     filterButton: {
       flexDirection: 'row',
@@ -121,8 +121,8 @@ const ProductListContent: React.FC<Props> = ({ route }) => {
   const header = (
     <View style={styles.header}>
       <View style={styles.toolbar}>
-        <AppText variant="small" tone="muted">
-          {list.isLoading && !list.rows.length ? 'Loading…' : `${list.total} ${list.total === 1 ? 'product' : 'products'} · ${sortLabel(filters.sort)}`}
+        <AppText variant="small" tone="muted" numberOfLines={1}>
+          Sort: {sortLabel(filters.sort)}
         </AppText>
         <Pressable
           onPress={() => dispatch(openFilters(key))}
@@ -153,13 +153,17 @@ const ProductListContent: React.FC<Props> = ({ route }) => {
 
   return (
     <View style={styles.root}>
-      <ShopTopBar title={title} onBack={back} />
+      <ShopTopBar
+        title={title}
+        subtitle={list.isLoading && !list.rows.length ? undefined : `${list.total} ${list.total === 1 ? 'product' : 'products'}`}
+        onBack={back}
+      />
       <ProductGrid
         list={list}
         header={header}
         showStore={!storeId}
         empty={{
-          icon: 'search',
+          ion: 'search-outline',
           title: count ? 'Nothing matches these filters' : q ? `No results for "${q}"` : 'Nothing here yet',
           body: count ? 'Loosen a filter to see more.' : q ? 'Check the spelling, or try a broader word.' : 'Check back soon.',
           action: count ? { label: 'Clear filters', onPress: () => dispatch(setFilters({ key, filters: { ...DEFAULT_FILTERS, sort: filters.sort } })) } : undefined,

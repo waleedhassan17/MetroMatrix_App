@@ -1,8 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — All categories
 // ═══════════════════════════════════════════════════════
-// Two panes, as shopping apps do it: the top levels down the side, the
-// chosen one's sub-categories (with how many products each has) beside it.
+// Two panes, as shopping apps do it: the top levels down a white side rail
+// (the chosen one on a soft accent pill), the chosen one's sub-categories
+// (with how many products each has) in one card beside it.
 
 import React, { useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -11,8 +12,8 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { useShopNav } from '../../hooks/useShop';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Divider, IonIcon, ListRow, SkeletonLines, categoryIcon } from '../../Custom-Components/index';
-import { SectionError, ShopTopBar } from '../../Components/shopping/ShopParts';
+import { AppText, Card, Divider, IonIcon, ListRow, Skeleton, categoryIcon } from '../../Custom-Components/index';
+import { SectionError, ShopSection, ShopTopBar } from '../../Components/shopping/ShopParts';
 import type { HomeStackParamList } from '../../models';
 import {
   loadCategoriesAsync,
@@ -23,22 +24,22 @@ import {
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'CategoryBrowse'>;
 
-const makeStyles = ({ colors, space, size, gutter }: Theme) =>
+const makeStyles = ({ colors, space, size, radius, gutter }: Theme) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.canvas },
-    panes: { flex: 1, flexDirection: 'row' },
-    side: { width: size.categoryWell * 2, backgroundColor: colors.surfaceSunk },
+    panes: { flex: 1, flexDirection: 'row', paddingTop: space.s16 },
+    side: { width: size.categoryWell * 2, borderRightWidth: size.hairline, borderRightColor: colors.line },
+    sideContent: { paddingHorizontal: space.s8, paddingBottom: space.s40, gap: space.s4 },
     top: {
       alignItems: 'center',
       gap: space.s4,
-      paddingVertical: space.s16,
+      paddingVertical: space.s12,
       paddingHorizontal: space.s8,
-      borderLeftWidth: size.focusBorder,
-      borderLeftColor: colors.surfaceSunk,
+      borderRadius: radius.md,
     },
     main: { flex: 1 },
-    mainContent: { paddingHorizontal: gutter, paddingBottom: space.s40, paddingTop: space.s8 },
-    loading: { padding: gutter },
+    mainContent: { paddingHorizontal: gutter, paddingBottom: space.s40, gap: space.s12 },
+    loading: { padding: gutter, gap: space.s12 },
   });
 
 const CategoryBrowse: React.FC<Props> = props => (
@@ -51,7 +52,7 @@ const CategoryBrowseContent: React.FC<Props> = ({ route }) => {
   const { back } = useBack({ name: 'ShoppingHome' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { colors, service } = useTheme();
+  const { colors, service, size } = useTheme();
   const s = useAppSelector(selectCategoryBrowse);
   const { openList } = useShopNav();
   const asked = route.params?.categoryId;
@@ -72,21 +73,22 @@ const CategoryBrowseContent: React.FC<Props> = ({ route }) => {
 
   return (
     <View style={styles.root}>
-      <ShopTopBar title="Categories" onBack={back} />
-      <Divider />
+      <ShopTopBar title="Categories" subtitle="Everything the stores sell" onBack={back} />
       {s.status === 'failed' && !s.categories.length ? (
         <SectionError
           message={s.error.message}
           onRetry={() => void dispatch(loadCategoriesAsync())}
         />
       ) : !s.categories.length ? (
-        <View style={styles.loading}>
-          <SkeletonLines lines={6} />
+        <View style={styles.loading} accessibilityLabel="Loading" accessibilityRole="progressbar">
+          {[0, 1, 2, 3, 4].map(i => (
+            <Skeleton key={i} height={size.control.md} shape="md" />
+          ))}
         </View>
       ) : (
         <View style={styles.panes}>
           <View style={styles.side}>
-            <ScrollView accessibilityRole="tablist">
+            <ScrollView accessibilityRole="tablist" contentContainerStyle={styles.sideContent}>
               {s.categories.map(c => {
                 const on = c.id === s.selectedId;
                 return (
@@ -96,14 +98,11 @@ const CategoryBrowseContent: React.FC<Props> = ({ route }) => {
                     accessibilityRole="tab"
                     aria-selected={on}
                     accessibilityLabel={c.name}
-                    style={[
-                      styles.top,
-                      on && { backgroundColor: colors.canvas, borderLeftColor: service.accent },
-                    ]}>
+                    style={[styles.top, on && { backgroundColor: service.accentSoft }]}>
                     <IonIcon
                       name={categoryIcon(c.icon)}
                       size="lg"
-                      color={on ? service.accent : colors.inkMuted}
+                      color={on ? service.accentDeep : colors.inkMuted}
                     />
                     <AppText
                       variant={on ? 'chip' : 'caption'}
@@ -121,23 +120,28 @@ const CategoryBrowseContent: React.FC<Props> = ({ route }) => {
             <ScrollView contentContainerStyle={styles.mainContent}>
               {selected ? (
                 <>
-                  <ListRow
-                    title={`All ${selected.name}`}
-                    value={String(selected.productCount)}
-                    leftIcon={categoryIcon(selected.icon)}
-                    onPress={() => openList({ title: selected.name, categoryId: selected.id })}
+                  <ShopSection
+                    title={selected.name}
+                    subtitle={`${selected.productCount} ${selected.productCount === 1 ? 'product' : 'products'}`}
+                    inset={false}
                   />
-                  {selected.children.map(child => (
-                    <View key={child.id}>
-                      <Divider />
-                      <ListRow
-                        title={child.name}
-                        value={String(child.productCount)}
-                        leftIcon={categoryIcon(child.icon)}
-                        onPress={() => openList({ title: child.name, categoryId: child.id })}
-                      />
-                    </View>
-                  ))}
+                  <Card padded="horizontal">
+                    <ListRow
+                      title={`All ${selected.name}`}
+                      value={String(selected.productCount)}
+                      onPress={() => openList({ title: selected.name, categoryId: selected.id })}
+                    />
+                    {selected.children.map(child => (
+                      <View key={child.id}>
+                        <Divider />
+                        <ListRow
+                          title={child.name}
+                          value={String(child.productCount)}
+                          onPress={() => openList({ title: child.name, categoryId: child.id })}
+                        />
+                      </View>
+                    ))}
+                  </Card>
                 </>
               ) : null}
             </ScrollView>

@@ -16,6 +16,8 @@ export interface ChoiceChipProps {
   selected?: boolean;
   disabled?: boolean;
   onPress: () => void;
+  /** A recent search: hold to remove it. */
+  onLongPress?: () => void;
   icon?: IonName;
   /** A colour dot before the label (a colour option). */
   swatch?: string;
@@ -59,6 +61,7 @@ export const ChoiceChip: React.FC<ChoiceChipProps> = ({
   selected,
   disabled,
   onPress,
+  onLongPress,
   icon,
   swatch,
   count,
@@ -81,6 +84,7 @@ export const ChoiceChip: React.FC<ChoiceChipProps> = ({
   return (
     <Pressable
       onPress={onPress}
+      onLongPress={onLongPress}
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={disabled ? `${label}, unavailable` : shown ? `${label}, ${count}` : label}
