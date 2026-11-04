@@ -25,6 +25,8 @@ export interface LineItemRowProps {
   right?: React.ReactNode;
   /** Under the text (warnings, a stepper, "Write a review"). */
   children?: React.ReactNode;
+  /** `square`: a dish's photo (Food Court); `none`: a line with no photo (a kitchen's ticket). */
+  shape?: 'portrait' | 'square' | 'none';
 }
 
 const makeStyles = ({ colors, radius, space, size }: Theme) =>
@@ -51,12 +53,14 @@ export const LineItemRow: React.FC<LineItemRowProps> = ({
   onOpen,
   right,
   children,
+  shape = 'portrait',
 }) => {
   const styles = useStyles(makeStyles);
   const { size, opacity, motion } = useTheme();
-  const uri = cdn(imageUrl, { w: size.lineThumb * 2, h: (size.lineThumb * 2) / size.productAspect });
-  const thumb = (
-    <View style={styles.thumb}>
+  const aspect = shape === 'square' ? 1 : size.productAspect;
+  const uri = cdn(imageUrl, { w: size.lineThumb * 2, h: (size.lineThumb * 2) / aspect });
+  const thumb = shape === 'none' ? null : (
+    <View style={[styles.thumb, { aspectRatio: aspect }]}>
       {uri ? (
         <Image source={{ uri }} style={[styles.image, soldOut && { opacity: opacity.soldOut }]} contentFit="cover" transition={motion.imageFade} />
       ) : null}
@@ -64,7 +68,7 @@ export const LineItemRow: React.FC<LineItemRowProps> = ({
   );
   return (
     <View style={styles.row}>
-      {onOpen ? (
+      {onOpen && thumb ? (
         <Pressable onPress={onOpen} accessibilityRole="button" accessibilityLabel={`Open ${name}`}>
           {thumb}
         </Pressable>

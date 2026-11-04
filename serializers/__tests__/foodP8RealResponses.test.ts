@@ -77,6 +77,9 @@ describe('customers browse', () => {
     expect(home.coverage.delivering).toBe(true);
     expect(home.banners.length).toBeGreaterThan(0);
     expect(home.banners[0].target).toMatchObject({ type: 'vendor', slug: 'qandeel-karahi-house' });
+    // The shared carousel's shape: a headline (the wire's title) and an optional subhead.
+    expect(home.banners[0]).toMatchObject({ headline: expect.any(String), imageUrl: expect.any(String) });
+    expect(home.banners[0].headline.length).toBeGreaterThan(0);
     expect(home.cuisines.length).toBe(3);
     expect(foodHomeSerializer(data('homeFar'))!.coverage).toEqual({ delivering: false, message: 'Not delivering here yet', pickupNearby: 0 });
   });

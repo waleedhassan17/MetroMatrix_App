@@ -117,7 +117,7 @@ const bannerTargetSerializer = (raw: unknown): FoodBannerTarget | null => {
 export const foodHomeBannerSerializer = (raw: unknown): FoodHomeBanner | null => {
   if (!isObject(raw) || !str(raw.id) || !str(raw.imageUrl)) return null;
   const target = bannerTargetSerializer(raw.target);
-  return target ? { id: str(raw.id), imageUrl: str(raw.imageUrl), title: str(raw.title), subtitle: strOrNull(raw.subtitle), target } : null;
+  return target ? { id: str(raw.id), imageUrl: str(raw.imageUrl), headline: str(raw.title), subhead: strOrNull(raw.subtitle), target } : null;
 };
 
 export const foodHomeBannersSerializer = (raw: unknown): FoodHomeBanner[] => compact(arr(raw).map(foodHomeBannerSerializer));

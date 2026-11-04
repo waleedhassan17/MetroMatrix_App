@@ -6,27 +6,24 @@
 
 import React, { useCallback } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Card, EmptyState, IconButton, IonIcon, InlineNotice, ScreenShell, SkeletonLines } from '../../Custom-Components/index';
+import { Card, EmptyState, IonIcon, InlineNotice, RowCardsSkeleton, ScreenShell, StoreHeadRow } from '../../Custom-Components/index';
+import { FoodBagDock, useBagDockInset } from '../../Components/food/FoodParts';
 import type { FoodAppParamList, FoodFavourite } from '../../models';
-import { cdn } from '../../utils/cdn/cdn';
 import { loadFavouritesAsync, selectFoodFavourites, toggleFavouriteAsync } from './foodFavouritesSlice';
 
 type Props = NativeStackScreenProps<FoodAppParamList, 'FoodFavourites'>;
 
-const makeStyles = ({ colors, space, size, radius, gutter }: Theme) =>
+const makeStyles = ({ space, size, gutter }: Theme) =>
   StyleSheet.create({
-    list: { paddingHorizontal: gutter, paddingTop: space.s16, paddingBottom: space.s40, gap: space.s12 },
-    row: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
-    logo: { width: size.avatar.md, height: size.avatar.md, borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.surfaceSunk },
-    fill: { ...StyleSheet.absoluteFillObject },
-    grow: { flex: 1, gap: space.s4 },
-    rating: { flexDirection: 'row', alignItems: 'center', gap: space.s4 },
+    list: { paddingHorizontal: gutter, paddingBottom: space.s40, gap: space.s12 },
+    row: { flexDirection: 'row', alignItems: 'center', gap: space.s8 },
+    grow: { flex: 1 },
+    heart: { width: size.touch, height: size.touch, alignItems: 'center', justifyContent: 'center' },
   });
 
 const FoodFavourites: React.FC<Props> = props => (
@@ -39,7 +36,8 @@ const FoodFavouritesContent: React.FC<Props> = ({ navigation }) => {
   const { back } = useBack({ name: 'FoodTabs' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { colors, size } = useTheme();
+  const { colors, service, space, opacity } = useTheme();
+  const dockInset = useBagDockInset();
   const s = useAppSelector(selectFoodFavourites);
 
   useFocusEffect(
@@ -48,43 +46,50 @@ const FoodFavouritesContent: React.FC<Props> = ({ navigation }) => {
     }, [dispatch]),
   );
 
-  const row = (f: FoodFavourite) => (
-    <Card key={f.id}>
-      <View style={styles.row}>
-        <Pressable onPress={() => navigation.navigate('FoodVendor', { slug: f.slug })} style={[styles.row, styles.grow]} accessibilityRole="button" accessibilityLabel={`${f.name}, ${f.openState.label}`}>
-          <View style={styles.logo}>{f.logoUrl ? <Image source={{ uri: cdn(f.logoUrl, { w: size.avatar.md }) ?? undefined }} style={styles.fill} contentFit="cover" /> : null}</View>
+  const row = (f: FoodFavourite) => {
+    const meta = [f.ratingCount ? `Rated ${f.ratingAvg.toFixed(1)} (${f.ratingCount})` : null, f.openState.label].filter(Boolean).join(' · ');
+    return (
+      <Card key={f.id}>
+        <View style={styles.row}>
           <View style={styles.grow}>
-            <AppText variant="bodyStrong">{f.name}</AppText>
-            <View style={styles.rating}>
-              {f.ratingCount ? <IonIcon name="star" size="sm" color={colors.star} /> : null}
-              <AppText variant="small" tone={f.openState.open ? 'muted' : 'warning'}>
-                {[f.ratingCount ? `${f.ratingAvg.toFixed(1)} (${f.ratingCount})` : null, f.openState.label].filter(Boolean).join(' · ')}
-              </AppText>
-            </View>
+            <StoreHeadRow
+              store={{ name: f.name, logoUrl: f.logoUrl, brandColor: service.accent }}
+              meta={meta}
+              onPress={() => navigation.navigate('FoodVendor', { slug: f.slug })}
+              chevron={false}
+            />
           </View>
-        </Pressable>
-        <IconButton icon="heart" accessibilityLabel={`Remove ${f.name} from saved`} onPress={() => void dispatch(toggleFavouriteAsync({ vendorId: f.id, save: false }))} />
-      </View>
-    </Card>
-  );
+          {/* The saved heart is red here as on the kitchen's page. */}
+          <Pressable
+            onPress={() => void dispatch(toggleFavouriteAsync({ vendorId: f.id, save: false }))}
+            style={({ pressed }) => [styles.heart, pressed && { opacity: opacity.pressed }]}
+            accessibilityRole="button"
+            accessibilityLabel={`Remove ${f.name} from saved`}>
+            <IonIcon name="heart" size="md" color={colors.danger} />
+          </Pressable>
+        </View>
+      </Card>
+    );
+  };
 
   return (
-    <ScreenShell title="Saved kitchens" onBack={back} scroll={false} padded={false}>
+    <ScreenShell title="Saved kitchens" subtitle={s.items.length ? `${s.items.length} saved` : undefined} onBack={back} scroll={false} padded={false}>
       <FlatList
         data={s.items}
         keyExtractor={f => f.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, { paddingBottom: space.s40 + dockInset }]}
         renderItem={({ item }) => row(item)}
         ListEmptyComponent={
           s.status === 'loading' || s.status === 'idle' ? (
-            <SkeletonLines lines={6} />
+            <RowCardsSkeleton />
           ) : s.status === 'failed' ? (
             <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadFavouritesAsync()) }} />
           ) : (
-            <EmptyState icon="heart" title="No saved kitchens yet" body="Tap the heart on a kitchen’s page to keep it here." action={{ label: 'Browse the Food Court', onPress: back }} />
+            <EmptyState ion="heart-outline" title="No saved kitchens yet" body="Tap the heart on a kitchen’s page to keep it here." action={{ label: 'Browse the Food Court', onPress: back }} />
           )
         }
       />
+      <FoodBagDock />
     </ScreenShell>
   );
 };

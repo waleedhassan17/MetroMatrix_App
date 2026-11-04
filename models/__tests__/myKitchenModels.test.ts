@@ -63,8 +63,8 @@ describe('nutrition', () => {
   });
 
   it('gives a dish that serves more as a person’s share', () => {
-    expect(dishFactsLine({ kcal: 494, protein: 49, serves: 1 })).toBe('About 494 kcal · 49 g protein');
-    expect(dishFactsLine({ kcal: 1923, protein: 122, serves: 2 })).toBe('About 962 kcal a person · 61 g protein');
+    expect(dishFactsLine({ kcal: 494, protein: 49, serves: 1 })).toBe('About 494 kcal · 49 g protein (estimated)');
+    expect(dishFactsLine({ kcal: 1923, protein: 122, serves: 2 })).toBe('About 962 kcal a person · 61 g protein (estimated)');
     // The item sheet's numbers are per serving already.
     expect(dishFactsSerializer({ perServing: { kcal: 1030, proteinG: 46.4, carbsG: 133.8, fatG: 33.2 }, method: 'recipe' })).toMatchObject({ kcal: 1030, protein: 46, serves: 1, method: 'recipe' });
     expect(dishFactsSerializer({ perServing: { kcal: 500, proteinG: 20 }, method: 'ai_estimate' })).toMatchObject({ method: 'ai_estimate' });

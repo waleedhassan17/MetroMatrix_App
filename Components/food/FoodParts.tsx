@@ -15,6 +15,8 @@ import { AppText } from '../../Custom-Components/AppText';
 import { IonIcon, MciIcon, type IonName, type MciName } from '../../Custom-Components/Icon';
 import { Skeleton } from '../../Custom-Components/Skeleton';
 import { VendorCard } from '../../Custom-Components/food/VendorCard';
+import { BagBar } from '../../Custom-Components/food/BagBar';
+import { useFoodBag } from '../../hooks/useFoodBag';
 import { SurplusCard } from '../../Custom-Components/kitchen/SurplusCard';
 import { ShopSection } from '../shopping/ShopParts';
 import { RowCard } from '../admin/AdminParts';
@@ -290,14 +292,19 @@ export const FoodOrderRow: React.FC<{ order: FoodOrderSummary; onPress: () => vo
 };
 
 /** The Food home's live order: one order opens it; two or more open the Orders tab. */
-export const ActiveOrderCard: React.FC<{ orders: FoodOrderSummary[]; onOpen: (code: string) => void; onAll: () => void }> = ({ orders, onOpen, onAll }) => {
+export const ActiveOrderCard: React.FC<{ orders: FoodOrderSummary[]; total: number; onOpen: (code: string) => void; onAll: () => void }> = ({
+  orders,
+  total,
+  onOpen,
+  onAll,
+}) => {
   const { service } = useTheme();
   const first = orders[0];
   if (!first) return null;
-  if (orders.length > 1) {
+  if (Math.max(total, orders.length) > 1) {
     return (
       <RowCard
-        title={`${orders.length} orders in progress`}
+        title={`${Math.max(total, orders.length)} orders in progress`}
         lines={[orders.map(o => o.vendor.name).join(' · ')]}
         mark={{ icon: 'receipt-outline', tint: 'accent' }}
         chevron
@@ -317,6 +324,21 @@ export const ActiveOrderCard: React.FC<{ orders: FoodOrderSummary[]; onOpen: (co
       accessibilityLabel={`Your order from ${first.vendor.name}, ${label}. Track it`}
     />
   );
+};
+
+// ─── The bag, wherever the customer is ────────────────
+/** The bag bar on any Food screen: nothing while the bag is empty. */
+export const FoodBagDock: React.FC<{ inTab?: boolean }> = ({ inTab }) => {
+  const bag = useFoodBag();
+  if (!bag.count) return null;
+  return <BagBar count={bag.count} subtotal={bag.subtotal} kitchen={bag.vendor?.name} busy={bag.busy} onPress={bag.openBag} inTab={inTab} />;
+};
+
+/** Room a list leaves under its last row while the dock shows. */
+export const useBagDockInset = () => {
+  const bag = useFoodBag();
+  const { size, space } = useTheme();
+  return bag.count ? size.control.lg + space.s40 : 0;
 };
 
 // ─── Loading ──────────────────────────────────────────

@@ -183,12 +183,12 @@ export interface QuickAction {
   onPress: () => void;
 }
 
-/** The store's quick actions (the FYP's): three to a row, a tinted tile and a label. */
-export const QuickActionGrid: React.FC<{ actions: QuickAction[] }> = ({ actions }) => {
+/** The store's quick actions (the FYP's): three to a row (or four), a tinted tile and a label. */
+export const QuickActionGrid: React.FC<{ actions: QuickAction[]; columns?: 3 | 4 }> = ({ actions, columns = 3 }) => {
   const styles = useStyles(makeStyles);
   const { space, opacity } = useTheme();
   const [width, setWidth] = useState(0);
-  const tile = width ? Math.floor((width - space.s12 * 2) / 3) : undefined;
+  const tile = width ? Math.floor((width - space.s12 * (columns - 1)) / columns) : undefined;
   return (
     <View style={styles.grid} onLayout={e => setWidth(e.nativeEvent.layout.width)}>
       {actions.map(a => (

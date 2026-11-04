@@ -67,8 +67,8 @@ export const targetLine = (kcal: number | null) => (kcal ? `Your daily target: a
 /** "About 520 kcal · 30 g protein"; a person's share for a dish that serves more ("About 960 kcal a person · …"). */
 export const dishFactsLine = (f: Pick<DishFacts, 'kcal' | 'protein' | 'serves'>) =>
   f.serves > 1
-    ? `About ${n(Math.round(f.kcal / f.serves))} kcal a person · ${Math.round(f.protein / f.serves)} g protein`
-    : `About ${n(f.kcal)} kcal · ${f.protein} g protein`;
+    ? `About ${n(Math.round(f.kcal / f.serves))} kcal a person · ${Math.round(f.protein / f.serves)} g protein (estimated)`
+    : `About ${n(f.kcal)} kcal · ${f.protein} g protein (estimated)`;
 
 /** A day of ordered food, said plainly: "Tue 20 Oct: 1,840 kcal from 2 orders". */
 export const dayLine = (d: NutritionSummary['days'][number]) =>

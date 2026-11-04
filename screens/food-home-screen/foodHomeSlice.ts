@@ -8,18 +8,21 @@
 // Bachat Boxes nearby (tonight's surplus, for pickup) and, for people who
 // turned calories on, kitchens with lighter dishes ride along; without them
 // the home is the same. Tiffin and iftar kitchens are the home's own rails.
+// The customer's orders still on their way head the page (activeOrders).
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchFoodHome } from '../../networks/food/discovery';
 import { fetchSurplusNearby } from '../../networks/food/surplus';
+import { fetchFoodOrders } from '../../networks/food/orders';
 import { fetchHealthyPicks } from '../../networks/myKitchen/nutrition';
 import { toRejectedValue } from '../../networks/network/network';
 import { currentPoint } from '../../services/location';
 import { setFoodPoint } from '../../store/preferencesSlice';
-import type { FoodHome, SurplusCard, VendorCard } from '../../models';
+import type { FoodHome, FoodOrderSummary, SurplusCard, VendorCard } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { foodHomeSerializer, vendorCardsPageSerializer } from '../../serializers/food/discoverySerializer';
 import { surplusCardsSerializer } from '../../serializers/kitchen/surplusSerializer';
+import { foodOrdersPageSerializer } from '../../serializers/food/orderSerializer';
 
 export interface FoodHomeSliceState {
   home: FoodHome | null;
@@ -34,6 +37,9 @@ export interface FoodHomeSliceState {
   pointSheet: boolean;
   locating: boolean;
   locateError: string;
+  /** Orders on their way (the first few), for the live-order card. */
+  activeOrders: FoodOrderSummary[];
+  activeTotal: number;
 }
 
 const initialState: FoodHomeSliceState = {
@@ -47,6 +53,8 @@ const initialState: FoodHomeSliceState = {
   pointSheet: false,
   locating: false,
   locateError: '',
+  activeOrders: [],
+  activeTotal: 0,
 };
 
 export const pointKey = (p: { lat: number; lng: number }) => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`;
@@ -102,6 +110,23 @@ export const foodHomeSlice = createAppSlice({
         },
       },
     ),
+    /** The customer's orders on their way; a failure leaves the card out. */
+    loadActiveFoodOrdersAsync: create.asyncThunk(
+      async (_: void, { rejectWithValue }) => {
+        try {
+          return await fetchFoodOrders('active', 1, 3);
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        fulfilled: (state, action) => {
+          const page = foodOrdersPageSerializer(action.payload);
+          state.activeOrders = page.items;
+          state.activeTotal = page.total;
+        },
+      },
+    ),
     /** "Use my current location": asks once, then delivers there. */
     locateMeAsync: create.asyncThunk(
       async (_: void, { dispatch, rejectWithValue }) => {
@@ -131,5 +156,5 @@ export const foodHomeSlice = createAppSlice({
   },
 });
 
-export const { openPointSheet, closePointSheet, loadFoodHomeAsync, locateMeAsync } = foodHomeSlice.actions;
+export const { openPointSheet, closePointSheet, loadFoodHomeAsync, loadActiveFoodOrdersAsync, locateMeAsync } = foodHomeSlice.actions;
 export const { selectFoodHome } = foodHomeSlice.selectors;

@@ -184,7 +184,7 @@ it('keeps cuisines in use and shows only banners whose target is there', async (
   expect((await failure(createFoodBanner({ ...banner, targetType: 'vendor', targetId: 'fb_nowhere', targetQuery: null }).then(raw => required(adminFoodBannerSerializer(raw))))).code).toBe('VALIDATION_FAILED');
   await createFoodBanner({ ...banner, targetType: 'vendor', targetId: 'fb_resto', targetQuery: null });
   await as('customer');
-  expect((required(foodHomeSerializer(await fetchFoodHome(HOME.lat, HOME.lng)))).banners).toMatchObject([{ title: 'Biryani week', target: { type: 'vendor', slug: 'biryani-bazaar' } }]);
+  expect((required(foodHomeSerializer(await fetchFoodHome(HOME.lat, HOME.lng)))).banners).toMatchObject([{ headline: 'Biryani week', target: { type: 'vendor', slug: 'biryani-bazaar' } }]);
   await as('admin');
   await setVendorSuspended('fb_resto', true, 'Food safety complaint under review');
   await as('customer');

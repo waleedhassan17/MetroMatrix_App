@@ -1,13 +1,16 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Food Court (the Food app's Home tab)
 // ═══════════════════════════════════════════════════════
-// Where it delivers (a saved address or where you are), search, cuisines,
-// then rails — deals, top rated, fastest, home kitchens, free delivery, new —
-// and every restaurant that delivers to you, a page at a time, open ones
-// first. Vendors deliver with their own riders; MetroMatrix takes no
-// commission, so the fee shown is the vendor's own.
+// Ordering first: the customer's live order, the staff's banners, cuisines,
+// then the rails — order again, deals, top rated, fastest, home kitchens,
+// free delivery, new — then "More from Food Court" (Bachat Box, tiffins,
+// dawat, My Kitchen) and its rails, and every kitchen that delivers to you,
+// a page at a time, open ones first. The bag follows the customer (the
+// header's bag and the dock). Vendors deliver with their own riders;
+// MetroMatrix takes no commission, so the fee shown is the vendor's own.
 
 import React, { useCallback, useEffect, useMemo } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
@@ -16,15 +19,18 @@ import { usePagedList } from '../../hooks/usePagedList';
 import { fetchVendors } from '../../networks/food/discovery';
 import { RAILS, pointOfAddress } from '../../models/food/discoveryModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Divider, EmptyState, IconButton, IonIcon, InlineNotice, ListRow, MciIcon, PageHeader, Sheet, Skeleton } from '../../Custom-Components/index';
+import { AppText, Button, Card, CountIconButton, Divider, EmptyState, IconButton, IonIcon, InlineNotice, ListRow, MciIcon, PageHeader, PhotoBannerCarousel, Sheet } from '../../Custom-Components/index';
 import { loadNutritionSettingsAsync, selectNutritionSettings } from '../nutrition-settings-screen/nutritionSettingsSlice';
 import { VendorCard } from '../../Custom-Components/food/VendorCard';
-import { CuisineRail, FoodHomeSkeleton, FoodSection, SurplusRail, VendorRail } from '../../Components/food/FoodParts';
+import { ActiveOrderCard, CuisineRail, FoodBagDock, FoodHomeSkeleton, FoodSection, SurplusRail, VendorRail, useBagDockInset } from '../../Components/food/FoodParts';
+import { VendorCardSkeleton } from '../../Custom-Components/food/FoodSkeletons';
+import { QuickActionGrid } from '../../Components/admin/AdminParts';
+import { useFoodBag } from '../../hooks/useFoodBag';
 import { SearchPill } from '../../Components/shopping/ShopParts';
-import type { VendorCard as VendorCardData } from '../../models';
+import type { FoodHomeBanner, VendorCard as VendorCardData } from '../../models';
 import { selectFoodPoint, setFoodPoint } from '../../store/preferencesSlice';
 import { loadAddressesAsync, selectAddressBook } from '../address-book-screen/addressBookSlice';
-import { closePointSheet, loadFoodHomeAsync, locateMeAsync, openPointSheet, pointKey, selectFoodHome } from './foodHomeSlice';
+import { closePointSheet, loadActiveFoodOrdersAsync, loadFoodHomeAsync, locateMeAsync, openPointSheet, pointKey, selectFoodHome } from './foodHomeSlice';
 import { vendorCardsPageSerializer } from '../../serializers/food/discoverySerializer';
 
 type Nav = { navigate: (name: string, params?: object) => void };
@@ -38,11 +44,9 @@ const makeStyles = ({ colors, space, gutter, size }: Theme) =>
     header: { gap: space.s24, paddingTop: space.s20, paddingBottom: space.s16 },
     padded: { paddingHorizontal: gutter, gap: space.s12 },
     row: { paddingBottom: space.s24 },
-    footer: { paddingVertical: space.s16, alignItems: 'center' },
-    rail: { paddingHorizontal: gutter, gap: space.s16 },
-    tile: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
-    tileText: { flex: 1, minWidth: 0, gap: space.s4 },
-    pick: { width: size.railCard, gap: space.s4 },
+    headerActions: { flexDirection: 'row', alignItems: 'center' },
+    allHead: { paddingHorizontal: gutter, gap: space.s4 },
+    footer: { paddingHorizontal: gutter, paddingBottom: space.s24 },
   });
 
 const FoodHome: React.FC = () => (
@@ -57,11 +61,20 @@ const FoodHomeContent: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { service, colors, size } = useTheme();
+  const { service, colors } = useTheme();
   const s = useAppSelector(selectFoodHome);
   const point = useAppSelector(selectFoodPoint);
   const book = useAppSelector(selectAddressBook);
+  const bag = useFoodBag();
+  const dockInset = useBagDockInset();
   const home = s.home;
+
+  // The live-order card reads again each time the tab comes back.
+  useFocusEffect(
+    useCallback(() => {
+      void dispatch(loadActiveFoodOrdersAsync());
+    }, [dispatch]),
+  );
 
   useEffect(() => {
     if (book.status === 'idle') void dispatch(loadAddressesAsync());
@@ -96,10 +109,30 @@ const FoodHomeContent: React.FC = () => {
 
   const open = (v: VendorCardData) => navigation.navigate('FoodVendor', { slug: v.slug });
   const refresh = () => {
+    void dispatch(loadActiveFoodOrdersAsync());
     if (!point) return;
     void dispatch(loadFoodHomeAsync({ lat: point.lat, lng: point.lng, refresh: true }));
     all.refresh();
   };
+
+  const openBanner = (b: FoodHomeBanner) => {
+    if (b.target.type === 'vendor') navigation.navigate('FoodVendor', { slug: b.target.slug });
+    else if (b.target.type === 'cuisine') navigation.navigate('FoodVendors', { cuisine: b.target.slug, title: b.target.name });
+    else navigation.navigate('FoodSearch', { q: b.target.query });
+  };
+  const bannerCta = (b: FoodHomeBanner) => (b.target.type === 'vendor' ? 'Order now' : b.target.type === 'cuisine' ? 'See kitchens' : 'Search');
+
+  // The customer's own orders on their way: one opens it, more open the Orders tab.
+  const liveOrder = s.activeOrders.length ? (
+    <View style={styles.padded}>
+      <ActiveOrderCard
+        orders={s.activeOrders}
+        total={s.activeTotal}
+        onOpen={code => navigation.navigate('FoodOrder', { code })}
+        onAll={() => navigation.navigate('FoodOrdersTab')}
+      />
+    </View>
+  ) : null;
 
   // Bachat Boxes are for pickup: they show even where nobody delivers.
   const surplusRail = s.surplus.length ? (
@@ -115,21 +148,21 @@ const FoodHomeContent: React.FC = () => {
     </FoodSection>
   ) : null;
 
-  const myKitchen = (
-    <View style={styles.padded}>
-      <Card onPress={() => navigation.navigate('MyKitchen')} accessibilityLabel="My Kitchen: cook what you have, get what's missing">
-        <View style={styles.tile}>
-          <IonIcon name="basket-outline" size="lg" color={service.accentDeep} />
-          <View style={styles.tileText}>
-            <AppText variant="title">My Kitchen</AppText>
-            <AppText variant="small" tone="muted">
-              Cook what you have, and get what’s missing
-            </AppText>
-          </View>
-          <IonIcon name="chevron-forward" size="md" color={colors.inkMuted} />
-        </View>
-      </Card>
-    </View>
+  // Food Court's other ways to eat, in one row (each opens its own list).
+  const more = (
+    <FoodSection title="More from Food Court">
+      <View style={styles.padded}>
+        <QuickActionGrid
+          columns={4}
+          actions={[
+            { key: 'bachat', icon: 'gift-outline', tint: 'green', label: 'Bachat Box', onPress: () => navigation.navigate('FoodSurplusList') },
+            { key: 'tiffins', icon: 'calendar-outline', tint: 'amber', label: 'My tiffins', onPress: () => navigation.navigate('FoodTiffins') },
+            { key: 'dawat', icon: 'people-outline', tint: 'violet', label: 'Dawat requests', onPress: () => navigation.navigate('FoodCateringRequests') },
+            { key: 'kitchen', icon: 'basket-outline', tint: 'teal', label: 'My Kitchen', onPress: () => navigation.navigate('MyKitchen') },
+          ]}
+        />
+      </View>
+    </FoodSection>
   );
 
   const healthyRail =
@@ -149,10 +182,11 @@ const FoodHomeContent: React.FC = () => {
 
   const header = (
     <View style={styles.header}>
+      {liveOrder}
       {!point ? (
         <View style={styles.padded}>
-          <EmptyState icon="map-pin" title="Where should we deliver?" body="Pick a saved address or use where you are, and we’ll show the kitchens that deliver to you." />
-          <Button label="Choose where" onPress={() => dispatch(openPointSheet())} fullWidth />
+          <EmptyState ion="location-outline" title="Choose your address" body="Pick a saved address or use where you are, and we’ll show the kitchens that deliver there." />
+          <Button label="Choose an address" onPress={() => dispatch(openPointSheet())} fullWidth />
         </View>
       ) : s.error.message && !home ? (
         <View style={styles.padded}>
@@ -164,7 +198,7 @@ const FoodHomeContent: React.FC = () => {
         <>
           <View style={styles.padded}>
             <EmptyState
-              icon="map"
+              ion="map-outline"
               title="Not delivering here yet"
               body={
                 home.coverage.pickupNearby
@@ -182,16 +216,12 @@ const FoodHomeContent: React.FC = () => {
         </>
       ) : (
         <>
+          {home.banners.length ? <PhotoBannerCarousel banners={home.banners} onOpen={openBanner} cta={bannerCta} /> : null}
           {home.cuisines.length ? (
             <FoodSection title="Cuisines">
               <CuisineRail cuisines={home.cuisines} onPress={c => navigation.navigate('FoodVendors', { cuisine: c.slug, title: c.name })} />
             </FoodSection>
           ) : null}
-          {myKitchen}
-          {healthyRail}
-          {iftarRail}
-          {surplusRail}
-          {tiffinRail}
           {rails.map(r => (
             <FoodSection
               key={r.key}
@@ -202,9 +232,14 @@ const FoodHomeContent: React.FC = () => {
               <VendorRail vendors={r.vendors} onOpen={open} />
             </FoodSection>
           ))}
-          <View style={styles.padded}>
+          {more}
+          {iftarRail}
+          {healthyRail}
+          {surplusRail}
+          {tiffinRail}
+          <View style={styles.allHead}>
             <AppText variant="sectionTitle" accessibilityRole="header">
-              All restaurants
+              All kitchens
             </AppText>
             <AppText variant="small" tone="muted">
               {all.total ? `${all.total} deliver to ${point.label}` : 'Open ones first'}
@@ -222,21 +257,26 @@ const FoodHomeContent: React.FC = () => {
         title="Food Court"
         onBack={back}
         backLabel="Back to services"
-        right={<IconButton icon="heart-outline" tone="onScrim" accessibilityLabel="Saved kitchens" onPress={() => navigation.navigate('FoodFavourites')} />}
+        right={
+          <View style={styles.headerActions}>
+            <IconButton icon="heart-outline" tone="onScrim" accessibilityLabel="Saved kitchens" onPress={() => navigation.navigate('FoodFavourites')} />
+            <CountIconButton icon="bag-handle-outline" count={bag.count} onPress={bag.openBag} label="Your bag" />
+          </View>
+        }
       >
         <Pressable
           style={styles.whereRow}
           onPress={() => dispatch(openPointSheet())}
           accessibilityRole="button"
-          accessibilityLabel={point ? `Delivering to ${point.label}. Change` : 'Choose where to deliver'}
+          accessibilityLabel={point ? `Deliver to ${point.label}. Change the address` : 'Choose your address'}
         >
           <MciIcon name="map-marker" size="sm" color={colors.onScrim} />
           <AppText variant="bodyStrong" tone="onScrim" numberOfLines={1} style={styles.whereText}>
-            {point ? `Delivering to ${point.label}` : 'Choose where to deliver'}
+            {point ? `Deliver to ${point.label}` : 'Choose your address'}
           </AppText>
           <IonIcon name="chevron-down" size="sm" color={colors.onScrim} />
         </Pressable>
-        <SearchPill label="Search dishes and kitchens" onPress={() => navigation.navigate('FoodSearch')} />
+        <SearchPill label="Search dishes and kitchens" hints={['Search biryani, karahi, burgers', 'Search a kitchen by name', 'Search dishes and kitchens']} onPress={() => navigation.navigate('FoodSearch')} />
       </PageHeader>
 
       <FlatList
@@ -250,25 +290,25 @@ const FoodHomeContent: React.FC = () => {
         ListHeaderComponent={header}
         ListFooterComponent={
           delivering && all.isLoading ? (
-            <View style={styles.padded}>
-              <Skeleton height={size.storeCard / size.vendorPhotoAspect} shape="lg" />
-            </View>
+            <VendorCardSkeleton count={1} />
           ) : delivering && all.error ? (
-            <View style={styles.padded}>
+            <View style={styles.footer}>
               <InlineNotice message={all.error} action={{ label: 'Try again', onPress: all.reload }} />
             </View>
           ) : null
         }
         onEndReached={all.loadMore}
         onEndReachedThreshold={0.5}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, { paddingBottom: styles.list.paddingBottom + dockInset }]}
         refreshControl={
           <RefreshControl refreshing={s.refreshing || all.isRefreshing} onRefresh={refresh} tintColor={service.accent} colors={[service.accent]} progressBackgroundColor={colors.surface} />
         }
         showsVerticalScrollIndicator={false}
       />
 
-      <Sheet visible={s.pointSheet} onClose={() => dispatch(closePointSheet())} title="Where should we deliver?">
+      <FoodBagDock inTab />
+
+      <Sheet visible={s.pointSheet} onClose={() => dispatch(closePointSheet())} title="Your address">
         {s.locateError ? <InlineNotice message={s.locateError} /> : null}
         <Card padded="horizontal">
           <ListRow

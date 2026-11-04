@@ -1073,12 +1073,12 @@ export type FoodBannerTarget =
   | { type: 'cuisine'; id: string; slug: string; name: string }
   | { type: 'search'; query: string };
 
-/** A staff banner on the Food home, with what it opens. */
+/** A staff banner on the Food home, with what it opens (the shared PhotoBanner's shape). */
 export interface FoodHomeBanner {
   id: string;
   imageUrl: string;
-  title: string;
-  subtitle: string | null;
+  headline: string;
+  subhead: string | null;
   target: FoodBannerTarget;
 }
 
