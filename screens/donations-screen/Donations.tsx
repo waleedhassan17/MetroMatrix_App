@@ -13,7 +13,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { rescuedShareText, validateDonation } from '../../models/kitchen/wasteModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { Button, Card, EmptyState, InlineNotice, ScreenShell, SkeletonLines, TextField, AppText } from '../../Custom-Components/index';
+import { AppText, Button, EmptyState, InlineNotice, RowCardsSkeleton, ScreenShell, SectionCard, TextField } from '../../Custom-Components/index';
 import { RowCard, StatGrid } from '../../Components/admin/AdminParts';
 import type { FoodVendorStackParamList } from '../../models';
 import { formatWhen } from '../../utils/health-time/healthTime';
@@ -85,22 +85,21 @@ const DonationsContent: React.FC<Props> = () => {
         />
       ) : null}
 
-      <Card>
+      <SectionCard title="Record a donation">
         <View style={styles.gap}>
-          <AppText variant="title">Record a donation</AppText>
           {s.saveError.message ? <InlineNotice message={s.saveError.message} /> : null}
           <TextField label="Meals" value={s.form.meals} onChangeText={meals => dispatch(editDonation({ meals }))} keyboardType="number-pad" placeholder="12" error={s.errors.meals} />
           <TextField label="Given to" value={s.form.to} onChangeText={to => dispatch(editDonation({ to }))} placeholder="Edhi centre, Gulberg" maxLength={80} error={s.errors.to} />
           <TextField label="Note (optional)" value={s.form.note} onChangeText={note => dispatch(editDonation({ note }))} maxLength={200} />
           <Button label="Save" onPress={() => void save()} loading={s.saving} fullWidth />
         </View>
-      </Card>
+      </SectionCard>
 
       <AppText variant="sectionTitle">Given</AppText>
       {!s.data ? (
-        s.status === 'failed' ? null : <SkeletonLines lines={4} />
+        s.status === 'failed' ? null : <RowCardsSkeleton count={2} />
       ) : !s.data.items.length ? (
-        <EmptyState icon="heart" title="No donations yet" body="Food you give away to a shelter, a mosque or a langar counts here." />
+        <EmptyState ion="heart-outline" title="No donations yet" body="Food you give away to a shelter, a mosque or a langar counts here." />
       ) : (
         s.data.items.map(d => <RowCard key={d.id} title={d.to} mark={{ icon: 'heart-outline', tint: 'rose' }} lines={[formatWhen(d.at, TZ), d.note]} amount={`${d.meals} ${d.meals === 1 ? 'meal' : 'meals'}`} />)
       )}

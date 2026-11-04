@@ -15,7 +15,7 @@ import { useBack } from '../../hooks/useBack';
 import { CATEGORY_LABEL, MOVEMENT_LABEL, STOCK_STATE } from '../../models/kitchen/kitchenStatusModel';
 import { parLabel, qtyLabel } from '../../models/kitchen/stockModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Divider, ExpiryChip, InlineNotice, ListRow, ScreenShell, SkeletonLines, StatusPill, StockLevelBar, TextAction } from '../../Custom-Components/index';
+import { AppText, Button, Card, Divider, ExpiryChip, InlineNotice, ListRow, RowCardsSkeleton, ScreenShell, StatusPill, StockLevelBar, TextAction } from '../../Custom-Components/index';
 import { SectionHead } from '../../Components/admin/AdminParts';
 import type { FoodVendorStackParamList } from '../../models';
 import { Alert } from '../../utils/alert/alert';
@@ -91,7 +91,7 @@ const IngredientContent: React.FC<Props> = ({ navigation, route }) => {
       onRefresh={() => void dispatch(loadIngredientAsync(id))}
       footer={i ? <Button label="Edit" variant="secondary" leftIcon="create-outline" onPress={() => navigation.navigate('KitchenIngredientForm', { id })} fullWidth /> : undefined}>
       {s.status === 'failed' && !i ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadIngredientAsync(id)) }} /> : null}
-      {!i && s.status !== 'failed' ? <SkeletonLines lines={8} /> : null}
+      {!i && s.status !== 'failed' ? <RowCardsSkeleton count={4} /> : null}
       {i ? (
         <>
           <StockLevelBar ingredient={i} today={today} />

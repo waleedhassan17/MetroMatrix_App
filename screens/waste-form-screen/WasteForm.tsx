@@ -16,7 +16,8 @@ import { defaultUnit, unitChoices, unitOfKey } from '../../models/kitchen/stockM
 import { wasteInputOf, wasteLineCost } from '../../models/kitchen/wasteModel';
 import type { CostedIngredient } from '../../models/kitchen/costingModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, BottomSheetPicker, Button, Card, ChoiceChip, Divider, EmptyState, InlineNotice, RecipeLineRow, ScreenShell, SkeletonLines, TextAction, TextField } from '../../Custom-Components/index';
+import { BottomSheetPicker, Button, Card, ChoiceChip, Divider, EmptyState, InlineNotice, RecipeLineRow, RowCardsSkeleton, ScreenShell, SectionCard, TextAction, TextField } from '../../Custom-Components/index';
+import { ShopSection } from '../../Components/shopping/ShopParts';
 import { IngredientPicker } from '../../Components/kitchen/IngredientPicker';
 import { VoiceSheetButton } from '../../Components/voice/VoiceSheet';
 import type { FoodVendorStackParamList } from '../../models';
@@ -103,20 +104,22 @@ const WasteFormContent: React.FC<Props> = () => {
           }}
         />
       }
-      footer={s.lines.length ? <Button label="Save" onPress={() => void save()} loading={s.saving} fullWidth /> : undefined}>
+      // The footer stays: with nothing added yet it says what's missing instead of vanishing.
+      footer={<Button label={s.lines.length ? 'Save' : 'Add what went to waste first'} onPress={() => void save()} loading={s.saving} disabled={!s.lines.length} fullWidth />}>
       {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadWasteFormAsync()) }} /> : null}
       {s.saveError.message ? <InlineNotice message={s.saveError.message} /> : null}
 
-      <AppText variant="sectionTitle">Why</AppText>
-      <View style={styles.chips}>
-        {WASTE_REASONS.map(r => (
-          <ChoiceChip key={r} label={WASTE_REASON_LABEL[r]} selected={s.reason === r} onPress={() => dispatch(setWasteReason(r))} />
-        ))}
-      </View>
+      <SectionCard title="Why" icon="help-circle-outline">
+        <View style={styles.chips}>
+          {WASTE_REASONS.map(r => (
+            <ChoiceChip key={r} label={WASTE_REASON_LABEL[r]} selected={s.reason === r} onPress={() => dispatch(setWasteReason(r))} />
+          ))}
+        </View>
+      </SectionCard>
 
-      <AppText variant="sectionTitle">What</AppText>
+      <ShopSection title="What" subtitle="Ingredients, or cooked dishes" inset={false} />
       {s.status === 'loading' && !s.ingredients.length ? (
-        <SkeletonLines lines={4} />
+        <RowCardsSkeleton count={2} />
       ) : s.lines.length ? (
         <Card padded="horizontal">
           {s.lines.map((l, n) => (
@@ -141,7 +144,7 @@ const WasteFormContent: React.FC<Props> = () => {
           ))}
         </Card>
       ) : (
-        <EmptyState icon="trash-2" title="Add what went to waste" body="An ingredient (rice that went bad), or a cooked dish (six plates left over)." />
+        <EmptyState ion="trash-outline" title="Add what went to waste" body="An ingredient (rice that went bad), or a cooked dish (six plates left over)." />
       )}
       {s.errors.lines ? <InlineNotice message={s.errors.lines} /> : null}
       <View style={styles.adds}>
@@ -149,7 +152,9 @@ const WasteFormContent: React.FC<Props> = () => {
         <TextAction label="Add a cooked dish" icon="add" onPress={() => setPicking({ kind: 'dish' })} disabled={!s.dishes.length} />
       </View>
 
-      <TextField label="Note (optional)" value={s.note} onChangeText={t => dispatch(setWasteNote(t))} placeholder="End of night, fridge failed…" maxLength={200} />
+      <SectionCard title="Note (optional)" icon="create-outline">
+        <TextField label="What happened" value={s.note} onChangeText={t => dispatch(setWasteNote(t))} placeholder="End of night, fridge failed…" maxLength={200} />
+      </SectionCard>
 
       <IngredientPicker
         visible={picking?.kind === 'ingredient'}

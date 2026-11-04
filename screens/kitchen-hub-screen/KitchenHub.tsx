@@ -1,9 +1,11 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Kitchen (the vendor's Kitchen tab)
 // ═══════════════════════════════════════════════════════
-// Answers first: today's date and the assistant's meter, then up to five
-// findings to act on (insight cards, one action each), then the kitchen's
-// tools with one live number each. Two columns on a tablet.
+// The day's quick actions first, then up to five findings to act on (insight
+// cards, one action each), today in four numbers, the assistant's meter, and
+// every kitchen tool in four tinted groups — stock and prep, costs and
+// waste, grow, the assistant — each row with its live count. A failed card
+// list or meter says so in place. Two columns on a tablet.
 
 import React, { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -11,12 +13,12 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useLayoutClass } from '../../hooks/useLayoutClass';
 import { cardTarget } from '../../models/kitchen/insightCardModel';
-import { usageFill, usageLine, usageNote } from '../../models/kitchen/aiModel';
 import { HYGIENE_STATUS } from '../../models/kitchen/kitchenStatusModel';
 import { selectBusiness } from '../../store/authSlice';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Card, InlineNotice, InsightCard, ProgressBar, ScreenShell, SkeletonLines } from '../../Custom-Components/index';
-import { IconWell, SectionHead, StatGrid, ToolSection, type AdminStat } from '../../Components/admin/AdminParts';
+import { AppText, InlineNotice, InsightCard, RowCardsSkeleton, ScreenShell, StatGridSkeleton } from '../../Custom-Components/index';
+import { QuickActionGrid, SectionHead, StatGrid, ToolSection, type AdminStat, type AdminTool } from '../../Components/admin/AdminParts';
+import { AiMeterCard } from '../../Components/kitchen/AiMeterCard';
 import { formatLongDate } from '../../utils/health-time/healthTime';
 import { formatPKR } from '../../utils/money/money';
 import type { KitchenSummary } from '../../models';
@@ -30,131 +32,95 @@ const makeStyles = ({ space }: Theme) =>
     column: { flex: 1, gap: space.s16 },
     stack: { gap: space.s16 },
     cards: { gap: space.s12 },
-    meter: { gap: space.s8 },
-    meterHead: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
-    grow: { flex: 1, gap: space.s4 },
+    loading: { gap: space.s16 },
   });
 
-/** The tools, each with its live number. */
-const tiles = (s: KitchenSummary, go: (name: string, params?: object) => void): AdminStat[] => [
-  {
-    key: 'stock',
-    icon: 'cube-outline',
-    tint: 'blue',
-    label: 'Stock',
-    value: s.stock.low + s.stock.negative ? `${s.stock.low + s.stock.negative}` : 'All set',
-    hint: s.stock.low + s.stock.negative ? `running low or below zero · ${s.stock.expiring} expiring` : `${s.stock.total} ingredients`,
-    onPress: () => go('KitchenStock', s.stock.low ? { segment: 'low' } : undefined),
-  },
-  {
-    key: 'recipes',
-    icon: 'pie-chart-outline',
-    tint: 'violet',
-    label: 'Recipes and costs',
-    value: s.recipes.avgFoodCostPct === null ? '—' : `${s.recipes.avgFoodCostPct}%`,
-    hint: s.recipes.missing ? `average food cost · ${s.recipes.missing} need a recipe` : `average food cost · target ${s.recipes.targetFoodCostPct}%`,
-    onPress: () => go('KitchenRecipes'),
-  },
-  {
-    key: 'purchases',
-    icon: 'cart-outline',
-    tint: 'amber',
-    label: 'Purchases',
-    value: formatPKR(s.purchases.weekTotal),
-    hint: `spent this week · ${s.purchases.weekCount} ${s.purchases.weekCount === 1 ? 'purchase' : 'purchases'}`,
-    onPress: () => go('KitchenPurchases'),
-  },
-  {
-    key: 'forecast',
-    icon: 'clipboard-outline',
-    tint: 'blue',
-    label: 'Forecast and prep',
-    value: s.forecast.learning ? 'Learning' : `${s.forecast.dishes}`,
-    hint: s.forecast.learning ? `about ${s.forecast.dishes} dishes tomorrow, ranges still wide` : `dishes expected tomorrow · about ${s.forecast.orders} orders`,
-    onPress: () => go('KitchenForecast'),
-  },
-  {
-    key: 'waste',
-    icon: 'leaf-outline',
-    tint: 'rose',
-    label: 'Waste and Bachat Box',
-    value: formatPKR(s.waste.weekCost),
-    hint: `wasted this week · ${s.waste.mealsRescued} ${s.waste.mealsRescued === 1 ? 'meal' : 'meals'} rescued`,
-    onPress: () => go('KitchenWaste'),
-  },
-];
-
-/** Reaching customers (5B), each with its live number. Cloud kitchens see demand first. */
-const growTiles = (s: KitchenSummary, go: (name: string, params?: object) => void, cloud: boolean): AdminStat[] => {
-  const g = s.growth;
-  const tiles: AdminStat[] = [
+/** Today in four numbers (the words that explain each go in its hint). */
+const todayTiles = (s: KitchenSummary, go: (name: string, params?: object) => void): AdminStat[] => {
+  const alerts = s.stock.low + s.stock.negative;
+  return [
     {
-      key: 'tiffin',
-      icon: 'calendar-outline',
-      tint: 'amber',
-      label: 'Tiffin',
-      value: s.growth.tiffin.plans ? `${s.growth.tiffin.active}` : 'Start one',
-      hint: s.growth.tiffin.plans
-        ? `subscribers · ${s.growth.tiffin.tomorrow} tomorrow${s.growth.tiffin.pending ? ` · ${s.growth.tiffin.pending} to approve` : ''}`
-        : 'weekly or monthly meals, paid ahead',
-      onPress: () => go('GrowthTiffin'),
+      key: 'stock',
+      icon: 'cube-outline',
+      tint: alerts ? 'amber' : 'green',
+      label: 'Stock to check',
+      value: alerts,
+      hint: alerts ? `low or below zero · ${s.stock.expiring} expiring` : `${s.stock.total} ingredients, all fine`,
+      onPress: () => go('KitchenStock', s.stock.low ? { segment: 'low' } : undefined),
     },
     {
-      key: 'catering',
-      icon: 'people-outline',
+      key: 'cost',
+      icon: 'pie-chart-outline',
       tint: 'violet',
-      label: 'Catering',
-      value: s.growth.catering.new ? `${s.growth.catering.new} new` : `${s.growth.catering.upcoming}`,
-      hint: s.growth.catering.new ? `requests to quote · ${s.growth.catering.upcoming} coming up` : 'events coming up',
-      onPress: () => go('GrowthCatering'),
+      label: 'Food cost (estimated)',
+      value: s.recipes.avgFoodCostPct === null ? '—' : `${s.recipes.avgFoodCostPct}%`,
+      hint: s.recipes.missing ? `${s.recipes.missing} dishes need a recipe card` : `target ${s.recipes.targetFoodCostPct}%`,
+      onPress: () => go('KitchenRecipes'),
     },
     {
-      key: 'storefront',
-      icon: 'qr-code-outline',
+      key: 'spent',
+      icon: 'cart-outline',
       tint: 'blue',
-      label: 'Your link and QR',
-      value: `${g.storefront.brought}`,
-      hint: 'orders you brought this month',
-      onPress: () => go('GrowthStorefront'),
+      label: 'Spent this week',
+      value: formatPKR(s.purchases.weekTotal),
+      hint: `${s.purchases.weekCount} ${s.purchases.weekCount === 1 ? 'purchase' : 'purchases'}`,
+      onPress: () => go('KitchenPurchases'),
     },
     {
-      key: 'demand',
-      icon: 'map-outline',
-      tint: 'rose',
-      label: 'Demand nearby',
-      value: g.demand.unmet.toLocaleString('en-US'),
-      hint: 'searches nearby found nothing open · 30 days',
-      onPress: () => go('GrowthDemand'),
-    },
-    {
-      key: 'menu',
-      icon: 'analytics-outline',
-      tint: 'violet',
-      label: 'Menu insights',
-      value: g.experiments.results ? `${g.experiments.results} to decide` : g.experiments.running ? `${g.experiments.running} testing` : 'See dishes',
-      hint: g.experiments.results ? 'tests with a result' : 'what sells, what earns, and tests',
-      onPress: () => go('GrowthMenuInsights'),
-    },
-    {
-      key: 'story',
-      icon: 'shield-checkmark-outline',
-      tint: 'amber',
-      label: 'Story and hygiene',
-      value: HYGIENE_STATUS[g.hygiene].vendorLabel,
-      hint: 'what customers read about you',
-      onPress: () => go('GrowthStory'),
-    },
-    {
-      key: 'ramadan',
-      icon: 'moon-outline',
-      tint: 'blue',
-      label: 'Ramadan mode',
-      value: g.ramadan.enabled ? 'On' : g.ramadan.state === 'none' ? 'Later' : 'Off',
-      hint: g.ramadan.state === 'none' ? 'opens a month before Ramadan' : 'sehri and iftar hours',
-      onPress: () => go('GrowthRamadan'),
+      key: 'waste',
+      icon: 'leaf-outline',
+      tint: 'red',
+      label: 'Wasted this week',
+      value: formatPKR(s.waste.weekCost),
+      hint: `${s.waste.mealsRescued} ${s.waste.mealsRescued === 1 ? 'meal' : 'meals'} rescued in Bachat Boxes`,
+      onPress: () => go('KitchenWaste'),
     },
   ];
-  return cloud ? [...tiles.filter(t => t.key === 'demand'), ...tiles.filter(t => t.key !== 'demand')] : tiles;
+};
+
+/** The kitchen's tools, grouped; each section wears one tint, so colour means the group. */
+const toolSections = (s: KitchenSummary, go: (name: string, params?: object) => void, cloud: boolean, assistantLeft: number | null): { title: string; tools: AdminTool[] }[] => {
+  const g = s.growth;
+  const grow: AdminTool[] = [
+    { key: 'tiffin', title: 'Tiffin', subtitle: 'Weekly or monthly meals, paid ahead', icon: 'calendar-outline', tint: 'violet', value: g.tiffin.plans ? `${g.tiffin.active} on${g.tiffin.pending ? ` · ${g.tiffin.pending} to approve` : ''}` : 'Start one', onPress: () => go('GrowthTiffin') },
+    { key: 'catering', title: 'Dawat and catering', subtitle: 'Requests, quotes and events', icon: 'people-outline', tint: 'violet', value: g.catering.new ? `${g.catering.new} new` : g.catering.upcoming ? `${g.catering.upcoming} coming` : undefined, onPress: () => go('GrowthCatering') },
+    { key: 'storefront', title: 'Your link and QR', subtitle: 'Your own page to share', icon: 'qr-code-outline', tint: 'violet', value: g.storefront.brought ? `${g.storefront.brought} orders` : undefined, onPress: () => go('GrowthStorefront') },
+    { key: 'demand', title: 'Demand nearby', subtitle: 'Searches near you that found nothing open', icon: 'map-outline', tint: 'violet', value: g.demand.unmet ? g.demand.unmet.toLocaleString('en-US') : undefined, onPress: () => go('GrowthDemand') },
+    { key: 'menu', title: 'Menu insights', subtitle: 'What sells, what you keep, and tests', icon: 'analytics-outline', tint: 'violet', value: g.experiments.results ? `${g.experiments.results} to decide` : g.experiments.running ? `${g.experiments.running} testing` : undefined, onPress: () => go('GrowthMenuInsights') },
+    { key: 'story', title: 'Story and hygiene', subtitle: 'What customers read about you', icon: 'shield-checkmark-outline', tint: 'violet', value: HYGIENE_STATUS[g.hygiene].vendorLabel, onPress: () => go('GrowthStory') },
+    { key: 'ramadan', title: 'Ramadan mode', subtitle: g.ramadan.state === 'none' ? 'Opens a month before Ramadan' : 'Sehri and iftar hours', icon: 'moon-outline', tint: 'violet', value: g.ramadan.enabled ? 'On' : g.ramadan.state === 'none' ? undefined : 'Off', onPress: () => go('GrowthRamadan') },
+  ];
+  return [
+    {
+      title: 'Stock and prep',
+      tools: [
+        { key: 'forecast', title: 'Forecast and prep', subtitle: s.forecast.learning ? 'Still learning your orders' : `About ${s.forecast.orders} orders tomorrow (estimated)`, icon: 'clipboard-outline', tint: 'blue', value: s.forecast.learning ? undefined : `${s.forecast.dishes} dishes`, onPress: () => go('KitchenForecast') },
+        { key: 'stock', title: 'Stock', subtitle: `${s.stock.total} ingredients`, icon: 'cube-outline', tint: 'blue', value: s.stock.low + s.stock.negative ? `${s.stock.low + s.stock.negative} to check` : undefined, onPress: () => go('KitchenStock') },
+        { key: 'count', title: 'Count stock', subtitle: 'Walk the shelves and set what’s there', icon: 'list-outline', tint: 'blue', onPress: () => go('KitchenStockTake') },
+        { key: 'purchases', title: 'Purchases', subtitle: 'What you bought, and receipts', icon: 'cart-outline', tint: 'blue', onPress: () => go('KitchenPurchases') },
+        { key: 'suppliers', title: 'Suppliers', subtitle: 'Who you buy from', icon: 'storefront-outline', tint: 'blue', onPress: () => go('KitchenSuppliers') },
+        { key: 'prices', title: 'Price watch', subtitle: 'What your ingredients cost lately', icon: 'trending-up-outline', tint: 'blue', onPress: () => go('KitchenPriceWatch') },
+      ],
+    },
+    {
+      title: 'Costs and waste',
+      tools: [
+        { key: 'recipes', title: 'Recipes and costs', subtitle: 'Cost to make and what you keep, per dish', icon: 'pie-chart-outline', tint: 'amber', value: s.recipes.missing ? `${s.recipes.missing} to add` : undefined, onPress: () => go('KitchenRecipes') },
+        { key: 'waste', title: 'Waste and Bachat Box', subtitle: 'What was thrown, and what was rescued', icon: 'leaf-outline', tint: 'amber', onPress: () => go('KitchenWaste') },
+        { key: 'donations', title: 'Donations', subtitle: 'Food you gave away', icon: 'heart-outline', tint: 'amber', onPress: () => go('KitchenDonations') },
+        { key: 'settings', title: 'Costs, stock and the board', subtitle: 'Food-cost target, selling out by stock, packing photo, spoken orders', icon: 'settings-outline', tint: 'amber', onPress: () => go('KitchenSettings') },
+      ],
+    },
+    { title: 'Grow', tools: cloud ? [...grow.filter(t => t.key === 'demand'), ...grow.filter(t => t.key !== 'demand')] : grow },
+    {
+      title: 'Assistant',
+      tools: [
+        { key: 'assistant', title: 'Assistant', subtitle: 'Descriptions, specials, combos, photo tips', icon: 'sparkles-outline', tint: 'teal', value: assistantLeft !== null ? `${assistantLeft} left` : undefined, onPress: () => go('KitchenAssistant') },
+        { key: 'reviews', title: 'What reviews say', subtitle: 'The week’s themes, good and bad', icon: 'chatbubbles-outline', tint: 'teal', onPress: () => go('KitchenReviewInsights') },
+        { key: 'nutrition', title: 'Nutrition', subtitle: 'Calories and macros per dish (estimated)', icon: 'nutrition-outline', tint: 'teal', onPress: () => go('KitchenNutrition') },
+      ],
+    },
+  ];
 };
 
 const KitchenHub: React.FC = () => (
@@ -178,28 +144,31 @@ const KitchenHubContent: React.FC = () => {
   );
 
   const go = (name: string, params?: object) => navigation.navigate(name, params);
-  const note = usageNote(s.usage);
+  const reload = () => void dispatch(loadKitchenHubAsync());
+
+  const quick = (
+    <QuickActionGrid
+      actions={[
+        { key: 'purchase', icon: 'cart-outline', tint: 'blue', label: 'Add a purchase', onPress: () => go('KitchenPurchaseForm') },
+        { key: 'count', icon: 'list-outline', tint: 'blue', label: 'Count stock', onPress: () => go('KitchenStockTake') },
+        { key: 'waste', icon: 'trash-outline', tint: 'amber', label: 'Log waste', onPress: () => go('KitchenWasteForm') },
+        { key: 'box', icon: 'gift-outline', tint: 'green', label: 'Bachat Box', onPress: () => go('KitchenBoxForm', { suggest: true }) },
+        { key: 'recipes', icon: 'pie-chart-outline', tint: 'amber', label: 'Recipe costs', onPress: () => go('KitchenRecipes') },
+        { key: 'assistant', icon: 'sparkles-outline', tint: 'teal', label: 'Assistant', onPress: () => go('KitchenAssistant') },
+      ]}
+    />
+  );
 
   const meter = s.usage ? (
-    <Card onPress={() => go('KitchenAssistant')} accessibilityLabel={`${usageLine(s.usage)}. Opens the assistant.`}>
-      <View style={styles.meter}>
-        <View style={styles.meterHead}>
-          <IconWell icon="sparkles-outline" tint="accent" />
-          <View style={styles.grow}>
-            <AppText variant="title">{usageLine(s.usage)}</AppText>
-            <AppText variant="small" tone="muted">
-              {note ?? 'Voice entry, receipt scans and drafts count. Nothing is saved until you confirm it.'}
-            </AppText>
-          </View>
-        </View>
-        <ProgressBar progress={1 - usageFill(s.usage)} accessibilityLabel={usageLine(s.usage)} />
-      </View>
-    </Card>
+    <AiMeterCard usage={s.usage} onPress={() => go('KitchenAssistant')} />
+  ) : s.partsFailed.usage ? (
+    <InlineNotice message="The assistant’s meter didn’t load." action={{ label: 'Try again', onPress: reload }} />
   ) : null;
 
   const cards = (
     <View style={styles.cards}>
       <SectionHead title={s.cards.length ? 'Needs you' : 'All clear'} />
+      {s.partsFailed.cards ? <InlineNotice message="What needs you didn’t load." action={{ label: 'Try again', onPress: reload }} /> : null}
       {s.cards.map(c => (
         <InsightCard
           key={c.id}
@@ -211,7 +180,7 @@ const KitchenHubContent: React.FC = () => {
           onDismiss={() => void dispatch(snoozeCardAsync(c.id))}
         />
       ))}
-      {!s.cards.length && s.status === 'succeeded' ? (
+      {!s.cards.length && !s.partsFailed.cards && s.status === 'succeeded' ? (
         <AppText variant="small" tone="muted">
           Nothing to act on right now. Stock, costs and tomorrow’s prep look fine.
         </AppText>
@@ -219,20 +188,18 @@ const KitchenHubContent: React.FC = () => {
     </View>
   );
 
+  const today = s.summary ? (
+    <View style={styles.stack}>
+      <SectionHead title="This week" />
+      <StatGrid stats={todayTiles(s.summary, go)} />
+    </View>
+  ) : null;
+
   const tools = s.summary ? (
     <View style={styles.stack}>
-      <SectionHead title="Your kitchen" />
-      <StatGrid stats={tiles(s.summary, go)} />
-      <SectionHead title="Grow" />
-      <StatGrid stats={growTiles(s.summary, go, cloud)} />
-      <ToolSection
-        title="Assistant"
-        tools={[
-          { key: 'assistant', title: 'Assistant', subtitle: 'Descriptions, specials, combos, photo tips', icon: 'sparkles-outline', tint: 'violet', value: s.usage ? `${s.usage.left} left` : undefined, onPress: () => go('KitchenAssistant') },
-          { key: 'reviews', title: 'What reviews say', subtitle: 'The week’s themes, good and bad', icon: 'chatbubbles-outline', tint: 'rose', onPress: () => go('KitchenReviewInsights') },
-          { key: 'nutrition', title: 'Nutrition', subtitle: 'Calories and macros per dish', icon: 'nutrition-outline', tint: 'blue', onPress: () => go('KitchenNutrition') },
-        ]}
-      />
+      {toolSections(s.summary, go, cloud, s.usage ? s.usage.left : null).map(sec => (
+        <ToolSection key={sec.title} title={sec.title} tools={sec.tools} />
+      ))}
     </View>
   ) : null;
 
@@ -241,22 +208,30 @@ const KitchenHubContent: React.FC = () => {
       title="Kitchen"
       subtitle={s.summary ? formatLongDate(`${s.summary.date}T07:00:00.000Z`, 'Asia/Karachi') : 'Stock, costs and tomorrow’s prep'}
       refreshing={s.status === 'loading' && !!s.summary}
-      onRefresh={() => void dispatch(loadKitchenHubAsync())}>
-      {s.status === 'failed' && !s.summary ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadKitchenHubAsync()) }} /> : null}
-      {!s.summary && s.status !== 'failed' ? <SkeletonLines lines={8} /> : null}
+      onRefresh={reload}>
+      {s.status === 'failed' && !s.summary ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: reload }} /> : null}
+      {quick}
+      {!s.summary && s.status !== 'failed' ? (
+        <View style={styles.loading}>
+          <StatGridSkeleton count={4} />
+          <RowCardsSkeleton count={3} />
+        </View>
+      ) : null}
       {s.summary ? (
         tablet ? (
           <View style={styles.columns}>
             <View style={styles.column}>
-              {meter}
               {cards}
+              {today}
+              {meter}
             </View>
             <View style={styles.column}>{tools}</View>
           </View>
         ) : (
           <>
-            {meter}
             {cards}
+            {today}
+            {meter}
             {tools}
           </>
         )

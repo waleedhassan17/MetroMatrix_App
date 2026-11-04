@@ -18,7 +18,7 @@ import { IFTAR_TIMES, SEHRI_TIMES, ramadanDatesLine, ramadanSwitch, validateRama
 import { RAMADAN_STATE } from '../../models/kitchen/kitchenStatusModel';
 import { timeLabel } from '../../models/kitchen/cateringModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, BottomSheetPicker, Button, Card, InlineNotice, PickerField, ScreenShell, SkeletonLines, StatusPill, ToggleRow } from '../../Custom-Components/index';
+import { AppText, BottomSheetPicker, Button, Card, InlineNotice, PickerField, RowCardsSkeleton, ScreenShell, SectionCard, StatusPill, ToggleRow } from '../../Custom-Components/index';
 import type { FoodVendorStackParamList, RamadanSettings } from '../../models';
 import { haptics } from '../../utils/haptics/haptics';
 import { loadRamadanAsync, saveRamadanAsync, selectRamadanMode } from './ramadanModeSlice';
@@ -62,7 +62,7 @@ const RamadanModeContent: React.FC<Props> = () => {
   if (!r || !draft) {
     return (
       <ScreenShell title="Ramadan mode" onBack={back}>
-        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : <SkeletonLines lines={8} />}
+        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : <RowCardsSkeleton count={4} />}
       </ScreenShell>
     );
   }
@@ -106,9 +106,8 @@ const RamadanModeContent: React.FC<Props> = () => {
         </View>
       </Card>
 
-      <Card>
+      <SectionCard title="Sehri">
         <View style={styles.gap}>
-          <AppText variant="title">Sehri</AppText>
           <View style={styles.two}>
             <View style={styles.half}>
               <PickerField label="From" valueLabel={timeLabel(draft.sehri.from)} placeholder="Pick a time" onPress={() => !sw.disabled && setPicking({ which: 'sehri', end: 'from' })} />
@@ -118,11 +117,10 @@ const RamadanModeContent: React.FC<Props> = () => {
             </View>
           </View>
         </View>
-      </Card>
+      </SectionCard>
 
-      <Card>
+      <SectionCard title="Iftar">
         <View style={styles.gap}>
-          <AppText variant="title">Iftar</AppText>
           <View style={styles.two}>
             <View style={styles.half}>
               <PickerField label="From" valueLabel={timeLabel(draft.iftar.from)} placeholder="Pick a time" onPress={() => !sw.disabled && setPicking({ which: 'iftar', end: 'from' })} />
@@ -139,7 +137,7 @@ const RamadanModeContent: React.FC<Props> = () => {
             onChange={v => void save({ iftarPreorderOnly: v }, v ? 'Iftar is by pre-order' : 'Iftar orders open on the day')}
           />
         </View>
-      </Card>
+      </SectionCard>
 
       {dirty ? (
         <Button
@@ -151,11 +149,8 @@ const RamadanModeContent: React.FC<Props> = () => {
         />
       ) : null}
 
-      <Card>
+      <SectionCard title="How customers see it">
         <View style={styles.gap}>
-          <AppText variant="overline" tone="muted">
-            How customers see it
-          </AppText>
           <AppText variant="bodyStrong">Ramadan hours</AppText>
           <AppText variant="body">{`Sehri ${windowText(draft.sehri)}`}</AppText>
           <AppText variant="body">{`Iftar ${windowText(draft.iftar)}${r.iftarPreorderOnly ? ' · order ahead' : ''}`}</AppText>
@@ -163,7 +158,7 @@ const RamadanModeContent: React.FC<Props> = () => {
             {r.enabled ? 'Shown on your page and in “Iftar near you” during Ramadan.' : 'Shown once you turn Ramadan hours on.'}
           </AppText>
         </View>
-      </Card>
+      </SectionCard>
 
       <BottomSheetPicker
         visible={!!picking}

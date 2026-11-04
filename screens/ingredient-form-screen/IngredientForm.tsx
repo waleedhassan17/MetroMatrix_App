@@ -14,7 +14,7 @@ import { useBack } from '../../hooks/useBack';
 import { CATEGORY_LABEL, CATEGORY_ORDER } from '../../models/kitchen/kitchenStatusModel';
 import { MAX_CUSTOM_UNITS, customUnitsOf, ingredientInput, validateIngredient } from '../../models/kitchen/stockModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, ChoiceChip, IconButton, InlineNotice, ScreenShell, SegmentTabs, SkeletonLines, TextAction, TextField, ToggleRow } from '../../Custom-Components/index';
+import { AppText, Button, ChoiceChip, IconButton, InlineNotice, RowCardsSkeleton, ScreenShell, SectionCard, SegmentTabs, TextAction, TextField, ToggleRow } from '../../Custom-Components/index';
 import type { FoodVendorStackParamList } from '../../models';
 import { UNITS, unitsFor, type BaseUnit, type StandardUnit } from '../../utils/units/units';
 import { haptics } from '../../utils/haptics/haptics';
@@ -94,13 +94,14 @@ const IngredientFormContent: React.FC<Props> = ({ navigation, route }) => {
   if (id && s.status !== 'succeeded') {
     return (
       <ScreenShell title="Edit ingredient" onBack={back}>
-        {s.status === 'failed' ? <InlineNotice message={s.error.message} /> : <SkeletonLines lines={6} />}
+        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadIngredientForEditAsync(id)) }} /> : <RowCardsSkeleton count={3} />}
       </ScreenShell>
     );
   }
 
   return (
     <ScreenShell title={id ? 'Edit ingredient' : 'New ingredient'} onBack={back} footer={<Button label={id ? 'Save' : 'Add to stock'} onPress={() => void save()} loading={s.saving} fullWidth />}>
+      <SectionCard title="What it is" icon="cube-outline" invalid={!!errors.name}>
       <TextField label="Name" value={f.name} onChangeText={name => dispatch(setIngredientField({ name }))} error={errors.name} placeholder="Tomato, chicken boneless…" />
       <View style={styles.group}>
         <AppText variant="label">Kind</AppText>
@@ -110,25 +111,23 @@ const IngredientFormContent: React.FC<Props> = ({ navigation, route }) => {
           ))}
         </ScrollView>
       </View>
-      <View style={styles.group}>
-        <AppText variant="label">Counted by</AppText>
-        <SegmentTabs options={BASES} value={f.baseUnit} onChange={baseUnit => !s.locked && dispatch(setIngredientField({ baseUnit }))} accessibilityLabel="Counted by" />
-        {s.locked ? (
-          <AppText variant="caption" tone="muted">
-            It has stock, so the way it is counted stays.
-          </AppText>
-        ) : null}
+      </SectionCard>
+
+      <SectionCard
+        title="Counted by"
+        subtitle={s.locked ? `${BASES.find(b => b.key === f.baseUnit)?.label ?? ''} — it has stock, so the way it is counted stays.` : undefined}
+        icon="scale-outline">
+        {/* Locked: no tabs that look tappable but do nothing. */}
+        {s.locked ? null : <SegmentTabs options={BASES} value={f.baseUnit} onChange={baseUnit => dispatch(setIngredientField({ baseUnit }))} accessibilityLabel="Counted by" />}
         {f.baseUnit === 'pc' ? <ToggleRow label="Count in dozens" helper="Eggs and the like" value={f.dozens} onChange={dozens => dispatch(setIngredientField({ dozens }))} /> : null}
-      </View>
-      <View style={styles.group}>
-        <TextField label="Restock at (optional)" value={f.par} onChangeText={par => dispatch(setIngredientField({ par }))} keyboardType="decimal-pad" error={errors.par} helper="Below this it shows as running low" />
+      </SectionCard>
+
+      <SectionCard title="Restock at (optional)" subtitle="Below this it shows as running low" icon="alert-circle-outline" invalid={!!errors.par}>
+        <TextField label="Amount" value={f.par} onChangeText={par => dispatch(setIngredientField({ par }))} keyboardType="decimal-pad" error={errors.par} />
         {unitChips(f.parUnit, parUnit => dispatch(setIngredientField({ parUnit })))}
-      </View>
-      <View style={styles.group}>
-        <AppText variant="label">Your own units (optional)</AppText>
-        <AppText variant="caption" tone="muted">
-          A crate, a bori, a tray: how you buy it. Counts and purchases can use them.
-        </AppText>
+      </SectionCard>
+
+      <SectionCard title="Your own units (optional)" subtitle="A crate, a bori, a tray: how you buy it. Counts and purchases can use them." icon="layers-outline" invalid={s.touched && Object.keys(custom.errors).length > 0}>
         {s.customUnits.map((u, n) => (
           <View key={n} style={styles.group}>
             <View style={styles.row}>
@@ -150,7 +149,7 @@ const IngredientFormContent: React.FC<Props> = ({ navigation, route }) => {
             onPress={() => dispatch(setCustomUnits([...s.customUnits, { name: '', amount: '', unit: unitsFor(f.baseUnit)[f.baseUnit === 'pc' ? 0 : 1] }]))}
           />
         ) : null}
-      </View>
+      </SectionCard>
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
     </ScreenShell>
   );

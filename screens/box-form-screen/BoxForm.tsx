@@ -14,11 +14,12 @@ import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { BACHAT_BOX, MAX_BOX_QUANTITY, boxInput, discountLabel, pickupTimes, validateBox, withPickupFrom } from '../../models/kitchen/surplusModel';
-import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, BottomSheetPicker, Button, Card, IconButton, InlineNotice, ScreenShell, SkeletonLines, TextAction, TextField } from '../../Custom-Components/index';
+import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
+import { AppText, BottomSheetPicker, Button, Card, IconButton, InlineNotice, RowCardsSkeleton, ScreenShell, SectionCard, TextAction, TextField } from '../../Custom-Components/index';
 import type { FoodVendorStackParamList } from '../../models';
 import { formatSlot } from '../../utils/health-time/healthTime';
 import { formatPKR, parseRupees } from '../../utils/money/money';
+import { cdn } from '../../utils/cdn/cdn';
 import { pickImageFromLibrary, takePhoto } from '../../utils/pickers/pickers';
 import { haptics } from '../../utils/haptics/haptics';
 import { createBoxAsync, editBoxForm, selectBoxForm, setBoxErrors, startBoxForm, suggestBoxAsync, uploadBoxPhotoAsync } from './boxFormSlice';
@@ -55,6 +56,7 @@ const BoxFormContent: React.FC<Props> = ({ navigation, route }) => {
   const dispatch = useAppDispatch();
   const appStore = useAppStore();
   const styles = useStyles(makeStyles);
+  const { size } = useTheme();
   const s = useAppSelector(selectBoxForm);
   const f = s.form;
   const suggest = !!route.params?.suggest;
@@ -98,7 +100,7 @@ const BoxFormContent: React.FC<Props> = ({ navigation, route }) => {
       subtitle="Tonight’s food at a lower price, for pickup"
       onBack={back}
       footer={<Button label="Put it up" onPress={() => void save()} loading={s.saving} disabled={s.uploading} fullWidth />}>
-      {s.suggesting === 'loading' ? <SkeletonLines lines={3} /> : null}
+      {s.suggesting === 'loading' ? <RowCardsSkeleton count={2} /> : null}
       {s.basis ? <InlineNotice tone="info" title="Suggested for tonight" message={BASIS[s.basis] ?? BASIS.end_of_day} /> : null}
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
 
@@ -155,9 +157,8 @@ const BoxFormContent: React.FC<Props> = ({ navigation, route }) => {
         ) : null}
       </Card>
 
-      <Card>
+      <SectionCard title="Pickup today">
         <View style={styles.gap}>
-          <AppText variant="title">Pickup today</AppText>
           <View style={styles.times}>
             <View style={styles.half}>
               <Button label={`From ${formatSlot(f.pickupFrom, TZ)}`} variant="secondary" onPress={() => setTimeFor('from')} fullWidth />
@@ -176,20 +177,19 @@ const BoxFormContent: React.FC<Props> = ({ navigation, route }) => {
             </AppText>
           )}
         </View>
-      </Card>
+      </SectionCard>
 
-      <Card>
+      <SectionCard title="Photo (optional)">
         <View style={styles.gap}>
-          <AppText variant="title">Photo (optional)</AppText>
-          {f.photoUrl ? <Image source={{ uri: f.photoUrl }} style={styles.photo} contentFit="cover" accessibilityLabel="The box’s photo" /> : null}
-          {s.uploading ? <SkeletonLines lines={1} /> : null}
+          {f.photoUrl ? <Image source={{ uri: cdn(f.photoUrl, { w: size.railCard * 3 }) ?? f.photoUrl }} style={styles.photo} contentFit="cover" accessibilityLabel="The box’s photo" /> : null}
+          {s.uploading ? <RowCardsSkeleton count={2} /> : null}
           <View style={styles.photoActions}>
             <TextAction label={f.photoUrl ? 'Retake' : 'Take a photo'} icon="camera-outline" onPress={() => void addPhoto('camera')} disabled={s.uploading} />
             <TextAction label="From your photos" icon="image-outline" onPress={() => void addPhoto('library')} disabled={s.uploading} />
             {f.photoUrl ? <TextAction label="Remove" tone="muted" onPress={() => dispatch(editBoxForm({ photoUrl: null }))} /> : null}
           </View>
         </View>
-      </Card>
+      </SectionCard>
 
       <BottomSheetPicker
         visible={!!timeFor}

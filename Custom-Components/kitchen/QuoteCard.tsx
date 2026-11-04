@@ -49,7 +49,7 @@ export const QuoteCard: React.FC<{ quote: QuoteCardData; children?: React.ReactN
           <AppText variant="title" accessibilityRole="header">
             Quote, version {quote.version}
           </AppText>
-          <StatusPill label={quote.stateLabel} tone={quote.current ? 'accent' : 'neutral'} />
+          <StatusPill label={quote.stateLabel} tone={quote.current ? 'info' : 'neutral'} />
         </View>
         {quote.lines.map(l => (
           <View key={`${l.name}-${l.quantity}`} style={styles.line}>

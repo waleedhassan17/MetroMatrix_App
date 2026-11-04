@@ -17,8 +17,9 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { useDebouncedValue } from '../../hooks/usePagedList';
 import { NUTRITION_METHOD, PER_LABEL, confidenceOf, nutritionLine } from '../../models/kitchen/assistantModel';
+import { formatQty } from '../../utils/units/units';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Card, ChoiceChip, Divider, InlineNotice, ListRow, ScreenShell, Sheet, SkeletonLines, StatusPill, TextAction, TextField, ToggleRow } from '../../Custom-Components/index';
+import { AppText, Card, ChoiceChip, Divider, InlineNotice, ListRow, RowCardsSkeleton, ScreenShell, Sheet, StatusPill, TextAction, TextField, ToggleRow } from '../../Custom-Components/index';
 import { SectionHead } from '../../Components/admin/AdminParts';
 import type { FoodVendorStackParamList } from '../../models';
 import {
@@ -68,7 +69,7 @@ const NutritionVendorContent: React.FC<Props> = () => {
     <ScreenShell title="Nutrition" subtitle="Per dish as you sell it" onBack={back} refreshing={s.status === 'loading' && !!d} onRefresh={load}>
       {s.status === 'failed' && !d ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : null}
       {s.actionError.message ? <InlineNotice message={s.actionError.message} /> : null}
-      {!d && s.status !== 'failed' ? <SkeletonLines lines={10} /> : null}
+      {!d && s.status !== 'failed' ? <RowCardsSkeleton count={4} /> : null}
       {d ? (
         <>
           <Card>
@@ -149,12 +150,12 @@ const NutritionVendorContent: React.FC<Props> = () => {
       <Sheet visible={!!searching} onClose={() => dispatch(openFoodSearch(null))} title={searching ? `Match ${searching.name}` : ''} subtitle="Pick the food it is closest to">
         <View style={styles.gap}>
           <TextField label="Search" value={s.query} onChangeText={v => dispatch(setFoodQuery(v))} icon="search-outline" clearable autoFocus />
-          {s.searching && !s.foods.length ? <SkeletonLines lines={3} /> : null}
+          {s.searching && !s.foods.length ? <RowCardsSkeleton count={2} /> : null}
           {s.foods.map(f => (
             <ListRow
               key={f.id}
               title={f.name}
-              subtitle={`${f.kcal} kcal ${PER_LABEL[f.per]} · protein ${f.protein} g`}
+              subtitle={`${f.kcal} kcal ${PER_LABEL[f.per]} · protein ${formatQty(f.protein, 'g')}`}
               onPress={() => searching && void dispatch(mapIngredientAsync({ ingredientId: searching.ingredientId, foodId: f.id }))}
             />
           ))}

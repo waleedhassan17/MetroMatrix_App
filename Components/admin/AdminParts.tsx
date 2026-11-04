@@ -130,7 +130,10 @@ const StatTile: React.FC<{ stat: AdminStat; compact?: boolean; width?: number }>
       {s.value === null ? (
         <Skeleton width="50%" height={size.subTypeTile} />
       ) : (
-        <AppText variant={compact ? 'h2' : 'h1'}>{String(s.value)}</AppText>
+        // One line: a value is a number or a short word; the words that explain it go in the hint.
+        <AppText variant={compact ? 'h2' : 'h1'} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+          {String(s.value)}
+        </AppText>
       )}
       {compact ? (
         <AppText variant="caption" tone="muted" numberOfLines={2}>
@@ -138,7 +141,7 @@ const StatTile: React.FC<{ stat: AdminStat; compact?: boolean; width?: number }>
         </AppText>
       ) : null}
       {s.hint ? (
-        <AppText variant="caption" tone="muted" numberOfLines={1}>
+        <AppText variant="caption" tone="muted" numberOfLines={2}>
           {s.hint}
         </AppText>
       ) : null}

@@ -14,7 +14,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image } from 'expo-image';
 import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
-import { TIFFIN_PAY, WEEKDAY_LONG } from '../../models/kitchen/kitchenStatusModel';
+import { TIFFIN_PAY, WEEKDAY_LONG, placesHeadline } from '../../models/kitchen/kitchenStatusModel';
 import { cutoffChoiceLabel, perMealLabel, priceLabel, scheduleLabel, startChoices } from '../../models/kitchen/tiffinModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import { AppText, ChoiceChip, CtaBar, Divider, IonIcon, InlineNotice, ScreenShell, SectionCard, Skeleton, StatusPill, TextAction } from '../../Custom-Components/index';
@@ -129,7 +129,7 @@ const FoodTiffinPlanContent: React.FC<Props> = ({ navigation, route }) => {
         {s.subscribeError.message ? <InlineNotice message={s.subscribeError.message} /> : null}
         {full ? <InlineNotice tone="warning" title="This plan is full" message={`${p.vendor.name} isn’t taking anyone new on it right now. Ask the kitchen, or look at its other plans.`} /> : null}
         <View style={styles.gap}>
-          <StatusPill label={full ? 'Full' : `${p.seatsLeft} ${p.seatsLeft === 1 ? 'place' : 'places'} left`} tone={full ? 'warning' : 'success'} />
+          {placesHeadline(p.seatsLeft) ? <StatusPill label={placesHeadline(p.seatsLeft)!.label} tone={placesHeadline(p.seatsLeft)!.tone} /> : null}
           <AppText variant="cardTitle" tone="accentDeep">
             {priceLabel(p)}
           </AppText>

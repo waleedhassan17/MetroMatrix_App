@@ -15,7 +15,7 @@ import { useBack } from '../../hooks/useBack';
 import { usePagedList } from '../../hooks/usePagedList';
 import { fetchPurchases } from '../../networks/kitchen/purchases';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, EmptyState, IconButton, InlineNotice, ScreenShell, SkeletonLines, TextAction } from '../../Custom-Components/index';
+import { AppText, Button, Card, EmptyState, IconButton, InlineNotice, RowCardsSkeleton, ScreenShell, TextAction } from '../../Custom-Components/index';
 import { Sparkline } from '../../Custom-Components/shopping/charts/Sparkline';
 import { RowCard, SectionHead } from '../../Components/admin/AdminParts';
 import { VoiceSheetButton } from '../../Components/voice/VoiceSheet';
@@ -147,14 +147,14 @@ const PurchasesContent: React.FC<Props> = ({ navigation }) => {
         )}
         ListEmptyComponent={
           list.isLoading ? (
-            <SkeletonLines lines={6} />
+            <RowCardsSkeleton count={3} />
           ) : list.error ? (
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
-            <EmptyState icon="shopping-cart" title="No purchases yet" body="Add what you buy, and stock and costs keep themselves up to date." />
+            <EmptyState ion="cart-outline" title="No purchases yet" body="Add what you buy, and stock and costs keep themselves up to date." />
           )
         }
-        ListFooterComponent={list.isLoadingMore ? <SkeletonLines lines={2} /> : null}
+        ListFooterComponent={list.isLoadingMore ? <RowCardsSkeleton count={2} /> : null}
       />
     </ScreenShell>
   );

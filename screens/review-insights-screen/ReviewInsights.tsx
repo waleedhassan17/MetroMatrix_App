@@ -15,7 +15,7 @@ import { useBack } from '../../hooks/useBack';
 import { aiDownNote, isAiDown } from '../../models/kitchen/aiModel';
 import { weekLabel } from '../../models/kitchen/assistantModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Card, ChoiceChip, EmptyState, InlineNotice, IonIcon, ScreenShell, SkeletonLines } from '../../Custom-Components/index';
+import { AppText, Card, ChoiceChip, EmptyState, InlineNotice, IonIcon, RowCardsSkeleton, ScreenShell } from '../../Custom-Components/index';
 import { SectionHead } from '../../Components/admin/AdminParts';
 import type { FoodVendorStackParamList, ReviewTheme } from '../../models';
 import { loadReviewInsightsAsync, selectReviewInsights } from './reviewInsightsSlice';
@@ -90,7 +90,7 @@ const ReviewInsightsContent: React.FC<Props> = ({ navigation }) => {
     <ScreenShell title="What reviews say" subtitle={d ? `${weekLabel(d.week)} · ${d.reviewCount} ${d.reviewCount === 1 ? 'review' : 'reviews'}` : 'This week’s themes'} onBack={back} refreshing={s.status === 'loading' && !!d} onRefresh={() => load(d?.week ?? null)}>
       {down ? <InlineNotice tone="info" title={down.title} message="You can still read every review and reply to it." action={{ label: 'Open your reviews', onPress: () => navigation.navigate('VendorReviews') }} /> : null}
       {s.error.message && !down ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => load(d?.week ?? null) }} /> : null}
-      {!d && s.status !== 'failed' ? <SkeletonLines lines={8} /> : null}
+      {!d && s.status !== 'failed' ? <RowCardsSkeleton count={4} /> : null}
       {d ? (
         <>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipBar} contentContainerStyle={styles.chips}>
@@ -98,7 +98,7 @@ const ReviewInsightsContent: React.FC<Props> = ({ navigation }) => {
               <ChoiceChip key={w.week} label={`${weekLabel(w.week)} · ${w.count}`} selected={w.week === d.week} onPress={() => load(w.week)} />
             ))}
           </ScrollView>
-          {!d.themes.length ? <EmptyState icon="message-square" title="Nothing to read yet" body="No reviews that week. Pick another week above." /> : null}
+          {!d.themes.length ? <EmptyState ion="chatbox-ellipses-outline" title="Nothing to read yet" body="No reviews that week. Pick another week above." /> : null}
           {bad.length ? (
             <View style={styles.group}>
               <SectionHead title="To look at" />

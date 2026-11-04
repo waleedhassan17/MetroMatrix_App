@@ -19,7 +19,7 @@ import { useBack } from '../../hooks/useBack';
 import { broughtCount, shortUrl, storefrontStatLines } from '../../models/kitchen/reachModel';
 import { monthLabel } from '../../models/kitchen/tiffinModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Divider, InlineNotice, ScreenShell, SkeletonLines } from '../../Custom-Components/index';
+import { AppText, Button, Card, Divider, InlineNotice, RowCardsSkeleton, ScreenShell, SectionCard } from '../../Custom-Components/index';
 import type { FoodVendorStackParamList } from '../../models';
 import { printStoreCard, shareQrImage } from '../../services/storefront/storefrontQr';
 import { shareText } from '../../utils/share-text/shareText';
@@ -63,7 +63,7 @@ const StorefrontContent: React.FC<Props> = () => {
   if (!f) {
     return (
       <ScreenShell title="Your link and QR" onBack={back}>
-        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : <SkeletonLines lines={8} />}
+        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : <RowCardsSkeleton count={4} />}
       </ScreenShell>
     );
   }
@@ -106,9 +106,8 @@ const StorefrontContent: React.FC<Props> = () => {
   const brought = broughtCount(f);
   return (
     <ScreenShell title="Your link and QR" subtitle="Your own page, to share anywhere" onBack={back} refreshing={s.status === 'loading'} onRefresh={load}>
-      <Card>
+      <SectionCard title="Your link">
         <View style={styles.gap}>
-          <AppText variant="title">Your link</AppText>
           <View style={styles.url}>
             <AppText variant="bodyStrong" selectable accessibilityLabel={`Your link: ${f.url}`}>
               {shortUrl(f.url)}
@@ -126,11 +125,10 @@ const StorefrontContent: React.FC<Props> = () => {
             </View>
           </View>
         </View>
-      </Card>
+      </SectionCard>
 
-      <Card>
+      <SectionCard title="Your QR code">
         <View style={styles.gap}>
-          <AppText variant="title">Your QR code</AppText>
           <View style={styles.plate} accessible accessibilityLabel={`QR code that opens ${shortUrl(f.url)}`}>
             <QRCode value={f.qrUrl} size={size.qr} color={colors.ink} backgroundColor={colors.surface} getRef={(c: QrRef | null) => (qr.current = c)} />
           </View>
@@ -146,7 +144,7 @@ const StorefrontContent: React.FC<Props> = () => {
             </View>
           </View>
         </View>
-      </Card>
+      </SectionCard>
 
       <Card>
         <View style={styles.gap}>

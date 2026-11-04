@@ -18,7 +18,7 @@ import { changeLine, priceBounds, progressLine, resultLines, validateTestPrice }
 import { EXPERIMENT_STATUS, VERDICT } from '../../models/kitchen/kitchenStatusModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
 import { Image } from 'expo-image';
-import { AppText, Button, Card, Divider, InlineNotice, ProgressBar, ScreenShell, Sheet, SkeletonLines, StatusPill, TextField } from '../../Custom-Components/index';
+import { AppText, Button, Card, Divider, InlineNotice, ProgressBar, RowCardsSkeleton, ScreenShell, SectionCard, Sheet, StatusPill, TextField } from '../../Custom-Components/index';
 import type { ExperimentDecision } from '../../models/kitchen/reachModel';
 import type { FoodVendorStackParamList } from '../../models';
 import { cdn } from '../../utils/cdn/cdn';
@@ -68,7 +68,7 @@ const MenuExperimentContent: React.FC<Props> = ({ route }) => {
   if (!e) {
     return (
       <ScreenShell title="Menu test" onBack={back}>
-        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={s.error.code === 'NOT_FOUND' ? undefined : { label: 'Try again', onPress: load }} /> : <SkeletonLines lines={8} />}
+        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={s.error.code === 'NOT_FOUND' ? undefined : { label: 'Try again', onPress: load }} /> : <RowCardsSkeleton count={4} />}
       </ScreenShell>
     );
   }
@@ -122,9 +122,8 @@ const MenuExperimentContent: React.FC<Props> = ({ route }) => {
       </Card>
 
       {e.result ? (
-        <Card>
+        <SectionCard title={e.status === 'running' ? 'So far' : 'How it went'}>
           <View style={styles.gap}>
-            <AppText variant="title">{e.status === 'running' ? 'So far' : 'How it went'}</AppText>
             <View style={styles.table}>
               <AppText variant="caption" tone="muted" style={styles.label}>
                 A day
@@ -164,7 +163,7 @@ const MenuExperimentContent: React.FC<Props> = ({ route }) => {
               Estimated from your recorded sales. Weather, holidays and deals change orders too.
             </AppText>
           </View>
-        </Card>
+        </SectionCard>
       ) : (
         <Card>
           <AppText variant="body">Orders and recorded sales show here after the first full day.</AppText>

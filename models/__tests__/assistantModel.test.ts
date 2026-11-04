@@ -21,9 +21,9 @@ describe('confirming drafts', () => {
     expect(descriptionInput({ en: '  Fresh naan. ', ur: '' })).toEqual({ description: 'Fresh naan.', descriptionUr: null });
   });
 
-  it('adds a combo as a deal', () => {
+  it('adds a combo as a deal, hidden until the cook turns it on (a draft, as a special is)', () => {
     const combo = comboItemInput({ names: ['Chicken Biryani', 'Naan'] }, 'mc_deals', 630);
-    expect(combo).toMatchObject({ name: 'Chicken Biryani + Naan', description: 'Chicken Biryani and Naan together.', isDeal: true, isActive: true, basePrice: 630 });
+    expect(combo).toMatchObject({ name: 'Chicken Biryani + Naan', description: 'Chicken Biryani and Naan together.', isDeal: true, isActive: false, basePrice: 630 });
   });
 
   it('re-prices what is kept as the cook types', () => {

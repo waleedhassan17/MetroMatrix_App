@@ -60,7 +60,7 @@ export const ForecastBar: React.FC<ForecastBarProps> = ({ item, max, onAdjust, b
       </View>
       <View style={styles.foot}>
         <AppText variant="small" tone="muted">
-          Expected {item.expected} ({rangeLabel(item)}){own ? ` · ${own}` : ''}
+          Expected {item.expected} ({rangeLabel(item)}, estimated){own ? ` · ${own}` : ''}
           {fixed ? ` · ${fixed} fixed (tiffin and catering)` : ''}
         </AppText>
         {onAdjust ? (

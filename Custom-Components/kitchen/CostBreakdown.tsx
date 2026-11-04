@@ -40,9 +40,10 @@ export const CostBreakdown: React.FC<{ cost: Cost; targetPct: number; compact?: 
     </View>
   );
   return (
-    <View style={styles.root} accessible accessibilityLabel={`Cost to make ${formatPKR(cost.toMake)}. You sell for ${formatPKR(cost.sellPrice)}. You keep ${formatPKR(cost.keep)}, ${cost.keepPct} percent. ${foodCostLabel(cost, targetPct)}.`}>
+    <View style={styles.root} accessible accessibilityLabel={`Cost to make, estimated, ${formatPKR(cost.toMake)}. You sell for ${formatPKR(cost.sellPrice)}. You keep ${formatPKR(cost.keep)}, ${cost.keepPct} percent. ${foodCostLabel(cost, targetPct)}.`}>
       <View style={styles.figures}>
-        {figure('Cost to make', formatPKR(cost.toMake))}
+        {/* Worked out from your recipe card and recent prices, so it's an estimate. */}
+        {figure('Cost to make (estimated)', formatPKR(cost.toMake))}
         {figure('You sell', formatPKR(cost.sellPrice))}
         {figure(`You keep (${cost.keepPct}%)`, formatPKR(cost.keep), true)}
       </View>

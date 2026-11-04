@@ -16,7 +16,7 @@ import { useBack } from '../../hooks/useBack';
 import { aiDownNote, isAiDown } from '../../models/kitchen/aiModel';
 import { repriced, validateDraftPrice } from '../../models/kitchen/assistantModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, BottomSheetPicker, Button, Card, CostBreakdown, EmptyState, InlineNotice, PickerField, ScreenShell, SkeletonLines, StatusPill, TextAction, TextField } from '../../Custom-Components/index';
+import { AppText, BottomSheetPicker, Button, Card, CostBreakdown, EmptyState, InlineNotice, PickerField, RowCardsSkeleton, ScreenShell, SectionCard, StatusPill, TextAction, TextField } from '../../Custom-Components/index';
 import type { FoodVendorStackParamList } from '../../models';
 import { formatPKR, parseRupees } from '../../utils/money/money';
 import { haptics } from '../../utils/haptics/haptics';
@@ -81,20 +81,20 @@ const AiSpecialsContent: React.FC<Props> = ({ navigation, route }) => {
       {s.error.message && !down ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: suggest }} /> : null}
       {s.createError.message ? <InlineNotice message={s.createError.message} /> : null}
 
-      {!s.ideas.length && s.status !== 'loading' ? (
-        <Card>
+      {/* One state at a time: the ask before asking, the empty result after. */}
+      {!s.ideas.length && s.status !== 'loading' && s.status !== 'succeeded' ? (
+        <SectionCard title="Use it before it goes to waste">
           <View style={styles.gap}>
-            <AppText variant="title">Use it before it goes to waste</AppText>
             <AppText variant="body">The assistant looks at what expires in the next two days and suggests dishes that use it, priced for your food-cost target.</AppText>
             <Button label="Suggest specials" onPress={suggest} fullWidth />
             <AppText variant="caption" tone="muted">
               One assistant action.
             </AppText>
           </View>
-        </Card>
+        </SectionCard>
       ) : null}
-      {s.status === 'loading' && !s.ideas.length ? <SkeletonLines lines={8} /> : null}
-      {s.status === 'succeeded' && !s.ideas.length ? <EmptyState icon="check-circle" title="Nothing about to expire" body="No stock runs out of date in the next two days." /> : null}
+      {s.status === 'loading' && !s.ideas.length ? <RowCardsSkeleton count={4} /> : null}
+      {s.status === 'succeeded' && !s.ideas.length ? <EmptyState ion="checkmark-circle-outline" title="Nothing about to expire" body="No stock runs out of date in the next two days." /> : null}
 
       {s.ideas.map(idea => {
         const priceError = validateDraftPrice(s.prices[idea.id] ?? '');

@@ -18,8 +18,9 @@ import { useLayoutClass } from '../../hooks/useLayoutClass';
 import { aiDownNote, isAiDown } from '../../models/kitchen/aiModel';
 import { MAX_DESCRIPTION_DISHES, validateDescription } from '../../models/kitchen/assistantModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Checkbox, Divider, InlineNotice, ScreenShell, SkeletonLines, StatusPill, TextAction, TextField } from '../../Custom-Components/index';
+import { AppText, Button, Card, Checkbox, Divider, EmptyState, InlineNotice, RowCardsSkeleton, ScreenShell, StatusPill, TextAction, TextField } from '../../Custom-Components/index';
 import type { FoodVendorStackParamList } from '../../models';
+import { Alert } from '../../utils/alert/alert';
 import { haptics } from '../../utils/haptics/haptics';
 import { draftDescriptionsAsync, loadDescribeItemsAsync, saveDescriptionAsync, selectAiDescriptions, setDraftText, startOver, toggleDescribe } from './aiDescriptionsSlice';
 
@@ -74,8 +75,17 @@ const AiDescriptionsContent: React.FC<Props> = ({ navigation }) => {
 
   // ── Drafts ──
   if (s.drafts.length) {
+    const unsaved = s.drafts.filter(d => !s.saved.includes(d.itemId)).length;
+    // Drafts cost an assistant action: leaving with some unsaved asks first.
+    const leave = () =>
+      unsaved
+        ? Alert.alert('Leave the drafts?', `${unsaved} ${unsaved === 1 ? 'draft isn’t' : 'drafts aren’t'} saved. Writing them again uses another assistant action.`, [
+            { text: 'Stay', style: 'cancel' },
+            { text: 'Leave them', style: 'destructive', onPress: () => dispatch(startOver()) },
+          ])
+        : dispatch(startOver());
     return (
-      <ScreenShell title="Descriptions" subtitle="Drafts: edit them, then save each dish" onBack={() => dispatch(startOver())}>
+      <ScreenShell title="Descriptions" subtitle="Drafts: edit them, then save each dish" onBack={leave}>
         {s.saveError.message ? <InlineNotice message={s.saveError.message} /> : null}
         {s.drafts.map(d => {
           const e = s.edits[d.itemId] ?? { en: d.en, ur: d.ur };
@@ -115,7 +125,7 @@ const AiDescriptionsContent: React.FC<Props> = ({ navigation }) => {
             </Card>
           );
         })}
-        <Button label="Pick other dishes" variant="ghost" onPress={() => dispatch(startOver())} fullWidth />
+        <Button label="Pick other dishes" variant="ghost" onPress={leave} fullWidth />
         <AppText variant="caption" tone="muted">
           Drafts from the assistant: read them before saving. Nothing changes on your menu until you save.
         </AppText>
@@ -126,11 +136,29 @@ const AiDescriptionsContent: React.FC<Props> = ({ navigation }) => {
   // ── Pick dishes ──
   const items = s.items.filter(i => i.isActive);
   return (
-    <ScreenShell title="Descriptions" subtitle={`Pick up to ${MAX_DESCRIPTION_DISHES} dishes`} onBack={back} refreshing={s.status === 'loading' && !!items.length} onRefresh={load}>
+    <ScreenShell
+      title="Descriptions"
+      subtitle={`Pick up to ${MAX_DESCRIPTION_DISHES} dishes`}
+      onBack={back}
+      refreshing={s.status === 'loading' && !!items.length}
+      onRefresh={load}
+      footer={
+        <Button
+          label={s.selected.length ? `Write drafts for ${s.selected.length} ${s.selected.length === 1 ? 'dish' : 'dishes'}` : 'Pick a dish first'}
+          disabled={!s.selected.length || !!down}
+          loading={s.drafting}
+          onPress={() => void draft()}
+          fullWidth
+        />
+      }>
       {down ? <InlineNotice tone="info" title={down.title} message={down.message} action={{ label: 'Write one in the menu', onPress: () => navigation.navigate('VendorMenuItem', s.selected[0] ? { id: s.selected[0] } : undefined) }} /> : null}
       {s.draftError.message && !down ? <InlineNotice message={s.draftError.message} /> : null}
       {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : null}
-      {!items.length && s.status !== 'failed' ? <SkeletonLines lines={8} /> : null}
+      {!items.length && (s.status === 'loading' || s.status === 'idle') ? <RowCardsSkeleton count={4} /> : null}
+      {/* Loaded with nothing to describe: say so instead of loading forever. */}
+      {!items.length && s.status === 'succeeded' ? (
+        <EmptyState ion="restaurant-outline" title="No dishes on the menu yet" body="Add a dish first, then the assistant can draft its description." action={{ label: 'Add a dish', onPress: () => navigation.navigate('VendorMenuItem', undefined) }} />
+      ) : null}
       {items.length ? (
         <Card padded="horizontal">
           {items.map((i, n) => (
@@ -155,13 +183,6 @@ const AiDescriptionsContent: React.FC<Props> = ({ navigation }) => {
           ))}
         </Card>
       ) : null}
-      <Button
-        label={s.selected.length ? `Write drafts for ${s.selected.length} ${s.selected.length === 1 ? 'dish' : 'dishes'}` : 'Pick a dish first'}
-        disabled={!s.selected.length}
-        loading={s.drafting}
-        onPress={() => void draft()}
-        fullWidth
-      />
       <TextAction label="Or write one yourself in the menu" icon="create-outline" onPress={() => navigation.navigate('VendorMenuItem', s.selected[0] ? { id: s.selected[0] } : undefined)} />
       <AppText variant="caption" tone="muted">
         One assistant action, however many dishes you pick.

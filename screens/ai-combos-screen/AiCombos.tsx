@@ -16,7 +16,7 @@ import { useBack } from '../../hooks/useBack';
 import { aiDownNote, isAiDown } from '../../models/kitchen/aiModel';
 import { comboTitle, repriced, savingLine, validateDraftPrice } from '../../models/kitchen/assistantModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, CostBreakdown, EmptyState, InlineNotice, ScreenShell, SkeletonLines, StatusPill, TextAction, TextField } from '../../Custom-Components/index';
+import { AppText, Button, Card, CostBreakdown, EmptyState, InlineNotice, RowCardsSkeleton, ScreenShell, SectionCard, StatusPill, TextAction, TextField } from '../../Custom-Components/index';
 import type { FoodVendorStackParamList } from '../../models';
 import { parseRupees } from '../../utils/money/money';
 import { haptics } from '../../utils/haptics/haptics';
@@ -54,30 +54,29 @@ const AiCombosContent: React.FC<Props> = ({ navigation }) => {
     const r = await dispatch(createComboAsync({ idea, categoryId: s.category.id, price }));
     if (createComboAsync.fulfilled.match(r)) {
       haptics.success();
-      Toast.show({ type: 'success', text1: 'Deal added', text2: `${comboTitle(idea)} is on your menu under ${s.category.name}.` });
+      Toast.show({ type: 'success', text1: 'Deal added', text2: `${comboTitle(idea)} is in ${s.category.name}, hidden until you turn it on.` });
     } else haptics.warning();
   };
 
   return (
     <ScreenShell title="Combo ideas" subtitle="Dishes people order together" onBack={back} refreshing={s.status === 'loading' && !!s.ideas.length} onRefresh={suggest}>
-      {down ? <InlineNotice tone="info" title={down.title} message={`${down.message} You can add a deal in your menu.`} action={{ label: 'Open your menu', onPress: () => navigation.navigate('VendorMenuItem') }} /> : null}
+      {down ? <InlineNotice tone="info" title={down.title} message={`${down.message} You can set up a deal yourself.`} action={{ label: 'Open your deals', onPress: () => navigation.navigate('VendorPromotions') }} /> : null}
       {s.error.message && !down ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: suggest }} /> : null}
       {s.createError.message ? <InlineNotice message={s.createError.message} /> : null}
 
       {!s.ideas.length && s.status !== 'loading' && s.status !== 'succeeded' ? (
-        <Card>
+        <SectionCard title="Sell two together">
           <View style={styles.gap}>
-            <AppText variant="title">Sell two together</AppText>
             <AppText variant="body">The assistant finds dishes your customers often order together and suggests a price for both, a little less than apart.</AppText>
             <Button label="Find combo ideas" onPress={suggest} fullWidth />
             <AppText variant="caption" tone="muted">
               One assistant action.
             </AppText>
           </View>
-        </Card>
+        </SectionCard>
       ) : null}
-      {s.status === 'loading' && !s.ideas.length ? <SkeletonLines lines={8} /> : null}
-      {s.status === 'succeeded' && !s.ideas.length ? <EmptyState icon="shopping-bag" title="No pairs yet" body="Once customers order a main with a side or a drink, ideas show here." /> : null}
+      {s.status === 'loading' && !s.ideas.length ? <RowCardsSkeleton count={4} /> : null}
+      {s.status === 'succeeded' && !s.ideas.length ? <EmptyState ion="bag-handle-outline" title="No pairs yet" body="Once customers order a main with a side or a drink, ideas show here." /> : null}
 
       {s.ideas.map(idea => {
         const priceError = validateDraftPrice(s.prices[idea.id] ?? '');

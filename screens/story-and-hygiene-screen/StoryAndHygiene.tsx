@@ -17,7 +17,7 @@ import { useBack } from '../../hooks/useBack';
 import { MAX_STORY_PHOTOS, STORY_MAX, hygieneProgress, validateStory } from '../../models/kitchen/reachModel';
 import { HYGIENE_STATUS } from '../../models/kitchen/kitchenStatusModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Checkbox, Divider, InlineNotice, PhotoStrip, ProgressBar, ScreenShell, SkeletonLines, StatusPill, TextAction, TextField } from '../../Custom-Components/index';
+import { AppText, Button, Card, Checkbox, Divider, InlineNotice, PhotoStrip, ProgressBar, RowCardsSkeleton, ScreenShell, StatusPill, TextAction, TextField } from '../../Custom-Components/index';
 import { SectionHead } from '../../Components/admin/AdminParts';
 import type { FoodVendorStackParamList } from '../../models';
 import { pickImageFromLibrary, pickVideoFromLibrary } from '../../utils/pickers/pickers';
@@ -63,7 +63,7 @@ const StoryAndHygieneContent: React.FC<Props> = ({ route }) => {
   if (!s.hygiene || !s.story) {
     return (
       <ScreenShell title="Your story and hygiene" onBack={back}>
-        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : <SkeletonLines lines={10} />}
+        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : <RowCardsSkeleton count={4} />}
       </ScreenShell>
     );
   }

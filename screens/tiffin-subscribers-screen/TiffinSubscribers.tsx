@@ -17,12 +17,13 @@ import { TIFFIN_STATUS, tiffinPaymentStatus } from '../../models/kitchen/kitchen
 import { periodAmountLabel, periodLabel, scheduleLabel } from '../../models/kitchen/tiffinModel';
 import { PAYMENT_REJECT_REASONS } from '../../models/food/foodStatusModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, ChoiceChip, EmptyState, IconButton, InlineNotice, ScreenShell, Sheet, SkeletonLines, StatusPill, TextAction } from '../../Custom-Components/index';
+import { AppText, Button, Card, ChoiceChip, EmptyState, IconButton, InlineNotice, RowCardsSkeleton, ScreenShell, Sheet, StatusPill, TextAction } from '../../Custom-Components/index';
 import { ChoiceLine } from '../../Custom-Components/food/ChoiceLine';
 import type { FoodVendorStackParamList, TiffinSubscription } from '../../models';
 import { PKT, addDays, formatDayShort, todayInZone } from '../../utils/health-time/healthTime';
 import { formatPkPhoneForDisplay } from '../../utils/phone/phone';
 import { callNumber } from '../../utils/maps/maps';
+import { Alert } from '../../utils/alert/alert';
 import { haptics } from '../../utils/haptics/haptics';
 import { loadSubscribersAsync, selectTiffinSubscribers, setSubscribersTab, subscriberActAsync, type SubscriberAct, type SubscribersTab } from './tiffinSubscribersSlice';
 
@@ -36,8 +37,9 @@ const inTab = (s: TiffinSubscription, tab: SubscribersTab) => (tab === 'ended' ?
 
 const makeStyles = ({ space, gutter }: Theme) =>
   StyleSheet.create({
-    chipBar: { flexGrow: 0, flexShrink: 0 },
-    chips: { flexDirection: 'row', gap: space.s8, paddingRight: gutter },
+    // Inside the header: the rail runs edge to edge.
+    chipBar: { flexGrow: 0, flexShrink: 0, marginHorizontal: -gutter },
+    chips: { flexDirection: 'row', gap: space.s8, paddingHorizontal: gutter },
     gap: { gap: space.s8 },
     head: { flexDirection: 'row', alignItems: 'center', gap: space.s8 },
     grow: { flex: 1, gap: space.s4, minWidth: 0 },
@@ -78,7 +80,13 @@ const TiffinSubscribersContent: React.FC<Props> = ({ navigation, route }) => {
     }
     haptics.warning();
     return false;
-  };
+  };  // Ending a subscription can't be undone: ask first.
+  const endPlan = (x: { code: string; customer: { name: string } | null }) =>
+    Alert.alert(`End ${x.customer?.name ?? 'this'} subscription?`, 'Days you have started still go out. The customer is told.', [
+      { text: 'Keep it', style: 'cancel' },
+      { text: 'End it', style: 'destructive', onPress: () => void act(x.code, { kind: 'end', reason: END_REASON }, 'Subscription ended') },
+    ]);
+
 
   const inbox = s.planId === planId ? s.inbox : null;
   const items = inbox?.items.filter(x => inTab(x, s.tab)) ?? [];
@@ -163,12 +171,12 @@ const TiffinSubscribersContent: React.FC<Props> = ({ navigation, route }) => {
           {x.status === 'active' ? (
             <View style={styles.actions}>
               <TextAction label="Pause a week" icon="pause-outline" onPress={() => void act(x.code, { kind: 'pause', until: addDays(todayInZone(PKT), 7) }, 'Paused for a week')} disabled={busy} />
-              <TextAction label="End" tone="danger" onPress={() => void act(x.code, { kind: 'end', reason: END_REASON }, 'Subscription ended')} disabled={busy} />
+              <TextAction label="End" tone="danger" onPress={() => endPlan(x)} disabled={busy} />
             </View>
           ) : x.status === 'paused' ? (
             <View style={styles.actions}>
               <TextAction label="Resume" icon="play-outline" onPress={() => void act(x.code, { kind: 'resume' }, 'Resumed')} disabled={busy} />
-              <TextAction label="End" tone="danger" onPress={() => void act(x.code, { kind: 'end', reason: END_REASON }, 'Subscription ended')} disabled={busy} />
+              <TextAction label="End" tone="danger" onPress={() => endPlan(x)} disabled={busy} />
             </View>
           ) : null}
         </View>
@@ -183,19 +191,21 @@ const TiffinSubscribersContent: React.FC<Props> = ({ navigation, route }) => {
       onBack={back}
       refreshing={s.status === 'loading' && !!inbox}
       onRefresh={load}
+      headerContent={
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipBar} contentContainerStyle={styles.chips}>
+          {tabs.map(t => (
+            <ChoiceChip key={t.key} label={t.label} selected={s.tab === t.key} onPress={() => dispatch(setSubscribersTab(t.key))} />
+          ))}
+        </ScrollView>
+      }
       headerRight={planId ? <IconButton icon="create-outline" accessibilityLabel="Edit the plan" onPress={() => navigation.navigate('GrowthTiffinPlanForm', { id: planId })} /> : undefined}>
       {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : null}
       {s.actionError.message && !declining && !rejecting ? <InlineNotice message={s.actionError.message} /> : null}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipBar} contentContainerStyle={styles.chips}>
-        {tabs.map(t => (
-          <ChoiceChip key={t.key} label={t.label} selected={s.tab === t.key} onPress={() => dispatch(setSubscribersTab(t.key))} />
-        ))}
-      </ScrollView>
       {!inbox ? (
-        s.status === 'failed' ? null : <SkeletonLines lines={6} />
+        s.status === 'failed' ? null : <RowCardsSkeleton count={3} />
       ) : !items.length ? (
         <EmptyState
-          icon="users"
+          ion="people-outline"
           title={s.tab === 'pending' ? 'No requests to answer' : 'Nobody here'}
           body={s.tab === 'pending' ? 'New tiffin requests wait here for you to approve. Their first period is due once you do.' : 'Subscriptions move here as they change.'}
         />

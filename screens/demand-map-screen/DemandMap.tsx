@@ -15,7 +15,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { HOUR_CHOICES, busiestGap, hourLabel, unmetLine } from '../../models/kitchen/reachModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Card, ChoiceChip, DemandHeatmap, Divider, HourCurve, InlineNotice, ScreenShell, SkeletonLines } from '../../Custom-Components/index';
+import { AppText, ChoiceChip, DemandHeatmap, Divider, HourCurve, InlineNotice, RowCardsSkeleton, ScreenShell, SectionCard } from '../../Custom-Components/index';
 import type { FoodVendorStackParamList } from '../../models';
 import { loadDemandAsync, selectDemandMap, setDemandFilter } from './demandMapSlice';
 
@@ -77,7 +77,7 @@ const DemandMapContent: React.FC<Props> = () => {
   return (
     <ScreenShell title="Demand nearby" subtitle={d ? `Searches within ${d.radiusKm} km, the last 30 days` : 'What people near you search for'} onBack={back} refreshing={s.status === 'loading' && !!d} onRefresh={() => load()}>
       {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => load() }} /> : null}
-      {!d && s.status !== 'failed' ? <SkeletonLines lines={10} /> : null}
+      {!d && s.status !== 'failed' ? <RowCardsSkeleton count={4} /> : null}
       {d ? (
         <>
           <DemandHeatmap cells={d.cells.map(c => ({ id: c.geohash, sw: c.sw, ne: c.ne, searches: c.searches, unmetShare: c.unmetShare }))} center={d.center ?? LAHORE} minCount={d.minCount} filters={filters} />
@@ -88,9 +88,8 @@ const DemandMapContent: React.FC<Props> = () => {
           </AppText>
 
           {d.topUnmet.length ? (
-            <Card>
+            <SectionCard title="Searched for, not found">
               <View style={styles.gap}>
-                <AppText variant="title">Searched for, not found</AppText>
                 <AppText variant="small" tone="muted">
                   What people nearby looked for when nothing open had it.
                 </AppText>
@@ -106,12 +105,11 @@ const DemandMapContent: React.FC<Props> = () => {
                   </View>
                 ))}
               </View>
-            </Card>
+            </SectionCard>
           ) : null}
 
-          <Card>
+          <SectionCard title="Your day against the area’s">
             <View style={styles.gap}>
-              <AppText variant="title">Your day against the area’s</AppText>
               <HourCurve area={d.hourCurve.area} own={d.hourCurve.own} />
               {gap !== null ? (
                 <AppText variant="small" tone="muted">
@@ -119,7 +117,7 @@ const DemandMapContent: React.FC<Props> = () => {
                 </AppText>
               ) : null}
             </View>
-          </Card>
+          </SectionCard>
         </>
       ) : null}
     </ScreenShell>

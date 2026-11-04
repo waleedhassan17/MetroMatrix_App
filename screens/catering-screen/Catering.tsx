@@ -15,7 +15,7 @@ import { CATERING_STATUS, EVENT_TYPE_LABEL } from '../../models/kitchen/kitchenS
 import { eventLine, latestQuote, timeLabel } from '../../models/kitchen/cateringModel';
 import { monthLabel, monthOf, shiftMonth } from '../../models/kitchen/tiffinModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, ChoiceChip, Divider, EmptyState, IconButton, InlineNotice, ScreenShell, Sheet, SkeletonLines, TextField, ToggleRow } from '../../Custom-Components/index';
+import { AppText, Button, Card, ChoiceChip, Divider, EmptyState, IconButton, InlineNotice, RowCardsSkeleton, ScreenShell, Sheet, TextField, ToggleRow } from '../../Custom-Components/index';
 import { RowCard } from '../../Components/admin/AdminParts';
 import type { CateringRequest, FoodVendorStackParamList } from '../../models';
 import { formatDayShort, todayInZone } from '../../utils/health-time/healthTime';
@@ -34,8 +34,9 @@ const GROUPS: Record<Exclude<CateringTab, 'calendar'>, CateringRequest['status']
 
 const makeStyles = ({ space, gutter }: Theme) =>
   StyleSheet.create({
-    chipBar: { flexGrow: 0, flexShrink: 0 },
-    chips: { flexDirection: 'row', gap: space.s8, paddingRight: gutter },
+    // Inside the header: the rail runs edge to edge.
+    chipBar: { flexGrow: 0, flexShrink: 0, marginHorizontal: -gutter },
+    chips: { flexDirection: 'row', gap: space.s8, paddingHorizontal: gutter },
     gap: { gap: space.s8 },
     month: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     event: { flexDirection: 'row', gap: space.s12, alignItems: 'baseline', paddingVertical: space.s8 },
@@ -86,16 +87,18 @@ const CateringContent: React.FC<Props> = ({ navigation, route }) => {
       onBack={back}
       refreshing={s.status === 'loading' && !!s.inbox}
       onRefresh={load}
+      headerContent={
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipBar} contentContainerStyle={styles.chips}>
+          {tabs.map(t => (
+            <ChoiceChip key={t.key} label={t.label} selected={s.tab === t.key} onPress={() => dispatch(setCateringTab(t.key))} />
+          ))}
+        </ScrollView>
+      }
       headerRight={<IconButton icon="settings-outline" accessibilityLabel="Catering terms" onPress={() => s.settings && setTerms({ minGuests: String(s.settings.minGuests), leadDays: String(s.settings.leadDays) })} />}>
       {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : null}
       {s.settings && !s.settings.open ? (
         <InlineNotice tone="info" title="Not taking requests" message="Customers don’t see “Plan a dawat” on your page." action={{ label: 'Start taking them', onPress: () => void dispatch(saveCateringSettingsAsync({ open: true })) }} />
       ) : null}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipBar} contentContainerStyle={styles.chips}>
-        {tabs.map(t => (
-          <ChoiceChip key={t.key} label={t.label} selected={s.tab === t.key} onPress={() => dispatch(setCateringTab(t.key))} />
-        ))}
-      </ScrollView>
 
       {s.tab === 'calendar' ? (
         <>
@@ -105,9 +108,9 @@ const CateringContent: React.FC<Props> = ({ navigation, route }) => {
             <IconButton icon="chevron-forward" accessibilityLabel="The month after" onPress={() => void dispatch(loadCateringCalendarAsync(shiftMonth(month, 1)))} />
           </View>
           {!s.calendar || s.calendar.month !== month ? (
-            <SkeletonLines lines={4} />
+            <RowCardsSkeleton count={2} />
           ) : !s.calendar.days.length ? (
-            <EmptyState icon="calendar" title="Nothing booked this month" body="Accepted and confirmed events show here by day." />
+            <EmptyState ion="calendar-outline" title="Nothing booked this month" body="Accepted and confirmed events show here by day." />
           ) : (
             s.calendar.days.map(d => (
               <Card key={d.date}>
@@ -133,10 +136,10 @@ const CateringContent: React.FC<Props> = ({ navigation, route }) => {
           )}
         </>
       ) : !s.inbox ? (
-        s.status === 'failed' ? null : <SkeletonLines lines={6} />
+        s.status === 'failed' ? null : <RowCardsSkeleton count={3} />
       ) : !items.length ? (
         <EmptyState
-          icon="users"
+          ion="people-outline"
           title={s.tab === 'new' ? 'No new requests' : 'Nothing here'}
           body={s.tab === 'new' ? 'When a customer plans a dawat with you, it comes here to quote.' : 'Requests move here as they go along.'}
         />

@@ -9,7 +9,7 @@ import { FlatList, StyleSheet } from 'react-native';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { Button, EmptyState, InlineNotice, ScreenShell, Sheet, SkeletonLines, TextAction, TextField } from '../../Custom-Components/index';
+import { Button, DangerRow, EmptyState, InlineNotice, RowCardsSkeleton, ScreenShell, Sheet, TextField } from '../../Custom-Components/index';
 import { RowCard } from '../../Components/admin/AdminParts';
 import { formatDayFull } from '../../utils/health-time/healthTime';
 import { formatPKR } from '../../utils/money/money';
@@ -70,11 +70,11 @@ const SuppliersContent: React.FC = () => {
         )}
         ListEmptyComponent={
           s.status === 'loading' ? (
-            <SkeletonLines lines={4} />
+            <RowCardsSkeleton count={2} />
           ) : s.status === 'failed' ? (
             <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadSuppliersAsync()) }} />
           ) : (
-            <EmptyState icon="truck" title="No suppliers yet" body="Add the mandi stall, the meat shop, the cash and carry: then pick them on a purchase." />
+            <EmptyState ion="bicycle-outline" title="No suppliers yet" body="Add the mandi stall, the meat shop, the cash and carry: then pick them on a purchase." />
           )
         }
       />
@@ -87,7 +87,13 @@ const SuppliersContent: React.FC = () => {
         <TextField label="Phone (optional)" value={e?.phone ?? ''} onChangeText={phone => dispatch(setSupplierDraft({ phone }))} keyboardType="phone-pad" />
         <TextField label="Note (optional)" value={e?.note ?? ''} onChangeText={note => dispatch(setSupplierDraft({ note }))} placeholder="Delivers before 9, cash only…" />
         {s.saveError.message ? <InlineNotice message={s.saveError.message} /> : null}
-        {e?.id ? <TextAction label="Remove this supplier" tone="danger" onPress={() => e.id && void dispatch(deleteSupplierAsync(e.id))} /> : null}
+        {e?.id ? (
+          <DangerRow
+            label="Remove this supplier"
+            confirm={{ title: `Remove ${e.name || 'this supplier'}?`, message: 'Past purchases keep their name; new ones can’t pick them.', action: 'Remove' }}
+            onConfirm={() => e.id && void dispatch(deleteSupplierAsync(e.id))}
+          />
+        ) : null}
       </Sheet>
     </ScreenShell>
   );

@@ -11,11 +11,12 @@ import { Image } from 'expo-image';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { qtyLabel } from '../../models/kitchen/stockModel';
-import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Card, Divider, ImageViewer, InlineNotice, ListRow, ScreenShell, SkeletonLines } from '../../Custom-Components/index';
+import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
+import { AppText, Card, Divider, ImageViewer, InlineNotice, ListRow, RowCardsSkeleton, ScreenShell } from '../../Custom-Components/index';
 import type { FoodVendorStackParamList } from '../../models';
 import { formatDayFull } from '../../utils/health-time/healthTime';
 import { formatPKR } from '../../utils/money/money';
+import { cdn } from '../../utils/cdn/cdn';
 import { formatUnitPrice } from '../../utils/units/units';
 import { loadPurchaseAsync, selectPurchase } from './purchaseSlice';
 
@@ -42,6 +43,7 @@ const PurchaseContent: React.FC<Props> = ({ navigation, route }) => {
   const { back } = useBack({ name: 'KitchenPurchases' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
+  const { size } = useTheme();
   const s = useAppSelector(selectPurchase);
   const [viewing, setViewing] = useState(false);
   const p = s.purchase?.id === route.params.id ? s.purchase : null;
@@ -53,7 +55,7 @@ const PurchaseContent: React.FC<Props> = ({ navigation, route }) => {
   return (
     <ScreenShell title={p ? formatPKR(p.total) : 'Purchase'} subtitle={p ? `${formatDayFull(p.date)}${p.supplier ? ` · ${p.supplier.name}` : ''}` : undefined} onBack={back}>
       {s.status === 'failed' && !p ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadPurchaseAsync(route.params.id)) }} /> : null}
-      {!p && s.status !== 'failed' ? <SkeletonLines lines={6} /> : null}
+      {!p && s.status !== 'failed' ? <RowCardsSkeleton count={3} /> : null}
       {p ? (
         <>
           <Card padded="horizontal">
@@ -83,7 +85,7 @@ const PurchaseContent: React.FC<Props> = ({ navigation, route }) => {
           </Card>
           {p.receiptUrl ? (
             <Pressable onPress={() => setViewing(true)} accessibilityRole="imagebutton" accessibilityLabel="The receipt photo. Open it">
-              <Image source={{ uri: p.receiptUrl }} style={styles.receipt} contentFit="cover" />
+              <Image source={{ uri: cdn(p.receiptUrl, { w: size.railCard * 4 }) ?? p.receiptUrl }} style={styles.receipt} contentFit="cover" />
             </Pressable>
           ) : null}
           <ImageViewer visible={viewing} uri={p.receiptUrl} title="Receipt" onClose={() => setViewing(false)} />

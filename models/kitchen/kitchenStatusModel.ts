@@ -296,3 +296,10 @@ export const tiffinHeadline = (t: { status: TiffinStatus; period: { payment: { s
   if (t.status === 'active' && (pay === 'awaiting_transfer' || pay === 'proof_submitted')) return pick(tiffinPaymentStatus(pay));
   return pick(TIFFIN_STATUS[t.status]);
 };
+
+/** A plan's places, as its ONE pill: not taking new (grey), full (amber), places left (green). */
+export const placesHeadline = (placesLeft: number | null, isActive = true): KitchenHeadline | null => {
+  if (!isActive) return { label: 'Not taking new', tone: 'neutral' };
+  if (placesLeft === null) return null;
+  return placesLeft === 0 ? { label: 'Full', tone: 'warning' } : { label: `${placesLeft} ${placesLeft === 1 ? 'place' : 'places'} left`, tone: 'success' };
+};

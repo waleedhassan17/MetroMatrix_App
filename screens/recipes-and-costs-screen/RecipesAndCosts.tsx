@@ -6,7 +6,7 @@
 // without a recipe card can't be costed, counted out of stock or prepped:
 // "Needs a recipe" lists them.
 
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -15,7 +15,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { RECIPE_STATUS } from '../../models/kitchen/kitchenStatusModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Card, ChoiceChip, CostBreakdown, EmptyState, IconButton, InlineNotice, ScreenShell, SkeletonLines, StatusPill } from '../../Custom-Components/index';
+import { AppText, Card, ChoiceChip, CostBreakdown, EmptyState, IconButton, InlineNotice, RowCardsSkeleton, ScreenShell, StatusPill } from '../../Custom-Components/index';
 import type { FoodVendorStackParamList, RecipeRow } from '../../models';
 import { cdn } from '../../utils/cdn/cdn';
 import { formatPKR } from '../../utils/money/money';
@@ -50,6 +50,8 @@ const RecipesAndCostsContent: React.FC<Props> = ({ navigation, route }) => {
     if (route.params?.needsRecipe !== undefined) dispatch(setNeedsRecipe(route.params.needsRecipe));
   }, [dispatch, route.params?.needsRecipe]);
 
+  const [overOnly, setOverOnly] = useState(false);
+
   useFocusEffect(
     useCallback(() => {
       void dispatch(loadRecipesAsync(s.needsRecipe));
@@ -83,13 +85,39 @@ const RecipesAndCostsContent: React.FC<Props> = ({ navigation, route }) => {
       headerRight={<IconButton icon="options-outline" onPress={() => navigation.navigate('KitchenSettings')} accessibilityLabel="Target food cost and kitchen settings" />}
       headerContent={
         <View style={styles.chips}>
-          <ChoiceChip label="All dishes" selected={!s.needsRecipe} onPress={() => dispatch(setNeedsRecipe(false))} />
-          <ChoiceChip label={l?.counts.missing ? `Needs a recipe · ${l.counts.missing}` : 'Needs a recipe'} selected={s.needsRecipe} onPress={() => dispatch(setNeedsRecipe(true))} />
-          {l?.counts.overTarget ? <ChoiceChip label={`Over target · ${l.counts.overTarget}`} selected={false} onPress={() => dispatch(setNeedsRecipe(false))} /> : null}
+          <ChoiceChip
+            label="All dishes"
+            selected={!s.needsRecipe && !overOnly}
+            onPress={() => {
+              setOverOnly(false);
+              dispatch(setNeedsRecipe(false));
+            }}
+          />
+          <ChoiceChip
+            label="Needs a recipe"
+            count={l?.counts.missing || undefined}
+            selected={s.needsRecipe}
+            onPress={() => {
+              setOverOnly(false);
+              dispatch(setNeedsRecipe(true));
+            }}
+          />
+          {/* Over target: the dishes whose cost to make is above your food-cost target. */}
+          {l?.counts.overTarget ? (
+            <ChoiceChip
+              label="Over target"
+              count={l.counts.overTarget}
+              selected={overOnly}
+              onPress={() => {
+                setOverOnly(true);
+                dispatch(setNeedsRecipe(false));
+              }}
+            />
+          ) : null}
         </View>
       }>
       <FlatList
-        data={l?.items ?? []}
+        data={(l?.items ?? []).filter(r => !overOnly || !!r.cost?.overTarget)}
         keyExtractor={r => r.itemId}
         contentContainerStyle={styles.list}
         onRefresh={() => void dispatch(loadRecipesAsync(s.needsRecipe))}
@@ -97,11 +125,11 @@ const RecipesAndCostsContent: React.FC<Props> = ({ navigation, route }) => {
         renderItem={({ item }) => row(item)}
         ListEmptyComponent={
           !l && s.status !== 'failed' ? (
-            <SkeletonLines lines={8} />
+            <RowCardsSkeleton count={4} />
           ) : s.status === 'failed' ? (
             <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadRecipesAsync(s.needsRecipe)) }} />
           ) : (
-            <EmptyState icon="check-circle" title={s.needsRecipe ? 'Every dish has a recipe card' : 'No dishes yet'} body={s.needsRecipe ? 'Costs, stock and the prep sheet can use all of them.' : 'Add dishes to your menu first.'} />
+            <EmptyState ion="checkmark-circle-outline" title={s.needsRecipe ? 'Every dish has a recipe card' : 'No dishes yet'} body={s.needsRecipe ? 'Costs, stock and the prep sheet can use all of them.' : 'Add dishes to your menu first.'} />
           )
         }
       />

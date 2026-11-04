@@ -11,7 +11,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Card, EmptyState, InlineNotice, ScreenShell, SkeletonLines, StatusPill } from '../../Custom-Components/index';
+import { AppText, Card, EmptyState, InlineNotice, RowCardsSkeleton, ScreenShell, StatusPill } from '../../Custom-Components/index';
 import { Sparkline } from '../../Custom-Components/shopping/charts/Sparkline';
 import type { FoodVendorStackParamList } from '../../models';
 import { formatDayShort } from '../../utils/health-time/healthTime';
@@ -71,11 +71,11 @@ const PriceWatchContent: React.FC<Props> = ({ navigation }) => {
         )}
         ListEmptyComponent={
           !w && s.status !== 'failed' ? (
-            <SkeletonLines lines={6} />
+            <RowCardsSkeleton count={3} />
           ) : s.status === 'failed' ? (
             <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadPriceWatchAsync()) }} />
           ) : (
-            <EmptyState icon="trending-down" title="Your prices look fair" body="Nothing you buy costs you 10% more than the city’s price this week." />
+            <EmptyState ion="trending-down-outline" title="Your prices look fair" body="Nothing you buy costs you 10% more than the city’s price this week." />
           )
         }
       />

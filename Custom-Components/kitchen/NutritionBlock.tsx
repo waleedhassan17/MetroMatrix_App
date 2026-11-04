@@ -5,6 +5,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useStyles, type Theme } from '../../theme';
+import { formatQty } from '../../utils/units/units';
 import { AppText } from '../AppText';
 
 export interface NutritionFacts {
@@ -49,9 +50,9 @@ export const NutritionBlock: React.FC<{ facts: NutritionFacts }> = ({ facts }) =
       accessibilityLabel={`About ${facts.kcal} calories, ${facts.protein} grams protein, ${facts.carbs} grams carbs, ${facts.fat} grams fat. ${whole}${METHOD[facts.method]}.`}>
       <View style={styles.row}>
         {cell(grouped(facts.kcal), 'kcal')}
-        {cell(`${facts.protein} g`, 'protein')}
-        {cell(`${facts.carbs} g`, 'carbs')}
-        {cell(`${facts.fat} g`, 'fat')}
+        {cell(formatQty(facts.protein, 'g'), 'protein')}
+        {cell(formatQty(facts.carbs, 'g'), 'carbs')}
+        {cell(formatQty(facts.fat, 'g'), 'fat')}
       </View>
       <AppText variant="caption" tone="muted" align="center">
         {`${whole}${METHOD[facts.method]}.`}

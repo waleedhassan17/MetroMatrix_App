@@ -17,7 +17,7 @@ import { CATEGORY_LABEL, CATEGORY_ORDER } from '../../models/kitchen/kitchenStat
 import { draftTotal, purchaseInput, validatePurchase, type DraftLine } from '../../models/kitchen/purchaseModel';
 import { unitChoices } from '../../models/kitchen/stockModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, BottomSheetPicker, Button, Card, ChoiceChip, Divider, IconButton, IonIcon, InlineNotice, ScreenShell, Sheet, StatusPill, TextAction, TextField } from '../../Custom-Components/index';
+import { AppText, BottomSheetPicker, Button, Card, ChoiceChip, CtaBar, Divider, IconButton, InlineNotice, IonIcon, ScreenShell, Sheet, StatusPill, TextAction, TextField } from '../../Custom-Components/index';
 import { SectionHead } from '../../Components/admin/AdminParts';
 import { IngredientPicker } from '../../Components/kitchen/IngredientPicker';
 import { VoiceEntry } from '../../Components/voice/VoiceEntry';
@@ -136,7 +136,13 @@ const PurchaseFormContent: React.FC<Props> = ({ navigation, route }) => {
   const total = draftTotal(s.lines);
 
   return (
-    <ScreenShell title="New purchase" subtitle="Check each line, then save" onBack={back} footer={<Button label={total ? `Save · ${formatPKR(total)}` : 'Save the purchase'} onPress={() => void save()} loading={s.saving} fullWidth />}>
+    <ScreenShell
+      title="New purchase"
+      subtitle="Check each line, then save"
+      onBack={back}
+      footer={<CtaBar label="Purchase total" amount={total} note={total ? 'Saved to your stock and costs' : 'Add a line to save'} action={{ label: 'Save', onPress: () => void save(), loading: s.saving, disabled: !total }} />}>
+      {/* A failed read sits at the top, with its retry; a failed save says so here too. */}
+      {s.error.message ? <InlineNotice message={s.error.message} action={s.status === 'failed' ? { label: 'Try again', onPress: () => void dispatch(loadPurchaseFormAsync()) } : undefined} /> : null}
       <View style={styles.ways}>
         <View style={styles.grow}>
           <Button label="Scan a receipt" variant="secondary" leftIcon="camera-outline" onPress={() => setScanOpen(true)} loading={s.scanning} fullWidth />
@@ -238,7 +244,6 @@ const PurchaseFormContent: React.FC<Props> = ({ navigation, route }) => {
           <ChoiceChip key={d.n} label={d.label} selected={s.daysAgo === d.n} onPress={() => dispatch(setDaysAgo(d.n))} />
         ))}
       </View>
-      {s.error.message ? <InlineNotice message={s.error.message} /> : null}
       <TextAction label="Manage suppliers" onPress={() => navigation.navigate('KitchenSuppliers')} />
 
       <IngredientPicker

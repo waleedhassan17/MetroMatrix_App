@@ -14,7 +14,7 @@ import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useRedu
 import { useBack } from '../../hooks/useBack';
 import { countsOf, defaultUnit, qtyLabel, unitChoices } from '../../models/kitchen/stockModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, BottomSheetPicker, Button, Divider, IonIcon, InlineNotice, ScreenShell, SkeletonLines } from '../../Custom-Components/index';
+import { AppText, BottomSheetPicker, Button, Divider, InlineNotice, IonIcon, RowCardsSkeleton, ScreenShell } from '../../Custom-Components/index';
 import type { FoodVendorStackParamList, Ingredient } from '../../models';
 import { haptics } from '../../utils/haptics/haptics';
 import { loadStockTakeAsync, resetStockTake, saveStockTakeAsync, selectStockTake, setCount, setCountUnit, setRowErrors } from './stockTakeSlice';
@@ -126,7 +126,7 @@ const StockTakeContent: React.FC<Props> = ({ navigation, route }) => {
             </View>
           );
         }}
-        ListEmptyComponent={s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadStockTakeAsync()) }} /> : <SkeletonLines lines={8} />}
+        ListEmptyComponent={s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadStockTakeAsync()) }} /> : <RowCardsSkeleton count={4} />}
       />
       <BottomSheetPicker
         visible={!!picking}

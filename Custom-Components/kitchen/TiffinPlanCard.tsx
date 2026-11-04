@@ -8,6 +8,7 @@ import { useStyles, useTheme, type Theme } from '../../theme';
 import { AppText } from '../AppText';
 import { IonIcon } from '../Icon';
 import { StatusPill } from '../StatusPill';
+import { placesHeadline } from '../../models/kitchen/kitchenStatusModel';
 
 export interface TiffinPlanCardData {
   id: string;
@@ -42,7 +43,7 @@ export const TiffinPlanCard: React.FC<{ plan: TiffinPlanCardData; onPress: () =>
         <AppText variant="title" numberOfLines={1} style={styles.grow}>
           {plan.name}
         </AppText>
-        {plan.placesLeft !== null ? <StatusPill label={full ? 'Full' : `${plan.placesLeft} places left`} tone={full ? 'neutral' : 'accent'} /> : null}
+        {placesHeadline(plan.placesLeft) ? <StatusPill label={placesHeadline(plan.placesLeft)!.label} tone={placesHeadline(plan.placesLeft)!.tone} /> : null}
       </View>
       {plan.vendorName ? (
         <AppText variant="small" tone="muted">

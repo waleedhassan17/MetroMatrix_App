@@ -13,10 +13,11 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
-import { CUTOFF_CHOICES, MAX_PLAN_DISHES, WEEKDAYS, cutoffChoiceLabel, draftPerMeal, planInput, validatePlan } from '../../models/kitchen/tiffinModel';
+import { CUTOFF_CHOICES, MAX_PLAN_DISHES, WEEKDAYS, cutoffChoiceLabel, draftPerMeal, formFromPlan, planInput, validatePlan } from '../../models/kitchen/tiffinModel';
 import { MEAL_LABEL, WEEKDAY_LONG, WEEKDAY_SHORT } from '../../models/kitchen/kitchenStatusModel';
-import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Checkbox, ChoiceChip, Divider, InlineNotice, ScreenShell, SegmentTabs, Sheet, SkeletonLines, TextAction, TextField, ToggleRow } from '../../Custom-Components/index';
+import { ServiceScope, useStyles, type Theme } from '../../theme/index';
+import { AppText, Button, Card, Checkbox, ChoiceChip, DangerRow, Divider, InlineNotice, RowCardsSkeleton, ScreenShell, SectionCard, SegmentTabs, Sheet, TextAction, TextField, TimeField, ToggleRow } from '../../Custom-Components/index';
+import { ShopSection } from '../../Components/shopping/ShopParts';
 import type { FoodVendorStackParamList, Meal } from '../../models';
 import { formatPKR } from '../../utils/money/money';
 import { haptics } from '../../utils/haptics/haptics';
@@ -58,7 +59,6 @@ const TiffinPlanFormContent: React.FC<Props> = ({ navigation, route }) => {
   const { back } = useBack({ name: 'GrowthTiffin' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { space } = useTheme();
   const s = useAppSelector(selectTiffinPlanForm);
   const f = s.form;
   const [pickingDay, setPickingDay] = useState<number | null>(null);
@@ -90,7 +90,7 @@ const TiffinPlanFormContent: React.FC<Props> = ({ navigation, route }) => {
   if (s.status !== 'succeeded' || s.planId !== id) {
     return (
       <ScreenShell title={id ? 'Tiffin plan' : 'New tiffin plan'} onBack={back}>
-        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadPlanFormAsync(id)) }} /> : <SkeletonLines lines={10} />}
+        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadPlanFormAsync(id)) }} /> : <RowCardsSkeleton count={4} />}
       </ScreenShell>
     );
   }
@@ -103,6 +103,7 @@ const TiffinPlanFormContent: React.FC<Props> = ({ navigation, route }) => {
       footer={<Button label={id ? 'Save' : 'Put it up'} onPress={() => void save()} loading={s.saving} fullWidth />}>
       {s.saveError.message ? <InlineNotice message={s.saveError.message} /> : null}
 
+      <SectionCard title="The plan" icon="calendar-outline" invalid={!!s.errors.name}>
       <TextField label="Name" value={f.name} onChangeText={name => dispatch(editPlanForm({ name }))} placeholder="Office lunch tiffin" maxLength={60} error={s.errors.name} />
       <TextField
         label="About it (optional)"
@@ -112,8 +113,9 @@ const TiffinPlanFormContent: React.FC<Props> = ({ navigation, route }) => {
         maxLength={300}
         multiline
       />
+      </SectionCard>
 
-      <AppText variant="sectionTitle">Meal and days</AppText>
+      <SectionCard title="Meal and days" icon="restaurant-outline" invalid={!!s.errors.days}>
       <View style={styles.chips}>
         {MEALS.map(m => (
           <ChoiceChip key={m} label={MEAL_LABEL[m]} selected={f.meal === m} onPress={() => dispatch(setPlanMeal(m))} />
@@ -129,8 +131,9 @@ const TiffinPlanFormContent: React.FC<Props> = ({ navigation, route }) => {
           {s.errors.days}
         </AppText>
       ) : null}
+      </SectionCard>
 
-      <AppText variant="sectionTitle">Price</AppText>
+      <SectionCard title="Price" icon="cash-outline" invalid={!!s.errors.price}>
       <SegmentTabs
         options={[
           { key: 'week', label: 'A week' },
@@ -149,8 +152,9 @@ const TiffinPlanFormContent: React.FC<Props> = ({ navigation, route }) => {
         error={s.errors.price}
         helper={perMeal ? `${formatPKR(perMeal)} a meal for ${f.days.length * (f.period === 'week' ? 1 : 4)} meals` : undefined}
       />
+      </SectionCard>
 
-      <AppText variant="sectionTitle">Delivery and time</AppText>
+      <SectionCard title="Delivery and time" icon="bicycle-outline" invalid={!!s.errors.window || !!s.errors.capacity}>
       <SegmentTabs
         options={[
           { key: 'delivery', label: 'Delivered' },
@@ -163,18 +167,16 @@ const TiffinPlanFormContent: React.FC<Props> = ({ navigation, route }) => {
       />
       <View style={styles.two}>
         <View style={styles.half}>
-          <TextField label="From" value={f.from} onChangeText={from => dispatch(editPlanForm({ from }))} placeholder="12:30" keyboardType="numbers-and-punctuation" />
+          <TimeField label="From" value={f.from} onChange={from => dispatch(editPlanForm({ from }))} step={15} />
         </View>
         <View style={styles.half}>
-          <TextField label="Until" value={f.to} onChangeText={to => dispatch(editPlanForm({ to }))} placeholder="13:30" keyboardType="numbers-and-punctuation" error={s.errors.window} />
+          <TimeField label="Until" value={f.to} onChange={to => dispatch(editPlanForm({ to }))} step={15} error={s.errors.window} />
         </View>
       </View>
       <TextField label="Places" value={f.capacity} onChangeText={capacity => dispatch(editPlanForm({ capacity }))} keyboardType="number-pad" helper="How many people you can cook for on this plan" error={s.errors.capacity} />
+      </SectionCard>
 
-      <AppText variant="sectionTitle">Skipping a day</AppText>
-      <AppText variant="small" tone="muted">
-        Customers can skip a day until this time the evening before; after it, the day’s tiffins go on your board.
-      </AppText>
+      <SectionCard title="Skipping a day" subtitle="Customers can skip a day until this time the evening before; after it, the day’s tiffins go on your board." icon="play-skip-forward-outline">
       <View style={styles.chips}>
         {CUTOFF_CHOICES.map(h => (
           <ChoiceChip key={h} label={`${((h + 11) % 12) + 1} PM`} selected={f.skipCutoffHour === h} onPress={() => dispatch(editPlanForm({ skipCutoffHour: h }))} />
@@ -183,8 +185,9 @@ const TiffinPlanFormContent: React.FC<Props> = ({ navigation, route }) => {
       <AppText variant="caption" tone="muted">
         {cutoffChoiceLabel(f.skipCutoffHour)}
       </AppText>
+      </SectionCard>
 
-      <AppText variant="sectionTitle">What you cook</AppText>
+      <ShopSection title="What you cook" subtitle="Dishes from your menu, or a few words, for each day" inset={false} />
       {s.errors.rotation ? <InlineNotice message={s.errors.rotation} /> : null}
       <Card padded="horizontal">
         {f.days.map((d, n) => {
@@ -212,15 +215,18 @@ const TiffinPlanFormContent: React.FC<Props> = ({ navigation, route }) => {
       </Card>
 
       {id && s.plan ? (
-        <View style={{ gap: space.s8 }}>
-          <ToggleRow
-            label="Taking new subscribers"
-            helper="Off: it leaves your page; people on it carry on."
-            value={s.plan.isActive}
-            onChange={isActive => void dispatch(savePlanAsync({ id, input: { ...planInput(f), isActive } })).then(() => dispatch(loadPlanFormAsync(id)))}
-          />
-          <TextAction label="Remove this plan" tone="danger" onPress={() => setStopping(true)} />
-        </View>
+        <>
+          <Card padded="horizontal">
+            <ToggleRow
+              label="Taking new subscribers"
+              helper="Off: it leaves your page; people on it carry on. Saves at once."
+              value={s.plan.isActive}
+              // The saved plan with only this switch changed: unsaved edits above wait for Save.
+              onChange={isActive => void dispatch(savePlanAsync({ id, input: { ...planInput(formFromPlan(s.plan!)), isActive } })).then(() => dispatch(loadPlanFormAsync(id)))}
+            />
+          </Card>
+          <DangerRow label="Remove this plan" onConfirm={() => setStopping(true)} />
+        </>
       ) : null}
 
       <Sheet

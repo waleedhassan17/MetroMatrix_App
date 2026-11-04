@@ -11,7 +11,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { TARGET_RANGE } from '../../models/kitchen/costingModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, IconButton, InlineNotice, ScreenShell, SegmentTabs, SkeletonLines } from '../../Custom-Components/index';
+import { AppText, Button, Card, IconButton, InlineNotice, RowCardsSkeleton, ScreenShell, SegmentTabs } from '../../Custom-Components/index';
 import { SectionHead } from '../../Components/admin/AdminParts';
 import { selectAnnounce, setAnnounce, type AnnounceLanguage } from '../../store/preferencesSlice';
 import { announce, hasDeviceVoice } from '../../services/announcer';
@@ -66,7 +66,7 @@ const KitchenSettingsContent: React.FC = () => {
   return (
     <ScreenShell title="Kitchen settings" subtitle="Costs, stock and the order board" onBack={back}>
       {s.status === 'failed' && !k ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadKitchenSettingsAsync()) }} /> : null}
-      {!k && s.status !== 'failed' ? <SkeletonLines lines={6} /> : null}
+      {!k && s.status !== 'failed' ? <RowCardsSkeleton count={3} /> : null}
       {k ? (
         <>
           <View style={styles.group}>

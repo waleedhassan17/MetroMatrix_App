@@ -16,7 +16,7 @@ import { useBack } from '../../hooks/useBack';
 import { useDebouncedValue } from '../../hooks/usePagedList';
 import { CATEGORY_LABEL, CATEGORY_ORDER, STOCK_SEGMENTS } from '../../models/kitchen/kitchenStatusModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, ChoiceChip, EmptyState, InlineNotice, ScreenShell, SkeletonLines, StockLevelBar } from '../../Custom-Components/index';
+import { AppText, Button, ChoiceChip, EmptyState, InlineNotice, RowCardsSkeleton, ScreenShell, StockLevelBar } from '../../Custom-Components/index';
 import { SearchField } from '../../Components/shopping/ShopParts';
 import { VoiceSheetButton } from '../../Components/voice/VoiceSheet';
 import type { FoodVendorStackParamList, Ingredient, VoiceAction } from '../../models';
@@ -138,12 +138,12 @@ const StockContent: React.FC<Props> = ({ navigation, route }) => {
         )}
         ListEmptyComponent={
           !s.list && s.status !== 'failed' ? (
-            <SkeletonLines lines={8} />
+            <RowCardsSkeleton count={4} />
           ) : s.status === 'failed' ? (
             <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadStockAsync({ segment: s.segment, q })) }} />
           ) : (
             <EmptyState
-              icon="package"
+              ion="cube-outline"
               title={q ? `Nothing called “${q}”` : s.segment === 'all' ? 'No ingredients yet' : 'Nothing here'}
               body={s.segment === 'all' ? 'Add a purchase and its ingredients join your stock.' : 'Good: nothing in this list needs you.'}
               action={s.segment === 'all' ? { label: 'Add an ingredient', onPress: () => navigation.navigate('KitchenIngredientForm', q ? { name: q } : undefined) } : undefined}

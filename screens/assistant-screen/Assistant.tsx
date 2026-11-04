@@ -15,9 +15,10 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { useLayoutClass } from '../../hooks/useLayoutClass';
-import { usageFill, usageLine, usageNote } from '../../models/kitchen/aiModel';
+import { usageNote } from '../../models/kitchen/aiModel';
+import { AiMeterCard } from '../../Components/kitchen/AiMeterCard';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Card, InlineNotice, ProgressBar, ScreenShell, SkeletonLines } from '../../Custom-Components/index';
+import { AppText, Card, InlineNotice, RowCardsSkeleton, ScreenShell } from '../../Custom-Components/index';
 import { IconWell, ToolSection } from '../../Components/admin/AdminParts';
 import type { FoodVendorStackParamList } from '../../models';
 import { loadAssistantAsync, selectAssistant } from './assistantSlice';
@@ -34,7 +35,6 @@ const ACTIONS = [
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
     gap: { gap: space.s12 },
-    meterHead: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
     grow: { flex: 1, minWidth: 0, gap: space.s4 },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s12 },
     tile: { flexGrow: 1, flexBasis: '45%', minWidth: 0 },
@@ -65,23 +65,8 @@ const AssistantContent: React.FC<Props> = ({ navigation }) => {
   return (
     <ScreenShell title="Assistant" subtitle="Drafts you check before anything is saved" onBack={back} refreshing={s.status === 'loading' && !!u} onRefresh={load}>
       {s.status === 'failed' && !u ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : null}
-      {!u && s.status !== 'failed' ? <SkeletonLines lines={3} /> : null}
-      {u ? (
-        <Card>
-          <View style={styles.gap}>
-            <View style={styles.meterHead}>
-              <IconWell icon="sparkles-outline" tint="accent" />
-              <View style={styles.grow}>
-                <AppText variant="title">{usageLine(u)}</AppText>
-                <AppText variant="small" tone="muted">
-                  {note ?? 'Each draft counts once. Reading a week’s review themes again is free.'}
-                </AppText>
-              </View>
-            </View>
-            <ProgressBar progress={1 - usageFill(u)} accessibilityLabel={usageLine(u)} />
-          </View>
-        </Card>
-      ) : null}
+      {!u && s.status !== 'failed' ? <RowCardsSkeleton count={2} /> : null}
+      {u ? <AiMeterCard usage={u} hint="Each draft counts once. Reading a week’s review themes again is free." /> : null}
       {note ? <InlineNotice tone="info" title={u?.enabled ? 'Assistant actions used up' : 'The assistant is off'} message="Every screen below still works by hand: write a description in the menu, add a dish, set a deal." /> : null}
 
       <View style={styles.grid}>

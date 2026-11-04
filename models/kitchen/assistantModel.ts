@@ -56,7 +56,8 @@ export const comboItemInput = (c: Pick<ComboIdea, 'names'>, categoryId: string, 
   isDeal: true,
   serves: 1,
   days: EVERY_DAY,
-  isActive: true,
+  // An assistant's idea is a draft: it goes on the menu hidden, as a special does, until the cook turns it on.
+  isActive: false,
 });
 
 export const savingLine = (c: Pick<ComboIdea, 'regularPrice'>, price: number) =>

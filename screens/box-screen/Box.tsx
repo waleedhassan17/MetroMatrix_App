@@ -20,13 +20,14 @@ import { BOX_PAYMENT, BOX_STATUS, RESERVATION_STATUS, boxPaymentStatus } from '.
 import { BACHAT_BOX, MAX_BOX_QUANTITY, discountLabel } from '../../models/kitchen/surplusModel';
 import { PAYMENT_REJECT_REASONS } from '../../models/food/foodStatusModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Divider, EmptyState, IconButton, InlineNotice, ScreenShell, Sheet, SkeletonLines, StatusPill, TextAction } from '../../Custom-Components/index';
+import { AppText, Button, Card, Divider, EmptyState, IconButton, InlineNotice, RowCardsSkeleton, ScreenShell, Sheet, StatusPill, TextAction } from '../../Custom-Components/index';
 import { ChoiceLine } from '../../Custom-Components/food/ChoiceLine';
 import { StatGrid } from '../../Components/admin/AdminParts';
 import type { FoodVendorStackParamList, SurplusReservation } from '../../models';
 import { formatSlot } from '../../utils/health-time/healthTime';
 import { formatPKR } from '../../utils/money/money';
 import { cdn } from '../../utils/cdn/cdn';
+import { Alert } from '../../utils/alert/alert';
 import { haptics } from '../../utils/haptics/haptics';
 import { boxActAsync, loadBoxAsync, selectKitchenBox, type BoxAct } from './boxSlice';
 
@@ -81,7 +82,7 @@ const BoxContent: React.FC<Props> = ({ route }) => {
   if (!b) {
     return (
       <ScreenShell title={BACHAT_BOX} onBack={back}>
-        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={s.error.code === 'NOT_FOUND' ? undefined : { label: 'Try again', onPress: load }} /> : <SkeletonLines lines={8} />}
+        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={s.error.code === 'NOT_FOUND' ? undefined : { label: 'Try again', onPress: load }} /> : <RowCardsSkeleton count={4} />}
       </ScreenShell>
     );
   }
@@ -146,7 +147,17 @@ const BoxContent: React.FC<Props> = ({ route }) => {
               {`Collected at ${formatSlot(r.collectedAt, TZ)}`}
             </AppText>
           ) : null}
-          {r.status === 'reserved' && started ? <TextAction label="They didn’t come" tone="muted" onPress={() => void act({ kind: 'no-show', id: r.id }, 'Marked as not collected')} disabled={busy} /> : null}
+          {r.status === 'reserved' && started ? <TextAction
+              label="They didn’t come"
+              tone="muted"
+              disabled={busy}
+              onPress={() =>
+                Alert.alert('Mark as not collected?', 'The customer is told, and the reservation closes.', [
+                  { text: 'Not yet', style: 'cancel' },
+                  { text: 'They didn’t come', style: 'destructive', onPress: () => void act({ kind: 'no-show', id: r.id }, 'Marked as not collected') },
+                ])
+              }
+            /> : null}
         </View>
       </Card>
     );

@@ -17,7 +17,7 @@ import { CATERING_MODE, CATERING_STATUS, EVENT_TYPE_LABEL, boxPaymentStatus } fr
 import { advanceLine, latestQuote, quoteCardData, whenLine } from '../../models/kitchen/cateringModel';
 import { PAYMENT_REJECT_REASONS } from '../../models/food/foodStatusModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Divider, IconButton, InlineNotice, IonIcon, QuoteCard, ScreenShell, Sheet, SkeletonLines, StatusPill } from '../../Custom-Components/index';
+import { AppText, Button, Card, Divider, IconButton, InlineNotice, IonIcon, QuoteCard, RowCardsSkeleton, ScreenShell, SectionCard, Sheet, StatusPill } from '../../Custom-Components/index';
 import { ChoiceLine } from '../../Custom-Components/food/ChoiceLine';
 import type { FoodVendorStackParamList } from '../../models';
 import { formatPKR } from '../../utils/money/money';
@@ -73,7 +73,7 @@ const CateringRequestContent: React.FC<Props> = ({ navigation, route }) => {
   if (!r) {
     return (
       <ScreenShell title="Catering request" onBack={back}>
-        {ui.status === 'failed' ? <InlineNotice message={ui.error.message} action={ui.error.code === 'NOT_FOUND' ? undefined : { label: 'Try again', onPress: load }} /> : <SkeletonLines lines={10} />}
+        {ui.status === 'failed' ? <InlineNotice message={ui.error.message} action={ui.error.code === 'NOT_FOUND' ? undefined : { label: 'Try again', onPress: load }} /> : <RowCardsSkeleton count={4} />}
       </ScreenShell>
     );
   }
@@ -129,9 +129,8 @@ const CateringRequestContent: React.FC<Props> = ({ navigation, route }) => {
         {r.notes ? <AppText variant="small" tone="accentDeep">{`“${r.notes}”`}</AppText> : null}
       </Card>
 
-      <Card>
+      <SectionCard title="Asked for">
         <View style={styles.gap}>
-          <AppText variant="title">Asked for</AppText>
           {r.dishes.map((d, n) => (
             <View key={`${d.name}-${n}`} style={styles.row}>
               <AppText variant="body" style={styles.grow}>
@@ -141,7 +140,7 @@ const CateringRequestContent: React.FC<Props> = ({ navigation, route }) => {
             </View>
           ))}
         </View>
-      </Card>
+      </SectionCard>
 
       {adv ? (
         <Card>

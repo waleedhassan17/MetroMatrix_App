@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════
 // Every dish of the last 30 days on two axes: how often it is ordered and
 // what the kitchen keeps on each. Four plain-word groups ("Sells and
-// earns", "Sells, earns little" …), never menu-engineering jargon. A dish
+// you keep a lot", "Sells well, you keep little" …), never menu-engineering jargon. A dish
 // opens to its numbers and one suggestion, and from there a test: a new
 // price (dishes without sizes) or a new photo, for 3 to 14 days. Tests that
 // are running or have a result sit on top.
@@ -18,7 +18,7 @@ import { useBack } from '../../hooks/useBack';
 import { EXPERIMENT_DAY_CHOICES, canTestPrice, changeLine, priceBounds, progressLine, validateTestPrice } from '../../models/kitchen/reachModel';
 import { EXPERIMENT_STATUS, QUADRANT, QUADRANT_ORDER } from '../../models/kitchen/kitchenStatusModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, ChoiceChip, InlineNotice, ListRow, QuadrantChart, ScreenShell, Sheet, SkeletonLines, StatusPill, TextField } from '../../Custom-Components/index';
+import { AppText, Button, Card, ChoiceChip, InlineNotice, ListRow, QuadrantChart, RowCardsSkeleton, ScreenShell, SectionCard, Sheet, StatusPill, TextField } from '../../Custom-Components/index';
 import { RowCard, SectionHead, ToolSection } from '../../Components/admin/AdminParts';
 import type { FoodVendorStackParamList, LocalFile, MenuInsightItem } from '../../models';
 import { pickImageFromLibrary } from '../../utils/pickers/pickers';
@@ -92,7 +92,7 @@ const MenuInsightsContent: React.FC<Props> = ({ navigation, route }) => {
   return (
     <ScreenShell title="Menu insights" subtitle="Your dishes, the last 30 days" onBack={back} refreshing={s.status === 'loading' && !!s.data} onRefresh={load}>
       {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : null}
-      {!s.data && s.status !== 'failed' ? <SkeletonLines lines={10} /> : null}
+      {!s.data && s.status !== 'failed' ? <RowCardsSkeleton count={4} /> : null}
 
       {live.length ? (
         <View style={styles.group}>
@@ -112,9 +112,8 @@ const MenuInsightsContent: React.FC<Props> = ({ navigation, route }) => {
 
       {s.data ? (
         <>
-          <Card>
+          <SectionCard title="Ordered, against what you keep">
             <View style={styles.gap}>
-              <AppText variant="title">Ordered against earned</AppText>
               <QuadrantChart
                 points={items.filter(i => i.quadrant !== 'unknown').map(i => ({ id: i.itemId, label: i.name, popularity: i.popularity, profit: i.profit ?? 0, quadrant: i.quadrant as Exclude<typeof i.quadrant, 'unknown'> }))}
                 onPress={setOpenId}
@@ -123,7 +122,7 @@ const MenuInsightsContent: React.FC<Props> = ({ navigation, route }) => {
                 Tap a dot to see the dish. Further right is ordered more; higher up is more kept on each.
               </AppText>
             </View>
-          </Card>
+          </SectionCard>
 
           <ToolSection
             title="Also"

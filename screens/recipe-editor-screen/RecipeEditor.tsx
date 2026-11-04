@@ -15,26 +15,12 @@ import { useBack } from '../../hooks/useBack';
 import { draftCost, draftLineCost, recipeInputOf, validateRecipe, type CostedIngredient, type DraftLine } from '../../models/kitchen/costingModel';
 import { unitChoices, unitOfKey } from '../../models/kitchen/stockModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import {
-  AppText,
-  BottomSheetPicker,
-  Button,
-  Card,
-  ChoiceChip,
-  CostBreakdown,
-  Divider,
-  InlineNotice,
-  RecipeLineRow,
-  ScreenShell,
-  SkeletonLines,
-  TextAction,
-  TextField,
-  ToggleRow,
-} from '../../Custom-Components/index';
+import { AppText, BottomSheetPicker, Button, Card, ChoiceChip, CostBreakdown, Divider, InlineNotice, RecipeLineRow, RowCardsSkeleton, ScreenShell, TextAction, TextField, ToggleRow } from '../../Custom-Components/index';
 import { SectionHead } from '../../Components/admin/AdminParts';
 import { IngredientPicker } from '../../Components/kitchen/IngredientPicker';
 import type { FoodVendorStackParamList } from '../../models';
 import { Alert } from '../../utils/alert/alert';
+import { formatPKR } from '../../utils/money/money';
 import { haptics } from '../../utils/haptics/haptics';
 import {
   addRecipeLine,
@@ -105,7 +91,7 @@ const RecipeEditorContent: React.FC<Props> = ({ navigation, route }) => {
     if (saveRecipeAsync.fulfilled.match(res)) {
       const { recipe } = selectRecipeEditor(appStore.getState());
       haptics.success();
-      Toast.show({ type: 'success', text1: 'Recipe saved', text2: recipe?.cost ? `Cost to make ${recipe.cost.toMake}. Stock now counts it.` : undefined });
+      Toast.show({ type: 'success', text1: 'Recipe saved', text2: recipe?.cost ? `Cost to make ${formatPKR(recipe.cost.toMake)} (estimated). Stock now counts it.` : undefined });
     } else haptics.warning();
   };
 
@@ -135,7 +121,7 @@ const RecipeEditorContent: React.FC<Props> = ({ navigation, route }) => {
   if (!r) {
     return (
       <ScreenShell title="Recipe card" onBack={back}>
-        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadRecipeEditorAsync({ itemId, variantId })) }} /> : <SkeletonLines lines={8} />}
+        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadRecipeEditorAsync({ itemId, variantId })) }} /> : <RowCardsSkeleton count={4} />}
       </ScreenShell>
     );
   }

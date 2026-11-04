@@ -13,9 +13,9 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { cutoffLabel, perMealLabel, priceLabel, scheduleLabel } from '../../models/kitchen/tiffinModel';
-import { MEAL_LABEL } from '../../models/kitchen/kitchenStatusModel';
+import { MEAL_LABEL, placesHeadline } from '../../models/kitchen/kitchenStatusModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Divider, EmptyState, InlineNotice, ScreenShell, SkeletonLines } from '../../Custom-Components/index';
+import { AppText, Button, Card, Divider, EmptyState, InlineNotice, RowCardsSkeleton, ScreenShell } from '../../Custom-Components/index';
 import { RowCard, SectionHead, StatGrid } from '../../Components/admin/AdminParts';
 import type { FoodVendorStackParamList } from '../../models';
 import { formatDayShort } from '../../utils/health-time/healthTime';
@@ -69,9 +69,9 @@ const TiffinPlansContent: React.FC<Props> = ({ navigation }) => {
       />
 
       <SectionHead title="Plans" />
-      {!s.plans.length && s.status === 'loading' ? <SkeletonLines lines={4} /> : null}
+      {!s.plans.length && s.status === 'loading' ? <RowCardsSkeleton count={2} /> : null}
       {!s.plans.length && s.status === 'succeeded' ? (
-        <EmptyState icon="package" title="No tiffin plans yet" body="Offer the same meal on set days, paid by the week or month: office lunches, home dinners, a breakfast box." />
+        <EmptyState ion="cube-outline" title="No tiffin plans yet" body="Offer the same meal on set days, paid by the week or month: office lunches, home dinners, a breakfast box." />
       ) : null}
       {s.plans.map(p => (
         <RowCard
@@ -79,7 +79,7 @@ const TiffinPlansContent: React.FC<Props> = ({ navigation }) => {
           title={p.name}
           mark={{ icon: p.meal === 'breakfast' ? 'cafe-outline' : p.meal === 'lunch' ? 'sunny-outline' : 'moon-outline', tint: 'amber' }}
           lines={[`${scheduleLabel(p)} · ${p.window.label}`, `${priceLabel(p)} · ${perMealLabel(p)}`, `${p.subscribers} of ${p.capacity} places taken`]}
-          pill={!p.isActive ? { label: 'Not taking new', tone: 'neutral' } : p.seatsLeft ? { label: `${p.seatsLeft} left`, tone: 'success' } : { label: 'Full', tone: 'warning' }}
+          pill={placesHeadline(p.seatsLeft, p.isActive) ?? undefined}
           onPress={() => navigation.navigate('GrowthTiffinSubscribers', { planId: p.id })}
         />
       ))}

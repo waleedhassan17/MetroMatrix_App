@@ -1,6 +1,8 @@
 // MetroMatrix — Kitchen: the hub (the Kitchen tab). Its tiles' numbers, the
-// insight cards and the assistant's meter, read together; a card snoozed
-// leaves at once (the API keeps it away for a day).
+// insight cards and the assistant's meter, read together; only the numbers
+// hold the tab back — a failed card list or meter is said where it sits,
+// with its own retry. A card snoozed leaves at once (the API keeps it away
+// for a day).
 
 import { createAppSlice } from '../../store/createAppSlice';
 import { fetchInsightCards, fetchKitchenSummary, snoozeInsightCard } from '../../networks/kitchen/insightsCards';
@@ -14,11 +16,13 @@ export interface KitchenHubSliceState {
   summary: KitchenSummary | null;
   cards: InsightCard[];
   usage: AiUsage | null;
+  /** The parts that didn't load this time (the rest of the hub still shows). */
+  partsFailed: { cards: boolean; usage: boolean };
   status: FormStatus;
   error: ServerError;
 }
 
-const initialState: KitchenHubSliceState = { summary: null, cards: [], usage: null, status: 'idle', error: NO_ERROR };
+const initialState: KitchenHubSliceState = { summary: null, cards: [], usage: null, partsFailed: { cards: false, usage: false }, status: 'idle', error: NO_ERROR };
 
 export const kitchenHubSlice = createAppSlice({
   name: 'kitchenHub',
@@ -27,8 +31,8 @@ export const kitchenHubSlice = createAppSlice({
     loadKitchenHubAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          // The tiles, the cards and the assistant's meter, read together.
-          const [summary, cards, usage] = await Promise.all([fetchKitchenSummary(), fetchInsightCards(), fetchAiUsage()]);
+          // The tiles, the cards and the assistant's meter, read together; the extras never hold the tiles back.
+          const [summary, cards, usage] = await Promise.all([fetchKitchenSummary(), fetchInsightCards().catch(() => null), fetchAiUsage().catch(() => null)]);
           return { summary, cards, usage };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -42,10 +46,11 @@ export const kitchenHubSlice = createAppSlice({
         fulfilled: (state, action) => {
           const hub = kitchenHubSerializer(action.payload);
           state.status = 'succeeded';
+          state.partsFailed = { cards: action.payload.cards === null, usage: action.payload.usage === null };
           if (!hub) return;
           state.summary = hub.summary;
-          state.cards = hub.cards;
-          state.usage = hub.usage;
+          if (action.payload.cards !== null) state.cards = hub.cards;
+          if (action.payload.usage !== null) state.usage = hub.usage;
         },
         rejected: (state, action) => {
           state.status = 'failed';

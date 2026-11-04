@@ -14,7 +14,9 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { ADVANCE_CHOICES, VALID_DAY_CHOICES, eventLine, latestQuote, quoteInput, quoteTotals, validateQuote } from '../../models/kitchen/cateringModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, BottomSheetPicker, Button, Card, ChoiceChip, Divider, IconButton, InlineNotice, ScreenShell, SkeletonLines, TextAction, TextField } from '../../Custom-Components/index';
+import { AppText, BottomSheetPicker, Card, ChoiceChip, CtaBar, Divider, IconButton, InlineNotice, MoneyRows, RowCardsSkeleton, ScreenShell, SectionCard, TextAction, TextField } from '../../Custom-Components/index';
+import { TrustNote } from '../../Components/food/FoodParts';
+import { VENDOR_TRUST_LINE } from '../../models/food/trustModel';
 import type { FoodVendorStackParamList } from '../../models';
 import { formatPKR } from '../../utils/money/money';
 import { haptics } from '../../utils/haptics/haptics';
@@ -73,7 +75,7 @@ const QuoteBuilderContent: React.FC<Props> = ({ route }) => {
   if (!r || !d) {
     return (
       <ScreenShell title="Quote" onBack={back}>
-        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadQuoteBuilderAsync(code)) }} /> : <SkeletonLines lines={10} />}
+        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadQuoteBuilderAsync(code)) }} /> : <RowCardsSkeleton count={4} />}
       </ScreenShell>
     );
   }
@@ -101,7 +103,7 @@ const QuoteBuilderContent: React.FC<Props> = ({ route }) => {
       title={version > 1 ? `Quote, version ${version}` : 'Quote'}
       subtitle={eventLine(r)}
       onBack={back}
-      footer={<Button label={`Send · ${formatPKR(t.total)}`} onPress={() => void send()} loading={s.sending} fullWidth />}>
+      footer={<CtaBar label="Quote total" amount={t.total} note={t.advance ? `${formatPKR(t.advance)} advance` : 'All on the day'} action={{ label: 'Send quote', onPress: () => void send(), loading: s.sending }} />}>
       {s.sendError.message ? <InlineNotice message={s.sendError.message} /> : null}
       {r.budget ? (
         <AppText variant="small" tone={t.total > r.budget ? 'warning' : 'muted'}>
@@ -185,23 +187,19 @@ const QuoteBuilderContent: React.FC<Props> = ({ route }) => {
 
       <TextField label="Note (optional)" value={d.notes} onChangeText={notes => dispatch(editQuote({ notes }))} placeholder="Two serving staff included" maxLength={500} multiline />
 
-      <Card>
-        <View style={styles.gap}>
-          <View style={styles.row}>
-            <AppText variant="body" tone="muted">
-              Food
-            </AppText>
-            <AppText variant="body">{formatPKR(t.subtotal)}</AppText>
-          </View>
-          <View style={styles.row}>
-            <AppText variant="title">Total</AppText>
-            <AppText variant="title">{formatPKR(t.total)}</AppText>
-          </View>
-          <AppText variant="small" tone="muted">
-            {t.advance ? `${formatPKR(t.advance)} advance to your own account, ${formatPKR(t.total - t.advance)} on the day.` : `${formatPKR(t.total)} on the day.`} MetroMatrix takes no commission.
-          </AppText>
-        </View>
-      </Card>
+      <SectionCard title="The quote" icon="receipt-outline">
+        <MoneyRows
+          rows={[
+            { label: 'Food', value: t.subtotal },
+            { label: 'Delivery and serving', value: t.total - t.subtotal, kind: 'free' },
+            { label: 'Total', value: t.total, kind: 'total' },
+          ]}
+        />
+        <AppText variant="small" tone="muted">
+          {t.advance ? `${formatPKR(t.advance)} advance to your own account, ${formatPKR(t.total - t.advance)} on the day.` : `${formatPKR(t.total)} on the day.`}
+        </AppText>
+        <TrustNote text={VENDOR_TRUST_LINE} />
+      </SectionCard>
 
       <BottomSheetPicker
         visible={picking}

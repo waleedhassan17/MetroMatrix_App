@@ -17,7 +17,7 @@ import { BOX_STATUS, WASTE_REASON_LABEL } from '../../models/kitchen/kitchenStat
 import { BACHAT_BOX, discountLabel, isPickupCode } from '../../models/kitchen/surplusModel';
 import { rescuedShareText, wasteSentence } from '../../models/kitchen/wasteModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Divider, InlineNotice, ScreenShell, SegmentTabs, SkeletonLines, TextAction, TextField } from '../../Custom-Components/index';
+import { AppText, Button, Card, Divider, InlineNotice, RowCardsSkeleton, ScreenShell, SectionCard, SegmentTabs, TextAction, TextField } from '../../Custom-Components/index';
 import { RowCard, SectionHead, StatGrid } from '../../Components/admin/AdminParts';
 import { VoiceSheetButton } from '../../Components/voice/VoiceSheet';
 import type { FoodVendorStackParamList } from '../../models';
@@ -143,9 +143,8 @@ const WasteAndSurplusContent: React.FC<Props> = ({ navigation }) => {
         </Card>
       ) : null}
       {s.boxes.length ? (
-        <Card>
+        <SectionCard title="Collect by code">
           <View style={styles.gap}>
-            <AppText variant="title">Collect by code</AppText>
             <View style={styles.code}>
               <View style={styles.codeField}>
                 <TextField
@@ -162,23 +161,20 @@ const WasteAndSurplusContent: React.FC<Props> = ({ navigation }) => {
             </View>
             <Button label="Collect" variant="secondary" disabled={!isPickupCode(s.code)} loading={s.collecting} onPress={() => void collect()} fullWidth />
           </View>
-        </Card>
+        </SectionCard>
       ) : null}
 
       {/* Waste */}
       <SectionHead title="Waste" />
       <SegmentTabs options={RANGES} value={s.range} onChange={r => dispatch(setWasteRange(r))} accessibilityLabel="Waste over" />
       {!w ? (
-        s.status === 'failed' ? null : <SkeletonLines lines={6} />
+        s.status === 'failed' ? null : <RowCardsSkeleton count={3} />
       ) : (
         <>
           <AppText variant="body">{wasteSentence(w)}</AppText>
           {w.entries ? (
-            <Card>
+            <SectionCard title="By reason">
               <View style={styles.gap}>
-                <AppText variant="overline" tone="muted">
-                  By reason
-                </AppText>
                 {w.topReasons.map(r => (
                   <View key={r.reason} style={styles.row}>
                     <AppText variant="body" style={styles.grow}>
@@ -202,7 +198,7 @@ const WasteAndSurplusContent: React.FC<Props> = ({ navigation }) => {
                   </View>
                 ))}
               </View>
-            </Card>
+            </SectionCard>
           ) : null}
           {s.recent.map(e => (
             <RowCard

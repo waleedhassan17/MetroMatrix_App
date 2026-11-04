@@ -22,6 +22,7 @@ import {
   LEARNING_BODY,
   LEARNING_TITLE,
   accuracyBadge,
+  accuracyTone,
   barMax,
   dayLabel,
   defaultForecastDate,
@@ -33,7 +34,7 @@ import {
   purchaseDraftOf,
 } from '../../models/kitchen/forecastModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, DateStrip, Divider, EmptyState, ForecastBar, InlineNotice, PrepList, ScreenShell, SegmentTabs, Sheet, SkeletonLines, StatusPill, TextAction } from '../../Custom-Components/index';
+import { AppText, Button, Card, DateStrip, Divider, EmptyState, ForecastBar, InlineNotice, PrepList, RowCardsSkeleton, ScreenShell, SegmentTabs, Sheet, StatusPill, TextAction } from '../../Custom-Components/index';
 import type { FoodVendorStackParamList, ShoppingList } from '../../models';
 import { formatDayChip, todayInZone } from '../../utils/health-time/healthTime';
 import { formatPKR } from '../../utils/money/money';
@@ -136,7 +137,7 @@ const ForecastAndPrepContent: React.FC<Props> = ({ navigation, route }) => {
         <InlineNotice tone="info" title={LEARNING_TITLE} message={`${LEARNING_BODY} ${forecast.basisDays ? `Based on ${forecast.basisDays} days so far.` : ''}`.trim()} />
       ) : badge ? (
         <View style={styles.badge}>
-          <StatusPill label={badge} tone="success" />
+          <StatusPill label={badge} tone={accuracyTone(s.accuracy)} />
           <TextAction label="What this means" onPress={() => setExplaining(true)} />
         </View>
       ) : null}
@@ -145,10 +146,10 @@ const ForecastAndPrepContent: React.FC<Props> = ({ navigation, route }) => {
         f?.status === 'failed' ? (
           <InlineNotice message={f.error.message} action={{ label: 'Try again', onPress: load }} />
         ) : (
-          <SkeletonLines lines={8} />
+          <RowCardsSkeleton count={4} />
         )
       ) : !forecast.items.length ? (
-        <EmptyState icon="calendar" title="Nothing on the menu that day" body={homeKitchen ? 'Choose the days for each dish in your weekly menu.' : 'No dishes are served that day.'} />
+        <EmptyState ion="calendar-outline" title="Nothing on the menu that day" body={homeKitchen ? 'Choose the days for each dish in your weekly menu.' : 'No dishes are served that day.'} />
       ) : (
         <Card padded="horizontal">
           {forecast.items.map((i, n) => (
@@ -194,7 +195,7 @@ const ForecastAndPrepContent: React.FC<Props> = ({ navigation, route }) => {
   const prepPart = (
     <View style={styles.gap}>
       {!prep?.data ? (
-        prep?.status === 'failed' ? <InlineNotice message={prep.error.message} action={{ label: 'Try again', onPress: load }} /> : <SkeletonLines lines={8} />
+        prep?.status === 'failed' ? <InlineNotice message={prep.error.message} action={{ label: 'Try again', onPress: load }} /> : <RowCardsSkeleton count={4} />
       ) : !prep.data.groups.length ? (
         <EmptyState
           icon="clipboard"
@@ -227,9 +228,9 @@ const ForecastAndPrepContent: React.FC<Props> = ({ navigation, route }) => {
   const shoppingPart = (
     <View style={styles.gap}>
       {!shop?.data ? (
-        shop?.status === 'failed' ? <InlineNotice message={shop.error.message} action={{ label: 'Try again', onPress: load }} /> : <SkeletonLines lines={8} />
+        shop?.status === 'failed' ? <InlineNotice message={shop.error.message} action={{ label: 'Try again', onPress: load }} /> : <RowCardsSkeleton count={4} />
       ) : !shop.data.lines.length ? (
-        <EmptyState icon="shopping-bag" title="Nothing to buy" body="What is in stock covers the dishes expected that day." />
+        <EmptyState ion="bag-handle-outline" title="Nothing to buy" body="What is in stock covers the dishes expected that day." />
       ) : (
         <ShoppingCard
           list={shop.data}

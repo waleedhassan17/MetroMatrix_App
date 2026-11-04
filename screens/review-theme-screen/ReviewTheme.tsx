@@ -59,7 +59,7 @@ const ReviewThemeContent: React.FC<Props> = ({ navigation, route }) => {
           </View>
         </Card>
       ) : (
-        <EmptyState icon="message-square" title="This theme has moved on" body="Open the week’s themes again to see the latest." />
+        <EmptyState ion="chatbox-ellipses-outline" title="This theme has moved on" body="Open the week’s themes again to see the latest." />
       )}
       <TextAction label="Reply on your reviews page" icon="chatbubble-outline" onPress={() => navigation.navigate('VendorReviews')} />
     </ScreenShell>

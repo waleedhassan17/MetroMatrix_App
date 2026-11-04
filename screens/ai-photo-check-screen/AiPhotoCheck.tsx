@@ -43,11 +43,11 @@ const AiPhotoCheck: React.FC<Props> = props => (
   </ServiceScope>
 );
 
-const AiPhotoCheckContent: React.FC<Props> = ({ route }) => {
+const AiPhotoCheckContent: React.FC<Props> = ({ route, navigation }) => {
   const { back } = useBack({ name: 'KitchenAssistant' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { colors } = useTheme();
+  const { colors, size } = useTheme();
   const s = useAppSelector(selectAiPhotoCheck);
   const [picking, setPicking] = useState(false);
   const wantItem = route.params?.itemId ?? null;
@@ -79,7 +79,14 @@ const AiPhotoCheckContent: React.FC<Props> = ({ route }) => {
 
   return (
     <ScreenShell title="Photo check" subtitle="Tips before a photo goes on your menu" onBack={back}>
-      {down ? <InlineNotice tone="info" title={down.title} message="You can still change a dish’s photo in your menu." /> : null}
+      {down ? (
+        <InlineNotice
+          tone="info"
+          title={down.title}
+          message="You can still change a dish’s photo in your menu."
+          action={{ label: dish ? `Open ${dish.name}` : 'Add a dish photo', onPress: () => navigation.navigate('VendorMenuItem', dish ? { id: dish.id } : undefined) }}
+        />
+      ) : null}
       {s.error.message && !down ? <InlineNotice message={s.error.message} /> : null}
       <Card>
         <View style={styles.gap}>
@@ -95,7 +102,7 @@ const AiPhotoCheckContent: React.FC<Props> = ({ route }) => {
       {s.result ? (
         <Card>
           <View style={styles.gap}>
-            <Image source={cdn(s.result.imageUrl, { w: 640 }) ?? s.result.imageUrl} style={styles.photo} contentFit="cover" accessibilityLabel="The photo you checked" />
+            <Image source={cdn(s.result.imageUrl, { w: size.railCard * 4 }) ?? s.result.imageUrl} style={styles.photo} contentFit="cover" accessibilityLabel="The photo you checked" />
             <View style={styles.head}>
               <AppText variant="title">{`${s.result.score} out of 100`}</AppText>
               <StatusPill label={PHOTO_VERDICT[s.result.verdict].label} tone={PHOTO_VERDICT[s.result.verdict].tone} />

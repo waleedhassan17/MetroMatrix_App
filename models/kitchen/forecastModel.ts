@@ -36,6 +36,10 @@ export const forecastHeadline = (f: Forecast, today: string) =>
     ? `${dayLabel(f.date, today)}: about ${f.dishes} ${f.dishes === 1 ? 'portion' : 'portions'} across ${f.items.length} ${f.items.length === 1 ? 'dish' : 'dishes'}`
     : `${dayLabel(f.date, today)}: no forecast yet`;
 
+/** How the accuracy pill reads: green when the forecast has been close, amber when it hasn't. */
+export const accuracyTone = (a: ForecastAccuracy | null): 'success' | 'info' | 'warning' =>
+  !a || a.accuracyPct === null ? 'info' : a.accuracyPct >= 75 ? 'success' : a.accuracyPct >= 50 ? 'info' : 'warning';
+
 /** The accuracy badge, or null while it can't be measured. */
 export const accuracyBadge = (a: ForecastAccuracy | null) => (a && a.accuracyPct !== null ? `Last ${a.days} days: ${a.accuracyPct}% accurate` : null);
 
