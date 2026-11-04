@@ -69,7 +69,9 @@ export const ChoiceChip: React.FC<ChoiceChipProps> = ({
   accessibilityHint,
 }) => {
   const styles = useStyles(makeStyles);
-  const { service, colors, opacity } = useTheme();
+  const { service, colors, opacity, size } = useTheme();
+  // A 36 pt chip still takes a 44 pt touch: the slop makes up the difference.
+  const slop = chipSize === 'option' ? undefined : { top: (size.touch - size.control.sm) / 2, bottom: (size.touch - size.control.sm) / 2 };
   // Inside the gradient page header: a white wash, and white when chosen.
   const onGradient = useOnGradient();
   const ink = selected ? (onGradient ? service.accentDeep : service.onAccent) : onGradient ? colors.onScrim : colors.inkMuted;
@@ -86,6 +88,7 @@ export const ChoiceChip: React.FC<ChoiceChipProps> = ({
       onPress={onPress}
       onLongPress={onLongPress}
       disabled={disabled}
+      hitSlop={slop}
       accessibilityRole="button"
       accessibilityLabel={disabled ? `${label}, unavailable` : shown ? `${label}, ${count}` : label}
       accessibilityHint={accessibilityHint}

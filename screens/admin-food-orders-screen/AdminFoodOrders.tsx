@@ -16,7 +16,6 @@ import {
   PAYMENT_METHOD,
   PAYMENT_STATUS,
   orderStatusLabel,
-  pillTone,
 } from '../../models/food/foodStatusModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
 import { ChoiceChip, EmptyState, InlineNotice, ScreenShell, SkeletonLines } from '../../Custom-Components/index';
@@ -136,7 +135,7 @@ const AdminFoodOrders: React.FC<Props> = ({ navigation, route }) => {
               ]}
               pill={{
                 label: orderStatusLabel(o.status, o.fulfilment),
-                tone: pillTone(ORDER_STATUS[o.status].tone),
+                tone: ORDER_STATUS[o.status].tone,
               }}
               amount={formatPKR(o.total)}
               onPress={() => navigation.navigate('AdminFoodOrder', { id: o.id, code: o.code })}

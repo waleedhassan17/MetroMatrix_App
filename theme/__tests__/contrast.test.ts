@@ -166,3 +166,12 @@ describe('Kitchen Intelligence charts and bars', () => {
     }
   });
 });
+
+describe('row tints (menus, quick actions, stat wells)', () => {
+  it('every tint’s glyph reads on its own well (WCAG non-text, 3:1), the new Kitchen teal and green included', () => {
+    const { ROW_TINTS } = jest.requireActual('../tokens') as typeof import('../tokens');
+    for (const [name, t] of Object.entries(ROW_TINTS)) {
+      expect([name, contrastRatio(t.fg, t.bg) >= AA_LARGE]).toEqual([name, true]);
+    }
+  });
+});

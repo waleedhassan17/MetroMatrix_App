@@ -16,7 +16,7 @@ import { dishFactsLine } from '../../models/myKitchen/nutritionModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import { AppText, Card, ChoiceChip, Divider, EmptyState, InlineNotice, IonIcon, ListRow, PageHeader, SegmentTabs, SkeletonLines, TextAction } from '../../Custom-Components/index';
 import { VendorCard } from '../../Custom-Components/food/VendorCard';
-import { FoodSearchField } from '../../Components/food/FoodParts';
+import { SearchField } from '../../Components/shopping/ShopParts';
 import type { FoodAppParamList } from '../../models';
 import { cdn } from '../../utils/cdn/cdn';
 import { formatPKR } from '../../utils/money/money';
@@ -89,7 +89,7 @@ const FoodSearchContent: React.FC<Props> = ({ route, navigation }) => {
     <View style={styles.root}>
       {/* The FYP's gradient page header, as on Shopping and Health. */}
       <PageHeader title="Search" subtitle={point ? `Delivering to ${point.label}` : undefined} onBack={back}>
-        <FoodSearchField value={s.text} onChange={v => dispatch(setSearchText(v))} onSubmit={() => submit()} autoFocus />
+        <SearchField value={s.text} onChange={v => dispatch(setSearchText(v))} onSubmit={() => submit()} placeholder="Biryani, burgers, a kitchen…" autoFocus />
         {showCalories ? (
           <View style={styles.filters}>
             <ChoiceChip label="Under 600 kcal" selected={s.nutrition === 'under_600'} onPress={() => dispatch(setSearchNutrition(s.nutrition === 'under_600' ? null : 'under_600'))} />

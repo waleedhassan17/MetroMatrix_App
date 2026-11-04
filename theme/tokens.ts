@@ -147,7 +147,7 @@ export const CARD_SHADOW = '#64748B';
 // "Addresses" by its colour without reading. Fixed across services, like a
 // settings app's icons (the FYP's ROW_TINT). The FYP's hues, deepened where
 // they miss 3:1 on their own ground (rose, amber) so the glyph still reads.
-export type RowTint = 'violet' | 'blue' | 'rose' | 'amber' | 'red' | 'grey';
+export type RowTint = 'violet' | 'blue' | 'rose' | 'amber' | 'red' | 'grey' | 'teal' | 'green';
 
 export const ROW_TINTS: Record<RowTint, { fg: string; bg: string }> = {
   violet: { fg: '#7C3AED', bg: '#EDE9FE' },
@@ -156,6 +156,9 @@ export const ROW_TINTS: Record<RowTint, { fg: string; bg: string }> = {
   amber: { fg: '#B45309', bg: '#FEF3C7' },
   red: { fg: light.danger, bg: light.dangerSoft },
   grey: { fg: light.inkMuted, bg: light.surfaceSunk },
+  // Kitchen menus, where rose would read as Food's own pink.
+  teal: { fg: '#0F766E', bg: '#CCFBF1' },
+  green: { fg: '#15803D', bg: '#DCFCE7' },
 };
 
 // ─── Health home: the "How can we help you today?" cards ─
@@ -327,6 +330,18 @@ export const size = {
   dishPhoto: 96,
   /** The vendor page's cover. */
   vendorCoverAspect: 1.8,
+  /** A dish's photo at the top of its sheet. */
+  dishHeroAspect: 2.1,
+  /** A delivery zone's map, and a column of the kitchen's board on a tablet. */
+  zoneMap: 160,
+  boardColumn: 280,
+  /** A tiffin calendar day (a full touch target), and the weekday column's least width. */
+  calendarCell: 44,
+  weekdayColumn: 84,
+  /** The packed-order photo on the customer's tracking card. */
+  packedPhoto: 128,
+  /** A dish's "add" circle on the menu (inside a 44 hit area). */
+  dishAdd: 32,
   /** Charts: the Today sparkline and the Insights charts. */
   chart: { spark: 56, bar: 168, line: 168 },
   /** Rating-breakdown bar track. */

@@ -46,7 +46,10 @@ export const QuantityStepper: React.FC<QuantityStepperProps> = ({
   compact,
 }) => {
   const styles = useStyles(makeStyles);
-  const { colors, opacity } = useTheme();
+  const { colors, opacity, size } = useTheme();
+  // The buttons are 36 tall; the slop gives them a 44 pt touch.
+  const lift = (size.touch - size.control.sm) / 2;
+  const slop = compact ? { top: lift, bottom: lift, left: lift, right: lift } : { top: lift, bottom: lift };
   const set = (next: number) => {
     const n = Math.max(min, Math.min(max, next));
     if (n !== value) {
@@ -69,7 +72,7 @@ export const QuantityStepper: React.FC<QuantityStepperProps> = ({
         onPress={() => set(value - 1)}
         disabled={!canDown}
         accessibilityLabel="Fewer"
-        hitSlop={compact ? 4 : undefined}
+        hitSlop={slop}
         style={({ pressed }) => [styles.button, compact && styles.buttonCompact, pressed && { opacity: opacity.pressed }]}>
         <IonIcon name="remove" size="md" color={canDown ? colors.ink : colors.inkFaint} />
       </Pressable>
@@ -80,7 +83,7 @@ export const QuantityStepper: React.FC<QuantityStepperProps> = ({
         onPress={() => set(value + 1)}
         disabled={!canUp}
         accessibilityLabel="More"
-        hitSlop={compact ? 4 : undefined}
+        hitSlop={slop}
         style={({ pressed }) => [styles.button, compact && styles.buttonCompact, pressed && { opacity: opacity.pressed }]}>
         <IonIcon name="add" size="md" color={canUp ? colors.ink : colors.inkFaint} />
       </Pressable>

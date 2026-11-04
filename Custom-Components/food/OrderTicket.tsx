@@ -12,7 +12,6 @@ import {
   agoLabel,
   clock,
   nextVendorMove,
-  pillTone,
   secondsLeft,
   type VendorMove,
 } from '../../models/food/foodStatusModel';
@@ -126,7 +125,7 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({
           <AppText variant="bodyStrong">{formatPKR(card.total)}</AppText>
         </View>
         <View style={styles.row}>
-          <StatusPill label={pay.vendorLabel} tone={pillTone(pay.tone)} />
+          <StatusPill label={pay.vendorLabel} tone={pay.tone} />
           {card.handedToExternal ? (
             <AppText variant="caption" tone="muted">
               With your rider

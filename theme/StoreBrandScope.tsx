@@ -12,11 +12,12 @@
 //   accentSoft  a 92% tint of the brand toward white
 //   accentLine  a 72% tint
 // A near-white brand is darkened until a button stands off the white page.
-// A colour that isn't a hex falls back to the Shopping accent.
+// A colour that isn't a hex falls back to the enclosing service's accent
+// (`base`: Shopping by default, Food Court for a kitchen's page).
 
 import React, { useMemo } from 'react';
 import { AA_BODY, AA_LARGE, contrastRatio, mix, parseHex } from './contrast';
-import { SERVICE_PALETTES, type ServicePalette } from './services';
+import { SERVICE_PALETTES, type ServiceName, type ServicePalette } from './services';
 import { getTheme, type Theme } from './theme';
 import { PALETTES } from './tokens';
 import { ThemeScope } from './ThemeProvider';
@@ -41,9 +42,9 @@ const darkenUntil = (from: string, grounds: string[], ratio = AA_BODY): string =
 /** Below this a fill disappears into the white page (a white or cream brand). */
 const VISIBLE_ON_WHITE = 1.5;
 
-export const storePalette = (brand: string | null | undefined, onBrand: string | null | undefined): ServicePalette => {
+export const storePalette = (brand: string | null | undefined, onBrand: string | null | undefined, base: ServiceName = 'shopping'): ServicePalette => {
   const raw = brand ? hex(brand) : null;
-  if (!raw) return SERVICE_PALETTES.light.shopping;
+  if (!raw) return SERVICE_PALETTES.light[base];
   const accent = contrastRatio(raw, WHITE) < VISIBLE_ON_WHITE ? darkenUntil(raw, [WHITE], AA_LARGE) : raw;
   const wanted = onBrand ? hex(onBrand) : null;
   const onAccent =
@@ -63,21 +64,24 @@ export const storePalette = (brand: string | null | undefined, onBrand: string |
   };
 };
 
-const SHOPPING = getTheme('shopping');
-
-export const storeTheme = (brand: string | null | undefined, onBrand: string | null | undefined): Theme => ({
-  ...SHOPPING,
-  service: storePalette(brand, onBrand),
-  // Inside a store the bar is white with the store's colour as a rule under
-  // it (the FYP's BrandHeader): a vendor's hex behind a title can't be trusted.
-  header: { ...SHOPPING.header, tone: 'surface' },
-});
+export const storeTheme = (brand: string | null | undefined, onBrand: string | null | undefined, base: ServiceName = 'shopping'): Theme => {
+  const theme = getTheme(base);
+  return {
+    ...theme,
+    service: storePalette(brand, onBrand, base),
+    // Inside a store the bar is white with the store's colour as a rule under
+    // it (the FYP's BrandHeader): a vendor's hex behind a title can't be trusted.
+    header: { ...theme.header, tone: 'surface' },
+  };
+};
 
 export const StoreBrandScope: React.FC<{
   brand: string | null | undefined;
   onBrand: string | null | undefined;
+  /** The service whose theme the store's colour sits on (and falls back to). */
+  base?: ServiceName;
   children: React.ReactNode;
-}> = ({ brand, onBrand, children }) => {
-  const theme = useMemo(() => storeTheme(brand, onBrand), [brand, onBrand]);
+}> = ({ brand, onBrand, base = 'shopping', children }) => {
+  const theme = useMemo(() => storeTheme(brand, onBrand, base), [brand, onBrand, base]);
   return <ThemeScope theme={theme}>{children}</ThemeScope>;
 };

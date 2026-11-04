@@ -27,7 +27,6 @@ import {
   isEnded,
   isNegativeEnd,
   orderStatusLabel,
-  pillTone,
   progressIndex,
   rejectReasonLabel,
   riderStepLabel,
@@ -168,7 +167,7 @@ const FoodOrderContent: React.FC<Props> = ({ route, navigation }) => {
             <AppText variant="title" style={styles.grow} accessibilityRole="header">
               {label}
             </AppText>
-            <StatusPill label={PAYMENT_STATUS[o.payment.status].label} tone={pillTone(PAYMENT_STATUS[o.payment.status].tone)} />
+            <StatusPill label={PAYMENT_STATUS[o.payment.status].label} tone={PAYMENT_STATUS[o.payment.status].tone} />
           </View>
           {headline ? (
             <AppText variant="body" tone={isNegativeEnd(o.status) ? 'muted' : 'accentDeep'}>

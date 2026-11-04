@@ -16,7 +16,6 @@ import {
   PAYMENT_METHOD,
   PAYMENT_STATUS,
   orderStatusLabel,
-  pillTone,
   rejectReasonLabel,
   riderStepLabel,
 } from '../../models/food/foodStatusModel';
@@ -106,7 +105,7 @@ const AdminFoodOrder: React.FC<Props> = ({ route, navigation }) => {
           </AppText>
           <StatusPill
             label={PAYMENT_STATUS[o.payment.status].vendorLabel}
-            tone={pillTone(PAYMENT_STATUS[o.payment.status].tone)}
+            tone={PAYMENT_STATUS[o.payment.status].tone}
           />
         </View>
         <AppText variant="small" tone="muted">

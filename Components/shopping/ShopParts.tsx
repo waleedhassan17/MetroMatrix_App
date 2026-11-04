@@ -205,11 +205,13 @@ export const PhotoTopBar: React.FC<{
   /** More circles before the Bag (share, the heart, search). */
   right?: React.ReactNode;
   showBag?: boolean;
-}> = ({ onBack, right, showBag = true }) => {
+  /** Another service's bag (Food Court's) in place of Shopping's. */
+  bag?: { count: number; onPress: () => void };
+}> = ({ onBack, right, showBag = true, bag }) => {
   const styles = useStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const { space } = useTheme();
-  const count = useBagCount();
+  const shopCount = useBagCount();
   const { openBag } = useShopNav();
   useBarStyle(true);
   return (
@@ -217,7 +219,9 @@ export const PhotoTopBar: React.FC<{
       {onBack ? <IconButton icon="chevron-back" appearance="circle" onPress={onBack} accessibilityLabel="Back" /> : <View />}
       <View style={styles.photoTopEnd}>
         {right}
-        {showBag ? <CountIconButton icon="bag-handle-outline" appearance="circle" count={count} onPress={openBag} label="Bag" /> : null}
+        {showBag ? (
+          <CountIconButton icon="bag-handle-outline" appearance="circle" count={bag ? bag.count : shopCount} onPress={bag ? bag.onPress : openBag} label="Bag" />
+        ) : null}
       </View>
     </View>
   );

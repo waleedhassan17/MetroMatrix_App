@@ -3,25 +3,35 @@
 // ═══════════════════════════════════════════════════════
 // How an order, its payment and its rider's step are said, to the customer,
 // the vendor and the rider; the tracking steps; the vendor board's columns;
-// accept-time and decline-reason choices. Calm: no red for an ordinary end.
-// Money is always paid to the vendor directly; nothing implies a MetroMatrix
-// cut or MetroMatrix riders.
+// accept-time and decline-reason choices. Money is always paid to the vendor
+// directly; nothing implies a MetroMatrix cut or MetroMatrix riders.
+//
+// Tones are Shopping's families (models/shopping/orderStatusModel), the same
+// in the customer's, the kitchen's and the rider's apps:
+//   waiting      warning  placed, a transfer to send, a refund owed
+//   in progress  info     accepted, cooking, ready, a receipt being checked
+//   on the way   accent   out for delivery
+//   done         success  delivered, collected, paid
+//   stopped      danger   declined, missed, cancelled
+//   neutral               cash on delivery, pay at pickup, nothing to pay
+// Every row and card shows ONE pill: foodOrderHeadline, ticketHeadline,
+// riderDeliveryHeadline pick it.
 
 import type { FoodFulfilment, FoodOrderStatus, FoodPaymentMethod, FoodPaymentStatus, RiderStep } from '../food';
 
-export type Tone = 'neutral' | 'info' | 'success' | 'warning';
+export type Tone = 'neutral' | 'info' | 'accent' | 'success' | 'warning' | 'danger';
 
 export const ORDER_STATUS: Record<FoodOrderStatus, { label: string; vendorLabel: string; tone: Tone }> = {
-  placed: { label: 'Waiting for the restaurant', vendorLabel: 'New', tone: 'warning' },
+  placed: { label: 'Waiting for the kitchen', vendorLabel: 'New', tone: 'warning' },
   accepted: { label: 'Accepted', vendorLabel: 'Accepted', tone: 'info' },
   preparing: { label: 'Being prepared', vendorLabel: 'Cooking', tone: 'info' },
   ready: { label: 'Ready', vendorLabel: 'Ready', tone: 'info' },
-  on_the_way: { label: 'On the way', vendorLabel: 'Out for delivery', tone: 'info' },
+  on_the_way: { label: 'On the way', vendorLabel: 'Out for delivery', tone: 'accent' },
   delivered: { label: 'Delivered', vendorLabel: 'Delivered', tone: 'success' },
   picked_up: { label: 'Collected', vendorLabel: 'Collected', tone: 'success' },
-  rejected: { label: 'Declined by the restaurant', vendorLabel: 'Declined', tone: 'neutral' },
-  auto_rejected: { label: 'Not accepted in time', vendorLabel: 'Missed', tone: 'neutral' },
-  cancelled: { label: 'Cancelled', vendorLabel: 'Cancelled', tone: 'neutral' },
+  rejected: { label: 'Declined by the kitchen', vendorLabel: 'Declined', tone: 'danger' },
+  auto_rejected: { label: 'Not accepted in time', vendorLabel: 'Missed', tone: 'danger' },
+  cancelled: { label: 'Cancelled', vendorLabel: 'Cancelled', tone: 'danger' },
 };
 
 export const orderStatusLabel = (s: FoodOrderStatus, fulfilment: FoodFulfilment = 'delivery') =>
@@ -68,15 +78,44 @@ export const PAYMENT_METHOD: Record<FoodPaymentMethod, { label: string; hint: st
   tiffin_plan: { label: 'Tiffin plan', hint: 'Paid with your tiffin period, directly to the kitchen' },
 };
 
-export const PAYMENT_STATUS: Record<FoodPaymentStatus, { label: string; vendorLabel: string; tone: Tone }> = {
-  cod_pending: { label: 'Cash on delivery', vendorLabel: 'Cash on delivery', tone: 'neutral' },
-  unpaid: { label: 'Pay at pickup', vendorLabel: 'Pays at pickup', tone: 'neutral' },
-  awaiting_transfer: { label: 'Waiting for your transfer', vendorLabel: 'Waiting for transfer', tone: 'warning' },
-  proof_submitted: { label: 'Receipt sent, waiting for the kitchen', vendorLabel: 'Check the transfer', tone: 'warning' },
-  paid: { label: 'Paid', vendorLabel: 'Paid', tone: 'success' },
-  void: { label: 'Nothing to pay', vendorLabel: 'No payment', tone: 'neutral' },
-  refund_due: { label: 'The kitchen owes you a refund', vendorLabel: 'Refund due', tone: 'warning' },
-  refunded: { label: 'Refunded', vendorLabel: 'Refunded', tone: 'neutral' },
+/** `pill` is the short form a StatusPill shows; `label` the sentence a card says. */
+export const PAYMENT_STATUS: Record<FoodPaymentStatus, { label: string; pill: string; vendorLabel: string; tone: Tone }> = {
+  cod_pending: { label: 'Cash on delivery', pill: 'Cash on delivery', vendorLabel: 'Cash on delivery', tone: 'neutral' },
+  unpaid: { label: 'Pay at pickup', pill: 'Pay at pickup', vendorLabel: 'Pays at pickup', tone: 'neutral' },
+  awaiting_transfer: { label: 'Waiting for your transfer', pill: 'Send the transfer', vendorLabel: 'Waiting for transfer', tone: 'warning' },
+  proof_submitted: { label: 'Receipt sent, waiting for the kitchen', pill: 'Receipt being checked', vendorLabel: 'Check the transfer', tone: 'info' },
+  paid: { label: 'Paid', pill: 'Paid', vendorLabel: 'Paid', tone: 'success' },
+  void: { label: 'Nothing to pay', pill: 'Nothing to pay', vendorLabel: 'No payment', tone: 'neutral' },
+  refund_due: { label: 'The kitchen owes you a refund', pill: 'Refund due', vendorLabel: 'Refund due', tone: 'warning' },
+  refunded: { label: 'Refunded', pill: 'Refunded', vendorLabel: 'Refunded', tone: 'neutral' },
+};
+
+export interface FoodHeadline {
+  label: string;
+  tone: Tone;
+}
+
+type HeadlineOrder = { status: FoodOrderStatus; fulfilment: FoodFulfilment; payment: { method: FoodPaymentMethod; status: FoodPaymentStatus } };
+
+/**
+ * The ONE pill a customer's order shows: what the customer owes beats where
+ * the food is (a transfer to send, a receipt being checked, a refund coming),
+ * then the order's own step.
+ */
+export const foodOrderHeadline = (o: HeadlineOrder): FoodHeadline => {
+  const ended = isEnded(o.status);
+  if (!ended && o.payment.status === 'awaiting_transfer') return { label: PAYMENT_STATUS.awaiting_transfer.pill, tone: 'warning' };
+  if (!ended && o.payment.status === 'proof_submitted') return { label: PAYMENT_STATUS.proof_submitted.pill, tone: 'info' };
+  if (o.payment.status === 'refund_due') return { label: PAYMENT_STATUS.refund_due.pill, tone: 'warning' };
+  return { label: orderStatusLabel(o.status, o.fulfilment), tone: ORDER_STATUS[o.status].tone };
+};
+
+/** The ONE pill on a kitchen's ticket: a transfer to check beats the step. */
+export const ticketHeadline = (o: HeadlineOrder): FoodHeadline => {
+  if (!isEnded(o.status) && o.payment.status === 'proof_submitted') return { label: PAYMENT_STATUS.proof_submitted.vendorLabel, tone: 'info' };
+  if (o.payment.status === 'refund_due') return { label: PAYMENT_STATUS.refund_due.vendorLabel, tone: 'warning' };
+  const label = o.status === 'ready' && o.fulfilment === 'pickup' ? 'Ready to collect' : ORDER_STATUS[o.status].vendorLabel;
+  return { label, tone: ORDER_STATUS[o.status].tone };
 };
 
 export const RIDER_STEP: Record<string, string> = {
@@ -114,6 +153,36 @@ export const RIDER_STEP_FOR_RIDER: Record<string, string> = {
 
 export const riderStepLabel = (s: RiderStep, audience: 'customer' | 'vendor' | 'rider' = 'customer') =>
   (audience === 'vendor' ? RIDER_STEP_FOR_VENDOR : audience === 'rider' ? RIDER_STEP_FOR_RIDER : RIDER_STEP)[s] ?? (audience === 'rider' ? 'New delivery' : 'Rider assigned');
+
+/** The ONE pill on a rider's delivery: ready at the kitchen, new, on the way, done. */
+export const riderDeliveryHeadline = (o: { status: FoodOrderStatus; riderStep: RiderStep | null }): FoodHeadline => {
+  const step = o.riderStep ?? 'assigned';
+  if (o.status === 'ready' && (step === 'assigned' || step === 'accepted_by_rider' || step === 'arrived_at_branch')) {
+    return { label: 'Ready to collect', tone: 'info' };
+  }
+  const label = riderStepLabel(step, 'rider');
+  if (step === 'assigned') return { label, tone: 'warning' };
+  if (step === 'picked_up' || step === 'arrived_at_customer') return { label, tone: 'accent' };
+  if (step === 'delivered') return { label, tone: 'success' };
+  if (step === 'declined') return { label, tone: 'neutral' };
+  return { label, tone: 'info' };
+};
+
+/** How the kitchen's app says where its own rider is with an order. */
+export const VENDOR_RIDER_LINE = {
+  withRider: 'With your rider',
+  riderComing: 'Rider on the way',
+  locationLive: 'Location live',
+  locationOff: 'No live location',
+  handedExternal: 'With your own rider, outside the app',
+} as const;
+
+/** What the kitchen sends and takes, said once. */
+export const VENDOR_ORDER_LINE = {
+  cutlery: 'Send cutlery',
+  collectCash: (amount: string) => `Collect ${amount} at the door`,
+  collectCounter: (amount: string) => `Collect ${amount} at the counter`,
+} as const;
 
 /** What a rider's next tap is called, by the step it moves to. */
 export const RIDER_ACTION: Record<string, string> = {
@@ -158,8 +227,8 @@ export const secondsLeft = (acceptBy: string | null, now: number) => (acceptBy ?
 /** "4:05" for a countdown. */
 export const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 
-/** StatusPill speaks 'accent' where this map says 'info'. */
-export const pillTone = (t: Tone): 'neutral' | 'accent' | 'success' | 'warning' => (t === 'info' ? 'accent' : t);
+/** Minutes a kitchen is asked first when it accepts (the chips start here). */
+export const DEFAULT_PREP_MINUTES = 20;
 
 // ─── The kitchen's next move ──────────────────────────
 export type VendorMove = 'accept' | 'preparing' | 'ready' | 'assign' | 'handed-external' | 'picked-up' | 'delivered' | 'check-transfer';

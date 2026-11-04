@@ -2,7 +2,7 @@
 
 import { bagBlocker, bagNotices, cleanCode, defaultPayment, fixOf, lineChoices, payChoices, validateCheckout, whenChoices } from '../food/bagModel';
 import { dealLabel, daysLine, emptyPromotionForm, formLabel, promotionForm, promotionInput, validatePromotion, whenLine } from '../food/promotionModel';
-import { agoLabel, cardOfOrder, columnCounts, nextVendorMove, pillTone } from '../food/foodStatusModel';
+import { agoLabel, cardOfOrder, columnCounts, foodOrderHeadline, nextVendorMove, ORDER_STATUS, riderDeliveryHeadline, ticketHeadline } from '../food/foodStatusModel';
 import type { FoodPreview, FoodPromotion, FoodSlots } from '../food';
 
 // Thursday 15 October 2026, 3:10 PM in Pakistan.
@@ -186,7 +186,41 @@ describe('the kitchen’s board', () => {
     expect(agoLabel('2026-10-15T10:09:40.000Z', NOW)).toBe('Just now');
     expect(agoLabel('2026-10-15T10:06:00.000Z', NOW)).toBe('4 min ago');
     expect(agoLabel('2026-10-15T09:05:00.000Z', NOW)).toBe('1 h 5 min ago');
-    expect(pillTone('info')).toBe('accent');
+  });
+
+  it('speaks Shopping’s status families: waiting, in progress, on the way, done, stopped', () => {
+    expect(ORDER_STATUS.placed.tone).toBe('warning');
+    expect(ORDER_STATUS.accepted.tone).toBe('info');
+    expect(ORDER_STATUS.preparing.tone).toBe('info');
+    expect(ORDER_STATUS.ready.tone).toBe('info');
+    expect(ORDER_STATUS.on_the_way.tone).toBe('accent');
+    expect(ORDER_STATUS.delivered.tone).toBe('success');
+    expect(ORDER_STATUS.picked_up.tone).toBe('success');
+    expect(ORDER_STATUS.rejected.tone).toBe('danger');
+    expect(ORDER_STATUS.auto_rejected.tone).toBe('danger');
+    expect(ORDER_STATUS.cancelled.tone).toBe('danger');
+  });
+
+  it('shows ONE pill: what the customer owes beats the step', () => {
+    const o = { status: 'accepted' as const, fulfilment: 'delivery' as const, payment: { method: 'transfer' as const, status: 'awaiting_transfer' as const } };
+    expect(foodOrderHeadline(o)).toEqual({ label: 'Send the transfer', tone: 'warning' });
+    expect(foodOrderHeadline({ ...o, payment: { method: 'transfer', status: 'proof_submitted' } })).toEqual({ label: 'Receipt being checked', tone: 'info' });
+    expect(foodOrderHeadline({ ...o, payment: { method: 'cod', status: 'cod_pending' } })).toEqual({ label: 'Accepted', tone: 'info' });
+    expect(foodOrderHeadline({ ...o, status: 'ready', fulfilment: 'pickup', payment: { method: 'pay_at_pickup', status: 'unpaid' } })).toEqual({ label: 'Ready to collect', tone: 'info' });
+    expect(foodOrderHeadline({ ...o, status: 'cancelled', payment: { method: 'transfer', status: 'refund_due' } })).toEqual({ label: 'Refund due', tone: 'warning' });
+    // An ended order no longer asks for a transfer.
+    expect(foodOrderHeadline({ ...o, status: 'cancelled' }).tone).toBe('danger');
+  });
+
+  it('gives the kitchen’s ticket and the rider’s delivery ONE pill too', () => {
+    const t = { status: 'accepted' as const, fulfilment: 'delivery' as const, payment: { method: 'transfer' as const, status: 'proof_submitted' as const } };
+    expect(ticketHeadline(t)).toEqual({ label: 'Check the transfer', tone: 'info' });
+    expect(ticketHeadline({ ...t, payment: { method: 'cod', status: 'cod_pending' } })).toEqual({ label: 'Accepted', tone: 'info' });
+    expect(ticketHeadline({ ...t, status: 'ready', fulfilment: 'pickup', payment: { method: 'pay_at_pickup', status: 'unpaid' } }).label).toBe('Ready to collect');
+    expect(riderDeliveryHeadline({ status: 'ready', riderStep: 'arrived_at_branch' })).toEqual({ label: 'Ready to collect', tone: 'info' });
+    expect(riderDeliveryHeadline({ status: 'preparing', riderStep: 'assigned' }).tone).toBe('warning');
+    expect(riderDeliveryHeadline({ status: 'on_the_way', riderStep: 'picked_up' }).tone).toBe('accent');
+    expect(riderDeliveryHeadline({ status: 'delivered', riderStep: 'delivered' }).tone).toBe('success');
   });
 
   it('turns a moved order back into its card, keeping its rider', () => {

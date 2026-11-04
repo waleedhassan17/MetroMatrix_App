@@ -15,7 +15,7 @@ import { usePagedList } from '../../hooks/usePagedList';
 import { fetchOrders } from '../../networks/shopping/orders';
 import { fetchAppointments } from '../../networks/health/appointments';
 import { fetchFoodOrders } from '../../networks/food/orders';
-import { orderStatusLabel, ORDER_STATUS, pillTone } from '../../models/food/foodStatusModel';
+import { orderStatusLabel, ORDER_STATUS } from '../../models/food/foodStatusModel';
 import { useAppointmentAction } from '../../Components/health/HealthParts';
 import { groupHeadline } from '../../models/shopping/orderStatusModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
@@ -215,7 +215,7 @@ const FoodOrderCard: React.FC<{ order: FoodOrderSummary; onPress: () => void }> 
         </View>
       </View>
       <View style={styles.row}>
-        <StatusPill label={label} tone={pillTone(ORDER_STATUS[order.status].tone)} />
+        <StatusPill label={label} tone={ORDER_STATUS[order.status].tone} />
         <AppText variant="bodyStrong">{formatPKR(order.total)}</AppText>
       </View>
       <AppText variant="caption" tone="muted">

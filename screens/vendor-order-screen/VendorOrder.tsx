@@ -30,7 +30,6 @@ import {
   agoLabel,
   clock,
   isEnded,
-  pillTone,
   rejectReasonLabel,
   riderStepLabel,
   secondsLeft,
@@ -181,7 +180,7 @@ const VendorOrderContent: React.FC<Props> = ({ route }) => {
         <Card>
           <View style={styles.row}>
             <AppText variant="title">{o.fulfilment === 'pickup' ? 'Pick-up' : 'Delivery'}</AppText>
-            <StatusPill label={ORDER_STATUS[o.status].vendorLabel} tone={pillTone(ORDER_STATUS[o.status].tone)} />
+            <StatusPill label={ORDER_STATUS[o.status].vendorLabel} tone={ORDER_STATUS[o.status].tone} />
           </View>
           <AppText variant="small" tone="muted">
             {`Placed ${agoLabel(o.placedAt, now).toLowerCase()} · ${formatSlot(o.placedAt, TZ)}`}
@@ -369,7 +368,7 @@ const VendorOrderContent: React.FC<Props> = ({ route }) => {
         <Card>
           <View style={styles.row}>
             <AppText variant="title">{PAYMENT_METHOD[o.payment.method].label}</AppText>
-            {pay.vendorLabel !== PAYMENT_METHOD[o.payment.method].label ? <StatusPill label={pay.vendorLabel} tone={pillTone(pay.tone)} /> : null}
+            {pay.vendorLabel !== PAYMENT_METHOD[o.payment.method].label ? <StatusPill label={pay.vendorLabel} tone={pay.tone} /> : null}
           </View>
           <View style={styles.row}>
             <AppText variant="body" tone="muted">

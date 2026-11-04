@@ -19,6 +19,7 @@ export const useToneColors = () => {
   return (tone: KitchenTone): { fg: string; bg: string } =>
     ({
       neutral: { fg: colors.inkMuted, bg: colors.surfaceSunk },
+      info: { fg: colors.info, bg: colors.infoSoft },
       accent: { fg: service.accentDeep, bg: service.accentSoft },
       success: { fg: colors.success, bg: colors.successSoft },
       warning: { fg: colors.warning, bg: colors.warningSoft },

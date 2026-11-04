@@ -93,7 +93,7 @@ const FoodVendor: React.FC<Props> = props => {
   const entry = useAppSelector(st => selectVendorPage(st, props.route.params.slug));
   return (
     <ServiceScope service="food">
-      <StoreBrandScope brand={entry.page?.brandColor} onBrand={entry.page?.onBrandColor}>
+      <StoreBrandScope brand={entry.page?.brandColor} onBrand={entry.page?.onBrandColor} base="food">
         <FoodVendorContent {...props} />
       </StoreBrandScope>
     </ServiceScope>

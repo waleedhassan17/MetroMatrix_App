@@ -19,7 +19,8 @@ import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index
 import { AppText, Button, Card, Divider, EmptyState, IconButton, IonIcon, InlineNotice, ListRow, MciIcon, PageHeader, Sheet, Skeleton } from '../../Custom-Components/index';
 import { loadNutritionSettingsAsync, selectNutritionSettings } from '../nutrition-settings-screen/nutritionSettingsSlice';
 import { VendorCard } from '../../Custom-Components/food/VendorCard';
-import { CuisineRail, FoodHomeSkeleton, FoodSearchButton, FoodSection, SurplusRail, VendorRail } from '../../Components/food/FoodParts';
+import { CuisineRail, FoodHomeSkeleton, FoodSection, SurplusRail, VendorRail } from '../../Components/food/FoodParts';
+import { SearchPill } from '../../Components/shopping/ShopParts';
 import type { VendorCard as VendorCardData } from '../../models';
 import { selectFoodPoint, setFoodPoint } from '../../store/preferencesSlice';
 import { loadAddressesAsync, selectAddressBook } from '../address-book-screen/addressBookSlice';
@@ -235,7 +236,7 @@ const FoodHomeContent: React.FC = () => {
           </AppText>
           <IonIcon name="chevron-down" size="sm" color={colors.onScrim} />
         </Pressable>
-        <FoodSearchButton onPress={() => navigation.navigate('FoodSearch')} />
+        <SearchPill label="Search dishes and kitchens" onPress={() => navigation.navigate('FoodSearch')} />
       </PageHeader>
 
       <FlatList

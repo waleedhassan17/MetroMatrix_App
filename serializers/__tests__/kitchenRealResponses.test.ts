@@ -243,9 +243,11 @@ describe('tiffin and catering', () => {
   });
 
   it('reads a dawat by its code, its quotes and the advance', () => {
+    const CAPTURED_AT = Date.parse('2026-11-02T00:00:00.000Z');
     const r = cateringRequestSerializer(ok('cateringRequest'))!;
     expect(r).toMatchObject({ id: expect.any(String), code: expect.stringMatching(/^CT-/), status: 'requested', eventType: 'dawat' });
-    const quoted = cateringRequestSerializer(ok('cateringQuote2'))!;
+    // Read at capture time: the quote's validity is relative to the day it was captured.
+    const quoted = cateringRequestSerializer(ok('cateringQuote2'), CAPTURED_AT)!;
     expect(quoted.quotes[0]).toMatchObject({ version: 2, state: 'current' });
     expect(quoted.quotes[0].lines.every(l => l.total === l.qty * l.unitPrice)).toBe(true);
     const accepted = cateringRequestSerializer(ok('cateringAccept'))!;

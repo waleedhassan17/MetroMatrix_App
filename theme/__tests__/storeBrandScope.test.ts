@@ -1,6 +1,6 @@
 import { contrastRatio, AA_BODY } from '../contrast';
 import { SERVICE_PALETTES } from '../services';
-import { storePalette } from '../StoreBrandScope';
+import { storePalette, storeTheme } from '../StoreBrandScope';
 
 const WHITE = '#FFFFFF';
 
@@ -28,5 +28,11 @@ describe('storePalette', () => {
   it('falls back to the Shopping accent for a colour that is not a hex', () => {
     expect(storePalette('tomato', '#FFFFFF')).toEqual(SERVICE_PALETTES.light.shopping);
     expect(storePalette(null, null)).toEqual(SERVICE_PALETTES.light.shopping);
+  });
+
+  it('falls back to Food Court pink on a kitchen page, never Shopping orange', () => {
+    expect(storePalette(null, null, 'food')).toEqual(SERVICE_PALETTES.light.food);
+    expect(storeTheme(null, null, 'food').serviceName).toBe('food');
+    expect(storeTheme(null, null, 'food').header.tone).toBe('surface');
   });
 });
