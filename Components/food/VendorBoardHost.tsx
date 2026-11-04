@@ -20,6 +20,7 @@ import {
   boardOrderUpdated,
   boardSynced,
   loadBoardAsync,
+  loadKitchenAsync,
   selectUnseenCount,
   selectVendorBoard,
   setBoardColumn,
@@ -33,10 +34,13 @@ export const VendorBoardHost: React.FC = () => {
   const unseen = useAppSelector(selectUnseenCount);
 
   const refetch = useCallback(() => void dispatch(loadBoardAsync()), [dispatch]);
-  // The board is read once on arrival; the socket and the fallback poll keep it.
+  // The board and the kitchen (its logo, colour and open state for every tab's
+  // header) are read once on arrival; the socket and the fallback poll keep them.
   useEffect(() => {
-    if (live) refetch();
-  }, [live, refetch]);
+    if (!live) return;
+    refetch();
+    void dispatch(loadKitchenAsync());
+  }, [dispatch, live, refetch]);
 
   useVendorBoard(
     {

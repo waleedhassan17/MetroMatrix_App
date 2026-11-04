@@ -23,7 +23,8 @@ export interface CtaBarProps {
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
     row: { flexDirection: 'row', alignItems: 'center', gap: space.s16 },
-    price: { flexShrink: 1, gap: space.s0 },
+    // The price never takes the button's room: a long note truncates instead.
+    price: { flexShrink: 1, flexBasis: '45%', gap: space.s0 },
     amount: { flexDirection: 'row', alignItems: 'baseline', gap: space.s8 },
     was: { textDecorationLine: 'line-through' },
     action: { flex: 1 },

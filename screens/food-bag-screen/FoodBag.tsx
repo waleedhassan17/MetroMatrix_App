@@ -153,7 +153,16 @@ const FoodBagContent: React.FC<Props> = ({ navigation }) => {
         <CtaBar
           label="Subtotal"
           amount={cart.subtotal}
-          note={!blocker ? `${cart.itemCount} ${cart.itemCount === 1 ? 'item' : 'items'} · delivery and deals at checkout` : blocker.message}
+          // The notice above says why in full; the bar says what to do.
+          note={
+            !blocker
+              ? `${cart.itemCount} ${cart.itemCount === 1 ? 'item' : 'items'} · delivery and deals at checkout`
+              : needsTime
+                ? 'Closed now: pick a time to order'
+                : blocker.code === 'BELOW_MIN_ORDER'
+                  ? 'Below the minimum order'
+                  : 'Fix the notice above first'
+          }
           action={{
             label: !blocker ? 'Checkout' : needsTime ? 'Choose a time' : short && blocker.code === 'BELOW_MIN_ORDER' ? `Add ${formatPKR(Number(short.details?.shortfall ?? 0))} more` : 'Checkout',
             onPress: () => (needsTime ? openWhen() : blocker?.code === 'BELOW_MIN_ORDER' && vendor ? navigation.navigate('FoodVendor', { slug: vendor.slug }) : navigation.navigate('FoodCheckout')),
