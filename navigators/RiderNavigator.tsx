@@ -1,5 +1,6 @@
 // MetroMatrix — the Food rider's app: a stack over Deliveries · Cash · Profile
-// (navigations-maps/Rider.tsx).
+// (navigations-maps/Rider.tsx), on Food's own tab bar with the deliveries
+// on hand counted on Deliveries.
 
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -8,11 +9,11 @@ import { ServicePausedGate } from '../Components/platform/ServicePausedGate';
 import type { RiderStackParamList } from '../models';
 import { ROUTES } from '../navigations-maps/Base';
 import { RIDER_STACK_ROUTES, RIDER_TABS } from '../navigations-maps/Rider';
-import { RouteTabs } from './RouteTabs';
+import { ServiceTabs } from './ServiceTabs';
 
 const Stack = createNativeStackNavigator<RiderStackParamList>();
 
-const RiderTabs: React.FC = () => <RouteTabs id="RiderTabs" routes={RIDER_TABS} />;
+const RiderTabs: React.FC = () => <ServiceTabs id="RiderTabs" routes={RIDER_TABS} />;
 
 const RiderNavigator: React.FC = () => (
   <ServiceScope service="food">

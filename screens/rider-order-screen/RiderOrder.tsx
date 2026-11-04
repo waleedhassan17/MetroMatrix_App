@@ -18,7 +18,7 @@ import { useRiderChannel } from '../../hooks/useFoodLive';
 import { RIDER_ACTION, RIDER_DECLINE_REASONS, primaryRiderStep, riderStepLabel, waitingForKitchen } from '../../models/food/foodStatusModel';
 import { dropOrderLabel } from '../../models/kitchen/reachModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Divider, IconButton, InlineNotice, IonIcon, ScreenShell, Sheet, SkeletonLines, TextField } from '../../Custom-Components/index';
+import { AppText, Button, Card, Divider, IconButton, InlineNotice, IonIcon, RowCardsSkeleton, ScreenShell, SectionCard, Sheet, TextField } from '../../Custom-Components/index';
 import { ChoiceLine } from '../../Custom-Components/food/ChoiceLine';
 import { FoodMap } from '../../Custom-Components/food/map/FoodMap';
 import type { RiderStackParamList } from '../../models';
@@ -42,15 +42,15 @@ const STEP_PATH: Record<string, RiderStepAction> = {
   arrived_at_customer: 'arrived-customer',
 };
 
-const makeStyles = ({ space, gutter, radius, colors }: Theme) =>
+const makeStyles = ({ space, gutter, radius, colors, size }: Theme) =>
   StyleSheet.create({
-    content: { paddingHorizontal: gutter, paddingTop: space.s16, paddingBottom: space.s40, gap: space.s16 },
+    content: { paddingHorizontal: gutter, paddingBottom: space.s40, gap: space.s16 },
     head: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
     grow: { flex: 1, gap: space.s4 },
     row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.s12 },
     map: { borderRadius: radius.lg, overflow: 'hidden' },
-    cash: { padding: space.s16, borderRadius: radius.lg, gap: space.s4 },
-    muted: { color: colors.inkMuted },
+    cashWell: { width: size.statWell + space.s12, height: size.statWell + space.s12, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+    mapHolder: { height: size.zoneMap, borderRadius: radius.md, backgroundColor: colors.surfaceSunk, alignItems: 'center', justifyContent: 'center', gap: space.s8, padding: space.s16 },
   });
 
 const RiderOrder: React.FC<Props> = props => (
@@ -64,7 +64,7 @@ const RiderOrderContent: React.FC<Props> = ({ route }) => {
   const { back } = useBack({ name: 'RiderTabs' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { colors, service, size } = useTheme();
+  const { colors, service, size, rowTint } = useTheme();
   const { order: o, status, error } = useAppSelector(st => selectRiderOrderEntry(st, id));
   const ui = useAppSelector(selectRiderOrderUi);
   const [me, setMe] = useState<RiderLocationState>(riderLocation.current);
@@ -103,7 +103,7 @@ const RiderOrderContent: React.FC<Props> = ({ route }) => {
   if (!o) {
     return (
       <ScreenShell title="Delivery" onBack={back} scroll>
-        {status === 'failed' ? <InlineNotice message={error.message} action={error.code === 'NOT_FOUND' ? undefined : { label: 'Try again', onPress: refetch }} /> : <SkeletonLines lines={10} />}
+        {status === 'failed' ? <InlineNotice message={error.message} action={error.code === 'NOT_FOUND' ? undefined : { label: 'Try again', onPress: refetch }} /> : <RowCardsSkeleton count={4} />}
       </ScreenShell>
     );
   }
@@ -171,14 +171,20 @@ const RiderOrderContent: React.FC<Props> = ({ route }) => {
         ) : null}
 
         {o.cashToCollect > 0 ? (
-          <View style={[styles.cash, { backgroundColor: service.accentSoft }]}>
-            <AppText variant="small" tone="accentDeep">
-              Collect in cash
-            </AppText>
-            <AppText variant="h2" tone="accentDeep">
-              {formatPKR(o.cashToCollect)}
-            </AppText>
-          </View>
+          // The cash at the door: a white card with a tinted well, the amount large.
+          <Card>
+            <View style={styles.head} accessible accessibilityLabel={`Collect ${formatPKR(o.cashToCollect)} in cash at the door`}>
+              <View style={[styles.cashWell, { backgroundColor: rowTint.amber.bg }]}>
+                <IonIcon name="cash-outline" size="lg" color={rowTint.amber.fg} />
+              </View>
+              <View style={styles.grow}>
+                <AppText variant="small" tone="muted">
+                  Collect at the door
+                </AppText>
+                <AppText variant="h1">{formatPKR(o.cashToCollect)}</AppText>
+              </View>
+            </View>
+          </Card>
         ) : (
           <InlineNotice tone="success" message={o.codCollected ? `You collected ${formatPKR(o.codCollected)}.` : 'Already paid: nothing to collect.'} />
         )}
@@ -194,6 +200,14 @@ const RiderOrderContent: React.FC<Props> = ({ route }) => {
               height={size.trackingMap}
               accessibilityLabel={`Map: ${o.pickup.name} and the customer`}
             />
+          </View>
+        ) : active ? (
+          // No pins to draw: say so, and keep the directions one tap away.
+          <View style={styles.mapHolder}>
+            <IonIcon name="map-outline" size="xl" color={colors.inkMuted} />
+            <AppText variant="small" tone="muted" align="center">
+              No map for this delivery yet. Use Directions on the kitchen or the customer.
+            </AppText>
           </View>
         ) : null}
 
@@ -239,13 +253,12 @@ const RiderOrderContent: React.FC<Props> = ({ route }) => {
               {drop ? <IconButton icon="navigate-outline" accessibilityLabel="Directions to the customer" onPress={() => navigateTo(drop.lat, drop.lng)} /> : null}
             </View>
             {o.drop.riderInstructions ? <InlineNotice tone="info" message={o.drop.riderInstructions} /> : null}
-            {o.drop.phone ? <Button label="WhatsApp the customer" variant="secondary" size="sm" leftIcon="logo-whatsapp" onPress={() => openWhatsApp(o.drop!.phone!)} /> : null}
+            {o.drop.phone ? <Button label="WhatsApp the customer" variant="secondary" leftIcon="logo-whatsapp" onPress={() => openWhatsApp(o.drop!.phone!)} fullWidth /> : null}
           </Card>
         ) : null}
 
         {/* What to carry */}
-        <Card>
-          <AppText variant="title">{`${o.itemCount} ${o.itemCount === 1 ? 'item' : 'items'}`}</AppText>
+        <SectionCard title={`${o.itemCount} ${o.itemCount === 1 ? 'item' : 'items'}`} icon="bag-handle-outline">
           {o.items.map((i, n) => (
             <View key={`${i.name}-${n}`}>
               {n > 0 ? <Divider /> : null}
@@ -261,7 +274,7 @@ const RiderOrderContent: React.FC<Props> = ({ route }) => {
           <AppText variant="small" tone="muted">
             {o.cutlery ? 'Cutlery in the bag' : 'No cutlery'}
           </AppText>
-        </Card>
+        </SectionCard>
         {o.promisedAt && active ? (
           <AppText variant="small" tone="muted">
             {`The customer expects it by ${formatSlot(o.promisedAt, 'Asia/Karachi')}.`}

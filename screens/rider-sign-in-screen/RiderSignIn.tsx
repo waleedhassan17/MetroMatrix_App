@@ -6,14 +6,12 @@
 // the vendor resets a rider's password from their Riders screen.
 
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { hasErrors, validateRiderSignIn } from '../../models/authModel';
 import { visibleErrors } from '../../utils/form-errors/formErrors';
 import { haptics } from '../../utils/haptics/haptics';
-import { AppText, Button, IonIcon } from '../../Custom-Components/index';
-import { useStyles, useTheme, type Theme } from '../../theme/index';
+import { Button, InlineNotice } from '../../Custom-Components/index';
 import { AuthHeader, AuthScreen, ProviderBadge } from '../../Components/auth/AuthChrome';
 import { RiderSignInFields } from '../../Components/auth/AuthFields';
 import { AuthErrorNotice } from '../../Components/auth/AuthErrorNotice';
@@ -22,24 +20,8 @@ import { riderSignInAsync, selectRiderSignIn, setPassword, setUsername, touch, t
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RiderSignIn'>;
 
-const makeStyles = ({ space, radius, colors, size }: Theme) =>
-  StyleSheet.create({
-    note: {
-      flexDirection: 'row',
-      gap: space.s12,
-      padding: space.s16,
-      borderRadius: radius.lg,
-      borderWidth: size.border,
-      borderColor: colors.line,
-      backgroundColor: colors.surface,
-    },
-    noteText: { flex: 1 },
-  });
-
 const RiderSignIn: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
-  const styles = useStyles(makeStyles);
-  const { colors } = useTheme();
   const form = useAppSelector(selectRiderSignIn);
 
   const errors = validateRiderSignIn({ username: form.username, password: form.password });
@@ -78,12 +60,7 @@ const RiderSignIn: React.FC<Props> = ({ navigation }) => {
         disabled={loading}
       />
       <Button label={loading ? 'Signing in...' : 'Sign In'} onPress={submit} disabled={!complete || loading} fullWidth />
-      <View style={styles.note}>
-        <IonIcon name="information-circle-outline" size="md" color={colors.inkMuted} />
-        <AppText variant="small" tone="muted" style={styles.noteText}>
-          Forgot your password? Ask your vendor to reset it from their Riders screen in MetroMatrix.
-        </AppText>
-      </View>
+      <InlineNotice tone="info" title="Forgot your password?" message="Ask your vendor to reset it from their Riders screen in MetroMatrix." />
     </AuthScreen>
   );
 };

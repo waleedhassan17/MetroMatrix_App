@@ -8,7 +8,7 @@
 // deliver for. Live: any change to a delivery reads them again.
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { FlatList, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { FlatList, Platform, StyleSheet, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useRiderChannel } from '../../hooks/useFoodLive';
@@ -16,9 +16,10 @@ import { usePagedList } from '../../hooks/usePagedList';
 import { fetchRiderOrders } from '../../networks/food/rider/rider';
 import { placeLine, riderVehicleLabel } from '../../models/food/vendorModel';
 import { dropOrderLabel } from '../../models/kitchen/reachModel';
-import { riderStepLabel } from '../../models/food/foodStatusModel';
-import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Avatar, Button, Card, ChoiceChip, Divider, EmptyState, InlineNotice, IonIcon, ListRow, ScreenShell, Sheet, SkeletonLines, StatusPill, ToggleRow } from '../../Custom-Components/index';
+import { riderDeliveryHeadline } from '../../models/food/foodStatusModel';
+import { ServiceScope, useStyles, type Theme } from '../../theme/index';
+import { AppText, Avatar, Button, Card, ChoiceChip, Divider, EmptyState, InlineNotice, ListRow, RowCardsSkeleton, ScreenShell, Sheet, ToggleRow } from '../../Custom-Components/index';
+import { RowCard } from '../../Components/admin/AdminParts';
 import type { RiderOrder } from '../../models';
 import { riderLocation, supportsBackgroundTracking, type RiderLocationState } from '../../services/location/riderLocation';
 import { riderTransport } from '../../services/location/riderTransport';
@@ -32,7 +33,8 @@ type Nav = { navigate: (name: string, params?: object) => void };
 
 const makeStyles = ({ space, gutter }: Theme) =>
   StyleSheet.create({
-    list: { paddingHorizontal: gutter, paddingTop: space.s16, paddingBottom: space.s40, gap: space.s12 },
+    list: { paddingHorizontal: gutter, paddingBottom: space.s40, gap: space.s12 },
+    sheetButtons: { flexDirection: 'row', gap: space.s12 },
     head: { gap: space.s12 },
     vendor: { flexDirection: 'row', alignItems: 'center', gap: space.s12, paddingVertical: space.s12 },
     grow: { flex: 1, gap: space.s4 },
@@ -49,34 +51,20 @@ const TRACKING_LINE: Record<RiderLocationState['mode'], string | null> = {
   disabled: 'Location sharing is switched off for now.',
 };
 
+/** A delivery as a row card: ONE pill (riderDeliveryHeadline), the kitchen → the customer, the cash at the door. */
 const DeliveryCard: React.FC<{ o: RiderOrder; onPress: () => void }> = ({ o, onPress }) => {
-  const styles = useStyles(makeStyles);
-  const { colors } = useTheme();
+  const pill = riderDeliveryHeadline(o);
   return (
-    <Card
+    <RowCard
+      title={o.code}
+      mark={{ icon: 'bicycle-outline', tint: 'accent' }}
+      lines={[`${o.pickup.name} → ${[o.drop?.name, o.drop?.area].filter(Boolean).join(' · ') || 'the customer'}`, o.dropOrder ? dropOrderLabel(o.dropOrder) : null]}
+      pill={pill}
+      foot={{ left: o.cashToCollect ? 'Collect in cash' : 'Already paid: nothing to collect', right: o.cashToCollect ? formatPKR(o.cashToCollect) : undefined }}
+      chevron
       onPress={onPress}
-      accessibilityLabel={`Delivery ${o.code}, ${riderStepLabel(o.riderStep ?? 'assigned', 'rider')}${o.dropOrder ? `, ${dropOrderLabel(o.dropOrder)}` : ''}, from ${o.pickup.name} to ${o.drop?.area ?? 'the customer'}`}>
-      <View style={styles.row}>
-        <AppText variant="title">{o.code}</AppText>
-        {o.dropOrder ? <StatusPill label={dropOrderLabel(o.dropOrder)!} tone="neutral" /> : null}
-        <StatusPill label={o.status === 'ready' && (o.riderStep === 'assigned' || o.riderStep === 'accepted_by_rider' || o.riderStep === 'arrived_at_branch') ? 'Ready to collect' : riderStepLabel(o.riderStep ?? 'assigned', 'rider')} tone="accent" />
-      </View>
-      <View style={styles.route}>
-        <IonIcon name="storefront-outline" size="sm" color={colors.inkMuted} />
-        <AppText variant="small" numberOfLines={1} style={styles.grow}>
-          {o.pickup.name}
-        </AppText>
-      </View>
-      <View style={styles.route}>
-        <IonIcon name="location-outline" size="sm" color={colors.inkMuted} />
-        <AppText variant="small" numberOfLines={1} style={styles.grow}>
-          {[o.drop?.name, o.drop?.area].filter(Boolean).join(' · ') || 'The customer'}
-        </AppText>
-      </View>
-      <AppText variant="small" tone={o.cashToCollect ? 'accentDeep' : 'muted'}>
-        {o.cashToCollect ? `Collect ${formatPKR(o.cashToCollect)} in cash` : 'Already paid: nothing to collect'}
-      </AppText>
-    </Card>
+      accessibilityLabel={`Delivery ${o.code}, ${pill.label}${o.dropOrder ? `, ${dropOrderLabel(o.dropOrder)}` : ''}, from ${o.pickup.name} to ${o.drop?.area ?? 'the customer'}${o.cashToCollect ? `, collect ${formatPKR(o.cashToCollect)}` : ''}`}
+    />
   );
 };
 
@@ -153,10 +141,7 @@ const RiderDeliveriesContent: React.FC = () => {
         ) : null}
         {r.dutyError.message ? <InlineNotice message={r.dutyError.message} /> : null}
       </Card>
-      <View style={styles.chips}>
-        <ChoiceChip label={`Now${r.active.length ? ` · ${r.active.length}` : ''}`} selected={segment === 'active'} onPress={() => setSegment('active')} />
-        <ChoiceChip label="Past" selected={segment === 'history'} onPress={() => setSegment('history')} />
-      </View>
+      {segment === 'history' && history.error ? <InlineNotice message={history.error} action={{ label: 'Try again', onPress: history.reload }} /> : null}
     </View>
   );
 
@@ -165,8 +150,8 @@ const RiderDeliveriesContent: React.FC = () => {
       <View style={styles.vendor}>
         <Avatar name={v.name} uri={v.logoUrl} size="md" />
         <View style={styles.grow}>
-          <AppText variant="micro" tone="muted">
-            YOU DELIVER FOR
+          <AppText variant="overline" tone="muted">
+            You deliver for
           </AppText>
           <AppText variant="title">{v.name}</AppText>
           {where ? (
@@ -186,7 +171,17 @@ const RiderDeliveriesContent: React.FC = () => {
   ) : null;
 
   return (
-    <ScreenShell title="Deliveries" subtitle={r.home ? `${r.home.rider.fullName} · ${riderVehicleLabel(r.home.rider.vehicle)}` : undefined} scroll={false} padded={false}>
+    <ScreenShell
+      title="Deliveries"
+      subtitle={r.home ? `${r.home.rider.fullName} · ${riderVehicleLabel(r.home.rider.vehicle)}` : undefined}
+      scroll={false}
+      padded={false}
+      headerContent={
+        <View style={styles.chips}>
+          <ChoiceChip label="Now" count={r.active.length} selected={segment === 'active'} onPress={() => setSegment('active')} />
+          <ChoiceChip label="Past" selected={segment === 'history'} onPress={() => setSegment('history')} />
+        </View>
+      }>
       <FlatList
         data={rows}
         keyExtractor={o => o.id}
@@ -194,48 +189,56 @@ const RiderDeliveriesContent: React.FC = () => {
         ListHeaderComponent={header}
         ListFooterComponent={footer}
         onEndReached={segment === 'history' ? history.loadMore : undefined}
-        refreshing={false}
+        refreshing={segment === 'active' ? r.activeStatus === 'loading' && r.active.length > 0 : history.isRefreshing}
         onRefresh={() => (segment === 'active' ? refetch() : history.refresh())}
         renderItem={({ item }) =>
           segment === 'active' ? (
             <DeliveryCard o={item} onPress={() => open(item)} />
           ) : (
-            <Pressable onPress={() => open(item)} accessibilityRole="button" accessibilityLabel={`${item.code}, ${item.statusLabel}`}>
-              <Card>
-                <View style={styles.row}>
-                  <AppText variant="bodyStrong">{item.code}</AppText>
-                  <AppText variant="small" tone="muted">
-                    {item.statusLabel}
-                  </AppText>
-                </View>
-                <AppText variant="small" tone="muted">
-                  {`${item.pickup.name} → ${item.drop?.area ?? 'the customer'}${item.codCollected ? ` · collected ${formatPKR(item.codCollected)}` : ''}`}
-                </AppText>
-              </Card>
-            </Pressable>
+            <RowCard
+              title={item.code}
+              mark={{ icon: 'checkmark-done-outline', tint: 'grey' }}
+              lines={[`${item.pickup.name} → ${item.drop?.area ?? 'the customer'}`]}
+              pill={riderDeliveryHeadline(item)}
+              amount={item.codCollected ? formatPKR(item.codCollected) : undefined}
+              chevron
+              onPress={() => open(item)}
+            />
           )
         }
         ListEmptyComponent={
           (segment === 'active' ? r.activeStatus === 'loading' || !r.home : history.isLoading) ? (
-            <SkeletonLines lines={4} />
-          ) : segment === 'active' ? (
+            <RowCardsSkeleton count={3} />
+          ) : segment === 'history' && history.error ? null : segment === 'active' ? (
             <EmptyState
-              icon="package"
+              ion="cube-outline"
               title={onDuty ? 'No deliveries right now' : 'You’re off duty'}
               body={onDuty ? `When ${v?.name ?? 'your vendor'} gives you an order, it appears here.` : 'Go on duty when you’re ready to deliver.'}
             />
           ) : (
-            <EmptyState icon="clock" title="No past deliveries" body="Deliveries you finish show here." />
+            <EmptyState ion="time-outline" title="No past deliveries" body="Deliveries you finish show here." />
           )
         }
       />
 
-      <Sheet visible={explain} onClose={() => setExplain(false)} title="Share your location on duty" subtitle={supportsBackgroundTracking() ? 'Also while the app is closed, only on duty.' : undefined}>
+      <Sheet
+        visible={explain}
+        onClose={() => setExplain(false)}
+        title="Share your location on duty"
+        subtitle={supportsBackgroundTracking() ? 'Also while the app is closed, only on duty.' : undefined}
+        footer={
+          <View style={styles.sheetButtons}>
+            <View style={styles.grow}>
+              <Button label="Not now" variant="secondary" onPress={() => setExplain(false)} fullWidth />
+            </View>
+            <View style={styles.grow}>
+              <Button label="Allow location" leftIcon="location-outline" onPress={() => void goOnDuty()} fullWidth />
+            </View>
+          </View>
+        }>
         <AppText variant="body" tone="muted">
           {`While you’re on duty or carrying an order, ${v?.name ?? 'your vendor'} sees where you are, and the customer sees you on their way. Go off duty and nothing is shared.`}
         </AppText>
-        <Button label="Allow location" leftIcon="location-outline" onPress={() => void goOnDuty()} fullWidth />
-        <Button label="Not now" variant="secondary" onPress={() => setExplain(false)} fullWidth />
       </Sheet>
     </ScreenShell>
   );

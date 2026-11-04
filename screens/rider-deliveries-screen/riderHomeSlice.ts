@@ -105,8 +105,10 @@ export const riderHomeSlice = createAppSlice({
   }),
   selectors: {
     selectRiderHome: state => state,
+    /** Deliveries on the rider's hands now (the Deliveries tab's badge). */
+    selectActiveDeliveryCount: state => state.active.length,
   },
 });
 
 export const { loadRiderHomeAsync, loadRiderDeliveriesAsync, setDutyAsync } = riderHomeSlice.actions;
-export const { selectRiderHome } = riderHomeSlice.selectors;
+export const { selectRiderHome, selectActiveDeliveryCount } = riderHomeSlice.selectors;

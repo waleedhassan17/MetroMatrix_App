@@ -6,6 +6,7 @@
 
 import type { IRoute, ITabRoute } from './types';
 import { ROUTES } from './Base';
+import { useActiveDeliveries } from '../hooks/useFoodVendor';
 
 import RiderDeliveries from '../screens/rider-deliveries-screen/RiderDeliveries';
 import RiderCash from '../screens/rider-cash-screen/RiderCash';
@@ -15,7 +16,7 @@ import Notifications from '../screens/notifications-screen/Notifications';
 import RiderOrder from '../screens/rider-order-screen/RiderOrder';
 
 export const RIDER_TABS: ITabRoute[] = [
-  { title: ROUTES.DELIVERIES_TAB, component: RiderDeliveries, label: 'Deliveries', icon: 'bicycle-outline', iconActive: 'bicycle' },
+  { title: ROUTES.DELIVERIES_TAB, component: RiderDeliveries, label: 'Deliveries', icon: 'bicycle-outline', iconActive: 'bicycle', useBadge: useActiveDeliveries },
   { title: ROUTES.CASH_TAB, component: RiderCash, label: 'Cash', icon: 'cash-outline', iconActive: 'cash' },
   { title: ROUTES.RIDER_PROFILE_TAB, component: RiderProfile, label: 'Profile', icon: 'person-circle-outline', iconActive: 'person-circle' },
 ];
