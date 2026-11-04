@@ -180,9 +180,10 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
   const jump = useCallback(
     (index: number) => {
       setActive(index);
-      list.current?.scrollToLocation({ sectionIndex: index, itemIndex: 0, viewOffset: size.control.md + gutter, animated: true });
+      // Clear of the white bar and the tabs pinned under it.
+      list.current?.scrollToLocation({ sectionIndex: index, itemIndex: 0, viewOffset: insets.top + size.headerBar + size.control.md + space.s16, animated: true });
     },
-    [gutter, size.control.md],
+    [insets.top, size.headerBar, size.control.md, space.s16],
   );
 
   useEffect(() => {

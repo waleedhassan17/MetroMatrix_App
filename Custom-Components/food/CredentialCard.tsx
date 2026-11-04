@@ -15,10 +15,11 @@ import { InlineNotice } from '../InlineNotice';
 import { useStyles, type Theme } from '../../theme';
 import type { RiderCredential } from '../../models/food';
 
-const makeStyles = ({ colors, space, radius, size }: Theme) =>
+const makeStyles = ({ colors, space, radius, size, elevation }: Theme) =>
   StyleSheet.create({
     root: { gap: space.s16 },
-    box: { gap: space.s12, padding: space.s16, borderRadius: radius.lg, borderWidth: size.border, borderColor: colors.line, backgroundColor: colors.surfaceSunk },
+    // A white card, as every card is (never a grey block).
+    box: { gap: space.s12, padding: space.s16, borderRadius: radius.lg, borderWidth: size.hairline, borderColor: colors.lineSoft, backgroundColor: colors.surface, ...elevation.card },
     line: { gap: space.s4 },
     actions: { flexDirection: 'row', gap: space.s12 },
     grow: { flex: 1 },

@@ -82,7 +82,7 @@ Set environment in `.env.local`; see `.env.example`. `networks/network/network.t
    - gradients as surfaces — with one exception the owner asked for: the FYP's module-page header (`PageHeader`, chosen by `theme.header`) on Shopping, Health and Food Court screens (customer, vendor and rider apps alike), and on Orders and the account pages (`PageHeaderScope`); and the Health tab bar's selected-icon pill (`ServiceTabBar`)
    - centred spinners for content (use `Skeleton` instead)
    - decorative background shapes on any screen: watermark glyphs, faint circles or "bubbles", ambient glows (the owner asked for clean white screens)
-9. **Every phase ends** with its acceptance commands run, then a commit `chunk1/pN: <summary>` (later chunks use their own prefix).
+9. **Every phase ends** with its acceptance commands run, then a commit `chunk1/pN: <summary>` (later chunks use their own prefix: `shopui/` for the Shopping overhaul, `foodui/` for the Food Court one).
 
 ## Platform switches (GET /config)
 
@@ -108,7 +108,9 @@ Components/                  AppContainer.tsx + appContainerSlice.ts (bootstrap/
   auth/                      AuthChrome (frame/header/tabs/badge), AuthFields, ChoiceCard, StepFlow, AuthErrorNotice, GoogleSignInButton(.web)
   brand/                     BrandMark, BrandWordmark (splash, onboarding)
   home/                      ServiceCard + serviceCatalog (the customer home's three cards)
-  food/                      FoodParts (search, promos, cuisines, kitchen cards)
+  food/                      FoodParts (FoodSection on ShopSection, cuisine / vendor / dish / Bachat Box rails, DealTag, TrustNote,
+                             FoodOrderRow and ActiveOrderCard, FoodBagDock + useBagDockInset), VendorBoardHost (the kitchen's
+                             board live on every tab: socket, ring, spoken order)
   shopping/                  ShopParts (top bar + Bag, the photo-top bar, ShopSection, banners, PolicyStrip, product grid,
                              SearchField), StoreParts (PartnerOrderCard / PartnerOrderLine), ReviewItem, shopPhotos (the
                              home's bundled category photos)
@@ -118,7 +120,7 @@ Components/                  AppContainer.tsx + appContainerSlice.ts (bootstrap/
   voice/                     VoiceEntry (mic + confirm card + type instead) and VoiceSheet (a header mic opening it)
   health/                    HealthParts (sections, rows, the trust list, banner calls to action, the appointment-action
                              hook), healthPhotos (the Health home's bundled photos)
-  platform/, kitchen/        ServicePausedGate …; the Kitchen's parts
+  platform/, kitchen/        ServicePausedGate …; the Kitchen's parts (AiMeterCard, IngredientPicker)
   shared/                    ErrorBoundary
 Custom-Components/           the design-system components (tokens only); barrel: Custom-Components/index; SectionCard (a
                              titled part of a long page or form); shopping/ (ProductCard, StoreMark, StoreHeadRow,
@@ -129,7 +131,9 @@ Custom-Components/           the design-system components (tokens only); barrel:
                              ServiceTabBar (the FYP per-service bottom bars); PhotoBannerCarousel (Shopping's and Health's banners);
                              kitchen/ (VoiceButton, VoiceResultCard, InsightCard, StockLevelBar, CostBreakdown, ForecastBar,
                              PrepList, SurplusCard, TiffinPlanCard, QuoteCard, DemandHeatmap, QuadrantChart, HourCurve,
-                             NutritionBlock, PantryItemRow, RecipeSuggestionCard, BadgeRow …; DesignGallery's KitchenStories)
+                             NutritionBlock, PantryItemRow, RecipeSuggestionCard, BadgeRow …; DesignGallery's KitchenStories);
+                             food/ (VendorCard, MenuDishRow, OrderTicket, BagBar, CashLedger, FoodSkeletons …); TimeField (a clock
+                             time picked from a list, never typed); DangerRow (the one delete / end action, asking first)
 hooks/                       useReduxHooks (useAppDispatch / useAppSelector / useAppStore), useSignOut, usePagedList
                              (+ useDebouncedValue), useShop (bag count, hearts, shop navigation),
                              useServiceNav (home ↔ service apps, tabs, leaving a service),
@@ -138,7 +142,8 @@ hooks/                       useReduxHooks (useAppDispatch / useAppSelector / us
                              useRealtime (the one live connection: events, rooms, resync, polling fallback),
                              useFoodLive (useOrderChannel for one order, useVendorBoard for the kitchen's board),
                              useLayoutClass (phone or tablet), useGridSizing (a wrapping grid's cell width),
-                             useStorePartner (the store's Orders tab count)
+                             useStorePartner (the store's Orders tab count), useFoodBag (the Food bag on any Food screen),
+                             useFoodVendor (the kitchen's Orders badge, the rider's Deliveries badge)
 models/                      the app's types, one file per domain (navigation param lists, auth/business, shopping, health,
                              payments, food, kitchen, myKitchen, kitchenAdmin; models/index re-exports them), and validation
                              + form schemas (<domain>Model.ts); shopping/ holds the ONE order-status map (orderStatusModel),
@@ -156,8 +161,8 @@ navigations-maps/            Base.tsx (ROUTES), Auth.tsx (gate arrays), Customer
 navigators/                  sessionGate.ts (the ladder + doctorRootRoute + foodVendorRootRoute), BaseNavigator, CustomerNavigator
                              (root stack), Health/Shop/FoodAppNavigator (a service's stack over its tabs),
                              Store/Doctor/KitchenPartner (the Food vendor's app)/Rider/AdminNavigator,
-                             RouteTabs (the doctor, Food vendor, rider and staff tab mapper), ServiceTabs (the service
-                             apps' and the store's tab mapper → ServiceTabBar),
+                             RouteTabs (the doctor and staff tab mapper), ServiceTabs (the service
+                             apps', the store's, the Food vendor's and the rider's tab mapper → ServiceTabBar),
                              stacks/ (AccountStack, AdminStack, AdminShopStack, AdminHealthStack, AdminFoodStack)
 networks/
   network/network.ts         the main network file: API_URL, MainAxiosInstance, the API request functions, the refresh
@@ -267,8 +272,15 @@ const styles = useStyles(makeStyles); // memoised on the active theme (mode + se
 - Health copy: calm and plain, no exclamation marks; red only for emergencies (`appointmentStatusModel` never uses `danger`); appointment and payment wording only from `appointmentStatusModel`; every time through `healthTime` in the practice's timezone; "Recorded fees" (never earnings); the symptom checker names areas to discuss, never a diagnosis.
 - Shopping copy: "Bag" (never cart), "Recorded sales" (never revenue or income), money only through `formatPKR`, order/payment/return wording only from `orderStatusModel`, every remote image through `cdn()`.
 - Shopping's look (the FYP's, `shopui/p1`–`p9`): one product card everywhere (`ProductCard`, framed, 3:4); one round `StoreMark`; a store's part of the Bag, checkout or an order is a `StoreHeadRow`, `LineItemRow`s (72 pt) and `MoneyRows`; every list row and order shows ONE pill (`groupHeadline`, `storeOrderHeadline`, `partnerHeadline`), in families the customer and the store share (waiting amber, in progress blue `info`, shipped orange, done green, stopped red); section heads are `ShopSection` (19/800, "View all" as a soft accent pill); forms and long pages are `SectionCard`s, never bare fields on the canvas; a product or store page opens on its photo under floating white circles (`PhotoTopBar`), and the white bar takes over once the photo scrolls away; checkout is three steps on one screen (`StepCard`, `checkoutStepModel`). The store's app wears Shopping's tab bar and the console's parts (`StatGrid`, `QuickActionGrid`, `RowCard`, `ToolSection`).
-- Food copy: "bag" too (one kitchen at a time), money only through `formatPKR`, order/payment/rider wording only from `foodStatusModel`, totals only the server's (subtotal − the deal + the kitchen's delivery fee; there is no other fee). Say that customers pay the kitchen directly and that riders are the kitchen's own.
-- Food live screens (the customer's order, the kitchen's board and order page) go through `useOrderChannel` / `useVendorBoard`, never the socket. REST is the truth: events are hints, every reconnect reads again, and polling covers a dropped connection. The board rings (`services/orderAlert`) while a new order is unopened, keeps the screen awake, and shows four columns from tablet width (`useLayoutClass`).
+- Food copy: "bag" too (one kitchen at a time), money only through `formatPKR`, order/payment/rider wording only from `foodStatusModel`, totals only the server's (subtotal − the deal + the kitchen's delivery fee; there is no other fee). Say that customers pay the kitchen directly and that riders are the kitchen's own — in one wording, `models/food/trustModel` through `TrustNote`, once per page. Say "kitchen", never "restaurant", to customers, and never "we deliver".
+- Food's look (the `foodui/` overhaul, the owner's 2026-11-04 decisions):
+  - Status pills are Shopping's families in every Food and Kitchen app: waiting amber, accepted/cooking/ready blue `info`, on the way pink `accent`, done green, declined/cancelled/missed red. Every row and card shows ONE pill (`foodOrderHeadline`, `ticketHeadline`, `riderDeliveryHeadline`, `reservationHeadline`, `tiffinHeadline`, `placesHeadline`, `riderDutyHeadline`); no screen writes its own tone.
+  - The bag follows the customer: `FoodBagDock` on Home, the lists, search, saved kitchens, the Orders tab and a kitchen's page, and a bag with its count in the Food home's header. Tabs stay Home · Orders · Profile.
+  - The Food home orders first: the live order, the staff's banners, cuisines, the rails, "More from Food Court", then the Kitchen rails and All kitchens.
+  - A kitchen's page opens on its cover under `PhotoTopBar` (Food's bag), hands over to a white bar with the tabs under it, and runs in `StoreBrandScope base="food"`.
+  - Checkout is one page of three `SectionCard`s (Deliver to, Payment, Your order) under a `CtaBar` — not Shopping's steps.
+  - Food and Kitchen screens use Shopping's shared parts (`SectionCard`, `StoreHeadRow`, `LineItemRow`, `MoneyRows`, `CtaBar`, `RowCard`, `StatGrid`, `QuickActionGrid`, `ToolSection`); shaped skeletons (`FoodSkeletons`, `ShopSkeletons`), never `SkeletonLines` for a page; Ionicons empty states; times through `TimeField`; a sheet that ends something picks its reason, then confirms.
+- Food live screens (the customer's order, the kitchen's board and order page) go through `useOrderChannel` / `useVendorBoard`, never the socket. REST is the truth: events are hints, every reconnect reads again, and polling covers a dropped connection. The board is live on every tab of the kitchen's app (`VendorBoardHost`, so a home kitchen that opens on Today still rings); it rings (`services/orderAlert`) while a new order is unopened, the Orders screen keeps the screen awake, and it shows four columns from tablet width (`useLayoutClass`).
 - Kitchen copy (Chunk 5):
   - Costs say "Cost to make" and "You keep" (never profit or margin, never revenue); money only through `formatPKR`; quantities only through `utils/units` (`formatQty`).
   - Every number the app works out is "estimated" (forecasts, calories, a dish's numbers), and every assistant result is a draft: voice proposes an action in plain words (`voiceModel`), and nothing is written until the cook taps Confirm, which calls the ordinary endpoint.
@@ -300,8 +312,8 @@ The splash plays on every launch as an overlay in AppContainer. It lifts only on
 
 Once the gate is cleared, `AppContainer.renderNavigator()` mounts the navigator for the role:
 - `customer` → `CustomerNavigator`: a root stack (`CustomerStack`) with the three-card home (no bottom bar; its side menu opens Orders, Profile, Saved, Addresses…) and one app per service: Health (Home · Appointments · Records · Profile), Shopping (Home · Bag · Saved · Orders), Food Court (Home · Orders · Profile)
-- approved `partner` → `Store`/`Doctor`/`KitchenPartnerNavigator`, chosen by `serviceType`. The store app is a stack over Today · Orders · Products · More, on Shopping's own tab bar (`ServiceTabs`) with the new orders counted on Orders. The doctor app is a stack over Today · Calendar · Patients · More; it opens on PracticeSetup until the doctor is listed (`doctorRootRoute(business)`). The Food vendor's app (`KitchenPartnerNavigator`, `navigations-maps/FoodVendor.ts`) is a stack over Orders · Menu · Kitchen · Riders · More (a home kitchen has Today · Orders · Kitchen · More, with Menu and Riders in More; Today holds portions, the weekly menu and pre-order slots); it opens on Kitchen setup until the kitchen is live (`foodVendorRootRoute(business)`, from the session's `business.food`). The Kitchen tab is the hub of Chunk 5's tools (stock, recipes and costs, purchases, forecast and prep, waste and Bachat Box, growth, the assistant).
-- `rider` → `RiderNavigator`: a stack over Deliveries · Cash · Profile, with each delivery pushed over them (`RiderOrder`: one big button per step, cash at the door). Going on duty asks for location after a plain explanation; the rider's location is shared only on duty or on a delivery (`services/location/riderLocation`, sent by `riderTransport`: the socket, else the REST batch).
+- approved `partner` → `Store`/`Doctor`/`KitchenPartnerNavigator`, chosen by `serviceType`. The store app is a stack over Today · Orders · Products · More, on Shopping's own tab bar (`ServiceTabs`) with the new orders counted on Orders. The doctor app is a stack over Today · Calendar · Patients · More; it opens on PracticeSetup until the doctor is listed (`doctorRootRoute(business)`). The Food vendor's app (`KitchenPartnerNavigator`, `navigations-maps/FoodVendor.ts`) is a stack over Orders · Menu · Kitchen · Riders · More (a home kitchen has Today · Orders · Kitchen · More, with Menu and Riders in More; Today holds portions, the weekly menu and pre-order slots); it opens on Kitchen setup until the kitchen is live (`foodVendorRootRoute(business)`, from the session's `business.food`). It wears Food's own tab bar (`ServiceTabs`) with the new orders counted on Orders. The Kitchen tab is the hub of Chunk 5's tools (stock, recipes and costs, purchases, forecast and prep, waste and Bachat Box, growth, the assistant).
+- `rider` → `RiderNavigator`: a stack over Deliveries · Cash · Profile on Food's tab bar (`ServiceTabs`, the deliveries on hand counted on Deliveries), with each delivery pushed over them (`RiderOrder`: one big button per step, cash at the door). Going on duty asks for location after a plain explanation; the rider's location is shared only on duty or on a delivery (`services/location/riderLocation`, sent by `riderTransport`: the socket, else the REST batch).
 - `admin` / `super_admin` → `AdminNavigator` (Approvals · Shopping · Health · Food · Profile). A doctor is approved only after staff check the PMDC number (Health → Doctor verification); the server answers `422 PMDC_NOT_VERIFIED` otherwise. A home kitchen goes live only after staff record a passed food-safety check (Food → Vendors).
 - Food Court reviews: one per order once it arrived (`FoodRateOrder`, from the order page); the vendor page shows the rating block and `FoodReviews`; the kitchen replies (`VendorReviews`) and reads `VendorInsights` (recorded sales). Staff hide reviews, feature and suspend vendors, change a vendor's plan, and run cuisines and the home's banners. The Food tab's Kitchen tools (`screens/admin-kitchen-*-screen`, from the overview) run the assistant (use, the switch, limits), city prices and nutrition foods (CSV with a dry run), the words voice understands, the calendar (Ramadan's dates), hygiene checks, signature dishes, the city demand map and a tiffin or catering code lookup.
 
