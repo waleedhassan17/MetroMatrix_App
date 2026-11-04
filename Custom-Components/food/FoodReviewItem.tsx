@@ -7,7 +7,7 @@ import React from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Stars } from '../index';
+import { AppText, Avatar, Stars } from '../index';
 import { FOOD_REVIEW_TAG_LABEL } from '../../models/food/reviewModel';
 import type { FoodReview } from '../../models';
 import { cdn } from '../../utils/cdn/cdn';
@@ -16,7 +16,10 @@ import { formatDate } from '../../utils/dates/dates';
 const makeStyles = ({ colors, space, size, radius }: Theme) =>
   StyleSheet.create({
     root: { gap: space.s8, paddingVertical: space.s16 },
-    head: { flexDirection: 'row', alignItems: 'center', gap: space.s8, flexWrap: 'wrap' },
+    inCard: { paddingVertical: space.s0 },
+    head: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
+    who: { flex: 1, gap: space.s4 },
+    whoLine: { flexDirection: 'row', alignItems: 'center', gap: space.s8, flexWrap: 'wrap' },
     tags: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
     tag: { paddingHorizontal: space.s8, paddingVertical: space.s4, borderRadius: radius.pill, backgroundColor: colors.surfaceSunk },
     photos: { gap: space.s8 },
@@ -33,18 +36,25 @@ export const FoodReviewItem: React.FC<{
   context?: string;
   onPhoto?: (uri: string) => void;
   footer?: React.ReactNode;
-}> = ({ review: r, vendorName, author, context, onPhoto, footer }) => {
+  /** Inside its own Card (the card pads it). */
+  inCard?: boolean;
+}> = ({ review: r, vendorName, author, context, onPhoto, footer, inCard }) => {
   const styles = useStyles(makeStyles);
   const { size } = useTheme();
   const who = author ?? r.author ?? 'Customer';
   return (
-    <View style={styles.root} accessible={!footer} accessibilityLabel={!footer ? `${who}, ${r.foodRating} of 5 stars. ${r.text ?? ''}` : undefined}>
+    <View style={[styles.root, inCard && styles.inCard]} accessible={!footer} accessibilityLabel={!footer ? `${who}, ${r.foodRating} of 5 stars. ${r.text ?? ''}` : undefined}>
       <View style={styles.head}>
-        <Stars rating={r.foodRating} />
-        <AppText variant="small">{who}</AppText>
-        <AppText variant="caption" tone="muted">
-          · {formatDate(r.createdAt)}
-        </AppText>
+        <Avatar name={who} size="md" />
+        <View style={styles.who}>
+          <View style={styles.whoLine}>
+            <AppText variant="bodyStrong">{who}</AppText>
+            <AppText variant="caption" tone="muted">
+              {formatDate(r.createdAt)}
+            </AppText>
+          </View>
+          <Stars rating={r.foodRating} />
+        </View>
       </View>
       {context ? (
         <AppText variant="caption" tone="muted">

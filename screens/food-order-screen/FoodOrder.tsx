@@ -7,6 +7,8 @@
 // ordered, and what you can do now: cancel before the kitchen answers,
 // order it again, or rate it once it arrived. Live over the socket; read
 // again after reconnects, and every few seconds while the connection is down.
+// ONE pill (foodOrderHeadline), the kitchen named once in the order card,
+// and ONE action in the sticky footer.
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -19,11 +21,11 @@ import { useNow } from '../../hooks/useNow';
 import { useOrderChannel } from '../../hooks/useFoodLive';
 import {
   CUSTOMER_CANCEL_REASONS,
-  ORDER_STATUS,
   PAYMENT_METHOD,
   PAYMENT_STATUS,
   PROGRESS,
   clock,
+  foodOrderHeadline,
   isEnded,
   isNegativeEnd,
   orderStatusLabel,
@@ -33,7 +35,11 @@ import {
   secondsLeft,
 } from '../../models/food/foodStatusModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Divider, IconButton, ImageViewer, InlineNotice, IonIcon, ScreenShell, Sheet, SkeletonLines, StatusPill, StatusTimeline, TextAction, type TimelineStep } from '../../Custom-Components/index';
+import { IonIcon } from '../../Custom-Components/Icon';
+import { AppText, Button, Card, Divider, IconButton, ImageViewer, InlineNotice, LineItemRow, MoneyRows, ScreenShell, SectionCard, Sheet, StatusPill, StatusTimeline, StoreHeadRow, TextAction, type TimelineStep } from '../../Custom-Components/index';
+import { OrderTrackSkeleton } from '../../Custom-Components/food/FoodSkeletons';
+import { TrustNote } from '../../Components/food/FoodParts';
+import { customerTrustLine } from '../../models/food/trustModel';
 import { ChoiceLine } from '../../Custom-Components/food/ChoiceLine';
 import { TransferCard } from '../../Custom-Components/food/TransferCard';
 import { StarInput } from '../../Custom-Components/food/StarInput';
@@ -53,16 +59,18 @@ const TZ = 'Asia/Karachi';
 
 const makeStyles = ({ colors, space, size, radius, gutter }: Theme) =>
   StyleSheet.create({
-    content: { paddingHorizontal: gutter, paddingTop: space.s16, paddingBottom: space.s40, gap: space.s16 },
+    content: { paddingHorizontal: gutter, paddingBottom: space.s40, gap: space.s16 },
     row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.s12 },
     head: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
     grow: { flex: 1, gap: space.s4 },
-    logo: { width: size.avatar.md, height: size.avatar.md, borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.surfaceSunk },
     fill: { ...StyleSheet.absoluteFillObject },
-    map: { borderRadius: radius.lg, overflow: 'hidden' },
+    map: { borderRadius: radius.md, overflow: 'hidden' },
     riderBadge: { width: size.avatar.md, height: size.avatar.md, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-    actions: { gap: space.s8 },
-    packed: { width: size.avatar.lg * 2, aspectRatio: 1, borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.surfaceSunk },
+    packed: { width: size.packedPhoto, aspectRatio: 1, borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.surfaceSunk },
+    lines: { gap: space.s12 },
+    reasons: { gap: space.s4 },
+    sheetButtons: { flexDirection: 'row', gap: space.s12 },
+    half: { flex: 1 },
   });
 
 const FoodOrderScreen: React.FC<Props> = props => (
@@ -89,11 +97,12 @@ const FoodOrderContent: React.FC<Props> = ({ route, navigation }) => {
   const dispatch = useAppDispatch();
   const appStore = useAppStore();
   const styles = useStyles(makeStyles);
-  const { colors, service, size } = useTheme();
+  const { service, size } = useTheme();
   const { order: o, tracking, status, error } = useAppSelector(st => selectFoodOrderEntry(st, code));
   const ui = useAppSelector(selectFoodOrderUi);
   const now = useNow(1000);
   const [viewing, setViewing] = useState(false);
+  const [reason, setReason] = useState<string | null>(null);
 
   const refetch = useCallback(() => void dispatch(loadFoodOrderAsync(code)), [dispatch, code]);
   useEffect(() => {
@@ -110,7 +119,7 @@ const FoodOrderContent: React.FC<Props> = ({ route, navigation }) => {
   if (!o) {
     return (
       <ScreenShell title="Your order" subtitle={code} onBack={back} scroll>
-        {status === 'failed' ? <InlineNotice message={error.message} action={error.code === 'NOT_FOUND' ? undefined : { label: 'Try again', onPress: refetch }} /> : <SkeletonLines lines={10} />}
+        {status === 'failed' ? <InlineNotice message={error.message} action={error.code === 'NOT_FOUND' ? undefined : { label: 'Try again', onPress: refetch }} /> : <OrderTrackSkeleton />}
       </ScreenShell>
     );
   }
@@ -158,212 +167,222 @@ const FoodOrderContent: React.FC<Props> = ({ route, navigation }) => {
     } else Toast.show({ type: 'error', text1: 'We couldn’t add those dishes again' });
   };
 
+  const pill = foodOrderHeadline(o);
+  const paid = o.payment.status === 'paid';
+  const totalLabel = paid
+    ? `Paid to ${o.vendor.name}`
+    : isNegativeEnd(o.status)
+      ? 'Order total'
+      : o.payment.method === 'cod'
+        ? `Pay ${o.vendor.name} on delivery`
+        : o.payment.method === 'pay_at_pickup'
+          ? `Pay ${o.vendor.name} at pick-up`
+          : `Pay ${o.vendor.name}`;
+  const transferCard = o.payment.method === 'transfer' && !!o.payment.accounts && !isNegativeEnd(o.status);
+  // ONE action at the bottom: cancel while the kitchen hasn't answered, then order it again.
+  const footer = o.canCancel ? (
+    <Button label="Cancel order" variant="secondary" onPress={() => dispatch(setCancelSheet(true))} fullWidth />
+  ) : o.canReorder ? (
+    <Button label="Order again" leftIcon="refresh" onPress={() => void reorder()} fullWidth />
+  ) : undefined;
+
   return (
-    <ScreenShell title="Your order" subtitle={`${o.code} · ${o.vendor.name}`} onBack={back} scroll padded={false} refreshing={status === 'loading'} onRefresh={refetch}>
+    <ScreenShell title="Your order" subtitle={`${o.code} · ${o.vendor.name}`} onBack={back} scroll padded={false} refreshing={status === 'loading'} onRefresh={refetch} footer={footer}>
       <View style={styles.content}>
-        {/* Where it is */}
+        {/* Where it is: ONE pill, the time, the steps */}
         <Card>
           <View style={styles.row}>
-            <AppText variant="title" style={styles.grow} accessibilityRole="header">
-              {label}
+            <AppText variant="h2" style={styles.grow} accessibilityRole="header">
+              {headline ?? label}
             </AppText>
-            <StatusPill label={PAYMENT_STATUS[o.payment.status].label} tone={PAYMENT_STATUS[o.payment.status].tone} />
+            <StatusPill label={pill.label} tone={pill.tone} />
           </View>
-          {headline ? (
-            <AppText variant="body" tone={isNegativeEnd(o.status) ? 'muted' : 'accentDeep'}>
-              {headline}
-            </AppText>
-          ) : null}
           <StatusTimeline steps={stepsOf(o)} />
           {live && channel.status !== 'connected' ? (
             <AppText variant="caption" tone="muted">
               Reconnecting… the page still updates every few seconds.
             </AppText>
           ) : null}
+          {/* How it was packed (the kitchen's photo; Kitchen Intelligence) */}
+          {o.packedPhotoUrl ? (
+            <>
+              <Divider />
+              <View style={styles.head}>
+                <Pressable onPress={() => setViewing(true)} style={styles.packed} accessibilityRole="imagebutton" accessibilityLabel="Your order, packed. Open the photo">
+                  <Image source={{ uri: cdn(o.packedPhotoUrl, { w: size.packedPhoto * 2, h: size.packedPhoto * 2 }) ?? o.packedPhotoUrl }} style={styles.fill} contentFit="cover" />
+                </Pressable>
+                <View style={styles.grow}>
+                  <AppText variant="bodyStrong">How it was packed</AppText>
+                  <AppText variant="small" tone="muted">
+                    The kitchen took this photo of your order before it left.
+                  </AppText>
+                  <TextAction label="See the photo" onPress={() => setViewing(true)} />
+                </View>
+              </View>
+            </>
+          ) : null}
         </Card>
 
-        {showMap ? (
-          <View style={styles.map}>
-            <FoodMap
-              pins={[
-                { id: 'kitchen', kind: 'vendor', at: kitchen!, label: o.vendor.name },
-                { id: 'drop', kind: 'drop', at: tracking!.drop!, label: 'Your address' },
-              ]}
-              rider={riderAt}
-              height={size.trackingMap}
-              accessibilityLabel={riderAt ? `Map: ${o.vendor.name}, your address and the rider` : `Map: ${o.vendor.name} and your address`}
-            />
-          </View>
-        ) : null}
-
-        {/* The rider (the kitchen's own) */}
-        {live && rider ? (
+        {/* The map and the rider (the kitchen's own), in one card */}
+        {showMap || (live && rider) ? (
           <Card>
-            <View style={styles.head}>
-              <View style={[styles.riderBadge, { backgroundColor: service.accentSoft }]}>
-                <IonIcon name="bicycle-outline" size="lg" color={service.accentDeep} />
+            {showMap ? (
+              <View style={styles.map}>
+                <FoodMap
+                  pins={[
+                    { id: 'kitchen', kind: 'vendor', at: kitchen!, label: o.vendor.name },
+                    { id: 'drop', kind: 'drop', at: tracking!.drop!, label: 'Your address' },
+                  ]}
+                  rider={riderAt}
+                  height={size.trackingMap}
+                  accessibilityLabel={riderAt ? `Map: ${o.vendor.name}, your address and the rider` : `Map: ${o.vendor.name} and your address`}
+                />
               </View>
-              <View style={styles.grow}>
-                <AppText variant="bodyStrong">{rider.name}</AppText>
-                <AppText variant="small" tone="muted">
-                  {`${riderStepLabel(rider.step)} · ${o.vendor.name}’s rider`}
-                </AppText>
-                {!rider.locationLive && o.status === 'on_the_way' ? (
-                  <AppText variant="caption" tone="muted">
-                    Location updating…
+            ) : null}
+            {live && rider ? (
+              <View style={styles.head}>
+                <View style={[styles.riderBadge, { backgroundColor: service.accentSoft }]}>
+                  <IonIcon name="bicycle-outline" size="lg" color={service.accentDeep} />
+                </View>
+                <View style={styles.grow}>
+                  <AppText variant="bodyStrong">{rider.name}</AppText>
+                  <AppText variant="small" tone="muted">
+                    {`${riderStepLabel(rider.step)} · the kitchen’s own rider`}
                   </AppText>
-                ) : null}
+                  {!rider.locationLive && o.status === 'on_the_way' ? (
+                    <AppText variant="caption" tone="muted">
+                      Location updating…
+                    </AppText>
+                  ) : null}
+                </View>
+                {rider.phone ? <IconButton icon="call-outline" accessibilityLabel={`Call ${rider.name}`} onPress={() => callNumber(rider.phone!)} /> : null}
               </View>
-              {rider.phone ? <IconButton icon="call-outline" accessibilityLabel={`Call ${rider.name}`} onPress={() => callNumber(rider.phone!)} /> : null}
-            </View>
+            ) : null}
           </Card>
         ) : live && o.handedToExternal ? (
           <InlineNotice tone="info" message={`${o.vendor.name}’s own rider has your order.`} />
         ) : null}
 
-        {/* How it was packed (the kitchen's photo; Kitchen Intelligence) */}
-        {o.packedPhotoUrl ? (
-          <Card>
-            <View style={styles.head}>
-              <Pressable onPress={() => setViewing(true)} style={styles.packed} accessibilityRole="imagebutton" accessibilityLabel="Your order, packed. Open the photo">
-                <Image source={{ uri: cdn(o.packedPhotoUrl, { w: size.avatar.lg * 2, h: size.avatar.lg * 2 }) ?? o.packedPhotoUrl }} style={styles.fill} contentFit="cover" />
-              </Pressable>
-              <View style={styles.grow}>
-                <AppText variant="bodyStrong">How it was packed</AppText>
-                <AppText variant="small" tone="muted">
-                  {`${o.vendor.name} took this photo of your order before it left.`}
-                </AppText>
-                <TextAction label="See the photo" onPress={() => setViewing(true)} />
-              </View>
-            </View>
-          </Card>
-        ) : null}
-
         {/* Paying the kitchen */}
-        {o.payment.method === 'transfer' && o.payment.accounts && !isNegativeEnd(o.status) ? (
+        {transferCard ? (
           <TransferCard
             vendorName={o.vendor.name}
             amount={o.totals.total}
-            accounts={o.payment.accounts}
+            accounts={o.payment.accounts!}
             status={o.payment.status}
             payBy={o.payment.payBy}
             reference={o.payment.reference}
             rejectedReason={o.payment.rejectedReason}
             onSendReceipt={o.payment.status === 'awaiting_transfer' ? () => navigation.navigate('PaymentProof', { foodOrderCode: o.code }) : undefined}
           />
-        ) : o.payment.instructions ? (
-          <InlineNotice tone="info" message={o.payment.instructions} />
-        ) : o.payment.status === 'refund_due' ? (
-          <InlineNotice tone="warning" message={`${o.vendor.name} owes you a refund of ${formatPKR(o.totals.total)} for your transfer. Call them if you haven’t heard.`} />
+        ) : o.payment.instructions || o.payment.status === 'refund_due' ? (
+          <SectionCard title="Payment" subtitle={PAYMENT_METHOD[o.payment.method].label} icon="wallet-outline" action={<StatusPill label={PAYMENT_STATUS[o.payment.status].pill} tone={PAYMENT_STATUS[o.payment.status].tone} />}>
+            {o.payment.status === 'refund_due' ? (
+              <InlineNotice embedded tone="warning" message={`${o.vendor.name} owes you a refund of ${formatPKR(o.totals.total)} for your transfer. Call them if you haven’t heard.`} />
+            ) : (
+              <AppText variant="small" tone="muted">
+                {o.payment.instructions}
+              </AppText>
+            )}
+          </SectionCard>
         ) : null}
 
-        {/* What you ordered */}
+        {/* What you ordered — the kitchen named once, here */}
         <Card>
-          <View style={styles.head}>
-            <View style={styles.logo}>{o.vendor.logoUrl ? <Image source={{ uri: cdn(o.vendor.logoUrl, { w: size.avatar.md }) ?? undefined }} style={styles.fill} contentFit="cover" /> : null}</View>
-            <View style={styles.grow}>
-              <AppText variant="bodyStrong">{o.vendor.name}</AppText>
-              <AppText variant="small" tone="muted">
-                {`${o.fulfilment === 'pickup' ? 'Pick-up' : 'Delivery'} · ${PAYMENT_METHOD[o.payment.method].label}`}
-              </AppText>
-            </View>
-            {o.vendor.phone ? <IconButton icon="call-outline" accessibilityLabel={`Call ${o.vendor.name}`} onPress={() => callNumber(o.vendor.phone!)} /> : null}
+          <StoreHeadRow
+            store={{ name: o.vendor.name, logoUrl: o.vendor.logoUrl, brandColor: service.accent }}
+            meta={`${o.fulfilment === 'pickup' ? 'Pick-up' : 'Delivery'} · ${PAYMENT_METHOD[o.payment.method].label}`}
+            trailing={o.vendor.phone ? <IconButton icon="call-outline" accessibilityLabel={`Call ${o.vendor.name}`} onPress={() => callNumber(o.vendor.phone!)} /> : null}
+            chevron={false}
+          />
+          <Divider />
+          <View style={styles.lines}>
+            {o.items.map(i => (
+              <LineItemRow
+                key={i.id}
+                shape="none"
+                imageUrl={null}
+                name={`${i.quantity} × ${i.name}`}
+                meta={[i.variant, i.options.map(x => x.name).join(', ')].filter(Boolean).join(' · ') || null}
+                price={formatPKR(i.lineTotal)}
+                priceTone="ink"
+              />
+            ))}
           </View>
           <Divider />
-          {o.items.map(i => (
-            <View key={i.id} style={styles.row}>
-              <View style={styles.grow}>
-                <AppText variant="body">{`${i.quantity} × ${i.name}`}</AppText>
-                {i.variant || i.options.length ? (
-                  <AppText variant="caption" tone="muted">
-                    {[i.variant, i.options.map(x => x.name).join(', ')].filter(Boolean).join(' · ')}
-                  </AppText>
-                ) : null}
-              </View>
-              <AppText variant="body">{formatPKR(i.lineTotal)}</AppText>
-            </View>
-          ))}
-          <Divider />
-          <View style={styles.row}>
-            <AppText variant="body" tone="muted">
-              Subtotal
-            </AppText>
-            <AppText variant="body">{formatPKR(o.totals.subtotal)}</AppText>
-          </View>
-          {o.totals.discount ? (
-            <View style={styles.row}>
-              <AppText variant="body" tone="muted">
-                {o.deal?.code ? `Code ${o.deal.code}` : (o.deal?.title ?? 'Deal')}
-              </AppText>
-              <AppText variant="body" tone="success">{`− ${formatPKR(o.totals.discount)}`}</AppText>
-            </View>
-          ) : null}
-          {o.fulfilment === 'delivery' ? (
-            <View style={styles.row}>
-              <AppText variant="body" tone="muted">
-                Delivery
-              </AppText>
-              <AppText variant="body" tone={o.totals.deliveryFee ? 'ink' : 'success'}>
-                {o.totals.deliveryFee ? formatPKR(o.totals.deliveryFee) : 'Free'}
-              </AppText>
-            </View>
-          ) : null}
-          <View style={styles.row}>
-            <AppText variant="title">{`Paid to ${o.vendor.name}`}</AppText>
-            <AppText variant="title">{formatPKR(o.totals.total)}</AppText>
-          </View>
+          <MoneyRows
+            rows={[
+              { label: 'Subtotal', value: o.totals.subtotal },
+              o.totals.discount ? { label: o.deal?.code ? `Code ${o.deal.code}` : (o.deal?.title ?? 'Deal'), value: o.totals.discount, kind: 'discount' } : null,
+              o.fulfilment === 'delivery' ? { label: 'Delivery (the kitchen’s own rider)', value: o.totals.deliveryFee, kind: 'free' } : null,
+              { label: totalLabel, value: o.totals.total, kind: 'total' },
+            ]}
+          />
         </Card>
 
         {o.address ? (
-          <Card>
-            <View style={styles.head}>
-              <IonIcon name="location-outline" size="lg" color={colors.inkMuted} />
-              <View style={styles.grow}>
-                <AppText variant="bodyStrong">{o.address.fullName ?? 'Your address'}</AppText>
+          <SectionCard title="Delivering to" icon="location-outline">
+            <View style={styles.grow}>
+              <AppText variant="bodyStrong">{o.address.fullName ?? 'Your address'}</AppText>
+              <AppText variant="small" tone="muted">
+                {[o.address.line1, o.address.building, o.address.floor, o.address.area, o.address.city].filter(Boolean).join(', ')}
+              </AppText>
+              {o.address.phone ? (
                 <AppText variant="small" tone="muted">
-                  {[o.address.line1, o.address.building, o.address.floor, o.address.area, o.address.city].filter(Boolean).join(', ')}
+                  {formatPkPhoneForDisplay(o.address.phone)}
                 </AppText>
-                {o.address.phone ? (
-                  <AppText variant="small" tone="muted">
-                    {formatPkPhoneForDisplay(o.address.phone)}
-                  </AppText>
-                ) : null}
-              </View>
+              ) : null}
             </View>
-          </Card>
+          </SectionCard>
         ) : null}
 
         {o.canReview ? (
-          <Card>
-            <AppText variant="title">How was your order?</AppText>
-            <AppText variant="small" tone="muted">
-              {`Rate the food${o.fulfilment === 'delivery' ? ' and the delivery' : ''}. It helps ${o.vendor.name}, and other customers.`}
-            </AppText>
+          <SectionCard title="How was it?" subtitle={`Rate the food${o.fulfilment === 'delivery' ? ' and the delivery' : ''}. It helps ${o.vendor.name}, and other customers.`} icon="star-outline">
             <StarInput label="The food" value={0} onChange={n => navigation.navigate('FoodRateOrder', { code: o.code, stars: n })} />
-          </Card>
+          </SectionCard>
         ) : null}
 
-        <View style={styles.actions}>
-          {o.canCancel ? <Button label="Cancel order" variant="secondary" onPress={() => dispatch(setCancelSheet(true))} fullWidth /> : null}
-          {o.canReorder ? <Button label="Order again" leftIcon="refresh" onPress={() => void reorder()} fullWidth /> : null}
-          {!o.canCancel && live ? (
-            <AppText variant="small" tone="muted">
-              {`To change or cancel now, call ${o.vendor.name}.`}
-            </AppText>
-          ) : null}
-        </View>
-        <AppText variant="caption" tone="muted">
-          {`${ORDER_STATUS[o.status].label}. You pay ${o.vendor.name} directly, and its own rider delivers. MetroMatrix takes no commission.`}
-        </AppText>
+        {!o.canCancel && live ? (
+          <AppText variant="small" tone="muted">
+            {`To change or cancel now, call ${o.vendor.name}.`}
+          </AppText>
+        ) : null}
         {o.vendor.phone && !live ? <TextAction label={`Call ${o.vendor.name}`} icon="call-outline" onPress={() => callNumber(o.vendor.phone!)} /> : null}
+        <TrustNote text={customerTrustLine(o.vendor.name, { riders: o.fulfilment === 'delivery' })} />
       </View>
 
-      <Sheet visible={ui.cancelSheetOpen} onClose={() => dispatch(setCancelSheet(false))} title="Cancel this order?" subtitle={`${o.vendor.name} hasn’t accepted it yet.`}>
+      <Sheet
+        visible={ui.cancelSheetOpen}
+        onClose={() => {
+          setReason(null);
+          dispatch(setCancelSheet(false));
+        }}
+        title="Cancel this order?"
+        subtitle={`${o.vendor.name} hasn’t accepted it yet. Why are you cancelling?`}
+        footer={
+          <View style={styles.sheetButtons}>
+            <View style={styles.half}>
+              <Button label="Keep my order" variant="secondary" onPress={() => dispatch(setCancelSheet(false))} fullWidth />
+            </View>
+            <View style={styles.half}>
+              <Button
+                label="Cancel order"
+                variant="destructive"
+                disabled={!reason}
+                loading={ui.cancelling}
+                onPress={() => reason && void dispatch(cancelFoodOrderAsync({ code: o.code, reason }))}
+                fullWidth
+              />
+            </View>
+          </View>
+        }
+      >
         {ui.cancelError.message ? <InlineNotice message={ui.cancelError.message} /> : null}
-        {CUSTOMER_CANCEL_REASONS.map(r => (
-          <ChoiceLine key={r} label={r} price={null} selected={false} multiple={false} disabled={ui.cancelling} onPress={() => void dispatch(cancelFoodOrderAsync({ code: o.code, reason: r }))} />
-        ))}
-        <Button label="Keep my order" variant="secondary" onPress={() => dispatch(setCancelSheet(false))} fullWidth />
+        <View style={styles.reasons} accessibilityRole="radiogroup" accessibilityLabel="Why you’re cancelling">
+          {CUSTOMER_CANCEL_REASONS.map(r => (
+            <ChoiceLine key={r} label={r} price={null} selected={reason === r} multiple={false} disabled={ui.cancelling} onPress={() => setReason(r)} />
+          ))}
+        </View>
       </Sheet>
       <ImageViewer visible={viewing} uri={o.packedPhotoUrl} title={`Order ${o.code}, packed`} onClose={() => setViewing(false)} />
     </ScreenShell>

@@ -15,7 +15,7 @@ import { usePagedList } from '../../hooks/usePagedList';
 import { fetchOrders } from '../../networks/shopping/orders';
 import { fetchAppointments } from '../../networks/health/appointments';
 import { fetchFoodOrders } from '../../networks/food/orders';
-import { orderStatusLabel, ORDER_STATUS } from '../../models/food/foodStatusModel';
+import { FoodOrderRow } from '../../Components/food/FoodParts';
 import { useAppointmentAction } from '../../Components/health/HealthParts';
 import { groupHeadline } from '../../models/shopping/orderStatusModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
@@ -32,7 +32,7 @@ import {
   StatusPill,
   StoreMark,
 } from '../../Custom-Components/index';
-import type { AppointmentSegment, FoodOrderSummary, OrderGroupSummary, OrderSegment } from '../../models';
+import type { AppointmentSegment, OrderGroupSummary, OrderSegment } from '../../models';
 import { cdn } from '../../utils/cdn/cdn';
 import { formatDateTime } from '../../utils/dates/dates';
 import { formatPKR } from '../../utils/money/money';
@@ -198,35 +198,13 @@ export const Appointments: React.FC<{ segment: AppointmentSegment; onOpen: (code
   );
 };
 
-const FoodOrderCard: React.FC<{ order: FoodOrderSummary; onPress: () => void }> = ({ order, onPress }) => {
-  const styles = useStyles(makeStyles);
-  const { size } = useTheme();
-  const label = orderStatusLabel(order.status, order.fulfilment);
-  return (
-    <Card onPress={onPress} accessibilityLabel={`Order ${order.code}, ${order.vendor.name}, ${label}, ${formatPKR(order.total)}`}>
-      <View style={styles.row}>
-        <View style={styles.marks}>
-          {order.vendor.logoUrl ? (
-            <Image source={{ uri: cdn(order.vendor.logoUrl, { w: size.storeLogoSmall }) ?? undefined }} style={styles.logo} contentFit="cover" />
-          ) : null}
-          <AppText variant="title" numberOfLines={1} style={styles.grow}>
-            {order.vendor.name}
-          </AppText>
-        </View>
-      </View>
-      <View style={styles.row}>
-        <StatusPill label={label} tone={ORDER_STATUS[order.status].tone} />
-        <AppText variant="bodyStrong">{formatPKR(order.total)}</AppText>
-      </View>
-      <AppText variant="caption" tone="muted">
-        {order.code} · {formatDateTime(order.scheduledFor ?? order.placedAt)} · {order.itemCount} {order.itemCount === 1 ? 'item' : 'items'}
-        {order.fulfilment === 'pickup' ? ' · Pick-up' : ''}
-      </AppText>
-    </Card>
-  );
-};
-
-export const FoodOrdersList: React.FC<{ segment: 'active' | 'past'; onOpen: (code: string) => void; onBrowse: () => void }> = ({ segment, onOpen, onBrowse }) => {
+export const FoodOrdersList: React.FC<{ segment: 'active' | 'past'; onOpen: (code: string) => void; onBrowse: () => void; header?: React.ReactElement | null; bottomInset?: number }> = ({
+  segment,
+  onOpen,
+  onBrowse,
+  header,
+  bottomInset = 0,
+}) => {
   const styles = useStyles(makeStyles);
   const list = usePagedList((page, size) => fetchFoodOrders(segment, page, size), foodOrdersPageSerializer, `food-orders|${segment}`);
   return (
@@ -234,27 +212,31 @@ export const FoodOrdersList: React.FC<{ segment: 'active' | 'past'; onOpen: (cod
       <FlatList
         data={list.rows}
         keyExtractor={o => o.code}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, bottomInset ? { paddingBottom: bottomInset } : null]}
         onEndReached={list.loadMore}
         onEndReachedThreshold={0.5}
         onRefresh={list.refresh}
         refreshing={list.isRefreshing}
-        renderItem={({ item }) => <FoodOrderCard order={item} onPress={() => onOpen(item.code)} />}
+        ListHeaderComponent={header ?? null}
+        renderItem={({ item }) => <FoodOrderRow order={item} when={formatDateTime(item.scheduledFor ?? item.placedAt)} onPress={() => onOpen(item.code)} />}
         ListEmptyComponent={
           list.isLoading ? (
-            <SkeletonLines lines={6} />
+            <View style={styles.list}>
+              <OrderCardSkeleton />
+              <OrderCardSkeleton />
+            </View>
           ) : list.error ? (
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
             <EmptyState
-              icon="coffee"
+              ion="receipt-outline"
               title={segment === 'active' ? 'Nothing on its way' : 'No past Food Court orders'}
               body={segment === 'active' ? 'Orders you place show here until they reach you, with each kitchen’s time.' : 'Delivered, collected and cancelled orders show here.'}
               action={segment === 'active' ? { label: 'Browse the Food Court', onPress: onBrowse } : undefined}
             />
           )
         }
-        ListFooterComponent={list.isLoadingMore ? <SkeletonLines lines={2} /> : null}
+        ListFooterComponent={list.isLoadingMore ? <OrderCardSkeleton /> : null}
       />
     </ServiceScope>
   );
