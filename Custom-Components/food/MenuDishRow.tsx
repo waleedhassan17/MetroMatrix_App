@@ -38,8 +38,9 @@ const makeStyles = ({ colors, space, size, radius, elevation }: Theme) =>
       position: 'absolute',
       right: space.s4,
       bottom: space.s4,
-      width: size.control.sm,
-      height: size.control.sm,
+      minWidth: size.dishAdd,
+      height: size.dishAdd,
+      paddingHorizontal: space.s4,
       borderRadius: radius.pill,
       alignItems: 'center',
       justifyContent: 'center',
@@ -51,15 +52,16 @@ const makeStyles = ({ colors, space, size, radius, elevation }: Theme) =>
 
 export const MenuDishRow: React.FC<MenuDishRowProps> = ({ dish: d, windowFrom, inBag = 0, onPress }) => {
   const styles = useStyles(makeStyles);
-  const { colors, service, size, opacity } = useTheme();
+  const { colors, service, size, opacity, motion } = useTheme();
   const why = d.available ? null : unavailableLabel(d.unavailableReason, windowFrom);
   const price = d.hasVariants ? `from ${formatPKR(d.fromPrice)}` : formatPKR(d.fromPrice);
   const shownTags = SHOWN_TAGS.filter(t => d.tags.includes(t));
+  // In the bag already: the count on the kitchen's colour, so the menu shows what's chosen.
   const addButton = (
-    <View style={[styles.add, !d.photoUrl && styles.addPlain]}>
+    <View style={[styles.add, !d.photoUrl && styles.addPlain, inBag ? { backgroundColor: service.accent, borderColor: service.accent } : null]}>
       {inBag ? (
-        <AppText variant="bodyStrong" tone="accentDeep">
-          {inBag}
+        <AppText variant="label" tone="onAccent">
+          {`${inBag}`}
         </AppText>
       ) : (
         <IonIcon name="add" size="md" color={d.available ? service.accentDeep : colors.inkFaint} />
@@ -112,7 +114,7 @@ export const MenuDishRow: React.FC<MenuDishRowProps> = ({ dish: d, windowFrom, i
       </View>
       {d.photoUrl ? (
         <View style={[styles.photo, !d.available && { opacity: opacity.soldOut }]}>
-          <Image source={{ uri: cdn(d.photoUrl, { w: size.dishPhoto, h: size.dishPhoto }) ?? undefined }} style={styles.fill} contentFit="cover" transition={150} />
+          <Image source={{ uri: cdn(d.photoUrl, { w: size.dishPhoto, h: size.dishPhoto }) ?? undefined }} style={styles.fill} contentFit="cover" transition={motion.imageFade} />
           {addButton}
         </View>
       ) : (

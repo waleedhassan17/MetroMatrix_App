@@ -5,7 +5,7 @@
 // and how a vendor card says its time, fee, distance and state. Money only
 // through formatPKR; no commission is ever implied (the fee is the vendor's).
 
-import type { Address, FoodPoint, VendorCard, VendorListQuery, VendorSort } from '../../models';
+import type { Address, FoodPoint, VendorCard, VendorListQuery, VendorPage, VendorSort } from '../../models';
 import { formatPKR } from '../../utils/money/money';
 
 export type FoodRail = 'orderAgain' | 'offers' | 'topRated' | 'fastest' | 'homeKitchens' | 'newOnFoodCourt' | 'freeDelivery';
@@ -96,3 +96,26 @@ export const ADDRESS_LABEL: Record<Address['label'], string> = { home: 'Home', w
 /** A saved address as a delivery point (only addresses with a map pin can be). */
 export const pointOfAddress = (a: Address): FoodPoint | null =>
   a.lat !== null && a.lng !== null ? { lat: a.lat, lng: a.lng, label: `${ADDRESS_LABEL[a.label]} · ${a.area}`, addressId: a.id } : null;
+
+// ─── A kitchen's page ─────────────────────────────────
+/** One fact in the page's facts strip (Shopping's PolicyStrip: an icon over two short lines). */
+export interface VendorFact {
+  icon: 'time-outline' | 'bicycle-outline' | 'bag-handle-outline' | 'receipt-outline' | 'navigate-outline';
+  text: string;
+}
+
+/**
+ * The kitchen page's three facts, under its name: how long, what delivery
+ * costs (or that it's pick-up), and the minimum order (or how far away).
+ */
+export const vendorFacts = (p: Pick<VendorPage, 'delivery' | 'pickup' | 'eta' | 'distanceKm'>): VendorFact[] => {
+  const delivers = !!p.delivery?.available;
+  const out: VendorFact[] = [
+    { icon: 'time-outline', text: delivers ? p.delivery!.eta.label : p.pickup ? `Ready in ${p.pickup.readyIn.label}` : p.eta.label },
+    delivers ? { icon: 'bicycle-outline', text: feeLabel({ deliveryFee: p.delivery!.fee }) } : { icon: 'bag-handle-outline', text: p.pickup ? 'Pick-up' : 'Delivery not here' },
+  ];
+  const far = distanceLabel(p.distanceKm);
+  if (delivers && p.delivery!.minOrder) out.push({ icon: 'receipt-outline', text: `Min ${formatPKR(p.delivery!.minOrder)}` });
+  else if (far) out.push({ icon: 'navigate-outline', text: `${far} away` });
+  return out;
+};

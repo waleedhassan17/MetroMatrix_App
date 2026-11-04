@@ -1,14 +1,16 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Food Court: a vendor's page
 // ═══════════════════════════════════════════════════════
-// The kitchen's food photo and mark in its own colour (StoreBrandScope), how
-// long it takes to you and what delivery costs, whether it is open (or
-// paused, or out of your area), deals, its popular dishes, then the menu by
-// category with tabs that follow the scroll and stay at the top. A dish
-// opens its sheet. The fee is the vendor's own: MetroMatrix takes nothing.
+// The kitchen's food photo under floating circles (the white bar takes over
+// once it scrolls away), its mark and name in its own colour
+// (StoreBrandScope on Food), the facts strip (time, fee, minimum), ONE
+// notice, its deals, "Popular here", what else it offers (tiffins, dawat,
+// Ramadan), then the menu by category with tabs that follow the scroll and
+// stay under the bar. Reviews and the kitchen's story come after the menu.
+// A dish opens its sheet. The fee is the vendor's own: MetroMatrix takes nothing.
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Linking, Pressable, ScrollView, SectionList, StyleSheet, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ViewToken } from 'react-native';
+import { Linking, Pressable, ScrollView, SectionList, StyleSheet, View, useWindowDimensions, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, type ViewToken } from 'react-native';
 import { Image } from 'expo-image';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -18,9 +20,13 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { lineInput } from '../../models/food/bagModel';
 import { useBack } from '../../hooks/useBack';
 import { categoryWindowLabel } from '../../models/food/menuModel';
-import { cuisineLine, distanceLabel, feeLabel, ratingLabel } from '../../models/food/discoveryModel';
+import { cuisineLine, feeLabel, ratingLabel, vendorFacts } from '../../models/food/discoveryModel';
+import { customerTrustLine } from '../../models/food/trustModel';
 import { ServiceScope, StoreBrandScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, BadgeRow, Button, Card, ChoiceChip, Divider, IconButton, IonIcon, InlineNotice, ListRow, Sheet, Skeleton, SkeletonLines, TextAction, TiffinPlanCard } from '../../Custom-Components/index';
+import { AppText, BadgeRow, Button, Card, ChoiceChip, CountIconButton, Divider, EmptyState, IconButton, IonIcon, InlineNotice, ListRow, PhotoScrim, SectionCard, Sheet, TextAction, TiffinPlanCard, storeInitials } from '../../Custom-Components/index';
+import { VendorPageSkeleton } from '../../Custom-Components/food/FoodSkeletons';
+import { DealRail, DishRail, FoodSection, TrustNote, type DishTileData } from '../../Components/food/FoodParts';
+import { PhotoTopBar, PolicyStrip, ShopSection } from '../../Components/shopping/ShopParts';
 import { planCardData } from '../../models/kitchen/tiffinModel';
 import { windowText } from '../../models/kitchen/reachModel';
 import { HYGIENE_STATUS } from '../../models/kitchen/kitchenStatusModel';
@@ -43,50 +49,48 @@ import { loadFavouritesAsync, selectFoodFavourites, toggleFavouriteAsync } from 
 
 type Props = NativeStackScreenProps<FoodAppParamList, 'FoodVendor'>;
 
+const VIEWABILITY = { itemVisiblePercentThreshold: 40 };
+
 const makeStyles = ({ colors, space, size, radius, gutter, elevation }: Theme) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.canvas },
     cover: { width: '100%', aspectRatio: size.vendorCoverAspect, backgroundColor: colors.surfaceSunk },
     fill: { ...StyleSheet.absoluteFillObject },
-    topButtons: { position: 'absolute', left: gutter - space.s8, right: gutter - space.s8, flexDirection: 'row', justifyContent: 'space-between' },
-    round: { width: size.touch, height: size.touch, borderRadius: radius.pill, backgroundColor: colors.glass, alignItems: 'center', justifyContent: 'center', ...elevation.input },
-    identity: { flexDirection: 'row', alignItems: 'flex-end', gap: space.s12, paddingHorizontal: gutter, marginTop: -size.avatar.lg / 2 },
+    fade: { position: 'absolute', top: space.s0, left: space.s0, right: space.s0 },
+    // The white bar once the cover has gone: the kitchen's colour as a rule under it.
+    bar: { position: 'absolute', top: space.s0, left: space.s0, right: space.s0, backgroundColor: colors.surface, borderBottomWidth: size.focusBorder },
+    barRow: { flexDirection: 'row', alignItems: 'center', minHeight: size.headerBar, paddingHorizontal: space.s8 },
+    barTitle: { flex: 1, paddingHorizontal: space.s4 },
+    identity: { paddingHorizontal: gutter, marginTop: -size.avatar.lg / 2 },
     logo: {
       width: size.avatar.lg,
       height: size.avatar.lg,
-      borderRadius: radius.lg,
+      borderRadius: radius.pill,
       overflow: 'hidden',
       borderWidth: size.focusBorder,
       borderColor: colors.surface,
       backgroundColor: colors.surface,
-      ...elevation.raised,
-    },
-    head: { gap: space.s16, paddingTop: space.s12, paddingBottom: space.s8 },
-    padded: { paddingHorizontal: gutter, gap: space.s8 },
-    facts: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8, paddingHorizontal: gutter },
-    fact: { flexDirection: 'row', alignItems: 'center', gap: space.s4, paddingHorizontal: space.s12, paddingVertical: space.s8, borderRadius: radius.pill, backgroundColor: colors.surfaceSunk },
-    dawatRow: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
-    dawat: { flex: 1, gap: space.s4, minWidth: 0 },
-    rating: { flexDirection: 'row', alignItems: 'center', gap: space.s4 },
-    rail: { paddingHorizontal: gutter, gap: space.s12 },
-    popular: { width: size.railCard, gap: space.s4 },
-    popularPhoto: {
-      width: size.railCard,
-      height: size.railCard,
-      borderRadius: radius.md,
-      overflow: 'hidden',
-      backgroundColor: colors.surfaceSunk,
       alignItems: 'center',
       justifyContent: 'center',
+      ...elevation.raised,
     },
+    head: { gap: space.s20, paddingTop: space.s12, paddingBottom: space.s8 },
+    padded: { paddingHorizontal: gutter, gap: space.s12 },
+    fact: { flexDirection: 'row', alignItems: 'center', gap: space.s8 },
+    rating: { flexDirection: 'row', alignItems: 'center', gap: space.s4, alignSelf: 'flex-start' },
+    ratingText: { flexShrink: 1 },
+    rail: { paddingHorizontal: gutter, gap: space.s12 },
+    planRail: { gap: space.s12 },
+    storyPhoto: { width: size.railCard, height: size.railCard, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.surfaceSunk },
     tabs: { paddingHorizontal: gutter, gap: space.s8, paddingVertical: space.s8 },
-    stickyTabs: { position: 'absolute', left: space.s0, right: space.s0, backgroundColor: colors.canvas, borderBottomWidth: size.hairline, borderBottomColor: colors.line },
     sectionHead: { paddingHorizontal: gutter, paddingTop: space.s24, gap: space.s4 },
     item: { paddingHorizontal: gutter },
+    after: { gap: space.s24, paddingTop: space.s32 },
     list: { paddingBottom: space.s56 },
     listWithBar: { paddingBottom: size.control.lg + space.s56 + space.s24 },
-    confirmButtons: { gap: space.s8 },
-    skeleton: { gap: space.s16 },
+    confirmButtons: { flexDirection: 'row', gap: space.s12 },
+    half: { flex: 1 },
+    failed: { paddingHorizontal: gutter, paddingTop: space.s20 },
   });
 
 const FoodVendor: React.FC<Props> = props => {
@@ -116,8 +120,9 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
     if (via) dispatch(setStoreSource({ kind: via, slug, at: Date.now(), opened: true }));
   }, [dispatch, via, slug]);
   const styles = useStyles(makeStyles);
-  const { colors, size, space, gutter } = useTheme();
+  const { colors, size, space, gutter, service, motion } = useTheme();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const point = useAppSelector(selectFoodPoint);
   const { page, status, error } = useAppSelector(st => selectVendorPage(st, slug));
   const bag = useAppSelector(selectFoodBag);
@@ -126,6 +131,8 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
   const [active, setActive] = useState(0);
   const [tabsY, setTabsY] = useState(0);
   const [stuck, setStuck] = useState(false);
+  // The cover has scrolled away: the white bar takes over from the circles.
+  const [pastCover, setPastCover] = useState(false);
   const list = useRef<SectionList<DishCard, MenuSection>>(null);
   const tabBar = useRef<ScrollView>(null);
 
@@ -183,32 +190,27 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
     tabBar.current?.scrollTo({ x: Math.max(0, active * size.railCard * 0.6 - gutter), animated: true });
   }, [active, gutter, size.railCard]);
 
+  const handOver = width / size.vendorCoverAspect - size.headerBar - insets.top;
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const y = e.nativeEvent.contentOffset.y;
-    const next = tabsY > 0 && y >= tabsY;
+    const past = y > handOver;
+    if (past !== pastCover) setPastCover(past);
+    // The tabs stay once the menu reaches the white bar.
+    const next = tabsY > 0 && y >= tabsY - size.headerBar - insets.top;
     if (next !== stuck) setStuck(next);
   };
 
   if (!page) {
     return (
-      <View style={[styles.root, { paddingTop: insets.top }]}>
-        <View style={[styles.topButtons, { top: insets.top + space.s8 }]}>
-          <IconButton icon="arrow-back" accessibilityLabel="Back" onPress={back} />
-        </View>
-        <View style={[styles.skeleton, { paddingTop: size.touch + space.s16 }]}>
-          {status === 'failed' ? (
-            <View style={styles.padded}>
-              <InlineNotice message={error.message} action={error.code === 'NOT_FOUND' ? undefined : { label: 'Try again', onPress: () => void dispatch(loadVendorPageAsync({ slug, at })) }} />
-            </View>
-          ) : (
-            <>
-              <Skeleton height={size.storeCard / size.vendorCoverAspect} />
-              <View style={styles.padded}>
-                <SkeletonLines lines={8} />
-              </View>
-            </>
-          )}
-        </View>
+      <View style={styles.root}>
+        {status === 'failed' ? (
+          <View style={[styles.failed, { paddingTop: insets.top + size.touch + space.s16 }]}>
+            <InlineNotice message={error.message} action={error.code === 'NOT_FOUND' ? undefined : { label: 'Try again', onPress: () => void dispatch(loadVendorPageAsync({ slug, at })) }} />
+          </View>
+        ) : (
+          <VendorPageSkeleton />
+        )}
+        <PhotoTopBar onBack={back} showBag={false} />
       </View>
     );
   }
@@ -236,24 +238,52 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
   );
 
   const reviewCount = page.ratingSummary ? page.ratingSummary.recent.length : 0;
-  const signature = page.signatureItemIds.length ? page.menu.flatMap(m => m.items).filter((d, i, all) => page.signatureItemIds.includes(d.id) && all.findIndex(x => x.id === d.id) === i) : [];
+  const allDishes = page.menu.flatMap(m => m.items);
+  const signature = page.signatureItemIds.length ? allDishes.filter((d, i, all) => page.signatureItemIds.includes(d.id) && all.findIndex(x => x.id === d.id) === i) : [];
+  // One rail: the kitchen's own recipes first (tagged), then what people order most.
+  const picks: DishTileData[] = [
+    ...signature.map(d => ({ ...d, tag: 'Signature' })),
+    ...page.popular.filter(d => !page.signatureItemIds.includes(d.id)).map(d => ({ ...d, tag: null })),
+  ];
   const openReviews = () => navigation.navigate('FoodReviews', { id: page.id, name: page.name, slug: page.slug });
+  const inBag = (id: string) => (bagHere ? bag.cart.lines.filter(l => l.itemId === id).reduce((n, l) => n + l.quantity, 0) : 0);
+  // ONE notice: paused beats closed beats out of the area.
+  const notice = page.paused ? (
+    <InlineNotice tone="warning" title="Not taking orders right now" message={page.pauseMessage ?? 'Check back soon.'} />
+  ) : !page.openState.open ? (
+    <InlineNotice tone="info" title={page.openState.label} message="You can look through the menu now and order when it opens." />
+  ) : page.delivery?.outOfZone ? (
+    <InlineNotice
+      tone="warning"
+      title={point ? `Doesn’t deliver to ${point.label}` : 'Doesn’t deliver to your address'}
+      message={page.pickup ? `You can collect from ${[page.location.area, page.location.city].filter(Boolean).join(', ')} instead.` : 'Try another address.'}
+    />
+  ) : null;
+  const fromKitchen = page.tiffinPlans.length || page.catering?.open || page.ramadan;
 
   const header = (
     <View>
       <View style={styles.cover}>
-        {page.coverUrl ? <Image source={{ uri: cdn(page.coverUrl, { w: size.storeCard * 1.6 }) ?? undefined }} style={styles.fill} contentFit="cover" transition={150} /> : null}
+        {page.coverUrl ? <Image source={{ uri: cdn(page.coverUrl, { w: width }) ?? undefined }} style={styles.fill} contentFit="cover" transition={motion.imageFade} /> : null}
       </View>
       <View style={styles.identity}>
-        <View style={styles.logo}>{page.logoUrl ? <Image source={{ uri: cdn(page.logoUrl, { w: size.avatar.lg }) ?? undefined }} style={styles.fill} contentFit="cover" /> : null}</View>
+        <View style={styles.logo}>
+          {page.logoUrl ? (
+            <Image source={{ uri: cdn(page.logoUrl, { w: size.avatar.lg * 2 }) ?? undefined }} style={styles.fill} contentFit="cover" />
+          ) : (
+            <AppText variant="title" tone="accentDeep">
+              {storeInitials(page.name)}
+            </AppText>
+          )}
+        </View>
       </View>
       <View style={styles.head}>
         <View style={styles.padded}>
-          <AppText variant="screenTitle" accessibilityRole="header">
+          <AppText variant="heading" accessibilityRole="header">
             {page.name}
           </AppText>
           {page.tagline ? (
-            <AppText variant="body" tone="muted">
+            <AppText variant="body" tone="muted" numberOfLines={2}>
               {page.tagline}
             </AppText>
           ) : null}
@@ -261,207 +291,132 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
             style={styles.rating}
             onPress={reviewCount ? openReviews : undefined}
             disabled={!reviewCount}
+            hitSlop={space.s8}
             accessibilityRole={reviewCount ? 'link' : 'text'}
             accessibilityHint={reviewCount ? 'Opens the reviews' : undefined}>
             <IonIcon name="star" size="sm" color={colors.star} />
-            <AppText variant="small">{`${ratingLabel(page)} · ${cuisineLine(page)}${page.isHomeKitchen ? ' · Home kitchen' : ''}`}</AppText>
+            <AppText variant="small" numberOfLines={2} style={styles.ratingText}>{`${ratingLabel(page)} · ${cuisineLine(page)}${page.isHomeKitchen ? ' · Home kitchen' : ''}`}</AppText>
+            {reviewCount ? <IonIcon name="chevron-forward" size="sm" color={colors.inkMuted} /> : null}
           </Pressable>
           <BadgeRow badges={page.badges.filter(b => b !== 'home_kitchen')} />
         </View>
-        <View style={styles.facts}>
-          <View style={styles.fact}>
-            <IonIcon name="time-outline" size="sm" color={colors.inkMuted} />
-            <AppText variant="small">{page.delivery?.available ? page.delivery.eta.label : page.pickup ? `Pick-up ${page.pickup.readyIn.label}` : page.eta.label}</AppText>
-          </View>
-          {page.delivery?.available ? (
-            <View style={styles.fact}>
-              <IonIcon name="bicycle-outline" size="sm" color={colors.inkMuted} />
-              <AppText variant="small">{feeLabel({ deliveryFee: page.delivery.fee })}</AppText>
-            </View>
-          ) : null}
-          {page.delivery?.available && page.delivery.minOrder ? (
-            <View style={styles.fact}>
-              <AppText variant="small">{`Min ${formatPKR(page.delivery.minOrder)}`}</AppText>
-            </View>
-          ) : null}
-          {distanceLabel(page.distanceKm) ? (
-            <View style={styles.fact}>
-              <IonIcon name="navigate-outline" size="sm" color={colors.inkMuted} />
-              <AppText variant="small">{distanceLabel(page.distanceKm)!}</AppText>
-            </View>
-          ) : null}
-        </View>
         <View style={styles.padded}>
-          <TextAction label="Address, hours and how to pay" icon="information-circle-outline" onPress={() => setInfo(true)} />
-          {page.paused ? (
-            <InlineNotice tone="warning" title="Not taking orders right now" message={page.pauseMessage ?? 'Check back soon.'} />
-          ) : !page.openState.open ? (
-            <InlineNotice tone="info" title={page.openState.label} message="You can look through the menu now and order when it opens." />
-          ) : null}
-          {page.delivery?.outOfZone ? (
-            <InlineNotice
-              tone="warning"
-              title={point ? `Doesn’t deliver to ${point.label}` : 'Doesn’t deliver to your address'}
-              message={page.pickup ? `You can collect from ${[page.location.area, page.location.city].filter(Boolean).join(', ')} instead.` : 'Try another address.'}
-            />
-          ) : null}
+          <PolicyStrip lines={vendorFacts(page)} />
           {page.freeDeliveryOver && page.delivery?.available && page.delivery.fee > 0 ? (
             <AppText variant="small" tone="accentDeep">{`Free delivery on orders over ${formatPKR(page.freeDeliveryOver)}`}</AppText>
           ) : null}
-          {page.ramadan ? (
-            <Card>
-              <View style={styles.dawatRow}>
-                <IonIcon name="moon-outline" size="md" color={colors.inkMuted} />
-                <View style={styles.dawat}>
-                  <AppText variant="title">Ramadan hours</AppText>
-                  {page.ramadan.sehri ? <AppText variant="small">{`Sehri ${windowText(page.ramadan.sehri)}`}</AppText> : null}
-                  {page.ramadan.iftar ? <AppText variant="small">{`Iftar ${windowText(page.ramadan.iftar)}${page.ramadan.iftarPreorderOnly ? ' · order ahead' : ''}`}</AppText> : null}
-                </View>
-              </View>
-            </Card>
-          ) : null}
+          <TextAction label="Address, hours and how to pay" icon="information-circle-outline" onPress={() => setInfo(true)} />
+          {notice}
         </View>
-        {/* Tiffin plans and catering (Kitchen Intelligence, 5B) */}
-        {page.tiffinPlans.length ? (
+        {page.deals.length ? <DealRail deals={page.deals} /> : null}
+        {picks.length ? (
+          <FoodSection title="Popular here" subtitle={signature.length ? 'The kitchen’s own recipes, and what people order most' : 'What people order most'}>
+            <DishRail dishes={picks} onOpen={id => void dispatch(openItemSheetAsync(id))} />
+          </FoodSection>
+        ) : null}
+        {/* Tiffin plans, dawat and Ramadan hours (Kitchen Intelligence), in one card. */}
+        {fromKitchen ? (
           <View style={styles.padded}>
-            <AppText variant="sectionTitle">Tiffin plans</AppText>
-            <AppText variant="small" tone="muted">
-              The same meal on set days, paid to the kitchen by the week or month
-            </AppText>
-          </View>
-        ) : null}
-        {page.tiffinPlans.length ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
-            {page.tiffinPlans.map(t => (
-              <TiffinPlanCard key={t.id} plan={planCardData(t, page.name)} rail onPress={() => navigation.navigate('FoodTiffinPlan', { id: t.id })} />
-            ))}
-          </ScrollView>
-        ) : null}
-        {page.catering?.open ? (
-          <View style={styles.padded}>
-            <Card onPress={() => navigation.navigate('FoodCateringForm', { slug: page.slug, name: page.name })} accessibilityLabel={`Plan a dawat with ${page.name}`}>
-              <View style={styles.dawatRow}>
-                <IonIcon name="people-outline" size="md" color={colors.inkMuted} />
-                <View style={styles.dawat}>
-                  <AppText variant="title">Plan a dawat</AppText>
-                  <AppText variant="small" tone="muted">
-                    {`Catering from ${page.catering.minGuests} guests, ${page.catering.leadDays} days ahead. Ask for a quote.`}
-                  </AppText>
-                </View>
-                <IonIcon name="chevron-forward" size="md" color={colors.inkMuted} />
-              </View>
-            </Card>
-          </View>
-        ) : null}
-        {page.deals.length ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
-            {page.deals.map(d => (
-              <ChoiceChip key={d.id} label={d.label} selected onPress={() => undefined} />
-            ))}
-          </ScrollView>
-        ) : null}
-        {signature.length ? (
-          <View style={styles.padded}>
-            <AppText variant="sectionTitle">Signature dishes</AppText>
-            <AppText variant="small" tone="muted">
-              The kitchen’s own recipes
-            </AppText>
-          </View>
-        ) : null}
-        {signature.length ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
-            {signature.map(d => (
-              <Pressable key={d.id} style={styles.popular} onPress={() => void dispatch(openItemSheetAsync(d.id))} accessibilityRole="button" accessibilityLabel={`Signature dish: ${d.name}, ${formatPKR(d.fromPrice)}`}>
-                <View style={styles.popularPhoto}>
-                  {d.photoUrl ? (
-                    <Image source={{ uri: cdn(d.photoUrl, { w: size.railCard, h: size.railCard }) ?? undefined }} style={styles.fill} contentFit="cover" />
-                  ) : (
-                    <IonIcon name="ribbon-outline" size="lg" color={colors.inkFaint} />
-                  )}
-                </View>
-                <AppText variant="small" numberOfLines={2}>
-                  {d.name}
-                </AppText>
-                <AppText variant="small" tone="accentDeep">
-                  {d.hasVariants ? `from ${formatPKR(d.fromPrice)}` : formatPKR(d.fromPrice)}
-                </AppText>
-              </Pressable>
-            ))}
-          </ScrollView>
-        ) : null}
-        {page.popular.length ? (
-          <View style={styles.padded}>
-            <AppText variant="sectionTitle">Popular</AppText>
-          </View>
-        ) : null}
-        {page.popular.length ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
-            {page.popular.map(d => (
-              <Pressable key={d.id} style={styles.popular} onPress={() => void dispatch(openItemSheetAsync(d.id))} accessibilityRole="button" accessibilityLabel={`${d.name}, ${formatPKR(d.fromPrice)}`}>
-                <View style={styles.popularPhoto}>
-                  {d.photoUrl ? (
-                    <Image source={{ uri: cdn(d.photoUrl, { w: size.railCard, h: size.railCard }) ?? undefined }} style={styles.fill} contentFit="cover" />
-                  ) : (
-                    <IonIcon name="restaurant-outline" size="lg" color={colors.inkFaint} />
-                  )}
-                </View>
-                <AppText variant="small" numberOfLines={2}>
-                  {d.name}
-                </AppText>
-                <AppText variant="small" tone="accentDeep">
-                  {d.hasVariants ? `from ${formatPKR(d.fromPrice)}` : formatPKR(d.fromPrice)}
-                </AppText>
-              </Pressable>
-            ))}
-          </ScrollView>
-        ) : null}
-        {page.ratingSummary && reviewCount ? (
-          <View style={styles.padded}>
-            <AppText variant="sectionTitle">Ratings and reviews</AppText>
-            <RatingSummary summary={page.ratingSummary} />
-            {page.ratingSummary.recent[0] ? <FoodReviewItem review={page.ratingSummary.recent[0]} vendorName={page.name} /> : null}
-            <TextAction label="See all reviews" icon="chatbox-ellipses-outline" onPress={openReviews} />
-          </View>
-        ) : null}
-        {page.story || page.hygiene.status !== 'none' ? (
-          <View style={styles.padded}>
-            <AppText variant="sectionTitle">{page.story ? 'Our story' : 'Hygiene'}</AppText>
-            {page.story ? (
-              <>
-                {page.story.cookName ? <AppText variant="bodyStrong">{`Cooked by ${page.story.cookName}`}</AppText> : null}
-                <AppText variant="body">{page.story.text}</AppText>
-              </>
-            ) : null}
-          </View>
-        ) : null}
-        {page.story?.photoUrls.length ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
-            {page.story.photoUrls.map((u, n) => (
-              <View key={u} style={styles.popularPhoto}>
-                <Image source={{ uri: cdn(u, { w: size.railCard, h: size.railCard }) ?? undefined }} style={styles.fill} contentFit="cover" accessibilityLabel={`${page.name}: kitchen photo ${n + 1}`} />
-              </View>
-            ))}
-          </ScrollView>
-        ) : null}
-        {page.story?.videoUrl || page.hygiene.status !== 'none' ? (
-          <View style={styles.padded}>
-            {page.story?.videoUrl ? <TextAction label="Watch the kitchen’s video" icon="play-circle-outline" onPress={() => void Linking.openURL(page.story!.videoUrl!)} /> : null}
-            {page.hygiene.status !== 'none' ? (
-              <View style={styles.fact}>
-                <IonIcon name={page.hygiene.status === 'verified' ? 'shield-checkmark-outline' : 'shield-outline'} size="sm" color={colors.inkMuted} />
-                <AppText variant="small" tone="muted">
-                  {page.hygiene.status === 'verified'
-                    ? `${HYGIENE_STATUS.verified.label} by MetroMatrix${page.hygiene.checkedAt ? ` · checked ${formatOn(page.hygiene.checkedAt)}` : ''}`
-                    : `${HYGIENE_STATUS.self_declared.label} by the kitchen`}
-                </AppText>
-              </View>
-            ) : null}
+            <SectionCard title={`From ${page.name}`} icon="sparkles-outline">
+              {page.tiffinPlans.length ? (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.planRail}>
+                  {page.tiffinPlans.map(t => (
+                    <TiffinPlanCard key={t.id} plan={planCardData(t, page.name)} rail onPress={() => navigation.navigate('FoodTiffinPlan', { id: t.id })} />
+                  ))}
+                </ScrollView>
+              ) : null}
+              {page.catering?.open ? (
+                <ListRow
+                  title="Plan a dawat"
+                  subtitle={`Catering from ${page.catering.minGuests} guests, ${page.catering.leadDays} days ahead. Ask for a quote.`}
+                  leftIcon="people-outline"
+                  tint="violet"
+                  onPress={() => navigation.navigate('FoodCateringForm', { slug: page.slug, name: page.name })}
+                />
+              ) : null}
+              {page.ramadan ? (
+                <ListRow
+                  title="Ramadan hours"
+                  subtitle={[
+                    page.ramadan.sehri ? `Sehri ${windowText(page.ramadan.sehri)}` : null,
+                    page.ramadan.iftar ? `Iftar ${windowText(page.ramadan.iftar)}${page.ramadan.iftarPreorderOnly ? ' · order ahead' : ''}` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                  leftIcon="moon-outline"
+                  tint="blue"
+                  chevron={false}
+                />
+              ) : null}
+            </SectionCard>
           </View>
         ) : null}
       </View>
       <View onLayout={(e: LayoutChangeEvent) => setTabsY(e.nativeEvent.layout.y)}>{page.menu.length > 1 ? tabs : null}</View>
     </View>
   );
+
+  // After the menu: what people say, and the kitchen's story and hygiene.
+  const footer = (
+    <View style={styles.after}>
+      {page.ratingSummary && reviewCount ? (
+        <View style={styles.padded}>
+          <ShopSection title="Ratings and reviews" inset={false} onSeeAll={openReviews} seeAllLabel="See all" />
+          <RatingSummary summary={page.ratingSummary} />
+          {page.ratingSummary.recent[0] ? <FoodReviewItem review={page.ratingSummary.recent[0]} vendorName={page.name} /> : null}
+        </View>
+      ) : null}
+      {page.story || page.hygiene.status !== 'none' ? (
+        <View style={styles.padded}>
+          <ShopSection title={page.story ? 'Our story' : 'Hygiene'} inset={false} />
+          {page.story ? (
+            <>
+              {page.story.cookName ? <AppText variant="bodyStrong">{`Cooked by ${page.story.cookName}`}</AppText> : null}
+              <AppText variant="body">{page.story.text}</AppText>
+            </>
+          ) : null}
+        </View>
+      ) : null}
+      {page.story?.photoUrls.length ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
+          {page.story.photoUrls.map((u, n) => (
+            <View key={u} style={styles.storyPhoto}>
+              <Image source={{ uri: cdn(u, { w: size.railCard, h: size.railCard }) ?? undefined }} style={styles.fill} contentFit="cover" accessibilityLabel={`${page.name}: kitchen photo ${n + 1}`} />
+            </View>
+          ))}
+        </ScrollView>
+      ) : null}
+      {page.story?.videoUrl || page.hygiene.status !== 'none' ? (
+        <View style={styles.padded}>
+          {page.story?.videoUrl ? <TextAction label="Watch the kitchen’s video" icon="play-circle-outline" onPress={() => void Linking.openURL(page.story!.videoUrl!)} /> : null}
+          {page.hygiene.status !== 'none' ? (
+            <View style={styles.fact}>
+              <IonIcon name={page.hygiene.status === 'verified' ? 'shield-checkmark-outline' : 'shield-outline'} size="sm" color={colors.inkMuted} />
+              <AppText variant="small" tone="muted" style={styles.ratingText}>
+                {page.hygiene.status === 'verified'
+                  ? `${HYGIENE_STATUS.verified.label} by MetroMatrix${page.hygiene.checkedAt ? ` · checked ${formatOn(page.hygiene.checkedAt)}` : ''}`
+                  : `${HYGIENE_STATUS.self_declared.label} by the kitchen`}
+              </AppText>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
+      <View style={styles.padded}>
+        <TrustNote text={customerTrustLine(page.name, { riders: true })} />
+      </View>
+    </View>
+  );
+
+  const saveButton = (circle: boolean) => (
+    <IconButton
+      icon={saved ? 'heart' : 'heart-outline'}
+      appearance={circle ? 'circle' : undefined}
+      tone={saved ? 'danger' : undefined}
+      onPress={() => void dispatch(toggleFavouriteAsync({ vendorId: page.id, save: !saved }))}
+      accessibilityLabel={saved ? `Remove ${page.name} from saved` : `Save ${page.name}`}
+    />
+  );
+  const bagCount = bag.cart.empty ? 0 : bag.cart.itemCount;
 
   return (
     <View style={styles.root}>
@@ -471,57 +426,59 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
         keyExtractor={d => d.id}
         stickySectionHeadersEnabled={false}
         ListHeaderComponent={header}
+        ListFooterComponent={footer}
         renderSectionHeader={({ section }) => (
           <View style={styles.sectionHead}>
             <AppText variant="sectionTitle" accessibilityRole="header">
               {section.name}
             </AppText>
-            {!section.availableNow ? (
-              <AppText variant="small" tone="warning">{`Served ${categoryWindowLabel(section.availableFrom, section.availableTo)}`}</AppText>
-            ) : null}
+            <AppText variant="small" tone={section.availableNow ? 'muted' : 'warning'}>
+              {[`${section.items.length} ${section.items.length === 1 ? 'dish' : 'dishes'}`, section.availableNow ? null : `Served ${categoryWindowLabel(section.availableFrom, section.availableTo)}`]
+                .filter(Boolean)
+                .join(' · ')}
+            </AppText>
           </View>
         )}
         renderItem={({ item, index, section }) => (
           <View style={styles.item}>
             {index > 0 ? <Divider /> : null}
-            <MenuDishRow dish={item} windowFrom={section.availableFrom} onPress={() => void dispatch(openItemSheetAsync(item.id))} />
+            <MenuDishRow dish={item} windowFrom={section.availableFrom} inBag={inBag(item.id)} onPress={() => void dispatch(openItemSheetAsync(item.id))} />
           </View>
         )}
         ListEmptyComponent={
           <View style={styles.padded}>
-            <AppText variant="body" tone="muted">
-              Nothing on the menu right now.
-            </AppText>
+            <EmptyState ion="restaurant-outline" title="Nothing on the menu right now" body="The kitchen hasn’t put its dishes up yet. Check back soon." />
           </View>
         }
         onViewableItemsChanged={onViewable}
-        viewabilityConfig={{ itemVisiblePercentThreshold: 40 }}
+        viewabilityConfig={VIEWABILITY}
         onScroll={onScroll}
-        scrollEventThrottle={32}
+        scrollEventThrottle={16}
         contentContainerStyle={bagHere ? styles.listWithBar : styles.list}
         onScrollToIndexFailed={() => undefined}
       />
 
-      {/* The back button over the photo; the tabs stay at the top once the menu reaches them. */}
-      {stuck && page.menu.length > 1 ? <View style={[styles.stickyTabs, { top: 0, paddingTop: insets.top }]}>{tabs}</View> : null}
-      <View style={[styles.topButtons, { top: insets.top + space.s8 }]} pointerEvents="box-none">
-        {stuck ? null : (
-          <>
-            <Pressable onPress={back} style={styles.round} accessibilityRole="button" accessibilityLabel="Back">
-              <IonIcon name="arrow-back" size="md" color={colors.ink} />
-            </Pressable>
-            <Pressable
-              onPress={() => void dispatch(toggleFavouriteAsync({ vendorId: page.id, save: !saved }))}
-              style={styles.round}
-              accessibilityRole="button"
-              aria-selected={saved}
-              accessibilityLabel={saved ? `Remove ${page.name} from saved` : `Save ${page.name}`}
-            >
-              <IonIcon name={saved ? 'heart' : 'heart-outline'} size="md" color={saved ? colors.danger : colors.ink} />
-            </Pressable>
-          </>
-        )}
-      </View>
+      {/* Over the cover: a fade under the status bar and the floating circles. Past it: the white bar, then the tabs once the menu reaches the top. */}
+      {pastCover ? (
+        <View style={[styles.bar, { paddingTop: insets.top, borderBottomColor: stuck ? colors.line : service.accent }]}>
+          <View style={styles.barRow}>
+            <IconButton icon="chevron-back" onPress={back} accessibilityLabel="Back" />
+            <AppText variant="barTitle" numberOfLines={1} style={styles.barTitle} accessibilityRole="header">
+              {page.name}
+            </AppText>
+            {saveButton(false)}
+            <CountIconButton icon="bag-handle-outline" count={bagCount} onPress={() => navigation.navigate('FoodBag')} label="Your bag" />
+          </View>
+          {stuck && page.menu.length > 1 ? tabs : null}
+        </View>
+      ) : (
+        <>
+          <View style={[styles.fade, { height: insets.top + size.headerWell + space.s24 }]} pointerEvents="none">
+            <PhotoScrim edge="top" />
+          </View>
+          <PhotoTopBar onBack={back} right={saveButton(true)} bag={{ count: bagCount, onPress: () => navigation.navigate('FoodBag') }} />
+        </>
+      )}
 
       {bagHere ? <BagBar count={bag.cart.itemCount} subtotal={bag.cart.subtotal} busy={bag.adding} onPress={() => navigation.navigate('FoodBag')} /> : null}
 
@@ -537,19 +494,23 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
           {`Each order comes from one kitchen. Starting a new bag from ${page.name} removes what’s in your bag now.`}
         </AppText>
         <View style={styles.confirmButtons}>
-          <Button
-            label="Start a new bag"
-            loading={bag.adding}
-            onPress={() => {
-              const pending = bag.otherVendor;
-              if (!pending) return;
-              void dispatch(addToFoodBagAsync({ input: pending.input, replace: true })).then(r => {
-                if (addToFoodBagAsync.fulfilled.match(r)) Toast.show({ type: 'success', text1: `New bag from ${page.name}` });
-              });
-            }}
-            fullWidth
-          />
-          <Button label="Keep my bag" variant="secondary" onPress={() => dispatch(dismissOtherVendor())} fullWidth />
+          <View style={styles.half}>
+            <Button label="Keep my bag" variant="secondary" onPress={() => dispatch(dismissOtherVendor())} fullWidth />
+          </View>
+          <View style={styles.half}>
+            <Button
+              label="Start a new bag"
+              loading={bag.adding}
+              onPress={() => {
+                const pending = bag.otherVendor;
+                if (!pending) return;
+                void dispatch(addToFoodBagAsync({ input: pending.input, replace: true })).then(r => {
+                  if (addToFoodBagAsync.fulfilled.match(r)) Toast.show({ type: 'success', text1: `New bag from ${page.name}` });
+                });
+              }}
+              fullWidth
+            />
+          </View>
         </View>
       </Sheet>
 
@@ -591,9 +552,7 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
           <Divider />
           <ListRow title={page.acceptsCod ? 'Cash, or a bank or wallet transfer' : 'Bank or wallet transfer'} subtitle="How to pay" leftIcon="wallet-outline" chevron={false} />
         </Card>
-        <AppText variant="small" tone="muted">
-          {`You pay ${page.name} directly, and its own riders bring your food. MetroMatrix takes no commission.`}
-        </AppText>
+        <TrustNote text={customerTrustLine(page.name, { riders: true })} />
       </Sheet>
     </View>
   );

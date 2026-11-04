@@ -13,7 +13,8 @@ export interface IconButtonProps {
   icon: IonName;
   onPress: () => void;
   accessibilityLabel: string;
-  tone?: 'ink' | 'muted' | 'onScrim';
+  /** `danger`: a filled, chosen state in red (a saved heart). */
+  tone?: 'ink' | 'muted' | 'onScrim' | 'danger';
   /** `circle`: the white circle off the header too (over a photo, lifted). */
   appearance?: 'plain' | 'circle';
   disabled?: boolean;
@@ -59,8 +60,8 @@ export const IconButton: React.FC<IconButtonProps> = ({
   const styles = useStyles(makeStyles);
   const { colors, opacity, elevation } = useTheme();
   const onGradient = useOnGradient();
-  // An explicit tone (the header's back glyph) stays a bare glyph.
-  const circle = useCircleAction(toneProp ? 'plain' : appearance);
+  // An explicit tone (the header's back glyph) stays a bare glyph, unless a circle is asked for.
+  const circle = useCircleAction(toneProp && appearance !== 'circle' ? 'plain' : appearance);
   if (circle) {
     return (
       <Pressable
@@ -76,13 +77,13 @@ export const IconButton: React.FC<IconButtonProps> = ({
           pressed && { opacity: opacity.pressed },
           disabled && { opacity: opacity.disabled },
         ]}>
-        <IonIcon name={icon} size="md" color={colors.ink} />
+        <IonIcon name={icon} size="md" color={toneProp === 'danger' ? colors.danger : colors.ink} />
       </Pressable>
     );
   }
   const tone = toneProp ?? (onGradient ? 'onScrim' : 'ink');
   const color =
-    tone === 'muted' ? colors.inkMuted : tone === 'onScrim' ? colors.onScrim : colors.ink;
+    tone === 'muted' ? colors.inkMuted : tone === 'onScrim' ? colors.onScrim : tone === 'danger' ? colors.danger : colors.ink;
   return (
     <Pressable
       onPress={onPress}

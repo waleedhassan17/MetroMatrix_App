@@ -7,13 +7,13 @@
 // named when the customer taps Add too early.
 
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { MAX_NOTE, MAX_QUANTITY, firstProblem, groupHint, groupsFor, linePrice, unavailableLabel, type Selection } from '../../models/food/itemSelectionModel';
 import { ITEM_TAG_LABEL } from '../../models/food/menuModel';
 import { useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, InlineNotice, QuantityStepper, Sheet, SkeletonLines, TextField } from '../../Custom-Components/index';
+import { AppText, Button, InlineNotice, QuantityStepper, Sheet, Skeleton, StatusPill, TextField } from '../../Custom-Components/index';
 import { ChoiceLine } from '../../Custom-Components/food/ChoiceLine';
 import type { ItemSheet } from '../../models';
 import { cdn } from '../../utils/cdn/cdn';
@@ -27,12 +27,14 @@ const makeStyles = ({ colors, space, size, radius }: Theme) =>
   StyleSheet.create({
     // Urdu reads right to left.
     urdu: { writingDirection: 'rtl', textAlign: 'right' },
-    photo: { width: '100%', aspectRatio: size.vendorPhotoAspect, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.surfaceSunk },
+    photo: { width: '100%', aspectRatio: size.dishHeroAspect, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.surfaceSunk },
+    loading: { gap: space.s12 },
     fill: { ...StyleSheet.absoluteFillObject },
     head: { gap: space.s4 },
     tags: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
     group: { gap: space.s4 },
-    groupHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space.s8 },
+    groupHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.s8, paddingTop: space.s8 },
+    groupName: { flex: 1 },
     footer: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
     grow: { flex: 1 },
   });
@@ -50,7 +52,8 @@ export interface ItemSheetViewProps {
 export const ItemSheetView: React.FC<ItemSheetViewProps> = ({ onAdd, adding, addError, blockedReason }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { size } = useTheme();
+  const { size, motion } = useTheme();
+  const { width } = useWindowDimensions();
   const s = useAppSelector(selectItemSheet);
   const showCalories = useAppSelector(selectShowCalories);
   const sheet = s.sheet;
@@ -99,12 +102,20 @@ export const ItemSheetView: React.FC<ItemSheetViewProps> = ({ onAdd, adding, add
     >
       {s.status === 'failed' ? <InlineNotice message={s.error.message} /> : null}
       {!sheet || !sel ? (
-        s.status === 'failed' ? null : <SkeletonLines lines={6} />
+        s.status === 'failed' ? null : (
+          <View style={styles.loading} accessibilityLabel="Loading the dish" accessibilityRole="progressbar">
+            <View style={styles.photo} />
+            <Skeleton width="85%" />
+            <Skeleton width="60%" />
+            <Skeleton height={size.control.lg} shape="md" />
+            <Skeleton height={size.control.lg} shape="md" />
+          </View>
+        )
       ) : (
         <>
           {sheet.photoUrl ? (
             <View style={styles.photo}>
-              <Image source={{ uri: cdn(sheet.photoUrl, { w: size.storeCard * 1.6 }) ?? undefined }} style={styles.fill} contentFit="cover" transition={150} />
+              <Image source={{ uri: cdn(sheet.photoUrl, { w: width }) ?? undefined }} style={styles.fill} contentFit="cover" transition={motion.imageFade} />
             </View>
           ) : null}
           <View style={styles.head}>
@@ -144,10 +155,10 @@ export const ItemSheetView: React.FC<ItemSheetViewProps> = ({ onAdd, adding, add
           {sheet.variants.length ? (
             <View style={styles.group}>
               <View style={styles.groupHead}>
-                <AppText variant="title">Size</AppText>
-                <AppText variant="small" tone="muted">
-                  Required · pick 1
+                <AppText variant="title" accessibilityRole="header" style={styles.groupName}>
+                  Size
                 </AppText>
+                <StatusPill label="Required · pick 1" tone={sel.variantId ? 'success' : 'warning'} />
               </View>
               {sheet.variants.map(v => (
                 <ChoiceLine key={v.id} label={v.name} price={formatPKR(v.price)} selected={sel.variantId === v.id} multiple={false} onPress={() => dispatch(pickVariant(v.id))} />
@@ -161,10 +172,14 @@ export const ItemSheetView: React.FC<ItemSheetViewProps> = ({ onAdd, adding, add
             return (
               <View key={`${g.id}:${g.variantId ?? ''}`} style={styles.group}>
                 <View style={styles.groupHead}>
-                  <AppText variant="title">{g.name}</AppText>
-                  <AppText variant="small" tone={missing ? 'danger' : g.required && chosen.length < g.minSelect ? 'accentDeep' : 'muted'}>
-                    {groupHint(g)}
+                  <AppText variant="title" accessibilityRole="header" style={styles.groupName}>
+                    {g.name}
                   </AppText>
+                  {/* Required and unmet: amber, red once Add was tried; met: green; optional: grey. */}
+                  <StatusPill
+                    label={groupHint(g)}
+                    tone={missing ? 'danger' : g.required && chosen.length < g.minSelect ? 'warning' : g.required ? 'success' : 'neutral'}
+                  />
                 </View>
                 {missing ? (
                   <AppText variant="small" tone="danger">
