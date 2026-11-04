@@ -4,15 +4,19 @@
 // The order's code, that the kitchen is about to answer, when to expect it,
 // and how it's paid — for a transfer, the kitchen's own account and the
 // minutes left to send the money. Stateless: checkout left the order in its
-// slice; on a reload it still leads to the order's live page.
+// slice; on a reload it still leads to the order's live page. Shopping's
+// confirmation look: a ring round a solid disc, the code to copy, ONE card.
 
 import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppSelector } from '../../hooks/useReduxHooks';
 import { PAYMENT_METHOD } from '../../models/food/foodStatusModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, Card, IonIcon, StickyCTA } from '../../Custom-Components/index';
+import { AppText, Button, Card, IonIcon, StickyCTA, StoreHeadRow } from '../../Custom-Components/index';
 import { TransferCard } from '../../Custom-Components/food/TransferCard';
 import type { FoodAppParamList } from '../../models';
 import { formatSlot } from '../../utils/health-time/healthTime';
@@ -24,17 +28,38 @@ type Props = NativeStackScreenProps<FoodAppParamList, 'FoodOrderPlaced'>;
 const makeStyles = ({ colors, space, size, radius, gutter }: Theme) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.canvas },
-    content: { paddingHorizontal: gutter, paddingBottom: space.s40, gap: space.s16 },
-    hero: { alignItems: 'center', gap: space.s8, paddingVertical: space.s32 },
-    badge: {
-      width: size.avatar.xl,
-      height: size.avatar.xl,
+    content: { paddingHorizontal: gutter, paddingBottom: space.s40, gap: space.s20 },
+    hero: { alignItems: 'center', gap: space.s12, paddingVertical: space.s32 },
+    ring: {
+      width: size.successRing,
+      height: size.successRing,
       borderRadius: radius.pill,
       backgroundColor: colors.successSoft,
       alignItems: 'center',
       justifyContent: 'center',
+      marginBottom: space.s8,
     },
-    row: { flexDirection: 'row', justifyContent: 'space-between', gap: space.s12 },
+    disc: {
+      width: size.successDisc,
+      height: size.successDisc,
+      borderRadius: radius.pill,
+      backgroundColor: colors.success,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    code: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space.s8,
+      paddingHorizontal: space.s16,
+      paddingVertical: space.s8,
+      minHeight: size.touch,
+      borderRadius: radius.pill,
+      borderWidth: size.hairline,
+      borderColor: colors.line,
+      backgroundColor: colors.surface,
+    },
+    facts: { gap: space.s4 },
   });
 
 const FoodOrderPlaced: React.FC<Props> = props => (
@@ -45,8 +70,13 @@ const FoodOrderPlaced: React.FC<Props> = props => (
 
 const FoodOrderPlacedContent: React.FC<Props> = ({ navigation, route }) => {
   const styles = useStyles(makeStyles);
-  const { colors } = useTheme();
+  const { colors, service } = useTheme();
+  const insets = useSafeAreaInsets();
   const { code } = route.params;
+  const copy = async () => {
+    await Clipboard.setStringAsync(code);
+    Toast.show({ type: 'success', text1: 'Order code copied' });
+  };
   const placed = useAppSelector(selectFoodCheckout).placed;
   const o = placed?.code === code ? placed : null;
   const items = o ? o.items.reduce((n, i) => n + i.quantity, 0) : 0;
@@ -67,35 +97,48 @@ const FoodOrderPlacedContent: React.FC<Props> = ({ navigation, route }) => {
     : null;
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { paddingTop: insets.top }]}>
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.hero} accessible accessibilityRole="header" accessibilityLabel={`Order placed. Your order code is ${code}`}>
-          <View style={styles.badge}>
-            <IonIcon name="checkmark" size="hero" color={colors.success} />
+        <View style={styles.hero}>
+          <View style={styles.ring} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+            <View style={styles.disc}>
+              <IonIcon name="checkmark" size="xl" color={colors.onScrim} />
+            </View>
           </View>
-          <AppText variant="h1" align="center">
+          <AppText variant="h1" align="center" accessibilityRole="header">
             Order placed
           </AppText>
           <AppText variant="body" tone="muted" align="center">
-            {o ? `Order ${code}. ${o.vendor.name} will accept it in the next few minutes, and we’ll tell you when they do.` : `Order ${code}. You can follow it from Orders.`}
+            {o ? `${o.vendor.name} will accept it in the next few minutes, and we’ll tell you when they do.` : 'You can follow it from Orders.'}
           </AppText>
+          <Pressable onPress={() => void copy()} style={styles.code} accessibilityRole="button" accessibilityLabel={`Order ${code}. Copy`}>
+            <AppText variant="tag" tone="muted">
+              ORDER
+            </AppText>
+            <AppText variant="bodyStrong">{code}</AppText>
+            <IonIcon name="copy-outline" size="sm" color={service.accentDeep} />
+          </Pressable>
         </View>
 
         {o ? (
           <Card>
-            <View style={styles.row}>
-              <AppText variant="title">{o.vendor.name}</AppText>
-              <AppText variant="title">{formatPKR(o.totals.total)}</AppText>
-            </View>
-            <AppText variant="small" tone="muted">
-              {`${items} ${items === 1 ? 'item' : 'items'} · ${o.fulfilment === 'pickup' ? 'Pick-up' : 'Delivery'} · ${PAYMENT_METHOD[o.payment.method].label}`}
-            </AppText>
-            {when ? <AppText variant="small">{when}</AppText> : null}
-            {o.payment.method !== 'transfer' && o.payment.instructions ? (
+            <StoreHeadRow
+              store={{ name: o.vendor.name, logoUrl: o.vendor.logoUrl ?? null, brandColor: service.accent }}
+              meta={`${items} ${items === 1 ? 'item' : 'items'} · ${o.fulfilment === 'pickup' ? 'Pick-up' : 'Delivery'}`}
+              trailing={formatPKR(o.totals.total)}
+              chevron={false}
+            />
+            <View style={styles.facts}>
               <AppText variant="small" tone="muted">
-                {o.payment.instructions}
+                {PAYMENT_METHOD[o.payment.method].label}
               </AppText>
-            ) : null}
+              {when ? <AppText variant="small">{when}</AppText> : null}
+              {o.payment.method !== 'transfer' && o.payment.instructions ? (
+                <AppText variant="small" tone="muted">
+                  {o.payment.instructions}
+                </AppText>
+              ) : null}
+            </View>
           </Card>
         ) : null}
 
@@ -111,8 +154,8 @@ const FoodOrderPlacedContent: React.FC<Props> = ({ navigation, route }) => {
         ) : null}
       </ScrollView>
       <StickyCTA>
-        <Button label="Follow your order" onPress={follow} fullWidth />
-        <Button label="Back to the Food Court" variant="ghost" onPress={home} fullWidth />
+        <Button label="Track your order" onPress={follow} fullWidth />
+        <Button label="Back to the Food Court" variant="secondary" onPress={home} fullWidth />
       </StickyCTA>
     </View>
   );

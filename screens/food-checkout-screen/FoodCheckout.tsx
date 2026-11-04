@@ -6,7 +6,8 @@
 // deal, the kitchen's delivery fee — no other fee. Whatever stands in the
 // way is said with its fix. MetroMatrix takes no commission and never holds
 // the money: cash goes to the kitchen's rider or counter, transfers to the
-// kitchen's own account.
+// kitchen's own account. One page, three titled cards — Deliver to (or Pick
+// up from), Payment, Your order — and the sticky CtaBar with the total.
 
 import React, { useEffect, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -19,7 +20,10 @@ import { useDebouncedValue } from '../../hooks/usePagedList';
 import { formatAddress } from '../../models/addressModel';
 import { defaultPayment, fixOf, lineChoices, payChoices, validateCheckout, type IssueFix } from '../../models/food/bagModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Divider, IconButton, InlineNotice, IonIcon, ScreenShell, Sheet, SkeletonLines, TextAction, TextField, ToggleRow } from '../../Custom-Components/index';
+import { AppText, Button, CheckoutSkeleton, CtaBar, Divider, EmptyState, IconButton, InlineNotice, IonIcon, LineItemRow, ListRow, MoneyRows, ScreenShell, SectionCard, Sheet, Skeleton, StoreHeadRow, TextAction, TextField, ToggleRow } from '../../Custom-Components/index';
+import { TrustNote } from '../../Components/food/FoodParts';
+import { customerTrustLine } from '../../models/food/trustModel';
+import { PAYMENT_METHOD, TRANSFER_WINDOW_MINUTES, VENDOR_ORDER_LINE } from '../../models/food/foodStatusModel';
 import { ChoiceLine } from '../../Custom-Components/food/ChoiceLine';
 import type { FoodAppParamList, FoodIssue, FoodPaymentMethod } from '../../models';
 import { haptics } from '../../utils/haptics/haptics';
@@ -50,12 +54,14 @@ import {
 
 type Props = NativeStackScreenProps<FoodAppParamList, 'FoodCheckout'>;
 
-const makeStyles = ({ colors, space, size, radius, gutter }: Theme) =>
+const makeStyles = ({ space, size, radius, gutter }: Theme) =>
   StyleSheet.create({
-    content: { paddingHorizontal: gutter, paddingTop: space.s16, paddingBottom: space.s40, gap: space.s16 },
+    content: { paddingHorizontal: gutter, paddingBottom: space.s40, gap: space.s16 },
     head: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
     grow: { flex: 1, gap: space.s4 },
-    row: { flexDirection: 'row', justifyContent: 'space-between', gap: space.s12 },
+    halves: { flexDirection: 'row', gap: space.s12 },
+    half: { flex: 1 },
+    lines: { gap: space.s12 },
     code: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -67,25 +73,9 @@ const makeStyles = ({ colors, space, size, radius, gutter }: Theme) =>
       borderStyle: 'dashed',
     },
     codeEntry: { flexDirection: 'row', alignItems: 'flex-end', gap: space.s8 },
-    addressRow: { flexDirection: 'row', alignItems: 'center', gap: space.s12, paddingVertical: space.s12 },
-    sectionTitle: { marginTop: space.s8 },
+    addressRow: { flexDirection: 'row', alignItems: 'center', gap: space.s12, paddingVertical: space.s12, paddingHorizontal: space.s12, borderRadius: radius.md },
     payList: { gap: space.s4 },
-    muted: { color: colors.inkMuted },
   });
-
-const Money: React.FC<{ label: string; value: number; tone?: 'success'; strong?: boolean; free?: boolean }> = ({ label, value, tone, strong, free }) => {
-  const styles = useStyles(makeStyles);
-  return (
-    <View style={styles.row}>
-      <AppText variant={strong ? 'title' : 'body'} tone={strong ? 'ink' : 'muted'}>
-        {label}
-      </AppText>
-      <AppText variant={strong ? 'title' : 'body'} tone={tone ?? 'ink'}>
-        {free && value === 0 ? 'Free' : value < 0 ? `− ${formatPKR(-value)}` : formatPKR(value)}
-      </AppText>
-    </View>
-  );
-};
 
 const FoodCheckout: React.FC<Props> = props => (
   <ServiceScope service="food">
@@ -99,7 +89,7 @@ const FoodCheckoutContent: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const appStore = useAppStore();
   const styles = useStyles(makeStyles);
-  const { service, colors, motion } = useTheme();
+  const { service, colors, motion, size } = useTheme();
   const c = useAppSelector(selectFoodCheckout);
   const bag = useAppSelector(selectFoodBag);
   const book = useAppSelector(selectAddressBook);
@@ -215,12 +205,14 @@ const FoodCheckoutContent: React.FC<Props> = ({ navigation }) => {
   if (bag.cart.empty && bag.status !== 'loading') {
     return (
       <ScreenShell title="Checkout" onBack={back} scroll>
-        <InlineNotice tone="info" message="Your bag is empty." action={{ label: 'Browse the Food Court', onPress: () => navigation.navigate('FoodTabs', { screen: 'FoodHomeTab' }) }} />
+        <EmptyState ion="bag-handle-outline" title="Your bag is empty" body="Add dishes from a kitchen’s menu, then check out here." action={{ label: 'Browse the Food Court', onPress: () => navigation.navigate('FoodTabs', { screen: 'FoodHomeTab' }) }} />
       </ScreenShell>
     );
   }
 
   const when = bag.cart.scheduledFor ? bag.cart.scheduledFor.label : preview?.eta ? `${delivery ? 'Arrives in' : 'Ready in'} about ${preview.eta.label}` : null;
+  const kitchen = vendor?.name ?? 'the kitchen';
+  const payNote = c.paymentMethod ? `${PAYMENT_METHOD[c.paymentMethod].label} · paid to ${kitchen}` : `Paid to ${kitchen} directly`;
 
   return (
     <ScreenShell
@@ -230,85 +222,15 @@ const FoodCheckoutContent: React.FC<Props> = ({ navigation }) => {
       scroll
       padded={false}
       footer={
-        <Button
-          label={preview && !stale ? `Place order · ${formatPKR(preview.totals.total)}` : 'Place order'}
-          onPress={() => void place()}
-          loading={c.placeStatus === 'loading'}
-          disabled={!canPlace}
-          fullWidth
+        <CtaBar
+          label="Total"
+          amount={preview?.totals.total ?? bag.cart.subtotal}
+          note={stale ? 'Working out your total…' : payNote}
+          action={{ label: 'Place order', onPress: () => void place(), loading: c.placeStatus === 'loading', disabled: !canPlace }}
         />
       }
     >
       <View style={styles.content}>
-        {/* Where */}
-        <AppText variant="sectionTitle">{delivery ? 'Deliver to' : 'Collect from'}</AppText>
-        {delivery ? (
-          book.status === 'loading' && !book.addresses.length ? (
-            <SkeletonLines lines={3} />
-          ) : address ? (
-            <Card onPress={() => dispatch(setFoodAddressSheet(true))} invalid={!!errors.address} accessibilityLabel={`Deliver to ${address.fullName}, ${formatAddress(address)}. Change`}>
-              <View style={styles.head}>
-                <IonIcon name="location-outline" size="lg" color={service.accentDeep} />
-                <View style={styles.grow}>
-                  <AppText variant="bodyStrong">{address.fullName}</AppText>
-                  <AppText variant="small" tone="muted">
-                    {formatAddress(address)}
-                  </AppText>
-                  <AppText variant="small" tone="muted">
-                    {formatPkPhoneForDisplay(address.phone)}
-                  </AppText>
-                </View>
-                <AppText variant="small" tone="accentDeep">
-                  Change
-                </AppText>
-              </View>
-              {errors.address ? (
-                <InlineNotice tone="warning" message={errors.address} action={{ label: 'Drop a pin', onPress: () => root.navigate('AddressForm', { id: address.id }) }} />
-              ) : null}
-            </Card>
-          ) : (
-            <Card>
-              <AppText variant="body" tone="muted">
-                Add the address the kitchen’s rider should bring your food to.
-              </AppText>
-              <Button label="Add an address" leftIcon="add" variant="secondary" onPress={() => root.navigate('AddressForm')} />
-            </Card>
-          )
-        ) : (
-          <Card>
-            <View style={styles.head}>
-              <IonIcon name="storefront-outline" size="lg" color={service.accentDeep} />
-              <View style={styles.grow}>
-                <AppText variant="bodyStrong">{vendor?.name ?? 'The kitchen'}</AppText>
-                <AppText variant="small" tone="muted">
-                  {page?.location.addressLine ? [page.location.addressLine, page.location.area].filter(Boolean).join(', ') : 'Show your order code at the counter.'}
-                </AppText>
-              </View>
-            </View>
-          </Card>
-        )}
-        {when ? (
-          <View style={styles.head}>
-            <IonIcon name="time-outline" size="md" color={colors.inkMuted} />
-            <AppText variant="small" tone="muted">
-              {when}
-            </AppText>
-          </View>
-        ) : null}
-
-        {delivery && address ? (
-          <>
-            <TextField label="Building or house name (optional)" value={c.building} onChangeText={v => dispatch(setCheckoutText({ field: 'building', value: v }))} />
-            <TextField label="Floor or flat (optional)" value={c.floor} onChangeText={v => dispatch(setCheckoutText({ field: 'floor', value: v }))} />
-            <TextField
-              label="Note for the rider (optional)"
-              value={c.riderInstructions}
-              onChangeText={v => dispatch(setCheckoutText({ field: 'riderInstructions', value: v }))}
-              placeholder="Call when you reach the gate"
-            />
-          </>
-        ) : null}
-
         {/* What stands in the way, first problem first */}
         {c.previewError.message ? <InlineNotice message={c.previewError.message} /> : null}
         {first && !stale ? (
@@ -320,93 +242,156 @@ const FoodCheckoutContent: React.FC<Props> = ({ navigation }) => {
         ) : null}
         {c.placeError.message ? <InlineNotice message={c.placeError.message} action={{ label: 'Dismiss', onPress: () => dispatch(clearFoodPlaceError()) }} /> : null}
 
-        {/* Paying */}
-        <AppText variant="sectionTitle" style={styles.sectionTitle}>
-          {`How you’ll pay ${vendor?.name ?? 'the kitchen'}`}
-        </AppText>
-        {preview ? (
-          <View style={styles.payList} accessibilityRole="radiogroup" accessibilityLabel="Payment method">
-            {payChoices(preview).map(p => (
-              <ChoiceLine
-                key={p.method}
-                label={p.label}
-                price={null}
-                note={p.hint}
-                selected={c.paymentMethod === p.method}
-                disabled={!p.available}
-                multiple={false}
-                onPress={() => dispatch(chooseFoodPayment(p.method))}
-              />
-            ))}
-          </View>
-        ) : (
-          <SkeletonLines lines={2} />
-        )}
-        {c.paymentMethod === 'transfer' && preview?.payment.accounts.length ? (
-          <AppText variant="small" tone="muted">
-            You’ll see the kitchen’s account after placing the order, and have 10 minutes to send the money.
-          </AppText>
-        ) : null}
+        {!preview && !book.addresses.length && book.status === 'loading' ? <CheckoutSkeleton /> : null}
 
-        {/* A code */}
-        {c.promoCode ? (
-          <View style={[styles.code, { borderColor: preview?.deal?.code ? service.accent : colors.lineStrong }]}>
-            <IonIcon name="pricetag-outline" size="md" color={service.accentDeep} />
+        {/* 1 · Where */}
+        <SectionCard
+          title={delivery ? 'Deliver to' : 'Pick up from'}
+          icon={delivery ? 'location-outline' : 'storefront-outline'}
+          invalid={!!errors.address}
+          action={delivery && address ? { label: 'Change', onPress: () => dispatch(setFoodAddressSheet(true)) } : undefined}
+        >
+          {delivery ? (
+            book.status === 'loading' && !book.addresses.length ? (
+              <Skeleton height={size.control.lg} shape="md" />
+            ) : address ? (
+              <>
+                <View style={styles.grow} accessible accessibilityLabel={`Deliver to ${address.fullName}, ${formatAddress(address)}`}>
+                  <AppText variant="bodyStrong">{address.fullName}</AppText>
+                  <AppText variant="small" tone="muted">
+                    {formatAddress(address)}
+                  </AppText>
+                  <AppText variant="small" tone="muted">
+                    {formatPkPhoneForDisplay(address.phone)}
+                  </AppText>
+                </View>
+                {errors.address ? (
+                  <InlineNotice embedded tone="warning" message={errors.address} action={{ label: 'Drop a pin', onPress: () => root.navigate('AddressForm', { id: address.id }) }} />
+                ) : null}
+                <View style={styles.halves}>
+                  <View style={styles.half}>
+                    <TextField label="Building (optional)" value={c.building} onChangeText={v => dispatch(setCheckoutText({ field: 'building', value: v }))} />
+                  </View>
+                  <View style={styles.half}>
+                    <TextField label="Floor or flat (optional)" value={c.floor} onChangeText={v => dispatch(setCheckoutText({ field: 'floor', value: v }))} />
+                  </View>
+                </View>
+                <TextField
+                  label="Note for the rider (optional)"
+                  value={c.riderInstructions}
+                  onChangeText={v => dispatch(setCheckoutText({ field: 'riderInstructions', value: v }))}
+                  placeholder="Call when you reach the gate"
+                />
+              </>
+            ) : (
+              <>
+                <AppText variant="body" tone="muted">
+                  Add the address the kitchen’s rider should bring your food to.
+                </AppText>
+                <Button label="Add an address" leftIcon="add" variant="secondary" onPress={() => root.navigate('AddressForm')} />
+              </>
+            )
+          ) : (
             <View style={styles.grow}>
-              <AppText variant="bodyStrong">{c.promoCode}</AppText>
-              <AppText variant="caption" tone={preview?.deal?.code ? 'success' : 'muted'}>
-                {preview?.deal?.code ? `You save ${formatPKR(preview.deal.discount)}` : preview?.deal ? 'A better deal is applied instead' : 'Checking…'}
+              <AppText variant="bodyStrong">{vendor?.name ?? 'The kitchen'}</AppText>
+              <AppText variant="small" tone="muted">
+                {page?.location.addressLine ? [page.location.addressLine, page.location.area].filter(Boolean).join(', ') : 'Show your order code at the counter.'}
               </AppText>
             </View>
-            <IconButton icon="close" tone="muted" onPress={() => dispatch(removeFoodCode())} accessibilityLabel={`Remove code ${c.promoCode}`} />
-          </View>
-        ) : (
-          <View style={styles.codeEntry}>
-            <View style={styles.grow}>
-              <TextField label="Promo code (optional)" value={c.codeInput} onChangeText={v => dispatch(setCodeInput(v))} autoCapitalize="characters" placeholder="A code from the kitchen" error={errors.promoCode} />
+          )}
+          {when ? <ListRow title={when} subtitle={bag.cart.scheduledFor ? 'Scheduled' : delivery ? 'Delivery time' : 'Pick-up time'} leftIcon="time-outline" value="Change" onPress={back} /> : null}
+        </SectionCard>
+
+        {/* 2 · Paying */}
+        <SectionCard title="Payment" subtitle={`You pay ${kitchen} directly`} icon="wallet-outline">
+          {preview ? (
+            <View style={styles.payList} accessibilityRole="radiogroup" accessibilityLabel="Payment method">
+              {payChoices(preview).map(p => (
+                <ChoiceLine
+                  key={p.method}
+                  label={p.label}
+                  price={null}
+                  note={p.hint}
+                  selected={c.paymentMethod === p.method}
+                  disabled={!p.available}
+                  multiple={false}
+                  onPress={() => dispatch(chooseFoodPayment(p.method))}
+                />
+              ))}
             </View>
-            <Button label="Apply" variant="secondary" disabled={c.codeInput.length < 3} onPress={() => dispatch(applyFoodCode())} />
-          </View>
-        )}
+          ) : (
+            <>
+              <Skeleton height={size.control.lg} shape="md" />
+              <Skeleton height={size.control.lg} shape="md" />
+            </>
+          )}
+          {c.paymentMethod === 'transfer' && preview?.payment.accounts.length ? (
+            <InlineNotice embedded tone="info" message={`You’ll see ${kitchen}’s account once the order is placed, and have ${TRANSFER_WINDOW_MINUTES} minutes to send the money.`} />
+          ) : null}
 
-        <ToggleRow label="Send cutlery" helper="Only if you need it — less plastic otherwise." value={c.cutlery} onChange={v => dispatch(setCutlery(v))} />
-        <TextField label="Note for the kitchen (optional)" value={c.note} onChangeText={v => dispatch(setCheckoutText({ field: 'note', value: v }))} placeholder="Ring the bell twice" />
-
-        {/* What you'll pay */}
-        <AppText variant="sectionTitle" style={styles.sectionTitle}>
-          Your order
-        </AppText>
-        {preview ? (
-          <Card>
-            {preview.lines.map(l => (
-              <View key={l.id} style={styles.row}>
-                <View style={styles.grow}>
-                  <AppText variant="body">{`${l.quantity} × ${l.name}`}</AppText>
-                  {lineChoices(l) ? (
-                    <AppText variant="caption" tone="muted">
-                      {lineChoices(l)}
-                    </AppText>
-                  ) : null}
-                </View>
-                <AppText variant="body">{formatPKR(l.lineTotal)}</AppText>
+          {/* A code */}
+          {c.promoCode ? (
+            <View style={[styles.code, { borderColor: preview?.deal?.code ? service.accent : colors.lineStrong }]}>
+              <IonIcon name="pricetag-outline" size="md" color={service.accentDeep} />
+              <View style={styles.grow}>
+                <AppText variant="bodyStrong">{c.promoCode}</AppText>
+                <AppText variant="caption" tone={preview?.deal?.code ? 'success' : 'muted'}>
+                  {preview?.deal?.code ? `You save ${formatPKR(preview.deal.discount)}` : preview?.deal ? 'A better deal is applied instead' : 'Checking…'}
+                </AppText>
               </View>
-            ))}
-            <Divider />
-            <Money label="Subtotal" value={preview.totals.subtotal} />
-            {preview.deal ? <Money label={preview.deal.code ? `Code ${preview.deal.code}` : preview.deal.title} value={-preview.totals.discount} tone="success" /> : null}
-            {delivery ? <Money label="Delivery (the kitchen’s own rider)" value={preview.totals.deliveryFee} free tone={preview.totals.deliveryFee === 0 ? 'success' : undefined} /> : null}
-            <Divider />
-            <Money label={`Pay ${vendor?.name ?? 'the kitchen'}`} value={preview.totals.total} strong />
-            {delivery && preview.freeDeliveryOver && preview.totals.deliveryFee > 0 ? (
-              <AppText variant="caption" tone="muted">{`Free delivery on orders over ${formatPKR(preview.freeDeliveryOver)}.`}</AppText>
-            ) : null}
-            <AppText variant="caption" tone="muted">
-              No service or platform fee. MetroMatrix takes no commission.
-            </AppText>
-          </Card>
-        ) : (
-          <SkeletonLines lines={6} />
-        )}
+              <IconButton icon="close" tone="muted" onPress={() => dispatch(removeFoodCode())} accessibilityLabel={`Remove code ${c.promoCode}`} />
+            </View>
+          ) : (
+            <View style={styles.codeEntry}>
+              <View style={styles.grow}>
+                <TextField label="Promo code (optional)" value={c.codeInput} onChangeText={v => dispatch(setCodeInput(v))} autoCapitalize="characters" placeholder="A code from the kitchen" error={errors.promoCode} />
+              </View>
+              <Button label="Apply" variant="secondary" disabled={c.codeInput.length < 3} onPress={() => dispatch(applyFoodCode())} />
+            </View>
+          )}
+        </SectionCard>
+
+        {/* 3 · What you'll pay */}
+        <SectionCard title="Your order" icon="receipt-outline">
+          {vendor ? (
+            <StoreHeadRow
+              store={{ name: vendor.name, logoUrl: vendor.logoUrl, brandColor: service.accent }}
+              meta={`${bag.cart.itemCount} ${bag.cart.itemCount === 1 ? 'item' : 'items'}`}
+              chevron={false}
+            />
+          ) : null}
+          {preview ? (
+            <>
+              <View style={styles.lines}>
+                {preview.lines.map(l => (
+                  <LineItemRow key={l.id} shape="square" imageUrl={l.photoUrl} name={`${l.quantity} × ${l.name}`} meta={lineChoices(l) || null} price={formatPKR(l.lineTotal)} priceTone="ink" />
+                ))}
+              </View>
+              <Divider />
+              <ToggleRow label={VENDOR_ORDER_LINE.cutlery} helper="Only if you need it — less plastic otherwise." value={c.cutlery} onChange={v => dispatch(setCutlery(v))} />
+              <TextField label="Note for the kitchen (optional)" value={c.note} onChangeText={v => dispatch(setCheckoutText({ field: 'note', value: v }))} placeholder="Less spicy, no onions" />
+              <Divider />
+              <MoneyRows
+                rows={[
+                  { label: 'Subtotal', value: preview.totals.subtotal },
+                  preview.deal ? { label: preview.deal.code ? `Code ${preview.deal.code}` : preview.deal.title, value: preview.totals.discount, kind: 'discount' } : null,
+                  delivery ? { label: 'Delivery (the kitchen’s own rider)', value: preview.totals.deliveryFee, kind: 'free' } : null,
+                  { label: `Pay ${kitchen}`, value: preview.totals.total, kind: 'total' },
+                ]}
+              />
+              {delivery && preview.freeDeliveryOver && preview.totals.deliveryFee > 0 ? (
+                <AppText variant="caption" tone="muted">{`Free delivery on orders over ${formatPKR(preview.freeDeliveryOver)}.`}</AppText>
+              ) : null}
+              <TrustNote text={`No service or platform fee. ${customerTrustLine(vendor?.name)}`} />
+            </>
+          ) : (
+            <>
+              <Skeleton height={size.lineThumb} shape="md" />
+              <Skeleton width="60%" />
+              <Skeleton width="40%" />
+            </>
+          )}
+        </SectionCard>
       </View>
 
       <Sheet visible={c.addressSheetOpen} onClose={() => dispatch(setFoodAddressSheet(false))} title="Deliver to">
@@ -415,12 +400,12 @@ const FoodCheckoutContent: React.FC<Props> = ({ navigation }) => {
             {i > 0 ? <Divider /> : null}
             <Pressable
               onPress={() => dispatch(chooseFoodAddress(a.id))}
-              style={styles.addressRow}
+              style={[styles.addressRow, a.id === address?.id && { backgroundColor: service.accentSoft }]}
               accessibilityRole="radio"
               aria-checked={a.id === address?.id}
               accessibilityLabel={`${a.fullName}, ${formatAddress(a)}`}
             >
-              <IonIcon name={a.id === address?.id ? 'radio-button-on' : 'radio-button-off'} size="md" color={a.id === address?.id ? service.accent : colors.lineStrong} />
+              <IonIcon name={a.id === address?.id ? 'checkmark-circle' : 'radio-button-off'} size="md" color={a.id === address?.id ? service.accentDeep : colors.lineStrong} />
               <View style={styles.grow}>
                 <AppText variant="bodyStrong">{a.fullName}</AppText>
                 <AppText variant="small" tone="muted">

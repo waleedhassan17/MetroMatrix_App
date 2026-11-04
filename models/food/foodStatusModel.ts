@@ -227,6 +227,9 @@ export const secondsLeft = (acceptBy: string | null, now: number) => (acceptBy ?
 /** "4:05" for a countdown. */
 export const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 
+/** How long a customer has to send a transfer once the order is placed (the API's window). */
+export const TRANSFER_WINDOW_MINUTES = 10;
+
 /** Minutes a kitchen is asked first when it accepts (the chips start here). */
 export const DEFAULT_PREP_MINUTES = 20;
 
