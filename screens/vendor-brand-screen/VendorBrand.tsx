@@ -15,7 +15,7 @@ import { useBack } from '../../hooks/useBack';
 import { MAX_CUISINES, PRICE_LEVELS, validateVendorBrand } from '../../models/food/vendorModel';
 import { BRAND_PRESETS } from '../../models/shopping/storeModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, Card, ChoiceChip, IonIcon, InlineNotice, ScreenShell, SkeletonLines, TextAction, TextField } from '../../Custom-Components/index';
+import { AppText, Button, ChoiceChip, InlineNotice, IonIcon, RowCardsSkeleton, ScreenShell, SectionCard, TextAction, TextField } from '../../Custom-Components/index';
 import type { FoodVendorStackParamList } from '../../models';
 import { cdn } from '../../utils/cdn/cdn';
 import { haptics } from '../../utils/haptics/haptics';
@@ -58,6 +58,7 @@ const makeStyles = ({ colors, space, size, radius }: Theme) =>
     },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
     swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
+    grow: { flex: 1 },
     swatch: { width: size.swatch, height: size.swatch, borderRadius: radius.pill, borderWidth: size.focusBorder, borderColor: colors.surface },
     card: { gap: space.s12 },
   });
@@ -83,7 +84,7 @@ const VendorBrandContent: React.FC<Props> = () => {
   if (!f) {
     return (
       <ScreenShell title="Your brand" onBack={back}>
-        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadVendorBrandAsync()) }} /> : <SkeletonLines lines={8} />}
+        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadVendorBrandAsync()) }} /> : <RowCardsSkeleton count={4} />}
       </ScreenShell>
     );
   }
@@ -118,6 +119,7 @@ const VendorBrandContent: React.FC<Props> = () => {
     >
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
 
+      <SectionCard title="How customers see you" subtitle="Your cover, logo, name and tagline" icon="storefront-outline" invalid={!!errors.name || !!errors.tagline || !!errors.logoUrl}>
       <Pressable onPress={() => void pick('cover')} style={styles.cover} accessibilityRole="button" accessibilityLabel={f.coverUrl ? 'Change the cover photo' : 'Add a cover photo'}>
         {f.coverUrl ? <Image source={{ uri: cdn(f.coverUrl, { w: size.storeCard * 2 }) ?? undefined }} style={styles.fill} contentFit="cover" /> : null}
         {!f.coverUrl ? <IonIcon name="image-outline" size="xl" color={colors.inkFaint} /> : null}
@@ -133,7 +135,7 @@ const VendorBrandContent: React.FC<Props> = () => {
         <Pressable onPress={() => void pick('logo')} style={styles.logo} accessibilityRole="button" accessibilityLabel={f.logoUrl ? 'Change the logo' : 'Add a logo'}>
           {f.logoUrl ? <Image source={{ uri: cdn(f.logoUrl, { w: size.storeLogo * 2 }) ?? undefined }} style={styles.fill} contentFit="cover" /> : <IonIcon name="camera-outline" size="lg" color={colors.inkFaint} />}
         </Pressable>
-        <View style={{ flex: 1 }}>
+        <View style={styles.grow}>
           <TextAction label={s.uploading === 'logo' ? 'Uploading…' : f.logoUrl ? 'Change logo' : 'Add your logo'} icon="camera-outline" onPress={() => void pick('logo')} disabled={!!s.uploading} />
           {errors.logoUrl ? (
             <AppText variant="small" tone="danger">
@@ -152,9 +154,9 @@ const VendorBrandContent: React.FC<Props> = () => {
         maxLength={140}
         placeholder="Karachi-style biryani, slow-cooked every morning"
       />
+      </SectionCard>
 
-      <Card style={styles.card}>
-        <AppText variant="title">Cuisines</AppText>
+      <SectionCard title="Cuisines">
         <AppText variant="small" tone="muted">{`Up to ${MAX_CUISINES}. Customers find you under them.`}</AppText>
         <View style={styles.chips}>
           {s.cuisines.map(c => {
@@ -175,19 +177,17 @@ const VendorBrandContent: React.FC<Props> = () => {
             {errors.cuisineIds}
           </AppText>
         ) : null}
-      </Card>
+      </SectionCard>
 
-      <Card style={styles.card}>
-        <AppText variant="title">Price level</AppText>
+      <SectionCard title="Price level">
         <View style={styles.chips}>
           {PRICE_LEVELS.map(p => (
             <ChoiceChip key={p.value} label={`${p.label} · ${p.hint}`} selected={f.priceLevel === p.value} onPress={() => dispatch(setBrandField({ field: 'priceLevel', value: p.value }))} />
           ))}
         </View>
-      </Card>
+      </SectionCard>
 
-      <Card style={styles.card}>
-        <AppText variant="title">Brand colour</AppText>
+      <SectionCard title="Brand colour">
         <AppText variant="small" tone="muted">
           Your page, its add buttons and deal ribbons use it.
         </AppText>
@@ -199,6 +199,7 @@ const VendorBrandContent: React.FC<Props> = () => {
               accessibilityRole="radio"
               aria-checked={f.brandColor.toUpperCase() === hex.toUpperCase()}
               accessibilityLabel={`Brand colour ${hex}`}
+              hitSlop={(size.touch - size.swatch) / 2}
               style={[styles.swatch, { backgroundColor: hex }, f.brandColor.toUpperCase() === hex.toUpperCase() && { borderColor: colors.ink }]}
             />
           ))}
@@ -211,7 +212,7 @@ const VendorBrandContent: React.FC<Props> = () => {
           autoCorrect={false}
           error={errors.brandColor}
         />
-      </Card>
+      </SectionCard>
     </ScreenShell>
   );
 };

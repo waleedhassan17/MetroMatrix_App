@@ -9,10 +9,10 @@ import React, { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
-import { RIDER_VEHICLES, validateRider } from '../../models/food/vendorModel';
+import { RIDER_VEHICLES, riderDutyHeadline, riderVehicleLabel, validateRider } from '../../models/food/vendorModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, ChoiceChip, Divider, EmptyState, InlineNotice, ScreenShell, Sheet, SkeletonLines, TextField } from '../../Custom-Components/index';
-import { RiderPill } from '../../Custom-Components/food/RiderPill';
+import { AppText, Button, ChoiceChip, EmptyState, InlineNotice, ScreenShell, Sheet, TextField, RowCardsSkeleton } from '../../Custom-Components/index';
+import { RowCard } from '../../Components/admin/AdminParts';
 import { CredentialCard } from '../../Custom-Components/food/CredentialCard';
 import { haptics } from '../../utils/haptics/haptics';
 import {
@@ -74,21 +74,28 @@ const VendorRidersContent: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       refreshing={s.status === 'loading' && !!s.riders.length}
       onRefresh={() => void dispatch(loadRidersAsync())}
     >
-      <InlineNotice tone="info" message="Riders are optional — you can also mark an order as handed to your own rider." />
-      {s.error.message && s.sheet === 'closed' ? <InlineNotice message={s.error.message} /> : null}
+      {s.error.message && s.sheet === 'closed' ? (
+        <InlineNotice message={s.error.message} action={s.status === 'failed' ? { label: 'Try again', onPress: () => void dispatch(loadRidersAsync()) } : undefined} />
+      ) : null}
       {s.status === 'loading' && !s.riders.length ? (
-        <SkeletonLines lines={5} />
-      ) : !s.riders.length ? (
-        <EmptyState icon="users" title="No riders yet" body="Add the people who deliver for you. Each gets a username and password for the MetroMatrix app, and you see them on the map while they deliver." />
+        <RowCardsSkeleton count={3} />
+      ) : !s.riders.length && s.status !== 'failed' ? (
+        <>
+          <EmptyState ion="bicycle-outline" title="No riders yet" body="Add the people who deliver for you. Each gets a username and password for the MetroMatrix app, and you see them on the map while they deliver." />
+          <InlineNotice tone="info" message="Riders are optional — you can also mark an order as handed to your own rider." />
+        </>
       ) : (
-        <Card padded="horizontal">
-          {s.riders.map((r, i) => (
-            <View key={r.id}>
-              {i > 0 ? <Divider /> : null}
-              <RiderPill rider={r} onPress={() => navigation.navigate('VendorRiderDetail', { id: r.id })} />
-            </View>
-          ))}
-        </Card>
+        s.riders.map(r => (
+          <RowCard
+            key={r.id}
+            title={r.fullName}
+            mark={{ name: r.fullName }}
+            lines={[[riderVehicleLabel(r.vehicle), r.locationLive ? 'Location live' : null, r.activeOrderCount ? `${r.activeOrderCount} active` : null].filter(Boolean).join(' · ')]}
+            pill={riderDutyHeadline(r)}
+            chevron
+            onPress={() => navigation.navigate('VendorRiderDetail', { id: r.id })}
+          />
+        ))
       )}
 
       <Sheet
@@ -117,7 +124,7 @@ const VendorRidersContent: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
               placeholder="0300 1234567"
               helper="Customers can call the rider while they deliver."
             />
-            <AppText variant="bodyStrong">Rides a</AppText>
+            <AppText variant="label">Rides a</AppText>
             <View style={styles.chips}>
               {RIDER_VEHICLES.map(v => (
                 <ChoiceChip key={v.key} label={v.label} selected={s.form.vehicle === v.key} onPress={() => dispatch(setRiderField({ field: 'vehicle', value: v.key }))} />

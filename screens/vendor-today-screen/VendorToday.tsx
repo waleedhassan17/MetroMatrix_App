@@ -4,7 +4,9 @@
 // The day's dishes: cooking or not, and how many plates. Dishes not on
 // today's menu are listed below, with the weekly menu a tap away. The
 // kitchen's forecast offers today's portions in one tap; "aaj 20 biryani"
-// sets them by voice; in the evening, leftovers go up as a Bachat Box.
+// sets them by voice; in the evening, leftovers go up as a Bachat Box. The
+// day at a glance on stat tiles (new orders, dishes cooking, plates left)
+// and the kitchen's daily tools as quick tiles, under its own mark.
 
 import React, { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -13,8 +15,12 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { DAY_LONG } from '../../models/food/menuModel';
 import { portionsLine } from '../../models/kitchen/forecastModel';
 import { VoiceSheetButton } from '../../Components/voice/VoiceSheet';
-import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Divider, EmptyState, InlineNotice, ScreenShell, SkeletonLines, TextAction, ToggleRow } from '../../Custom-Components/index';
+import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
+import { Button, Card, CountIconButton, Divider, EmptyState, InlineNotice, RowCardsSkeleton, ScreenShell, StatGridSkeleton, StoreMark, TextAction, ToggleRow, AppText } from '../../Custom-Components/index';
+import { QuickActionGrid, RowCard, StatGrid } from '../../Components/admin/AdminParts';
+import { ShopSection } from '../../Components/shopping/ShopParts';
+import { selectNewOrderCount, selectVendorBoard } from '../vendor-orders-screen/vendorBoardSlice';
+import { selectUnreadCount } from '../notifications-screen/notificationsSlice';
 import { PortionStepper } from '../../Custom-Components/food/PortionStepper';
 import { formatDayFull, hourOfDay } from '../../utils/health-time/healthTime';
 import { useNow } from '../../hooks/useNow';
@@ -25,12 +31,12 @@ import { applyPortions, discardToday, editToday, loadTodayAsync, saveTodayAsync,
 
 type Nav = { navigate: (name: string, params?: object) => void };
 
-const makeStyles = ({ space }: Theme) =>
+const makeStyles = ({ space, size, radius, colors }: Theme) =>
   StyleSheet.create({
-    dish: { gap: space.s4, paddingVertical: space.s8 },
-    links: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space.s16 },
+    dish: { gap: space.s4, paddingVertical: space.s12 },
     gap: { gap: space.s8 },
     footer: { gap: space.s4, alignItems: 'center' },
+    mark: { borderRadius: radius.pill, borderWidth: size.focusBorder, borderColor: colors.onScrimLine },
   });
 
 const VendorToday: React.FC = () => {
@@ -40,6 +46,10 @@ const VendorToday: React.FC = () => {
   const s = useAppSelector(selectVendorToday);
   const business = useAppSelector(selectBusiness);
   const suggested = useAppSelector(selectSuggestedPortions);
+  const profile = useAppSelector(selectVendorBoard).profile;
+  const newOrders = useAppSelector(selectNewOrderCount);
+  const unread = useAppSelector(selectUnreadCount);
+  const { service } = useTheme();
   const t = s.today;
   const now = useNow(60_000);
   /** From 5 PM: leftovers can go up as a Bachat Box for tonight. */
@@ -54,6 +64,11 @@ const VendorToday: React.FC = () => {
   const dirty = Object.keys(s.edits).length > 0;
   const onMenu = t?.items.filter(i => i.onTodaysMenu) ?? [];
   const offMenu = t?.items.filter(i => !i.onTodaysMenu) ?? [];
+  const cookingNow = onMenu.filter(i => i.cooking);
+  const platesLeft = cookingNow.reduce((n, i) => (i.dailyLimit === null ? n : n + Math.max(0, i.dailyLimit - (i.sold ?? 0))), 0);
+  const limited = cookingNow.some(i => i.dailyLimit !== null);
+  const tiffinsTomorrow = s.tiffin?.plans.reduce((n, p) => n + p.count, 0) ?? 0;
+  const name = profile?.name ?? business?.name ?? 'Today';
 
   const save = async () => {
     const r = await dispatch(saveTodayAsync());
@@ -70,7 +85,13 @@ const VendorToday: React.FC = () => {
         subtitle={t ? `${DAY_LONG[t.weekday]}, ${formatDayFull(t.date)}` : business?.name}
         refreshing={s.status === 'loading' && !!t}
         onRefresh={() => void dispatch(loadTodayAsync())}
+        headerLeading={
+          <View style={styles.mark}>
+            <StoreMark store={{ name, logoUrl: profile?.logoUrl ?? null, brandColor: profile?.brandColor ?? service.accent }} size="md" />
+          </View>
+        }
         headerRight={
+          <>
           <VoiceSheetButton
             context="today"
             title="Speak today’s portions"
@@ -88,6 +109,8 @@ const VendorToday: React.FC = () => {
               return false;
             }}
           />
+          <CountIconButton icon="notifications-outline" count={unread} onPress={() => navigation.navigate('Notifications')} label="Notifications" />
+          </>
         }
         footer={
           dirty ? (
@@ -98,50 +121,68 @@ const VendorToday: React.FC = () => {
           ) : undefined
         }
       >
-        {s.error.message ? <InlineNotice message={s.error.message} /> : null}
+        {s.error.message ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadTodayAsync()) }} /> : null}
+        {t ? (
+          <StatGrid
+            columns={3}
+            compact
+            stats={[
+              { key: 'new', icon: 'receipt-outline', tint: 'accent', value: newOrders, label: 'New orders', onPress: () => navigation.navigate('VendorTabs', { screen: 'OrdersTab' }) },
+              { key: 'cooking', icon: 'flame-outline', tint: 'amber', value: cookingNow.length, label: 'Cooking today' },
+              { key: 'plates', icon: 'restaurant-outline', tint: 'green', value: limited ? platesLeft : '—', label: 'Plates left' },
+            ]}
+          />
+        ) : s.status !== 'failed' ? (
+          <StatGridSkeleton />
+        ) : null}
+        <QuickActionGrid
+          actions={[
+            { key: 'weekly', icon: 'calendar-number-outline', tint: 'amber', label: 'Weekly menu', onPress: () => navigation.navigate('VendorWeeklyMenu') },
+            { key: 'slots', icon: 'alarm-outline', tint: 'green', label: 'Pre-order slots', onPress: () => navigation.navigate('VendorPreorderSlots') },
+            { key: 'menu', icon: 'book-outline', tint: 'rose', label: 'Menu', onPress: () => navigation.navigate('VendorMenuPage') },
+            { key: 'box', icon: 'gift-outline', tint: 'teal', label: 'Bachat Box', onPress: () => navigation.navigate('KitchenBoxForm', { suggest: evening }) },
+            { key: 'tiffin', icon: 'calendar-outline', tint: 'violet', label: 'Tiffins', onPress: () => navigation.navigate('GrowthTiffin') },
+            { key: 'riders', icon: 'bicycle-outline', tint: 'blue', label: 'Riders', onPress: () => navigation.navigate('VendorRidersPage') },
+          ]}
+        />
         {suggested.length && !dirty ? (
           <InlineNotice
             tone="info"
             title="Suggested portions for today"
-            message={`From your usual orders: ${portionsLine(suggested)}.`}
+            message={`From your usual orders (estimated): ${portionsLine(suggested)}.`}
             action={{ label: 'Use these', onPress: () => dispatch(applyPortions(suggested)) }}
           />
         ) : null}
-        {s.tiffin?.plans.some(p => p.count) ? (
-          <Card onPress={() => navigation.navigate('GrowthTiffin')} accessibilityLabel="Tomorrow's tiffins">
-            <View style={styles.gap}>
-              <AppText variant="title">{`Tiffins tomorrow: ${s.tiffin.plans.reduce((n, p) => n + p.count, 0)}`}</AppText>
-              <AppText variant="small" tone="muted">
-                {s.tiffin.plans
-                  .filter(p => p.count)
-                  .map(p => `${p.name}: ${p.count} (${p.dishes.join(', ')})`)
-                  .join(' · ')}
-              </AppText>
-            </View>
-          </Card>
+        {tiffinsTomorrow ? (
+          <RowCard
+            title={`Tiffins tomorrow: ${tiffinsTomorrow}`}
+            lines={[
+              s.tiffin!.plans
+                .filter(p => p.count)
+                .map(p => `${p.name}: ${p.count} (${p.dishes.join(', ')})`)
+                .join(' · '),
+            ]}
+            mark={{ icon: 'calendar-outline', tint: 'violet' }}
+            chevron
+            onPress={() => navigation.navigate('GrowthTiffin')}
+          />
         ) : null}
         {evening && t?.items.some(i => i.onTodaysMenu && i.cooking) ? (
-          <Card>
-            <View style={styles.gap}>
-              <AppText variant="title">Food left tonight?</AppText>
-              <AppText variant="small" tone="muted">
-                Put it up as a Bachat Box: sold for pickup at a lower price instead of thrown away.
-              </AppText>
-              <TextAction label="Make a Bachat Box" onPress={() => navigation.navigate('KitchenBoxForm', { suggest: true })} />
-            </View>
-          </Card>
+          <RowCard
+            title="Food left tonight?"
+            lines={['Put it up as a Bachat Box: sold for pickup at a lower price instead of thrown away.']}
+            mark={{ icon: 'gift-outline', tint: 'teal' }}
+            chevron
+            onPress={() => navigation.navigate('KitchenBoxForm', { suggest: true })}
+          />
         ) : null}
-        <View style={styles.links}>
-          <TextAction label="Weekly menu" icon="calendar-outline" onPress={() => navigation.navigate('VendorWeeklyMenu')} />
-          <TextAction label="Pre-order slots" icon="time-outline" onPress={() => navigation.navigate('VendorPreorderSlots')} />
-        </View>
         {!t ? (
-          s.status === 'failed' ? null : <SkeletonLines lines={8} />
+          s.status === 'failed' ? null : <RowCardsSkeleton count={3} />
         ) : !t.items.length ? (
-          <EmptyState icon="book-open" title="Add your dishes first" body="Put your dishes on the menu, then set how many plates you cook each day." action={{ label: 'Open the menu', onPress: () => navigation.navigate('VendorMenuPage') }} />
+          <EmptyState ion="book-outline" title="Add your dishes first" body="Put your dishes on the menu, then set how many plates you cook each day." action={{ label: 'Open the menu', onPress: () => navigation.navigate('VendorMenuPage') }} />
         ) : (
           <>
-            <AppText variant="sectionTitle">Cooking today</AppText>
+            <ShopSection title="Cooking today" subtitle="Turn a dish off for the day, or set how many plates" inset={false} />
             {onMenu.length ? (
               <Card padded="horizontal">
                 {onMenu.map((i, n) => {
@@ -166,7 +207,7 @@ const VendorToday: React.FC = () => {
             )}
             {offMenu.length ? (
               <>
-                <AppText variant="sectionTitle">Not on today’s menu</AppText>
+                <ShopSection title="Not on today’s menu" inset={false} />
                 <Card padded="horizontal">
                   {offMenu.map((i, n) => (
                     <View key={i.itemId}>

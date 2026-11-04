@@ -12,7 +12,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { MAX_RANGES_PER_DAY, WEEK, rangeLabel, validateHours } from '../../models/food/vendorModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, IconButton, InlineNotice, ScreenShell, SkeletonLines, TextAction, TextField } from '../../Custom-Components/index';
+import { AppText, Button, IconButton, InlineNotice, RowCardsSkeleton, ScreenShell, SectionCard, TextAction, TimeField } from '../../Custom-Components/index';
 import type { FoodVendorStackParamList } from '../../models';
 import { haptics } from '../../utils/haptics/haptics';
 import {
@@ -30,9 +30,7 @@ type Props = NativeStackScreenProps<FoodVendorStackParamList, 'VendorHours'>;
 
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
-    day: { gap: space.s8 },
-    head: { gap: space.s4 },
-    range: { flexDirection: 'row', alignItems: 'flex-start', gap: space.s8 },
+    range: { flexDirection: 'row', alignItems: 'flex-end', gap: space.s8 },
     field: { flex: 1 },
     actions: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space.s16 },
   });
@@ -54,6 +52,8 @@ const VendorHoursContent: React.FC<Props> = () => {
   }, [dispatch]);
 
   const errors = s.submitted ? validateHours(s.ranges) : {};
+  // Only a week that loaded can be saved: after a failed load the form would be empty, and saving it would close every day.
+  const loaded = s.status === 'succeeded';
 
   const save = async () => {
     dispatch(markHoursSubmitted());
@@ -73,44 +73,38 @@ const VendorHoursContent: React.FC<Props> = () => {
       title="Opening hours"
       subtitle="When customers can order"
       onBack={back}
-      footer={<Button label="Save hours" onPress={() => void save()} loading={s.saving} disabled={!s.dirty && s.status !== 'failed'} fullWidth />}
+      footer={loaded ? <Button label="Save hours" onPress={() => void save()} loading={s.saving} disabled={!s.dirty} fullWidth /> : undefined}
     >
-      {s.error.message ? <InlineNotice message={s.error.message} /> : null}
+      {s.error.message ? (
+        <InlineNotice message={s.error.message} action={s.status === 'failed' ? { label: 'Try again', onPress: () => void dispatch(loadHoursAsync()) } : undefined} />
+      ) : null}
       {errors.overlap ? <InlineNotice message={errors.overlap} /> : null}
-      {s.status === 'loading' && !s.ranges.length ? (
-        <SkeletonLines lines={10} />
+      {!loaded ? (
+        s.status === 'failed' ? null : <RowCardsSkeleton count={4} />
       ) : (
         WEEK.map(day => {
           const ranges = s.ranges.filter(r => r.weekday === day.weekday);
+          const bad = ranges.some((_, i) => errors[`${day.weekday}.${i}.opensAt`] || errors[`${day.weekday}.${i}.closesAt`]);
           return (
-            <Card key={day.weekday} style={styles.day}>
-              <View style={styles.head}>
-                <AppText variant="title">{day.label}</AppText>
-                <AppText variant="small" tone="muted">
-                  {ranges.length ? ranges.map(rangeLabel).join(' · ') : 'Closed'}
-                </AppText>
-              </View>
+            <SectionCard key={day.weekday} title={day.label} subtitle={ranges.length ? ranges.map(rangeLabel).join(' · ') : 'Closed'} icon={ranges.length ? 'time-outline' : 'moon-outline'} invalid={bad}>
               {ranges.map((r, i) => (
                 <View key={i} style={styles.range}>
                   <View style={styles.field}>
-                    <TextField
+                    <TimeField
                       label="Opens"
                       value={r.opensAt}
-                      onChangeText={v => dispatch(setRange({ weekday: day.weekday, index: i, field: 'opensAt', value: v }))}
-                      placeholder="12:00"
-                      maxLength={5}
-                      keyboardType="numbers-and-punctuation"
+                      onChange={v => dispatch(setRange({ weekday: day.weekday, index: i, field: 'opensAt', value: v }))}
+                      step={30}
                       error={errors[`${day.weekday}.${i}.opensAt`]}
                     />
                   </View>
                   <View style={styles.field}>
-                    <TextField
+                    <TimeField
                       label="Closes"
                       value={r.closesAt}
-                      onChangeText={v => dispatch(setRange({ weekday: day.weekday, index: i, field: 'closesAt', value: v }))}
-                      placeholder="23:00"
-                      maxLength={5}
-                      keyboardType="numbers-and-punctuation"
+                      onChange={v => dispatch(setRange({ weekday: day.weekday, index: i, field: 'closesAt', value: v }))}
+                      step={30}
+                      allowMidnight
                       error={errors[`${day.weekday}.${i}.closesAt`]}
                     />
                   </View>
@@ -130,12 +124,12 @@ const VendorHoursContent: React.FC<Props> = () => {
                   <TextAction label="Copy to Mon–Fri" icon="calendar-outline" onPress={() => dispatch(copyDay({ weekday: day.weekday, to: 'weekdays' }))} />
                 ) : null}
               </View>
-            </Card>
+            </SectionCard>
           );
         })
       )}
       <AppText variant="small" tone="muted">
-        A range that closes before it opens runs past midnight, e.g. 18:00 to 02:00.
+        A range that closes before it opens runs past midnight, e.g. 6:00 PM to 2:00 AM.
       </AppText>
     </ScreenShell>
   );

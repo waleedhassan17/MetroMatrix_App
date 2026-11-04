@@ -1,6 +1,7 @@
 // CashLedger — a rider's cash for their vendor: what they hold now, and each
 // entry (collected at a door, handed over at the kitchen), newest first.
-// Shared by the rider's Cash tab and the vendor's rider page.
+// Shared by the rider's Cash tab and the vendor's rider page. The balance is
+// a white card with a tinted icon well (never a tinted block).
 
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -15,24 +16,30 @@ import { IonIcon } from '../Icon';
 
 const TZ = 'Asia/Karachi';
 
-const makeStyles = ({ space, radius }: Theme) =>
+const makeStyles = ({ space, radius, size }: Theme) =>
   StyleSheet.create({
-    balance: { padding: space.s16, borderRadius: radius.lg, gap: space.s4 },
+    balance: { flexDirection: 'row', alignItems: 'center', gap: space.s16 },
+    well: { width: size.statWell + space.s12, height: size.statWell + space.s12, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
     row: { flexDirection: 'row', alignItems: 'center', gap: space.s12, paddingVertical: space.s12 },
     grow: { flex: 1, gap: space.s4 },
   });
 
 export const CashLedger: React.FC<{ cash: RiderCash; holder: string; vendor: string }> = ({ cash, holder, vendor }) => {
   const styles = useStyles(makeStyles);
-  const { service, colors } = useTheme();
+  const { service, colors, rowTint } = useTheme();
   return (
     <>
-      <View style={[styles.balance, { backgroundColor: service.accentSoft }]} accessible accessibilityLabel={`${holder} holds ${formatPKR(cash.balance)} for ${vendor}`}>
-        <AppText variant="small" tone="accentDeep">{`${holder} hold${holder === 'You' ? '' : 's'} for ${vendor}`}</AppText>
-        <AppText variant="h1" tone="accentDeep">
-          {formatPKR(cash.balance)}
-        </AppText>
-      </View>
+      <Card>
+        <View style={styles.balance} accessible accessibilityLabel={`${holder} holds ${formatPKR(cash.balance)} for ${vendor}`}>
+          <View style={[styles.well, { backgroundColor: rowTint.amber.bg }]}>
+            <IonIcon name="cash-outline" size="lg" color={rowTint.amber.fg} />
+          </View>
+          <View style={styles.grow}>
+            <AppText variant="small" tone="muted">{`${holder} hold${holder === 'You' ? '' : 's'} for ${vendor}`}</AppText>
+            <AppText variant="h1">{formatPKR(cash.balance)}</AppText>
+          </View>
+        </View>
+      </Card>
       {cash.entries.length ? (
         <Card padded="horizontal">
           {cash.entries.map((e, i) => (

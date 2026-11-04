@@ -14,23 +14,7 @@ import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useRedu
 import { useBack } from '../../hooks/useBack';
 import { DAY_SHORT, ITEM_TAGS, ITEM_TAG_LABEL, MAX_VARIANTS, WEEK_ORDER, groupRuleLabel, validateItem } from '../../models/food/menuModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import {
-  AppText,
-  Button,
-  Card,
-  Checkbox,
-  ChoiceChip,
-  Divider,
-  IconButton,
-  IonIcon,
-  InlineNotice,
-  ListRow,
-  ScreenShell,
-  SkeletonLines,
-  TextAction,
-  TextField,
-  ToggleRow,
-} from '../../Custom-Components/index';
+import { AppText, Button, Card, Checkbox, ChoiceChip, DangerRow, IconButton, InlineNotice, IonIcon, ListRow, RowCardsSkeleton, ScreenShell, SectionCard, TextAction, TextField, ToggleRow } from '../../Custom-Components/index';
 import type { FoodVendorStackParamList } from '../../models';
 import { Alert } from '../../utils/alert/alert';
 import { cdn } from '../../utils/cdn/cdn';
@@ -101,7 +85,7 @@ const VendorMenuItemContent: React.FC<Props> = ({ route, navigation }) => {
   if (!f || s.status === 'loading') {
     return (
       <ScreenShell title={title} onBack={back}>
-        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadMenuItemAsync({ id, categoryId })) }} /> : <SkeletonLines lines={10} />}
+        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadMenuItemAsync({ id, categoryId })) }} /> : <RowCardsSkeleton count={4} />}
       </ScreenShell>
     );
   }
@@ -162,20 +146,17 @@ const VendorMenuItemContent: React.FC<Props> = ({ route, navigation }) => {
       footer={<Button label={id ? 'Save dish' : 'Add dish'} onPress={() => void save()} loading={s.saving} disabled={s.uploading} fullWidth />}
     >
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
+      {Object.keys(errors).length ? <InlineNotice tone="warning" message="Finish the highlighted parts, then save." /> : null}
 
+      <SectionCard title="Photo and name" subtitle="Dishes with a photo sell better" icon="image-outline" invalid={!!errors.name || !!errors.description}>
       <Pressable onPress={() => void pick()} style={styles.photo} accessibilityRole="button" accessibilityLabel={f.photoUrl ? 'Change the photo' : 'Add a photo'}>
         {f.photoUrl ? (
-          <Image source={{ uri: cdn(f.photoUrl, { w: size.storeCard * 2 }) ?? undefined }} style={styles.fill} contentFit="cover" />
+          <Image source={{ uri: cdn(f.photoUrl, { w: size.railCard * 3 }) ?? undefined }} style={styles.fill} contentFit="cover" />
         ) : (
           <IonIcon name="camera-outline" size="xl" color={colors.inkFaint} />
         )}
       </Pressable>
-      <TextAction
-        label={s.uploading ? 'Uploading the photo…' : f.photoUrl ? 'Change the photo' : 'Add a photo — dishes with one sell better'}
-        icon="image-outline"
-        onPress={() => void pick()}
-        disabled={s.uploading}
-      />
+      <TextAction label={s.uploading ? 'Uploading the photo…' : f.photoUrl ? 'Change the photo' : 'Add a photo'} icon="camera-outline" onPress={() => void pick()} disabled={s.uploading} />
 
       <TextField label="Name" value={f.name} onChangeText={v => set('name', v)} error={errors.name} maxLength={120} placeholder="Chicken Biryani" />
       <TextField
@@ -187,9 +168,9 @@ const VendorMenuItemContent: React.FC<Props> = ({ route, navigation }) => {
         multiline
         placeholder="What’s in it, how it’s cooked"
       />
+      </SectionCard>
 
-      <Card style={styles.card}>
-        <AppText variant="title">Category</AppText>
+      <SectionCard title="Category" icon="albums-outline" invalid={!!errors.categoryId}>
         <View style={styles.chips}>
           {s.categories.map(c => (
             <ChoiceChip key={c.id} label={c.name} selected={f.categoryId === c.id} onPress={() => set('categoryId', c.id)} />
@@ -200,10 +181,9 @@ const VendorMenuItemContent: React.FC<Props> = ({ route, navigation }) => {
             {errors.categoryId}
           </AppText>
         ) : null}
-      </Card>
+      </SectionCard>
 
-      <Card style={styles.card}>
-        <AppText variant="title">{hasSizes ? 'Sizes' : 'Price'}</AppText>
+      <SectionCard title={hasSizes ? 'Sizes' : 'Price'} icon="cash-outline" invalid={!!errors.basePrice || !!errors.variants || Object.keys(errors).some(k => k.startsWith('variants.'))}>
         {hasSizes ? (
           <>
             <AppText variant="small" tone="muted">
@@ -238,10 +218,9 @@ const VendorMenuItemContent: React.FC<Props> = ({ route, navigation }) => {
         {f.variants.length < MAX_VARIANTS ? (
           <TextAction label={hasSizes ? 'Add another size' : 'Sell it in sizes (half, full…)'} icon="add" onPress={() => dispatch(addVariant())} />
         ) : null}
-      </Card>
+      </SectionCard>
 
-      <Card style={styles.card}>
-        <AppText variant="title">Add-ons</AppText>
+      <SectionCard title="Add-ons" icon="layers-outline">
         {s.groups.length ? (
           <>
             <AppText variant="small" tone="muted">
@@ -268,18 +247,17 @@ const VendorMenuItemContent: React.FC<Props> = ({ route, navigation }) => {
           </AppText>
         )}
         <TextAction label="New add-on group" icon="add" onPress={() => navigation.navigate('VendorOptionGroup', {})} />
-      </Card>
+      </SectionCard>
 
-      <Card style={styles.card}>
-        <AppText variant="title">Details</AppText>
+      <SectionCard title="Where and when it shows" icon="calendar-outline" invalid={!!errors.serves || !!errors.days}>
         <TextField label="Serves (optional)" value={f.serves} onChangeText={v => set('serves', v.replace(/[^\d]/g, ''))} error={errors.serves} keyboardType="number-pad" placeholder="1" />
-        <AppText variant="bodyStrong">Tags</AppText>
+        <AppText variant="label">Tags</AppText>
         <View style={styles.chips}>
           {ITEM_TAGS.map(t => (
             <ChoiceChip key={t} label={ITEM_TAG_LABEL[t]} selected={f.tags.includes(t)} onPress={() => dispatch(toggleItemTag(t))} />
           ))}
         </View>
-        <AppText variant="bodyStrong">On the menu on</AppText>
+        <AppText variant="label">On the menu on</AppText>
         <View style={styles.chips}>
           {WEEK_ORDER.map(d => (
             <ChoiceChip key={d} label={DAY_SHORT[d]} selected={f.days.includes(d)} onPress={() => dispatch(toggleItemDay(d))} />
@@ -292,14 +270,15 @@ const VendorMenuItemContent: React.FC<Props> = ({ route, navigation }) => {
         ) : null}
         <ToggleRow label="It’s a deal" helper="Shown with your deals, with a deal ribbon" value={f.isDeal} onChange={v => set('isDeal', v)} />
         <ToggleRow label="Show on the menu" helper="Off hides it from customers until you switch it back" value={f.isActive} onChange={v => set('isActive', v)} />
-      </Card>
+      </SectionCard>
 
       {id ? (
-        <Card padded="horizontal">
-          <ListRow title="Make a copy" subtitle="With the same sizes and add-ons" leftIcon="copy-outline" onPress={() => void duplicate()} />
-          <Divider />
-          <ListRow title="Delete dish" leftIcon="trash-outline" destructive onPress={remove} chevron={false} />
-        </Card>
+        <>
+          <Card padded="horizontal">
+            <ListRow title="Make a copy" subtitle="With the same sizes and add-ons" leftIcon="copy-outline" tint="blue" onPress={() => void duplicate()} />
+          </Card>
+          <DangerRow label="Delete dish" onConfirm={remove} />
+        </>
       ) : null}
     </ScreenShell>
   );

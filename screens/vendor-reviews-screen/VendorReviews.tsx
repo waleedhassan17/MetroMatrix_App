@@ -16,7 +16,7 @@ import { fetchMyReviews } from '../../networks/food/vendor/reviews';
 import { validateReply } from '../../models/food/reviewModel';
 import { selectBusiness } from '../../store/authSlice';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { Button, Divider, EmptyState, InlineNotice, ScreenShell, SegmentTabs, Sheet, SkeletonLines, TextField } from '../../Custom-Components/index';
+import { Button, Card, EmptyState, InlineNotice, RowCardsSkeleton, ScreenShell, SegmentTabs, Sheet, TextAction, TextField } from '../../Custom-Components/index';
 import { FoodReviewItem } from '../../Custom-Components/food/FoodReviewItem';
 import type { FoodVendorStackParamList, VendorReview } from '../../models';
 import { haptics } from '../../utils/haptics/haptics';
@@ -32,7 +32,7 @@ const SEGMENTS: { key: 'waiting' | 'all'; label: string }[] = [
 
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
-    list: { paddingBottom: space.s40 },
+    list: { paddingBottom: space.s40, gap: space.s12 },
     actions: { flexDirection: 'row', gap: space.s12 },
   });
 
@@ -70,8 +70,12 @@ const VendorReviewsContent: React.FC<Props> = () => {
   };
 
   return (
-    <ScreenShell title="Reviews" onBack={back} scroll={false}>
-      <SegmentTabs options={SEGMENTS} value={s.unreplied ? 'waiting' : 'all'} onChange={k => dispatch(setUnrepliedOnly(k === 'waiting'))} accessibilityLabel="Reviews" />
+    <ScreenShell
+      title="Reviews"
+      subtitle={list.total ? `${list.total} ${s.unreplied ? 'waiting for a reply' : list.total === 1 ? 'review' : 'reviews'}` : name}
+      onBack={back}
+      scroll={false}
+      headerContent={<SegmentTabs options={SEGMENTS} value={s.unreplied ? 'waiting' : 'all'} onChange={k => dispatch(setUnrepliedOnly(k === 'waiting'))} accessibilityLabel="Reviews" />}>
       <FlatList
         data={list.rows}
         keyExtractor={r => r.id}
@@ -79,32 +83,29 @@ const VendorReviewsContent: React.FC<Props> = () => {
         onRefresh={list.refresh}
         refreshing={list.isRefreshing}
         onEndReached={list.loadMore}
-        ItemSeparatorComponent={Divider}
         renderItem={({ item: r }) => (
-          <FoodReviewItem
-            review={r}
-            vendorName={name}
-            context={r.orderCode ? `Order ${r.orderCode}` : undefined}
-            footer={
-              <View style={styles.actions}>
-                <Button
-                  label={r.vendorReply ? 'Edit reply' : 'Reply'}
-                  variant="secondary"
-                  leftIcon="chatbubble-outline"
-                  onPress={() => dispatch(openReply({ id: r.id, current: r.vendorReply }))}
-                />
-              </View>
-            }
-          />
+          <Card>
+            <FoodReviewItem
+              review={r}
+              vendorName={name}
+              inCard
+              context={r.orderCode ? `Order ${r.orderCode}` : undefined}
+              footer={
+                <View style={styles.actions}>
+                  <TextAction label={r.vendorReply ? 'Edit your reply' : 'Reply'} icon="chatbubble-outline" onPress={() => dispatch(openReply({ id: r.id, current: r.vendorReply }))} />
+                </View>
+              }
+            />
+          </Card>
         )}
         ListEmptyComponent={
           list.isLoading ? (
-            <SkeletonLines lines={6} />
+            <RowCardsSkeleton />
           ) : list.error ? (
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
             <EmptyState
-              icon="message-square"
+              ion="chatbox-ellipses-outline"
               title={s.unreplied ? 'Nothing waiting for a reply' : 'No reviews yet'}
               body="Customers can rate an order once it was delivered or collected."
             />

@@ -10,8 +10,9 @@ import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
+import { formatPKR } from '../../utils/money/money';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Card, IonIcon, InlineNotice, ProgressBar, ScreenShell, SkeletonLines } from '../../Custom-Components/index';
+import { AppText, Card, InlineNotice, IonIcon, ProgressBar, RowCardsSkeleton, ScreenShell, SectionCard } from '../../Custom-Components/index';
 import type { FoodVendorStackParamList } from '../../models';
 import { useTheme } from '../../theme/index';
 import { loadVendorPlanAsync, selectVendorPlan } from './vendorPlanSlice';
@@ -60,26 +61,25 @@ const VendorPlanContent: React.FC<Props> = () => {
 
   return (
     <ScreenShell title="Your plan" onBack={back} refreshing={s.status === 'loading' && !!plan} onRefresh={() => void dispatch(loadVendorPlanAsync())}>
-      {s.error.message ? <InlineNotice message={s.error.message} /> : null}
+      {s.error.message ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadVendorPlanAsync()) }} /> : null}
       {!plan ? (
-        s.status === 'failed' ? null : <SkeletonLines lines={6} />
+        s.status === 'failed' ? null : <RowCardsSkeleton count={2} />
       ) : (
         <>
           <Card style={styles.hero}>
             <View style={styles.heroHead}>
               <IonIcon name="leaf-outline" size="lg" color={colors.success} />
-              <AppText variant="screenTitle">{`${plan.label} plan`}</AppText>
+              <AppText variant="cardTitle">{`${plan.label} plan`}</AppText>
             </View>
             <AppText variant="title" tone="success">
-              {plan.price === 0 ? 'Free' : `Rs ${plan.price}`}
+              {plan.price === 0 ? 'Free' : formatPKR(plan.price)}
             </AppText>
             <AppText variant="body" tone="muted">
               No commission, ever. Customers pay you directly and every rupee of the order is yours.
             </AppText>
           </Card>
 
-          <Card style={styles.usage}>
-            <AppText variant="title">What you’re using</AppText>
+          <SectionCard title="What you’re using">
             {ORDER.filter(k => plan.limits[k] !== undefined).map(k => {
               const used = plan.usage[k] ?? 0;
               const limit = plan.limits[k];
@@ -93,7 +93,7 @@ const VendorPlanContent: React.FC<Props> = () => {
                 </View>
               );
             })}
-          </Card>
+          </SectionCard>
 
           <Card style={styles.points}>
             {[

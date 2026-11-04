@@ -12,8 +12,8 @@ import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { MAX_FEE_BANDS, bandsFromForm, validateFeeBands } from '../../models/food/vendorModel';
-import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, IconButton, InlineNotice, ScreenShell, SkeletonLines, TextAction, TextField } from '../../Custom-Components/index';
+import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
+import { AppText, Button, Card, IconButton, InlineNotice, ScreenShell, RowCardsSkeleton, TextAction, TextField } from '../../Custom-Components/index';
 import { FoodMap } from '../../Custom-Components/food/map/FoodMap';
 import type { FoodVendorStackParamList } from '../../models';
 import { formatPKR } from '../../utils/money/money';
@@ -26,8 +26,9 @@ const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
     band: { gap: space.s8 },
     head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    fields: { flexDirection: 'row', gap: space.s8 },
-    field: { flex: 1 },
+    // Two fields to a row on a phone (the minimum order takes the next row), so labels never squeeze.
+    fields: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
+    field: { flexGrow: 1, flexBasis: '40%' },
   });
 
 const VendorZones: React.FC<Props> = props => (
@@ -40,6 +41,7 @@ const VendorZonesContent: React.FC<Props> = ({ navigation }) => {
   const { back } = useBack({ name: 'VendorTabs', params: { screen: 'MoreTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
+  const { size } = useTheme();
   const s = useAppSelector(selectVendorZones);
 
   useEffect(() => {
@@ -69,14 +71,14 @@ const VendorZonesContent: React.FC<Props> = ({ navigation }) => {
       onBack={back}
       footer={<Button label="Save zones" onPress={() => void save()} loading={s.saving} disabled={!s.dirty} fullWidth />}
     >
-      {s.error.message ? <InlineNotice message={s.error.message} /> : null}
+      {s.error.message ? <InlineNotice message={s.error.message} action={s.status === 'failed' ? { label: 'Try again', onPress: () => void dispatch(loadZonesAsync()) } : undefined} /> : null}
       {errors.bands ? <InlineNotice message={errors.bands} /> : null}
-      {s.status === 'loading' && !s.rows.length ? (
-        <SkeletonLines lines={6} />
+      {s.status === 'failed' && !s.rows.length ? null : s.status === 'loading' && !s.rows.length ? (
+        <RowCardsSkeleton count={3} />
       ) : (
         <>
           {s.kitchen ? (
-            <FoodMap pins={[{ id: 'kitchen', kind: 'vendor', at: s.kitchen, label: 'Your kitchen' }]} height={160} interactive={false} accessibilityLabel="Map of your kitchen" />
+            <FoodMap pins={[{ id: 'kitchen', kind: 'vendor', at: s.kitchen, label: 'Your kitchen' }]} height={size.zoneMap} interactive={false} accessibilityLabel="Map of your kitchen" />
           ) : null}
           {s.rows.map((row, i) => (
             <Card key={i} style={styles.band}>
@@ -121,9 +123,9 @@ const VendorZonesContent: React.FC<Props> = ({ navigation }) => {
           ))}
           {s.rows.length < MAX_FEE_BANDS ? <TextAction label={s.rows.length ? 'Add a farther band' : 'Add your first band'} icon="add" onPress={() => dispatch(addBand())} /> : null}
           <AppText variant="small" tone="muted">
-            Distances are straight lines from your pin. To deliver farther, raise your delivery radius in Kitchen settings.
+            Distances are straight lines from your pin. To deliver farther, raise your delivery radius in Ordering and delivery.
           </AppText>
-          <TextAction label="Kitchen settings" icon="settings-outline" onPress={() => navigation.navigate('VendorSettings')} />
+          <TextAction label="Ordering and delivery" icon="settings-outline" onPress={() => navigation.navigate('VendorSettings')} />
         </>
       )}
     </ScreenShell>

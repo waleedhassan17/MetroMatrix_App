@@ -9,7 +9,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { groupRuleLabel } from '../../models/food/menuModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Divider, EmptyState, InlineNotice, ScreenShell, SkeletonLines, TextAction, ToggleRow } from '../../Custom-Components/index';
+import { AppText, Button, Card, Divider, EmptyState, InlineNotice, RowCardsSkeleton, ScreenShell, TextAction, ToggleRow } from '../../Custom-Components/index';
 import { formatPKR } from '../../utils/money/money';
 import { haptics } from '../../utils/haptics/haptics';
 import { loadOptionGroupsAsync, selectVendorOptionGroups, setOptionAvailableAsync } from './vendorOptionGroupsSlice';
@@ -48,11 +48,11 @@ const VendorOptionGroups: React.FC = () => {
         onRefresh={() => void dispatch(loadOptionGroupsAsync())}
         footer={<Button label="New add-on group" leftIcon="add" onPress={() => navigation.navigate('VendorOptionGroup', {})} fullWidth />}
       >
-        {s.error.message ? <InlineNotice message={s.error.message} /> : null}
+        {s.error.message ? <InlineNotice message={s.error.message} action={s.status === 'failed' ? { label: 'Try again', onPress: () => void dispatch(loadOptionGroupsAsync()) } : undefined} /> : null}
         {s.status === 'loading' && !s.groups.length ? (
-          <SkeletonLines lines={8} />
-        ) : !s.groups.length ? (
-          <EmptyState icon="sliders" title="No add-on groups yet" body="Spice level, extra toppings, a drink with the meal: customers pick from them on the dish." />
+          <RowCardsSkeleton count={4} />
+        ) : s.status === 'failed' && !s.groups.length ? null : !s.groups.length ? (
+          <EmptyState ion="options-outline" title="No add-on groups yet" body="Spice level, extra toppings, a drink with the meal: customers pick from them on the dish." />
         ) : (
           s.groups.map(g => (
             <Card key={g.id} style={styles.card}>

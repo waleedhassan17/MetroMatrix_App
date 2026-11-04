@@ -9,7 +9,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { categoryWindowLabel, validateCategory } from '../../models/food/menuModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Divider, EmptyState, IconButton, InlineNotice, ScreenShell, Sheet, SkeletonLines, TextAction, TextField, ToggleRow } from '../../Custom-Components/index';
+import { AppText, Button, Card, DangerRow, Divider, EmptyState, IconButton, InlineNotice, RowCardsSkeleton, ScreenShell, Sheet, TextField, TimeField, ToggleRow } from '../../Custom-Components/index';
 import { Alert } from '../../utils/alert/alert';
 import { haptics } from '../../utils/haptics/haptics';
 import {
@@ -85,11 +85,11 @@ const VendorCategories: React.FC = () => {
         onBack={back}
         footer={<Button label="Add a category" leftIcon="add" onPress={() => dispatch(openCategorySheet(null))} fullWidth />}
       >
-        {s.error.message && !sheet ? <InlineNotice message={s.error.message} /> : null}
+        {s.error.message && !sheet ? <InlineNotice message={s.error.message} action={s.status === 'failed' ? { label: 'Try again', onPress: () => void dispatch(loadCategoriesAsync()) } : undefined} /> : null}
         {s.status === 'loading' && !s.categories.length ? (
-          <SkeletonLines lines={6} />
-        ) : !s.categories.length ? (
-          <EmptyState icon="layers" title="No categories yet" body="Customers browse your menu by these: Biryani, BBQ, Drinks…" />
+          <RowCardsSkeleton count={3} />
+        ) : s.status === 'failed' && !s.categories.length ? null : !s.categories.length ? (
+          <EmptyState ion="layers-outline" title="No categories yet" body="Customers browse your menu by these: Biryani, BBQ, Drinks…" />
         ) : (
           <Card padded="horizontal">
             {s.categories.map((c, i) => (
@@ -131,17 +131,17 @@ const VendorCategories: React.FC = () => {
               {sheet.windowed ? (
                 <View style={styles.pair}>
                   <View style={styles.half}>
-                    <TextField label="From" value={sheet.form.availableFrom} onChangeText={v => dispatch(setCategoryField({ field: 'availableFrom', value: v }))} error={errors.availableFrom} maxLength={5} keyboardType="numbers-and-punctuation" placeholder="18:00" />
+                    <TimeField label="From" value={sheet.form.availableFrom} onChange={v => dispatch(setCategoryField({ field: 'availableFrom', value: v }))} error={errors.availableFrom} step={30} />
                   </View>
                   <View style={styles.half}>
-                    <TextField label="Until" value={sheet.form.availableTo} onChangeText={v => dispatch(setCategoryField({ field: 'availableTo', value: v }))} error={errors.availableTo} maxLength={5} keyboardType="numbers-and-punctuation" placeholder="23:30" />
+                    <TimeField label="Until" value={sheet.form.availableTo} onChange={v => dispatch(setCategoryField({ field: 'availableTo', value: v }))} error={errors.availableTo} step={30} />
                   </View>
                 </View>
               ) : null}
               {sheet.id ? (
                 <>
                   <ToggleRow label="Show on the menu" helper="Off hides the category and its dishes" value={sheet.isActive} onChange={v => dispatch(setCategoryActive(v))} />
-                  <TextAction label="Delete category" icon="trash-outline" tone="danger" onPress={remove} />
+                  <DangerRow label="Delete category" onConfirm={remove} />
                 </>
               ) : null}
             </View>

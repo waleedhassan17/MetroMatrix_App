@@ -9,7 +9,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { CUTOFF_CHOICES, DAY_LONG, MAX_SLOTS, WEEK_ORDER, cutoffLabel, validateSlots } from '../../models/food/menuModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, ChoiceChip, Divider, IconButton, InlineNotice, ScreenShell, SkeletonLines, TextAction, TextField } from '../../Custom-Components/index';
+import { AppText, Button, Card, ChoiceChip, Divider, IconButton, InlineNotice, RowCardsSkeleton, ScreenShell, TextAction, TextField, TimeField, clockLabel } from '../../Custom-Components/index';
 import { haptics } from '../../utils/haptics/haptics';
 import { addSlot, loadPreorderSlotsAsync, markSlotsSubmitted, removeSlot, savePreorderSlotsAsync, selectVendorPreorderSlots, setSlot } from './vendorPreorderSlotsSlice';
 
@@ -56,14 +56,14 @@ const VendorPreorderSlots: React.FC = () => {
         onBack={back}
         footer={dirty ? <Button label="Save slots" onPress={() => void save()} loading={s.saving} fullWidth /> : undefined}
       >
-        {s.error.message ? <InlineNotice message={s.error.message} /> : null}
+        {s.error.message ? <InlineNotice message={s.error.message} action={s.status === 'failed' ? { label: 'Try again', onPress: () => void dispatch(loadPreorderSlotsAsync()) } : undefined} /> : null}
         {errors.slots ? <InlineNotice message={errors.slots} /> : null}
         <AppText variant="small" tone="muted">
           Each slot is a time you hand over food. Orders for it close before you start cooking, and stop once it is full.
         </AppText>
         {s.status === 'loading' && !s.rows.length ? (
-          <SkeletonLines lines={8} />
-        ) : (
+          <RowCardsSkeleton count={4} />
+        ) : s.status === 'failed' && !s.rows.length ? null : (
           WEEK_ORDER.map(day => {
             const rows = s.rows.map((r, index) => ({ r, index })).filter(x => x.r.weekday === day);
             return (
@@ -80,15 +80,7 @@ const VendorPreorderSlots: React.FC = () => {
                       <View style={styles.slot}>
                         <View style={styles.row}>
                           <View style={styles.field}>
-                            <TextField
-                              label="Time"
-                              value={r.slotStart}
-                              onChangeText={v => dispatch(setSlot({ index, patch: { slotStart: v } }))}
-                              error={errors[`${index}.slotStart`]}
-                              maxLength={5}
-                              keyboardType="numbers-and-punctuation"
-                              placeholder="13:00"
-                            />
+                            <TimeField label="Time" value={r.slotStart} onChange={v => dispatch(setSlot({ index, patch: { slotStart: v } }))} error={errors[`${index}.slotStart`]} step={30} />
                           </View>
                           <View style={styles.field}>
                             <TextField
@@ -99,7 +91,7 @@ const VendorPreorderSlots: React.FC = () => {
                               keyboardType="number-pad"
                             />
                           </View>
-                          <IconButton icon="close" accessibilityLabel={`Remove the ${DAY_LONG[day]} ${r.slotStart} slot`} onPress={() => dispatch(removeSlot(index))} />
+                          <IconButton icon="close" accessibilityLabel={`Remove the ${DAY_LONG[day]} ${clockLabel(r.slotStart)} slot`} onPress={() => dispatch(removeSlot(index))} />
                         </View>
                         <AppText variant="small" tone="muted">
                           Orders close

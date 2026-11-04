@@ -10,7 +10,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, DateField, EmptyState, InlineNotice, ScreenShell, Sheet, SkeletonLines, TextAction, TextField } from '../../Custom-Components/index';
+import { AppText, Button, Card, DateField, EmptyState, InlineNotice, RowCardsSkeleton, ScreenShell, Sheet, TextAction, TextField } from '../../Custom-Components/index';
 import type { FoodVendorStackParamList } from '../../models';
 import { PKT, addDays, dateInZone, formatDayFull, todayInZone } from '../../utils/health-time/healthTime';
 import { Alert } from '../../utils/alert/alert';
@@ -79,11 +79,11 @@ const VendorClosuresContent: React.FC<Props> = () => {
       onBack={back}
       footer={<Button label="Add a closure" leftIcon="add" onPress={() => dispatch(openClosureSheet())} fullWidth />}
     >
-      {s.error.message && !s.sheet ? <InlineNotice message={s.error.message} /> : null}
+      {s.error.message && !s.sheet ? <InlineNotice message={s.error.message} action={s.status === 'failed' ? { label: 'Try again', onPress: () => void dispatch(loadClosuresAsync()) } : undefined} /> : null}
       {s.status === 'loading' && !s.closures.length ? (
-        <SkeletonLines lines={4} />
-      ) : !s.closures.length ? (
-        <EmptyState icon="calendar" title="No closed days" body="Add the days you won’t cook — a holiday or a family event. Your weekly hours stay as they are." />
+        <RowCardsSkeleton count={2} />
+      ) : s.status === 'failed' && !s.closures.length ? null : !s.closures.length ? (
+        <EmptyState ion="calendar-outline" title="No closed days" body="Add the days you won’t cook — a holiday or a family event. Your weekly hours stay as they are." />
       ) : (
         s.closures.map(c => {
           const label = daysLabel(c.startsAt, c.endsAt);

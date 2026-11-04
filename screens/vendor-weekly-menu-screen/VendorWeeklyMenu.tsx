@@ -9,7 +9,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { DAY_SHORT, EVERY_DAY, WEEK_ORDER, daysLabel } from '../../models/food/menuModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, ChoiceChip, EmptyState, InlineNotice, ScreenShell, SkeletonLines, TextAction } from '../../Custom-Components/index';
+import { AppText, Button, Card, ChoiceChip, EmptyState, InlineNotice, RowCardsSkeleton, ScreenShell, TextAction } from '../../Custom-Components/index';
 import { haptics } from '../../utils/haptics/haptics';
 import { loadWeeklyMenuAsync, saveWeeklyMenuAsync, selectVendorWeeklyMenu, setWeeklyDays, toggleWeeklyDay } from './vendorWeeklyMenuSlice';
 
@@ -51,12 +51,12 @@ const VendorWeeklyMenu: React.FC = () => {
         onBack={back}
         footer={dirty ? <Button label="Save weekly menu" onPress={() => void save()} loading={s.saving} disabled={empty} fullWidth /> : undefined}
       >
-        {s.error.message ? <InlineNotice message={s.error.message} /> : null}
+        {s.error.message ? <InlineNotice message={s.error.message} action={s.status === 'failed' ? { label: 'Try again', onPress: () => void dispatch(loadWeeklyMenuAsync()) } : undefined} /> : null}
         {empty ? <InlineNotice tone="warning" message="Every dish needs at least one day. To stop cooking one, hide it from the menu instead." /> : null}
         {s.status === 'loading' && !s.saved.length ? (
-          <SkeletonLines lines={8} />
-        ) : !s.saved.length ? (
-          <EmptyState icon="calendar" title="No dishes yet" body="Add dishes to your menu, then choose the days you cook each one." />
+          <RowCardsSkeleton count={4} />
+        ) : s.status === 'failed' && !s.saved.length ? null : !s.saved.length ? (
+          <EmptyState ion="calendar-outline" title="No dishes yet" body="Add dishes to your menu, then choose the days you cook each one." />
         ) : (
           s.saved.map(r => {
             const days = s.days[r.itemId] ?? [];

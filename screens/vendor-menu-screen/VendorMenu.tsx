@@ -5,14 +5,17 @@
 // right now, for an hour or two, until tomorrow, or until switched back;
 // tapping a dish opens it. Categories and the add-on library are a tap away.
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { OFF_CHOICES, categoryWindowLabel, daysLabel, itemPriceLabel, offUntil, type OffFor } from '../../models/food/menuModel';
 import { menuStockNote } from '../../models/kitchen/boardModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Divider, EmptyState, InlineNotice, ListRow, ScreenShell, Sheet, SkeletonLines, TextAction } from '../../Custom-Components/index';
+import { AppText, Button, Card, ChoiceChip, Divider, EmptyState, InlineNotice, ListRow, ScreenShell, Sheet } from '../../Custom-Components/index';
+import { MenuSkeleton } from '../../Custom-Components/food/FoodSkeletons';
+import { QuickActionGrid } from '../../Components/admin/AdminParts';
+import { SearchField, ShopSection } from '../../Components/shopping/ShopParts';
 import { DishRow } from '../../Custom-Components/food/DishRow';
 import type { VendorMenuItem } from '../../models';
 import { PKT, addDays, formatSlot, todayInZone, zonedToIso } from '../../utils/health-time/healthTime';
@@ -23,9 +26,8 @@ type Nav = { navigate: (name: string, params?: object) => void };
 
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
-    links: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space.s16 },
     section: { gap: space.s8 },
-    sectionHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space.s8 },
+    chips: { flexDirection: 'row', gap: space.s8 },
   });
 
 /** "3 sizes · Thu–Sat · Hidden". */
@@ -48,6 +50,9 @@ const VendorMenu: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectVendorMenu);
+  // Finding a dish: by name, or only what's switched off now (both stay on this screen).
+  const [query, setQuery] = useState('');
+  const [onlyOff, setOnlyOff] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -58,6 +63,9 @@ const VendorMenu: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const offItem = s.items.find(i => i.id === s.offItemId) ?? null;
   const offCount = s.items.filter(i => s.availability[i.id] && !s.availability[i.id].isAvailable).length;
   const loading = s.status === 'loading' && !s.items.length && !s.categories.length;
+  const q = query.trim().toLowerCase();
+  const shown = (i: VendorMenuItem) => (!q || i.name.toLowerCase().includes(q)) && (!onlyOff || (s.availability[i.id] ? !s.availability[i.id].isAvailable : false));
+  const filtering = !!q || onlyOff;
 
   const toggle = (item: VendorMenuItem, next: boolean) => {
     haptics.select();
@@ -83,35 +91,50 @@ const VendorMenu: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             <Button label="Add a dish" leftIcon="add" onPress={() => navigation.navigate('VendorMenuItem', {})} fullWidth />
           ) : undefined
         }
+        headerContent={
+          s.items.length ? (
+            <>
+              <SearchField value={query} onChange={setQuery} placeholder="Find a dish" />
+              <View style={styles.chips}>
+                <ChoiceChip label="All" count={s.items.length} selected={!onlyOff} onPress={() => setOnlyOff(false)} />
+                <ChoiceChip label="Off now" count={offCount} selected={onlyOff} onPress={() => setOnlyOff(true)} />
+              </View>
+            </>
+          ) : undefined
+        }
       >
         {s.error.message ? <InlineNotice message={s.error.message} action={s.status === 'failed' ? { label: 'Try again', onPress: () => void dispatch(loadVendorMenuAsync()) } : undefined} /> : null}
-        <View style={styles.links}>
-          <TextAction label="Categories" icon="albums-outline" onPress={() => navigation.navigate('VendorCategories')} />
-          <TextAction label="Add-on groups" icon="options-outline" onPress={() => navigation.navigate('VendorOptionGroups')} />
-        </View>
+        {filtering ? null : (
+          <QuickActionGrid
+            actions={[
+              { key: 'cats', icon: 'albums-outline', tint: 'violet', label: 'Categories', onPress: () => navigation.navigate('VendorCategories') },
+              { key: 'addons', icon: 'layers-outline', tint: 'blue', label: 'Add-on groups', onPress: () => navigation.navigate('VendorOptionGroups') },
+              { key: 'deals', icon: 'pricetag-outline', tint: 'amber', label: 'Deals', onPress: () => navigation.navigate('VendorPromotions') },
+            ]}
+          />
+        )}
 
         {loading ? (
-          <SkeletonLines lines={10} />
+          <MenuSkeleton />
         ) : !s.categories.length && s.status !== 'failed' ? (
           <EmptyState
-            icon="book-open"
+            ion="book-outline"
             title="Start your menu"
             body="Add a category first, like Biryani or Drinks, then the dishes in it."
             action={{ label: 'Add a category', onPress: () => navigation.navigate('VendorCategories') }}
           />
         ) : (
           s.categories.map(c => {
-            const dishes = s.items.filter(i => i.categoryId === c.id);
+            const all = s.items.filter(i => i.categoryId === c.id);
+            const dishes = all.filter(shown);
+            if (filtering && !dishes.length) return null;
             return (
               <View key={c.id} style={styles.section}>
-                <View style={styles.sectionHead}>
-                  <AppText variant="sectionTitle" numberOfLines={1} style={{ flexShrink: 1 }}>
-                    {c.name}
-                  </AppText>
-                  <AppText variant="small" tone="muted">
-                    {[c.isActive ? null : 'Hidden', c.availableFrom ? categoryWindowLabel(c.availableFrom, c.availableTo) : null].filter(Boolean).join(' · ')}
-                  </AppText>
-                </View>
+                <ShopSection
+                  title={c.name}
+                  subtitle={[`${all.length} ${all.length === 1 ? 'dish' : 'dishes'}`, c.isActive ? null : 'Hidden', c.availableFrom ? `Served ${categoryWindowLabel(c.availableFrom, c.availableTo)}` : null].filter(Boolean).join(' · ')}
+                  inset={false}
+                />
                 <Card padded="horizontal">
                   {dishes.length ? (
                     dishes.map((i, n) => {
@@ -135,7 +158,7 @@ const VendorMenu: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         </View>
                       );
                     })
-                  ) : (
+                  ) : filtering ? null : (
                     <ListRow title="No dishes yet" subtitle="Add the first one" leftIcon="add-circle-outline" onPress={() => navigation.navigate('VendorMenuItem', { categoryId: c.id })} />
                   )}
                 </Card>
@@ -143,6 +166,7 @@ const VendorMenu: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             );
           })
         )}
+        {filtering && !s.items.some(shown) ? <EmptyState ion="search-outline" title="No dish matches" body={onlyOff ? 'Every dish is on right now.' : 'Try another name.'} /> : null}
 
         <Sheet visible={!!offItem} onClose={() => dispatch(closeOffSheet())} title={offItem ? `Switch off ${offItem.name}` : ''}>
           <AppText variant="small" tone="muted">

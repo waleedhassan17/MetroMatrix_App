@@ -342,6 +342,8 @@ export const size = {
   packedPhoto: 128,
   /** A dish's "add" circle on the menu (inside a 44 hit area). */
   dishAdd: 32,
+  /** A list to pick from inside a form card (it scrolls past this). */
+  pickerList: 320,
   /** Charts: the Today sparkline and the Insights charts. */
   chart: { spark: 56, bar: 168, line: 168 },
   /** Rating-breakdown bar track. */

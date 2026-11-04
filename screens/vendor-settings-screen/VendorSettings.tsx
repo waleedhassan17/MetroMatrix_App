@@ -13,8 +13,10 @@ import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { AUTO_REJECT_CHOICES, validateVendorSettings } from '../../models/food/vendorModel';
-import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, ChoiceChip, InlineNotice, ScreenShell, SkeletonLines, TextField, ToggleRow } from '../../Custom-Components/index';
+import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
+import { AppText, Button, ChoiceChip, InlineNotice, RowCardsSkeleton, ScreenShell, SectionCard, TextAction, TextField, ToggleRow } from '../../Custom-Components/index';
+import { TrustNote } from '../../Components/food/FoodParts';
+import { VENDOR_TRUST_LINE } from '../../models/food/trustModel';
 import { FoodMap } from '../../Custom-Components/food/map/FoodMap';
 import type { FoodVendorStackParamList } from '../../models';
 import { haptics } from '../../utils/haptics/haptics';
@@ -47,10 +49,11 @@ const VendorSettings: React.FC<Props> = props => (
   </ServiceScope>
 );
 
-const VendorSettingsContent: React.FC<Props> = () => {
+const VendorSettingsContent: React.FC<Props> = ({ navigation }) => {
   const { back } = useBack({ name: 'VendorTabs', params: { screen: 'MoreTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
+  const { size } = useTheme();
   const s = useAppSelector(selectVendorSettings);
   const homeKitchen = useAppSelector(selectBusiness)?.subType === 'home_kitchen';
   const f = s.form;
@@ -73,7 +76,7 @@ const VendorSettingsContent: React.FC<Props> = () => {
         {s.status === 'failed' ? (
           <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadVendorSettingsAsync()) }} />
         ) : (
-          <SkeletonLines lines={10} />
+          <RowCardsSkeleton count={4} />
         )}
       </ScreenShell>
     );
@@ -97,15 +100,14 @@ const VendorSettingsContent: React.FC<Props> = () => {
 
   return (
     <ScreenShell
-      title="Kitchen settings"
+      title="Ordering and delivery"
       subtitle="How customers order from you"
       onBack={back}
       footer={<Button label="Save settings" onPress={() => void save()} loading={s.saving} fullWidth />}
     >
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
 
-      <Card style={styles.card}>
-        <AppText variant="title">Orders</AppText>
+      <SectionCard title="Orders" icon="receipt-outline" invalid={!!errors.fulfilment}>
         <ToggleRow label="Delivery" helper="Your own riders take orders to customers" value={f.acceptsDelivery} onChange={v => set('acceptsDelivery', v)} />
         <ToggleRow label="Pick-up" helper="Customers collect from your counter" value={f.acceptsPickup} onChange={v => set('acceptsPickup', v)} />
         {errors.fulfilment ? (
@@ -116,10 +118,9 @@ const VendorSettingsContent: React.FC<Props> = () => {
         {homeKitchen ? (
           <ToggleRow label="Pre-orders only" helper="Customers order ahead for your pre-order slots" value={f.preorderOnly} onChange={v => set('preorderOnly', v)} />
         ) : null}
-      </Card>
+      </SectionCard>
 
-      <Card style={styles.card}>
-        <AppText variant="title">Payment</AppText>
+      <SectionCard title="Payment" icon="wallet-outline" invalid={!!errors.codLimit}>
         <ToggleRow label="Cash on delivery" helper="And cash when customers collect" value={f.acceptsCod} onChange={v => set('acceptsCod', v)} />
         {f.acceptsCod ? (
           <TextField
@@ -137,13 +138,11 @@ const VendorSettingsContent: React.FC<Props> = () => {
           value={f.transferConfirmBeforePrep}
           onChange={v => set('transferConfirmBeforePrep', v)}
         />
-        <AppText variant="small" tone="muted">
-          Transfer accounts are under More → Payment accounts. Customers pay you directly; MetroMatrix takes no commission.
-        </AppText>
-      </Card>
+        <TextAction label="Your transfer accounts" icon="card-outline" onPress={() => navigation.navigate('PaymentAccounts')} />
+        <TrustNote text={VENDOR_TRUST_LINE} />
+      </SectionCard>
 
-      <Card style={styles.card}>
-        <AppText variant="title">Timing</AppText>
+      <SectionCard title="Timing" icon="timer-outline" invalid={!!errors.prepMinutes}>
         <TextField
           label="Usual cooking time (minutes)"
           value={f.prepMinutes}
@@ -152,7 +151,7 @@ const VendorSettingsContent: React.FC<Props> = () => {
           error={errors.prepMinutes}
           helper="Customers see it in your delivery time."
         />
-        <AppText variant="bodyStrong">An order waits for your answer for</AppText>
+        <AppText variant="label">An order waits for your answer for</AppText>
         <View style={styles.chips}>
           {AUTO_REJECT_CHOICES.map(m => (
             <ChoiceChip key={m} label={`${m} min`} selected={f.autoRejectMinutes === m} onPress={() => set('autoRejectMinutes', m)} />
@@ -161,10 +160,9 @@ const VendorSettingsContent: React.FC<Props> = () => {
         <AppText variant="small" tone="muted">
           After that it is declined for you, and the customer is told straight away.
         </AppText>
-      </Card>
+      </SectionCard>
 
-      <Card style={styles.card}>
-        <AppText variant="title">Delivery area</AppText>
+      <SectionCard title="Delivery area" icon="navigate-circle-outline" invalid={!!errors.maxRadiusKm || !!errors.freeDeliveryOver}>
         <View style={styles.pair}>
           <View style={styles.half}>
             <TextField
@@ -186,13 +184,10 @@ const VendorSettingsContent: React.FC<Props> = () => {
             />
           </View>
         </View>
-        <AppText variant="small" tone="muted">
-          Delivery fees by distance are under More → Delivery zones.
-        </AppText>
-      </Card>
+        <TextAction label="Fees by distance (delivery zones)" icon="navigate-outline" onPress={() => navigation.navigate('VendorZones')} />
+      </SectionCard>
 
-      <Card style={styles.card}>
-        <AppText variant="title">Where you are</AppText>
+      <SectionCard title="Where you are" icon="location-outline" invalid={!!errors.addressLine || !!errors.area || !!errors.city || !!errors.phone || !!errors.pin}>
         <TextField label="Address" value={f.addressLine} onChangeText={v => set('addressLine', v)} error={errors.addressLine} placeholder="12-C Main Boulevard" />
         <View style={styles.pair}>
           <View style={styles.half}>
@@ -203,10 +198,10 @@ const VendorSettingsContent: React.FC<Props> = () => {
           </View>
         </View>
         <TextField label="Kitchen phone" value={f.phone} onChangeText={v => set('phone', v)} error={errors.phone} keyboardType="phone-pad" placeholder="0300 1234567" />
-        <AppText variant="bodyStrong">Move the map so the pin sits on your kitchen</AppText>
+        <AppText variant="label">Move the map so the pin sits on your kitchen</AppText>
         <FoodMap
           pins={[]}
-          height={220}
+          height={size.trackingMap}
           picker={{ initial: startPin, onCenterChange: p => dispatch(setSettingsPin(p)) }}
           accessibilityLabel="Map: move it so the pin marks your kitchen"
         />
@@ -215,7 +210,7 @@ const VendorSettingsContent: React.FC<Props> = () => {
             {errors.pin}
           </AppText>
         ) : null}
-      </Card>
+      </SectionCard>
     </ScreenShell>
   );
 };

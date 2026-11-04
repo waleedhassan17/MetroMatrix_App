@@ -317,6 +317,13 @@ export const RIDER_STATUS_LABEL: Record<string, string> = {
 
 export const riderStatusLabel = (s: RiderStatus) => RIDER_STATUS_LABEL[s] ?? 'Inactive';
 
+/** A rider's ONE pill on the kitchen's list: on a delivery, on duty, off duty, or why they can't ride. */
+export const riderDutyHeadline = (r: { status: RiderStatus; onDuty: boolean; activeOrderCount: number }): { label: string; tone: 'neutral' | 'info' | 'success' | 'warning' } => {
+  if (r.status !== 'active') return { label: riderStatusLabel(r.status), tone: r.status === 'plan_locked' ? 'warning' : 'neutral' };
+  if (r.onDuty && r.activeOrderCount) return { label: 'On a delivery', tone: 'info' };
+  return r.onDuty ? { label: 'On duty', tone: 'success' } : { label: 'Off duty', tone: 'neutral' };
+};
+
 export const validateRider = (r: RiderInput): ValidationErrors => {
   const e: ValidationErrors = {};
   const name = r.fullName.trim();

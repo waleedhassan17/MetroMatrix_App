@@ -10,7 +10,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { MAX_OPTIONS, groupRuleLabel, validateGroup } from '../../models/food/menuModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Checkbox, IconButton, InlineNotice, QuantityStepper, ScreenShell, SkeletonLines, TextAction, TextField, ToggleRow } from '../../Custom-Components/index';
+import { AppText, Button, Checkbox, DangerRow, IconButton, InlineNotice, QuantityStepper, RowCardsSkeleton, ScreenShell, SectionCard, TextAction, TextField, ToggleRow } from '../../Custom-Components/index';
 import type { FoodVendorStackParamList } from '../../models';
 import { Alert } from '../../utils/alert/alert';
 import { haptics } from '../../utils/haptics/haptics';
@@ -64,7 +64,7 @@ const VendorOptionGroupContent: React.FC<Props> = ({ route }) => {
   if (!f || s.status === 'loading') {
     return (
       <ScreenShell title={title} onBack={back}>
-        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadOptionGroupAsync(id)) }} /> : <SkeletonLines lines={8} />}
+        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadOptionGroupAsync(id)) }} /> : <RowCardsSkeleton count={4} />}
       </ScreenShell>
     );
   }
@@ -116,8 +116,7 @@ const VendorOptionGroupContent: React.FC<Props> = ({ route }) => {
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
       <TextField label="Name" value={f.name} onChangeText={v => dispatch(setGroupName(v))} error={errors.name} maxLength={80} placeholder="Spice level" />
 
-      <Card style={styles.card}>
-        <AppText variant="title">How customers choose</AppText>
+      <SectionCard title="How customers choose">
         <ToggleRow label="Customers must choose" helper="They can’t add the dish until they pick" value={required} onChange={v => dispatch(setGroupRequired(v))} />
         {required ? (
           <View style={styles.stepRow}>
@@ -132,10 +131,9 @@ const VendorOptionGroupContent: React.FC<Props> = ({ route }) => {
         <AppText variant="small" tone={errors.rule ? 'danger' : 'muted'}>
           {errors.rule ?? `Customers see: ${groupRuleLabel(f)}`}
         </AppText>
-      </Card>
+      </SectionCard>
 
-      <Card style={styles.card}>
-        <AppText variant="title">Choices</AppText>
+      <SectionCard title="Choices">
         {errors.options ? (
           <AppText variant="small" tone="danger">
             {errors.options}
@@ -162,9 +160,9 @@ const VendorOptionGroupContent: React.FC<Props> = ({ route }) => {
           </View>
         ))}
         {f.options.length < MAX_OPTIONS ? <TextAction label="Add a choice" icon="add" onPress={() => dispatch(addGroupOption())} /> : null}
-      </Card>
+      </SectionCard>
 
-      {id ? <TextAction label="Delete this group" icon="trash-outline" tone="danger" onPress={remove} /> : null}
+      {id ? <DangerRow label="Delete this group" onConfirm={remove} /> : null}
     </ScreenShell>
   );
 };

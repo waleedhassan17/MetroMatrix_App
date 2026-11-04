@@ -2,14 +2,17 @@
 // MetroMatrix — Food vendor: one rider
 // ═══════════════════════════════════════════════════════
 
+import * as Clipboard from 'expo-clipboard';
+import Toast from 'react-native-toast-message';
 import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
-import { RIDER_VEHICLES, riderStatusLabel, riderVehicleLabel } from '../../models/food/vendorModel';
+import { RIDER_VEHICLES, riderDutyHeadline, riderVehicleLabel } from '../../models/food/vendorModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, ChoiceChip, InlineNotice, ListRow, ScreenShell, Sheet, SkeletonLines, StatusPill, TextField } from '../../Custom-Components/index';
+import { AppText, Button, Card, ChoiceChip, InlineNotice, ScreenShell, Sheet, StatusPill, TextField, RowCardsSkeleton, SectionCard, Avatar } from '../../Custom-Components/index';
+import { ToolSection } from '../../Components/admin/AdminParts';
 import { CredentialCard } from '../../Custom-Components/food/CredentialCard';
 import { CashLedger } from '../../Custom-Components/food/CashLedger';
 import { formatPKR } from '../../utils/money/money';
@@ -49,9 +52,9 @@ const dutyLine = (r: FoodRider) =>
 
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
-    card: { gap: space.s12 },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
-    head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    identity: { flexDirection: 'row', alignItems: 'center', gap: space.s16 },
+    grow: { flex: 1, gap: space.s4 },
   });
 
 const RiderDetail: React.FC<Props> = props => (
@@ -76,7 +79,7 @@ const RiderDetailContent: React.FC<Props> = ({ route }) => {
   if (!r) {
     return (
       <ScreenShell title="Rider" onBack={back}>
-        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadRiderAsync(id)) }} /> : <SkeletonLines lines={6} />}
+        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadRiderAsync(id)) }} /> : <RowCardsSkeleton count={3} />}
       </ScreenShell>
     );
   }
@@ -101,43 +104,63 @@ const RiderDetailContent: React.FC<Props> = ({ route }) => {
     <ScreenShell title={r.fullName} subtitle={dutyLine(r)} onBack={back} refreshing={s.status === 'loading'} onRefresh={() => void dispatch(loadRiderAsync(id))}>
       {s.error.message && !s.credential ? <InlineNotice message={s.error.message} /> : null}
 
-      <Card style={styles.card}>
-        <View style={styles.head}>
-          <AppText variant="title">Status</AppText>
-          <StatusPill label={riderStatusLabel(r.status)} tone={r.status === 'active' ? 'success' : r.status === 'plan_locked' ? 'warning' : 'neutral'} />
+      {/* Who: the rider, and ONE pill for where they are now */}
+      <Card>
+        <View style={styles.identity}>
+          <Avatar name={r.fullName} size="lg" />
+          <View style={styles.grow}>
+            <AppText variant="title" numberOfLines={1}>
+              {r.fullName}
+            </AppText>
+            <AppText variant="small" tone="muted">
+              {dutyLine(r)}
+            </AppText>
+          </View>
+          <StatusPill label={riderDutyHeadline(r).label} tone={riderDutyHeadline(r).tone} />
         </View>
-        {r.status === 'plan_locked' ? (
-          <AppText variant="small" tone="muted">
-            Your plan has more riders than it allows, so this rider is paused. Deactivate another rider to free a place.
-          </AppText>
-        ) : (
+      </Card>
+
+      <SectionCard title="Status" subtitle={r.status === 'plan_locked' ? 'Your plan has more riders than it allows, so this rider is paused. Deactivate another rider to free a place.' : undefined} icon="person-outline">
+        {r.status === 'plan_locked' ? null : (
           <View style={styles.chips}>
             {STATUS_CHOICES.map(c => (
               <ChoiceChip key={c.key} label={c.label} selected={r.status === c.key} disabled={s.busy === 'status'} onPress={() => changeStatus(c.key)} />
             ))}
           </View>
         )}
-      </Card>
+      </SectionCard>
 
-      <Card style={styles.card}>
-        <AppText variant="title">Vehicle</AppText>
+      <SectionCard title="Vehicle" icon="bicycle-outline">
         <View style={styles.chips}>
           {RIDER_VEHICLES.map(v => (
             <ChoiceChip key={v.key} label={v.label} selected={r.vehicle === v.key} disabled={s.busy === 'save'} onPress={() => void dispatch(saveRiderAsync({ id, input: { vehicle: v.key } }))} />
           ))}
         </View>
-      </Card>
+      </SectionCard>
 
-      <Card padded="horizontal">
-        {r.phone ? (
-          <>
-            <ListRow title={formatPkPhoneForDisplay(r.phone)} subtitle="Call" leftIcon="call-outline" onPress={() => callNumber(r.phone!)} />
-            <ListRow title="WhatsApp" leftIcon="logo-whatsapp" onPress={() => openWhatsApp(r.phone!)} />
-          </>
-        ) : null}
-        <ListRow title={r.username ?? 'No username'} subtitle="Username — riders sign in with it" leftIcon="person-outline" chevron={false} />
-        <ListRow title="Reset password" subtitle="Signs them out and gives a new password" leftIcon="key-outline" onPress={reset} />
-      </Card>
+      <ToolSection
+        title="Contact and sign-in"
+        tools={[
+          ...(r.phone
+            ? [
+                { key: 'call', title: formatPkPhoneForDisplay(r.phone), subtitle: 'Call', icon: 'call-outline' as const, tint: 'green' as const, onPress: () => callNumber(r.phone!) },
+                { key: 'wa', title: 'WhatsApp', icon: 'logo-whatsapp' as const, tint: 'teal' as const, onPress: () => openWhatsApp(r.phone!) },
+              ]
+            : []),
+          {
+            key: 'user',
+            title: r.username ?? 'No username',
+            subtitle: 'Username — riders sign in with it. Tap to copy',
+            icon: 'person-outline' as const,
+            tint: 'grey' as const,
+            onPress: () => {
+              if (!r.username) return;
+              void Clipboard.setStringAsync(r.username).then(() => Toast.show({ type: 'success', text1: 'Username copied' }));
+            },
+          },
+          { key: 'reset', title: 'Reset password', subtitle: 'Signs them out and gives a new password', icon: 'key-outline' as const, tint: 'amber' as const, onPress: reset },
+        ]}
+      />
 
       {s.cash ? (
         <>
@@ -146,17 +169,23 @@ const RiderDetailContent: React.FC<Props> = ({ route }) => {
         </>
       ) : null}
 
-      <Sheet visible={s.handoverOpen} onClose={() => dispatch(openHandover(false))} title={`Cash from ${r.fullName}`} subtitle={s.cash ? `They hold ${formatPKR(s.cash.balance)}.` : undefined}>
+      <Sheet
+        visible={s.handoverOpen}
+        onClose={() => dispatch(openHandover(false))}
+        title={`Cash from ${r.fullName}`}
+        subtitle={s.cash ? `They hold ${formatPKR(s.cash.balance)}.` : undefined}
+        footer={
+          <Button
+            label="Record handover"
+            loading={s.handing}
+            disabled={!Number(s.handoverAmount) || (!!s.cash && Number(s.handoverAmount) > s.cash.balance)}
+            onPress={() => void dispatch(recordHandoverAsync({ id, amount: Number(s.handoverAmount), note: s.handoverNote.trim() || null }))}
+            fullWidth
+          />
+        }>
         {s.handoverError.message ? <InlineNotice message={s.handoverError.message} /> : null}
         <TextField label="Amount handed over (Rs)" value={s.handoverAmount} onChangeText={v => dispatch(setHandoverAmount(v))} keyboardType="number-pad" />
         <TextField label="Note (optional)" value={s.handoverNote} onChangeText={v => dispatch(setHandoverNote(v))} placeholder="Evening handover" />
-        <Button
-          label="Record handover"
-          loading={s.handing}
-          disabled={!Number(s.handoverAmount) || (!!s.cash && Number(s.handoverAmount) > s.cash.balance)}
-          onPress={() => void dispatch(recordHandoverAsync({ id, amount: Number(s.handoverAmount), note: s.handoverNote.trim() || null }))}
-          fullWidth
-        />
       </Sheet>
 
       <Sheet visible={!!s.credential} onClose={() => dispatch(clearRiderCredential())} title="New password" footer={<Button label="Done" variant="secondary" onPress={() => dispatch(clearRiderCredential())} fullWidth />}>

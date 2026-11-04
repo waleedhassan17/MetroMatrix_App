@@ -7,14 +7,15 @@
 // is switched off instead (orders keep what it gave them).
 
 import React, { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { PROMOTION_KINDS, PROMOTION_STATE, WEEKDAY_CHOICES, formLabel, validatePromotion } from '../../models/food/promotionModel';
-import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Checkbox, ChoiceChip, DateField, InlineNotice, IonIcon, ScreenShell, SkeletonLines, StatusPill, TextField, ToggleRow } from '../../Custom-Components/index';
+import { ServiceScope, useStyles, type Theme } from '../../theme/index';
+import { AppText, Button, Checkbox, ChoiceChip, DateField, InlineNotice, ScreenShell, SkeletonLines, StatusPill, TextField, ToggleRow, SectionCard, TimeField, DangerRow } from '../../Custom-Components/index';
+import { DealTag, TrustNote } from '../../Components/food/FoodParts';
 import { ChoiceLine } from '../../Custom-Components/food/ChoiceLine';
 import type { FoodVendorStackParamList } from '../../models';
 import { Alert } from '../../utils/alert/alert';
@@ -36,14 +37,15 @@ import {
 
 type Props = NativeStackScreenProps<FoodVendorStackParamList, 'VendorPromotion'>;
 
-const makeStyles = ({ space, radius, size }: Theme) =>
+const makeStyles = ({ space, size }: Theme) =>
   StyleSheet.create({
-    card: { gap: space.s12 },
-    preview: { flexDirection: 'row', alignItems: 'center', gap: space.s8, alignSelf: 'flex-start', paddingHorizontal: space.s12, paddingVertical: space.s8, borderRadius: radius.pill },
+    preview: { alignSelf: 'flex-start' },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
     pair: { flexDirection: 'row', gap: space.s12 },
     half: { flex: 1 },
-    dishes: { gap: space.s4, maxHeight: size.storeCard * 1.5 },
+    // Scrolls inside its card, so a long menu neither clips nor pushes the form away.
+    dishes: { maxHeight: size.pickerList },
+    dishList: { gap: space.s4 },
     actions: { gap: space.s8 },
   });
 
@@ -59,7 +61,6 @@ const VendorPromotionContent: React.FC<Props> = ({ route }) => {
   const dispatch = useAppDispatch();
   const appStore = useAppStore();
   const styles = useStyles(makeStyles);
-  const { service } = useTheme();
   const s = useAppSelector(selectVendorPromotion);
   const f = s.form;
 
@@ -121,17 +122,14 @@ const VendorPromotionContent: React.FC<Props> = ({ route }) => {
     >
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
 
-      <View style={[styles.preview, { backgroundColor: service.accentSoft }]} accessible accessibilityLabel={`Customers see: ${formLabel(f)}`}>
-        <IonIcon name="pricetag" size="sm" color={service.accentDeep} />
-        <AppText variant="label" tone="accentDeep">
-          {formLabel(f)}
-        </AppText>
-      </View>
+      <SectionCard title="Name" subtitle="Customers see the tag on your card and menu" icon="pricetag-outline" invalid={!!errors.title}>
+        <View style={styles.preview}>
+          <DealTag label={formLabel(f)} />
+        </View>
+        <TextField label="Name (only you see it)" value={f.title} onChangeText={text('title')} error={errors.title} maxLength={80} placeholder="Biryani nights" />
+      </SectionCard>
 
-      <TextField label="Name" value={f.title} onChangeText={text('title')} error={errors.title} maxLength={80} placeholder="Biryani nights" />
-
-      <Card style={styles.card}>
-        <AppText variant="title">What it gives</AppText>
+      <SectionCard title="What it gives" icon="gift-outline" invalid={!!errors.value || !!errors.maxDiscount || !!errors.minOrder}>
         {PROMOTION_KINDS.map(k => (
           <ChoiceLine key={k.key} label={k.label} price={null} note={k.hint} selected={f.kind === k.key} multiple={false} onPress={() => dispatch(setPromotionKind(k.key))} />
         ))}
@@ -148,26 +146,24 @@ const VendorPromotionContent: React.FC<Props> = ({ route }) => {
           </View>
         ) : null}
         <TextField label="On orders of at least, Rs" value={f.minOrder} onChangeText={text('minOrder')} keyboardType="number-pad" error={errors.minOrder} />
-      </Card>
+      </SectionCard>
 
       {f.kind === 'percent_off_items' ? (
-        <Card style={styles.card}>
-          <AppText variant="title">Which dishes</AppText>
+        <SectionCard title="Which dishes" subtitle={f.itemIds.length ? `${f.itemIds.length} chosen` : undefined} icon="restaurant-outline" invalid={!!errors.itemIds}>
           {errors.itemIds ? (
             <AppText variant="small" tone="danger">
               {errors.itemIds}
             </AppText>
           ) : null}
-          <View style={styles.dishes}>
+          <ScrollView style={styles.dishes} contentContainerStyle={styles.dishList} nestedScrollEnabled>
             {s.dishes.map(d => (
               <Checkbox key={d.id} checked={f.itemIds.includes(d.id)} onToggle={() => dispatch(togglePromotionDish(d.id))} label={d.name} accessibilityLabel={d.name} />
             ))}
-          </View>
-        </Card>
+          </ScrollView>
+        </SectionCard>
       ) : null}
 
-      <Card style={styles.card}>
-        <AppText variant="title">Who gets it</AppText>
+      <SectionCard title="Who gets it" icon="people-outline" invalid={!!errors.code || !!errors.usageLimit || !!errors.perUserLimit}>
         <ToggleRow
           label="Customers type a code"
           helper="Off: it applies by itself and shows on your card"
@@ -184,10 +180,9 @@ const VendorPromotionContent: React.FC<Props> = ({ route }) => {
             <TextField label="Per customer (optional)" value={f.perUserLimit} onChangeText={text('perUserLimit')} keyboardType="number-pad" error={errors.perUserLimit} />
           </View>
         </View>
-      </Card>
+      </SectionCard>
 
-      <Card style={styles.card}>
-        <AppText variant="title">When it runs</AppText>
+      <SectionCard title="When it runs" icon="calendar-outline" invalid={!!errors.weekdays || !!errors.timeTo || !!errors.endsOn}>
         <View style={styles.chips}>
           {WEEKDAY_CHOICES.map(d => (
             <ChoiceChip key={d.day} label={d.label} selected={f.weekdays.includes(d.day)} onPress={() => dispatch(togglePromotionDay(d.day))} />
@@ -202,30 +197,28 @@ const VendorPromotionContent: React.FC<Props> = ({ route }) => {
         {f.withWindow ? (
           <View style={styles.pair}>
             <View style={styles.half}>
-              <TextField label="From (24-hour)" value={f.timeFrom} onChangeText={text('timeFrom')} placeholder="18:00" maxLength={5} />
+              <TimeField label="From" value={f.timeFrom} onChange={text('timeFrom')} step={30} />
             </View>
             <View style={styles.half}>
-              <TextField label="Until" value={f.timeTo} onChangeText={text('timeTo')} placeholder="23:00" maxLength={5} error={errors.timeTo} />
+              <TimeField label="Until" value={f.timeTo} onChange={text('timeTo')} step={30} allowMidnight error={errors.timeTo} />
             </View>
           </View>
         ) : null}
         <DateField label="Last day (optional)" value={f.endsOn} onChange={text('endsOn')} min={today} placeholder="No end date" error={errors.endsOn} />
-      </Card>
+      </SectionCard>
 
       {p ? (
         <View style={styles.actions}>
           {p.isActive ? (
-            <Button label="Switch it off" variant="secondary" loading={s.saving} onPress={() => void dispatch(deactivatePromotionAsync(p.id))} fullWidth />
+            <Button label="Switch it off" variant="secondary" leftIcon="pause-circle-outline" loading={s.saving} onPress={() => void dispatch(deactivatePromotionAsync(p.id))} fullWidth />
           ) : (
             <StatusPill label="Off — customers don’t see it" tone="neutral" />
           )}
-          {p.usedCount === 0 ? <Button label="Delete deal" variant="destructive" onPress={remove} fullWidth /> : null}
+          {p.usedCount === 0 ? <DangerRow label="Delete deal" onConfirm={remove} /> : null}
         </View>
       ) : null}
 
-      <AppText variant="small" tone="muted">
-        You fund every deal. Customers get one deal per order — the one that saves them most — and MetroMatrix takes no commission.
-      </AppText>
+      <TrustNote text="You fund every deal. Customers get one deal per order — the one that saves them most — and MetroMatrix takes no commission." />
     </ScreenShell>
   );
 };

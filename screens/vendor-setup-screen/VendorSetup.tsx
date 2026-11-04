@@ -14,7 +14,9 @@ import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Divider, IonIcon, InlineNotice, ListRow, ProgressBar, ScreenShell, SkeletonLines, TextAction } from '../../Custom-Components/index';
+import { AppText, Button, Card, Divider, IonIcon, InlineNotice, ListRow, ProgressBar, ScreenShell, TextAction, Skeleton, RowCardsSkeleton, StatusPill, type IonName } from '../../Custom-Components/index';
+import { TrustNote } from '../../Components/food/FoodParts';
+import { VENDOR_TRUST_LINE } from '../../models/food/trustModel';
 import type { FoodVendorStackParamList } from '../../models';
 import { KITCHEN_KIND_NAME, setupRoute, setupTitle } from '../../models/food/vendorModel';
 import { haptics } from '../../utils/haptics/haptics';
@@ -35,10 +37,25 @@ const HINT: Record<string, string> = {
   slots: 'When customers can collect or receive a pre-order',
 };
 
-const makeStyles = ({ space }: Theme) =>
+/** Each step's glyph while it's still to do. */
+const SETUP_ICON: Record<string, IonName> = {
+  profile: 'color-palette-outline',
+  location: 'location-outline',
+  hours: 'time-outline',
+  zones: 'navigate-circle-outline',
+  payment: 'card-outline',
+  food_safety: 'shield-checkmark-outline',
+  menu: 'book-outline',
+  portions: 'restaurant-outline',
+  slots: 'alarm-outline',
+};
+
+const makeStyles = ({ space, size, radius }: Theme) =>
   StyleSheet.create({
     progress: { gap: space.s8 },
     progressHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+    well: { width: size.subTypeTile, height: size.subTypeTile, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+    loading: { gap: space.s16 },
   });
 
 const VendorSetup: React.FC<Props> = props => (
@@ -50,7 +67,7 @@ const VendorSetup: React.FC<Props> = props => (
 const VendorSetupContent: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { colors } = useTheme();
+  const { colors, service, size } = useTheme();
   const s = useAppSelector(selectVendorSetup);
   const setup = s.setup;
   const business = useAppSelector(selectBusiness);
@@ -97,18 +114,27 @@ const VendorSetupContent: React.FC<Props> = ({ navigation }) => {
       refreshing={s.status === 'loading' && !!setup}
       onRefresh={() => void dispatch(loadVendorSetupAsync())}
     >
-      {s.error.message ? <InlineNotice message={s.error.message} /> : null}
+      {s.error.message ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadVendorSetupAsync()) }} /> : null}
       {!setup ? (
-        s.status === 'failed' ? null : <SkeletonLines lines={8} />
+        s.status === 'failed' ? null : (
+          <View style={styles.loading} accessibilityLabel="Loading" accessibilityRole="progressbar">
+            <Skeleton height={size.control.lg} shape="lg" />
+            <RowCardsSkeleton count={4} />
+          </View>
+        )
       ) : (
         <>
-          <View style={styles.progress}>
-            <View style={styles.progressHead}>
-              <AppText variant="title">{setup.ready ? 'All done' : `${done} of ${setup.items.length} done`}</AppText>
-              <AppText variant="bodyStrong" tone="accentDeep">{`${setup.percent}%`}</AppText>
+          <Card>
+            <View style={styles.progress}>
+              <View style={styles.progressHead}>
+                <AppText variant="title" accessibilityRole="header">
+                  {setup.ready ? 'All done' : `${done} of ${setup.items.length} done`}
+                </AppText>
+                <AppText variant="bodyStrong" tone="accentDeep">{`${setup.percent}%`}</AppText>
+              </View>
+              <ProgressBar progress={setup.percent / 100} thickness="step" accessibilityLabel={`Kitchen setup ${setup.percent}% done`} />
             </View>
-            <ProgressBar progress={setup.percent / 100} accessibilityLabel={`Kitchen setup ${setup.percent}% done`} />
-          </View>
+          </Card>
           <Card padded="horizontal">
             {setup.items.map((item, i) => {
               const to = setupRoute(item.key, business?.subType === 'home_kitchen');
@@ -118,21 +144,21 @@ const VendorSetupContent: React.FC<Props> = ({ navigation }) => {
                   <ListRow
                     title={setupTitle(item.key, item.label)}
                     subtitle={item.key === 'food_safety' && !item.done ? 'MetroMatrix will contact you to arrange a test order' : HINT[item.key]}
-                    left={<IonIcon name={item.done ? 'checkmark-circle' : 'ellipse-outline'} size="lg" color={item.done ? colors.success : colors.lineStrong} />}
+                    left={
+                      <View style={[styles.well, { backgroundColor: item.done ? colors.successSoft : service.accentSoft }]}>
+                        <IonIcon name={item.done ? 'checkmark' : SETUP_ICON[item.key] ?? 'ellipse-outline'} size="md" color={item.done ? colors.success : service.accentDeep} />
+                      </View>
+                    }
+                    right={item.done ? <StatusPill label="Done" tone="success" /> : undefined}
                     onPress={to ? () => (navigation.navigate as (name: string, params?: object) => void)(to.name, to.params) : undefined}
-                    chevron={!!to}
+                    // Done rows can still be opened to change them, without asking for attention.
+                    chevron={!!to && !item.done}
                   />
                 </View>
               );
             })}
           </Card>
-          {live ? (
-            <Button label="Go to orders" variant="secondary" onPress={toTabs} fullWidth />
-          ) : (
-            <AppText variant="small" tone="muted">
-              {KITCHEN_KIND_NAME[setup.kind]} on Food Court: customers pay you directly — cash, at pickup, or a transfer to your own account. MetroMatrix takes no commission.
-            </AppText>
-          )}
+          {live ? <Button label="Go to orders" variant="secondary" onPress={toTabs} fullWidth /> : <TrustNote text={`${KITCHEN_KIND_NAME[setup.kind]} on Food Court. ${VENDOR_TRUST_LINE}`} />}
         </>
       )}
     </ScreenShell>
