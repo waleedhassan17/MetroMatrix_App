@@ -1,6 +1,8 @@
 // MetroMatrix — the approved Food vendor's app (restaurant, home or cloud
 // kitchen): a stack whose first screen is the tabs (or Kitchen setup until the
 // kitchen is live), with every tool pushed over them (navigations-maps/FoodVendor.tsx).
+// The tabs are Food's own bar (ServiceTabs, with the new orders counted on
+// Orders), and the board stays live on every tab (VendorBoardHost).
 
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -11,14 +13,20 @@ import { ROUTES } from '../navigations-maps/Base';
 import { FOOD_VENDOR_HOME_TABS, FOOD_VENDOR_STACK_ROUTES, FOOD_VENDOR_TABS } from '../navigations-maps/FoodVendor';
 import { useAppSelector } from '../hooks/useReduxHooks';
 import { selectBusiness } from '../store/authSlice';
-import { RouteTabs } from './RouteTabs';
+import { ServiceTabs } from './ServiceTabs';
+import { VendorBoardHost } from '../Components/food/VendorBoardHost';
 import { foodVendorRootRoute } from './sessionGate';
 
 const Stack = createNativeStackNavigator<FoodVendorStackParamList>();
 
 const VendorTabs: React.FC = () => {
   const homeKitchen = useAppSelector(selectBusiness)?.subType === 'home_kitchen';
-  return <RouteTabs id="FoodVendorTabs" routes={homeKitchen ? FOOD_VENDOR_HOME_TABS : FOOD_VENDOR_TABS} />;
+  return (
+    <>
+      <VendorBoardHost />
+      <ServiceTabs id="FoodVendorTabs" routes={homeKitchen ? FOOD_VENDOR_HOME_TABS : FOOD_VENDOR_TABS} />
+    </>
+  );
 };
 
 const KitchenPartnerNavigator: React.FC = () => {

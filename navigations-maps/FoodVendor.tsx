@@ -7,6 +7,7 @@
 
 import type { IRoute, ITabRoute } from './types';
 import { ROUTES } from './Base';
+import { useNewFoodOrders } from '../hooks/useFoodVendor';
 
 import VendorOrders from '../screens/vendor-orders-screen/VendorOrders';
 import VendorMenu from '../screens/vendor-menu-screen/VendorMenu';
@@ -79,7 +80,7 @@ import StoryAndHygiene from '../screens/story-and-hygiene-screen/StoryAndHygiene
 import ChangePassword from '../screens/change-password-screen/ChangePassword';
 import Notifications from '../screens/notifications-screen/Notifications';
 
-const ORDERS: ITabRoute = { title: ROUTES.ORDERS_TAB, component: VendorOrders, label: 'Orders', icon: 'receipt-outline', iconActive: 'receipt' };
+const ORDERS: ITabRoute = { title: ROUTES.ORDERS_TAB, component: VendorOrders, label: 'Orders', icon: 'receipt-outline', iconActive: 'receipt', useBadge: useNewFoodOrders };
 const KITCHEN: ITabRoute = { title: ROUTES.KITCHEN_TAB, component: KitchenHub, label: 'Kitchen', icon: 'flame-outline', iconActive: 'flame' };
 const MORE: ITabRoute = { title: ROUTES.MORE_TAB, component: VendorMore, label: 'More', icon: 'grid-outline', iconActive: 'grid' };
 
