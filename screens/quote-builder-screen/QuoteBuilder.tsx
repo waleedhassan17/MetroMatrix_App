@@ -91,7 +91,7 @@ const QuoteBuilderContent: React.FC<Props> = ({ route }) => {
     const res = await dispatch(sendQuoteAsync({ code, input: quoteInput(d, r, Date.now()) }));
     if (sendQuoteAsync.fulfilled.match(res)) {
       haptics.success();
-      Toast.show({ type: 'success', text1: `Quote v${version} sent`, text2: `${r.customer?.name ?? 'The customer'} can accept it now.` });
+      Toast.show({ type: 'success', text1: `Quote ${version} sent`, text2: `${r.customer?.name ?? 'The customer'} can accept it now.` });
       back();
     } else haptics.warning();
   };

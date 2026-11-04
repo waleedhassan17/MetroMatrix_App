@@ -14,7 +14,7 @@ import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Divider, InlineNotice, IonIcon, ScreenShell, SkeletonLines, StatusPill } from '../../Custom-Components/index';
+import { AppText, Button, Card, Divider, InlineNotice, IonIcon, RowCardsSkeleton, ScreenShell, SectionCard } from '../../Custom-Components/index';
 import type { FoodAppParamList } from '../../models';
 import { formatQty } from '../../utils/units/units';
 import { selectNutritionSettings } from '../nutrition-settings-screen/nutritionSettingsSlice';
@@ -65,7 +65,7 @@ const HomeRecipeContent: React.FC<Props> = ({ navigation, route }) => {
   if (!r) {
     return (
       <ScreenShell title="Recipe" onBack={back}>
-        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : <SkeletonLines lines={10} />}
+        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : <RowCardsSkeleton count={4} />}
       </ScreenShell>
     );
   }
@@ -101,14 +101,18 @@ const HomeRecipeContent: React.FC<Props> = ({ navigation, route }) => {
   }
 
   return (
-    <ScreenShell title={title} subtitle={`${r.minutes} min · for ${r.servings}`} onBack={back} refreshing={s.status === 'loading'} onRefresh={load}>
+    <ScreenShell
+      title={title}
+      subtitle={`${r.minutes} min · for ${r.servings}`}
+      onBack={back}
+      refreshing={s.status === 'loading'}
+      onRefresh={load}
+      footer={<Button label="Cook step by step" leftIcon="play-outline" onPress={() => setStepAt(0)} fullWidth />}>
       {showCalories && r.nutrition ? (
         <AppText variant="small" tone="muted">{`About ${r.nutrition.kcal} kcal a serving (estimated)`}</AppText>
       ) : null}
-      <Button label="Cook step by step" leftIcon="play-outline" onPress={() => setStepAt(0)} fullWidth />
-      <Card>
+      <SectionCard title="What it takes" subtitle={missing.length ? `${missing.length} missing` : 'You have everything'} icon="basket-outline">
         <View style={styles.gap}>
-          <AppText variant="title">{`What it takes${missing.length ? ` · ${missing.length} missing` : ''}`}</AppText>
           {r.ingredients.map((i, n) => (
             <View key={i.key}>
               {n ? <Divider /> : null}
@@ -117,7 +121,11 @@ const HomeRecipeContent: React.FC<Props> = ({ navigation, route }) => {
                 <AppText variant="body" style={[styles.grow, text]}>
                   {i.name}
                 </AppText>
-                {i.usesExpiring ? <StatusPill label="Use soon" tone="warning" /> : null}
+                {i.usesExpiring ? (
+                  <AppText variant="caption" tone="warning">
+                    Use soon
+                  </AppText>
+                ) : null}
                 {i.qty !== null ? <AppText variant="bodyStrong">{formatQty(i.qty, i.unit, { dozens: i.key === 'egg' })}</AppText> : null}
               </View>
             </View>
@@ -126,10 +134,9 @@ const HomeRecipeContent: React.FC<Props> = ({ navigation, route }) => {
             <Button label={`Get the ${missing.length} missing from Shopping`} variant="secondary" leftIcon="bag-add-outline" onPress={() => navigation.navigate('MyKitchenMissing', { id: r.id, title: r.title, servings: r.servings })} fullWidth />
           ) : null}
         </View>
-      </Card>
-      <Card>
+      </SectionCard>
+      <SectionCard title="Steps" icon="list-outline">
         <View style={styles.gap}>
-          <AppText variant="title">Steps</AppText>
           {r.steps.map((st, n) => (
             <View key={st} style={styles.step}>
               <AppText variant="bodyStrong">{`${n + 1}.`}</AppText>
@@ -139,7 +146,7 @@ const HomeRecipeContent: React.FC<Props> = ({ navigation, route }) => {
             </View>
           ))}
         </View>
-      </Card>
+      </SectionCard>
       <Button label="Order it nearby instead" variant="ghost" onPress={() => navigation.navigate('FoodSearch', { q: r.searchTerm })} fullWidth />
     </ScreenShell>
   );

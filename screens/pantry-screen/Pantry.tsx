@@ -17,9 +17,9 @@ import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useRedu
 import { useBack } from '../../hooks/useBack';
 import { EXPIRY_CHOICES, PANTRY_SEGMENTS, PANTRY_UNITS, expiryLine, pantryLineOf, pantryQty, statsLine, validatePantryForm } from '../../models/myKitchen/pantryModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Checkbox, ChoiceChip, Divider, EmptyState, InlineNotice, PantryItemRow, ScreenShell, SegmentTabs, Sheet, SkeletonLines, TextAction, TextField, ToggleRow } from '../../Custom-Components/index';
+import { AppText, Button, Card, Checkbox, ChoiceChip, Divider, EmptyState, IconButton, InlineNotice, PantryItemRow, RowCardsSkeleton, ScreenShell, SegmentTabs, Sheet, TextField, ToggleRow } from '../../Custom-Components/index';
 import { VoiceEntry } from '../../Components/voice/VoiceEntry';
-import { IconWell } from '../../Components/admin/AdminParts';
+import { IconWell, QuickActionGrid } from '../../Components/admin/AdminParts';
 import type { FoodAppParamList, VoiceAction } from '../../models';
 import { formatDayShort, todayInZone } from '../../utils/health-time/healthTime';
 import { formatQty } from '../../utils/units/units';
@@ -135,7 +135,14 @@ const PantryContent: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <ScreenShell title="My Kitchen" subtitle="What’s in your kitchen at home" onBack={back} refreshing={s.status === 'loading' && !!s.list} onRefresh={load}>
+    <ScreenShell
+      title="My Kitchen"
+      subtitle="What’s in your kitchen at home"
+      onBack={back}
+      refreshing={s.status === 'loading' && !!s.list}
+      onRefresh={load}
+      headerRight={<IconButton icon="add" onPress={() => dispatch(openPantryForm(true))} accessibilityLabel="Add to your kitchen" />}
+      footer={<Button label="Cook something from it" leftIcon="restaurant-outline" onPress={() => navigation.navigate('MyKitchenRecipes')} fullWidth />}>
       {s.status === 'failed' && !s.list ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : null}
       {s.actionError.message ? <InlineNotice message={s.actionError.message} /> : null}
 
@@ -153,19 +160,15 @@ const PantryContent: React.FC<Props> = ({ navigation }) => {
         </Card>
       ) : null}
 
-      <Button label="Cook something from it" leftIcon="restaurant-outline" onPress={() => navigation.navigate('MyKitchenRecipes')} fullWidth />
-      <View style={styles.two}>
-        <View style={styles.half}>
-          <Button label="Add" variant="secondary" leftIcon="add-outline" onPress={() => dispatch(openPantryForm(true))} fullWidth />
-        </View>
-        <View style={styles.half}>
-          <Button label="Speak" variant="secondary" leftIcon="mic-outline" onPress={() => setSheet('voice')} fullWidth />
-        </View>
-      </View>
-      <View style={styles.chips}>
-        <TextAction label="Add from a Shopping order" icon="bag-handle-outline" onPress={openOrders} />
-        <TextAction label="Reminders" icon="notifications-outline" onPress={() => setSheet('reminders')} />
-      </View>
+      <QuickActionGrid
+        columns={4}
+        actions={[
+          { key: 'add', icon: 'add-circle-outline', tint: 'teal', label: 'Add', onPress: () => dispatch(openPantryForm(true)) },
+          { key: 'voice', icon: 'mic-outline', tint: 'violet', label: 'Speak', onPress: () => setSheet('voice') },
+          { key: 'order', icon: 'bag-handle-outline', tint: 'amber', label: 'From an order', onPress: openOrders },
+          { key: 'reminders', icon: 'notifications-outline', tint: 'blue', label: 'Reminders', onPress: () => setSheet('reminders') },
+        ]}
+      />
 
       <SegmentTabs
         options={PANTRY_SEGMENTS.map(x => ({ key: x.key, label: s.list ? `${x.label} · ${s.list.counts[x.key]}` : x.label }))}
@@ -173,10 +176,10 @@ const PantryContent: React.FC<Props> = ({ navigation }) => {
         onChange={k => dispatch(setPantrySegment(k as typeof s.segment))}
         accessibilityLabel="Your kitchen"
       />
-      {!s.list && s.status !== 'failed' ? <SkeletonLines lines={6} /> : null}
+      {!s.list && s.status !== 'failed' ? <RowCardsSkeleton count={4} /> : null}
       {s.list && !items.length ? (
         <EmptyState
-          icon="archive"
+          ion="archive-outline"
           title={s.segment === 'all' ? 'Nothing here yet' : s.segment === 'use_soon' ? 'Nothing to use soon' : 'Nothing expired'}
           body={s.segment === 'all' ? 'Add what you have, and you’ll get ideas to cook it before it goes off.' : 'All good for now.'}
         />
@@ -228,7 +231,7 @@ const PantryContent: React.FC<Props> = ({ navigation }) => {
       {/* From a Shopping order */}
       <Sheet visible={sheet === 'orders'} onClose={() => setSheet(null)} title="Add from a Shopping order" subtitle="Groceries from your orders in the last 45 days">
         <View style={styles.gap}>
-          {s.ordersStatus === 'loading' && !s.orders.length ? <SkeletonLines lines={4} /> : null}
+          {s.ordersStatus === 'loading' && !s.orders.length ? <RowCardsSkeleton count={2} /> : null}
           {s.ordersStatus === 'succeeded' && !s.orders.length ? (
             <AppText variant="body" tone="muted">
               No grocery orders yet. Groceries you order on MetroMatrix Shopping show here.
@@ -279,7 +282,7 @@ const PantryContent: React.FC<Props> = ({ navigation }) => {
             </AppText>
           </View>
         ) : (
-          <SkeletonLines lines={3} />
+          <RowCardsSkeleton count={2} />
         )}
       </Sheet>
     </ScreenShell>

@@ -14,10 +14,12 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
-import { TIFFIN_DAY, TIFFIN_STATUS, WEEKDAY_SHORT, tiffinPaymentStatus } from '../../models/kitchen/kitchenStatusModel';
+import { TIFFIN_DAY, WEEKDAY_SHORT, tiffinHeadline, tiffinPaymentStatus } from '../../models/kitchen/kitchenStatusModel';
 import { cutoffLabel, dayA11y, monthGrid, monthLabel, monthOf, periodAmountLabel, periodLabel, scheduleLabel, shiftMonth } from '../../models/kitchen/tiffinModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, Card, IconButton, InlineNotice, ScreenShell, Sheet, SkeletonLines, StatusPill } from '../../Custom-Components/index';
+import { AppText, Button, Card, DangerRow, IconButton, InlineNotice, ScreenShell, SectionCard, Sheet, Skeleton, StatusPill } from '../../Custom-Components/index';
+import { TrustNote } from '../../Components/food/FoodParts';
+import { customerTrustLine } from '../../models/food/trustModel';
 import { ChoiceLine } from '../../Custom-Components/food/ChoiceLine';
 import { TransferCard } from '../../Custom-Components/food/TransferCard';
 import type { FoodAppParamList, TiffinDay } from '../../models';
@@ -39,18 +41,20 @@ const PAUSE_FOR: { label: string; days: number }[] = [
 const makeStyles = ({ space, radius, colors, size }: Theme) =>
   StyleSheet.create({
     gap: { gap: space.s8 },
-    pills: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
     month: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     week: { flexDirection: 'row', gap: space.s4 },
-    cell: { flex: 1, aspectRatio: 1, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', gap: size.focusBorder },
-    empty: { flex: 1, aspectRatio: 1 },
+    // A full touch target for every day, however narrow the phone.
+    cell: { flex: 1, minHeight: size.calendarCell, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', gap: size.focusBorder },
+    empty: { flex: 1, minHeight: size.calendarCell },
     head: { flex: 1, alignItems: 'center' },
-    dot: { width: size.focusBorder * 3, height: size.focusBorder * 3, borderRadius: radius.pill },
+    dot: { width: size.pageDot, height: size.pageDot, borderRadius: radius.pill },
     today: { borderWidth: size.border, borderColor: colors.ink },
     legend: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s12 },
     legendItem: { flexDirection: 'row', alignItems: 'center', gap: space.s4 },
     swatch: { width: space.s12, height: space.s12, borderRadius: radius.sm, borderWidth: size.border, borderColor: colors.line },
-    actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
+    sheetButtons: { flexDirection: 'row', gap: space.s12 },
+    half: { flex: 1 },
+    loading: { gap: space.s16 },
   });
 
 const FoodTiffin: React.FC<Props> = props => (
@@ -64,11 +68,12 @@ const FoodTiffinContent: React.FC<Props> = ({ navigation, route }) => {
   const { back } = useBack({ name: 'FoodTiffins' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { colors, service } = useTheme();
+  const { colors, service, size } = useTheme();
   const today = useMemo(() => todayInZone(TZ), []);
   const [month, setMonth] = useState(() => monthOf(today));
   const [day, setDay] = useState<string | null>(null);
   const [sheet, setSheet] = useState<'pause' | 'cancel' | null>(null);
+  const [pauseDays, setPauseDays] = useState<number | null>(null);
   const ui = useAppSelector(selectFoodTiffinUi);
   const x = useAppSelector(st => selectMyTiffin(st, code));
   const cal = useAppSelector(st => selectTiffinCalendar(st, code, month));
@@ -79,12 +84,19 @@ const FoodTiffinContent: React.FC<Props> = ({ navigation, route }) => {
   if (!x) {
     return (
       <ScreenShell title="Tiffin" onBack={back}>
-        {ui.status === 'failed' ? <InlineNotice message={ui.error.message} action={ui.error.code === 'NOT_FOUND' ? undefined : { label: 'Try again', onPress: load }} /> : <SkeletonLines lines={10} />}
+        {ui.status === 'failed' ? (
+          <InlineNotice message={ui.error.message} action={ui.error.code === 'NOT_FOUND' ? undefined : { label: 'Try again', onPress: load }} />
+        ) : (
+          <View style={styles.loading} accessibilityLabel="Loading" accessibilityRole="progressbar">
+            <Skeleton height={size.control.lg * 2} shape="lg" />
+            <Skeleton height={size.calendarCell * 6} shape="lg" />
+          </View>
+        )}
       </ScreenShell>
     );
   }
 
-  const status = TIFFIN_STATUS[x.status];
+  const pill = tiffinHeadline(x);
   const picked: TiffinDay | null = day ? (cal?.days.find(d => d.date === day) ?? null) : null;
   const pay = x.period ? tiffinPaymentStatus(x.period.payment.status) : null;
 
@@ -120,7 +132,19 @@ const FoodTiffinContent: React.FC<Props> = ({ navigation, route }) => {
   };
 
   return (
-    <ScreenShell title={x.plan.name} subtitle={`${x.vendor.name} · ${status.label}`} onBack={back} refreshing={ui.status === 'loading'} onRefresh={load}>
+    <ScreenShell
+      title={x.plan.name}
+      subtitle={x.vendor.name}
+      onBack={back}
+      refreshing={ui.status === 'loading'}
+      onRefresh={load}
+      footer={
+        x.canResume ? (
+          <Button label="Resume" leftIcon="play-outline" loading={ui.busy === 'sub'} onPress={() => void act({ kind: 'resume' }, 'Resumed')} fullWidth />
+        ) : x.canPause ? (
+          <Button label="Pause for a while" variant="secondary" leftIcon="pause-outline" onPress={() => setSheet('pause')} fullWidth />
+        ) : undefined
+      }>
       {fresh && x.status === 'pending' ? (
         <InlineNotice tone="success" title="Request sent" message={`${x.vendor.name} approves it, then your first period is due. You start ${formatDayShort(x.startDate)}.`} />
       ) : null}
@@ -129,9 +153,11 @@ const FoodTiffinContent: React.FC<Props> = ({ navigation, route }) => {
 
       <Card>
         <View style={styles.gap}>
-          <View style={styles.pills}>
-            <StatusPill label={status.label} tone={status.tone} />
-            <StatusPill label={scheduleLabel(x.plan)} />
+          <View style={styles.month}>
+            <AppText variant="small" tone="muted">
+              {scheduleLabel(x.plan)}
+            </AppText>
+            <StatusPill label={pill.label} tone={pill.tone} />
           </View>
           {x.nextDelivery ? (
             <>
@@ -172,7 +198,7 @@ const FoodTiffinContent: React.FC<Props> = ({ navigation, route }) => {
               ))}
             </View>
             {!cal ? (
-              <SkeletonLines lines={5} />
+              <Skeleton height={size.calendarCell * 5} shape="md" />
             ) : (
               monthGrid(cal.days).map((week, w) => (
                 <View key={w} style={styles.week}>
@@ -180,9 +206,11 @@ const FoodTiffinContent: React.FC<Props> = ({ navigation, route }) => {
                     d ? (
                       <Pressable
                         key={d.date}
-                        onPress={() => (d.state === 'off' || d.state === 'before_start' ? undefined : setDay(d.date))}
+                        // A day with nothing on it isn't a button.
+                        disabled={d.state === 'off' || d.state === 'before_start' || d.state === 'none'}
+                        onPress={() => setDay(d.date)}
                         style={[styles.cell, { backgroundColor: fill(d) }, d.date === today && styles.today]}
-                        accessibilityRole="button"
+                        accessibilityRole={d.state === 'off' || d.state === 'before_start' || d.state === 'none' ? 'text' : 'button'}
                         accessibilityLabel={dayA11y(d, TIFFIN_DAY[d.state].label)}>
                         <AppText variant="small" tone={d.state === 'off' || d.state === 'before_start' || d.state === 'none' ? 'faint' : 'ink'}>
                           {String(Number(d.date.slice(8)))}
@@ -235,29 +263,15 @@ const FoodTiffinContent: React.FC<Props> = ({ navigation, route }) => {
             />
           </>
         ) : (
-          <Card>
-            <View style={styles.gap}>
-              <View style={styles.month}>
-                <AppText variant="title">{periodLabel(x.period)}</AppText>
-                {pay ? <StatusPill label={pay.label} tone={pay.tone} /> : null}
-              </View>
-              <AppText variant="body">{periodAmountLabel(x.period)}</AppText>
-              {x.period.payment.status === 'unpaid' ? (
-                <AppText variant="small" tone="muted">{`Pay ${formatPKR(x.period.amount)} in cash with the first delivery of the period.`}</AppText>
-              ) : null}
-            </View>
-          </Card>
+          <SectionCard title={periodLabel(x.period)} subtitle={periodAmountLabel(x.period)} icon="wallet-outline" action={pay ? <StatusPill label={pay.label} tone={pay.tone} /> : undefined}>
+            {x.period.payment.status === 'unpaid' ? (
+              <AppText variant="small" tone="muted">{`Pay ${formatPKR(x.period.amount)} in cash with the first delivery of the period.`}</AppText>
+            ) : null}
+          </SectionCard>
         )
       ) : null}
-      <AppText variant="caption" tone="muted">
-        You pay the kitchen directly. MetroMatrix takes no commission.
-      </AppText>
-
-      <View style={styles.actions}>
-        {x.canPause ? <Button label="Pause" variant="secondary" leftIcon="pause-outline" onPress={() => setSheet('pause')} /> : null}
-        {x.canResume ? <Button label="Resume" leftIcon="play-outline" loading={ui.busy === 'sub'} onPress={() => void act({ kind: 'resume' }, 'Resumed')} /> : null}
-        {x.canCancel ? <Button label={x.status === 'pending' ? 'Withdraw the request' : 'Cancel the tiffin'} variant="secondary" onPress={() => setSheet('cancel')} /> : null}
-      </View>
+      <TrustNote text={customerTrustLine(x.vendor.name)} />
+      {x.canCancel ? <DangerRow label={x.status === 'pending' ? 'Withdraw the request' : 'Cancel the tiffin'} icon="close-circle-outline" onConfirm={() => setSheet('cancel')} /> : null}
 
       <Sheet
         visible={!!picked}
@@ -289,19 +303,29 @@ const FoodTiffinContent: React.FC<Props> = ({ navigation, route }) => {
         ) : null}
       </Sheet>
 
-      <Sheet visible={sheet === 'pause'} onClose={() => setSheet(null)} title="Pause your tiffin" subtitle="From the next day you can still change.">
-        {ui.actionError.message ? <InlineNotice message={ui.actionError.message} /> : null}
-        {PAUSE_FOR.map(p => (
-          <ChoiceLine
-            key={p.label}
-            label={p.label}
-            price={null}
-            selected={false}
-            multiple={false}
-            disabled={ui.busy === 'sub'}
-            onPress={() => void act({ kind: 'pause', until: addDays(today, p.days) }, 'Paused')}
+      <Sheet
+        visible={sheet === 'pause'}
+        onClose={() => {
+          setPauseDays(null);
+          setSheet(null);
+        }}
+        title="Pause your tiffin"
+        subtitle="From the next day you can still change. Resume any time before."
+        footer={
+          <Button
+            label={pauseDays ? `Pause until ${formatDayShort(addDays(today, pauseDays))}` : 'Choose how long'}
+            disabled={!pauseDays}
+            loading={ui.busy === 'sub'}
+            onPress={() => pauseDays && void act({ kind: 'pause', until: addDays(today, pauseDays) }, 'Paused')}
+            fullWidth
           />
-        ))}
+        }>
+        {ui.actionError.message ? <InlineNotice message={ui.actionError.message} /> : null}
+        <View accessibilityRole="radiogroup" accessibilityLabel="How long to pause">
+          {PAUSE_FOR.map(p => (
+            <ChoiceLine key={p.label} label={p.label} price={null} selected={pauseDays === p.days} multiple={false} disabled={ui.busy === 'sub'} onPress={() => setPauseDays(p.days)} />
+          ))}
+        </View>
       </Sheet>
 
       <Sheet
@@ -309,8 +333,19 @@ const FoodTiffinContent: React.FC<Props> = ({ navigation, route }) => {
         onClose={() => setSheet(null)}
         title={x.status === 'pending' ? 'Withdraw your request?' : 'Cancel your tiffin?'}
         subtitle={x.status === 'pending' ? undefined : 'Days the kitchen has started on still come.'}
-        footer={<Button label={x.status === 'pending' ? 'Withdraw it' : 'Cancel it'} variant="destructive" loading={ui.busy === 'sub'} onPress={() => void act({ kind: 'cancel' }, 'Cancelled')} fullWidth />}>
-        <Button label="Keep it" variant="secondary" onPress={() => setSheet(null)} fullWidth />
+        footer={
+          <View style={styles.sheetButtons}>
+            <View style={styles.half}>
+              <Button label="Keep it" variant="secondary" onPress={() => setSheet(null)} fullWidth />
+            </View>
+            <View style={styles.half}>
+              <Button label={x.status === 'pending' ? 'Withdraw it' : 'Cancel it'} variant="destructive" loading={ui.busy === 'sub'} onPress={() => void act({ kind: 'cancel' }, 'Cancelled')} fullWidth />
+            </View>
+          </View>
+        }>
+        <AppText variant="body" tone="muted">
+          {x.status === 'pending' ? `${x.vendor.name} won’t see your request any more.` : `No more ${x.plan.name} from ${x.vendor.name} after the days already started.`}
+        </AppText>
       </Sheet>
     </ScreenShell>
   );

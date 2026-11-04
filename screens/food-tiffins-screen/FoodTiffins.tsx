@@ -10,10 +10,10 @@ import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
-import { TIFFIN_STATUS } from '../../models/kitchen/kitchenStatusModel';
+import { tiffinHeadline } from '../../models/kitchen/kitchenStatusModel';
 import { priceLabel, scheduleLabel } from '../../models/kitchen/tiffinModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { EmptyState, InlineNotice, ScreenShell, SkeletonLines } from '../../Custom-Components/index';
+import { EmptyState, InlineNotice, ScreenShell, RowCardsSkeleton } from '../../Custom-Components/index';
 import { RowCard, SectionHead } from '../../Components/admin/AdminParts';
 import type { FoodAppParamList, TiffinSubscription } from '../../models';
 import { formatDayShort } from '../../utils/health-time/healthTime';
@@ -51,7 +51,8 @@ const FoodTiffinsContent: React.FC<Props> = ({ navigation }) => {
         `${x.vendor.name} · ${scheduleLabel(x.plan)}`,
         x.nextDelivery ? `Next: ${formatDayShort(x.nextDelivery.date)} · ${x.nextDelivery.dishes.join(', ')}` : priceLabel(x.plan),
       ]}
-      pill={{ label: TIFFIN_STATUS[x.status].label, tone: TIFFIN_STATUS[x.status].tone }}
+      pill={tiffinHeadline(x)}
+      chevron
       onPress={() => navigation.navigate('FoodTiffin', { code: x.code })}
     />
   );
@@ -62,9 +63,9 @@ const FoodTiffinsContent: React.FC<Props> = ({ navigation }) => {
     <ScreenShell title="Your tiffins" subtitle="Meals on set days, paid to the kitchen" onBack={back} refreshing={s.status === 'loading' && !!s.items.length} onRefresh={load}>
       {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : null}
       {s.status === 'loading' && !s.items.length ? (
-        <SkeletonLines lines={6} />
+        <RowCardsSkeleton count={3} />
       ) : !s.items.length && s.status === 'succeeded' ? (
-        <EmptyState icon="calendar" title="No tiffins yet" body="Home kitchens offer weekday lunches and monthly dinners. Find one on a kitchen’s page." action={{ label: 'Browse home kitchens', onPress: () => navigation.navigate('FoodVendors', { rail: 'homeKitchens', title: 'Home kitchens' }) }} />
+        <EmptyState ion="calendar-outline" title="No tiffins yet" body="Home kitchens offer weekday lunches and monthly dinners. Find one on a kitchen’s page." action={{ label: 'Browse home kitchens', onPress: () => navigation.navigate('FoodVendors', { rail: 'homeKitchens', title: 'Home kitchens' }) }} />
       ) : (
         <View style={styles.list}>
           {current.length ? <SectionHead title="Current" /> : null}

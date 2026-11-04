@@ -7,7 +7,7 @@
 // puts them in the Shopping bag (paid to the store at checkout); "View bag"
 // opens Shopping.
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -17,7 +17,7 @@ import { useBack } from '../../hooks/useBack';
 import { useServiceNav } from '../../hooks/useServiceNav';
 import { optionLine } from '../../models/myKitchen/pantryModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Divider, EmptyState, InlineNotice, ScreenShell, SkeletonLines, StatusPill } from '../../Custom-Components/index';
+import { AppText, Button, Card, Divider, EmptyState, InlineNotice, RowCardsSkeleton, ScreenShell, StatusPill } from '../../Custom-Components/index';
 import type { FoodAppParamList, GroceryOption } from '../../models';
 import { formatQty } from '../../utils/units/units';
 import { haptics } from '../../utils/haptics/haptics';
@@ -53,10 +53,14 @@ const MissingItemsContent: React.FC<Props> = ({ route }) => {
   const load = useCallback(() => void dispatch(loadMissingItemsAsync({ id, servings })), [dispatch, id, servings]);
   useFocusEffect(load);
 
+  // Only the button that was tapped spins.
+  const [addingId, setAddingId] = useState<string | null>(null);
   const add = async (o: GroceryOption) => {
     if (!o.variantId) return;
     haptics.press();
+    setAddingId(o.variantId);
     const r = await dispatch(addToBagAsync({ variantId: o.variantId, quantity: o.packsNeeded }));
+    setAddingId(null);
     if (addToBagAsync.fulfilled.match(r)) {
       haptics.success();
       dispatch(markAddedToBag(o.variantId));
@@ -66,11 +70,17 @@ const MissingItemsContent: React.FC<Props> = ({ route }) => {
 
   const items = s.recipeId === id ? s.items : [];
   return (
-    <ScreenShell title="Get what’s missing" subtitle={title ?? 'From MetroMatrix Shopping'} onBack={back} refreshing={s.status === 'loading' && !!items.length} onRefresh={load}>
+    <ScreenShell
+      title="Get what’s missing"
+      subtitle={title ?? 'From MetroMatrix Shopping'}
+      onBack={back}
+      refreshing={s.status === 'loading' && !!items.length}
+      onRefresh={load}
+      footer={s.added.length ? <Button label={`View your Shopping bag · ${s.added.length} added`} leftIcon="bag-outline" onPress={() => openShopTab('BagTab')} fullWidth /> : undefined}>
       {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : null}
       {bag.addError.message ? <InlineNotice message={bag.addError.message} /> : null}
-      {!items.length && s.status === 'loading' ? <SkeletonLines lines={8} /> : null}
-      {s.status === 'succeeded' && !items.length ? <EmptyState icon="check-circle" title="Nothing missing" body="You have everything this recipe needs." /> : null}
+      {!items.length && s.status === 'loading' ? <RowCardsSkeleton count={4} /> : null}
+      {s.status === 'succeeded' && !items.length ? <EmptyState ion="checkmark-circle-outline" title="Nothing missing" body="You have everything this recipe needs." /> : null}
       {items.map(m => (
         <Card key={m.key}>
           <View style={styles.gap}>
@@ -101,7 +111,7 @@ const MissingItemsContent: React.FC<Props> = ({ route }) => {
                       variant={n === 0 ? 'primary' : 'secondary'}
                       size="sm"
                       disabled={added || !o.inStock || !o.variantId}
-                      loading={bag.adding}
+                      loading={bag.adding && addingId === o.variantId}
                       onPress={() => void add(o)}
                       fullWidth
                     />
@@ -112,7 +122,6 @@ const MissingItemsContent: React.FC<Props> = ({ route }) => {
           </View>
         </Card>
       ))}
-      {s.added.length ? <Button label="View bag" leftIcon="bag-outline" onPress={() => openShopTab('BagTab')} fullWidth /> : null}
       <AppText variant="caption" tone="muted">
         Prices are each store’s own on MetroMatrix Shopping. You pay the store at checkout.
       </AppText>

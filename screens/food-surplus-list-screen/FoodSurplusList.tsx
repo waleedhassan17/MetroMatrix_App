@@ -12,7 +12,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { BACHAT_BOX } from '../../models/kitchen/surplusModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, EmptyState, InlineNotice, ScreenShell, SkeletonLines, SurplusCard, TextAction } from '../../Custom-Components/index';
+import { AppText, EmptyState, IconButton, InlineNotice, RowCardsSkeleton, ScreenShell, SurplusCard } from '../../Custom-Components/index';
 import type { FoodAppParamList } from '../../models';
 import { selectFoodPoint } from '../../store/preferencesSlice';
 import { loadSurplusListAsync, selectSurplusList } from './surplusListSlice';
@@ -47,19 +47,19 @@ const FoodSurplusListContent: React.FC<Props> = ({ navigation }) => {
       subtitle={point ? `Pickup today near ${point.label}` : 'Tonight’s food at a lower price'}
       onBack={back}
       refreshing={s.status === 'loading' && !!s.items.length}
-      onRefresh={load}>
+      onRefresh={load}
+      headerRight={<IconButton icon="bookmark-outline" onPress={() => navigation.navigate('FoodSurplusReservations')} accessibilityLabel="Your reservations" />}>
       <AppText variant="small" tone="muted">
-        Kitchens put up what is left at the end of the day at a lower price, so good food isn’t thrown away. What is inside is a surprise; you collect it yourself.
+        What a kitchen has left at the end of the day, at a lower price, so good food isn’t thrown away. What’s inside is a surprise; you collect it yourself.
       </AppText>
-      <TextAction label="Your reservations" icon="bookmark-outline" onPress={() => navigation.navigate('FoodSurplusReservations')} />
       {!point ? (
-        <EmptyState icon="map-pin" title="Where are you?" body="Choose your address on Food Court’s home to see Bachat Boxes near you." />
+        <EmptyState ion="location-outline" title="Choose your address" body="Pick your address on the Food Court home to see Bachat Boxes near you." />
       ) : s.status === 'failed' ? (
         <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} />
       ) : s.status === 'loading' && !s.items.length ? (
-        <SkeletonLines lines={8} />
+        <RowCardsSkeleton count={3} />
       ) : !s.items.length ? (
-        <EmptyState icon="gift" title="None nearby right now" body="Kitchens usually put Bachat Boxes up in the evening. Check back after 8 PM." />
+        <EmptyState ion="gift-outline" title="None nearby right now" body="Kitchens put Bachat Boxes up towards the end of the day. Check back this evening." />
       ) : (
         <View style={styles.list}>
           {s.items.map(b => (

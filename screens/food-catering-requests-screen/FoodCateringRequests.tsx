@@ -13,7 +13,7 @@ import { useBack } from '../../hooks/useBack';
 import { CATERING_STATUS } from '../../models/kitchen/kitchenStatusModel';
 import { eventLine, latestQuote } from '../../models/kitchen/cateringModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { EmptyState, InlineNotice, ScreenShell, SkeletonLines } from '../../Custom-Components/index';
+import { EmptyState, InlineNotice, ScreenShell, RowCardsSkeleton } from '../../Custom-Components/index';
 import { RowCard } from '../../Components/admin/AdminParts';
 import type { FoodAppParamList } from '../../models';
 import { formatPKR } from '../../utils/money/money';
@@ -44,9 +44,14 @@ const FoodCateringRequestsContent: React.FC<Props> = ({ navigation }) => {
     <ScreenShell title="Dawat requests" subtitle="Catering from Food Court kitchens" onBack={back} refreshing={s.status === 'loading' && !!s.items.length} onRefresh={load}>
       {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : null}
       {s.status === 'loading' && !s.items.length ? (
-        <SkeletonLines lines={6} />
+        <RowCardsSkeleton count={3} />
       ) : !s.items.length && s.status === 'succeeded' ? (
-        <EmptyState icon="users" title="No dawat requests yet" body="Planning a dawat, a wedding or an office lunch? Ask a kitchen from its page: “Plan a dawat”." />
+        <EmptyState
+          ion="people-outline"
+          title="No dawat requests yet"
+          body="Planning a dawat, a wedding or an office lunch? Ask a kitchen from its page: “Plan a dawat”."
+          action={{ label: 'Browse kitchens', onPress: () => navigation.navigate('FoodVendors', { title: 'Kitchens' }) }}
+        />
       ) : (
         <View style={styles.list}>
           {s.items.map(r => {
@@ -56,8 +61,9 @@ const FoodCateringRequestsContent: React.FC<Props> = ({ navigation }) => {
                 key={r.code}
                 title={r.vendor.name}
                 mark={{ icon: 'people-outline', tint: 'violet' }}
-                lines={[eventLine(r), q ? `Quote v${q.version}: ${formatPKR(q.total)}` : `${r.dishes.length} dishes asked for`]}
+                lines={[eventLine(r), q ? `Quote ${q.version}: ${formatPKR(q.total)}` : `${r.dishes.length} dishes asked for`]}
                 pill={{ label: CATERING_STATUS[r.status].label, tone: CATERING_STATUS[r.status].tone }}
+                chevron
                 onPress={() => navigation.navigate('FoodCateringRequest', { code: r.code })}
               />
             );

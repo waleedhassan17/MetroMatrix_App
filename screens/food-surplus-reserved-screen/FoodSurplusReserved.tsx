@@ -13,10 +13,12 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
-import { BOX_PAYMENT, RESERVATION_STATUS, boxPaymentStatus } from '../../models/kitchen/kitchenStatusModel';
+import { BOX_PAYMENT, RESERVATION_STATUS, reservationHeadline } from '../../models/kitchen/kitchenStatusModel';
 import { BACHAT_BOX } from '../../models/kitchen/surplusModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Divider, IconButton, InlineNotice, IonIcon, ScreenShell, Sheet, SkeletonLines, StatusPill, TextAction } from '../../Custom-Components/index';
+import { AppText, Button, DangerRow, Divider, IconButton, InlineNotice, ListRow, ScreenShell, SectionCard, Sheet, Skeleton, StatusPill, TextAction } from '../../Custom-Components/index';
+import { TrustNote } from '../../Components/food/FoodParts';
+import { customerTrustLine } from '../../models/food/trustModel';
 import { TransferCard } from '../../Custom-Components/food/TransferCard';
 import type { FoodAppParamList } from '../../models';
 import { formatSlot } from '../../utils/health-time/healthTime';
@@ -29,13 +31,15 @@ type Props = NativeStackScreenProps<FoodAppParamList, 'FoodSurplusReserved'>;
 
 const TZ = 'Asia/Karachi';
 
-const makeStyles = ({ space, radius, colors, size, service }: Theme) =>
+const makeStyles = ({ space, radius, colors, size, elevation }: Theme) =>
   StyleSheet.create({
-    code: { alignItems: 'center', gap: space.s8, paddingVertical: space.s24, borderRadius: radius.lg, borderWidth: size.border, borderColor: service.accentLine, backgroundColor: colors.surface },
+    // The pickup pass: the FYP card, the code large in the middle.
+    code: { alignItems: 'center', gap: space.s8, paddingVertical: space.s24, paddingHorizontal: space.s16, borderRadius: radius.lg, borderWidth: size.hairline, borderColor: colors.lineSoft, backgroundColor: colors.surface, ...elevation.card },
     gap: { gap: space.s8 },
-    line: { flexDirection: 'row', alignItems: 'center', gap: space.s8 },
     grow: { flex: 1, gap: space.s4, minWidth: 0 },
-    pills: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8, justifyContent: 'center' },
+    sheetButtons: { flexDirection: 'row', gap: space.s12 },
+    half: { flex: 1 },
+    loading: { gap: space.s16 },
   });
 
 const FoodSurplusReserved: React.FC<Props> = props => (
@@ -49,7 +53,7 @@ const FoodSurplusReservedContent: React.FC<Props> = ({ navigation, route }) => {
   const { back } = useBack({ name: 'FoodSurplusReservations' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { colors } = useTheme();
+  const { size } = useTheme();
   const ui = useAppSelector(selectSurplusReserved);
   const r = useAppSelector(st => selectReservation(st, code));
   const [cancelling, setCancelling] = useState(false);
@@ -60,13 +64,20 @@ const FoodSurplusReservedContent: React.FC<Props> = ({ navigation, route }) => {
   if (!r) {
     return (
       <ScreenShell title={BACHAT_BOX} onBack={back}>
-        {ui.status === 'failed' ? <InlineNotice message={ui.error.message} action={ui.error.code === 'NOT_FOUND' ? undefined : { label: 'Try again', onPress: load }} /> : <SkeletonLines lines={8} />}
+        {ui.status === 'failed' ? (
+          <InlineNotice message={ui.error.message} action={ui.error.code === 'NOT_FOUND' ? undefined : { label: 'Try again', onPress: load }} />
+        ) : (
+          <View style={styles.loading} accessibilityLabel="Loading" accessibilityRole="progressbar">
+            <Skeleton height={size.storeHero} shape="lg" />
+            <Skeleton height={size.control.lg * 2} shape="lg" />
+          </View>
+        )}
       </ScreenShell>
     );
   }
 
   const status = RESERVATION_STATUS[r.status];
-  const pay = boxPaymentStatus(r.payment.status);
+  const pill = reservationHeadline(r);
   const where = [r.vendor.location.addressLine, r.vendor.location.area, r.vendor.location.city].filter(Boolean).join(', ');
   const live = r.status === 'reserved';
 
@@ -80,10 +91,7 @@ const FoodSurplusReservedContent: React.FC<Props> = ({ navigation, route }) => {
         <AppText variant="display" tone={live ? 'accentDeep' : 'muted'} selectable>
           {r.code}
         </AppText>
-        <View style={styles.pills}>
-          <StatusPill label={status.label} tone={status.tone} />
-          {live ? <StatusPill label={pay.label} tone={pay.tone} /> : null}
-        </View>
+        <StatusPill label={pill.label} tone={pill.tone} />
         {live ? (
           <AppText variant="small" tone="muted" align="center">
             Show this code at the counter.
@@ -91,38 +99,25 @@ const FoodSurplusReservedContent: React.FC<Props> = ({ navigation, route }) => {
         ) : null}
       </View>
 
-      <Card>
+      <SectionCard title={`Pick up ${r.pickupLabel}`} subtitle={r.collectedAt ? `Collected at ${formatSlot(r.collectedAt, TZ)}` : undefined} icon="time-outline">
         <View style={styles.gap}>
-          <AppText variant="title">{r.box.title}</AppText>
+          <AppText variant="bodyStrong">{r.box.title}</AppText>
           <AppText variant="small" tone="muted">
             {`${r.quantity === 1 ? '1 box' : `${r.quantity} boxes`} · ${formatPKR(r.total)} (${formatPKR(r.box.value * r.quantity)} of food)`}
           </AppText>
-          {r.collectedAt ? <AppText variant="small">{`Collected at ${formatSlot(r.collectedAt, TZ)}`}</AppText> : null}
-        </View>
-      </Card>
-
-      <Card>
-        <View style={styles.line}>
-          <IonIcon name="time-outline" size="md" color={colors.inkMuted} />
-          <AppText variant="bodyStrong" style={styles.grow}>{`Pick up ${r.pickupLabel}`}</AppText>
         </View>
         <Divider />
-        <View style={styles.line}>
-          <IonIcon name="location-outline" size="md" color={colors.inkMuted} />
-          <View style={styles.grow}>
-            <AppText variant="bodyStrong">{r.vendor.name}</AppText>
-            {where ? (
-              <AppText variant="small" tone="muted">
-                {where}
-              </AppText>
-            ) : null}
-          </View>
-          {r.vendor.phone ? <IconButton icon="call-outline" accessibilityLabel={`Call ${r.vendor.name}`} onPress={() => callNumber(r.vendor.phone!)} /> : null}
-        </View>
+        <ListRow
+          title={r.vendor.name}
+          subtitle={where || undefined}
+          leftIcon="location-outline"
+          chevron={false}
+          right={r.vendor.phone ? <IconButton icon="call-outline" accessibilityLabel={`Call ${r.vendor.name}`} onPress={() => callNumber(r.vendor.phone!)} /> : undefined}
+        />
         {r.vendor.location.lat !== null && r.vendor.location.lng !== null ? (
           <TextAction label="Directions" icon="navigate-outline" onPress={() => navigateTo(r.vendor.location.lat!, r.vendor.location.lng!)} />
         ) : null}
-      </Card>
+      </SectionCard>
 
       {live && r.payment.method === 'transfer' && r.payment.accounts?.length ? (
         <TransferCard
@@ -137,22 +132,13 @@ const FoodSurplusReservedContent: React.FC<Props> = ({ navigation, route }) => {
           onSendReceipt={r.payment.status === 'awaiting_transfer' ? () => navigation.navigate('PaymentProof', { surplusCode: r.code }) : undefined}
         />
       ) : live ? (
-        <Card>
-          <View style={styles.gap}>
-            <AppText variant="title">{BOX_PAYMENT[r.payment.method].label}</AppText>
-            <AppText variant="small" tone="muted">
-              {r.payment.status === 'paid' ? 'Paid. Just show your code.' : `Bring ${formatPKR(r.total)} in cash. ${BOX_PAYMENT.pay_at_pickup.hint}`}
-            </AppText>
-          </View>
-        </Card>
+        <SectionCard title={BOX_PAYMENT[r.payment.method].label} subtitle={r.payment.status === 'paid' ? 'Paid. Just show your code.' : `Bring ${formatPKR(r.total)} in cash. ${BOX_PAYMENT.pay_at_pickup.hint}`} icon="wallet-outline" />
       ) : null}
 
-      <AppText variant="caption" tone="muted">
-        You pay the kitchen directly. MetroMatrix takes no commission.
-      </AppText>
+      <TrustNote text={customerTrustLine(r.vendor.name)} />
 
       {ui.cancelError.message ? <InlineNotice message={ui.cancelError.message} /> : null}
-      {r.canCancel ? <Button label="Cancel the reservation" variant="secondary" onPress={() => setCancelling(true)} fullWidth /> : null}
+      {r.canCancel ? <DangerRow label="Cancel the reservation" icon="close-circle-outline" onConfirm={() => setCancelling(true)} /> : null}
 
       <Sheet
         visible={cancelling}
@@ -160,22 +146,31 @@ const FoodSurplusReservedContent: React.FC<Props> = ({ navigation, route }) => {
         title="Cancel this reservation?"
         subtitle="The box goes back for someone else to reserve."
         footer={
-          <Button
-            label="Cancel it"
-            variant="destructive"
-            loading={ui.cancelling}
-            onPress={async () => {
-              const res = await dispatch(cancelReservationAsync(r.code));
-              if (cancelReservationAsync.fulfilled.match(res)) {
-                haptics.success();
-                setCancelling(false);
-                Toast.show({ type: 'success', text1: 'Cancelled' });
-              } else haptics.warning();
-            }}
-            fullWidth
-          />
+          <View style={styles.sheetButtons}>
+            <View style={styles.half}>
+              <Button label="Keep it" variant="secondary" onPress={() => setCancelling(false)} fullWidth />
+            </View>
+            <View style={styles.half}>
+              <Button
+                label="Cancel it"
+                variant="destructive"
+                loading={ui.cancelling}
+                onPress={async () => {
+                  const res = await dispatch(cancelReservationAsync(r.code));
+                  if (cancelReservationAsync.fulfilled.match(res)) {
+                    haptics.success();
+                    setCancelling(false);
+                    Toast.show({ type: 'success', text1: 'Cancelled' });
+                  } else haptics.warning();
+                }}
+                fullWidth
+              />
+            </View>
+          </View>
         }>
-        <Button label="Keep it" variant="secondary" onPress={() => setCancelling(false)} fullWidth />
+        <AppText variant="body" tone="muted">
+          {`${r.quantity === 1 ? 'Your box' : `Your ${r.quantity} boxes`} from ${r.vendor.name} won’t be held for you any more.`}
+        </AppText>
       </Sheet>
     </ScreenShell>
   );

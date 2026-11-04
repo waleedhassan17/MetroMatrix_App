@@ -13,8 +13,10 @@ import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useRedu
 import { useBack } from '../../hooks/useBack';
 import { CATERING_MODE, EVENT_TYPES, EVENT_TYPE_LABEL } from '../../models/kitchen/kitchenStatusModel';
 import { EVENT_TIMES, cateringInput, eventDates, timeLabel, validateCatering } from '../../models/kitchen/cateringModel';
-import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, BottomSheetPicker, Button, Card, ChoiceChip, DateStrip, Divider, EmptyState, IconButton, InlineNotice, ScreenShell, SkeletonLines, TextAction, TextField } from '../../Custom-Components/index';
+import { MAX_FONT_SCALE, ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
+import { AppText, BottomSheetPicker, Button, ChoiceChip, CtaBar, DateStrip, Divider, EmptyState, IconButton, InlineNotice, PickerField, ScreenShell, SectionCard, Skeleton, TextAction, TextField } from '../../Custom-Components/index';
+import { TrustNote } from '../../Components/food/FoodParts';
+import { customerTrustLine } from '../../models/food/trustModel';
 import { ChoiceLine } from '../../Custom-Components/food/ChoiceLine';
 import type { FoodAppParamList } from '../../models';
 import { formatDayChip } from '../../utils/health-time/healthTime';
@@ -43,7 +45,7 @@ const makeStyles = ({ space, size, radius, colors, type }: Theme) =>
     qty: {
       ...type.input,
       width: size.control.lg * 2,
-      minHeight: size.control.sm,
+      minHeight: size.touch,
       paddingHorizontal: space.s12,
       borderRadius: radius.md,
       borderWidth: size.border,
@@ -67,7 +69,7 @@ const FoodCateringFormContent: React.FC<Props> = ({ navigation, route }) => {
   const dispatch = useAppDispatch();
   const appStore = useAppStore();
   const styles = useStyles(makeStyles);
-  const { colors } = useTheme();
+  const { colors, size } = useTheme();
   const s = useAppSelector(selectFoodCateringForm);
   const book = useAppSelector(selectAddressBook);
   const [picker, setPicker] = useState<'time' | 'dish' | null>(null);
@@ -86,14 +88,21 @@ const FoodCateringFormContent: React.FC<Props> = ({ navigation, route }) => {
   if (!v) {
     return (
       <ScreenShell title="Plan a dawat" subtitle={name} onBack={back}>
-        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadCateringVendorAsync(slug)) }} /> : <SkeletonLines lines={10} />}
+        {s.status === 'failed' ? (
+          <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadCateringVendorAsync(slug)) }} />
+        ) : (
+          <>
+            <Skeleton height={size.control.lg * 2} shape="lg" />
+            <Skeleton height={size.control.lg * 3} shape="lg" />
+          </>
+        )}
       </ScreenShell>
     );
   }
   if (!v.open) {
     return (
       <ScreenShell title="Plan a dawat" subtitle={name} onBack={back}>
-        <EmptyState icon="calendar" title="Not taking catering requests" body="This kitchen isn’t taking dawat requests right now. Try another, or ask it when it opens them again." />
+        <EmptyState ion="calendar-outline" title="Not taking catering requests" body="This kitchen isn’t taking dawat requests right now. Try another, or ask it when it opens them again." />
       </ScreenShell>
     );
   }
@@ -121,132 +130,127 @@ const FoodCateringFormContent: React.FC<Props> = ({ navigation, route }) => {
       title="Plan a dawat"
       subtitle={name ?? 'Catering from this kitchen'}
       onBack={back}
-      footer={<Button label="Send the request" onPress={() => void send()} loading={s.sending} fullWidth />}>
+      footer={
+        rough ? (
+          <CtaBar label="At menu prices (estimated)" amount={rough} note="The kitchen sends its own quote" action={{ label: 'Send the request', onPress: () => void send(), loading: s.sending }} />
+        ) : (
+          <Button label="Send the request" onPress={() => void send()} loading={s.sending} fullWidth />
+        )
+      }>
       {s.sendError.message ? <InlineNotice message={s.sendError.message} /> : null}
 
-      <AppText variant="sectionTitle">What’s the occasion</AppText>
-      <View style={styles.chips}>
-        {EVENT_TYPES.map(t => (
-          <ChoiceChip key={t} label={EVENT_TYPE_LABEL[t]} selected={f.eventType === t} onPress={() => dispatch(editCatering({ eventType: t }))} />
-        ))}
-      </View>
-
-      <AppText variant="sectionTitle">When</AppText>
-      <DateStrip
-        days={dates.map(date => ({ date, slotCount: 1 }))}
-        selected={f.date}
-        onSelect={date => dispatch(editCatering({ date }))}
-        describe={d => ({ sub: formatDayChip(d.date).month, label: formatDayChip(d.date).long })}
-      />
-      {s.errors.date ? (
-        <AppText variant="small" tone="danger">
-          {s.errors.date}
-        </AppText>
-      ) : (
-        <AppText variant="caption" tone="muted">
-          {`At least ${v.leadDays} days ahead.`}
-        </AppText>
-      )}
-      <Button label={`At ${timeLabel(f.time)}`} variant="secondary" leftIcon="time-outline" onPress={() => setPicker('time')} />
-
-      <TextField
-        label="Guests"
-        value={f.guests}
-        onChangeText={guests => dispatch(editCatering({ guests }))}
-        keyboardType="number-pad"
-        placeholder={String(Math.max(v.minGuests, 50))}
-        helper={`From ${v.minGuests} guests`}
-        error={s.errors.guests}
-      />
-
-      <AppText variant="sectionTitle">Dishes</AppText>
-      {f.dishes.length ? (
-        <Card padded="horizontal">
-          {f.dishes.map((d, n) => (
-            <View key={d.key}>
-              {n > 0 ? <Divider /> : null}
-              <View style={styles.dish}>
-                {d.itemId ? (
-                  <View style={styles.name}>
-                    <AppText variant="bodyStrong">{d.name}</AppText>
-                    {priceOf(d.itemId) ? (
-                      <AppText variant="caption" tone="muted">
-                        {`${formatPKR(priceOf(d.itemId)!)} on the menu`}
-                      </AppText>
-                    ) : null}
-                  </View>
-                ) : (
-                  <TextInput
-                    value={d.name}
-                    onChangeText={t => dispatch(editCateringDish({ key: d.key, patch: { name: t } }))}
-                    placeholder="Dish name"
-                    placeholderTextColor={colors.inkFaint}
-                    style={[styles.qty, styles.name, { textAlign: 'left' }]}
-                    accessibilityLabel="Dish name"
-                  />
-                )}
-                <TextInput
-                  value={d.qty}
-                  onChangeText={qty => dispatch(editCateringDish({ key: d.key, patch: { qty } }))}
-                  keyboardType="number-pad"
-                  placeholder="How many"
-                  placeholderTextColor={colors.inkFaint}
-                  style={styles.qty}
-                  accessibilityLabel={`${d.name || 'Dish'}: how many`}
-                />
-                <IconButton icon="close" tone="muted" onPress={() => dispatch(removeCateringDish(d.key))} accessibilityLabel={`Remove ${d.name || 'this dish'}`} />
-              </View>
-            </View>
+      <SectionCard title="The occasion" icon="sparkles-outline">
+        <View style={styles.chips}>
+          {EVENT_TYPES.map(t => (
+            <ChoiceChip key={t} label={EVENT_TYPE_LABEL[t]} selected={f.eventType === t} onPress={() => dispatch(editCatering({ eventType: t }))} />
           ))}
-        </Card>
-      ) : null}
-      {s.errors.dishes ? <InlineNotice message={s.errors.dishes} /> : null}
-      <View style={styles.adds}>
-        <TextAction label="Add from the menu" icon="add" onPress={() => setPicker('dish')} />
-        <TextAction label="Something not on it" icon="add" onPress={() => dispatch(addCateringDish({ itemId: null, name: '' }))} />
-      </View>
-      {rough ? (
-        <AppText variant="small" tone="muted">
-          {`About ${formatPKR(rough)} at menu prices. The kitchen’s quote may differ for a large order.`}
-        </AppText>
-      ) : null}
+        </View>
+      </SectionCard>
 
-      <TextField label="Budget (optional, Rs)" value={f.budget} onChangeText={budget => dispatch(editCatering({ budget }))} keyboardType="number-pad" placeholder="50000" error={s.errors.budget} />
+      <SectionCard title="When, and how many" subtitle={`At least ${v.leadDays} days ahead, from ${v.minGuests} guests`} icon="calendar-outline" invalid={!!s.errors.date || !!s.errors.guests}>
+        <DateStrip
+          days={dates.map(date => ({ date, slotCount: 1 }))}
+          selected={f.date}
+          onSelect={date => dispatch(editCatering({ date }))}
+          describe={d => ({ sub: formatDayChip(d.date).month, label: formatDayChip(d.date).long })}
+        />
+        {s.errors.date ? (
+          <AppText variant="small" tone="danger">
+            {s.errors.date}
+          </AppText>
+        ) : null}
+        <PickerField label="Time" valueLabel={timeLabel(f.time)} placeholder="Choose a time" onPress={() => setPicker('time')} />
+        <TextField
+          label="Guests"
+          value={f.guests}
+          onChangeText={guests => dispatch(editCatering({ guests }))}
+          keyboardType="number-pad"
+          placeholder={String(Math.max(v.minGuests, 50))}
+          helper={`From ${v.minGuests} guests`}
+          error={s.errors.guests}
+        />
+      </SectionCard>
 
-      <View style={styles.gap}>
-        <AppText variant="sectionTitle">How it’s served</AppText>
+      <SectionCard title="Dishes" icon="restaurant-outline" invalid={!!s.errors.dishes}>
+        {f.dishes.map((d, n) => (
+          <View key={d.key}>
+            {n > 0 ? <Divider /> : null}
+            <View style={styles.dish}>
+              {d.itemId ? (
+                <View style={styles.name}>
+                  <AppText variant="bodyStrong">{d.name}</AppText>
+                  {priceOf(d.itemId) ? (
+                    <AppText variant="caption" tone="muted">
+                      {`${formatPKR(priceOf(d.itemId)!)} on the menu`}
+                    </AppText>
+                  ) : null}
+                </View>
+              ) : (
+                <TextInput
+                  value={d.name}
+                  onChangeText={t => dispatch(editCateringDish({ key: d.key, patch: { name: t } }))}
+                  placeholder="Dish name"
+                  placeholderTextColor={colors.inkMuted}
+                  maxFontSizeMultiplier={MAX_FONT_SCALE}
+                  style={[styles.qty, styles.name, { textAlign: 'left' }]}
+                  accessibilityLabel="Dish name"
+                />
+              )}
+              <TextInput
+                value={d.qty}
+                onChangeText={qty => dispatch(editCateringDish({ key: d.key, patch: { qty } }))}
+                keyboardType="number-pad"
+                placeholder="How many"
+                placeholderTextColor={colors.inkMuted}
+                maxFontSizeMultiplier={MAX_FONT_SCALE}
+                style={styles.qty}
+                accessibilityLabel={`${d.name || 'Dish'}: how many`}
+              />
+              <IconButton icon="close" tone="muted" onPress={() => dispatch(removeCateringDish(d.key))} accessibilityLabel={`Remove ${d.name || 'this dish'}`} />
+            </View>
+          </View>
+        ))}
+        {s.errors.dishes ? <InlineNotice embedded message={s.errors.dishes} /> : null}
+        <View style={styles.adds}>
+          <TextAction label="Add from the menu" icon="add" onPress={() => setPicker('dish')} />
+          <TextAction label="Something not on it" icon="add" onPress={() => dispatch(addCateringDish({ itemId: null, name: '' }))} />
+        </View>
+      </SectionCard>
+
+      <SectionCard title="How it’s served" icon="people-outline" invalid={!!s.errors.addressId}>
         {v.modes.map(m => (
           <ChoiceLine key={m} label={CATERING_MODE[m].label} note={CATERING_MODE[m].hint} price={null} selected={f.mode === m} multiple={false} onPress={() => dispatch(editCatering({ mode: m }))} />
         ))}
-      </View>
+        {f.mode !== 'pickup' ? (
+          <View style={styles.gap}>
+            <Divider />
+            <AppText variant="label">Where</AppText>
+            {book.addresses.map(a => (
+              <ChoiceLine
+                key={a.id}
+                label={a.label === 'work' ? 'Work' : a.label === 'home' ? 'Home' : 'Other'}
+                note={[a.line1, a.area].filter(Boolean).join(', ')}
+                price={null}
+                selected={f.addressId === a.id}
+                multiple={false}
+                onPress={() => dispatch(editCatering({ addressId: a.id }))}
+              />
+            ))}
+            {s.errors.addressId ? (
+              <AppText variant="small" tone="danger">
+                {s.errors.addressId}
+              </AppText>
+            ) : null}
+            <TextAction label="Add an address" icon="add" onPress={() => navigation.getParent()?.navigate('AddressForm')} />
+          </View>
+        ) : null}
+      </SectionCard>
 
-      {f.mode !== 'pickup' ? (
-        <View style={styles.gap}>
-          <AppText variant="sectionTitle">Where</AppText>
-          {book.addresses.map(a => (
-            <ChoiceLine
-              key={a.id}
-              label={a.label === 'work' ? 'Work' : a.label === 'home' ? 'Home' : 'Other'}
-              note={[a.line1, a.area].filter(Boolean).join(', ')}
-              price={null}
-              selected={f.addressId === a.id}
-              multiple={false}
-              onPress={() => dispatch(editCatering({ addressId: a.id }))}
-            />
-          ))}
-          {s.errors.addressId ? (
-            <AppText variant="small" tone="danger">
-              {s.errors.addressId}
-            </AppText>
-          ) : null}
-          <TextAction label="Add an address" icon="add" onPress={() => navigation.getParent()?.navigate('AddressForm')} />
-        </View>
-      ) : null}
-
-      <TextField label="Anything else (optional)" value={f.notes} onChangeText={notes => dispatch(editCatering({ notes }))} placeholder="Serving staff, plates, a dish for children…" maxLength={500} multiline />
-      <AppText variant="caption" tone="muted">
-        The kitchen sends a quote you can accept. You pay it directly; MetroMatrix takes no commission.
-      </AppText>
+      <SectionCard title="Budget and notes" icon="create-outline" invalid={!!s.errors.budget}>
+        <TextField label="Budget (optional, Rs)" value={f.budget} onChangeText={budget => dispatch(editCatering({ budget }))} keyboardType="number-pad" placeholder="50000" error={s.errors.budget} />
+        <TextField label="Anything else (optional)" value={f.notes} onChangeText={notes => dispatch(editCatering({ notes }))} placeholder="Serving staff, plates, a dish for children…" maxLength={500} multiline />
+      </SectionCard>
+      <TrustNote text={`The kitchen sends a quote you can accept. ${customerTrustLine()}`} />
 
       <BottomSheetPicker
         visible={picker === 'time'}

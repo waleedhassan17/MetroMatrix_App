@@ -14,7 +14,9 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { SUMMARY_SCOPE, dayLine, targetLine, vsTarget } from '../../models/myKitchen/nutritionModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, BarChart, Button, Card, Divider, InlineNotice, ScreenShell, SkeletonLines } from '../../Custom-Components/index';
+import { AppText, BarChart, Button, Card, Divider, EmptyState, InlineNotice, ScreenShell, SectionCard, StatGridSkeleton } from '../../Custom-Components/index';
+import { StatGrid } from '../../Components/admin/AdminParts';
+import { ShopSection } from '../../Components/shopping/ShopParts';
 import type { FoodAppParamList } from '../../models';
 import { loadNutritionSummaryAsync, selectNutritionSummary } from './nutritionSummarySlice';
 
@@ -59,50 +61,37 @@ const NutritionSummaryContent: React.FC<Props> = ({ navigation }) => {
   return (
     <ScreenShell title="Your week" subtitle="Food Court orders, the last 7 days" onBack={back} refreshing={s.status === 'loading' && !!sum} onRefresh={load}>
       {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : null}
-      {!sum && s.status !== 'failed' ? <SkeletonLines lines={8} /> : null}
+      {!sum && s.status !== 'failed' ? <StatGridSkeleton count={4} /> : null}
       {sum ? (
         <>
-          <Card>
+          <SectionCard title="Calories a day (estimated)" icon="bar-chart-outline">
             <View style={styles.gap}>
-              <AppText variant="title">Estimated calories a day</AppText>
               <BarChart data={sum.days.map(d => ({ label: weekday(d.date), value: d.kcal }))} format={x => n(x)} />
               <AppText variant="small" tone="muted">
                 {targetLine(sum.targetKcal)}
               </AppText>
             </View>
-          </Card>
+          </SectionCard>
 
           {ordered.length ? (
-            <Card>
-              <View style={styles.gap}>
-                <AppText variant="title">On the days you ordered</AppText>
-                <View style={styles.row}>
-                  <AppText variant="body">Calories</AppText>
-                  <AppText variant="bodyStrong">{`${n(sum.averageOnOrderDays.kcal)} kcal`}</AppText>
-                </View>
-                <View style={styles.row}>
-                  <AppText variant="body">Protein</AppText>
-                  <AppText variant="bodyStrong">{`${sum.averageOnOrderDays.protein} g`}</AppText>
-                </View>
-                <View style={styles.row}>
-                  <AppText variant="body">Carbs</AppText>
-                  <AppText variant="bodyStrong">{`${sum.averageOnOrderDays.carbs} g`}</AppText>
-                </View>
-                <View style={styles.row}>
-                  <AppText variant="body">Fat</AppText>
-                  <AppText variant="bodyStrong">{`${sum.averageOnOrderDays.fat} g`}</AppText>
-                </View>
-                {vsTarget(sum.averageOnOrderDays.kcal, sum.targetKcal) ? (
-                  <AppText variant="small" tone="muted">
-                    {vsTarget(sum.averageOnOrderDays.kcal, sum.targetKcal)}
-                  </AppText>
-                ) : null}
-              </View>
-            </Card>
+            <View style={styles.gap}>
+              <ShopSection title="On the days you ordered" subtitle="A day’s average, estimated" inset={false} />
+              <StatGrid
+                stats={[
+                  { key: 'kcal', icon: 'flame-outline', tint: 'amber', value: `${n(sum.averageOnOrderDays.kcal)}`, label: 'kcal' },
+                  { key: 'protein', icon: 'barbell-outline', tint: 'blue', value: `${sum.averageOnOrderDays.protein} g`, label: 'Protein' },
+                  { key: 'carbs', icon: 'leaf-outline', tint: 'green', value: `${sum.averageOnOrderDays.carbs} g`, label: 'Carbs' },
+                  { key: 'fat', icon: 'water-outline', tint: 'violet', value: `${sum.averageOnOrderDays.fat} g`, label: 'Fat' },
+                ]}
+              />
+              {vsTarget(sum.averageOnOrderDays.kcal, sum.targetKcal) ? (
+                <AppText variant="small" tone="muted">
+                  {vsTarget(sum.averageOnOrderDays.kcal, sum.targetKcal)}
+                </AppText>
+              ) : null}
+            </View>
           ) : (
-            <Card>
-              <AppText variant="body">No Food Court orders delivered or collected in the last 7 days.</AppText>
-            </Card>
+            <EmptyState ion="restaurant-outline" title="No orders this week" body="No Food Court orders delivered or collected in the last 7 days." />
           )}
 
           <Card>
@@ -119,9 +108,8 @@ const NutritionSummaryContent: React.FC<Props> = ({ navigation }) => {
           </Card>
 
           {sum.topDishes.length ? (
-            <Card>
+            <SectionCard title="You ordered most" icon="trophy-outline">
               <View style={styles.gap}>
-                <AppText variant="title">You ordered most</AppText>
                 {sum.topDishes.map(t => (
                   <View key={t.name} style={styles.row}>
                     <AppText variant="body">{t.name}</AppText>
@@ -129,7 +117,7 @@ const NutritionSummaryContent: React.FC<Props> = ({ navigation }) => {
                   </View>
                 ))}
               </View>
-            </Card>
+            </SectionCard>
           ) : null}
 
           <AppText variant="caption" tone="muted">

@@ -12,11 +12,13 @@ import { StatusPill } from '../StatusPill';
 import { cdn } from '../../utils/cdn/cdn';
 import { formatPKR } from '../../utils/money/money';
 import { BACHAT_BOX, discountLabel } from '../../models/kitchen/surplusModel';
+import { distanceLabel } from '../../models/food/discoveryModel';
 import type { SurplusCard as SurplusCardData } from '../../models/kitchen';
 
 const makeStyles = ({ space, size, radius, colors, elevation }: Theme) =>
   StyleSheet.create({
-    root: { borderRadius: radius.lg, backgroundColor: colors.surface, overflow: 'hidden', ...elevation.card },
+    // The FYP card: a soft border and shadow, radius 16 (Card's look, with the photo to the edge).
+    root: { borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: size.hairline, borderColor: colors.lineSoft, overflow: 'hidden', ...elevation.card },
     rail: { width: size.surplusCard },
     photo: { width: '100%', aspectRatio: size.railPhotoAspect, backgroundColor: colors.surfaceSunk },
     tag: { position: 'absolute', left: space.s12, top: space.s12 },
@@ -28,7 +30,8 @@ const makeStyles = ({ space, size, radius, colors, elevation }: Theme) =>
 
 export const SurplusCard: React.FC<{ card: SurplusCardData; onPress: () => void; rail?: boolean }> = ({ card, onPress, rail }) => {
   const styles = useStyles(makeStyles);
-  const { colors, size } = useTheme();
+  const { colors, size, motion } = useTheme();
+  const far = distanceLabel(card.vendor.distanceKm);
   const left = card.left === 1 ? '1 left' : `${card.left} left`;
   return (
     <Pressable
@@ -37,9 +40,9 @@ export const SurplusCard: React.FC<{ card: SurplusCardData; onPress: () => void;
       accessibilityRole="button"
       accessibilityLabel={`${BACHAT_BOX} from ${card.vendor.name}: ${card.title}. ${formatPKR(card.value)} value for ${formatPKR(card.price)}. ${card.pickupLabel}. ${left}.`}>
       <View>
-        <Image source={cdn(card.photoUrl, { w: size.surplusCard, h: Math.round(size.surplusCard / size.railPhotoAspect) }) ?? undefined} style={styles.photo} contentFit="cover" />
+        <Image source={cdn(card.photoUrl, { w: size.surplusCard, h: Math.round(size.surplusCard / size.railPhotoAspect) }) ?? undefined} style={styles.photo} contentFit="cover" transition={motion.imageFade} />
         <View style={styles.tag}>
-          <StatusPill label={`${BACHAT_BOX} · ${discountLabel(card.value, card.price)}`} tone="success" />
+          <StatusPill label={`${BACHAT_BOX} · ${discountLabel(card.value, card.price)}`} tone="accent" />
         </View>
       </View>
       <View style={styles.body}>
@@ -48,7 +51,7 @@ export const SurplusCard: React.FC<{ card: SurplusCardData; onPress: () => void;
         </AppText>
         <AppText variant="small" tone="muted" numberOfLines={1}>
           {card.title}
-          {card.vendor.distanceKm !== null ? ` · ${card.vendor.distanceKm} km` : ''}
+          {far ? ` · ${far}` : ''}
         </AppText>
         <View style={styles.price}>
           <AppText variant="bodyStrong">{formatPKR(card.price)}</AppText>

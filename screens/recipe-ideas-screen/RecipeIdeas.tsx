@@ -14,7 +14,7 @@ import { useBack } from '../../hooks/useBack';
 import { aiDownNote, isAiDown } from '../../models/kitchen/aiModel';
 import { RECIPE_TIMES, SERVINGS } from '../../models/myKitchen/pantryModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, ChoiceChip, EmptyState, InlineNotice, RecipeSuggestionCard, ScreenShell, SkeletonLines } from '../../Custom-Components/index';
+import { AppText, Button, Card, ChoiceChip, EmptyState, InlineNotice, RecipeSuggestionCard, RowCardsSkeleton, ScreenShell } from '../../Custom-Components/index';
 import type { FoodAppParamList } from '../../models';
 import { haptics } from '../../utils/haptics/haptics';
 import { selectRecipeIdeas, setRecipeFilter, suggestRecipesAsync } from './recipeIdeasSlice';
@@ -78,8 +78,8 @@ const RecipeIdeasContent: React.FC<Props> = ({ navigation }) => {
       </Card>
       {down ? <InlineNotice tone="info" title={down.title} message="You can still keep your kitchen list, and order on Food Court." /> : null}
       {s.error.message && !down ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void suggest() }} /> : null}
-      {s.status === 'loading' && !s.ideas.length ? <SkeletonLines lines={8} /> : null}
-      {s.status === 'succeeded' && !s.ideas.length ? <EmptyState icon="book-open" title="Nothing fits yet" body="Add a few things to your kitchen, or pick more time." /> : null}
+      {s.status === 'loading' && !s.ideas.length ? <RowCardsSkeleton count={4} /> : null}
+      {s.status === 'succeeded' && !s.ideas.length ? <EmptyState ion="book-outline" title="Nothing fits yet" body="Add a few things to your kitchen, or pick more time." /> : null}
       {s.ideas.map(r => (
         <RecipeSuggestionCard
           key={r.id}

@@ -16,7 +16,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { ACTIVITIES, ACTIVITY, GOAL, GOALS, metricsFormOf, metricsOf, targetLine, validateManualTarget, validateMetrics, type MetricsForm } from '../../models/myKitchen/nutritionModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, ChoiceChip, InlineNotice, ListRow, ScreenShell, Sheet, SkeletonLines, TextField, ToggleRow } from '../../Custom-Components/index';
+import { AppText, Button, Card, ChoiceChip, DangerRow, InlineNotice, ListRow, RowCardsSkeleton, ScreenShell, SectionCard, Sheet, TextField, ToggleRow } from '../../Custom-Components/index';
 import type { FoodAppParamList, NutritionSettings } from '../../models';
 import { haptics } from '../../utils/haptics/haptics';
 import { deleteNutritionAsync, loadNutritionSettingsAsync, saveNutritionAsync, selectNutritionSettings } from './nutritionSettingsSlice';
@@ -64,7 +64,7 @@ const NutritionSettingsContent: React.FC<Props> = ({ navigation }) => {
   if (!n) {
     return (
       <ScreenShell title="Nutrition" onBack={back}>
-        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : <SkeletonLines lines={8} />}
+        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : <RowCardsSkeleton count={4} />}
       </ScreenShell>
     );
   }
@@ -92,9 +92,8 @@ const NutritionSettingsContent: React.FC<Props> = ({ navigation }) => {
             </View>
           </Card>
 
-          <Card>
+          <SectionCard title="Your goal" subtitle="Saved as you choose" icon="flag-outline">
             <View style={styles.gap}>
-              <AppText variant="title">Your goal</AppText>
               <View style={styles.chips}>
                 {GOALS.map(g => (
                   <ChoiceChip key={g} label={GOAL[g].label} selected={n.goal === g} disabled={s.saving} onPress={() => void save({ goal: g })} />
@@ -104,7 +103,7 @@ const NutritionSettingsContent: React.FC<Props> = ({ navigation }) => {
                 {GOAL[n.goal].hint}
               </AppText>
             </View>
-          </Card>
+          </SectionCard>
 
           {/* Keyed by what is saved: the form starts again from it after a save or a delete. */}
           <NumbersCard key={n.updatedAt ?? 'none'} metrics={n.metrics} manualTargetKcal={n.manualTargetKcal} saving={s.saving} onSave={save} />
@@ -115,7 +114,7 @@ const NutritionSettingsContent: React.FC<Props> = ({ navigation }) => {
         </>
       ) : null}
 
-      {n.enabled || n.metrics || n.manualTargetKcal ? <Button label="Delete my nutrition data" variant="secondary" onPress={() => setDeleting(true)} fullWidth /> : null}
+      {n.enabled || n.metrics || n.manualTargetKcal ? <DangerRow label="Delete my nutrition data" onConfirm={() => setDeleting(true)} /> : null}
 
       <Sheet
         visible={deleting}
@@ -123,21 +122,30 @@ const NutritionSettingsContent: React.FC<Props> = ({ navigation }) => {
         title="Delete your nutrition data?"
         subtitle="Your goal, your numbers and your target go, and nutrition turns off. Your orders stay."
         footer={
-          <Button
-            label="Delete it"
-            variant="destructive"
-            loading={s.deleting}
-            onPress={async () => {
-              const r = await dispatch(deleteNutritionAsync());
-              if (deleteNutritionAsync.fulfilled.match(r)) {
-                setDeleting(false);
-                Toast.show({ type: 'success', text1: 'Nutrition data deleted' });
-              }
-            }}
-            fullWidth
-          />
+          <View style={styles.two}>
+            <View style={styles.half}>
+              <Button label="Keep it" variant="secondary" onPress={() => setDeleting(false)} fullWidth />
+            </View>
+            <View style={styles.half}>
+              <Button
+                label="Delete it"
+                variant="destructive"
+                loading={s.deleting}
+                onPress={async () => {
+                  const r = await dispatch(deleteNutritionAsync());
+                  if (deleteNutritionAsync.fulfilled.match(r)) {
+                    setDeleting(false);
+                    Toast.show({ type: 'success', text1: 'Nutrition data deleted' });
+                  }
+                }}
+                fullWidth
+              />
+            </View>
+          </View>
         }>
-        <Button label="Keep it" variant="secondary" onPress={() => setDeleting(false)} fullWidth />
+        <AppText variant="body" tone="muted">
+          Kitchens never see your nutrition data. Deleting it can’t be undone.
+        </AppText>
       </Sheet>
     </ScreenShell>
   );
@@ -156,12 +164,9 @@ const NumbersCard: React.FC<{
   const metricErrors = validateMetrics(form);
   const manualError = manual.trim() ? validateManualTarget(manual) : null;
   return (
-    <Card>
+    <>
+    <SectionCard title="Your numbers (optional)" subtitle="Used only to work out a daily target." icon="body-outline">
       <View style={styles.gap}>
-        <AppText variant="title">Your numbers (optional)</AppText>
-        <AppText variant="small" tone="muted">
-          Used only to work out a daily target.
-        </AppText>
         <View style={styles.chips}>
           <ChoiceChip label="Female" selected={form.sex === 'female'} onPress={() => setForm({ ...form, sex: 'female' })} />
           <ChoiceChip label="Male" selected={form.sex === 'male'} onPress={() => setForm({ ...form, sex: 'male' })} />
@@ -181,17 +186,21 @@ const NumbersCard: React.FC<{
           ))}
         </View>
         <Button label="Save my numbers" variant="secondary" loading={saving} disabled={Object.keys(metricErrors).length > 0} onPress={() => void onSave({ metrics: metricsOf(form) }, 'Daily target updated')} fullWidth />
+      </View>
+    </SectionCard>
+    <SectionCard title="Your own target (optional)" subtitle="Leave it empty to use the worked-out one." icon="speedometer-outline">
+      <View style={styles.gap}>
         <TextField
-          label="Or a daily target of my own (kcal)"
+          label="Daily target (kcal)"
           mode="numeric"
           value={manual}
           onChangeText={setManual}
-          helper="Leave empty to use the worked-out one."
           error={manualError ?? undefined}
         />
         <Button label="Save my target" variant="secondary" disabled={!!manualError} loading={saving} onPress={() => void onSave({ manualTargetKcal: manual.trim() ? Number(manual) : null }, 'Daily target saved')} fullWidth />
       </View>
-    </Card>
+    </SectionCard>
+    </>
   );
 };
 

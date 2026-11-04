@@ -17,7 +17,10 @@ import { useBack } from '../../hooks/useBack';
 import { BOX_PAYMENT, BOX_STATUS } from '../../models/kitchen/kitchenStatusModel';
 import { BACHAT_BOX, discountLabel } from '../../models/kitchen/surplusModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Divider, IconButton, InlineNotice, IonIcon, ScreenShell, SkeletonLines, StatusPill, TextAction } from '../../Custom-Components/index';
+import { AppText, Button, CtaBar, Divider, IconButton, InlineNotice, ListRow, QuantityStepper, ScreenShell, SectionCard, Skeleton, StatusPill, TextAction } from '../../Custom-Components/index';
+import { TrustNote } from '../../Components/food/FoodParts';
+import { customerTrustLine } from '../../models/food/trustModel';
+import { distanceLabel } from '../../models/food/discoveryModel';
 import { ChoiceLine } from '../../Custom-Components/food/ChoiceLine';
 import type { FoodAppParamList } from '../../models';
 import { selectFoodPoint } from '../../store/preferencesSlice';
@@ -29,16 +32,16 @@ import { loadSurplusAsync, newSurplusKey, reserveSurplusAsync, selectFoodSurplus
 
 type Props = NativeStackScreenProps<FoodAppParamList, 'FoodSurplus'>;
 
-const makeStyles = ({ space, colors, size }: Theme) =>
+const makeStyles = ({ space, colors, size, radius, gutter }: Theme) =>
   StyleSheet.create({
-    photo: { width: '100%', aspectRatio: size.railPhotoAspect, backgroundColor: colors.surfaceSunk },
-    content: { padding: space.s20, gap: space.s16 },
+    photo: { width: '100%', aspectRatio: size.railPhotoAspect, borderRadius: radius.lg, backgroundColor: colors.surfaceSunk },
+    content: { paddingHorizontal: gutter, paddingBottom: space.s40, gap: space.s16 },
     gap: { gap: space.s8 },
     row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.s12 },
-    line: { flexDirection: 'row', alignItems: 'center', gap: space.s8 },
     grow: { flex: 1, gap: space.s4, minWidth: 0 },
     price: { flexDirection: 'row', alignItems: 'baseline', gap: space.s8, flexWrap: 'wrap' },
-    stepper: { flexDirection: 'row', alignItems: 'center', gap: space.s8 },
+    links: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space.s16 },
+    loading: { gap: space.s16 },
   });
 
 const FoodSurplus: React.FC<Props> = props => (
@@ -53,7 +56,7 @@ const FoodSurplusContent: React.FC<Props> = ({ navigation, route }) => {
   const dispatch = useAppDispatch();
   const appStore = useAppStore();
   const styles = useStyles(makeStyles);
-  const { colors, size } = useTheme();
+  const { size, motion } = useTheme();
   const s = useAppSelector(selectFoodSurplus);
   const point = useAppSelector(selectFoodPoint);
 
@@ -67,7 +70,16 @@ const FoodSurplusContent: React.FC<Props> = ({ navigation, route }) => {
   if (!b) {
     return (
       <ScreenShell title={BACHAT_BOX} onBack={back}>
-        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={s.error.code === 'NOT_FOUND' ? undefined : { label: 'Try again', onPress: load }} /> : <SkeletonLines lines={8} />}
+        {s.status === 'failed' ? (
+          <InlineNotice message={s.error.message} action={s.error.code === 'NOT_FOUND' ? undefined : { label: 'Try again', onPress: load }} />
+        ) : (
+          <View style={styles.loading} accessibilityLabel="Loading" accessibilityRole="progressbar">
+            <View style={styles.photo} />
+            <Skeleton width="70%" height={size.icon.lg} />
+            <Skeleton width="40%" />
+            <Skeleton height={size.control.lg * 2} shape="lg" />
+          </View>
+        )}
       </ScreenShell>
     );
   }
@@ -98,13 +110,13 @@ const FoodSurplusContent: React.FC<Props> = ({ navigation, route }) => {
       onRefresh={load}
       footer={
         open ? (
-          <Button label={`Reserve · ${formatPKR(total)}`} onPress={() => void reserve()} loading={s.reserving} fullWidth />
+          <CtaBar label="Total" amount={total} note={`${s.quantity} × ${formatPKR(b.price)} · pay the kitchen`} action={{ label: 'Reserve', onPress: () => void reserve(), loading: s.reserving }} />
         ) : (
           <Button label={BOX_STATUS[b.status === 'live' ? 'sold_out' : b.status].customerLabel} disabled onPress={() => undefined} fullWidth />
         )
       }>
-      <Image source={cdn(b.photoUrl, { w: size.surplusCard * 2 }) ?? undefined} style={styles.photo} contentFit="cover" accessibilityLabel={`${b.title}: photo`} />
       <View style={styles.content}>
+        <Image source={cdn(b.photoUrl, { w: size.surplusCard * 2 }) ?? undefined} style={styles.photo} contentFit="cover" transition={motion.imageFade} accessibilityLabel={`${b.title}: photo`} />
         {s.reserveError.message ? <InlineNotice title={s.reserveError.code === 'SURPLUS_SOLD_OUT' ? 'Just missed it' : undefined} message={s.reserveError.message} /> : null}
         {b.myReservations.length ? (
           <InlineNotice
@@ -116,10 +128,14 @@ const FoodSurplusContent: React.FC<Props> = ({ navigation, route }) => {
         ) : null}
 
         <View style={styles.gap}>
-          <StatusPill label={`${BACHAT_BOX} · ${discountLabel(b.value, b.price)}`} tone="success" />
-          <AppText variant="h2">{b.title}</AppText>
+          <StatusPill label={`${BACHAT_BOX} · ${discountLabel(b.value, b.price)}`} tone="accent" />
+          <AppText variant="cardTitle" accessibilityRole="header">
+            {b.title}
+          </AppText>
           <View style={styles.price}>
-            <AppText variant="title">{formatPKR(b.price)}</AppText>
+            <AppText variant="title" tone="accentDeep">
+              {formatPKR(b.price)}
+            </AppText>
             <AppText variant="small" tone="muted">
               {`${formatPKR(b.value)} of food`}
             </AppText>
@@ -133,68 +149,34 @@ const FoodSurplusContent: React.FC<Props> = ({ navigation, route }) => {
           </AppText>
         </View>
 
-        <Card>
-          <View style={styles.line}>
-            <IonIcon name="time-outline" size="md" color={colors.inkMuted} />
-            <View style={styles.grow}>
-              <AppText variant="bodyStrong">{`Pick up ${b.pickupLabel}`}</AppText>
-              <AppText variant="small" tone="muted">
-                At the kitchen. No delivery for Bachat Boxes.
-              </AppText>
-            </View>
-          </View>
+        <SectionCard title={`Pick up ${b.pickupLabel}`} subtitle="At the kitchen. No delivery for Bachat Boxes." icon="time-outline">
           <Divider />
-          <View style={styles.line}>
-            <IonIcon name="location-outline" size="md" color={colors.inkMuted} />
-            <View style={styles.grow}>
-              <AppText variant="bodyStrong">{b.vendor.name}</AppText>
-              {where ? (
-                <AppText variant="small" tone="muted">
-                  {where}
-                </AppText>
-              ) : null}
-              {b.vendor.distanceKm !== null ? (
-                <AppText variant="caption" tone="muted">
-                  {`${b.vendor.distanceKm} km from you`}
-                </AppText>
-              ) : null}
-            </View>
-            {b.pickup.phone ? <IconButton icon="call-outline" accessibilityLabel={`Call ${b.vendor.name}`} onPress={() => callNumber(b.pickup.phone!)} /> : null}
+          <ListRow
+            title={b.vendor.name}
+            subtitle={[where, distanceLabel(b.vendor.distanceKm) ? `${distanceLabel(b.vendor.distanceKm)} from you` : null].filter(Boolean).join(' · ') || undefined}
+            leftIcon="location-outline"
+            chevron={false}
+            right={b.pickup.phone ? <IconButton icon="call-outline" accessibilityLabel={`Call ${b.vendor.name}`} onPress={() => callNumber(b.pickup.phone!)} /> : undefined}
+          />
+          <View style={styles.links}>
+            {b.pickup.lat !== null && b.pickup.lng !== null ? <TextAction label="Directions" icon="navigate-outline" onPress={() => navigateTo(b.pickup.lat!, b.pickup.lng!)} /> : null}
+            <TextAction label="See the kitchen’s menu" icon="restaurant-outline" onPress={() => navigation.navigate('FoodVendor', { slug: b.vendor.slug })} />
           </View>
-          {b.pickup.lat !== null && b.pickup.lng !== null ? <TextAction label="Directions" icon="navigate-outline" onPress={() => navigateTo(b.pickup.lat!, b.pickup.lng!)} /> : null}
-          <TextAction label="See the kitchen’s menu" onPress={() => navigation.navigate('FoodVendor', { slug: b.vendor.slug })} />
-        </Card>
+        </SectionCard>
 
         {open ? (
           <>
-            <Card>
-              <View style={styles.row}>
-                <View style={styles.grow}>
-                  <AppText variant="title">How many</AppText>
-                  <AppText variant="caption" tone="muted">
-                    {`Up to ${b.maxPerCustomer} each, so more people get one`}
-                  </AppText>
-                </View>
-                <View style={styles.stepper}>
-                  <IconButton icon="remove" tone="muted" onPress={() => dispatch(setSurplusQuantity(s.quantity - 1))} disabled={s.quantity <= 1} accessibilityLabel="One fewer" />
-                  <AppText variant="h2" accessibilityLabel={`${s.quantity} boxes`}>
-                    {String(s.quantity)}
-                  </AppText>
-                  <IconButton icon="add" tone="muted" onPress={() => dispatch(setSurplusQuantity(s.quantity + 1))} disabled={s.quantity >= max} accessibilityLabel="One more" />
-                </View>
-              </View>
-            </Card>
-            <View style={styles.gap}>
-              <AppText variant="sectionTitle">How you pay</AppText>
+            <SectionCard title="How many" subtitle={`Up to ${b.maxPerCustomer} each, so more people get one`} icon="layers-outline">
+              <QuantityStepper value={s.quantity} onChange={n => dispatch(setSurplusQuantity(n))} min={1} max={max} label="How many boxes" />
+            </SectionCard>
+            <SectionCard title="Payment" subtitle={`You pay ${b.vendor.name} directly`} icon="wallet-outline">
               {b.paymentMethods.map(m => (
                 <ChoiceLine key={m} label={BOX_PAYMENT[m].label} note={BOX_PAYMENT[m].hint} price={null} selected={s.method === m} multiple={false} onPress={() => dispatch(setSurplusMethod(m))} />
               ))}
-              <AppText variant="caption" tone="muted">
-                You pay the kitchen directly. MetroMatrix takes no commission.
-              </AppText>
-            </View>
+            </SectionCard>
           </>
         ) : null}
+        <TrustNote text={customerTrustLine(b.vendor.name)} />
       </View>
     </ScreenShell>
   );

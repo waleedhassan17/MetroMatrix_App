@@ -16,8 +16,12 @@ import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useRedu
 import { useBack } from '../../hooks/useBack';
 import { CATERING_MODE, CATERING_STATUS, EVENT_TYPE_LABEL } from '../../models/kitchen/kitchenStatusModel';
 import { advanceLine, latestQuote, quoteCardData, whenLine } from '../../models/kitchen/cateringModel';
-import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, ChoiceChip, InlineNotice, QuoteCard, ScreenShell, Sheet, SkeletonLines, StatusPill } from '../../Custom-Components/index';
+import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
+import { AppText, Button, DangerRow, InlineNotice, QuoteCard, RowCardsSkeleton, ScreenShell, SectionCard, Sheet, StatusPill } from '../../Custom-Components/index';
+import { ChoiceLine } from '../../Custom-Components/food/ChoiceLine';
+import { TrustNote } from '../../Components/food/FoodParts';
+import { ShopSection } from '../../Components/shopping/ShopParts';
+import { customerTrustLine } from '../../models/food/trustModel';
 import { TransferCard } from '../../Custom-Components/food/TransferCard';
 import type { FoodAppParamList } from '../../models';
 import { formatWhen } from '../../utils/health-time/healthTime';
@@ -35,7 +39,9 @@ const makeStyles = ({ space }: Theme) =>
     gap: { gap: space.s8 },
     row: { flexDirection: 'row', justifyContent: 'space-between', gap: space.s12 },
     grow: { flex: 1, minWidth: 0 },
-    reasons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
+    reasons: { gap: space.s4 },
+    sheetButtons: { flexDirection: 'row', gap: space.s12 },
+    half: { flex: 1 },
   });
 
 const FoodCateringRequest: React.FC<Props> = props => (
@@ -50,6 +56,7 @@ const FoodCateringRequestContent: React.FC<Props> = ({ navigation, route }) => {
   const dispatch = useAppDispatch();
   const appStore = useAppStore();
   const styles = useStyles(makeStyles);
+  const { colors } = useTheme();
   const ui = useAppSelector(selectFoodCateringUi);
   const r = useAppSelector(st => selectMyCateringRequest(st, code));
   const [cancelling, setCancelling] = useState(false);
@@ -61,7 +68,7 @@ const FoodCateringRequestContent: React.FC<Props> = ({ navigation, route }) => {
   if (!r) {
     return (
       <ScreenShell title="Dawat request" onBack={back}>
-        {ui.status === 'failed' ? <InlineNotice message={ui.error.message} action={ui.error.code === 'NOT_FOUND' ? undefined : { label: 'Try again', onPress: load }} /> : <SkeletonLines lines={10} />}
+        {ui.status === 'failed' ? <InlineNotice message={ui.error.message} action={ui.error.code === 'NOT_FOUND' ? undefined : { label: 'Try again', onPress: load }} /> : <RowCardsSkeleton count={3} />}
       </ScreenShell>
     );
   }
@@ -76,15 +83,20 @@ const FoodCateringRequestContent: React.FC<Props> = ({ navigation, route }) => {
     if (myCateringActAsync.fulfilled.match(res)) {
       haptics.success();
       const request = selectFoodCateringUi(appStore.getState()).byCode[code];
-      Toast.show({ type: 'success', text1: `Quote v${version} accepted`, text2: request?.advance ? 'Pay the advance to confirm the day.' : 'Your dawat is confirmed.' });
+      Toast.show({ type: 'success', text1: `Quote ${version} accepted`, text2: request?.advance ? 'Pay the advance to confirm the day.' : 'Your dawat is confirmed.' });
     } else haptics.warning();
   };
 
   return (
-    <ScreenShell title={`${EVENT_TYPE_LABEL[r.eventType]} with ${r.vendor.name}`} subtitle={whenLine(r)} onBack={back} refreshing={ui.status === 'loading'} onRefresh={load}>
+    <ScreenShell
+      title={EVENT_TYPE_LABEL[r.eventType]}
+      subtitle={`${r.vendor.name} · ${whenLine(r)}`}
+      onBack={back}
+      refreshing={ui.status === 'loading'}
+      onRefresh={load}
+      headerRight={<StatusPill label={CATERING_STATUS[r.status].label} tone={CATERING_STATUS[r.status].tone} />}>
       {fresh && r.status === 'requested' ? <InlineNotice tone="success" title="Request sent" message={`${r.vendor.name} will send a quote. You’ll find it here.`} /> : null}
       {ui.actionError.message ? <InlineNotice title={ui.actionError.code === 'QUOTE_OUTDATED' ? 'There is a newer quote' : ui.actionError.code === 'QUOTE_EXPIRED' ? 'That quote has expired' : undefined} message={ui.actionError.message} /> : null}
-      <StatusPill label={CATERING_STATUS[r.status].label} tone={CATERING_STATUS[r.status].tone} />
       {r.declineReason ? <InlineNotice title={`${r.vendor.name} can’t take it`} message={r.declineReason} /> : null}
 
       {r.advance && r.status === 'accepted' && r.advance.accounts?.length ? (
@@ -107,20 +119,12 @@ const FoodCateringRequestContent: React.FC<Props> = ({ navigation, route }) => {
         </>
       ) : null}
       {accepted ? (
-        <Card>
-          <View style={styles.gap}>
-            <AppText variant="title">{r.status === 'confirmed' || r.status === 'completed' ? 'Confirmed' : `Version ${accepted.version} accepted`}</AppText>
-            <AppText variant="body">{advanceLine(accepted)}</AppText>
-            {r.balance !== null && r.advance?.status === 'paid' ? <AppText variant="small" tone="muted">{`${formatPKR(r.balance)} to pay ${r.vendor.name} on the day.`}</AppText> : null}
-          </View>
-        </Card>
+        <SectionCard title={r.status === 'confirmed' || r.status === 'completed' ? 'Confirmed' : `Quote ${accepted.version} accepted`} subtitle={advanceLine(accepted)} icon="checkmark-circle-outline" tint={{ fg: colors.success, bg: colors.successSoft }}>
+          {r.balance !== null && r.advance?.status === 'paid' ? <AppText variant="small" tone="muted">{`${formatPKR(r.balance)} to pay ${r.vendor.name} on the day.`}</AppText> : null}
+        </SectionCard>
       ) : null}
 
-      {quotes.length ? <AppText variant="sectionTitle">Quotes</AppText> : (
-        <Card>
-          <AppText variant="body">{`Waiting for ${r.vendor.name} to send a quote.`}</AppText>
-        </Card>
-      )}
+      {quotes.length ? <ShopSection title="Quotes" inset={false} /> : <SectionCard title="Waiting for a quote" subtitle={`${r.vendor.name} sends one here. You can accept it, or wait for a new one.`} icon="hourglass-outline" />}
       {quotes.map(q => (
         <QuoteCard key={q.version} quote={quoteCardData(q, TZ, latest?.version ?? q.version)}>
           {r.canAccept && q.state === 'current' ? (
@@ -129,9 +133,8 @@ const FoodCateringRequestContent: React.FC<Props> = ({ navigation, route }) => {
         </QuoteCard>
       ))}
 
-      <Card>
+      <SectionCard title="You asked for" icon="restaurant-outline">
         <View style={styles.gap}>
-          <AppText variant="title">You asked for</AppText>
           {r.dishes.map((d, n) => (
             <View key={`${d.name}-${n}`} style={styles.row}>
               <AppText variant="body" style={styles.grow}>
@@ -145,41 +148,45 @@ const FoodCateringRequestContent: React.FC<Props> = ({ navigation, route }) => {
           </AppText>
           {r.notes ? <AppText variant="small">{`“${r.notes}”`}</AppText> : null}
         </View>
-      </Card>
+      </SectionCard>
 
-      <AppText variant="caption" tone="muted">
-        You pay the kitchen directly. MetroMatrix takes no commission.
-      </AppText>
-      {r.canCancel ? <Button label="Cancel the request" variant="secondary" onPress={() => setCancelling(true)} fullWidth /> : null}
+      <TrustNote text={customerTrustLine(r.vendor.name)} />
+      {r.canCancel ? <DangerRow label="Cancel the request" icon="close-circle-outline" onConfirm={() => setCancelling(true)} /> : null}
 
       <Sheet
         visible={cancelling}
         onClose={() => setCancelling(false)}
         title="Cancel this request?"
         footer={
-          <Button
-            label="Cancel it"
-            variant="destructive"
-            loading={ui.acting}
-            onPress={async () => {
-              const res = await dispatch(myCateringActAsync({ code, act: { kind: 'cancel', reason: cancelReason } }));
-              if (myCateringActAsync.fulfilled.match(res)) {
-                setCancelling(false);
-                Toast.show({ type: 'success', text1: 'Cancelled' });
-              }
-            }}
-            fullWidth
-          />
+          <View style={styles.sheetButtons}>
+            <View style={styles.half}>
+              <Button label="Keep it" variant="secondary" onPress={() => setCancelling(false)} fullWidth />
+            </View>
+            <View style={styles.half}>
+              <Button
+                label="Cancel it"
+                variant="destructive"
+                loading={ui.acting}
+                onPress={async () => {
+                  const res = await dispatch(myCateringActAsync({ code, act: { kind: 'cancel', reason: cancelReason } }));
+                  if (myCateringActAsync.fulfilled.match(res)) {
+                    setCancelling(false);
+                    Toast.show({ type: 'success', text1: 'Cancelled' });
+                  }
+                }}
+                fullWidth
+              />
+            </View>
+          </View>
         }>
         <AppText variant="small" tone="muted">
           The kitchen is told why.
         </AppText>
-        <View style={styles.reasons}>
+        <View style={styles.reasons} accessibilityRole="radiogroup" accessibilityLabel="Why you’re cancelling">
           {CANCEL_REASONS.map(x => (
-            <ChoiceChip key={x} label={x} selected={cancelReason === x} onPress={() => setCancelReason(x)} />
+            <ChoiceLine key={x} label={x} price={null} selected={cancelReason === x} multiple={false} onPress={() => setCancelReason(x)} />
           ))}
         </View>
-        <Button label="Keep it" variant="secondary" onPress={() => setCancelling(false)} fullWidth />
       </Sheet>
     </ScreenShell>
   );

@@ -17,7 +17,9 @@ import { useBack } from '../../hooks/useBack';
 import { TIFFIN_PAY, WEEKDAY_LONG } from '../../models/kitchen/kitchenStatusModel';
 import { cutoffChoiceLabel, perMealLabel, priceLabel, scheduleLabel, startChoices } from '../../models/kitchen/tiffinModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, Card, ChoiceChip, Divider, IonIcon, InlineNotice, ScreenShell, SkeletonLines, StatusPill, TextAction } from '../../Custom-Components/index';
+import { AppText, ChoiceChip, CtaBar, Divider, IonIcon, InlineNotice, ScreenShell, SectionCard, Skeleton, StatusPill, TextAction } from '../../Custom-Components/index';
+import { TrustNote } from '../../Components/food/FoodParts';
+import { customerTrustLine } from '../../models/food/trustModel';
 import { ChoiceLine } from '../../Custom-Components/food/ChoiceLine';
 import type { FoodAppParamList } from '../../models';
 import { cdn } from '../../utils/cdn/cdn';
@@ -28,17 +30,19 @@ import { PICKUP, chooseTiffin, loadTiffinPlanAsync, newTiffinKey, selectFoodTiff
 
 type Props = NativeStackScreenProps<FoodAppParamList, 'FoodTiffinPlan'>;
 
-const makeStyles = ({ space, gutter, colors, size }: Theme) =>
+const makeStyles = ({ space, gutter, colors, size, radius }: Theme) =>
   StyleSheet.create({
-    photo: { width: '100%', aspectRatio: size.railPhotoAspect, backgroundColor: colors.surfaceSunk },
-    content: { padding: gutter, gap: space.s16 },
+    photo: { width: '100%', aspectRatio: size.railPhotoAspect, borderRadius: radius.lg, backgroundColor: colors.surfaceSunk },
+    content: { paddingHorizontal: gutter, paddingBottom: space.s40, gap: space.s16 },
     gap: { gap: space.s8 },
     line: { flexDirection: 'row', alignItems: 'center', gap: space.s8 },
     grow: { flex: 1, gap: space.s4, minWidth: 0 },
     day: { flexDirection: 'row', gap: space.s12, paddingVertical: space.s8 },
-    dayName: { width: size.avatar.lg + space.s20 },
+    // A least width, so "Wednesday" fits and large text can still wrap.
+    dayName: { minWidth: size.weekdayColumn, maxWidth: '40%' },
     chipBar: { flexGrow: 0 },
     chips: { flexDirection: 'row', gap: space.s8 },
+    loading: { gap: space.s16 },
   });
 
 const FoodTiffinPlan: React.FC<Props> = props => (
@@ -53,7 +57,7 @@ const FoodTiffinPlanContent: React.FC<Props> = ({ navigation, route }) => {
   const dispatch = useAppDispatch();
   const appStore = useAppStore();
   const styles = useStyles(makeStyles);
-  const { colors, size } = useTheme();
+  const { colors, size, motion } = useTheme();
   const s = useAppSelector(selectFoodTiffinPlan);
   const book = useAppSelector(selectAddressBook);
 
@@ -74,7 +78,15 @@ const FoodTiffinPlanContent: React.FC<Props> = ({ navigation, route }) => {
   if (!p) {
     return (
       <ScreenShell title="Tiffin" onBack={back}>
-        {s.status === 'failed' ? <InlineNotice message={s.error.message} action={s.error.code === 'NOT_FOUND' ? undefined : { label: 'Try again', onPress: load }} /> : <SkeletonLines lines={10} />}
+        {s.status === 'failed' ? (
+          <InlineNotice message={s.error.message} action={s.error.code === 'NOT_FOUND' ? undefined : { label: 'Try again', onPress: load }} />
+        ) : (
+          <View style={styles.loading} accessibilityLabel="Loading" accessibilityRole="progressbar">
+            <Skeleton height={size.storeHero} shape="lg" />
+            <Skeleton width="50%" height={size.icon.lg} />
+            <Skeleton height={size.control.lg * 3} shape="lg" />
+          </View>
+        )}
       </ScreenShell>
     );
   }
@@ -103,29 +115,31 @@ const FoodTiffinPlanContent: React.FC<Props> = ({ navigation, route }) => {
       refreshing={s.status === 'loading'}
       onRefresh={load}
       footer={
-        full ? (
-          <Button label="This plan is full" disabled onPress={() => undefined} fullWidth />
-        ) : (
-          <Button label={`Ask to join · ${priceLabel(p)}`} onPress={() => void subscribe()} loading={s.subscribing} disabled={!s.startDate || needsAddress} fullWidth />
+        full ? undefined : (
+          <CtaBar
+            label={p.period === 'week' ? 'Each week' : 'Each month'}
+            amount={p.price}
+            note={`${perMealLabel(p)} · paid to the kitchen`}
+            action={{ label: 'Ask to join', onPress: () => void subscribe(), loading: s.subscribing, disabled: !s.startDate || needsAddress }}
+          />
         )
       }>
-      {p.photoUrl ? <Image source={cdn(p.photoUrl, { w: size.surplusCard * 2 }) ?? undefined} style={styles.photo} contentFit="cover" accessibilityLabel={`${p.name}: photo`} /> : null}
       <View style={styles.content}>
+        {p.photoUrl ? <Image source={cdn(p.photoUrl, { w: size.surplusCard * 2 }) ?? undefined} style={styles.photo} contentFit="cover" transition={motion.imageFade} accessibilityLabel={`${p.name}: photo`} /> : null}
         {s.subscribeError.message ? <InlineNotice message={s.subscribeError.message} /> : null}
+        {full ? <InlineNotice tone="warning" title="This plan is full" message={`${p.vendor.name} isn’t taking anyone new on it right now. Ask the kitchen, or look at its other plans.`} /> : null}
         <View style={styles.gap}>
-          <View style={styles.line}>
-            <StatusPill label={scheduleLabel(p)} tone="accent" />
-            <StatusPill label={full ? 'Full' : `${p.seatsLeft} places left`} tone={full ? 'warning' : 'success'} />
-          </View>
-          <AppText variant="h2">{`${priceLabel(p)}`}</AppText>
+          <StatusPill label={full ? 'Full' : `${p.seatsLeft} ${p.seatsLeft === 1 ? 'place' : 'places'} left`} tone={full ? 'warning' : 'success'} />
+          <AppText variant="cardTitle" tone="accentDeep">
+            {priceLabel(p)}
+          </AppText>
           <AppText variant="small" tone="muted">
-            {`${perMealLabel(p)} · ${p.mealsPerPeriod} meals · ${p.mode === 'delivery' ? 'Delivered' : p.mode === 'pickup' ? 'Collected' : 'Delivered or collected'} ${p.window.label}`}
+            {`${scheduleLabel(p)} · ${perMealLabel(p)} · ${p.mealsPerPeriod} meals · ${p.mode === 'delivery' ? 'Delivered' : p.mode === 'pickup' ? 'Collected' : 'Delivered or collected'} ${p.window.label}`}
           </AppText>
           {p.description ? <AppText variant="body">{p.description}</AppText> : null}
         </View>
 
-        <Card>
-          <AppText variant="title">What’s cooked</AppText>
+        <SectionCard title="What’s cooked" icon="restaurant-outline">
           {p.rotation.map((r, n) => (
             <View key={r.weekday}>
               {n > 0 ? <Divider /> : null}
@@ -139,43 +153,40 @@ const FoodTiffinPlanContent: React.FC<Props> = ({ navigation, route }) => {
               </View>
             </View>
           ))}
-        </Card>
+        </SectionCard>
 
-        <Card>
-          <View style={styles.gap}>
-            {[
-              ['calendar-outline', `Skip any day until ${cutoffChoiceLabel(p.skipCutoffHour)}.`],
-              ['pause-outline', 'Pause it while you travel, or cancel any time.'],
-              ['wallet-outline', 'You pay the kitchen directly for each period. MetroMatrix takes no commission.'],
-            ].map(([icon, text]) => (
-              <View key={text} style={styles.line}>
-                <IonIcon name={icon as 'calendar-outline'} size="md" color={colors.inkMuted} />
-                <AppText variant="small" style={styles.grow}>
-                  {text}
-                </AppText>
-              </View>
-            ))}
-          </View>
-        </Card>
+        <SectionCard title="How it works" icon="information-circle-outline">
+          {[
+            ['calendar-outline', `Skip any day until ${cutoffChoiceLabel(p.skipCutoffHour)}.`],
+            ['pause-outline', 'Pause it while you travel, or cancel any time.'],
+          ].map(([icon, text]) => (
+            <View key={text} style={styles.line}>
+              <IonIcon name={icon as 'calendar-outline'} size="md" color={colors.inkMuted} />
+              <AppText variant="small" style={styles.grow}>
+                {text}
+              </AppText>
+            </View>
+          ))}
+        </SectionCard>
 
         {!full ? (
           <>
-            <AppText variant="sectionTitle">Start on</AppText>
-            {starts.length ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipBar} contentContainerStyle={styles.chips}>
-                {starts.map(d => (
-                  <ChoiceChip key={d} label={`${formatDayChip(d).weekday} ${formatDayChip(d).day} ${formatDayChip(d).month}`} selected={s.startDate === d} onPress={() => dispatch(chooseTiffin({ startDate: d }))} />
-                ))}
-              </ScrollView>
-            ) : (
-              <AppText variant="small" tone="muted">
-                No start days are open right now.
-              </AppText>
-            )}
+            <SectionCard title="Start on" icon="today-outline" invalid={!s.startDate && !starts.length}>
+              {starts.length ? (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipBar} contentContainerStyle={styles.chips}>
+                  {starts.map(d => (
+                    <ChoiceChip key={d} label={`${formatDayChip(d).weekday} ${formatDayChip(d).day} ${formatDayChip(d).month}`} selected={s.startDate === d} onPress={() => dispatch(chooseTiffin({ startDate: d }))} />
+                  ))}
+                </ScrollView>
+              ) : (
+                <AppText variant="small" tone="muted">
+                  No start days are open right now.
+                </AppText>
+              )}
+            </SectionCard>
 
             {p.mode !== 'pickup' ? (
-              <View style={styles.gap}>
-                <AppText variant="sectionTitle">{p.mode === 'both' ? 'Delivered, or collected' : 'Deliver to'}</AppText>
+              <SectionCard title={p.mode === 'both' ? 'Delivered, or collected' : 'Deliver to'} icon="location-outline" invalid={needsAddress && !pinned.length}>
                 {p.mode === 'both' ? (
                   <ChoiceLine
                     label="I’ll collect it"
@@ -203,17 +214,17 @@ const FoodTiffinPlanContent: React.FC<Props> = ({ navigation, route }) => {
                   </AppText>
                 ) : null}
                 <TextAction label="Add an address" icon="add" onPress={() => navigation.getParent()?.navigate('AddressForm')} />
-              </View>
+              </SectionCard>
             ) : null}
 
-            <View style={styles.gap}>
-              <AppText variant="sectionTitle">How you pay the kitchen</AppText>
+            <SectionCard title="How you pay the kitchen" icon="wallet-outline">
               {(['transfer', 'cash'] as const).map(m => (
                 <ChoiceLine key={m} label={TIFFIN_PAY[m].label} note={TIFFIN_PAY[m].hint} price={null} selected={s.payMethod === m} multiple={false} onPress={() => dispatch(chooseTiffin({ payMethod: m }))} />
               ))}
-            </View>
+            </SectionCard>
           </>
         ) : null}
+        <TrustNote text={customerTrustLine(p.vendor.name)} />
       </View>
     </ScreenShell>
   );

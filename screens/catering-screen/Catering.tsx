@@ -148,7 +148,7 @@ const CateringContent: React.FC<Props> = ({ navigation, route }) => {
               key={r.code}
               title={r.customer?.name ?? 'Customer'}
               mark={{ icon: 'people-outline', tint: 'violet' }}
-              lines={[eventLine(r), r.budget ? `Budget about ${formatPKR(r.budget)}` : null, q ? `Quote v${q.version}: ${formatPKR(q.total)}` : `${r.dishes.length} dishes asked for`]}
+              lines={[eventLine(r), r.budget ? `Budget about ${formatPKR(r.budget)}` : null, q ? `Quote ${q.version}: ${formatPKR(q.total)}` : `${r.dishes.length} dishes asked for`]}
               pill={{ label: CATERING_STATUS[r.status].vendorLabel, tone: CATERING_STATUS[r.status].tone }}
               onPress={() => navigation.navigate('GrowthCateringRequest', { code: r.code })}
             />
