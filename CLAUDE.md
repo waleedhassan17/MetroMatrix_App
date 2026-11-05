@@ -106,7 +106,7 @@ config/env.ts                GOOGLE_WEB_CLIENT_ID, SUPPORT_EMAIL (with network.t
 Components/                  AppContainer.tsx + appContainerSlice.ts (bootstrap/refresh/push), ConfigErrorScreen,
                              MaintenanceGate, OfflineGate, PushPrePrompt, sessionEndedCopy; and the feature parts:
   auth/                      AuthChrome (frame/header/tabs/badge), AuthFields, ChoiceCard, StepFlow, AuthErrorNotice, GoogleSignInButton(.web)
-  brand/                     BrandMark (the logo tile, splash-mark.png), BrandWordmark (splash, onboarding)
+  brand/                     BrandMark (the logo's four squares, splash-mark.png), BrandWordmark (splash, onboarding)
   home/                      ServiceCard + serviceCatalog (the customer home's three cards)
   food/                      FoodParts (FoodSection on ShopSection, cuisine / vendor / dish / Bachat Box rails, DealTag, TrustNote,
                              FoodOrderRow and ActiveOrderCard, FoodBagDock + useBagDockInset), VendorBoardHost (the kitchen's

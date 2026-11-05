@@ -11,7 +11,7 @@ drawn fresh rather than stretched from the 512 px file, and no size loses qualit
 |---|---|---|---|
 | icon.png | 1024×1024 | opaque, full bleed; iOS and Android round it themselves | app.json `icon` |
 | adaptive-icon.png | 1024×1024 | transparent, the squares only at 2/3 size: Android shows the middle 72 of 108 dp, so it reads as icon.png does, and the squares stay inside the 66 dp safe circle | app.json `android.adaptiveIcon` (background `#FAFBF6`, the tile's colour) |
-| splash-mark.png | 1024×1024 | transparent, the tile as drawn | app.json's splash (104 dp) and `BrandMark` (splash, onboarding) |
+| splash-mark.png | 1024×1024 | transparent, the four squares only (no tile), cut to their edges | app.json's splash (88 dp, on white) and `BrandMark` (splash, onboarding) |
 | favicon.png | 48×48 | transparent, the tile as drawn | app.json `web.favicon` |
 
 To change the logo, put the new file in as `logo.png`, trace it into `logo.svg`, run `npm run export:logo`, and keep

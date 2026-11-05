@@ -3,6 +3,7 @@
 import { createHash } from 'crypto';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { size } from '../tokens';
 
 const IMAGES = join(__dirname, '..', '..', 'assets', 'images');
 const read = (file: string) => readFileSync(join(IMAGES, file));
@@ -36,5 +37,7 @@ describe('the MetroMatrix logo', () => {
     expect(expo.web.favicon).toBe('./assets/images/favicon.png');
     const splash = expo.plugins.find((p: unknown) => Array.isArray(p) && p[0] === 'expo-splash-screen')[1];
     expect(splash.image).toBe('./assets/images/splash-mark.png');
+    // BrandMark paints the same file at the same width, so native → JS doesn't move the mark.
+    expect(splash.imageWidth).toBe(size.splashMark);
   });
 });

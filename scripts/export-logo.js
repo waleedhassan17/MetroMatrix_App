@@ -7,7 +7,8 @@
 //   adaptive-icon.png  1024 transparent, the tile left out (app.json's backgroundColor is the tile's colour) and
 //                      the logo at 2/3 size: Android shows the middle 72 of 108 dp, so it reads as icon.png does
 //                      and the squares stay inside the 66 dp safe circle
-//   splash-mark.png    1024 transparent, the tile as drawn (app.json's splash, and BrandMark in the app)
+//   splash-mark.png    1024 transparent, the four squares only (no tile), cut to their edges: the splash shows them
+//                      on white (app.json's splash, and BrandMark in the app)
 //   favicon.png        48 transparent, the tile as drawn (web)
 //
 // logo.png itself is never written: it stays exactly as the owner gave it.
@@ -25,7 +26,7 @@ const TILE = '#FAFBF6';
 const EXPORTS = [
   { file: 'icon.png', size: 1024, background: TILE, css: '#tile { rx: 0; }' },
   { file: 'adaptive-icon.png', size: 1024, css: '#tile { display: none; }', viewBox: '-256 -256 1536 1536' },
-  { file: 'splash-mark.png', size: 1024 },
+  { file: 'splash-mark.png', size: 1024, css: '#tile { display: none; }', viewBox: '246 246 532 532' },
   { file: 'favicon.png', size: 48 },
 ];
 

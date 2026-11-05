@@ -261,8 +261,8 @@ export const size = {
   sheetHandle: 4,
   thumb: 56,
   logoMark: 40,
-  /** The native splash mark's imageWidth (app.json) — the JS splash matches it. */
-  splashMark: 104,
+  /** The native splash mark's imageWidth (app.json) — the JS splash matches it. The logo's four squares, edge to edge. */
+  splashMark: 88,
   /** Paragraph measure for onboarding and empty-state prose. */
   prose: 460,
   /** Onboarding preview card width, its row icon tile, eyebrow dot, top-bar mark. */

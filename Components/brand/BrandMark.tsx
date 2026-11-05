@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// BrandMark — the MetroMatrix logo tile
+// BrandMark — the MetroMatrix logo's four squares (no tile)
 // ═══════════════════════════════════════════════════════
 // assets/images/splash-mark.png is exactly what app.json hands the native
 // splash, at the same width (size.splashMark). The JS splash paints this same
