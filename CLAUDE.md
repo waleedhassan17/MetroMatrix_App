@@ -8,7 +8,7 @@ MetroMatrix is a zero-commission community marketplace with three services: **Sh
 - admins, who approve partners
 
 The app follows the **Consultant_Mobile app architecture** (`waleedhassan17/Consultant_Mobile`, local clone `~/Consultant-Mobile/Consultant_Mobile`; the owner's decision of 2026-10-31, replacing the FinMatrix layout): folders at the repo root with relative imports, one flat kebab-case folder per screen, `networks/network/network.ts` with the `API` request functions, and slices that serialize in `fulfilled`. Its **look and flows follow the owner's MetroMatrix FYP app** (`~/MetroMatrix/Waleed-MetroMatrix`):
-- white, light-only screens in the platform system font, with the FYP icon, splash and onboarding (Health keeps the FYP's pale clinical blue);
+- white, light-only screens in the platform system font, with the FYP's splash and onboarding (Health keeps the FYP's pale clinical blue); the logo and app icons are the owner's MetroMatrix logo (`assets/images/logo.png`, kept as given; every icon is exported from its vector trace `logo.svg`, see `assets/images/README.md`);
 - Role Selection → (Provider Selection) → sign in / sign up → email link → profile steps;
 - the FYP's three-card user home, with no bottom bar; each service opens its own app with its own bottom tabs, as in the FYP. The app is in English: no Urdu UI copy and no language switch. Urdu appears only as content: speech and its transcript, assistant-drafted dish descriptions, spoken announcements, and recipes when Urdu is picked (Chunk 5's owner decision). Food is branded **Food Court**: a platform for food vendors. Unlike Foodpanda, MetroMatrix takes **no commission** and runs **no rider fleet**. Vendors deliver with their own riders through MetroMatrix's delivery app. Delivery details (time, fee, area) are fine to show; never imply MetroMatrix's own couriers or a cut of the order.
 
@@ -106,7 +106,7 @@ config/env.ts                GOOGLE_WEB_CLIENT_ID, SUPPORT_EMAIL (with network.t
 Components/                  AppContainer.tsx + appContainerSlice.ts (bootstrap/refresh/push), ConfigErrorScreen,
                              MaintenanceGate, OfflineGate, PushPrePrompt, sessionEndedCopy; and the feature parts:
   auth/                      AuthChrome (frame/header/tabs/badge), AuthFields, ChoiceCard, StepFlow, AuthErrorNotice, GoogleSignInButton(.web)
-  brand/                     BrandMark, BrandWordmark (splash, onboarding)
+  brand/                     BrandMark (the logo tile, splash-mark.png), BrandWordmark (splash, onboarding)
   home/                      ServiceCard + serviceCatalog (the customer home's three cards)
   food/                      FoodParts (FoodSection on ShopSection, cuisine / vendor / dish / Bachat Box rails, DealTag, TrustNote,
                              FoodOrderRow and ActiveOrderCard, FoodBagDock + useBagDockInset), VendorBoardHost (the kitchen's
@@ -218,11 +218,13 @@ utils/<name>/                one folder per util: storage_utils/storageUtils (to
                              script → RTL), share-text, store-card-html (the printable QR card), grid (gridCellWidth)
 __live__/, __fixtures__/     the live suite against a running API; shared test fixtures
 scripts/check-design-tokens.js, capture-health-fixtures.js, capture-food-fixtures.js, capture-shop-fixtures.js and
-                             capture-shop-staff-fixtures.js (real responses → the serializer fixtures)
+                             capture-shop-staff-fixtures.js (real responses → the serializer fixtures); export-logo.js
+                             (`npm run export:logo`: logo.svg → icon, adaptive icon, splash mark, favicon)
 docs/                        API_CONTRACT_ASSUMED.md, API_SHOPPING.md, API_HEALTH.md, API_FOOD.md, API_KITCHEN.md, AI.md and VOICE.md (copies of
                              the backend's), MOCK_HEALTH.md, MOCK_FOOD.md, MOCK_IMAGES.md, GOOGLE_SIGNIN.md,
                              PLAY_BACKGROUND_LOCATION.md, FOOD_DEVICE_CHECKS.md, KITCHEN_DEVICE_CHECKS.md
-assets/images/               FYP icon + splash mark; services/, health/ and shopping/ (card and category photos — sources in
+assets/images/               the logo (logo.png as the owner gave it, logo.svg its vector) and the icons exported from it
+                             (README.md); services/, health/ and shopping/ (card and category photos — sources in
                              each CREDITS.md)
 ```
 

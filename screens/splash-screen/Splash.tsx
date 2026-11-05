@@ -10,6 +10,9 @@
 // frame, so native → JS reads as one continuous moment. No safe-area inset:
 // it would shift the centre off the window's and the tile would jump.
 //
+// Just the mark, the wordmark and the line under it: no services row (the
+// owner found it odd on the splash).
+//
 // One Animated sequence, no timers: it stops on unmount, and `onDone` hangs
 // off its completion (pass a stable callback, or the sequence restarts).
 // Opacity and transforms only, all on the native driver.
@@ -17,19 +20,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BrandMark, BrandWordmark } from '../../Components/brand';
-import { SERVICE_PALETTES, useStyles, useTheme, type ServiceName, type Theme } from '../../theme';
+import { useStyles, useTheme, type Theme } from '../../theme';
 import { AppText } from '../../Custom-Components/AppText';
 
-/** The three services, in the order onboarding introduces them. */
-const SERVICES: { service: Exclude<ServiceName, 'neutral'>; label: string }[] = [
-  { service: 'food', label: 'Food Court' },
-  { service: 'healthcare', label: 'Healthcare' },
-  { service: 'shopping', label: 'Shopping' },
-];
-
-const makeStyles = ({ colors, space, size, radius }: Theme) =>
+const makeStyles = ({ colors, space, size }: Theme) =>
   StyleSheet.create({
     root: { ...StyleSheet.absoluteFillObject, backgroundColor: colors.canvas },
     centre: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
@@ -43,21 +38,16 @@ const makeStyles = ({ colors, space, size, radius }: Theme) =>
       alignItems: 'center',
       gap: space.s4,
     },
-    footer: { position: 'absolute', left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: space.s16 },
-    service: { flexDirection: 'row', alignItems: 'center', gap: space.s8 },
-    dot: { width: space.s8, height: space.s8, borderRadius: radius.pill },
   });
 
 export const Splash: React.FC<{ onDone: () => void }> = ({ onDone }) => {
   const styles = useStyles(makeStyles);
-  const { size, space, motion } = useTheme();
-  const insets = useSafeAreaInsets();
+  const { size, motion } = useTheme();
 
   const [wordOpacity] = useState(() => new Animated.Value(0));
   const [wordY] = useState(() => new Animated.Value(12));
   const [tagOpacity] = useState(() => new Animated.Value(0));
   const [tagY] = useState(() => new Animated.Value(8));
-  const [footOpacity] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     let sequence: Animated.CompositeAnimation | null = null;
@@ -72,7 +62,7 @@ export const Splash: React.FC<{ onDone: () => void }> = ({ onDone }) => {
       .then(reduced => {
         if (cancelled) return;
         if (reduced) {
-          [wordOpacity, tagOpacity, footOpacity].forEach(v => v.setValue(1));
+          [wordOpacity, tagOpacity].forEach(v => v.setValue(1));
           wordY.setValue(0);
           tagY.setValue(0);
           sequence = Animated.delay(600);
@@ -83,7 +73,6 @@ export const Splash: React.FC<{ onDone: () => void }> = ({ onDone }) => {
             Animated.stagger(t.stagger, [
               Animated.parallel([fade(wordOpacity, t.word), fade(wordY, t.word, 0)]),
               Animated.parallel([fade(tagOpacity, t.tag), fade(tagY, t.tag, 0)]),
-              fade(footOpacity, t.tag),
             ]),
             Animated.delay(t.hold),
           ]);
@@ -95,7 +84,7 @@ export const Splash: React.FC<{ onDone: () => void }> = ({ onDone }) => {
       cancelled = true;
       sequence?.stop();
     };
-  }, [footOpacity, motion.splash, onDone, tagOpacity, tagY, wordOpacity, wordY]);
+  }, [motion.splash, onDone, tagOpacity, tagY, wordOpacity, wordY]);
 
   return (
     <View style={styles.root} accessibilityLabel="MetroMatrix is starting" accessibilityRole="image">
@@ -114,20 +103,6 @@ export const Splash: React.FC<{ onDone: () => void }> = ({ onDone }) => {
           </AppText>
         </Animated.View>
       </View>
-
-      <Animated.View
-        style={[styles.footer, { bottom: insets.bottom + space.s24, opacity: footOpacity }]}
-        pointerEvents="none"
-        accessibilityLabel="Food, healthcare and shopping">
-        {SERVICES.map(s => (
-          <View key={s.service} style={styles.service}>
-            <View style={[styles.dot, { backgroundColor: SERVICE_PALETTES.light[s.service].highlight }]} />
-            <AppText variant="caption" tone="muted">
-              {s.label}
-            </AppText>
-          </View>
-        ))}
-      </Animated.View>
     </View>
   );
 };

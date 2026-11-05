@@ -11,6 +11,7 @@
     "lint": "eslint . --ext .ts,.tsx",
     "type-check": "tsc --noEmit",
     "check:tokens": "node scripts/check-design-tokens.js",
+    "export:logo": "node scripts/export-logo.js",
     "gates": "tsc --noEmit && node scripts/check-design-tokens.js && eslint . --ext .ts,.tsx && jest",
     "test": "jest",
     "ios": "expo run:ios"

@@ -38,7 +38,7 @@ The dummy API in `networks/network/mock/` is test fixtures only: the Shopping, H
 
 ## Status
 
-- **Look and flow:** the MetroMatrix FYP app's. That means a white, light-only UI in the platform system font, the FYP icon and splash, onboarding, Role Selection → Provider Selection, and the full user and provider authentication flows. There is no Facebook login.
+- **Look and flow:** the MetroMatrix FYP app's. That means a white, light-only UI in the platform system font, the FYP splash and onboarding (with the owner's MetroMatrix logo and icons, `assets/images/`), Role Selection → Provider Selection, and the full user and provider authentication flows. There is no Facebook login.
 - **Customer home:** the FYP's three service cards. The **Food Court** is live. It's MetroMatrix's food-vendor platform: zero commission, with vendors delivering through their own riders on MetroMatrix's delivery app. It appears as a Foodpanda-style page led by local fast-food brands. **Smart Shopping** is live (Chunk 2). Health shows what is coming.
 - **Shopping (Chunk 2):**
   - customers browse stores in their own colours, search, filter, save, fill one Bag from several stores and check out once (cash on delivery or a transfer straight to the store)

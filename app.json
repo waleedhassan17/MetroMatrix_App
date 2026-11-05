@@ -17,7 +17,7 @@
       "package": "com.metromatrix.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#091118"
+        "backgroundColor": "#FAFBF6"
       },
       "edgeToEdgeEnabled": true,
       "permissions": [

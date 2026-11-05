@@ -1,10 +1,12 @@
 // ═══════════════════════════════════════════════════════
-// BrandMark — the MetroMatrix logo tile (ported from the FYP)
+// BrandMark — the MetroMatrix logo tile
 // ═══════════════════════════════════════════════════════
 // assets/images/splash-mark.png is exactly what app.json hands the native
 // splash, at the same width (size.splashMark). The JS splash paints this same
 // file at the same size in the window's centre, so the launch hands off
-// native → JS without the mark moving or changing.
+// native → JS without the mark moving or changing. It is the owner's logo
+// (assets/images/logo.png) exported at 1024 from logo.svg, so it stays sharp
+// at every size it is drawn (assets/images/README.md).
 
 import React from 'react';
 import { Image, View, type StyleProp, type ViewStyle } from 'react-native';

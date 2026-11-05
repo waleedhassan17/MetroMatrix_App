@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>MetroMatrix</title>
+  <!-- logo.png (the owner's file, kept as it is) traced to vector: the same tile, squares, M and colours.
+       Every app icon here is exported from this file, never by stretching logo.png: node scripts/export-logo.js -->
+  <rect id="tile" width="1024" height="1024" rx="224" fill="#FAFBF6"/>
+  <g id="mark">
+    <rect x="246" y="246" width="238" height="238" rx="56" fill="#C25200"/>
+    <rect x="540" y="246" width="238" height="238" rx="56" fill="#A81059"/>
+    <rect x="246" y="540" width="238" height="238" rx="56" fill="#1E6BE1"/>
+    <rect x="540" y="540" width="238" height="238" rx="56" fill="#057857"/>
+    <path d="M589 725.5V592.5L659 662.5L729 592.5V725.5" fill="none" stroke="#FFFFFF" stroke-width="35" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
