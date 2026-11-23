@@ -29,6 +29,17 @@ export const DateField: React.FC<DateFieldProps> = ({ label, value, onChange, mi
         disabled,
         'aria-label': label,
         'aria-invalid': !!error,
+        // The input's own calendar icon does not open reliably inside the app's
+        // scroll view (Firefox), so a click opens the picker itself. Typing
+        // still works; browsers without showPicker keep their default.
+        onClick: (e: { currentTarget: { showPicker?: () => void } }) => {
+          if (disabled) return;
+          try {
+            e.currentTarget.showPicker?.();
+          } catch {
+            // Not allowed here (e.g. a cross-origin frame): the default stays.
+          }
+        },
         onChange: (e: { target: { value: string } }) => {
           // Chrome reports a year typed digit by digit as 0002, 0020, …
           const v = e.target.value;

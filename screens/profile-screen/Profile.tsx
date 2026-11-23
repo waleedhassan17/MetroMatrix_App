@@ -273,7 +273,10 @@ const ProfileContent: React.FC<Props> = ({ navigation }) => {
     } else haptics.warning();
   };
 
-  const who = [ROLE_LABEL[user.role], business?.name ?? `since ${dayjs(user.createdAt).format('MMM YYYY')}`].filter(Boolean).join(' · ');
+  // The API's AuthUserView carries no createdAt today: "since …" only for a real date, never "Invalid Date".
+  const joined = user.createdAt ? dayjs(user.createdAt) : null;
+  const since = joined?.isValid() ? `since ${joined.format('MMM YYYY')}` : null;
+  const who = [ROLE_LABEL[user.role], business?.name ?? since].filter(Boolean).join(' · ');
 
   const account: MenuItem[] = [
     { key: 'edit', title: 'Edit profile', subtitle: 'Your name, mobile and photo', icon: 'create-outline', tint: 'violet', onPress: () => dispatch(setProfileTab('settings')) },
