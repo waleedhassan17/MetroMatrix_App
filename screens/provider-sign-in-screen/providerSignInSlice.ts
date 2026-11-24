@@ -69,7 +69,9 @@ export const providerSignInSlice = createAppSlice({
           state.error = readRejection(action, 'Sign in failed. Try again.');
           state.lockedUntil = lockedUntilAfter(state.error);
           // The typed password goes: it was wrong, and it must not wait in the form for the next person.
+          // Untouched again, so the empty field isn't flagged "required" before they type.
           state.password = '';
+          delete state.touched.password;
           state.wrongPasswords = state.error.code === 'INVALID_CREDENTIALS' ? state.wrongPasswords + 1 : 0;
         },
       },

@@ -274,3 +274,18 @@ describe('approvalQueueSlice', () => {
     expect(s.lists.all.items.map(b => b.id)).toEqual(['a', 'c']);
   });
 });
+
+describe('a refused sign-in', () => {
+  it('clears the wrong password without flagging the empty field, and counts wrong passwords', () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { signInSlice } = require('../sign-in-screen/signInSlice') as typeof import('../sign-in-screen/signInSlice');
+    const { reducer, actions } = signInSlice;
+    let s = reducer(undefined, actions.setPassword('Wrong2026pass'));
+    s = reducer(s, actions.touchAll());
+    const wrong = { message: 'Incorrect email or password.', code: 'INVALID_CREDENTIALS', details: null };
+    for (let i = 0; i < 3; i++) s = reducer(s, actions.signInAsync.rejected(null, 'r', { email: 'a@x.pk', password: 'x' }, wrong));
+    expect(s.password).toBe('');
+    expect(s.touched.password).toBeUndefined();
+    expect(s.wrongPasswords).toBe(3);
+  });
+});

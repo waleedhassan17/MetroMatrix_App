@@ -72,6 +72,7 @@ export const riderSignInSlice = createAppSlice({
               : error;
           state.lockedUntil = lockedUntilAfter(state.error);
           state.password = '';
+          delete state.touched.password;
         },
       },
     ),
