@@ -32,6 +32,7 @@ import { visibleErrors } from '../../utils/form-errors/formErrors';
 import { haptics } from '../../utils/haptics/haptics';
 import { Alert } from '../../utils/alert/alert';
 import { pickDocumentFile, pickImageFromLibrary, takePhoto } from '../../utils/pickers/pickers';
+import { pdfPage } from '../../utils/cdn/cdn';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import {
   BottomSheetPicker,
@@ -90,6 +91,9 @@ const STEP_COPY = {
 } as const;
 /** Step 3's line under its title, with the count first. */
 const documentsLine = (added: number, total: number) => `${added} of ${total} added · clear photos or PDFs`;
+
+/** A PDF page's width in the viewer (points; the device's pixel ratio is applied). */
+const VIEWER_WIDTH = 900;
 
 /** How many skeleton tiles stand in while the documents are read. */
 const SKELETON_TILES = 3;
@@ -263,14 +267,19 @@ const PersonalInfo: React.FC<Props> = ({ route, navigation }) => {
       { text: 'Remove', style: 'destructive', onPress: () => void dispatch(removeDocumentAsync(doc.id)) },
     ]);
 
+  // A PDF opens as its pages (Cloudinary won't deliver the file itself on this plan).
   const view = (doc: BusinessDocument) => {
-    if (isPdf(doc)) void Linking.openURL(doc.url);
-    else dispatch(openViewer({ uri: doc.url, title: DOCUMENT_LABELS[doc.kind].label }));
+    const title = DOCUMENT_LABELS[doc.kind].label;
+    if (!isPdf(doc)) dispatch(openViewer({ uri: doc.url, title }));
+    else if (pdfPage(doc.url, 1, { w: VIEWER_WIDTH })) dispatch(openViewer({ uri: doc.url, title, pdf: true }));
+    else void Linking.openURL(doc.url);
   };
 
   const tileFor = (slot: DocumentSlot) => {
     const pending = s.uploads[slot.key];
     const { doc } = slot;
+    // A PDF shows its first page as the preview.
+    const pdfThumb = doc && isPdf(doc) ? pdfPage(doc.url, 1, { w: size.thumb }) : null;
     const state: DocumentTileState = pending
       ? pending.status === 'failed'
         ? 'failed'
@@ -290,8 +299,8 @@ const PersonalInfo: React.FC<Props> = ({ route, navigation }) => {
         state={state}
         progress={pending?.progress}
         error={pending?.error}
-        thumbnailUri={pending ? pending.previewUri : doc && !isPdf(doc) ? doc.url : null}
-        isPdf={pending ? pending.isPdf : doc ? isPdf(doc) : false}
+        thumbnailUri={pending ? pending.previewUri : (pdfThumb ?? (doc && !isPdf(doc) ? doc.url : null))}
+        isPdf={pending ? pending.isPdf : doc ? isPdf(doc) && !pdfThumb : false}
         note={doc?.reviewerNote}
         // The server names requirements (`a|b`); Rejected passes the kinds it turned down.
         highlighted={
@@ -529,7 +538,13 @@ const PersonalInfo: React.FC<Props> = ({ route, navigation }) => {
           <ListRow title="Choose from photos" leftIcon="images-outline" onPress={choose(() => pickImageFromLibrary({ onDenied }))} />
           <ListRow title="Choose a file" subtitle="PDF or image" leftIcon="document-text-outline" onPress={choose(pickDocumentFile)} />
         </Sheet>
-        <ImageViewer visible={!!s.viewer} uri={s.viewer?.uri ?? null} title={s.viewer?.title} onClose={() => dispatch(openViewer(null))} />
+        <ImageViewer
+          visible={!!s.viewer}
+          uri={s.viewer?.uri ?? null}
+          title={s.viewer?.title}
+          pageUrl={s.viewer?.pdf ? page => pdfPage(s.viewer?.uri, page, { w: VIEWER_WIDTH }) : null}
+          onClose={() => dispatch(openViewer(null))}
+        />
       </AuthScreen>
     </ServiceScope>
   );

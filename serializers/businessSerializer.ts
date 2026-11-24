@@ -143,6 +143,8 @@ export const businessWithOwnerSerializer = fromResponse((raw: unknown): Business
       email: str(owner.email),
       phone: strOrNull(owner.phone),
     },
+    // An API without per-document review doesn't send it: no controls then.
+    canReviewDocuments: raw.canReviewDocuments === true,
   };
 });
 

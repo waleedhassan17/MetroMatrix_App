@@ -156,6 +156,7 @@ const CASES: [string, () => Promise<unknown>, string[]][] = [
   ['fetchBusinesses', () => admin.fetchBusinesses({ status: 'pending_approval', serviceType: 'food', q: 'karahi', page: 2, pageSize: 20 }), ['GET /admin/businesses']],
   ['fetchBusiness', () => admin.fetchBusiness('b1'), ['GET /admin/businesses/{id}']],
   ['approveBusiness', () => admin.approveBusiness('b1'), ['POST /admin/businesses/{id}/approve']],
+  ['reviewBusinessDocument', () => admin.reviewBusinessDocument('b1', 'd1', 'accepted'), ['POST /admin/businesses/{id}/documents/{documentId}/review']],
   ['rejectBusiness', () => admin.rejectBusiness('b1', { reason: 'The CNIC photo is too blurry.', documentNotes: [{ documentId: 'd1', note: 'Retake it' }] }), ['POST /admin/businesses/{id}/reject']],
   ['suspendBusiness', () => admin.suspendBusiness('b1', 'Repeated complaints.'), ['POST /admin/businesses/{id}/suspend']],
   ['reinstateBusiness', () => admin.reinstateBusiness('b1', 'The licence was renewed.'), ['POST /admin/businesses/{id}/reinstate']],
@@ -215,9 +216,14 @@ describe('App ↔ API contract (docs/openapi.json)', () => {
       .filter(([p]) => /^\/api\/v1\/(auth|users\/me|media\/sign-upload|businesses|admin\/me\/totp|admin\/businesses)/.test(p))
       .flatMap(([p, ops]) => Object.keys(ops).map(m => `${m.toUpperCase()} ${p}`));
     // /auth/signout is the API's alias of /auth/logout; the App uses logout.
-    // /auth/web/* is the admin web console's cookie session, never the App's.
+    // /auth/web/* is the admin web console's cookie session, never the App's,
+    // and /auth/admin/setup is that console's first-run registration.
     const uncalled = inScope.filter(
-      op => !called.has(op) && op !== 'POST /api/v1/auth/signout' && !op.includes(' /api/v1/auth/web/'),
+      op =>
+        !called.has(op) &&
+        op !== 'POST /api/v1/auth/signout' &&
+        !op.includes(' /api/v1/auth/web/') &&
+        !op.endsWith(' /api/v1/auth/admin/setup'),
     );
     expect(uncalled).toEqual([]);
   });

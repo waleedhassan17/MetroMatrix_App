@@ -51,6 +51,16 @@ export const approveBusiness = async (id: string): Promise<unknown> => {
   }
 };
 
+/** Staff accept one document (`accepted`) or undo it (`pending`) while the business waits for review. */
+export const reviewBusinessDocument = async (id: string, documentId: string, status: 'accepted' | 'pending'): Promise<unknown> => {
+  try {
+    const response = await API.POST({ URL: `/admin/businesses/${encodeURIComponent(id)}/documents/${encodeURIComponent(documentId)}/review`, data: { status } });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+
 export const rejectBusiness = async (
   id: string,
   body: { reason: string; documentNotes: { documentId: string; note: string }[] },

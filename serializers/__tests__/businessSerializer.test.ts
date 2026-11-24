@@ -147,6 +147,12 @@ describe('admin serializers', () => {
     expect(businessWithOwnerSerializer({ ...rawBusiness, owner: null })?.owner.name).toBe('');
   });
 
+  it('reads canReviewDocuments only when the API says true (an older API sends nothing)', () => {
+    expect(businessWithOwnerSerializer({ ...rawBusiness, canReviewDocuments: true })!.canReviewDocuments).toBe(true);
+    expect(businessWithOwnerSerializer({ ...rawBusiness, canReviewDocuments: false })!.canReviewDocuments).toBe(false);
+    expect(businessWithOwnerSerializer(rawBusiness)!.canReviewDocuments).toBe(false);
+  });
+
   it("reads the API's Paged list and skips malformed rows", () => {
     const page = businessPageSerializer({
       items: [

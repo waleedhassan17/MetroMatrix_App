@@ -22,7 +22,7 @@ export interface DoctorVerificationSliceState {
   note: string;
   noteTouched: boolean;
   busy: boolean;
-  viewer: { uri: string; title: string } | null;
+  viewer: { uri: string; title: string; pdf?: boolean } | null;
 }
 
 const initialState: DoctorVerificationSliceState = {
@@ -56,7 +56,7 @@ export const doctorVerificationSlice = createAppSlice({
     touchVerifyNote: create.reducer(state => {
       state.noteTouched = true;
     }),
-    openDocument: create.reducer((state, action: PayloadAction<{ uri: string; title: string } | null>) => {
+    openDocument: create.reducer((state, action: PayloadAction<{ uri: string; title: string; pdf?: boolean } | null>) => {
       state.viewer = action.payload;
     }),
     loadDoctorsForVerificationAsync: create.asyncThunk(

@@ -147,6 +147,8 @@ export interface BusinessOwner {
 /** Admin review: a business with its owner. */
 export interface BusinessWithOwner extends Business {
   owner: BusinessOwner;
+  /** Staff may accept single documents now (the API says so while the business waits for review). */
+  canReviewDocuments: boolean;
 }
 
 /** Admin queue row. */

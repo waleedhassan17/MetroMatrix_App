@@ -28,6 +28,7 @@ import { hasErrors } from '../../models/authModel';
 import { formatPkPhoneForDisplay } from '../../utils/phone/phone';
 import { Alert } from '../../utils/alert/alert';
 import { haptics } from '../../utils/haptics/haptics';
+import { pdfPage } from '../../utils/cdn/cdn';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import {
   AppText,
@@ -44,6 +45,7 @@ import {
   SkeletonLines,
   Skeleton,
   StatusPill,
+  TextAction,
   TextField,
   type PillTone,
 } from '../../Custom-Components/index';
@@ -54,6 +56,7 @@ import {
   openSheet,
   openViewer,
   resetReview,
+  reviewDocumentAsync,
   selectBusinessReview,
   setDocumentNote,
   setReason,
@@ -78,10 +81,20 @@ const DONE: Record<Decision, string> = {
   reinstate: 'Reinstated. The business is live again.',
 };
 
+/** A PDF page's width in the viewer (points; the device's pixel ratio is applied). */
+const VIEWER_WIDTH = 900;
 const isPdf = (doc: BusinessDocument) => doc.mimeType === 'application/pdf' || doc.url.toLowerCase().endsWith('.pdf');
+
+/** A document's review state, in the words staff read. */
+const DOC_STATUS = {
+  accepted: { label: 'Accepted', tone: 'success' },
+  rejected: { label: 'Rejected', tone: 'danger' },
+  pending: { label: 'Not reviewed', tone: 'neutral' },
+} as const;
 
 const makeStyles = ({ space, size, radius, colors }: Theme) =>
   StyleSheet.create({
+    docRight: { flexDirection: 'row', alignItems: 'center', gap: space.s8 },
     thumb: {
       width: size.thumb,
       height: size.thumb,
@@ -133,15 +146,34 @@ const BusinessReview: React.FC<Props> = ({ navigation, route }) => {
     } else haptics.warning();
   };
 
+  // Accept one document (or undo it): the API answers the whole application again.
+  const review = async (doc: BusinessDocument) => {
+    if (!b) return;
+    const r = await dispatch(
+      reviewDocumentAsync({ id: b.id, documentId: doc.id, status: doc.status === 'accepted' ? 'pending' : 'accepted' }),
+    );
+    if (reviewDocumentAsync.fulfilled.match(r)) haptics.success();
+    else if (!r.meta.condition) haptics.warning();
+  };
+
+  const unreviewed = b?.documents.filter(d => d.status === 'pending').length ?? 0;
   const confirmApprove = () =>
-    Alert.alert('Approve this business?', `${b?.name ?? 'It'} goes live and the partner can start.`, [
+    Alert.alert(
+      'Approve this business?',
+      `${b?.name ?? 'It'} goes live and the partner can start.${
+        unreviewed ? ` ${unreviewed === 1 ? "The document you haven't reviewed is" : `The ${unreviewed} documents you haven't reviewed are`} accepted with it.` : ''
+      }`,
+      [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Approve', onPress: () => void decide('approve') },
     ]);
 
+  // A PDF opens as its pages (Cloudinary won't deliver the file itself on this plan).
   const view = (doc: BusinessDocument) => {
-    if (isPdf(doc)) void Linking.openURL(doc.url);
-    else dispatch(openViewer({ uri: doc.url, title: DOCUMENT_LABELS[doc.kind].label }));
+    const title = DOCUMENT_LABELS[doc.kind].label;
+    if (!isPdf(doc)) dispatch(openViewer({ uri: doc.url, title }));
+    else if (pdfPage(doc.url, 1, { w: VIEWER_WIDTH })) dispatch(openViewer({ uri: doc.url, title, pdf: true }));
+    else void Linking.openURL(doc.url);
   };
 
   if (!b) {
@@ -263,14 +295,30 @@ const BusinessReview: React.FC<Props> = ({ navigation, route }) => {
                   subtitle={doc.reviewerNote ?? (isPdf(doc) ? 'PDF' : 'Image')}
                   left={
                     <View style={styles.thumb}>
-                      {isPdf(doc) ? (
+                      {isPdf(doc) && !pdfPage(doc.url, 1, { w: size.thumb }) ? (
                         <Icon name="file-text" size="lg" />
                       ) : (
-                        <Image source={{ uri: doc.url }} style={StyleSheet.absoluteFill} contentFit="cover" />
+                        <Image
+                          source={{ uri: isPdf(doc) ? pdfPage(doc.url, 1, { w: size.thumb })! : doc.url }}
+                          style={StyleSheet.absoluteFill}
+                          contentFit="cover"
+                        />
                       )}
                     </View>
                   }
-                  right={doc.status === 'rejected' ? <StatusPill label="Rejected" tone="danger" /> : undefined}
+                  right={
+                    <View style={styles.docRight}>
+                      <StatusPill label={DOC_STATUS[doc.status].label} tone={DOC_STATUS[doc.status].tone} />
+                      {b.canReviewDocuments && doc.status !== 'rejected' ? (
+                        <TextAction
+                          label={doc.status === 'accepted' ? 'Undo' : 'Accept'}
+                          onPress={() => void review(doc)}
+                          disabled={!!s.reviewing}
+                          accessibilityLabel={`${doc.status === 'accepted' ? 'Undo accepting' : 'Accept'} ${DOCUMENT_LABELS[doc.kind].label}`}
+                        />
+                      ) : null}
+                    </View>
+                  }
                   onPress={() => view(doc)}
                   accessibilityHint="Opens the document"
                 />
@@ -371,6 +419,7 @@ const BusinessReview: React.FC<Props> = ({ navigation, route }) => {
           visible={!!s.viewer}
           uri={s.viewer?.uri ?? null}
           title={s.viewer?.title}
+          pageUrl={s.viewer?.pdf ? page => pdfPage(s.viewer?.uri, page, { w: VIEWER_WIDTH }) : null}
           onClose={() => dispatch(openViewer(null))}
         />
       </ScreenShell>

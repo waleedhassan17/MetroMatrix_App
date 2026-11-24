@@ -12,6 +12,7 @@ import {
   fetchBusiness,
   reinstateBusiness,
   rejectBusiness,
+  reviewBusinessDocument,
   suspendBusiness,
 } from '../../networks/admin/adminBusiness';
 import { toRejectedValue } from '../../networks/network/network';
@@ -34,7 +35,9 @@ export interface BusinessReviewSliceState {
   documentNotes: Record<string, string>;
   deciding: Decision | null;
   lastDecision: Decision | null;
-  viewer: { uri: string; title: string } | null;
+  viewer: { uri: string; title: string; pdf?: boolean } | null;
+  /** The document whose review (accept / undo) is on the wire. */
+  reviewing: string | null;
   error: ServerError;
 }
 
@@ -48,12 +51,20 @@ const initialState: BusinessReviewSliceState = {
   deciding: null,
   lastDecision: null,
   viewer: null,
+  reviewing: null,
   error: NO_ERROR,
 };
 
 /** Keep the owner from the detail call; the decision endpoints return a bare business. */
 const withOwner = (state: BusinessReviewSliceState, business: Business) => {
-  if (state.business) state.business = { ...business, owner: state.business.owner };
+  // A decided business has nothing left to review.
+  if (state.business) {
+    state.business = {
+      ...business,
+      owner: state.business.owner,
+      canReviewDocuments: state.business.canReviewDocuments && business.status === 'pending_approval',
+    };
+  }
 };
 
 export const businessReviewSlice = createAppSlice({
@@ -76,7 +87,7 @@ export const businessReviewSlice = createAppSlice({
     setDocumentNote: create.reducer((state, action: PayloadAction<{ id: string; note: string }>) => {
       state.documentNotes[action.payload.id] = action.payload.note;
     }),
-    openViewer: create.reducer((state, action: PayloadAction<{ uri: string; title: string } | null>) => {
+    openViewer: create.reducer((state, action: PayloadAction<{ uri: string; title: string; pdf?: boolean } | null>) => {
       state.viewer = action.payload;
     }),
     resetReview: create.reducer(() => initialState),
@@ -102,6 +113,38 @@ export const businessReviewSlice = createAppSlice({
         rejected: (state, action) => {
           state.loadStatus = 'failed';
           state.error = readRejection(action, "We couldn't load this application.");
+        },
+      },
+    ),
+
+    /** Accept one document, or undo it, while the business waits for review. */
+    reviewDocumentAsync: create.asyncThunk(
+      async (args: { id: string; documentId: string; status: 'accepted' | 'pending' }, { rejectWithValue }) => {
+        try {
+          return await reviewBusinessDocument(args.id, args.documentId, args.status);
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        options: {
+          condition: (_args, { getState }) =>
+            !(getState() as { businessReview: BusinessReviewSliceState }).businessReview.reviewing,
+        },
+        pending: (state, action) => {
+          state.reviewing = action.meta.arg.documentId;
+          state.error = NO_ERROR;
+        },
+        fulfilled: (state, action) => {
+          state.reviewing = null;
+          const business = businessWithOwnerSerializer(action.payload);
+          if (!business) return;
+          state.business = business;
+        },
+        rejected: (state, action) => {
+          if (action.meta.condition) return;
+          state.reviewing = null;
+          state.error = readRejection(action, "That review didn't save. Try again.");
         },
       },
     ),
@@ -160,6 +203,7 @@ export const {
   setDocumentNote,
   openViewer,
   resetReview,
+  reviewDocumentAsync,
   loadBusinessAsync,
   decideAsync,
 } = businessReviewSlice.actions;

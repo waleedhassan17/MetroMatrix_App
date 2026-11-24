@@ -48,3 +48,17 @@ export const cdn = (url: string | null | undefined, { w, h, fit = 'fill' }: CdnO
 
   return url;
 };
+
+/**
+ * One page of a PDF that Cloudinary stores as an image asset, rendered as a
+ * JPEG at the device's pixel ratio; null for anything else (a raw upload,
+ * another host, a local file). Cloudinary's plan refuses to deliver the PDF
+ * file itself ("deny or ACL failure", 401: the owner's report of
+ * 2026-11-25), but renders its pages: `…/image/upload/pg_2,f_jpg,…/v1/…/a.jpg`.
+ */
+export const pdfPage = (url: string | null | undefined, page: number, { w }: { w: number }): string | null => {
+  if (!url) return null;
+  const m = /^(https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/)(.+)\.pdf$/i.exec(url);
+  if (!m) return null;
+  return `${m[1]}pg_${page},f_jpg,w_${Math.round(w * dpr())},c_limit,q_auto/${m[2]}.jpg`;
+};

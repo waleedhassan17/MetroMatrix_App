@@ -36,6 +36,7 @@ import { validatePmdcNote } from '../../models/health/adminHealthModel';
 import type { AdminDoctor, AdminHealthStackParamList, DocumentKind } from '../../models';
 import { formatDateTime } from '../../utils/dates/dates';
 import { haptics } from '../../utils/haptics/haptics';
+import { pdfPage } from '../../utils/cdn/cdn';
 import {
   loadDoctorsForVerificationAsync,
   openDocument,
@@ -63,6 +64,8 @@ const STATUS_LABEL: Record<AdminDoctor['status'], { label: string; tone: 'neutra
   suspended: { label: 'Suspended', tone: 'danger' },
 };
 
+/** A PDF page's width in the viewer (points; the device's pixel ratio is applied). */
+const VIEWER_WIDTH = 900;
 const isPdf = (d: AdminDoctor['documents'][number]) => d.mimeType === 'application/pdf' || d.url.toLowerCase().endsWith('.pdf');
 const docLabel = (kind: string) => DOCUMENT_LABELS[kind as DocumentKind]?.label ?? kind.replace(/_/g, ' ');
 
@@ -89,7 +92,7 @@ const DoctorVerification: React.FC<Props> = ({ navigation, route }) => {
   const { back } = useBack({ name: 'HealthOverview' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { opacity } = useTheme();
+  const { opacity, size } = useTheme();
   const s = useAppSelector(selectDoctorVerification);
   const focusId = route.params?.businessId;
   const noteError = s.noteTouched ? validatePmdcNote(s.note).note : undefined;
@@ -105,9 +108,12 @@ const DoctorVerification: React.FC<Props> = ({ navigation, route }) => {
     [s.doctors, focusId],
   );
 
+  // A PDF opens as its pages (Cloudinary won't deliver the file itself on this plan).
   const view = (d: AdminDoctor['documents'][number]) => {
-    if (isPdf(d)) void Linking.openURL(d.url);
-    else dispatch(openDocument({ uri: d.url, title: docLabel(d.kind) }));
+    const title = docLabel(d.kind);
+    if (!isPdf(d)) dispatch(openDocument({ uri: d.url, title }));
+    else if (pdfPage(d.url, 1, { w: VIEWER_WIDTH })) dispatch(openDocument({ uri: d.url, title, pdf: true }));
+    else void Linking.openURL(d.url);
   };
 
   const openApplication = (d: AdminDoctor) =>
@@ -162,7 +168,15 @@ const DoctorVerification: React.FC<Props> = ({ navigation, route }) => {
                 accessibilityLabel={`${docLabel(doc.kind)}, ${isPdf(doc) ? 'PDF' : 'image'}`}
                 accessibilityHint="Opens the document">
                 <View style={styles.thumb}>
-                  {isPdf(doc) ? <Icon name="file-text" size="lg" /> : <Image source={{ uri: doc.url }} style={StyleSheet.absoluteFill} contentFit="cover" />}
+                  {isPdf(doc) && !pdfPage(doc.url, 1, { w: size.thumb }) ? (
+                    <Icon name="file-text" size="lg" />
+                  ) : (
+                    <Image
+                      source={{ uri: isPdf(doc) ? pdfPage(doc.url, 1, { w: size.thumb })! : doc.url }}
+                      style={StyleSheet.absoluteFill}
+                      contentFit="cover"
+                    />
+                  )}
                 </View>
                 <AppText variant="caption" tone="muted" numberOfLines={2}>
                   {docLabel(doc.kind)}
@@ -223,7 +237,13 @@ const DoctorVerification: React.FC<Props> = ({ navigation, route }) => {
         />
         {s.error.message ? <InlineNotice message={s.error.message} /> : null}
       </Sheet>
-      <ImageViewer visible={!!s.viewer} uri={s.viewer?.uri ?? null} title={s.viewer?.title} onClose={() => dispatch(openDocument(null))} />
+      <ImageViewer
+        visible={!!s.viewer}
+        uri={s.viewer?.uri ?? null}
+        title={s.viewer?.title}
+        pageUrl={s.viewer?.pdf ? page => pdfPage(s.viewer?.uri, page, { w: VIEWER_WIDTH }) : null}
+        onClose={() => dispatch(openDocument(null))}
+      />
     </ScreenShell>
   );
 };

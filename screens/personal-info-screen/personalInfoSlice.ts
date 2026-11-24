@@ -101,7 +101,7 @@ export interface PersonalInfoSliceState {
   uploads: Partial<Record<string, UploadState>>;
   /** The slot whose picker sheet is open, the kinds it takes and the one chosen. */
   pickingFor: { slot: string; kinds: DocumentKind[]; kind: DocumentKind; replacing: string | null } | null;
-  viewer: { uri: string; title: string } | null;
+  viewer: { uri: string; title: string; pdf?: boolean } | null;
   /** Requirement keys the server said are missing (`kind` or `a|b`). */
   highlight: string[];
   status: FormStatus;
@@ -288,7 +288,7 @@ export const personalInfoSlice = createAppSlice({
     choosePickingKind: create.reducer((state, action: PayloadAction<DocumentKind>) => {
       if (state.pickingFor?.kinds.includes(action.payload)) state.pickingFor.kind = action.payload;
     }),
-    openViewer: create.reducer((state, action: PayloadAction<{ uri: string; title: string } | null>) => {
+    openViewer: create.reducer((state, action: PayloadAction<{ uri: string; title: string; pdf?: boolean } | null>) => {
       state.viewer = action.payload;
     }),
     setUploadProgress: create.reducer((state, action: PayloadAction<{ slot: string; progress: number }>) => {
