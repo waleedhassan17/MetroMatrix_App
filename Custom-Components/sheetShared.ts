@@ -1,5 +1,5 @@
-// Shared by Sheet.tsx and Sheet.web.tsx. Its own module because on web
-// './Sheet' resolves to Sheet.web.tsx — a file importing itself.
+// The sheet's props and parts, shared by ModalSheet (which Sheet is) and the
+// pickers built on it.
 
 import type React from 'react';
 import { StyleSheet } from 'react-native';

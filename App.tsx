@@ -5,7 +5,6 @@ import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import * as Splash from 'expo-splash-screen';
 import { store, persistor } from './store/store';
 import { ThemeProvider } from './theme';
@@ -32,9 +31,7 @@ const App = () => {
           <Provider store={store}>
             <PersistGate loading={null} persistor={persistor}>
               <ThemeProvider>
-                <BottomSheetModalProvider>
-                  <AppContainer />
-                </BottomSheetModalProvider>
+                <AppContainer />
               </ThemeProvider>
             </PersistGate>
           </Provider>

@@ -1,16 +1,17 @@
 // ═══════════════════════════════════════════════════════
 // ModalSheet — a bottom sheet built on React Native's Modal
 // ═══════════════════════════════════════════════════════
-// Same props and look as Sheet: a scrim that dismisses, a panel anchored to
-// the bottom (centred and capped in width on a wide window), the handle,
-// title, close, body and footer. It is Sheet on web, where
-// @gorhom/bottom-sheet never presents, and every picker on every platform
-// (BottomSheetPicker, SearchPicker): a plain Modal opens wherever the app
-// runs, Expo Go on Android included. `tall` keeps the panel one height while
-// its content changes, so a search field at the top stays where it is.
+// Every sheet in the app (Sheet is this) and every picker (BottomSheetPicker,
+// SearchPicker): a scrim that dismisses, a panel anchored to the bottom
+// (centred and capped in width on a wide window), the handle, title, close,
+// body and footer. A plain Modal opens wherever the app runs, Expo Go on
+// Android included. The panel rises above the keyboard, so a field in a sheet
+// (a reason, a quantity, a search) stays in sight while it is typed in.
+// `tall` keeps the panel one height while its content changes, so a search
+// field at the top stays where it is.
 
 import React from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { AppText } from './AppText';
@@ -65,7 +66,9 @@ export const ModalSheet: React.FC<ModalSheetProps> = ({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.root}>
+      {/* Only the part the keyboard really covers is made up for: where the
+          window already resizes for it, this adds nothing. */}
+      <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <Pressable
           style={styles.scrim}
           onPress={onClose}
@@ -96,7 +99,7 @@ export const ModalSheet: React.FC<ModalSheetProps> = ({
           </ScrollView>
           {footer ? <View style={[parts.footer, { paddingBottom: bottom }]}>{footer}</View> : null}
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
