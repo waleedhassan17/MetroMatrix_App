@@ -17,6 +17,7 @@
 //   m every other provider type (doctor, restaurant, cloud kitchen) → its own app
 //   n a rider the kitchen issued signs in with the username (no verification, no approval)
 //   o retries are safe: sign-up recovery, BUSINESS_EXISTS adoption, replayed submit and resend
+//   p staff given a temporary password choose their own before the console (gate 'staffPassword')
 //   b (in-app deep link) is run by hand on the emulator.
 
 // First: point network.ts at the live API before it loads.
@@ -519,6 +520,37 @@ live('live run against the local API', () => {
     expect(submitApplicationAsync.fulfilled.match(await store.dispatch(submitApplicationAsync({ key: 'live-submit-1' })))).toBe(true);
     expect(submitApplicationAsync.fulfilled.match(await store.dispatch(submitApplicationAsync({ key: 'live-submit-2' })))).toBe(true);
     expect(gateOf(await meRequest())).toBe('pending');
+  });
+
+  it("p. staff created with a temporary password land on Change Password, then the console", async () => {
+    await use(sessions.admin);
+    // A step-up code must be fresh (the API refuses one already used): wait for the next 30 s window.
+    await sleep(30_000 - (Date.now() % 30_000) + 1_000);
+    const created = unwrap(
+      await MainAxiosInstance.post('/admin/admins', {
+        email: email('staff'),
+        displayName: 'Live Staff',
+        permissions: [],
+        totpCode: totp(adminSecret),
+      }).catch(e => {
+        throw toApiError(e);
+      }),
+    ) as { temporaryPassword: string };
+    expect(created.temporaryPassword).toEqual(expect.any(String));
+
+    await clearTokens();
+    const first = await signin({ email: email('staff'), password: created.temporaryPassword, portal: 'admin' });
+    if (first.kind !== 'totp') throw new Error('expected a TOTP challenge');
+    const enrolment = await adminTotpEnrol(first.challenge.challengeToken);
+    const { result } = await adminTotpConfirm(first.challenge.challengeToken, totp(enrolment.secret));
+    await openSession(result);
+    const forced = await meRequest();
+    expect(forced.user.mustChangePassword).toBe(true);
+    expect(gateOf(forced)).toBe('staffPassword');
+
+    const changed = await changePassword({ currentPassword: created.temporaryPassword, newPassword: 'LiveStaff2026x' });
+    expect(changed?.user.mustChangePassword).toBeFalsy();
+    expect(gateOf(await meRequest())).toBe('admin');
   });
 
   it('l. sign-out revokes the session (no body); deleting the account stops sign-in', async () => {
