@@ -24,6 +24,7 @@ describe('authSlice reducers', () => {
       isAuthenticated: false,
       pendingTotp: null,
       signedOutLanding: null,
+      signedOutEmail: null,
     });
   });
 
@@ -36,6 +37,7 @@ describe('authSlice reducers', () => {
       isAuthenticated: true,
       pendingTotp: null,
       signedOutLanding: null,
+      signedOutEmail: null,
     });
   });
 
@@ -62,6 +64,7 @@ describe('authSlice reducers', () => {
       isAuthenticated: false,
       pendingTotp: null,
       signedOutLanding: null,
+      signedOutEmail: null,
     });
   });
 
@@ -91,5 +94,13 @@ describe('authSlice selectors', () => {
     expect(s.selectIsEmailVerified(state)).toBe(false);
     expect(s.selectBusinessStatus(state)).toBeNull();
     expect(s.selectServiceType(state)).toBeNull();
+  });
+});
+
+describe('an ended session lands on its own sign-in, with the email filled in', () => {
+  it('keeps the landing and email only when a landing is given', () => {
+    const landed = reducer(undefined, signOut({ landing: 'ProviderSignIn', email: 'p@x.pk' }));
+    expect(landed).toMatchObject({ signedOutLanding: 'ProviderSignIn', signedOutEmail: 'p@x.pk', isAuthenticated: false });
+    expect(reducer(undefined, signOut({ email: 'p@x.pk' } as never)).signedOutEmail).toBeNull();
   });
 });

@@ -20,17 +20,22 @@ export interface PendingTotp {
   email: string;
 }
 
-/** Where the signed-out navigator opens after a sign-out that asked for one. */
-/** Where "Use a different account" lands: a provider on the provider sign-in, everyone else on the User one. */
-export type SignedOutLanding = 'SignIn' | 'ProviderSignIn';
+/**
+ * Where the signed-out navigator opens after a sign-out that asked for one: "Use a different account", and a
+ * session that ended (the FYP's rule) — a provider on the provider sign-in, a rider on theirs, everyone else on
+ * the User one.
+ */
+export type SignedOutLanding = 'SignIn' | 'ProviderSignIn' | 'RiderSignIn';
 
 export interface AuthSliceState {
   user: User | null;
   business: Business | null;
   isAuthenticated: boolean;
   pendingTotp: PendingTotp | null;
-  /** "Use a different account" lands on Sign In; any other sign-out on Onboarding. */
+  /** "Use a different account" and an ended session land on a sign-in; any other sign-out on Onboarding. */
   signedOutLanding: SignedOutLanding | null;
+  /** The email that landing opens with (an ended session's account). */
+  signedOutEmail: string | null;
 }
 
 const initialState: AuthSliceState = {
@@ -39,6 +44,7 @@ const initialState: AuthSliceState = {
   isAuthenticated: false,
   pendingTotp: null,
   signedOutLanding: null,
+  signedOutEmail: null,
 };
 
 export const authSlice = createAppSlice({
@@ -53,6 +59,7 @@ export const authSlice = createAppSlice({
         state.isAuthenticated = true;
         state.pendingTotp = null;
         state.signedOutLanding = null;
+        state.signedOutEmail = null;
       },
     ),
     setUser: create.reducer((state, action: PayloadAction<User>) => {
@@ -69,9 +76,10 @@ export const authSlice = createAppSlice({
       state.pendingTotp = null;
       state.signedOutLanding = 'SignIn';
     }),
-    signOut: create.reducer((_state, action: PayloadAction<{ landing?: SignedOutLanding } | undefined>) => ({
+    signOut: create.reducer((_state, action: PayloadAction<{ landing?: SignedOutLanding; email?: string } | undefined>) => ({
       ...initialState,
       signedOutLanding: action.payload?.landing ?? null,
+      signedOutEmail: action.payload?.landing ? action.payload.email ?? null : null,
     })),
   }),
 

@@ -284,11 +284,17 @@ export const refreshTokens = async (): Promise<string> => {
     }
     // RefreshAxiosInstance, not MainAxiosInstance: the refresh call must not
     // pass through the interceptors it is serving.
-    const { data } = await RefreshAxiosInstance.post(AUTH_PATHS.refresh, { refreshToken });
+    let data: unknown;
+    try {
+      ({ data } = await RefreshAxiosInstance.post(AUTH_PATHS.refresh, { refreshToken }));
+    } catch (e) {
+      throw await refreshFailure(e);
+    }
     // The API answers a bare TokenPair: { accessToken, refreshToken, expiresIn }.
     const pair = unwrapBody<any>(data);
     if (typeof pair?.accessToken !== 'string' || typeof pair?.refreshToken !== 'string') {
-      throw new Error('No token in refresh response');
+      // The refresh token was spent and nothing usable came back: the session can't go on.
+      throw new ApiError('Please sign in again.', ERROR_CODES.REFRESH_INVALID, 401);
     }
     await setTokens(pair.accessToken, pair.refreshToken);
     processQueue(null, pair.accessToken);
@@ -299,6 +305,27 @@ export const refreshTokens = async (): Promise<string> => {
   } finally {
     isRefreshing = false;
   }
+};
+
+/**
+ * Why a refresh failed, in the terms the session rules read:
+ *   • no answer → the error, stamped with its reason (offline / timeout / unreachable): the session stays;
+ *   • a 4xx other than 408 or 429 → the server refused this refresh token for good. Its own code is kept
+ *     when it is one that ends a session; any other refusal (a 400, an unlisted 401) becomes
+ *     REFRESH_INVALID, so the person is signed out instead of every request failing forever;
+ *   • anything else (5xx, 408, 429) → unchanged: try again later.
+ */
+const refreshFailure = async (e: unknown): Promise<unknown> => {
+  if (!axios.isAxiosError(e)) return e;
+  if (!e.response) {
+    (e as NoResponseError).noResponseReason = await classifyNoResponse(e);
+    return e;
+  }
+  const status = e.response.status;
+  if (status >= 400 && status < 500 && status !== 408 && status !== 429 && !isDefinitiveSessionFailure(e)) {
+    return new ApiError('Please sign in again.', ERROR_CODES.REFRESH_INVALID, 401);
+  }
+  return e;
 };
 
 // ─── No response: why? ───────────────────────────────

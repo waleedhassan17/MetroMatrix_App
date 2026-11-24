@@ -11,7 +11,9 @@
 // when there is none; VALIDATION_FAILED lists its fields. SIGNUPS_PAUSED
 // (the platform switch) is information: SignupsPausedNotice says it too.
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { AccessibilityInfo } from 'react-native';
+import { useAuthScrollToTop } from './AuthChrome';
 import { InlineNotice } from '../../Custom-Components/InlineNotice';
 import { doorForAccount, WRONG_DOOR_MESSAGE } from '../../models/authDoors';
 import { ERROR_CODES } from '../../networks/network/network';
@@ -43,6 +45,17 @@ export const AuthErrorNotice: React.FC<{
   /** Sign-up screens: EMAIL_EXISTS offers this side's sign-in (the API doesn't say which kind of account it is). */
   onSignInInstead?: () => void;
 }> = ({ error, fallbackTitle, onGoToPortal, onSignInInstead }) => {
+  // A new error is brought into view (it shows above the fields, which the
+  // keyboard may have scrolled away) and read out — VoiceOver ignores live
+  // regions, so it is announced on iOS too.
+  const scrollToTop = useAuthScrollToTop();
+  const spoken = error.message ? authErrorMessage(error) : '';
+  useEffect(() => {
+    if (!spoken) return;
+    scrollToTop();
+    AccessibilityInfo.announceForAccessibility(spoken);
+  }, [spoken, scrollToTop]);
+
   if (!error.message) return null;
   if (error.code === ERROR_CODES.NETWORK_ERROR) {
     return <InlineNotice tone="warning" message={authErrorMessage(error)} />;

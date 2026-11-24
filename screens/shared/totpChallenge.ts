@@ -10,7 +10,7 @@ import type { Dispatch } from '@reduxjs/toolkit';
 import type { RejectedApiError } from '../../networks/network/network';
 import { endPendingTotp, setPendingTotp, type PendingTotp } from '../../store/authSlice';
 import { showError } from '../sign-in-screen/signInSlice';
-import { ERROR_CODES } from '../../networks/network/network';
+import { ERROR_CODES, errorCopy } from '../../networks/network/network';
 
 /** Codes that mean the challenge itself is gone. */
 export const CHALLENGE_DEAD: readonly string[] = [ERROR_CODES.UNAUTHORIZED, ERROR_CODES.RATE_LIMITED];
@@ -31,8 +31,15 @@ export const handleChallengeError = (
   step: 'code' | 'enrol',
 ): boolean => {
   if (rejected.code && CHALLENGE_DEAD.includes(rejected.code)) {
-    // Shown on Sign In, where the gate now lands.
-    dispatch(showError(DEAD_COPY[rejected.code] ?? rejected.message));
+    // Shown on Sign In, where the gate now lands. Too many codes: the real wait, and Sign In waits it out too.
+    const retry = rejected.code === ERROR_CODES.RATE_LIMITED ? errorCopy(rejected.code, rejected.details) : null;
+    dispatch(
+      showError({
+        message: retry ? `Too many incorrect codes. ${retry.replace(/^Too many attempts\. /, '')}` : DEAD_COPY[rejected.code] ?? rejected.message,
+        code: rejected.code,
+        details: rejected.details,
+      }),
+    );
     dispatch(endPendingTotp());
     return true;
   }

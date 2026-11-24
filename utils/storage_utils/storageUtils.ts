@@ -37,7 +37,15 @@ const backend = {
         return null;
       }
     }
-    return SecureStore.getItemAsync(key);
+    // A keystore entry the OS can no longer decrypt (a restored backup, a
+    // reset lock screen) throws on every read: it reads as nothing stored and
+    // is deleted, so the person signs in again instead of every request failing.
+    try {
+      return await SecureStore.getItemAsync(key);
+    } catch {
+      await SecureStore.deleteItemAsync(key).catch(() => undefined);
+      return null;
+    }
   },
   async set(key: string, value: string): Promise<void> {
     if (isWeb) {
@@ -48,7 +56,11 @@ const backend = {
       }
       return;
     }
-    await SecureStore.setItemAsync(key, value);
+    try {
+      await SecureStore.setItemAsync(key, value);
+    } catch {
+      // Unwritable keystore: the session still works this launch (the in-memory cache holds it).
+    }
   },
   async remove(key: string): Promise<void> {
     if (isWeb) {
@@ -59,7 +71,7 @@ const backend = {
       }
       return;
     }
-    await SecureStore.deleteItemAsync(key);
+    await SecureStore.deleteItemAsync(key).catch(() => undefined);
   },
 };
 

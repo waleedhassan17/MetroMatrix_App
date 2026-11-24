@@ -40,7 +40,7 @@ const makeStyles = ({ colors, space, size }: Theme) =>
     },
   });
 
-export const Splash: React.FC<{ onDone: () => void }> = ({ onDone }) => {
+export const Splash: React.FC<{ onDone: () => void; connecting?: boolean }> = ({ onDone, connecting }) => {
   const styles = useStyles(makeStyles);
   const { size, motion } = useTheme();
 
@@ -102,6 +102,11 @@ export const Splash: React.FC<{ onDone: () => void }> = ({ onDone }) => {
             Smart City Services
           </AppText>
         </Animated.View>
+        {connecting ? (
+          <AppText variant="small" tone="muted" accessibilityLiveRegion="polite">
+            Still connecting…
+          </AppText>
+        ) : null}
       </View>
     </View>
   );

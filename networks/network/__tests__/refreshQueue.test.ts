@@ -80,8 +80,30 @@ describe('apiHelpers — single-flight refresh', () => {
     expect(await getRefreshToken()).toBe('refresh-2');
   });
 
-  it('a refresh response without both tokens fails the request but keeps the session (not definitive)', async () => {
+  it('a refresh answered without both tokens ends the session (the old refresh token is already spent)', async () => {
     refreshSpy.mockResolvedValue({ data: { data: { tokens: { accessToken: 'access-2', refreshToken: 'refresh-2' } } } });
+    await expect(MainAxiosInstance.get('/orders')).rejects.toBeDefined();
+    expect(expired).toHaveBeenCalledWith('REFRESH_INVALID');
+    expect(await getRefreshToken()).toBeNull();
+  });
+
+  it.each([
+    ['400 (a malformed token)', 400, 'VALIDATION_FAILED'],
+    ['an unlisted 401', 401, 'UNAUTHORIZED'],
+    ['404', 404, 'NOT_FOUND'],
+  ])('a refresh refused with %s ends the session instead of failing every request forever', async (_n, status, code) => {
+    refreshSpy.mockRejectedValue(serverSays(status, code));
+    await expect(MainAxiosInstance.get('/orders')).rejects.toMatchObject({ code: 'REFRESH_INVALID' });
+    expect(expired).toHaveBeenCalledWith('REFRESH_INVALID');
+    expect(await getRefreshToken()).toBeNull();
+  });
+
+  it.each([
+    ['408', 408],
+    ['429', 429],
+    ['503', 503],
+  ])('a refresh that failed with %s keeps the session for the next try', async (_n, status) => {
+    refreshSpy.mockRejectedValue(serverSays(status, 'X'));
     await expect(MainAxiosInstance.get('/orders')).rejects.toBeDefined();
     expect(expired).not.toHaveBeenCalled();
     expect(await getRefreshToken()).toBe('refresh-1');

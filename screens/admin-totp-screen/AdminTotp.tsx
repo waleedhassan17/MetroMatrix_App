@@ -10,7 +10,7 @@ import { haptics } from '../../utils/haptics/haptics';
 import { useStyles, useTheme, type Theme } from '../../theme/index';
 import { AppText, Button, InlineNotice, IonIcon, OtpInput, TextField } from '../../Custom-Components/index';
 import { AuthHeader, AuthScreen } from '../../Components/auth/AuthChrome';
-import { selectPendingTotp, setPendingTotp } from '../../store/authSlice';
+import { selectPendingTotp, endPendingTotp } from '../../store/authSlice';
 import { resetTotp, selectAdminTotp, setCode, setRecoveryCode, toggleRecovery, verifyTotpAsync } from './adminTotpSlice';
 
 const makeStyles = ({ space, size, radius }: Theme) =>
@@ -53,7 +53,7 @@ const AdminTotp: React.FC = () => {
   // Back to Sign In: dropping the challenge moves the gate.
   const cancel = () => {
     dispatch(resetTotp());
-    dispatch(setPendingTotp(null));
+    dispatch(endPendingTotp());
   };
 
   return (

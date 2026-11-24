@@ -213,3 +213,13 @@ describe('retryAfterSerializer', () => {
     expect(retryAfterSerializer(raw)).toBe(expected);
   });
 });
+
+describe("staff's admin view", () => {
+  it('reads mustChangePassword from the session (AccountView.admin), false otherwise', () => {
+    const forced = sessionSerializer({ user: fullUser, business: null, admin: { mustChangePassword: true, isSuperAdmin: false, permissions: [] } });
+    expect(forced?.user.mustChangePassword).toBe(true);
+    const settled = sessionSerializer({ user: fullUser, business: null, admin: { mustChangePassword: false } });
+    expect(settled?.user.mustChangePassword).toBeFalsy();
+    expect(sessionSerializer({ user: fullUser, business: null })?.user.mustChangePassword).toBeFalsy();
+  });
+});

@@ -20,6 +20,8 @@ export interface ForgotPasswordSliceState {
   error: ServerError;
   /** When the code can next be re-sent — read by ResetPasswordOTP. */
   resendAvailableAt: number;
+  /** The address the last code went to (going back and pressing Send again within the wait goes straight on). */
+  sentTo: string | null;
 }
 
 const initialState: ForgotPasswordSliceState = {
@@ -28,6 +30,7 @@ const initialState: ForgotPasswordSliceState = {
   status: 'idle',
   error: NO_ERROR,
   resendAvailableAt: 0,
+  sentTo: null,
 };
 
 /** The client's own wait between reset codes. */
@@ -63,9 +66,10 @@ export const forgotPasswordSlice = createAppSlice({
           state.status = 'loading';
           state.error = NO_ERROR;
         },
-        fulfilled: state => {
+        fulfilled: (state, action) => {
           state.status = 'succeeded';
           state.resendAvailableAt = cooldownFrom(RESEND_SECONDS);
+          state.sentTo = action.meta.arg.trim().toLowerCase();
         },
         rejected: (state, action) => {
           state.status = 'failed';

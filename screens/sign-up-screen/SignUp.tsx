@@ -31,7 +31,13 @@ const SignUp: React.FC<Props> = ({ navigation }) => {
   const complete = (['name', 'email', 'password'] as const).every(f => form.values[f].trim().length > 0) && open;
 
   const submit = async () => {
-    if (!complete || busy) return;
+    if (busy) return;
+    // The keyboard's go key on an unfinished form shows what's missing.
+    if (!complete) {
+      dispatch(touchAll());
+      haptics.warning();
+      return;
+    }
     if (hasErrors(errors)) {
       dispatch(touchAll());
       haptics.warning();
@@ -45,7 +51,7 @@ const SignUp: React.FC<Props> = ({ navigation }) => {
   return (
     <AuthScreen onBack={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate('RoleSelection'))}>
       <AuthHeader title="Get Started" subtitle="Create your account to get started" />
-      <AuthTabs value="signup" onChange={() => navigation.navigate('SignIn')} disabled={busy} />
+      <AuthTabs value="signup" onChange={() => navigation.replace('SignIn')} disabled={busy} />
       <SignupsPausedNotice role="customer" />
       <AuthErrorNotice
         error={form.error}

@@ -12,7 +12,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { changePassword } from '../../networks/authcalls/changePassword';
-import { ApiError, toRejectedValue, ERROR_CODES } from '../../networks/network/network';
+import { ApiError, toRejectedValue, ERROR_CODES, errorCopy } from '../../networks/network/network';
 import { getGoogleIdToken } from '../../services/googleAuth';
 import { setSession } from '../../store/authSlice';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -61,7 +61,8 @@ export const changePasswordSlice = createAppSlice({
             if (!idToken) throw new ApiError('Confirm with Google to set your password.', ERROR_CODES.GOOGLE_CANCELLED);
             session = await changePassword({ idToken, newPassword });
           }
-          dispatch(setSession(session));
+          // A re-read that failed after the change: the next session read fills it in.
+          if (session) dispatch(setSession(session));
           return true;
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
@@ -77,7 +78,8 @@ export const changePasswordSlice = createAppSlice({
         },
         rejected: (state, action) => {
           state.status = 'failed';
-          const error = readRejection(action, "We couldn't change your password. Try again.");
+          const raw = readRejection(action, "We couldn't change your password. Try again.");
+          const error = { ...raw, message: errorCopy(raw.code, raw.details) ?? raw.message };
           // Google-only: a mismatched Google account is INVALID_CREDENTIALS too.
           const googleOnly = !action.meta.arg.currentPassword;
           state.error =

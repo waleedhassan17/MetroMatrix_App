@@ -18,6 +18,7 @@ import { RiderSignInFields } from '../../Components/auth/AuthFields';
 import { AuthErrorNotice } from '../../Components/auth/AuthErrorNotice';
 import type { RootStackParamList } from '../../models';
 import { riderSignInAsync, selectRiderSignIn, setPassword, setUsername, touch, touchAll } from './riderSignInSlice';
+import { NO_ERROR } from '../shared/formStatus';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RiderSignIn'>;
 
@@ -30,10 +31,18 @@ const RiderSignIn: React.FC<Props> = ({ navigation }) => {
   const loading = form.status === 'loading';
   // RATE_LIMITED: the button waits it out (pressing sooner only adds to the count).
   const lockLeft = useCountdown(form.lockedUntil);
+  // The rate-limit notice goes when its wait is over (its text doesn't count down).
+  const shownError = form.error.code === 'RATE_LIMITED' && form.lockedUntil && lockLeft === 0 ? NO_ERROR : form.error;
   const complete = !!form.username.trim() && !!form.password;
 
   const submit = async () => {
-    if (!complete || loading) return;
+    if (loading || lockLeft > 0) return;
+    // The keyboard's go key on an unfinished form shows what's missing.
+    if (!complete) {
+      dispatch(touchAll());
+      haptics.warning();
+      return;
+    }
     if (hasErrors(errors)) {
       dispatch(touchAll());
       haptics.warning();
@@ -51,7 +60,7 @@ const RiderSignIn: React.FC<Props> = ({ navigation }) => {
         badge={<ProviderBadge label="Food Court rider" service="food" />}
         subtitle="Sign in with the username your vendor gave you"
       />
-      <AuthErrorNotice error={form.error} onGoToPortal={() => navigation.navigate('SignIn', { email: '' })} />
+      <AuthErrorNotice error={shownError} onGoToPortal={() => navigation.navigate('SignIn', { email: '' })} />
       <RiderSignInFields
         username={form.username}
         password={form.password}

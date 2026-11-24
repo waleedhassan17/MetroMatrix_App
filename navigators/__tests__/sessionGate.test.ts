@@ -176,3 +176,21 @@ describe('partnerAppFor — routing after approval', () => {
     expect(partnerAppFor(null)).toBe('store');
   });
 });
+
+describe('staff with a temporary password', () => {
+  it('choose their own password before the console opens', () => {
+    const admin = makeUser({ role: 'admin', isEmailVerified: true, mustChangePassword: true });
+    expect(resolveGate(input({ user: admin }))).toBe('staffPassword');
+    expect(isGateCleared('staffPassword')).toBe(false);
+    expect(resolveGate(input({ user: { ...admin, mustChangePassword: false } }))).toBe('admin');
+    expect(resolveGate(input({ user: makeUser({ role: 'super_admin', isEmailVerified: true, mustChangePassword: true }) }))).toBe(
+      'staffPassword',
+    );
+  });
+
+  it('never applies to anyone else', () => {
+    expect(resolveGate(input({ user: makeUser({ role: 'customer', isEmailVerified: true, mustChangePassword: true }) }))).not.toBe(
+      'staffPassword',
+    );
+  });
+});

@@ -35,7 +35,13 @@ const ProviderSignUp: React.FC<Props> = ({ navigation }) => {
   const complete = (['name', 'email', 'password'] as const).every(f => form.values[f].trim().length > 0) && open && !!subType;
 
   const submit = async () => {
-    if (!complete || loading || !subType) return;
+    if (loading || !subType) return;
+    // The keyboard's go key on an unfinished form shows what's missing.
+    if (!complete) {
+      dispatch(touchAll());
+      haptics.warning();
+      return;
+    }
     if (hasErrors(errors)) {
       dispatch(touchAll());
       haptics.warning();
@@ -53,7 +59,7 @@ const ProviderSignUp: React.FC<Props> = ({ navigation }) => {
         badge={subType ? <ProviderBadge label={providerTypeLabel(subType)} service={SUBTYPE_SERVICE[subType]} /> : undefined}
         subtitle="Create your provider account to get started"
       />
-      <AuthTabs value="signup" onChange={() => navigation.navigate('ProviderSignIn')} disabled={loading} />
+      <AuthTabs value="signup" onChange={() => navigation.replace('ProviderSignIn')} disabled={loading} />
       {!subType ? (
         <InlineNotice
           tone="info"

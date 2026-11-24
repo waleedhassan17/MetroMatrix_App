@@ -4,7 +4,7 @@
 import { AxiosError } from 'axios';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import { ApiError, isDefinitiveSessionFailure, isTransient, NO_REFRESH_TOKEN } from '../network';
-import { appContainerSlice, bootstrapSession } from '../../../Components/appContainerSlice';
+import { appContainerSlice, bootstrapSession, BOOTSTRAP_DEADLINE_MS } from '../../../Components/appContainerSlice';
 import { sessionEndedCopy } from '../../../Components/sessionEndedCopy';
 import authReducer from '../../../store/authSlice';
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from '../../../utils/storage_utils/storageUtils';
@@ -143,5 +143,24 @@ describe('sign-out toast', () => {
     expect(sessionEndedCopy('REFRESH_REUSED').text2).toBe('You were signed out for security. Please sign in again.');
     expect(sessionEndedCopy('ACCOUNT_DISABLED').text1).toBe('Account disabled');
     expect(sessionEndedCopy('NO_REFRESH_TOKEN').text1).toBe('Session expired');
+  });
+});
+
+describe('a cold start that never answers', () => {
+  it('gives up at the deadline: "We can\'t reach MetroMatrix" (not a silent splash), tokens kept', async () => {
+    jest.useFakeTimers();
+    try {
+      await clearTokens();
+      await setTokens('a', 'r');
+      me.mockReturnValue(new Promise(() => undefined));
+      const store = configureStore({ reducer: combineReducers({ auth: authReducer, appContainer: appContainerSlice.reducer }) });
+      const done = store.dispatch(bootstrapSession());
+      await jest.advanceTimersByTimeAsync(BOOTSTRAP_DEADLINE_MS + 10);
+      await done;
+      expect(store.getState().appContainer).toMatchObject({ isAppReady: true, networkIsDown: true, downReason: 'server' });
+      expect(await getRefreshToken()).toBe('r');
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

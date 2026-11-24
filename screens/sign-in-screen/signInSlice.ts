@@ -54,9 +54,14 @@ export const signInSlice = createAppSlice({
       state.touched = { email: true, password: true };
     }),
     /** A message from outside the API (Google's SDK); `code` GOOGLE_UNAVAILABLE reads as information. */
-    showError: create.reducer((state, action: PayloadAction<string | { message: string; code?: string }>) => {
+    showError: create.reducer((state, action: PayloadAction<string | { message: string; code?: string; details?: unknown }>) => {
       const p = action.payload;
-      state.error = typeof p === 'string' ? { message: p, code: null, details: null } : { message: p.message, code: p.code ?? null, details: null };
+      state.error =
+        typeof p === 'string'
+          ? { message: p, code: null, details: null }
+          : { message: p.message, code: p.code ?? null, details: (p.details as ServerError['details']) ?? null };
+      // A staff sign-in locked out for too many codes: Sign In waits it out too.
+      state.lockedUntil = lockedUntilAfter(state.error);
     }),
 
     signInAsync: create.asyncThunk(

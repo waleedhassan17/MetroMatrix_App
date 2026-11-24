@@ -265,7 +265,7 @@ live('live run against the local API', () => {
 
     await use(sessions.cust); // device A
     const me = await changePassword({ currentPassword: 'Metro2026Reset', newPassword: 'Metro2026Changed' });
-    expect(me.user.email).toBe(email('cust'));
+    expect(me?.user.email).toBe(email('cust'));
     sessions.cust = await stored();
     expect((await meRequest()).user.role).toBe('customer'); // A's new pair works
 

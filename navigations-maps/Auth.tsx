@@ -37,6 +37,7 @@ import AdminTotp from '../screens/admin-totp-screen/AdminTotp';
 import AdminTwoFactorEnrol from '../screens/admin-two-factor-enrol-screen/AdminTwoFactorEnrol';
 import DesignGallery from '../screens/design-gallery-screen/DesignGallery';
 import RiderSignIn from '../screens/rider-sign-in-screen/RiderSignIn';
+import ChangePassword from '../screens/change-password-screen/ChangePassword';
 import PublicStore from '../screens/public-store-screen/PublicStore';
 
 /** Shown once per install, before Role Selection. */
@@ -133,7 +134,13 @@ export const SUSPENDED_ROUTES: IRoute[] = [
   { title: ROUTES.SUSPENDED, component: Suspended, options: { animation: 'none' } },
 ];
 
+/** ── Staff with a temporary password: their own password first ── */
+export const STAFF_PASSWORD_ROUTES: IRoute[] = [
+  { title: ROUTES.CHANGE_PASSWORD, component: ChangePassword, options: { animation: 'none' } },
+];
+
 const GATE_BRANCHES: Partial<Record<Gate, IRoute[]>> = {
+  staffPassword: STAFF_PASSWORD_ROUTES,
   totp: ADMIN_TOTP_ROUTES,
   verify: EMAIL_VERIFY_ROUTES,
   completeProfile: COMPLETE_PROFILE_ROUTES,

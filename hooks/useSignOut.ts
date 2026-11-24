@@ -25,6 +25,7 @@ import { unregisterDevice } from '../networks/users/users';
 import { clearPushToken, clearTokens, getAccessToken, getPushToken } from '../utils/storage_utils/storageUtils';
 import { markIntentionalSignOut } from '../utils/auth-events/authEvents';
 import { Alert } from '../utils/alert/alert';
+import { signOutOfGoogle } from '../services/googleAuth';
 
 const CONFIRM_TITLE = 'Sign out';
 const CONFIRM_MESSAGE = 'You can sign back in any time with the same account.';
@@ -41,23 +42,31 @@ export function useSignOut() {
     inFlight.current = true;
     setSigningOut(true);
 
-    markIntentionalSignOut();
-    const [accessToken, pushToken] = await Promise.all([getAccessToken(), getPushToken()]);
-    await Promise.all([clearTokens(), clearPushToken()]);
+    // try/finally: a storage error can't leave sign-out stuck "in flight" for good.
+    try {
+      markIntentionalSignOut();
+      const [accessToken, pushToken] = await Promise.all([
+        getAccessToken().catch(() => null),
+        getPushToken().catch(() => null),
+      ]);
+      await Promise.all([clearTokens().catch(() => undefined), clearPushToken().catch(() => undefined)]);
 
-    // Synchronous — this is what swaps the navigator to Welcome.
-    dispatch(resetAllState());
-    dispatch(signOut(opts?.landing ? { landing: opts.landing } : undefined));
+      // Synchronous — this is what swaps the navigator to Welcome.
+      dispatch(resetAllState());
+      dispatch(signOut(opts?.landing ? { landing: opts.landing } : undefined));
 
-    // Best-effort, in the prompt's order, on the captured token.
-    void (async () => {
-      // A stale device row only costs the server one undelivered push.
-      if (pushToken) await unregisterDevice(pushToken, accessToken).catch(() => undefined);
-      await logoutUser(accessToken);
-    })();
-
-    inFlight.current = false;
-    setSigningOut(false);
+      // Best-effort, in the prompt's order, on the captured token.
+      void (async () => {
+        // A stale device row only costs the server one undelivered push.
+        if (pushToken) await unregisterDevice(pushToken, accessToken).catch(() => undefined);
+        await logoutUser(accessToken).catch(() => undefined);
+        // The next Google sign-in shows the account picker instead of reusing this account.
+        await signOutOfGoogle();
+      })();
+    } finally {
+      inFlight.current = false;
+      setSigningOut(false);
+    }
   }, [dispatch]);
 
   const confirmSignOut = useCallback(() => {

@@ -19,6 +19,7 @@ import { AuthErrorNotice } from '../../Components/auth/AuthErrorNotice';
 import type { RootStackParamList } from '../../models';
 import { selectProviderSubType } from '../provider-selection-screen/providerSelectionSlice';
 import { selectProviderSignIn, setEmail, setPassword, signInAsync, touch, touchAll } from './providerSignInSlice';
+import { NO_ERROR } from '../shared/formStatus';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ProviderSignIn'>;
 
@@ -37,10 +38,18 @@ const ProviderSignIn: React.FC<Props> = ({ navigation, route }) => {
   const loading = form.status === 'loading';
   // RATE_LIMITED: the button waits it out (pressing sooner only adds to the count).
   const lockLeft = useCountdown(form.lockedUntil);
+  // The rate-limit notice goes when its wait is over (its text doesn't count down).
+  const shownError = form.error.code === 'RATE_LIMITED' && form.lockedUntil && lockLeft === 0 ? NO_ERROR : form.error;
   const complete = !!form.email.trim() && !!form.password;
 
   const submit = async () => {
-    if (!complete || loading) return;
+    if (loading || lockLeft > 0) return;
+    // The keyboard's go key on an unfinished form shows what's missing.
+    if (!complete) {
+      dispatch(touchAll());
+      haptics.warning();
+      return;
+    }
     if (hasErrors(errors)) {
       dispatch(touchAll());
       haptics.warning();
@@ -58,9 +67,9 @@ const ProviderSignIn: React.FC<Props> = ({ navigation, route }) => {
         badge={subType ? <ProviderBadge label={providerTypeLabel(subType)} service={SUBTYPE_SERVICE[subType]} /> : undefined}
         subtitle={subType ? 'Sign in to continue your registration' : 'Sign in to continue to your account'}
       />
-      <AuthTabs value="signin" onChange={() => navigation.navigate('ProviderSignUp')} disabled={loading} />
+      <AuthTabs value="signin" onChange={() => navigation.replace('ProviderSignUp')} disabled={loading} />
       <AuthErrorNotice
-        error={form.error}
+        error={shownError}
         onGoToPortal={() => navigation.navigate('SignIn', { email: form.email.trim() })}
       />
       <SignInFields

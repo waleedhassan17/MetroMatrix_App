@@ -8,6 +8,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
+import { useSignOut } from '../../hooks/useSignOut';
+import { refreshSession } from '../../Components/appContainerSlice';
 import { hasErrors, validateChangePassword } from '../../models/authModel';
 import { visibleErrors } from '../../utils/form-errors/formErrors';
 import { haptics } from '../../utils/haptics/haptics';
@@ -29,6 +31,9 @@ const ChangePasswordContent: React.FC<Props> = () => {
   const { back } = useBack({ name: 'Profile' });
   const dispatch = useAppDispatch();
   const user = useAppSelector(selectUser);
+  // Staff with a temporary password: this is the gate before the console — no way back, Sign out instead.
+  const forced = !!user?.mustChangePassword;
+  const { signOutNow, signingOut } = useSignOut();
   const s = useAppSelector(selectChangePassword);
   const newRef = useRef<TextInput>(null);
   const confirmRef = useRef<TextInput>(null);
@@ -59,33 +64,49 @@ const ChangePasswordContent: React.FC<Props> = () => {
         text1: requireCurrent ? 'Password changed' : 'Password set',
         text2: 'Your other devices have been signed out.',
       });
-      back();
+      // The fresh session (mustChangePassword now false) opens the console; if it couldn't be read, read it now.
+      if (forced) void dispatch(refreshSession());
+      else back();
     } else haptics.warning();
   };
 
   return (
     <ScreenShell
-      title={requireCurrent ? 'Change password' : 'Set a password'}
+      title={forced ? 'Choose your password' : requireCurrent ? 'Change password' : 'Set a password'}
       subtitle={
-        requireCurrent
-          ? 'Use 8–72 characters with an upper-case letter, a lower-case letter and a number.'
-          : "Add a password so you can also sign in with your email. You'll confirm with Google first."
+        forced
+          ? 'Your account has a temporary password. Choose your own to open the console.'
+          : requireCurrent
+            ? 'Use 8–72 characters with an upper-case letter, a lower-case letter and a number.'
+            : "Add a password so you can also sign in with your email. You'll confirm with Google first."
       }
-      onBack={back}
+      onBack={forced ? undefined : back}
       footer={
-        <Button
-          label={requireCurrent ? 'Change password' : 'Set password'}
-          onPress={submit}
-          loading={s.status === 'loading'}
-          disabled={hasErrors(errors)}
-          fullWidth
-          size="lg"
-        />
+        <>
+          <Button
+            label={requireCurrent ? 'Change password' : 'Set password'}
+            onPress={submit}
+            loading={s.status === 'loading'}
+            disabled={hasErrors(errors)}
+            fullWidth
+            size="lg"
+          />
+          {forced ? (
+            <Button
+              label={signingOut ? 'Signing out...' : 'Sign out'}
+              variant="ghost"
+              size="sm"
+              disabled={signingOut || s.status === 'loading'}
+              onPress={() => void signOutNow({ landing: 'SignIn' })}
+            />
+          ) : null}
+        </>
       }>
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
       <Card>
         {requireCurrent ? (
           <TextField
+          editable={s.status !== 'loading'}
             label="Current password"
             mode="password"
             value={s.values.currentPassword}
@@ -99,6 +120,7 @@ const ChangePasswordContent: React.FC<Props> = () => {
           />
         ) : null}
         <TextField
+          editable={s.status !== 'loading'}
           ref={newRef}
           label="New password"
           mode="password"
@@ -114,6 +136,7 @@ const ChangePasswordContent: React.FC<Props> = () => {
         />
         <PasswordStrength password={s.values.password} />
         <TextField
+          editable={s.status !== 'loading'}
           ref={confirmRef}
           label="Confirm new password"
           mode="password"

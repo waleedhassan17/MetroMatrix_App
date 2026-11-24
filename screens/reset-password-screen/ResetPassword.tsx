@@ -7,6 +7,7 @@ import { StyleSheet, View, type TextInput } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useBack } from '../../hooks/useBack';
 import { hasErrors, validateNewPassword } from '../../models/authModel';
 import { visibleErrors } from '../../utils/form-errors/formErrors';
 import { haptics } from '../../utils/haptics/haptics';
@@ -38,10 +39,17 @@ const ResetPassword: React.FC<Props> = ({ navigation, route }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service } = useTheme();
-  const { email, userType } = route.params;
+  // Opened without an address (a bare link, a web bookmark): start at the email step instead of crashing.
+  const email = route.params?.email ?? '';
+  const userType = route.params?.userType ?? 'user';
   const resetToken = useAppSelector(selectResetToken);
   const s = useAppSelector(selectResetPassword);
   const confirmRef = useRef<TextInput>(null);
+  const { back } = useBack({ name: 'ForgotPassword', params: { email, userType } });
+
+  useEffect(() => {
+    if (!email) navigation.replace('ForgotPassword', { userType });
+  }, [email, userType, navigation]);
 
   useEffect(() => {
     dispatch(resetResetPassword());
@@ -53,6 +61,9 @@ const ResetPassword: React.FC<Props> = ({ navigation, route }) => {
   // No token: a reload on web, or a spent / expired one (the API's
   // OTP_INVALID here) — get a new code.
   const tokenSpent = !resetToken || s.error.code === ERROR_CODES.OTP_INVALID;
+  // An earlier try got no answer and the token is now refused: that try most likely worked.
+  const probablyChanged = s.mayHaveChanged && s.error.code === ERROR_CODES.OTP_INVALID;
+  const signInRoute = userType === 'provider' ? 'ProviderSignIn' : 'SignIn';
 
   const submit = async () => {
     if (loading || tokenSpent) return;
@@ -65,23 +76,34 @@ const ResetPassword: React.FC<Props> = ({ navigation, route }) => {
     if (resetPasswordAsync.fulfilled.match(r)) {
       haptics.success();
       dispatch(resetForgotPassword());
-      Toast.show({ type: 'success', text1: 'Password changed, please sign in' });
+      Toast.show({ type: 'success', text1: 'Password changed. Please sign in.' });
       // A fresh stack: Back from sign-in must not return into the reset flow.
       const target = userType === 'provider' ? 'ProviderSignIn' : 'SignIn';
       navigation.reset({ index: 1, routes: [{ name: 'RoleSelection' }, { name: target, params: { email } }] });
     } else haptics.warning();
   };
 
+  if (!email) return null;
+
   return (
-    <AuthScreen onBack={() => navigation.goBack()}>
+    <AuthScreen onBack={back}>
       <View style={[styles.hero, { backgroundColor: service.accentSoft }]}>
         <IonIcon name="shield-checkmark-outline" size="xl" color={service.accent} />
       </View>
       <AuthHeader hideLogo title="Reset Password" subtitle="Create a new password for your account." />
-      {s.error.message || tokenSpent ? (
+      {probablyChanged ? (
+        <InlineNotice
+          tone="info"
+          message="Your password may already be changed. Try signing in with the new one."
+          action={{
+            label: 'Sign in',
+            onPress: () => navigation.reset({ index: 1, routes: [{ name: 'RoleSelection' }, { name: signInRoute, params: { email } }] }),
+          }}
+        />
+      ) : s.error.message || tokenSpent ? (
         <InlineNotice
           message={tokenSpent ? 'This reset session has expired. Request a new code.' : s.error.message}
-          action={tokenSpent ? { label: 'Get a new code', onPress: () => navigation.navigate('ForgotPassword', { email, userType }) } : undefined}
+          action={tokenSpent ? { label: 'Get a new code', onPress: () => navigation.popTo('ForgotPassword', { email, userType }) } : undefined}
         />
       ) : null}
       <View style={styles.form}>

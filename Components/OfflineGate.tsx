@@ -4,8 +4,10 @@
 // MetroMatrix". The tokens are kept; Retry re-runs the bootstrap.
 
 import React from 'react';
+import { View } from 'react-native';
 import { useAppDispatch, useAppSelector } from '../hooks/useReduxHooks';
-import { EmptyState, ScreenShell } from '../Custom-Components';
+import { useSignOut } from '../hooks/useSignOut';
+import { Button, EmptyState, ScreenShell } from '../Custom-Components';
 import { bootstrapSession, selectAppStatus, selectDownReason } from './appContainerSlice';
 
 export const OfflineGate: React.FC = () => {
@@ -13,6 +15,8 @@ export const OfflineGate: React.FC = () => {
   const status = useAppSelector(selectAppStatus);
   const reason = useAppSelector(selectDownReason);
   const server = reason === 'server';
+  const checking = status === 'loading';
+  const { signOutNow, signingOut } = useSignOut();
   return (
     <ScreenShell scroll={false}>
       <EmptyState
@@ -24,10 +28,22 @@ export const OfflineGate: React.FC = () => {
             : 'Connect to the internet to pick up where you left off.'
         }
         action={{
-          label: status === 'loading' ? 'Checking' : 'Try again',
-          onPress: () => dispatch(bootstrapSession()),
+          label: checking ? 'Checking...' : 'Try again',
+          onPress: () => {
+            if (!checking) dispatch(bootstrapSession());
+          },
         }}
       />
+      {/* Never a dead end: whatever keeps failing, the person can leave this account. */}
+      <View style={{ alignItems: 'center' }}>
+        <Button
+          label={signingOut ? 'Signing out...' : 'Sign out'}
+          variant="ghost"
+          size="sm"
+          disabled={signingOut || checking}
+          onPress={() => void signOutNow()}
+        />
+      </View>
     </ScreenShell>
   );
 };

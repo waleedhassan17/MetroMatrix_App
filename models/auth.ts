@@ -60,6 +60,11 @@ export interface User {
   isEmailVerified: boolean;
   /** False for Google-only accounts: they set a first password, not change one. */
   hasPassword: boolean;
+  /**
+   * Staff given a temporary password (the API's `admin.mustChangePassword`): they choose their own before the
+   * console opens (sessionGate 'staffPassword'). Always false for everyone else.
+   */
+  mustChangePassword?: boolean;
   providers: AuthProvider[];
   createdAt: string;
   /** Customers: CompleteProfile has been finished. Always true for other roles. */

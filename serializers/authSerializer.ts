@@ -83,7 +83,10 @@ export interface SessionPayload {
 /** /auth/me and any response carrying { user, business }. */
 export const sessionSerializer = (raw: unknown): SessionPayload | null => {
   if (!isObject(raw) || !isObject(raw.user)) return null;
-  return { user: userSerializer(raw.user), business: businessSerializer(raw.business) };
+  const user = userSerializer(raw.user);
+  // Staff only: `admin` sits beside `user` (AccountView).
+  if (isObject(raw.admin) && raw.admin.mustChangePassword === true) user.mustChangePassword = true;
+  return { user, business: businessSerializer(raw.business) };
 };
 
 /** Null when the response has no user or no usable token pair. */

@@ -23,6 +23,7 @@ jest.mock('../../screens/rejected-screen/Rejected', () => () => null);
 jest.mock('../../screens/suspended-screen/Suspended', () => () => null);
 jest.mock('../../screens/admin-totp-screen/AdminTotp', () => () => null);
 jest.mock('../../screens/admin-two-factor-enrol-screen/AdminTwoFactorEnrol', () => () => null);
+jest.mock('../../screens/change-password-screen/ChangePassword', () => () => null);
 jest.mock('../../screens/design-gallery-screen/DesignGallery', () => () => null);
 jest.mock('../../screens/rider-sign-in-screen/RiderSignIn', () => () => null);
 jest.mock('../../screens/public-store-screen/PublicStore', () => () => null);
@@ -88,6 +89,7 @@ const GATED: Record<Exclude<Gate, 'unauthenticated' | 'customer' | 'partner' | '
   pending: [ROUTES.PROVIDER_APPROVAL_PENDING],
   rejected: [ROUTES.REJECTED, ROUTES.PERSONAL_INFO],
   suspended: [ROUTES.SUSPENDED],
+  staffPassword: [ROUTES.CHANGE_PASSWORD],
 };
 
 // Screens shared on purpose, and why:

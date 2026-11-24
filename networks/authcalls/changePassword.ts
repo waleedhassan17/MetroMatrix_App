@@ -22,13 +22,20 @@ export type ChangePasswordPayload =
  * The whole session comes back, so the role and business are the server's,
  * never a stale or partial copy.
  */
-export const changePassword = async (payload: ChangePasswordPayload): Promise<SessionPayload> => {
+export const changePassword = async (payload: ChangePasswordPayload): Promise<SessionPayload | null> => {
   try {
     const body = unwrap(await API.POST({ URL: '/auth/change-password', data: payload }));
     const tokens = tokensSerializer(body);
     if (!tokens) throw malformed();
     await setTokens(tokens.accessToken, tokens.refreshToken);
-    return await me();
+    // The password IS changed and the new pair stored: a slow or failed
+    // re-read must not turn that into a failure (a retry would then be told
+    // the old password is wrong). null: the session is refreshed later.
+    try {
+      return await me();
+    } catch {
+      return null;
+    }
   } catch (e) {
     throw toApiError(e);
   }

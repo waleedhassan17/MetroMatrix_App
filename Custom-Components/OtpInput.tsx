@@ -76,6 +76,16 @@ export const OtpInput = forwardRef<TextInput, OtpInputProps>(
       if (value.length < length) lastCompleted.current = '';
     }, [value, length, onComplete]);
 
+    // Typeable again after a check (a wrong code): the keyboard comes back by
+    // itself, so the person can correct it without tapping the boxes.
+    const wasDisabled = useRef(disabled);
+    useEffect(() => {
+      if (wasDisabled.current && !disabled && autoFocus) innerRef.current?.focus();
+      wasDisabled.current = disabled;
+    }, [disabled, autoFocus]);
+
+    // Red only while the code that was refused is still there: editing it clears the warning.
+    const showError = error && value.length === length;
     const cells = Array.from({ length }, (_, i) => value[i] ?? '');
     const activeIndex = Math.min(value.length, length - 1);
 
@@ -93,7 +103,7 @@ export const OtpInput = forwardRef<TextInput, OtpInputProps>(
                 style={[
                   styles.cell,
                   active && { borderColor: service.accent, borderWidth: size.focusBorder },
-                  error && { borderColor: colors.danger },
+                  showError && { borderColor: colors.danger },
                 ]}>
                 <AppText variant="h2">{digit}</AppText>
               </View>

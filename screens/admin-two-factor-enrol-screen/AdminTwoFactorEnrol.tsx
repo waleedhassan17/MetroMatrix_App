@@ -3,11 +3,12 @@
 // ═══════════════════════════════════════════════════════
 
 import React, { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Linking, Platform, StyleSheet, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import * as Clipboard from 'expo-clipboard';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { authErrorMessage } from '../../Components/auth/authErrorMessage';
 import { OTP_LENGTH } from '../../models/authModel';
 import { resetAllState } from '../../store/resetAllState';
 import { haptics } from '../../utils/haptics/haptics';
@@ -23,7 +24,7 @@ import {
   Skeleton,
   SkeletonLines,
 } from '../../Custom-Components/index';
-import { selectPendingTotp, setPendingTotp, setSession } from '../../store/authSlice';
+import { endPendingTotp, selectPendingTotp, setPendingTotp, setSession } from '../../store/authSlice';
 import {
   confirmAsync,
   loadEnrolmentAsync,
@@ -48,6 +49,7 @@ const makeStyles = ({ space, radius, size, colors }: Theme) =>
       backgroundColor: colors.surfaceSunk,
       alignItems: 'center',
     },
+    keyActions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space.s8 },
     codes: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
     code: {
       width: '47%',
@@ -97,7 +99,23 @@ const AdminTwoFactorEnrol: React.FC = () => {
     dispatch(setSession(s.session));
   };
 
-  const cancel = () => dispatch(setPendingTotp(null));
+  // Back to Sign In (not Onboarding): dropping the challenge moves the gate there.
+  const cancel = () => dispatch(endPendingTotp());
+
+  // On the same phone as the authenticator, the QR can't be scanned: copy the key, or hand the link over.
+  const copyKey = async () => {
+    if (!s.enrolment) return;
+    await Clipboard.setStringAsync(s.enrolment.secret);
+    Toast.show({ type: 'success', text1: 'Setup key copied', text2: 'Paste it into your authenticator app.' });
+  };
+  const openAuthenticator = async () => {
+    if (!s.enrolment) return;
+    try {
+      await Linking.openURL(s.enrolment.otpauthUrl);
+    } catch {
+      Toast.show({ type: 'info', text1: 'No authenticator app opened it', text2: 'Copy the setup key and add it by hand.' });
+    }
+  };
 
   // ─── Step 2: recovery codes, shown once ────────────
   if (s.session) {
@@ -146,7 +164,7 @@ const AdminTwoFactorEnrol: React.FC = () => {
           size="lg"
         />
       }>
-      {s.error.message ? <InlineNotice message={s.error.message} /> : null}
+      {s.error.message ? <InlineNotice message={authErrorMessage(s.error)} /> : null}
       <Card>
         {s.enrolment ? (
           <>
@@ -165,6 +183,12 @@ const AdminTwoFactorEnrol: React.FC = () => {
               <AppText variant="bodyStrong" selectable accessibilityLabel={`Setup key ${s.enrolment.secret}`}>
                 {groupSecret(s.enrolment.secret)}
               </AppText>
+            </View>
+            <View style={styles.keyActions}>
+              <Button label="Copy setup key" variant="secondary" size="sm" leftIcon="copy-outline" onPress={() => void copyKey()} />
+              {Platform.OS !== 'web' ? (
+                <Button label="Open in authenticator" variant="ghost" size="sm" onPress={() => void openAuthenticator()} />
+              ) : null}
             </View>
           </>
         ) : s.loadStatus === 'failed' ? (

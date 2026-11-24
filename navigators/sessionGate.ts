@@ -38,7 +38,9 @@ export type Gate =
   | 'customer'
   | 'partner'
   | 'rider'
-  | 'admin';
+  | 'admin'
+  /** Staff with a temporary password: Change Password before the console. */
+  | 'staffPassword';
 
 export interface GateInput {
   isAuthenticated: boolean;
@@ -73,7 +75,7 @@ export const resolveGate = ({ isAuthenticated, user, business, pendingTotp, prof
     }
     case 'admin':
     case 'super_admin':
-      return 'admin';
+      return user.mustChangePassword ? 'staffPassword' : 'admin';
     case 'customer':
       // New customers must complete the profile; customers from before it
       // existed are asked once and may skip (remembered on this device).

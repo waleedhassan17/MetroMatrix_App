@@ -67,7 +67,12 @@ const BaseNavigator: React.FC = () => {
           name={route.title as keyof RootStackParamList}
           component={route.component}
           options={route.options}
-          initialParams={route.initialParams as never}
+          initialParams={
+            // An ended session's email fills in the sign-in it lands on.
+            (gate === 'unauthenticated' && auth.signedOutEmail && route.title === auth.signedOutLanding
+              ? { ...(route.initialParams ?? {}), email: auth.signedOutEmail }
+              : route.initialParams) as never
+          }
         />
       ))}
     </Stack.Navigator>

@@ -6,11 +6,14 @@ import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useBack } from '../../hooks/useBack';
+import { useCountdown } from '../../hooks/useCountdown';
 import { validateEmail } from '../../models/authModel';
 import { haptics } from '../../utils/haptics/haptics';
 import { useStyles, useTheme, type Theme } from '../../theme/index';
 import { Button, InlineNotice, IonIcon, TextField } from '../../Custom-Components/index';
 import { AuthHeader, AuthScreen } from '../../Components/auth/AuthChrome';
+import { authErrorMessage } from '../../Components/auth/authErrorMessage';
 import type { RootStackParamList } from '../../models';
 import { requestCodeAsync, selectForgotPassword, setEmail, touch } from './forgotPasswordSlice';
 
@@ -42,6 +45,9 @@ const ForgotPassword: React.FC<Props> = ({ navigation, route }) => {
 
   const error = validateEmail(s.email);
   const loading = s.status === 'loading';
+  const secondsLeft = useCountdown(s.resendAvailableAt);
+  // Back works even when this screen was opened from a link or a web reload.
+  const { back } = useBack({ name: 'SignIn' });
 
   const submit = async () => {
     dispatch(touch());
@@ -50,6 +56,11 @@ const ForgotPassword: React.FC<Props> = ({ navigation, route }) => {
       return;
     }
     const email = s.email.trim();
+    // A code just went to this address: go on to it instead of asking again (the API allows 3 an hour).
+    if (secondsLeft > 0 && s.sentTo === email.toLowerCase()) {
+      navigation.navigate('ResetPasswordOTP', { email, userType });
+      return;
+    }
     const r = await dispatch(requestCodeAsync(email));
     if (requestCodeAsync.fulfilled.match(r)) {
       navigation.navigate('ResetPasswordOTP', { email, userType });
@@ -57,7 +68,7 @@ const ForgotPassword: React.FC<Props> = ({ navigation, route }) => {
   };
 
   return (
-    <AuthScreen onBack={() => navigation.goBack()}>
+    <AuthScreen onBack={back}>
       <View style={[styles.hero, { backgroundColor: service.accentSoft }]}>
         <IonIcon name="lock-closed-outline" size="xl" color={service.accent} />
       </View>
@@ -66,7 +77,7 @@ const ForgotPassword: React.FC<Props> = ({ navigation, route }) => {
         title="Forgot Password?"
         subtitle="Enter your email address and we'll send you a 6-digit code to reset your password."
       />
-      {s.error.message ? <InlineNotice message={s.error.message} /> : null}
+      {s.error.message ? <InlineNotice message={authErrorMessage(s.error)} /> : null}
       <TextField
         label="Email"
         mode="email"
@@ -86,7 +97,7 @@ const ForgotPassword: React.FC<Props> = ({ navigation, route }) => {
         disabled={!s.email.trim() || loading}
         fullWidth
       />
-      <Button label="Back to Sign In" variant="ghost" onPress={() => navigation.goBack()} />
+      <Button label="Back to Sign In" variant="ghost" onPress={back} />
     </AuthScreen>
   );
 };

@@ -3,7 +3,7 @@
 // Google-only accounts prove themselves with a fresh Google ID token, for
 // both the first password and deletion.
 
-import type { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import { MainAxiosInstance } from '../../network/network';
 import { changePassword } from '../changePassword';
@@ -64,7 +64,16 @@ describe('changePassword', () => {
     expect(await getAccessToken()).toBe('access-NEW');
     expect(await getRefreshToken()).toBe('refresh-NEW');
     expect(sent[1]).toMatchObject({ url: '/auth/me', auth: 'Bearer access-NEW' });
-    expect(session.user.role).toBe('partner');
+    expect(session?.user.role).toBe('partner');
+  });
+
+  it('a change whose re-read fails is still a change: the new pair is stored and null comes back', async () => {
+    MainAxiosInstance.defaults.adapter = ((config: InternalAxiosRequestConfig) =>
+      config.url === '/auth/me'
+        ? Promise.reject(new AxiosError('timeout of 30000ms exceeded', 'ECONNABORTED', config, {}, undefined))
+        : Promise.resolve({ data: { success: true, data: { changed: true, tokens: { accessToken: 'access-NEW', refreshToken: 'refresh-NEW' } } }, status: 200, statusText: 'OK', headers: {}, config })) as never;
+    await expect(changePassword({ currentPassword: 'Old1pass', newPassword: 'New1pass' })).resolves.toBeNull();
+    expect(await getAccessToken()).toBe('access-NEW');
   });
 
   it('a response without tokens is refused and leaves the stored pair alone', async () => {

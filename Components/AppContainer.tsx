@@ -7,11 +7,13 @@
 // release, the push pre-prompt, and toast notifications.
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Linking, View, StyleSheet, StatusBar } from 'react-native';
+import { Animated, AppState, Linking, View, StyleSheet, StatusBar } from 'react-native';
 import { NavigationContainer, getStateFromPath, type LinkingOptions } from '@react-navigation/native';
 import * as NativeSplash from 'expo-splash-screen';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../hooks/useReduxHooks';
+import { clearPushToken } from '../utils/storage_utils/storageUtils';
+import type { SignedOutLanding } from '../store/authSlice';
 import { navigationTheme, useStyles, useTheme, type Theme } from '../theme';
 import { toastConfig } from '../Custom-Components/toastConfig';
 
@@ -375,6 +377,11 @@ const linkingFor = (customer: boolean): LinkingOptions<ReactNavigation.RootParam
 
 // A build with no backend URL renders nothing but the configuration error: no
 // bootstrap, no navigator, no request (CONFIG_ERROR is a build-time constant).
+/** How often, at most, coming back to the app re-reads the session. */
+const FOREGROUND_RECHECK_MS = 5 * 60_000;
+/** After this long, the splash says it is still connecting. */
+const SLOW_START_MS = 8_000;
+
 export const AppContainer: React.FC = () => (CONFIG_ERROR ? <ConfigErrorScreen /> : <AppShell />);
 
 const AppShell: React.FC = () => {
@@ -419,6 +426,13 @@ const AppShell: React.FC = () => {
   // onto a stale route; then it fades out over the right navigator.
   const [splashPlayed, setSplashPlayed] = useState(false);
   const [splashGone, setSplashGone] = useState(false);
+  // A slow start says so on the splash instead of a silent mark.
+  const [slowStart, setSlowStart] = useState(false);
+  useEffect(() => {
+    if (isAppReady) return;
+    const t = setTimeout(() => setSlowStart(true), SLOW_START_MS);
+    return () => clearTimeout(t);
+  }, [isAppReady]);
   const [splashOpacity] = useState(() => new Animated.Value(1));
   const releaseNativeSplash = useCallback(() => {
     void NativeSplash.hideAsync().catch(() => {
@@ -444,14 +458,38 @@ const AppShell: React.FC = () => {
   // authenticated screens whose every request fails.
   // Only a definitive failure gets here (sessionRefresh.ts): offline or a
   // server error never signs anyone out.
+  // Like the FYP, it lands on the sign-in the person uses (a provider's, a
+  // rider's, or the User one) with their email filled in, rather than
+  // Onboarding. The device's push token is forgotten so the next session
+  // registers it afresh (the dead session can't unregister it).
+  const store = useAppStore();
   useEffect(() => {
     setSessionExpiredHandler(reason => {
+      const user = store.getState().auth.user;
+      const landing: SignedOutLanding = user?.role === 'partner' ? 'ProviderSignIn' : user?.role === 'rider' ? 'RiderSignIn' : 'SignIn';
+      void clearPushToken().catch(() => undefined);
       dispatch(resetAllState());
-      dispatch(signOut());
+      dispatch(signOut({ landing, email: user?.role === 'rider' ? undefined : user?.email }));
       Toast.show({ type: 'info', ...sessionEndedCopy(reason) });
     });
     return () => setSessionExpiredHandler(null);
-  }, [dispatch]);
+  }, [dispatch, store]);
+
+  // ─── Back in the foreground after a while: re-read the session, so an
+  // approval, a suspension or a verification made meanwhile shows at once
+  // rather than at the next failing request. At most every 5 minutes.
+  const foregroundCheckAt = useRef(0);
+  useEffect(() => {
+    // The bootstrap just read the session: the first re-read waits a full interval from now.
+    foregroundCheckAt.current = Date.now();
+    const sub = AppState.addEventListener('change', next => {
+      if (next !== 'active' || !store.getState().auth.isAuthenticated) return;
+      if (Date.now() - foregroundCheckAt.current < FOREGROUND_RECHECK_MS) return;
+      foregroundCheckAt.current = Date.now();
+      dispatch(refreshSession());
+    });
+    return () => sub.remove();
+  }, [dispatch, store]);
 
   // ─── Business-status-stale bridge: a partner request 403'd with
   // BUSINESS_SUSPENDED. Re-read /auth/me — the fresh business status makes
@@ -543,7 +581,7 @@ const AppShell: React.FC = () => {
           style={[StyleSheet.absoluteFill, { opacity: splashOpacity }]}
           pointerEvents={splashPlayed && isAppReady ? 'none' : 'auto'}
           onLayout={releaseNativeSplash}>
-          <Splash onDone={onSplashPlayed} />
+          <Splash onDone={onSplashPlayed} connecting={slowStart && !isAppReady} />
         </Animated.View>
       )}
       <Toast config={toastConfig} topOffset={theme.space.s56} />

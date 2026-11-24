@@ -8,7 +8,29 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../store/createAppSlice';
 import { getAccessToken, getRefreshToken, clearTokens } from '../utils/storage_utils/storageUtils';
 import { me } from '../networks/authcalls/me';
-import { isNetworkError, noResponseReasonOf, refreshTokens, isDefinitiveSessionFailure } from '../networks/network/network';
+import { ApiError, ERROR_CODES, isNetworkError, noResponseReasonOf, refreshTokens, isDefinitiveSessionFailure } from '../networks/network/network';
+
+/** The longest a cold start waits on the API before "We can't reach MetroMatrix" (Try again, or Sign out). */
+export const BOOTSTRAP_DEADLINE_MS = 25_000;
+
+/** `work`, or a timed-out NETWORK_ERROR after `ms`. */
+const withDeadline = <T>(work: Promise<T>, ms: number): Promise<T> =>
+  new Promise<T>((resolve, reject) => {
+    const t = setTimeout(
+      () => reject(new ApiError('MetroMatrix is taking longer than usual to answer.', ERROR_CODES.NETWORK_ERROR, undefined, { reason: 'timeout' })),
+      ms,
+    );
+    work.then(
+      v => {
+        clearTimeout(t);
+        resolve(v);
+      },
+      e => {
+        clearTimeout(t);
+        reject(e);
+      },
+    );
+  });
 import { setSession, signOut } from '../store/authSlice';
 import { registerDevice } from '../networks/users/users';
 import { setPushToken } from '../utils/storage_utils/storageUtils';
@@ -86,8 +108,13 @@ export const appContainerSlice = createAppSlice({
         try {
           // The access token can be gone while the refresh token lives on
           // (cleared, or never stored): refresh instead of signing out.
-          if (!access) await refreshTokens();
-          const session = await me();
+          const session = await withDeadline(
+            (async () => {
+              if (!access) await refreshTokens();
+              return me();
+            })(),
+            BOOTSTRAP_DEADLINE_MS,
+          );
           dispatch(setSession(session));
           return 'restored';
         } catch (e) {
