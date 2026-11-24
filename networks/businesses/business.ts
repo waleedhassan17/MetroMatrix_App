@@ -8,6 +8,13 @@
 import { API, toApiError } from '../network/network';
 import type { DocumentKind, ServiceType, SubType } from '../../models/auth';
 
+/**
+ * The API replays an authenticated POST that repeats its `Idempotency-Key`,
+ * so a retry after a timeout can't create a second business, attach a photo
+ * twice or submit twice. The caller keeps one key per attempt.
+ */
+const idempotent = (key?: string) => (key ? { 'Idempotency-Key': key } : undefined);
+
 /** The API's CreateBusinessDto (PATCH takes any part of it). Unknown fields are dropped by the API. */
 export interface BusinessPayload {
   serviceType: ServiceType;
@@ -22,9 +29,9 @@ export interface BusinessPayload {
   pmdcNumber?: string;
 }
 
-export const createBusiness = async (payload: BusinessPayload): Promise<unknown> => {
+export const createBusiness = async (payload: BusinessPayload, idempotencyKey?: string): Promise<unknown> => {
   try {
-    const response = await API.POST({ URL: '/businesses', data: payload });
+    const response = await API.POST({ URL: '/businesses', data: payload, headers: idempotent(idempotencyKey) });
     return response.data;
   } catch (e) {
     throw toApiError(e);
@@ -57,10 +64,13 @@ export const updateMyBusiness = async (patch: Partial<BusinessPayload>): Promise
  * (at most 4). Answers the one document (DocumentView), so the caller reads
  * the business again for the new list and requirement statuses.
  */
-export const addDocument = async (doc: { kind: DocumentKind; url: string; publicId: string }): Promise<unknown> => {
+export const addDocument = async (
+  doc: { kind: DocumentKind; url: string; publicId: string },
+  idempotencyKey?: string,
+): Promise<unknown> => {
   try {
     const { kind, url, publicId } = doc;
-    const response = await API.POST({ URL: '/businesses/me/documents', data: { kind, url, publicId } });
+    const response = await API.POST({ URL: '/businesses/me/documents', data: { kind, url, publicId }, headers: idempotent(idempotencyKey) });
     return response.data;
   } catch (e) {
     throw toApiError(e);
@@ -78,9 +88,9 @@ export const removeDocument = async (documentId: string): Promise<unknown> => {
 };
 
 /** 422 DOCUMENTS_MISSING carries `details.missing`: requirement keys (`kind` or `a|b`). */
-export const submitBusiness = async (): Promise<unknown> => {
+export const submitBusiness = async (idempotencyKey?: string): Promise<unknown> => {
   try {
-    const response = await API.POST({ URL: '/businesses/me/submit' });
+    const response = await API.POST({ URL: '/businesses/me/submit', headers: idempotent(idempotencyKey) });
     return response.data;
   } catch (e) {
     throw toApiError(e);

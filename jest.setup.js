@@ -23,3 +23,17 @@ jest.mock('expo-secure-store', () => {
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
+
+// The device's connectivity (networks/network/network.ts asks it why a request
+// got no answer). Online by default; a test sets `isConnected: false` with
+// `require('expo-network').getNetworkStateAsync.mockResolvedValueOnce(...)`.
+jest.mock('expo-network', () => ({
+  getNetworkStateAsync: jest.fn(async () => ({ isConnected: true, isInternetReachable: true, type: 'WIFI' })),
+  NetworkStateType: { NONE: 'NONE', UNKNOWN: 'UNKNOWN', WIFI: 'WIFI', CELLULAR: 'CELLULAR' },
+}));
+
+// Photo resizing before upload (utils/pickers). Answers the same file, sized.
+jest.mock('expo-image-manipulator', () => ({
+  manipulateAsync: jest.fn(async (uri, _actions, _options) => ({ uri: `${uri}#resized`, width: 2048, height: 1536 })),
+  SaveFormat: { JPEG: 'jpeg', PNG: 'png', WEBP: 'webp' },
+}));

@@ -33,10 +33,15 @@ export interface ResendOutcome {
   alreadyVerified: boolean;
 }
 
-/** 429 RESEND_COOLDOWN carries `details.retryAfter`. */
-export const resendVerification = async (): Promise<ResendOutcome> => {
+/**
+ * 429 RESEND_COOLDOWN carries `details.retryAfter`. A repeated
+ * `Idempotency-Key` replays the first answer, so retrying a resend that timed
+ * out (but sent) doesn't hit the cooldown or retire the link just sent.
+ */
+export const resendVerification = async (idempotencyKey?: string): Promise<ResendOutcome> => {
   try {
-    const body = unwrap(await API.POST({ URL: '/auth/resend-verification' }));
+    const headers = idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : undefined;
+    const body = unwrap(await API.POST({ URL: '/auth/resend-verification', headers }));
     return { retryAfter: retryAfterSerializer(body), alreadyVerified: body?.alreadyVerified === true };
   } catch (e) {
     throw toApiError(e);

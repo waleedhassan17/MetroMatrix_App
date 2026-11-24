@@ -10,6 +10,7 @@
 
 import { Platform } from 'react-native';
 import axios, { AxiosAdapter, AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import * as Network from 'expo-network';
 import { setTokens, getAccessToken, getRefreshToken, clearTokens } from '../../utils/storage_utils/storageUtils';
 import {
   emitSessionExpired,
@@ -78,7 +79,11 @@ const API_CODES = {
 
 /** Codes only the app produces. */
 const APP_CODES = {
-  /** No response at all: offline, DNS, timeout. */
+  /**
+   * No response at all. `details.reason` says why (NoResponseReason): the
+   * device is offline, the request timed out, or the server couldn't be
+   * reached. Only `offline` may tell the person they are offline.
+   */
   NETWORK_ERROR: 'NETWORK_ERROR',
   /** A build with no backend URL (config/env.ts). */
   CONFIG_ERROR: 'CONFIG_ERROR',
@@ -291,6 +296,61 @@ export const refreshTokens = async (): Promise<string> => {
   }
 };
 
+// ─── No response: why? ───────────────────────────────
+// "You're offline" only when the device says so. A request that timed out (a
+// slow link, a slow server) or never reached the server (DNS, TLS, refused)
+// says that instead: telling an online person they are offline sends them to
+// fix a connection that works (the sign-up report of 2026-11-24).
+
+/** Why a request got no answer at all: NETWORK_ERROR's `details.reason`. */
+export type NoResponseReason = 'offline' | 'timeout' | 'unreachable';
+
+type NoResponseError = AxiosError & { noResponseReason?: NoResponseReason };
+
+const isTimeout = (error: AxiosError): boolean =>
+  error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT' || /timeout/i.test(error.message ?? '');
+
+/** The device's own word: offline only when it reports no connection. Unknown counts as online. */
+const deviceIsOffline = async (): Promise<boolean> => {
+  try {
+    const state = await Promise.race([
+      Network.getNetworkStateAsync(),
+      new Promise<null>(resolve => setTimeout(() => resolve(null), 1500)),
+    ]);
+    return state?.isConnected === false;
+  } catch {
+    return false;
+  }
+};
+
+const classifyNoResponse = async (error: AxiosError): Promise<NoResponseReason> => {
+  if (await deviceIsOffline()) return 'offline';
+  return isTimeout(error) ? 'timeout' : 'unreachable';
+};
+
+/** The reason on a no-response failure (axios error or ApiError), if one was found. */
+export const noResponseReasonOf = (error: unknown): NoResponseReason | undefined => {
+  const stamped = (error as NoResponseError | null)?.noResponseReason;
+  if (stamped) return stamped;
+  const reason = (error as { details?: { reason?: unknown } } | null)?.details?.reason;
+  return reason === 'offline' || reason === 'timeout' || reason === 'unreachable' ? reason : undefined;
+};
+
+/** What a person reads when nothing came back. Unknown never claims "offline". */
+const noResponseCopy = (reason: NoResponseReason | undefined): string => {
+  switch (reason) {
+    case 'offline':
+      return "You're offline. Check your connection, then try again.";
+    case 'timeout':
+      return 'MetroMatrix is taking longer than usual to answer. Please try again.';
+    default:
+      return "We can't reach MetroMatrix right now. Please try again in a moment.";
+  }
+};
+
+/** A read that never reached the server is tried once more after this pause. */
+const READ_RETRY_DELAY_MS = 800;
+
 // ─── Response Interceptor (401 refresh, 403 status gates) ───
 /**
  * Every answer is the API's envelope (`{ success, data }`, MetroMatrix_Backend
@@ -308,8 +368,25 @@ MainAxiosInstance.interceptors.response.use(
       : Promise.reject(new ApiError('The server sent an unexpected response. Please try again.', ERROR_CODES.BAD_RESPONSE, response.status)),
   async (error: AxiosError) => {
     const originalRequest = error.config as
-      | (InternalAxiosRequestConfig & { _retry?: boolean })
+      | (InternalAxiosRequestConfig & { _retry?: boolean; _netRetry?: boolean })
       | undefined;
+
+    // ── No response at all: say why, and give a read one more try ──
+    // Only a GET that never reached the server is repeated (a flaky mobile
+    // link to a far-away API); a timeout or a write never is, so nothing is
+    // ever done twice and nobody waits twice as long.
+    if (!error.response && originalRequest && axios.isAxiosError(error)) {
+      const reason = await classifyNoResponse(error);
+      (error as NoResponseError).noResponseReason = reason;
+      const isRead = (originalRequest.method ?? 'get').toLowerCase() === 'get';
+      if (reason === 'unreachable' && isRead && !originalRequest._netRetry) {
+        originalRequest._netRetry = true;
+        await new Promise(resolve => setTimeout(resolve, READ_RETRY_DELAY_MS));
+        return MainAxiosInstance(originalRequest);
+      }
+      return Promise.reject(error);
+    }
+
     const url = originalRequest?.url ?? '';
     const status = error.response?.status;
     const isAuthRoute = NO_REFRESH_PATHS.some(p => url.includes(p));
@@ -444,7 +521,7 @@ export const extractErrorMessage = (error: any): string => {
     if (data?.message) {
       return Array.isArray(data.message) ? data.message.join(', ') : String(data.message);
     }
-    if (!error.response) return "You're offline. Check your connection and try again.";
+    if (!error.response) return noResponseCopy(noResponseReasonOf(error));
     if (status === 401) return 'Please sign in again.';
     if (status === 429) return 'Too many requests. Please wait a moment.';
     if (status === 403) return 'You do not have permission for this action.';
@@ -518,11 +595,13 @@ export const toApiError = (error: any): ApiError => {
   if (error instanceof ApiError) return error;
   const isAxios = axios.isAxiosError(error);
   const data: any = isAxios ? error.response?.data : undefined;
+  const reason = isAxios && !error.response ? noResponseReasonOf(error) : undefined;
+  const details = withRetryAfter(error, data?.error?.details ?? data?.details);
   return new ApiError(
     extractErrorMessage(error),
     extractErrorCode(error),
     isAxios ? error.response?.status : undefined,
-    withRetryAfter(error, data?.error?.details ?? data?.details),
+    reason ? { ...(details ?? {}), reason } : details,
   );
 };
 
@@ -578,7 +657,7 @@ export const errorCopy = (code: string | null | undefined, details?: Details): s
   const retry = retryAfterOf(details);
   switch (code) {
     case ERROR_CODES.NETWORK_ERROR:
-      return "You're offline. Check your connection, then try again.";
+      return noResponseCopy(noResponseReasonOf({ details }));
     case ERROR_CODES.CONFIG_ERROR:
       return "This version can't connect. Install the latest version of MetroMatrix.";
     case ERROR_CODES.REFRESH_REUSED:

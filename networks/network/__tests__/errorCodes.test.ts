@@ -90,3 +90,23 @@ describe("a 429's wait", () => {
     expect(e.details).toBeUndefined();
   });
 });
+
+describe('NETWORK_ERROR copy follows the reason', () => {
+  it.each([
+    ['offline', /^You're offline/],
+    ['timeout', /taking longer than usual/],
+    ['unreachable', /can't reach MetroMatrix/],
+  ])('%s', (reason, copy) => {
+    expect(errorCopy(ERROR_CODES.NETWORK_ERROR, { reason })).toMatch(copy);
+  });
+
+  it('never claims "offline" without the device saying so', () => {
+    expect(errorCopy(ERROR_CODES.NETWORK_ERROR)).not.toMatch(/offline/);
+    expect(errorCopy(ERROR_CODES.NETWORK_ERROR, { reason: 'timeout' })).not.toMatch(/offline/);
+  });
+
+  it('the auth screens read the same words', () => {
+    const msg = authErrorMessage({ message: 'x', code: ERROR_CODES.NETWORK_ERROR, details: { reason: 'timeout' } } as never);
+    expect(msg).toMatch(/taking longer than usual/);
+  });
+});

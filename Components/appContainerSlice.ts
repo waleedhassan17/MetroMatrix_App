@@ -8,7 +8,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../store/createAppSlice';
 import { getAccessToken, getRefreshToken, clearTokens } from '../utils/storage_utils/storageUtils';
 import { me } from '../networks/authcalls/me';
-import { isNetworkError, refreshTokens, isDefinitiveSessionFailure } from '../networks/network/network';
+import { isNetworkError, noResponseReasonOf, refreshTokens, isDefinitiveSessionFailure } from '../networks/network/network';
 import { setSession, signOut } from '../store/authSlice';
 import { registerDevice } from '../networks/users/users';
 import { setPushToken } from '../utils/storage_utils/storageUtils';
@@ -69,8 +69,10 @@ export const appContainerSlice = createAppSlice({
      *                          have changed server-side)
      *   definitive failure   → tokens cleared, signed out → Welcome
      *                          (sessionRefresh.isDefinitiveSessionFailure)
-     *   anything else        → networkIsDown (offline, or the API failing);
-     *                          tokens KEPT; Retry re-runs this
+     *   anything else        → networkIsDown, tokens KEPT; Retry re-runs this:
+     *                          'offline' only when the device reports no
+     *                          connection, else 'serverDown' (a timeout, an
+     *                          unreachable or failing API)
      */
     bootstrapSession: create.asyncThunk(
       async (_: void, { dispatch }): Promise<BootstrapOutcome> => {
@@ -94,7 +96,9 @@ export const appContainerSlice = createAppSlice({
             dispatch(signOut());
             return 'signedOut';
           }
-          return isNetworkError(e) ? 'offline' : 'serverDown';
+          // "You're offline" only when the device says so; a timeout or an
+          // unreachable server is "We can't reach MetroMatrix".
+          return isNetworkError(e) && noResponseReasonOf(e) === 'offline' ? 'offline' : 'serverDown';
         }
       },
       {

@@ -87,12 +87,25 @@ describe('bootstrapSession', () => {
     expect(await getRefreshToken()).toBe('r');
   });
 
-  it('offline at cold start: the offline gate, tokens kept', async () => {
+  it('offline at cold start (the device says so): the offline gate, tokens kept', async () => {
     await setTokens('a', 'r');
-    me.mockRejectedValue(offline());
+    me.mockRejectedValue(new ApiError('x', 'NETWORK_ERROR', undefined, { reason: 'offline' }));
     const store = makeStore();
     await store.dispatch(bootstrapSession());
     expect(store.getState().appContainer).toMatchObject({ networkIsDown: true, downReason: 'offline' });
+    expect(await getRefreshToken()).toBe('r');
+  });
+
+  it.each([
+    ['a timeout', new ApiError('x', 'NETWORK_ERROR', undefined, { reason: 'timeout' })],
+    ['an unreachable server', new ApiError('x', 'NETWORK_ERROR', undefined, { reason: 'unreachable' })],
+    ['no reason known', offline()],
+  ])('%s at cold start while online is "We can\'t reach MetroMatrix", never "offline"', async (_n, err) => {
+    await setTokens('a', 'r');
+    me.mockRejectedValue(err);
+    const store = makeStore();
+    await store.dispatch(bootstrapSession());
+    expect(store.getState().appContainer).toMatchObject({ networkIsDown: true, downReason: 'server' });
     expect(await getRefreshToken()).toBe('r');
   });
 

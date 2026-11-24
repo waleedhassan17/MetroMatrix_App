@@ -190,11 +190,59 @@ describe('apiHelpers — status gates and errors', () => {
     });
   });
 
-  it('a request that never got a response is a NETWORK_ERROR with an offline message', async () => {
-    MainAxiosInstance.defaults.adapter = ((config: InternalAxiosRequestConfig) =>
-      Promise.reject(new AxiosError('Network Error', 'ERR_NETWORK', config, {}, undefined))) as never;
-    const raw = await MainAxiosInstance.get('/x').catch(e => e);
-    expect(extractErrorCode(raw)).toBe('NETWORK_ERROR');
-    expect(toApiError(raw).message).toMatch(/offline/);
+  describe('no response at all: why, in words that are true', () => {
+    const network = jest.requireMock('expo-network') as { getNetworkStateAsync: jest.Mock };
+    const noResponse = (code = 'ERR_NETWORK', message = 'Network Error') => {
+      const calls: string[] = [];
+      MainAxiosInstance.defaults.adapter = ((config: InternalAxiosRequestConfig) => {
+        calls.push(`${config.method} ${config.url}`);
+        return Promise.reject(new AxiosError(message, code, config, {}, undefined));
+      }) as never;
+      return calls;
+    };
+
+    it('says "offline" only when the device reports no connection', async () => {
+      network.getNetworkStateAsync.mockResolvedValueOnce({ isConnected: false, isInternetReachable: false });
+      noResponse();
+      const err = toApiError(await MainAxiosInstance.get('/x').catch(e => e));
+      expect(err).toMatchObject({ code: 'NETWORK_ERROR', details: { reason: 'offline' } });
+      expect(err.message).toMatch(/You're offline/);
+    });
+
+    it('a timeout while online says MetroMatrix is slow, not offline, and is never repeated', async () => {
+      const calls = noResponse('ECONNABORTED', 'timeout of 30000ms exceeded');
+      const err = toApiError(await MainAxiosInstance.get('/x').catch(e => e));
+      expect(extractErrorCode(err)).toBe('NETWORK_ERROR');
+      expect(err.details).toMatchObject({ reason: 'timeout' });
+      expect(err.message).toMatch(/taking longer than usual/);
+      expect(err.message).not.toMatch(/offline/);
+      expect(calls).toHaveLength(1);
+    });
+
+    it('a read that never reached the server is tried once more, then says it cannot reach MetroMatrix', async () => {
+      const calls = noResponse();
+      const err = toApiError(await MainAxiosInstance.get('/x').catch(e => e));
+      expect(calls).toEqual(['get /x', 'get /x']);
+      expect(err.details).toMatchObject({ reason: 'unreachable' });
+      expect(err.message).toMatch(/can't reach MetroMatrix/);
+      expect(err.message).not.toMatch(/offline/);
+    });
+
+    it('a write is never repeated', async () => {
+      const calls = noResponse();
+      await MainAxiosInstance.post('/auth/signup', {}).catch(e => e);
+      expect(calls).toEqual(['post /auth/signup']);
+    });
+
+    it('a read that succeeds on its second try answers normally', async () => {
+      let n = 0;
+      MainAxiosInstance.defaults.adapter = ((config: InternalAxiosRequestConfig) =>
+        n++ === 0
+          ? Promise.reject(new AxiosError('Network Error', 'ERR_NETWORK', config, {}, undefined))
+          : Promise.resolve(respond(config, 200, { success: true, data: { ok: true } }))) as never;
+      const res = await MainAxiosInstance.get('/x');
+      expect(unwrap(res)).toEqual({ ok: true });
+      expect(n).toBe(2);
+    });
   });
 });
