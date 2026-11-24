@@ -21,7 +21,8 @@ export interface PendingTotp {
 }
 
 /** Where the signed-out navigator opens after a sign-out that asked for one. */
-export type SignedOutLanding = 'SignIn';
+/** Where "Use a different account" lands: a provider on the provider sign-in, everyone else on the User one. */
+export type SignedOutLanding = 'SignIn' | 'ProviderSignIn';
 
 export interface AuthSliceState {
   user: User | null;

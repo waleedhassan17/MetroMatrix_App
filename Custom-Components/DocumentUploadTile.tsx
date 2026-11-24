@@ -31,6 +31,8 @@ export interface DocumentUploadTileProps {
   highlighted?: boolean;
   onPick: () => void;
   onRetry?: () => void;
+  /** A failed upload: let it go and pick a different file. */
+  onChooseAnother?: () => void;
   onRemove?: () => void;
   onView?: () => void;
 }
@@ -77,6 +79,7 @@ export const DocumentUploadTile: React.FC<DocumentUploadTileProps> = ({
   highlighted,
   onPick,
   onRetry,
+  onChooseAnother,
   onRemove,
   onView,
 }) => {
@@ -168,6 +171,9 @@ export const DocumentUploadTile: React.FC<DocumentUploadTileProps> = ({
             leftIcon="refresh"
             onPress={onRetry}
           />
+        ) : null}
+        {state === 'uploading' && error && onChooseAnother ? (
+          <Button label="Choose another file" size="sm" variant="ghost" onPress={onChooseAnother} />
         ) : null}
         {state === 'uploaded' ? (
           <>

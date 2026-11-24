@@ -5,6 +5,7 @@
 import React, { useEffect } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useCountdown } from '../../hooks/useCountdown';
 import { hasErrors, validateSignIn } from '../../models/authModel';
 import { visibleErrors } from '../../utils/form-errors/formErrors';
 import { haptics } from '../../utils/haptics/haptics';
@@ -30,6 +31,8 @@ const SignIn: React.FC<Props> = ({ navigation, route }) => {
   const shown = visibleErrors(errors, form.touched);
   const loading = form.status === 'loading';
   const busy = loading || form.googleStatus === 'loading';
+  // RATE_LIMITED: the button waits it out (pressing sooner only adds to the count).
+  const lockLeft = useCountdown(form.lockedUntil);
   // The FYP's rule: the button turns green once both fields have something in them.
   const complete = !!form.email.trim() && !!form.password;
 
@@ -66,7 +69,12 @@ const SignIn: React.FC<Props> = ({ navigation, route }) => {
         onForgotPassword={() => navigation.navigate('ForgotPassword', { email: form.email.trim() || undefined, userType: 'user' })}
         disabled={busy}
       />
-      <Button label={loading ? 'Signing in...' : 'Sign In'} onPress={submit} disabled={!complete || busy} fullWidth />
+      <Button
+        label={loading ? 'Signing in...' : lockLeft > 0 ? `Try again in ${lockLeft}s` : 'Sign In'}
+        onPress={submit}
+        disabled={!complete || busy || lockLeft > 0}
+        fullWidth
+      />
       <SocialSignIn
         busy={form.googleStatus === 'loading'}
         disabled={loading}

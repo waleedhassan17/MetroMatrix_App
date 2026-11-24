@@ -112,11 +112,15 @@ export interface SignUpData {
   password: string;
 }
 
+/** The API's displayName limit (SignupDto, UpdateMeDto). */
+export const NAME_MAX = 80;
+
 export const validateSignUp = (data: SignUpData): ValidationErrors => {
   const errors: ValidationErrors = {};
 
   if (!data.name.trim()) errors.name = 'Full name is required';
   else if (data.name.trim().length < 2) errors.name = 'Name must be at least 2 characters';
+  else if (data.name.trim().length > NAME_MAX) errors.name = `Use at most ${NAME_MAX} characters`;
 
   const phone = validatePhone(data.phone, false);
   if (phone) errors.phone = phone;
@@ -237,6 +241,7 @@ export const validateProfile = (data: ProfileData): ValidationErrors => {
   const errors: ValidationErrors = {};
   if (!data.name.trim()) errors.name = 'Full name is required';
   else if (data.name.trim().length < 2) errors.name = 'Name must be at least 2 characters';
+  else if (data.name.trim().length > NAME_MAX) errors.name = `Use at most ${NAME_MAX} characters`;
   const phone = validatePhone(data.phone, false);
   if (phone) errors.phone = phone;
   return errors;

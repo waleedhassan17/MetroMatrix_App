@@ -19,7 +19,7 @@ import { AppText, Button, IonIcon, InlineNotice, MciIcon, StatusTimeline, type I
 import { AuthHeader, AuthScreen, ProviderBadge } from '../../Components/auth/AuthChrome';
 import type { Business } from '../../models';
 import { selectBusiness } from '../../store/authSlice';
-import { POLL_INTERVAL_MS, checkStatusAsync, selectProviderApprovalPending } from './providerApprovalPendingSlice';
+import { POLL_INTERVAL_MS, checkStatusAsync, markManualCheck, selectProviderApprovalPending } from './providerApprovalPendingSlice';
 
 const makeStyles = ({ colors, space, size, radius, elevation }: Theme) =>
   StyleSheet.create({
@@ -145,14 +145,22 @@ const PendingContent: React.FC<{ business: Business }> = ({ business }) => {
 
   useFocusEffect(
     useCallback(() => {
-      dispatch(checkStatusAsync({ manual: false }));
-      const id = setInterval(() => dispatch(checkStatusAsync({ manual: false })), POLL_INTERVAL_MS);
+      // A chain, not an interval: the next check waits for the last answer,
+      // so a slow link never stacks them up.
+      let active = true;
+      let timer: ReturnType<typeof setTimeout> | null = null;
+      const tick = async () => {
+        await dispatch(checkStatusAsync({ manual: false }));
+        if (active) timer = setTimeout(() => void tick(), POLL_INTERVAL_MS);
+      };
+      void tick();
       // Back from the email app or the background: check at once, not at the next tick.
       const sub = AppState.addEventListener('change', next => {
         if (next === 'active') dispatch(checkStatusAsync({ manual: false }));
       });
       return () => {
-        clearInterval(id);
+        active = false;
+        if (timer) clearTimeout(timer);
         sub.remove();
       };
     }, [dispatch]),
@@ -161,6 +169,11 @@ const PendingContent: React.FC<{ business: Business }> = ({ business }) => {
   const submitted = business.submittedAt ? dayjs(business.submittedAt).format('D MMM, h:mm a') : 'Just now';
 
   const checkNow = async () => {
+    // A quiet check is on the wire: it reports to the person instead.
+    if (s.checking) {
+      dispatch(markManualCheck());
+      return;
+    }
     const r = await dispatch(checkStatusAsync({ manual: true }));
     if (checkStatusAsync.rejected.match(r)) haptics.warning();
   };

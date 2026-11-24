@@ -2,7 +2,7 @@
 // MetroMatrix — Verify Your Email (the FYP's link flow)
 // ═══════════════════════════════════════════════════════
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
@@ -13,7 +13,7 @@ import { useStyles, useTheme, type Theme } from '../../theme/index';
 import { AppText, Button, InlineNotice, IonIcon, type IonName } from '../../Custom-Components/index';
 import { AuthHeader, AuthScreen } from '../../Components/auth/AuthChrome';
 import { selectUser } from '../../store/authSlice';
-import { checkVerifiedAsync, resendAsync, selectEmailVerification, startCooldownIfIdle } from './emailVerificationSlice';
+import { checkVerifiedAsync, markManualCheck, nextResendKey, resendAsync, selectEmailVerification } from './emailVerificationSlice';
 import { useVerificationPolling } from './useVerificationPolling';
 import { ERROR_CODES } from '../../networks/network/network';
 
@@ -75,20 +75,21 @@ const EmailVerification: React.FC = () => {
   const secondsLeft = useCountdown(s.resendAvailableAt);
   const { signOutNow, signingOut } = useSignOut();
 
-  useEffect(() => {
-    dispatch(startCooldownIfIdle());
-  }, [dispatch]);
-
   useVerificationPolling(s.failures, s.autoSignIn);
 
   const check = async () => {
+    // A quiet check is already on the wire: it reports to the person instead.
+    if (s.inFlight) {
+      dispatch(markManualCheck());
+      return;
+    }
     const r = await dispatch(checkVerifiedAsync({ silent: false }));
     if (checkVerifiedAsync.fulfilled.match(r) && r.payload) haptics.success();
     else haptics.warning();
   };
 
   const resend = async () => {
-    const r = await dispatch(resendAsync());
+    const r = await dispatch(resendAsync({ key: nextResendKey(s) }));
     if (resendAsync.fulfilled.match(r) && !r.payload.alreadyVerified) {
       Toast.show({ type: 'success', text1: 'Email sent', text2: `We sent a new link to ${user?.email ?? 'your inbox'}.` });
     }
@@ -160,7 +161,7 @@ const EmailVerification: React.FC = () => {
           variant="ghost"
           size="sm"
           disabled={signingOut}
-          onPress={() => void signOutNow({ landing: 'SignIn' })}
+          onPress={() => void signOutNow({ landing: user?.role === 'partner' ? 'ProviderSignIn' : 'SignIn' })}
         />
         <Button label={signingOut ? 'Signing out...' : 'Sign out'} variant="ghost" size="sm" onPress={() => void signOutNow()} />
       </View>

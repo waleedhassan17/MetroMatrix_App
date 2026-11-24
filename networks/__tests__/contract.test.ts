@@ -39,6 +39,7 @@ interface Captured {
   query: Record<string, unknown>;
   body: Record<string, unknown> | undefined;
   authorization: string | undefined;
+  idempotencyKey?: string;
 }
 
 let sent: Captured[] = [];
@@ -52,6 +53,7 @@ const capture = (config: InternalAxiosRequestConfig): Promise<AxiosResponse> => 
     query: { ...(config.params ?? {}) },
     body: raw ?? undefined,
     authorization: config.headers?.Authorization as string | undefined,
+    idempotencyKey: config.headers?.['Idempotency-Key'] as string | undefined,
   });
   // An empty success: callers that need more fail on reading it, after the request is captured.
   return Promise.resolve({ data: { success: true, data: {} }, status: 200, statusText: 'OK', headers: {}, config });
@@ -123,6 +125,7 @@ const CASES: [string, () => Promise<unknown>, string[]][] = [
   ['authSignup (customer)', () => authSignup({ name: 'Ayesha Khan', email: 'a@x.com', phone: '+923124890176', password: 'Metro2026', portal: 'customer' }), ['POST /auth/signup']],
   ['authSignup (partner, no phone)', () => authSignup({ name: 'Ayesha Khan', email: 'a@x.com', phone: '', password: 'Metro2026', portal: 'partner' }), ['POST /auth/signup']],
   ['authLogin', () => authLogin({ email: 'a@x.com', password: 'Metro2026', portal: 'partner' }), ['POST /auth/signin']],
+  ['authLogin (rider username)', () => authLogin({ username: 'qandeel-karahi-house.imran', password: 'Metro2026', portal: 'partner' }), ['POST /auth/signin']],
   ['authAdminTotp (code)', () => authAdminTotp('challenge', { code: '123456' }), ['POST /auth/admin/totp']],
   ['authAdminTotp (recovery code)', () => authAdminTotp('challenge', { recoveryCode: 'MM7K-Q2PX' }), ['POST /auth/admin/totp']],
   ['authGoogle', () => authGoogle('google-id-token'), ['POST /auth/google']],
@@ -163,6 +166,28 @@ const CASES: [string, () => Promise<unknown>, string[]][] = [
 describe('App ↔ API contract (docs/openapi.json)', () => {
   it.each(CASES)('%s', async (_name, call, expected) => {
     expectContract(await run(call), expected);
+  });
+
+  it('onboarding writes carry the Idempotency-Key they are given, and none without one', async () => {
+    sent = [];
+    await businesses.createBusiness({ serviceType: 'shopping', subType: 'store', name: 'Shop', phone: '+923124890176', city: 'Lahore', addressLine: '12 Main Boulevard' }, 'key-create').catch(() => undefined);
+    await businesses.addDocument({ kind: 'cnic_front', url: 'https://res.cloudinary.com/x/a.jpg', publicId: 'x/a' }, 'key-doc').catch(() => undefined);
+    await businesses.submitBusiness('key-submit').catch(() => undefined);
+    await resendVerification('key-resend').catch(() => undefined);
+    await businesses.submitBusiness().catch(() => undefined);
+    expect(sent.map(r => [r.path.replace('/api/v1', ''), r.idempotencyKey])).toEqual([
+      ['/businesses', 'key-create'],
+      ['/businesses/me/documents', 'key-doc'],
+      ['/businesses/me/submit', 'key-submit'],
+      ['/auth/resend-verification', 'key-resend'],
+      ['/businesses/me/submit', undefined],
+    ]);
+  });
+
+  it('the rider signs in with `identifier`, lower-cased and trimmed, on the partner portal', async () => {
+    sent = [];
+    await authLogin({ username: '  Qandeel-Karahi-House.Imran ', password: 'Metro2026', portal: 'partner' }).catch(() => undefined);
+    expect(sent[0].body).toEqual({ identifier: 'qandeel-karahi-house.imran', password: 'Metro2026', portal: 'partner' });
   });
 
   it('the admin list sends the API’s query (page / pageSize / q), not a cursor', async () => {

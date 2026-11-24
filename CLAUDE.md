@@ -66,7 +66,7 @@ Set environment in `.env.local`; see `.env.example`. `networks/network/network.t
    - the API URL (`API_URL`, read right here from `EXPO_PUBLIC_API_URL`; `CONFIG_ERROR` when it is missing) and the axios instance (`MainAxiosInstance`; the refresh call has its own `RefreshAxiosInstance`, which skips the interceptors)
    - the bearer interceptor, the envelope check (a 2xx body that isn't `{ success, … }` is `BAD_RESPONSE`), and the single-flight refresh queue with the session-ending rules (only `REFRESH_INVALID`, `REFRESH_REUSED`, `TOKEN_REVOKED` and `ACCOUNT_DISABLED` end a session)
    - the request functions every network file calls: `API.GET/POST/PUT/PATCH/DELETE({ URL, params, data, headers, …rest })`
-   - the error codes (`ERROR_CODES`, `errorCopy`, `fieldErrors`), `extractErrorMessage`, `extractErrorCode`
+   - the error codes (`ERROR_CODES`, `errorCopy`, `fieldErrors`), `extractErrorMessage`, `extractErrorCode`; a request with no answer is `NETWORK_ERROR` with `details.reason` (`offline` from expo-network, `timeout`, `unreachable`, `noResponseReasonOf`), and only `offline` may say "You're offline"; a `GET` that never reached the server is retried once, a write never is (onboarding writes carry an `Idempotency-Key`, kept across the person's retry)
    - `ApiError` / `toApiError`, carrying the backend `code`, `status` and `details`; `required(value)` (a value a thunk decides on, else `BAD_RESPONSE`)
    - query helpers (`clean`, `pageParams`) and the Cloudinary upload (`services/mediaUpload.ts` signs and uploads)
 

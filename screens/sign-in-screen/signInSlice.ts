@@ -9,7 +9,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { toRejectedValue } from '../../networks/network/network';
 import { googleAndOpen, signInAndOpen } from '../shared/authThunks';
-import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
+import { NO_ERROR, lockedUntilAfter, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import type { Touched } from '../../utils/form-errors/formErrors';
 
 type Field = 'email' | 'password';
@@ -21,6 +21,8 @@ export interface SignInSliceState {
   status: FormStatus;
   googleStatus: FormStatus;
   error: ServerError;
+  /** RATE_LIMITED: Sign In waits until then (lockedUntilAfter). */
+  lockedUntil: number;
 }
 
 const initialState: SignInSliceState = {
@@ -30,6 +32,7 @@ const initialState: SignInSliceState = {
   status: 'idle',
   googleStatus: 'idle',
   error: NO_ERROR,
+  lockedUntil: 0,
 };
 
 export const signInSlice = createAppSlice({
@@ -74,6 +77,7 @@ export const signInSlice = createAppSlice({
         rejected: (state, action) => {
           state.status = 'failed';
           state.error = readRejection(action, 'Sign in failed. Try again.');
+          state.lockedUntil = lockedUntilAfter(state.error);
         },
       },
     ),

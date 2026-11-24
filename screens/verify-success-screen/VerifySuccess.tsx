@@ -7,11 +7,11 @@ import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, InlineNotice, IonIcon, SkeletonLines } from '../../Custom-Components/index';
+import { Button, InlineNotice, IonIcon, SkeletonLines } from '../../Custom-Components/index';
 import { AuthHeader, AuthScreen } from '../../Components/auth/AuthChrome';
 import type { RootStackParamList } from '../../models';
 import { selectIsAuthenticated } from '../../store/authSlice';
-import { selectVerifySuccess, verifyLinkAsync } from './verifySuccessSlice';
+import { continueAsync, selectVerifySuccess, verifyLinkAsync } from './verifySuccessSlice';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'VerifySuccess'>;
 
@@ -42,38 +42,62 @@ const VerifySuccess: React.FC<Props> = ({ navigation, route }) => {
 
   const ok = s.status === 'succeeded';
   const failed = s.status === 'failed';
+  const checking = ok && s.outcome === 'unconfirmed';
+  const needsContinue = ok && (s.outcome === 'unreadable' || s.outcome === 'unconfirmed');
+  const signInRoute = s.role === 'partner' ? 'ProviderSignIn' : 'SignIn';
+
+  const title = failed
+    ? s.retryable
+      ? "We couldn't reach MetroMatrix"
+      : "We couldn't verify that link"
+    : checking
+      ? 'Checking your email'
+      : ok
+        ? 'Email verified'
+        : 'Verifying your email';
+  const subtitle = failed
+    ? s.retryable
+      ? 'Your link is still good. Try again in a moment.'
+      : 'Open the app and tap Resend on the verification screen for a new link.'
+    : checking
+      ? 'The link is still being registered. Tap Continue in a moment.'
+      : ok && s.outcome === 'unreadable'
+        ? "We couldn't load your account just now. Tap Continue."
+        : ok && s.signedIn
+          ? 'Taking you to the next step...'
+          : ok
+            ? 'Email verified, sign in to continue.'
+            : 'One moment.';
 
   return (
     <AuthScreen>
       <View style={[styles.hero, { backgroundColor: failed ? colors.dangerSoft : service.accentSoft }]}>
-        <IonIcon name={failed ? 'close-circle-outline' : 'checkmark-circle-outline'} size="xl" color={failed ? colors.danger : service.accent} />
+        <IonIcon
+          name={failed ? 'close-circle-outline' : checking ? 'time-outline' : 'checkmark-circle-outline'}
+          size="xl"
+          color={failed ? colors.danger : service.accent}
+        />
       </View>
-      <AuthHeader
-        hideLogo
-        title={failed ? "We couldn't verify that link" : ok ? 'Email verified' : 'Verifying your email'}
-        subtitle={
-          failed
-            ? 'Open the app and tap Resend on the verification screen for a new link.'
-            : ok && s.signedIn
-              ? 'Taking you to the next step...'
-              : ok
-                ? 'Email verified, sign in to continue.'
-                : 'One moment.'
-        }
-      />
+      <AuthHeader hideLogo title={title} subtitle={subtitle} />
       {s.status === 'loading' ? <SkeletonLines lines={2} /> : null}
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
-      {/* Signed in, the gate replaces this screen; signed out, it leads to Sign In. */}
-      {(ok && !s.signedIn) || (failed && !isAuthenticated) ? (
-        <Button label="Continue to Sign In" onPress={() => navigation.navigate('SignIn')} fullWidth />
+      {failed && s.retryable ? (
+        <Button label="Try again" onPress={() => dispatch(verifyLinkAsync({ token, verified }))} fullWidth />
+      ) : null}
+      {needsContinue ? (
+        <Button label="Continue" onPress={() => dispatch(continueAsync())} loading={s.continuing} fullWidth />
+      ) : null}
+      {/* Signed in, the gate replaces this screen; signed out, it leads to the right sign-in. */}
+      {(ok && !s.signedIn) || (failed && !isAuthenticated && !s.retryable) ? (
+        <Button label="Continue to Sign In" onPress={() => navigation.navigate(signInRoute)} fullWidth />
       ) : null}
       {failed && isAuthenticated ? (
-        <Button label="Back to verification" onPress={() => navigation.navigate('EmailVerification')} fullWidth />
-      ) : null}
-      {ok && s.signedIn ? (
-        <AppText variant="small" tone="muted" align="center">
-          If nothing happens, close and reopen the app.
-        </AppText>
+        <Button
+          label="Back to verification"
+          variant={s.retryable ? 'secondary' : 'primary'}
+          onPress={() => navigation.navigate('EmailVerification')}
+          fullWidth
+        />
       ) : null}
     </AuthScreen>
   );

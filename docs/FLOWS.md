@@ -42,19 +42,19 @@ A rider session restores to `unauthenticated`; riders are refused at sign-in (`W
 | Step | Route / screen | Slice | Network → endpoint | Success | Errors handled |
 |---|---|---|---|---|---|
 | Pick "Provider", then service and type | `RoleSelection` → `ProviderSelection` | `providerSelectionSlice` (`pending`, persisted) | — | — | — |
-| Sign up | `ProviderSignUp` | `providerSignUpSlice` → `shared/authThunks` | `POST /auth/signup` with `role: 'partner'` (the pick is not sent) | 201; gate → `verify` | as customer |
+| Sign up | `ProviderSignUp` | `providerSignUpSlice` → `shared/authThunks.signUpAndOpen` | `POST /auth/signup` with `role: 'partner'` (the pick is not sent) | 201; gate → `verify` | as customer; a sign-up that timed out (not offline) or a second tap told 409 `EMAIL_EXISTS` signs in with the same email and password on the same door, and carries on if it is their account |
 | Sign in | `ProviderSignIn` | `providerSignInSlice` → `signInAndOpen` | `POST /auth/signin` | 200 | as customer |
 | Verify email | as customer | | | gate → `partnerSetup` | |
 | No service known (new device, no draft) | `ProviderSelection` (in `PARTNER_SETUP_ROUTES`) | `providerSelectionSlice` | — | → PersonalInfo | — |
 | Personal info, step 1 (name, phone) | `PersonalInfo` | `personalInfoSlice.saveBasicsAsync` | `updateMe` → `PATCH /users/me` `{displayName, phone}` | 200 user | 400 fields |
-| Step 2 (business: name, city, address, pin, PMDC for doctors) | `PersonalInfo` | `saveProfessionalAsync` | `createBusiness` → `POST /businesses` `{serviceType, subType, name, phone, city, addressLine, lat?, lng?, pmdcNumber?}`; later `updateMyBusiness` → `PATCH /businesses/me` | 201 / 200 `BusinessDetail` (`draft`) | 409 `BUSINESS_EXISTS`, 400 fields, 409 `BUSINESS_NOT_EDITABLE` |
-| Step 3: upload a document (one tile per slot) | `PersonalInfo` | `uploadDocumentAsync` | `signUpload('business_document')` → `POST /media/sign-upload`; direct upload to Cloudinary; `addDocument` → `POST /businesses/me/documents` `{kind, url, publicId}`, then `GET /businesses/me` | business with the document and requirement statuses | file too large / wrong format (before uploading), 400 (kind not needed, a 5th photo), Cloudinary errors (Retry) |
+| Step 2 (business: name, city, address, PMDC for doctors; no map pin) | `PersonalInfo` | `saveProfessionalAsync` | `createBusiness` → `POST /businesses` `{serviceType, subType, name, phone, city, addressLine, pmdcNumber?}` with an `Idempotency-Key` kept across a retry; later `updateMyBusiness` → `PATCH /businesses/me` | 201 / 200 `BusinessDetail` (`draft`) | 409 `BUSINESS_EXISTS` (an earlier create worked: this form is PATCHed onto it), 400 fields (shown under the field, on its step), 409 `BUSINESS_NOT_EDITABLE` |
+| Step 3: upload a document (one tile per slot) | `PersonalInfo` | `uploadDocumentAsync` (one at a time) | `signUpload('business_document')` → `POST /media/sign-upload`; direct upload to Cloudinary (photos scaled to 2048 px on native); `addDocument` → `POST /businesses/me/documents` `{kind, url, publicId}` with an `Idempotency-Key` per file, then `GET /businesses/me` | business with the document and requirement statuses | file too large / wrong format (before uploading), 400 (kind not needed, a 5th photo), Cloudinary errors; Retry reuses a file that already reached Cloudinary, "Choose another file" takes a new one; a refused camera / photos permission offers Settings |
 | Remove a document | `PersonalInfo` | `removeDocumentAsync` | `removeDocument` → `DELETE /businesses/me/documents/:id`, then `GET /businesses/me` | business | 404, 409 |
-| Submit | `PersonalInfo` | `submitApplicationAsync` | `submitBusiness` → `POST /businesses/me/submit` | 200 `pending_approval`; gate → `pending` | 422 `DOCUMENTS_MISSING` (highlights `details.missing`), 400 PMDC missing, 409 `INVALID_TRANSITION` |
-| Waiting for approval | `ProviderApprovalPending` | `providerApprovalPendingSlice` | `getMyBusinessStatus` → `GET /businesses/me/status` every 10 s while focused, on returning to the foreground, and "Check now"; when it changes, `authMe` | status changes → gate moves on | silent retry; error shown on "Check now" |
-| Approved | role app (`sessionGate.partnerAppFor`) | — | — | Store → `StorePartnerNavigator`; doctor → `DoctorPartnerNavigator`, opening on PracticeSetup until `isListed` (`doctorRootRoute`); kitchen → `KitchenPartnerNavigator` (VendorSetup BLOCKED) | — |
+| Submit | `PersonalInfo` | `submitApplicationAsync` | `submitBusiness` → `POST /businesses/me/submit` with an `Idempotency-Key` kept across a retry | 200 `pending_approval`; gate → `pending` | 422 `DOCUMENTS_MISSING` (highlights `details.missing`), 400 PMDC missing; a timeout or 409 `INVALID_TRANSITION` reads `GET /auth/me` and moves the gate on if the submit went through |
+| Waiting for approval | `ProviderApprovalPending` | `providerApprovalPendingSlice` | `fetchMyBusinessStatus` → `GET /businesses/me/status` 10 s after the last answer while focused (one at a time), on returning to the foreground, and "Check now"; when it changes, `me` | status changes → gate moves on | silent retry; error shown on "Check now" (also when it lands on a quiet check) |
+| Approved | role app (`sessionGate.partnerAppFor`) | — | — | Store → `StorePartnerNavigator`; doctor → `DoctorPartnerNavigator`, opening on PracticeSetup until `isListed` (`doctorRootRoute`); kitchen → `KitchenPartnerNavigator`, opening on VendorSetup until the kitchen is live (`foodVendorRootRoute`) | — |
 | Rejected | `Rejected` → "Edit and resubmit" → `PersonalInfo` (step 3 with the rejected kinds highlighted, or step 2) | — (reads `auth.business`) | — (the business from `GET /auth/me` / `GET /businesses/me`) | resubmit → `pending` | — |
-| Suspended | `Suspended` | — | — | mail to `EXPO_PUBLIC_SUPPORT_EMAIL` | — |
+| Suspended | `Suspended` | — | "Check again" → `GET /auth/me` | mail to `EXPO_PUBLIC_SUPPORT_EMAIL`; reinstated → gate moves on | "Still paused" / can't reach, inline |
 | Suspended mid-session | any partner screen | `network.ts` interceptor → `emitBusinessStatusStale` | the 403 `BUSINESS_SUSPENDED`, then `GET /auth/me` | gate → `suspended` | — |
 
 ## 4. Staff (admin, super_admin)
@@ -83,6 +83,12 @@ A rider session restores to `unauthenticated`; riders are refused at sign-in (`W
 | Sign out | `useSignOut` | tokens cleared first, then (best effort) the device is unregistered and `authLogout` → `POST /auth/logout` (bearer, no body) | `resetAllState` → RoleSelection |
 | Session refresh | `network.ts` interceptor (single flight) | `POST /auth/refresh-token` `{refreshToken}` | new pair. Only `REFRESH_INVALID`, `REFRESH_REUSED`, `TOKEN_REVOKED`, `ACCOUNT_DISABLED` or no refresh token end the session; network errors and 5xx keep it |
 
-## 7. Known gaps (tracked in `D:\MetroMatrix\AUTH_PROGRESS.md`)
+## 7. Riders
 
-- Rider sign-in is BLOCKED (no rider sign-in on the API); kitchen VendorSetup is BLOCKED (no Food module).
+| Step | Route / screen | Slice | Network → endpoint | Success | Errors handled |
+|---|---|---|---|---|---|
+| Sign in with the username their vendor issued | `RoleSelection` → `RiderSignIn` | `riderSignInSlice` → `riderSignInAndOpen` | `POST /auth/signin` `{identifier, password, portal: 'partner'}` (username trimmed, lower-cased) | the rider app (no email verification, no approval) | `INVALID_CREDENTIALS`, 429 `RATE_LIMITED` (the button waits it out), staff → User sign-in |
+
+## 8. When a request gets no answer
+
+Every no-response failure is `NETWORK_ERROR` with `details.reason`: `offline` (the device reports no connection, expo-network), `timeout`, or `unreachable`. Only `offline` says "You're offline"; a timeout says MetroMatrix is taking longer than usual, and an unreachable server says we can't reach MetroMatrix. A `GET` that never reached the server is tried once more; writes never are, and the onboarding writes carry an `Idempotency-Key` so the person's own retry is safe. Polls and re-reads apply a session only while tokens are still stored (`screens/shared/sessionGuard.ts`), so a reply after sign-out can't restore it. Sign-in screens wait out a 429 `RATE_LIMITED` before the button works again.

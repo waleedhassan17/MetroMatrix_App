@@ -5,8 +5,9 @@
 // the provider-type badge, and Back / Continue. The fields of step 2 and the
 // documents of step 3 come from businessModel for the provider's sub-type.
 
-import React, { useEffect, useRef } from 'react';
-import { Linking, Platform, StyleSheet, View, type TextInput } from 'react-native';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { BackHandler, Linking, Platform, StyleSheet, View, type TextInput } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useSignOut } from '../../hooks/useSignOut';
@@ -29,6 +30,7 @@ import {
 } from '../../models/businessModel';
 import { visibleErrors } from '../../utils/form-errors/formErrors';
 import { haptics } from '../../utils/haptics/haptics';
+import { Alert } from '../../utils/alert/alert';
 import { pickDocumentFile, pickImageFromLibrary, takePhoto } from '../../utils/pickers/pickers';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
 import {
@@ -52,8 +54,13 @@ import { selectBusiness, selectUser } from '../../store/authSlice';
 import { selectPendingPick } from '../provider-selection-screen/providerSelectionSlice';
 import {
   dismissError,
+  discardUpload,
+  forgetUpload,
   goToStep,
   initialise,
+  nextCreateKey,
+  nextSubmitKey,
+  setPermissionDenied,
   choosePickingKind,
   openDocumentPicker,
   openPicker,
@@ -113,28 +120,58 @@ const PersonalInfo: React.FC<Props> = ({ route, navigation }) => {
     if (serviceUnknown) navigation.replace('ProviderSelection');
   }, [serviceUnknown, navigation]);
 
+  // The full business may arrive after a short summary: fill again once it does.
+  const businessDetail = business ? (business.address ? 'full' : 'summary') : 'none';
   useEffect(() => {
     if (user) dispatch(initialise({ user, business, step: paramStep, highlight: paramHighlight }));
-    // Only on arrival and when the account / draft changes identity.
+    // Only on arrival and when the account / draft changes identity (or fills in).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, user?.id, business?.id, paramStep, paramHighlight]);
+  }, [dispatch, user?.id, business?.id, businessDetail, paramStep, paramHighlight]);
+
+  // Android's back button walks the steps back; from step 1 it does what it always does.
+  const saving = s.status === 'loading' || s.submitStatus === 'loading';
+  useFocusEffect(
+    useCallback(() => {
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        if (s.step > 1 && !saving) {
+          dispatch(goToStep((s.step - 1) as 1 | 2));
+          return true;
+        }
+        return s.step > 1; // saving: hold still rather than leave mid-save
+      });
+      return () => sub.remove();
+    }, [dispatch, s.step, saving]),
+  );
 
   if (!user || serviceUnknown) return null;
 
   const basicErrors = validateProviderBasics({ name: s.fullName, phone: s.phone });
   const proErrors = validateBusinessProfile(subType, s.form);
-  const shown = visibleErrors(
-    { ...(basicErrors.name ? { fullName: basicErrors.name } : {}), ...(basicErrors.phone ? { phone: basicErrors.phone } : {}), ...proErrors },
-    s.touched,
-  );
+  // The server's word on a field shows whether or not it was touched, until it's edited.
+  const shown = {
+    ...visibleErrors(
+      { ...(basicErrors.name ? { fullName: basicErrors.name } : {}), ...(basicErrors.phone ? { phone: basicErrors.phone } : {}), ...proErrors },
+      s.touched,
+    ),
+    ...s.serverErrors,
+  } as Record<string, string | undefined>;
   const busy = s.status === 'loading';
   const submitting = s.submitStatus === 'loading';
   const documents = business?.documents ?? [];
   const slots = documentSlots(subType, documents);
-  const missing = missingDocuments(subType, documents);
+  // The server's list when it sent one (its rules win); the local rules otherwise.
+  const missing = business?.missingDocuments ?? missingDocuments(subType, documents);
   const filledSlots = slots.filter(slot => slot.doc && slot.doc.status !== 'rejected').length;
   const uploading = Object.values(s.uploads).some(u => u?.status === 'uploading');
-  const back = s.step > 1 ? () => dispatch(goToStep((s.step - 1) as 1 | 2)) : undefined;
+  // Back holds still while a save is on the wire: its answer would land on the wrong step.
+  const back = s.step > 1 && !busy && !submitting ? () => dispatch(goToStep((s.step - 1) as 1 | 2)) : undefined;
+
+  const signOutAsking = () =>
+    Alert.alert('Sign out?', 'The steps you saved are kept. Changes on this step that you haven\'t saved are lost.', [
+      { text: 'Stay', style: 'cancel' },
+      { text: 'Sign out', style: 'destructive', onPress: () => void signOutNow() },
+    ]);
+  const onDenied = (what: 'camera' | 'photos') => dispatch(setPermissionDenied(what));
 
   // ── Step actions ──
   const next = async () => {
@@ -155,12 +192,12 @@ const PersonalInfo: React.FC<Props> = ({ route, navigation }) => {
         return;
       }
       const r = await dispatch(
-        saveProfessionalAsync({ business, serviceType, subType, form: s.form, phone: user.phone ?? '' }),
+        saveProfessionalAsync({ business, serviceType, subType, form: s.form, phone: user.phone ?? '', createKey: nextCreateKey(s) }),
       );
       if (saveProfessionalAsync.rejected.match(r)) haptics.warning();
       return;
     }
-    const r = await dispatch(submitApplicationAsync());
+    const r = await dispatch(submitApplicationAsync({ key: nextSubmitKey(s) }));
     if (submitApplicationAsync.fulfilled.match(r)) haptics.success();
     else haptics.warning();
   };
@@ -180,6 +217,7 @@ const PersonalInfo: React.FC<Props> = ({ route, navigation }) => {
     const picking = s.pickingFor;
     dispatch(openDocumentPicker(null));
     if (!file || !picking) return;
+    dispatch(setPermissionDenied(null));
     const r = await dispatch(uploadDocumentAsync({ slot: picking.slot, kind: picking.kind, file, replacing: picking.replacing }));
     if (uploadDocumentAsync.fulfilled.match(r)) haptics.success();
     else haptics.warning();
@@ -220,7 +258,12 @@ const PersonalInfo: React.FC<Props> = ({ route, navigation }) => {
             else haptics.warning();
           });
         }}
-        onRemove={doc ? () => dispatch(removeDocumentAsync(doc.id)) : undefined}
+        onChooseAnother={() => {
+          forgetUpload(slot.key);
+          dispatch(discardUpload(slot.key));
+          pick();
+        }}
+        onRemove={doc && !s.removing.includes(doc.id) ? () => dispatch(removeDocumentAsync(doc.id)) : undefined}
         onView={doc ? () => view(doc) : undefined}
       />
     );
@@ -266,6 +309,14 @@ const PersonalInfo: React.FC<Props> = ({ route, navigation }) => {
         <StepProgress current={s.step} total={3} />
         {business?.status === 'rejected' && business.rejectionReason ? (
           <InlineNotice tone="warning" title="Changes requested" message={business.rejectionReason} />
+        ) : null}
+        {s.permissionDenied ? (
+          <InlineNotice
+            tone="warning"
+            title={s.permissionDenied === 'camera' ? 'Camera access is off' : 'Photo access is off'}
+            message="Allow it in Settings to add your documents, or choose a file instead."
+            action={{ label: 'Open Settings', onPress: () => void Linking.openSettings() }}
+          />
         ) : null}
         {s.error.message ? (
           <InlineNotice
@@ -393,7 +444,7 @@ const PersonalInfo: React.FC<Props> = ({ route, navigation }) => {
 
         <StepButtons onBack={back} onNext={() => void next()} nextLabel={nextLabel} disabled={!stepFilled || busy || submitting} loading={busy || submitting} />
         <View style={styles.center}>
-          <Button label={signingOut ? 'Signing out...' : 'Save and sign out'} variant="ghost" size="sm" onPress={() => void signOutNow()} />
+          <Button label={signingOut ? 'Signing out...' : 'Sign out'} variant="ghost" size="sm" disabled={signingOut} onPress={signOutAsking} />
         </View>
 
         <Sheet
@@ -411,8 +462,10 @@ const PersonalInfo: React.FC<Props> = ({ route, navigation }) => {
                 />
               ))
             : null}
-          {Platform.OS !== 'web' ? <ListRow title="Take a photo" leftIcon="camera-outline" onPress={async () => upload(await takePhoto())} /> : null}
-          <ListRow title="Choose from photos" leftIcon="images-outline" onPress={async () => upload(await pickImageFromLibrary())} />
+          {Platform.OS !== 'web' ? (
+            <ListRow title="Take a photo" leftIcon="camera-outline" onPress={async () => upload(await takePhoto({ onDenied }))} />
+          ) : null}
+          <ListRow title="Choose from photos" leftIcon="images-outline" onPress={async () => upload(await pickImageFromLibrary({ onDenied }))} />
           <ListRow title="Choose a file" subtitle="PDF or image" leftIcon="document-text-outline" onPress={async () => upload(await pickDocumentFile())} />
         </Sheet>
         <ImageViewer visible={!!s.viewer} uri={s.viewer?.uri ?? null} title={s.viewer?.title} onClose={() => dispatch(openViewer(null))} />

@@ -65,6 +65,11 @@ const API_CODES = {
   TOTP_INVALID: 'TOTP_INVALID',
   BUSINESS_SUSPENDED: 'BUSINESS_SUSPENDED',
   DOCUMENTS_MISSING: 'DOCUMENTS_MISSING',
+  /** POST /businesses when the partner already has one (a create that timed out but worked). */
+  BUSINESS_EXISTS: 'BUSINESS_EXISTS',
+  BUSINESS_NOT_EDITABLE: 'BUSINESS_NOT_EDITABLE',
+  /** A status move that already happened (a submit or a staff decision that timed out but worked). */
+  INVALID_TRANSITION: 'INVALID_TRANSITION',
   RATE_LIMITED: 'RATE_LIMITED',
   UNAUTHORIZED: 'UNAUTHORIZED',
   FORBIDDEN: 'FORBIDDEN',

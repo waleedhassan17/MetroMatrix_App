@@ -9,7 +9,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { toRejectedValue } from '../../networks/network/network';
 import { signInAndOpen } from '../shared/authThunks';
-import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
+import { NO_ERROR, lockedUntilAfter, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import type { Touched } from '../../utils/form-errors/formErrors';
 
 type Field = 'email' | 'password';
@@ -20,9 +20,11 @@ export interface ProviderSignInSliceState {
   touched: Touched<Field>;
   status: FormStatus;
   error: ServerError;
+  /** RATE_LIMITED: Sign In waits until then (lockedUntilAfter). */
+  lockedUntil: number;
 }
 
-const initialState: ProviderSignInSliceState = { email: '', password: '', touched: {}, status: 'idle', error: NO_ERROR };
+const initialState: ProviderSignInSliceState = { email: '', password: '', touched: {}, status: 'idle', error: NO_ERROR, lockedUntil: 0 };
 
 export const providerSignInSlice = createAppSlice({
   name: 'providerSignIn',
@@ -63,6 +65,7 @@ export const providerSignInSlice = createAppSlice({
         rejected: (state, action) => {
           state.status = 'failed';
           state.error = readRejection(action, 'Sign in failed. Try again.');
+          state.lockedUntil = lockedUntilAfter(state.error);
         },
       },
     ),

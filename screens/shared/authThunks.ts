@@ -13,7 +13,8 @@ import { resetAllState } from '../../store/resetAllState';
 import { authGoogle } from '../../networks/authcalls/google';
 import { authLogin } from '../../networks/authcalls/signin';
 import { authSignup, type SignupPayload } from '../../networks/authcalls/signup';
-import { ApiError, ERROR_CODES } from '../../networks/network/network';
+import { ApiError, ERROR_CODES, noResponseReasonOf } from '../../networks/network/network';
+import { startCooldownIfIdle } from '../email-verification-screen/emailVerificationSlice';
 import { isStaffAccount } from '../../models/authDoors';
 import type { AuthResult, Portal } from '../../models/auth';
 import { setPendingTotp, setSession } from '../../store/authSlice';
@@ -70,8 +71,8 @@ export const signInAndOpen = async (
 
 /**
  * Riders sign in on the partner portal with the username their vendor issued
- * (`identifier`). A partner who types their email here simply gets their own
- * app (same portal); staff are pointed to the User sign-in.
+ * (`identifier`; the screen accepts a username only, RIDER_USERNAME_REGEX).
+ * Staff are pointed to the User sign-in.
  */
 export const riderSignInAndOpen = async (dispatch: Dispatch, username: string, password: string): Promise<'session'> => {
   const outcome = await authLogin({ username, password, portal: 'partner' });
@@ -82,9 +83,48 @@ export const riderSignInAndOpen = async (dispatch: Dispatch, username: string, p
   return 'session';
 };
 
+/** A timed-out sign-up gives the API this long to finish saving before we look. */
+const SIGNUP_SETTLE_MS = 1500;
+
+/**
+ * A sign-up whose account may exist anyway: it timed out or never answered
+ * (the API saves the account before anything slow), or a second tap was told
+ * EMAIL_EXISTS. Offline means it never left the phone.
+ */
+const signupMayHaveWorked = (e: unknown): boolean =>
+  e instanceof ApiError &&
+  (e.code === ERROR_CODES.EMAIL_EXISTS || (e.code === ERROR_CODES.NETWORK_ERROR && noResponseReasonOf(e) !== 'offline'));
+
+/**
+ * Sign-up, safe to retry. When it may have worked, the same email and password
+ * sign in on the sign-up's own door: the person proved the password, so it is
+ * their account and they carry on (to Email Verification, or wherever their
+ * account stands). Anything else keeps the original error — EMAIL_EXISTS still
+ * offers "Sign in instead", a timeout still says MetroMatrix is slow.
+ */
 export const signUpAndOpen = async (dispatch: Dispatch, payload: SignupPayload): Promise<void> => {
-  open(dispatch, await authSignup(payload));
+  try {
+    open(dispatch, await authSignup(payload));
+    // The verification email just went out: Resend waits the usual minute.
+    dispatch(startCooldownIfIdle());
+  } catch (e) {
+    if (!signupMayHaveWorked(e)) throw e;
+    if ((e as ApiError).code === ERROR_CODES.NETWORK_ERROR) {
+      await new Promise(resolve => setTimeout(resolve, SIGNUP_SETTLE_MS));
+    }
+    let outcome: Awaited<ReturnType<typeof authLogin>>;
+    try {
+      outcome = await authLogin({ email: payload.email, password: payload.password, portal: payload.portal });
+    } catch {
+      throw e;
+    }
+    if (outcome.kind !== 'session') throw e;
+    open(dispatch, outcome.result);
+    dispatch(startCooldownIfIdle());
+  }
 };
+
+export { stillSignedIn } from './sessionGuard';
 
 export const googleAndOpen = async (dispatch: Dispatch, idToken: string): Promise<void> => {
   open(dispatch, await authGoogle(idToken));

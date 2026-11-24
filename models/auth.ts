@@ -216,4 +216,6 @@ export interface LocalFile {
   mimeType: string;
   /** Web only: the picked File/Blob. */
   file?: Blob;
+  /** Bytes, when the picker knows (checked against the signed upload's limit before sending). */
+  size?: number;
 }

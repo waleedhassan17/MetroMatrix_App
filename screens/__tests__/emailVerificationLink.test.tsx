@@ -12,11 +12,13 @@ import authReducer from '../../store/authSlice';
 import {
   checkVerifiedAsync,
   emailVerificationSlice,
+  markManualCheck,
   nextPollDelay,
+  nextResendKey,
   resendAsync,
 } from '../email-verification-screen/emailVerificationSlice';
 import { useVerificationPolling } from '../email-verification-screen/useVerificationPolling';
-import { verifyLinkAsync, verifySuccessSlice } from '../verify-success-screen/verifySuccessSlice';
+import { continueAsync, verifyLinkAsync, verifySuccessSlice } from '../verify-success-screen/verifySuccessSlice';
 import { rewriteVerifyPath } from '../../navigators/linkingPaths';
 import { ApiError } from '../../networks/network/network';
 import { clearTokens, setTokens } from '../../utils/storage_utils/storageUtils';
@@ -64,6 +66,7 @@ describe('polling back-off', () => {
 describe('checkVerifiedAsync', () => {
   it('moves the session on once the account says verified', async () => {
     const store = makeStore();
+    await setTokens('a', 'r');
     network.me.mockResolvedValue(verified);
     await store.dispatch(checkVerifiedAsync({ silent: true }));
     expect(store.getState().auth.user?.isEmailVerified).toBe(true);
@@ -96,12 +99,47 @@ describe('checkVerifiedAsync', () => {
   });
 });
 
+describe('checkVerifiedAsync after sign-out and during a quiet check', () => {
+  it('a verified answer that lands after sign-out does not bring the session back', async () => {
+    const store = makeStore();
+    network.me.mockResolvedValue(verified); // no tokens stored: signed out meanwhile
+    const r = await store.dispatch(checkVerifiedAsync({ silent: true }));
+    expect(r.payload).toBe(false);
+    expect(store.getState().auth.isAuthenticated).toBe(false);
+  });
+
+  it('"I Verified My Email" during a quiet check is not dropped: that check reports to the person', async () => {
+    const store = makeStore();
+    let release!: (v: unknown) => void;
+    network.me.mockReturnValue(new Promise(r => (release = r)));
+    const quiet = store.dispatch(checkVerifiedAsync({ silent: true }));
+    store.dispatch(markManualCheck());
+    expect(store.getState().emailVerification.status).toBe('loading');
+    release(unverified);
+    await quiet;
+    expect(store.getState().emailVerification).toMatchObject({
+      status: 'failed',
+      manual: false,
+      error: { code: 'NOT_VERIFIED' },
+    });
+  });
+
+  it('a timed-out manual check says MetroMatrix is slow, never "offline"', async () => {
+    const store = makeStore();
+    network.me.mockRejectedValue(new ApiError('x', 'NETWORK_ERROR', undefined, { reason: 'timeout' }));
+    await store.dispatch(checkVerifiedAsync({ silent: false }));
+    const { message } = store.getState().emailVerification.error;
+    expect(message).toMatch(/taking longer than usual/);
+    expect(message).not.toMatch(/offline/);
+  });
+});
+
 describe('resendAsync', () => {
   it('RESEND_COOLDOWN restarts the countdown from retryAfter', async () => {
     const store = makeStore();
     network.resendVerification.mockRejectedValue(new ApiError('Wait', 'RESEND_COOLDOWN', 429, { retryAfter: 42 }));
     const before = Date.now();
-    await store.dispatch(resendAsync());
+    await store.dispatch(resendAsync({ key: 'k1' }));
     const at = store.getState().emailVerification.resendAvailableAt;
     expect(at - before).toBeGreaterThanOrEqual(41_000);
     expect(at - before).toBeLessThanOrEqual(43_000);
@@ -109,10 +147,43 @@ describe('resendAsync', () => {
 
   it('already verified: re-reads the account instead of waiting', async () => {
     const store = makeStore();
+    await setTokens('a', 'r');
     network.resendVerification.mockResolvedValue({ retryAfter: 0, alreadyVerified: true });
     network.me.mockResolvedValue(verified);
-    await store.dispatch(resendAsync());
+    await store.dispatch(resendAsync({ key: 'k1' }));
     expect(store.getState().auth.user?.isEmailVerified).toBe(true);
+  });
+
+  it('already verified but the re-read fails: still a success, the poll moves on', async () => {
+    const store = makeStore();
+    network.resendVerification.mockResolvedValue({ retryAfter: 0, alreadyVerified: true });
+    network.me.mockRejectedValue(new ApiError('x', 'NETWORK_ERROR', undefined, { reason: 'unreachable' }));
+    const r = await store.dispatch(resendAsync({ key: 'k1' }));
+    expect(resendAsync.fulfilled.match(r)).toBe(true);
+    expect(store.getState().emailVerification.error.message).toBe('');
+  });
+
+  it('sends the Idempotency-Key, keeps it when nothing came back and drops it once answered', async () => {
+    const store = makeStore();
+    network.resendVerification.mockRejectedValueOnce(new ApiError('x', 'NETWORK_ERROR', undefined, { reason: 'timeout' }));
+    await store.dispatch(resendAsync({ key: 'k1' }));
+    expect(network.resendVerification).toHaveBeenLastCalledWith('k1');
+    expect(nextResendKey(store.getState().emailVerification)).toBe('k1');
+
+    network.resendVerification.mockResolvedValueOnce({ retryAfter: 60, alreadyVerified: false });
+    await store.dispatch(resendAsync({ key: nextResendKey(store.getState().emailVerification) }));
+    expect(network.resendVerification).toHaveBeenLastCalledWith('k1');
+    expect(store.getState().emailVerification.resendKey).toBeNull();
+    expect(nextResendKey(store.getState().emailVerification)).not.toBe('k1');
+  });
+
+  it('RATE_LIMITED (5 resends an hour) also starts the countdown', async () => {
+    const store = makeStore();
+    network.resendVerification.mockRejectedValue(new ApiError('Too many', 'RATE_LIMITED', 429, { retryAfter: 900 }));
+    const before = Date.now();
+    await store.dispatch(resendAsync({ key: 'k2' }));
+    expect(store.getState().emailVerification.resendAvailableAt - before).toBeGreaterThanOrEqual(899_000);
+    expect(store.getState().emailVerification.resendKey).toBeNull();
   });
 });
 
@@ -187,7 +258,7 @@ describe('verifyLinkAsync (the deep-link handler)', () => {
     network.me.mockResolvedValue(verified);
     const r = await store.dispatch(verifyLinkAsync({ token: 'tok' }));
     expect(network.verifyEmail).toHaveBeenCalledWith('tok');
-    expect(r.payload).toBe(true);
+    expect(r.payload).toMatchObject({ signedIn: true, outcome: 'moved' });
     expect(store.getState().auth.user?.isEmailVerified).toBe(true);
   });
 
@@ -218,7 +289,55 @@ describe('verifyLinkAsync (the deep-link handler)', () => {
 
     network.me.mockResolvedValue(unverified);
     await store.dispatch(verifyLinkAsync({ token: 'spent' }));
-    expect(store.getState().verifySuccess).toMatchObject({ status: 'failed', error: { code: 'VERIFY_LINK_INVALID' } });
+    expect(store.getState().verifySuccess).toMatchObject({
+      status: 'failed',
+      retryable: false,
+      error: { code: 'VERIFY_LINK_INVALID' },
+    });
+  });
+
+  it('signed out, a provider\'s link leads to the provider sign-in', async () => {
+    const store = makeStore();
+    network.verifyEmail.mockResolvedValue({ user: makeUser({ role: 'partner', isEmailVerified: true }), business: null });
+    await store.dispatch(verifyLinkAsync({ token: 'tok' }));
+    expect(store.getState().verifySuccess).toMatchObject({ outcome: 'done', role: 'partner' });
+  });
+
+  it('no answer while spending the link: retryable, and "Try again" spends the same token', async () => {
+    const store = makeStore();
+    network.verifyEmail.mockRejectedValueOnce(new ApiError('x', 'NETWORK_ERROR', undefined, { reason: 'timeout' }));
+    await store.dispatch(verifyLinkAsync({ token: 'tok' }));
+    const failed = store.getState().verifySuccess;
+    expect(failed).toMatchObject({ status: 'failed', retryable: true });
+    expect(failed.error.message).toMatch(/taking longer than usual/);
+
+    network.verifyEmail.mockResolvedValueOnce(verified);
+    await store.dispatch(verifyLinkAsync({ token: 'tok' }));
+    expect(network.verifyEmail).toHaveBeenLastCalledWith('tok');
+    expect(store.getState().verifySuccess).toMatchObject({ status: 'succeeded', outcome: 'done' });
+  });
+
+  it('verified but the account could not be read: "Continue" re-reads it and the gate moves on', async () => {
+    const store = makeStore();
+    await setTokens('a', 'r');
+    network.verifyEmail.mockResolvedValue(verified);
+    network.me.mockRejectedValueOnce(new ApiError('x', 'NETWORK_ERROR', undefined, { reason: 'unreachable' }));
+    await store.dispatch(verifyLinkAsync({ token: 'tok' }));
+    expect(store.getState().verifySuccess.outcome).toBe('unreadable');
+    expect(store.getState().auth.isAuthenticated).toBe(false);
+
+    network.me.mockResolvedValueOnce(verified);
+    await store.dispatch(continueAsync());
+    expect(store.getState().verifySuccess.outcome).toBe('moved');
+    expect(store.getState().auth.user?.isEmailVerified).toBe(true);
+  });
+
+  it('?verified=1 while the account still reads unverified says "checking", never "verified"', async () => {
+    const store = makeStore();
+    await setTokens('a', 'r');
+    network.me.mockResolvedValue(unverified);
+    await store.dispatch(verifyLinkAsync({ verified: true }));
+    expect(store.getState().verifySuccess.outcome).toBe('unconfirmed');
   });
 });
 

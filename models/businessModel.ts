@@ -341,17 +341,23 @@ export const emptyBusinessProfile = (): BusinessProfileForm => ({
   details: {},
 });
 
+/** The API's CreateBusinessDto limits. */
+export const BUSINESS_NAME_MAX = 120;
+export const ADDRESS_MAX = 255;
+
 export const validateBusinessProfile = (subType: SubType, form: BusinessProfileForm): ValidationErrors => {
   const errors: ValidationErrors = {};
   const schema = BUSINESS_FORM_SCHEMA[subType];
 
   if (!form.name.trim()) errors.name = `${schema.nameLabel} is required`;
   else if (form.name.trim().length < 2) errors.name = 'Use at least 2 characters';
+  else if (form.name.trim().length > BUSINESS_NAME_MAX) errors.name = `Use at most ${BUSINESS_NAME_MAX} characters`;
 
   const city = form.city ? cityError(form.city) : 'Choose a city';
   if (city) errors.city = city;
   if (!form.address.trim()) errors.address = `${schema.addressLabel} is required`;
   else if (form.address.trim().length < 5) errors.address = 'Add the street and area';
+  else if (form.address.trim().length > ADDRESS_MAX) errors.address = `Use at most ${ADDRESS_MAX} characters`;
 
   for (const field of allDetailFields(subType)) {
     const value = (form.details[field.key] ?? '').trim();

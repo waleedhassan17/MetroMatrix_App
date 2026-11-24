@@ -24,3 +24,15 @@ export const readRejection = (
     details: (p?.details as Record<string, any> | undefined) ?? null,
   };
 };
+
+/**
+ * After a 429 RATE_LIMITED (sign-in allows 5 a minute) the button waits it
+ * out: the time it may be pressed again, or 0. Pressing sooner only adds to
+ * the count.
+ */
+export const lockedUntilAfter = (error: ServerError): number => {
+  if (error.code !== 'RATE_LIMITED') return 0;
+  const raw = (error.details as { retryAfter?: unknown } | null)?.retryAfter;
+  const seconds = typeof raw === 'number' && raw > 0 ? Math.ceil(raw) : 60;
+  return Date.now() + seconds * 1000;
+};

@@ -7,6 +7,7 @@
 import React, { useEffect } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useCountdown } from '../../hooks/useCountdown';
 import { hasErrors, validateSignIn } from '../../models/authModel';
 import { SUBTYPE_SERVICE, providerTypeLabel } from '../../models/businessModel';
 import { visibleErrors } from '../../utils/form-errors/formErrors';
@@ -34,6 +35,8 @@ const ProviderSignIn: React.FC<Props> = ({ navigation, route }) => {
   const errors = validateSignIn({ email: form.email, password: form.password });
   const shown = visibleErrors(errors, form.touched);
   const loading = form.status === 'loading';
+  // RATE_LIMITED: the button waits it out (pressing sooner only adds to the count).
+  const lockLeft = useCountdown(form.lockedUntil);
   const complete = !!form.email.trim() && !!form.password;
 
   const submit = async () => {
@@ -73,7 +76,12 @@ const ProviderSignIn: React.FC<Props> = ({ navigation, route }) => {
         }
         disabled={loading}
       />
-      <Button label={loading ? 'Signing in...' : 'Sign In'} onPress={submit} disabled={!complete || loading} fullWidth />
+      <Button
+        label={loading ? 'Signing in...' : lockLeft > 0 ? `Try again in ${lockLeft}s` : 'Sign In'}
+        onPress={submit}
+        disabled={!complete || loading || lockLeft > 0}
+        fullWidth
+      />
     </AuthScreen>
   );
 };

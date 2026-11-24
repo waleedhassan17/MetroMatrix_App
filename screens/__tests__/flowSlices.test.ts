@@ -42,7 +42,7 @@ describe('emailVerificationSlice (link based, as in the FYP)', () => {
 
   it('takes the resend countdown from the server (QA 6)', () => {
     const before = Date.now();
-    const s = reducer(init(reducer), actions.resendAsync.fulfilled({ retryAfter: 45, alreadyVerified: false }, 'r', undefined));
+    const s = reducer(init(reducer), actions.resendAsync.fulfilled({ retryAfter: 45, alreadyVerified: false }, 'r', { key: 'k' }));
     expect(s.resendAvailableAt).toBeGreaterThanOrEqual(before + 45_000);
     expect(s.resendAvailableAt).toBeLessThan(before + 46_000);
   });
@@ -162,7 +162,7 @@ describe('personalInfoSlice (providers, 3 steps)', () => {
   it('DOCUMENTS_MISSING highlights the tiles the server named (QA 17)', () => {
     const s = reducer(
       init(reducer),
-      actions.submitApplicationAsync.rejected(null, 'r', undefined, {
+      actions.submitApplicationAsync.rejected(null, 'r', { key: 'k' }, {
         message: 'Missing documents',
         code: 'DOCUMENTS_MISSING',
         details: { missing: ['pmdc_certificate', 'ntn_certificate|shop_photo'] },

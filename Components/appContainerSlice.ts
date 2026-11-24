@@ -127,6 +127,9 @@ export const appContainerSlice = createAppSlice({
       async (_: void, { dispatch }) => {
         try {
           const session = await me();
+          // Signed out while this was on the wire: don't bring the session back.
+          const [access, refresh] = await Promise.all([getAccessToken(), getRefreshToken()]);
+          if (!access && !refresh) return false;
           dispatch(setSession(session));
           return true;
         } catch {

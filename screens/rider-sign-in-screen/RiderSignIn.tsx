@@ -8,6 +8,7 @@
 import React from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useCountdown } from '../../hooks/useCountdown';
 import { hasErrors, validateRiderSignIn } from '../../models/authModel';
 import { visibleErrors } from '../../utils/form-errors/formErrors';
 import { haptics } from '../../utils/haptics/haptics';
@@ -27,6 +28,8 @@ const RiderSignIn: React.FC<Props> = ({ navigation }) => {
   const errors = validateRiderSignIn({ username: form.username, password: form.password });
   const shown = visibleErrors(errors, form.touched);
   const loading = form.status === 'loading';
+  // RATE_LIMITED: the button waits it out (pressing sooner only adds to the count).
+  const lockLeft = useCountdown(form.lockedUntil);
   const complete = !!form.username.trim() && !!form.password;
 
   const submit = async () => {
@@ -59,7 +62,12 @@ const RiderSignIn: React.FC<Props> = ({ navigation }) => {
         onSubmit={submit}
         disabled={loading}
       />
-      <Button label={loading ? 'Signing in...' : 'Sign In'} onPress={submit} disabled={!complete || loading} fullWidth />
+      <Button
+        label={loading ? 'Signing in...' : lockLeft > 0 ? `Try again in ${lockLeft}s` : 'Sign In'}
+        onPress={submit}
+        disabled={!complete || loading || lockLeft > 0}
+        fullWidth
+      />
       <InlineNotice tone="info" title="Forgot your password?" message="Ask your vendor to reset it from their Riders screen in MetroMatrix." />
     </AuthScreen>
   );
