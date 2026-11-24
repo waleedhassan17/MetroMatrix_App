@@ -14,7 +14,10 @@
 //   g a second device's session ends               i partner onboarding → submit
 //   j staff TOTP enrol → reject (note) → resubmit → approve
 //   k suspended mid-session → Suspended; reinstate l sign-out revokes; delete account
-//   b (in-app deep link) is run by hand on the emulator; h (rider) is BLOCKED.
+//   m every other provider type (doctor, restaurant, cloud kitchen) → its own app
+//   n a rider the kitchen issued signs in with the username (no verification, no approval)
+//   o retries are safe: sign-up recovery, BUSINESS_EXISTS adoption, replayed submit and resend
+//   b (in-app deep link) is run by hand on the emulator.
 
 // First: point network.ts at the live API before it loads.
 import './liveApiUrl';
@@ -48,6 +51,17 @@ import { documentSlots } from '../models/businessModel';
 import type { ApiError } from '../networks/network/network';
 import type { DocumentKind } from '../models/auth';
 import { userResponseSerializer } from '../serializers/authSerializer';
+import { createRider } from '../networks/food/vendor/riders';
+import { fetchAdminDoctorByBusiness, verifyPmdc } from '../networks/admin/adminHealth';
+import { adminDoctorIdSerializer } from '../serializers/health/adminHealthSerializer';
+import { createdRiderSerializer } from '../serializers/food/riderSerializer';
+import { resendVerification } from '../networks/authcalls/verifyEmail';
+import { combineReducers, configureStore } from '@reduxjs/toolkit';
+import authReducer from '../store/authSlice';
+import { emailVerificationSlice } from '../screens/email-verification-screen/emailVerificationSlice';
+import { personalInfoSlice, saveProfessionalAsync, submitApplicationAsync } from '../screens/personal-info-screen/personalInfoSlice';
+import { signUpAndOpen } from '../screens/shared/authThunks';
+import { emptyBusinessProfile } from '../models/businessModel';
 
 // The partner's steps as the setup slice composes them: thin network calls,
 // then the business read and serialized.
@@ -391,6 +405,118 @@ live('live run against the local API', () => {
     } finally {
       setBusinessStatusStaleHandler(null);
     }
+  });
+
+  it('m. every other provider type: doctor (PMDC), restaurant and cloud kitchen each reach their own app', async () => {
+    const types: { who: string; serviceType: 'healthcare' | 'food'; subType: 'doctor' | 'restaurant' | 'cloud_kitchen'; docs: DocumentKind[]; app: string }[] = [
+      { who: 'doctor', serviceType: 'healthcare', subType: 'doctor', docs: ['cnic_front', 'cnic_back', 'pmdc_certificate', 'degree_certificate'], app: 'doctor' },
+      { who: 'restaurant', serviceType: 'food', subType: 'restaurant', docs: ['cnic_front', 'cnic_back', 'pfa_licence', 'storefront_photo'], app: 'kitchen' },
+      { who: 'cloud', serviceType: 'food', subType: 'cloud_kitchen', docs: ['cnic_front', 'cnic_back', 'pfa_licence'], app: 'kitchen' },
+    ];
+    for (const t of types) {
+      await clearTokens();
+      const signedUp = await authSignup({ name: `Live ${t.who}`, email: email(t.who), phone: '', password: PASSWORD, portal: 'partner' });
+      expect(gateOf(signedUp)).toBe('verify');
+      sessions[t.who] = await stored();
+      await verifyEmail(await linkToken(email(t.who)));
+      await use(sessions[t.who]);
+      expect(gateOf(await meRequest())).toBe('partnerSetup');
+      await users.updateMe({ displayName: `Live ${t.who}`, phone: '+923001112255' });
+      const draft = await biz.createBusiness({
+        serviceType: t.serviceType,
+        subType: t.subType,
+        name: `Live ${t.who} ${run}`,
+        phone: '+923001112255',
+        city: 'Lahore',
+        addressLine: '5 Jail Road, Lahore',
+        ...(t.subType === 'doctor' ? { pmdcNumber: `${run.slice(-5).toUpperCase()}-P` } : {}),
+      });
+      expect(draft.missingDocuments.flatMap(k => k.split('|')).sort()).toEqual([...t.docs].sort());
+      const signed = await media.signUpload('business_document');
+      for (const kind of t.docs) await biz.addDocument({ kind, ...fakeUpload(signed, `${t.who}-${kind}-${run}`) });
+      expect((await biz.submitBusiness()).status).toBe('pending_approval');
+      expect(gateOf(await meRequest())).toBe('pending');
+
+      await use(sessions.admin);
+      if (t.subType === 'doctor') {
+        // Staff check the PMDC number first (Health → Doctor verification); the API refuses the approval until then.
+        expect((await failure(admin.approveBusiness(draft.id))).code).toBe('PMDC_NOT_VERIFIED');
+        const doctorId = required(adminDoctorIdSerializer(await fetchAdminDoctorByBusiness(draft.id)));
+        await verifyPmdc(doctorId, 'Checked on the PMDC register.');
+      }
+      expect((await admin.approveBusiness(draft.id)).status).toBe('approved');
+      await use(sessions[t.who]);
+      const approved = await meRequest();
+      expect(gateOf(approved)).toBe('partner');
+      expect(partnerAppFor(approved.business)).toBe(t.app);
+    }
+  });
+
+  it('n. a rider the kitchen issued signs in with the username: no email verification, no approval', async () => {
+    await use(sessions.kitchen);
+    const created = required(
+      createdRiderSerializer(await createRider({ fullName: 'Live Rider', phone: '+923001112266', vehicle: 'bike' })),
+    );
+    expect(created.credential.username).toMatch(/^[a-z0-9._-]{3,60}$/);
+    await clearTokens();
+    const outcome = await signin({ username: created.credential.username.toUpperCase(), password: created.credential.password, portal: 'partner' });
+    if (outcome.kind !== 'session') throw new Error('expected a session');
+    expect(outcome.result.user.role).toBe('rider');
+    expect(gateOf(outcome.result)).toBe('rider');
+    // The User door is not theirs.
+    expect((await failure(signin({ username: created.credential.username, password: created.credential.password, portal: 'customer' }))).code).toBe(
+      'WRONG_PORTAL',
+    );
+  });
+
+  it('o. retries are safe: sign-up recovery, BUSINESS_EXISTS adoption, a replayed submit and a replayed resend', async () => {
+    await clearTokens();
+    const store = configureStore({
+      reducer: combineReducers({ auth: authReducer, emailVerification: emailVerificationSlice.reducer, personalInfo: personalInfoSlice.reducer }),
+      middleware: d => d({ serializableCheck: false }),
+    });
+    const payload = { name: 'Live Retry', email: email('retry'), phone: '', password: PASSWORD, portal: 'partner' as const };
+    await signUpAndOpen(store.dispatch, payload);
+    sessions.retry = await stored();
+    // The same sign-up again (a second tap after a timeout): EMAIL_EXISTS → signed in, carries on.
+    await clearTokens();
+    await signUpAndOpen(store.dispatch, payload);
+    expect(store.getState().auth.user?.email).toBe(email('retry'));
+    expect(await getAccessToken()).toBeTruthy();
+    // Someone else's password keeps EMAIL_EXISTS.
+    expect((await failure(signUpAndOpen(store.dispatch, { ...payload, password: 'Another2026x' }))).code).toBe('EMAIL_EXISTS');
+
+    // A resend replayed with its key answers as the first did, never RESEND_COOLDOWN.
+    await use(sessions.retry);
+    const first = await resendVerification('live-resend-key').catch(e => e as ApiError);
+    const again = await resendVerification('live-resend-key').catch(e => e as ApiError);
+    expect(again).toEqual(first);
+
+    await verifyEmail(await linkToken(email('retry')));
+    await use(sessions.retry);
+    store.dispatch({ type: 'auth/setSession', payload: await meRequest() });
+    const form = { ...emptyBusinessProfile(), name: `Live Retry ${run}`, city: 'Lahore', address: '3 Mall Road, Lahore' };
+    const args = { business: null, serviceType: 'shopping' as const, subType: 'store' as const, form, phone: '+923001112277' };
+    await users.updateMe({ displayName: 'Live Retry', phone: '+923001112277' });
+    expect(saveProfessionalAsync.fulfilled.match(await store.dispatch(saveProfessionalAsync({ ...args, createKey: 'live-create-1' })))).toBe(true);
+    // A second create (the app never saw the first answer, a new key): BUSINESS_EXISTS → adopted, form saved.
+    const adopted = await store.dispatch(saveProfessionalAsync({ ...args, form: { ...form, address: '4 Mall Road, Lahore' }, createKey: 'live-create-2' }));
+    expect(saveProfessionalAsync.fulfilled.match(adopted)).toBe(true);
+    expect((await biz.getMyBusiness()).address).toBe('4 Mall Road, Lahore');
+
+    const signed = await media.signUpload('business_document');
+    for (const [kind, name] of [['cnic_front', 'rf'], ['cnic_back', 'rb'], ['shop_photo', 'rs']] as [DocumentKind, string][]) {
+      await businessNetwork.addDocument({ kind, ...fakeUpload(signed, `${name}-${run}`) }, `live-doc-${name}`);
+      // The same file recorded again with its key: replayed, not a second photo.
+      await businessNetwork.addDocument({ kind, ...fakeUpload(signed, `${name}-${run}`) }, `live-doc-${name}`);
+    }
+    expect((await biz.getMyBusiness()).documents.filter(d => d.kind === 'shop_photo')).toHaveLength(1);
+
+    // Submit replayed with its key answers as the first did; a fresh key (the app never saw it) reads the account.
+    expect(submitApplicationAsync.fulfilled.match(await store.dispatch(submitApplicationAsync({ key: 'live-submit-1' })))).toBe(true);
+    expect(submitApplicationAsync.fulfilled.match(await store.dispatch(submitApplicationAsync({ key: 'live-submit-1' })))).toBe(true);
+    expect(submitApplicationAsync.fulfilled.match(await store.dispatch(submitApplicationAsync({ key: 'live-submit-2' })))).toBe(true);
+    expect(gateOf(await meRequest())).toBe('pending');
   });
 
   it('l. sign-out revokes the session (no body); deleting the account stops sign-in', async () => {
