@@ -101,14 +101,12 @@ export const AuthHeader: React.FC<{
   return (
     <View style={styles.header}>
       {hideLogo ? null : (
-        <AppText variant="logo" tone="brand" style={styles.logo} accessibilityRole="header">
+        <AppText variant="logo" tone="brand" style={styles.logo}>
           MetroMatrix
         </AppText>
       )}
-      <AppText
-        variant="screenTitle"
-        align="center"
-        accessibilityRole={hideLogo ? 'header' : undefined}>
+      {/* The screen's own title is its heading (not the brand line above it). */}
+      <AppText variant="screenTitle" align="center" accessibilityRole="header">
         {title}
       </AppText>
       {badge}
@@ -122,16 +120,20 @@ export const AuthHeader: React.FC<{
 };
 
 /** The provider type the user picked on Provider Selection, as a soft pill. */
-export const ProviderBadge: React.FC<{ label: string; service: ServiceName }> = ({
-  label,
-  service,
-}) => (
+export const ProviderBadge: React.FC<{
+  label: string;
+  service: ServiceName;
+  signingIn?: boolean;
+}> = ({ label, service, signingIn }) => (
   <ServiceScope service={service}>
-    <ProviderBadgeInner label={label} />
+    <ProviderBadgeInner label={label} signingIn={signingIn} />
   </ServiceScope>
 );
 
-const ProviderBadgeInner: React.FC<{ label: string }> = ({ label }) => {
+const ProviderBadgeInner: React.FC<{ label: string; signingIn?: boolean }> = ({
+  label,
+  signingIn,
+}) => {
   const styles = useStyles(makeStyles);
   const { service } = useTheme();
   return (
@@ -140,7 +142,7 @@ const ProviderBadgeInner: React.FC<{ label: string }> = ({ label }) => {
         styles.badge,
         { backgroundColor: service.accentSoft, borderColor: service.accentLine },
       ]}
-      accessibilityLabel={`Registering as ${label}`}>
+      accessibilityLabel={`${signingIn ? 'Signing in as' : 'Registering as'} ${label}`}>
       <AppText variant="small" tone="accentDeep">
         {label}
       </AppText>
@@ -156,15 +158,32 @@ export const AuthTabs: React.FC<{
   onChange: (tab: AuthTab) => void;
   disabled?: boolean;
 }> = ({ value, onChange, disabled }) => (
-  <SegmentTabs
-    options={[
-      { key: 'signin', label: 'Sign In' },
-      { key: 'signup', label: 'Sign Up' },
-    ]}
-    value={value}
-    onChange={tab => {
-      if (!disabled && tab !== value) onChange(tab);
-    }}
-    accessibilityLabel="Sign in or sign up"
-  />
+  <AuthTabsFrame disabled={disabled}>
+    <SegmentTabs
+      options={[
+        { key: 'signin', label: 'Sign In' },
+        { key: 'signup', label: 'Sign Up' },
+      ]}
+      value={value}
+      onChange={tab => {
+        if (!disabled && tab !== value) onChange(tab);
+      }}
+      accessibilityLabel="Sign in or sign up"
+    />
+  </AuthTabsFrame>
 );
+
+/** While a request is on the wire the tabs look as they act: disabled. */
+const AuthTabsFrame: React.FC<{ disabled?: boolean; children: React.ReactNode }> = ({
+  disabled,
+  children,
+}) => {
+  const { opacity } = useTheme();
+  return (
+    <View
+      style={disabled ? { opacity: opacity.disabled } : undefined}
+      pointerEvents={disabled ? 'none' : 'auto'}>
+      {children}
+    </View>
+  );
+};

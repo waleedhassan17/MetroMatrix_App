@@ -64,8 +64,15 @@ const SignIn: React.FC<Props> = ({ navigation, route }) => {
       <AuthTabs value="signin" onChange={() => navigation.replace('SignUp')} disabled={busy} />
       <AuthErrorNotice
         error={shownError}
+        currentPortal="customer"
         onGoToPortal={portal =>
           portal === 'partner' ? navigation.navigate('ProviderSignIn', { email: form.email.trim() }) : undefined
+        }
+        onGoToRider={() => navigation.navigate('RiderSignIn')}
+        onForgotPassword={
+          form.wrongPasswords >= 3
+            ? () => navigation.navigate('ForgotPassword', { email: form.email.trim() || undefined, userType: 'user' })
+            : undefined
         }
       />
       <SignInFields

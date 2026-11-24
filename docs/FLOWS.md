@@ -69,9 +69,9 @@ A rider session restores to `unauthenticated`; riders are refused at sign-in (`W
 
 | Step | Route / screen | Slice | Network → endpoint | Success | Errors handled |
 |---|---|---|---|---|---|
-| Email | `ForgotPassword` | `forgotPasswordSlice` | `authForgotPassword` → `POST /auth/forgot-password` `{email}` | always 200 `{delivered: true}`; the App's own 60 s resend timer | 429 |
-| Code | `ResetPasswordOTP` | `resetPasswordOtpSlice` | `authVerifyResetOtp` → `POST /auth/verify-otp` `{email, otp}` | `{resetToken}` | `OTP_INVALID` (`attemptsLeft`), `OTP_EXPIRED`, `OTP_LOCKED` |
-| New password | `ResetPassword` | `resetPasswordSlice` | `authResetPassword` → `POST /auth/reset-password` `{resetToken, password}` | tokens cleared, toast, stack reset to Sign In | `RESET_TOKEN_INVALID`, 400 password policy |
+| Email | `ForgotPassword` | `forgotPasswordSlice` | `authForgotPassword` → `POST /auth/forgot-password` `{email}` | always 200 `{delivered: true}`; the App's own 60 s resend timer (Send again within it goes straight on to the code) | 429 ("Try again in N") |
+| Code | `ResetPasswordOTP` | `resetPasswordOtpSlice` | `authVerifyResetOtp` → `POST /auth/verify-otp` `{email, otp}` | `{resetToken}` | `OTP_INVALID` (`attemptsLeft`), `OTP_EXPIRED`, `OTP_LOCKED`; the copy never says whether an account exists ("If an account exists for this email…", "Wrong email?"); opened without an email → the email step |
+| New password | `ResetPassword` | `resetPasswordSlice` | `authResetPassword` → `POST /auth/reset-password` `{resetToken, password}` | tokens cleared, toast, stack reset to Sign In | `RESET_TOKEN_INVALID`, 400 password policy; a reset that got no answer and is then refused says "Your password may already be changed" (Sign in) |
 
 ## 6. Signed-in account actions
 
@@ -80,8 +80,12 @@ A rider session restores to `unauthenticated`; riders are refused at sign-in (`W
 | Change password | `ChangePassword` (`changePasswordSlice`) | `authChangePassword` → `POST /auth/change-password` `{currentPassword, newPassword}`, or `{idToken, newPassword}` for a Google-only account | `{changed, tokens}`: the new pair is stored, then `GET /auth/me`; every other session ends |
 | Delete account | `Profile` (`profileSlice`) | `authDeleteAccount` → `DELETE /auth/account` `{password}` or `{idToken}` | `{deleted: true}` → signed out |
 | Push device | app start / sign-out | `PUT /users/me/devices {expoPushToken, platform}`; `DELETE /users/me/devices/:token` | `{removed}` |
-| Sign out | `useSignOut` | tokens cleared first, then (best effort) the device is unregistered and `authLogout` → `POST /auth/logout` (bearer, no body) | `resetAllState` → RoleSelection |
-| Session refresh | `network.ts` interceptor (single flight) | `POST /auth/refresh-token` `{refreshToken}` | new pair. Only `REFRESH_INVALID`, `REFRESH_REUSED`, `TOKEN_REVOKED`, `ACCOUNT_DISABLED` or no refresh token end the session; network errors and 5xx keep it |
+| Sign out | `useSignOut` (try/finally) | tokens cleared first, then (best effort) the device is unregistered, `authLogout` → `POST /auth/logout` (bearer, no body), and the Google account forgotten | `resetAllState` → Onboarding |
+| Session refresh | `network.ts` interceptor (single flight) | `POST /auth/refresh-token` `{refreshToken}` | new pair. `REFRESH_INVALID`, `REFRESH_REUSED`, `TOKEN_REVOKED`, `ACCOUNT_DISABLED`, no refresh token, and any other 4xx but 408/429 (a 200 without tokens too) end the session; no answer, 408, 429 and 5xx keep it |
+| Session ended | `AppContainer` (session-expired handler) | — | toast, then the person's own sign-in (User, provider or rider) with the email filled in; the local push token is forgotten |
+| Back in the foreground | `AppContainer` (`AppState`) | `GET /auth/me` at most every 5 min | an approval, suspension or verification made meanwhile shows at once |
+| Cold start | `bootstrapSession` | `GET /auth/me` (+ refresh), capped at 25 s | the splash says "Still connecting…" after 8 s; past the cap `OfflineGate` (Try again, Sign out) |
+| Staff with a temporary password | gate `staffPassword` → `ChangePassword` | `POST /auth/change-password` | the console opens once `admin.mustChangePassword` is false |
 
 ## 7. Riders
 

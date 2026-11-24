@@ -543,7 +543,8 @@ const Onboarding: React.FC<Props> = ({ navigation }) => {
             style={styles.link}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel="I already have an account. Sign in">
+            accessibilityLabel="I already have an account. Sign in"
+            accessibilityHint="Choose how you sign in: as a user, a service provider or a rider">
             <AppText variant="body" tone="muted">
               I already have an account{'  ·  '}
               <AppText variant="bodyStrong" tone="accentDeep">

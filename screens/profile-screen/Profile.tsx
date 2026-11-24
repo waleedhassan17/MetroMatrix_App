@@ -265,7 +265,8 @@ const ProfileContent: React.FC<Props> = ({ navigation }) => {
   };
 
   const confirmDelete = async () => {
-    if (!deleteReady) return;
+    // The keyboard's go key too: one delete on the wire, never two.
+    if (!deleteReady || p.deleteStatus === 'loading') return;
     // The method follows the account: a password, or (Google-only) a fresh Google sign-in.
     const r = await dispatch(deleteAccountAsync(googleOnly ? { google: true } : { password: p.deleteConfirmation }));
     if (deleteAccountAsync.fulfilled.match(r)) {
@@ -505,6 +506,7 @@ const ProfileContent: React.FC<Props> = ({ navigation }) => {
           autoCapitalize={googleOnly ? 'characters' : 'none'}
           returnKeyType="go"
           onSubmitEditing={confirmDelete}
+          editable={p.deleteStatus !== 'loading'}
         />
       </Sheet>
     </ScreenShell>

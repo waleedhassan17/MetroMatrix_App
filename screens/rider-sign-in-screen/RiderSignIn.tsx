@@ -57,7 +57,7 @@ const RiderSignIn: React.FC<Props> = ({ navigation }) => {
     <AuthScreen onBack={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate('RoleSelection'))}>
       <AuthHeader
         title="Welcome Back"
-        badge={<ProviderBadge label="Food Court rider" service="food" />}
+        badge={<ProviderBadge label="Food Court rider" service="food" signingIn />}
         subtitle="Sign in with the username your vendor gave you"
       />
       <AuthErrorNotice error={shownError} onGoToPortal={() => navigation.navigate('SignIn', { email: '' })} />

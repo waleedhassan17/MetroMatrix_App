@@ -157,7 +157,7 @@ export const SignUpFields: React.FC<{
       />
       <TextField
         ref={phoneRef}
-        label="Phone Number"
+        label="Phone Number (optional)"
         mode="phone"
         icon="call-outline"
         value={values.phone}

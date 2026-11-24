@@ -64,8 +64,14 @@ export const riderSignInSlice = createAppSlice({
         },
         rejected: (state, action) => {
           state.status = 'failed';
-          state.error = readRejection(action, 'Sign in failed. Try again.');
+          const error = readRejection(action, 'Sign in failed. Try again.');
+          // Riders sign in with a username, and only their vendor can reset it.
+          state.error =
+            error.code === 'INVALID_CREDENTIALS'
+              ? { ...error, message: "That username and password don't match. If you've forgotten them, ask your vendor to reset them." }
+              : error;
           state.lockedUntil = lockedUntilAfter(state.error);
+          state.password = '';
         },
       },
     ),

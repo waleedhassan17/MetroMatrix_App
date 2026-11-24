@@ -40,7 +40,7 @@ import RiderSignIn from '../screens/rider-sign-in-screen/RiderSignIn';
 import ChangePassword from '../screens/change-password-screen/ChangePassword';
 import PublicStore from '../screens/public-store-screen/PublicStore';
 
-/** Shown once per install, before Role Selection. */
+/** Shown after every splash and every sign-out (no "seen onboarding" flag), before Role Selection. */
 export const ONBOARDING_ROUTE: IRoute = {
   title: ROUTES.ONBOARDING,
   component: Onboarding,

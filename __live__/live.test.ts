@@ -33,6 +33,7 @@ import { me as meRequest } from '../networks/authcalls/me';
 import { forgotPassword, verifyResetOtp, resetPassword } from '../networks/authcalls/forgotPassword';
 import { changePassword } from '../networks/authcalls/changePassword';
 import { adminTotpEnrol, adminTotpConfirm } from '../networks/authcalls/adminTotp';
+import { openSession } from '../networks/authcalls/session';
 import { logoutUser } from '../networks/authcalls/logout';
 import { deleteAccount } from '../networks/authcalls/deleteAccount';
 import * as users from '../networks/users/users';
@@ -322,6 +323,7 @@ live('live run against the local API', () => {
     adminSecret = enrolment.secret;
     expect(enrolment.otpauthUrl).toMatch(/^otpauth:\/\/totp\//);
     const { result, recoveryCodes } = await adminTotpConfirm(first.challenge.challengeToken, totp(adminSecret));
+    await openSession(result); // as the app does once the codes are saved
     expect(recoveryCodes).toHaveLength(10);
     expect(gateOf(result)).toBe('admin');
     sessions.admin = await stored();

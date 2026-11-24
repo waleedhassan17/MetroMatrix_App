@@ -10,7 +10,7 @@ import { adminTotpConfirm, adminTotpEnrol } from '../../networks/authcalls/admin
 import authReducer, { setPendingTotp } from '../../store/authSlice';
 import { signInSlice } from '../sign-in-screen/signInSlice';
 import { adminTotpSlice, verifyTotpAsync } from '../admin-totp-screen/adminTotpSlice';
-import { adminTwoFactorEnrolSlice, loadEnrolmentAsync } from '../admin-two-factor-enrol-screen/adminTwoFactorEnrolSlice';
+import { adminTwoFactorEnrolSlice, confirmAsync, finishEnrolAsync, loadEnrolmentAsync } from '../admin-two-factor-enrol-screen/adminTwoFactorEnrolSlice';
 import { signInAndOpen } from '../shared/authThunks';
 import { doorForAccount } from '../../models/authDoors';
 import { clearTokens, getAccessToken } from '../../utils/storage_utils/storageUtils';
@@ -77,14 +77,15 @@ describe('enrolment requests', () => {
     expect(enrolment).toEqual({ secret: 'S', otpauthUrl: 'otpauth://totp/x?secret=S', qrDataUrl: 'data:image/png;base64,AA' });
   });
 
-  it('confirm: only { code } in the body; reads { recoveryCodes, auth } and stores the session', async () => {
+  it('confirm: only { code } in the body; reads { recoveryCodes, auth }; the session waits for the saved codes', async () => {
     MainAxiosInstance.defaults.adapter = server(c => reply(c, 200, { success: true, data: { recoveryCodes: ['abcd-2345'], auth: authResult } }));
     const out = await adminTotpConfirm('challenge-1', '123456');
     expect(sent[0]).toMatchObject({ url: '/admin/me/totp/confirm', auth: 'Bearer challenge-1' });
     expect(JSON.parse(String(sent[0].data))).toEqual({ code: '123456' });
     expect(out.recoveryCodes).toEqual(['abcd-2345']);
     expect(out.result.user.role).toBe('super_admin');
-    expect(await getAccessToken()).toBe('acc');
+    // Not stored yet: an app closed on the recovery-codes step must not come back signed in without them.
+    expect(await getAccessToken()).toBeNull();
   });
 });
 
@@ -142,5 +143,20 @@ describe('staff on the User door', () => {
     expect(doorForAccount('customer')).toBe('customer');
     expect(doorForAccount('super_admin')).toBe('customer');
     expect(doorForAccount('rider')).toBeUndefined();
+  });
+});
+
+describe('recovery codes come before the console', () => {
+  it('the session is stored and opened only on "I\'ve saved them"', async () => {
+    MainAxiosInstance.defaults.adapter = server(c => reply(c, 200, { success: true, data: { recoveryCodes: ['abcd-2345'], auth: authResult } }));
+    const store = makeStore();
+    await store.dispatch(confirmAsync({ challengeToken: 'challenge-1', code: '123456' }));
+    expect(store.getState().adminTwoFactorEnrol.recoveryCodes).toEqual(['abcd-2345']);
+    expect(store.getState().auth.isAuthenticated).toBe(false);
+    expect(await getAccessToken()).toBeNull();
+
+    await store.dispatch(finishEnrolAsync());
+    expect(await getAccessToken()).toBe('acc');
+    expect(store.getState().auth).toMatchObject({ isAuthenticated: true, user: { role: 'super_admin' } });
   });
 });

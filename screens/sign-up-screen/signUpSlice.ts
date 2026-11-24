@@ -29,6 +29,12 @@ const initialState: SignUpSliceState = {
   error: NO_ERROR,
 };
 
+/** Google's EMAIL_NOT_VERIFIED means Google hasn't verified the address — not our emailed link. */
+const googleError = (error: ServerError): ServerError =>
+  error.code === 'EMAIL_NOT_VERIFIED'
+    ? { ...error, message: "Google hasn't verified this email address yet. Verify it with Google, or use your email and a password." }
+    : error;
+
 export const signUpSlice = createAppSlice({
   name: 'signUp',
   initialState,
@@ -98,7 +104,7 @@ export const signUpSlice = createAppSlice({
         },
         rejected: (state, action) => {
           state.googleStatus = 'failed';
-          state.error = readRejection(action, 'Google sign-in failed. Try again.');
+          state.error = googleError(readRejection(action, 'Google sign-in failed. Try again.'));
         },
       },
     ),

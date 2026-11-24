@@ -6,8 +6,8 @@
 // Customers from before Complete Profile existed (user.profileSkippable) may
 // "Skip for now": remembered on this device, and the gate lets them through.
 
-import React, { useCallback, useState } from 'react';
-import { BackHandler, Linking, Platform, StyleSheet, View } from 'react-native';
+import React, { useCallback, useRef, useState } from 'react';
+import { BackHandler, Linking, Platform, StyleSheet, View, type TextInput } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useSignOut } from '../../hooks/useSignOut';
@@ -88,6 +88,7 @@ const CompleteProfile: React.FC = () => {
   const s = useAppSelector(selectCompleteProfile);
   const [cityOpen, setCityOpen] = useState(false);
   const [denied, setDenied] = useState<'camera' | 'photos' | null>(null);
+  const postalRef = useRef<TextInput>(null);
   const { signOutNow, signingOut } = useSignOut();
 
   const personalErrors = validatePersonalStep({ dateOfBirth: s.dateOfBirth, gender: s.gender });
@@ -204,6 +205,9 @@ const CompleteProfile: React.FC = () => {
             placeholder="Enter your street address"
             autoComplete="street-address"
             textContentType="fullStreetAddress"
+            returnKeyType="next"
+            onSubmitEditing={() => postalRef.current?.focus()}
+            submitBehavior="submit"
           />
           <PickerField
             label="City"
@@ -213,6 +217,7 @@ const CompleteProfile: React.FC = () => {
             error={shown.city}
           />
           <TextField
+            ref={postalRef}
             label="Postal Code (optional)"
             mode="numeric"
             icon="mail-open-outline"
@@ -223,6 +228,8 @@ const CompleteProfile: React.FC = () => {
             placeholder="54000"
             autoComplete="postal-code"
             maxLength={5}
+            returnKeyType="done"
+            onSubmitEditing={next}
           />
           <SearchPicker
             visible={cityOpen}

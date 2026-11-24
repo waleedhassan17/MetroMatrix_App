@@ -10,7 +10,6 @@ import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { authErrorMessage } from '../../Components/auth/authErrorMessage';
 import { OTP_LENGTH } from '../../models/authModel';
-import { resetAllState } from '../../store/resetAllState';
 import { haptics } from '../../utils/haptics/haptics';
 import { PALETTES, useStyles, useTheme, type Theme } from '../../theme/index';
 import {
@@ -24,7 +23,7 @@ import {
   Skeleton,
   SkeletonLines,
 } from '../../Custom-Components/index';
-import { endPendingTotp, selectPendingTotp, setPendingTotp, setSession } from '../../store/authSlice';
+import { endPendingTotp, selectPendingTotp } from '../../store/authSlice';
 import {
   confirmAsync,
   loadEnrolmentAsync,
@@ -32,6 +31,7 @@ import {
   resetEnrol,
   selectAdminTwoFactorEnrol,
   setCode,
+  finishEnrolAsync,
 } from './adminTwoFactorEnrolSlice';
 
 const makeStyles = ({ space, radius, size, colors }: Theme) =>
@@ -95,8 +95,7 @@ const AdminTwoFactorEnrol: React.FC = () => {
 
   const finish = () => {
     if (!s.session) return;
-    dispatch(resetAllState());
-    dispatch(setSession(s.session));
+    void dispatch(finishEnrolAsync());
   };
 
   // Back to Sign In (not Onboarding): dropping the challenge moves the gate there.

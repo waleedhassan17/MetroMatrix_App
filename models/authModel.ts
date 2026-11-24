@@ -58,7 +58,7 @@ export const validatePassword = (password: string): string | undefined => {
     return `Use ${PASSWORD_POLICY.maxLength} characters or fewer`;
   }
   if (PASSWORD_POLICY.requiresLower && !/[a-z]/.test(password)) return 'Add at least one lower-case letter';
-  if (PASSWORD_POLICY.requiresUpper && !/[A-Z]/.test(password)) return 'Add at least one capital letter';
+  if (PASSWORD_POLICY.requiresUpper && !/[A-Z]/.test(password)) return 'Add at least one upper-case letter';
   if (PASSWORD_POLICY.requiresNumber && !/[0-9]/.test(password)) return 'Add at least one number';
   return undefined;
 };
@@ -169,7 +169,7 @@ export const validateChangePassword = (
   const errors = validateNewPassword(data);
   if (requireCurrent && !data.currentPassword) errors.currentPassword = 'Current password is required';
   if (requireCurrent && data.currentPassword && data.currentPassword === data.password) {
-    errors.password = 'Choose a password you have not used here';
+    errors.password = 'Use a different password from your current one';
   }
   return errors;
 };
@@ -268,8 +268,11 @@ export const getPasswordStrength = (password: string): PasswordStrengthLevel => 
   const hasSpecial = /[^A-Za-z0-9]/.test(password);
   const mixedCase = hasUpper && hasLower;
 
+  // Every password that passes the policy already mixes case and has a number,
+  // so length (and a symbol) is what separates them: 8–9 fair, 10+ strong,
+  // 12+ with a symbol excellent.
   if (password.length >= 12 && mixedCase && hasNumber && hasSpecial) return 'excellent';
-  if (mixedCase && hasNumber) return 'strong';
+  if (password.length >= 10 && mixedCase && hasNumber) return 'strong';
   return 'fair';
 };
 

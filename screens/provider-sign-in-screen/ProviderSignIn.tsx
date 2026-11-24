@@ -64,13 +64,20 @@ const ProviderSignIn: React.FC<Props> = ({ navigation, route }) => {
     <AuthScreen onBack={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate('ProviderSelection'))}>
       <AuthHeader
         title="Welcome Back"
-        badge={subType ? <ProviderBadge label={providerTypeLabel(subType)} service={SUBTYPE_SERVICE[subType]} /> : undefined}
+        badge={subType ? <ProviderBadge label={providerTypeLabel(subType)} service={SUBTYPE_SERVICE[subType]} signingIn /> : undefined}
         subtitle={subType ? 'Sign in to continue your registration' : 'Sign in to continue to your account'}
       />
       <AuthTabs value="signin" onChange={() => navigation.replace('ProviderSignUp')} disabled={loading} />
       <AuthErrorNotice
         error={shownError}
+        currentPortal="partner"
         onGoToPortal={() => navigation.navigate('SignIn', { email: form.email.trim() })}
+        onGoToRider={() => navigation.navigate('RiderSignIn')}
+        onForgotPassword={
+          form.wrongPasswords >= 3
+            ? () => navigation.navigate('ForgotPassword', { email: form.email.trim() || undefined, userType: 'provider' })
+            : undefined
+        }
       />
       <SignInFields
         email={form.email}

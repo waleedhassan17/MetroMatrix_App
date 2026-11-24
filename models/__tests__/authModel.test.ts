@@ -44,7 +44,7 @@ describe('validatePassword (policy identical to the API)', () => {
     ['abc123', 'Use at least 8 characters'],
     ['a1'.repeat(37), 'Use 72 characters or fewer'],
     ['12345678', 'Add at least one lower-case letter'],
-    ['abcdefg1', 'Add at least one capital letter'],
+    ['abcdefg1', 'Add at least one upper-case letter'],
     ['Abcdefgh', 'Add at least one number'],
   ])('%p → %p', (password, message) => {
     expect(validatePassword(password)).toBe(message);
@@ -175,7 +175,9 @@ describe('getPasswordStrength', () => {
     ['', 'weak'],
     ['abcdefgh', 'weak'],
     ['abcdefg1', 'weak'],
-    ['Abcdefg1', 'strong'],
+    // Every policy-passing password mixes case and has a number: length grades it.
+    ['Abcdefg1', 'fair'],
+    ['Abcdefgh12', 'strong'],
     ['Abcdefgh123!', 'excellent'],
   ])('%p is %p', (password, level) => {
     expect(getPasswordStrength(password)).toBe(level);

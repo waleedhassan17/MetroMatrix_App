@@ -4,9 +4,10 @@
 //   1 Personal   date of birth, gender
 //   2 Location   street address, city, postal code (optional)
 //   3 Photo      optional — uploaded on pick (signed, direct, with progress)
-// "Complete Registration" / "Skip for now" saves all of it in one
-// PATCH /users/me/profile, which marks the profile complete; the session
-// gate then opens the customer app.
+// "Complete Registration" saves all of it in one PATCH /users/me/profile,
+// which marks the profile complete; the session gate then opens the customer
+// app. "Skip for now" (older accounts only) is remembered on this device and
+// saves nothing on the server.
 //
 // A picked photo can be a Blob on web, which must not enter Redux, so the
 // file a failed upload used lives in a module-level slot for Retry.

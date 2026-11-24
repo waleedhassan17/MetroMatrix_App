@@ -22,9 +22,11 @@ export interface ProviderSignInSliceState {
   error: ServerError;
   /** RATE_LIMITED: Sign In waits until then (lockedUntilAfter). */
   lockedUntil: number;
+  /** Wrong passwords in a row: from the third, the notice offers "Forgot your password?". */
+  wrongPasswords: number;
 }
 
-const initialState: ProviderSignInSliceState = { email: '', password: '', touched: {}, status: 'idle', error: NO_ERROR, lockedUntil: 0 };
+const initialState: ProviderSignInSliceState = { email: '', password: '', touched: {}, status: 'idle', error: NO_ERROR, lockedUntil: 0, wrongPasswords: 0 };
 
 export const providerSignInSlice = createAppSlice({
   name: 'providerSignIn',
@@ -66,6 +68,9 @@ export const providerSignInSlice = createAppSlice({
           state.status = 'failed';
           state.error = readRejection(action, 'Sign in failed. Try again.');
           state.lockedUntil = lockedUntilAfter(state.error);
+          // The typed password goes: it was wrong, and it must not wait in the form for the next person.
+          state.password = '';
+          state.wrongPasswords = state.error.code === 'INVALID_CREDENTIALS' ? state.wrongPasswords + 1 : 0;
         },
       },
     ),

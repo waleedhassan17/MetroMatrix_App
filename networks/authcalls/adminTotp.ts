@@ -6,8 +6,7 @@
 // admin has no session yet. The API's AdminTotpEnrolGuard reads it as the
 // bearer, never from the body. Enrol has no body; confirm sends only { code }.
 
-import { API, unwrap, setTokens, toApiError, AUTH_PATHS } from '../network/network';
-import { clearIntentionalSignOut } from '../../utils/auth-events/authEvents';
+import { API, unwrap, toApiError, AUTH_PATHS } from '../network/network';
 import { authResultSerializer, recoveryCodesSerializer, totpEnrolmentSerializer } from '../../serializers/authSerializer';
 import { malformed, openSession } from './session';
 import type { AuthResult, TotpEnrolment } from '../../models/auth';
@@ -41,9 +40,9 @@ export const adminTotpEnrol = async (challengeToken: string): Promise<TotpEnrolm
 };
 
 /**
- * Confirms the first code. Stores the session tokens now (they are real),
- * but the caller keeps the user on the recovery-codes step until they have
- * saved them — Redux only learns of the session after that.
+ * Confirms the first code. The session is NOT stored here: the caller holds it
+ * and opens it (openSession) only once the recovery codes are saved, so an app
+ * closed on the codes step can't come back signed in without ever showing them.
  */
 export const adminTotpConfirm = async (
   challengeToken: string,
@@ -54,8 +53,6 @@ export const adminTotpConfirm = async (
     // The API nests the session: { recoveryCodes, auth: AuthResult }.
     const result = authResultSerializer(body?.auth);
     if (!result) throw malformed();
-    await setTokens(result.tokens.accessToken, result.tokens.refreshToken);
-    clearIntentionalSignOut();
     return { result, recoveryCodes: recoveryCodesSerializer(body) };
   } catch (e) {
     throw toApiError(e);

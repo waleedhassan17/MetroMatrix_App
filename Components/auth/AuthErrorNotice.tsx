@@ -44,7 +44,13 @@ export const AuthErrorNotice: React.FC<{
   onGoToPortal?: (portal: Portal) => void;
   /** Sign-up screens: EMAIL_EXISTS offers this side's sign-in (the API doesn't say which kind of account it is). */
   onSignInInstead?: () => void;
-}> = ({ error, fallbackTitle, onGoToPortal, onSignInInstead }) => {
+  /** The door this screen is: its own "Sign in as…" action would do nothing, so it isn't offered. */
+  currentPortal?: Portal;
+  /** A rider account at a User or provider door: "Sign in as a Rider" (riders use their own screen). */
+  onGoToRider?: () => void;
+  /** After a few wrong passwords: "Forgot your password?" sits on the notice. */
+  onForgotPassword?: () => void;
+}> = ({ error, fallbackTitle, onGoToPortal, onSignInInstead, currentPortal, onGoToRider, onForgotPassword }) => {
   // A new error is brought into view (it shows above the fields, which the
   // keyboard may have scrolled away) and read out — VoiceOver ignores live
   // regions, so it is announced on iOS too.
@@ -64,18 +70,21 @@ export const AuthErrorNotice: React.FC<{
     const accountType = error.details?.accountType;
     const portal = doorForAccount(accountType);
     const message = (typeof accountType === 'string' && WRONG_DOOR_MESSAGE[accountType]) || error.message;
-    return (
-      <InlineNotice
-        tone="info"
-        message={message}
-        action={portal && onGoToPortal ? { label: PORTAL_LABEL[portal], onPress: () => onGoToPortal(portal) } : undefined}
-      />
-    );
+    const action =
+      accountType === 'rider' && onGoToRider
+        ? { label: 'Sign in as a Rider', onPress: onGoToRider }
+        : portal && onGoToPortal && portal !== currentPortal
+          ? { label: PORTAL_LABEL[portal], onPress: () => onGoToPortal(portal) }
+          : undefined;
+    return <InlineNotice tone="info" message={message} action={action} />;
   }
   if (error.code === ERROR_CODES.EMAIL_EXISTS && onSignInInstead) {
     return (
       <InlineNotice tone="info" message={authErrorMessage(error)} action={{ label: 'Sign in instead', onPress: onSignInInstead }} />
     );
+  }
+  if (error.code === ERROR_CODES.INVALID_CREDENTIALS && onForgotPassword) {
+    return <InlineNotice tone="error" message={authErrorMessage(error)} action={{ label: 'Forgot your password?', onPress: onForgotPassword }} />;
   }
   const tone = error.code && INFO_CODES.has(error.code) ? 'info' : 'error';
   return <InlineNotice tone={tone} title={tone === 'error' ? fallbackTitle : undefined} message={authErrorMessage(error)} />;

@@ -23,6 +23,8 @@ export interface SignInSliceState {
   error: ServerError;
   /** RATE_LIMITED: Sign In waits until then (lockedUntilAfter). */
   lockedUntil: number;
+  /** Wrong passwords in a row: from the third, the notice offers "Forgot your password?". */
+  wrongPasswords: number;
 }
 
 const initialState: SignInSliceState = {
@@ -33,7 +35,14 @@ const initialState: SignInSliceState = {
   googleStatus: 'idle',
   error: NO_ERROR,
   lockedUntil: 0,
+  wrongPasswords: 0,
 };
+
+/** Google's EMAIL_NOT_VERIFIED means Google hasn't verified the address — not our emailed link. */
+const googleError = (error: ServerError): ServerError =>
+  error.code === 'EMAIL_NOT_VERIFIED'
+    ? { ...error, message: "Google hasn't verified this email address yet. Verify it with Google, or use your email and a password." }
+    : error;
 
 export const signInSlice = createAppSlice({
   name: 'signIn',
@@ -85,6 +94,9 @@ export const signInSlice = createAppSlice({
           state.status = 'failed';
           state.error = readRejection(action, 'Sign in failed. Try again.');
           state.lockedUntil = lockedUntilAfter(state.error);
+          // The typed password goes: it was wrong, and it must not wait in the form for the next person.
+          state.password = '';
+          state.wrongPasswords = state.error.code === 'INVALID_CREDENTIALS' ? state.wrongPasswords + 1 : 0;
         },
       },
     ),
@@ -108,7 +120,7 @@ export const signInSlice = createAppSlice({
         },
         rejected: (state, action) => {
           state.googleStatus = 'failed';
-          state.error = readRejection(action, 'Google sign-in failed. Try again.');
+          state.error = googleError(readRejection(action, 'Google sign-in failed. Try again.'));
         },
       },
     ),

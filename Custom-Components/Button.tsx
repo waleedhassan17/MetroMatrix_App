@@ -118,6 +118,8 @@ export const Button: React.FC<ButtonProps> = ({
       onPressIn={() => !inactive && press(motion.press.scale)}
       onPressOut={() => press(1)}
       disabled={inactive}
+      // A small button (36) still takes a full 44 pt touch.
+      hitSlop={size === 'sm' ? (sizes.touch - sizes.control.sm) / 2 : undefined}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityHint={accessibilityHint}

@@ -7,7 +7,7 @@
 // vendor added, with the username the vendor gave them).
 
 import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppDispatch } from '../../hooks/useReduxHooks';
@@ -16,6 +16,7 @@ import { AppText, IonIcon } from '../../Custom-Components/index';
 import { ChoiceCard } from '../../Components/auth/ChoiceCard';
 import type { AuthUserType, RootStackParamList } from '../../models';
 import { selectRole } from './roleSelectionSlice';
+import { SUPPORT_EMAIL } from '../../config/env';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RoleSelection'>;
 
@@ -108,12 +109,21 @@ const RoleSelection: React.FC<Props> = ({ navigation }) => {
             </ServiceScope>
           </View>
 
-          <View style={styles.help}>
+          <Pressable
+            style={styles.help}
+            onPress={() => void Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=Help%20choosing%20a%20role`)}
+            accessibilityRole="link"
+            accessibilityLabel="Need help choosing? Email our support team"
+            accessibilityHint={SUPPORT_EMAIL}>
             <IonIcon name="help-circle-outline" size="md" color={colors.roleProvider} />
             <AppText variant="small" tone="muted" style={{ flex: 1 }}>
-              Need help choosing? Contact our support team anytime.
+              Need help choosing?{' '}
+              <AppText variant="small" tone="accentDeep">
+                Contact our support team
+              </AppText>{' '}
+              anytime.
             </AppText>
-          </View>
+          </Pressable>
         </View>
       </ScrollView>
     </View>
