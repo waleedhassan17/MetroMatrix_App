@@ -10,6 +10,7 @@ import {
   fillKey,
   nextCreateKey,
   personalInfoSlice,
+  refreshBusinessAsync,
   retryUploadFor,
   saveBasicsAsync,
   saveProfessionalAsync,
@@ -196,6 +197,30 @@ describe('documents', () => {
     releaseFirst();
     await Promise.all([a, b]);
     expect(order).toEqual(['start a.jpg', 'end a.jpg', 'start b.jpg', 'end b.jpg']);
+  });
+});
+
+describe('arriving with only the session summary', () => {
+  it('reads the full business, so saved documents show instead of "0 of 4 added"', async () => {
+    const store = makeStore();
+    biz.fetchMyBusiness.mockResolvedValue(
+      envelope(rawBusiness({ documents: [{ id: 'd1', kind: 'cnic_front', url: 'https://res.cloudinary.com/x/a.jpg', status: 'pending' }] })),
+    );
+    const pending = store.dispatch(refreshBusinessAsync());
+    expect(store.getState().personalInfo.businessStatus).toBe('loading');
+    await pending;
+    expect(store.getState().personalInfo.businessStatus).toBe('succeeded');
+    expect(store.getState().auth.business?.documents.map(d => d.kind)).toEqual(['cnic_front']);
+    expect(store.getState().auth.business?.address).toBe('12 Main Boulevard, Gulberg');
+  });
+
+  it('reads once at a time, and a failure leaves the summary as it was', async () => {
+    const store = makeStore();
+    biz.fetchMyBusiness.mockRejectedValue(new ApiError('slow', 'NETWORK_ERROR', undefined, { reason: 'timeout' }));
+    await Promise.all([store.dispatch(refreshBusinessAsync()), store.dispatch(refreshBusinessAsync())]);
+    expect(biz.fetchMyBusiness).toHaveBeenCalledTimes(1);
+    expect(store.getState().personalInfo.businessStatus).toBe('failed');
+    expect(store.getState().auth.business).toBeNull();
   });
 });
 

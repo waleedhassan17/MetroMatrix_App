@@ -30,6 +30,11 @@
 //     overwrite a newer one;
 //   • a failed tile can take a different file ("Choose another file").
 // Server field errors land on the step and field that own them.
+//
+// The session carries only a summary of the business (no address, no
+// documents). If the full read at startup failed, the screen would show
+// empty fields and "0 of 4 added" for files already uploaded, so
+// `refreshBusinessAsync` reads it again on arrival (the 2026-11-25 QA).
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
@@ -112,6 +117,8 @@ export interface PersonalInfoSliceState {
   removing: string[];
   /** The camera or photos permission was refused: say so and offer Settings. */
   permissionDenied: 'camera' | 'photos' | null;
+  /** The full business is being read (the session only had its summary). */
+  businessStatus: FormStatus;
 }
 
 const initialState: PersonalInfoSliceState = {
@@ -134,6 +141,7 @@ const initialState: PersonalInfoSliceState = {
   submitKey: null,
   removing: [],
   permissionDenied: null,
+  businessStatus: 'idle',
 };
 
 export interface DocumentUpload {
@@ -297,6 +305,39 @@ export const personalInfoSlice = createAppSlice({
     discardUpload: create.reducer((state, action: PayloadAction<string>) => {
       delete state.uploads[action.payload];
     }),
+
+    /**
+     * The full business (GET /businesses/me) when the session only has its
+     * summary: its address and documents fill the form and the tiles. A
+     * failure leaves the summary; the next upload or save reads it anyway.
+     */
+    refreshBusinessAsync: create.asyncThunk(
+      async (_: void, { dispatch, rejectWithValue }) => {
+        try {
+          const business = required(businessSerializer(await fetchMyBusiness()));
+          if (await stillSignedIn()) dispatch(setBusiness(business));
+          return business.id;
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        options: {
+          condition: (_arg, { getState }) =>
+            (getState() as { personalInfo: PersonalInfoSliceState }).personalInfo.businessStatus !== 'loading',
+        },
+        pending: state => {
+          state.businessStatus = 'loading';
+        },
+        fulfilled: state => {
+          state.businessStatus = 'succeeded';
+        },
+        rejected: (state, action) => {
+          if (action.meta.condition) return;
+          state.businessStatus = 'failed';
+        },
+      },
+    ),
 
     /** Step 1 → PATCH /users/me (only when something changed). */
     saveBasicsAsync: create.asyncThunk(
@@ -540,6 +581,7 @@ export const {
   dismissError,
   discardUpload,
   setPermissionDenied,
+  refreshBusinessAsync,
   saveBasicsAsync,
   saveProfessionalAsync,
   uploadDocumentAsync,

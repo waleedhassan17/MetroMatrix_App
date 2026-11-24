@@ -100,6 +100,12 @@ const APP_CODES = {
   GOOGLE_CANCELLED: 'GOOGLE_CANCELLED',
   /** "I Verified My Email" before the link was opened. */
   NOT_VERIFIED: 'NOT_VERIFIED',
+  /**
+   * Cloudinary (or the API's signing) refused an upload. `details.kind` says
+   * whose problem it is: `file` (its type, size or contents) or `service`
+   * (uploads aren't working right now). The message is already readable.
+   */
+  UPLOAD_FAILED: 'UPLOAD_FAILED',
 } as const;
 
 export const ERROR_CODES = { ...API_CODES, ...APP_CODES } as const;
@@ -344,20 +350,31 @@ const isTimeout = (error: AxiosError): boolean =>
 
 /** The device's own word: offline only when it reports no connection. Unknown counts as online. */
 const deviceIsOffline = async (): Promise<boolean> => {
+  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     const state = await Promise.race([
       Network.getNetworkStateAsync(),
-      new Promise<null>(resolve => setTimeout(() => resolve(null), 1500)),
+      new Promise<null>(resolve => {
+        timer = setTimeout(() => resolve(null), 1500);
+      }),
     ]);
     return state?.isConnected === false;
   } catch {
     return false;
+  } finally {
+    clearTimeout(timer);
   }
 };
 
 const classifyNoResponse = async (error: AxiosError): Promise<NoResponseReason> => {
   if (await deviceIsOffline()) return 'offline';
   return isTimeout(error) ? 'timeout' : 'unreachable';
+};
+
+/** The same verdict for a request outside axios (the Cloudinary upload's XHR). */
+const classifyNoAnswer = async (timedOut: boolean): Promise<NoResponseReason> => {
+  if (await deviceIsOffline()) return 'offline';
+  return timedOut ? 'timeout' : 'unreachable';
 };
 
 /** The reason on a no-response failure (axios error or ApiError), if one was found. */
@@ -378,6 +395,30 @@ const noResponseCopy = (reason: NoResponseReason | undefined): string => {
     default:
       return "We can't reach MetroMatrix right now. Please try again in a moment.";
   }
+};
+
+/** The same, for a file on its way to storage (`details.upload`). */
+const uploadNoResponseCopy = (reason: NoResponseReason | undefined): string => {
+  switch (reason) {
+    case 'offline':
+      return "You're offline. Check your connection, then try again.";
+    case 'timeout':
+      return 'The upload is taking too long. Try again, ideally on Wi-Fi or a stronger signal.';
+    default:
+      return "The upload couldn't get through. Try again in a moment.";
+  }
+};
+
+/** Uploads aren't working right now (signing refused, storage down): nothing the person can fix. */
+export const UPLOAD_UNAVAILABLE_COPY = "Uploads aren't available right now. Try again in a few minutes.";
+
+/** The file itself was refused: what to send instead. */
+export const uploadFileCopy = (signed?: Pick<SignedUpload, 'allowedFormats' | 'maxBytes'> | null): string => {
+  const formats = (signed?.allowedFormats ?? '').split(',').map(f => f.trim());
+  const pdf = !signed?.allowedFormats || formats.includes('pdf');
+  const mb = signed?.maxBytes ? Math.floor(signed.maxBytes / 1_000_000) : 0;
+  const what = pdf ? 'a clear photo (JPG or PNG) or a PDF' : 'a clear photo (JPG or PNG)';
+  return `This file couldn't be uploaded. Use ${what}${mb ? ` under ${mb} MB` : ''}.`;
 };
 
 /** A read that never reached the server is tried once more after this pause. */
@@ -689,7 +730,11 @@ export const errorCopy = (code: string | null | undefined, details?: Details): s
   const retry = retryAfterOf(details);
   switch (code) {
     case ERROR_CODES.NETWORK_ERROR:
-      return noResponseCopy(noResponseReasonOf({ details }));
+      return details?.upload
+        ? uploadNoResponseCopy(noResponseReasonOf({ details }))
+        : noResponseCopy(noResponseReasonOf({ details }));
+    case ERROR_CODES.UPLOAD_FAILED:
+      return details?.kind === 'service' ? UPLOAD_UNAVAILABLE_COPY : null;
     case ERROR_CODES.CONFIG_ERROR:
       return "This version can't connect. Install the latest version of MetroMatrix.";
     case ERROR_CODES.REFRESH_REUSED:
@@ -789,6 +834,17 @@ const appendFile = async (form: FormData, file: LocalFile) => {
   form.append('file', { uri: file.uri, name: file.name, type: file.mimeType } as unknown as Blob);
 };
 
+/**
+ * Whose problem a Cloudinary refusal is: the file's (its type, size or
+ * contents, a 400) or the service's (a bad or stale signature, a missing key,
+ * a rate limit, an outage). Only the first is something the person can fix.
+ */
+export const cloudinaryRefusal = (status: number, message: string): 'file' | 'service' => {
+  if (status === 401 || status === 403 || status === 420 || status === 429 || status >= 500 || status === 0) return 'service';
+  if (/signature|api[_ ]key|stale request|timestamp|upload preset|cloud name|disabled|account/i.test(message)) return 'service';
+  return 'file';
+};
+
 /** Resolves with the stored file; onProgress receives 0..1. */
 export const uploadToCloudinary = async (
   file: LocalFile,
@@ -829,19 +885,24 @@ export const uploadToCloudinary = async (
           publicId: String(body.public_id ?? ''),
           mimeType: file.mimeType,
         });
-      } else {
-        reject(
-          new ApiError(
-            body?.error?.message ?? `Upload failed (${xhr.status}). Please try again.`,
-            'UPLOAD_FAILED',
-            xhr.status,
-          ),
-        );
+        return;
       }
+      const raw = typeof body?.error?.message === 'string' ? body.error.message : '';
+      if (__DEV__) console.warn(`[upload] Cloudinary answered ${xhr.status}: ${raw || xhr.responseText?.slice(0, 200)}`);
+      const kind = cloudinaryRefusal(xhr.status, raw);
+      reject(
+        new ApiError(kind === 'service' ? UPLOAD_UNAVAILABLE_COPY : uploadFileCopy(signed), ERROR_CODES.UPLOAD_FAILED, xhr.status, {
+          kind,
+        }),
+      );
     };
-    xhr.onerror = () =>
-      reject(new ApiError("Upload failed — you're offline or the connection dropped.", 'NETWORK_ERROR'));
-    xhr.ontimeout = () => reject(new ApiError('Upload timed out. Please try again.', 'NETWORK_ERROR'));
+    // No answer from storage: offline only when the device says so (as for the API).
+    const noAnswer = (timedOut: boolean) =>
+      void classifyNoAnswer(timedOut).then(reason =>
+        reject(new ApiError(uploadNoResponseCopy(reason), ERROR_CODES.NETWORK_ERROR, undefined, { reason, upload: true })),
+      );
+    xhr.onerror = () => noAnswer(false);
+    xhr.ontimeout = () => noAnswer(true);
     xhr.send(form);
   });
 };
