@@ -32,9 +32,8 @@ import { visibleErrors } from '../../utils/form-errors/formErrors';
 import { haptics } from '../../utils/haptics/haptics';
 import { Alert } from '../../utils/alert/alert';
 import { pickDocumentFile, pickImageFromLibrary, takePhoto } from '../../utils/pickers/pickers';
-import { ServiceScope, useStyles, type Theme } from '../../theme/index';
+import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import {
-  AppText,
   BottomSheetPicker,
   Button,
   DocumentUploadTile,
@@ -44,10 +43,11 @@ import {
   PickerField,
   SearchPicker,
   Sheet,
+  Skeleton,
   TextField,
   type DocumentTileState,
 } from '../../Custom-Components/index';
-import { AuthHeader, AuthScreen, ProviderBadge } from '../../Components/auth/AuthChrome';
+import { AuthHeader, AuthScreen, ProviderBadge, ScrollToTopOnMessage } from '../../Components/auth/AuthChrome';
 import { StepButtons, StepHeading, StepProgress } from '../../Components/auth/StepFlow';
 import type { BusinessDocument, LocalFile, RootStackParamList } from '../../models';
 import { selectBusiness, selectUser } from '../../store/authSlice';
@@ -65,6 +65,7 @@ import {
   openDocumentPicker,
   openPicker,
   openViewer,
+  refreshBusinessAsync,
   removeDocumentAsync,
   retryUploadFor,
   saveBasicsAsync,
@@ -85,8 +86,13 @@ type Props = NativeStackScreenProps<RootStackParamList, 'PersonalInfo'>;
 const STEP_COPY = {
   1: { title: 'Personal Information', subtitle: 'Tell us about yourself' },
   2: { title: 'Professional Details', subtitle: 'Your expertise and credentials' },
-  3: { title: 'Upload Documents', subtitle: 'Verify your credentials' },
+  3: { title: 'Upload Documents', subtitle: 'Clear photos or PDFs' },
 } as const;
+/** Step 3's line under its title, with the count first. */
+const documentsLine = (added: number, total: number) => `${added} of ${total} added · clear photos or PDFs`;
+
+/** How many skeleton tiles stand in while the documents are read. */
+const SKELETON_TILES = 3;
 
 const isPdf = (doc: Pick<BusinessDocument, 'mimeType' | 'url'>) =>
   doc.mimeType === 'application/pdf' || doc.url.toLowerCase().endsWith('.pdf');
@@ -94,18 +100,24 @@ const isPdf = (doc: Pick<BusinessDocument, 'mimeType' | 'url'>) =>
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
     body: { gap: space.s20 },
+    tiles: { gap: space.s12 },
     center: { alignItems: 'center' },
   });
 
 const PersonalInfo: React.FC<Props> = ({ route, navigation }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
+  const { size, space } = useTheme();
+  // A document tile's height: the 56 pt preview inside its 12 pt padding.
+  const tileHeight = size.thumb + space.s24;
   const user = useAppSelector(selectUser);
   const business = useAppSelector(selectBusiness);
   const s = useAppSelector(selectPersonalInfo);
   const { signOutNow, signingOut } = useSignOut();
   const phoneRef = useRef<TextInput>(null);
   const addressRef = useRef<TextInput>(null);
+  // A native picker is open: a second tap must not launch another one.
+  const pickerOpen = useRef(false);
 
   const pending = useAppSelector(selectPendingPick);
   const subType = business?.subType ?? pending?.subType ?? user?.providerSubType ?? 'store';
@@ -122,6 +134,11 @@ const PersonalInfo: React.FC<Props> = ({ route, navigation }) => {
 
   // The full business may arrive after a short summary: fill again once it does.
   const businessDetail = business ? (business.address ? 'full' : 'summary') : 'none';
+  // Only the summary (the full read at startup failed): read it now, so the
+  // form and the tiles show what was already saved.
+  useEffect(() => {
+    if (businessDetail === 'summary') void dispatch(refreshBusinessAsync());
+  }, [dispatch, businessDetail, business?.id]);
   useEffect(() => {
     if (user) dispatch(initialise({ user, business, step: paramStep, highlight: paramHighlight }));
     // Only on arrival and when the account / draft changes identity (or fills in).
@@ -163,6 +180,8 @@ const PersonalInfo: React.FC<Props> = ({ route, navigation }) => {
   const missing = business?.missingDocuments ?? missingDocuments(subType, documents);
   const filledSlots = slots.filter(slot => slot.doc && slot.doc.status !== 'rejected').length;
   const uploading = Object.values(s.uploads).some(u => u?.status === 'uploading');
+  // The form and tiles wait for the full business rather than show it empty.
+  const readingBusiness = businessDetail === 'summary' && s.businessStatus === 'loading' && s.step > 1;
   // Back holds still while a save is on the wire: its answer would land on the wrong step.
   const back = s.step > 1 && !busy && !submitting ? () => dispatch(goToStep((s.step - 1) as 1 | 2)) : undefined;
 
@@ -223,6 +242,27 @@ const PersonalInfo: React.FC<Props> = ({ route, navigation }) => {
     else haptics.warning();
   };
 
+  /** One native picker at a time; the guard lifts as soon as it returns. */
+  const choose = (open: () => Promise<LocalFile | null>) => async () => {
+    if (pickerOpen.current) return;
+    pickerOpen.current = true;
+    let file: LocalFile | null = null;
+    try {
+      file = await open();
+    } catch {
+      Alert.alert("That didn't open", 'Try again, or choose a file instead.');
+    } finally {
+      pickerOpen.current = false;
+    }
+    await upload(file);
+  };
+
+  const confirmRemove = (doc: BusinessDocument, label: string) =>
+    Alert.alert(`Remove ${label}?`, 'You can add it again before you submit.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Remove', style: 'destructive', onPress: () => void dispatch(removeDocumentAsync(doc.id)) },
+    ]);
+
   const view = (doc: BusinessDocument) => {
     if (isPdf(doc)) void Linking.openURL(doc.url);
     else dispatch(openViewer({ uri: doc.url, title: DOCUMENT_LABELS[doc.kind].label }));
@@ -231,12 +271,21 @@ const PersonalInfo: React.FC<Props> = ({ route, navigation }) => {
   const tileFor = (slot: DocumentSlot) => {
     const pending = s.uploads[slot.key];
     const { doc } = slot;
-    const state: DocumentTileState = pending ? 'uploading' : doc ? (doc.status === 'rejected' ? 'rejected' : 'uploaded') : 'empty';
+    const state: DocumentTileState = pending
+      ? pending.status === 'failed'
+        ? 'failed'
+        : 'uploading'
+      : doc
+        ? doc.status === 'rejected'
+          ? 'rejected'
+          : 'uploaded'
+        : 'empty';
     const pick = () => dispatch(openDocumentPicker({ slot: slot.key, kinds: slot.kinds, replacing: doc?.id ?? null }));
+    const label = doc && slot.kinds.length > 1 ? `${slot.label} · ${DOCUMENT_LABELS[doc.kind].label}` : slot.label;
     return (
       <DocumentUploadTile
         key={slot.key}
-        label={doc && slot.kinds.length > 1 ? `${slot.label} · ${DOCUMENT_LABELS[doc.kind].label}` : slot.label}
+        label={label}
         hint={slot.hint}
         state={state}
         progress={pending?.progress}
@@ -263,7 +312,8 @@ const PersonalInfo: React.FC<Props> = ({ route, navigation }) => {
           dispatch(discardUpload(slot.key));
           pick();
         }}
-        onRemove={doc && !s.removing.includes(doc.id) ? () => dispatch(removeDocumentAsync(doc.id)) : undefined}
+        removing={!!doc && s.removing.includes(doc.id)}
+        onRemove={doc && !s.removing.includes(doc.id) ? () => confirmRemove(doc, label) : undefined}
         onView={doc ? () => view(doc) : undefined}
       />
     );
@@ -302,6 +352,7 @@ const PersonalInfo: React.FC<Props> = ({ route, navigation }) => {
     <ServiceScope service={serviceType}>
       <AuthScreen onBack={back}>
         <AuthHeader
+          hideLogo
           title="Complete Your Profile"
           badge={<ProviderBadge label={providerTypeLabel(subType)} service={serviceType} />}
           subtitle={`Step ${s.step} of 3`}
@@ -329,7 +380,24 @@ const PersonalInfo: React.FC<Props> = ({ route, navigation }) => {
           />
         ) : null}
 
-        <StepHeading title={STEP_COPY[s.step].title} subtitle={STEP_COPY[s.step].subtitle} />
+        <ScrollToTopOnMessage message={s.error.message} />
+
+        <StepHeading
+          title={STEP_COPY[s.step].title}
+          subtitle={
+            s.step === 3 && !readingBusiness
+              ? documentsLine(filledSlots, slots.length)
+              : STEP_COPY[s.step].subtitle
+          }
+        />
+
+        {readingBusiness ? (
+          <View style={styles.tiles} accessibilityLabel="Loading your saved details">
+            {Array.from({ length: SKELETON_TILES }, (_, i) => (
+              <Skeleton key={i} height={tileHeight} shape="lg" />
+            ))}
+          </View>
+        ) : null}
 
         {s.step === 1 ? (
           <View style={styles.body}>
@@ -365,7 +433,7 @@ const PersonalInfo: React.FC<Props> = ({ route, navigation }) => {
           </View>
         ) : null}
 
-        {s.step === 2 ? (
+        {s.step === 2 && !readingBusiness ? (
           <View style={styles.body}>
             {schema.lead.map(detailField)}
             <TextField
@@ -433,14 +501,7 @@ const PersonalInfo: React.FC<Props> = ({ route, navigation }) => {
           </View>
         ) : null}
 
-        {s.step === 3 ? (
-          <View style={styles.body}>
-            <AppText variant="small" tone="muted">
-              {filledSlots} of {slots.length} added · clear photos or PDFs, every corner visible
-            </AppText>
-            {slots.map(tileFor)}
-          </View>
-        ) : null}
+        {s.step === 3 && !readingBusiness ? <View style={styles.tiles}>{slots.map(tileFor)}</View> : null}
 
         <StepButtons onBack={back} onNext={() => void next()} nextLabel={nextLabel} disabled={!stepFilled || busy || submitting} loading={busy || submitting} />
         <View style={styles.center}>
@@ -463,10 +524,10 @@ const PersonalInfo: React.FC<Props> = ({ route, navigation }) => {
               ))
             : null}
           {Platform.OS !== 'web' ? (
-            <ListRow title="Take a photo" leftIcon="camera-outline" onPress={async () => upload(await takePhoto({ onDenied }))} />
+            <ListRow title="Take a photo" leftIcon="camera-outline" onPress={choose(() => takePhoto({ onDenied }))} />
           ) : null}
-          <ListRow title="Choose from photos" leftIcon="images-outline" onPress={async () => upload(await pickImageFromLibrary({ onDenied }))} />
-          <ListRow title="Choose a file" subtitle="PDF or image" leftIcon="document-text-outline" onPress={async () => upload(await pickDocumentFile())} />
+          <ListRow title="Choose from photos" leftIcon="images-outline" onPress={choose(() => pickImageFromLibrary({ onDenied }))} />
+          <ListRow title="Choose a file" subtitle="PDF or image" leftIcon="document-text-outline" onPress={choose(pickDocumentFile)} />
         </Sheet>
         <ImageViewer visible={!!s.viewer} uri={s.viewer?.uri ?? null} title={s.viewer?.title} onClose={() => dispatch(openViewer(null))} />
       </AuthScreen>

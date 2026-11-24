@@ -11,11 +11,8 @@ import { Button } from '../../Custom-Components/Button';
 
 const makeStyles = ({ colors, space, size, radius }: Theme) =>
   StyleSheet.create({
-    progress: { gap: space.s12 },
     track: { height: size.progress, borderRadius: radius.pill, backgroundColor: colors.line, overflow: 'hidden' },
     fill: { height: '100%', borderRadius: radius.pill },
-    dots: { flexDirection: 'row', justifyContent: 'center', gap: space.s8 },
-    dot: { width: size.pageDot, height: size.pageDot, borderRadius: radius.pill },
     buttons: { flexDirection: 'row', gap: space.s12 },
     grow: { flex: 1 },
     pills: { flexDirection: 'row', gap: space.s12 },
@@ -31,24 +28,20 @@ const makeStyles = ({ colors, space, size, radius }: Theme) =>
     stepHead: { gap: space.s4 },
   });
 
-/** The bar fills by step; the dots light up to the current step. */
+/**
+ * The bar fills by step. (The FYP's dots under it went on 2026-11-25: with the
+ * bar and the header's "Step 2 of 3" they said the same thing a third time.)
+ */
 export const StepProgress: React.FC<{ current: number; total: number }> = ({ current, total }) => {
   const styles = useStyles(makeStyles);
-  const { colors, service } = useTheme();
+  const { service } = useTheme();
   return (
     <View
-      style={styles.progress}
+      style={styles.track}
       accessibilityRole="progressbar"
       accessibilityLabel={`Step ${current} of ${total}`}
       accessibilityValue={{ min: 1, max: total, now: current }}>
-      <View style={styles.track}>
-        <View style={[styles.fill, { width: `${(current / total) * 100}%`, backgroundColor: service.accent }]} />
-      </View>
-      <View style={styles.dots}>
-        {Array.from({ length: total }, (_, i) => (
-          <View key={i} style={[styles.dot, { backgroundColor: i < current ? service.accent : colors.line }]} />
-        ))}
-      </View>
+      <View style={[styles.fill, { width: `${(current / total) * 100}%`, backgroundColor: service.accent }]} />
     </View>
   );
 };
@@ -70,7 +63,11 @@ export const StepHeading: React.FC<{ title: string; subtitle?: string }> = ({ ti
   );
 };
 
-/** Back (outlined) beside the primary step action; Back hides on step 1. */
+/**
+ * Back (outlined, as wide as its word) beside the primary step action, which
+ * takes the rest of the row so "Submit Application" fits on a 360 pt phone.
+ * Back hides on step 1.
+ */
 export const StepButtons: React.FC<{
   onBack?: () => void;
   onNext: () => void;
@@ -81,11 +78,7 @@ export const StepButtons: React.FC<{
   const styles = useStyles(makeStyles);
   return (
     <View style={styles.buttons}>
-      {onBack ? (
-        <View style={styles.grow}>
-          <Button label="Back" variant="secondary" onPress={onBack} disabled={loading} fullWidth />
-        </View>
-      ) : null}
+      {onBack ? <Button label="Back" variant="secondary" onPress={onBack} disabled={loading} /> : null}
       <View style={styles.grow}>
         <Button label={nextLabel} onPress={onNext} disabled={disabled} loading={loading} fullWidth />
       </View>

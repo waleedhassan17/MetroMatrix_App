@@ -6,8 +6,9 @@
 // a 24 pt title, a muted one-line subtitle), then the Sign In / Sign Up tab
 // switcher. These pieces are that frame; screens compose them.
 
-import React, { createContext, useCallback, useContext, useRef } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef } from 'react';
 import {
+  AccessibilityInfo,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -47,6 +48,21 @@ const makeStyles = ({ colors, space, gutter, size, radius }: Theme) =>
 /** Scrolls the auth screen back to its top, where errors show (AuthErrorNotice uses it). */
 const AuthScrollToTop = createContext<() => void>(() => undefined);
 export const useAuthScrollToTop = () => useContext(AuthScrollToTop);
+
+/**
+ * Inside an AuthScreen: when `message` changes to something, scroll to the top
+ * (where the screen's notice shows) and read it out. For screens whose errors
+ * use a plain InlineNotice rather than AuthErrorNotice (Personal Info).
+ */
+export const ScrollToTopOnMessage: React.FC<{ message: string | null | undefined }> = ({ message }) => {
+  const scrollToTop = useAuthScrollToTop();
+  useEffect(() => {
+    if (!message) return;
+    scrollToTop();
+    AccessibilityInfo.announceForAccessibility(message);
+  }, [message, scrollToTop]);
+  return null;
+};
 
 export const AuthScreen: React.FC<{
   children: React.ReactNode;
@@ -94,7 +110,7 @@ export const AuthHeader: React.FC<{
   subtitle?: string;
   /** Shown between title and subtitle (the provider type). */
   badge?: React.ReactNode;
-  /** Hide the "MetroMatrix" logo line (reset-password steps). */
+  /** Hide the "MetroMatrix" logo line (reset-password steps, the profile steps, Check your inbox). */
   hideLogo?: boolean;
 }> = ({ title, subtitle, badge, hideLogo }) => {
   const styles = useStyles(makeStyles);

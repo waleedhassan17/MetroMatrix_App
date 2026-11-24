@@ -161,7 +161,7 @@ const CompleteProfile: React.FC = () => {
 
   return (
     <AuthScreen onBack={back}>
-      <AuthHeader title="Complete Your Profile" subtitle={SUBTITLES[s.step]} />
+      <AuthHeader hideLogo title="Complete Your Profile" subtitle={SUBTITLES[s.step]} />
       <StepProgress current={s.step} total={3} />
       {s.error.message ? <InlineNotice message={authErrorMessage(s.error)} /> : null}
       {denied ? (

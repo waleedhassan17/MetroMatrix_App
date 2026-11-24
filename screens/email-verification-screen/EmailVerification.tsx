@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// MetroMatrix — Verify Your Email (the FYP's link flow)
+// MetroMatrix — Verify Your Email (the FYP's link flow, decluttered)
 // ═══════════════════════════════════════════════════════
 
 import React from 'react';
@@ -10,7 +10,7 @@ import { useCountdown } from '../../hooks/useCountdown';
 import { useSignOut } from '../../hooks/useSignOut';
 import { haptics } from '../../utils/haptics/haptics';
 import { useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, InlineNotice, IonIcon, type IonName } from '../../Custom-Components/index';
+import { AppText, Button, InlineNotice, IonIcon, LiveDot, TextAction, type IonName } from '../../Custom-Components/index';
 import { AuthHeader, AuthScreen } from '../../Components/auth/AuthChrome';
 import { selectUser } from '../../store/authSlice';
 import { checkVerifiedAsync, markManualCheck, nextResendKey, resendAsync, selectEmailVerification } from './emailVerificationSlice';
@@ -21,51 +21,44 @@ const makeStyles = ({ colors, space, size, radius, elevation }: Theme) =>
   StyleSheet.create({
     hero: {
       alignSelf: 'center',
-      width: size.avatar.xl,
-      height: size.avatar.xl,
+      width: size.avatar.lg,
+      height: size.avatar.lg,
       borderRadius: radius.pill,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    emailBox: {
-      alignItems: 'center',
-      gap: space.s4,
-      padding: space.s16,
-      borderRadius: radius.md,
-      backgroundColor: colors.surfaceSunk,
-    },
-    auto: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.s8 },
-    card: {
+    sentTo: { alignItems: 'center', gap: space.s4 },
+    status: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.s8 },
+    actions: { gap: space.s8 },
+    // As tall as the Resend button, so the page doesn't jump when it appears.
+    resend: { alignItems: 'center', justifyContent: 'center', minHeight: size.control.md },
+    tips: {
       gap: space.s12,
       padding: space.s16,
       borderRadius: radius.md,
-      borderWidth: size.hairline,
-      borderColor: colors.line,
       backgroundColor: colors.surface,
-      ...elevation.input,
+      ...elevation.none,
     },
-    step: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
-    center: { alignItems: 'center' },
+    tip: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
+    grow: { flex: 1 },
+    footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.s4, flexWrap: 'wrap' },
   });
 
-const Steps: React.FC<{ title: string; items: { icon: IonName; text: string }[] }> = ({ title, items }) => {
-  const styles = useStyles(makeStyles);
-  const { service } = useTheme();
-  return (
-    <View style={styles.card}>
-      <AppText variant="title">{title}</AppText>
-      {items.map(item => (
-        <View key={item.text} style={styles.step}>
-          <IonIcon name={item.icon} size="md" color={service.accent} />
-          <AppText variant="body" tone="muted" style={{ flex: 1 }}>
-            {item.text}
-          </AppText>
-        </View>
-      ))}
-    </View>
-  );
-};
+/** 51 → "0:51", 75 → "1:15". */
+export const clockOf = (seconds: number): string => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 
+const TIPS: { icon: IonName; text: string }[] = [
+  { icon: 'folder-open-outline', text: 'Check your spam or promotions folder.' },
+  { icon: 'time-outline', text: 'Still nothing after a few minutes? Resend it.' },
+];
+
+/**
+ * "Check your inbox", decluttered on 2026-11-25 (the owner found the FYP's
+ * two cards of six tips messy): the address once, a live line saying the
+ * screen is watching for the link, one action, Resend, and one short card
+ * for when the email doesn't come. The screen still moves on by itself
+ * (useVerificationPolling); the button is the same check, on demand.
+ */
 const EmailVerification: React.FC = () => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
@@ -95,75 +88,92 @@ const EmailVerification: React.FC = () => {
     }
   };
 
+  const differentAccount = () => void signOutNow({ landing: user?.role === 'partner' ? 'ProviderSignIn' : 'SignIn' });
+
   return (
     <AuthScreen>
       <View style={[styles.hero, { backgroundColor: service.accentSoft }]}>
         <IonIcon name="mail-unread-outline" size="xl" color={service.accent} />
       </View>
-      <AuthHeader hideLogo title="Check your inbox" subtitle="We've sent a verification link to your email address." />
+      <AuthHeader hideLogo title="Check your inbox" />
 
-      <View style={styles.emailBox}>
-        <AppText variant="small" tone="muted">
-          Email sent to:
+      <View style={styles.sentTo}>
+        <AppText variant="body" tone="muted" align="center">
+          We sent a verification link to
         </AppText>
-        <AppText variant="bodyStrong">{user?.email ?? ''}</AppText>
+        <AppText variant="bodyStrong" align="center" selectable>
+          {user?.email ?? ''}
+        </AppText>
+        <AppText variant="body" tone="muted" align="center">
+          Tap the link in the email to verify your account.
+        </AppText>
       </View>
 
       {s.autoSignIn ? (
-        <View style={styles.auto} accessibilityLiveRegion="polite">
+        <View style={styles.status} accessibilityLiveRegion="polite">
           <IonIcon name="checkmark-circle" size="md" color={service.accent} />
           <AppText variant="bodyStrong" tone="accentDeep">
-            Email verified — signing you in automatically...
+            Email verified. Signing you in...
           </AppText>
         </View>
-      ) : null}
+      ) : (
+        <View style={styles.status}>
+          <LiveDot color={service.accent} />
+          <AppText variant="small" tone="muted">
+            Waiting for you to tap the link
+          </AppText>
+        </View>
+      )}
 
       {s.error.message ? (
         <InlineNotice tone={s.error.code === ERROR_CODES.NOT_VERIFIED ? 'info' : 'error'} message={s.error.message} />
       ) : null}
 
-      <Button
-        label={s.autoSignIn ? 'Email Verified' : 'I Verified My Email'}
-        onPress={check}
-        loading={s.status === 'loading'}
-        disabled={s.autoSignIn}
-        fullWidth
-      />
-      <View style={styles.center}>
-        {secondsLeft > 0 ? (
-          <AppText variant="small" tone="muted" accessibilityLiveRegion="polite">
-            Resend email in {secondsLeft}s
-          </AppText>
-        ) : (
-          <Button label="Resend Email" variant="ghost" onPress={resend} loading={s.resendStatus === 'loading'} />
+      <View style={styles.actions}>
+        <Button
+          label={s.autoSignIn ? 'Email verified' : "I've verified my email"}
+          onPress={check}
+          loading={s.status === 'loading'}
+          disabled={s.autoSignIn}
+          fullWidth
+        />
+        {s.autoSignIn ? null : (
+          <View style={styles.resend}>
+            {secondsLeft > 0 ? (
+              // Not a live region: it would read out every second.
+              <AppText variant="small" tone="muted">
+                Resend email in {clockOf(secondsLeft)}
+              </AppText>
+            ) : (
+              <Button label="Resend email" variant="ghost" onPress={resend} loading={s.resendStatus === 'loading'} />
+            )}
+          </View>
         )}
       </View>
 
-      <Steps
-        title="How to verify:"
-        items={[
-          { icon: 'mail-outline', text: 'Check your email inbox (and spam folder)' },
-          { icon: 'link-outline', text: 'Click the verification link in the email' },
-          { icon: 'checkmark-done-outline', text: 'Come back here — we sign you in automatically' },
-        ]}
-      />
-      <Steps
-        title="Didn't receive the email?"
-        items={[
-          { icon: 'folder-open-outline', text: 'Check your spam/junk folder' },
-          { icon: 'at-outline', text: 'Make sure the email address above is correct' },
-          { icon: 'time-outline', text: 'Wait a few minutes, then tap "Resend Email"' },
-        ]}
-      />
-      <View style={styles.center}>
-        <Button
-          label="Use a different account"
-          variant="ghost"
-          size="sm"
+      {s.autoSignIn ? null : (
+        <View style={styles.tips}>
+          <AppText variant="title">Didn&apos;t get the email?</AppText>
+          {TIPS.map(tip => (
+            <View key={tip.text} style={styles.tip}>
+              <IonIcon name={tip.icon} size="md" color={service.accent} />
+              <AppText variant="body" tone="muted" style={styles.grow}>
+                {tip.text}
+              </AppText>
+            </View>
+          ))}
+        </View>
+      )}
+
+      <View style={styles.footer}>
+        <AppText variant="small" tone="muted">
+          Wrong email?
+        </AppText>
+        <TextAction
+          label={signingOut ? 'Signing out...' : 'Use a different account'}
+          onPress={differentAccount}
           disabled={signingOut}
-          onPress={() => void signOutNow({ landing: user?.role === 'partner' ? 'ProviderSignIn' : 'SignIn' })}
         />
-        <Button label={signingOut ? 'Signing out...' : 'Sign out'} variant="ghost" size="sm" onPress={() => void signOutNow()} />
       </View>
     </AuthScreen>
   );

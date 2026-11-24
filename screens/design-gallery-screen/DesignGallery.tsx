@@ -267,7 +267,8 @@ const Stories: React.FC = () => {
       <Section title="Documents">
         <DocumentUploadTile label="CNIC — front" state="empty" onPick={() => undefined} />
         <DocumentUploadTile label="CNIC — back" state="uploading" progress={0.45} onPick={() => undefined} />
-        <DocumentUploadTile label="PMDC registration certificate" state="uploading" progress={0.3} error="Upload failed. Check your connection." onRetry={() => undefined} onPick={() => undefined} />
+        <DocumentUploadTile label="PMDC registration certificate" state="failed" error="The upload is taking too long. Try again, ideally on Wi-Fi or a stronger signal." onRetry={() => undefined} onChooseAnother={() => undefined} onPick={() => undefined} />
+        <DocumentUploadTile label="Degree certificate" hint="MBBS, BDS or equivalent." state="empty" onPick={() => undefined} />
         <DocumentUploadTile label="Storefront photo" state="uploaded" thumbnailUri={null} onPick={() => undefined} onRemove={() => undefined} onView={() => setViewerOpen(true)} />
         <DocumentUploadTile label="Medical degree" state="rejected" note="The scan is cropped. Upload the full page." onPick={() => undefined} />
         <DocumentUploadTile label="Food authority licence" state="empty" highlighted onPick={() => undefined} />
