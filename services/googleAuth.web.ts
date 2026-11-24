@@ -10,6 +10,9 @@ import { ApiError } from '../networks/network/network';
 
 export const GOOGLE_UNAVAILABLE = 'GOOGLE_UNAVAILABLE';
 
+/** What an unconfigured build says when Google is pressed (the button stays, as the owner asked). */
+export const GOOGLE_COMING_SOON = 'Google sign-in is coming soon. Use your email for now.';
+
 interface GoogleIdApi {
   initialize: (config: {
     client_id: string;
@@ -20,6 +23,7 @@ interface GoogleIdApi {
   renderButton: (parent: HTMLElement, options: Record<string, unknown>) => void;
   prompt: () => void;
   cancel: () => void;
+  disableAutoSelect?: () => void;
 }
 
 declare global {
@@ -31,11 +35,12 @@ declare global {
 const GIS_SRC = 'https://accounts.google.com/gsi/client';
 let loading: Promise<GoogleIdApi> | null = null;
 
-export const isGoogleSignInAvailable = (): boolean => !!GOOGLE_WEB_CLIENT_ID;
+export const isGoogleConfigured = (): boolean => !!GOOGLE_WEB_CLIENT_ID;
+export const isGoogleSignInAvailable = isGoogleConfigured;
 
 export const loadGoogleIdentity = (): Promise<GoogleIdApi> => {
   if (!GOOGLE_WEB_CLIENT_ID) {
-    return Promise.reject(new ApiError('Google sign-in is not set up on this build yet.', GOOGLE_UNAVAILABLE));
+    return Promise.reject(new ApiError(GOOGLE_COMING_SOON, GOOGLE_UNAVAILABLE));
   }
   if (window.google?.accounts?.id) return Promise.resolve(window.google.accounts.id);
   if (!loading) {
@@ -59,7 +64,19 @@ export const loadGoogleIdentity = (): Promise<GoogleIdApi> => {
 };
 
 export const getGoogleIdToken = async (): Promise<string | null> => {
-  throw new ApiError('Use the Google button to continue.', GOOGLE_UNAVAILABLE);
+  throw new ApiError(
+    isGoogleConfigured() ? 'Use the Google button to continue.' : GOOGLE_COMING_SOON,
+    GOOGLE_UNAVAILABLE,
+  );
+};
+
+/** Sign-out stops One Tap from silently picking the last Google account. Never throws. */
+export const signOutOfGoogle = async (): Promise<void> => {
+  try {
+    window.google?.accounts?.id?.disableAutoSelect?.();
+  } catch {
+    /* nothing to forget */
+  }
 };
 
 export const GOOGLE_CLIENT_ID = GOOGLE_WEB_CLIENT_ID;

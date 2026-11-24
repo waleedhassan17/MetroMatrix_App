@@ -79,7 +79,7 @@ const SignIn: React.FC<Props> = ({ navigation, route }) => {
         busy={form.googleStatus === 'loading'}
         disabled={loading}
         onIdToken={token => dispatch(googleSignInAsync(token))}
-        onError={message => dispatch(showError(message))}
+        onError={(message, code) => dispatch(showError({ message, code }))}
       />
     </AuthScreen>
   );

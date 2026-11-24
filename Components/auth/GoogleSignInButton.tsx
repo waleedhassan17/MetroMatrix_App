@@ -10,7 +10,8 @@ import { getGoogleIdToken } from '../../services/googleAuth';
 
 export interface GoogleSignInButtonProps {
   onIdToken: (idToken: string) => void;
-  onError: (message: string) => void;
+  /** `code` GOOGLE_UNAVAILABLE ("coming soon", Expo Go) reads as information, not a failure. */
+  onError: (message: string, code?: string) => void;
   /** The API exchange is running (the slice's status). */
   busy?: boolean;
   disabled?: boolean;
@@ -24,7 +25,7 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({ onIdToke
       const token = await getGoogleIdToken();
       if (token) onIdToken(token);
     } catch (e) {
-      onError((e as Error).message);
+      onError((e as Error).message, (e as { code?: string }).code);
     } finally {
       setAcquiring(false);
     }

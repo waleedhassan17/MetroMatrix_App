@@ -8,21 +8,27 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://metromatrix-api.duckdns.org/api/v1"
+        "EXPO_PUBLIC_API_URL": "https://metromatrix-api.duckdns.org/api/v1",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": ""
       }
     },
     "preview": {
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://metromatrix-api.duckdns.org/api/v1",
-        "EXPO_PUBLIC_SUPPORT_EMAIL": "support@metromatrix.app"
+        "EXPO_PUBLIC_SUPPORT_EMAIL": "support@metromatrix.app",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": ""
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_API_URL": "https://metromatrix-api.duckdns.org/api/v1",
-        "EXPO_PUBLIC_SUPPORT_EMAIL": "support@metromatrix.app"
+        "EXPO_PUBLIC_SUPPORT_EMAIL": "support@metromatrix.app",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": ""
       }
     }
   },

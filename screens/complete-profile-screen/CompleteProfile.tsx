@@ -6,8 +6,9 @@
 // Customers from before Complete Profile existed (user.profileSkippable) may
 // "Skip for now": remembered on this device, and the gate lets them through.
 
-import React, { useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { BackHandler, Linking, Platform, StyleSheet, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useSignOut } from '../../hooks/useSignOut';
 import { hasErrors, MIN_AGE, validateLocationStep, validatePersonalStep } from '../../models/authModel';
@@ -29,6 +30,7 @@ import {
   dateKeyOf,
 } from '../../Custom-Components/index';
 import { AuthHeader, AuthScreen } from '../../Components/auth/AuthChrome';
+import { authErrorMessage } from '../../Components/auth/authErrorMessage';
 import { OptionPills, StepButtons, StepHeading, StepProgress } from '../../Components/auth/StepFlow';
 import type { Gender } from '../../models';
 import { selectUser } from '../../store/authSlice';
@@ -85,6 +87,7 @@ const CompleteProfile: React.FC = () => {
   const user = useAppSelector(selectUser);
   const s = useAppSelector(selectCompleteProfile);
   const [cityOpen, setCityOpen] = useState(false);
+  const [denied, setDenied] = useState<'camera' | 'photos' | null>(null);
   const { signOutNow, signingOut } = useSignOut();
 
   const personalErrors = validatePersonalStep({ dateOfBirth: s.dateOfBirth, gender: s.gender });
@@ -98,9 +101,27 @@ const CompleteProfile: React.FC = () => {
     s.step === 1 ? !!s.dateOfBirth && !!s.gender : s.step === 2 ? !!s.streetAddress.trim() && !!s.city : !uploading;
 
   const pick = async (from: 'library' | 'camera') => {
-    const file = from === 'camera' ? await takePhoto() : await pickImageFromLibrary({ square: true });
-    if (file) dispatch(uploadPhotoAsync(file));
+    const file = from === 'camera' ? await takePhoto({ onDenied: setDenied }) : await pickImageFromLibrary({ square: true, onDenied: setDenied });
+    if (file) {
+      setDenied(null);
+      dispatch(uploadPhotoAsync(file));
+    }
   };
+
+  // Android's back button walks the steps back (it used to close the app); it holds still mid-save.
+  const back = s.step > 1 && !loading ? () => dispatch(goToStep((s.step - 1) as 1 | 2)) : undefined;
+  useFocusEffect(
+    useCallback(() => {
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        if (s.step > 1 && !loading) {
+          dispatch(goToStep((s.step - 1) as 1 | 2));
+          return true;
+        }
+        return s.step > 1;
+      });
+      return () => sub.remove();
+    }, [dispatch, s.step, loading]),
+  );
 
   const submit = async () => {
     if (!s.gender) return;
@@ -138,14 +159,22 @@ const CompleteProfile: React.FC = () => {
           : 'Finish without a photo';
 
   return (
-    <AuthScreen onBack={s.step > 1 ? () => dispatch(goToStep((s.step - 1) as 1 | 2)) : undefined}>
+    <AuthScreen onBack={back}>
       <AuthHeader title="Complete Your Profile" subtitle={SUBTITLES[s.step]} />
       <StepProgress current={s.step} total={3} />
-      {s.error.message ? <InlineNotice message={s.error.message} /> : null}
+      {s.error.message ? <InlineNotice message={authErrorMessage(s.error)} /> : null}
+      {denied ? (
+        <InlineNotice
+          tone="warning"
+          title={denied === 'camera' ? 'Camera access is off' : 'Photo access is off'}
+          message="Allow it in Settings to add a photo, or finish without one."
+          action={{ label: 'Open Settings', onPress: () => void Linking.openSettings() }}
+        />
+      ) : null}
 
       {s.step === 1 ? (
         <View style={styles.body}>
-          <StepHeading title="Personal Information" subtitle={`Hi ${user?.name.split(' ')[0] ?? 'there'}, tell us a little about yourself.`} />
+          <StepHeading title="Personal Information" subtitle={`Hi ${user?.name.trim().split(' ')[0] || 'there'}, tell us a little about yourself.`} />
           <DateField
             label="Date of Birth"
             value={s.dateOfBirth}
@@ -268,7 +297,7 @@ const CompleteProfile: React.FC = () => {
       ) : null}
 
       <StepButtons
-        onBack={s.step > 1 ? () => dispatch(goToStep((s.step - 1) as 1 | 2)) : undefined}
+        onBack={back}
         onNext={next}
         nextLabel={nextLabel}
         disabled={!stepFilled || loading}

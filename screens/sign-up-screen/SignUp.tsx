@@ -70,7 +70,7 @@ const SignUp: React.FC<Props> = ({ navigation }) => {
         busy={form.googleStatus === 'loading'}
         disabled={loading}
         onIdToken={token => dispatch(googleSignUpAsync(token))}
-        onError={message => dispatch(showError(message))}
+        onError={(message, code) => dispatch(showError({ message, code }))}
       />
     </AuthScreen>
   );

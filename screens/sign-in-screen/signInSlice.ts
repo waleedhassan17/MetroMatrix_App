@@ -53,8 +53,10 @@ export const signInSlice = createAppSlice({
     touchAll: create.reducer(state => {
       state.touched = { email: true, password: true };
     }),
-    showError: create.reducer((state, action: PayloadAction<string>) => {
-      state.error = { message: action.payload, code: null, details: null };
+    /** A message from outside the API (Google's SDK); `code` GOOGLE_UNAVAILABLE reads as information. */
+    showError: create.reducer((state, action: PayloadAction<string | { message: string; code?: string }>) => {
+      const p = action.payload;
+      state.error = typeof p === 'string' ? { message: p, code: null, details: null } : { message: p.message, code: p.code ?? null, details: null };
     }),
 
     signInAsync: create.asyncThunk(

@@ -32,6 +32,8 @@ const INFO_CODES = new Set<string>([
   ERROR_CODES.EMAIL_NOT_VERIFIED,
   ERROR_CODES.TOTP_REQUIRED,
   ERROR_CODES.SIGNUPS_PAUSED,
+  // Google not set up on this build yet ("coming soon"), or Expo Go.
+  'GOOGLE_UNAVAILABLE',
 ]);
 
 export const AuthErrorNotice: React.FC<{

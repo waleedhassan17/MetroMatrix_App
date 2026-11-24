@@ -10,7 +10,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { GoogleButton } from '../../Custom-Components/GoogleButton';
 import { useTheme } from '../../theme';
-import { GOOGLE_CLIENT_ID, loadGoogleIdentity, isGoogleSignInAvailable } from '../../services/googleAuth.web';
+import {
+  GOOGLE_CLIENT_ID,
+  GOOGLE_COMING_SOON,
+  GOOGLE_UNAVAILABLE,
+  loadGoogleIdentity,
+  isGoogleSignInAvailable,
+} from '../../services/googleAuth.web';
 import type { GoogleSignInButtonProps } from './GoogleSignInButton';
 
 export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({ onIdToken, onError, busy, disabled }) => {
@@ -54,7 +60,7 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({ onIdToke
       .catch((e: Error) => {
         if (cancelled) return;
         setFailed(true);
-        handlers.current.onError(e.message);
+        handlers.current.onError(e.message, (e as { code?: string }).code);
       });
     return () => {
       cancelled = true;
@@ -65,7 +71,7 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({ onIdToke
   if (failed) {
     return (
       <GoogleButton
-        onPress={() => onError('Google sign-in is not set up on this build yet.')}
+        onPress={() => onError(GOOGLE_COMING_SOON, GOOGLE_UNAVAILABLE)}
         loading={busy}
         disabled={disabled}
       />

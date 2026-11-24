@@ -6,10 +6,11 @@
 // "next" moves down the form; the last field submits.
 
 import React, { useRef } from 'react';
-import { StyleSheet, View, type TextInput } from 'react-native';
+import { Linking, StyleSheet, View, type TextInput } from 'react-native';
 import { useStyles, type Theme } from '../../theme';
 import { AppText, Button, Divider, PasswordStrength, TextField } from '../../Custom-Components';
 import { GoogleSignInButton } from './GoogleSignInButton';
+import { PRIVACY_URL, TERMS_URL } from '../../config/env';
 
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
@@ -209,7 +210,8 @@ export const SignUpFields: React.FC<{
 // ─── "or continue with" + Google ──────────────────────
 export const SocialSignIn: React.FC<{
   onIdToken: (token: string) => void;
-  onError: (message: string) => void;
+  /** `code` GOOGLE_UNAVAILABLE ("coming soon") reads as information. */
+  onError: (message: string, code?: string) => void;
   busy?: boolean;
   disabled?: boolean;
 }> = props => {
@@ -222,9 +224,27 @@ export const SocialSignIn: React.FC<{
   );
 };
 
-/** The passive consent line under "Create Account". */
+/** The consent line under "Create Account": both policies open on the website (config/env.ts). */
 export const TermsLine: React.FC = () => (
   <AppText variant="caption" tone="muted" align="center">
-    By creating an account you agree to our Terms of Service and Privacy Policy.
+    By creating an account you agree to our{' '}
+    <AppText
+      variant="caption"
+      tone="accentDeep"
+      accessibilityRole="link"
+      accessibilityHint="Opens in your browser"
+      onPress={() => void Linking.openURL(TERMS_URL)}>
+      Terms of Service
+    </AppText>{' '}
+    and{' '}
+    <AppText
+      variant="caption"
+      tone="accentDeep"
+      accessibilityRole="link"
+      accessibilityHint="Opens in your browser"
+      onPress={() => void Linking.openURL(PRIVACY_URL)}>
+      Privacy Policy
+    </AppText>
+    .
   </AppText>
 );
