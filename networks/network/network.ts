@@ -32,6 +32,32 @@ export const API_URL = process.env.EXPO_PUBLIC_API_URL?.trim() || '';
 /** No API URL: the app cannot work and says so (ConfigErrorScreen). */
 export const CONFIG_ERROR = !API_URL;
 
+/** Where the development web build reaches the API on its own origin (scripts/devApiProxy.js). */
+export const DEV_API_PROXY_PREFIX = '/__api';
+
+/**
+ * Where requests go: API_URL, except in a development web build served from
+ * another origin (http://localhost:8082 …). A browser would only let that page
+ * call the API if the API listed the origin (CORS), so it calls its own origin
+ * under /__api and the dev server forwards to the API (metro.config.js). Native
+ * apps and release builds go straight to API_URL.
+ */
+export const requestBaseFor = (
+  apiUrl: string,
+  where: { web: boolean; dev: boolean; origin: string | null | undefined },
+): string => {
+  if (!apiUrl || !where.web || !where.dev || !where.origin) return apiUrl;
+  const parts = /^(https?:\/\/[^/]+)(\/.*)?$/i.exec(apiUrl);
+  if (!parts || parts[1].toLowerCase() === where.origin.toLowerCase()) return apiUrl;
+  return `${where.origin}${DEV_API_PROXY_PREFIX}${parts[2] ?? ''}`;
+};
+
+const REQUEST_BASE = requestBaseFor(API_URL, {
+  web: Platform.OS === 'web',
+  dev: __DEV__,
+  origin: typeof window !== 'undefined' ? window.location?.origin : null,
+});
+
 const TIMEOUT = 30000;
 
 // Token storage lives in utils/storage_utils/storageUtils.ts; re-exported here so the domain
@@ -152,7 +178,7 @@ const configErrorAdapter: AxiosAdapter = () =>
   Promise.reject(new ApiError('This build has no server address. Reinstall the app or contact support.', CONFIG_ERROR_CODE));
 
 const clientConfig = {
-  baseURL: API_URL,
+  baseURL: REQUEST_BASE,
   responseType: 'json' as const,
   timeout: TIMEOUT,
   headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
