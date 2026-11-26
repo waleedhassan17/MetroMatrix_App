@@ -29,7 +29,8 @@ import { daysSerializer, slotDaySerializer, healthHomeSerializer, suggestionsSer
 import { prescriptionSerializer, videoJoinSerializer, symptomResultSerializer } from '../../../../serializers/health/recordsSerializer';
 import { verifyPmdc } from '../../../../screens/shared/taxonomyWrites';
 import { getDoctor, submitAppointmentPaymentProof, reviewAppointment } from '../../../../screens/shared/healthReads';
-import { publishProfile, addTimeOff, listLocations, saveHours, actOnAppointment, completeAppointment, confirmPayment, getDoctorAppointment, getToday, updatePrescription } from '../../../../screens/shared/practiceReads';
+import { publishProfile, addTimeOff, listLocations, saveHours, actOnAppointment, completeAppointment, confirmPayment, getDoctorAppointment, getToday, updatePrescription, getCalendar } from '../../../../screens/shared/practiceReads';
+import { calendarQuery } from '../../../../models/health/calendarModel';
 
 installDummyApi();
 
@@ -288,6 +289,19 @@ describe('the doctor app', () => {
     const patients = required(patientRowPageSerializer(await fetchPatients('', 1)));
     const theirs = new Set(db.health.appointments.filter(a => a.doctorId === 'd_ayesha').map(a => a.patientName));
     expect(patients.items.every(p => theirs.has(p.name))).toBe(true);
+  });
+
+  it("shows the day's visits in the calendar's day view, and every one of the week's in the week view", async () => {
+    await signIn('derm@metromatrix.app', 'partner');
+    const today = todayInZone(PKT, T0);
+    const queue = (await getToday(null, null)).queue;
+    expect(queue.length).toBeGreaterThan(0);
+    // A day used to ask from == to and get nothing back (the API's `to` is exclusive).
+    const day = await getCalendar(calendarQuery(today, 'day'));
+    expect(day.appointments.map(a => a.id).sort()).toEqual(expect.arrayContaining(queue.map(q => q.id)));
+    const week = await getCalendar(calendarQuery(today, 'week'));
+    expect(week.appointments.length).toBeGreaterThanOrEqual(day.appointments.length);
+    expect(week.appointments.map(a => a.id)).toEqual(expect.arrayContaining(day.appointments.map(a => a.id)));
   });
 
   it('names the other clinic when weekly hours overlap', async () => {

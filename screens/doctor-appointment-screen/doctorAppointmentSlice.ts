@@ -2,17 +2,28 @@
 // MetroMatrix — One appointment, the doctor's side (keyed by id)
 // ═══════════════════════════════════════════════════════
 // Who the patient is with you (visits, missed, late cancels), what they
-// shared, your earlier visits, private notes, the payment to check, and the
-// moves the server allows now. Every action answers with the appointment.
+// shared, your earlier visits, private notes (and their files), the payment
+// to check, a refund to record, and the moves the server allows now. Every
+// action answers with the appointment. Saving notes keeps their files.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { openSharedRecord, type DoctorAction } from '../../networks/health/doctor/doctorAppointments';
-import { toRejectedValue } from '../../networks/network/network';
-import type { DoctorAppointmentDetail } from '../../models';
+import { errorCopy, toRejectedValue } from '../../networks/network/network';
+import { uploadImage } from '../../services/mediaUpload';
+import type { DoctorAppointmentDetail, LocalFile } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { healthRecordSerializer } from '../../serializers/health/recordsSerializer';
-import { actOnAppointment, cancelByDoctor, completeAppointment, confirmPayment, getDoctorAppointment, rejectPayment, saveNotes } from '../shared/practiceReads';
+import {
+  actOnAppointment,
+  cancelByDoctor,
+  completeAppointment,
+  confirmPayment,
+  getDoctorAppointment,
+  refundAppointment,
+  rejectPayment,
+  saveNotes,
+} from '../shared/practiceReads';
 
 export interface DoctorAppointmentEntry {
   appointment: DoctorAppointmentDetail | null;
@@ -20,13 +31,18 @@ export interface DoctorAppointmentEntry {
   error: ServerError;
 }
 
-export type DoctorMove = DoctorAction | 'complete' | 'cancel' | 'confirm-payment' | 'reject-payment' | 'notes';
+export type DoctorMove = DoctorAction | 'complete' | 'cancel' | 'confirm-payment' | 'reject-payment' | 'refund' | 'notes';
 
 export interface DoctorAppointmentSliceState {
   byId: Record<string, DoctorAppointmentEntry>;
   notes: Record<string, string>;
+  /** The notes' files as they'll be saved (existing ones kept, new ones added). */
+  noteFiles: Record<string, string[]>;
+  /** A note file uploading. */
+  attaching: boolean;
   busy: DoctorMove | null;
-  sheet: { kind: 'cancel' | 'reject' | 'complete' | null; reason: string };
+  /** `reason` is the refund reference on the refund sheet. */
+  sheet: { kind: 'cancel' | 'reject' | 'complete' | 'refund' | null; reason: string };
   viewing: string | null;
   /** A shared report being opened (its files come with short-lived links, on demand). */
   openingRecord: string | null;
@@ -37,6 +53,8 @@ const EMPTY: DoctorAppointmentEntry = { appointment: null, status: 'idle', error
 const initialState: DoctorAppointmentSliceState = {
   byId: {},
   notes: {},
+  noteFiles: {},
+  attaching: false,
   busy: null,
   sheet: { kind: null, reason: '' },
   viewing: null,
@@ -55,7 +73,10 @@ export const doctorAppointmentSlice = createAppSlice({
     setNotesDraft: create.reducer((state, action: PayloadAction<{ id: string; text: string }>) => {
       state.notes[action.payload.id] = action.payload.text;
     }),
-    openDoctorSheet: create.reducer((state, action: PayloadAction<'cancel' | 'reject' | 'complete'>) => {
+    removeNoteFile: create.reducer((state, action: PayloadAction<{ id: string; url: string }>) => {
+      state.noteFiles[action.payload.id] = (state.noteFiles[action.payload.id] ?? []).filter(u => u !== action.payload.url);
+    }),
+    openDoctorSheet: create.reducer((state, action: PayloadAction<'cancel' | 'reject' | 'complete' | 'refund'>) => {
       state.sheet = { kind: action.payload, reason: '' };
       state.error = NO_ERROR;
     }),
@@ -86,6 +107,7 @@ export const doctorAppointmentSlice = createAppSlice({
         fulfilled: (state, action) => {
           save(state, action.payload);
           if (state.notes[action.payload.id] === undefined) state.notes[action.payload.id] = action.payload.notes.text;
+          if (state.noteFiles[action.payload.id] === undefined) state.noteFiles[action.payload.id] = action.payload.notes.attachments;
         },
         rejected: (state, action) => {
           const e = (state.byId[action.meta.arg] ??= { ...EMPTY });
@@ -122,8 +144,45 @@ export const doctorAppointmentSlice = createAppSlice({
       },
     ),
 
+    /** A file for the notes (a photo or a PDF), uploaded now and saved with the notes. */
+    attachNoteFileAsync: create.asyncThunk(
+      async ({ file }: { id: string; file: LocalFile }, { rejectWithValue }) => {
+        try {
+          return (await uploadImage(file, 'consult_attachment')).url;
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        pending: state => {
+          state.attaching = true;
+          state.error = NO_ERROR;
+        },
+        fulfilled: (state, action) => {
+          state.attaching = false;
+          const id = action.meta.arg.id;
+          state.noteFiles[id] = [...(state.noteFiles[id] ?? []), action.payload];
+        },
+        rejected: (state, action) => {
+          state.attaching = false;
+          const error = readRejection(action, "The file didn't upload. Try again.");
+          state.error = { ...error, message: errorCopy(error.code, error.details) ?? error.message };
+        },
+      },
+    ),
+
     doctorMoveAsync: create.asyncThunk(
-      async ({ id, move, reason, paymentCollected, notes }: { id: string; move: DoctorMove; reason?: string; paymentCollected?: boolean; notes?: string }, { rejectWithValue }) => {
+      async (
+        {
+          id,
+          move,
+          reason,
+          paymentCollected,
+          notes,
+          files,
+        }: { id: string; move: DoctorMove; reason?: string; paymentCollected?: boolean; notes?: string; files?: string[] },
+        { rejectWithValue },
+      ) => {
         try {
           switch (move) {
             case 'complete':
@@ -134,8 +193,11 @@ export const doctorAppointmentSlice = createAppSlice({
               return await confirmPayment(id);
             case 'reject-payment':
               return await rejectPayment(id, reason ?? '');
+            case 'refund':
+              return await refundAppointment(id, (reason ?? '').trim());
             case 'notes':
-              return await saveNotes(id, { text: notes ?? '', attachments: [] });
+              // The files go with the text: saving never drops the ones already there.
+              return await saveNotes(id, { text: notes ?? '', attachments: files ?? [] });
             default:
               return await actOnAppointment(id, move);
           }
@@ -152,10 +214,12 @@ export const doctorAppointmentSlice = createAppSlice({
           state.busy = null;
           state.sheet.kind = null;
           save(state, action.payload);
+          if (action.meta.arg.move === 'notes') state.noteFiles[action.payload.id] = action.payload.notes.attachments;
         },
         rejected: (state, action) => {
           state.busy = null;
-          state.error = readRejection(action, "That didn't go through. Pull down to refresh.");
+          const error = readRejection(action, "That didn't go through. Pull down to refresh.");
+          state.error = { ...error, message: errorCopy(error.code, error.details) ?? error.message };
         },
       },
     ),
@@ -168,6 +232,8 @@ export const doctorAppointmentSlice = createAppSlice({
 
 export const {
   setNotesDraft,
+  removeNoteFile,
+  attachNoteFileAsync,
   openDoctorSheet,
   closeDoctorSheet,
   setSheetReason,

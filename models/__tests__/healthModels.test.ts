@@ -1,7 +1,7 @@
 // Health form rules and the one status map.
 
 import { APPOINTMENT_PAYMENT_STATUS, APPOINTMENT_STATUS, appointmentTimeline } from '../health/appointmentStatusModel';
-import { cancelReasonText, defaultPaymentFor, paymentOptionsFor, validateBooking, validateCancel } from '../health/bookingModel';
+import { cancelReasonText, defaultPaymentFor, paymentOptionsFor, prepayDeadline, validateBooking, validateCancel } from '../health/bookingModel';
 import {
   appDayFromWeekday,
   copyToWeekdays,
@@ -106,8 +106,10 @@ describe('prescriptionModel', () => {
   it('validates rows and drops empty ones before saving', () => {
     const p = emptyPrescription();
     expect(validatePrescription(p)).toHaveProperty('diagnosis');
-    const filled = { ...p, diagnosis: 'Viral fever', medicines: [{ ...p.medicines[0], name: 'Paracetamol', dose: '1+x+1' }] };
+    // The API's pattern: digits, ½ ¼ . + - and words ("2 puffs"), up to 20 characters.
+    const filled = { ...p, diagnosis: 'Viral fever', medicines: [{ ...p.medicines[0], name: 'Paracetamol', dose: '1/0/1' }] };
     expect(Object.keys(validatePrescription(filled))).toContain('medicine.0.dose');
+    expect(Object.keys(validatePrescription({ ...filled, medicines: [{ ...filled.medicines[0], dose: '2 puffs', timing: 'after_meal' }] }))).not.toContain('medicine.0.dose');
     const ok = { ...filled, medicines: [{ ...filled.medicines[0], dose: '1+1+1' }, { ...p.medicines[0], name: '' }] };
     expect(Object.keys(validatePrescription(ok))).toContain('medicine.1.name');
     expect(prescriptionToSave(ok).medicines).toHaveLength(1);
@@ -192,13 +194,14 @@ describe('family, records, reviews, profile', () => {
 
   it('validates the doctor profile tables', () => {
     const p: DoctorOwnProfile = {
+      id: 'd1',
       title: 'Dr.',
       name: 'Hamza Rauf',
       gender: 'male',
       photoUrl: null,
       specialtySlug: 'general-physician',
       specialtyName: 'General physician',
-      secondarySpecialtySlug: 'general-physician',
+      secondarySpecialtySlugs: ['general-physician'],
       practisingSince: 2019,
       languages: [],
       about: '',
@@ -209,9 +212,17 @@ describe('family, records, reviews, profile', () => {
       bookingRules: { windowDays: 14, minNoticeMinutes: 60, cancelCutoffHours: 4, videoPrepay: false },
       pmdcNumber: '1',
       isListed: false,
+      isAccepting: true,
+      hiddenByStaff: null,
     };
     const e = validateDoctorProfile(p, 2026);
-    expect(Object.keys(e).sort()).toEqual(['experience.0.to', 'languages', 'qualification.0.degree', 'secondarySpecialtySlug']);
+    // The API's own limits: about under 40 characters takes a doctor off the listing.
+    expect(Object.keys(e).sort()).toEqual(['about', 'experience.0.to', 'languages', 'qualification.0.degree', 'qualification.0.institute', 'secondarySpecialtySlugs']);
+    expect(e.about).toMatch(/at least 40 characters/);
+    // An institute under two characters is refused before the server says so.
+    expect(validateDoctorProfile({ ...p, qualifications: [{ degree: 'MBBS', institute: 'K', year: null }] }, 2026)['qualification.0.institute']).toBe(
+      'Enter where you studied',
+    );
 
     // What goes to the server: never the read-only fields, never blank rows.
     const patch = ownProfilePatch(p);
@@ -313,6 +324,18 @@ describe('the real API’s vocabulary (MetroMatrix-API docs/API_HEALTH.md)', () 
     expect(p).toMatchObject({ city: 'Lahore', availableToday: 'true', minExperience: 10, sort: 'fee_asc' });
     expect(toParams(baseQuery('Lahore')).availableToday).toBeUndefined();
     expect(toParams({ ...baseQuery('Lahore'), sort: 'most_reviewed' }).sort).toBe('reviews');
+  });
+
+  it("sets a prepayment's deadline as the API does: 2 hours, at least 30 minutes before, never under 10 minutes", () => {
+    const now = Date.parse('2026-11-26T10:00:00.000Z');
+    // Tomorrow's visit: two hours from now.
+    expect(prepayDeadline('2026-11-27T10:00:00.000Z', now)).toBe('2026-11-26T12:00:00.000Z');
+    // A visit in 90 minutes: 30 minutes before it.
+    expect(prepayDeadline('2026-11-26T11:30:00.000Z', now)).toBe('2026-11-26T11:00:00.000Z');
+    // A visit in 20 minutes: still 10 minutes to pay.
+    expect(prepayDeadline('2026-11-26T10:20:00.000Z', now)).toBe('2026-11-26T10:10:00.000Z');
+    // A visit in 5 minutes: never after it starts.
+    expect(prepayDeadline('2026-11-26T10:05:00.000Z', now)).toBe('2026-11-26T10:05:00.000Z');
   });
 
   it('keeps a cancel reason as one line of text', () => {

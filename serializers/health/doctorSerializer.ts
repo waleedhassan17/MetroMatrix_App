@@ -50,7 +50,7 @@ const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 // ─── Profile ──────────────────────────────────────────
 /**
- * `GET /health/doctor/profile`. `secondarySpecialtySlug` is filled in by the
+ * `GET /health/doctor/profile`. `secondarySpecialtySlugs` is filled in by the
  * network (the API sends ids; the app works in slugs).
  */
 export const ownProfileSerializer = (raw: unknown): DoctorOwnProfile | null => {
@@ -58,13 +58,14 @@ export const ownProfileSerializer = (raw: unknown): DoctorOwnProfile | null => {
   const primary = isObject(raw.primarySpecialty) ? raw.primarySpecialty : {};
   const pmdc = str(raw.pmdcNumber);
   return {
+    id: str(raw.id),
     title: TITLE_PREFIX[str(raw.title)] ?? 'Dr.',
     name: str(raw.fullName) || str(raw.name),
     gender: gender(raw.gender),
     photoUrl: strOrNull(raw.photoUrl),
     specialtySlug: strOrNull(primary.slug),
     specialtyName: str(primary.name),
-    secondarySpecialtySlug: strOrNull(raw.secondarySpecialtySlug),
+    secondarySpecialtySlugs: strings(raw.secondarySpecialtySlugs),
     practisingSince: numOrNull(raw.practicingSince),
     languages: strings(raw.languages),
     about: str(raw.about),
@@ -83,8 +84,16 @@ export const ownProfileSerializer = (raw: unknown): DoctorOwnProfile | null => {
     // A doctor who hasn't given a number yet shows an empty field, not the placeholder.
     pmdcNumber: pmdc.startsWith('UNSET-') ? '' : pmdc,
     isListed: bool(raw.isListed),
+    isAccepting: raw.isAccepting === undefined ? true : bool(raw.isAccepting),
+    hiddenByStaff: strOrNull(raw.unlistedReason),
   };
 };
+
+/** GET /health/doctor/profile, only what More shows: the public link and whether patients can find you. */
+export const listingSerializer = fromResponse((raw: unknown) => {
+  if (!isObject(raw) || !str(raw.id)) return null;
+  return { id: str(raw.id), isListed: bool(raw.isListed), hiddenByStaff: strOrNull(raw.unlistedReason) };
+});
 
 /** `{ percent, missing, isListed }` → the practice set-up checklist. */
 export const completenessSerializer = fromResponse((raw: unknown): Completeness | null => {
@@ -259,8 +268,13 @@ const actionsSerializer = (raw: unknown): DoctorActions => {
     canConfirmPayment: bool(c.confirmPayment),
     canWritePrescription: bool(c.writePrescription),
     canJoinVideo: bool(c.joinVideo),
+    canRefund: bool(c.refund),
+    canRejectPayment: bool(c.rejectPayment),
   };
 };
+
+const CANCELLED_BY = ['patient', 'doctor', 'system'] as const;
+const TIMING_KEYS = ['after_meal', 'before_meal', 'with_meal', 'bedtime', 'as_needed'] as const;
 
 const patientLite = (raw: unknown) => {
   const r = isObject(raw) ? raw : {};
@@ -315,12 +329,20 @@ export const todaySerializer = (raw: unknown): TodaySummary | null => {
     date,
     timezone: locations[0]?.timezone ?? PKT,
     locations: locations.map(({ id, name, kind }) => ({ id, name, kind })),
-    counts: {
-      booked: count(c.remaining),
-      checkedIn: count(c.waiting) + count(c.inConsultation),
-      done: count(c.done),
-      noShow: queue.filter(q => q.status === 'no_show').length,
-    },
+    // The server's counts are for the whole practice; a location's are counted from its queue.
+    counts: isObject(t.counts) && Object.keys(c).length
+      ? {
+          booked: count(c.remaining),
+          checkedIn: count(c.waiting) + count(c.inConsultation),
+          done: count(c.done),
+          noShow: queue.filter(q => q.status === 'no_show').length,
+        }
+      : {
+          booked: queue.filter(q => q.status === 'confirmed' || q.status === 'awaiting_payment').length,
+          checkedIn: queue.filter(q => q.status === 'checked_in' || q.status === 'in_progress').length,
+          done: queue.filter(q => q.status === 'completed').length,
+          noShow: queue.filter(q => q.status === 'no_show').length,
+        },
     queue,
   };
 };
@@ -375,6 +397,8 @@ const previousVisits = (raw: unknown, exceptCode?: string): PreviousVisit[] => {
         code,
         startAt,
         kind: oneOf(v.kind, KINDS, 'clinic'),
+        status: appointmentStatus(v.status),
+        reason: strOrNull(v.reason),
         diagnosis: p ? strOrNull(p.diagnosis) : null,
         prescriptionId: p ? strOrNull(p.id) : null,
         notes: null,
@@ -430,6 +454,14 @@ export const doctorAppointmentSerializer = (raw: unknown): DoctorAppointmentDeta
     actions: item.actions,
     prescription: rx ? prescriptionSerializer(rx) : null,
     timeline: compact(arr(a.events).map(eventSerializer)),
+    cancellation:
+      item.status === 'cancelled'
+        ? {
+            by: CANCELLED_BY.find(b => b === str(a.cancelledBy)) ?? null,
+            reason: strOrNull(a.cancelReason),
+            late: bool(a.lateCancel),
+          }
+        : null,
   };
 };
 
@@ -443,6 +475,8 @@ export const medicineSuggestionsSerializer = fromResponse((raw: unknown): Medici
             strength: str(m.strength),
             form: oneOf(m.form, ['tablet', 'capsule', 'syrup', 'injection', 'drops', 'cream', 'other'] as const, 'tablet'),
             isFavourite: str(m.source) === 'favourite' || bool(m.isFavourite),
+            dose: strOrNull(m.dosePattern),
+            timing: TIMING_KEYS.find(t => t === str(m.timing)) ?? null,
           }
         : null,
     ),
@@ -453,7 +487,15 @@ export const patientRowSerializer = (raw: unknown): PatientRow | null => {
   if (!isObject(raw)) return null;
   const id = str(raw.patientKey) || str(raw.id);
   if (!id) return null;
-  return { id, ...patientLite(raw), lastVisitAt: iso(instant(raw.lastVisitAt)), visits: count(raw.visits) };
+  // `visits` counts every booking; `completedVisits` the ones that happened.
+  const bookings = count(raw.visits);
+  return {
+    id,
+    ...patientLite(raw),
+    lastVisitAt: iso(instant(raw.lastVisitAt)),
+    visits: raw.completedVisits === undefined ? bookings : count(raw.completedVisits),
+    bookings,
+  };
 };
 
 /** `{ patientKey, name, …, previousAppointments, prescriptions }` → the person and their visits with this doctor. */
@@ -464,12 +506,20 @@ export const patientHistorySerializer = fromResponse((raw: unknown): PatientHist
   return { patient: { id, ...patientLite(raw) }, visits: previousVisits(raw) };
 });
 
+/** A rate between 0 and 1, or null (nothing to measure yet). */
+const share = (v: unknown): number | null => {
+  const n = numOrNull(v);
+  return n === null ? null : Math.min(1, Math.max(0, n));
+};
+
 /** The insights the doctor's chart and tiles show (fees are recorded by the doctor, never held). */
 export const insightsSerializer = fromResponse((raw: unknown): DoctorInsights | null => {
   if (!isObject(raw)) return null;
   const totals = isObject(raw.totals) ? raw.totals : {};
   const times = isObject(raw.times) ? raw.times : {};
   const fees = isObject(raw.fees) ? raw.fees : {};
+  const rates = isObject(raw.rates) ? raw.rates : {};
+  const people = isObject(raw.patients) ? raw.patients : {};
   return {
     range: oneOf(raw.range, ['7d', '30d', '90d'] as readonly DoctorInsightsRange[], '30d'),
     perDay: compact(
@@ -479,8 +529,20 @@ export const insightsSerializer = fromResponse((raw: unknown): DoctorInsights | 
         return date ? { date, video: count(d.video), clinic: count(d.clinic) } : null;
       }),
     ),
-    outcomes: { completed: count(totals.completed), cancelled: count(totals.cancelled), noShow: count(totals.noShow) },
+    outcomes: {
+      completed: count(totals.completed),
+      cancelled: count(totals.cancelled),
+      noShow: count(totals.noShow),
+      upcoming: count(totals.upcoming),
+      lateCancelled: count(totals.lateCancelled),
+      cancelledByDoctor: count(totals.cancelledByDoctor),
+    },
+    rates: { completion: share(rates.completion), cancellation: share(rates.cancellation), noShow: share(rates.noShow) },
     avgWaitMinutes: numOrNull(times.avgWaitMinutes),
+    waitSamples: count(times.waitSamples),
+    avgConsultMinutes: numOrNull(times.avgConsultMinutes),
+    consultSamples: count(times.consultSamples),
+    patients: { new: count(people.new), returning: count(people.returning) },
     ratingTrend: compact(
       arr(raw.ratingTrend).map(d => {
         if (!isObject(d)) return null;
@@ -490,6 +552,7 @@ export const insightsSerializer = fromResponse((raw: unknown): DoctorInsights | 
       }),
     ),
     recordedFees: money(fees.recorded),
+    fees: { atClinic: money(fees.atClinic), byTransfer: money(fees.byTransfer), refundDue: money(fees.refundDue), refunded: money(fees.refunded) },
     appointments: count(totals.appointments),
   };
 });
@@ -502,7 +565,8 @@ export const patientRowPageSerializer = fromResponse(raw => paged(raw, patientRo
 /** Only one location's patients, when the doctor picked one. */
 const forLocation = (today: unknown, locationId: string | null) => {
   if (!locationId || !isObject(today)) return today;
-  return { ...today, queue: arr(today.queue).filter(q => isObject(q) && isObject(q.location) && str(q.location.id) === locationId) };
+  // Without the practice-wide counts, the location's are counted from its own queue.
+  return { ...today, counts: undefined, queue: arr(today.queue).filter(q => isObject(q) && isObject(q.location) && str(q.location.id) === locationId) };
 };
 
 /**

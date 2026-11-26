@@ -24,11 +24,12 @@ export const fetchDoctorToday = async (): Promise<unknown> => {
   }
 };
 
-/** The doctor's appointments: one `date`, or a `from`–`to` range. */
+/** The doctor's appointments: one `date` (a Pakistan-time day), or instants `from` (inclusive) – `to` (exclusive). */
 export const fetchDoctorAppointments = async (params: {
   date?: string;
   from?: string;
   to?: string;
+  page?: number;
   pageSize?: number;
 }): Promise<unknown> => {
   try {
@@ -110,6 +111,16 @@ export const confirmPayment = async (id: string): Promise<unknown> => {
 export const rejectPayment = async (id: string, reason: string): Promise<unknown> => {
   try {
     const response = await API.POST({ URL: `${path(id)}/payment/reject`, data: { reason } });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+
+/** A fee owed back after a cancellation, sent outside MetroMatrix: `refund_due → refunded`. */
+export const refundAppointment = async (id: string, refundRef: string): Promise<unknown> => {
+  try {
+    const response = await API.POST({ URL: `${path(id)}/refund`, data: { refundRef } });
     return response.data;
   } catch (e) {
     throw toApiError(e);

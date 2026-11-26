@@ -45,6 +45,17 @@ export const paymentOptionsFor = (location: Pick<PracticeLocation, 'kind' | 'req
 export const defaultPaymentFor = (location: Pick<PracticeLocation, 'kind' | 'requiresPrepay'>): AppointmentPaymentMethod =>
   paymentOptionsFor(location)[0];
 
+const MIN = 60_000;
+/**
+ * When a required prepayment is due, as the API sets it (appointments.service
+ * `payBy`): two hours from booking, but at least 30 minutes before the start;
+ * never under 10 minutes from now, and never after the start.
+ */
+export const prepayDeadline = (startAt: string, now: number): string => {
+  const start = Date.parse(startAt);
+  return new Date(Math.min(Math.max(now + 10 * MIN, Math.min(now + 120 * MIN, start - 30 * MIN)), start)).toISOString();
+};
+
 export const validateBooking = (b: Pick<BookingInput, 'startAt' | 'reason' | 'recordIds'>): ValidationErrors => {
   const errors: ValidationErrors = {};
   if (!b.startAt) errors.startAt = 'Choose a time';

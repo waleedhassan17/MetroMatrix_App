@@ -313,6 +313,22 @@ export const slotDaySerializer = fromResponse((raw: unknown): SlotDay | null => 
   };
 });
 
+/** One day of a fortnight's answer (and, when it has no room, the next day that does). */
+export const slotDayOnSerializer = fromResponse((raw: unknown, date: string): SlotDay | null => {
+  const days = slotDays(raw);
+  const i = days.findIndex(d => d.date === date);
+  if (i < 0) return null;
+  const loc = isObject(raw) && isObject(raw.location) ? raw.location : {};
+  const day = days[i];
+  const next = day.slots.length ? null : days.slice(i + 1).find(d => d.slots.length);
+  return {
+    date: day.date,
+    timezone: timezone(loc.timezone),
+    slots: day.slots,
+    nextAvailable: next ? { date: next.date, startAt: next.slots[0].startAt } : null,
+  };
+});
+
 // ─── Home ─────────────────────────────────────────────
 const BANNER_SCREENS = ['video_consultation', 'symptom_checker', 'emergency', 'records', 'available_today'] as const;
 

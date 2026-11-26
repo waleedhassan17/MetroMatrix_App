@@ -7,8 +7,9 @@ import { toRejectedValue } from '../../networks/network/network';
 import type { CalendarRange } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { getCalendar } from '../shared/practiceReads';
+import { calendarQuery, type CalendarMode } from '../../models/health/calendarModel';
 
-export type CalendarMode = 'day' | 'week';
+export type { CalendarMode } from '../../models/health/calendarModel';
 
 export interface DoctorCalendarSliceState {
   mode: CalendarMode;
@@ -29,9 +30,9 @@ export const doctorCalendarSlice = createAppSlice({
       state.mode = action.payload;
     }),
     loadCalendarAsync: create.asyncThunk(
-      async ({ from, to }: { date: string; from: string; to: string }, { rejectWithValue }) => {
+      async ({ date, mode }: { date: string; mode: CalendarMode }, { rejectWithValue }) => {
         try {
-          return await getCalendar(from, to);
+          return await getCalendar(calendarQuery(date, mode));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

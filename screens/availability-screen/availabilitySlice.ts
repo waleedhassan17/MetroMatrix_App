@@ -4,20 +4,34 @@
 // Locations (a clinic, or video) with their fee and slot length; each one's
 // week as time ranges, checked inline (and by the server) against the
 // doctor's other locations; and the next days exactly as patients see them.
+// The server's word on a location field lands under that field; a video
+// location whose "pay before" couldn't be switched on is still saved (and
+// the sheet stays on it); unsaved hours are known (`hoursDirty`).
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { deleteLocation, fetchPreview } from '../../networks/health/doctor/practice';
-import { toRejectedValue } from '../../networks/network/network';
-import { overlapsFrom, previewSerializer } from '../../serializers/health/doctorSerializer';
-import { DEFAULT_RANGE, copyToWeekdays, normaliseWeek } from '../../models/health/availabilityModel';
+import { deleteLocation, fetchDoctorPaymentAccounts, fetchPreview } from '../../networks/health/doctor/practice';
+import { errorCopy, fieldErrors, toRejectedValue } from '../../networks/network/network';
+import { doctorPaymentAccountListSerializer, overlapsFrom, previewSerializer } from '../../serializers/health/doctorSerializer';
+import {
+  DEFAULT_RANGE,
+  copyToDays,
+  copyToWeekdays,
+  locationFieldKey,
+  normaliseWeek,
+  sameWeek,
+  type DoctorLocationForm,
+} from '../../models/health/availabilityModel';
 import type { AvailabilityPreview, DoctorLocation, DoctorLocationInput, HoursOverlap, WeekDayHours } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { createLocation, listLocations, saveHours, updateLocation } from '../shared/practiceReads';
 
 export type AvailabilityTab = 'locations' | 'hours' | 'preview';
 
-export const blankLocation = (kind: 'video' | 'clinic' = 'clinic'): DoctorLocationInput => ({
+/** How many days the Preview tab shows (the API's most). */
+export const PREVIEW_DAYS = 14;
+
+export const blankLocation = (kind: 'video' | 'clinic' = 'clinic'): DoctorLocationForm => ({
   kind,
   name: kind === 'video' ? 'Video consultation' : '',
   area: '',
@@ -36,7 +50,20 @@ export interface AvailabilitySliceState {
   tab: AvailabilityTab;
   locations: DoctorLocation[];
   status: FormStatus;
-  sheet: { open: boolean; id: string | null; form: DoctorLocationInput; touched: boolean };
+  sheet: {
+    open: boolean;
+    id: string | null;
+    form: DoctorLocationForm;
+    touched: boolean;
+    /** The server's word on a field, by the form's own key ("address"). */
+    serverErrors: Record<string, string>;
+    /** The map pin is being set (the map shows in the sheet). */
+    pinning: boolean;
+  };
+  /** The doctor has an active payment account (needed before "pay before the call"). */
+  hasPaymentAccount: boolean;
+  /** Saved, but its "pay before" was refused: say so in the sheet, with a way to fix it. */
+  prepayRefused: boolean;
   /** The location whose week is being edited, and the unsaved week. */
   hoursFor: string | null;
   draft: WeekDayHours[];
@@ -52,7 +79,9 @@ const initialState: AvailabilitySliceState = {
   tab: 'locations',
   locations: [],
   status: 'idle',
-  sheet: { open: false, id: null, form: blankLocation(), touched: false },
+  sheet: { open: false, id: null, form: blankLocation(), touched: false, serverErrors: {}, pinning: false },
+  hasPaymentAccount: false,
+  prepayRefused: false,
   hoursFor: null,
   draft: [],
   serverOverlaps: [],
@@ -86,6 +115,8 @@ export const availabilitySlice = createAppSlice({
         open: true,
         id: l?.id ?? null,
         touched: false,
+        serverErrors: {},
+        pinning: false,
         form: l
           ? {
               kind: l.kind,
@@ -104,12 +135,18 @@ export const availabilitySlice = createAppSlice({
           : blankLocation(action.payload.kind),
       };
       state.error = NO_ERROR;
+      state.prepayRefused = false;
     }),
     closeLocationSheet: create.reducer(state => {
       state.sheet.open = false;
+      state.prepayRefused = false;
     }),
-    editLocation: create.reducer((state, action: PayloadAction<Partial<DoctorLocationInput>>) => {
+    editLocation: create.reducer((state, action: PayloadAction<Partial<DoctorLocationForm>>) => {
       state.sheet.form = { ...state.sheet.form, ...action.payload };
+      for (const k of Object.keys(action.payload)) delete state.sheet.serverErrors[k];
+    }),
+    setPinning: create.reducer((state, action: PayloadAction<boolean>) => {
+      state.sheet.pinning = action.payload;
     }),
     touchLocation: create.reducer(state => {
       state.sheet.touched = true;
@@ -138,6 +175,13 @@ export const availabilitySlice = createAppSlice({
       state.draft = copyToWeekdays(state.draft, action.payload);
       state.serverOverlaps = [];
     }),
+    /** "Copy to…": one day's ranges onto the days the doctor ticked. */
+    copyDayTo: create.reducer((state, action: PayloadAction<{ from: number; to: number[] }>) => {
+      state.draft = copyToDays(state.draft, action.payload.from, action.payload.to);
+      state.serverOverlaps = [];
+    }),
+    /** Throw the unsaved week away (back to the saved one). */
+    resetHours: create.reducer(state => startHours(state, state.hoursFor)),
     touchHours: create.reducer(state => {
       state.touchedHours = true;
     }),
@@ -145,7 +189,8 @@ export const availabilitySlice = createAppSlice({
     loadLocationsAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await listLocations();
+          const [locations, accounts] = await Promise.all([listLocations(), fetchDoctorPaymentAccounts()]);
+          return { locations, accounts };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -153,11 +198,13 @@ export const availabilitySlice = createAppSlice({
       {
         pending: state => {
           state.status = 'loading';
+          state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
           state.status = 'succeeded';
-          state.locations = action.payload;
-          if (!state.hoursFor || !action.payload.some(l => l.id === state.hoursFor)) startHours(state, null);
+          state.locations = action.payload.locations;
+          state.hasPaymentAccount = (doctorPaymentAccountListSerializer(action.payload.accounts) ?? []).some(a => a.isActive);
+          if (!state.hoursFor || !action.payload.locations.some(l => l.id === state.hoursFor)) startHours(state, null);
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -177,18 +224,38 @@ export const availabilitySlice = createAppSlice({
         pending: state => {
           state.busy = 'location';
           state.error = NO_ERROR;
+          state.sheet.serverErrors = {};
+          state.prepayRefused = false;
         },
         fulfilled: (state, action) => {
           state.busy = null;
+          const { location, prepayError } = action.payload;
+          const added = !state.locations.some(l => l.id === location.id);
+          const i = state.locations.findIndex(l => l.id === location.id);
+          if (i >= 0) state.locations[i] = location;
+          else state.locations.push(location);
+          if (prepayError) {
+            // Saved: the sheet stays on it (a retry edits it, never adds a second one).
+            state.sheet.id = location.id;
+            state.sheet.form.requiresPrepay = false;
+            state.prepayRefused = true;
+            return;
+          }
           state.sheet.open = false;
-          const i = state.locations.findIndex(l => l.id === action.payload.id);
-          if (i >= 0) state.locations[i] = action.payload;
-          else state.locations.push(action.payload);
-          if (!state.hoursFor) startHours(state, action.payload.id);
+          // A new location's next step is its hours.
+          if (added) {
+            startHours(state, location.id);
+            state.tab = 'hours';
+          } else if (!state.hoursFor) startHours(state, location.id);
+          state.preview = null;
+          state.previewStatus = 'idle';
         },
         rejected: (state, action) => {
           state.busy = null;
-          state.error = readRejection(action, "The location wasn't saved.");
+          const error = readRejection(action, "The location wasn't saved.");
+          const fields = Object.fromEntries(Object.entries(fieldErrors(error.details)).map(([k, m]) => [locationFieldKey(k), m]));
+          state.sheet.serverErrors = fields;
+          state.error = { ...error, message: Object.keys(fields).length ? 'Check the highlighted fields.' : (errorCopy(error.code, error.details) ?? error.message) };
         },
       },
     ),
@@ -214,7 +281,8 @@ export const availabilitySlice = createAppSlice({
         },
         rejected: (state, action) => {
           state.busy = null;
-          state.error = readRejection(action, "The location wasn't removed.");
+          const error = readRejection(action, "The location wasn't removed.");
+          state.error = { ...error, message: errorCopy(error.code, error.details) ?? error.message };
         },
       },
     ),
@@ -237,7 +305,9 @@ export const availabilitySlice = createAppSlice({
           const i = state.locations.findIndex(l => l.id === action.payload.id);
           if (i >= 0) state.locations[i] = action.payload;
           state.draft = normaliseWeek(action.payload.hours);
+          state.touchedHours = false;
           state.preview = null;
+          state.previewStatus = 'idle';
         },
         rejected: (state, action) => {
           state.busy = null;
@@ -249,7 +319,7 @@ export const availabilitySlice = createAppSlice({
     loadPreviewAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
-          return await fetchPreview(7);
+          return await fetchPreview(PREVIEW_DAYS);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -263,15 +333,20 @@ export const availabilitySlice = createAppSlice({
           state.previewStatus = 'succeeded';
           state.preview = payload;
         },
-        rejected: (state, action) => {
+        rejected: state => {
+          // Shown on the Preview tab with "Try again"; it never retries by itself.
           state.previewStatus = 'failed';
-          state.error = readRejection(action, "The preview didn't load.");
         },
       },
     ),
   }),
   selectors: {
     selectAvailability: state => state,
+    /** The week being edited differs from its location's saved hours. */
+    selectHoursDirty: state => {
+      const loc = state.locations.find(l => l.id === state.hoursFor);
+      return !!loc && !sameWeek(state.draft, loc.hours);
+    },
   },
 });
 
@@ -280,6 +355,7 @@ export const {
   openLocationSheet,
   closeLocationSheet,
   editLocation,
+  setPinning,
   touchLocation,
   chooseHoursFor,
   setDayOpen,
@@ -287,6 +363,8 @@ export const {
   removeRange,
   setRange,
   copyDay,
+  copyDayTo,
+  resetHours,
   touchHours,
   loadLocationsAsync,
   saveLocationAsync,
@@ -294,4 +372,4 @@ export const {
   saveHoursAsync,
   loadPreviewAsync,
 } = availabilitySlice.actions;
-export const { selectAvailability } = availabilitySlice.selectors;
+export const { selectAvailability, selectHoursDirty } = availabilitySlice.selectors;

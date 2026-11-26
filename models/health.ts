@@ -520,6 +520,8 @@ export interface SymptomResult {
 
 // ─── Doctor partner ───────────────────────────────────
 export interface DoctorOwnProfile {
+  /** The doctor's id: their public page is /health/doctor/:id. */
+  id: string;
   title: string;
   name: string;
   gender: Gender | null;
@@ -527,7 +529,8 @@ export interface DoctorOwnProfile {
   specialtySlug: string | null;
   /** The specialty's name, as patients see it (read-only). */
   specialtyName: string;
-  secondarySpecialtySlug: string | null;
+  /** Up to five more specialties (the API's limit), by slug. */
+  secondarySpecialtySlugs: string[];
   practisingSince: number | null;
   languages: string[];
   about: string;
@@ -538,12 +541,17 @@ export interface DoctorOwnProfile {
   bookingRules: BookingRules;
   pmdcNumber: string;
   isListed: boolean;
+  /** Taking new bookings (the doctor's pause switch). */
+  isAccepting: boolean;
+  /** Staff took the profile off the directory, and why; only support can put it back. */
+  hiddenByStaff: string | null;
 }
 
-export type CompletenessKey = 'photo' | 'about' | 'qualifications' | 'services' | 'location' | 'hours' | 'preview';
+export type CompletenessKey = 'pmdc' | 'photo' | 'about' | 'qualifications' | 'location' | 'hours' | 'preview';
 
 export interface Completeness {
-  items: { key: CompletenessKey; label: string; done: boolean }[];
+  /** `detail`: what exactly is missing in that step ("Add: gender, languages"). */
+  items: { key: CompletenessKey; label: string; done: boolean; detail: string | null }[];
   percent: number;
   isListed: boolean;
   canPublish: boolean;
@@ -638,6 +646,17 @@ export interface DoctorActions {
   canConfirmPayment: boolean;
   canWritePrescription: boolean;
   canJoinVideo: boolean;
+  /** A paid fee is owed back (the visit was cancelled): record the refund. */
+  canRefund: boolean;
+  /** A transfer proof was sent: it can be turned down. */
+  canRejectPayment: boolean;
+}
+
+/** Who cancelled a visit, why, and whether it was inside the cutoff. */
+export interface AppointmentCancellation {
+  by: 'patient' | 'doctor' | 'system' | null;
+  reason: string | null;
+  late: boolean;
 }
 
 export interface TodaySummary {
@@ -672,6 +691,10 @@ export interface PreviousVisit {
   code: string;
   startAt: string;
   kind: ConsultKind;
+  /** Booked, completed, cancelled or missed: only completed visits count as seen. */
+  status: AppointmentStatus;
+  /** Why they booked (the patient's own words), when they said. */
+  reason: string | null;
   diagnosis: string | null;
   prescriptionId: string | null;
   notes: string | null;
@@ -705,6 +728,8 @@ export interface DoctorAppointmentDetail {
   actions: DoctorActions;
   prescription: Prescription | null;
   timeline: AppointmentEvent[];
+  /** Cancelled visits: who, why, and whether late. */
+  cancellation: AppointmentCancellation | null;
 }
 
 export interface MedicineSuggestion {
@@ -712,6 +737,9 @@ export interface MedicineSuggestion {
   strength: string;
   form: MedicineForm;
   isFavourite: boolean;
+  /** A favourite's usual dose and timing (what you wrote last time), when the API knows it. */
+  dose: string | null;
+  timing: MedicineTiming | null;
 }
 
 export interface PatientRow {
@@ -719,8 +747,12 @@ export interface PatientRow {
   name: string;
   age: number | null;
   gender: Gender | null;
+  /** Their latest booking with you (it may still be ahead, or cancelled). */
   lastVisitAt: string;
+  /** Completed visits only: cancelled and missed ones aren't visits. */
   visits: number;
+  /** Every booking, whatever became of it. */
+  bookings: number;
 }
 
 export interface PatientHistory {
@@ -732,11 +764,22 @@ export type DoctorInsightsRange = '7d' | '30d' | '90d';
 
 export interface DoctorInsights {
   range: DoctorInsightsRange;
+  /** Booked visits per day, cancelled ones left out. */
   perDay: { date: string; video: number; clinic: number }[];
-  outcomes: { completed: number; cancelled: number; noShow: number };
+  outcomes: { completed: number; cancelled: number; noShow: number; upcoming: number; lateCancelled: number; cancelledByDoctor: number };
+  /** Shares of the visits that ended (0–1); null before any did. */
+  rates: { completion: number | null; cancellation: number | null; noShow: number | null };
   avgWaitMinutes: number | null;
+  waitSamples: number;
+  avgConsultMinutes: number | null;
+  consultSamples: number;
+  /** People seen in the range: first time with you, or back again. */
+  patients: { new: number; returning: number };
   ratingTrend: { date: string; rating: number }[];
+  /** Fees you recorded as paid (MetroMatrix never holds them), and how. */
   recordedFees: number;
+  fees: { atClinic: number; byTransfer: number; refundDue: number; refunded: number };
+  /** Every booking in the range, cancelled ones included. */
   appointments: number;
 }
 

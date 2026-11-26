@@ -10,6 +10,8 @@ import { reviewSummarySerializer, doctorReviewSerializer } from '../../serialize
 
 export interface MyReviewsSliceState {
   summary: DoctorReviewSummary | null;
+  summaryStatus: FormStatus;
+  summaryError: ServerError;
   unreplied: boolean;
   replying: DoctorReview | null;
   text: string;
@@ -19,7 +21,15 @@ export interface MyReviewsSliceState {
   replied: ReturnType<typeof doctorReviewSerializer>;
 }
 
-const initialState: MyReviewsSliceState = { summary: null, unreplied: false, replying: null, text: '', status: 'idle', error: NO_ERROR ,
+const initialState: MyReviewsSliceState = {
+  summary: null,
+  summaryStatus: 'idle',
+  summaryError: NO_ERROR,
+  unreplied: false,
+  replying: null,
+  text: '',
+  status: 'idle',
+  error: NO_ERROR,
   replied: null,
 };
 
@@ -47,9 +57,19 @@ export const myReviewsSlice = createAppSlice({
         }
       },
       {
+        pending: state => {
+          state.summaryStatus = 'loading';
+          state.summaryError = NO_ERROR;
+        },
         fulfilled: (state, action) => {
+          state.summaryStatus = 'succeeded';
           const payload = reviewSummarySerializer(action.payload);
+          if (!payload) return;
           state.summary = payload;
+        },
+        rejected: (state, action) => {
+          state.summaryStatus = 'failed';
+          state.summaryError = readRejection(action, "Your rating didn't load.");
         },
       },
     ),

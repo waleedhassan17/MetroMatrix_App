@@ -218,7 +218,16 @@ describe('the doctor app', () => {
     expect(h.visits[0]).toMatchObject({ code: 'HC-UVSAE3', diagnosis: 'Acne vulgaris (mild)' });
     const i = insightsSerializer(data('insights'))!;
     expect(i.perDay).toHaveLength(7);
-    expect(i).toMatchObject({ recordedFees: 12000, outcomes: { completed: 5, cancelled: 6, noShow: 0 } });
+    expect(i).toMatchObject({
+      recordedFees: 12000,
+      outcomes: { completed: 5, cancelled: 6, noShow: 0, upcoming: 3 },
+      rates: { completion: 0.455, cancellation: 0.545, noShow: 0 },
+      avgWaitMinutes: 2,
+      waitSamples: 5,
+      avgConsultMinutes: 2,
+      patients: { new: 2, returning: 2 },
+      fees: { atClinic: 10000, byTransfer: 2000, refundDue: 0, refunded: 0 },
+    });
   });
 });
 

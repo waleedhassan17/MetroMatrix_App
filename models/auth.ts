@@ -131,6 +131,12 @@ export interface Business {
    * null for every other service (API_AUTH.md, A1).
    */
   isListed: boolean | null;
+  /**
+   * Doctors only: listed at some point (the API sends it once it knows; a
+   * listed doctor counts too). A doctor the server took off the listing keeps
+   * the app's tabs, so booked patients stay reachable (the 2026-11-26 QA).
+   */
+  wasListed?: boolean | null;
   /** Doctors only: staff have checked the PMDC number (API_AUTH.md, A1). */
   pmdcVerified: boolean | null;
   /** Food vendors only: their brand and whether they are live (session `business.food`). */

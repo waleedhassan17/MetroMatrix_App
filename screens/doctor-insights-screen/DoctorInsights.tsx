@@ -1,9 +1,11 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Insights
 // ═══════════════════════════════════════════════════════
-// Appointments per day (video and clinic), how visits ended (completed,
-// cancelled, missed), the measured average wait, your rating over time, and
-// fees recorded from completed visits — MetroMatrix doesn't process them.
+// All from GET /health/doctor/insights: visits per day (video and clinic,
+// cancelled ones left out), how visits ended with their rates, new and
+// returning patients, the measured wait and time with each patient, your
+// rating over time, and the fees you recorded (at the clinic, by transfer,
+// refunds) — MetroMatrix never processes or holds them.
 
 import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -11,8 +13,20 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, BarChart, Card, InlineNotice, LineChart, ScreenShell, SegmentTabs, SkeletonLines } from '../../Custom-Components/index';
-import type { DoctorInsightsRange, DoctorPartnerStackParamList } from '../../models';
+import {
+  AppText,
+  BarChart,
+  InlineNotice,
+  LineChart,
+  MoneyRows,
+  RowCardsSkeleton,
+  ScreenShell,
+  SectionCard,
+  SegmentTabs,
+  StatGridSkeleton,
+} from '../../Custom-Components/index';
+import { StatGrid } from '../../Components/admin/AdminParts';
+import type { DoctorInsights as Insights, DoctorInsightsRange, DoctorPartnerStackParamList } from '../../models';
 import { formatDayChip } from '../../utils/health-time/healthTime';
 import { formatPKR } from '../../utils/money/money';
 import { loadInsightsAsync, selectDoctorInsights } from './doctorInsightsSlice';
@@ -25,11 +39,16 @@ const RANGES: { key: DoctorInsightsRange; label: string }[] = [
   { key: '90d', label: '90 days' },
 ];
 
-const makeStyles = ({ space, radius, colors }: Theme) =>
+const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
-    tiles: { flexDirection: 'row', gap: space.s8 },
-    tile: { flex: 1, alignItems: 'center', gap: space.s0, paddingVertical: space.s12, borderRadius: radius.md, backgroundColor: colors.surfaceSunk },
+    pair: { flexDirection: 'row', gap: space.s16 },
+    half: { flex: 1, gap: space.s0 },
   });
+
+/** 0.455 → "46%"; nothing ended yet → null. */
+const pct = (r: number | null) => (r === null ? null : `${Math.round(r * 100)}%`);
+const visits = (n: number) => (n === 1 ? '1 visit' : `${n} visits`);
+const minutes = (n: number | null) => (n === null ? '—' : `${n} min`);
 
 const DoctorInsights: React.FC<Props> = props => (
   <ServiceScope service="healthcare">
@@ -43,6 +62,7 @@ const DoctorInsightsContent: React.FC<Props> = () => {
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectDoctorInsights);
   const d = s.insights;
+  const reload = () => void dispatch(loadInsightsAsync(s.range));
 
   useEffect(() => {
     void dispatch(loadInsightsAsync(s.range));
@@ -50,7 +70,31 @@ const DoctorInsightsContent: React.FC<Props> = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch]);
 
-  const perDay = (d?.perDay ?? []).map(p => ({ label: formatDayChip(p.date).day, value: p.video + p.clinic }));
+  return (
+    <ScreenShell
+      title="Insights"
+      subtitle="From your appointments"
+      onBack={back}
+      refreshing={s.status === 'loading' && !!d}
+      onRefresh={reload}
+      headerContent={<SegmentTabs options={RANGES} value={s.range} onChange={r => void dispatch(loadInsightsAsync(r))} accessibilityLabel="Range" />}>
+      {s.error.message ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: reload }} /> : null}
+      {!d ? (
+        s.status === 'failed' ? null : (
+          <>
+            <StatGridSkeleton count={4} />
+            <RowCardsSkeleton count={3} />
+          </>
+        )
+      ) : (
+        <InsightsBody d={d} styles={styles} />
+      )}
+    </ScreenShell>
+  );
+};
+
+const InsightsBody: React.FC<{ d: Insights; styles: ReturnType<typeof makeStyles> }> = ({ d, styles }) => {
+  const perDay = d.perDay.map(p => ({ label: formatDayChip(p.date).day, value: p.video + p.clinic }));
   // Long ranges read better as weeks.
   const bars: { label: string; value: number }[] = [];
   if (perDay.length > 14) {
@@ -59,59 +103,97 @@ const DoctorInsightsContent: React.FC<Props> = () => {
       else bars[bars.length - 1].value += p.value;
     });
   } else bars.push(...perDay);
+  const video = d.perDay.reduce((n, p) => n + p.video, 0);
+  const clinic = d.perDay.reduce((n, p) => n + p.clinic, 0);
+  const o = d.outcomes;
+  const seen = d.patients.new + d.patients.returning;
 
   return (
-    <ScreenShell title="Insights" subtitle="From your appointments" onBack={back} refreshing={s.status === 'loading' && !!d} onRefresh={() => void dispatch(loadInsightsAsync(s.range))}>
-      <SegmentTabs options={RANGES} value={s.range} onChange={r => void dispatch(loadInsightsAsync(r))} accessibilityLabel="Range" />
-      {s.error.message ? <InlineNotice message={s.error.message} /> : null}
-      {!d ? (
-        <SkeletonLines lines={10} />
-      ) : (
-        <>
-          <Card>
-            <AppText variant="title">{`${d.appointments} appointments`}</AppText>
-            <AppText variant="small" tone="muted">
-              {`${d.perDay.reduce((n, p) => n + p.video, 0)} video · ${d.perDay.reduce((n, p) => n + p.clinic, 0)} clinic${perDay.length > 14 ? ' · per week' : ' · per day'}`}
-            </AppText>
-            <BarChart data={bars} />
-          </Card>
-          <View style={styles.tiles}>
-            {[
-              ['Completed', d.outcomes.completed],
-              ['Cancelled', d.outcomes.cancelled],
-              ['Missed', d.outcomes.noShow],
-            ].map(([l, n]) => (
-              <View key={l as string} style={styles.tile} accessible accessibilityLabel={`${l}: ${n}`}>
-                <AppText variant="h2">{String(n)}</AppText>
-                <AppText variant="caption" tone="muted">
-                  {l as string}
-                </AppText>
-              </View>
-            ))}
+    <>
+      <StatGrid
+        columns={2}
+        compact
+        stats={[
+          { key: 'done', icon: 'checkmark-done-outline', tint: 'green', value: o.completed, label: 'Completed', hint: pct(d.rates.completion) ? `${pct(d.rates.completion)} of visits that ended` : null },
+          { key: 'cancelled', icon: 'close-circle-outline', tint: 'red', value: o.cancelled, label: 'Cancelled', hint: o.cancelled ? [pct(d.rates.cancellation), o.lateCancelled ? `${o.lateCancelled} late` : null, o.cancelledByDoctor ? `${o.cancelledByDoctor} by you` : null].filter(Boolean).join(' · ') : null },
+          { key: 'missed', icon: 'alert-circle-outline', tint: 'amber', value: o.noShow, label: 'Missed', hint: o.noShow ? pct(d.rates.noShow) : null },
+          { key: 'upcoming', icon: 'calendar-outline', tint: 'blue', value: o.upcoming, label: 'Still ahead', hint: 'Booked, not yet seen' },
+        ]}
+      />
+
+      <SectionCard title="Visits" icon="bar-chart-outline">
+        <AppText variant="small" tone="muted">
+          {`${video} video · ${clinic} clinic · ${perDay.length > 14 ? 'per week' : 'per day'}, cancelled visits left out`}
+        </AppText>
+        <BarChart data={bars} />
+      </SectionCard>
+
+      <SectionCard title="Patients" icon="people-outline">
+        {seen ? (
+          <View style={styles.pair}>
+            <View style={styles.half} accessible accessibilityLabel={`New patients: ${d.patients.new}`}>
+              <AppText variant="h2">{String(d.patients.new)}</AppText>
+              <AppText variant="small" tone="muted">
+                First visit with you
+              </AppText>
+            </View>
+            <View style={styles.half} accessible accessibilityLabel={`Returning patients: ${d.patients.returning}`}>
+              <AppText variant="h2">{String(d.patients.returning)}</AppText>
+              <AppText variant="small" tone="muted">
+                Came back to you
+              </AppText>
+            </View>
           </View>
-          <Card>
-            <AppText variant="title">Average wait</AppText>
-            <AppText variant="h1">{d.avgWaitMinutes !== null ? `${d.avgWaitMinutes} min` : '—'}</AppText>
+        ) : (
+          <AppText variant="small" tone="muted">
+            The people you see in this period are counted here once their visits are completed.
+          </AppText>
+        )}
+      </SectionCard>
+
+      <SectionCard title="Time" icon="time-outline">
+        <View style={styles.pair}>
+          <View style={styles.half} accessible accessibilityLabel={`Average wait: ${minutes(d.avgWaitMinutes)}`}>
+            <AppText variant="h2">{minutes(d.avgWaitMinutes)}</AppText>
             <AppText variant="small" tone="muted">
-              {d.avgWaitMinutes !== null ? 'From check-in to the start of the consultation, at your clinics.' : 'Shown once at least three checked-in visits are completed.'}
+              Average wait
             </AppText>
-          </Card>
-          {d.ratingTrend.length > 1 ? (
-            <Card>
-              <AppText variant="title">Your rating</AppText>
-              <LineChart data={d.ratingTrend.map(r => ({ label: formatDayChip(r.date).day, value: r.rating }))} format={n => n.toFixed(1)} />
-            </Card>
-          ) : null}
-          <Card>
-            <AppText variant="title">Recorded fees</AppText>
-            <AppText variant="h1">{formatPKR(d.recordedFees)}</AppText>
+          </View>
+          <View style={styles.half} accessible accessibilityLabel={`Average time with a patient: ${minutes(d.avgConsultMinutes)}`}>
+            <AppText variant="h2">{minutes(d.avgConsultMinutes)}</AppText>
             <AppText variant="small" tone="muted">
-              Recorded from completed visits. MetroMatrix does not process your payments.
+              With each patient
             </AppText>
-          </Card>
-        </>
-      )}
-    </ScreenShell>
+          </View>
+        </View>
+        <AppText variant="small" tone="muted">
+          {d.waitSamples || d.consultSamples
+            ? `Measured from ${visits(Math.max(d.waitSamples, d.consultSamples))}: the wait runs from check-in (or the booked time) to the start, the time with a patient from start to complete.`
+            : 'Measured once you start and complete visits in the app.'}
+        </AppText>
+      </SectionCard>
+
+      {d.ratingTrend.length > 1 ? (
+        <SectionCard title="Your rating" icon="star-outline">
+          <LineChart data={d.ratingTrend.map(r => ({ label: formatDayChip(r.date).day, value: r.rating }))} format={n => n.toFixed(1)} />
+        </SectionCard>
+      ) : null}
+
+      <SectionCard title="Recorded fees" icon="wallet-outline">
+        <AppText variant="h1">{formatPKR(d.recordedFees)}</AppText>
+        <MoneyRows
+          rows={[
+            { label: 'Paid at the clinic', value: d.fees.atClinic },
+            { label: 'Paid by transfer', value: d.fees.byTransfer },
+            d.fees.refundDue ? { label: 'Refunds you owe', value: d.fees.refundDue } : null,
+            d.fees.refunded ? { label: 'Refunded', value: d.fees.refunded } : null,
+          ]}
+        />
+        <AppText variant="small" tone="muted">
+          The fees you marked as paid. MetroMatrix does not process or hold your payments.
+        </AppText>
+      </SectionCard>
+    </>
   );
 };
 

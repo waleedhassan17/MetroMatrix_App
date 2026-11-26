@@ -11,6 +11,7 @@ import { StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useNow } from '../../hooks/useNow';
 import { useStyles, useTheme, type Theme } from '../../theme/index';
 import {
   AppText,
@@ -25,7 +26,7 @@ import {
   TextAction,
   TextField,
 } from '../../Custom-Components/index';
-import { MAX_REASON, REASON_TAGS, paymentOptionsFor } from '../../models/health/bookingModel';
+import { MAX_REASON, REASON_TAGS, paymentOptionsFor, prepayDeadline } from '../../models/health/bookingModel';
 import { PAYMENT_METHOD_LABEL } from '../../models/health/appointmentStatusModel';
 import { recordTypeLabel } from '../../models/health/recordModel';
 import type { HealthBrowseParamList } from '../../models';
@@ -60,6 +61,7 @@ const makeStyles = ({ space }: Theme) =>
 type Nav = NativeStackNavigationProp<HealthBrowseParamList>;
 
 export const BookAppointmentSheet: React.FC = () => {
+  const now = useNow();
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service } = useTheme();
@@ -226,7 +228,9 @@ export const BookAppointmentSheet: React.FC = () => {
         )}
         <AppText variant="small" tone="muted">
           {b.paymentMethod === 'transfer'
-            ? `${loc.requiresPrepay ? 'This doctor asks for payment before video consultations. ' : ''}You'll see the doctor's account next. Send ${formatPKR(loc.fee)} within 3 hours (and before ${formatSlot(b.startAt, tz)}) to keep this time.`
+            ? loc.requiresPrepay
+              ? `This doctor asks for payment before video consultations. You'll see their account next: send ${formatPKR(loc.fee)} by ${formatSlot(prepayDeadline(b.startAt, now), tz)}, or this time is released for other patients.`
+              : `You'll see the doctor's account next. Send ${formatPKR(loc.fee)} before your consultation. You pay the doctor directly.`
             : 'You pay the doctor directly. MetroMatrix never holds your money.'}
         </AppText>
       </View>

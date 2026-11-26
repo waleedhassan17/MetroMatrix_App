@@ -126,6 +126,7 @@ export const businessSerializer = fromResponse((raw: unknown): Business | null =
     updatedAt: str(raw.updatedAt),
     // Doctors only: listed for patients, and the PMDC check (MetroMatrix-API docs/API_AUTH.md, A1).
     isListed: subType === 'doctor' ? bool(raw.isListed) : null,
+    wasListed: subType === 'doctor' ? bool(raw.wasListed) || bool(raw.isListed) : null,
     pmdcVerified: subType === 'doctor' ? bool(raw.pmdcVerified) : null,
     food: foodVendorSessionSerializer(raw.food),
   };

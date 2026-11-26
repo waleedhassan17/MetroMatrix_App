@@ -1199,7 +1199,7 @@ const seedAppointments = (h: MockHealth, now: number) => {
           accountNumber: '+923001112233',
           bankName: null,
           amount: ayeshaVideo.fee,
-          payBy: new Date(Math.min(now + 3 * HOUR, Date.parse(vnext.startAt) - 15 * MINUTE)).toISOString(),
+          payBy: new Date(Math.min(now + 2 * HOUR, Date.parse(vnext.startAt) - 30 * MINUTE)).toISOString(),
         },
         proof: { transactionId: 'JC8842019935', imageUrl: null, submittedAt: new Date(now - 2 * HOUR).toISOString(), rejectionReason: null },
       },

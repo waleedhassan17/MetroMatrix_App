@@ -10,7 +10,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 
 import { issuePrescription, recentDiagnoses, suggestMedicines } from '../../networks/health/doctor/prescriptionWriter';
-import { toRejectedValue } from '../../networks/network/network';
+import { errorCopy, toRejectedValue } from '../../networks/network/network';
 import { emptyMedicine, emptyPrescription, moveMedicine } from '../../models/health/prescriptionModel';
 import type { DoctorAppointmentDetail, DoctorOwnProfile, Medicine, MedicineSuggestion, PrescriptionInput } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
@@ -24,6 +24,8 @@ export interface PrescriptionWriterSliceState {
   prescriptionId: string | null;
   editableUntil: string | null;
   form: PrescriptionInput;
+  /** The prescription as opened or last saved: the form differs → unsaved changes. */
+  saved: PrescriptionInput;
   diagnoses: string[];
   suggestions: { row: number; items: MedicineSuggestion[] } | null;
   newTest: string;
@@ -40,6 +42,7 @@ const initialState: PrescriptionWriterSliceState = {
   prescriptionId: null,
   editableUntil: null,
   form: emptyPrescription(),
+  saved: emptyPrescription(),
   diagnoses: [],
   suggestions: null,
   newTest: '',
@@ -75,7 +78,17 @@ export const prescriptionWriterSlice = createAppSlice({
     }),
     pickSuggestion: create.reducer((state, action: PayloadAction<{ index: number; s: MedicineSuggestion }>) => {
       const m = state.form.medicines[action.payload.index];
-      if (m) state.form.medicines[action.payload.index] = { ...m, name: action.payload.s.name, strength: action.payload.s.strength, form: action.payload.s.form };
+      // A favourite brings your usual dose and timing with it.
+      const sg = action.payload.s;
+      if (m)
+        state.form.medicines[action.payload.index] = {
+          ...m,
+          name: sg.name,
+          strength: sg.strength,
+          form: sg.form,
+          dose: sg.dose ?? m.dose,
+          timing: sg.timing ?? m.timing,
+        };
       state.suggestions = null;
     }),
     clearSuggestions: create.reducer(state => {
@@ -129,6 +142,7 @@ export const prescriptionWriterSlice = createAppSlice({
           state.form = rx
             ? { diagnosis: rx.diagnosis, medicines: rx.medicines.length ? rx.medicines : [emptyMedicine()], tests: rx.tests, advice: rx.advice, followUpInDays: rx.followUpInDays }
             : emptyPrescription();
+          state.saved = state.form;
         },
         rejected: (state, action) => {
           state.status = 'failed';
@@ -170,13 +184,15 @@ export const prescriptionWriterSlice = createAppSlice({
         fulfilled: (state, action) => {
           const rx = prescriptionSerializer(action.payload);
           state.saveStatus = 'succeeded';
+          state.saved = state.form;
           if (!rx) return;
           state.prescriptionId = rx.id;
           state.editableUntil = rx.editableUntil;
         },
         rejected: (state, action) => {
           state.saveStatus = 'failed';
-          state.error = readRejection(action, "The prescription wasn't saved. Try again.");
+          const error = readRejection(action, "The prescription wasn't saved. Try again.");
+          state.error = { ...error, message: errorCopy(error.code, error.details) ?? error.message };
         },
       },
     ),

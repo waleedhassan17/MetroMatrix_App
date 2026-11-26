@@ -2,47 +2,66 @@
 // MetroMatrix — Availability
 // ═══════════════════════════════════════════════════════
 // Locations: video and each clinic, with fee and slot length (add, edit,
-// remove). Weekly hours: one location's week as time ranges — add a range,
-// copy a day to the weekdays, close a day — with clashes against your other
-// locations named inline. Preview: your next 7 days exactly as patients see
-// them.
+// remove), a clinic's street address and its pin on the map. Weekly hours:
+// one location's week as time ranges picked from a clock (never typed) —
+// add a range, copy a day to any days, close a day — with each day's and the
+// week's slot count, and clashes against your other locations named inline;
+// leaving or switching with unsaved hours asks first. Preview: your next 14
+// days exactly as patients see them. Every limit is the API's own and the
+// server's word on a field shows under that field.
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
+import { useUnsavedGuard } from '../../hooks/useUnsavedGuard';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import {
   AppText,
   Button,
   Card,
+  Checkbox,
   ChoiceChip,
+  DangerRow,
   Divider,
   EmptyState,
   IconButton,
   InlineNotice,
   IonIcon,
+  RowCardsSkeleton,
   ScreenShell,
   SegmentTabs,
   Sheet,
-  SkeletonLines,
   TextAction,
   TextField,
+  TimeField,
   ToggleRow,
 } from '../../Custom-Components/index';
-import { SLOT_LENGTHS, WEEKDAYS, crossLocationOverlaps, overlapMessage, validateLocation, validateWeek } from '../../models/health/availabilityModel';
+import { FoodMap } from '../../Custom-Components/food/map/FoodMap';
+import {
+  LOCATION_LIMITS,
+  SLOT_LENGTHS,
+  WEEKDAYS,
+  crossLocationOverlaps,
+  daySlotCount,
+  overlapMessage,
+  validateLocation,
+  validateWeek,
+  weeklySlotCount,
+} from '../../models/health/availabilityModel';
 import type { DoctorPartnerStackParamList } from '../../models';
 import { Alert } from '../../utils/alert/alert';
-import { formatDayChip, formatSlot } from '../../utils/health-time/healthTime';
+import { PKT, formatDayChip, formatSlot } from '../../utils/health-time/healthTime';
 import { formatPKR } from '../../utils/money/money';
 import { haptics } from '../../utils/haptics/haptics';
 import {
+  PREVIEW_DAYS,
   addRange,
   chooseHoursFor,
   closeLocationSheet,
-  copyDay,
+  copyDayTo,
   deleteLocationAsync,
   editLocation,
   loadLocationsAsync,
@@ -52,8 +71,10 @@ import {
   saveHoursAsync,
   saveLocationAsync,
   selectAvailability,
+  selectHoursDirty,
   setAvailabilityTab,
   setDayOpen,
+  setPinning,
   setRange,
   touchHours,
   touchLocation,
@@ -68,7 +89,17 @@ const TABS: { key: AvailabilityTab; label: string }[] = [
   { key: 'preview', label: 'Preview' },
 ];
 
-const makeStyles = ({ space, radius, colors }: Theme) =>
+/** Where the map starts when a clinic has no pin yet. */
+const LAHORE = { lat: 31.5204, lng: 74.3587 };
+
+/** The app keeps the end of the day as 23:59; the clock picker calls it midnight (24:00). */
+const toPicker = (hhmm: string) => (hhmm === '23:59' ? '24:00' : hhmm);
+const fromPicker = (hhmm: string) => (hhmm === '24:00' ? '23:59' : hhmm);
+
+/** "Pakistan time", or the zone's own name. */
+const zoneLabel = (tz: string) => (tz === PKT ? 'Pakistan time' : tz.replace(/_/g, ' '));
+
+const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
     row: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
     grow: { flex: 1, gap: space.s4 },
@@ -76,8 +107,9 @@ const makeStyles = ({ space, radius, colors }: Theme) =>
     dayHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.s8 },
     range: { flexDirection: 'row', alignItems: 'flex-start', gap: space.s8 },
     links: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s16 },
-    slot: { paddingHorizontal: space.s8, paddingVertical: space.s4, borderRadius: radius.sm, backgroundColor: colors.surfaceSunk },
-    previewDay: { gap: space.s8, paddingVertical: space.s8 },
+    previewDay: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.s8, paddingVertical: space.s8 },
+    list: { gap: space.s12 },
+    footer: { gap: space.s8 },
   });
 
 const Availability: React.FC<Props> = props => (
@@ -86,12 +118,17 @@ const Availability: React.FC<Props> = props => (
   </ServiceScope>
 );
 
-const AvailabilityContent: React.FC<Props> = ({ route }) => {
+const AvailabilityContent: React.FC<Props> = ({ route, navigation }) => {
   const { back } = useBack({ name: 'DoctorTabs', params: { screen: 'MoreTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { service } = useTheme();
+  const { service, size } = useTheme();
   const s = useAppSelector(selectAvailability);
+  const hoursDirty = useAppSelector(selectHoursDirty);
+  useUnsavedGuard(hoursDirty, s.busy === 'hours');
+  // "Copy to…": the day being copied, and the days ticked.
+  const [copyFrom, setCopyFrom] = useState<number | null>(null);
+  const [copyTargets, setCopyTargets] = useState<number[]>([]);
 
   useEffect(() => {
     void dispatch(loadLocationsAsync());
@@ -99,35 +136,43 @@ const AvailabilityContent: React.FC<Props> = ({ route }) => {
   useEffect(() => {
     if (route.params?.tab) dispatch(setAvailabilityTab(route.params.tab));
   }, [route.params?.tab, dispatch]);
+  // The preview loads once when its tab opens; after a failure only "Try again" asks again.
   useEffect(() => {
-    if (s.tab === 'preview' && !s.preview && s.previewStatus !== 'loading') void dispatch(loadPreviewAsync());
-  }, [s.tab, s.preview, s.previewStatus, dispatch]);
+    if (s.tab === 'preview' && s.previewStatus === 'idle') void dispatch(loadPreviewAsync());
+  }, [s.tab, s.previewStatus, dispatch]);
 
   const form = s.sheet.form;
   const locErrors = validateLocation(form);
+  const showLoc = (k: string) => s.sheet.serverErrors[k] ?? (s.sheet.touched ? locErrors[k] : undefined);
   const current = s.locations.find(l => l.id === s.hoursFor) ?? null;
-  const weekErrors = validateWeek(s.draft);
+  const weekErrors = validateWeek(s.draft, current?.slotMinutes ?? 15);
   const clashes = s.hoursFor ? crossLocationOverlaps(s.hoursFor, s.draft, s.locations) : [];
   const allClashes = [...clashes, ...s.serverOverlaps.filter(o => !clashes.some(c => c.day === o.day && c.otherLocationName === o.otherLocationName))];
+  const hasVideo = s.locations.some(l => l.kind === 'video');
+  // The pin picker's start is fixed when the map opens; the map then moves under the pin.
+  const pinStart = useMemo(
+    () => (form.lat !== null && form.lng !== null ? { lat: form.lat, lng: form.lng } : LAHORE),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [s.sheet.pinning, s.sheet.open],
+  );
 
   const saveLocation = async () => {
     dispatch(touchLocation());
-    if (Object.keys(locErrors).length) {
+    if (Object.keys(locErrors).length || form.fee === null) {
       haptics.warning();
       return;
     }
-    const r = await dispatch(saveLocationAsync({ id: s.sheet.id, input: { ...form, city: form.city || 'Lahore' } }));
-    if (saveLocationAsync.fulfilled.match(r)) {
+    const wasNew = !s.sheet.id;
+    const r = await dispatch(saveLocationAsync({ id: s.sheet.id, input: { ...form, fee: form.fee } }));
+    if (saveLocationAsync.fulfilled.match(r) && !r.payload.prepayError) {
       haptics.success();
-      Toast.show({ type: 'success', text1: s.sheet.id ? 'Location saved' : 'Location added', text2: s.sheet.id ? undefined : 'Now set its weekly hours.' });
-    }
+      Toast.show({
+        type: 'success',
+        text1: wasNew ? 'Location added' : 'Location saved',
+        text2: wasNew ? 'Now set the hours patients can book there.' : undefined,
+      });
+    } else haptics.warning();
   };
-
-  const removeLocation = () =>
-    Alert.alert('Remove this location?', 'Patients will no longer see it. Booked appointments stay; move or cancel them first.', [
-      { text: 'Keep', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: () => s.sheet.id && void dispatch(deleteLocationAsync(s.sheet.id)) },
-    ]);
 
   const saveWeek = async () => {
     dispatch(touchHours());
@@ -142,12 +187,32 @@ const AvailabilityContent: React.FC<Props> = ({ route }) => {
     } else haptics.warning();
   };
 
+  /** Switching to another location's week with unsaved hours asks first. */
+  const switchHoursTo = (id: string) => {
+    if (id === s.hoursFor) return;
+    if (!hoursDirty) {
+      dispatch(chooseHoursFor(id));
+      return;
+    }
+    Alert.alert('Discard these hours?', `Your changes to ${current?.name ?? 'this location'} haven’t been saved.`, [
+      { text: 'Keep editing', style: 'cancel' },
+      { text: 'Discard', style: 'destructive', onPress: () => dispatch(chooseHoursFor(id)) },
+    ]);
+  };
+
+  const openPaymentAccounts = () => {
+    dispatch(closeLocationSheet());
+    navigation.navigate('PaymentAccounts');
+  };
+
   const footer =
     s.tab === 'locations' ? (
-      <Button label="Add a location" leftIcon="add" onPress={() => dispatch(openLocationSheet({ location: null }))} fullWidth />
+      <Button label="Add a location" leftIcon="add" onPress={() => dispatch(openLocationSheet({ location: null, kind: 'clinic' }))} fullWidth />
     ) : s.tab === 'hours' && current ? (
-      <Button label={`Save ${current.name} hours`} onPress={() => void saveWeek()} loading={s.busy === 'hours'} fullWidth />
+      <Button label={`Save ${current.name} hours`} onPress={() => void saveWeek()} loading={s.busy === 'hours'} disabled={!hoursDirty} fullWidth />
     ) : undefined;
+
+  const sheetError = s.sheet.touched && Object.keys(locErrors).length ? 'Check the highlighted fields.' : s.error.message;
 
   return (
     <ScreenShell
@@ -155,69 +220,124 @@ const AvailabilityContent: React.FC<Props> = ({ route }) => {
       subtitle="Where you see patients, and when"
       onBack={back}
       footer={footer}
-      refreshing={s.status === 'loading' && s.locations.length > 0}
+      headerContent={<SegmentTabs options={TABS} value={s.tab} onChange={t => dispatch(setAvailabilityTab(t))} accessibilityLabel="Availability" />}
+      refreshing={false}
       onRefresh={() => void (s.tab === 'preview' ? dispatch(loadPreviewAsync()) : dispatch(loadLocationsAsync()))}>
-      <SegmentTabs options={TABS} value={s.tab} onChange={t => dispatch(setAvailabilityTab(t))} accessibilityLabel="Availability" />
-      {s.error.message && !s.sheet.open && !allClashes.length ? <InlineNotice message={s.error.message} /> : null}
+      {s.error.message && !s.sheet.open && !allClashes.length ? (
+        <InlineNotice
+          message={s.error.message}
+          action={s.status === 'failed' && !s.locations.length ? { label: 'Try again', onPress: () => void dispatch(loadLocationsAsync()) } : undefined}
+        />
+      ) : null}
 
       {s.status !== 'succeeded' && !s.locations.length ? (
-        s.status === 'failed' ? null : <SkeletonLines lines={6} />
+        s.status === 'failed' ? null : <RowCardsSkeleton count={3} />
       ) : s.tab === 'locations' ? (
         s.locations.length ? (
-          s.locations.map(l => (
-            <Card key={l.id} onPress={() => dispatch(openLocationSheet({ location: l }))} accessibilityLabel={`${l.name}. Edit`}>
-              <View style={styles.row}>
-                <IonIcon name={l.kind === 'video' ? 'videocam-outline' : 'business-outline'} size="lg" color={service.accentDeep} />
-                <View style={styles.grow}>
-                  <AppText variant="title">{l.name}</AppText>
-                  <AppText variant="small" tone="muted">
-                    {[l.kind === 'video' ? 'From anywhere' : [l.area, l.city].filter(Boolean).join(', '), `${l.slotMinutes} min slots`, l.requiresPrepay ? 'Paid before' : null].filter(Boolean).join(' · ')}
-                  </AppText>
-                  <AppText variant="small">{l.hours.some(h => h.ranges.length) ? l.timings.map(t => `${t.days}: ${t.hours}`).join('\n') : 'No hours yet'}</AppText>
+          <View style={styles.list}>
+            {s.locations.map(l => (
+              <Card key={l.id} onPress={() => dispatch(openLocationSheet({ location: l }))} accessibilityLabel={`${l.name}. Edit`}>
+                <View style={styles.row}>
+                  <IonIcon name={l.kind === 'video' ? 'videocam-outline' : 'business-outline'} size="lg" color={service.accentDeep} />
+                  <View style={styles.grow}>
+                    <AppText variant="title">{l.name}</AppText>
+                    <AppText variant="small" tone="muted">
+                      {[
+                        l.kind === 'video' ? 'From anywhere' : [l.area, l.city].filter(Boolean).join(', '),
+                        `${l.slotMinutes} min slots`,
+                        l.requiresPrepay ? 'Paid before' : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </AppText>
+                    <AppText variant="small">
+                      {l.hours.some(h => h.ranges.length) ? l.timings.map(t => `${t.days}: ${t.hours}`).join('\n') : 'No hours yet'}
+                    </AppText>
+                  </View>
+                  <View style={styles.grow}>
+                    <AppText variant="bodyStrong" align="right">
+                      {formatPKR(l.fee)}
+                    </AppText>
+                    <AppText variant="small" tone="accentDeep" align="right">
+                      Edit
+                    </AppText>
+                  </View>
                 </View>
-                <AppText variant="bodyStrong">{formatPKR(l.fee)}</AppText>
-              </View>
-            </Card>
-          ))
+              </Card>
+            ))}
+            {!hasVideo ? (
+              <TextAction
+                label="Offer video consultations too"
+                icon="videocam-outline"
+                onPress={() => dispatch(openLocationSheet({ location: null, kind: 'video' }))}
+              />
+            ) : null}
+          </View>
         ) : (
-          <EmptyState icon="map-pin" title="No locations yet" body="Add the clinic where you see patients, or offer video consultations from anywhere." />
+          <EmptyState
+            icon="map-pin"
+            title="No locations yet"
+            body="Add the clinic where you see patients, or offer video consultations from anywhere."
+            action={{ label: 'Offer video consultations', onPress: () => dispatch(openLocationSheet({ location: null, kind: 'video' })) }}
+          />
         )
       ) : s.tab === 'hours' ? (
         !s.locations.length ? (
-          <EmptyState icon="clock" title="Add a location first" body="Hours belong to a location." />
+          <EmptyState icon="clock" title="Add a location first" body="Hours belong to a location." action={{ label: 'Add a location', onPress: () => dispatch(setAvailabilityTab('locations')) }} />
         ) : (
-          <>
+          <View style={styles.list}>
             <View style={styles.chips}>
               {s.locations.map(l => (
-                <ChoiceChip key={l.id} label={l.name} icon={l.kind === 'video' ? 'videocam-outline' : 'business-outline'} selected={l.id === s.hoursFor} onPress={() => dispatch(chooseHoursFor(l.id))} />
+                <ChoiceChip
+                  key={l.id}
+                  label={l.name}
+                  icon={l.kind === 'video' ? 'videocam-outline' : 'business-outline'}
+                  selected={l.id === s.hoursFor}
+                  onPress={() => switchHoursTo(l.id)}
+                />
               ))}
             </View>
-            {allClashes.length ? <InlineNotice tone="warning" title="These hours overlap another location" message={allClashes.map(overlapMessage).join('\n')} /> : null}
+            {current ? (
+              <AppText variant="small" tone="muted">
+                {`${weeklySlotCount(s.draft, current.slotMinutes)} slots a week · ${current.slotMinutes}-minute slots · ${zoneLabel(current.timezone)}`}
+              </AppText>
+            ) : null}
+            {allClashes.length ? (
+              <InlineNotice tone="warning" title="These hours overlap another location" message={allClashes.map(overlapMessage).join('\n')} />
+            ) : null}
             {WEEKDAYS.map(w => {
               const d = s.draft.find(x => x.day === w.day) ?? { day: w.day, ranges: [] };
               const open = d.ranges.length > 0;
               const clash = allClashes.find(c => c.day === w.day);
+              const slots = current ? daySlotCount(d, current.slotMinutes) : 0;
               return (
                 <Card key={w.day}>
                   <View style={styles.dayHead}>
-                    <AppText variant="title">{w.long}</AppText>
-                    <ToggleRow label={open ? 'Open' : 'Closed'} value={open} onChange={v => dispatch(setDayOpen({ day: w.day, open: v }))} />
+                    <View style={styles.grow}>
+                      <AppText variant="title">{w.long}</AppText>
+                      <AppText variant="caption" tone="muted">
+                        {open ? `${slots} ${slots === 1 ? 'slot' : 'slots'}` : 'Closed'}
+                      </AppText>
+                    </View>
+                    <ToggleRow label={`${w.long} ${open ? 'open' : 'closed'}`} value={open} onChange={v => dispatch(setDayOpen({ day: w.day, open: v }))} />
                   </View>
                   {d.ranges.map((r, i) => (
                     <View key={i} style={styles.range}>
                       <View style={styles.grow}>
-                        <TextField
-                          label="From"
+                        <TimeField
+                          label={`${w.short} from`}
                           value={r.from}
-                          onChangeText={t => dispatch(setRange({ day: w.day, index: i, field: 'from', value: t }))}
-                          placeholder="17:00"
-                          maxLength={5}
-                          keyboardType="numbers-and-punctuation"
+                          onChange={t => dispatch(setRange({ day: w.day, index: i, field: 'from', value: t }))}
                           error={s.touchedHours ? weekErrors[`day.${w.day}.${i}`] : undefined}
                         />
                       </View>
                       <View style={styles.grow}>
-                        <TextField label="To" value={r.to} onChangeText={t => dispatch(setRange({ day: w.day, index: i, field: 'to', value: t }))} placeholder="21:00" maxLength={5} keyboardType="numbers-and-punctuation" />
+                        <TimeField
+                          label={`${w.short} to`}
+                          value={toPicker(r.to)}
+                          onChange={t => dispatch(setRange({ day: w.day, index: i, field: 'to', value: fromPicker(t) }))}
+                          allowMidnight
+                        />
                       </View>
                       <IconButton icon="close" tone="muted" onPress={() => dispatch(removeRange({ day: w.day, index: i }))} accessibilityLabel={`Remove ${w.long} range ${i + 1}`} />
                     </View>
@@ -229,89 +349,225 @@ const AvailabilityContent: React.FC<Props> = ({ route }) => {
                   ) : null}
                   {open ? (
                     <View style={styles.links}>
-                      <TextAction label="Add hours" icon="add" onPress={() => dispatch(addRange(w.day))} />
-                      {w.day <= 6 ? <TextAction label="Copy to Mon – Sat" icon="copy-outline" onPress={() => dispatch(copyDay(w.day))} /> : null}
+                      <TextAction label="Add a break" icon="add" onPress={() => dispatch(addRange(w.day))} />
+                      <TextAction
+                        label="Copy to…"
+                        icon="copy-outline"
+                        onPress={() => {
+                          setCopyTargets([]);
+                          setCopyFrom(w.day);
+                        }}
+                      />
                     </View>
                   ) : null}
                 </Card>
               );
             })}
             <AppText variant="small" tone="muted">
-              {current ? `Times are in Pakistan time, cut into ${current.slotMinutes}-minute slots. Patients can't book less than your shortest notice ahead.` : ''}
+              Patients book in these hours, never sooner than your shortest notice. Booked visits stay as they are when hours change.
             </AppText>
-          </>
+          </View>
         )
-      ) : s.previewStatus === 'loading' || !s.preview ? (
-        <SkeletonLines lines={8} />
+      ) : s.previewStatus === 'failed' ? (
+        <InlineNotice message="The preview didn't load." action={{ label: 'Try again', onPress: () => void dispatch(loadPreviewAsync()) }} />
+      ) : s.previewStatus !== 'succeeded' || !s.preview ? (
+        <RowCardsSkeleton count={2} />
+      ) : !s.preview.locations.length ? (
+        <EmptyState icon="calendar" title="Nothing to preview yet" body="Add a location and its weekly hours to see what patients will see." />
       ) : (
-        s.preview.locations.map(l => (
-          <Card key={l.id}>
-            <View style={styles.row}>
-              <IonIcon name={l.kind === 'video' ? 'videocam-outline' : 'business-outline'} size="lg" color={service.accentDeep} />
-              <AppText variant="title" style={styles.grow}>
-                {l.name}
-              </AppText>
-            </View>
-            {l.days.map((d, i) => {
-              const chip = formatDayChip(d.date);
-              return (
-                <View key={d.date}>
-                  {i > 0 ? <Divider /> : null}
-                  <View style={styles.previewDay}>
-                    <AppText variant="bodyStrong">{chip.long}</AppText>
-                    {d.slots.length ? (
-                      <View style={styles.chips}>
-                        {d.slots.map(t => (
-                          <View key={t} style={styles.slot}>
-                            <AppText variant="small">{formatSlot(t, l.timezone)}</AppText>
-                          </View>
-                        ))}
-                      </View>
-                    ) : (
-                      <AppText variant="small" tone="muted">
-                        No times
-                      </AppText>
-                    )}
+        <View style={styles.list}>
+          <AppText variant="small" tone="muted">{`Your next ${PREVIEW_DAYS} days, exactly as patients see them.`}</AppText>
+          {s.preview.locations.map(l => {
+            const total = l.days.reduce((n, d) => n + d.slots.length, 0);
+            return (
+              <Card key={l.id}>
+                <View style={styles.row}>
+                  <IonIcon name={l.kind === 'video' ? 'videocam-outline' : 'business-outline'} size="lg" color={service.accentDeep} />
+                  <View style={styles.grow}>
+                    <AppText variant="title">{l.name}</AppText>
+                    <AppText variant="small" tone="muted">{`${total} open ${total === 1 ? 'time' : 'times'}`}</AppText>
                   </View>
                 </View>
-              );
-            })}
-          </Card>
-        ))
+                {!total ? <InlineNotice tone="warning" message="Patients can't book here: no open times in these days. Check its weekly hours and time off." embedded /> : null}
+                {l.days.map((d, i) => (
+                  <View key={d.date}>
+                    {i > 0 ? <Divider /> : null}
+                    <View style={styles.previewDay}>
+                      <AppText variant="bodyStrong">{formatDayChip(d.date).long}</AppText>
+                      <AppText variant="small" tone={d.slots.length ? 'ink' : 'muted'}>
+                        {d.slots.length
+                          ? `${d.slots.length} · ${formatSlot(d.slots[0], l.timezone)} – ${formatSlot(d.slots[d.slots.length - 1], l.timezone)}`
+                          : 'No times'}
+                      </AppText>
+                    </View>
+                  </View>
+                ))}
+              </Card>
+            );
+          })}
+        </View>
       )}
+
+      <Sheet
+        visible={copyFrom !== null}
+        onClose={() => setCopyFrom(null)}
+        title={`Copy ${copyFrom ? WEEKDAYS.find(w => w.day === copyFrom)?.long : ''} to`}
+        subtitle="The days you tick get the same hours."
+        footer={
+          <Button
+            label={copyTargets.length ? `Copy to ${copyTargets.length} ${copyTargets.length === 1 ? 'day' : 'days'}` : 'Choose the days'}
+            disabled={!copyTargets.length}
+            onPress={() => {
+              if (copyFrom) dispatch(copyDayTo({ from: copyFrom, to: copyTargets }));
+              setCopyFrom(null);
+            }}
+            fullWidth
+          />
+        }>
+        {WEEKDAYS.filter(w => w.day !== copyFrom).map(w => (
+          <Checkbox
+            key={w.day}
+            checked={copyTargets.includes(w.day)}
+            onToggle={on => setCopyTargets(t => (on ? [...t, w.day] : t.filter(x => x !== w.day)))}
+            label={w.long}
+            accessibilityLabel={`Copy to ${w.long}`}
+          />
+        ))}
+        <TextAction label="Every other day" onPress={() => setCopyTargets(WEEKDAYS.filter(w => w.day !== copyFrom).map(w => w.day))} />
+      </Sheet>
 
       <Sheet
         visible={s.sheet.open}
         onClose={() => dispatch(closeLocationSheet())}
-        title={s.sheet.id ? 'Edit location' : 'Add a location'}
+        title={s.sheet.id ? `Edit ${form.kind === 'video' ? 'video consultations' : 'clinic'}` : form.kind === 'video' ? 'Offer video consultations' : 'Add a clinic'}
         footer={
-          <>
+          <View style={styles.footer}>
+            {sheetError && !s.prepayRefused ? <InlineNotice message={sheetError} /> : null}
             <Button label="Save location" onPress={() => void saveLocation()} loading={s.busy === 'location'} fullWidth />
-            {s.sheet.id ? <Button label="Remove location" variant="ghost" onPress={removeLocation} loading={s.busy === 'delete'} fullWidth /> : null}
-          </>
+          </View>
         }>
-        {s.error.message ? <InlineNotice message={s.error.message} /> : null}
-        <View style={styles.chips}>
-          <ChoiceChip label="Clinic" icon="business-outline" selected={form.kind === 'clinic'} onPress={() => dispatch(editLocation({ kind: 'clinic', name: form.kind === 'video' ? '' : form.name, requiresPrepay: false }))} />
-          <ChoiceChip label="Video" icon="videocam-outline" selected={form.kind === 'video'} onPress={() => dispatch(editLocation({ kind: 'video', name: form.name || 'Video consultation' }))} />
-        </View>
-        <TextField label={form.kind === 'video' ? 'Name' : 'Clinic or hospital'} value={form.name} onChangeText={t => dispatch(editLocation({ name: t }))} error={s.sheet.touched ? locErrors.name : undefined} />
+        {s.prepayRefused ? (
+          <InlineNotice
+            tone="warning"
+            title="Saved, without payment before the call"
+            message="Asking patients to pay first needs an active payment account."
+            action={{ label: 'Add a payment account', onPress: openPaymentAccounts }}
+          />
+        ) : null}
+        {!s.sheet.id ? (
+          <View style={styles.chips}>
+            <ChoiceChip
+              label="Clinic"
+              icon="business-outline"
+              selected={form.kind === 'clinic'}
+              onPress={() => dispatch(editLocation({ kind: 'clinic', name: form.kind === 'video' ? '' : form.name, requiresPrepay: false }))}
+            />
+            {!hasVideo ? (
+              <ChoiceChip
+                label="Video"
+                icon="videocam-outline"
+                selected={form.kind === 'video'}
+                onPress={() => dispatch(editLocation({ kind: 'video', name: form.name || 'Video consultation' }))}
+              />
+            ) : null}
+          </View>
+        ) : null}
+        {!s.sheet.id && hasVideo && form.kind === 'clinic' ? (
+          <AppText variant="caption" tone="muted">
+            You already offer video consultations. Edit them from your locations.
+          </AppText>
+        ) : null}
+        <TextField
+          label={form.kind === 'video' ? 'Name' : 'Clinic or hospital'}
+          value={form.name}
+          onChangeText={t => dispatch(editLocation({ name: t }))}
+          error={showLoc('name')}
+          maxLength={LOCATION_LIMITS.name}
+          placeholder={form.kind === 'video' ? 'Video consultation' : 'Ayesha Hospital'}
+        />
         {form.kind === 'clinic' ? (
           <>
-            <TextField label="Area" value={form.area} onChangeText={t => dispatch(editLocation({ area: t }))} error={s.sheet.touched ? locErrors.area : undefined} placeholder="Gulberg III" />
-            <TextField label="City" value={form.city} onChangeText={t => dispatch(editLocation({ city: t }))} error={s.sheet.touched ? locErrors.city : undefined} placeholder="Lahore" />
-            <TextField label="Address" value={form.address ?? ''} onChangeText={t => dispatch(editLocation({ address: t || null }))} multiline placeholder="42-B Main Boulevard" />
-            <TextField label="Clinic phone" mode="phone" value={(form.phone ?? '').replace(/^\+92/, '')} onChangeText={v => dispatch(editLocation({ phone: v ? `+92${v}` : null }))} />
+            <TextField
+              label="Street address"
+              value={form.address ?? ''}
+              onChangeText={t => dispatch(editLocation({ address: t || null }))}
+              error={showLoc('address')}
+              maxLength={LOCATION_LIMITS.address}
+              multiline
+              placeholder="42-B Main Boulevard"
+              helper="Building and street, so patients can find the clinic."
+            />
+            <TextField
+              label="Area"
+              value={form.area}
+              onChangeText={t => dispatch(editLocation({ area: t }))}
+              error={showLoc('area')}
+              maxLength={LOCATION_LIMITS.area}
+              placeholder="Gulberg III"
+            />
+            <TextField
+              label="City"
+              value={form.city}
+              onChangeText={t => dispatch(editLocation({ city: t }))}
+              error={showLoc('city')}
+              maxLength={LOCATION_LIMITS.city}
+              placeholder="Lahore"
+            />
+            <TextField
+              label="Clinic phone (optional)"
+              mode="phone"
+              value={(form.phone ?? '').replace(/^\+92/, '')}
+              onChangeText={v => dispatch(editLocation({ phone: v ? `+92${v.replace(/\D/g, '')}` : null }))}
+              error={showLoc('phone')}
+            />
+            {s.sheet.pinning ? (
+              <>
+                <AppText variant="label">Move the map so the pin sits on the clinic</AppText>
+                <FoodMap
+                  pins={[]}
+                  height={size.trackingMap}
+                  picker={{ initial: pinStart, onCenterChange: p => dispatch(editLocation({ lat: p.lat, lng: p.lng })) }}
+                  accessibilityLabel="Map: move it so the pin marks your clinic"
+                />
+                <TextAction label="Done" icon="checkmark" onPress={() => dispatch(setPinning(false))} />
+              </>
+            ) : (
+              <View style={styles.links}>
+                <TextAction
+                  label={form.lat !== null ? 'Move the map pin' : 'Pin it on the map (optional)'}
+                  icon="location-outline"
+                  onPress={() => dispatch(setPinning(true))}
+                />
+                {form.lat !== null ? <TextAction label="Remove pin" tone="muted" onPress={() => dispatch(editLocation({ lat: null, lng: null }))} /> : null}
+              </View>
+            )}
           </>
         ) : (
-          <ToggleRow label="Payment before the consultation" helper="Patients transfer the fee to your payment account first." value={form.requiresPrepay} onChange={v => dispatch(editLocation({ requiresPrepay: v }))} />
+          <>
+            <ToggleRow
+              label="Payment before the consultation"
+              helper={
+                s.hasPaymentAccount
+                  ? 'Patients transfer the fee to your payment account first.'
+                  : 'Add a payment account first, so patients know where to send the fee.'
+              }
+              value={form.requiresPrepay}
+              disabled={!s.hasPaymentAccount && !form.requiresPrepay}
+              onChange={v => dispatch(editLocation({ requiresPrepay: v }))}
+            />
+            {!s.hasPaymentAccount ? <TextAction label="Add a payment account" icon="card-outline" onPress={openPaymentAccounts} /> : null}
+          </>
         )}
         <TextField
           label="Fee (Rs)"
-          value={form.fee ? String(form.fee) : ''}
-          onChangeText={t => dispatch(editLocation({ fee: Number(t.replace(/\D/g, '')) || 0 }))}
+          value={form.fee === null ? '' : String(form.fee)}
+          onChangeText={t => {
+            const digits = t.replace(/\D/g, '');
+            dispatch(editLocation({ fee: digits ? Number(digits) : null }));
+          }}
           keyboardType="number-pad"
-          error={s.sheet.touched ? locErrors.fee : undefined}
+          error={showLoc('fee')}
+          placeholder="1500"
         />
         <AppText variant="label">Slot length</AppText>
         <View style={styles.chips}>
@@ -319,7 +575,28 @@ const AvailabilityContent: React.FC<Props> = ({ route }) => {
             <ChoiceChip key={m} label={`${m} min`} selected={form.slotMinutes === m} onPress={() => dispatch(editLocation({ slotMinutes: m }))} />
           ))}
         </View>
-        <TextField label="Instructions for patients (optional)" value={form.instructions ?? ''} onChangeText={t => dispatch(editLocation({ instructions: t || null }))} multiline placeholder="First floor, next to the pharmacy." />
+        <TextField
+          label="Instructions for patients (optional)"
+          value={form.instructions ?? ''}
+          onChangeText={t => dispatch(editLocation({ instructions: t || null }))}
+          error={showLoc('instructions')}
+          maxLength={LOCATION_LIMITS.instructions}
+          multiline
+          placeholder={form.kind === 'video' ? 'Keep your reports and medicines nearby for the call.' : 'First floor, next to the pharmacy.'}
+        />
+        {s.sheet.id ? (
+          <DangerRow
+            label="Remove this location"
+            icon="trash-outline"
+            disabled={s.busy === 'delete'}
+            confirm={{
+              title: 'Remove this location?',
+              message: 'Patients will no longer see it. Booked appointments stay; move or cancel them first.',
+              action: 'Remove',
+            }}
+            onConfirm={() => s.sheet.id && void dispatch(deleteLocationAsync(s.sheet.id))}
+          />
+        ) : null}
       </Sheet>
     </ScreenShell>
   );

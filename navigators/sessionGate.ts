@@ -118,11 +118,14 @@ export const totpInitialRoute = (pendingTotp: PendingTotp | null): 'AdminTotp' |
   pendingTotp && !pendingTotp.enrolled ? 'AdminTwoFactorEnrol' : 'AdminTotp';
 
 /**
- * The doctor's app opens on Practice setup until the doctor is listed for
- * patients (the checklist, then Publish); after that, on the tabs.
+ * The doctor's app opens on Practice setup until the doctor is first listed
+ * for patients (the checklist, then Publish); after that, on the tabs — also
+ * when the server later takes them off the listing (a removed location, a
+ * short "about"), so their booked patients stay reachable. Today then says
+ * what to fix.
  */
-export const doctorRootRoute = (business: Pick<Business, 'isListed'> | null): 'PracticeSetup' | 'DoctorTabs' =>
-  business?.isListed ? 'DoctorTabs' : 'PracticeSetup';
+export const doctorRootRoute = (business: Pick<Business, 'isListed' | 'wasListed'> | null): 'PracticeSetup' | 'DoctorTabs' =>
+  business?.isListed || business?.wasListed ? 'DoctorTabs' : 'PracticeSetup';
 
 /**
  * The Food vendor's app opens on Kitchen setup until the kitchen is live for

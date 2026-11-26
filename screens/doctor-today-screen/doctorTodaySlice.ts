@@ -9,7 +9,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 import { type DoctorAction } from '../../networks/health/doctor/doctorAppointments';
-import { toRejectedValue } from '../../networks/network/network';
+import { errorCopy, toRejectedValue } from '../../networks/network/network';
 import type { TodaySummary } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { actOnAppointment, completeAppointment, getToday } from '../shared/practiceReads';
@@ -19,9 +19,16 @@ export interface DoctorTodaySliceState {
   locationId: string | null;
   status: FormStatus;
   busy: string | null;
-  /** The completion sheet: which visit, and which question it is on. */
-  complete: { id: string | null; step: 'payment' | 'prescription'; payAtVisit: boolean };
+  /** The completion sheet: which visit, which question, and which answer is on the wire. */
+  complete: { id: string | null; step: 'payment' | 'prescription'; payAtVisit: boolean; answering: 'paid' | 'not_paid' | null };
+  /** Loading the day failed (shown at the top, cleared by the next good read). */
   error: ServerError;
+  /** A quiet refresh failed: the queue on screen may be out of date. */
+  stale: boolean;
+  /** A row's own move failed (shown on that row). */
+  rowError: { id: string; message: string } | null;
+  /** Completing failed (shown in the sheet). */
+  completeError: string | null;
 }
 
 const initialState: DoctorTodaySliceState = {
@@ -29,8 +36,11 @@ const initialState: DoctorTodaySliceState = {
   locationId: null,
   status: 'idle',
   busy: null,
-  complete: { id: null, step: 'payment', payAtVisit: false },
+  complete: { id: null, step: 'payment', payAtVisit: false, answering: null },
   error: NO_ERROR,
+  stale: false,
+  rowError: null,
+  completeError: null,
 };
 
 export const doctorTodaySlice = createAppSlice({
@@ -41,8 +51,13 @@ export const doctorTodaySlice = createAppSlice({
       state.locationId = action.payload;
     }),
     openComplete: create.reducer((state, action: PayloadAction<{ id: string; payAtVisit: boolean }>) => {
-      state.complete = { id: action.payload.id, step: action.payload.payAtVisit ? 'payment' : 'prescription', payAtVisit: action.payload.payAtVisit };
-      state.error = NO_ERROR;
+      state.complete = {
+        id: action.payload.id,
+        step: action.payload.payAtVisit ? 'payment' : 'prescription',
+        payAtVisit: action.payload.payAtVisit,
+        answering: null,
+      };
+      state.completeError = null;
     }),
     closeComplete: create.reducer(state => {
       state.complete.id = null;
@@ -62,10 +77,13 @@ export const doctorTodaySlice = createAppSlice({
         fulfilled: (state, action) => {
           state.status = 'succeeded';
           state.today = action.payload;
+          state.error = NO_ERROR;
+          state.stale = false;
         },
         rejected: (state, action) => {
           state.status = 'failed';
-          if (!action.meta.arg.quiet) state.error = readRejection(action, "Today's queue didn't load.");
+          if (action.meta.arg.quiet) state.stale = true;
+          else state.error = readRejection(action, "Today's queue didn't load.");
         },
       },
     ),
@@ -80,14 +98,15 @@ export const doctorTodaySlice = createAppSlice({
       {
         pending: (state, action) => {
           state.busy = action.meta.arg.id;
-          state.error = NO_ERROR;
+          state.rowError = null;
         },
         fulfilled: state => {
           state.busy = null;
         },
         rejected: (state, action) => {
           state.busy = null;
-          state.error = readRejection(action, "That didn't go through. Pull down to refresh.");
+          const error = readRejection(action, "That didn't go through. Pull down to refresh, then try again.");
+          state.rowError = { id: action.meta.arg.id, message: errorCopy(error.code, error.details) ?? error.message };
         },
       },
     ),
@@ -102,15 +121,19 @@ export const doctorTodaySlice = createAppSlice({
       {
         pending: (state, action) => {
           state.busy = action.meta.arg.id;
-          state.error = NO_ERROR;
+          state.complete.answering = action.meta.arg.paymentCollected ? 'paid' : 'not_paid';
+          state.completeError = null;
         },
         fulfilled: state => {
           state.busy = null;
+          state.complete.answering = null;
           state.complete.step = 'prescription';
         },
         rejected: (state, action) => {
           state.busy = null;
-          state.error = readRejection(action, "The visit wasn't completed. Try again.");
+          state.complete.answering = null;
+          const error = readRejection(action, "The visit wasn't completed. Try again.");
+          state.completeError = errorCopy(error.code, error.details) ?? error.message;
         },
       },
     ),

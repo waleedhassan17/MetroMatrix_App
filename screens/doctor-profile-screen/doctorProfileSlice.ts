@@ -9,11 +9,11 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
 
 import { fetchDays, fetchSlots } from '../../networks/health/availability';
-import { toRejectedValue, required } from '../../networks/network/network';
+import { toRejectedValue } from '../../networks/network/network';
 import type { DayAvailability, DoctorProfile, SlotDay } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { confirmBookingAsync } from '../book-appointment-sheet/bookAppointmentSlice';
-import { daysSerializer, slotDaySerializer } from '../../serializers/health/discoverySerializer';
+import { daysSerializer, slotDayOnSerializer, slotDaySerializer } from '../../serializers/health/discoverySerializer';
 import { getDoctor } from '../shared/healthReads';
 
 export interface DoctorEntry {
@@ -102,12 +102,8 @@ export const doctorProfileSlice = createAppSlice({
     chooseLocationAsync: create.asyncThunk(
       async ({ doctorId, locationId, date }: { key: string; doctorId: string; locationId: string; date?: string }, { rejectWithValue }) => {
         try {
-          const days = await fetchDays(doctorId, locationId, null, 14);
-          // The asked-for day, else the first with room, decides which slots to read.
-          const open = required(daysSerializer(days));
-          const pick = (date && open.find(d => d.date === date)?.date) || open.find(d => d.slotCount > 0)?.date || open[0]?.date || null;
-          const day = pick ? await fetchSlots(doctorId, locationId, pick) : null;
-          return { days, day };
+          // One request: the fortnight's answer holds every day's slots.
+          return { days: await fetchDays(doctorId, locationId, null, 14), date: date ?? null };
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -126,9 +122,13 @@ export const doctorProfileSlice = createAppSlice({
         fulfilled: (state, action) => {
           const v = state.views[action.meta.arg.key];
           if (!v || v.locationId !== action.meta.arg.locationId) return;
-          const day = action.payload.day === null ? null : slotDaySerializer(action.payload.day);
+          const days = daysSerializer(action.payload.days);
+          // The asked-for day, else the first with room, else the first.
+          const want = action.payload.date;
+          const pick = (want && days.find(d => d.date === want)?.date) || days.find(d => d.slotCount > 0)?.date || days[0]?.date || null;
+          const day = pick ? slotDayOnSerializer(action.payload.days, pick) : null;
           v.loading = false;
-          v.days = daysSerializer(action.payload.days);
+          v.days = days;
           v.day = day;
           v.date = day?.date ?? null;
         },

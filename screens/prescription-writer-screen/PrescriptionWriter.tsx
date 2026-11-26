@@ -6,7 +6,8 @@
 // (1+0+1, 1+1+1, 0+0+1, 1+0+0 or your own), when to take it, for how many
 // days; move rows up and down. Tests, advice, follow-up. Preview shows the
 // document exactly as the patient (and the PDF) will. Saved, the patient is
-// told; it can be changed for 24 hours.
+// told; it can be changed for 24 hours, and you can share it as a PDF. Every
+// limit is the API's own; leaving with unsaved changes asks first.
 
 import React, { useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -14,6 +15,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
+import { useUnsavedGuard } from '../../hooks/useUnsavedGuard';
 import { useDebouncedValue } from '../../hooks/usePagedList';
 import { useNow } from '../../hooks/useNow';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
@@ -27,9 +29,10 @@ import {
   IonIcon,
   PrescriptionSheet,
   QuantityStepper,
+  RowCardsSkeleton,
   ScreenShell,
+  SectionCard,
   SegmentTabs,
-  SkeletonLines,
   TextAction,
   TextField,
 } from '../../Custom-Components/index';
@@ -37,7 +40,13 @@ import {
   DOSE_PRESETS,
   DURATION_PRESETS,
   FOLLOW_UP_PRESETS,
+  MAX_ADVICE,
   MAX_DAYS,
+  MAX_DIAGNOSIS,
+  MAX_INSTRUCTIONS,
+  MAX_MEDICINE_NAME,
+  MAX_STRENGTH,
+  MAX_TEST,
   MEDICINE_FORMS,
   TIMINGS,
   formatDose,
@@ -45,8 +54,10 @@ import {
   validatePrescription,
 } from '../../models/health/prescriptionModel';
 import type { DoctorPartnerStackParamList } from '../../models';
-import { formatWhen } from '../../utils/health-time/healthTime';
+import { formatOn, formatWhen } from '../../utils/health-time/healthTime';
 import { haptics } from '../../utils/haptics/haptics';
+import { prescriptionHtml } from '../../utils/prescription-html/prescriptionHtml';
+import { sharePrescriptionPdf } from '../../services/prescriptionPdf';
 import {
   addMedicine,
   addTest,
@@ -95,11 +106,14 @@ const PrescriptionWriterContent: React.FC<Props> = ({ route }) => {
   const { back } = useBack({ name: 'DoctorAppointment', params: { id: appointmentId } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { colors, motion } = useTheme();
+  const { colors, motion, service } = useTheme();
   const s = useAppSelector(selectWriter);
   const now = useNow();
   const f = s.form;
   const a = s.appointment;
+  const dirty = JSON.stringify(f) !== JSON.stringify(s.saved);
+  useUnsavedGuard(dirty && s.status === 'succeeded', s.saveStatus === 'loading');
+  const [sharing, setSharing] = React.useState(false);
 
   useEffect(() => {
     void dispatch(startWriterAsync(appointmentId));
@@ -140,7 +154,11 @@ const PrescriptionWriterContent: React.FC<Props> = ({ route }) => {
   if (!a) {
     return (
       <ScreenShell title="Prescription" onBack={back}>
-        {s.status === 'failed' ? <InlineNotice message={s.error.message} /> : <SkeletonLines lines={10} />}
+        {s.status === 'failed' ? (
+          <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(startWriterAsync(appointmentId)) }} />
+        ) : (
+          <RowCardsSkeleton count={3} />
+        )}
       </ScreenShell>
     );
   }
@@ -155,34 +173,75 @@ const PrescriptionWriterContent: React.FC<Props> = ({ route }) => {
       phone: a.location.phone,
     },
     patient: { name: a.patient.name, age: a.patient.age, gender: a.patient.gender },
-    issuedAt: new Date(now).toISOString(),
+    // A saved prescription keeps the day it was written.
+    issuedAt: a.prescription?.issuedAt ?? new Date(now).toISOString(),
     ...prescriptionToSave(f),
   };
 
+  /** The saved prescription as a PDF: print it, or send it on (WhatsApp, email). */
+  const sharePdf = async () => {
+    setSharing(true);
+    try {
+      const html = prescriptionHtml(doc, { ink: colors.ink, muted: colors.inkMuted, line: colors.line, accent: service.accentDeep });
+      const r = await sharePrescriptionPdf(html, `Prescription ${a.patient.name} ${formatOn(doc.issuedAt)}`);
+      if (r === 'unavailable') Toast.show({ type: 'info', text1: "This device can't share a PDF", text2: 'The patient has it in their app.' });
+    } finally {
+      setSharing(false);
+    }
+  };
+  const footerError = s.touched && Object.keys(errors).length ? 'Check the highlighted fields.' : s.error.message;
+
   return (
     <ScreenShell
-      title={s.prescriptionId ? 'Edit prescription' : 'Prescription'}
+      title={locked ? 'Prescription' : s.prescriptionId ? 'Edit prescription' : 'Write a prescription'}
       subtitle={`${a.patient.name}${a.patient.age !== null ? ` · ${a.patient.age} years` : ''} · ${formatWhen(a.startAt, a.timezone)}`}
       onBack={back}
-      footer={locked ? undefined : <Button label={s.prescriptionId ? 'Save changes' : 'Save and send to the patient'} onPress={() => void save()} loading={s.saveStatus === 'loading'} fullWidth />}>
-      {locked ? <InlineNotice tone="info" title="This prescription is locked" message="Prescriptions can be changed for 24 hours after they are written. Write a new one at the next visit." /> : null}
-      {s.error.message ? <InlineNotice message={s.error.message} /> : null}
-      <SegmentTabs
-        options={[
-          { key: 'write', label: 'Write' },
-          { key: 'preview', label: 'Preview' },
-        ]}
-        value={s.preview || locked ? 'preview' : 'write'}
-        onChange={k => dispatch(setPreview(k === 'preview'))}
-        accessibilityLabel="Write or preview"
-      />
+      footer={
+        locked ? (
+          s.prescriptionId ? <Button label="Share as PDF" leftIcon="share-outline" variant="secondary" onPress={() => void sharePdf()} loading={sharing} fullWidth /> : undefined
+        ) : (
+          <View style={styles.group}>
+            {footerError ? <InlineNotice message={footerError} /> : null}
+            <Button
+              label={s.prescriptionId ? 'Save changes' : 'Save and send to the patient'}
+              onPress={() => void save()}
+              loading={s.saveStatus === 'loading'}
+              disabled={!!s.prescriptionId && !dirty}
+              fullWidth
+            />
+            {s.prescriptionId && !dirty ? (
+              <Button label="Share as PDF" leftIcon="share-outline" variant="ghost" onPress={() => void sharePdf()} loading={sharing} fullWidth />
+            ) : null}
+          </View>
+        )
+      }>
+      {locked ? (
+        <InlineNotice tone="info" title="This prescription is locked" message="Prescriptions can be changed for 24 hours after they are written. Write a new one at the next visit." />
+      ) : (
+        <SegmentTabs
+          options={[
+            { key: 'write', label: 'Write' },
+            { key: 'preview', label: 'Preview' },
+          ]}
+          value={s.preview ? 'preview' : 'write'}
+          onChange={k => dispatch(setPreview(k === 'preview'))}
+          accessibilityLabel="Write or preview"
+        />
+      )}
 
       {s.preview || locked ? (
         <PrescriptionSheet prescription={doc} />
       ) : (
         <>
-          <View style={styles.group}>
-            <TextField label="Diagnosis" value={f.diagnosis} onChangeText={t => dispatch(setDiagnosis(t))} error={show('diagnosis')} placeholder="Acne vulgaris (moderate)" />
+          <SectionCard title="Diagnosis" icon="pulse-outline">
+            <TextField
+              label="Diagnosis"
+              value={f.diagnosis}
+              onChangeText={t => dispatch(setDiagnosis(t))}
+              error={show('diagnosis')}
+              placeholder="Acne vulgaris (moderate)"
+              maxLength={MAX_DIAGNOSIS}
+            />
             {s.diagnoses.length ? (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollChips} keyboardShouldPersistTaps="handled">
                 {s.diagnoses.map(d => (
@@ -190,7 +249,7 @@ const PrescriptionWriterContent: React.FC<Props> = ({ route }) => {
                 ))}
               </ScrollView>
             ) : null}
-          </View>
+          </SectionCard>
 
           {show('medicines') ? <InlineNotice message={show('medicines')!} /> : null}
           {f.medicines.map((m, i) => (
@@ -214,6 +273,7 @@ const PrescriptionWriterContent: React.FC<Props> = ({ route }) => {
                 error={show(`medicine.${i}.name`)}
                 placeholder="Start typing: para…"
                 autoCorrect={false}
+                maxLength={MAX_MEDICINE_NAME}
               />
               {typing === i && s.suggestions?.items.length ? (
                 <View style={styles.suggest}>
@@ -235,7 +295,14 @@ const PrescriptionWriterContent: React.FC<Props> = ({ route }) => {
               ) : null}
               <View style={styles.pair}>
                 <View style={styles.grow}>
-                  <TextField label="Strength" value={m.strength} onChangeText={t => dispatch(setMedicine({ index: i, patch: { strength: t } }))} placeholder="500 mg" />
+                  <TextField
+                    label="Strength"
+                    value={m.strength}
+                    onChangeText={t => dispatch(setMedicine({ index: i, patch: { strength: t } }))}
+                    placeholder="500 mg"
+                    maxLength={MAX_STRENGTH}
+                    error={show(`medicine.${i}.strength`)}
+                  />
                 </View>
                 <View style={styles.group}>
                   <AppText variant="label">Days</AppText>
@@ -248,6 +315,7 @@ const PrescriptionWriterContent: React.FC<Props> = ({ route }) => {
                   <ChoiceChip key={d} label={`${d} days`} selected={m.days === d} onPress={() => dispatch(setMedicine({ index: i, patch: { days: d } }))} />
                 ))}
               </View>
+              <AppText variant="label">Form</AppText>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollChips}>
                 {MEDICINE_FORMS.map(fm => (
                   <ChoiceChip key={fm.key} label={fm.label} selected={m.form === fm.key} onPress={() => dispatch(setMedicine({ index: i, patch: { form: fm.key } }))} />
@@ -259,19 +327,40 @@ const PrescriptionWriterContent: React.FC<Props> = ({ route }) => {
                   <ChoiceChip key={d} label={formatDose(d)} selected={m.dose === d} onPress={() => dispatch(setMedicine({ index: i, patch: { dose: d } }))} />
                 ))}
               </View>
-              <TextField label="Or your own pattern" value={m.dose} onChangeText={t => dispatch(setMedicine({ index: i, patch: { dose: t } }))} error={show(`medicine.${i}.dose`)} placeholder="0.5+0+1" autoCorrect={false} />
+              <TextField
+                label="Or your own pattern"
+                value={m.dose}
+                onChangeText={t => dispatch(setMedicine({ index: i, patch: { dose: t } }))}
+                error={show(`medicine.${i}.dose`)}
+                placeholder="0.5+0+1 or 2 puffs"
+                autoCorrect={false}
+                maxLength={20}
+              />
+              <AppText variant="label">When to take it</AppText>
+              {/* One is always chosen: the API needs it (a second tap used to clear it). */}
               <View style={styles.chips}>
                 {TIMINGS.map(tm => (
-                  <ChoiceChip key={tm.key} label={tm.label} selected={m.timing === tm.key} onPress={() => dispatch(setMedicine({ index: i, patch: { timing: m.timing === tm.key ? null : tm.key } }))} />
+                  <ChoiceChip key={tm.key} label={tm.label} selected={m.timing === tm.key} onPress={() => dispatch(setMedicine({ index: i, patch: { timing: tm.key } }))} />
                 ))}
               </View>
-              <TextField label="Instructions (optional)" value={m.instructions ?? ''} onChangeText={t => dispatch(setMedicine({ index: i, patch: { instructions: t || null } }))} placeholder="With a full glass of water" />
+              {show(`medicine.${i}.timing`) ? (
+                <AppText variant="small" tone="danger">
+                  {show(`medicine.${i}.timing`)}
+                </AppText>
+              ) : null}
+              <TextField
+                label="Instructions (optional)"
+                value={m.instructions ?? ''}
+                onChangeText={t => dispatch(setMedicine({ index: i, patch: { instructions: t || null } }))}
+                placeholder="With a full glass of water"
+                maxLength={MAX_INSTRUCTIONS}
+                error={show(`medicine.${i}.instructions`)}
+              />
             </Card>
           ))}
           <TextAction label="Add medicine" icon="add" onPress={() => dispatch(addMedicine())} />
 
-          <View style={styles.group}>
-            <AppText variant="title">Tests</AppText>
+          <SectionCard title="Tests" icon="flask-outline">
             <View style={styles.chips}>
               {f.tests.map(t => (
                 <ChoiceChip key={t} label={t} icon="close" selected onPress={() => dispatch(removeTest(t))} accessibilityHint="Remove this test" />
@@ -279,23 +368,45 @@ const PrescriptionWriterContent: React.FC<Props> = ({ route }) => {
             </View>
             <View style={styles.add}>
               <View style={styles.grow}>
-                <TextField label="Add a test" value={s.newTest} onChangeText={t => dispatch(setNewTest(t))} onSubmitEditing={() => dispatch(addTest())} placeholder="Complete blood count" returnKeyType="done" />
+                <TextField
+                  label="Add a test"
+                  value={s.newTest}
+                  onChangeText={t => dispatch(setNewTest(t))}
+                  onSubmitEditing={() => dispatch(addTest())}
+                  placeholder="Complete blood count"
+                  returnKeyType="done"
+                  maxLength={MAX_TEST}
+                />
               </View>
-              <Button label="Add" size="sm" variant="secondary" onPress={() => dispatch(addTest())} disabled={!s.newTest.trim()} />
+              <Button label="Add" size="sm" variant="secondary" onPress={() => dispatch(addTest())} disabled={s.newTest.trim().length < 2} />
             </View>
-          </View>
+            {show('tests') ? (
+              <AppText variant="small" tone="danger">
+                {show('tests')}
+              </AppText>
+            ) : null}
+          </SectionCard>
 
-          <TextField label="Advice" value={f.advice ?? ''} onChangeText={t => dispatch(setAdvice(t))} multiline placeholder="Plenty of fluids and rest." />
+          <SectionCard title="Advice" icon="chatbubble-ellipses-outline">
+            <TextField
+              label="Advice"
+              value={f.advice ?? ''}
+              onChangeText={t => dispatch(setAdvice(t))}
+              multiline
+              placeholder="Plenty of fluids and rest."
+              maxLength={MAX_ADVICE}
+              error={show('advice')}
+            />
+          </SectionCard>
 
-          <View style={styles.group}>
-            <AppText variant="title">Follow-up</AppText>
+          <SectionCard title="Follow-up" icon="repeat-outline">
             <View style={styles.chips}>
               <ChoiceChip label="None" selected={f.followUpInDays === null} onPress={() => dispatch(setFollowUp(null))} />
               {FOLLOW_UP_PRESETS.map(d => (
                 <ChoiceChip key={d} label={`In ${d} days`} selected={f.followUpInDays === d} onPress={() => dispatch(setFollowUp(d))} />
               ))}
             </View>
-          </View>
+          </SectionCard>
           <AppText variant="small" tone="muted">
             Saved, the patient is told and can share it as a PDF. You can change it for 24 hours.
           </AppText>

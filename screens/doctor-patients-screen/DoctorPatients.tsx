@@ -1,19 +1,22 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Your patients
 // ═══════════════════════════════════════════════════════
-// Everyone who has booked with you (and only them): last visit and how many
-// visits; open one for their history with you.
+// Everyone who has booked with you (and only them), each a white card: how
+// many times you've seen them (completed visits only), and their next or
+// last booking; open one for their history with you. Search by name or phone.
 
 import React from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useDebouncedValue, usePagedList } from '../../hooks/usePagedList';
+import { useNow } from '../../hooks/useNow';
 import { fetchPatients } from '../../networks/health/doctor/patients';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { Avatar, Divider, EmptyState, InlineNotice, ListRow, PageHeader, SkeletonLines } from '../../Custom-Components/index';
+import { EmptyState, InlineNotice, PageHeader, RowCardsSkeleton } from '../../Custom-Components/index';
 import { SearchField } from '../../Components/shopping/ShopParts';
-import type { DoctorPartnerStackParamList } from '../../models';
+import { RowCard } from '../../Components/admin/AdminParts';
+import type { DoctorPartnerStackParamList, PatientRow } from '../../models';
 import { formatOn } from '../../utils/health-time/healthTime';
 import { genderLabel } from '../../models/health/familyMemberModel';
 import { selectPatientQuery, setPatientQuery } from './doctorPatientsSlice';
@@ -24,9 +27,12 @@ type Props = NativeStackScreenProps<DoctorPartnerStackParamList, 'DoctorTabs'>;
 const makeStyles = ({ colors, space, gutter }: Theme) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.canvas },
-    list: { paddingHorizontal: gutter, paddingBottom: space.s40 },
-    state: { paddingTop: space.s16 },
+    list: { paddingHorizontal: gutter, paddingTop: space.s16, paddingBottom: space.s40 },
+    gap: { height: space.s12 },
   });
+
+/** "Seen 3 times", "Not seen yet": cancelled and missed bookings aren't visits. */
+const seenLabel = (p: PatientRow) => (p.visits === 0 ? 'Not seen yet' : p.visits === 1 ? 'Seen once' : `Seen ${p.visits} times`);
 
 const DoctorPatients: React.FC<Props> = props => (
   <ServiceScope service="healthcare">
@@ -40,40 +46,50 @@ const DoctorPatientsContent: React.FC<Props> = ({ navigation }) => {
   const query = useAppSelector(selectPatientQuery);
   const q = useDebouncedValue(query.trim());
   const list = usePagedList((page, size) => fetchPatients(q, page, size), patientRowPageSerializer, `patients|${q}`);
+  const now = useNow();
+  const Gap = React.useCallback(() => <View style={styles.gap} />, [styles.gap]);
 
   return (
     <View style={styles.root}>
-      <PageHeader title="Patients" subtitle={list.isLoading ? 'Your patients' : `${list.total} ${list.total === 1 ? 'patient' : 'patients'} have seen you`}>
+      <PageHeader
+        title="Patients"
+        subtitle={list.isLoading || q ? 'People who booked with you' : `${list.total} ${list.total === 1 ? 'person has' : 'people have'} booked with you`}>
         <SearchField value={query} onChange={t => dispatch(setPatientQuery(t))} placeholder="Find a patient" />
       </PageHeader>
       <FlatList
         data={list.rows}
         keyExtractor={p => p.id}
         contentContainerStyle={styles.list}
-        ItemSeparatorComponent={Divider}
+        ItemSeparatorComponent={Gap}
         onEndReached={list.loadMore}
         onEndReachedThreshold={0.5}
         onRefresh={list.refresh}
         refreshing={list.isRefreshing}
-        renderItem={({ item }) => (
-          <ListRow
-            title={item.name}
-            subtitle={[item.age !== null ? `${item.age} years` : null, genderLabel(item.gender), `${item.visits} ${item.visits === 1 ? 'visit' : 'visits'}`, `last ${formatOn(item.lastVisitAt)}`].filter(Boolean).join(' · ')}
-            left={<Avatar name={item.name} size="sm" />}
-            onPress={() => navigation.navigate('PatientHistory', { id: item.id, name: item.name })}
-            chevron
-          />
-        )}
+        renderItem={({ item }) => {
+          const ahead = Date.parse(item.lastVisitAt) > now;
+          return (
+            <RowCard
+              title={item.name}
+              mark={{ name: item.name }}
+              lines={[
+                [item.age !== null ? `${item.age} years` : null, genderLabel(item.gender)].filter(Boolean).join(' · ') || null,
+                `${seenLabel(item)} · ${ahead ? `booked for ${formatOn(item.lastVisitAt)}` : `last booking ${formatOn(item.lastVisitAt)}`}`,
+              ]}
+              onPress={() => navigation.navigate('PatientHistory', { id: item.id, name: item.name })}
+              chevron
+            />
+          );
+        }}
         ListEmptyComponent={
-          <View style={styles.state}>
-            {list.isLoading ? (
-              <SkeletonLines lines={6} />
-            ) : list.error ? (
-              <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
-            ) : (
-              <EmptyState icon="users" title={q ? `No patient matches "${q}"` : 'No patients yet'} body="Patients appear here after their first booking with you." />
-            )}
-          </View>
+          list.isLoading ? (
+            <RowCardsSkeleton count={5} />
+          ) : list.error ? (
+            <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
+          ) : q ? (
+            <EmptyState ion="search-outline" title={`No patient matches "${q}"`} body="Try their name, or the phone number they booked with." />
+          ) : (
+            <EmptyState ion="people-outline" title="No patients yet" body="Patients appear here after their first booking with you." />
+          )
         }
       />
     </View>

@@ -148,6 +148,12 @@ const accountOut = (input: Partial<PaymentAccountInput>) => ({
   bankName: input.bankName ?? undefined,
   isActive: input.isActive,
 });
+/** An account's kind and number can't change once saved (UpdateDoctorPaymentAccountDto: title, bank, on/off). */
+const accountChangeOut = (input: Partial<PaymentAccountInput>) => ({
+  accountTitle: input.title,
+  bankName: input.bankName ?? undefined,
+  isActive: input.isActive,
+});
 
 export const fetchDoctorPaymentAccounts = async (): Promise<unknown> => {
   try {
@@ -167,7 +173,7 @@ export const createDoctorPaymentAccount = async (input: PaymentAccountInput): Pr
 };
 export const updateDoctorPaymentAccount = async (id: string, input: Partial<PaymentAccountInput>): Promise<unknown> => {
   try {
-    const response = await API.PATCH({ URL: `/health/doctor/payment-accounts/${enc(id)}`, data: accountOut(input) });
+    const response = await API.PATCH({ URL: `/health/doctor/payment-accounts/${enc(id)}`, data: accountChangeOut(input) });
     return response.data;
   } catch (e) {
     throw toApiError(e);

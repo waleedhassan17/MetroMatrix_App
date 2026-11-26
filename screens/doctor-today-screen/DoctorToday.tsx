@@ -4,8 +4,10 @@
 // The day at a glance (booked, checked in, done, missed) and the queue in
 // time order: who, how old, first visit or not, why, and how long they have
 // waited since check-in. Each row has the next step only: Check in, Start,
-// Complete — or Join for a video consultation inside its window. Refreshes
-// every 30 seconds while you look at it.
+// Complete — or Join for a video consultation inside its window; "Missed"
+// asks first. Refreshes every 30 seconds while you look at it, and says so
+// when a refresh fails. A doctor who isn't visible to patients is told what
+// to fix; a newly listed one is greeted here (not by a toast over the header).
 
 import React, { useCallback } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -14,7 +16,27 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useNow } from '../../hooks/useNow';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, Card, ChoiceChip, EmptyState, IconButton, IonIcon, InlineNotice, ScreenShell, Sheet, SkeletonLines, StatusPill, TextAction } from '../../Custom-Components/index';
+import {
+  AppText,
+  Button,
+  Card,
+  ChoiceChip,
+  CountIconButton,
+  EmptyState,
+  IonIcon,
+  InlineNotice,
+  RowCardsSkeleton,
+  ScreenShell,
+  Sheet,
+  StatGridSkeleton,
+  StatusPill,
+  TextAction,
+} from '../../Custom-Components/index';
+import { StatGrid } from '../../Components/admin/AdminParts';
+import { Alert } from '../../utils/alert/alert';
+import { selectBusiness } from '../../store/authSlice';
+import { clearJustListed, selectPracticeSetup } from '../practice-setup-screen/practiceSetupSlice';
+import { loadUnreadCountAsync, selectUnreadCount } from '../notifications-screen/notificationsSlice';
 import { APPOINTMENT_PAYMENT_STATUS, APPOINTMENT_STATUS } from '../../models/health/appointmentStatusModel';
 import { genderLabel } from '../../models/health/familyMemberModel';
 import type { DoctorPartnerStackParamList, QueueItem } from '../../models';
@@ -24,17 +46,15 @@ import { closeComplete, completeVisitAsync, loadTodayAsync, openComplete, queueA
 
 type Props = NativeStackScreenProps<DoctorPartnerStackParamList, 'DoctorTabs'>;
 
-const makeStyles = ({ colors, space, radius, gutter }: Theme) =>
+const makeStyles = ({ space, gutter }: Theme) =>
   StyleSheet.create({
-    counts: { flexDirection: 'row', gap: space.s8 },
-    count: { flex: 1, alignItems: 'center', gap: space.s0, paddingVertical: space.s12, borderRadius: radius.md, backgroundColor: colors.surfaceSunk },
+    stale: { flexDirection: 'row', alignItems: 'center', gap: space.s4 },
     chipsWrap: { marginHorizontal: -gutter },
     chips: { paddingHorizontal: gutter, gap: space.s8 },
     item: { flexDirection: 'row', gap: space.s12 },
     time: { width: space.s56, alignItems: 'flex-start', gap: space.s4 },
     grow: { flex: 1, gap: space.s4 },
     nameRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.s8 },
-    first: { paddingHorizontal: space.s8, borderRadius: radius.pill },
     actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.s12 },
     wait: { flexDirection: 'row', alignItems: 'center', gap: space.s4 },
   });
@@ -48,19 +68,31 @@ const DoctorToday: React.FC<Props> = props => (
 const DoctorTodayContent: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { service, colors, motion } = useTheme();
+  const { colors, motion } = useTheme();
   const s = useAppSelector(selectDoctorToday);
+  const business = useAppSelector(selectBusiness);
+  const { justListed } = useAppSelector(selectPracticeSetup);
+  const unread = useAppSelector(selectUnreadCount);
   const now = useNow(motion.queuePoll);
   const t = s.today;
+  const go = navigation as unknown as { navigate: (n: string, p?: object) => void };
 
   // Load on focus, then quietly every 30 seconds while on screen.
   useFocusEffect(
     useCallback(() => {
       void dispatch(loadTodayAsync({ locationId: s.locationId }));
+      void dispatch(loadUnreadCountAsync());
       const id = setInterval(() => void dispatch(loadTodayAsync({ locationId: s.locationId, quiet: true })), motion.queuePoll);
       return () => clearInterval(id);
     }, [dispatch, s.locationId, motion.queuePoll]),
   );
+
+  /** Missed counts against the patient: say so and ask first. */
+  const confirmMissed = (q: QueueItem) =>
+    Alert.alert(`Mark ${q.patient.name} as missed?`, "Only if they didn't come. It counts toward their missed visits.", [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Mark missed', style: 'destructive', onPress: () => void act(q, 'no-show') },
+    ]);
 
   const act = async (q: QueueItem, action: 'check-in' | 'start' | 'no-show') => {
     const r = await dispatch(queueActionAsync({ id: q.id, action }));
@@ -88,7 +120,7 @@ const DoctorTodayContent: React.FC<Props> = ({ navigation }) => {
     if (await complete(q.id, false)) dispatch(openComplete({ id: q.id, payAtVisit: false }));
   };
 
-  const open = (id: string) => (navigation as unknown as { navigate: (n: string, p: object) => void }).navigate('DoctorAppointment', { id });
+  const open = (id: string) => go.navigate('DoctorAppointment', { id });
 
   const row = (q: QueueItem) => {
     const status = APPOINTMENT_STATUS[q.status];
@@ -105,13 +137,7 @@ const DoctorTodayContent: React.FC<Props> = ({ navigation }) => {
           <View style={styles.grow}>
             <View style={styles.nameRow}>
               <AppText variant="title">{q.patient.name}</AppText>
-              {q.firstVisit ? (
-                <View style={[styles.first, { backgroundColor: service.accentSoft }]}>
-                  <AppText variant="micro" tone="accentDeep">
-                    First visit
-                  </AppText>
-                </View>
-              ) : null}
+              {q.firstVisit ? <StatusPill label="First visit" tone="info" /> : null}
             </View>
             <AppText variant="small" tone="muted">
               {[q.patient.age !== null ? `${q.patient.age} years` : null, genderLabel(q.patient.gender), (t?.locations.length ?? 0) > 1 ? q.locationName : null].filter(Boolean).join(' · ')}
@@ -133,49 +159,76 @@ const DoctorTodayContent: React.FC<Props> = ({ navigation }) => {
         </Pressable>
         {a.canJoinVideo || a.canCheckIn || a.canStart || a.canComplete || a.canNoShow || a.canConfirmPayment ? (
           <View style={styles.actions}>
-            {a.canJoinVideo ? (
-              <Button label="Join" size="sm" leftIcon="videocam" onPress={() => (navigation as unknown as { navigate: (n: string, p: object) => void }).navigate('VideoPrecheck', { appointmentId: q.id })} />
-            ) : null}
+            {a.canJoinVideo ? <Button label="Join" size="sm" leftIcon="videocam" onPress={() => go.navigate('VideoPrecheck', { appointmentId: q.id })} /> : null}
             {a.canCheckIn ? <Button label="Check in" size="sm" onPress={() => void act(q, 'check-in')} loading={busy} /> : null}
             {a.canStart && !a.canJoinVideo ? <Button label="Start" size="sm" onPress={() => void act(q, 'start')} loading={busy} /> : null}
             {a.canStart && a.canJoinVideo ? <Button label="Start" size="sm" variant="secondary" onPress={() => void act(q, 'start')} loading={busy} /> : null}
             {a.canComplete ? <Button label="Complete" size="sm" onPress={() => void startComplete(q)} loading={busy} /> : null}
             {a.canConfirmPayment ? <TextAction label="Check payment" icon="card-outline" onPress={() => open(q.id)} /> : null}
-            {a.canNoShow ? <TextAction label="Missed" icon="close-circle-outline" tone="muted" onPress={() => void act(q, 'no-show')} /> : null}
+            {a.canNoShow ? <TextAction label="Missed" icon="close-circle-outline" tone="muted" onPress={() => confirmMissed(q)} /> : null}
           </View>
+        ) : null}
+        {s.rowError?.id === q.id ? (
+          <AppText variant="small" tone="danger" accessibilityLiveRegion="polite">
+            {s.rowError.message}
+          </AppText>
         ) : null}
       </Card>
     );
   };
 
   const counts = t?.counts;
+  const reload = () => void dispatch(loadTodayAsync({ locationId: s.locationId }));
   return (
     <ScreenShell
       title="Today"
       subtitle={t ? formatLongDate(new Date(now).toISOString(), t.timezone) : undefined}
-      headerRight={<IconButton icon="notifications-outline" onPress={() => (navigation as unknown as { navigate: (n: string) => void }).navigate('Notifications')} accessibilityLabel="Notifications" />}
+      headerRight={<CountIconButton icon="notifications-outline" count={unread} onPress={() => go.navigate('Notifications')} label="Notifications" />}
       refreshing={s.status === 'loading' && !!t}
-      onRefresh={() => void dispatch(loadTodayAsync({ locationId: s.locationId }))}>
-      {s.error.message ? <InlineNotice message={s.error.message} /> : null}
+      onRefresh={reload}>
+      {justListed ? (
+        <InlineNotice
+          tone="success"
+          title="You are listed"
+          message="Patients can find and book you now."
+          action={{ label: 'Dismiss', onPress: () => dispatch(clearJustListed()) }}
+        />
+      ) : business && business.isListed === false ? (
+        <InlineNotice
+          tone="warning"
+          title="Patients can't find you right now"
+          message="Something in your practice setup needs finishing before patients can book you again. Booked visits stay as they are."
+          action={{ label: 'Finish setup', onPress: () => go.navigate('PracticeSetup') }}
+        />
+      ) : null}
+      {s.error.message ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: reload }} /> : null}
       {!t ? (
-        s.status === 'failed' ? null : <SkeletonLines lines={8} />
+        s.status === 'failed' ? null : (
+          <>
+            <StatGridSkeleton count={4} />
+            <RowCardsSkeleton count={3} />
+          </>
+        )
       ) : (
         <>
-          <View style={styles.counts}>
-            {[
-              ['Booked', counts!.booked],
-              ['Checked in', counts!.checkedIn],
-              ['Done', counts!.done],
-              ['Missed', counts!.noShow],
-            ].map(([label, n]) => (
-              <View key={label as string} style={styles.count} accessible accessibilityLabel={`${label}: ${n}`}>
-                <AppText variant="h2">{String(n)}</AppText>
-                <AppText variant="caption" tone="muted">
-                  {label as string}
-                </AppText>
-              </View>
-            ))}
-          </View>
+          <StatGrid
+            columns={2}
+            compact
+            stats={[
+              { key: 'booked', icon: 'calendar-outline', tint: 'blue', value: counts!.booked, label: 'Booked' },
+              { key: 'in', icon: 'people-outline', tint: 'teal', value: counts!.checkedIn, label: 'Checked in' },
+              { key: 'done', icon: 'checkmark-done-outline', tint: 'green', value: counts!.done, label: 'Done' },
+              { key: 'missed', icon: 'close-circle-outline', tint: 'amber', value: counts!.noShow, label: 'Missed' },
+            ]}
+          />
+          {s.stale ? (
+            <View style={styles.stale} accessibilityLiveRegion="polite">
+              <IonIcon name="cloud-offline-outline" size="sm" color={colors.inkMuted} />
+              <AppText variant="caption" tone="muted">
+                Couldn’t refresh. Pull down to try again.
+              </AppText>
+            </View>
+          ) : null}
           {t.locations.length > 1 ? (
             <View style={styles.chipsWrap}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
@@ -186,7 +239,16 @@ const DoctorTodayContent: React.FC<Props> = ({ navigation }) => {
               </ScrollView>
             </View>
           ) : null}
-          {t.queue.length ? t.queue.map(row) : <EmptyState icon="calendar" title="No appointments today" body="New bookings appear here as patients make them." />}
+          {t.queue.length ? (
+            t.queue.map(row)
+          ) : (
+            <EmptyState
+              icon="calendar"
+              title="No appointments today"
+              body="New bookings appear here as patients make them."
+              action={{ label: 'Check your availability', onPress: () => go.navigate('Availability', { tab: 'preview' }) }}
+            />
+          )}
         </>
       )}
 
@@ -198,8 +260,15 @@ const DoctorTodayContent: React.FC<Props> = ({ navigation }) => {
         footer={
           s.complete.step === 'payment' ? (
             <>
-              <Button label="Yes, paid" onPress={() => s.complete.id && void complete(s.complete.id, true)} loading={!!s.busy} fullWidth />
-              <Button label="Not paid" variant="secondary" onPress={() => s.complete.id && void complete(s.complete.id, false)} fullWidth />
+              <Button label="Yes, paid" onPress={() => s.complete.id && void complete(s.complete.id, true)} loading={s.complete.answering === 'paid'} disabled={!!s.complete.answering} fullWidth />
+              <Button
+                label="Not paid"
+                variant="secondary"
+                onPress={() => s.complete.id && void complete(s.complete.id, false)}
+                loading={s.complete.answering === 'not_paid'}
+                disabled={!!s.complete.answering}
+                fullWidth
+              />
             </>
           ) : (
             <>
@@ -209,7 +278,7 @@ const DoctorTodayContent: React.FC<Props> = ({ navigation }) => {
                 onPress={() => {
                   const id = s.complete.id!;
                   dispatch(closeComplete());
-                  (navigation as unknown as { navigate: (n: string, p: object) => void }).navigate('PrescriptionWriter', { appointmentId: id });
+                  go.navigate('PrescriptionWriter', { appointmentId: id });
                 }}
                 fullWidth
               />
@@ -217,7 +286,7 @@ const DoctorTodayContent: React.FC<Props> = ({ navigation }) => {
             </>
           )
         }>
-        {s.error.message ? <InlineNotice message={s.error.message} /> : null}
+        {s.completeError ? <InlineNotice message={s.completeError} /> : null}
       </Sheet>
     </ScreenShell>
   );

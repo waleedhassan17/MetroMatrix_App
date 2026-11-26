@@ -17,15 +17,20 @@ export interface PracticeSetupSliceState {
   completeness: Completeness | null;
   status: FormStatus;
   publishing: boolean;
+  /** Just published: Today says so once (a notice on the page, not a toast over its header). */
+  justListed: boolean;
   error: ServerError;
 }
 
-const initialState: PracticeSetupSliceState = { completeness: null, status: 'idle', publishing: false, error: NO_ERROR };
+const initialState: PracticeSetupSliceState = { completeness: null, status: 'idle', publishing: false, justListed: false, error: NO_ERROR };
 
 export const practiceSetupSlice = createAppSlice({
   name: 'practiceSetup',
   initialState,
   reducers: create => ({
+    clearJustListed: create.reducer(state => {
+      state.justListed = false;
+    }),
     loadCompletenessAsync: create.asyncThunk(
       async (_: void, { rejectWithValue }) => {
         try {
@@ -67,6 +72,7 @@ export const practiceSetupSlice = createAppSlice({
         },
         fulfilled: state => {
           state.publishing = false;
+          state.justListed = true;
           if (state.completeness) state.completeness = { ...state.completeness, isListed: true, canPublish: false };
         },
         rejected: (state, action) => {
@@ -81,5 +87,5 @@ export const practiceSetupSlice = createAppSlice({
   },
 });
 
-export const { loadCompletenessAsync, publishAsync } = practiceSetupSlice.actions;
+export const { loadCompletenessAsync, publishAsync, clearJustListed } = practiceSetupSlice.actions;
 export const { selectPracticeSetup } = practiceSetupSlice.selectors;

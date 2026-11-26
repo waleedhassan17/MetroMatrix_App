@@ -5,7 +5,7 @@
 // location's timezone. The server is the judge of overlaps across clinics;
 // these checks give the same answer inline, before saving.
 
-import type { DoctorLocation, HoursOverlap, TimeOffInput, TimeRange, WeekDayHours } from '../health';
+import type { DoctorLocation, DoctorLocationInput, HoursOverlap, TimeOffInput, TimeRange, WeekDayHours } from '../health';
 import type { ValidationErrors } from '../authModel';
 
 export const WEEKDAYS: { day: number; short: string; long: string }[] = [
@@ -65,23 +65,42 @@ export const normaliseWeek = (hours: WeekDayHours[]): WeekDayHours[] =>
   }));
 
 /** Copy `day`'s ranges to every other weekday (Mon–Sat; Sunday stays as it is). */
-export const copyToWeekdays = (hours: WeekDayHours[], day: number): WeekDayHours[] => {
+export const copyToWeekdays = (hours: WeekDayHours[], day: number): WeekDayHours[] =>
+  copyToDays(hours, day, [1, 2, 3, 4, 5, 6].filter(d => d !== day));
+
+/** Copy `day`'s ranges onto each of `targets` (any days the doctor ticks). */
+export const copyToDays = (hours: WeekDayHours[], day: number, targets: number[]): WeekDayHours[] => {
   const source = hours.find(h => h.day === day)?.ranges ?? [];
-  return normaliseWeek(hours).map(h => (h.day === 7 || h.day === day ? h : { ...h, ranges: source.map(r => ({ ...r })) }));
+  return normaliseWeek(hours).map(h => (h.day !== day && targets.includes(h.day) ? { ...h, ranges: source.map(r => ({ ...r })) } : h));
 };
+
+/** A range's length in minutes; "23:59" is the end of the day. */
+const rangeMinutes = (r: TimeRange) => (r.to === '23:59' ? 1440 : toMinutes(r.to)) - toMinutes(r.from);
+
+/** How many `slotMinutes` slots fit in a range (what patients can book there). */
+export const slotsInRange = (r: TimeRange, slotMinutes: number): number =>
+  HHMM.test(r.from) && HHMM.test(r.to) && slotMinutes > 0 ? Math.max(0, Math.floor(rangeMinutes(r) / slotMinutes)) : 0;
+
+/** Slots a day, and a week, holds. */
+export const daySlotCount = (d: WeekDayHours, slotMinutes: number) => d.ranges.reduce((n, r) => n + slotsInRange(r, slotMinutes), 0);
+export const weeklySlotCount = (hours: WeekDayHours[], slotMinutes: number) => hours.reduce((n, d) => n + daySlotCount(d, slotMinutes), 0);
+
+/** Same hours on every day of two weeks (the unsaved-changes check). */
+export const sameWeek = (a: WeekDayHours[], b: WeekDayHours[]) => JSON.stringify(normaliseWeek(a)) === JSON.stringify(normaliseWeek(b));
 
 /**
  * Errors for one location's week, keyed `day.<d>.<i>` (a bad or clashing
  * range). Ranges within a day must be valid, end after they start and not
  * overlap each other.
  */
-export const validateWeek = (hours: WeekDayHours[]): ValidationErrors => {
+export const validateWeek = (hours: WeekDayHours[], slotMinutes = 15): ValidationErrors => {
   const errors: ValidationErrors = {};
   for (const h of hours) {
     h.ranges.forEach((r, i) => {
-      if (!HHMM.test(r.from) || !HHMM.test(r.to)) errors[`day.${h.day}.${i}`] = 'Use times like 09:00';
-      else if (toMinutes(r.to) <= toMinutes(r.from)) errors[`day.${h.day}.${i}`] = 'The end time is before the start';
-      else if (toMinutes(r.to) - toMinutes(r.from) < 15) errors[`day.${h.day}.${i}`] = 'At least 15 minutes';
+      if (!HHMM.test(r.from) || !HHMM.test(r.to)) errors[`day.${h.day}.${i}`] = 'Choose a start and an end time';
+      else if (rangeMinutes(r) <= 0) errors[`day.${h.day}.${i}`] = 'The end time is before the start';
+      // A range shorter than a slot can never be booked.
+      else if (rangeMinutes(r) < slotMinutes) errors[`day.${h.day}.${i}`] = `Shorter than one ${slotMinutes}-minute slot`;
       else if (h.ranges.some((o, j) => j !== i && rangesOverlap(r, o))) errors[`day.${h.day}.${i}`] = 'Overlaps another range';
     });
   }
@@ -106,31 +125,47 @@ export const crossLocationOverlaps = (id: string, hours: WeekDayHours[], others:
 /** "Overlaps Thursday at Gulberg Clinic". */
 export const overlapMessage = (o: HoursOverlap) => `Overlaps ${weekdayName(o.day)} hours at ${o.otherLocationName}`;
 
+/** The API's limit (CreateTimeOffDto.reason). */
+export const MAX_TIME_OFF_REASON = 200;
+
 export const validateTimeOff = (t: TimeOffInput, today: string): ValidationErrors => {
   const errors: ValidationErrors = {};
   if (!/^\d{4}-\d{2}-\d{2}$/.test(t.from)) errors.from = 'Choose the first day';
   else if (t.from < today) errors.from = 'Choose today or a later day';
   if (!/^\d{4}-\d{2}-\d{2}$/.test(t.to)) errors.to = 'Choose the last day';
   else if (t.from && t.to < t.from) errors.to = 'The last day is before the first';
-  if ((t.reason ?? '').length > 120) errors.reason = 'Keep it under 120 characters';
+  if ((t.reason ?? '').length > MAX_TIME_OFF_REASON) errors.reason = `Keep it under ${MAX_TIME_OFF_REASON} characters`;
   return errors;
 };
 
-export const validateLocation = (l: {
-  kind: 'video' | 'clinic';
-  name: string;
-  area: string;
-  city: string;
-  fee: number;
-  slotMinutes: number;
-  phone: string | null;
-}): ValidationErrors => {
+/** The location form: the fee is empty (null) until typed, never quietly Rs 0. */
+export type DoctorLocationForm = Omit<DoctorLocationInput, 'fee'> & { fee: number | null };
+
+/** The API's own limits for a location (practice/dto/practice.dto.ts). */
+export const LOCATION_LIMITS = { name: 140, area: 80, city: 60, address: 255, instructions: 500 } as const;
+const PK_PHONE = /^\+92\d{10}$/;
+
+export const validateLocation = (l: Pick<DoctorLocationForm, 'kind' | 'name' | 'area' | 'city' | 'address' | 'fee' | 'slotMinutes' | 'phone' | 'instructions'>): ValidationErrors => {
   const errors: ValidationErrors = {};
-  if (l.name.trim().length < 2) errors.name = l.kind === 'video' ? 'Name it, for example "Video consultation"' : 'Enter the clinic or hospital name';
-  if (l.kind === 'clinic' && l.area.trim().length < 2) errors.area = 'Enter the area, for example Gulberg';
-  if (l.kind === 'clinic' && l.city.trim().length < 2) errors.city = 'Enter the city';
-  if (!Number.isInteger(l.fee) || l.fee < 0) errors.fee = 'Enter the fee in rupees';
+  const name = l.name.trim();
+  if (name.length < 2) errors.name = l.kind === 'video' ? 'Name it, for example "Video consultation"' : 'Enter the clinic or hospital name';
+  else if (name.length > LOCATION_LIMITS.name) errors.name = `Keep it under ${LOCATION_LIMITS.name} characters`;
+  if (l.kind === 'clinic') {
+    if (l.area.trim().length < 2) errors.area = 'Enter the area, for example Gulberg';
+    if (l.city.trim().length < 2) errors.city = 'Enter the city';
+    // The API needs a street address for a clinic, at least 5 characters.
+    const address = (l.address ?? '').trim();
+    if (address.length < 5) errors.address = 'Enter the street address, for example 42-B Main Boulevard (at least 5 characters)';
+    else if (address.length > LOCATION_LIMITS.address) errors.address = `Keep it under ${LOCATION_LIMITS.address} characters`;
+    if (l.phone && !PK_PHONE.test(l.phone)) errors.phone = 'Enter a Pakistani number, for example 300 1234567';
+  }
+  if (l.fee === null) errors.fee = 'Enter the fee in rupees (0 if it is free)';
+  else if (!Number.isInteger(l.fee) || l.fee < 0) errors.fee = 'Enter the fee in rupees';
   else if (l.fee > 50000) errors.fee = 'The fee looks too high';
   if (!SLOT_LENGTHS.includes(l.slotMinutes)) errors.slotMinutes = 'Choose a slot length';
+  if ((l.instructions ?? '').length > LOCATION_LIMITS.instructions) errors.instructions = `Keep it under ${LOCATION_LIMITS.instructions} characters`;
   return errors;
 };
+
+/** The API's field names → the location form's ("addressLine" → "address"). */
+export const locationFieldKey = (apiField: string): string => ({ addressLine: 'address' })[apiField] ?? apiField;

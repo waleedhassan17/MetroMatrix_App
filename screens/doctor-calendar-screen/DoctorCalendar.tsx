@@ -1,9 +1,11 @@
 // ═══════════════════════════════════════════════════════
 // MetroMatrix — Calendar
 // ═══════════════════════════════════════════════════════
-// Day: an hour grid with each visit as a block in its location's shade of
-// the accent (no new colours). Week: the week as an agenda. Tap a visit to
-// open it; hold an empty hour (or use "Take this day off") to block the day.
+// A day or a week as an agenda: each visit a row in a white card, in time
+// order, grouped by part of the day, with its location's dot and ONE status
+// pill. (An hour grid stacked back-to-back 15-minute visits on top of each
+// other and hid anything before 7 AM: the 2026-11-26 QA.) Tap a visit to open
+// it; "Take this day off" blocks a day.
 
 import React, { useCallback } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -11,32 +13,40 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { mix, ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Divider, IconButton, InlineNotice, ScreenShell, SegmentTabs, SkeletonLines, TextAction } from '../../Custom-Components/index';
+import {
+  AppText,
+  Card,
+  Divider,
+  EmptyState,
+  IconButton,
+  InlineNotice,
+  RowCardsSkeleton,
+  ScreenShell,
+  SegmentTabs,
+  StatusPill,
+  TextAction,
+} from '../../Custom-Components/index';
 import { APPOINTMENT_STATUS } from '../../models/health/appointmentStatusModel';
-import type { CalendarItem, DoctorPartnerStackParamList } from '../../models';
-import { PKT, addDays, dateInZone, formatDayChip, formatDayShort, formatSlot, hourOfDay, todayInZone, weekStart } from '../../utils/health-time/healthTime';
+import { DAY_PART_LABEL, byDayPart } from '../../models/health/calendarModel';
+import type { CalendarItem, CalendarRange, DoctorPartnerStackParamList } from '../../models';
+import { PKT, addDays, dateInZone, formatDayChip, formatDayShort, formatSlot, todayInZone, weekStart } from '../../utils/health-time/healthTime';
 import { loadCalendarAsync, selectDoctorCalendar, setCalendarMode, type CalendarMode } from './doctorCalendarSlice';
 
 type Props = NativeStackScreenProps<DoctorPartnerStackParamList, 'DoctorTabs'>;
 
-const FIRST_HOUR = 7;
-const LAST_HOUR = 24;
-
-const makeStyles = ({ colors, space, radius, size }: Theme) =>
+const makeStyles = ({ space, radius, size }: Theme) =>
   StyleSheet.create({
     nav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    navLabel: { flex: 1, alignItems: 'center' },
-    grid: { position: 'relative' },
-    hour: { flexDirection: 'row', height: size.calendarHour, borderTopWidth: size.hairline, borderTopColor: colors.lineSoft },
-    hourLabel: { width: size.calendarGutter, paddingTop: space.s4 },
-    block: { position: 'absolute', right: 0, borderRadius: radius.sm, paddingHorizontal: space.s8, paddingVertical: space.s4, overflow: 'hidden', borderLeftWidth: size.focusBorder * 2 },
-    off: { gap: space.s4, padding: space.s12, borderRadius: radius.md, backgroundColor: colors.surfaceSunk },
-    day: { gap: space.s8, paddingVertical: space.s12 },
-    row: { flexDirection: 'row', alignItems: 'center', gap: space.s12, minHeight: size.touch },
+    navLabel: { flex: 1, alignItems: 'center', gap: space.s0 },
+    list: { gap: space.s16 },
+    group: { gap: space.s8 },
+    row: { flexDirection: 'row', alignItems: 'center', gap: space.s12, minHeight: size.touch, paddingVertical: space.s8 },
+    time: { minWidth: size.calendarGutter },
     dot: { width: size.doseDot, height: size.doseDot, borderRadius: radius.pill },
     grow: { flex: 1, gap: space.s0 },
     legend: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s12 },
     legendItem: { flexDirection: 'row', alignItems: 'center', gap: space.s4 },
+    dayHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   });
 
 const DoctorCalendar: React.FC<Props> = props => (
@@ -48,19 +58,13 @@ const DoctorCalendar: React.FC<Props> = props => (
 const DoctorCalendarContent: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { service, colors, size } = useTheme();
+  const { service, colors } = useTheme();
   const s = useAppSelector(selectDoctorCalendar);
   const today = todayInZone(PKT);
   const date = s.date ?? today;
   const nav = navigation as unknown as { navigate: (n: string, p?: object) => void };
 
-  const load = useCallback(
-    (d: string, mode: CalendarMode) => {
-      const from = mode === 'day' ? d : weekStart(d);
-      void dispatch(loadCalendarAsync({ date: d, from, to: mode === 'day' ? d : addDays(from, 6) }));
-    },
-    [dispatch],
-  );
+  const load = useCallback((d: string, mode: CalendarMode) => void dispatch(loadCalendarAsync({ date: d, mode })), [dispatch]);
 
   useFocusEffect(
     useCallback(() => {
@@ -72,44 +76,87 @@ const DoctorCalendarContent: React.FC<Props> = ({ navigation }) => {
 
   const r = s.range;
   // Each location gets its own shade of the accent (tints, never new hues).
-  const shades = [service.accentSoft, mix(service.accent, colors.surface, 0.62), mix(service.accentDeep, colors.surface, 0.82), mix(service.accent, colors.surface, 0.9)];
-  const edges = [service.accent, service.accentDeep, service.accent, service.accentDeep];
-  const shadeOf = (locationId: string) => {
-    const i = Math.max(0, r?.locations.findIndex(l => l.id === locationId) ?? 0);
-    return { bg: shades[i % shades.length], edge: edges[i % edges.length] };
-  };
+  const dots = [service.accent, service.accentDeep, mix(service.accent, colors.surface, 0.45), mix(service.accentDeep, colors.surface, 0.45)];
+  const dotOf = (locationId: string) => dots[Math.max(0, r?.locations.findIndex(l => l.id === locationId) ?? 0) % dots.length];
   const open = (a: CalendarItem) => nav.navigate('DoctorAppointment', { id: a.id });
-  const offToday = r?.timeOff.filter(t => t.from <= date && date <= t.to) ?? [];
   const step = s.mode === 'day' ? 1 : 7;
-  const label = s.mode === 'day' ? formatDayChip(date).long : `${formatDayShort(weekStart(date))} – ${formatDayShort(addDays(weekStart(date), 6))}`;
+  const label =
+    s.mode === 'day' ? formatDayChip(date).long : `${formatDayShort(weekStart(date))} – ${formatDayShort(addDays(weekStart(date), 6))}`;
+
+  const visitRow = (a: CalendarItem, i: number) => {
+    const status = APPOINTMENT_STATUS[a.status];
+    return (
+      <React.Fragment key={a.id}>
+        {i > 0 ? <Divider /> : null}
+        <Pressable
+          onPress={() => open(a)}
+          style={styles.row}
+          accessibilityRole="button"
+          accessibilityLabel={`${formatSlot(a.startAt, a.timezone)}, ${a.patientName}, ${a.locationName}, ${status.label}`}>
+          <AppText variant="bodyStrong" style={styles.time}>
+            {formatSlot(a.startAt, a.timezone)}
+          </AppText>
+          <View style={[styles.dot, { backgroundColor: dotOf(a.locationId) }]} />
+          <View style={styles.grow}>
+            <AppText variant="body" numberOfLines={1}>
+              {a.patientName}
+            </AppText>
+            <AppText variant="caption" tone="muted" numberOfLines={1}>
+              {a.locationName}
+            </AppText>
+          </View>
+          <StatusPill label={status.label} tone={status.tone} />
+        </Pressable>
+      </React.Fragment>
+    );
+  };
+
+  const timeOffOn = (range: CalendarRange, d: string) => range.timeOff.filter(t => t.from <= d && d <= t.to);
 
   return (
-    <ScreenShell title="Calendar" subtitle={label} refreshing={s.status === 'loading' && !!r} onRefresh={() => load(date, s.mode)}>
-      <SegmentTabs
-        options={[
-          { key: 'day', label: 'Day' },
-          { key: 'week', label: 'Week' },
-        ]}
-        value={s.mode}
-        onChange={m => {
-          dispatch(setCalendarMode(m));
-          load(date, m);
-        }}
-        accessibilityLabel="Calendar view"
-      />
+    <ScreenShell
+      title="Calendar"
+      subtitle={s.mode === 'day' ? 'Your day' : 'Your week'}
+      headerContent={
+        <SegmentTabs
+          options={[
+            { key: 'day', label: 'Day' },
+            { key: 'week', label: 'Week' },
+          ]}
+          value={s.mode}
+          onChange={m => {
+            dispatch(setCalendarMode(m));
+            load(date, m);
+          }}
+          accessibilityLabel="Calendar view"
+        />
+      }
+      onRefresh={() => load(date, s.mode)}
+      refreshing={false}>
       <View style={styles.nav}>
-        <IconButton icon="chevron-back" onPress={() => load(addDays(date, -step), s.mode)} accessibilityLabel={s.mode === 'day' ? 'Previous day' : 'Previous week'} />
+        <IconButton
+          icon="chevron-back"
+          onPress={() => load(addDays(date, -step), s.mode)}
+          accessibilityLabel={s.mode === 'day' ? 'Previous day' : 'Previous week'}
+        />
         <View style={styles.navLabel}>
-          <AppText variant="title">{label}</AppText>
-          {date !== today ? <TextAction label="Today" onPress={() => load(today, s.mode)} /> : null}
+          <AppText variant="title" align="center">
+            {label}
+          </AppText>
+          {date !== today ? <TextAction label={s.mode === 'day' ? 'Back to today' : 'This week'} onPress={() => load(today, s.mode)} /> : null}
         </View>
-        <IconButton icon="chevron-forward" onPress={() => load(addDays(date, step), s.mode)} accessibilityLabel={s.mode === 'day' ? 'Next day' : 'Next week'} />
+        <IconButton
+          icon="chevron-forward"
+          onPress={() => load(addDays(date, step), s.mode)}
+          accessibilityLabel={s.mode === 'day' ? 'Next day' : 'Next week'}
+        />
       </View>
+
       {r && r.locations.length > 1 ? (
         <View style={styles.legend}>
           {r.locations.map(l => (
             <View key={l.id} style={styles.legendItem}>
-              <View style={[styles.dot, { backgroundColor: shadeOf(l.id).edge }]} />
+              <View style={[styles.dot, { backgroundColor: dotOf(l.id) }]} />
               <AppText variant="caption" tone="muted">
                 {l.name}
               </AppText>
@@ -117,93 +164,81 @@ const DoctorCalendarContent: React.FC<Props> = ({ navigation }) => {
           ))}
         </View>
       ) : null}
-      {s.error.message ? <InlineNotice message={s.error.message} /> : null}
+
+      {s.error.message ? (
+        <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => load(date, s.mode) }} />
+      ) : null}
 
       {!r ? (
-        <SkeletonLines lines={10} />
+        s.status === 'failed' ? null : <RowCardsSkeleton count={4} />
       ) : s.mode === 'day' ? (
-        <>
-          {offToday.map(t => (
-            <View key={t.id} style={styles.off}>
-              <AppText variant="bodyStrong">{`Time off${t.locationName ? ` at ${t.locationName}` : ''}`}</AppText>
-              {t.reason ? <AppText variant="small" tone="muted">{t.reason}</AppText> : null}
-            </View>
+        <View style={styles.list}>
+          {timeOffOn(r, date).map(t => (
+            <InlineNotice
+              key={t.id}
+              tone="info"
+              title={`Time off${t.locationName ? ` at ${t.locationName}` : ''}`}
+              message={t.reason ?? 'Patients can’t book you on this day.'}
+            />
           ))}
-          {!offToday.length && date >= today ? <TextAction label="Take this day off" icon="close-circle-outline" onPress={() => nav.navigate('TimeOff', { date })} /> : null}
-          <View style={styles.grid}>
-            {Array.from({ length: LAST_HOUR - FIRST_HOUR }, (_, i) => FIRST_HOUR + i).map(h => (
-              <Pressable
-                key={h}
-                style={styles.hour}
-                onLongPress={() => date >= today && nav.navigate('TimeOff', { date })}
-                accessibilityHint="Hold to take this day off">
-                <View style={styles.hourLabel}>
-                  <AppText variant="caption" tone="muted">
-                    {`${h % 12 === 0 ? 12 : h % 12} ${h < 12 || h === 24 ? 'AM' : 'PM'}`}
-                  </AppText>
-                </View>
-              </Pressable>
-            ))}
-            {r.appointments.map(a => {
-              const start = hourOfDay(a.startAt, a.timezone);
-              const end = Math.max(start + 0.4, hourOfDay(a.endAt, a.timezone) || start + 0.25);
-              if (start < FIRST_HOUR || start >= LAST_HOUR) return null;
-              const shade = shadeOf(a.locationId);
-              return (
-                <Pressable
-                  key={a.id}
-                  onPress={() => open(a)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${formatSlot(a.startAt, a.timezone)}, ${a.patientName}, ${a.locationName}, ${APPOINTMENT_STATUS[a.status].label}`}
-                  style={[
-                    styles.block,
-                    {
-                      top: (start - FIRST_HOUR) * size.calendarHour,
-                      height: Math.max(size.touch * 0.6, (end - start) * size.calendarHour - 2),
-                      left: size.calendarGutter,
-                      backgroundColor: shade.bg,
-                      borderLeftColor: shade.edge,
-                      opacity: a.status === 'no_show' ? 0.55 : 1,
-                    },
-                  ]}>
-                  <AppText variant="caption" numberOfLines={1}>{`${formatSlot(a.startAt, a.timezone)} · ${a.patientName}`}</AppText>
-                </Pressable>
-              );
-            })}
-          </View>
-        </>
-      ) : (
-        Array.from({ length: 7 }, (_, i) => addDays(weekStart(date), i)).map((d, i) => {
-          const list = r.appointments.filter(a => dateInZone(a.startAt, a.timezone) === d);
-          const off = r.timeOff.filter(t => t.from <= d && d <= t.to);
-          return (
-            <View key={d}>
-              {i > 0 ? <Divider /> : null}
-              <View style={styles.day}>
-                <AppText variant="title" tone={d === today ? 'accentDeep' : 'ink'}>
-                  {formatDayChip(d).long}
+          {r.appointments.length ? (
+            byDayPart(r.appointments).map(g => (
+              <View key={g.part} style={styles.group}>
+                <AppText variant="overline" tone="muted">
+                  {`${DAY_PART_LABEL[g.part]} · ${g.items.length}`}
                 </AppText>
-                {off.length ? <AppText variant="small" tone="muted">{`Time off${off[0].reason ? ` · ${off[0].reason}` : ''}`}</AppText> : null}
+                <Card padded="horizontal">{g.items.map(visitRow)}</Card>
+              </View>
+            ))
+          ) : (
+            <EmptyState
+              ion="calendar-clear-outline"
+              title="No appointments"
+              body={date < today ? 'Nothing was booked on this day.' : 'Bookings for this day appear here as patients make them.'}
+              action={
+                date >= today && !timeOffOn(r, date).length
+                  ? { label: 'Take this day off', onPress: () => nav.navigate('TimeOff', { date }) }
+                  : undefined
+              }
+            />
+          )}
+          {r.appointments.length && date >= today && !timeOffOn(r, date).length ? (
+            <TextAction label="Take this day off" icon="close-circle-outline" onPress={() => nav.navigate('TimeOff', { date })} />
+          ) : null}
+        </View>
+      ) : (
+        <View style={styles.list}>
+          {Array.from({ length: 7 }, (_, i) => addDays(weekStart(date), i)).map(d => {
+            const list = r.appointments
+              .filter(a => dateInZone(a.startAt, a.timezone) === d)
+              .sort((a, b) => a.startAt.localeCompare(b.startAt));
+            const off = timeOffOn(r, d);
+            return (
+              <View key={d} style={styles.group}>
+                <View style={styles.dayHead}>
+                  <AppText variant="title" tone={d === today ? 'accentDeep' : 'ink'}>
+                    {formatDayChip(d).long}
+                  </AppText>
+                  {list.length ? (
+                    <AppText variant="caption" tone="muted">
+                      {list.length === 1 ? '1 visit' : `${list.length} visits`}
+                    </AppText>
+                  ) : null}
+                </View>
+                {off.length ? (
+                  <AppText variant="small" tone="muted">{`Time off${off[0].reason ? ` · ${off[0].reason}` : ''}`}</AppText>
+                ) : null}
                 {list.length ? (
-                  list.map(a => (
-                    <Pressable key={a.id} onPress={() => open(a)} style={styles.row} accessibilityRole="button" accessibilityLabel={`${formatSlot(a.startAt, a.timezone)}, ${a.patientName}, ${a.locationName}`}>
-                      <View style={[styles.dot, { backgroundColor: shadeOf(a.locationId).edge }]} />
-                      <AppText variant="bodyStrong">{formatSlot(a.startAt, a.timezone)}</AppText>
-                      <View style={styles.grow}>
-                        <AppText variant="body">{a.patientName}</AppText>
-                        <AppText variant="caption" tone="muted">{`${a.locationName} · ${APPOINTMENT_STATUS[a.status].label}`}</AppText>
-                      </View>
-                    </Pressable>
-                  ))
+                  <Card padded="horizontal">{list.map(visitRow)}</Card>
                 ) : !off.length ? (
                   <AppText variant="small" tone="muted">
                     No appointments
                   </AppText>
                 ) : null}
               </View>
-            </View>
-          );
-        })
+            );
+          })}
+        </View>
       )}
     </ScreenShell>
   );

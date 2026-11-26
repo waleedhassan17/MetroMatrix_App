@@ -143,6 +143,9 @@ describe('doctorRootRoute — Practice setup until listed', () => {
   it('opens a listed doctor on the tabs', () => {
     expect(doctorRootRoute({ isListed: true })).toBe('DoctorTabs');
   });
+  it('keeps a doctor the server took off the listing on the tabs, so booked patients stay reachable', () => {
+    expect(doctorRootRoute({ isListed: false, wasListed: true })).toBe('DoctorTabs');
+  });
 });
 
 describe('foodVendorRootRoute — Kitchen setup until live', () => {

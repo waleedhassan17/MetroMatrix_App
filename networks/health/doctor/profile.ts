@@ -36,6 +36,16 @@ export const fetchCompleteness = async (): Promise<unknown> => {
   }
 };
 
+/** Takes the doctor off the directory (booked visits stay); the caller reads the business, now unlisted. */
+export const unpublishProfile = async (): Promise<unknown> => {
+  try {
+    const response = await API.POST({ URL: '/health/doctor/listing/unpublish', data: {} });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+
 /** Lists the doctor for patients (`422 PROFILE_INCOMPLETE` until the checklist is done); the caller reads the business, now listed. */
 export const publishProfile = async (): Promise<unknown> => {
   try {

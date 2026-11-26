@@ -12,8 +12,8 @@ import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, ChoiceChip, DateField, Divider, EmptyState, IconButton, InlineNotice, ScreenShell, Sheet, SkeletonLines, TextField, dateKeyOf } from '../../Custom-Components/index';
-import { validateTimeOff } from '../../models/health/availabilityModel';
+import { AppText, Button, Card, ChoiceChip, DateField, Divider, EmptyState, IconButton, InlineNotice, RowCardsSkeleton, ScreenShell, Sheet, TextField, dateKeyOf } from '../../Custom-Components/index';
+import { MAX_TIME_OFF_REASON, validateTimeOff } from '../../models/health/availabilityModel';
 import type { DoctorPartnerStackParamList } from '../../models';
 import { Alert } from '../../utils/alert/alert';
 import { formatDayFull, formatWhen } from '../../utils/health-time/healthTime';
@@ -78,7 +78,7 @@ const TimeOffContent: React.FC<Props> = ({ route }) => {
   const remove = (id: string) =>
     Alert.alert('Remove this time off?', 'Those days take bookings again.', [
       { text: 'Keep', style: 'cancel' },
-      { text: 'Remove', onPress: () => void dispatch(removeTimeOffAsync(id)) },
+      { text: 'Remove', style: 'destructive', onPress: () => void dispatch(removeTimeOffAsync(id)) },
     ]);
 
   const label = (from: string, to: string) => (from === to ? formatDayFull(from) : `${formatDayFull(from)} – ${formatDayFull(to)}`);
@@ -91,10 +91,15 @@ const TimeOffContent: React.FC<Props> = ({ route }) => {
       footer={<Button label="Add time off" leftIcon="add" onPress={() => dispatch(openTimeOffSheet(undefined))} fullWidth />}
       refreshing={s.status === 'loading' && s.items.length > 0}
       onRefresh={() => void dispatch(loadTimeOffAsync())}>
-      {s.error.message && !s.sheetOpen ? <InlineNotice message={s.error.message} /> : null}
+      {s.error.message && !s.sheetOpen ? (
+        <InlineNotice
+          message={s.error.message}
+          action={s.status === 'failed' && !s.items.length ? { label: 'Try again', onPress: () => void dispatch(loadTimeOffAsync()) } : undefined}
+        />
+      ) : null}
       {s.status === 'loading' && !s.items.length ? (
-        <SkeletonLines lines={4} />
-      ) : s.items.length ? (
+        <RowCardsSkeleton count={3} />
+      ) : s.status === 'failed' && !s.items.length ? null : s.items.length ? (
         <Card padded="horizontal">
           {s.items.map((t, i) => (
             <View key={t.id}>
@@ -131,6 +136,7 @@ const TimeOffContent: React.FC<Props> = ({ route }) => {
         }>
         {s.conflicts.length ? (
           <>
+            {s.error.message ? <InlineNotice message={s.error.message} /> : null}
             <InlineNotice tone="warning" message={`${s.conflicts.length} ${s.conflicts.length === 1 ? 'visit is' : 'visits are'} booked. Going ahead cancels ${s.conflicts.length === 1 ? 'it' : 'them'}, and each patient is told and can book another time.`} />
             {s.conflicts.map(c => (
               <View key={c.id} style={styles.grow}>
@@ -157,7 +163,15 @@ const TimeOffContent: React.FC<Props> = ({ route }) => {
                 <ChoiceChip key={l.id} label={l.name} selected={s.form.locationId === l.id} onPress={() => dispatch(editTimeOff({ locationId: l.id }))} />
               ))}
             </View>
-            <TextField label="Reason (only you see it)" value={s.form.reason ?? ''} onChangeText={t => dispatch(editTimeOff({ reason: t || null }))} placeholder="Conference" maxLength={120} />
+            <TextField
+              label="Reason (optional)"
+              helper="If a booked visit is cancelled, the patient is told this reason."
+              value={s.form.reason ?? ''}
+              onChangeText={t => dispatch(editTimeOff({ reason: t || null }))}
+              placeholder="Attending a conference"
+              maxLength={MAX_TIME_OFF_REASON}
+              error={s.touched ? errors.reason : undefined}
+            />
           </>
         )}
       </Sheet>

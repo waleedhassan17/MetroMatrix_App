@@ -3,7 +3,10 @@
 // ═══════════════════════════════════════════════════════
 // Raast, JazzCash, Easypaisa or a bank account in the partner's own name.
 // Customers (a doctor's patients) pay these directly; MetroMatrix never holds
-// the money. One screen for stores and doctors: the business picks the words.
+// the money. One screen for stores, doctors and kitchens: the business picks
+// the words. A doctor's or kitchen's saved account keeps its type and number
+// (their APIs change only the title, bank and on/off), so a new number is
+// "remove and add a new one"; a store's account can change all of it.
 
 import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -12,7 +15,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { PAYMENT_ACCOUNT_KINDS, accountKindLabel, validatePaymentAccount } from '../../models/shopping/storeModel';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, ChoiceChip, EmptyState, InlineNotice, ScreenShell, SectionCard, Sheet, SkeletonLines, StatusPill, TextAction, TextField } from '../../Custom-Components/index';
+import { AppText, Button, ChoiceChip, EmptyState, InlineNotice, ListRow, RowCardsSkeleton, ScreenShell, SectionCard, Sheet, StatusPill, TextAction, TextField } from '../../Custom-Components/index';
 import type { PaymentAccount, StorePartnerStackParamList } from '../../models';
 import { Alert } from '../../utils/alert/alert';
 import {
@@ -31,6 +34,7 @@ const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
     actions: { flexDirection: 'row', gap: space.s16 },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
+    fixed: { gap: space.s4 },
   });
 
 /** "PK36SCBL0000001123456702" → "PK36 •••• 6702" in lists. */
@@ -43,6 +47,8 @@ const EMPTY_BODY = {
   healthcare: 'Add one to take transfers before video consultations. Without one, patients pay at the visit.',
   food: 'Add one to take transfers. Without one, customers pay cash on delivery or when they collect.',
 } as const;
+/** Services whose saved accounts keep their type and number. */
+const FIXED_NUMBER = new Set(['healthcare', 'food']);
 
 const PaymentAccounts: React.FC<Props> = props => {
   const service = useAppSelector(st => st.auth.business?.serviceType) ?? 'shopping';
@@ -63,6 +69,8 @@ const PaymentAccountsContent: React.FC<Props> = () => {
   const f = s.form;
   const kind = PAYMENT_ACCOUNT_KINDS.find(k => k.key === f.kind) ?? PAYMENT_ACCOUNT_KINDS[0];
   const errors = s.submitted ? validatePaymentAccount(f) : {};
+  const editingAccount = s.editing ? s.accounts.find(a => a.id === s.editing) ?? null : null;
+  const numberFixed = !!editingAccount && FIXED_NUMBER.has(service ?? 'shopping');
 
   useEffect(() => {
     void dispatch(loadAccountsAsync());
@@ -74,6 +82,22 @@ const PaymentAccountsContent: React.FC<Props> = () => {
     void dispatch(changeAccountAsync({ kind: 'save', id: s.editing ?? '', input: f }));
   };
 
+  /** A new number for a doctor's or kitchen's account: remove this one, then add the new one. */
+  const replace = (a: PaymentAccount) =>
+    Alert.alert(`Remove ${accountKindLabel(a.kind)} ${masked(a.number)}?`, `Then add the new number. ${who} stop seeing this one at once.`, [
+      { text: 'Keep it', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: () =>
+          void dispatch(changeAccountAsync({ kind: 'delete', id: a.id })).then(r => {
+            if (!changeAccountAsync.fulfilled.match(r)) return;
+            dispatch(openAccountSheet(null));
+            dispatch(setAccountField({ field: 'kind', value: a.kind }));
+          }),
+      },
+    ]);
+
   const remove = (a: PaymentAccount) =>
     Alert.alert(`Remove ${accountKindLabel(a.kind)} ${masked(a.number)}?`, `${who} will no longer see it.`, [
       { text: 'Keep it', style: 'cancel' },
@@ -83,15 +107,18 @@ const PaymentAccountsContent: React.FC<Props> = () => {
   return (
     <ScreenShell
       title="Payment accounts"
-      subtitle={`${who} who pay by transfer send money here, straight to you.`}
+      subtitle="Transfers come straight to you"
       onBack={back}
       footer={<Button label="Add an account" leftIcon="add" onPress={() => dispatch(openAccountSheet(null))} fullWidth />}>
       {s.error.message && s.editing === null ? (
-        <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadAccountsAsync()) }} />
+        <InlineNotice
+          message={s.error.message}
+          action={s.status === 'failed' ? { label: 'Try again', onPress: () => void dispatch(loadAccountsAsync()) } : undefined}
+        />
       ) : null}
       {s.status === 'loading' && !s.accounts.length ? (
-        <SkeletonLines lines={4} />
-      ) : !s.accounts.length ? (
+        <RowCardsSkeleton count={2} />
+      ) : s.status === 'failed' && !s.accounts.length ? null : !s.accounts.length ? (
         <EmptyState icon="credit-card" title="No accounts yet" body={EMPTY_BODY[service ?? 'shopping']} />
       ) : (
         s.accounts.map(a => (
@@ -119,25 +146,51 @@ const PaymentAccountsContent: React.FC<Props> = () => {
         onClose={() => dispatch(closeAccountSheet())}
         title={s.editing ? 'Edit account' : 'Add an account'}
         footer={<Button label="Save account" onPress={save} loading={s.busy === 'save'} fullWidth />}>
-        <View style={styles.chips}>
-          {PAYMENT_ACCOUNT_KINDS.map(k => (
-            <ChoiceChip key={k.key} label={k.label} selected={f.kind === k.key} onPress={() => dispatch(setAccountField({ field: 'kind', value: k.key }))} />
-          ))}
-        </View>
-        <TextField label="Account title" value={f.title} onChangeText={t => dispatch(setAccountField({ field: 'title', value: t }))} error={errors.title} helper="Exactly as your bank or wallet shows it." />
-        <TextField
-          label={kind.numberLabel}
-          value={f.number}
-          onChangeText={t => dispatch(setAccountField({ field: 'number', value: t }))}
-          error={errors.number}
-          placeholder={kind.placeholder}
-          autoCapitalize="characters"
-          keyboardType={f.kind === 'bank' ? 'default' : 'number-pad'}
-        />
-        {f.kind === 'bank' ? (
-          <TextField label="Bank" value={f.bankName ?? ''} onChangeText={t => dispatch(setAccountField({ field: 'bankName', value: t }))} error={errors.bankName} placeholder="Meezan Bank" />
-        ) : null}
         {s.error.message ? <InlineNotice message={s.error.message} /> : null}
+        {numberFixed && editingAccount ? (
+          <View style={styles.fixed}>
+            <ListRow title={accountKindLabel(editingAccount.kind)} subtitle={editingAccount.number} leftIcon="lock-closed-outline" />
+            <AppText variant="small" tone="muted">
+              The type and number stay as saved. For a new number, remove this account and add the new one.
+            </AppText>
+            <TextAction label="Remove and add a new one" tone="danger" onPress={() => replace(editingAccount)} disabled={!!s.busy} />
+          </View>
+        ) : (
+          <View style={styles.chips}>
+            {PAYMENT_ACCOUNT_KINDS.map(k => (
+              <ChoiceChip key={k.key} label={k.label} selected={f.kind === k.key} onPress={() => dispatch(setAccountField({ field: 'kind', value: k.key }))} />
+            ))}
+          </View>
+        )}
+        <TextField
+          label="Account title"
+          value={f.title}
+          onChangeText={t => dispatch(setAccountField({ field: 'title', value: t }))}
+          error={errors.title}
+          helper="Exactly as your bank or wallet shows it."
+          maxLength={80}
+        />
+        {numberFixed ? null : (
+          <TextField
+            label={kind.numberLabel}
+            value={f.number}
+            onChangeText={t => dispatch(setAccountField({ field: 'number', value: t }))}
+            error={errors.number}
+            placeholder={kind.placeholder}
+            autoCapitalize="characters"
+            keyboardType={f.kind === 'bank' ? 'default' : 'number-pad'}
+          />
+        )}
+        {f.kind === 'bank' ? (
+          <TextField
+            label="Bank"
+            value={f.bankName ?? ''}
+            onChangeText={t => dispatch(setAccountField({ field: 'bankName', value: t }))}
+            error={errors.bankName}
+            placeholder="Meezan Bank"
+            maxLength={80}
+          />
+        ) : null}
       </Sheet>
     </ScreenShell>
   );

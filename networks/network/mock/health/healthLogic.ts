@@ -31,7 +31,9 @@ export const DAY = 24 * HOUR;
 export const JOIN_EARLY_MIN = 10;
 export const JOIN_LATE_MIN = 30;
 /** A transfer must arrive by the sooner of this long after booking or 15 minutes before the start. */
-export const PAY_WINDOW_MIN = 180;
+/** The API's window for a required prepayment (appointments.service payBy): 2 hours, and 30 minutes before the start. */
+export const PAY_WINDOW_MIN = 120;
+export const PAY_BEFORE_START_MIN = 30;
 export const PRESCRIPTION_EDIT_HOURS = 24;
 export const REPLY_EDIT_HOURS = 24;
 export const REVIEW_WINDOW_DAYS = 30;

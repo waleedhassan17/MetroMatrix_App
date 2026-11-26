@@ -8,6 +8,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, AppState, Linking, View, StyleSheet, StatusBar } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NavigationContainer, getStateFromPath, type LinkingOptions } from '@react-navigation/native';
 import * as NativeSplash from 'expo-splash-screen';
 import Toast from 'react-native-toast-message';
@@ -391,6 +392,7 @@ const AppShell: React.FC = () => {
   const maintenance = useAppSelector(selectMaintenance);
   const auth = useAppSelector(state => state.auth);
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const styles = useStyles(makeStyles);
   const skippedProfile = useAppSelector(selectSkippedProfile);
   const gate = resolveGate(gateInputOf(auth, skippedProfile));
@@ -584,7 +586,8 @@ const AppShell: React.FC = () => {
           <Splash onDone={onSplashPlayed} connecting={slowStart && !isAppReady} />
         </Animated.View>
       )}
-      <Toast config={toastConfig} topOffset={theme.space.s56} />
+      {/* At the bottom, above a tab bar: a toast at the top covered every page header. */}
+      <Toast config={toastConfig} position="bottom" bottomOffset={theme.size.tabBar + theme.space.s24 + insets.bottom} />
     </View>
   );
 };

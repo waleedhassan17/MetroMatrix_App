@@ -7,7 +7,7 @@
 // three routes (locations, each one's hours, the profile's prepay rule); the
 // profile is edited in slugs and stored by id (referenceIndex).
 
-import { required } from '../../networks/network/network';
+import { required, toRejectedValue, type RejectedApiError } from '../../networks/network/network';
 import {
   actOnAppointment as actOnAppointmentRequest,
   cancelByDoctor as cancelByDoctorRequest,
@@ -19,6 +19,7 @@ import {
   fetchDoctorAppointments,
   fetchDoctorToday,
   rejectPayment as rejectPaymentRequest,
+  refundAppointment as refundAppointmentRequest,
   saveNotes as saveNotesRequest,
   type DoctorAction,
 } from '../../networks/health/doctor/doctorAppointments';
@@ -31,7 +32,12 @@ import {
   saveHours as saveHoursRequest,
   updateLocation as updateLocationRequest,
 } from '../../networks/health/doctor/practice';
-import { fetchOwnProfile, publishProfile as publishProfileRequest, updateOwnProfile as updateOwnProfileRequest } from '../../networks/health/doctor/profile';
+import {
+  fetchOwnProfile,
+  publishProfile as publishProfileRequest,
+  unpublishProfile as unpublishProfileRequest,
+  updateOwnProfile as updateOwnProfileRequest,
+} from '../../networks/health/doctor/profile';
 import { fetchDoctorPrescription, issuePrescription } from '../../networks/health/doctor/prescriptionWriter';
 import { fetchMyBusiness } from '../../networks/businesses/business';
 import { conditionIds, referenceIndex, specialtyIds } from '../../networks/health/referenceIndex';
@@ -52,6 +58,7 @@ import {
 } from '../../serializers/health/doctorSerializer';
 import { titleKey } from '../../serializers/health/healthCommon';
 import { arr, bodiesOf, bodyOf, isObject, str } from '../../serializers/serializerUtils';
+import type { CalendarQuery } from '../../models/health/calendarModel';
 import type {
   DoctorLocationInput,
   DoctorOwnProfile,
@@ -97,6 +104,11 @@ export const rejectPayment = async (id: string, reason: string) => {
   return getDoctorAppointment(id);
 };
 
+export const refundAppointment = async (id: string, refundRef: string) => {
+  await refundAppointmentRequest(id, refundRef);
+  return getDoctorAppointment(id);
+};
+
 export const saveNotes = async (id: string, notes: { text: string; attachments: string[] }) => {
   await saveNotesRequest(id, notes);
   return getDoctorAppointment(id);
@@ -111,13 +123,27 @@ export const getToday = async (date: string | null, locationId: string | null) =
   return required(doctorDaySerializer({ day, locations }, date, locationId));
 };
 
-/** The range's appointments (first 100), time off and locations. */
-export const getCalendar = async (from: string, to: string) => {
-  const [appointments, timeOff, locations] = await Promise.all([
-    fetchDoctorAppointments({ from, to, pageSize: 100 }),
-    fetchTimeOff(),
-    fetchDoctorLocations(),
-  ]);
+/** The API's largest page. */
+const PAGE = 100;
+/** A calendar never asks for more than this many pages (a busy week is two). */
+const MAX_PAGES = 10;
+
+/** Every appointment the query matches, page by page: a busy week is more than one page. */
+const allAppointments = async (query: CalendarQuery) => {
+  const items: unknown[] = [];
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const body = bodyOf(await fetchDoctorAppointments({ ...query, page, pageSize: PAGE }));
+    const rows = isObject(body) ? arr(body.items) : [];
+    items.push(...rows);
+    const total = isObject(body) ? Number(body.total) : NaN;
+    if (rows.length < PAGE || (Number.isFinite(total) && items.length >= total)) break;
+  }
+  return { success: true, data: { items } };
+};
+
+/** The day's or week's appointments (all of them), time off and locations. */
+export const getCalendar = async (query: CalendarQuery) => {
+  const [appointments, timeOff, locations] = await Promise.all([allAppointments(query), fetchTimeOff(), fetchDoctorLocations()]);
   return calendarSerializer(bodiesOf({ appointments, timeOff, locations }));
 };
 
@@ -132,24 +158,32 @@ export const listLocations = async () => {
   return practiceLocationsSerializer({ locations, schedules, profile });
 };
 
-/** Prepay is the doctor's rule for video; set it when a video location asks for it (needs a payment account). */
-const syncPrepay = async (input: Partial<DoctorLocationInput>) => {
-  if (input.kind === 'video' && input.requiresPrepay !== undefined) {
+/**
+ * Prepay is the doctor's rule for video; set it when a video location asks
+ * for it (the API needs an active payment account). The location is saved
+ * either way: a refused prepay comes back as `prepayError`, so a retry edits
+ * the saved location instead of adding a second one (409).
+ */
+const syncPrepay = async (input: Partial<DoctorLocationInput>): Promise<RejectedApiError | null> => {
+  if (input.kind !== 'video' || input.requiresPrepay === undefined) return null;
+  try {
     await updateOwnProfileRequest({ videoPrepayRequired: input.requiresPrepay });
+    return null;
+  } catch (e) {
+    return toRejectedValue(e);
   }
 };
 
-export const createLocation = async (input: DoctorLocationInput) => {
-  const raw = await createLocationRequest(input);
-  await syncPrepay(input);
-  return required(savedLocationSerializer(raw, !!input.requiresPrepay));
+const savedWithPrepay = async (raw: unknown, input: Partial<DoctorLocationInput>) => {
+  const prepayError = await syncPrepay(input);
+  const location = required(savedLocationSerializer(raw, !!input.requiresPrepay && !prepayError));
+  return { location, prepayError };
 };
 
-export const updateLocation = async (id: string, input: Partial<DoctorLocationInput>) => {
-  const raw = await updateLocationRequest(id, input);
-  await syncPrepay(input);
-  return required(savedLocationSerializer(raw, !!input.requiresPrepay));
-};
+export const createLocation = async (input: DoctorLocationInput) => savedWithPrepay(await createLocationRequest(input), input);
+
+export const updateLocation = async (id: string, input: Partial<DoctorLocationInput>) =>
+  savedWithPrepay(await updateLocationRequest(id, input), input);
 
 /**
  * Replaces the week. A clash with another location answers 409
@@ -177,12 +211,12 @@ export const addTimeOff = async (input: TimeOffInput, cancelConflicts = false) =
 
 // ─── Profile ─────────────────────────────────────────
 
-/** The profile as the app reads it: its second specialty named by slug. */
+/** The profile as the app reads it: its other specialties named by slug. */
 const readProfile = async (raw: unknown): Promise<DoctorOwnProfile> => {
   const { specialtySlug } = await referenceIndex();
   const body = bodyOf(raw);
-  const second = isObject(body) ? str(arr(body.secondarySpecialtyIds)[0]) : '';
-  return required(ownProfileSerializer(isObject(body) ? { ...body, secondarySpecialtySlug: specialtySlug.get(second) ?? null } : null));
+  const others = isObject(body) ? arr(body.secondarySpecialtyIds).map(id => specialtySlug.get(str(id))).filter((s): s is string => !!s) : [];
+  return required(ownProfileSerializer(isObject(body) ? { ...body, secondarySpecialtySlugs: others } : null));
 };
 
 export const getOwnProfile = async () => readProfile(await fetchOwnProfile());
@@ -195,7 +229,7 @@ const ownProfileBody = async (p: Partial<DoctorOwnProfile>) => {
   if (p.gender !== undefined) out.gender = p.gender;
   if (p.photoUrl !== undefined) out.photoUrl = p.photoUrl;
   if (p.specialtySlug !== undefined) out.primarySpecialtyId = (await specialtyIds([p.specialtySlug]))[0];
-  if (p.secondarySpecialtySlug !== undefined) out.secondarySpecialtyIds = await specialtyIds([p.secondarySpecialtySlug]);
+  if (p.secondarySpecialtySlugs !== undefined) out.secondarySpecialtyIds = await specialtyIds(p.secondarySpecialtySlugs);
   if (p.practisingSince !== undefined) out.practicingSince = p.practisingSince ?? undefined;
   if (p.languages !== undefined) out.languages = p.languages;
   if (p.about !== undefined) out.about = p.about;
@@ -219,6 +253,12 @@ export const updateOwnProfile = async (patch: Partial<DoctorOwnProfile>) =>
 /** Lists the doctor (`422 PROFILE_INCOMPLETE` until the checklist is done): the business, now listed. */
 export const publishProfile = async () => {
   await publishProfileRequest();
+  return required(businessSerializer(await fetchMyBusiness()));
+};
+
+/** Off the directory (patients can't find or book; booked visits stay), then the business as it now reads. */
+export const unpublishProfile = async () => {
+  await unpublishProfileRequest();
   return required(businessSerializer(await fetchMyBusiness()));
 };
 

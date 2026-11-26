@@ -22,6 +22,7 @@ import {
   HOUR,
   HealthError,
   MINUTE,
+  PAY_BEFORE_START_MIN,
   PAY_WINDOW_MIN,
   REVIEW_WINDOW_DAYS,
   addEvent,
@@ -656,7 +657,9 @@ export function registerHealthRoutes(kit: HealthKit) {
       bankName: account.bankName,
       amount: loc.fee,
       payBy: loc.requiresPrepay
-        ? new Date(Math.max(now + 10 * MINUTE, Math.min(now + PAY_WINDOW_MIN * MINUTE, Date.parse(startAt) - 15 * MINUTE))).toISOString()
+        ? new Date(
+            Math.min(Math.max(now + 10 * MINUTE, Math.min(now + PAY_WINDOW_MIN * MINUTE, Date.parse(startAt) - PAY_BEFORE_START_MIN * MINUTE)), Date.parse(startAt)),
+          ).toISOString()
         : startAt,
     };
   };
@@ -1448,16 +1451,18 @@ export function registerHealthRoutes(kit: HealthKit) {
     const { doctor } = myDoctor(ctx);
     const h = ctx.db.health;
     const q = ctx.query;
+    // As the API: `date` is one Pakistan-time day; `from`/`to` are instants
+    // (a bare date is its UTC midnight), `to` exclusive.
     const date = DATE.test(String(q.date ?? '')) ? String(q.date) : null;
-    const from = DATE.test(String(q.from ?? '')) ? String(q.from) : null;
-    const to = DATE.test(String(q.to ?? '')) ? String(q.to) : null;
+    const from = instantOf(q.from) || null;
+    const to = instantOf(q.to) || null;
     const rows = h.appointments
       .filter(a => a.doctorId === doctor.id && a.userId !== 'u_standin_ghost')
       .filter(a => !q.status || STATUS_RANK[a.status] !== undefined || a.status === 'cancelled')
       .filter(a => !q.locationId || a.locationId === q.locationId)
       .filter(a => {
-        const d = dateInZone(a.startAt, PKT);
-        return (!date || d === date) && (!from || d >= from) && (!to || d <= to);
+        const at = new Date(a.startAt).toISOString();
+        return (!date || dateInZone(a.startAt, PKT) === date) && (!from || at >= from) && (!to || at < to);
       })
       .sort(upcomingFirst)
       .map(a => doctorAppointmentWire(h, a, ctx.now));

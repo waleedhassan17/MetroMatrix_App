@@ -31,6 +31,16 @@ export const DURATION_PRESETS = [3, 5, 7, 14, 30];
 export const FOLLOW_UP_PRESETS = [3, 7, 14, 30];
 export const MAX_MEDICINES = 15;
 export const MAX_DAYS = 365;
+// The API's own limits (prescriptions/dto/prescription.dto.ts).
+export const MAX_DIAGNOSIS = 2000;
+export const MAX_MEDICINE_NAME = 120;
+export const MAX_STRENGTH = 40;
+export const MAX_INSTRUCTIONS = 300;
+export const MAX_TEST = 120;
+export const MAX_TESTS = 30;
+export const MAX_ADVICE = 3000;
+/** A dose the API takes as written: "1+0+1", or a short note like "2 puffs". */
+const DOSE_TEXT = /^[0-9½¼.+\- a-zA-Z]{1,20}$/;
 /** The doctor can edit a prescription for this long after issuing it. */
 export const EDIT_WINDOW_HOURS = 24;
 
@@ -62,8 +72,12 @@ export const doseSlots = (dose: string): { label: 'Morning' | 'Afternoon' | 'Nig
   return (['Morning', 'Afternoon', 'Night'] as const).map((label, i) => ({ label, amount: p[i] }));
 };
 
-/** "1 tablet in the morning and at night, after meal, for 5 days". */
+/** "1 tablet in the morning and at night, after meal, for 5 days" (a note like "2 puffs" as written). */
 export const doseSentence = (m: Medicine): string => {
+  if (!parseDose(m.dose)) {
+    const timingText = timingLabel(m.timing).toLowerCase();
+    return [m.dose.trim(), timingText, `for ${m.days} ${m.days === 1 ? 'day' : 'days'}`].filter(Boolean).join(', ');
+  }
   const slots = doseSlots(m.dose).filter(s => s.amount > 0);
   const when = slots.map(s => (s.label === 'Night' ? 'at night' : `in the ${s.label.toLowerCase()}`));
   const whenText = when.length > 1 ? `${when.slice(0, -1).join(', ')} and ${when[when.length - 1]}` : (when[0] ?? '');
@@ -95,18 +109,30 @@ export const emptyPrescription = (): PrescriptionInput => ({
 export const validatePrescription = (p: PrescriptionInput): ValidationErrors => {
   const errors: ValidationErrors = {};
   if (p.diagnosis.trim().length < 2) errors.diagnosis = 'Enter the diagnosis';
-  else if (p.diagnosis.length > 200) errors.diagnosis = 'Keep it under 200 characters';
+  else if (p.diagnosis.length > MAX_DIAGNOSIS) errors.diagnosis = `Keep it under ${MAX_DIAGNOSIS} characters`;
+  if ((p.advice ?? '').length > MAX_ADVICE) errors.advice = `Keep it under ${MAX_ADVICE} characters`;
+  if (p.tests.length > MAX_TESTS) errors.tests = `Up to ${MAX_TESTS} tests`;
+  else if (p.tests.some(t => t.trim().length < 2 || t.length > MAX_TEST)) errors.tests = `Each test needs 2 to ${MAX_TEST} characters`;
   const filled = p.medicines.filter(m => m.name.trim());
   if (!filled.length && !p.tests.length && !(p.advice ?? '').trim()) {
     errors.medicines = 'Add a medicine, a test or advice';
   }
   if (p.medicines.length > MAX_MEDICINES) errors.medicines = `Up to ${MAX_MEDICINES} medicines`;
   p.medicines.forEach((m, i) => {
-    if (!m.name.trim()) {
+    const name = m.name.trim();
+    if (!name) {
       if (p.medicines.length > 1) errors[`medicine.${i}.name`] = 'Enter the medicine or remove this row';
       return;
     }
-    if (!parseDose(m.dose)) errors[`medicine.${i}.dose`] = 'Use a pattern like 1+0+1';
+    if (name.length < 2) errors[`medicine.${i}.name`] = 'Enter the full medicine name';
+    else if (name.length > MAX_MEDICINE_NAME) errors[`medicine.${i}.name`] = `Keep it under ${MAX_MEDICINE_NAME} characters`;
+    if (m.strength.length > MAX_STRENGTH) errors[`medicine.${i}.strength`] = `Keep it under ${MAX_STRENGTH} characters`;
+    if (!parseDose(m.dose) && !DOSE_TEXT.test(m.dose.trim())) {
+      errors[`medicine.${i}.dose`] = 'Use a pattern like 1+0+1, or a short note like 2 puffs';
+    }
+    // The API needs to know when to take it.
+    if (!m.timing) errors[`medicine.${i}.timing`] = 'Choose when to take it';
+    if ((m.instructions ?? '').length > MAX_INSTRUCTIONS) errors[`medicine.${i}.instructions`] = `Keep it under ${MAX_INSTRUCTIONS} characters`;
     if (!Number.isInteger(m.days) || m.days < 1 || m.days > MAX_DAYS) errors[`medicine.${i}.days`] = `1 to ${MAX_DAYS} days`;
   });
   if (p.followUpInDays !== null && (!Number.isInteger(p.followUpInDays) || p.followUpInDays < 1 || p.followUpInDays > 365)) {
