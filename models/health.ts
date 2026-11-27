@@ -742,11 +742,37 @@ export interface AppointmentCancellation {
   late: boolean;
 }
 
+/** The day in numbers: every visit today that isn't cancelled, and where each one stands. */
+export interface TodayCounts {
+  total: number;
+  /** Booked, still to come. */
+  upcoming: number;
+  /** Checked in, not yet with the doctor. */
+  waiting: number;
+  /** With the doctor now. */
+  withDoctor: number;
+  seen: number;
+  missed: number;
+}
+
+/** What still needs the doctor, any date (`attention`; feature `attention`). */
+export type DoctorNeed = 'transfer' | 'fee' | 'prescription' | 'refund';
+export interface DoctorAttention {
+  transfersToConfirm: number;
+  feesToMark: number;
+  prescriptionsToWrite: number;
+  refundsDue: number;
+  reviewsToReply: number;
+}
+
 export interface TodaySummary {
   date: string;
   timezone: string;
+  /** The locations in use (a deleted one still names its old visits, but is never offered). */
   locations: { id: string; name: string; kind: ConsultKind }[];
-  counts: { booked: number; checkedIn: number; done: number; noShow: number };
+  counts: TodayCounts;
+  /** null from a server without the feature. */
+  attention: DoctorAttention | null;
   queue: QueueItem[];
 }
 
@@ -765,7 +791,8 @@ export interface CalendarItem {
 export interface CalendarRange {
   appointments: CalendarItem[];
   timeOff: TimeOff[];
-  locations: { id: string; name: string; kind: ConsultKind }[];
+  /** The locations in use, with their slot length (a day's own hours are checked against it). */
+  locations: { id: string; name: string; kind: ConsultKind; slotMinutes: number }[];
 }
 
 export interface PreviousVisit {

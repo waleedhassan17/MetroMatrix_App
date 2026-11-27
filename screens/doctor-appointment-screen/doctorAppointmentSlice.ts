@@ -5,6 +5,10 @@
 // shared, your earlier visits, private notes (and their files), the payment
 // to check, a refund to record, and the moves the server allows now. Every
 // action answers with the appointment. Saving notes keeps their files.
+//
+// The page's moment-to-moment state (a move in flight, an open sheet, an
+// error) belongs to ONE visit, `uiFor`: opening another visit starts it
+// clean, so an error on one never shows on the next (selectDoctorAppointmentUi).
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
@@ -43,11 +47,14 @@ export interface DoctorAppointmentSliceState {
   attaching: boolean;
   busy: DoctorMove | null;
   /** `reason` is the refund reference on the refund sheet. */
-  sheet: { kind: 'cancel' | 'reject' | 'complete' | 'refund' | null; reason: string };
+  /** `more`: the visit's less common moves (move, follow-up, missed, cancel). */
+  sheet: { kind: 'cancel' | 'reject' | 'complete' | 'refund' | 'more' | null; reason: string };
   viewing: string | null;
   /** A shared report being opened (its files come with short-lived links, on demand). */
   openingRecord: string | null;
   error: ServerError;
+  /** The visit the busy flag, sheet and error belong to. */
+  uiFor: string | null;
 }
 
 const EMPTY: DoctorAppointmentEntry = { appointment: null, status: 'idle', error: NO_ERROR };
@@ -61,6 +68,19 @@ const initialState: DoctorAppointmentSliceState = {
   viewing: null,
   openingRecord: null,
   error: NO_ERROR,
+  uiFor: null,
+};
+
+/** Another visit's page: its own clean slate. */
+const claimUi = (state: DoctorAppointmentSliceState, id: string) => {
+  if (state.uiFor === id) return;
+  state.uiFor = id;
+  state.busy = null;
+  state.sheet = { kind: null, reason: '' };
+  state.viewing = null;
+  state.openingRecord = null;
+  state.attaching = false;
+  state.error = NO_ERROR;
 };
 
 const save = (state: DoctorAppointmentSliceState, a: DoctorAppointmentDetail) => {
@@ -77,7 +97,7 @@ export const doctorAppointmentSlice = createAppSlice({
     removeNoteFile: create.reducer((state, action: PayloadAction<{ id: string; url: string }>) => {
       state.noteFiles[action.payload.id] = (state.noteFiles[action.payload.id] ?? []).filter(u => u !== action.payload.url);
     }),
-    openDoctorSheet: create.reducer((state, action: PayloadAction<'cancel' | 'reject' | 'complete' | 'refund'>) => {
+    openDoctorSheet: create.reducer((state, action: PayloadAction<'cancel' | 'reject' | 'complete' | 'refund' | 'more'>) => {
       state.sheet = { kind: action.payload, reason: '' };
       state.error = NO_ERROR;
     }),
@@ -101,6 +121,7 @@ export const doctorAppointmentSlice = createAppSlice({
       },
       {
         pending: (state, action) => {
+          claimUi(state, action.meta.arg);
           const e = (state.byId[action.meta.arg] ??= { ...EMPTY });
           e.status = 'loading';
           e.error = NO_ERROR;
@@ -210,16 +231,19 @@ export const doctorAppointmentSlice = createAppSlice({
       },
       {
         pending: (state, action) => {
+          claimUi(state, action.meta.arg.id);
           state.busy = action.meta.arg.move;
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
-          state.busy = null;
-          state.sheet.kind = null;
           save(state, action.payload);
           if (action.meta.arg.move === 'notes') state.noteFiles[action.payload.id] = action.payload.notes.attachments;
+          if (state.uiFor !== action.meta.arg.id) return;
+          state.busy = null;
+          state.sheet.kind = null;
         },
         rejected: (state, action) => {
+          if (state.uiFor !== action.meta.arg.id) return;
           state.busy = null;
           const error = readRejection(action, "That didn't go through. Pull down to refresh.");
           state.error = { ...error, message: errorCopy(error.code, error.details) ?? error.message };

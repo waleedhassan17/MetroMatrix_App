@@ -8,6 +8,7 @@
 // (their APIs change only the title, bank and on/off), so a new number is
 // "remove and add a new one"; a store's account can change all of it.
 
+import Toast from 'react-native-toast-message';
 import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -44,9 +45,11 @@ const masked = (n: string) => (n.length > 8 ? `${n.slice(0, 4)} •••• ${n
 const TABS_OF = { shopping: 'StoreTabs', healthcare: 'DoctorTabs', food: 'VendorTabs' } as const;
 const EMPTY_BODY = {
   shopping: 'Add one to take transfers. Without one, customers can only pay cash on delivery.',
-  healthcare: 'Add one to take transfers before video consultations. Without one, patients pay at the visit.',
+  healthcare: 'Add one so patients can pay for video consultations by transfer, before the call if you ask for that. Clinic patients can always pay at the clinic.',
   food: 'Add one to take transfers. Without one, customers pay cash on delivery or when they collect.',
 } as const;
+/** The most active accounts a doctor keeps at once (the API's limit). */
+const MAX_ACCOUNTS = 4;
 /** Services whose saved accounts keep their type and number. */
 const FIXED_NUMBER = new Set(['healthcare', 'food']);
 
@@ -76,10 +79,16 @@ const PaymentAccountsContent: React.FC<Props> = () => {
     void dispatch(loadAccountsAsync());
   }, [dispatch]);
 
+  // A doctor keeps at most four active accounts (API_HEALTH.md); the button says so before the server does.
+  const full = service === 'healthcare' && s.accounts.filter(x => x.isActive).length >= MAX_ACCOUNTS;
+
   const save = () => {
     dispatch(markAccountSubmitted());
     if (Object.keys(validatePaymentAccount(f)).length) return;
-    void dispatch(changeAccountAsync({ kind: 'save', id: s.editing ?? '', input: f }));
+    const editing = !!s.editing;
+    void dispatch(changeAccountAsync({ kind: 'save', id: s.editing ?? '', input: f })).then(r => {
+      if (changeAccountAsync.fulfilled.match(r)) Toast.show({ type: 'success', text1: editing ? 'Account updated' : 'Account added', text2: `${who} see it when they pay.` });
+    });
   };
 
   /** A new number for a doctor's or kitchen's account: remove this one, then add the new one. */
@@ -101,7 +110,14 @@ const PaymentAccountsContent: React.FC<Props> = () => {
   const remove = (a: PaymentAccount) =>
     Alert.alert(`Remove ${accountKindLabel(a.kind)} ${masked(a.number)}?`, `${who} will no longer see it.`, [
       { text: 'Keep it', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: () => void dispatch(changeAccountAsync({ kind: 'delete', id: a.id })) },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: () =>
+          void dispatch(changeAccountAsync({ kind: 'delete', id: a.id })).then(r => {
+            if (changeAccountAsync.fulfilled.match(r)) Toast.show({ type: 'success', text1: 'Account removed' });
+          }),
+      },
     ]);
 
   return (
@@ -109,7 +125,15 @@ const PaymentAccountsContent: React.FC<Props> = () => {
       title="Payment accounts"
       subtitle="Transfers come straight to you"
       onBack={back}
-      footer={<Button label="Add an account" leftIcon="add" onPress={() => dispatch(openAccountSheet(null))} fullWidth />}>
+      footer={
+        full ? (
+          <AppText variant="small" tone="muted" align="center">
+            {`You have ${MAX_ACCOUNTS} accounts, the most you can keep. Remove one to add another.`}
+          </AppText>
+        ) : (
+          <Button label="Add an account" leftIcon="add" onPress={() => dispatch(openAccountSheet(null))} fullWidth />
+        )
+      }>
       {s.error.message && s.editing === null ? (
         <InlineNotice
           message={s.error.message}

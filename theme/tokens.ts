@@ -76,6 +76,9 @@ export interface Palette {
   glass: string;
   /** Ground of the full-screen document viewer. */
   viewer: string;
+  /** Role Selection's "Service Provider" card: the FYP's indigo icon on its tint (auth screens only). */
+  roleProvider: string;
+  roleProviderSoft: string;
 }
 
 const light: Palette = {
@@ -115,6 +118,8 @@ const light: Palette = {
   onScrimLine: 'rgba(255, 255, 255, 0.35)',
   glass: 'rgba(255, 255, 255, 0.94)',
   viewer: '#020617',
+  roleProvider: '#4F46E5',
+  roleProviderSoft: '#EEF2FF',
 };
 
 export const PALETTES: Record<ColorMode, Palette> = { light };
@@ -146,7 +151,9 @@ export const CARD_SHADOW = '#64748B';
 // `inkMuted` on `surfaceSunk` (Custom-Components/IconWell). Colour carries
 // status and selection only, never decoration (the owner, 2026-11-27: the
 // FYP's per-row and per-specialty colours read as generated). There are no
-// row, care or specialty tints, and none may be added.
+// row, care or specialty tints, and none may be added. The one exception is
+// the auth screens (the owner, 2026-11-27): their hero marks and role cards
+// wear the brand's and each service's colour on its soft tint.
 
 // ─── Space — 4-pt scale ─────────────────────────────
 export const space = {

@@ -5,26 +5,43 @@
 // moving a visit…) shows only when the server it talks to can do it, so the
 // app is right before and after a backend redeploy. `isAccepting` is the
 // doctor's "Taking new bookings" switch (PATCH /profile), which Today and
-// Availability both show. Loaded by the doctor's navigator; account-scoped,
-// so a sign-out wipes it.
+// Availability both show; `me` is who Today greets and whether patients can
+// find them. Loaded by the doctor's navigator and again on Today and More's
+// focus (`reloadDoctorFeatures`), so a failed first read is retried and the
+// listing state never goes stale. Account-scoped: a sign-out wipes it.
 
 import { createAppSlice } from './createAppSlice';
 import { fetchOwnProfile, updateOwnProfile } from '../networks/health/doctor/profile';
 import { toRejectedValue } from '../networks/network/network';
 import { doctorFeaturesSerializer } from '../serializers/health/doctorSerializer';
 import type { DoctorFeature } from '../models/health';
+
+/** Who the doctor app greets, and whether patients can find them. */
+export interface DoctorMe {
+  id: string;
+  name: string;
+  firstName: string | null;
+  photoUrl: string | null;
+  specialtyName: string | null;
+  isListed: boolean;
+  wasListed: boolean;
+  /** Staff took the profile down, with their reason. */
+  hiddenByStaff: string | null;
+}
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../screens/shared/formStatus';
 
 export interface DoctorFeaturesSliceState {
   features: DoctorFeature[];
   /** null until read. */
   isAccepting: boolean | null;
+  /** null until read. */
+  me: DoctorMe | null;
   status: FormStatus;
   switching: boolean;
   error: ServerError;
 }
 
-const initialState: DoctorFeaturesSliceState = { features: [], isAccepting: null, status: 'idle', switching: false, error: NO_ERROR };
+const initialState: DoctorFeaturesSliceState = { features: [], isAccepting: null, me: null, status: 'idle', switching: false, error: NO_ERROR };
 
 export const doctorFeaturesSlice = createAppSlice({
   name: 'doctorFeatures',
@@ -40,7 +57,8 @@ export const doctorFeaturesSlice = createAppSlice({
       },
       {
         pending: state => {
-          state.status = 'loading';
+          // A reload keeps what was read; only a first read shows as loading.
+          if (state.status !== 'succeeded') state.status = 'loading';
         },
         fulfilled: (state, action) => {
           state.status = 'succeeded';
@@ -48,10 +66,11 @@ export const doctorFeaturesSlice = createAppSlice({
           if (!read) return;
           state.features = read.features;
           state.isAccepting = read.isAccepting;
+          state.me = read.me;
         },
         // Best effort: without the list, the app shows only what every server can do.
         rejected: state => {
-          state.status = 'failed';
+          if (state.status !== 'succeeded') state.status = 'failed';
         },
       },
     ),
@@ -73,6 +92,7 @@ export const doctorFeaturesSlice = createAppSlice({
           state.switching = false;
           const read = doctorFeaturesSerializer(action.payload);
           state.isAccepting = read ? read.isAccepting : action.meta.arg;
+          if (read) state.me = read.me;
         },
         rejected: (state, action) => {
           state.switching = false;

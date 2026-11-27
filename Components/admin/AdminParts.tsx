@@ -17,22 +17,22 @@ import { AppText, Card, Divider, IconWell, ListRow, TextAction, type IonName } f
 export { IconWell, RowCard, RowCardSkeleton, RowCardsSkeleton, StatGrid, StatGridSkeleton } from '../../Custom-Components/index';
 export type { AdminStat, RowMark } from '../../Custom-Components/index';
 
-const makeStyles = ({ colors, space, radius, elevation, type, size }: Theme) =>
+const makeStyles = ({ colors, space, radius, elevation, type }: Theme) =>
   StyleSheet.create({
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s12 },
-    // Every tile is the height of a two-line label, its content centred, so a
-    // grid of quick actions is one height whatever the labels say.
+    // Every tile keeps room for a two-line label, with the glyphs on one line
+    // across the row, so a grid of quick actions is one height whatever the
+    // labels say.
     action: {
       alignItems: 'center',
-      justifyContent: 'center',
       gap: space.s8,
-      minHeight: space.s12 * 2 + size.well.md + space.s8 + (type.small.lineHeight as number) * 2,
-      paddingVertical: space.s12,
+      paddingVertical: space.s16,
       paddingHorizontal: space.s8,
       borderRadius: radius.lg,
       backgroundColor: colors.surface,
       ...elevation.card,
     },
+    actionLabel: { minHeight: (type.small.lineHeight as number) * 2 },
     section: { gap: space.s12 },
     sectionHead: {
       flexDirection: 'row',
@@ -74,7 +74,7 @@ const QuickActionTile: React.FC<{ action: QuickAction; width?: number; pressedOp
       accessibilityLabel={action.label}
       style={({ pressed }) => [styles.action, width ? { width } : { flexBasis: '28%', flexGrow: 1 }, pressed && { opacity: pressedOpacity }]}>
       <IconWell icon={action.icon} size="md" />
-      <AppText variant="small" align="center" numberOfLines={2}>
+      <AppText variant="small" align="center" numberOfLines={2} style={styles.actionLabel}>
         {action.label}
       </AppText>
     </Pressable>

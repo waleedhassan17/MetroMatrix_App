@@ -168,6 +168,7 @@ export const ROUTES = {
   PATIENT_HISTORY: 'PatientHistory',
   MY_REVIEWS: 'MyReviews',
   DOCTOR_INSIGHTS: 'DoctorInsights',
+  DOCTOR_NEEDS: 'DoctorNeeds',
   DOCTOR_PROFILE_EDIT: 'DoctorProfileEdit',
 
   // ── Healthcare: the admin console's tab ──

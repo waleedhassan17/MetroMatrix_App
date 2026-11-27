@@ -10,6 +10,7 @@
 
 import type {
   AvailabilityPreview,
+  AppointmentStatus,
   CalendarItem,
   CalendarRange,
   Completeness,
@@ -40,7 +41,7 @@ import { compact, count, iso, money, paged } from '../shopping/common';
 import { dateInZone, timeInZone } from '../../utils/health-time/healthTime';
 import { completenessFrom } from '../../models/health/doctorProfileModel';
 import { appDayFromWeekday } from '../../models/health/availabilityModel';
-import { KINDS, TITLE_PREFIX, appointmentStatus, dayOrNull, gender, instant, numOrNull, paymentMethod, paymentStatus, rating, strings, timezone } from './healthCommon';
+import { KINDS, TITLE_PREFIX, appointmentStatus, doctorName, dayOrNull, gender, instant, numOrNull, paymentMethod, paymentStatus, rating, strings, timezone } from './healthCommon';
 import { locationSerializer, experienceSerializer } from './discoverySerializer';
 import { eventSerializer, locationRefSerializer, paymentSerializer, reasonTags } from './appointmentSerializer';
 import { healthRecordSerializer, prescriptionSerializer } from './recordsSerializer';
@@ -212,13 +213,19 @@ export const previewSerializer = fromResponse((raw: unknown): AvailabilityPrevie
 });
 
 // ─── Time off ─────────────────────────────────────────
-type LocationLite = { id: string; name: string; kind: 'video' | 'clinic'; timezone: string };
+type LocationLite = { id: string; name: string; kind: 'video' | 'clinic'; timezone: string; active: boolean };
 
 const locationsLite = (raw: unknown): LocationLite[] =>
   compact(
     arr(raw).map(l =>
       isObject(l) && str(l.id)
-        ? { id: str(l.id), name: str(l.name, str(l.kind) === 'video' ? 'Video consultation' : 'Clinic'), kind: oneOf(l.kind, KINDS, 'clinic'), timezone: timezone(l.timezone) }
+        ? {
+            id: str(l.id),
+            name: str(l.name, str(l.kind) === 'video' ? 'Video consultation' : 'Clinic'),
+            kind: oneOf(l.kind, KINDS, 'clinic'),
+            timezone: timezone(l.timezone),
+            active: l.isActive !== false,
+          }
         : null,
     ),
   );
@@ -315,9 +322,21 @@ const FEATURES: readonly DoctorFeature[] = [
 /** GET /health/doctor/profile → what this server offers the doctor app, and whether bookings are on. */
 export const doctorFeaturesSerializer = fromResponse((raw: unknown) => {
   if (!isObject(raw)) return null;
+  const primary = isObject(raw.primarySpecialty) ? raw.primarySpecialty : {};
   return {
     features: arr(raw.features).filter((f): f is DoctorFeature => FEATURES.includes(f as DoctorFeature)),
     isAccepting: raw.isAccepting === undefined ? true : bool(raw.isAccepting),
+    // Who the app greets, and whether patients can find them (and why not).
+    me: {
+      id: str(raw.id),
+      name: doctorName(raw, 'Doctor'),
+      firstName: str(raw.fullName).split(' ')[0] || null,
+      photoUrl: strOrNull(raw.photoUrl),
+      specialtyName: strOrNull(primary.name),
+      isListed: bool(raw.isListed),
+      wasListed: raw.wasListed === undefined ? bool(raw.isListed) : bool(raw.wasListed),
+      hiddenByStaff: strOrNull(raw.unlistedReason),
+    },
   };
 });
 
@@ -405,24 +424,38 @@ export const todaySerializer = (raw: unknown): TodaySummary | null => {
   const c = isObject(t.counts) ? t.counts : {};
   const queue = compact(arr(t.queue).map(queueItemSerializer));
   const locations = locationsLite(r.locations);
+  const active = locations.filter(l => l.active);
+  const counted = (...statuses: AppointmentStatus[]) => queue.filter(q => statuses.includes(q.status)).length;
+  // The server's counts are for the whole practice; a location's are counted from its queue.
+  const server = isObject(t.counts) && Object.keys(c).length > 0;
+  const total = server ? count(c.total) || queue.filter(q => q.status !== 'cancelled').length : queue.filter(q => q.status !== 'cancelled').length;
+  const upcoming = server ? count(c.remaining) : counted('confirmed', 'awaiting_payment');
+  const waiting = server ? count(c.waiting) : counted('checked_in');
+  const withDoctor = server ? count(c.inConsultation) : counted('in_progress');
+  const seen = server ? count(c.done) : counted('completed');
+  const a = isObject(t.attention) ? t.attention : null;
   return {
     date,
-    timezone: locations[0]?.timezone ?? PKT,
-    locations: locations.map(({ id, name, kind }) => ({ id, name, kind })),
-    // The server's counts are for the whole practice; a location's are counted from its queue.
-    counts: isObject(t.counts) && Object.keys(c).length
+    timezone: (active[0] ?? locations[0])?.timezone ?? PKT,
+    locations: active.map(({ id, name, kind }) => ({ id, name, kind })),
+    counts: {
+      total,
+      upcoming,
+      waiting,
+      withDoctor,
+      seen,
+      // Older servers send no noShow: what's left of the day is the missed visits.
+      missed: server && c.noShow !== undefined ? count(c.noShow) : server ? Math.max(0, total - upcoming - waiting - withDoctor - seen) : counted('no_show'),
+    },
+    attention: a
       ? {
-          booked: count(c.remaining),
-          checkedIn: count(c.waiting) + count(c.inConsultation),
-          done: count(c.done),
-          noShow: queue.filter(q => q.status === 'no_show').length,
+          transfersToConfirm: count(a.transfersToConfirm),
+          feesToMark: count(a.feesToMark),
+          prescriptionsToWrite: count(a.prescriptionsToWrite),
+          refundsDue: count(a.refundsDue),
+          reviewsToReply: count(a.reviewsToReply),
         }
-      : {
-          booked: queue.filter(q => q.status === 'confirmed' || q.status === 'awaiting_payment').length,
-          checkedIn: queue.filter(q => q.status === 'checked_in' || q.status === 'in_progress').length,
-          done: queue.filter(q => q.status === 'completed').length,
-          noShow: queue.filter(q => q.status === 'no_show').length,
-        },
+      : null,
     queue,
   };
 };
@@ -451,7 +484,13 @@ export const calendarSerializer = (raw: unknown): CalendarRange => {
   return {
     appointments: compact(arr(rows).map(calendarItemSerializer)),
     timeOff: compact(arr(r.timeOff).map(t => timeOffSerializer(t, locations))),
-    locations: locations.map(({ id, name, kind }) => ({ id, name, kind })),
+    // Chips offer the locations in use; a deleted one still names its old visits above.
+    locations: locations
+      .filter(l => l.active)
+      .map(({ id, name, kind }) => {
+        const raw = arr(r.locations).find(l => isObject(l) && str(l.id) === id) as Record<string, unknown> | undefined;
+        return { id, name, kind, slotMinutes: Math.max(5, Math.round(num(raw?.slotMinutes, 15))) };
+      }),
   };
 };
 
@@ -643,6 +682,9 @@ export const insightsSerializer = fromResponse((raw: unknown): DoctorInsights | 
 /** A page of patientRows, as the API answers it. */
 export const patientRowPageSerializer = fromResponse(raw => paged(raw, patientRowSerializer));
 
+/** GET /health/doctor/appointments?needs=… → a page of visits, as queue rows. */
+export const queuePageSerializer = fromResponse(raw => paged(raw, queueItemSerializer));
+
 // ─── The doctor app's reads, several answers together ──────────
 
 /** Only one location's patients, when the doctor picked one. */
@@ -710,7 +752,7 @@ export const addedTimeOffSerializer = (parts: { created: unknown; locations: unk
   const { created, locations } = bodiesOf(parts);
   return timeOffSerializer(
     created,
-    compact(arr(locations).map(l => (isObject(l) ? { id: str(l.id), name: str(l.name), kind: 'clinic' as const, timezone: str(l.timezone) || PKT } : null))),
+    compact(arr(locations).map(l => (isObject(l) ? { id: str(l.id), name: str(l.name), kind: 'clinic' as const, timezone: str(l.timezone) || PKT, active: l.isActive !== false } : null))),
   );
 };
 

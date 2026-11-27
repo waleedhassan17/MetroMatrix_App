@@ -30,6 +30,8 @@ describe("the doctor's practice tools, from real answers", () => {
     expect(doctorFeaturesSerializer(body('doctorProfile'))).toEqual({
       features: expect.arrayContaining(['walk_in', 'overrides', 'doctor_reschedule', 'follow_up_booking', 'mark_paid_later', 'buffer', 'pause']),
       isAccepting: true,
+      // Who Today greets, and whether patients can find them.
+      me: expect.objectContaining({ name: 'Dr. Sana Iqbal', firstName: 'Sana', specialtyName: 'Dermatologist', isListed: true, wasListed: true, hiddenByStaff: null }),
     });
     expect(ownProfileSerializer(data('doctorProfile'))).toMatchObject({ isAccepting: true, hiddenByStaff: null });
     expect(listingSerializer(body('doctorProfile'))).toMatchObject({ isListed: true, hiddenByStaff: null });

@@ -19,6 +19,7 @@ import DoctorAppointment from '../screens/doctor-appointment-screen/DoctorAppoin
 import PrescriptionWriter from '../screens/prescription-writer-screen/PrescriptionWriter';
 import PatientHistory from '../screens/patient-history-screen/PatientHistory';
 import MyReviews from '../screens/my-reviews-screen/MyReviews';
+import DoctorNeeds from '../screens/doctor-needs-screen/DoctorNeeds';
 import DoctorInsights from '../screens/doctor-insights-screen/DoctorInsights';
 import DoctorProfileEdit from '../screens/doctor-profile-edit-screen/DoctorProfileEdit';
 import PaymentAccounts from '../screens/payment-accounts-screen/PaymentAccounts';
@@ -45,6 +46,7 @@ export const DOCTOR_PARTNER_STACK_ROUTES: IRoute[] = [
   { title: ROUTES.PATIENT_HISTORY, component: PatientHistory },
   { title: ROUTES.MY_REVIEWS, component: MyReviews },
   { title: ROUTES.DOCTOR_INSIGHTS, component: DoctorInsights },
+  { title: ROUTES.DOCTOR_NEEDS, component: DoctorNeeds },
   { title: ROUTES.DOCTOR_PROFILE_EDIT, component: DoctorProfileEdit },
   { title: ROUTES.PAYMENT_ACCOUNTS, component: PaymentAccounts },
   { title: ROUTES.VIDEO_PRECHECK, component: VideoPrecheck },

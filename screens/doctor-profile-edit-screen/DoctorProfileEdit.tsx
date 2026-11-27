@@ -143,7 +143,7 @@ const DoctorProfileEditContent: React.FC<Props> = () => {
       haptics.warning();
       return;
     }
-    const r = await dispatch(saveOwnProfileAsync(f));
+    const r = await dispatch(saveOwnProfileAsync({ form: f, saved: s.saved }));
     if (saveOwnProfileAsync.fulfilled.match(r)) {
       haptics.success();
       // What the server says now, not what the form thought before saving.

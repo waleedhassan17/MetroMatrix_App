@@ -10,7 +10,7 @@
 
 import { API, toApiError } from '../../network/network';
 import { mimeFromUrl, publicIdFromCloudinaryUrl } from '../../../serializers/health/healthCommon';
-import type { WalkInInput } from '../../../models/health';
+import type { DoctorNeed, WalkInInput } from '../../../models/health';
 
 const enc = encodeURIComponent;
 const path = (id: string) => `/health/doctor/appointments/${enc(id)}`;
@@ -25,11 +25,16 @@ export const fetchDoctorToday = async (): Promise<unknown> => {
   }
 };
 
-/** The doctor's appointments: one `date` (a Pakistan-time day), or instants `from` (inclusive) – `to` (exclusive). */
+/**
+ * The doctor's appointments: one `date` (a Pakistan-time day), or instants
+ * `from` (inclusive) – `to` (exclusive), or what one "Needs you" count
+ * counts (`needs`, any date).
+ */
 export const fetchDoctorAppointments = async (params: {
   date?: string;
   from?: string;
   to?: string;
+  needs?: DoctorNeed;
   page?: number;
   pageSize?: number;
 }): Promise<unknown> => {

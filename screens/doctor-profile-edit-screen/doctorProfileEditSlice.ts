@@ -169,9 +169,9 @@ export const doctorProfileEditSlice = createAppSlice({
       },
     ),
     saveOwnProfileAsync: create.asyncThunk(
-      async (form: DoctorOwnProfile, { rejectWithValue }) => {
+      async ({ form, saved }: { form: DoctorOwnProfile; saved: DoctorOwnProfile | null }, { rejectWithValue }) => {
         try {
-          return await updateOwnProfile(ownProfilePatch(form));
+          return await updateOwnProfile(ownProfilePatch(form, saved));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }

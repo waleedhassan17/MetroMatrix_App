@@ -29,6 +29,7 @@ import {
 
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
+    pager: { flexDirection: 'row', justifyContent: 'space-between', gap: space.s12 },
     group: { gap: space.s8 },
     chips: { gap: space.s8 },
   });
@@ -52,8 +53,18 @@ export const VisitTimeSheet: React.FC = () => {
   const place = (locationId: string) => void dispatch(loadVisitDaysAsync({ locationId, from: s.from }));
   const later = () => {
     const last = s.days[s.days.length - 1]?.date;
-    if (s.locationId && last) void dispatch(loadVisitDaysAsync({ locationId: s.locationId, from: addDays(last, 1) }));
+    if (s.locationId && last) void dispatch(loadVisitDaysAsync({ locationId: s.locationId, from: addDays(last, 1), page: 'later' }));
   };
+  const earlier = () => {
+    if (s.locationId && s.pages.length) void dispatch(loadVisitDaysAsync({ locationId: s.locationId, from: s.pages[s.pages.length - 1], page: 'earlier' }));
+  };
+
+  // Someone took the time meanwhile: read the days again, so the grid shows what is really free.
+  useEffect(() => {
+    if (s.open && s.error.code === 'SLOT_TAKEN' && s.locationId) void dispatch(loadVisitDaysAsync({ locationId: s.locationId, from: s.from, keepError: true }));
+    // Only when that error arrives.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s.error.code]);
 
   const save = () => {
     if (!s.appointmentId || !s.locationId || !s.selected) return;
@@ -111,7 +122,10 @@ export const VisitTimeSheet: React.FC = () => {
       <View style={styles.group}>
         <AppText variant="label">Day</AppText>
         <DateStrip days={s.days} selected={s.date} onSelect={d => dispatch(showVisitDay(d))} loading={s.loading} />
-        {s.days.length >= VISIT_TIME_DAYS ? <TextAction label="Later dates" icon="chevron-forward" onPress={later} /> : null}
+        <View style={styles.pager}>
+          {s.pages.length ? <TextAction label="Earlier dates" icon="chevron-back" onPress={earlier} /> : null}
+          {s.days.length >= VISIT_TIME_DAYS ? <TextAction label="Later dates" icon="chevron-forward" onPress={later} /> : null}
+        </View>
       </View>
       <View style={styles.group}>
         <AppText variant="label">Time</AppText>

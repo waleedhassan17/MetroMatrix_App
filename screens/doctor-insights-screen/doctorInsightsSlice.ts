@@ -12,9 +12,10 @@ export interface DoctorInsightsSliceState {
   insights: DoctorInsights | null;
   status: FormStatus;
   error: ServerError;
+  requestId: string | null;
 }
 
-const initialState: DoctorInsightsSliceState = { range: '30d', insights: null, status: 'idle', error: NO_ERROR };
+const initialState: DoctorInsightsSliceState = { range: '30d', insights: null, status: 'idle', error: NO_ERROR, requestId: null };
 
 export const doctorInsightsSlice = createAppSlice({
   name: 'doctorInsights',
@@ -30,16 +31,20 @@ export const doctorInsightsSlice = createAppSlice({
       },
       {
         pending: (state, action) => {
+          // The range tapped last wins, whichever answer comes back first.
+          state.requestId = action.meta.requestId;
           state.range = action.meta.arg;
           state.status = 'loading';
           state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          if (action.meta.requestId !== state.requestId) return;
           const payload = insightsSerializer(action.payload);
           state.status = 'succeeded';
           state.insights = payload;
         },
         rejected: (state, action) => {
+          if (action.meta.requestId !== state.requestId) return;
           state.status = 'failed';
           state.error = readRejection(action, "Insights didn't load.");
         },

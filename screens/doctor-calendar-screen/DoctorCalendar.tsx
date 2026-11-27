@@ -34,7 +34,7 @@ import { PKT, addDays, dateInZone, formatDayChip, formatDayShort, formatSlot, to
 import { loadCalendarAsync, selectDoctorCalendar, setCalendarMode, type CalendarMode } from './doctorCalendarSlice';
 import { selectHasDoctorFeature } from '../../store/doctorFeaturesSlice';
 import { DayHoursSheet } from '../day-hours-sheet/DayHoursSheet';
-import { loadDayHoursAsync, openDayHours, selectDayHours } from '../day-hours-sheet/dayHoursSlice';
+import { loadDayHoursAsync, loadUsualHoursAsync, openDayHours, selectDayHours } from '../day-hours-sheet/dayHoursSlice';
 import type { DayHours } from '../../models';
 
 type Props = NativeStackScreenProps<DoctorPartnerStackParamList, 'DoctorTabs'>;
@@ -96,14 +96,12 @@ const DoctorCalendarContent: React.FC<Props> = ({ navigation }) => {
     });
   const hoursText = (own: DayHours) =>
     own.closed ? 'Closed this day' : own.ranges.map(x => `${clock12(x.from)} – ${clock12(x.to)}`).join(', ');
-  const changeHours = (d: string, locationId?: string) =>
-    dispatch(
-      openDayHours({
-        date: d,
-        locationId,
-        locations: (s.range?.locations ?? []).map(l => ({ id: l.id, name: l.name, slotMinutes: 15 })),
-      }),
-    );
+  const changeHours = (d: string, locationId?: string) => {
+    const places = s.range?.locations ?? [];
+    // Each location's own slot length, and its usual week to start the day from.
+    dispatch(openDayHours({ date: d, locationId, locations: places.map(l => ({ id: l.id, name: l.name, slotMinutes: l.slotMinutes })) }));
+    void dispatch(loadUsualHoursAsync(places.map(l => l.id)));
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -170,8 +168,8 @@ const DoctorCalendarContent: React.FC<Props> = ({ navigation }) => {
           accessibilityLabel="Calendar view"
         />
       }
-      onRefresh={() => load(date, s.mode)}
-      refreshing={false}>
+      onRefresh={() => void dispatch(loadCalendarAsync({ date, mode: s.mode, refresh: true }))}
+      refreshing={s.refreshing}>
       <View style={styles.nav}>
         <IconButton
           icon="chevron-back"

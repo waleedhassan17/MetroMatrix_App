@@ -146,10 +146,13 @@ const AvailabilityContent: React.FC<Props> = ({ route, navigation }) => {
   useEffect(() => {
     if (route.params?.tab) dispatch(setAvailabilityTab(route.params.tab));
   }, [route.params?.tab, dispatch]);
-  // The preview loads once when its tab opens; after a failure only "Try again" asks again.
+  // The preview reads again every time its tab opens (hours, time off, a day's
+  // own hours or the pause may have changed since); after a failure, "Try again".
   useEffect(() => {
-    if (s.tab === 'preview' && s.previewStatus === 'idle') void dispatch(loadPreviewAsync());
-  }, [s.tab, s.previewStatus, dispatch]);
+    if (s.tab === 'preview' && s.previewStatus !== 'loading' && s.previewStatus !== 'failed') void dispatch(loadPreviewAsync());
+    // Only when the tab changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s.tab, dispatch]);
 
   const form = s.sheet.form;
   const locErrors = validateLocation(form);
@@ -717,7 +720,7 @@ const AvailabilityContent: React.FC<Props> = ({ route, navigation }) => {
             disabled={s.busy === 'delete'}
             confirm={{
               title: 'Remove this location?',
-              message: 'Patients will no longer see it. Booked appointments stay; move or cancel them first.',
+              message: "Patients won't see it any more. A location with patients booked can't be removed: move or cancel those visits first.",
               action: 'Remove',
             }}
             onConfirm={() => s.sheet.id && void dispatch(deleteLocationAsync(s.sheet.id))}

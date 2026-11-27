@@ -96,6 +96,11 @@ const API_CODES = {
   BUSINESS_NOT_EDITABLE: 'BUSINESS_NOT_EDITABLE',
   /** A status move that already happened (a submit or a staff decision that timed out but worked). */
   INVALID_TRANSITION: 'INVALID_TRANSITION',
+  // Healthcare's practice rules the app words itself (errorCopy).
+  LOCATION_HAS_BOOKINGS: 'LOCATION_HAS_BOOKINGS',
+  SCHEDULE_OVERLAP: 'SCHEDULE_OVERLAP',
+  PROFILE_INCOMPLETE: 'PROFILE_INCOMPLETE',
+  PRESCRIPTION_LOCKED: 'PRESCRIPTION_LOCKED',
   RATE_LIMITED: 'RATE_LIMITED',
   UNAUTHORIZED: 'UNAUTHORIZED',
   FORBIDDEN: 'FORBIDDEN',
@@ -787,6 +792,23 @@ export const errorCopy = (code: string | null | undefined, details?: Details): s
       return 'Set up your authenticator app to continue.';
     case ERROR_CODES.BUSINESS_SUSPENDED:
       return 'Your business is paused. Contact MetroMatrix support.';
+    // Healthcare: where the server's own words are technical. The rest
+    // (SLOT_TAKEN, PATIENT_OVERLAP, NO_FREE_SLOT, CANCEL_CUTOFF_PASSED …)
+    // already say it plainly and pass through.
+    case ERROR_CODES.INVALID_TRANSITION:
+      return 'This has changed since you opened it. Pull down to refresh, then try again.';
+    case ERROR_CODES.LOCATION_HAS_BOOKINGS: {
+      const n = Array.isArray(details?.appointments) ? details.appointments.length : 0;
+      return n
+        ? `${n === 1 ? 'A patient is' : `${n} patients are`} booked here. Move or cancel ${n === 1 ? 'that visit' : 'those visits'} first.`
+        : 'Patients are booked here. Move or cancel those visits first.';
+    }
+    case ERROR_CODES.SCHEDULE_OVERLAP:
+      return 'These hours overlap your hours at another location. You can only be in one place at a time.';
+    case ERROR_CODES.PROFILE_INCOMPLETE:
+      return 'Finish your practice setup first: patients can find you once every step is done.';
+    case ERROR_CODES.PRESCRIPTION_LOCKED:
+      return 'A prescription can be changed for 24 hours after the visit is completed. After that, write a new one.';
     default:
       return null;
   }

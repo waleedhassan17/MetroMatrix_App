@@ -53,6 +53,28 @@ export const formatHHmm = (hhmm: string) => {
   return `${h12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
 };
 
+const hhmmOf = (minutes: number) => (minutes >= 1440 ? '23:59' : `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`);
+
+/**
+ * "Add a break": the last range splits around its middle with an hour off
+ * (9:00–17:00 → 9:00–13:00 and 14:00–17:00). A range too short to split (under
+ * 3 hours) gets a second one an hour after it ends instead, three hours long
+ * at most; a day with nothing gets the usual evening.
+ */
+export const withBreak = (ranges: TimeRange[]): TimeRange[] => {
+  const last = ranges[ranges.length - 1];
+  if (!last) return [{ ...DEFAULT_RANGE }];
+  const from = toMinutes(last.from);
+  const to = last.to === '23:59' ? 1440 : toMinutes(last.to);
+  if (to - from >= 180) {
+    const mid = Math.round((from + (to - from) / 2 - 30) / 60) * 60;
+    return [...ranges.slice(0, -1), { from: last.from, to: hhmmOf(mid) }, { from: hhmmOf(mid + 60), to: last.to }];
+  }
+  const start = to + 60;
+  if (start >= 1440 - 30) return ranges;
+  return [...ranges, { from: hhmmOf(start), to: hhmmOf(Math.min(1440, start + 180)) }];
+};
+
 export const rangesOverlap = (a: TimeRange, b: TimeRange) => toMinutes(a.from) < toMinutes(b.to) && toMinutes(b.from) < toMinutes(a.to);
 
 export const emptyWeek = (): WeekDayHours[] => WEEKDAYS.map(w => ({ day: w.day, ranges: [] }));

@@ -52,6 +52,10 @@ export interface VisitTimeSheetState {
   done: string | null;
   /** The days as read, kept to show another of them without a request. */
   raw: unknown;
+  /** Where each earlier page of dates started, so "Earlier dates" goes back. */
+  pages: (string | null)[];
+  /** The latest read's id: a slow answer for a location tapped before never wins. */
+  requestId: string | null;
 }
 
 const initialState: VisitTimeSheetState = {
@@ -73,6 +77,8 @@ const initialState: VisitTimeSheetState = {
   error: NO_ERROR,
   done: null,
   raw: null,
+  pages: [],
+  requestId: null,
 };
 
 /** The moving reason the patient reads (the API's 3–500). */
@@ -138,7 +144,7 @@ export const visitTimeSlice = createAppSlice({
       },
     ),
     loadVisitDaysAsync: create.asyncThunk(
-      async ({ locationId, from }: { locationId: string; from: string | null }, { rejectWithValue }) => {
+      async ({ locationId, from }: { locationId: string; from: string | null; page?: 'later' | 'earlier'; keepError?: boolean }, { rejectWithValue }) => {
         try {
           return await fetchOwnSlots(locationId, from, VISIT_TIME_DAYS);
         } catch (e) {
@@ -147,13 +153,20 @@ export const visitTimeSlice = createAppSlice({
       },
       {
         pending: (state, action) => {
+          const { locationId, from, page } = action.meta.arg;
+          state.requestId = action.meta.requestId;
+          if (page === 'later') state.pages.push(state.from);
+          else if (page === 'earlier') state.pages.pop();
+          else if (locationId !== state.locationId) state.pages = [];
           state.loading = true;
-          state.locationId = action.meta.arg.locationId;
-          state.from = action.meta.arg.from;
+          state.locationId = locationId;
+          state.from = from;
           state.selected = null;
-          state.error = NO_ERROR;
+          // A reload after SLOT_TAKEN keeps saying why the grid changed.
+          if (!action.meta.arg.keepError) state.error = NO_ERROR;
         },
         fulfilled: (state, action) => {
+          if (action.meta.requestId !== state.requestId) return;
           state.loading = false;
           state.raw = action.payload;
           state.days = daysSerializer(action.payload);
@@ -163,6 +176,7 @@ export const visitTimeSlice = createAppSlice({
           state.day = pick ? slotDayOnSerializer(action.payload, pick) : null;
         },
         rejected: (state, action) => {
+          if (action.meta.requestId !== state.requestId) return;
           state.loading = false;
           state.error = readRejection(action, "Your times didn't load.");
         },

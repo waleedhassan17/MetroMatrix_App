@@ -5,7 +5,8 @@
 // why they came, the prescription. Only completed visits count as seen; only
 // your own visits — never other doctors'.
 
-import React, { useEffect } from 'react';
+import React, { useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
@@ -43,9 +44,12 @@ const PatientHistoryContent: React.FC<Props> = ({ route, navigation }) => {
   const h = entry.history;
   const seen = h ? h.visits.filter(v => v.status === 'completed').length : 0;
 
-  useEffect(() => {
-    void dispatch(loadPatientHistoryAsync(id));
-  }, [dispatch, id]);
+  // Every visit back (a visit completed, a prescription written) reads it again.
+  useFocusEffect(
+    useCallback(() => {
+      void dispatch(loadPatientHistoryAsync(id));
+    }, [dispatch, id]),
+  );
 
   return (
     <ScreenShell
@@ -58,7 +62,8 @@ const PatientHistoryContent: React.FC<Props> = ({ route, navigation }) => {
           : undefined
       }
       onBack={back}
-      refreshing={entry.status === 'loading' && !!h}
+      // Focus reloads quietly; the spinner is only the pull's own.
+      refreshing={false}
       onRefresh={() => void dispatch(loadPatientHistoryAsync(id))}>
       {entry.status === 'failed' ? (
         <InlineNotice message={entry.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadPatientHistoryAsync(id)) }} />

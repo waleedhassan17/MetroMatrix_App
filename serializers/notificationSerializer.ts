@@ -85,6 +85,8 @@ export const notificationSerializer = (raw: unknown): AppNotification | null => 
       appointmentCode: strOrNull(data.appointmentCode),
       appointmentId: strOrNull(data.appointmentId) ?? strOrNull(data.appointmentCode),
       prescriptionId: strOrNull(data.prescriptionId),
+      reviewId: strOrNull(data.reviewId),
+      screen: str(raw.type) === 'health.listing.hidden' ? 'listing' : str(data.screen) === 'today' ? 'today' : null,
     },
     isRead: bool(raw.isRead) || !!strOrNull(raw.readAt),
     createdAt: iso(raw.createdAt),

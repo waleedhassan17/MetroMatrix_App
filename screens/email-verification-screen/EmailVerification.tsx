@@ -92,8 +92,8 @@ const EmailVerification: React.FC = () => {
 
   return (
     <AuthScreen>
-      <View style={[styles.hero, { backgroundColor: colors.surfaceSunk }]}>
-        <IonIcon name="mail-unread-outline" size="xl" color={colors.inkMuted} />
+      <View style={[styles.hero, { backgroundColor: service.accentSoft }]}>
+        <IonIcon name="mail-unread-outline" size="xl" color={service.accentDeep} />
       </View>
       <AuthHeader hideLogo title="Check your inbox" />
 
@@ -156,7 +156,7 @@ const EmailVerification: React.FC = () => {
           <AppText variant="title">Didn&apos;t get the email?</AppText>
           {TIPS.map(tip => (
             <View key={tip.text} style={styles.tip}>
-              <IonIcon name={tip.icon} size="md" color={colors.inkMuted} />
+              <IonIcon name={tip.icon} size="md" color={service.accentDeep} />
               <AppText variant="body" tone="muted" style={styles.grow}>
                 {tip.text}
               </AppText>

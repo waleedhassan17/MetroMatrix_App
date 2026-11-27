@@ -27,12 +27,11 @@ import {
   Sheet,
   TextField,
   TimeField,
-  dateKeyOf,
 } from '../../Custom-Components/index';
 import { MAX_TIME_OFF_REASON, validateTimeOff } from '../../models/health/availabilityModel';
 import type { DoctorPartnerStackParamList } from '../../models';
 import { Alert } from '../../utils/alert/alert';
-import { formatDayFull, formatWhen } from '../../utils/health-time/healthTime';
+import { PKT, formatDayFull, formatWhen, todayInZone } from '../../utils/health-time/healthTime';
 import { haptics } from '../../utils/haptics/haptics';
 import {
   addTimeOffAsync,
@@ -67,7 +66,10 @@ const TimeOffContent: React.FC<Props> = ({ route }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectTimeOff);
-  const today = dateKeyOf(new Date());
+  // The practice's today (Pakistan time), never the phone's.
+  const today = todayInZone(PKT);
+  const upcoming = s.items.filter(t => t.to >= today);
+  const past = s.items.filter(t => t.to < today).slice(0, 10);
   const errors = validateTimeOff(s.form, today);
 
   useEffect(() => {
@@ -87,23 +89,36 @@ const TimeOffContent: React.FC<Props> = ({ route }) => {
     const r = await dispatch(addTimeOffAsync({ input: s.form, cancelConflicts }));
     if (addTimeOffAsync.fulfilled.match(r)) {
       haptics.success();
-      Toast.show({ type: 'success', text1: 'Time off added', text2: cancelConflicts ? 'The booked patients have been told.' : 'Those days take no bookings now.' });
+      Toast.show({
+        type: 'success',
+        text1: 'Time off added',
+        text2: cancelConflicts
+          ? 'The booked patients have been told.'
+          : 'Those days take no bookings now.',
+      });
     }
   };
 
   const remove = (id: string) =>
     Alert.alert('Remove this time off?', 'Those days take bookings again.', [
       { text: 'Keep', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: () => void dispatch(removeTimeOffAsync(id)) },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: () => void dispatch(removeTimeOffAsync(id)),
+      },
     ]);
 
-  const label = (from: string, to: string) => (from === to ? formatDayFull(from) : `${formatDayFull(from)} – ${formatDayFull(to)}`);
+  const label = (from: string, to: string) =>
+    from === to ? formatDayFull(from) : `${formatDayFull(from)} – ${formatDayFull(to)}`;
   const clock = (hm: string) => {
     const [h, m] = (hm === '23:59' ? '24:00' : hm).split(':').map(Number);
-    return `${h % 24 % 12 || 12}:${String(m).padStart(2, '0')} ${h % 24 < 12 ? 'AM' : 'PM'}`;
+    return `${(h % 24) % 12 || 12}:${String(m).padStart(2, '0')} ${h % 24 < 12 ? 'AM' : 'PM'}`;
   };
   const when = (t: { from: string; to: string; hours: { from: string; to: string } | null }) =>
-    t.hours ? `${formatDayFull(t.from)}, ${clock(t.hours.from)} – ${clock(t.hours.to)}` : label(t.from, t.to);
+    t.hours
+      ? `${formatDayFull(t.from)}, ${clock(t.hours.from)} – ${clock(t.hours.to)}`
+      : label(t.from, t.to);
   const partDay = !!s.form.hours;
 
   return (
@@ -111,36 +126,92 @@ const TimeOffContent: React.FC<Props> = ({ route }) => {
       title="Time off"
       subtitle="Days you won't see patients"
       onBack={back}
-      footer={<Button label="Add time off" leftIcon="add" onPress={() => dispatch(openTimeOffSheet(undefined))} fullWidth />}
+      footer={
+        <Button
+          label="Add time off"
+          leftIcon="add"
+          onPress={() => dispatch(openTimeOffSheet(undefined))}
+          fullWidth
+        />
+      }
       refreshing={s.status === 'loading' && s.items.length > 0}
       onRefresh={() => void dispatch(loadTimeOffAsync())}>
       {s.error.message && !s.sheetOpen ? (
         <InlineNotice
           message={s.error.message}
-          action={s.status === 'failed' && !s.items.length ? { label: 'Try again', onPress: () => void dispatch(loadTimeOffAsync()) } : undefined}
+          action={
+            s.status === 'failed' && !s.items.length
+              ? { label: 'Try again', onPress: () => void dispatch(loadTimeOffAsync()) }
+              : undefined
+          }
         />
       ) : null}
       {s.status === 'loading' && !s.items.length ? (
         <RowCardsSkeleton count={3} />
       ) : s.status === 'failed' && !s.items.length ? null : s.items.length ? (
-        <Card padded="horizontal">
-          {s.items.map((t, i) => (
-            <View key={t.id}>
-              {i > 0 ? <Divider /> : null}
-              <View style={[styles.row, styles.item]}>
-                <View style={styles.grow}>
-                  <AppText variant="title">{when(t)}</AppText>
-                  <AppText variant="small" tone="muted">
-                    {[t.locationName ?? 'All locations', t.reason].filter(Boolean).join(' · ')}
-                  </AppText>
+        <>
+          {upcoming.length ? (
+            <Card padded="horizontal">
+              {upcoming.map((t, i) => (
+                <View key={t.id}>
+                  {i > 0 ? <Divider /> : null}
+                  <View style={[styles.row, styles.item]}>
+                    <View style={styles.grow}>
+                      <AppText variant="title">{when(t)}</AppText>
+                      <AppText variant="small" tone="muted">
+                        {[t.locationName ?? 'All locations', t.reason].filter(Boolean).join(' · ')}
+                      </AppText>
+                    </View>
+                    <IconButton
+                      icon="trash-outline"
+                      tone="muted"
+                      onPress={() => remove(t.id)}
+                      accessibilityLabel={`Remove time off ${when(t)}`}
+                    />
+                  </View>
                 </View>
-                <IconButton icon="trash-outline" tone="muted" onPress={() => remove(t.id)} accessibilityLabel={`Remove time off ${when(t)}`} />
-              </View>
-            </View>
-          ))}
-        </Card>
+              ))}
+            </Card>
+          ) : (
+            <EmptyState
+              icon="sunny-outline"
+              title="No time off ahead"
+              body="Add leave or a closed day, and those days stop taking bookings."
+            />
+          )}
+          {past.length ? (
+            <>
+              <AppText variant="sectionTitle" accessibilityRole="header">
+                Earlier
+              </AppText>
+              <Card padded="horizontal">
+                {past.map((t, i) => (
+                  <View key={t.id}>
+                    {i > 0 ? <Divider /> : null}
+                    <View style={[styles.row, styles.item]}>
+                      <View style={styles.grow}>
+                        <AppText variant="title" tone="muted">
+                          {when(t)}
+                        </AppText>
+                        <AppText variant="small" tone="muted">
+                          {[t.locationName ?? 'All locations', t.reason]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </AppText>
+                      </View>
+                    </View>
+                  </View>
+                ))}
+              </Card>
+            </>
+          ) : null}
+        </>
       ) : (
-        <EmptyState icon="sunny-outline" title="No time off planned" body="Add leave or a closed day, and those days stop taking bookings." />
+        <EmptyState
+          icon="sunny-outline"
+          title="No time off planned"
+          body="Add leave or a closed day, and those days stop taking bookings."
+        />
       )}
 
       <Sheet
@@ -150,21 +221,45 @@ const TimeOffContent: React.FC<Props> = ({ route }) => {
         footer={
           s.conflicts.length ? (
             <>
-              <Button label="Cancel them and tell the patients" onPress={() => void add(true)} loading={s.busy === 'add'} fullWidth />
-              <Button label="Choose other days" variant="ghost" onPress={() => dispatch(editTimeOff({}))} fullWidth />
+              <Button
+                label="Cancel them and tell the patients"
+                onPress={() => void add(true)}
+                loading={s.busy === 'add'}
+                fullWidth
+              />
+              <Button
+                label="Choose other days"
+                variant="ghost"
+                onPress={() => dispatch(editTimeOff({}))}
+                fullWidth
+              />
             </>
           ) : (
-            <Button label="Add time off" onPress={() => void add(false)} loading={s.busy === 'add'} fullWidth />
+            <Button
+              label="Add time off"
+              onPress={() => void add(false)}
+              loading={s.busy === 'add'}
+              fullWidth
+            />
           )
         }>
         {s.conflicts.length ? (
           <>
             {s.error.message ? <InlineNotice message={s.error.message} /> : null}
-            <InlineNotice tone="warning" message={`${s.conflicts.length} ${s.conflicts.length === 1 ? 'visit is' : 'visits are'} booked. Going ahead cancels ${s.conflicts.length === 1 ? 'it' : 'them'}, and each patient is told and can book another time.`} />
+            <InlineNotice
+              tone="warning"
+              message={`${s.conflicts.length} ${
+                s.conflicts.length === 1 ? 'visit is' : 'visits are'
+              } booked. Going ahead cancels ${
+                s.conflicts.length === 1 ? 'it' : 'them'
+              }, and each patient is told and can book another time.`}
+            />
             {s.conflicts.map(c => (
               <View key={c.id} style={styles.grow}>
                 <AppText variant="bodyStrong">{c.patientName}</AppText>
-                <AppText variant="small" tone="muted">{`${formatWhen(c.startAt, c.timezone)} · ${c.code}`}</AppText>
+                <AppText variant="small" tone="muted">{`${formatWhen(c.startAt, c.timezone)} · ${
+                  c.code
+                }`}</AppText>
               </View>
             ))}
           </>
@@ -172,23 +267,43 @@ const TimeOffContent: React.FC<Props> = ({ route }) => {
           <>
             {s.error.message ? <InlineNotice message={s.error.message} /> : null}
             <View style={styles.chips}>
-              <ChoiceChip label="Whole days" icon="calendar-outline" selected={!partDay} onPress={() => dispatch(editTimeOff({ hours: null }))} />
+              <ChoiceChip
+                label="Whole days"
+                icon="calendar-outline"
+                selected={!partDay}
+                onPress={() => dispatch(editTimeOff({ hours: null }))}
+              />
               <ChoiceChip
                 label="Some hours"
                 icon="time-outline"
                 selected={partDay}
-                onPress={() => dispatch(editTimeOff({ hours: s.form.hours ?? { from: '14:00', to: '17:00' }, to: s.form.from }))}
+                onPress={() =>
+                  dispatch(
+                    editTimeOff({
+                      hours: s.form.hours ?? { from: '14:00', to: '17:00' },
+                      to: s.form.from,
+                    }),
+                  )
+                }
               />
             </View>
             {partDay ? (
               <>
-                <DateField label="Day" value={s.form.from} onChange={v => dispatch(editTimeOff({ from: v, to: v }))} min={today} error={s.touched ? errors.from : undefined} />
+                <DateField
+                  label="Day"
+                  value={s.form.from}
+                  onChange={v => dispatch(editTimeOff({ from: v, to: v }))}
+                  min={today}
+                  error={s.touched ? errors.from : undefined}
+                />
                 <View style={styles.pair}>
                   <View style={styles.grow}>
                     <TimeField
                       label="From"
                       value={s.form.hours!.from}
-                      onChange={v => dispatch(editTimeOff({ hours: { ...s.form.hours!, from: v } }))}
+                      onChange={v =>
+                        dispatch(editTimeOff({ hours: { ...s.form.hours!, from: v } }))
+                      }
                       error={s.touched ? errors.hours : undefined}
                     />
                   </View>
@@ -196,7 +311,13 @@ const TimeOffContent: React.FC<Props> = ({ route }) => {
                     <TimeField
                       label="To"
                       value={s.form.hours!.to === '23:59' ? '24:00' : s.form.hours!.to}
-                      onChange={v => dispatch(editTimeOff({ hours: { ...s.form.hours!, to: v === '24:00' ? '23:59' : v } }))}
+                      onChange={v =>
+                        dispatch(
+                          editTimeOff({
+                            hours: { ...s.form.hours!, to: v === '24:00' ? '23:59' : v },
+                          }),
+                        )
+                      }
                       allowMidnight
                     />
                   </View>
@@ -205,18 +326,43 @@ const TimeOffContent: React.FC<Props> = ({ route }) => {
             ) : (
               <View style={styles.pair}>
                 <View style={styles.grow}>
-                  <DateField label="First day" value={s.form.from} onChange={v => dispatch(editTimeOff({ from: v, to: s.form.to && s.form.to >= v ? s.form.to : v }))} min={today} error={s.touched ? errors.from : undefined} />
+                  <DateField
+                    label="First day"
+                    value={s.form.from}
+                    onChange={v =>
+                      dispatch(
+                        editTimeOff({ from: v, to: s.form.to && s.form.to >= v ? s.form.to : v }),
+                      )
+                    }
+                    min={today}
+                    error={s.touched ? errors.from : undefined}
+                  />
                 </View>
                 <View style={styles.grow}>
-                  <DateField label="Last day" value={s.form.to} onChange={v => dispatch(editTimeOff({ to: v }))} min={s.form.from || today} error={s.touched ? errors.to : undefined} />
+                  <DateField
+                    label="Last day"
+                    value={s.form.to}
+                    onChange={v => dispatch(editTimeOff({ to: v }))}
+                    min={s.form.from || today}
+                    error={s.touched ? errors.to : undefined}
+                  />
                 </View>
               </View>
             )}
             <AppText variant="label">Where</AppText>
             <View style={styles.chips}>
-              <ChoiceChip label="All locations" selected={!s.form.locationId} onPress={() => dispatch(editTimeOff({ locationId: null }))} />
+              <ChoiceChip
+                label="All locations"
+                selected={!s.form.locationId}
+                onPress={() => dispatch(editTimeOff({ locationId: null }))}
+              />
               {s.locations.map(l => (
-                <ChoiceChip key={l.id} label={l.name} selected={s.form.locationId === l.id} onPress={() => dispatch(editTimeOff({ locationId: l.id }))} />
+                <ChoiceChip
+                  key={l.id}
+                  label={l.name}
+                  selected={s.form.locationId === l.id}
+                  onPress={() => dispatch(editTimeOff({ locationId: l.id }))}
+                />
               ))}
             </View>
             <TextField

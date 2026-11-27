@@ -12,8 +12,9 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import { useSignOut } from '../../hooks/useSignOut';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
-import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Card, Divider, InlineNotice, ListRow, ScreenShell, StatusPill, type IonName } from '../../Custom-Components/index';
+import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
+import { AppText, Avatar, Card, Divider, IonIcon, InlineNotice, ListRow, ScreenShell, StatusPill, TextAction, type IonName } from '../../Custom-Components/index';
+import { loadDoctorFeaturesAsync, selectDoctorFeatures } from '../../store/doctorFeaturesSlice';
 import { selectBusiness } from '../../store/authSlice';
 import { Alert } from '../../utils/alert/alert';
 import { shareText } from '../../utils/share-text/shareText';
@@ -45,7 +46,6 @@ const SECTIONS: { title: string; items: Item[] }[] = [
     items: [
       { label: 'Reviews', hint: 'Read and reply', icon: 'star-outline', to: 'MyReviews' },
       { label: 'Insights', hint: 'Visits, wait times, recorded fees', icon: 'stats-chart-outline', to: 'DoctorInsights' },
-      { label: 'Your bookable times', hint: 'The next 14 days, as patients see them', icon: 'eye-outline', to: 'Availability', params: { tab: 'preview' } },
     ],
   },
   {
@@ -59,7 +59,9 @@ const SECTIONS: { title: string; items: Item[] }[] = [
 
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
-    section: { gap: space.s8 },
+    section: { gap: space.s12 },
+    hero: { flexDirection: 'row', alignItems: 'center', gap: space.s16 },
+    verified: { flexDirection: 'row', alignItems: 'center', gap: space.s4 },
     head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.s12 },
     grow: { flex: 1, gap: space.s0 },
   });
@@ -72,10 +74,14 @@ const DoctorMore: React.FC = () => {
   const s = useAppSelector(selectDoctorMore);
   const { confirmSignOut } = useSignOut();
   const listing = s.listing;
+  const me = useAppSelector(selectDoctorFeatures).me;
+  const { service } = useTheme();
 
   useFocusEffect(
     useCallback(() => {
       void dispatch(loadListingAsync());
+      // The identity on the hero, and the features (retried if the first read failed).
+      void dispatch(loadDoctorFeaturesAsync());
     }, [dispatch]),
   );
 
@@ -113,6 +119,32 @@ const DoctorMore: React.FC = () => {
             message={s.error.message}
             action={!listing ? { label: 'Try again', onPress: () => void dispatch(loadListingAsync()) } : undefined}
           />
+        ) : null}
+
+        {me ? (
+          <Card>
+            <View style={styles.hero}>
+              <Avatar name={me.name.replace(/^(Prof\. |Assoc\. Prof\. |Asst\. Prof\. )?Dr\. /, '')} uri={me.photoUrl} size="lg" />
+              <View style={styles.grow}>
+                <AppText variant="title" numberOfLines={1}>
+                  {me.name}
+                </AppText>
+                {me.specialtyName ? (
+                  <AppText variant="small" tone="muted" numberOfLines={1}>
+                    {me.specialtyName}
+                  </AppText>
+                ) : null}
+                {/* Listed doctors were checked against the PMDC register before approval. */}
+                <View style={styles.verified}>
+                  <IonIcon name="checkmark-circle" size="sm" color={service.accent} />
+                  <AppText variant="small" tone="accentDeep">
+                    PMDC verified
+                  </AppText>
+                </View>
+              </View>
+            </View>
+            <TextAction label="See what patients see" icon="eye-outline" onPress={() => navigation.navigate('Availability', { tab: 'preview' })} />
+          </Card>
         ) : null}
 
         {listing ? (

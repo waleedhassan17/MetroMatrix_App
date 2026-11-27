@@ -18,7 +18,7 @@ import { PageHeaderScope, useStyles, useTheme, type Theme } from '../../theme/in
 import { AppText, Divider, EmptyState, IconButton, InlineNotice, IonIcon, ScreenShell, SkeletonLines, type IonName } from '../../Custom-Components/index';
 import type { AppNotification, NotificationType, ShopBrowseParamList } from '../../models';
 import { formatDay } from '../../utils/dates/dates';
-import { selectUser } from '../../store/authSlice';
+import { selectBusiness, selectUser } from '../../store/authSlice';
 import { loadUnreadCountAsync, markReadAsync, selectUnreadCount } from './notificationsSlice';
 import { notificationPageSerializer } from '../../serializers/notificationSerializer';
 
@@ -67,9 +67,11 @@ const NotificationsContent: React.FC<Props> = ({ navigation }) => {
   const styles = useStyles(makeStyles);
   const { service, colors, opacity } = useTheme();
   const user = useAppSelector(selectUser);
+  const business = useAppSelector(selectBusiness);
   const unread = useAppSelector(selectUnreadCount);
   const list = usePagedList((page, size) => fetchNotifications(page, size), notificationPageSerializer, 'notifications');
   const isStore = user?.role === 'partner';
+  const isDoctor = isStore && business?.serviceType === 'healthcare';
 
   useFocusEffect(
     useCallback(() => {
@@ -85,7 +87,11 @@ const NotificationsContent: React.FC<Props> = ({ navigation }) => {
     const nav = navigation as unknown as Nav;
     const d = n.data;
     if (isStore) {
+      // The doctor's app: a visit, a review, the day, or the listing.
       if (d.appointmentId) nav.navigate('DoctorAppointment', { id: d.appointmentId });
+      else if (d.reviewId) nav.navigate('MyReviews');
+      else if (d.screen === 'today') nav.navigate('DoctorTabs', { screen: 'TodayTab' });
+      else if (d.screen === 'listing') nav.navigate('DoctorTabs', { screen: 'MoreTab' });
       else if (d.returnId) nav.navigate('StoreReturnDetail', { id: d.returnId });
       else if (d.orderId) nav.navigate('StoreOrderDetail', { id: d.orderId });
       else if (d.productId) nav.navigate('ProductForm', { id: d.productId });
@@ -151,7 +157,7 @@ const NotificationsContent: React.FC<Props> = ({ navigation }) => {
           ) : list.error ? (
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
-            <EmptyState icon="notifications-outline" title="You’re all caught up" body={isStore ? 'New orders, payments and returns show here.' : 'Order updates and replies show here.'} />
+            <EmptyState icon="notifications-outline" title="You’re all caught up" body={isDoctor ? 'New bookings, payments, cancellations and reviews show here.' : isStore ? 'New orders, payments and returns show here.' : 'Order updates and replies show here.'} />
           )
         }
         ListFooterComponent={list.isLoadingMore ? <SkeletonLines lines={2} /> : null}

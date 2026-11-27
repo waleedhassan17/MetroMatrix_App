@@ -73,7 +73,12 @@ export const validateDoctorProfile = (p: DoctorOwnProfile, thisYear: number): Va
 export const yearsSince = (since: number | null, thisYear: number) => (since ? Math.max(0, thisYear - since) : 0);
 
 /** The fields a doctor can change, ready to send: blank qualification and experience rows dropped. */
-export const ownProfilePatch = (p: DoctorOwnProfile): Partial<DoctorOwnProfile> => ({
+/**
+ * What the form sends. The booking rules go only when they changed: the
+ * server re-checks them on every write (video prepay needs a payment
+ * account), so an unchanged rule must never block saving a new photo or bio.
+ */
+export const ownProfilePatch = (p: DoctorOwnProfile, saved?: DoctorOwnProfile | null): Partial<DoctorOwnProfile> => ({
   title: p.title,
   name: p.name,
   gender: p.gender,
@@ -87,7 +92,7 @@ export const ownProfilePatch = (p: DoctorOwnProfile): Partial<DoctorOwnProfile> 
   experience: p.experience.filter(e => e.role.trim() && e.place.trim()),
   services: p.services,
   conditionSlugs: p.conditionSlugs,
-  bookingRules: p.bookingRules,
+  ...(saved && JSON.stringify(saved.bookingRules) === JSON.stringify(p.bookingRules) ? {} : { bookingRules: p.bookingRules }),
 });
 
 /**

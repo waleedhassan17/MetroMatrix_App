@@ -111,6 +111,10 @@ export const pushTapUrl = (data: Record<string, unknown> | null | undefined, aud
     // A doctor's appointment pushes carry appointmentCode (API_HEALTH §6); doctor routes take the code.
     const visit = s('appointmentCode') ?? s('appointmentId');
     if (visit) return `metromatrix://doctor/appointments/${encodeURIComponent(visit)}`;
+    // The doctor's other notices: a review, the daily digest, the listing taken down.
+    if (s('reviewId')) return 'metromatrix://doctor/reviews';
+    if (s('type') === 'health.doctor.today' || s('screen') === 'today') return 'metromatrix://doctor/today';
+    if (s('type') === 'health.listing.hidden') return 'metromatrix://doctor/more';
     if (s('returnId')) return `metromatrix://store/returns/${encodeURIComponent(s('returnId')!)}`;
     const order = s('storeOrderId') ?? s('orderId');
     if (order) return `metromatrix://store/orders/${encodeURIComponent(order)}`;

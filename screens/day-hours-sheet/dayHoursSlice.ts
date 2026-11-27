@@ -9,11 +9,13 @@
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
-import { fetchDayHours, removeDayHours, saveDayHours } from '../../networks/health/doctor/practice';
+import { fetchDayHours, fetchLocationSchedule, removeDayHours, saveDayHours } from '../../networks/health/doctor/practice';
 import { errorCopy, toRejectedValue } from '../../networks/network/network';
-import { dayHoursListSerializer, hoursReportSerializer } from '../../serializers/health/doctorSerializer';
+import { dayHoursListSerializer, hoursReportSerializer, hoursSerializer } from '../../serializers/health/doctorSerializer';
+import { bodyOf } from '../../serializers/serializerUtils';
+import { isoWeekday } from '../../utils/health-time/healthTime';
 import { DEFAULT_RANGE } from '../../models/health/availabilityModel';
-import type { DayHours, HoursReport, TimeRange } from '../../models/health';
+import type { DayHours, HoursReport, TimeRange, WeekDayHours } from '../../models/health';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 
 export interface DayHoursSheetState {
@@ -33,6 +35,8 @@ export interface DayHoursSheetState {
   check: HoursReport | null;
   /** Each location's own hours by date, for the calendar. */
   byLocation: Record<string, DayHours[]>;
+  /** Each location's usual week, so a day without its own hours starts from them. */
+  usual: Record<string, WeekDayHours[]>;
   /** Saved or removed: the calendar reloads. */
   saved: number;
 }
@@ -51,14 +55,17 @@ const initialState: DayHoursSheetState = {
   error: NO_ERROR,
   check: null,
   byLocation: {},
+  usual: {},
   saved: 0,
 };
 
 const fill = (state: DayHoursSheetState) => {
   const own = state.locationId && state.date ? (state.byLocation[state.locationId] ?? []).find(d => d.date === state.date) : undefined;
+  // No hours of its own: start from that weekday's usual hours.
+  const usual = state.locationId && state.date ? (state.usual[state.locationId] ?? []).find(d => d.day === isoWeekday(state.date!))?.ranges : undefined;
   state.existing = !!own;
   state.closed = own?.closed ?? false;
-  state.ranges = own ? own.ranges.map(r => ({ ...r })) : [{ ...DEFAULT_RANGE }];
+  state.ranges = own ? own.ranges.map(r => ({ ...r })) : usual?.length ? usual.map(r => ({ ...r })) : [{ ...DEFAULT_RANGE }];
   state.note = own?.note ?? '';
   state.check = null;
   state.touched = false;
@@ -114,6 +121,20 @@ export const dayHoursSlice = createAppSlice({
       state.touched = true;
     }),
 
+    /** The locations' usual weeks (once per open): a day without its own hours starts from them. */
+    loadUsualHoursAsync: create.asyncThunk(
+      async (locationIds: string[]) => {
+        const weeks = await Promise.all(locationIds.map(id => fetchLocationSchedule(id).catch(() => null)));
+        return Object.fromEntries(locationIds.map((id, i) => [id, weeks[i]]));
+      },
+      {
+        fulfilled: (state, action) => {
+          for (const [id, raw] of Object.entries(action.payload)) if (raw) state.usual[id] = hoursSerializer(bodyOf(raw));
+          // Still untouched and without its own hours: show the usual ones.
+          if (state.open && !state.touched && !state.existing && !state.closed) fill(state);
+        },
+      },
+    ),
     /** Every location's own hours between two dates (the calendar's range). */
     loadDayHoursAsync: create.asyncThunk(
       async ({ locationIds, from, to }: { locationIds: string[]; from: string; to: string }, { rejectWithValue }) => {
@@ -200,6 +221,7 @@ export const dayHoursSlice = createAppSlice({
 });
 
 export const {
+  loadUsualHoursAsync,
   openDayHours,
   closeDayHours,
   chooseDayHoursPlace,

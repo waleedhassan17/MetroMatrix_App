@@ -9,7 +9,7 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
 import type { DocumentKind } from './auth';
 import type { OrderSegment, ProductSort } from './shopping';
-import type { AppointmentSegment, ConsultKind } from './health';
+import type { AppointmentSegment, ConsultKind, DoctorNeed } from './health';
 import type { AdminVendorStatus, KitchenKind } from './food';
 import type { VoiceQtyLine } from './kitchen';
 
@@ -427,8 +427,10 @@ export type DoctorPartnerStackParamList = {
   DoctorAppointment: { id: string };
   PrescriptionWriter: { appointmentId: string };
   PatientHistory: { id: string; name?: string };
-  MyReviews: undefined;
+  MyReviews: { unreplied?: boolean } | undefined;
   DoctorInsights: undefined;
+  /** One "Needs you" count's visits (Today). */
+  DoctorNeeds: { kind: DoctorNeed };
   DoctorProfileEdit: undefined;
   PaymentAccounts: undefined;
   VideoPrecheck: { code?: string; appointmentId?: string };

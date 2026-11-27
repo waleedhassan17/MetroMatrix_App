@@ -29,7 +29,7 @@ const makeStyles = ({ space, size, radius }: Theme) =>
 const AdminTotp: React.FC = () => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { colors } = useTheme();
+  const { colors, service } = useTheme();
   const s = useAppSelector(selectAdminTotp);
   const pendingTotp = useAppSelector(selectPendingTotp);
   const loading = s.status === 'loading';
@@ -58,8 +58,8 @@ const AdminTotp: React.FC = () => {
 
   return (
     <AuthScreen onBack={cancel}>
-      <View style={[styles.hero, { backgroundColor: colors.surfaceSunk }]}>
-        <IonIcon name="shield-checkmark-outline" size="xl" color={colors.inkMuted} />
+      <View style={[styles.hero, { backgroundColor: service.accentSoft }]}>
+        <IonIcon name="shield-checkmark-outline" size="xl" color={service.accentDeep} />
       </View>
       <AuthHeader
         hideLogo

@@ -71,10 +71,12 @@ const DoctorPatientsContent: React.FC<Props> = ({ navigation }) => {
             <RowCard
               title={item.name}
               mark={{ name: item.name }}
+              // The same two lines for everyone: who, then when.
               lines={[
-                [item.age !== null ? `${item.age} years` : null, genderLabel(item.gender)].filter(Boolean).join(' · ') || null,
-                `${seenLabel(item)} · ${ahead ? `booked for ${formatOn(item.lastVisitAt)}` : `last booking ${formatOn(item.lastVisitAt)}`}`,
+                [item.age !== null ? `${item.age} years` : null, genderLabel(item.gender), seenLabel(item)].filter(Boolean).join(' · '),
+                ahead ? `Next visit ${formatOn(item.lastVisitAt)}` : `Last booking ${formatOn(item.lastVisitAt)}`,
               ]}
+              pill={ahead ? { label: 'Coming up', tone: 'info' } : undefined}
               onPress={() => navigation.navigate('PatientHistory', { id: item.id, name: item.name })}
               chevron
             />
@@ -82,7 +84,7 @@ const DoctorPatientsContent: React.FC<Props> = ({ navigation }) => {
         }}
         ListEmptyComponent={
           list.isLoading ? (
-            <RowCardsSkeleton count={5} />
+            <RowCardsSkeleton count={5} lines={2} />
           ) : list.error ? (
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : q ? (

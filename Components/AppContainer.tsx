@@ -122,6 +122,10 @@ const linkingFor = (customer: boolean): LinkingOptions<ReactNavigation.RootParam
       Inventory: 'store/inventory',
       Insights: 'store/insights',
       // The doctor's app (its own stack): metromatrix://doctor/appointments/:id
+      DoctorTabs: {
+        screens: { TodayTab: 'doctor/today', CalendarTab: 'doctor/calendar', PatientsTab: 'doctor/patients', MoreTab: 'doctor/more' },
+      },
+      DoctorNeeds: 'doctor/needs/:kind',
       DoctorAppointment: 'doctor/appointments/:id',
       PrescriptionWriter: 'doctor/appointments/:appointmentId/prescription',
       PracticeSetup: 'doctor/setup',

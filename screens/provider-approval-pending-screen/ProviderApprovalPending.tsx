@@ -79,12 +79,11 @@ const Stat: React.FC<{ label: string; value: string }> = ({ label, value }) => {
   );
 };
 
-const Info: React.FC<{ icon: IonName; title: string; text: string }> = ({ icon, title, text }) => {
+const Info: React.FC<{ icon: IonName; color: string; title: string; text: string }> = ({ icon, color, title, text }) => {
   const styles = useStyles(makeStyles);
-  const { colors } = useTheme();
   return (
     <View style={styles.info}>
-      <IonIcon name={icon} size="lg" color={colors.inkMuted} />
+      <IonIcon name={icon} size="lg" color={color} />
       <View style={styles.infoText}>
         <AppText variant="bodyStrong">{title}</AppText>
         <AppText variant="body" tone="muted">
@@ -138,7 +137,7 @@ const ProviderApprovalPending: React.FC = () => {
 const PendingContent: React.FC<{ business: Business }> = ({ business }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { colors } = useTheme();
+  const { colors, service } = useTheme();
   const s = useAppSelector(selectProviderApprovalPending);
   const nextIn = useCountdown(s.nextCheckAt);
   const { confirmSignOut } = useSignOut();
@@ -186,8 +185,8 @@ const PendingContent: React.FC<{ business: Business }> = ({ business }) => {
         badge={<ProviderBadge label={providerTypeLabel(business.subType)} service={business.serviceType} />}
         subtitle="Your profile is being reviewed by our admin team"
       />
-      <Animated.View style={[styles.mark, { backgroundColor: colors.surfaceSunk, transform: [{ scale }] }]}>
-        <MciIcon name="clipboard-check-outline" size="hero" color={colors.inkMuted} />
+      <Animated.View style={[styles.mark, { backgroundColor: service.accentSoft, transform: [{ scale }] }]}>
+        <MciIcon name="clipboard-check-outline" size="hero" color={service.accentDeep} />
       </Animated.View>
       <View style={styles.status} accessibilityLiveRegion="polite">
         <AppText variant="h2">{s.checking ? 'Checking status...' : 'Waiting for approval'}</AppText>
@@ -206,11 +205,13 @@ const PendingContent: React.FC<{ business: Business }> = ({ business }) => {
 
       <Info
         icon="information-circle-outline"
+        color={service.accentDeep}
         title="What happens next?"
         text="Our admin team will review your profile and documents. You'll receive an email once your status is updated."
       />
       <Info
         icon="time-outline"
+        color={colors.warning}
         title="Expected timeline"
         text="Approval typically takes 24-48 hours. We will keep you updated throughout the process."
       />

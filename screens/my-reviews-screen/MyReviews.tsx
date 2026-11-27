@@ -55,7 +55,7 @@ const MyReviews: React.FC<Props> = props => (
   </ServiceScope>
 );
 
-const MyReviewsContent: React.FC<Props> = () => {
+const MyReviewsContent: React.FC<Props> = ({ route }) => {
   const { back } = useBack({ name: 'DoctorTabs', params: { screen: 'MoreTab' } });
   const dispatch = useAppDispatch();
   const appStore = useAppStore();
@@ -66,6 +66,12 @@ const MyReviewsContent: React.FC<Props> = () => {
   const [tried, setTried] = React.useState(false);
   const replyError = tried ? validateReply(s.text).reply : undefined;
   const Gap = React.useCallback(() => <View style={styles.gap} />, [styles.gap]);
+
+  // Opened from Today's "Reviews to reply to": the unreplied ones.
+  const onlyUnreplied = !!route.params?.unreplied;
+  useEffect(() => {
+    if (onlyUnreplied) dispatch(setUnreplied(true));
+  }, [dispatch, onlyUnreplied]);
 
   useEffect(() => {
     void dispatch(loadReviewSummaryAsync());
@@ -83,6 +89,8 @@ const MyReviewsContent: React.FC<Props> = () => {
       haptics.success();
       list.setRows(rows => (s.unreplied ? rows.filter(x => x.id !== replied.id) : rows.map(x => (x.id === replied.id ? replied : x))));
       Toast.show({ type: 'success', text1: 'Reply posted', text2: 'Patients see it under the review.' });
+      // The summary counts replies too.
+      void dispatch(loadReviewSummaryAsync());
     }
   };
 

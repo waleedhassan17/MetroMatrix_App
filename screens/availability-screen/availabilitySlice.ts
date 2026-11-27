@@ -15,6 +15,7 @@ import { errorCopy, fieldErrors, toRejectedValue } from '../../networks/network/
 import { doctorPaymentAccountListSerializer, overlapsFrom, previewSerializer } from '../../serializers/health/doctorSerializer';
 import {
   DEFAULT_RANGE,
+  withBreak,
   copyToDays,
   copyToWeekdays,
   locationFieldKey,
@@ -167,7 +168,7 @@ export const availabilitySlice = createAppSlice({
     }),
     addRange: create.reducer((state, action: PayloadAction<number>) => {
       const d = state.draft.find(x => x.day === action.payload);
-      if (d) d.ranges.push(d.ranges.length ? { from: '09:00', to: '12:00' } : { ...DEFAULT_RANGE });
+      if (d) d.ranges = withBreak(d.ranges);
     }),
     removeRange: create.reducer((state, action: PayloadAction<{ day: number; index: number }>) => {
       const d = state.draft.find(x => x.day === action.payload.day);

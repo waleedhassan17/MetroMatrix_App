@@ -540,6 +540,10 @@ export interface AppNotification {
     appointmentCode: string | null;
     appointmentId: string | null;
     prescriptionId: string | null;
+    /** A review of the doctor (`health.review.new`). */
+    reviewId: string | null;
+    /** A doctor-app page with no record behind it: `today` (the daily digest), `listing` (hidden from patients). */
+    screen: 'today' | 'listing' | null;
   };
   isRead: boolean;
   createdAt: string;

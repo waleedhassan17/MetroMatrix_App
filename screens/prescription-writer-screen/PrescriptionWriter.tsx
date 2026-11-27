@@ -216,7 +216,7 @@ const PrescriptionWriterContent: React.FC<Props> = ({ route }) => {
         )
       }>
       {locked ? (
-        <InlineNotice tone="info" title="This prescription is locked" message="Prescriptions can be changed for 24 hours after they are written. Write a new one at the next visit." />
+        <InlineNotice tone="info" title="This prescription is locked" message="A prescription can be changed for 24 hours after the visit is completed. Write a new one at the next visit." />
       ) : (
         <SegmentTabs
           options={[

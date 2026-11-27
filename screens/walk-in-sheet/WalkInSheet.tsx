@@ -3,16 +3,19 @@
 // ═══════════════════════════════════════════════════════
 // The clinic (when there are several), their name, phone, gender and age if
 // they give them, and why they came. Added, they join today's queue checked
-// in, in the slot running now (or the next free one); Today opens the visit.
+// in, in the slot running now (or the next free one), or at a later free time
+// today the doctor picks; Today opens the visit.
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useStyles, type Theme } from '../../theme/index';
 import { AppText, Button, ChoiceChip, InlineNotice, Sheet, TextField } from '../../Custom-Components/index';
 import { MAX_WALK_IN_NAME, MAX_WALK_IN_REASON, validateWalkIn } from '../../models/health/bookingModel';
 import { haptics } from '../../utils/haptics/haptics';
-import { addWalkInAsync, closeWalkIn, editWalkIn, selectWalkIn, touchWalkIn } from './walkInSlice';
+import { formatSlot, PKT } from '../../utils/health-time/healthTime';
+import { selectHasDoctorFeature } from '../../store/doctorFeaturesSlice';
+import { addWalkInAsync, closeWalkIn, editWalkIn, loadWalkInTimesAsync, pickWalkInTime, selectWalkIn, touchWalkIn } from './walkInSlice';
 
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
@@ -33,7 +36,12 @@ export const WalkInSheet: React.FC = () => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const s = useAppSelector(selectWalkIn);
+  const ownSlots = useAppSelector(st => selectHasDoctorFeature(st, 'doctor_slots'));
   const f = s.form;
+  // Today's free times at the chosen clinic, when the server can list them.
+  useEffect(() => {
+    if (s.open && ownSlots && f.locationId && s.times === null) void dispatch(loadWalkInTimesAsync(f.locationId));
+  }, [s.open, ownSlots, f.locationId, s.times, dispatch]);
   const errors = validateWalkIn(f);
   const show = (k: keyof typeof f) => s.serverErrors[k] ?? (s.touched ? errors[k] : undefined);
 
@@ -43,7 +51,7 @@ export const WalkInSheet: React.FC = () => {
       haptics.warning();
       return;
     }
-    void dispatch(addWalkInAsync(f));
+    void dispatch(addWalkInAsync({ form: f, startAt: s.startAt }));
   };
 
   return (
@@ -67,6 +75,17 @@ export const WalkInSheet: React.FC = () => {
               {show('locationId')}
             </AppText>
           ) : null}
+        </View>
+      ) : null}
+      {s.times && s.times.length > 1 ? (
+        <View style={styles.group}>
+          <AppText variant="label">When</AppText>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+            <ChoiceChip label="Next free" selected={!s.startAt} onPress={() => dispatch(pickWalkInTime(null))} />
+            {s.times.slice(1).map(at => (
+              <ChoiceChip key={at} label={formatSlot(at, PKT)} selected={s.startAt === at} onPress={() => dispatch(pickWalkInTime(at))} />
+            ))}
+          </ScrollView>
         </View>
       ) : null}
       <TextField

@@ -10,11 +10,12 @@
 // first; a cancelled visit says who cancelled, why, and whether it was late.
 
 import React, { useCallback, useEffect } from 'react';
+import { NO_ERROR } from '../shared/formStatus';
 import { Linking, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
-import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import {
@@ -27,6 +28,7 @@ import {
   ImageViewer,
   InlineNotice,
   IonIcon,
+  type IonName,
   ListRow,
   PrescriptionSheet,
   RowCardsSkeleton,
@@ -88,7 +90,7 @@ const makeStyles = ({ space, colors, size, radius, elevation }: Theme) =>
     row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.s8 },
     actions: { gap: space.s12 },
     file: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
-    center: { alignItems: 'center' },
+    footer: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
   });
 
 const DoctorAppointment: React.FC<Props> = props => (
@@ -101,10 +103,20 @@ const DoctorAppointmentContent: React.FC<Props> = ({ route, navigation }) => {
   const { id } = route.params;
   const { back } = useBack({ name: 'DoctorTabs' });
   const dispatch = useAppDispatch();
+  const store = useAppStore();
   const styles = useStyles(makeStyles);
   const { service } = useTheme();
   const entry = useAppSelector(st => selectDoctorAppointmentEntry(st, id));
-  const ui = useAppSelector(selectDoctorAppointmentUi);
+  const shared = useAppSelector(selectDoctorAppointmentUi);
+  // A move, a sheet or an error belongs to the visit it was made on: another
+  // visit's page (a follow-up opened over this one) reads none of it.
+  const ui = React.useMemo(
+    () =>
+      shared.uiFor === id || shared.uiFor === null
+        ? shared
+        : { ...shared, busy: null, sheet: { kind: null, reason: '' }, viewing: null, openingRecord: null, attaching: false, error: NO_ERROR },
+    [shared, id],
+  );
   const now = useNow();
   const a = entry.appointment;
   const { features } = useAppSelector(selectDoctorFeatures);
@@ -149,6 +161,13 @@ const DoctorAppointmentContent: React.FC<Props> = ({ route, navigation }) => {
     if (doctorMoveAsync.fulfilled.match(r)) {
       haptics.success();
       if (done) Toast.show({ type: 'success', text1: done });
+      // Completed: the prescription now, while it's fresh (it stays editable for 24 hours).
+      const after = selectDoctorAppointmentEntry(store.getState(), id).appointment;
+      if (m === 'complete' && after?.actions.canWritePrescription && !after.prescription)
+        Alert.alert('Visit complete', 'Write the prescription now, while it’s fresh?', [
+          { text: 'Later', style: 'cancel' },
+          { text: 'Write prescription', onPress: () => navigation.navigate('PrescriptionWriter', { appointmentId: id }) },
+        ]);
     } else haptics.warning();
   };
 
@@ -170,8 +189,24 @@ const DoctorAppointmentContent: React.FC<Props> = ({ route, navigation }) => {
   const canStart = act.canStart && onItsDay;
   const booked = a.status === 'confirmed' || a.status === 'awaiting_payment';
   const notYet = booked && a.kind === 'clinic' && !act.canCheckIn && Date.parse(a.startAt) > now;
-  const canMove = booked && features.includes('doctor_reschedule');
-  const canFollowUp = (a.status === 'in_progress' || a.status === 'completed') && features.includes('follow_up_booking');
+  // Both pick from the doctor's own free times: a server without them can't offer either.
+  const ownSlots = features.includes('doctor_slots');
+  const canMove = booked && ownSlots && features.includes('doctor_reschedule');
+  const canFollowUp = (a.status === 'in_progress' || a.status === 'completed') && ownSlots && features.includes('follow_up_booking');
+  const join = () => navigation.navigate('VideoPrecheck', { appointmentId: id });
+  // The ONE next step, in the footer; the rarer moves wait under "More actions".
+  const primary: { label: string; icon?: IonName; busy?: DoctorMove; onPress: () => void } | null = act.canJoinVideo
+    ? { label: 'Join video consultation', icon: 'videocam-outline', onPress: join }
+    : act.canComplete
+      ? { label: 'Complete the visit', icon: 'checkmark-done-outline', onPress: () => dispatch(openDoctorSheet('complete')) }
+      : canStart
+        ? { label: 'Start consultation', busy: 'start', onPress: () => void move('start') }
+        : canCheckIn
+          ? { label: 'Check in', busy: 'check-in', onPress: () => void move('check-in', {}, 'Checked in') }
+          : act.canWritePrescription
+            ? { label: rx ? 'Edit prescription' : 'Write prescription', icon: 'create-outline', onPress: () => navigation.navigate('PrescriptionWriter', { appointmentId: id }) }
+            : null;
+  const more = canMove || canFollowUp || act.canNoShow || act.canCancel;
   const place = { id: a.location.id, name: a.location.name, kind: a.location.kind };
   const openMove = () => dispatch(openVisitTime({ mode: 'move', appointmentId: id, location: place, from: null }));
   const openFollowUp = () =>
@@ -202,13 +237,26 @@ const DoctorAppointmentContent: React.FC<Props> = ({ route, navigation }) => {
   return (
     <ScreenShell
       title={p.name}
-      subtitle={`${KIND_LABEL[a.kind]} · ${formatWhen(a.startAt, a.timezone)}`}
+      subtitle={`${a.code} · ${KIND_LABEL[a.kind]} · ${formatWhen(a.startAt, a.timezone)}`}
       onBack={back}
       footer={
-        act.canJoinVideo ? (
-          <Button label="Join video consultation" leftIcon="videocam" onPress={() => navigation.navigate('VideoPrecheck', { appointmentId: id })} fullWidth />
-        ) : act.canWritePrescription ? (
-          <Button label={rx ? 'Edit prescription' : 'Write prescription'} leftIcon="create-outline" onPress={writeRx} fullWidth />
+        primary || more ? (
+          <View style={styles.footer}>
+            {primary ? (
+              <View style={styles.grow}>
+                <Button label={primary.label} leftIcon={primary.icon} onPress={primary.onPress} loading={!!primary.busy && ui.busy === primary.busy} fullWidth />
+              </View>
+            ) : null}
+            {more ? (
+              primary ? (
+                <IconButton icon="ellipsis-horizontal" onPress={() => dispatch(openDoctorSheet('more'))} accessibilityLabel="More actions" />
+              ) : (
+                <View style={styles.grow}>
+                  <Button label="More actions" variant="secondary" leftIcon="ellipsis-horizontal" onPress={() => dispatch(openDoctorSheet('more'))} fullWidth />
+                </View>
+              )
+            ) : null}
+          </View>
         ) : undefined
       }
       refreshing={entry.status === 'loading'}
@@ -226,6 +274,7 @@ const DoctorAppointmentContent: React.FC<Props> = ({ route, navigation }) => {
           </View>
           {p.phone ? <IconButton icon="call-outline" onPress={() => void callNumber(p.phone!)} accessibilityLabel={`Call ${p.name}`} /> : null}
         </View>
+        {p.id ? <TextAction label="Full history with you" icon="time-outline" onPress={() => navigation.navigate('PatientHistory', { id: p.id, name: p.name })} /> : null}
       </Card>
       <View style={styles.stats}>
         {[
@@ -262,32 +311,16 @@ const DoctorAppointmentContent: React.FC<Props> = ({ route, navigation }) => {
         />
       ) : null}
 
-      {canCheckIn || canStart || act.canComplete ? (
-        <View style={styles.actions}>
-          {canCheckIn ? <Button label="Check in" onPress={() => void move('check-in', {}, 'Checked in')} loading={ui.busy === 'check-in'} fullWidth /> : null}
-          {canStart ? (
-            <Button
-              label="Start consultation"
-              variant={act.canJoinVideo ? 'secondary' : 'primary'}
-              onPress={() => void move('start')}
-              loading={ui.busy === 'start'}
-              fullWidth
-            />
-          ) : null}
-          {act.canComplete ? <Button label="Complete the visit" onPress={() => dispatch(openDoctorSheet('complete'))} fullWidth /> : null}
-        </View>
+      {/* The footer holds the one next step; a second one that can happen now sits here. */}
+      {act.canJoinVideo && canStart ? (
+        <Button label="Start consultation" variant="secondary" onPress={() => void move('start')} loading={ui.busy === 'start'} fullWidth />
+      ) : act.canComplete && act.canWritePrescription ? (
+        <Button label={rx ? 'Edit prescription' : 'Write prescription'} variant="secondary" leftIcon="create-outline" onPress={writeRx} fullWidth />
       ) : (act.canCheckIn && !onItsDay) || (serverGates && notYet) ? (
         <AppText variant="small" tone="muted">
           {serverGates ? 'Check in opens 2 hours before the visit.' : 'Check in opens on the day of the visit.'}
         </AppText>
       ) : null}
-      {canMove || canFollowUp ? (
-        <View style={styles.actions}>
-          {canMove ? <Button label="Move to another time" variant="secondary" leftIcon="swap-horizontal-outline" onPress={openMove} fullWidth /> : null}
-          {canFollowUp ? <Button label="Book a follow-up" variant="secondary" leftIcon="calendar-outline" onPress={openFollowUp} fullWidth /> : null}
-        </View>
-      ) : null}
-      {act.canNoShow ? <TextAction label="They didn't come: mark as missed" icon="close-circle-outline" tone="muted" onPress={confirmMissed} /> : null}
 
       <SectionCard title="Payment" icon="card-outline">
         <View style={styles.row}>
@@ -339,6 +372,8 @@ const DoctorAppointmentContent: React.FC<Props> = ({ route, navigation }) => {
         </SectionCard>
       ) : null}
 
+      {/* A walk-in has no account to share reports from. */}
+      {a.source === 'walk_in' ? null : (
       <SectionCard title="Reports they shared" icon="document-attach-outline">
         {a.records.length ? (
           a.records.map((r, k) => (
@@ -371,11 +406,12 @@ const DoctorAppointmentContent: React.FC<Props> = ({ route, navigation }) => {
           </AppText>
         )}
       </SectionCard>
+      )}
 
       {rx ? (
         <View style={styles.actions}>
           <PrescriptionSheet prescription={rx} />
-          {rxEditable ? null : <InlineNotice tone="info" message="Prescriptions can be changed for 24 hours after they are written." />}
+          {rxEditable ? null : <InlineNotice tone="info" message="A prescription can be changed for 24 hours after the visit is completed." />}
         </View>
       ) : null}
 
@@ -440,14 +476,49 @@ const DoctorAppointmentContent: React.FC<Props> = ({ route, navigation }) => {
         </SectionCard>
       ) : null}
 
-      {act.canCancel ? (
-        <View style={styles.center}>
-          <TextAction label="Cancel this appointment" icon="close-circle-outline" tone="danger" onPress={() => dispatch(openDoctorSheet('cancel'))} />
+      <Sheet visible={sheetKind === 'more'} onClose={() => dispatch(closeDoctorSheet())} title="More actions" subtitle={`${p.name} · ${formatWhen(a.startAt, a.timezone)}`}>
+        <View>
+          {canMove ? (
+            <ListRow
+              title="Move to another time"
+              subtitle="The patient is told why"
+              leftIcon="swap-horizontal-outline"
+              onPress={() => {
+                dispatch(closeDoctorSheet());
+                openMove();
+              }}
+            />
+          ) : null}
+          {canFollowUp ? (
+            <ListRow
+              title="Book a follow-up"
+              subtitle="For the same person, on your own times"
+              leftIcon="calendar-outline"
+              onPress={() => {
+                dispatch(closeDoctorSheet());
+                openFollowUp();
+              }}
+            />
+          ) : null}
+          {act.canNoShow ? (
+            <ListRow
+              title="Mark as missed"
+              subtitle="Only if they didn't come"
+              leftIcon="close-circle-outline"
+              onPress={() => {
+                dispatch(closeDoctorSheet());
+                confirmMissed();
+              }}
+            />
+          ) : null}
+          {act.canCancel ? (
+            <ListRow title="Cancel this appointment" subtitle="The patient sees your reason" leftIcon="trash-outline" destructive onPress={() => dispatch(openDoctorSheet('cancel'))} />
+          ) : null}
         </View>
-      ) : null}
+      </Sheet>
 
       <Sheet
-        visible={!!sheetKind}
+        visible={!!sheetKind && sheetKind !== 'more'}
         onClose={() => dispatch(closeDoctorSheet())}
         title={
           sheetKind === 'complete'

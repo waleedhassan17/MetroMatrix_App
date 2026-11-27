@@ -234,6 +234,9 @@ describe('family, records, reviews, profile', () => {
     expect(Object.keys(patch)).not.toContain('specialtyName');
     expect(patch.qualifications).toEqual([]);
     expect(patch.experience).toHaveLength(1);
+    // Unchanged booking rules stay off the wire (video prepay is re-checked on every write).
+    expect(Object.keys(ownProfilePatch(p, p))).not.toContain('bookingRules');
+    expect(ownProfilePatch({ ...p, bookingRules: { ...p.bookingRules, windowDays: 7 } }, p).bookingRules?.windowDays).toBe(7);
   });
 });
 

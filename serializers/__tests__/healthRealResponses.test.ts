@@ -201,7 +201,9 @@ describe('the doctor app', () => {
   it('reads the preview and the day (rows keyed by code, server flags as actions)', () => {
     expect(previewSerializer(data('preview')).locations[0].days[0].slots.length).toBeGreaterThan(0);
     const day = todaySerializer({ today: data('today'), locations: data('locations') })!;
-    expect(day.counts).toEqual({ booked: 4, checkedIn: 0, done: 2, noShow: 0 });
+    expect(day.counts).toEqual({ total: 6, upcoming: 4, waiting: 0, withDoctor: 0, seen: 2, missed: 0 });
+    // The October capture predates `attention`: no counts, so the app shows no "Needs you".
+    expect(day.attention).toBeNull();
     expect(day.queue[0]).toMatchObject({ id: 'HC-JSUCYS', code: 'HC-JSUCYS', status: 'confirmed', actions: { canCheckIn: true, canStart: false } });
   });
 
