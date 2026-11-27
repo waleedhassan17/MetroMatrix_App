@@ -130,6 +130,8 @@ const signin = async (email, password, portal) => {
   must('preview', await call('GET', '/health/doctor/availability/preview?days=2', { token: dt }));
   must('paymentAccounts', await call('GET', '/health/doctor/payment-accounts', { token: dt }));
   must('today', await call('GET', '/health/doctor/today', { token: dt }));
+  // "Needs you": what one of today's attention counts lists.
+  must('needsPrescription', await call('GET', '/health/doctor/appointments?needs=prescription&pageSize=5', { token: dt }));
   must('doctorAppointments', await call('GET', `/health/doctor/appointments?from=${day}&to=${day}&pageSize=5`, { token: dt }));
   // Check-in opens 2 hours before a visit: the doctor moves it to one of their own times
   // within the next two hours (giving today an hour of its own when no clinic is open).

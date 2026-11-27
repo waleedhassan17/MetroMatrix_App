@@ -123,6 +123,8 @@
       "avgWaitMinutes": 18,
       "pmdcVerified": true,
       "isTopBooked": false,
+      "isAccepting": true,
+      "clinicArea": "DHA Phase 5",
       "minFee": 3500,
       "offersVideo": false,
       "offersClinic": true,
@@ -153,6 +155,8 @@
       "avgWaitMinutes": 22,
       "pmdcVerified": true,
       "isTopBooked": false,
+      "isAccepting": true,
+      "clinicArea": "Model Town",
       "minFee": 1000,
       "offersVideo": true,
       "offersClinic": true,
@@ -183,6 +187,8 @@
       "avgWaitMinutes": 16,
       "pmdcVerified": true,
       "isTopBooked": false,
+      "isAccepting": true,
+      "clinicArea": "Model Town",
       "minFee": 4500,
       "offersVideo": false,
       "offersClinic": true,
@@ -216,6 +222,8 @@
       "avgWaitMinutes": 18,
       "pmdcVerified": true,
       "isTopBooked": false,
+      "isAccepting": true,
+      "clinicArea": "DHA Phase 5",
       "minFee": 1000,
       "offersVideo": true,
       "offersClinic": true,
@@ -240,12 +248,14 @@
       },
       "qualifications": "MBBS, FCPS (Dermatology)",
       "yearsExperience": 15,
-      "ratingAvg": 4.26,
-      "ratingCount": 42,
+      "ratingAvg": 4.28,
+      "ratingCount": 43,
       "satisfactionPct": 79,
-      "avgWaitMinutes": 12,
+      "avgWaitMinutes": 11,
       "pmdcVerified": true,
       "isTopBooked": false,
+      "isAccepting": true,
+      "clinicArea": "Gulberg III",
       "minFee": 2000,
       "offersVideo": true,
       "offersClinic": true,
@@ -276,6 +286,8 @@
       "avgWaitMinutes": 18,
       "pmdcVerified": true,
       "isTopBooked": false,
+      "isAccepting": true,
+      "clinicArea": "DHA Phase 5",
       "minFee": 3500,
       "offersVideo": false,
       "offersClinic": true,
@@ -413,12 +425,14 @@
       },
       "qualifications": "MBBS, FCPS (Dermatology)",
       "yearsExperience": 15,
-      "ratingAvg": 4.26,
-      "ratingCount": 42,
+      "ratingAvg": 4.28,
+      "ratingCount": 43,
       "satisfactionPct": 79,
-      "avgWaitMinutes": 12,
+      "avgWaitMinutes": 11,
       "pmdcVerified": true,
       "isTopBooked": false,
+      "isAccepting": true,
+      "clinicArea": "Gulberg III",
       "minFee": 2000,
       "offersVideo": true,
       "offersClinic": true,
@@ -449,6 +463,8 @@
       "avgWaitMinutes": 18,
       "pmdcVerified": true,
       "isTopBooked": false,
+      "isAccepting": true,
+      "clinicArea": "Blue Area",
       "minFee": 2500,
       "offersVideo": false,
       "offersClinic": true,
@@ -479,6 +495,8 @@
       "avgWaitMinutes": 17,
       "pmdcVerified": true,
       "isTopBooked": false,
+      "isAccepting": true,
+      "clinicArea": "Gulshan-e-Iqbal",
       "minFee": 2000,
       "offersVideo": true,
       "offersClinic": true,
@@ -579,12 +597,14 @@
       },
       "qualifications": "MBBS, FCPS (Dermatology)",
       "yearsExperience": 15,
-      "ratingAvg": 4.26,
-      "ratingCount": 42,
+      "ratingAvg": 4.28,
+      "ratingCount": 43,
       "satisfactionPct": 79,
-      "avgWaitMinutes": 12,
+      "avgWaitMinutes": 11,
       "pmdcVerified": true,
       "isTopBooked": false,
+      "isAccepting": true,
+      "clinicArea": "Gulberg III",
       "minFee": 2000,
       "offersVideo": true,
       "offersClinic": true,
@@ -686,12 +706,12 @@
      }
     ],
     "stats": {
-     "ratingAvg": 4.26,
-     "ratingCount": 42,
+     "ratingAvg": 4.28,
+     "ratingCount": 43,
      "satisfactionPct": 79,
-     "avgWaitMinutes": 12,
-     "avgConsultMinutes": 12,
-     "patientsServed": 12
+     "avgWaitMinutes": 11,
+     "avgConsultMinutes": 11,
+     "patientsServed": 13
     },
     "nextAvailableAt": "2026-11-27T04:30:00.000Z",
     "wasListed": true,
@@ -708,7 +728,8 @@
      "doctor_reschedule",
      "follow_up_booking",
      "doctor_slots",
-     "follow_up_reminder"
+     "follow_up_reminder",
+     "attention"
     ]
    }
   }
@@ -732,12 +753,14 @@
     },
     "qualifications": "MBBS, FCPS (Dermatology)",
     "yearsExperience": 15,
-    "ratingAvg": 4.26,
-    "ratingCount": 42,
+    "ratingAvg": 4.28,
+    "ratingCount": 43,
     "satisfactionPct": 79,
-    "avgWaitMinutes": 12,
+    "avgWaitMinutes": 11,
     "pmdcVerified": true,
     "isTopBooked": false,
+    "isAccepting": true,
+    "clinicArea": "Gulberg III",
     "minFee": 2000,
     "offersVideo": true,
     "offersClinic": true,
@@ -758,12 +781,12 @@
      "topBooked": false
     },
     "stats": {
-     "ratingAvg": 4.26,
-     "ratingCount": 42,
+     "ratingAvg": 4.28,
+     "ratingCount": 43,
      "satisfactionPct": 79,
-     "avgWaitMinutes": 12,
-     "avgConsultMinutes": 12,
-     "patientsServed": 12,
+     "avgWaitMinutes": 11,
+     "avgConsultMinutes": 11,
+     "patientsServed": 13,
      "yearsExperience": 15
     },
     "booking": {
@@ -1103,7 +1126,7 @@
      }
     ],
     "reviewSummary": {
-     "count": 42,
+     "count": 43,
      "averages": {
       "overall": 4.3,
       "diagnosis": 4.2,
@@ -1116,7 +1139,7 @@
       2,
       7,
       11,
-      22
+      23
      ],
      "topTags": [
       {
@@ -1125,7 +1148,7 @@
       },
       {
        "tag": "explained_well",
-       "count": 11
+       "count": 12
       },
       {
        "tag": "friendly",
@@ -1133,6 +1156,24 @@
       }
      ],
      "latest": [
+      {
+       "id": "93de4d06-853f-464b-9755-5dd6178318b2",
+       "author": "Ali R.",
+       "isAnonymous": false,
+       "verifiedVisit": true,
+       "kind": "clinic",
+       "overall": 5,
+       "diagnosis": 5,
+       "staff": 4,
+       "environment": 4,
+       "recommend": true,
+       "tags": [
+        "explained_well"
+       ],
+       "text": "Clear and kind.",
+       "createdAt": "2026-11-27T00:00:14.883Z",
+       "reply": null
+      },
       {
        "id": "c588673f-866e-453f-b945-18821f81ba5a",
        "author": "Ali R.",
@@ -1172,28 +1213,6 @@
         "text": "Thank you — see you at the follow-up.",
         "at": "2026-10-16T23:54:28.765Z"
        }
-      },
-      {
-       "id": "c3aa6ed7-22dd-4488-9113-86c06a10cfd1",
-       "author": "Postman P.",
-       "isAnonymous": false,
-       "verifiedVisit": true,
-       "kind": "clinic",
-       "overall": 5,
-       "diagnosis": 5,
-       "staff": 4,
-       "environment": 4,
-       "recommend": true,
-       "tags": [
-        "explained_well",
-        "on_time"
-       ],
-       "text": "Listened carefully and explained everything.",
-       "createdAt": "2026-10-16T12:26:58.041Z",
-       "reply": {
-        "text": "Thank you — see you at the follow-up.",
-        "at": "2026-10-16T12:26:59.584Z"
-       }
       }
      ]
     }
@@ -1226,6 +1245,8 @@
      "avgWaitMinutes": 18,
      "pmdcVerified": true,
      "isTopBooked": false,
+     "isAccepting": true,
+     "clinicArea": "Blue Area",
      "minFee": 2500,
      "offersVideo": false,
      "offersClinic": true,
@@ -1256,6 +1277,8 @@
      "avgWaitMinutes": 17,
      "pmdcVerified": true,
      "isTopBooked": false,
+     "isAccepting": true,
+     "clinicArea": "Gulshan-e-Iqbal",
      "minFee": 2000,
      "offersVideo": true,
      "offersClinic": true,
@@ -1361,6 +1384,24 @@
    "data": {
     "items": [
      {
+      "id": "93de4d06-853f-464b-9755-5dd6178318b2",
+      "author": "Ali R.",
+      "isAnonymous": false,
+      "verifiedVisit": true,
+      "kind": "clinic",
+      "overall": 5,
+      "diagnosis": 5,
+      "staff": 4,
+      "environment": 4,
+      "recommend": true,
+      "tags": [
+       "explained_well"
+      ],
+      "text": "Clear and kind.",
+      "createdAt": "2026-11-27T00:00:14.883Z",
+      "reply": null
+     },
+     {
       "id": "c588673f-866e-453f-b945-18821f81ba5a",
       "author": "Ali R.",
       "isAnonymous": false,
@@ -1399,31 +1440,9 @@
        "text": "Thank you — see you at the follow-up.",
        "at": "2026-10-16T23:54:28.765Z"
       }
-     },
-     {
-      "id": "c3aa6ed7-22dd-4488-9113-86c06a10cfd1",
-      "author": "Postman P.",
-      "isAnonymous": false,
-      "verifiedVisit": true,
-      "kind": "clinic",
-      "overall": 5,
-      "diagnosis": 5,
-      "staff": 4,
-      "environment": 4,
-      "recommend": true,
-      "tags": [
-       "explained_well",
-       "on_time"
-      ],
-      "text": "Listened carefully and explained everything.",
-      "createdAt": "2026-10-16T12:26:58.041Z",
-      "reply": {
-       "text": "Thank you — see you at the follow-up.",
-       "at": "2026-10-16T12:26:59.584Z"
-      }
      }
     ],
-    "total": 42,
+    "total": 43,
     "page": 1,
     "pageSize": 3
    }
@@ -1462,8 +1481,8 @@
   "body": {
    "success": true,
    "data": {
-    "id": "ffc75555-f01c-4f6c-96dc-7c6aa7abad69",
-    "code": "HC-EHCZUB",
+    "id": "1c02e22b-75bb-4c30-ae3e-66ef06dc7ce6",
+    "code": "HC-2VQ9XG",
     "status": "booked",
     "kind": "clinic",
     "startsAt": "2026-11-27T17:20:00.000+05:00",
@@ -1499,7 +1518,7 @@
     "rescheduledFromId": null,
     "source": "app",
     "followUpOfId": null,
-    "bookedAt": "2026-11-27T05:00:11.324+05:00",
+    "bookedAt": "2026-11-27T10:53:16.277+05:00",
     "checkedInAt": null,
     "startedAt": null,
     "completedAt": null,
@@ -1533,7 +1552,7 @@
       "to": "booked",
       "actorRole": "patient",
       "note": null,
-      "at": "2026-11-27T05:00:11.339+05:00"
+      "at": "2026-11-27T10:53:16.304+05:00"
      }
     ],
     "sharedRecords": [],
@@ -1579,8 +1598,8 @@
   "body": {
    "success": true,
    "data": {
-    "id": "ffc75555-f01c-4f6c-96dc-7c6aa7abad69",
-    "code": "HC-EHCZUB",
+    "id": "1c02e22b-75bb-4c30-ae3e-66ef06dc7ce6",
+    "code": "HC-2VQ9XG",
     "status": "booked",
     "kind": "clinic",
     "startsAt": "2026-11-27T17:20:00.000+05:00",
@@ -1616,7 +1635,7 @@
     "rescheduledFromId": null,
     "source": "app",
     "followUpOfId": null,
-    "bookedAt": "2026-11-27T05:00:11.324+05:00",
+    "bookedAt": "2026-11-27T10:53:16.277+05:00",
     "checkedInAt": null,
     "startedAt": null,
     "completedAt": null,
@@ -1650,7 +1669,7 @@
       "to": "booked",
       "actorRole": "patient",
       "note": null,
-      "at": "2026-11-27T05:00:11.339+05:00"
+      "at": "2026-11-27T10:53:16.304+05:00"
      }
     ],
     "sharedRecords": [],
@@ -1672,8 +1691,8 @@
    "data": {
     "items": [
      {
-      "id": "ffc75555-f01c-4f6c-96dc-7c6aa7abad69",
-      "code": "HC-EHCZUB",
+      "id": "1c02e22b-75bb-4c30-ae3e-66ef06dc7ce6",
+      "code": "HC-2VQ9XG",
       "status": "booked",
       "kind": "clinic",
       "startsAt": "2026-11-27T17:20:00.000+05:00",
@@ -1709,7 +1728,7 @@
       "rescheduledFromId": null,
       "source": "app",
       "followUpOfId": null,
-      "bookedAt": "2026-11-27T05:00:11.324+05:00",
+      "bookedAt": "2026-11-27T10:53:16.277+05:00",
       "checkedInAt": null,
       "startedAt": null,
       "completedAt": null,
@@ -1744,9 +1763,81 @@
        "submitPaymentProof": false,
        "review": false
       }
+     },
+     {
+      "id": "6b259f4c-75c2-4656-8315-1099d0d3fd67",
+      "code": "HC-DWYBA2",
+      "status": "booked",
+      "kind": "clinic",
+      "startsAt": "2026-11-28T20:40:00.000+05:00",
+      "endsAt": "2026-11-28T20:55:00.000+05:00",
+      "patient": {
+       "age": null,
+       "name": "Ali Raza",
+       "phone": "+923001234501",
+       "gender": null,
+       "relation": null
+      },
+      "familyMemberId": null,
+      "reason": "Walk check: a visit to move",
+      "symptoms": [],
+      "fee": 2500,
+      "payment": {
+       "method": "pay_at_clinic",
+       "status": "unpaid",
+       "payBy": null,
+       "paidAt": null,
+       "paymentRef": null,
+       "proofUrl": null,
+       "rejectedReason": null,
+       "accounts": null,
+       "refundRef": null,
+       "refundedAt": null
+      },
+      "lateCancel": false,
+      "cancelledBy": null,
+      "cancelReason": null,
+      "rescheduledFromId": null,
+      "source": "app",
+      "followUpOfId": null,
+      "bookedAt": "2026-11-27T05:12:35.891+05:00",
+      "checkedInAt": null,
+      "startedAt": null,
+      "completedAt": null,
+      "cancelledAt": null,
+      "doctor": {
+       "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+       "displayName": "Dr. Sana Iqbal",
+       "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format",
+       "specialty": "Dermatologist"
+      },
+      "location": {
+       "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+       "kind": "clinic",
+       "name": "Model Town Clinic (demo)",
+       "addressLine": "13-A Main Boulevard",
+       "area": "Model Town",
+       "city": "Lahore",
+       "lat": 31.487,
+       "lng": 74.3212,
+       "phone": "+923007000000",
+       "instructions": "Please arrive 10 minutes early and ask for your token at reception.",
+       "timezone": "Asia/Karachi"
+      },
+      "cancelCutoffAt": "2026-11-28T18:40:00.000+05:00",
+      "prescriptionId": null,
+      "reviewed": false,
+      "can": {
+       "cancel": true,
+       "reschedule": true,
+       "joinVideo": false,
+       "shareRecords": true,
+       "submitPaymentProof": false,
+       "review": false
+      }
      }
     ],
-    "total": 1,
+    "total": 2,
     "page": 1,
     "pageSize": 3
    }
@@ -1876,6 +1967,8 @@
       "avgWaitMinutes": 18,
       "pmdcVerified": true,
       "isTopBooked": false,
+      "isAccepting": true,
+      "clinicArea": "DHA Phase 5",
       "minFee": 3500,
       "offersVideo": false,
       "offersClinic": true,
@@ -1906,6 +1999,8 @@
       "avgWaitMinutes": 22,
       "pmdcVerified": true,
       "isTopBooked": false,
+      "isAccepting": true,
+      "clinicArea": "Model Town",
       "minFee": 1000,
       "offersVideo": true,
       "offersClinic": true,
@@ -1936,6 +2031,8 @@
       "avgWaitMinutes": 16,
       "pmdcVerified": true,
       "isTopBooked": false,
+      "isAccepting": true,
+      "clinicArea": "Model Town",
       "minFee": 4500,
       "offersVideo": false,
       "offersClinic": true,
@@ -1947,8 +2044,8 @@
      }
     ],
     "upcomingAppointment": {
-     "id": "ffc75555-f01c-4f6c-96dc-7c6aa7abad69",
-     "code": "HC-EHCZUB",
+     "id": "1c02e22b-75bb-4c30-ae3e-66ef06dc7ce6",
+     "code": "HC-2VQ9XG",
      "status": "booked",
      "kind": "clinic",
      "startsAt": "2026-11-27T17:20:00.000+05:00",
@@ -1984,7 +2081,7 @@
      "rescheduledFromId": null,
      "source": "app",
      "followUpOfId": null,
-     "bookedAt": "2026-11-27T05:00:11.324+05:00",
+     "bookedAt": "2026-11-27T10:53:16.277+05:00",
      "checkedInAt": null,
      "startedAt": null,
      "completedAt": null,
@@ -2042,6 +2139,8 @@
       "avgWaitMinutes": 18,
       "pmdcVerified": true,
       "isTopBooked": false,
+      "isAccepting": true,
+      "clinicArea": "DHA Phase 5",
       "minFee": 1000,
       "offersVideo": true,
       "offersClinic": true,
@@ -2066,19 +2165,21 @@
       },
       "qualifications": "MBBS, FCPS (Dermatology)",
       "yearsExperience": 15,
-      "ratingAvg": 4.26,
-      "ratingCount": 42,
+      "ratingAvg": 4.28,
+      "ratingCount": 43,
       "satisfactionPct": 79,
-      "avgWaitMinutes": 12,
+      "avgWaitMinutes": 11,
       "pmdcVerified": true,
       "isTopBooked": false,
+      "isAccepting": true,
+      "clinicArea": "Gulberg III",
       "minFee": 2000,
       "offersVideo": true,
       "offersClinic": true,
       "nextAvailable": {
-       "at": "2026-11-27T09:30:00.000+05:00",
+       "at": "2026-11-27T12:00:00.000+05:00",
        "locationKind": "clinic",
-       "label": "Available today, 9:30 AM"
+       "label": "Available today, 12:00 PM"
       }
      },
      {
@@ -2102,6 +2203,8 @@
       "avgWaitMinutes": 18,
       "pmdcVerified": true,
       "isTopBooked": false,
+      "isAccepting": true,
+      "clinicArea": "DHA Phase 5",
       "minFee": 3500,
       "offersVideo": false,
       "offersClinic": true,
@@ -2164,8 +2267,8 @@
   "body": {
    "success": true,
    "data": {
-    "id": "3e3fde52-3aa9-46e7-b21d-a1eda0e2a15a",
-    "code": "HC-XM6JTT",
+    "id": "40b356ec-2f4b-473d-8118-fd6443267cf3",
+    "code": "HC-2STS9V",
     "status": "booked",
     "kind": "clinic",
     "startsAt": "2026-11-27T18:00:00.000+05:00",
@@ -2198,10 +2301,10 @@
     "lateCancel": false,
     "cancelledBy": null,
     "cancelReason": null,
-    "rescheduledFromId": "ffc75555-f01c-4f6c-96dc-7c6aa7abad69",
+    "rescheduledFromId": "1c02e22b-75bb-4c30-ae3e-66ef06dc7ce6",
     "source": "app",
     "followUpOfId": null,
-    "bookedAt": "2026-11-27T05:00:11.854+05:00",
+    "bookedAt": "2026-11-27T10:53:17.008+05:00",
     "checkedInAt": null,
     "startedAt": null,
     "completedAt": null,
@@ -2235,7 +2338,7 @@
       "to": "booked",
       "actorRole": "patient",
       "note": "Rescheduled",
-      "at": "2026-11-27T05:00:11.869+05:00"
+      "at": "2026-11-27T10:53:17.038+05:00"
      }
     ],
     "sharedRecords": [],
@@ -2255,8 +2358,8 @@
   "body": {
    "success": true,
    "data": {
-    "id": "3e3fde52-3aa9-46e7-b21d-a1eda0e2a15a",
-    "code": "HC-XM6JTT",
+    "id": "40b356ec-2f4b-473d-8118-fd6443267cf3",
+    "code": "HC-2STS9V",
     "status": "cancelled",
     "kind": "clinic",
     "startsAt": "2026-11-27T18:00:00.000+05:00",
@@ -2289,14 +2392,14 @@
     "lateCancel": false,
     "cancelledBy": "patient",
     "cancelReason": "Feeling better",
-    "rescheduledFromId": "ffc75555-f01c-4f6c-96dc-7c6aa7abad69",
+    "rescheduledFromId": "1c02e22b-75bb-4c30-ae3e-66ef06dc7ce6",
     "source": "app",
     "followUpOfId": null,
-    "bookedAt": "2026-11-27T05:00:11.854+05:00",
+    "bookedAt": "2026-11-27T10:53:17.008+05:00",
     "checkedInAt": null,
     "startedAt": null,
     "completedAt": null,
-    "cancelledAt": "2026-11-27T05:00:11.906+05:00",
+    "cancelledAt": "2026-11-27T10:53:17.101+05:00",
     "doctor": {
      "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
      "displayName": "Dr. Sana Iqbal",
@@ -2326,7 +2429,7 @@
       "to": "booked",
       "actorRole": "patient",
       "note": "Rescheduled",
-      "at": "2026-11-27T05:00:11.869+05:00"
+      "at": "2026-11-27T10:53:17.038+05:00"
      },
      {
       "kind": "status",
@@ -2334,7 +2437,7 @@
       "to": "cancelled",
       "actorRole": "patient",
       "note": "Feeling better",
-      "at": "2026-11-27T05:00:11.907+05:00"
+      "at": "2026-11-27T10:53:17.104+05:00"
      },
      {
       "kind": "payment",
@@ -2342,7 +2445,7 @@
       "to": "void",
       "actorRole": "patient",
       "note": null,
-      "at": "2026-11-27T05:00:11.909+05:00"
+      "at": "2026-11-27T10:53:17.108+05:00"
      }
     ],
     "sharedRecords": [],
@@ -2362,8 +2465,8 @@
   "body": {
    "success": true,
    "data": {
-    "id": "7d7530dc-2dec-4a39-a3ef-a309a2d1611a",
-    "code": "HC-BAZCHZ",
+    "id": "93e6f362-9ce4-463a-801a-0b1cf61570de",
+    "code": "HC-XHV8TW",
     "status": "booked",
     "kind": "clinic",
     "startsAt": "2026-11-27T18:40:00.000+05:00",
@@ -2397,7 +2500,7 @@
     "rescheduledFromId": null,
     "source": "app",
     "followUpOfId": null,
-    "bookedAt": "2026-11-27T05:00:11.935+05:00",
+    "bookedAt": "2026-11-27T10:53:17.157+05:00",
     "checkedInAt": null,
     "startedAt": null,
     "completedAt": null,
@@ -2431,7 +2534,7 @@
       "to": "booked",
       "actorRole": "patient",
       "note": null,
-      "at": "2026-11-27T05:00:11.944+05:00"
+      "at": "2026-11-27T10:53:17.178+05:00"
      }
     ],
     "sharedRecords": [],
@@ -2452,6 +2555,62 @@
    "success": true,
    "data": {
     "items": [
+     {
+      "id": "005df30d-a677-43f1-a291-47838572d899",
+      "appointmentCode": "HC-PNNNC9",
+      "appointmentKind": "clinic",
+      "visitDate": "2026-11-27",
+      "issuedAt": "2026-11-27T05:00:14.392+05:00",
+      "updatedAt": "2026-11-27T05:00:14.392+05:00",
+      "editableUntil": "2026-11-28T05:00:14.423+05:00",
+      "locked": false,
+      "doctor": {
+       "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+       "displayName": "Dr. Sana Iqbal",
+       "qualifications": "MBBS, FCPS (Dermatology)",
+       "pmdcNumber": "DEMO-00001-P",
+       "specialty": "Dermatologist",
+       "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format"
+      },
+      "location": {
+       "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+       "kind": "clinic",
+       "name": "Model Town Clinic (demo)",
+       "addressLine": "13-A Main Boulevard",
+       "area": "Model Town",
+       "city": "Lahore",
+       "phone": "+923007000000"
+      },
+      "patient": {
+       "age": null,
+       "name": "Ali Raza",
+       "phone": "+923001234501",
+       "gender": null,
+       "relation": null
+      },
+      "familyMemberId": null,
+      "diagnosis": "Acne vulgaris (mild)",
+      "advice": "Gentle cleanser twice a day.",
+      "followUpInDays": 30,
+      "followUpOn": "2026-12-27",
+      "medicines": [
+       {
+        "name": "Doxycycline",
+        "strength": "100 mg",
+        "form": "capsule",
+        "dosePattern": "1+0+0",
+        "timing": "after_meal",
+        "durationDays": 30,
+        "instructions": null
+       }
+      ],
+      "tests": [
+       {
+        "name": "CBC",
+        "instructions": null
+       }
+      ]
+     },
      {
       "id": "89813222-2628-4b34-8ccc-05fefc577018",
       "appointmentCode": "HC-UVSAE3",
@@ -2509,7 +2668,7 @@
       ]
      }
     ],
-    "total": 1,
+    "total": 2,
     "page": 1,
     "pageSize": 3
    }
@@ -2532,7 +2691,7 @@
   "body": {
    "success": true,
    "data": {
-    "checkId": "f4f27285-1a7f-422a-9e65-67eb0b37b145",
+    "checkId": "ee1fe171-ac98-453d-8bc9-c3cfe2b359ae",
     "emergency": false,
     "source": "fallback",
     "urgency": "routine",
@@ -2561,7 +2720,7 @@
   "body": {
    "success": true,
    "data": {
-    "checkId": "1e851bad-bdb0-462c-8030-2e60702c2c22",
+    "checkId": "4e02f4c4-b134-4ea6-ba27-1124e6318d8a",
     "emergency": true,
     "source": "red_flag",
     "flags": [
@@ -2657,7 +2816,7 @@
      "bufferMinutes": 0,
      "instructions": "Please arrive 10 minutes early and ask for your token at reception.",
      "isActive": true,
-     "nextAvailableAt": "2026-11-27T09:30:00.000+05:00"
+     "nextAvailableAt": "2026-11-27T12:00:00.000+05:00"
     },
     {
      "id": "694c4b3f-b22f-443d-a062-ae5e572bd9bb",
@@ -2745,7 +2904,7 @@
     "details": {
      "appointments": [
       {
-       "code": "HC-BAZCHZ",
+       "code": "HC-XHV8TW",
        "startsAt": "2026-11-27T18:40:00.000+05:00",
        "patientName": "Ali Raza"
       }
@@ -2848,22 +3007,22 @@
         "dateLabel": "Fri 27 Nov",
         "isAvailable": true,
         "status": "open",
-        "totalSlots": 14,
+        "totalSlots": 4,
         "slots": [
          {
-          "startsAt": "2026-11-27T09:30:00.000+05:00",
-          "endsAt": "2026-11-27T09:45:00.000+05:00",
-          "period": "morning"
+          "startsAt": "2026-11-27T12:00:00.000+05:00",
+          "endsAt": "2026-11-27T12:15:00.000+05:00",
+          "period": "afternoon"
          },
          {
-          "startsAt": "2026-11-27T09:45:00.000+05:00",
-          "endsAt": "2026-11-27T10:00:00.000+05:00",
-          "period": "morning"
+          "startsAt": "2026-11-27T12:15:00.000+05:00",
+          "endsAt": "2026-11-27T12:30:00.000+05:00",
+          "period": "afternoon"
          },
          {
-          "startsAt": "2026-11-27T10:00:00.000+05:00",
-          "endsAt": "2026-11-27T10:15:00.000+05:00",
-          "period": "morning"
+          "startsAt": "2026-11-27T12:30:00.000+05:00",
+          "endsAt": "2026-11-27T12:45:00.000+05:00",
+          "period": "afternoon"
          }
         ]
        },
@@ -2974,16 +3133,24 @@
    "data": {
     "date": "2026-11-27",
     "counts": {
-     "total": 1,
+     "total": 3,
      "waiting": 0,
      "inConsultation": 0,
      "remaining": 1,
-     "done": 0
+     "done": 2,
+     "noShow": 0
+    },
+    "attention": {
+     "transfersToConfirm": 0,
+     "feesToMark": 0,
+     "prescriptionsToWrite": 1,
+     "refundsDue": 0,
+     "reviewsToReply": 36
     },
     "queue": [
      {
-      "id": "7d7530dc-2dec-4a39-a3ef-a309a2d1611a",
-      "code": "HC-BAZCHZ",
+      "id": "93e6f362-9ce4-463a-801a-0b1cf61570de",
+      "code": "HC-XHV8TW",
       "status": "booked",
       "kind": "clinic",
       "startsAt": "2026-11-27T18:40:00.000+05:00",
@@ -3017,7 +3184,7 @@
       "rescheduledFromId": null,
       "source": "app",
       "followUpOfId": null,
-      "bookedAt": "2026-11-27T05:00:11.935+05:00",
+      "bookedAt": "2026-11-27T10:53:17.157+05:00",
       "checkedInAt": null,
       "startedAt": null,
       "completedAt": null,
@@ -3049,8 +3216,228 @@
        "refund": false,
        "markPaid": false
       }
+     },
+     {
+      "id": "1893a99a-1f8f-47e4-a94a-af2b00f58fe2",
+      "code": "HC-PNNNC9",
+      "status": "completed",
+      "kind": "clinic",
+      "startsAt": "2026-11-27T05:15:00.000+05:00",
+      "endsAt": "2026-11-27T05:30:00.000+05:00",
+      "patient": {
+       "age": null,
+       "name": "Ali Raza",
+       "phone": "+923001234501",
+       "gender": null,
+       "relation": null
+      },
+      "familyMemberId": null,
+      "reason": "Follow-up",
+      "symptoms": [],
+      "fee": 2500,
+      "payment": {
+       "method": "pay_at_clinic",
+       "status": "paid",
+       "payBy": null,
+       "paidAt": "2026-11-27T05:00:14.424+05:00",
+       "paymentRef": null,
+       "proofUrl": null,
+       "rejectedReason": null,
+       "accounts": null,
+       "refundRef": null,
+       "refundedAt": null
+      },
+      "lateCancel": false,
+      "cancelledBy": null,
+      "cancelReason": null,
+      "rescheduledFromId": "7d7530dc-2dec-4a39-a3ef-a309a2d1611a",
+      "source": "app",
+      "followUpOfId": null,
+      "bookedAt": "2026-11-27T05:00:14.273+05:00",
+      "checkedInAt": "2026-11-27T05:00:14.329+05:00",
+      "startedAt": "2026-11-27T05:00:14.353+05:00",
+      "completedAt": "2026-11-27T05:00:14.423+05:00",
+      "cancelledAt": null,
+      "patientKey": "e05feed6-bbac-4b56-bee3-44a681c67a87",
+      "location": {
+       "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+       "kind": "clinic",
+       "name": "Model Town Clinic (demo)",
+       "area": "Model Town",
+       "timezone": "Asia/Karachi"
+      },
+      "waitingMinutes": null,
+      "flags": {
+       "firstVisit": false,
+       "lateCancels": 0,
+       "noShows": 0
+      },
+      "can": {
+       "checkIn": false,
+       "start": false,
+       "complete": false,
+       "noShow": false,
+       "cancel": false,
+       "writePrescription": true,
+       "joinVideo": false,
+       "confirmPayment": false,
+       "rejectPayment": false,
+       "refund": false,
+       "markPaid": false
+      }
+     },
+     {
+      "id": "6ab088f5-42f6-406b-a0f0-4a4af1d4bc11",
+      "code": "HC-D6M4TW",
+      "status": "completed",
+      "kind": "clinic",
+      "startsAt": "2026-11-27T17:00:00.000+05:00",
+      "endsAt": "2026-11-27T17:15:00.000+05:00",
+      "patient": {
+       "age": 40,
+       "name": "Capture Walk-in",
+       "phone": "+923001234567",
+       "gender": "male",
+       "relation": null
+      },
+      "familyMemberId": null,
+      "reason": "Fever",
+      "symptoms": [],
+      "fee": 2500,
+      "payment": {
+       "method": "pay_at_clinic",
+       "status": "paid",
+       "payBy": null,
+       "paidAt": "2026-11-27T05:00:14.755+05:00",
+       "paymentRef": null,
+       "proofUrl": null,
+       "rejectedReason": null,
+       "accounts": null,
+       "refundRef": null,
+       "refundedAt": null
+      },
+      "lateCancel": false,
+      "cancelledBy": null,
+      "cancelReason": null,
+      "rescheduledFromId": null,
+      "source": "walk_in",
+      "followUpOfId": null,
+      "bookedAt": "2026-11-27T05:00:14.670+05:00",
+      "checkedInAt": "2026-11-27T05:00:14.684+05:00",
+      "startedAt": "2026-11-27T05:00:14.707+05:00",
+      "completedAt": "2026-11-27T05:00:14.731+05:00",
+      "cancelledAt": null,
+      "patientKey": "352268e0-0388-4700-80e6-336e78bbbf2c",
+      "location": {
+       "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+       "kind": "clinic",
+       "name": "Model Town Clinic (demo)",
+       "area": "Model Town",
+       "timezone": "Asia/Karachi"
+      },
+      "waitingMinutes": null,
+      "flags": {
+       "firstVisit": true,
+       "lateCancels": 0,
+       "noShows": 0
+      },
+      "can": {
+       "checkIn": false,
+       "start": false,
+       "complete": false,
+       "noShow": false,
+       "cancel": false,
+       "writePrescription": true,
+       "joinVideo": false,
+       "confirmPayment": false,
+       "rejectPayment": false,
+       "refund": false,
+       "markPaid": false
+      }
      }
     ]
+   }
+  }
+ },
+ "needsPrescription": {
+  "status": 200,
+  "body": {
+   "success": true,
+   "data": {
+    "items": [
+     {
+      "id": "6ab088f5-42f6-406b-a0f0-4a4af1d4bc11",
+      "code": "HC-D6M4TW",
+      "status": "completed",
+      "kind": "clinic",
+      "startsAt": "2026-11-27T17:00:00.000+05:00",
+      "endsAt": "2026-11-27T17:15:00.000+05:00",
+      "patient": {
+       "age": 40,
+       "name": "Capture Walk-in",
+       "phone": "+923001234567",
+       "gender": "male",
+       "relation": null
+      },
+      "familyMemberId": null,
+      "reason": "Fever",
+      "symptoms": [],
+      "fee": 2500,
+      "payment": {
+       "method": "pay_at_clinic",
+       "status": "paid",
+       "payBy": null,
+       "paidAt": "2026-11-27T05:00:14.755+05:00",
+       "paymentRef": null,
+       "proofUrl": null,
+       "rejectedReason": null,
+       "accounts": null,
+       "refundRef": null,
+       "refundedAt": null
+      },
+      "lateCancel": false,
+      "cancelledBy": null,
+      "cancelReason": null,
+      "rescheduledFromId": null,
+      "source": "walk_in",
+      "followUpOfId": null,
+      "bookedAt": "2026-11-27T05:00:14.670+05:00",
+      "checkedInAt": "2026-11-27T05:00:14.684+05:00",
+      "startedAt": "2026-11-27T05:00:14.707+05:00",
+      "completedAt": "2026-11-27T05:00:14.731+05:00",
+      "cancelledAt": null,
+      "patientKey": "352268e0-0388-4700-80e6-336e78bbbf2c",
+      "location": {
+       "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+       "kind": "clinic",
+       "name": "Model Town Clinic (demo)",
+       "area": "Model Town",
+       "timezone": "Asia/Karachi"
+      },
+      "waitingMinutes": null,
+      "flags": {
+       "firstVisit": true,
+       "lateCancels": 0,
+       "noShows": 0
+      },
+      "can": {
+       "checkIn": false,
+       "start": false,
+       "complete": false,
+       "noShow": false,
+       "cancel": false,
+       "writePrescription": true,
+       "joinVideo": false,
+       "confirmPayment": false,
+       "rejectPayment": false,
+       "refund": false,
+       "markPaid": false
+      }
+     }
+    ],
+    "total": 1,
+    "page": 1,
+    "pageSize": 5
    }
   }
  },
@@ -3071,12 +3458,12 @@
   "body": {
    "success": true,
    "data": {
-    "id": "1893a99a-1f8f-47e4-a94a-af2b00f58fe2",
-    "code": "HC-PNNNC9",
+    "id": "ea87d70e-04a4-4e45-9e30-3043dd5ffecb",
+    "code": "HC-GQTP7R",
     "status": "booked",
     "kind": "clinic",
-    "startsAt": "2026-11-27T05:15:00.000+05:00",
-    "endsAt": "2026-11-27T05:30:00.000+05:00",
+    "startsAt": "2026-11-27T11:00:00.000+05:00",
+    "endsAt": "2026-11-27T11:15:00.000+05:00",
     "patient": {
      "age": null,
      "name": "Ali Raza",
@@ -3087,7 +3474,7 @@
     "familyMemberId": null,
     "reason": "Follow-up",
     "symptoms": [],
-    "fee": 2500,
+    "fee": 3000,
     "payment": {
      "method": "pay_at_clinic",
      "status": "unpaid",
@@ -3103,10 +3490,10 @@
     "lateCancel": false,
     "cancelledBy": null,
     "cancelReason": null,
-    "rescheduledFromId": "7d7530dc-2dec-4a39-a3ef-a309a2d1611a",
+    "rescheduledFromId": "93e6f362-9ce4-463a-801a-0b1cf61570de",
     "source": "app",
     "followUpOfId": null,
-    "bookedAt": "2026-11-27T05:00:14.273+05:00",
+    "bookedAt": "2026-11-27T10:53:19.655+05:00",
     "checkedInAt": null,
     "startedAt": null,
     "completedAt": null,
@@ -3119,12 +3506,12 @@
   "body": {
    "success": true,
    "data": {
-    "id": "1893a99a-1f8f-47e4-a94a-af2b00f58fe2",
-    "code": "HC-PNNNC9",
+    "id": "ea87d70e-04a4-4e45-9e30-3043dd5ffecb",
+    "code": "HC-GQTP7R",
     "status": "booked",
     "kind": "clinic",
-    "startsAt": "2026-11-27T05:15:00.000+05:00",
-    "endsAt": "2026-11-27T05:30:00.000+05:00",
+    "startsAt": "2026-11-27T11:00:00.000+05:00",
+    "endsAt": "2026-11-27T11:15:00.000+05:00",
     "patient": {
      "age": null,
      "name": "Ali Raza",
@@ -3135,7 +3522,7 @@
     "familyMemberId": null,
     "reason": "Follow-up",
     "symptoms": [],
-    "fee": 2500,
+    "fee": 3000,
     "payment": {
      "method": "pay_at_clinic",
      "status": "unpaid",
@@ -3151,20 +3538,20 @@
     "lateCancel": false,
     "cancelledBy": null,
     "cancelReason": null,
-    "rescheduledFromId": "7d7530dc-2dec-4a39-a3ef-a309a2d1611a",
+    "rescheduledFromId": "93e6f362-9ce4-463a-801a-0b1cf61570de",
     "source": "app",
     "followUpOfId": null,
-    "bookedAt": "2026-11-27T05:00:14.273+05:00",
+    "bookedAt": "2026-11-27T10:53:19.655+05:00",
     "checkedInAt": null,
     "startedAt": null,
     "completedAt": null,
     "cancelledAt": null,
     "patientKey": "e05feed6-bbac-4b56-bee3-44a681c67a87",
     "location": {
-     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "id": "2b9e43ef-3ede-42e6-91fe-dac3769b746b",
      "kind": "clinic",
-     "name": "Model Town Clinic (demo)",
-     "area": "Model Town",
+     "name": "Gulberg III Medical Centre (demo)",
+     "area": "Gulberg III",
      "timezone": "Asia/Karachi"
     },
     "waitingMinutes": null,
@@ -3193,34 +3580,40 @@
       "to": "booked",
       "actorRole": "doctor",
       "note": "Moved by the doctor",
-      "at": "2026-11-27T05:00:14.284+05:00"
+      "at": "2026-11-27T10:53:19.670+05:00"
      }
     ],
     "history": {
      "previousAppointments": [
       {
-       "code": "HC-BAZCHZ",
-       "startsAt": "2026-11-27T18:40:00.000+05:00",
+       "code": "HC-GFG6AH",
+       "startsAt": "2026-12-04T17:00:00.000+05:00",
        "status": "cancelled",
        "kind": "clinic",
        "reason": "Follow-up"
       },
       {
-       "code": "HC-XM6JTT",
-       "startsAt": "2026-11-27T18:00:00.000+05:00",
+       "code": "HC-Z26CG9",
+       "startsAt": "2026-11-30T17:00:00.000+05:00",
        "status": "cancelled",
        "kind": "clinic",
-       "reason": "Acne for six months"
+       "reason": "Capture: to move"
       },
       {
-       "code": "HC-EHCZUB",
-       "startsAt": "2026-11-27T17:20:00.000+05:00",
+       "code": "HC-Z6DDS7",
+       "startsAt": "2026-11-28T20:40:00.000+05:00",
        "status": "cancelled",
        "kind": "clinic",
-       "reason": "Acne for six months"
+       "reason": "Capture: to move"
       }
      ],
      "prescriptions": [
+      {
+       "id": "005df30d-a677-43f1-a291-47838572d899",
+       "issuedAt": "2026-11-27T00:00:14.392Z",
+       "diagnosis": "Acne vulgaris (mild)",
+       "appointmentCode": "HC-PNNNC9"
+      },
       {
        "id": "89813222-2628-4b34-8ccc-05fefc577018",
        "issuedAt": "2026-10-17T00:00:14.783Z",
@@ -3238,12 +3631,12 @@
   "body": {
    "success": true,
    "data": {
-    "id": "1893a99a-1f8f-47e4-a94a-af2b00f58fe2",
-    "code": "HC-PNNNC9",
+    "id": "ea87d70e-04a4-4e45-9e30-3043dd5ffecb",
+    "code": "HC-GQTP7R",
     "status": "checked_in",
     "kind": "clinic",
-    "startsAt": "2026-11-27T05:15:00.000+05:00",
-    "endsAt": "2026-11-27T05:30:00.000+05:00",
+    "startsAt": "2026-11-27T11:00:00.000+05:00",
+    "endsAt": "2026-11-27T11:15:00.000+05:00",
     "patient": {
      "age": null,
      "name": "Ali Raza",
@@ -3254,7 +3647,7 @@
     "familyMemberId": null,
     "reason": "Follow-up",
     "symptoms": [],
-    "fee": 2500,
+    "fee": 3000,
     "payment": {
      "method": "pay_at_clinic",
      "status": "unpaid",
@@ -3270,20 +3663,20 @@
     "lateCancel": false,
     "cancelledBy": null,
     "cancelReason": null,
-    "rescheduledFromId": "7d7530dc-2dec-4a39-a3ef-a309a2d1611a",
+    "rescheduledFromId": "93e6f362-9ce4-463a-801a-0b1cf61570de",
     "source": "app",
     "followUpOfId": null,
-    "bookedAt": "2026-11-27T05:00:14.273+05:00",
-    "checkedInAt": "2026-11-27T05:00:14.329+05:00",
+    "bookedAt": "2026-11-27T10:53:19.655+05:00",
+    "checkedInAt": "2026-11-27T10:53:19.733+05:00",
     "startedAt": null,
     "completedAt": null,
     "cancelledAt": null,
     "patientKey": "e05feed6-bbac-4b56-bee3-44a681c67a87",
     "location": {
-     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "id": "2b9e43ef-3ede-42e6-91fe-dac3769b746b",
      "kind": "clinic",
-     "name": "Model Town Clinic (demo)",
-     "area": "Model Town",
+     "name": "Gulberg III Medical Centre (demo)",
+     "area": "Gulberg III",
      "timezone": "Asia/Karachi"
     },
     "waitingMinutes": 0,
@@ -3313,12 +3706,12 @@
   "body": {
    "success": true,
    "data": {
-    "id": "1893a99a-1f8f-47e4-a94a-af2b00f58fe2",
-    "code": "HC-PNNNC9",
+    "id": "ea87d70e-04a4-4e45-9e30-3043dd5ffecb",
+    "code": "HC-GQTP7R",
     "status": "in_consultation",
     "kind": "clinic",
-    "startsAt": "2026-11-27T05:15:00.000+05:00",
-    "endsAt": "2026-11-27T05:30:00.000+05:00",
+    "startsAt": "2026-11-27T11:00:00.000+05:00",
+    "endsAt": "2026-11-27T11:15:00.000+05:00",
     "patient": {
      "age": null,
      "name": "Ali Raza",
@@ -3329,7 +3722,7 @@
     "familyMemberId": null,
     "reason": "Follow-up",
     "symptoms": [],
-    "fee": 2500,
+    "fee": 3000,
     "payment": {
      "method": "pay_at_clinic",
      "status": "unpaid",
@@ -3345,20 +3738,20 @@
     "lateCancel": false,
     "cancelledBy": null,
     "cancelReason": null,
-    "rescheduledFromId": "7d7530dc-2dec-4a39-a3ef-a309a2d1611a",
+    "rescheduledFromId": "93e6f362-9ce4-463a-801a-0b1cf61570de",
     "source": "app",
     "followUpOfId": null,
-    "bookedAt": "2026-11-27T05:00:14.273+05:00",
-    "checkedInAt": "2026-11-27T05:00:14.329+05:00",
-    "startedAt": "2026-11-27T05:00:14.353+05:00",
+    "bookedAt": "2026-11-27T10:53:19.655+05:00",
+    "checkedInAt": "2026-11-27T10:53:19.733+05:00",
+    "startedAt": "2026-11-27T10:53:19.770+05:00",
     "completedAt": null,
     "cancelledAt": null,
     "patientKey": "e05feed6-bbac-4b56-bee3-44a681c67a87",
     "location": {
-     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "id": "2b9e43ef-3ede-42e6-91fe-dac3769b746b",
      "kind": "clinic",
-     "name": "Model Town Clinic (demo)",
-     "area": "Model Town",
+     "name": "Gulberg III Medical Centre (demo)",
+     "area": "Gulberg III",
      "timezone": "Asia/Karachi"
     },
     "waitingMinutes": null,
@@ -3388,10 +3781,10 @@
   "body": {
    "success": true,
    "data": {
-    "appointmentCode": "HC-PNNNC9",
+    "appointmentCode": "HC-GQTP7R",
     "text": "Mild acne; no scarring.",
     "files": [],
-    "updatedAt": "2026-11-27T00:00:14.376Z"
+    "updatedAt": "2026-11-27T05:53:19.807Z"
    }
   }
  },
@@ -3400,10 +3793,10 @@
   "body": {
    "success": true,
    "data": {
-    "appointmentCode": "HC-PNNNC9",
+    "appointmentCode": "HC-GQTP7R",
     "text": "Mild acne; no scarring.",
     "files": [],
-    "updatedAt": "2026-11-27T00:00:14.376Z"
+    "updatedAt": "2026-11-27T05:53:19.807Z"
    }
   }
  },
@@ -3412,12 +3805,12 @@
   "body": {
    "success": true,
    "data": {
-    "id": "005df30d-a677-43f1-a291-47838572d899",
-    "appointmentCode": "HC-PNNNC9",
+    "id": "ef2300b1-0708-4954-bb05-e1674766c1f5",
+    "appointmentCode": "HC-GQTP7R",
     "appointmentKind": "clinic",
     "visitDate": "2026-11-27",
-    "issuedAt": "2026-11-27T05:00:14.392+05:00",
-    "updatedAt": "2026-11-27T05:00:14.392+05:00",
+    "issuedAt": "2026-11-27T10:53:19.832+05:00",
+    "updatedAt": "2026-11-27T10:53:19.833+05:00",
     "editableUntil": null,
     "locked": false,
     "doctor": {
@@ -3429,11 +3822,11 @@
      "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format"
     },
     "location": {
-     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "id": "2b9e43ef-3ede-42e6-91fe-dac3769b746b",
      "kind": "clinic",
-     "name": "Model Town Clinic (demo)",
-     "addressLine": "13-A Main Boulevard",
-     "area": "Model Town",
+     "name": "Gulberg III Medical Centre (demo)",
+     "addressLine": "51-B Main Boulevard",
+     "area": "Gulberg III",
      "city": "Lahore",
      "phone": "+923007000000"
     },
@@ -3475,12 +3868,12 @@
    "success": true,
    "data": {
     "prescription": {
-     "id": "005df30d-a677-43f1-a291-47838572d899",
-     "appointmentCode": "HC-PNNNC9",
+     "id": "ef2300b1-0708-4954-bb05-e1674766c1f5",
+     "appointmentCode": "HC-GQTP7R",
      "appointmentKind": "clinic",
      "visitDate": "2026-11-27",
-     "issuedAt": "2026-11-27T05:00:14.392+05:00",
-     "updatedAt": "2026-11-27T05:00:14.392+05:00",
+     "issuedAt": "2026-11-27T10:53:19.832+05:00",
+     "updatedAt": "2026-11-27T10:53:19.833+05:00",
      "editableUntil": null,
      "locked": false,
      "doctor": {
@@ -3492,11 +3885,11 @@
       "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format"
      },
      "location": {
-      "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+      "id": "2b9e43ef-3ede-42e6-91fe-dac3769b746b",
       "kind": "clinic",
-      "name": "Model Town Clinic (demo)",
-      "addressLine": "13-A Main Boulevard",
-      "area": "Model Town",
+      "name": "Gulberg III Medical Centre (demo)",
+      "addressLine": "51-B Main Boulevard",
+      "area": "Gulberg III",
       "city": "Lahore",
       "phone": "+923007000000"
      },
@@ -3539,12 +3932,12 @@
   "body": {
    "success": true,
    "data": {
-    "id": "1893a99a-1f8f-47e4-a94a-af2b00f58fe2",
-    "code": "HC-PNNNC9",
+    "id": "ea87d70e-04a4-4e45-9e30-3043dd5ffecb",
+    "code": "HC-GQTP7R",
     "status": "completed",
     "kind": "clinic",
-    "startsAt": "2026-11-27T05:15:00.000+05:00",
-    "endsAt": "2026-11-27T05:30:00.000+05:00",
+    "startsAt": "2026-11-27T11:00:00.000+05:00",
+    "endsAt": "2026-11-27T11:15:00.000+05:00",
     "patient": {
      "age": null,
      "name": "Ali Raza",
@@ -3555,12 +3948,12 @@
     "familyMemberId": null,
     "reason": "Follow-up",
     "symptoms": [],
-    "fee": 2500,
+    "fee": 3000,
     "payment": {
      "method": "pay_at_clinic",
      "status": "paid",
      "payBy": null,
-     "paidAt": "2026-11-27T05:00:14.424+05:00",
+     "paidAt": "2026-11-27T10:53:19.882+05:00",
      "paymentRef": null,
      "proofUrl": null,
      "rejectedReason": null,
@@ -3571,20 +3964,20 @@
     "lateCancel": false,
     "cancelledBy": null,
     "cancelReason": null,
-    "rescheduledFromId": "7d7530dc-2dec-4a39-a3ef-a309a2d1611a",
+    "rescheduledFromId": "93e6f362-9ce4-463a-801a-0b1cf61570de",
     "source": "app",
     "followUpOfId": null,
-    "bookedAt": "2026-11-27T05:00:14.273+05:00",
-    "checkedInAt": "2026-11-27T05:00:14.329+05:00",
-    "startedAt": "2026-11-27T05:00:14.353+05:00",
-    "completedAt": "2026-11-27T05:00:14.423+05:00",
+    "bookedAt": "2026-11-27T10:53:19.655+05:00",
+    "checkedInAt": "2026-11-27T10:53:19.733+05:00",
+    "startedAt": "2026-11-27T10:53:19.770+05:00",
+    "completedAt": "2026-11-27T10:53:19.879+05:00",
     "cancelledAt": null,
     "patientKey": "e05feed6-bbac-4b56-bee3-44a681c67a87",
     "location": {
-     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "id": "2b9e43ef-3ede-42e6-91fe-dac3769b746b",
      "kind": "clinic",
-     "name": "Model Town Clinic (demo)",
-     "area": "Model Town",
+     "name": "Gulberg III Medical Centre (demo)",
+     "area": "Gulberg III",
      "timezone": "Asia/Karachi"
     },
     "waitingMinutes": null,
@@ -3614,12 +4007,12 @@
   "body": {
    "success": true,
    "data": {
-    "id": "1893a99a-1f8f-47e4-a94a-af2b00f58fe2",
-    "code": "HC-PNNNC9",
+    "id": "ea87d70e-04a4-4e45-9e30-3043dd5ffecb",
+    "code": "HC-GQTP7R",
     "status": "completed",
     "kind": "clinic",
-    "startsAt": "2026-11-27T05:15:00.000+05:00",
-    "endsAt": "2026-11-27T05:30:00.000+05:00",
+    "startsAt": "2026-11-27T11:00:00.000+05:00",
+    "endsAt": "2026-11-27T11:15:00.000+05:00",
     "patient": {
      "age": null,
      "name": "Ali Raza",
@@ -3630,12 +4023,12 @@
     "familyMemberId": null,
     "reason": "Follow-up",
     "symptoms": [],
-    "fee": 2500,
+    "fee": 3000,
     "payment": {
      "method": "pay_at_clinic",
      "status": "paid",
      "payBy": null,
-     "paidAt": "2026-11-27T05:00:14.424+05:00",
+     "paidAt": "2026-11-27T10:53:19.882+05:00",
      "paymentRef": null,
      "proofUrl": null,
      "rejectedReason": null,
@@ -3646,20 +4039,20 @@
     "lateCancel": false,
     "cancelledBy": null,
     "cancelReason": null,
-    "rescheduledFromId": "7d7530dc-2dec-4a39-a3ef-a309a2d1611a",
+    "rescheduledFromId": "93e6f362-9ce4-463a-801a-0b1cf61570de",
     "source": "app",
     "followUpOfId": null,
-    "bookedAt": "2026-11-27T05:00:14.273+05:00",
-    "checkedInAt": "2026-11-27T05:00:14.329+05:00",
-    "startedAt": "2026-11-27T05:00:14.353+05:00",
-    "completedAt": "2026-11-27T05:00:14.423+05:00",
+    "bookedAt": "2026-11-27T10:53:19.655+05:00",
+    "checkedInAt": "2026-11-27T10:53:19.733+05:00",
+    "startedAt": "2026-11-27T10:53:19.770+05:00",
+    "completedAt": "2026-11-27T10:53:19.879+05:00",
     "cancelledAt": null,
     "patientKey": "e05feed6-bbac-4b56-bee3-44a681c67a87",
     "location": {
-     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "id": "2b9e43ef-3ede-42e6-91fe-dac3769b746b",
      "kind": "clinic",
-     "name": "Model Town Clinic (demo)",
-     "area": "Model Town",
+     "name": "Gulberg III Medical Centre (demo)",
+     "area": "Gulberg III",
      "timezone": "Asia/Karachi"
     },
     "waitingMinutes": null,
@@ -3688,7 +4081,7 @@
       "to": "booked",
       "actorRole": "doctor",
       "note": "Moved by the doctor",
-      "at": "2026-11-27T05:00:14.284+05:00"
+      "at": "2026-11-27T10:53:19.670+05:00"
      },
      {
       "kind": "status",
@@ -3696,7 +4089,7 @@
       "to": "checked_in",
       "actorRole": "doctor",
       "note": null,
-      "at": "2026-11-27T05:00:14.331+05:00"
+      "at": "2026-11-27T10:53:19.735+05:00"
      },
      {
       "kind": "status",
@@ -3704,7 +4097,7 @@
       "to": "in_consultation",
       "actorRole": "doctor",
       "note": null,
-      "at": "2026-11-27T05:00:14.354+05:00"
+      "at": "2026-11-27T10:53:19.772+05:00"
      },
      {
       "kind": "note",
@@ -3712,7 +4105,7 @@
       "to": null,
       "actorRole": "doctor",
       "note": "Prescription issued",
-      "at": "2026-11-27T05:00:14.399+05:00"
+      "at": "2026-11-27T10:53:19.845+05:00"
      },
      {
       "kind": "status",
@@ -3720,7 +4113,7 @@
       "to": "completed",
       "actorRole": "doctor",
       "note": null,
-      "at": "2026-11-27T05:00:14.424+05:00"
+      "at": "2026-11-27T10:53:19.881+05:00"
      },
      {
       "kind": "payment",
@@ -3728,34 +4121,40 @@
       "to": "paid",
       "actorRole": "doctor",
       "note": "Collected at the visit",
-      "at": "2026-11-27T05:00:14.425+05:00"
+      "at": "2026-11-27T10:53:19.883+05:00"
      }
     ],
     "history": {
      "previousAppointments": [
       {
-       "code": "HC-BAZCHZ",
-       "startsAt": "2026-11-27T18:40:00.000+05:00",
+       "code": "HC-GFG6AH",
+       "startsAt": "2026-12-04T17:00:00.000+05:00",
        "status": "cancelled",
        "kind": "clinic",
        "reason": "Follow-up"
       },
       {
-       "code": "HC-XM6JTT",
-       "startsAt": "2026-11-27T18:00:00.000+05:00",
+       "code": "HC-Z26CG9",
+       "startsAt": "2026-11-30T17:00:00.000+05:00",
        "status": "cancelled",
        "kind": "clinic",
-       "reason": "Acne for six months"
+       "reason": "Capture: to move"
       },
       {
-       "code": "HC-EHCZUB",
-       "startsAt": "2026-11-27T17:20:00.000+05:00",
+       "code": "HC-Z6DDS7",
+       "startsAt": "2026-11-28T20:40:00.000+05:00",
        "status": "cancelled",
        "kind": "clinic",
-       "reason": "Acne for six months"
+       "reason": "Capture: to move"
       }
      ],
      "prescriptions": [
+      {
+       "id": "ef2300b1-0708-4954-bb05-e1674766c1f5",
+       "issuedAt": "2026-11-27T05:53:19.832Z",
+       "diagnosis": "Acne vulgaris (mild)",
+       "appointmentCode": "HC-GQTP7R"
+      },
       {
        "id": "005df30d-a677-43f1-a291-47838572d899",
        "issuedAt": "2026-11-27T00:00:14.392Z",
@@ -3779,8 +4178,8 @@
   "body": {
    "success": true,
    "data": {
-    "id": "7a130aac-46a5-4aab-8b5c-7947759119c3",
-    "code": "HC-GFG6AH",
+    "id": "ed382e04-6911-4a49-8ed5-388057d6c5dd",
+    "code": "HC-KM9USQ",
     "status": "booked",
     "kind": "clinic",
     "startsAt": "2026-12-04T17:00:00.000+05:00",
@@ -3813,8 +4212,8 @@
     "cancelReason": null,
     "rescheduledFromId": null,
     "source": "app",
-    "followUpOfId": "1893a99a-1f8f-47e4-a94a-af2b00f58fe2",
-    "bookedAt": "2026-11-27T05:00:14.483+05:00",
+    "followUpOfId": "ea87d70e-04a4-4e45-9e30-3043dd5ffecb",
+    "bookedAt": "2026-11-27T10:53:19.958+05:00",
     "checkedInAt": null,
     "startedAt": null,
     "completedAt": null,
@@ -3835,9 +4234,20 @@
       "age": null,
       "phone": "+923001234501",
       "relation": null,
-      "visits": 19,
-      "completedVisits": 8,
+      "visits": 28,
+      "completedVisits": 9,
       "lastVisitAt": "2026-12-04T12:00:00.000Z"
+     },
+     {
+      "patientKey": "352268e0-0388-4700-80e6-336e78bbbf2c",
+      "name": "Capture Walk-in",
+      "gender": "male",
+      "age": 40,
+      "phone": "+923001234567",
+      "relation": null,
+      "visits": 1,
+      "completedVisits": 1,
+      "lastVisitAt": "2026-11-27T12:00:00.000Z"
      },
      {
       "patientKey": "c3e00175-7aa7-454d-92cb-c8a109555be7",
@@ -3849,20 +4259,9 @@
       "visits": 1,
       "completedVisits": 1,
       "lastVisitAt": "2026-11-25T12:45:00.000Z"
-     },
-     {
-      "patientKey": "97e554a2-caa7-4241-81a3-4bc18a2e17a5",
-      "name": "Zara Patient",
-      "gender": "female",
-      "age": 7,
-      "phone": null,
-      "relation": "child",
-      "visits": 2,
-      "completedVisits": 0,
-      "lastVisitAt": "2026-10-19T12:45:00.000Z"
      }
     ],
-    "total": 15,
+    "total": 16,
     "page": 1,
     "pageSize": 3
    }
@@ -3879,8 +4278,15 @@
     "age": null,
     "phone": "+923001234501",
     "relation": null,
-    "visits": 19,
+    "visits": 28,
     "previousAppointments": [
+     {
+      "code": "HC-KM9USQ",
+      "startsAt": "2026-12-04T17:00:00.000+05:00",
+      "status": "cancelled",
+      "kind": "clinic",
+      "reason": "Follow-up"
+     },
      {
       "code": "HC-GFG6AH",
       "startsAt": "2026-12-04T17:00:00.000+05:00",
@@ -3889,21 +4295,20 @@
       "reason": "Follow-up"
      },
      {
-      "code": "HC-BAZCHZ",
-      "startsAt": "2026-11-27T18:40:00.000+05:00",
+      "code": "HC-Z26CG9",
+      "startsAt": "2026-11-30T17:00:00.000+05:00",
       "status": "cancelled",
       "kind": "clinic",
-      "reason": "Follow-up"
-     },
-     {
-      "code": "HC-XM6JTT",
-      "startsAt": "2026-11-27T18:00:00.000+05:00",
-      "status": "cancelled",
-      "kind": "clinic",
-      "reason": "Acne for six months"
+      "reason": "Capture: to move"
      }
     ],
     "prescriptions": [
+     {
+      "id": "ef2300b1-0708-4954-bb05-e1674766c1f5",
+      "issuedAt": "2026-11-27T05:53:19.832Z",
+      "diagnosis": "Acne vulgaris (mild)",
+      "appointmentCode": "HC-GQTP7R"
+     },
      {
       "id": "005df30d-a677-43f1-a291-47838572d899",
       "issuedAt": "2026-11-27T00:00:14.392Z",
@@ -3968,44 +4373,50 @@
      },
      {
       "date": "2026-11-27",
-      "clinic": 1,
+      "clinic": 3,
       "video": 0,
-      "total": 1
+      "total": 3
      }
     ],
     "totals": {
-     "appointments": 5,
-     "completed": 2,
+     "appointments": 7,
+     "completed": 4,
      "cancelled": 3,
      "lateCancelled": 0,
-     "cancelledByDoctor": 1,
+     "cancelledByDoctor": 0,
      "noShow": 0,
      "upcoming": 0
     },
     "rates": {
-     "completion": 0.4,
-     "cancellation": 0.6,
+     "completion": 0.571,
+     "cancellation": 0.429,
      "noShow": 0
     },
     "times": {
-     "avgWaitMinutes": 2,
-     "waitSamples": 2,
-     "avgConsultMinutes": 5,
-     "consultSamples": 2
+     "avgWaitMinutes": 1,
+     "waitSamples": 4,
+     "avgConsultMinutes": 2,
+     "consultSamples": 4
     },
     "patients": {
-     "new": 1,
+     "new": 2,
      "returning": 1
     },
     "fees": {
      "label": "Recorded by you — MetroMatrix does not process or hold payments.",
-     "recorded": 5000,
-     "atClinic": 5000,
+     "recorded": 10500,
+     "atClinic": 10500,
      "byTransfer": 0,
      "refundDue": 0,
      "refunded": 0
     },
-    "ratingTrend": []
+    "ratingTrend": [
+     {
+      "date": "2026-11-27",
+      "reviews": 1,
+      "average": 5
+     }
+    ]
    }
   }
  },
@@ -4015,6 +4426,27 @@
    "success": true,
    "data": {
     "items": [
+     {
+      "id": "93de4d06-853f-464b-9755-5dd6178318b2",
+      "author": "Ali R.",
+      "isAnonymous": false,
+      "verifiedVisit": true,
+      "kind": "clinic",
+      "overall": 5,
+      "diagnosis": 5,
+      "staff": 4,
+      "environment": 4,
+      "recommend": true,
+      "tags": [
+       "explained_well"
+      ],
+      "text": "Clear and kind.",
+      "createdAt": "2026-11-27T00:00:14.883Z",
+      "reply": null,
+      "appointmentCode": "HC-PNNNC9",
+      "hidden": false,
+      "hiddenReason": null
+     },
      {
       "id": "c588673f-866e-453f-b945-18821f81ba5a",
       "author": "Ali R.",
@@ -4060,34 +4492,9 @@
       "appointmentCode": "HC-PKSSTF",
       "hidden": false,
       "hiddenReason": null
-     },
-     {
-      "id": "c3aa6ed7-22dd-4488-9113-86c06a10cfd1",
-      "author": "Postman P.",
-      "isAnonymous": false,
-      "verifiedVisit": true,
-      "kind": "clinic",
-      "overall": 5,
-      "diagnosis": 5,
-      "staff": 4,
-      "environment": 4,
-      "recommend": true,
-      "tags": [
-       "explained_well",
-       "on_time"
-      ],
-      "text": "Listened carefully and explained everything.",
-      "createdAt": "2026-10-16T12:26:58.041Z",
-      "reply": {
-       "text": "Thank you — see you at the follow-up.",
-       "at": "2026-10-16T12:26:59.584Z"
-      },
-      "appointmentCode": "HC-RHY5E6",
-      "hidden": false,
-      "hiddenReason": null
      }
     ],
-    "total": 42,
+    "total": 43,
     "page": 1,
     "pageSize": 3
    }
@@ -4098,7 +4505,7 @@
   "body": {
    "success": true,
    "data": {
-    "count": 42,
+    "count": 43,
     "averages": {
      "overall": 4.3,
      "diagnosis": 4.2,
@@ -4111,7 +4518,7 @@
      2,
      7,
      11,
-     22
+     23
     ],
     "topTags": [
      {
@@ -4120,7 +4527,7 @@
      },
      {
       "tag": "explained_well",
-      "count": 11
+      "count": 12
      },
      {
       "tag": "friendly",
@@ -4128,6 +4535,24 @@
      }
     ],
     "latest": [
+     {
+      "id": "93de4d06-853f-464b-9755-5dd6178318b2",
+      "author": "Ali R.",
+      "isAnonymous": false,
+      "verifiedVisit": true,
+      "kind": "clinic",
+      "overall": 5,
+      "diagnosis": 5,
+      "staff": 4,
+      "environment": 4,
+      "recommend": true,
+      "tags": [
+       "explained_well"
+      ],
+      "text": "Clear and kind.",
+      "createdAt": "2026-11-27T00:00:14.883Z",
+      "reply": null
+     },
      {
       "id": "c588673f-866e-453f-b945-18821f81ba5a",
       "author": "Ali R.",
@@ -4166,28 +4591,6 @@
       "reply": {
        "text": "Thank you — see you at the follow-up.",
        "at": "2026-10-16T23:54:28.765Z"
-      }
-     },
-     {
-      "id": "c3aa6ed7-22dd-4488-9113-86c06a10cfd1",
-      "author": "Postman P.",
-      "isAnonymous": false,
-      "verifiedVisit": true,
-      "kind": "clinic",
-      "overall": 5,
-      "diagnosis": 5,
-      "staff": 4,
-      "environment": 4,
-      "recommend": true,
-      "tags": [
-       "explained_well",
-       "on_time"
-      ],
-      "text": "Listened carefully and explained everything.",
-      "createdAt": "2026-10-16T12:26:58.041Z",
-      "reply": {
-       "text": "Thank you — see you at the follow-up.",
-       "at": "2026-10-16T12:26:59.584Z"
       }
      }
     ]
@@ -4530,8 +4933,8 @@
   "body": {
    "success": true,
    "data": {
-    "id": "6ab088f5-42f6-406b-a0f0-4a4af1d4bc11",
-    "code": "HC-D6M4TW",
+    "id": "5638319a-4abd-4412-a80a-a523d5949c5c",
+    "code": "HC-SVWKKC",
     "status": "checked_in",
     "kind": "clinic",
     "startsAt": "2026-11-27T17:00:00.000+05:00",
@@ -4565,8 +4968,8 @@
     "rescheduledFromId": null,
     "source": "walk_in",
     "followUpOfId": null,
-    "bookedAt": "2026-11-27T05:00:14.670+05:00",
-    "checkedInAt": "2026-11-27T05:00:14.684+05:00",
+    "bookedAt": "2026-11-27T10:53:20.327+05:00",
+    "checkedInAt": "2026-11-27T10:53:20.349+05:00",
     "startedAt": null,
     "completedAt": null,
     "cancelledAt": null
@@ -4578,8 +4981,8 @@
   "body": {
    "success": true,
    "data": {
-    "id": "6ab088f5-42f6-406b-a0f0-4a4af1d4bc11",
-    "code": "HC-D6M4TW",
+    "id": "5638319a-4abd-4412-a80a-a523d5949c5c",
+    "code": "HC-SVWKKC",
     "status": "in_consultation",
     "kind": "clinic",
     "startsAt": "2026-11-27T17:00:00.000+05:00",
@@ -4613,12 +5016,12 @@
     "rescheduledFromId": null,
     "source": "walk_in",
     "followUpOfId": null,
-    "bookedAt": "2026-11-27T05:00:14.670+05:00",
-    "checkedInAt": "2026-11-27T05:00:14.684+05:00",
-    "startedAt": "2026-11-27T05:00:14.707+05:00",
+    "bookedAt": "2026-11-27T10:53:20.327+05:00",
+    "checkedInAt": "2026-11-27T10:53:20.349+05:00",
+    "startedAt": "2026-11-27T10:53:20.382+05:00",
     "completedAt": null,
     "cancelledAt": null,
-    "patientKey": "352268e0-0388-4700-80e6-336e78bbbf2c",
+    "patientKey": "a6dbf83d-8199-44e9-8c7a-51bff78abdbd",
     "location": {
      "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
      "kind": "clinic",
@@ -4653,8 +5056,8 @@
   "body": {
    "success": true,
    "data": {
-    "id": "6ab088f5-42f6-406b-a0f0-4a4af1d4bc11",
-    "code": "HC-D6M4TW",
+    "id": "5638319a-4abd-4412-a80a-a523d5949c5c",
+    "code": "HC-SVWKKC",
     "status": "completed",
     "kind": "clinic",
     "startsAt": "2026-11-27T17:00:00.000+05:00",
@@ -4688,12 +5091,12 @@
     "rescheduledFromId": null,
     "source": "walk_in",
     "followUpOfId": null,
-    "bookedAt": "2026-11-27T05:00:14.670+05:00",
-    "checkedInAt": "2026-11-27T05:00:14.684+05:00",
-    "startedAt": "2026-11-27T05:00:14.707+05:00",
-    "completedAt": "2026-11-27T05:00:14.731+05:00",
+    "bookedAt": "2026-11-27T10:53:20.327+05:00",
+    "checkedInAt": "2026-11-27T10:53:20.349+05:00",
+    "startedAt": "2026-11-27T10:53:20.382+05:00",
+    "completedAt": "2026-11-27T10:53:20.410+05:00",
     "cancelledAt": null,
-    "patientKey": "352268e0-0388-4700-80e6-336e78bbbf2c",
+    "patientKey": "a6dbf83d-8199-44e9-8c7a-51bff78abdbd",
     "location": {
      "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
      "kind": "clinic",
@@ -4728,8 +5131,8 @@
   "body": {
    "success": true,
    "data": {
-    "id": "6ab088f5-42f6-406b-a0f0-4a4af1d4bc11",
-    "code": "HC-D6M4TW",
+    "id": "5638319a-4abd-4412-a80a-a523d5949c5c",
+    "code": "HC-SVWKKC",
     "status": "completed",
     "kind": "clinic",
     "startsAt": "2026-11-27T17:00:00.000+05:00",
@@ -4749,7 +5152,7 @@
      "method": "pay_at_clinic",
      "status": "paid",
      "payBy": null,
-     "paidAt": "2026-11-27T05:00:14.755+05:00",
+     "paidAt": "2026-11-27T10:53:20.442+05:00",
      "paymentRef": null,
      "proofUrl": null,
      "rejectedReason": null,
@@ -4763,10 +5166,10 @@
     "rescheduledFromId": null,
     "source": "walk_in",
     "followUpOfId": null,
-    "bookedAt": "2026-11-27T05:00:14.670+05:00",
-    "checkedInAt": "2026-11-27T05:00:14.684+05:00",
-    "startedAt": "2026-11-27T05:00:14.707+05:00",
-    "completedAt": "2026-11-27T05:00:14.731+05:00",
+    "bookedAt": "2026-11-27T10:53:20.327+05:00",
+    "checkedInAt": "2026-11-27T10:53:20.349+05:00",
+    "startedAt": "2026-11-27T10:53:20.382+05:00",
+    "completedAt": "2026-11-27T10:53:20.410+05:00",
     "cancelledAt": null
    }
   }
@@ -4776,12 +5179,12 @@
   "body": {
    "success": true,
    "data": {
-    "id": "32ed8304-02ac-4053-8ddd-7d5557177cda",
-    "code": "HC-Z6DDS7",
+    "id": "86522608-f0c5-4c69-afb8-e62e8541c406",
+    "code": "HC-DKVNGV",
     "status": "booked",
     "kind": "clinic",
-    "startsAt": "2026-11-28T20:40:00.000+05:00",
-    "endsAt": "2026-11-28T20:55:00.000+05:00",
+    "startsAt": "2026-11-28T20:20:00.000+05:00",
+    "endsAt": "2026-11-28T20:35:00.000+05:00",
     "patient": {
      "age": null,
      "name": "Ali Raza",
@@ -4811,7 +5214,7 @@
     "rescheduledFromId": null,
     "source": "app",
     "followUpOfId": null,
-    "bookedAt": "2026-11-27T05:00:14.767+05:00",
+    "bookedAt": "2026-11-27T10:53:20.460+05:00",
     "checkedInAt": null,
     "startedAt": null,
     "completedAt": null,
@@ -4835,7 +5238,7 @@
      "instructions": "Please arrive 10 minutes early and ask for your token at reception.",
      "timezone": "Asia/Karachi"
     },
-    "cancelCutoffAt": "2026-11-28T18:40:00.000+05:00",
+    "cancelCutoffAt": "2026-11-28T18:20:00.000+05:00",
     "prescriptionId": null,
     "reviewed": false,
     "events": [
@@ -4845,7 +5248,7 @@
       "to": "booked",
       "actorRole": "patient",
       "note": null,
-      "at": "2026-11-27T05:00:14.773+05:00"
+      "at": "2026-11-27T10:53:20.473+05:00"
      }
     ],
     "sharedRecords": [],
@@ -4865,8 +5268,8 @@
   "body": {
    "success": true,
    "data": {
-    "id": "72afb699-c54f-4e60-a2aa-260e7c83dc47",
-    "code": "HC-Z26CG9",
+    "id": "7591e523-781a-4813-9a07-8daf8ca77ba1",
+    "code": "HC-8NG5C4",
     "status": "booked",
     "kind": "clinic",
     "startsAt": "2026-11-30T17:00:00.000+05:00",
@@ -4897,10 +5300,10 @@
     "lateCancel": false,
     "cancelledBy": null,
     "cancelReason": null,
-    "rescheduledFromId": "32ed8304-02ac-4053-8ddd-7d5557177cda",
+    "rescheduledFromId": "86522608-f0c5-4c69-afb8-e62e8541c406",
     "source": "app",
     "followUpOfId": null,
-    "bookedAt": "2026-11-27T05:00:14.810+05:00",
+    "bookedAt": "2026-11-27T10:53:20.542+05:00",
     "checkedInAt": null,
     "startedAt": null,
     "completedAt": null,
@@ -4913,8 +5316,8 @@
   "body": {
    "success": true,
    "data": {
-    "id": "72afb699-c54f-4e60-a2aa-260e7c83dc47",
-    "code": "HC-Z26CG9",
+    "id": "7591e523-781a-4813-9a07-8daf8ca77ba1",
+    "code": "HC-8NG5C4",
     "status": "booked",
     "kind": "clinic",
     "startsAt": "2026-11-30T17:00:00.000+05:00",
@@ -4945,10 +5348,10 @@
     "lateCancel": false,
     "cancelledBy": null,
     "cancelReason": null,
-    "rescheduledFromId": "32ed8304-02ac-4053-8ddd-7d5557177cda",
+    "rescheduledFromId": "86522608-f0c5-4c69-afb8-e62e8541c406",
     "source": "app",
     "followUpOfId": null,
-    "bookedAt": "2026-11-27T05:00:14.810+05:00",
+    "bookedAt": "2026-11-27T10:53:20.542+05:00",
     "checkedInAt": null,
     "startedAt": null,
     "completedAt": null,
@@ -4982,7 +5385,7 @@
       "to": "booked",
       "actorRole": "doctor",
       "note": "Moved by the doctor",
-      "at": "2026-11-27T05:00:14.819+05:00"
+      "at": "2026-11-27T10:53:20.562+05:00"
      }
     ],
     "sharedRecords": [],
@@ -5028,7 +5431,7 @@
   "body": {
    "success": true,
    "data": {
-    "id": "93de4d06-853f-464b-9755-5dd6178318b2",
+    "id": "1f1fc7f0-ebd9-4547-bbeb-dd48cb41d8a6",
     "author": "Ali R.",
     "isAnonymous": false,
     "verifiedVisit": true,
@@ -5042,7 +5445,7 @@
      "explained_well"
     ],
     "text": "Clear and kind.",
-    "createdAt": "2026-11-27T00:00:14.883Z",
+    "createdAt": "2026-11-27T05:53:20.683Z",
     "reply": null
    }
   }
@@ -5052,12 +5455,12 @@
   "body": {
    "success": true,
    "data": {
-    "id": "1893a99a-1f8f-47e4-a94a-af2b00f58fe2",
-    "code": "HC-PNNNC9",
+    "id": "ea87d70e-04a4-4e45-9e30-3043dd5ffecb",
+    "code": "HC-GQTP7R",
     "status": "completed",
     "kind": "clinic",
-    "startsAt": "2026-11-27T05:15:00.000+05:00",
-    "endsAt": "2026-11-27T05:30:00.000+05:00",
+    "startsAt": "2026-11-27T11:00:00.000+05:00",
+    "endsAt": "2026-11-27T11:15:00.000+05:00",
     "patient": {
      "age": null,
      "name": "Ali Raza",
@@ -5068,12 +5471,12 @@
     "familyMemberId": null,
     "reason": "Follow-up",
     "symptoms": [],
-    "fee": 2500,
+    "fee": 3000,
     "payment": {
      "method": "pay_at_clinic",
      "status": "paid",
      "payBy": null,
-     "paidAt": "2026-11-27T05:00:14.424+05:00",
+     "paidAt": "2026-11-27T10:53:19.882+05:00",
      "paymentRef": null,
      "proofUrl": null,
      "rejectedReason": null,
@@ -5084,13 +5487,13 @@
     "lateCancel": false,
     "cancelledBy": null,
     "cancelReason": null,
-    "rescheduledFromId": "7d7530dc-2dec-4a39-a3ef-a309a2d1611a",
+    "rescheduledFromId": "93e6f362-9ce4-463a-801a-0b1cf61570de",
     "source": "app",
     "followUpOfId": null,
-    "bookedAt": "2026-11-27T05:00:14.273+05:00",
-    "checkedInAt": "2026-11-27T05:00:14.329+05:00",
-    "startedAt": "2026-11-27T05:00:14.353+05:00",
-    "completedAt": "2026-11-27T05:00:14.423+05:00",
+    "bookedAt": "2026-11-27T10:53:19.655+05:00",
+    "checkedInAt": "2026-11-27T10:53:19.733+05:00",
+    "startedAt": "2026-11-27T10:53:19.770+05:00",
+    "completedAt": "2026-11-27T10:53:19.879+05:00",
     "cancelledAt": null,
     "doctor": {
      "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
@@ -5099,20 +5502,20 @@
      "specialty": "Dermatologist"
     },
     "location": {
-     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "id": "2b9e43ef-3ede-42e6-91fe-dac3769b746b",
      "kind": "clinic",
-     "name": "Model Town Clinic (demo)",
-     "addressLine": "13-A Main Boulevard",
-     "area": "Model Town",
+     "name": "Gulberg III Medical Centre (demo)",
+     "addressLine": "51-B Main Boulevard",
+     "area": "Gulberg III",
      "city": "Lahore",
-     "lat": 31.487,
-     "lng": 74.3212,
+     "lat": 31.5101,
+     "lng": 74.343,
      "phone": "+923007000000",
      "instructions": "Please arrive 10 minutes early and ask for your token at reception.",
      "timezone": "Asia/Karachi"
     },
-    "cancelCutoffAt": "2026-11-27T03:15:00.000+05:00",
-    "prescriptionId": "005df30d-a677-43f1-a291-47838572d899",
+    "cancelCutoffAt": "2026-11-27T09:00:00.000+05:00",
+    "prescriptionId": "ef2300b1-0708-4954-bb05-e1674766c1f5",
     "reviewed": true,
     "events": [
      {
@@ -5121,7 +5524,7 @@
       "to": "booked",
       "actorRole": "doctor",
       "note": "Moved by the doctor",
-      "at": "2026-11-27T05:00:14.284+05:00"
+      "at": "2026-11-27T10:53:19.670+05:00"
      },
      {
       "kind": "status",
@@ -5129,7 +5532,7 @@
       "to": "checked_in",
       "actorRole": "doctor",
       "note": null,
-      "at": "2026-11-27T05:00:14.331+05:00"
+      "at": "2026-11-27T10:53:19.735+05:00"
      },
      {
       "kind": "status",
@@ -5137,7 +5540,7 @@
       "to": "in_consultation",
       "actorRole": "doctor",
       "note": null,
-      "at": "2026-11-27T05:00:14.354+05:00"
+      "at": "2026-11-27T10:53:19.772+05:00"
      },
      {
       "kind": "note",
@@ -5145,7 +5548,7 @@
       "to": null,
       "actorRole": "doctor",
       "note": "Prescription issued",
-      "at": "2026-11-27T05:00:14.399+05:00"
+      "at": "2026-11-27T10:53:19.845+05:00"
      },
      {
       "kind": "status",
@@ -5153,7 +5556,7 @@
       "to": "completed",
       "actorRole": "doctor",
       "note": null,
-      "at": "2026-11-27T05:00:14.424+05:00"
+      "at": "2026-11-27T10:53:19.881+05:00"
      },
      {
       "kind": "payment",
@@ -5161,7 +5564,7 @@
       "to": "paid",
       "actorRole": "doctor",
       "note": "Collected at the visit",
-      "at": "2026-11-27T05:00:14.425+05:00"
+      "at": "2026-11-27T10:53:19.883+05:00"
      }
     ],
     "sharedRecords": [],
@@ -5181,13 +5584,13 @@
   "body": {
    "success": true,
    "data": {
-    "id": "005df30d-a677-43f1-a291-47838572d899",
-    "appointmentCode": "HC-PNNNC9",
+    "id": "ef2300b1-0708-4954-bb05-e1674766c1f5",
+    "appointmentCode": "HC-GQTP7R",
     "appointmentKind": "clinic",
     "visitDate": "2026-11-27",
-    "issuedAt": "2026-11-27T05:00:14.392+05:00",
-    "updatedAt": "2026-11-27T05:00:14.392+05:00",
-    "editableUntil": "2026-11-28T05:00:14.423+05:00",
+    "issuedAt": "2026-11-27T10:53:19.832+05:00",
+    "updatedAt": "2026-11-27T10:53:19.833+05:00",
+    "editableUntil": "2026-11-28T10:53:19.879+05:00",
     "locked": false,
     "doctor": {
      "id": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
@@ -5198,11 +5601,11 @@
      "photoUrl": "https://images.unsplash.com/photo-1659353888906-adb3e0041693?w=600&h=600&fit=facearea&facepad=3.2&q=80&auto=format"
     },
     "location": {
-     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "id": "2b9e43ef-3ede-42e6-91fe-dac3769b746b",
      "kind": "clinic",
-     "name": "Model Town Clinic (demo)",
-     "addressLine": "13-A Main Boulevard",
-     "area": "Model Town",
+     "name": "Gulberg III Medical Centre (demo)",
+     "addressLine": "51-B Main Boulevard",
+     "area": "Gulberg III",
      "city": "Lahore",
      "phone": "+923007000000"
     },
@@ -5245,40 +5648,40 @@
    "data": {
     "items": [
      {
-      "id": "36b434dd-3671-4652-958e-1781e9eadf2e",
+      "id": "ab56fa78-b0be-4b6e-bcd3-667f44206cfd",
       "type": "health.appointment.moved",
-      "title": "New time for your visit: HC-Z26CG9",
+      "title": "New time for your visit: HC-8NG5C4",
       "body": "Dr. Sana Iqbal moved it to Mon 30 Nov · Model Town Clinic (demo). Capture: in surgery that morning",
       "data": {
-       "appointmentCode": "HC-Z26CG9"
+       "appointmentCode": "HC-8NG5C4"
       },
       "readAt": null,
-      "createdAt": "2026-11-27T00:00:14.831Z"
+      "createdAt": "2026-11-27T05:53:20.599Z"
      },
      {
-      "id": "7b17a79e-bb01-476a-b84d-c53c8bbaa22b",
+      "id": "dd72c89b-6a5f-4104-b364-0bf01b6be968",
       "type": "health.appointment.booked",
-      "title": "Booked HC-Z6DDS7",
-      "body": "tomorrow from 8:40 PM · Model Town Clinic (demo)",
+      "title": "Booked HC-DKVNGV",
+      "body": "tomorrow from 8:20 PM · Model Town Clinic (demo)",
       "data": {
-       "appointmentCode": "HC-Z6DDS7"
+       "appointmentCode": "HC-DKVNGV"
       },
       "readAt": null,
-      "createdAt": "2026-11-27T00:00:14.787Z"
+      "createdAt": "2026-11-27T05:53:20.497Z"
      },
      {
-      "id": "f6eb2371-5b54-41a3-831a-ba2322fb6360",
+      "id": "915f9ed6-f2da-4928-a95a-4290e58968d4",
       "type": "health.appointment.cancelled",
-      "title": "HC-GFG6AH cancelled by the doctor",
+      "title": "HC-KM9USQ cancelled by the doctor",
       "body": "Capture clean-up",
       "data": {
-       "appointmentCode": "HC-GFG6AH"
+       "appointmentCode": "HC-KM9USQ"
       },
       "readAt": null,
-      "createdAt": "2026-11-27T00:00:14.516Z"
+      "createdAt": "2026-11-27T05:53:20.045Z"
      }
     ],
-    "total": 25,
+    "total": 36,
     "page": 1,
     "pageSize": 5
    }
@@ -5291,40 +5694,40 @@
    "data": {
     "items": [
      {
-      "id": "bbbf17b2-f55d-41cf-bf90-6ab731ec9ab4",
+      "id": "0715da17-6046-433c-86f2-29899bcd91d0",
       "type": "health.review.new",
       "title": "New 5★ review",
       "body": "Clear and kind.",
       "data": {
-       "reviewId": "93de4d06-853f-464b-9755-5dd6178318b2"
+       "reviewId": "1f1fc7f0-ebd9-4547-bbeb-dd48cb41d8a6"
       },
       "readAt": null,
-      "createdAt": "2026-11-27T00:00:14.890Z"
+      "createdAt": "2026-11-27T05:53:20.697Z"
      },
      {
-      "id": "62020956-bd75-4937-90d4-d8310a580163",
+      "id": "7ccd4762-0055-4bd7-a2b4-ea7cb764079d",
       "type": "health.appointment.cancelled",
-      "title": "HC-Z26CG9 cancelled by the patient",
+      "title": "HC-8NG5C4 cancelled by the patient",
       "body": "Capture clean-up",
       "data": {
-       "appointmentCode": "HC-Z26CG9"
+       "appointmentCode": "HC-8NG5C4"
       },
       "readAt": null,
-      "createdAt": "2026-11-27T00:00:14.850Z"
+      "createdAt": "2026-11-27T05:53:20.630Z"
      },
      {
-      "id": "8761cc79-de0a-4e4e-8285-c2c2d7be1886",
+      "id": "a2b0e17b-2e87-4b0c-97bf-03228bbc8d93",
       "type": "health.appointment.new",
-      "title": "New appointment HC-Z6DDS7",
-      "body": "Ali Raza · tomorrow from 8:40 PM · Model Town Clinic (demo)",
+      "title": "New appointment HC-DKVNGV",
+      "body": "Ali Raza · tomorrow from 8:20 PM · Model Town Clinic (demo)",
       "data": {
-       "appointmentCode": "HC-Z6DDS7"
+       "appointmentCode": "HC-DKVNGV"
       },
       "readAt": null,
-      "createdAt": "2026-11-27T00:00:14.785Z"
+      "createdAt": "2026-11-27T05:53:20.494Z"
      }
     ],
-    "total": 45,
+    "total": 55,
     "page": 1,
     "pageSize": 5
    }
@@ -5335,8 +5738,8 @@
   "body": {
    "success": true,
    "data": {
-    "id": "44ac6f60-e063-4c11-97e6-b77ab66832ed",
-    "code": "HC-THM59S",
+    "id": "52bcb520-778a-4158-a8a6-3a0d8f9252b1",
+    "code": "HC-XKNW2G",
     "status": "booked",
     "kind": "video",
     "startsAt": "2026-11-27T22:30:00.000+05:00",
@@ -5377,7 +5780,7 @@
     "rescheduledFromId": null,
     "source": "app",
     "followUpOfId": null,
-    "bookedAt": "2026-11-27T05:00:14.945+05:00",
+    "bookedAt": "2026-11-27T10:53:20.787+05:00",
     "checkedInAt": null,
     "startedAt": null,
     "completedAt": null,
@@ -5411,7 +5814,7 @@
       "to": "booked",
       "actorRole": "patient",
       "note": null,
-      "at": "2026-11-27T05:00:14.953+05:00"
+      "at": "2026-11-27T10:53:20.799+05:00"
      }
     ],
     "sharedRecords": [],
@@ -5471,35 +5874,35 @@
      }
     ],
     "today": {
-     "newBookings": 9,
-     "cancellations": 7,
+     "newBookings": 19,
+     "cancellations": 14,
      "noShows": 0,
      "appointmentsByStatus": {
-      "completed": 2,
-      "cancelled": 4
+      "completed": 4,
+      "cancelled": 8
      }
     },
     "last7Days": {
-     "booked": 10,
-     "completed": 3,
-     "cancelled": 7,
+     "booked": 20,
+     "completed": 5,
+     "cancelled": 14,
      "noShow": 0,
-     "video": 1
+     "video": 2
     },
     "reviews": {
-     "total": 643,
+     "total": 644,
      "hidden": 0,
-     "last7Days": 1
+     "last7Days": 2
     },
     "symptomChecks": {
-     "last24h": 2,
-     "emergencies24h": 1
+     "last24h": 4,
+     "emergencies24h": 2
     },
     "topSpecialties30d": [
      {
       "slug": "dermatologist",
       "name": "Dermatologist",
-      "bookings": 10
+      "bookings": 20
      }
     ]
    }
@@ -5709,6 +6112,32 @@
    "data": {
     "items": [
      {
+      "id": "1f1fc7f0-ebd9-4547-bbeb-dd48cb41d8a6",
+      "author": "Ali R.",
+      "isAnonymous": false,
+      "verifiedVisit": true,
+      "kind": "clinic",
+      "overall": 5,
+      "diagnosis": 5,
+      "staff": 4,
+      "environment": 4,
+      "recommend": true,
+      "tags": [
+       "explained_well"
+      ],
+      "text": "Clear and kind.",
+      "createdAt": "2026-11-27T05:53:20.683Z",
+      "reply": null,
+      "appointmentCode": "HC-GQTP7R",
+      "hidden": false,
+      "hiddenReason": null,
+      "doctorId": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
+      "doctorName": "Dr. Sana Iqbal",
+      "patientUserId": "e05feed6-bbac-4b56-bee3-44a681c67a87",
+      "authorName": "Ali R.",
+      "hiddenAt": null
+     },
+     {
       "id": "93de4d06-853f-464b-9755-5dd6178318b2",
       "author": "Ali R.",
       "isAnonymous": false,
@@ -5733,35 +6162,9 @@
       "patientUserId": "e05feed6-bbac-4b56-bee3-44a681c67a87",
       "authorName": "Ali R.",
       "hiddenAt": null
-     },
-     {
-      "id": "c588673f-866e-453f-b945-18821f81ba5a",
-      "author": "Ali R.",
-      "isAnonymous": false,
-      "verifiedVisit": true,
-      "kind": "clinic",
-      "overall": 5,
-      "diagnosis": 5,
-      "staff": 4,
-      "environment": 4,
-      "recommend": true,
-      "tags": [
-       "explained_well"
-      ],
-      "text": "Clear and kind.",
-      "createdAt": "2026-10-17T00:00:14.891Z",
-      "reply": null,
-      "appointmentCode": "HC-UVSAE3",
-      "hidden": false,
-      "hiddenReason": null,
-      "doctorId": "ada3203f-92e1-4ca5-a83b-8fb712edabdc",
-      "doctorName": "Dr. Sana Iqbal",
-      "patientUserId": "e05feed6-bbac-4b56-bee3-44a681c67a87",
-      "authorName": "Ali R.",
-      "hiddenAt": null
      }
     ],
-    "total": 643,
+    "total": 644,
     "page": 1,
     "pageSize": 2
    }
@@ -5772,12 +6175,12 @@
   "body": {
    "success": true,
    "data": {
-    "id": "1893a99a-1f8f-47e4-a94a-af2b00f58fe2",
-    "code": "HC-PNNNC9",
+    "id": "ea87d70e-04a4-4e45-9e30-3043dd5ffecb",
+    "code": "HC-GQTP7R",
     "status": "completed",
     "kind": "clinic",
-    "startsAt": "2026-11-27T05:15:00.000+05:00",
-    "endsAt": "2026-11-27T05:30:00.000+05:00",
+    "startsAt": "2026-11-27T11:00:00.000+05:00",
+    "endsAt": "2026-11-27T11:15:00.000+05:00",
     "patient": {
      "age": null,
      "name": "Ali Raza",
@@ -5788,12 +6191,12 @@
     "familyMemberId": null,
     "reason": "Follow-up",
     "symptoms": [],
-    "fee": 2500,
+    "fee": 3000,
     "payment": {
      "method": "pay_at_clinic",
      "status": "paid",
      "payBy": null,
-     "paidAt": "2026-11-27T05:00:14.424+05:00",
+     "paidAt": "2026-11-27T10:53:19.882+05:00",
      "paymentRef": null,
      "proofUrl": null,
      "rejectedReason": null,
@@ -5804,13 +6207,13 @@
     "lateCancel": false,
     "cancelledBy": null,
     "cancelReason": null,
-    "rescheduledFromId": "7d7530dc-2dec-4a39-a3ef-a309a2d1611a",
+    "rescheduledFromId": "93e6f362-9ce4-463a-801a-0b1cf61570de",
     "source": "app",
     "followUpOfId": null,
-    "bookedAt": "2026-11-27T05:00:14.273+05:00",
-    "checkedInAt": "2026-11-27T05:00:14.329+05:00",
-    "startedAt": "2026-11-27T05:00:14.353+05:00",
-    "completedAt": "2026-11-27T05:00:14.423+05:00",
+    "bookedAt": "2026-11-27T10:53:19.655+05:00",
+    "checkedInAt": "2026-11-27T10:53:19.733+05:00",
+    "startedAt": "2026-11-27T10:53:19.770+05:00",
+    "completedAt": "2026-11-27T10:53:19.879+05:00",
     "cancelledAt": null,
     "patientUserId": "e05feed6-bbac-4b56-bee3-44a681c67a87",
     "doctor": {
@@ -5821,9 +6224,9 @@
     },
     "hasPrescription": true,
     "location": {
-     "id": "528c917c-4a2a-4145-9d43-08339c46a4a4",
+     "id": "2b9e43ef-3ede-42e6-91fe-dac3769b746b",
      "kind": "clinic",
-     "name": "Model Town Clinic (demo)",
+     "name": "Gulberg III Medical Centre (demo)",
      "city": "Lahore",
      "timezone": "Asia/Karachi"
     },
@@ -5835,7 +6238,7 @@
       "actorRole": "doctor",
       "actorUserId": "50d176f7-e91b-458d-8872-8aeea5ed462a",
       "note": "Moved by the doctor",
-      "at": "2026-11-27T05:00:14.284+05:00"
+      "at": "2026-11-27T10:53:19.670+05:00"
      },
      {
       "kind": "status",
@@ -5844,7 +6247,7 @@
       "actorRole": "doctor",
       "actorUserId": "50d176f7-e91b-458d-8872-8aeea5ed462a",
       "note": null,
-      "at": "2026-11-27T05:00:14.331+05:00"
+      "at": "2026-11-27T10:53:19.735+05:00"
      },
      {
       "kind": "status",
@@ -5853,7 +6256,7 @@
       "actorRole": "doctor",
       "actorUserId": "50d176f7-e91b-458d-8872-8aeea5ed462a",
       "note": null,
-      "at": "2026-11-27T05:00:14.354+05:00"
+      "at": "2026-11-27T10:53:19.772+05:00"
      },
      {
       "kind": "note",
@@ -5862,7 +6265,7 @@
       "actorRole": "doctor",
       "actorUserId": "50d176f7-e91b-458d-8872-8aeea5ed462a",
       "note": "Prescription issued",
-      "at": "2026-11-27T05:00:14.399+05:00"
+      "at": "2026-11-27T10:53:19.845+05:00"
      },
      {
       "kind": "status",
@@ -5871,7 +6274,7 @@
       "actorRole": "doctor",
       "actorUserId": "50d176f7-e91b-458d-8872-8aeea5ed462a",
       "note": null,
-      "at": "2026-11-27T05:00:14.424+05:00"
+      "at": "2026-11-27T10:53:19.881+05:00"
      },
      {
       "kind": "payment",
@@ -5880,7 +6283,7 @@
       "actorRole": "doctor",
       "actorUserId": "50d176f7-e91b-458d-8872-8aeea5ed462a",
       "note": "Collected at the visit",
-      "at": "2026-11-27T05:00:14.425+05:00"
+      "at": "2026-11-27T10:53:19.883+05:00"
      }
     ]
    }

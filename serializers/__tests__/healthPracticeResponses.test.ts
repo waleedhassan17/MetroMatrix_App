@@ -5,7 +5,7 @@
 // hours, a walk-in, mark paid, the doctor's move and a follow-up.
 
 import practice from './fixtures/health/practice.json';
-import { daysSerializer, locationSerializer, slotsMetaSerializer } from '../health/discoverySerializer';
+import { daysSerializer, doctorCardSerializer, locationSerializer, slotsMetaSerializer } from '../health/discoverySerializer';
 import { appointmentDetailSerializer } from '../health/appointmentSerializer';
 import {
   createdAppointmentSerializer,
@@ -17,6 +17,8 @@ import {
   ownProfileSerializer,
   placesSerializer,
   previewSerializer,
+  queuePageSerializer,
+  todaySerializer,
 } from '../health/doctorSerializer';
 import { businessSerializer } from '../businessSerializer';
 
@@ -91,5 +93,24 @@ describe("the doctor's practice tools, from real answers", () => {
     expect(follow.followUpOfId).toBeTruthy();
     expect(follow.reason).toBe('Follow-up');
     expect(appointmentDetailSerializer(body('appointmentMoved'))?.flags.canReschedule).toBe(true);
+  });
+  it('reads today as the dashboard does: the day in numbers, what needs the doctor, and its lists', () => {
+    const day = todaySerializer({ today: data('today'), locations: data('locations') })!;
+    expect(day.counts.total).toBe(day.counts.upcoming + day.counts.waiting + day.counts.withDoctor + day.counts.seen + day.counts.missed);
+    expect(day.attention).toEqual(
+      expect.objectContaining({ transfersToConfirm: expect.any(Number), feesToMark: expect.any(Number), prescriptionsToWrite: expect.any(Number), refundsDue: expect.any(Number), reviewsToReply: expect.any(Number) }),
+    );
+    // Only locations in use are offered as chips.
+    expect(day.locations.every(l => l.id)).toBe(true);
+    const needs = queuePageSerializer(body('needsPrescription'))!;
+    expect(needs.items.length).toBe(day.attention!.prescriptionsToWrite > 0 ? Math.min(5, day.attention!.prescriptionsToWrite) : 0);
+    expect(needs.items[0]?.status).toBe('completed');
+  });
+
+  it('reads a doctor card with the proof and the booking state', () => {
+    const card = doctorCardSerializer(data('doctors').items[0])!;
+    expect(card).toEqual(expect.objectContaining({ isAccepting: expect.any(Boolean) }));
+    expect(card).toHaveProperty('clinicArea');
+    expect(card).toHaveProperty('satisfactionPct');
   });
 });
