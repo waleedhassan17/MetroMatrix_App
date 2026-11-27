@@ -1,7 +1,11 @@
 // Captures real Healthcare responses (MetroMatrix-API docs/API_HEALTH.md) from a
 // local, seeded backend as the app's serializer fixture:
 //   BACKEND=~/MetroMatix-NestJS node scripts/capture-health-fixtures.js \
-//     serializers/__tests__/fixtures/health/real.json
+//     serializers/__tests__/fixtures/health/practice.json
+// practice.json (26 Nov 2026, with the doctor's practice tools: day hours,
+// walk-ins, moves, follow-ups, mark-paid) is read by
+// healthPracticeResponses.test.ts; real.json is the October capture the older
+// tests and the dummy API's parity pin.
 // The backend must run on :3000 with `npm run seed:health` applied; the run books,
 // moves, completes and cancels demo appointments in that (local) database. Credentials
 // come from its git-ignored Postman environment and are never printed. The
@@ -94,7 +98,7 @@ const signin = async (email, password, portal) => {
   );
   // Book another to cancel, and one to take through a visit.
   must('cancel', await call('POST', `/health/appointments/${moved.code}/cancel`, { token: pt, body: { reason: 'Feeling better' } }), 200);
-  const visit = must(
+  let visit = must(
     'bookVisit',
     await call('POST', '/health/appointments', {
       token: pt,
@@ -127,6 +131,41 @@ const signin = async (email, password, portal) => {
   must('paymentAccounts', await call('GET', '/health/doctor/payment-accounts', { token: dt }));
   must('today', await call('GET', '/health/doctor/today', { token: dt }));
   must('doctorAppointments', await call('GET', `/health/doctor/appointments?from=${day}&to=${day}&pageSize=5`, { token: dt }));
+  // Check-in opens 2 hours before a visit: the doctor moves it to one of their own times
+  // within the next two hours (giving today an hour of its own when no clinic is open).
+  const soon = async locId => {
+    const own0 = (await call('GET', `/health/doctor/locations/${locId}/slots?days=1`, { token: dt })).body.data;
+    return own0.days.flatMap(d => d.slots).map(x => x.startsAt).find(t => Date.parse(t) > Date.now() + 5 * 60e3 && Date.parse(t) < Date.now() + 110 * 60e3);
+  };
+  const clinicIds = locs.filter(l => l.kind === 'clinic' && l.isActive !== false).map(l => l.id);
+  const todayOwn = new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10);
+  let madeHour = null;
+  let near = null;
+  let nearLoc = null;
+  for (const id of clinicIds) {
+    near = await soon(id);
+    if (near) { nearLoc = id; break; }
+  }
+  if (!near) {
+    const q = Math.ceil((Date.now() + 5 * 3600e3 + 10 * 60e3) / 900e3) * 900e3 - 5 * 3600e3;
+    const hm = ms => new Date(ms + 5 * 3600e3).toISOString().slice(11, 16);
+    for (const id of clinicIds) {
+      const hour = await call('PUT', `/health/doctor/locations/${id}/overrides/${todayOwn}`, {
+        token: dt,
+        body: { ranges: [{ start: hm(q), end: hm(q + 3600e3) > hm(q) ? hm(q + 3600e3) : '24:00' }], note: 'Capture: an hour today' },
+      });
+      if (hour.status !== 200) continue;
+      madeHour = id;
+      near = await soon(id);
+      nearLoc = id;
+      if (near) break;
+    }
+  }
+  if (!near) throw new Error('no time within two hours to bring the visit to');
+  visit = must('doctorMoveSoon', await call('POST', `/health/doctor/appointments/${visit.code}/reschedule`, {
+    token: dt,
+    body: { startsAt: near, locationId: nearLoc, reason: 'Capture: seen sooner' },
+  }));
   must('doctorAppointment', await call('GET', `/health/doctor/appointments/${visit.code}`, { token: dt }));
   must('checkIn', await call('POST', `/health/doctor/appointments/${visit.code}/check-in`, { token: dt }), 200);
   must('start', await call('POST', `/health/doctor/appointments/${visit.code}/start`, { token: dt }), 200);
@@ -148,7 +187,15 @@ const signin = async (email, password, portal) => {
   );
   must('prescriptionCurrent', await call('GET', `/health/doctor/appointments/${visit.code}/prescription`, { token: dt }));
   must('complete', await call('POST', `/health/doctor/appointments/${visit.code}/complete`, { token: dt, body: { paymentCollected: true } }), 200);
+  if (madeHour) await call('DELETE', `/health/doctor/locations/${madeHour}/overrides/${todayOwn}`, { token: dt });
   const done = must('doctorAppointmentDone', await call('GET', `/health/doctor/appointments/${visit.code}`, { token: dt }));
+  // Its follow-up, a week on (then cancelled again).
+  const weekOn = (await call('GET', `/health/doctor/locations/${clinic.id}/slots?from=${new Date(Date.now() + 5 * 3600e3 + 7 * 86400e3).toISOString().slice(0, 10)}&days=7`, { token: dt })).body.data;
+  const follow = must('followUp', await call('POST', `/health/doctor/appointments/${visit.code}/follow-up`, {
+    token: dt,
+    body: { locationId: clinic.id, startsAt: weekOn.days.flatMap(d => d.slots)[0].startsAt },
+  }), 201);
+  await call('POST', `/health/doctor/appointments/${follow.code}/cancel`, { token: dt, body: { reason: 'Capture clean-up' } });
   const pats = must('patients', await call('GET', '/health/doctor/patients?pageSize=3', { token: dt }));
   must('patientHistory', await call('GET', `/health/doctor/patients/${done.patientKey}`, { token: dt }));
   must('insights', await call('GET', '/health/doctor/insights?range=7d', { token: dt }));
@@ -157,6 +204,58 @@ const signin = async (email, password, portal) => {
   must('medicines', await call('GET', '/health/doctor/medicines/suggest?q=para', { token: dt }));
   must('diagnoses', await call('GET', '/health/doctor/diagnoses/recent', { token: dt }));
   must('doctorBusiness', await call('GET', '/businesses/me', { token: dt }));
+
+  // ── The doctor's practice tools (API_HEALTH.md §10 D1–D2) ──
+  const pkt = (ms = Date.now()) => new Date(ms + 5 * 3600e3).toISOString();
+  const todayPkt = pkt().slice(0, 10);
+  const inDays = n => pkt(Date.now() + n * 86400e3).slice(0, 10);
+  const own = must('ownSlots', await call('GET', `/health/doctor/locations/${clinic.id}/slots?days=3`, { token: dt }));
+  const weekNow = (await call('GET', `/health/doctor/locations/${clinic.id}/schedule`, { token: dt })).body.data;
+  must('scheduleDryRun', await call('PUT', `/health/doctor/locations/${clinic.id}/schedule?dryRun=true`, {
+    token: dt,
+    body: weekNow.ranges.map(r => ({ weekday: r.weekday, start: r.start, end: r.end })),
+  }));
+  const extraDay = inDays(6);
+  must('overridePut', await call('PUT', `/health/doctor/locations/${clinic.id}/overrides/${extraDay}`, {
+    token: dt,
+    body: { ranges: [{ start: '14:00', end: '15:00' }], note: 'Capture: extra hour' },
+  }));
+  must('overrides', await call('GET', `/health/doctor/locations/${clinic.id}/overrides`, { token: dt }));
+  must('overrideRemove', await call('DELETE', `/health/doctor/locations/${clinic.id}/overrides/${extraDay}`, { token: dt }));
+  // A walk-in: the slot running now, else (a closed hour) an hour of today's own first.
+  const walkInBody = { locationId: clinic.id, patient: { name: 'Capture Walk-in', phone: '+923001234567', gender: 'male', age: 40 }, reason: 'Fever' };
+  let walkIn = await call('POST', '/health/doctor/appointments/walk-in', { token: dt, body: walkInBody });
+  let ownHour = false;
+  if (walkIn.status === 409) {
+    const q = Math.floor((Date.now() + 5 * 3600e3) / 900e3) * 900e3 - 5 * 3600e3;
+    const hm = ms => new Date(ms + 5 * 3600e3).toISOString().slice(11, 16);
+    const hour = await call('PUT', `/health/doctor/locations/${clinic.id}/overrides/${todayPkt}`, {
+      token: dt,
+      body: { ranges: [{ start: hm(q), end: hm(q + 3600e3) > hm(q) ? hm(q + 3600e3) : '24:00' }] },
+    });
+    ownHour = hour.status === 200;
+    if (ownHour) walkIn = await call('POST', '/health/doctor/appointments/walk-in', { token: dt, body: walkInBody });
+  }
+  const walked = must('walkIn', walkIn, 201);
+  must('walkInStart', await call('POST', `/health/doctor/appointments/${walked.code}/start`, { token: dt }), 200);
+  must('walkInComplete', await call('POST', `/health/doctor/appointments/${walked.code}/complete`, { token: dt, body: { paymentCollected: false } }), 200);
+  must('markPaid', await call('POST', `/health/doctor/appointments/${walked.code}/payment/mark-paid`, { token: dt }), 200);
+  if (ownHour) await call('DELETE', `/health/doctor/locations/${clinic.id}/overrides/${todayPkt}`, { token: dt });
+  // The doctor moves a visit to another of their times.
+  const ownFree = own.days.flatMap(d => d.slots).map(x => x.startsAt).filter(t => Date.parse(t) > Date.now() + 3 * 3600e3);
+  const toMove = must('bookToMove', await call('POST', '/health/appointments', {
+    token: pt,
+    key: crypto.randomUUID(),
+    body: { doctorId: me.id, locationId: clinic.id, startsAt: ownFree[ownFree.length - 1], reason: 'Capture: to move' },
+  }), 201);
+  const later = (await call('GET', `/health/doctor/locations/${clinic.id}/slots?from=${inDays(3)}&days=7`, { token: dt })).body.data;
+  const laterFree = later.days.flatMap(d => d.slots).map(x => x.startsAt);
+  const movedByDoctor = must('doctorReschedule', await call('POST', `/health/doctor/appointments/${toMove.code}/reschedule`, {
+    token: dt,
+    body: { startsAt: laterFree[0], reason: 'Capture: in surgery that morning' },
+  }));
+  must('appointmentMoved', await call('GET', `/health/appointments/${movedByDoctor.code}`, { token: pt }));
+  await call('POST', `/health/appointments/${movedByDoctor.code}/cancel`, { token: pt, body: { reason: 'Capture clean-up' } });
   const other2 = locs.find(l => l.kind === 'clinic' && l.id !== clinic.id) ?? locs.find(l => l.id !== clinic.id);
   const week = (await call('GET', `/health/doctor/locations/${clinic.id}/schedule`, { token: dt })).body.data;
   if (other2) {

@@ -20,6 +20,7 @@ import {
   completeAppointment,
   confirmPayment,
   getDoctorAppointment,
+  markPaid,
   refundAppointment,
   rejectPayment,
   saveNotes,
@@ -31,7 +32,7 @@ export interface DoctorAppointmentEntry {
   error: ServerError;
 }
 
-export type DoctorMove = DoctorAction | 'complete' | 'cancel' | 'confirm-payment' | 'reject-payment' | 'refund' | 'notes';
+export type DoctorMove = DoctorAction | 'complete' | 'cancel' | 'confirm-payment' | 'reject-payment' | 'refund' | 'mark-paid' | 'notes';
 
 export interface DoctorAppointmentSliceState {
   byId: Record<string, DoctorAppointmentEntry>;
@@ -195,6 +196,8 @@ export const doctorAppointmentSlice = createAppSlice({
               return await rejectPayment(id, reason ?? '');
             case 'refund':
               return await refundAppointment(id, (reason ?? '').trim());
+            case 'mark-paid':
+              return await markPaid(id);
             case 'notes':
               // The files go with the text: saving never drops the ones already there.
               return await saveNotes(id, { text: notes ?? '', attachments: files ?? [] });

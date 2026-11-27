@@ -20,6 +20,7 @@ import {
   fetchDoctorToday,
   rejectPayment as rejectPaymentRequest,
   refundAppointment as refundAppointmentRequest,
+  markPaid as markPaidRequest,
   saveNotes as saveNotesRequest,
   type DoctorAction,
 } from '../../networks/health/doctor/doctorAppointments';
@@ -55,6 +56,7 @@ import {
   savedHoursSerializer,
   savedLocationSerializer,
   timeOffListSerializer,
+  hoursReportSerializer,
 } from '../../serializers/health/doctorSerializer';
 import { titleKey } from '../../serializers/health/healthCommon';
 import { arr, bodiesOf, bodyOf, isObject, str } from '../../serializers/serializerUtils';
@@ -106,6 +108,12 @@ export const rejectPayment = async (id: string, reason: string) => {
 
 export const refundAppointment = async (id: string, refundRef: string) => {
   await refundAppointmentRequest(id, refundRef);
+  return getDoctorAppointment(id);
+};
+
+/** A clinic fee taken at the desk or after the visit. */
+export const markPaid = async (id: string) => {
+  await markPaidRequest(id);
   return getDoctorAppointment(id);
 };
 
@@ -191,8 +199,12 @@ export const updateLocation = async (id: string, input: Partial<DoctorLocationIn
  */
 export const saveHours = async (id: string, hours: WeekDayHours[]) => {
   const [schedule, locations] = await Promise.all([saveHoursRequest(id, hours), fetchDoctorLocations()]);
-  return required(savedHoursSerializer({ schedule, locations }, id));
+  // What the server reports with them (hours shared with the other kind, visits left outside).
+  return { location: required(savedHoursSerializer({ schedule, locations }, id)), report: hoursReportSerializer(schedule) };
 };
+
+/** The same PUT as a dry run: what saving these hours would mean, nothing saved. */
+export const checkHours = async (id: string, hours: WeekDayHours[]) => required(hoursReportSerializer(await saveHoursRequest(id, hours, true)));
 
 export const listTimeOff = async () => {
   const [timeOff, locations] = await Promise.all([fetchTimeOff(), fetchDoctorLocations()]);

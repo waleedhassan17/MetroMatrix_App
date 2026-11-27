@@ -117,6 +117,10 @@ import { availabilitySlice } from '../screens/availability-screen/availabilitySl
 import { doctorProfileEditSlice } from '../screens/doctor-profile-edit-screen/doctorProfileEditSlice';
 import { practiceSetupSlice } from '../screens/practice-setup-screen/practiceSetupSlice';
 import { doctorMoreSlice } from '../screens/doctor-more-screen/doctorMoreSlice';
+import { doctorFeaturesSlice } from './doctorFeaturesSlice';
+import { visitTimeSlice } from '../screens/visit-time-sheet/visitTimeSlice';
+import { walkInSlice } from '../screens/walk-in-sheet/walkInSlice';
+import { dayHoursSlice } from '../screens/day-hours-sheet/dayHoursSlice';
 import { videoSlice } from '../screens/video-precheck-screen/videoSlice';
 import { postConsultReviewSlice } from '../screens/post-consult-review-screen/postConsultReviewSlice';
 import { symptomCheckerSlice } from '../screens/symptom-checker-screen/symptomCheckerSlice';
@@ -352,6 +356,10 @@ const rootReducer = combineReducers({
   doctorProfileEdit: doctorProfileEditSlice.reducer,
   practiceSetup: practiceSetupSlice.reducer,
   doctorMore: doctorMoreSlice.reducer,
+  doctorFeatures: doctorFeaturesSlice.reducer,
+  visitTime: visitTimeSlice.reducer,
+  walkIn: walkInSlice.reducer,
+  dayHours: dayHoursSlice.reducer,
   video: videoSlice.reducer,
   postConsultReview: postConsultReviewSlice.reducer,
   symptomChecker: symptomCheckerSlice.reducer,

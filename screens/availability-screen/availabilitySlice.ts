@@ -22,9 +22,9 @@ import {
   sameWeek,
   type DoctorLocationForm,
 } from '../../models/health/availabilityModel';
-import type { AvailabilityPreview, DoctorLocation, DoctorLocationInput, HoursOverlap, WeekDayHours } from '../../models';
+import type { AvailabilityPreview, DoctorLocation, DoctorLocationInput, HoursOverlap, HoursReport, WeekDayHours } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
-import { createLocation, listLocations, saveHours, updateLocation } from '../shared/practiceReads';
+import { checkHours, createLocation, listLocations, saveHours, updateLocation } from '../shared/practiceReads';
 
 export type AvailabilityTab = 'locations' | 'hours' | 'preview';
 
@@ -42,6 +42,7 @@ export const blankLocation = (kind: 'video' | 'clinic' = 'clinic'): DoctorLocati
   phone: null,
   fee: 1500,
   slotMinutes: 15,
+  bufferMinutes: 0,
   instructions: null,
   requiresPrepay: false,
 });
@@ -68,6 +69,10 @@ export interface AvailabilitySliceState {
   hoursFor: string | null;
   draft: WeekDayHours[];
   serverOverlaps: HoursOverlap[];
+  /** What the server said of the hours just saved (shared with the other kind, visits left outside). */
+  hoursReport: HoursReport | null;
+  /** A check before saving (a dry run). */
+  hoursCheck: HoursReport | null;
   touchedHours: boolean;
   preview: AvailabilityPreview | null;
   previewStatus: FormStatus;
@@ -85,6 +90,8 @@ const initialState: AvailabilitySliceState = {
   hoursFor: null,
   draft: [],
   serverOverlaps: [],
+  hoursReport: null,
+  hoursCheck: null,
   touchedHours: false,
   preview: null,
   previewStatus: 'idle',
@@ -129,6 +136,7 @@ export const availabilitySlice = createAppSlice({
               phone: l.phone,
               fee: l.fee,
               slotMinutes: l.slotMinutes,
+              bufferMinutes: l.bufferMinutes,
               instructions: l.instructions,
               requiresPrepay: l.requiresPrepay,
             }
@@ -302,9 +310,12 @@ export const availabilitySlice = createAppSlice({
         },
         fulfilled: (state, action) => {
           state.busy = null;
-          const i = state.locations.findIndex(l => l.id === action.payload.id);
-          if (i >= 0) state.locations[i] = action.payload;
-          state.draft = normaliseWeek(action.payload.hours);
+          const saved = action.payload.location;
+          const i = state.locations.findIndex(l => l.id === saved.id);
+          if (i >= 0) state.locations[i] = saved;
+          state.draft = normaliseWeek(saved.hours);
+          state.hoursReport = action.payload.report;
+          state.hoursCheck = null;
           state.touchedHours = false;
           state.preview = null;
           state.previewStatus = 'idle';
@@ -312,6 +323,33 @@ export const availabilitySlice = createAppSlice({
         rejected: (state, action) => {
           state.busy = null;
           state.error = readRejection(action, "The hours weren't saved.");
+          state.serverOverlaps = overlapsFrom(state.error.details);
+        },
+      },
+    ),
+    /** What saving these hours would mean (the server's dry run); nothing is saved. */
+    checkHoursAsync: create.asyncThunk(
+      async ({ id, hours }: { id: string; hours: WeekDayHours[] }, { rejectWithValue }) => {
+        try {
+          return await checkHours(id, hours);
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        pending: state => {
+          state.busy = 'hours';
+          state.error = NO_ERROR;
+          state.serverOverlaps = [];
+          state.hoursCheck = null;
+        },
+        fulfilled: (state, action) => {
+          state.busy = null;
+          state.hoursCheck = action.payload;
+        },
+        rejected: (state, action) => {
+          state.busy = null;
+          state.error = readRejection(action, "The hours weren't checked.");
           state.serverOverlaps = overlapsFrom(state.error.details);
         },
       },
@@ -370,6 +408,7 @@ export const {
   saveLocationAsync,
   deleteLocationAsync,
   saveHoursAsync,
+  checkHoursAsync,
   loadPreviewAsync,
 } = availabilitySlice.actions;
 export const { selectAvailability, selectHoursDirty } = availabilitySlice.selectors;

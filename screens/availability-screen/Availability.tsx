@@ -41,6 +41,7 @@ import {
 } from '../../Custom-Components/index';
 import { FoodMap } from '../../Custom-Components/food/map/FoodMap';
 import {
+  BUFFER_CHOICES,
   LOCATION_LIMITS,
   SLOT_LENGTHS,
   WEEKDAYS,
@@ -52,8 +53,9 @@ import {
   weeklySlotCount,
 } from '../../models/health/availabilityModel';
 import type { DoctorPartnerStackParamList } from '../../models';
+import { selectDoctorFeatures, setAcceptingAsync } from '../../store/doctorFeaturesSlice';
 import { Alert } from '../../utils/alert/alert';
-import { PKT, formatDayChip, formatSlot } from '../../utils/health-time/healthTime';
+import { PKT, formatDayChip, formatSlot, formatWhen } from '../../utils/health-time/healthTime';
 import { formatPKR } from '../../utils/money/money';
 import { haptics } from '../../utils/haptics/haptics';
 import {
@@ -68,6 +70,7 @@ import {
   loadPreviewAsync,
   openLocationSheet,
   removeRange,
+  checkHoursAsync,
   saveHoursAsync,
   saveLocationAsync,
   selectAvailability,
@@ -99,10 +102,17 @@ const fromPicker = (hhmm: string) => (hhmm === '24:00' ? '23:59' : hhmm);
 /** "Pakistan time", or the zone's own name. */
 const zoneLabel = (tz: string) => (tz === PKT ? 'Pakistan time' : tz.replace(/_/g, ' '));
 
-const makeStyles = ({ space }: Theme) =>
+const makeStyles = ({ space, size, radius }: Theme) =>
   StyleSheet.create({
     row: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
     grow: { flex: 1, gap: space.s4 },
+    // A location card: icon well · name and place · fee; then its facts on full-width lines.
+    cardHead: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
+    well: { width: size.avatar.md, height: size.avatar.md, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+    fee: { alignItems: 'flex-end', gap: space.s0 },
+    facts: { gap: space.s8, paddingTop: space.s12 },
+    fact: { flexDirection: 'row', alignItems: 'flex-start', gap: space.s8 },
+    edit: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: space.s4 },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
     dayHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.s8 },
     range: { flexDirection: 'row', alignItems: 'flex-start', gap: space.s8 },
@@ -122,7 +132,7 @@ const AvailabilityContent: React.FC<Props> = ({ route, navigation }) => {
   const { back } = useBack({ name: 'DoctorTabs', params: { screen: 'MoreTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { service, size } = useTheme();
+  const { service, size, colors } = useTheme();
   const s = useAppSelector(selectAvailability);
   const hoursDirty = useAppSelector(selectHoursDirty);
   useUnsavedGuard(hoursDirty, s.busy === 'hours');
@@ -146,7 +156,18 @@ const AvailabilityContent: React.FC<Props> = ({ route, navigation }) => {
   const showLoc = (k: string) => s.sheet.serverErrors[k] ?? (s.sheet.touched ? locErrors[k] : undefined);
   const current = s.locations.find(l => l.id === s.hoursFor) ?? null;
   const weekErrors = validateWeek(s.draft, current?.slotMinutes ?? 15);
-  const clashes = s.hoursFor ? crossLocationOverlaps(s.hoursFor, s.draft, s.locations) : [];
+  const doctor = useAppSelector(selectDoctorFeatures);
+  const has = (f: Parameters<typeof doctor.features.includes>[0]) => doctor.features.includes(f);
+  // A clinic and the video consultation may share hours where the server allows it;
+  // two of the same kind never can.
+  const sameKind = has('cross_kind_hours') && current ? s.locations.filter(l => l.kind === current.kind) : s.locations;
+  const clashes = s.hoursFor ? crossLocationOverlaps(s.hoursFor, s.draft, sameKind) : [];
+  const shared =
+    has('cross_kind_hours') && current && s.hoursFor
+      ? crossLocationOverlaps(s.hoursFor, s.draft, s.locations.filter(l => l.kind !== current.kind))
+      : [];
+  const buffer = current?.bufferMinutes ?? 0;
+  const sharedNames = [...new Set(shared.map(o => o.otherLocationName))];
   const allClashes = [...clashes, ...s.serverOverlaps.filter(o => !clashes.some(c => c.day === o.day && c.otherLocationName === o.otherLocationName))];
   const hasVideo = s.locations.some(l => l.kind === 'video');
   // The pin picker's start is fixed when the map opens; the map then moves under the pin.
@@ -180,11 +201,34 @@ const AvailabilityContent: React.FC<Props> = ({ route, navigation }) => {
       haptics.warning();
       return;
     }
-    const r = await dispatch(saveHoursAsync({ id: s.hoursFor, hours: s.draft }));
-    if (saveHoursAsync.fulfilled.match(r)) {
-      haptics.success();
-      Toast.show({ type: 'success', text1: 'Hours saved', text2: 'Patients see the new times now.' });
-    } else haptics.warning();
+    const id = s.hoursFor;
+    const commit = async () => {
+      const r = await dispatch(saveHoursAsync({ id, hours: s.draft }));
+      if (saveHoursAsync.fulfilled.match(r)) {
+        haptics.success();
+        Toast.show({ type: 'success', text1: 'Hours saved', text2: 'Patients see the new times now.' });
+      } else haptics.warning();
+    };
+    if (!has('schedule_dry_run')) return commit();
+    // Check first: booked visits these hours leave out stay booked, but the doctor should know.
+    const check = await dispatch(checkHoursAsync({ id, hours: s.draft }));
+    if (!checkHoursAsync.fulfilled.match(check)) {
+      haptics.warning();
+      return;
+    }
+    const outside = check.payload.outsideHours;
+    if (!outside.length) return commit();
+    Alert.alert(
+      `${outside.length} booked ${outside.length === 1 ? 'visit falls' : 'visits fall'} outside these hours`,
+      `${outside
+        .slice(0, 4)
+        .map(v => `${v.patientName}, ${formatWhen(v.startAt, v.timezone)}`)
+        .join('\n')}${outside.length > 4 ? `\n…and ${outside.length - 4} more` : ''}\n\nThey stay booked. Move or cancel them from the calendar if you need to.`,
+      [
+        { text: 'Keep editing', style: 'cancel' },
+        { text: 'Save hours', onPress: () => void commit() },
+      ],
+    );
   };
 
   /** Switching to another location's week with unsaved hours asks first. */
@@ -235,32 +279,82 @@ const AvailabilityContent: React.FC<Props> = ({ route, navigation }) => {
       ) : s.tab === 'locations' ? (
         s.locations.length ? (
           <View style={styles.list}>
+            {has('pause') && doctor.isAccepting !== null ? (
+              <Card>
+                <ToggleRow
+                  label="Taking new bookings"
+                  helper={
+                    doctor.isAccepting
+                      ? 'Patients can book your free times.'
+                      : "Paused: patients can't book you. Visits already booked stay."
+                  }
+                  value={doctor.isAccepting}
+                  disabled={doctor.switching}
+                  onChange={v => void dispatch(setAcceptingAsync(v))}
+                />
+                {doctor.error.message ? (
+                  <AppText variant="small" tone="danger">
+                    {doctor.error.message}
+                  </AppText>
+                ) : null}
+              </Card>
+            ) : null}
             {s.locations.map(l => (
-              <Card key={l.id} onPress={() => dispatch(openLocationSheet({ location: l }))} accessibilityLabel={`${l.name}. Edit`}>
-                <View style={styles.row}>
-                  <IonIcon name={l.kind === 'video' ? 'videocam-outline' : 'business-outline'} size="lg" color={service.accentDeep} />
+              <Card key={l.id} onPress={() => dispatch(openLocationSheet({ location: l }))} accessibilityLabel={`${l.name}, ${formatPKR(l.fee)}. Edit`}>
+                <View style={styles.cardHead}>
+                  <View style={[styles.well, { backgroundColor: service.accentSoft }]}>
+                    <IonIcon name={l.kind === 'video' ? 'videocam-outline' : 'business-outline'} size="md" color={service.accentDeep} />
+                  </View>
                   <View style={styles.grow}>
-                    <AppText variant="title">{l.name}</AppText>
-                    <AppText variant="small" tone="muted">
+                    <AppText variant="title" numberOfLines={2}>
+                      {l.name}
+                    </AppText>
+                    <AppText variant="small" tone="muted" numberOfLines={1}>
+                      {l.kind === 'video' ? 'Video consultation, from anywhere' : [l.area, l.city].filter(Boolean).join(', ')}
+                    </AppText>
+                  </View>
+                  <View style={styles.fee}>
+                    <AppText variant="bodyStrong">{formatPKR(l.fee)}</AppText>
+                    <AppText variant="caption" tone="muted">
+                      per visit
+                    </AppText>
+                  </View>
+                </View>
+                <View style={styles.facts}>
+                  <Divider />
+                  <View style={styles.fact}>
+                    <IonIcon name="hourglass-outline" size="sm" color={colors.inkMuted} />
+                    <AppText variant="small" tone="muted" style={styles.grow}>
                       {[
-                        l.kind === 'video' ? 'From anywhere' : [l.area, l.city].filter(Boolean).join(', '),
-                        `${l.slotMinutes} min slots`,
-                        l.requiresPrepay ? 'Paid before' : null,
+                        `${l.slotMinutes}-minute visits`,
+                        l.bufferMinutes ? `${l.bufferMinutes}-minute break after each` : null,
+                        l.requiresPrepay ? 'paid before' : null,
                       ]
                         .filter(Boolean)
                         .join(' · ')}
                     </AppText>
-                    <AppText variant="small">
-                      {l.hours.some(h => h.ranges.length) ? l.timings.map(t => `${t.days}: ${t.hours}`).join('\n') : 'No hours yet'}
-                    </AppText>
                   </View>
-                  <View style={styles.grow}>
-                    <AppText variant="bodyStrong" align="right">
-                      {formatPKR(l.fee)}
-                    </AppText>
-                    <AppText variant="small" tone="accentDeep" align="right">
+                  <View style={styles.fact}>
+                    <IonIcon name="time-outline" size="sm" color={colors.inkMuted} />
+                    <View style={styles.grow}>
+                      {l.hours.some(h => h.ranges.length) ? (
+                        l.timings.map(t => (
+                          <AppText key={`${t.days}-${t.hours}`} variant="small">
+                            {`${t.days} · ${t.hours}`}
+                          </AppText>
+                        ))
+                      ) : (
+                        <AppText variant="small" tone="warning">
+                          {"No hours yet: patients can't book here"}
+                        </AppText>
+                      )}
+                    </View>
+                  </View>
+                  <View style={styles.edit}>
+                    <AppText variant="small" tone="accentDeep">
                       Edit
                     </AppText>
+                    <IonIcon name="chevron-forward" size="sm" color={service.accentDeep} />
                   </View>
                 </View>
               </Card>
@@ -299,8 +393,22 @@ const AvailabilityContent: React.FC<Props> = ({ route, navigation }) => {
             </View>
             {current ? (
               <AppText variant="small" tone="muted">
-                {`${weeklySlotCount(s.draft, current.slotMinutes)} slots a week · ${current.slotMinutes}-minute slots · ${zoneLabel(current.timezone)}`}
+                {`${weeklySlotCount(s.draft, current.slotMinutes, buffer)} slots a week · ${current.slotMinutes}-minute slots${buffer ? ` + ${buffer}-minute break` : ''} · ${zoneLabel(current.timezone)}`}
               </AppText>
+            ) : null}
+            {shared.length ? (
+              <InlineNotice
+                tone="info"
+                title="Shared hours"
+                message={`${sharedNames.join(' and ')} ${sharedNames.length === 1 ? 'is' : 'are'} open at some of these times too. Patients can book either; booking one closes the other.`}
+              />
+            ) : null}
+            {s.hoursReport?.outsideHours.length && !hoursDirty ? (
+              <InlineNotice
+                tone="warning"
+                title={`${s.hoursReport.outsideHours.length} booked ${s.hoursReport.outsideHours.length === 1 ? 'visit is' : 'visits are'} outside these hours`}
+                message="They stay booked. Move or cancel them from the calendar if you need to."
+              />
             ) : null}
             {allClashes.length ? (
               <InlineNotice tone="warning" title="These hours overlap another location" message={allClashes.map(overlapMessage).join('\n')} />
@@ -309,7 +417,7 @@ const AvailabilityContent: React.FC<Props> = ({ route, navigation }) => {
               const d = s.draft.find(x => x.day === w.day) ?? { day: w.day, ranges: [] };
               const open = d.ranges.length > 0;
               const clash = allClashes.find(c => c.day === w.day);
-              const slots = current ? daySlotCount(d, current.slotMinutes) : 0;
+              const slots = current ? daySlotCount(d, current.slotMinutes, buffer) : 0;
               return (
                 <Card key={w.day}>
                   <View style={styles.dayHead}>
@@ -376,7 +484,15 @@ const AvailabilityContent: React.FC<Props> = ({ route, navigation }) => {
         <EmptyState icon="calendar" title="Nothing to preview yet" body="Add a location and its weekly hours to see what patients will see." />
       ) : (
         <View style={styles.list}>
-          <AppText variant="small" tone="muted">{`Your next ${PREVIEW_DAYS} days, exactly as patients see them.`}</AppText>
+          {s.preview.paused ? (
+            <InlineNotice
+              tone="warning"
+              title="Bookings are paused"
+              message="These are your free times, but patients see none of them until you turn bookings back on (Locations)."
+            />
+          ) : (
+            <AppText variant="small" tone="muted">{`Your next ${PREVIEW_DAYS} days, exactly as patients see them.`}</AppText>
+          )}
           {s.preview.locations.map(l => {
             const total = l.days.reduce((n, d) => n + d.slots.length, 0);
             return (
@@ -575,6 +691,16 @@ const AvailabilityContent: React.FC<Props> = ({ route, navigation }) => {
             <ChoiceChip key={m} label={`${m} min`} selected={form.slotMinutes === m} onPress={() => dispatch(editLocation({ slotMinutes: m }))} />
           ))}
         </View>
+        {has('buffer') ? (
+          <>
+            <AppText variant="label">Break after each patient</AppText>
+            <View style={styles.chips}>
+              {BUFFER_CHOICES.map(m => (
+                <ChoiceChip key={m} label={m ? `${m} min` : 'None'} selected={form.bufferMinutes === m} onPress={() => dispatch(editLocation({ bufferMinutes: m }))} />
+              ))}
+            </View>
+          </>
+        ) : null}
         <TextField
           label="Instructions for patients (optional)"
           value={form.instructions ?? ''}

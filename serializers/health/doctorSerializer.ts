@@ -14,13 +14,16 @@ import type {
   CalendarRange,
   Completeness,
   ConflictingAppointment,
+  DayHours,
   DoctorActions,
   DoctorAppointmentDetail,
+  DoctorFeature,
   DoctorInsights,
   DoctorInsightsRange,
   DoctorLocation,
   DoctorOwnProfile,
   HoursOverlap,
+  HoursReport,
   MedicineSuggestion,
   PatientHistory,
   PatientRow,
@@ -34,7 +37,7 @@ import type {
 } from '../../models/health';
 import { arr, bodiesOf, bodyOf, bool, isObject, num, oneOf, str, strOrNull, fromResponse } from '../serializerUtils';
 import { compact, count, iso, money, paged } from '../shopping/common';
-import { dateInZone } from '../../utils/health-time/healthTime';
+import { dateInZone, timeInZone } from '../../utils/health-time/healthTime';
 import { completenessFrom } from '../../models/health/doctorProfileModel';
 import { appDayFromWeekday } from '../../models/health/availabilityModel';
 import { KINDS, TITLE_PREFIX, appointmentStatus, dayOrNull, gender, instant, numOrNull, paymentMethod, paymentStatus, rating, strings, timezone } from './healthCommon';
@@ -184,6 +187,7 @@ export const overlapsFrom = (details: Record<string, unknown> | null | undefined
 export const previewSerializer = fromResponse((raw: unknown): AvailabilityPreview => {
   const r = isObject(raw) ? raw : {};
   return {
+    paused: bool(r.paused),
     locations: compact(
       arr(r.locations).map(entry => {
         if (!isObject(entry)) return null;
@@ -228,10 +232,15 @@ export const timeOffSerializer = (raw: unknown, locations: LocationLite[] = []):
   if (!id || !start || !end) return null;
   const loc = locations.find(l => l.id === str(raw.locationId)) ?? null;
   const tz = loc?.timezone ?? PKT;
+  const startsAt = timeInZone(start, tz);
+  const endsAt = timeInZone(end, tz);
+  // Not from midnight to midnight: some hours of one day.
+  const partDay = startsAt !== '00:00' || endsAt !== '00:00';
   return {
     id,
     from: dateInZone(start, tz),
     to: dateInZone(new Date(Math.max(Date.parse(start), Date.parse(end) - MINUTE)).toISOString(), tz),
+    hours: partDay ? { from: startsAt, to: endsAt === '00:00' ? '23:59' : endsAt } : null,
     locationId: strOrNull(raw.locationId),
     locationName: loc?.name ?? null,
     reason: strOrNull(raw.reason),
@@ -244,6 +253,73 @@ export const timeOffListSerializer = (raw: unknown): TimeOff[] => {
   const locations = locationsLite(r.locations);
   return compact(arr(Array.isArray(raw) ? raw : r.timeOff).map(t => timeOffSerializer(t, locations)));
 };
+
+/** An appointment a doctor's action created (moved, follow-up, walk-in): its code opens it. */
+export const createdAppointmentSerializer = fromResponse((raw: unknown) => (isObject(raw) && str(raw.code) ? { code: str(raw.code) } : null));
+
+/** `{ items: [{ date, closed, ranges: [{ start, end }], note }] }` → a location's own hours by date. */
+export const dayHoursListSerializer = fromResponse((raw: unknown): DayHours[] =>
+  compact(
+    arr(isObject(raw) ? raw.items : raw).map(o => {
+      if (!isObject(o)) return null;
+      const date = dayOrNull(o.date);
+      if (!date) return null;
+      const closed = bool(o.closed);
+      return {
+        date,
+        closed,
+        ranges: closed ? [] : compact(arr(o.ranges).map(r => (isObject(r) ? { from: hhmmIn(r.start), to: hhmmIn(r.end) } : null))),
+        note: strOrNull(o.note),
+      };
+    }),
+  ).sort((a, b) => a.date.localeCompare(b.date)),
+);
+
+/**
+ * What saving or checking hours answered (the week's PUT, or a day's):
+ * `{ sharedWith: [{ locationName, kind, weekday, date?, start, end }],
+ * outsideHours: [{ code, startsAt, patientName }], slotsPerWeek | slots }`.
+ */
+export const hoursReportSerializer = fromResponse((raw: unknown, timezoneOf = PKT): HoursReport | null => {
+  if (!isObject(raw)) return null;
+  return {
+    sharedWith: compact(
+      arr(raw.sharedWith).map(x => {
+        if (!isObject(x)) return null;
+        const day = appDayFromWeekday(Math.round(num(x.weekday, -1)));
+        return day
+          ? { locationName: str(x.locationName), kind: oneOf(x.kind, KINDS, 'clinic'), day, date: dayOrNull(x.date), from: hhmmIn(x.start), to: hhmmIn(x.end) }
+          : null;
+      }),
+    ),
+    outsideHours: conflictsFrom({ appointments: arr(raw.outsideHours).map(v => (isObject(v) ? { ...v, timezone: v.timezone ?? timezoneOf } : v)) }),
+    slots: numOrNull(raw.slotsPerWeek ?? raw.slots),
+  };
+});
+
+const FEATURES: readonly DoctorFeature[] = [
+  'cross_kind_hours',
+  'buffer',
+  'schedule_dry_run',
+  'day_status',
+  'pause',
+  'mark_paid_later',
+  'listing_notice',
+  'overrides',
+  'walk_in',
+  'doctor_reschedule',
+  'follow_up_booking',
+  'doctor_slots',
+  'follow_up_reminder',
+];
+/** GET /health/doctor/profile → what this server offers the doctor app, and whether bookings are on. */
+export const doctorFeaturesSerializer = fromResponse((raw: unknown) => {
+  if (!isObject(raw)) return null;
+  return {
+    features: arr(raw.features).filter((f): f is DoctorFeature => FEATURES.includes(f as DoctorFeature)),
+    isAccepting: raw.isAccepting === undefined ? true : bool(raw.isAccepting),
+  };
+});
 
 /** `409 TIME_OFF_CONFLICTS` details `{ appointments: [{ code, startsAt, patientName }] }` → the visits in the way. */
 export const conflictsFrom = (details: Record<string, unknown> | null | undefined): ConflictingAppointment[] =>
@@ -270,8 +346,11 @@ const actionsSerializer = (raw: unknown): DoctorActions => {
     canJoinVideo: bool(c.joinVideo),
     canRefund: bool(c.refund),
     canRejectPayment: bool(c.rejectPayment),
+    canMarkPaid: bool(c.markPaid),
   };
 };
+
+const SOURCES = ['app', 'walk_in'] as const;
 
 const CANCELLED_BY = ['patient', 'doctor', 'system'] as const;
 const TIMING_KEYS = ['after_meal', 'before_meal', 'with_meal', 'bedtime', 'as_needed'] as const;
@@ -313,6 +392,7 @@ export const queueItemSerializer = (raw: unknown): QueueItem | null => {
     canJoinVideo: kind === 'video' && actions.canJoinVideo,
     joinOpensAt: joinOpens(kind, startAt),
     actions,
+    source: oneOf(raw.source, SOURCES, 'app'),
   };
 };
 
@@ -462,6 +542,9 @@ export const doctorAppointmentSerializer = (raw: unknown): DoctorAppointmentDeta
             late: bool(a.lateCancel),
           }
         : null,
+    source: item.source,
+    rescheduledFromId: strOrNull(a.rescheduledFromId),
+    followUpOfId: strOrNull(a.followUpOfId),
   };
 };
 
@@ -580,6 +663,20 @@ export const doctorDaySerializer = (parts: { day: unknown; locations: unknown },
 };
 
 /** The locations still in use (their ids are what the schedules are read for). */
+/** GET /health/doctor/locations → the active places, as a picker lists them. */
+export const placesSerializer = fromResponse((raw: unknown) =>
+  compact(
+    arr(raw)
+      .filter(l => isObject(l) && l.isActive !== false)
+      .map(l => {
+        const r = l as Record<string, unknown>;
+        const id = str(r.id);
+        const kind = oneOf(r.kind, KINDS, 'clinic');
+        return id ? { id, kind, name: str(r.name, kind === 'video' ? 'Video consultation' : 'Clinic') } : null;
+      }),
+  ),
+);
+
 export const activeLocations = (raw: unknown): Record<string, unknown>[] =>
   arr(bodyOf(raw)).filter(l => isObject(l) && l.isActive !== false) as Record<string, unknown>[];
 

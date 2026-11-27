@@ -257,6 +257,8 @@ export const size = {
   tabBar: 64,
   /** The FYP Health tab bar's active-icon pill. */
   tabPill: { width: 40, height: 32 },
+  /** The selected tab's underline in a gradient header's tabs. */
+  tabIndicator: 3,
   headerBar: 52,
   sheetHandle: 4,
   thumb: 56,

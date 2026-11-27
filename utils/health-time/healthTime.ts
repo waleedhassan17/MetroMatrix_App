@@ -90,6 +90,9 @@ export const slotA11yLabel = (iso: string, timezone: string, available = true) =
 /** The "YYYY-MM-DD" the instant falls on in `timezone`. */
 export const dateInZone = (iso: string, timezone: string) => wall(iso, timezone).format('YYYY-MM-DD');
 
+/** "14:30": an instant's wall-clock time in a zone (24-hour). */
+export const timeInZone = (iso: string, timezone: string) => wall(iso, timezone).format('HH:mm');
+
 /** Today's "YYYY-MM-DD" in `timezone`. */
 export const todayInZone = (timezone: string, now: number = Date.now()) => dateInZone(new Date(now).toISOString(), timezone);
 

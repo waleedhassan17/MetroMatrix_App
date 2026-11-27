@@ -9,7 +9,7 @@
 // with their files, and your earlier visits. "Mark as missed" and Cancel ask
 // first; a cancelled visit says who cancelled, why, and whether it was late.
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
@@ -50,6 +50,10 @@ import { callNumber } from '../../utils/maps/maps';
 import { haptics } from '../../utils/haptics/haptics';
 import { pickDocumentFile } from '../../utils/pickers/pickers';
 import { useNow } from '../../hooks/useNow';
+import { selectDoctorFeatures } from '../../store/doctorFeaturesSlice';
+import { VisitTimeSheet } from '../visit-time-sheet/VisitTimeSheet';
+import { clearVisitTimeDone, openVisitTime, selectVisitTime } from '../visit-time-sheet/visitTimeSlice';
+import { addDays } from '../../utils/health-time/healthTime';
 import {
   attachNoteFileAsync,
   closeDoctorSheet,
@@ -103,12 +107,26 @@ const DoctorAppointmentContent: React.FC<Props> = ({ route, navigation }) => {
   const ui = useAppSelector(selectDoctorAppointmentUi);
   const now = useNow();
   const a = entry.appointment;
+  const { features } = useAppSelector(selectDoctorFeatures);
+  const visitTime = useAppSelector(selectVisitTime);
 
   useFocusEffect(
     useCallback(() => {
       void dispatch(loadDoctorAppointmentAsync(id));
     }, [dispatch, id]),
   );
+
+  // A move or a follow-up made a new visit: say so, and open it.
+  useEffect(() => {
+    if (!visitTime.done || visitTime.appointmentId !== id) return;
+    const code = visitTime.done;
+    const moved = visitTime.mode === 'move';
+    dispatch(clearVisitTimeDone());
+    haptics.success();
+    Toast.show({ type: 'success', text1: moved ? 'Visit moved' : 'Follow-up booked', text2: 'The patient has been told.' });
+    if (moved) navigation.replace('DoctorAppointment', { id: code });
+    else navigation.push('DoctorAppointment', { id: code });
+  }, [visitTime.done, visitTime.appointmentId, visitTime.mode, id, dispatch, navigation]);
 
   if (!a) {
     return (
@@ -144,10 +162,28 @@ const DoctorAppointmentContent: React.FC<Props> = ({ route, navigation }) => {
   const rxEditable = !!rx && Date.parse(rx.editableUntil) > now;
   const writeRx = () => navigation.navigate('PrescriptionWriter', { appointmentId: id });
   const sheetKind = ui.sheet.kind;
-  // Check in and Start belong to the visit's own day (the server's gate comes with the API update).
-  const onItsDay = dateInZone(a.startAt, a.timezone) === todayInZone(a.timezone, now);
+  // Check in and Start: a server that gates them (from 2 hours before) says so in `can`;
+  // an older one is held to the visit's own day here.
+  const serverGates = features.includes('day_status');
+  const onItsDay = serverGates || dateInZone(a.startAt, a.timezone) === todayInZone(a.timezone, now);
   const canCheckIn = act.canCheckIn && onItsDay;
   const canStart = act.canStart && onItsDay;
+  const booked = a.status === 'confirmed' || a.status === 'awaiting_payment';
+  const notYet = booked && a.kind === 'clinic' && !act.canCheckIn && Date.parse(a.startAt) > now;
+  const canMove = booked && features.includes('doctor_reschedule');
+  const canFollowUp = (a.status === 'in_progress' || a.status === 'completed') && features.includes('follow_up_booking');
+  const place = { id: a.location.id, name: a.location.name, kind: a.location.kind };
+  const openMove = () => dispatch(openVisitTime({ mode: 'move', appointmentId: id, location: place, from: null }));
+  const openFollowUp = () =>
+    dispatch(
+      openVisitTime({
+        mode: 'follow_up',
+        appointmentId: id,
+        location: place,
+        // From the follow-up the prescription asks for, when it does.
+        from: rx?.followUpInDays ? addDays(todayInZone(a.timezone, now), rx.followUpInDays) : null,
+      }),
+    );
   const reasonLength = ui.sheet.reason.trim().length;
 
   const confirmMissed = () =>
@@ -211,6 +247,7 @@ const DoctorAppointmentContent: React.FC<Props> = ({ route, navigation }) => {
 
       <View style={styles.row}>
         <StatusPill label={status.label} tone={status.tone} />
+        {a.source === 'walk_in' ? <StatusPill label="Walk-in" tone="neutral" /> : a.followUpOfId ? <StatusPill label="Follow-up" tone="neutral" /> : null}
         {a.status === 'checked_in' && a.checkedInAt ? <AppText variant="small" tone="warning">{`Waiting ${elapsed(a.checkedInAt, now)}`}</AppText> : null}
         <AppText variant="small" tone="muted">
           {formatTimeRange(a.startAt, a.endAt, a.timezone)}
@@ -239,10 +276,16 @@ const DoctorAppointmentContent: React.FC<Props> = ({ route, navigation }) => {
           ) : null}
           {act.canComplete ? <Button label="Complete the visit" onPress={() => dispatch(openDoctorSheet('complete'))} fullWidth /> : null}
         </View>
-      ) : act.canCheckIn && !onItsDay ? (
+      ) : (act.canCheckIn && !onItsDay) || (serverGates && notYet) ? (
         <AppText variant="small" tone="muted">
-          Check in opens on the day of the visit.
+          {serverGates ? 'Check in opens 2 hours before the visit.' : 'Check in opens on the day of the visit.'}
         </AppText>
+      ) : null}
+      {canMove || canFollowUp ? (
+        <View style={styles.actions}>
+          {canMove ? <Button label="Move to another time" variant="secondary" leftIcon="swap-horizontal-outline" onPress={openMove} fullWidth /> : null}
+          {canFollowUp ? <Button label="Book a follow-up" variant="secondary" leftIcon="calendar-outline" onPress={openFollowUp} fullWidth /> : null}
+        </View>
       ) : null}
       {act.canNoShow ? <TextAction label="They didn't come: mark as missed" icon="close-circle-outline" tone="muted" onPress={confirmMissed} /> : null}
 
@@ -268,6 +311,16 @@ const DoctorAppointmentContent: React.FC<Props> = ({ route, navigation }) => {
             />
             <Button label="I can't find it" variant="ghost" onPress={() => dispatch(openDoctorSheet('reject'))} fullWidth />
           </>
+        ) : null}
+        {act.canMarkPaid ? (
+          <Button
+            label="Mark the fee as paid"
+            variant="secondary"
+            leftIcon="cash-outline"
+            onPress={() => void move('mark-paid', {}, 'Marked as paid')}
+            loading={ui.busy === 'mark-paid'}
+            fullWidth
+          />
         ) : null}
         {act.canRefund ? (
           <>
@@ -477,6 +530,7 @@ const DoctorAppointmentContent: React.FC<Props> = ({ route, navigation }) => {
         )}
       </Sheet>
       <ImageViewer visible={!!ui.viewing} uri={ui.viewing} title={p.name} onClose={() => dispatch(viewFile(null))} />
+      <VisitTimeSheet />
     </ScreenShell>
   );
 };

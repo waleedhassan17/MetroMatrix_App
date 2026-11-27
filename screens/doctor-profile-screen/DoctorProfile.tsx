@@ -41,7 +41,7 @@ import {
 } from '../../Custom-Components/index';
 import { HealthSection } from '../../Components/health/HealthParts';
 import type { DoctorProfile, HomeStackParamList, PracticeLocation } from '../../models';
-import { formatWhen } from '../../utils/health-time/healthTime';
+import { addDays, formatWhen } from '../../utils/health-time/healthTime';
 import { formatPKR } from '../../utils/money/money';
 import { newUuid } from '../../utils/ids/ids';
 import { haptics } from '../../utils/haptics/haptics';
@@ -49,6 +49,7 @@ import { BookAppointmentSheet } from '../book-appointment-sheet/BookAppointmentS
 import { openBooking } from '../book-appointment-sheet/bookAppointmentSlice';
 import {
   chooseDayAsync,
+  moreDaysAsync,
   chooseLocationAsync,
   closeProfileView,
   loadDoctorAsync,
@@ -147,7 +148,7 @@ const DoctorProfileContent: React.FC<Props> = ({ route, navigation }) => {
       subtitle={d ? d.specialty.name : undefined}
       onBack={back}
       headerRight={d ? <IconButton icon="share-social-outline" onPress={() => void share()} accessibilityLabel="Share this doctor" /> : undefined}
-      footer={d ? <Button label={cta} onPress={book} disabled={!view?.selected} fullWidth accessibilityHint="Opens the confirmation" /> : undefined}
+      footer={d && view?.accepting !== false ? <Button label={cta} onPress={book} disabled={!view?.selected} fullWidth accessibilityHint="Opens the confirmation" /> : undefined}
       refreshing={entry.status === 'loading' && !!d}
       onRefresh={() => void dispatch(loadDoctorAsync(id))}>
       {entry.status === 'failed' && !d ? <InlineNotice message={entry.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadDoctorAsync(id)) }} /> : null}
@@ -198,7 +199,16 @@ const DoctorProfileContent: React.FC<Props> = ({ route, navigation }) => {
             )}
           </View>
 
-          {location && view ? (
+          {location && view && !view.accepting && !view.loading ? (
+            <View style={styles.block}>
+              <HealthSection title="Choose a time" subtitle={location.kind === 'video' ? 'Video consultation' : location.name} />
+              <InlineNotice
+                tone="info"
+                title="Not taking new bookings right now"
+                message="This doctor has paused new appointments. Check back soon, or choose another doctor."
+              />
+            </View>
+          ) : location && view ? (
             <View style={styles.block}>
               <HealthSection title="Choose a time" subtitle={location.kind === 'video' ? 'Video consultation' : location.name} />
               <View style={styles.bleed}>
@@ -209,6 +219,19 @@ const DoctorProfileContent: React.FC<Props> = ({ route, navigation }) => {
                   onSelect={date => void dispatch(chooseDayAsync({ key, doctorId: d.id, locationId: location.id, date }))}
                 />
               </View>
+              {view.windowDays && view.days.length && view.days.length < view.windowDays ? (
+                <TextAction
+                  label={view.loadingMore ? 'Loading later days…' : 'Later dates'}
+                  icon="chevron-forward"
+                  onPress={() => {
+                    const last = view.days[view.days.length - 1].date;
+                    if (!view.loadingMore)
+                      void dispatch(
+                        moreDaysAsync({ key, doctorId: d.id, locationId: location.id, from: addDays(last, 1), days: Math.min(14, view.windowDays! - view.days.length) }),
+                      );
+                  }}
+                />
+              ) : null}
               {view.error.message ? <InlineNotice message={view.error.message} /> : null}
               <SlotGrid
                 slots={view.day?.slots ?? []}

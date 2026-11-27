@@ -78,12 +78,21 @@ export const copyToDays = (hours: WeekDayHours[], day: number, targets: number[]
 const rangeMinutes = (r: TimeRange) => (r.to === '23:59' ? 1440 : toMinutes(r.to)) - toMinutes(r.from);
 
 /** How many `slotMinutes` slots fit in a range (what patients can book there). */
-export const slotsInRange = (r: TimeRange, slotMinutes: number): number =>
-  HHMM.test(r.from) && HHMM.test(r.to) && slotMinutes > 0 ? Math.max(0, Math.floor(rangeMinutes(r) / slotMinutes)) : 0;
+/** Slots a range makes, a slot plus the break after it apart (the API's grid). */
+export const slotsInRange = (r: TimeRange, slotMinutes: number, bufferMinutes = 0): number => {
+  if (!HHMM.test(r.from) || !HHMM.test(r.to) || slotMinutes <= 0) return 0;
+  const m = rangeMinutes(r);
+  return m < slotMinutes ? 0 : Math.floor((m - slotMinutes) / (slotMinutes + Math.max(0, bufferMinutes))) + 1;
+};
 
 /** Slots a day, and a week, holds. */
-export const daySlotCount = (d: WeekDayHours, slotMinutes: number) => d.ranges.reduce((n, r) => n + slotsInRange(r, slotMinutes), 0);
-export const weeklySlotCount = (hours: WeekDayHours[], slotMinutes: number) => hours.reduce((n, d) => n + daySlotCount(d, slotMinutes), 0);
+export const daySlotCount = (d: WeekDayHours, slotMinutes: number, bufferMinutes = 0) =>
+  d.ranges.reduce((n, r) => n + slotsInRange(r, slotMinutes, bufferMinutes), 0);
+export const weeklySlotCount = (hours: WeekDayHours[], slotMinutes: number, bufferMinutes = 0) =>
+  hours.reduce((n, d) => n + daySlotCount(d, slotMinutes, bufferMinutes), 0);
+
+/** The breaks a doctor can leave after each patient. */
+export const BUFFER_CHOICES = [0, 5, 10, 15] as const;
 
 /** Same hours on every day of two weeks (the unsaved-changes check). */
 export const sameWeek = (a: WeekDayHours[], b: WeekDayHours[]) => JSON.stringify(normaliseWeek(a)) === JSON.stringify(normaliseWeek(b));
@@ -135,6 +144,11 @@ export const validateTimeOff = (t: TimeOffInput, today: string): ValidationError
   if (!/^\d{4}-\d{2}-\d{2}$/.test(t.to)) errors.to = 'Choose the last day';
   else if (t.from && t.to < t.from) errors.to = 'The last day is before the first';
   if ((t.reason ?? '').length > MAX_TIME_OFF_REASON) errors.reason = `Keep it under ${MAX_TIME_OFF_REASON} characters`;
+  if (t.hours) {
+    delete errors.to;
+    if (!HHMM.test(t.hours.from) || !HHMM.test(t.hours.to)) errors.hours = 'Choose the start and end';
+    else if (rangeMinutes(t.hours) <= 0) errors.hours = 'The end is before the start';
+  }
   return errors;
 };
 
@@ -169,3 +183,15 @@ export const validateLocation = (l: Pick<DoctorLocationForm, 'kind' | 'name' | '
 
 /** The API's field names → the location form's ("addressLine" → "address"). */
 export const locationFieldKey = (apiField: string): string => ({ addressLine: 'address' })[apiField] ?? apiField;
+
+/** A day's own hours, checked like a week's day (start before end, room for a slot, no overlap). */
+export const validateDayHours = (closed: boolean, ranges: TimeRange[], slotMinutes = 15): ValidationErrors => {
+  if (closed) return {};
+  if (!ranges.length) return { ranges: 'Add the hours, or close the day' };
+  const errors: ValidationErrors = {};
+  for (const [k, v] of Object.entries(validateWeek([{ day: 1, ranges }], slotMinutes))) errors[k.replace('day.1.', 'range.')] = v;
+  return errors;
+};
+
+/** A day-hours note's limit (the API's). */
+export const MAX_DAY_NOTE = 200;

@@ -12,7 +12,23 @@ import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { AppText, Button, Card, ChoiceChip, DateField, Divider, EmptyState, IconButton, InlineNotice, RowCardsSkeleton, ScreenShell, Sheet, TextField, dateKeyOf } from '../../Custom-Components/index';
+import {
+  AppText,
+  Button,
+  Card,
+  ChoiceChip,
+  DateField,
+  Divider,
+  EmptyState,
+  IconButton,
+  InlineNotice,
+  RowCardsSkeleton,
+  ScreenShell,
+  Sheet,
+  TextField,
+  TimeField,
+  dateKeyOf,
+} from '../../Custom-Components/index';
 import { MAX_TIME_OFF_REASON, validateTimeOff } from '../../models/health/availabilityModel';
 import type { DoctorPartnerStackParamList } from '../../models';
 import { Alert } from '../../utils/alert/alert';
@@ -82,6 +98,13 @@ const TimeOffContent: React.FC<Props> = ({ route }) => {
     ]);
 
   const label = (from: string, to: string) => (from === to ? formatDayFull(from) : `${formatDayFull(from)} – ${formatDayFull(to)}`);
+  const clock = (hm: string) => {
+    const [h, m] = (hm === '23:59' ? '24:00' : hm).split(':').map(Number);
+    return `${h % 24 % 12 || 12}:${String(m).padStart(2, '0')} ${h % 24 < 12 ? 'AM' : 'PM'}`;
+  };
+  const when = (t: { from: string; to: string; hours: { from: string; to: string } | null }) =>
+    t.hours ? `${formatDayFull(t.from)}, ${clock(t.hours.from)} – ${clock(t.hours.to)}` : label(t.from, t.to);
+  const partDay = !!s.form.hours;
 
   return (
     <ScreenShell
@@ -106,12 +129,12 @@ const TimeOffContent: React.FC<Props> = ({ route }) => {
               {i > 0 ? <Divider /> : null}
               <View style={[styles.row, styles.item]}>
                 <View style={styles.grow}>
-                  <AppText variant="title">{label(t.from, t.to)}</AppText>
+                  <AppText variant="title">{when(t)}</AppText>
                   <AppText variant="small" tone="muted">
                     {[t.locationName ?? 'All locations', t.reason].filter(Boolean).join(' · ')}
                   </AppText>
                 </View>
-                <IconButton icon="trash-outline" tone="muted" onPress={() => remove(t.id)} accessibilityLabel={`Remove time off ${label(t.from, t.to)}`} />
+                <IconButton icon="trash-outline" tone="muted" onPress={() => remove(t.id)} accessibilityLabel={`Remove time off ${when(t)}`} />
               </View>
             </View>
           ))}
@@ -148,14 +171,47 @@ const TimeOffContent: React.FC<Props> = ({ route }) => {
         ) : (
           <>
             {s.error.message ? <InlineNotice message={s.error.message} /> : null}
-            <View style={styles.pair}>
-              <View style={styles.grow}>
-                <DateField label="First day" value={s.form.from} onChange={v => dispatch(editTimeOff({ from: v, to: s.form.to && s.form.to >= v ? s.form.to : v }))} min={today} error={s.touched ? errors.from : undefined} />
-              </View>
-              <View style={styles.grow}>
-                <DateField label="Last day" value={s.form.to} onChange={v => dispatch(editTimeOff({ to: v }))} min={s.form.from || today} error={s.touched ? errors.to : undefined} />
-              </View>
+            <View style={styles.chips}>
+              <ChoiceChip label="Whole days" icon="calendar-outline" selected={!partDay} onPress={() => dispatch(editTimeOff({ hours: null }))} />
+              <ChoiceChip
+                label="Some hours"
+                icon="time-outline"
+                selected={partDay}
+                onPress={() => dispatch(editTimeOff({ hours: s.form.hours ?? { from: '14:00', to: '17:00' }, to: s.form.from }))}
+              />
             </View>
+            {partDay ? (
+              <>
+                <DateField label="Day" value={s.form.from} onChange={v => dispatch(editTimeOff({ from: v, to: v }))} min={today} error={s.touched ? errors.from : undefined} />
+                <View style={styles.pair}>
+                  <View style={styles.grow}>
+                    <TimeField
+                      label="From"
+                      value={s.form.hours!.from}
+                      onChange={v => dispatch(editTimeOff({ hours: { ...s.form.hours!, from: v } }))}
+                      error={s.touched ? errors.hours : undefined}
+                    />
+                  </View>
+                  <View style={styles.grow}>
+                    <TimeField
+                      label="To"
+                      value={s.form.hours!.to === '23:59' ? '24:00' : s.form.hours!.to}
+                      onChange={v => dispatch(editTimeOff({ hours: { ...s.form.hours!, to: v === '24:00' ? '23:59' : v } }))}
+                      allowMidnight
+                    />
+                  </View>
+                </View>
+              </>
+            ) : (
+              <View style={styles.pair}>
+                <View style={styles.grow}>
+                  <DateField label="First day" value={s.form.from} onChange={v => dispatch(editTimeOff({ from: v, to: s.form.to && s.form.to >= v ? s.form.to : v }))} min={today} error={s.touched ? errors.from : undefined} />
+                </View>
+                <View style={styles.grow}>
+                  <DateField label="Last day" value={s.form.to} onChange={v => dispatch(editTimeOff({ to: v }))} min={s.form.from || today} error={s.touched ? errors.to : undefined} />
+                </View>
+              </View>
+            )}
             <AppText variant="label">Where</AppText>
             <View style={styles.chips}>
               <ChoiceChip label="All locations" selected={!s.form.locationId} onPress={() => dispatch(editTimeOff({ locationId: null }))} />

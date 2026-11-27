@@ -4,14 +4,15 @@
 // Health's own bar (ServiceTabs → ServiceTabBar's gradient pill), as the
 // store's and the kitchen's apps wear theirs.
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ServiceScope } from '../theme';
 import { ServicePausedGate } from '../Components/platform/ServicePausedGate';
 import type { DoctorPartnerStackParamList } from '../models';
 import { ROUTES } from '../navigations-maps/Base';
 import { DOCTOR_PARTNER_STACK_ROUTES, DOCTOR_PARTNER_TABS } from '../navigations-maps/DoctorPartner';
-import { useAppSelector } from '../hooks/useReduxHooks';
+import { useAppDispatch, useAppSelector } from '../hooks/useReduxHooks';
+import { loadDoctorFeaturesAsync } from '../store/doctorFeaturesSlice';
 import { selectBusiness } from '../store/authSlice';
 import { ServiceTabs } from './ServiceTabs';
 import { doctorRootRoute } from './sessionGate';
@@ -22,6 +23,11 @@ const DoctorTabs: React.FC = () => <ServiceTabs id="DoctorPartnerTabs" routes={D
 
 const DoctorPartnerNavigator: React.FC = () => {
   const business = useAppSelector(selectBusiness);
+  const dispatch = useAppDispatch();
+  // What this server offers the doctor app (walk-ins, day hours…), once per session.
+  useEffect(() => {
+    void dispatch(loadDoctorFeaturesAsync());
+  }, [dispatch]);
   return (
     <ServiceScope service="healthcare">
       <ServicePausedGate service="healthcare">

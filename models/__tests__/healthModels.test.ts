@@ -150,9 +150,12 @@ describe('availabilityModel', () => {
   });
 
   it('validates time off', () => {
-    expect(validateTimeOff({ from: '2026-10-14', to: '2026-10-16', locationId: null, reason: null }, '2026-10-15')).toHaveProperty('from');
-    expect(validateTimeOff({ from: '2026-10-20', to: '2026-10-19', locationId: null, reason: null }, '2026-10-15')).toHaveProperty('to');
-    expect(validateTimeOff({ from: '2026-10-20', to: '2026-10-22', locationId: null, reason: 'Conference' }, '2026-10-15')).toEqual({});
+    expect(validateTimeOff({ from: '2026-10-14', to: '2026-10-16', hours: null, locationId: null, reason: null }, '2026-10-15')).toHaveProperty('from');
+    expect(validateTimeOff({ from: '2026-10-20', to: '2026-10-19', hours: null, locationId: null, reason: null }, '2026-10-15')).toHaveProperty('to');
+    expect(validateTimeOff({ from: '2026-10-20', to: '2026-10-22', hours: null, locationId: null, reason: 'Conference' }, '2026-10-15')).toEqual({});
+    // Some hours of one day: the end must come after the start; the last day doesn't matter.
+    expect(validateTimeOff({ from: '2026-10-20', to: '2026-10-19', hours: { from: '14:00', to: '17:00' }, locationId: null, reason: null }, '2026-10-15')).toEqual({});
+    expect(validateTimeOff({ from: '2026-10-20', to: '2026-10-20', hours: { from: '17:00', to: '14:00' }, locationId: null, reason: null }, '2026-10-15')).toHaveProperty('hours');
   });
 });
 

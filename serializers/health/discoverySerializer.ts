@@ -8,6 +8,7 @@ import type {
   BookingRules,
   Condition,
   DayAvailability,
+  DayStatus,
   DoctorBadge,
   DoctorCardData,
   DoctorProfile,
@@ -173,6 +174,7 @@ export const locationSerializer = (raw: unknown, prepay = false): PracticeLocati
     phone: strOrNull(raw.phone),
     fee: money(raw.fee),
     slotMinutes: Math.max(5, Math.round(num(raw.slotMinutes, 15))),
+    bufferMinutes: count(raw.bufferMinutes),
     instructions: strOrNull(raw.instructions),
     timezone: timezone(raw.timezone),
     availability,
@@ -284,17 +286,32 @@ const slotSerializer = (raw: unknown): Slot | null => {
   return startAt ? { startAt, period: oneOf(raw.period, PERIODS, 'morning') } : null;
 };
 
+const DAY_STATUSES = ['open', 'full', 'closed', 'time_off', 'paused', 'beyond_window'] as const;
+/** The API's day status, or null from a server that doesn't send one. */
+const dayStatusOf = (v: unknown): DayStatus | null => DAY_STATUSES.find(s => s === v) ?? null;
+
 const slotDays = (raw: unknown) =>
   compact(
     arr(isObject(raw) ? raw.days : raw).map(d => {
       if (!isObject(d)) return null;
       const date = dayOrNull(d.date);
-      return date ? { date, slots: compact(arr(d.slots).map(slotSerializer)) } : null;
+      return date ? { date, status: dayStatusOf(d.status), slots: compact(arr(d.slots).map(slotSerializer)) } : null;
     }),
   );
 
 /** The day chips: each day and how many free times it has. */
-export const daysSerializer = fromResponse((raw: unknown): DayAvailability[] => slotDays(raw).map(d => ({ date: d.date, slotCount: d.slots.length })));
+export const daysSerializer = fromResponse((raw: unknown): DayAvailability[] =>
+  slotDays(raw).map(d => ({ date: d.date, slotCount: d.slots.length, status: d.status })),
+);
+
+/** A doctor's slots answer: are they taking new bookings, and how far ahead (the API's window). */
+export const slotsMetaSerializer = fromResponse((raw: unknown) => {
+  if (!isObject(raw)) return null;
+  return {
+    accepting: raw.accepting === undefined ? true : bool(raw.accepting),
+    windowDays: raw.bookingWindowDays === undefined ? null : count(raw.bookingWindowDays),
+  };
+});
 
 export const slotsSerializer = (raw: unknown): Slot[] => slotDays(raw).flatMap(d => d.slots);
 

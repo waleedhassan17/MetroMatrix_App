@@ -90,6 +90,8 @@ export interface PracticeLocation {
   phone: string | null;
   fee: number;
   slotMinutes: number;
+  /** A break after each patient (0 = back to back). */
+  bufferMinutes: number;
   instructions: string | null;
   timezone: string;
   availability: Availability;
@@ -172,10 +174,19 @@ export interface DoctorProfile extends DoctorCardData {
   bookingRules: BookingRules;
 }
 
+/**
+ * Why a day has the slots it has (the API's `status`; null from an older
+ * server): open, full (all booked or past), closed (no hours, or today's are
+ * over), time off, paused (not taking bookings), beyond the booking window.
+ */
+export type DayStatus = 'open' | 'full' | 'closed' | 'time_off' | 'paused' | 'beyond_window';
+
 export interface DayAvailability {
   /** YYYY-MM-DD in the location's timezone. */
   date: string;
   slotCount: number;
+  /** Health's days say why (Food's date strips leave it out). */
+  status?: DayStatus | null;
 }
 
 export type SlotPeriod = 'morning' | 'afternoon' | 'evening' | 'night';
@@ -575,8 +586,68 @@ export interface DoctorLocation extends PracticeLocation {
 
 export type DoctorLocationInput = Pick<
   DoctorLocation,
-  'kind' | 'name' | 'area' | 'city' | 'address' | 'lat' | 'lng' | 'phone' | 'fee' | 'slotMinutes' | 'instructions' | 'requiresPrepay'
+  'kind' | 'name' | 'area' | 'city' | 'address' | 'lat' | 'lng' | 'phone' | 'fee' | 'slotMinutes' | 'bufferMinutes' | 'instructions' | 'requiresPrepay'
 >;
+
+/**
+ * What the doctor's server offers beyond the first release (the profile's
+ * `features`): a control shows only when its server can do it, so the app
+ * works before and after a backend redeploy.
+ */
+export type DoctorFeature =
+  | 'cross_kind_hours'
+  | 'buffer'
+  | 'schedule_dry_run'
+  | 'day_status'
+  | 'pause'
+  | 'mark_paid_later'
+  | 'listing_notice'
+  | 'overrides'
+  | 'walk_in'
+  | 'doctor_reschedule'
+  | 'follow_up_booking'
+  | 'doctor_slots'
+  | 'follow_up_reminder';
+
+/** Hours another location of the other kind also offers: booking either closes the other. */
+export interface SharedHours {
+  locationName: string;
+  kind: ConsultKind;
+  /** 1 = Monday … 7 = Sunday (the app's weekdays). */
+  day: number;
+  /** Only for a day's own hours. */
+  date: string | null;
+  from: string;
+  to: string;
+}
+
+/** What saving (or checking) hours answered. */
+export interface HoursReport {
+  sharedWith: SharedHours[];
+  /** Booked visits the new hours leave out: they stay booked. */
+  outsideHours: ConflictingAppointment[];
+  /** Slots the hours make (a week's, or the day's). */
+  slots: number | null;
+}
+
+/** A date's own hours at a location (extra, shorter, or closed), replacing its weekly hours. */
+export interface DayHours {
+  date: string;
+  closed: boolean;
+  ranges: TimeRange[];
+  note: string | null;
+}
+
+export interface WalkInInput {
+  locationId: string;
+  /** A free slot today; null = the one running now (or the next free today). */
+  startAt: string | null;
+  name: string;
+  phone: string;
+  gender: Gender | null;
+  age: number | null;
+  reason: string;
+}
 
 export interface HoursOverlap {
   day: number;
@@ -584,6 +655,8 @@ export interface HoursOverlap {
 }
 
 export interface AvailabilityPreview {
+  /** Not taking new bookings: patients see none of these times. */
+  paused: boolean;
   locations: { id: string; name: string; kind: ConsultKind; timezone: string; days: { date: string; slots: string[] }[] }[];
 }
 
@@ -591,6 +664,8 @@ export interface TimeOff {
   id: string;
   from: string;
   to: string;
+  /** Some hours of one day (wall times), not whole days. */
+  hours: TimeRange | null;
   locationId: string | null;
   locationName: string | null;
   reason: string | null;
@@ -599,6 +674,8 @@ export interface TimeOff {
 export interface TimeOffInput {
   from: string;
   to: string;
+  /** Some hours of the first day only (`to` is ignored); null = whole days. */
+  hours: TimeRange | null;
   locationId: string | null;
   reason: string | null;
 }
@@ -635,6 +712,7 @@ export interface QueueItem {
   canJoinVideo: boolean;
   joinOpensAt: string | null;
   actions: DoctorActions;
+  source: AppointmentSource;
 }
 
 export interface DoctorActions {
@@ -650,7 +728,12 @@ export interface DoctorActions {
   canRefund: boolean;
   /** A transfer proof was sent: it can be turned down. */
   canRejectPayment: boolean;
+  /** A clinic fee not yet taken: mark it paid (at the desk or after the visit). */
+  canMarkPaid: boolean;
 }
+
+/** `app`: booked in the app. `walk_in`: the doctor added them at the clinic desk (no account). */
+export type AppointmentSource = 'app' | 'walk_in';
 
 /** Who cancelled a visit, why, and whether it was inside the cutoff. */
 export interface AppointmentCancellation {
@@ -730,6 +813,11 @@ export interface DoctorAppointmentDetail {
   timeline: AppointmentEvent[];
   /** Cancelled visits: who, why, and whether late. */
   cancellation: AppointmentCancellation | null;
+  source: AppointmentSource;
+  /** Moved from another visit (by the patient or the doctor). */
+  rescheduledFromId: string | null;
+  /** The visit this one follows up. */
+  followUpOfId: string | null;
 }
 
 export interface MedicineSuggestion {

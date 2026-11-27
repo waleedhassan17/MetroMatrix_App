@@ -318,10 +318,10 @@ describe('the doctor app', () => {
     const db = await getDb();
     const booked = db.health.appointments.find(a => a.doctorId === 'd_ayesha' && a.status === 'awaiting_payment' && Date.parse(a.startAt) > T0)!;
     const day = dateInZone(booked.startAt, PKT);
-    const e = await failure(addTimeOff({ from: day, to: day, locationId: null, reason: 'Conference' }));
+    const e = await failure(addTimeOff({ from: day, to: day, hours: null, locationId: null, reason: 'Conference' }));
     expect(e.code).toBe('TIME_OFF_CONFLICTS');
     expect(conflictsFrom(e.details).map(c => c.code)).toContain(booked.code);
-    await addTimeOff({ from: day, to: day, locationId: null, reason: 'Conference' }, true);
+    await addTimeOff({ from: day, to: day, hours: null, locationId: null, reason: 'Conference' }, true);
     expect(db.health.appointments.find(a => a.id === booked.id)!.status).toBe('cancelled');
     expect(db.shop.notifications.some(n => n.userId === 'u_customer' && n.data.appointmentCode === booked.code)).toBe(true);
   });

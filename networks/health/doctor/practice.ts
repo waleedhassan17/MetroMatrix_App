@@ -11,7 +11,7 @@
 import { API, toApiError } from '../../network/network';
 import { scheduleBody } from '../../../models/health/availabilityModel';
 import { addDays, zonedToIso } from '../../../utils/health-time/healthTime';
-import type { DoctorLocationInput, TimeOffInput, WeekDayHours } from '../../../models/health';
+import type { DayHours, DoctorLocationInput, TimeOffInput, WeekDayHours } from '../../../models/health';
 import type { PaymentAccountInput } from '../../../models/payments';
 
 const enc = encodeURIComponent;
@@ -28,6 +28,7 @@ const locationBody = (input: Partial<DoctorLocationInput>) => ({
   phone: input.phone ?? undefined,
   fee: input.fee,
   slotMinutes: input.slotMinutes,
+  bufferMinutes: input.bufferMinutes,
   instructions: input.instructions ?? undefined,
 });
 
@@ -82,9 +83,58 @@ export const deleteLocation = async (id: string): Promise<unknown> => {
  * Replaces the week. A clash with another location answers 409
  * SCHEDULE_OVERLAP with details.conflict (overlapsFrom()).
  */
-export const saveHours = async (id: string, hours: WeekDayHours[]): Promise<unknown> => {
+/** `?dryRun=true`: the server checks and answers without saving. */
+const dryRunParams = (dryRun: boolean) => (dryRun ? { dryRun: 'true' } : undefined);
+
+export const saveHours = async (id: string, hours: WeekDayHours[], dryRun = false): Promise<unknown> => {
   try {
-    const response = await API.PUT({ URL: `${loc(id)}/schedule`, data: scheduleBody(hours) });
+    const response = await API.PUT({ URL: `${loc(id)}/schedule`, data: scheduleBody(hours), params: dryRunParams(dryRun) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+
+/** A location's own hours for some dates (default today … 60 days on). */
+export const fetchDayHours = async (id: string, from?: string, to?: string): Promise<unknown> => {
+  try {
+    const response = await API.GET({ URL: `${loc(id)}/overrides`, params: { from, to } });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+
+/** A day's own hours as the API takes them (23:59, the app's end of day, is the API's 24:00). */
+const dayHoursBody = (input: DayHours) => ({
+  closed: input.closed || undefined,
+  ranges: input.closed ? undefined : input.ranges.map(r => ({ start: r.from, end: r.to === '23:59' ? '24:00' : r.to })),
+  note: input.note ?? undefined,
+});
+
+/** One date's own hours (`closed`, or ranges replacing its weekly hours); `dryRun` reports without saving. */
+export const saveDayHours = async (id: string, input: DayHours, dryRun = false): Promise<unknown> => {
+  try {
+    const response = await API.PUT({ URL: `${loc(id)}/overrides/${enc(input.date)}`, data: dayHoursBody(input), params: dryRunParams(dryRun) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+
+export const removeDayHours = async (id: string, date: string): Promise<unknown> => {
+  try {
+    const response = await API.DELETE({ URL: `${loc(id)}/overrides/${enc(date)}` });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+
+/** Your own free slots at a location (no notice, bookings on or paused, the long window). */
+export const fetchOwnSlots = async (id: string, from: string | null, days = 14): Promise<unknown> => {
+  try {
+    const response = await API.GET({ URL: `${loc(id)}/slots`, params: { from: from ?? undefined, days } });
     return response.data;
   } catch (e) {
     throw toApiError(e);
@@ -119,8 +169,13 @@ export const fetchTimeOff = async (): Promise<unknown> => {
 export const addTimeOff = async (input: TimeOffInput, timezone: string, cancelConflicts = false): Promise<unknown> => {
   try {
     const response = await API.POST({ URL: '/health/doctor/time-off', data: {
-      startsAt: zonedToIso(input.from, '00:00', timezone),
-      endsAt: zonedToIso(addDays(input.to, 1), '00:00', timezone),
+      // Some hours of one day, or whole days (midnight to midnight).
+      startsAt: zonedToIso(input.from, input.hours ? input.hours.from : '00:00', timezone),
+      endsAt: input.hours
+        ? input.hours.to === '23:59'
+          ? zonedToIso(addDays(input.from, 1), '00:00', timezone)
+          : zonedToIso(input.from, input.hours.to, timezone)
+        : zonedToIso(addDays(input.to, 1), '00:00', timezone),
       locationId: input.locationId ?? undefined,
       reason: input.reason ?? undefined,
       cancelAffected: cancelConflicts || undefined,

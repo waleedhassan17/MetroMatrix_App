@@ -9,7 +9,8 @@
 // when a refresh fails. A doctor who isn't visible to patients is told what
 // to fix; a newly listed one is greeted here (not by a toast over the header).
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
+import Toast from 'react-native-toast-message';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
@@ -43,6 +44,9 @@ import type { DoctorPartnerStackParamList, QueueItem } from '../../models';
 import { elapsed, formatLongDate, formatSlot } from '../../utils/health-time/healthTime';
 import { haptics } from '../../utils/haptics/haptics';
 import { closeComplete, completeVisitAsync, loadTodayAsync, openComplete, queueActionAsync, selectDoctorToday, setTodayLocation } from './doctorTodaySlice';
+import { selectDoctorFeatures, setAcceptingAsync } from '../../store/doctorFeaturesSlice';
+import { WalkInSheet } from '../walk-in-sheet/WalkInSheet';
+import { clearWalkInAdded, openWalkIn, selectWalkIn } from '../walk-in-sheet/walkInSlice';
 
 type Props = NativeStackScreenProps<DoctorPartnerStackParamList, 'DoctorTabs'>;
 
@@ -76,6 +80,22 @@ const DoctorTodayContent: React.FC<Props> = ({ navigation }) => {
   const now = useNow(motion.queuePoll);
   const t = s.today;
   const go = navigation as unknown as { navigate: (n: string, p?: object) => void };
+  const doctor = useAppSelector(selectDoctorFeatures);
+  const walkIn = useAppSelector(selectWalkIn);
+  const clinics = (t?.locations ?? []).filter(l => l.kind === 'clinic').map(l => ({ id: l.id, name: l.name }));
+  const canWalkIn = doctor.features.includes('walk_in') && clinics.length > 0;
+  const paused = doctor.features.includes('pause') && doctor.isAccepting === false;
+
+  // A walk-in was added: the queue has them; open their visit.
+  useEffect(() => {
+    if (!walkIn.added) return;
+    const code = walkIn.added;
+    dispatch(clearWalkInAdded());
+    haptics.success();
+    Toast.show({ type: 'success', text1: 'Added to the queue', text2: 'Checked in and waiting.' });
+    void dispatch(loadTodayAsync({ locationId: s.locationId, quiet: true }));
+    go.navigate('DoctorAppointment', { id: code });
+  }, [walkIn.added, dispatch, s.locationId, go]);
 
   // Load on focus, then quietly every 30 seconds while on screen.
   useFocusEffect(
@@ -137,7 +157,7 @@ const DoctorTodayContent: React.FC<Props> = ({ navigation }) => {
           <View style={styles.grow}>
             <View style={styles.nameRow}>
               <AppText variant="title">{q.patient.name}</AppText>
-              {q.firstVisit ? <StatusPill label="First visit" tone="info" /> : null}
+              {q.source === 'walk_in' ? <StatusPill label="Walk-in" tone="neutral" /> : q.firstVisit ? <StatusPill label="First visit" tone="info" /> : null}
             </View>
             <AppText variant="small" tone="muted">
               {[q.patient.age !== null ? `${q.patient.age} years` : null, genderLabel(q.patient.gender), (t?.locations.length ?? 0) > 1 ? q.locationName : null].filter(Boolean).join(' · ')}
@@ -201,6 +221,14 @@ const DoctorTodayContent: React.FC<Props> = ({ navigation }) => {
           action={{ label: 'Finish setup', onPress: () => go.navigate('PracticeSetup') }}
         />
       ) : null}
+      {paused ? (
+        <InlineNotice
+          tone="warning"
+          title="You're not taking new bookings"
+          message="Patients can't book you until you turn bookings back on. Visits already booked stay."
+          action={{ label: doctor.switching ? 'Turning on…' : 'Turn bookings on', onPress: () => void dispatch(setAcceptingAsync(true)) }}
+        />
+      ) : null}
       {s.error.message ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: reload }} /> : null}
       {!t ? (
         s.status === 'failed' ? null : (
@@ -221,6 +249,15 @@ const DoctorTodayContent: React.FC<Props> = ({ navigation }) => {
               { key: 'missed', icon: 'close-circle-outline', tint: 'amber', value: counts!.noShow, label: 'Missed' },
             ]}
           />
+          {canWalkIn ? (
+            <Button
+              label="Add a walk-in"
+              variant="secondary"
+              leftIcon="person-add-outline"
+              onPress={() => dispatch(openWalkIn({ clinics, locationId: clinics.some(c => c.id === s.locationId) ? s.locationId : null }))}
+              fullWidth
+            />
+          ) : null}
           {s.stale ? (
             <View style={styles.stale} accessibilityLiveRegion="polite">
               <IonIcon name="cloud-offline-outline" size="sm" color={colors.inkMuted} />
@@ -288,6 +325,7 @@ const DoctorTodayContent: React.FC<Props> = ({ navigation }) => {
         }>
         {s.completeError ? <InlineNotice message={s.completeError} /> : null}
       </Sheet>
+      <WalkInSheet />
     </ScreenShell>
   );
 };

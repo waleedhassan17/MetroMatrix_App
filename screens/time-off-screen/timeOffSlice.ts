@@ -26,7 +26,7 @@ export interface TimeOffSliceState {
   error: ServerError;
 }
 
-const blank = (date = ''): TimeOffInput => ({ from: date, to: date, locationId: null, reason: null });
+const blank = (date = ''): TimeOffInput => ({ from: date, to: date, hours: null, locationId: null, reason: null });
 
 const initialState: TimeOffSliceState = {
   items: [],

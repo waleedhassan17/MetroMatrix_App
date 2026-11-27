@@ -10,6 +10,7 @@
 
 import { API, toApiError } from '../../network/network';
 import { mimeFromUrl, publicIdFromCloudinaryUrl } from '../../../serializers/health/healthCommon';
+import type { WalkInInput } from '../../../models/health';
 
 const enc = encodeURIComponent;
 const path = (id: string) => `/health/doctor/appointments/${enc(id)}`;
@@ -147,6 +148,64 @@ export const saveNotes = async (id: string, notes: { text: string; attachments: 
 export const openSharedRecord = async (id: string, recordId: string): Promise<unknown> => {
   try {
     const response = await API.GET({ URL: `${path(id)}/records/${enc(recordId)}` });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+
+/** A clinic fee taken at the desk or after the visit (pay at clinic, unpaid → paid). */
+export const markPaid = async (id: string): Promise<unknown> => {
+  try {
+    const response = await API.POST({ URL: `${path(id)}/payment/mark-paid`, data: {} });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+
+const moveBody = (move: { startAt: string; locationId: string | null; reason: string }) => ({
+  startsAt: move.startAt,
+  locationId: move.locationId ?? undefined,
+  reason: move.reason,
+});
+
+/** Move a booked visit to another of your free times; the patient is told why. */
+export const moveAppointment = async (id: string, move: { startAt: string; locationId: string | null; reason: string }): Promise<unknown> => {
+  try {
+    const response = await API.POST({ URL: `${path(id)}/reschedule`, data: moveBody(move) });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+
+/** Book the follow-up of a started or completed visit for the same person. */
+export const bookFollowUp = async (id: string, followUp: { locationId: string; startAt: string }): Promise<unknown> => {
+  try {
+    const response = await API.POST({ URL: `${path(id)}/follow-up`, data: { locationId: followUp.locationId, startsAt: followUp.startAt } });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+
+const walkInBody = (input: WalkInInput) => ({
+  locationId: input.locationId,
+  startsAt: input.startAt ?? undefined,
+  patient: {
+    name: input.name.trim(),
+    phone: input.phone.trim() || undefined,
+    gender: input.gender ?? undefined,
+    age: input.age ?? undefined,
+  },
+  reason: input.reason.trim() || undefined,
+});
+
+/** Someone at the clinic desk without a booking: checked in at once (a free slot today). */
+export const addWalkIn = async (input: WalkInInput): Promise<unknown> => {
+  try {
+    const response = await API.POST({ URL: '/health/doctor/appointments/walk-in', data: walkInBody(input) });
     return response.data;
   } catch (e) {
     throw toApiError(e);

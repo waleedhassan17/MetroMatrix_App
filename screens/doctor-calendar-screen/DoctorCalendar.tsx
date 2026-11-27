@@ -5,9 +5,10 @@
 // order, grouped by part of the day, with its location's dot and ONE status
 // pill. (An hour grid stacked back-to-back 15-minute visits on top of each
 // other and hid anything before 7 AM: the 2026-11-26 QA.) Tap a visit to open
-// it; "Take this day off" blocks a day.
+// it; "Take this day off" blocks a day; "Change hours for this day" gives it
+// its own hours (or closes it) at one location, where the server can.
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
@@ -31,6 +32,10 @@ import { DAY_PART_LABEL, byDayPart } from '../../models/health/calendarModel';
 import type { CalendarItem, CalendarRange, DoctorPartnerStackParamList } from '../../models';
 import { PKT, addDays, dateInZone, formatDayChip, formatDayShort, formatSlot, todayInZone, weekStart } from '../../utils/health-time/healthTime';
 import { loadCalendarAsync, selectDoctorCalendar, setCalendarMode, type CalendarMode } from './doctorCalendarSlice';
+import { selectHasDoctorFeature } from '../../store/doctorFeaturesSlice';
+import { DayHoursSheet } from '../day-hours-sheet/DayHoursSheet';
+import { loadDayHoursAsync, openDayHours, selectDayHours } from '../day-hours-sheet/dayHoursSlice';
+import type { DayHours } from '../../models';
 
 type Props = NativeStackScreenProps<DoctorPartnerStackParamList, 'DoctorTabs'>;
 
@@ -49,6 +54,13 @@ const makeStyles = ({ space, radius, size }: Theme) =>
     dayHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   });
 
+/** "18:00" → "6:00 PM" (23:59, the end of the day, reads as midnight). */
+const clock12 = (hm: string) => {
+  const [h, m] = (hm === '23:59' ? '24:00' : hm).split(':').map(Number);
+  const hh = h % 24;
+  return `${hh % 12 || 12}:${String(m).padStart(2, '0')} ${hh < 12 ? 'AM' : 'PM'}`;
+};
+
 const DoctorCalendar: React.FC<Props> = props => (
   <ServiceScope service="healthcare">
     <DoctorCalendarContent {...props} />
@@ -65,6 +77,33 @@ const DoctorCalendarContent: React.FC<Props> = ({ navigation }) => {
   const nav = navigation as unknown as { navigate: (n: string, p?: object) => void };
 
   const load = useCallback((d: string, mode: CalendarMode) => void dispatch(loadCalendarAsync({ date: d, mode })), [dispatch]);
+  const ownHours = useAppSelector(st => selectHasDoctorFeature(st, 'overrides'));
+  const dayHours = useAppSelector(selectDayHours);
+  const placeIds = (s.range?.locations ?? []).map(l => l.id).join(',');
+  const first = s.mode === 'day' ? date : weekStart(date);
+  const last = s.mode === 'day' ? date : addDays(weekStart(date), 6);
+
+  // Each location's own hours for the dates showing.
+  useEffect(() => {
+    if (!ownHours || !placeIds) return;
+    void dispatch(loadDayHoursAsync({ locationIds: placeIds.split(','), from: first, to: last }));
+  }, [ownHours, placeIds, first, last, dispatch]);
+
+  const ownOn = (d: string) =>
+    (s.range?.locations ?? []).flatMap(l => {
+      const own = (dayHours.byLocation[l.id] ?? []).find(x => x.date === d);
+      return own ? [{ location: l, own }] : [];
+    });
+  const hoursText = (own: DayHours) =>
+    own.closed ? 'Closed this day' : own.ranges.map(x => `${clock12(x.from)} – ${clock12(x.to)}`).join(', ');
+  const changeHours = (d: string, locationId?: string) =>
+    dispatch(
+      openDayHours({
+        date: d,
+        locationId,
+        locations: (s.range?.locations ?? []).map(l => ({ id: l.id, name: l.name, slotMinutes: 15 })),
+      }),
+    );
 
   useFocusEffect(
     useCallback(() => {
@@ -173,11 +212,22 @@ const DoctorCalendarContent: React.FC<Props> = ({ navigation }) => {
         s.status === 'failed' ? null : <RowCardsSkeleton count={4} />
       ) : s.mode === 'day' ? (
         <View style={styles.list}>
+          {ownHours
+            ? ownOn(date).map(({ location, own }) => (
+                <InlineNotice
+                  key={location.id}
+                  tone="info"
+                  title={own.closed ? `Closed at ${location.name}` : `Different hours at ${location.name}`}
+                  message={`${hoursText(own)}${own.note ? ` · ${own.note}` : ''}`}
+                  action={{ label: 'Change', onPress: () => changeHours(date, location.id) }}
+                />
+              ))
+            : null}
           {timeOffOn(r, date).map(t => (
             <InlineNotice
               key={t.id}
               tone="info"
-              title={`Time off${t.locationName ? ` at ${t.locationName}` : ''}`}
+              title={`Time off${t.hours ? ` ${clock12(t.hours.from)} – ${clock12(t.hours.to)}` : ''}${t.locationName ? ` at ${t.locationName}` : ''}`}
               message={t.reason ?? 'Patients can’t book you on this day.'}
             />
           ))}
@@ -202,6 +252,9 @@ const DoctorCalendarContent: React.FC<Props> = ({ navigation }) => {
               }
             />
           )}
+          {date >= today && ownHours && r.locations.length ? (
+            <TextAction label="Change hours for this day" icon="time-outline" onPress={() => changeHours(date)} />
+          ) : null}
           {r.appointments.length && date >= today && !timeOffOn(r, date).length ? (
             <TextAction label="Take this day off" icon="close-circle-outline" onPress={() => nav.navigate('TimeOff', { date })} />
           ) : null}
@@ -226,8 +279,15 @@ const DoctorCalendarContent: React.FC<Props> = ({ navigation }) => {
                   ) : null}
                 </View>
                 {off.length ? (
-                  <AppText variant="small" tone="muted">{`Time off${off[0].reason ? ` · ${off[0].reason}` : ''}`}</AppText>
+                  <AppText variant="small" tone="muted">{`Time off${off[0].hours ? ` ${clock12(off[0].hours.from)} – ${clock12(off[0].hours.to)}` : ''}${off[0].reason ? ` · ${off[0].reason}` : ''}`}</AppText>
                 ) : null}
+                {ownHours
+                  ? ownOn(d).map(({ location, own }) => (
+                      <AppText key={location.id} variant="small" tone="muted">
+                        {`${r.locations.length > 1 ? `${location.name}: ` : ''}${hoursText(own)}`}
+                      </AppText>
+                    ))
+                  : null}
                 {list.length ? (
                   <Card padded="horizontal">{list.map(visitRow)}</Card>
                 ) : !off.length ? (
@@ -240,6 +300,7 @@ const DoctorCalendarContent: React.FC<Props> = ({ navigation }) => {
           })}
         </View>
       )}
+      <DayHoursSheet />
     </ScreenShell>
   );
 };

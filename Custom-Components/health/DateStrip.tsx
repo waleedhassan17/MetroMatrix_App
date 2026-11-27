@@ -8,7 +8,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../../theme';
-import type { DayAvailability } from '../../models/health';
+import type { DayAvailability, DayStatus } from '../../models/health';
 import { formatDayChip } from '../../utils/health-time/healthTime';
 import { AppText } from '../AppText';
 import { Skeleton } from '../Skeleton';
@@ -30,6 +30,15 @@ const makeStyles = ({ colors, space, radius, size, gutter }: Theme) =>
     },
     dim: { backgroundColor: colors.surfaceSunk, borderColor: colors.lineSoft },
   });
+
+/** An empty day's reason, when the API says (Health's `status`). */
+const EMPTY_WORD: Partial<Record<DayStatus, { sub: string; label: string }>> = {
+  full: { sub: 'Full', label: 'fully booked' },
+  closed: { sub: 'Closed', label: 'closed' },
+  time_off: { sub: 'On leave', label: 'the doctor is away' },
+  paused: { sub: 'Paused', label: 'not taking bookings' },
+  beyond_window: { sub: 'Not yet', label: 'not open for booking yet' },
+};
 
 export const DateStrip: React.FC<{
   days: DayAvailability[];
@@ -66,13 +75,18 @@ export const DateStrip: React.FC<{
         const on = d.date === selected;
         const own = describe?.(d);
         const none = !own && d.slotCount === 0;
+        const why = none && d.status ? EMPTY_WORD[d.status] : undefined;
         return (
           <Pressable
             key={d.date}
             onPress={() => onSelect(d.date)}
             accessibilityRole="button"
             aria-selected={on}
-            accessibilityLabel={own ? `${chip.long}, ${own.label}` : `${chip.long}, ${none ? 'no times' : `${d.slotCount} ${d.slotCount === 1 ? 'time' : 'times'} free`}`}
+            accessibilityLabel={
+              own
+                ? `${chip.long}, ${own.label}`
+                : `${chip.long}, ${none ? (why?.label ?? 'no times') : `${d.slotCount} ${d.slotCount === 1 ? 'time' : 'times'} free`}`
+            }
             style={[styles.chip, none && styles.dim, on && { backgroundColor: service.accent, borderColor: service.accent }]}>
             <AppText variant="micro" tone={on ? 'onAccent' : none ? 'faint' : 'muted'}>
               {chip.weekday.toUpperCase()}
@@ -81,7 +95,7 @@ export const DateStrip: React.FC<{
               {chip.day}
             </AppText>
             <AppText variant="micro" tone={on ? 'onAccent' : 'faint'}>
-              {own ? own.sub : none ? 'No slots' : chip.month}
+              {own ? own.sub : none ? (why?.sub ?? 'No slots') : chip.month}
             </AppText>
           </Pressable>
         );

@@ -13,7 +13,7 @@ import { toRejectedValue } from '../../networks/network/network';
 import type { DayAvailability, DoctorProfile, SlotDay } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { confirmBookingAsync } from '../book-appointment-sheet/bookAppointmentSlice';
-import { daysSerializer, slotDayOnSerializer, slotDaySerializer } from '../../serializers/health/discoverySerializer';
+import { daysSerializer, slotDayOnSerializer, slotDaySerializer, slotsMetaSerializer } from '../../serializers/health/discoverySerializer';
 import { getDoctor } from '../shared/healthReads';
 
 export interface DoctorEntry {
@@ -32,6 +32,11 @@ export interface ProfileView {
   selected: string | null;
   aboutOpen: boolean;
   error: ServerError;
+  /** The doctor is taking new bookings (a paused one shows no times). */
+  accepting: boolean;
+  /** How many days ahead patients may book (null from a server that doesn't say). */
+  windowDays: number | null;
+  loadingMore: boolean;
 }
 
 export interface DoctorProfileSliceState {
@@ -52,6 +57,9 @@ const newView = (doctorId: string): ProfileView => ({
   selected: null,
   aboutOpen: false,
   error: NO_ERROR,
+  accepting: true,
+  windowDays: null,
+  loadingMore: false,
 });
 
 export const doctorProfileSlice = createAppSlice({
@@ -123,6 +131,9 @@ export const doctorProfileSlice = createAppSlice({
           const v = state.views[action.meta.arg.key];
           if (!v || v.locationId !== action.meta.arg.locationId) return;
           const days = daysSerializer(action.payload.days);
+          const meta = slotsMetaSerializer(action.payload.days);
+          v.accepting = meta?.accepting ?? true;
+          v.windowDays = meta?.windowDays ?? null;
           // The asked-for day, else the first with room, else the first.
           const want = action.payload.date;
           const pick = (want && days.find(d => d.date === want)?.date) || days.find(d => d.slotCount > 0)?.date || days[0]?.date || null;
@@ -141,6 +152,35 @@ export const doctorProfileSlice = createAppSlice({
       },
     ),
 
+    /** The next days of the doctor's booking window (past the first fortnight). */
+    moreDaysAsync: create.asyncThunk(
+      async ({ doctorId, locationId, from, days }: { key: string; doctorId: string; locationId: string; from: string; days: number }, { rejectWithValue }) => {
+        try {
+          return await fetchDays(doctorId, locationId, from, days);
+        } catch (e) {
+          return rejectWithValue(toRejectedValue(e));
+        }
+      },
+      {
+        pending: (state, action) => {
+          const v = state.views[action.meta.arg.key];
+          if (v) v.loadingMore = true;
+        },
+        fulfilled: (state, action) => {
+          const v = state.views[action.meta.arg.key];
+          if (!v || v.locationId !== action.meta.arg.locationId) return;
+          v.loadingMore = false;
+          const more = daysSerializer(action.payload).filter(d => !v.days.some(x => x.date === d.date));
+          v.days = [...v.days, ...more];
+        },
+        rejected: (state, action) => {
+          const v = state.views[action.meta.arg.key];
+          if (!v) return;
+          v.loadingMore = false;
+          v.error = readRejection(action, "The later days didn't load.");
+        },
+      },
+    ),
     chooseDayAsync: create.asyncThunk(
       async ({ doctorId, locationId, date }: { key: string; doctorId: string; locationId: string; date: string }, { rejectWithValue }) => {
         try {
@@ -192,6 +232,6 @@ export const doctorProfileSlice = createAppSlice({
   },
 });
 
-export const { openProfileView, closeProfileView, pickSlot, toggleAbout, loadDoctorAsync, chooseLocationAsync, chooseDayAsync } =
+export const { openProfileView, closeProfileView, pickSlot, toggleAbout, loadDoctorAsync, chooseLocationAsync, chooseDayAsync, moreDaysAsync } =
   doctorProfileSlice.actions;
 export const { selectDoctorEntry, selectProfileView } = doctorProfileSlice.selectors;

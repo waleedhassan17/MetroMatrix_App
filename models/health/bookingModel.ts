@@ -6,8 +6,11 @@ import type {
   CancelReason,
   PracticeLocation,
   ReasonTag,
+  WalkInInput,
 } from '../health';
 import type { ValidationErrors } from '../authModel';
+import type { Gender } from '../auth';
+import { PK_MOBILE_MESSAGE, isValidPkMobile, normalizePkPhone } from '../../utils/phone/phone';
 
 export const REASON_TAGS: { key: ReasonTag; label: string }[] = [
   { key: 'follow_up', label: 'Follow-up' },
@@ -70,3 +73,43 @@ export const validateCancel = (reason: CancelReason | null, note: string): Valid
   if (note.length > MAX_REASON) return { note: `Keep it under ${MAX_REASON} characters` };
   return {};
 };
+
+/** A walk-in as the form holds it (age as typed). */
+export interface WalkInForm {
+  locationId: string;
+  name: string;
+  phone: string;
+  gender: Gender | null;
+  age: string;
+  reason: string;
+}
+
+export const MAX_WALK_IN_NAME = 120;
+export const MAX_WALK_IN_REASON = 300;
+
+/** The API's own rules (WalkInDto): a name, an optional PK mobile, an age 0–120. */
+export const validateWalkIn = (f: WalkInForm): ValidationErrors => {
+  const errors: ValidationErrors = {};
+  const name = f.name.trim();
+  if (name.length < 2) errors.name = 'Their name, as they give it';
+  else if (name.length > MAX_WALK_IN_NAME) errors.name = `Keep it under ${MAX_WALK_IN_NAME} characters`;
+  if (f.phone.trim() && !isValidPkMobile(f.phone)) errors.phone = PK_MOBILE_MESSAGE;
+  if (f.age.trim()) {
+    const n = Number(f.age);
+    if (!Number.isInteger(n) || n < 0 || n > 120) errors.age = 'An age from 0 to 120';
+  }
+  if (f.reason.length > MAX_WALK_IN_REASON) errors.reason = `Keep it under ${MAX_WALK_IN_REASON} characters`;
+  if (!f.locationId) errors.locationId = 'Choose the clinic';
+  return errors;
+};
+
+/** The form as the API takes it (phone in +92 form, age a number). */
+export const walkInToSave = (f: WalkInForm, startAt: string | null): WalkInInput => ({
+  locationId: f.locationId,
+  startAt,
+  name: f.name.trim(),
+  phone: normalizePkPhone(f.phone) ?? '',
+  gender: f.gender,
+  age: f.age.trim() ? Number(f.age) : null,
+  reason: f.reason.trim(),
+});
