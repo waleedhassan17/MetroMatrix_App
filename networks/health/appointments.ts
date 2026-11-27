@@ -67,11 +67,12 @@ export const cancelAppointment = async (code: string, reason: CancelReason, note
 
 /**
  * The new time is a NEW appointment with its own code (the old one is
- * void); the answer is the new one. Its own Idempotency-Key per attempt.
+ * void); the answer is the new one. One Idempotency-Key per attempt: a retry
+ * of the same time sends the same key, so it can never move the visit twice.
  */
-export const rescheduleAppointment = async (code: string, startAt: string): Promise<unknown> => {
+export const rescheduleAppointment = async (code: string, startAt: string, idempotencyKey: string = newUuid()): Promise<unknown> => {
   try {
-    const response = await API.POST({ URL: `${path(code)}/reschedule`, data: { startsAt: startAt }, headers: { 'Idempotency-Key': newUuid() } });
+    const response = await API.POST({ URL: `${path(code)}/reschedule`, data: { startsAt: startAt }, headers: { 'Idempotency-Key': idempotencyKey } });
     return response.data;
   } catch (e) {
     throw toApiError(e);
@@ -82,6 +83,16 @@ export const rescheduleAppointment = async (code: string, startAt: string): Prom
 export const submitAppointmentPaymentProof = async (code: string, body: { transactionId: string; imageUrl: string | null }): Promise<unknown> => {
   try {
     const response = await API.POST({ URL: `${path(code)}/payment-proof`, data: { paymentRef: body.transactionId, proofUrl: body.imageUrl ?? undefined } });
+    return response.data;
+  } catch (e) {
+    throw toApiError(e);
+  }
+};
+
+/** Stop sharing one record with the visit (always allowed; the doctor loses access at once). */
+export const unshareRecord = async (code: string, recordId: string): Promise<unknown> => {
+  try {
+    const response = await API.DELETE({ URL: `${path(code)}/attachments/${encodeURIComponent(recordId)}` });
     return response.data;
   } catch (e) {
     throw toApiError(e);

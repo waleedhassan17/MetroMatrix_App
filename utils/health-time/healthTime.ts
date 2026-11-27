@@ -125,8 +125,10 @@ export const hourOfDay = (iso: string, timezone: string) => {
 /**
  * "Starts now", "in 45 min", "in 2 h 15 min", "Tomorrow", "in 3 days", or
  * null once the appointment is over (or started more than its length ago).
+ * Days are calendar days in the practice's zone: tomorrow evening is
+ * "Tomorrow", never "in 2 days"; within six hours it counts the time.
  */
-export const relativeStart = (startIso: string, now: number = Date.now(), endIso?: string): string | null => {
+export const relativeStart = (startIso: string, now: number = Date.now(), endIso?: string, timezone: string = PKT): string | null => {
   const start = Date.parse(startIso);
   const end = endIso ? Date.parse(endIso) : start + 30 * MINUTE;
   if (now >= end) return null;
@@ -134,13 +136,13 @@ export const relativeStart = (startIso: string, now: number = Date.now(), endIso
   if (ms <= MINUTE) return 'Starts now';
   const minutes = Math.ceil(ms / MINUTE);
   if (minutes < 60) return `in ${minutes} min`;
-  if (ms < DAY) {
+  const days = day(dateInZone(startIso, timezone)).diff(day(dateInZone(new Date(now).toISOString(), timezone)), 'day');
+  if (ms < 6 * 60 * MINUTE || days === 0) {
     const h = Math.floor(minutes / 60);
     const m = minutes % 60;
     return m ? `in ${h} h ${m} min` : `in ${h} h`;
   }
-  const days = Math.round(ms / DAY);
-  return days <= 1 ? 'Tomorrow' : `in ${days} days`;
+  return days === 1 ? 'Tomorrow' : `in ${days} days`;
 };
 
 /** "12 min" / "1 h 5 min" since `iso` (the waiting timer). */

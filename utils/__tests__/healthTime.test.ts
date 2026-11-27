@@ -63,6 +63,11 @@ describe('healthTime (device in New York, clinic in Lahore)', () => {
     expect(relativeStart(SLOT, start + 5 * 60_000, '2026-10-15T13:30:00.000Z')).toBe('Starts now');
     expect(relativeStart(SLOT, start + 20 * 60_000, '2026-10-15T13:30:00.000Z')).toBeNull();
     expect(relativeStart(SLOT, start - 26 * 3_600_000)).toBe('Tomorrow');
+    // Calendar days in the practice's zone: just after midnight, tomorrow evening is "Tomorrow", not "in 2 days".
+    expect(relativeStart('2026-10-15T13:00:00.000Z', Date.parse('2026-10-13T19:30:00.000Z'))).toBe('Tomorrow');
+    expect(relativeStart('2026-10-15T13:00:00.000Z', Date.parse('2026-10-13T17:00:00.000Z'))).toBe('in 2 days');
+    // Later the same day, however many hours: the time.
+    expect(relativeStart('2026-10-15T17:00:00.000Z', Date.parse('2026-10-15T04:00:00.000Z'))).toBe('in 13 h');
     expect(relativeStart(SLOT, start - 3 * 86_400_000)).toBe('in 3 days');
   });
 

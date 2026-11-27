@@ -36,7 +36,7 @@ export const NextVisitCard: React.FC<{ appointment: AppointmentSummary; onPress:
 }) => {
   const styles = useStyles(makeStyles);
   const { colors, opacity } = useTheme();
-  const soon = relativeStart(a.startAt, now, a.endAt);
+  const soon = relativeStart(a.startAt, now, a.endAt, a.timezone);
   const where = a.kind === 'video' ? 'Video consultation' : [a.location.name, a.location.area].filter(Boolean).join(', ');
   const soft = { color: colors.onScrimSoft };
   return (

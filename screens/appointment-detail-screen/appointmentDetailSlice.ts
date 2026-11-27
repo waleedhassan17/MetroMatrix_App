@@ -12,14 +12,14 @@ import { createAppSlice } from '../../store/createAppSlice';
 import { cancelAppointment, fetchAppointment, rescheduleAppointment } from '../../networks/health/appointments';
 import { fetchDays, fetchSlots } from '../../networks/health/availability';
 
-import { toRejectedValue, required } from '../../networks/network/network';
+import { errorCopy, toRejectedValue, required } from '../../networks/network/network';
 import { alternativesFrom, appointmentDetailSerializer } from '../../serializers/health/appointmentSerializer';
 import type { AppointmentDetail, CancelReason, DayAvailability, HealthRecord, Slot } from '../../models';
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { submitAppointmentProofAsync } from '../payment-proof-screen/paymentProofSlice';
 import { confirmBookingAsync } from '../book-appointment-sheet/bookAppointmentSlice';
 import { daysSerializer, slotDaySerializer } from '../../serializers/health/discoverySerializer';
-import { attachRecords, listRecords } from '../shared/healthReads';
+import { listRecords, syncSharedRecords } from '../shared/healthReads';
 
 export interface AppointmentEntry {
   appointment: AppointmentDetail | null;
@@ -38,6 +38,8 @@ export interface RescheduleSheet {
   loading: boolean;
   /** A taken time's alternatives, shown in place. */
   alternatives: string[];
+  /** The attempt's Idempotency-Key: kept while the same time is retried, new for another time. */
+  attemptKey: string;
 }
 
 export interface AppointmentDetailSliceState {
@@ -63,6 +65,7 @@ const NO_RESCHEDULE: RescheduleSheet = {
   selected: null,
   loading: false,
   alternatives: [],
+  attemptKey: '',
 };
 
 const initialState: AppointmentDetailSliceState = {
@@ -103,8 +106,10 @@ export const appointmentDetailSlice = createAppSlice({
     closeReschedule: create.reducer(state => {
       state.reschedule.open = false;
     }),
-    pickRescheduleSlot: create.reducer((state, action: PayloadAction<string>) => {
-      state.reschedule.selected = action.payload;
+    pickRescheduleSlot: create.reducer((state, action: PayloadAction<{ startAt: string; attemptKey: string }>) => {
+      if (state.reschedule.selected === action.payload.startAt && state.reschedule.attemptKey) return;
+      state.reschedule.selected = action.payload.startAt;
+      state.reschedule.attemptKey = action.payload.attemptKey;
     }),
     closeRecordsSheet: create.reducer(state => {
       state.recordsSheet.open = false;
@@ -112,7 +117,8 @@ export const appointmentDetailSlice = createAppSlice({
     togglePickedRecord: create.reducer((state, action: PayloadAction<string>) => {
       const id = action.payload;
       const sel = state.recordsSheet.selected;
-      state.recordsSheet.selected = sel.includes(id) ? sel.filter(x => x !== id) : [...sel, id];
+      // At most 10 reports go with one visit (the API's limit).
+      state.recordsSheet.selected = sel.includes(id) ? sel.filter(x => x !== id) : sel.length < 10 ? [...sel, id] : sel;
     }),
 
     /** Opens "Share more records" with what is already shared ticked. */
@@ -264,9 +270,9 @@ export const appointmentDetailSlice = createAppSlice({
     ),
 
     rescheduleAsync: create.asyncThunk(
-      async ({ code, startAt }: { code: string; startAt: string }, { rejectWithValue }) => {
+      async ({ code, startAt, attemptKey }: { code: string; startAt: string; attemptKey: string }, { rejectWithValue }) => {
         try {
-          return await rescheduleAppointment(code, startAt);
+          return await rescheduleAppointment(code, startAt, attemptKey || undefined);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -299,9 +305,9 @@ export const appointmentDetailSlice = createAppSlice({
     ),
 
     attachRecordsAsync: create.asyncThunk(
-      async ({ code, recordIds }: { code: string; recordIds: string[] }, { rejectWithValue }) => {
+      async ({ code, shared, selected }: { code: string; shared: string[]; selected: string[] }, { rejectWithValue }) => {
         try {
-          return await attachRecords(code, recordIds);
+          return await syncSharedRecords(code, shared, selected);
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
@@ -318,7 +324,8 @@ export const appointmentDetailSlice = createAppSlice({
         },
         rejected: (state, action) => {
           state.busy = null;
-          state.actionError = readRejection(action, "The records weren't shared. Try again.");
+          const error = readRejection(action, "The reports didn't change. Try again.");
+          state.actionError = { ...error, message: errorCopy(error.code, error.details) ?? error.message };
         },
       },
     ),

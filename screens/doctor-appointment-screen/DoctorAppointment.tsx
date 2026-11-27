@@ -416,7 +416,7 @@ const DoctorAppointmentContent: React.FC<Props> = ({ route, navigation }) => {
       ) : null}
 
       <SectionCard title="Progress" icon="git-commit-outline">
-        <StatusTimeline steps={appointmentTimeline(a.status, a.kind, a.payment.method === 'transfer')} />
+        <StatusTimeline steps={appointmentTimeline(a.status, a.kind, a.payment.method === 'transfer', a.payment.status)} />
       </SectionCard>
 
       <SectionCard title="Private notes" subtitle="Only you see these." icon="lock-closed-outline">

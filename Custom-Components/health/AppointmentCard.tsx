@@ -45,7 +45,7 @@ export const AppointmentCard: React.FC<{
   const { service, colors, opacity } = useTheme();
   const block = dateBlock(a.startAt, a.timezone);
   const status = APPOINTMENT_STATUS[a.status];
-  const soon = relativeStart(a.startAt, now, a.endAt);
+  const soon = relativeStart(a.startAt, now, a.endAt, a.timezone);
   const upcoming = status.tone !== 'success' && a.status !== 'cancelled' && a.status !== 'no_show';
   const where = a.kind === 'video' ? 'Video consultation' : [a.location.name, a.location.area].filter(Boolean).join(', ');
   return (

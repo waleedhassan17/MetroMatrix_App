@@ -6,6 +6,8 @@
 // allows now: Join video, Pay, Reschedule (once, same location), Cancel
 // (with a late-cancel note inside the cutoff), View prescription, Rate visit.
 
+import { newUuid } from '../../utils/ids/ids';
+import { Alert } from '../../utils/alert/alert';
 import React, { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -37,7 +39,7 @@ import {
   TextAction,
   TextField,
 } from '../../Custom-Components/index';
-import { APPOINTMENT_PAYMENT_STATUS, APPOINTMENT_STATUS, KIND_LABEL, appointmentTimeline } from '../../models/health/appointmentStatusModel';
+import { APPOINTMENT_PAYMENT_STATUS, APPOINTMENT_STATUS, KIND_LABEL, appointmentTimeline, visitChangeNote } from '../../models/health/appointmentStatusModel';
 import { CANCEL_REASONS, MAX_REASON, REASON_TAGS, validateCancel } from '../../models/health/bookingModel';
 import { recordTypeIcon, recordTypeLabel } from '../../models/health/recordModel';
 import type { IonName } from '../../Custom-Components/index';
@@ -66,11 +68,15 @@ import {
   togglePickedRecord,
 } from './appointmentDetailSlice';
 
+/** The same ids, in any order. */
+const sameSet = (x: string[], y: string[]) => x.length === y.length && x.every(id => y.includes(id));
+
 type Props = NativeStackScreenProps<OrdersStackParamList, 'AppointmentDetail'>;
 
 const makeStyles = ({ space, gutter }: Theme) =>
   StyleSheet.create({
     status: { gap: space.s8 },
+    sharedRow: { flexDirection: 'row', alignItems: 'center', gap: space.s8 },
     statusRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space.s8 },
     doctor: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
     grow: { flex: 1, gap: space.s4 },
@@ -121,7 +127,16 @@ const AppointmentDetailContent: React.FC<Props> = ({ route, navigation }) => {
   const status = APPOINTMENT_STATUS[a.status];
   const video = a.kind === 'video';
   const f = a.flags;
-  const soon = relativeStart(a.startAt, undefined, a.endAt);
+  const stopSharing = (recordId: string, title: string) =>
+    Alert.alert(`Stop sharing ${title}?`, 'The doctor can no longer open it for this visit.', [
+      { text: 'Keep sharing', style: 'cancel' },
+      {
+        text: 'Stop sharing',
+        style: 'destructive',
+        onPress: () => void dispatch(attachRecordsAsync({ code, shared: a.records.map(x => x.id), selected: a.records.map(x => x.id).filter(x => x !== recordId) })),
+      },
+    ]);
+  const soon = relativeStart(a.startAt, undefined, a.endAt, a.timezone);
   const cancelErrors = validateCancel(s.cancelSheet.reason, s.cancelSheet.note);
   const r = s.reschedule;
 
@@ -136,7 +151,7 @@ const AppointmentDetailContent: React.FC<Props> = ({ route, navigation }) => {
 
   const moveTo = async () => {
     if (!r.selected) return;
-    const res = await dispatch(rescheduleAsync({ code, startAt: r.selected }));
+    const res = await dispatch(rescheduleAsync({ code, startAt: r.selected, attemptKey: r.attemptKey }));
     const moved = rescheduleAsync.fulfilled.match(res) ? selectAppointmentState(appStore.getState()).rescheduled : null;
     if (moved) {
       haptics.success();
@@ -165,7 +180,7 @@ const AppointmentDetailContent: React.FC<Props> = ({ route, navigation }) => {
           ) : null}
         </View>
         <AppText variant="body" tone="muted">
-          {a.status === 'cancelled' && a.cancelReason ? `${status.description} ${a.cancelReason}.` : status.description}
+          {visitChangeNote(a) ?? status.description}
         </AppText>
       </View>
 
@@ -247,14 +262,19 @@ const AppointmentDetailContent: React.FC<Props> = ({ route, navigation }) => {
         <AppText variant="label">Shared with the doctor</AppText>
         {a.records.length ? (
           a.records.map(rec => (
-            <ListRow
-              key={rec.id}
-              title={rec.title}
-              subtitle={`${recordTypeLabel(rec.type)} · ${rec.memberName}`}
-              leftIcon={recordTypeIcon(rec.type) as IonName}
-              onPress={() => navigation.navigate('RecordDetail', { id: rec.id })}
-              chevron
-            />
+            <View key={rec.id} style={styles.sharedRow}>
+              <View style={styles.grow}>
+                <ListRow
+                  title={rec.title}
+                  subtitle={`${recordTypeLabel(rec.type)} · ${rec.memberName}`}
+                  leftIcon={recordTypeIcon(rec.type) as IonName}
+                  onPress={() => navigation.navigate('RecordDetail', { id: rec.id })}
+                  chevron={false}
+                />
+              </View>
+              {/* Unsharing is always allowed: the doctor loses access at once. */}
+              <TextAction label="Stop sharing" tone="muted" onPress={() => stopSharing(rec.id, rec.title)} disabled={s.busy === 'records'} />
+            </View>
           ))
         ) : (
           <AppText variant="small" tone="muted">
@@ -266,7 +286,8 @@ const AppointmentDetailContent: React.FC<Props> = ({ route, navigation }) => {
         ) : null}
       </Card>
 
-      {a.payment.instructions && (a.payment.method === 'transfer' || a.payment.status !== 'pay_at_visit') ? (
+      {/* The transfer card only while money is owed or being checked; every other state reads from the status model. */}
+      {a.payment.instructions && ['awaiting_transfer', 'proof_rejected', 'proof_submitted'].includes(a.payment.status) ? (
         <PaymentInstructionsCard
           instructions={a.payment.instructions}
           status={a.payment.status}
@@ -284,7 +305,7 @@ const AppointmentDetailContent: React.FC<Props> = ({ route, navigation }) => {
         </Card>
       )}
 
-      <StatusTimeline steps={appointmentTimeline(a.status, a.kind, a.payment.method === 'transfer')} />
+      <StatusTimeline steps={appointmentTimeline(a.status, a.kind, a.payment.method === 'transfer', a.payment.status)} />
 
       <View style={styles.actions}>
         {a.prescriptionId ? <Button label="View prescription" leftIcon="document-text-outline" onPress={() => nav.openPrescription(a.prescriptionId!)} fullWidth /> : null}
@@ -299,7 +320,8 @@ const AppointmentDetailContent: React.FC<Props> = ({ route, navigation }) => {
           />
         ) : null}
         {f.canCancel ? <Button label="Cancel appointment" variant="ghost" onPress={() => dispatch(openCancelSheet())} fullWidth /> : null}
-        {a.status === 'completed' || a.status === 'cancelled' || a.status === 'no_show' ? (
+        {/* Again after a visit that happened (or was missed); a moved or cancelled one has its own next step. */}
+        {a.status === 'completed' || a.status === 'no_show' ? (
           <Button label="Book again" variant="ghost" onPress={() => nav.openDoctor(a.doctor.id, { locationId: a.location.id })} fullWidth />
         ) : null}
       </View>
@@ -349,7 +371,7 @@ const AppointmentDetailContent: React.FC<Props> = ({ route, navigation }) => {
             <InlineNotice tone="warning" title="That time was just taken" message="Choose one of the next free times:" />
             <View style={styles.chips}>
               {r.alternatives.map(t => (
-                <ChoiceChip key={t} label={formatWhen(t, r.timezone)} icon="time-outline" selected={r.selected === t} onPress={() => dispatch(pickRescheduleSlot(t))} />
+                <ChoiceChip key={t} label={formatWhen(t, r.timezone)} icon="time-outline" selected={r.selected === t} onPress={() => dispatch(pickRescheduleSlot({ startAt: t, attemptKey: newUuid() }))} />
               ))}
             </View>
           </>
@@ -369,7 +391,7 @@ const AppointmentDetailContent: React.FC<Props> = ({ route, navigation }) => {
           timezone={r.timezone}
           selected={r.selected}
           loading={r.loading}
-          onSelect={t => dispatch(pickRescheduleSlot(t))}
+          onSelect={t => dispatch(pickRescheduleSlot({ startAt: t, attemptKey: newUuid() }))}
           nextAvailable={r.nextAvailable}
           onNextAvailable={date => void dispatch(rescheduleDayAsync({ doctorId: a.doctor.id, locationId: a.location.id, date }))}
         />
@@ -380,16 +402,18 @@ const AppointmentDetailContent: React.FC<Props> = ({ route, navigation }) => {
         visible={s.recordsSheet.open}
         onClose={() => dispatch(closeRecordsSheet())}
         title="Share reports with the doctor"
+        subtitle={`${a.patient.name}'s reports only · at most 10`}
         footer={
           <Button
-            label="Share"
-            onPress={() => void dispatch(attachRecordsAsync({ code, recordIds: s.recordsSheet.selected }))}
+            label="Save"
+            onPress={() => void dispatch(attachRecordsAsync({ code, shared: a.records.map(x => x.id), selected: s.recordsSheet.selected }))}
             loading={s.busy === 'records'}
+            disabled={sameSet(a.records.map(x => x.id), s.recordsSheet.selected)}
             fullWidth
           />
         }>
         {s.recordsSheet.loading && !s.recordsSheet.records.length ? <SkeletonLines lines={4} /> : null}
-        {s.recordsSheet.records.map(rec => (
+        {s.recordsSheet.records.filter(rec => rec.memberId === a.patient.familyMemberId).map(rec => (
           <Checkbox
             key={rec.id}
             checked={s.recordsSheet.selected.includes(rec.id)}

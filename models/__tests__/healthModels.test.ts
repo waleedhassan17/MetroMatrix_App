@@ -1,6 +1,6 @@
 // Health form rules and the one status map.
 
-import { APPOINTMENT_PAYMENT_STATUS, APPOINTMENT_STATUS, appointmentTimeline } from '../health/appointmentStatusModel';
+import { APPOINTMENT_PAYMENT_STATUS, APPOINTMENT_STATUS, appointmentTimeline, visitChangeNote } from '../health/appointmentStatusModel';
 import { cancelReasonText, defaultPaymentFor, paymentOptionsFor, prepayDeadline, validateBooking, validateCancel } from '../health/bookingModel';
 import {
   appDayFromWeekday,
@@ -66,6 +66,11 @@ describe('appointmentStatusModel', () => {
     const cancelled = appointmentTimeline('cancelled', 'clinic', false);
     expect(cancelled.every(s => s.state !== 'failed')).toBe(true);
     expect(appointmentTimeline('completed', 'clinic', false).every(s => s.state === 'done')).toBe(true);
+    // The payment step follows the money, not the visit: a video seen but not yet paid still owes it.
+    expect(appointmentTimeline('completed', 'video', true, 'awaiting_transfer')[1]).toEqual({ label: 'Payment', state: 'current' });
+    expect(appointmentTimeline('confirmed', 'video', true, 'proof_submitted')[1]).toEqual({ label: 'Payment in review', state: 'current' });
+    expect(appointmentTimeline('confirmed', 'video', true, 'paid')[1]).toEqual({ label: 'Payment', state: 'done' });
+    expect(appointmentTimeline('cancelled', 'video', true, 'void').map(s => s.label)).not.toContain('Payment');
   });
 });
 
@@ -347,5 +352,20 @@ describe('the real API’s vocabulary (MetroMatrix-API docs/API_HEALTH.md)', () 
   it('keeps a cancel reason as one line of text', () => {
     expect(cancelReasonText('schedule_clash', ' travelling ')).toBe('Schedule clash: travelling');
     expect(cancelReasonText('feeling_better', null)).toBe('Feeling better');
+  });
+});
+
+describe('visitChangeNote (what changed, and who changed it)', () => {
+  const base = { status: 'confirmed' as const, cancelReason: null, cancelledBy: null, rescheduledFromId: null, followUpOfId: null, timeline: [], doctor: { name: 'Dr. Sana Iqbal' } };
+  it('names the doctor’s move with their reason, and never says "cancelled. rescheduled."', () => {
+    const moved = visitChangeNote({ ...base, status: 'cancelled', cancelReason: 'rescheduled', cancelledBy: 'doctor', timeline: [{ note: 'Moved by the doctor: I am at a conference' }] });
+    expect(moved).toBe('Dr. Sana Iqbal moved this visit to a new time: I am at a conference. Your new visit is in Appointments, with your payment and reports.');
+    expect(visitChangeNote({ ...base, rescheduledFromId: 'x', timeline: [{ note: 'Moved by the doctor' }] })).toBe('Dr. Sana Iqbal moved your visit to this time.');
+    expect(visitChangeNote({ ...base, status: 'cancelled', cancelReason: 'rescheduled', cancelledBy: 'patient' })).toBe('You moved this visit to a new time. Your new visit is in Appointments.');
+  });
+  it('explains the doctor’s cancellation and follow-ups, and stays quiet otherwise', () => {
+    expect(visitChangeNote({ ...base, status: 'cancelled', cancelledBy: 'doctor', cancelReason: 'Clinic closed for repairs' })).toBe('Dr. Sana Iqbal cancelled this visit: Clinic closed for repairs.');
+    expect(visitChangeNote({ ...base, followUpOfId: 'y' })).toBe('A follow-up Dr. Sana Iqbal booked after your last visit.');
+    expect(visitChangeNote(base)).toBeNull();
   });
 });

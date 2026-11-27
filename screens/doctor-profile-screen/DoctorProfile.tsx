@@ -351,7 +351,7 @@ const DoctorProfileContent: React.FC<Props> = ({ route, navigation }) => {
           ) : null}
         </>
       )}
-      <BookAppointmentSheet />
+      <BookAppointmentSheet viewKey={key} />
     </ScreenShell>
   );
 };

@@ -204,6 +204,9 @@ export const appointmentDetailSerializer = fromResponse((raw: unknown, now: numb
       ? `This is within the doctor's ${noticeHours}-hour notice, so it counts as a late cancellation. Please give notice next time if you can.`
       : null,
     cancelReason: strOrNull(raw.cancelReason),
+    cancelledBy: (['patient', 'doctor', 'system'] as const).find(x => x === raw.cancelledBy) ?? null,
+    rescheduledFromId: strOrNull(raw.rescheduledFromId),
+    followUpOfId: strOrNull(raw.followUpOfId),
     // One reschedule per visit: a rescheduled visit can't move again.
     rescheduleCount: strOrNull(raw.rescheduledFromId) ? 1 : 0,
     prescriptionId: strOrNull(raw.prescriptionId),

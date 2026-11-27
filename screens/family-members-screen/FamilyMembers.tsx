@@ -11,8 +11,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { ServiceScope, useStyles, type Theme } from '../../theme/index';
-import { Avatar, Button, Card, Divider, EmptyState, IconButton, InlineNotice, ListRow, ScreenShell, SkeletonLines } from '../../Custom-Components/index';
-import { relationLabel } from '../../models/health/familyMemberModel';
+import { AppText, Avatar, Button, Card, Divider, EmptyState, IconButton, InlineNotice, ListRow, RowCardsSkeleton, ScreenShell } from '../../Custom-Components/index';
+import { relationLabel, MAX_FAMILY } from '../../models/health/familyMemberModel';
 import type { AccountStackParamList } from '../../models';
 import { Alert } from '../../utils/alert/alert';
 import { ageFrom } from '../../utils/health-time/healthTime';
@@ -42,7 +42,7 @@ const FamilyMembersContent: React.FC<Props> = ({ navigation }) => {
   );
 
   const remove = (id: string, name: string) =>
-    Alert.alert(`Remove ${name}?`, 'Their records stay in Health records under your account.', [
+    Alert.alert(`Remove ${name}?`, 'Their health records are deleted with them. Their past visits and prescriptions stay in your history.', [
       { text: 'Keep', style: 'cancel' },
       { text: 'Remove', style: 'destructive', onPress: () => void dispatch(removeFamilyMemberAsync(id)) },
     ]);
@@ -52,12 +52,20 @@ const FamilyMembersContent: React.FC<Props> = ({ navigation }) => {
       title="Family members"
       subtitle="Book visits and keep records for them"
       onBack={canGoBack ? back : undefined}
-      footer={<Button label="Add family member" leftIcon="person-add-outline" onPress={() => navigation.navigate('FamilyMemberForm', undefined)} fullWidth />}
+      footer={
+        s.members.length >= MAX_FAMILY ? (
+          <AppText variant="small" tone="muted" align="center">
+            {`You have ${MAX_FAMILY} family members, the most you can add. Remove one to add someone else.`}
+          </AppText>
+        ) : (
+          <Button label="Add family member" leftIcon="person-add-outline" onPress={() => navigation.navigate('FamilyMemberForm', undefined)} fullWidth />
+        )
+      }
       refreshing={s.status === 'loading' && s.members.length > 0}
       onRefresh={() => void dispatch(loadFamilyAsync())}>
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
       {s.status === 'loading' && !s.members.length ? (
-        <SkeletonLines lines={4} />
+        <RowCardsSkeleton count={3} />
       ) : s.members.length ? (
         <Card padded="horizontal">
           {s.members.map((m, i) => {

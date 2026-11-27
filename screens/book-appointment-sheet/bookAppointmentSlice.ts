@@ -17,6 +17,9 @@ import type { AppointmentPaymentMethod, BookingInput, HealthRecord, PracticeLoca
 import { NO_ERROR, readRejection, type FormStatus, type ServerError } from '../shared/formStatus';
 import { listRecords } from '../shared/healthReads';
 
+/** The most reports one visit can carry (the API's own limit). */
+export const MAX_BOOKING_RECORDS = 10;
+
 export interface BookingSheetState {
   open: boolean;
   /** The profile view that opened it (its grid drops a taken time). */
@@ -100,6 +103,8 @@ export const bookAppointmentSlice = createAppSlice({
     }),
     setBookingFor: create.reducer((state, action: PayloadAction<string | null>) => {
       state.familyMemberId = action.payload;
+      // Only this person's reports can go with their visit.
+      state.recordIds = state.recordIds.filter(id => state.records.find(r => r.id === id)?.memberId === action.payload);
     }),
     toggleReasonTag: create.reducer((state, action: PayloadAction<ReasonTag>) => {
       const t = action.payload;
@@ -116,11 +121,13 @@ export const bookAppointmentSlice = createAppSlice({
     }),
     toggleRecord: create.reducer((state, action: PayloadAction<string>) => {
       const id = action.payload;
-      state.recordIds = state.recordIds.includes(id) ? state.recordIds.filter(x => x !== id) : [...state.recordIds, id];
+      if (state.recordIds.includes(id)) state.recordIds = state.recordIds.filter(x => x !== id);
+      else if (state.recordIds.length < MAX_BOOKING_RECORDS) state.recordIds = [...state.recordIds, id];
     }),
-    /** Picking an alternative after SLOT_TAKEN. */
-    pickAlternative: create.reducer((state, action: PayloadAction<string>) => {
-      state.startAt = action.payload;
+    /** Picking an alternative after SLOT_TAKEN: a new booking, so a new idempotency key. */
+    pickAlternative: create.reducer((state, action: PayloadAction<{ startAt: string; idempotencyKey: string }>) => {
+      state.startAt = action.payload.startAt;
+      state.idempotencyKey = action.payload.idempotencyKey;
       state.alternatives = [];
       state.error = NO_ERROR;
     }),

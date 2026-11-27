@@ -186,6 +186,11 @@ export const symptomResultSerializer = fromResponse((raw: unknown): SymptomResul
           ),
         ).slice(0, 3),
     specialty: !emergency && isObject(raw.specialty) && str(raw.specialty.slug) ? specialtyRefSerializer(raw.specialty) : null,
+    urgency: emergency ? null : (['routine', 'soon', 'urgent'] as const).find(u => u === raw.urgency) ?? null,
+    advice: emergency ? null : strOrNull(raw.advice),
+    alternatives: emergency
+      ? []
+      : compact(arr(raw.alternatives).map(a => (isObject(a) && str(a.slug) ? specialtyRefSerializer(a) : null))).slice(0, 2),
     // Never shown without one: the API's own words, or ours.
     disclaimer: str(raw.disclaimer) || DISCLAIMER,
   };

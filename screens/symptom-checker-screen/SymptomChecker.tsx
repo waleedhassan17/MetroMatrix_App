@@ -18,6 +18,10 @@ import { selectUser } from '../../store/authSlice';
 import { loadFamilyAsync, selectFamily } from '../family-members-screen/familySlice';
 import { SYMPTOM_EXAMPLES, checkSymptomsAsync, selectSymptomChecker, setSymptomFor, setSymptomText } from './symptomCheckerSlice';
 
+
+/** The API needs at least this much to work with (`text`, 10–1000). */
+const MIN_SYMPTOM_TEXT = 10;
+
 type Props = NativeStackScreenProps<HomeStackParamList, 'SymptomChecker'>;
 
 const makeStyles = ({ space }: Theme) =>
@@ -46,9 +50,9 @@ const SymptomCheckerContent: React.FC<Props> = ({ navigation }) => {
     if (family.status === 'idle') void dispatch(loadFamilyAsync());
   }, [family.status, dispatch]);
 
-  const check = async () => {
+    const check = async () => {
     const text = s.text.trim();
-    if (text.length < 3) {
+    if (text.length < MIN_SYMPTOM_TEXT) {
       haptics.warning();
       return;
     }
@@ -70,7 +74,7 @@ const SymptomCheckerContent: React.FC<Props> = ({ navigation }) => {
       title="Not sure who to see?"
       subtitle="Describe how you feel. We’ll suggest the right specialty."
       onBack={back}
-      footer={<Button label="Check" onPress={() => void check()} loading={s.status === 'loading'} disabled={s.text.trim().length < 3} fullWidth />}>
+      footer={<Button label="Check" onPress={() => void check()} loading={s.status === 'loading'} disabled={s.text.trim().length < MIN_SYMPTOM_TEXT} fullWidth />}>
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
       <View style={styles.group}>
         <AppText variant="label">Who is it for</AppText>
@@ -83,6 +87,7 @@ const SymptomCheckerContent: React.FC<Props> = ({ navigation }) => {
         multiline
         maxLength={500}
         placeholder="Fever and sore throat for 3 days"
+        helper={s.text.trim().length < MIN_SYMPTOM_TEXT ? `A few words at least (${MIN_SYMPTOM_TEXT} characters).` : undefined}
       />
       <View style={styles.group}>
         <AppText variant="small" tone="muted">

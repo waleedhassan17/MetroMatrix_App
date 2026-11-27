@@ -67,7 +67,11 @@ const BookingConfirmedContent: React.FC<Props> = ({ route, navigation }) => {
     );
   }
 
-  const owed = a.payment.method === 'transfer' && a.status === 'awaiting_payment';
+  // A transfer still to send (any visit paid by transfer, prepay or not), and
+  // whether it must arrive before the booking is confirmed; once sent, it's in review.
+  const due = a.payment.method === 'transfer' && (a.payment.status === 'awaiting_transfer' || a.payment.status === 'proof_rejected');
+  const owed = due && a.status === 'awaiting_payment';
+  const inReview = a.payment.status === 'proof_submitted';
   const video = a.kind === 'video';
 
   const copyCode = async () => {
@@ -91,16 +95,16 @@ const BookingConfirmedContent: React.FC<Props> = ({ route, navigation }) => {
 
   return (
     <ScreenShell
-      title={owed ? 'Almost done' : 'Appointment confirmed'}
+      title={owed ? 'Almost done' : inReview ? 'Payment in review' : 'Appointment confirmed'}
       subtitle={`${a.doctor.name} · ${a.doctor.specialty.name}`}
       onBack={back}
       footer={<Button label="Done" onPress={done} fullWidth />}>
       <View style={styles.top}>
         <View style={[styles.check, { backgroundColor: service.accentSoft }]}>
-          <IonIcon name={owed ? 'time-outline' : 'checkmark-circle'} size="hero" color={service.accentDeep} />
+          <IonIcon name={owed || inReview ? 'time-outline' : 'checkmark-circle'} size="hero" color={service.accentDeep} />
         </View>
         <AppText variant="h1" align="center" accessibilityRole="header">
-          {owed ? 'Send the fee to confirm' : 'Your appointment is confirmed'}
+          {owed ? 'Send the fee to confirm' : inReview ? 'The doctor is checking your transfer' : 'Your appointment is confirmed'}
         </AppText>
         <View style={styles.code}>
           <AppText variant="body" tone="muted">
@@ -120,7 +124,7 @@ const BookingConfirmedContent: React.FC<Props> = ({ route, navigation }) => {
             <AppText variant="title">{formatLongDate(a.startAt, a.timezone)}</AppText>
             <AppText variant="body">{formatTimeRange(a.startAt, a.endAt, a.timezone)}</AppText>
             <AppText variant="small" tone="muted">
-              {[relativeStart(a.startAt, undefined, a.endAt), `For ${a.patient.name}`, `Fee ${formatPKR(a.fee)}`].filter(Boolean).join(' · ')}
+              {[relativeStart(a.startAt, undefined, a.endAt, a.timezone), `For ${a.patient.name}`, `Fee ${formatPKR(a.fee)}`].filter(Boolean).join(' · ')}
             </AppText>
           </View>
         </View>
@@ -151,7 +155,7 @@ const BookingConfirmedContent: React.FC<Props> = ({ route, navigation }) => {
         </View>
       </Card>
 
-      {owed && a.payment.instructions ? (
+      {(due || inReview) && a.payment.instructions ? (
         <PaymentInstructionsCard
           instructions={a.payment.instructions}
           status={a.payment.status}

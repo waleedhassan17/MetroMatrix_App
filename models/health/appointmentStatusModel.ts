@@ -90,10 +90,20 @@ const MAIN_PATH: AppointmentStatus[] = ['confirmed', 'checked_in', 'in_progress'
  * main path up to where it is. A cancelled or missed visit ends on that step
  * (shown as current, never as a red failure).
  */
-export const appointmentTimeline = (status: AppointmentStatus, kind: ConsultKind, needsTransfer: boolean): TimelineStep[] => {
+export const appointmentTimeline = (
+  status: AppointmentStatus,
+  kind: ConsultKind,
+  needsTransfer: boolean,
+  payment?: AppointmentPaymentStatus,
+): TimelineStep[] => {
   const steps: TimelineStep[] = [{ label: 'Booked', state: 'done' }];
-  if (needsTransfer) {
-    steps.push({ label: 'Payment', state: status === 'awaiting_payment' ? 'current' : 'done' });
+  // The payment step says what really happened to the money: done only once
+  // it was paid, in review while the doctor checks, owed until then; a void
+  // transfer (nothing owed) has no step at all.
+  if (needsTransfer && payment !== 'void') {
+    const paid = payment === undefined ? status !== 'awaiting_payment' : ['paid', 'collected', 'refund_due', 'refunded'].includes(payment);
+    const label = payment === 'proof_submitted' ? APPOINTMENT_PAYMENT_STATUS.proof_submitted.label : 'Payment';
+    steps.push({ label, state: paid ? 'done' : 'current' });
   }
   if (status === 'cancelled' || status === 'no_show') {
     steps.push({ label: APPOINTMENT_STATUS[status].label, description: APPOINTMENT_STATUS[status].description, state: 'current' });
@@ -112,3 +122,36 @@ export const appointmentTimeline = (status: AppointmentStatus, kind: ConsultKind
 /** Upcoming means it can still happen; everything else is past. */
 export const isUpcomingStatus = (status: AppointmentStatus) =>
   status === 'awaiting_payment' || status === 'confirmed' || status === 'checked_in' || status === 'in_progress';
+
+/**
+ * What changed about a visit and who changed it, in one plain sentence for
+ * the patient: a move (theirs or the doctor's, with the doctor's reason from
+ * the timeline), a doctor's or MetroMatrix's cancellation, a follow-up the
+ * doctor booked. null when nothing needs explaining.
+ */
+export const visitChangeNote = (a: {
+  status: AppointmentStatus;
+  cancelReason: string | null;
+  cancelledBy: 'patient' | 'doctor' | 'system' | null;
+  rescheduledFromId: string | null;
+  followUpOfId: string | null;
+  timeline: { note: string | null }[];
+  doctor: { name: string };
+}): string | null => {
+  const notes = a.timeline.map(e => e.note ?? '');
+  const movedByDoctor = notes.find(n => n.startsWith('Moved by the doctor'));
+  const why = movedByDoctor?.split(':').slice(1).join(':').trim();
+  if (a.status === 'cancelled') {
+    if (a.cancelReason === 'rescheduled')
+      return a.cancelledBy === 'doctor'
+        ? `${a.doctor.name} moved this visit to a new time${why ? `: ${why}` : ''}. Your new visit is in Appointments, with your payment and reports.`
+        : 'You moved this visit to a new time. Your new visit is in Appointments.';
+    if (a.cancelledBy === 'doctor') return `${a.doctor.name} cancelled this visit${a.cancelReason ? `: ${a.cancelReason}` : ''}.`;
+    if (a.cancelledBy === 'system') return 'MetroMatrix cancelled this visit because it was never confirmed.';
+    return a.cancelReason ? `You cancelled this visit: ${a.cancelReason}.` : 'You cancelled this visit.';
+  }
+  if (a.rescheduledFromId) return movedByDoctor ? `${a.doctor.name} moved your visit to this time.` : 'You moved your visit to this time.';
+  if (a.followUpOfId) return `A follow-up ${a.doctor.name} booked after your last visit.`;
+  return null;
+};
+

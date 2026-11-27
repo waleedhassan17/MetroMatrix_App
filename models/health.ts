@@ -390,6 +390,11 @@ export interface AppointmentDetail extends AppointmentSummary {
   isLateCancel: boolean;
   lateCancelNote: string | null;
   cancelReason: string | null;
+  /** Who cancelled (a move is a cancel with the reason `rescheduled`). */
+  cancelledBy: 'patient' | 'doctor' | 'system' | null;
+  /** This visit replaced an earlier one (a move), or follows up an earlier one (booked by the doctor). */
+  rescheduledFromId: string | null;
+  followUpOfId: string | null;
   rescheduleCount: number;
   prescriptionId: string | null;
   reviewed: boolean;
@@ -521,11 +526,18 @@ export interface VideoJoin {
   closesAt: string;
 }
 
+export type SymptomUrgency = 'routine' | 'soon' | 'urgent';
+
 export interface SymptomResult {
   emergency: boolean;
   emergencyNumbers: EmergencyNumber[];
   areas: { title: string; body: string }[];
   specialty: SpecialtyRef | null;
+  /** How soon to be seen, and the checker's own advice (not a diagnosis). */
+  urgency: SymptomUrgency | null;
+  advice: string | null;
+  /** Other specialties that could also help. */
+  alternatives: SpecialtyRef[];
   disclaimer: string;
 }
 

@@ -120,7 +120,7 @@ const AppointmentLookup: React.FC<Props> = ({ navigation, route }) => {
           </Card>
           <Card>
             <AppText variant="title">Status</AppText>
-            <StatusTimeline steps={appointmentTimeline(a.status, a.kind, a.payment.method === 'transfer')} />
+            <StatusTimeline steps={appointmentTimeline(a.status, a.kind, a.payment.method === 'transfer', a.payment.status)} />
           </Card>
           {a.timeline.length ? (
             <Card>

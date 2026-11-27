@@ -6,6 +6,7 @@
 // Confirm. If someone took the time a moment ago, three other times are
 // offered right here; picking one and confirming books it.
 
+import { newUuid } from '../../utils/ids/ids';
 import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -39,6 +40,7 @@ import {
   closeBooking,
   confirmBookingAsync,
   loadBookingRecordsAsync,
+  MAX_BOOKING_RECORDS,
   pickAlternative,
   selectBooking,
   setBookingFor,
@@ -60,13 +62,19 @@ const makeStyles = ({ space }: Theme) =>
 
 type Nav = NativeStackNavigationProp<HealthBrowseParamList>;
 
-export const BookAppointmentSheet: React.FC = () => {
+/**
+ * `viewKey`: the profile showing it. Two profiles stacked (a similar doctor
+ * opened from the first) each hold a sheet; only the one that opened it shows.
+ */
+export const BookAppointmentSheet: React.FC<{ viewKey: string }> = ({ viewKey }) => {
   const now = useNow();
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
   const { service } = useTheme();
   const navigation = useNavigation<Nav>();
   const b = useAppSelector(selectBooking);
+  // Only the reports of the person the visit is for.
+  const mine = b.records.filter(r => r.memberId === b.familyMemberId);
   const family = useAppSelector(selectFamily);
   const loc = b.location;
 
@@ -116,7 +124,7 @@ export const BookAppointmentSheet: React.FC = () => {
 
   return (
     <Sheet
-      visible={b.open}
+      visible={b.open && b.viewKey === viewKey}
       onClose={() => dispatch(closeBooking())}
       title="Confirm your appointment"
       footer={<Button label="Confirm appointment" leftIcon="checkmark-circle-outline" onPress={() => void confirm()} loading={b.status === 'loading'} disabled={taken} fullWidth />}>
@@ -147,7 +155,7 @@ export const BookAppointmentSheet: React.FC = () => {
           <InlineNotice tone="warning" title="Someone booked this time a moment ago" message={b.alternatives.length ? 'Choose one of the next free times:' : 'Choose another time on the profile.'} />
           <View style={styles.chips}>
             {b.alternatives.map(a => (
-              <ChoiceChip key={a} label={formatWhen(a, tz)} icon="time-outline" onPress={() => dispatch(pickAlternative(a))} accessibilityHint="Book this time instead" />
+              <ChoiceChip key={a} label={formatWhen(a, tz)} icon="time-outline" onPress={() => dispatch(pickAlternative({ startAt: a, idempotencyKey: newUuid() }))} accessibilityHint="Book this time instead" />
             ))}
           </View>
         </View>
@@ -190,8 +198,9 @@ export const BookAppointmentSheet: React.FC = () => {
         />
         {b.recordsOpen ? (
           <View style={styles.records}>
-            {b.records.length ? (
-              b.records.map(r => (
+            {mine.length ? <AppText variant="caption" tone="muted">{`${b.recordIds.length} of ${MAX_BOOKING_RECORDS} at most`}</AppText> : null}
+            {mine.length ? (
+              mine.map(r => (
                 <Checkbox
                   key={r.id}
                   checked={b.recordIds.includes(r.id)}
@@ -207,7 +216,7 @@ export const BookAppointmentSheet: React.FC = () => {
               ))
             ) : (
               <AppText variant="small" tone="muted">
-                No records yet.
+                {b.familyMemberId ? 'No reports saved for them yet.' : 'No reports saved for you yet.'}
               </AppText>
             )}
             <TextAction label="Upload a new report" icon="cloud-upload-outline" onPress={() => leave(() => navigation.navigate('RecordUpload', undefined))} />

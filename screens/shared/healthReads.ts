@@ -7,7 +7,7 @@
 // again after it.
 
 import { required } from '../../networks/network/network';
-import { attachRecords as attachRecordsRequest, fetchAppointment, submitAppointmentPaymentProof as submitAppointmentPaymentProofRequest } from '../../networks/health/appointments';
+import { attachRecords as attachRecordsRequest, unshareRecord, fetchAppointment, submitAppointmentPaymentProof as submitAppointmentPaymentProofRequest } from '../../networks/health/appointments';
 import { reviewAppointment as reviewAppointmentRequest } from '../../networks/health/reviews';
 import { fetchDoctor, fetchSimilarDoctors } from '../../networks/health/discovery';
 import { createRecord as createRecordRequest, fetchRecord, fetchRecords } from '../../networks/health/records';
@@ -64,5 +64,18 @@ export const submitAppointmentPaymentProof = async (code: string, body: { transa
 /** Share records with the visit (while it's upcoming). */
 export const attachRecords = async (code: string, recordIds: string[]) => {
   await attachRecordsRequest(code, recordIds);
+  return readAppointment(code);
+};
+
+/**
+ * The reports shared with a visit made to match the patient's choice: the
+ * new ones shared in one request (never an empty one), the unticked ones
+ * unshared one by one; then the visit as it now reads.
+ */
+export const syncSharedRecords = async (code: string, shared: string[], selected: string[]) => {
+  const add = selected.filter(id => !shared.includes(id));
+  const remove = shared.filter(id => !selected.includes(id));
+  if (add.length) await attachRecordsRequest(code, add);
+  for (const id of remove) await unshareRecord(code, id);
   return readAppointment(code);
 };
