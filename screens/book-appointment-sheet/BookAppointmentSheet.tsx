@@ -13,25 +13,25 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useNow } from '../../hooks/useNow';
-import { useStyles, useTheme, type Theme } from '../../theme/index';
+import { useStyles, type Theme } from '../../theme/index';
 import {
   AppText,
   Button,
-  Card,
   Checkbox,
   ChoiceChip,
-  IonIcon,
   InlineNotice,
+  MoneyRows,
   PatientPicker,
+  SectionCard,
   Sheet,
-  TextAction,
   TextField,
 } from '../../Custom-Components/index';
+import { selectUser } from '../../store/authSlice';
 import { MAX_REASON, REASON_TAGS, paymentOptionsFor, prepayDeadline } from '../../models/health/bookingModel';
 import { PAYMENT_METHOD_LABEL } from '../../models/health/appointmentStatusModel';
 import { recordTypeLabel } from '../../models/health/recordModel';
 import type { HealthBrowseParamList } from '../../models';
-import { formatOn, formatSlot, formatWhen } from '../../utils/health-time/healthTime';
+import { formatOn, formatWhen } from '../../utils/health-time/healthTime';
 import { formatPKR } from '../../utils/money/money';
 import { haptics } from '../../utils/haptics/haptics';
 import { loadFamilyAsync, selectFamily } from '../family-members-screen/familySlice';
@@ -48,16 +48,13 @@ import {
   setPaymentMethod,
   toggleReasonTag,
   toggleRecord,
-  toggleRecordsPicker,
 } from './bookAppointmentSlice';
 
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
     group: { gap: space.s8 },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
-    line: { flexDirection: 'row', alignItems: 'center', gap: space.s8 },
-    lineText: { flex: 1 },
-    records: { gap: space.s4 },
+    facts: { gap: space.s4 },
   });
 
 type Nav = NativeStackNavigationProp<HealthBrowseParamList>;
@@ -70,9 +67,9 @@ export const BookAppointmentSheet: React.FC<{ viewKey: string }> = ({ viewKey })
   const now = useNow();
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { service } = useTheme();
   const navigation = useNavigation<Nav>();
   const b = useAppSelector(selectBooking);
+  const me = useAppSelector(selectUser);
   // Only the reports of the person the visit is for.
   const mine = b.records.filter(r => r.memberId === b.familyMemberId);
   const family = useAppSelector(selectFamily);
@@ -128,27 +125,20 @@ export const BookAppointmentSheet: React.FC<{ viewKey: string }> = ({ viewKey })
       onClose={() => dispatch(closeBooking())}
       title="Confirm your appointment"
       footer={<Button label="Confirm appointment" leftIcon="checkmark-circle-outline" onPress={() => void confirm()} loading={b.status === 'loading'} disabled={taken} fullWidth />}>
-      <Card>
-        <AppText variant="title">{b.doctorName}</AppText>
-        <View style={styles.line}>
-          <IonIcon name={loc.kind === 'video' ? 'videocam-outline' : 'business-outline'} size="md" color={service.accentDeep} />
-          <AppText variant="body" style={styles.lineText}>
+      <SectionCard
+        title="Visit"
+        icon="calendar-outline"
+        action={{ label: 'Change', onPress: () => dispatch(closeBooking()) }}>
+        <View style={styles.facts}>
+          <AppText variant="title" numberOfLines={1}>
+            {b.doctorName}
+          </AppText>
+          <AppText variant="bodyStrong">{formatWhen(b.startAt, tz)}</AppText>
+          <AppText variant="small" tone="muted" numberOfLines={2}>
             {loc.kind === 'video' ? 'Video consultation' : [loc.name, loc.area].filter(Boolean).join(', ')}
           </AppText>
         </View>
-        <View style={styles.line}>
-          <IonIcon name="calendar-outline" size="md" color={service.accentDeep} />
-          <AppText variant="bodyStrong" style={styles.lineText}>
-            {formatWhen(b.startAt, tz)}
-          </AppText>
-        </View>
-        <View style={styles.line}>
-          <IonIcon name="cash-outline" size="md" color={service.accentDeep} />
-          <AppText variant="body" style={styles.lineText}>
-            {`Fee ${formatPKR(loc.fee)}`}
-          </AppText>
-        </View>
-      </Card>
+      </SectionCard>
 
       {taken ? (
         <View style={styles.group}>
@@ -163,18 +153,17 @@ export const BookAppointmentSheet: React.FC<{ viewKey: string }> = ({ viewKey })
         <InlineNotice message={b.error.message} />
       ) : null}
 
-      <View style={styles.group}>
-        <AppText variant="label">Who is it for</AppText>
+      <SectionCard title="Who it's for" icon="people-outline">
         <PatientPicker
           family={family.members}
           selected={b.familyMemberId}
+          meName={me?.name}
           onSelect={id => dispatch(setBookingFor(id))}
           onAdd={() => leave(() => navigation.navigate('FamilyMemberForm'))}
         />
-      </View>
+      </SectionCard>
 
-      <View style={styles.group}>
-        <AppText variant="label">Reason for the visit (optional)</AppText>
+      <SectionCard title="Reason" subtitle="Optional: it helps the doctor prepare" icon="chatbubble-ellipses-outline">
         <View style={styles.chips}>
           {REASON_TAGS.map(t => (
             <ChoiceChip key={t.key} label={t.label} selected={b.reasonTags.includes(t.key)} onPress={() => dispatch(toggleReasonTag(t.key))} />
@@ -188,44 +177,38 @@ export const BookAppointmentSheet: React.FC<{ viewKey: string }> = ({ viewKey })
           maxLength={MAX_REASON}
           placeholder="Fever and sore throat for three days"
         />
-      </View>
+      </SectionCard>
 
-      <View style={styles.group}>
-        <TextAction
-          label={b.recordIds.length ? `Reports to share (${b.recordIds.length})` : 'Attach reports'}
-          icon={b.recordsOpen ? 'chevron-up' : 'attach-outline'}
-          onPress={() => dispatch(toggleRecordsPicker())}
-        />
-        {b.recordsOpen ? (
-          <View style={styles.records}>
-            {mine.length ? <AppText variant="caption" tone="muted">{`${b.recordIds.length} of ${MAX_BOOKING_RECORDS} at most`}</AppText> : null}
-            {mine.length ? (
-              mine.map(r => (
-                <Checkbox
-                  key={r.id}
-                  checked={b.recordIds.includes(r.id)}
-                  onToggle={() => dispatch(toggleRecord(r.id))}
-                  label={
-                    <View>
-                      <AppText variant="body">{r.title}</AppText>
-                      <AppText variant="caption" tone="muted">{`${recordTypeLabel(r.type)} · ${r.memberName} · ${formatOn(`${r.recordedOn}T12:00:00Z`)}`}</AppText>
-                    </View>
-                  }
-                  accessibilityLabel={`Share ${r.title}`}
-                />
-              ))
-            ) : (
-              <AppText variant="small" tone="muted">
-                {b.familyMemberId ? 'No reports saved for them yet.' : 'No reports saved for you yet.'}
-              </AppText>
-            )}
-            <TextAction label="Upload a new report" icon="cloud-upload-outline" onPress={() => leave(() => navigation.navigate('RecordUpload', undefined))} />
-          </View>
-        ) : null}
-      </View>
+      <SectionCard
+        title="Reports"
+        subtitle={mine.length ? `${b.recordIds.length} of ${MAX_BOOKING_RECORDS} at most, shared only with this doctor` : 'Share earlier reports with this doctor'}
+        icon="document-attach-outline"
+        action={{ label: 'Upload', onPress: () => leave(() => navigation.navigate('RecordUpload', undefined)) }}>
+        {mine.length ? (
+          mine.map(r => (
+            <Checkbox
+              key={r.id}
+              checked={b.recordIds.includes(r.id)}
+              onToggle={() => dispatch(toggleRecord(r.id))}
+              label={
+                <View>
+                  <AppText variant="body" numberOfLines={1}>
+                    {r.title}
+                  </AppText>
+                  <AppText variant="caption" tone="muted" numberOfLines={1}>{`${recordTypeLabel(r.type)} · ${formatOn(`${r.recordedOn}T12:00:00Z`)}`}</AppText>
+                </View>
+              }
+              accessibilityLabel={`Share ${r.title}`}
+            />
+          ))
+        ) : (
+          <AppText variant="small" tone="muted">
+            {b.familyMemberId ? 'No reports saved for them yet.' : 'No reports saved for you yet.'}
+          </AppText>
+        )}
+      </SectionCard>
 
-      <View style={styles.group}>
-        <AppText variant="label">Payment</AppText>
+      <SectionCard title="Payment" icon="wallet-outline">
         {options.length > 1 ? (
           <View style={styles.chips}>
             {options.map(m => (
@@ -235,6 +218,13 @@ export const BookAppointmentSheet: React.FC<{ viewKey: string }> = ({ viewKey })
         ) : (
           <AppText variant="bodyStrong">{loc.kind === 'clinic' ? 'Pay at the clinic' : PAYMENT_METHOD_LABEL[options[0]]}</AppText>
         )}
+        <MoneyRows
+          rows={[
+            { label: 'Consultation fee', value: loc.fee },
+            { label: 'MetroMatrix fee · no commission', value: 0, kind: 'free' },
+            { label: 'You pay the doctor', value: loc.fee, kind: 'total' },
+          ]}
+        />
         <AppText variant="small" tone="muted">
           {b.paymentMethod === 'transfer'
             ? loc.requiresPrepay
@@ -242,7 +232,7 @@ export const BookAppointmentSheet: React.FC<{ viewKey: string }> = ({ viewKey })
               : `You'll see the doctor's account next. Send ${formatPKR(loc.fee)} before your consultation. You pay the doctor directly.`
             : 'You pay the doctor directly. MetroMatrix never holds your money.'}
         </AppText>
-      </View>
+      </SectionCard>
     </Sheet>
   );
 };

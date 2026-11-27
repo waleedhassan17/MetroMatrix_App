@@ -8,9 +8,11 @@ export interface HealthRecordsSliceState {
   /** null = everyone; 'self' = the account holder; else a family member's id. */
   memberId: string | null;
   type: RecordType | null;
+  /** Reports (uploaded records) or the prescriptions doctors wrote. */
+  tab: 'reports' | 'prescriptions';
 }
 
-const initialState: HealthRecordsSliceState = { memberId: null, type: null };
+const initialState: HealthRecordsSliceState = { memberId: null, type: null, tab: 'reports' };
 
 export const healthRecordsSlice = createAppSlice({
   name: 'healthRecords',
@@ -22,11 +24,14 @@ export const healthRecordsSlice = createAppSlice({
     setRecordsType: create.reducer((state, action: PayloadAction<RecordType | null>) => {
       state.type = action.payload;
     }),
+    setRecordsTab: create.reducer((state, action: PayloadAction<'reports' | 'prescriptions'>) => {
+      state.tab = action.payload;
+    }),
   }),
   selectors: {
     selectRecordsFilter: state => state,
   },
 });
 
-export const { setRecordsMember, setRecordsType } = healthRecordsSlice.actions;
+export const { setRecordsMember, setRecordsType, setRecordsTab } = healthRecordsSlice.actions;
 export const { selectRecordsFilter } = healthRecordsSlice.selectors;

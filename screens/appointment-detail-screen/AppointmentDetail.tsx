@@ -38,8 +38,9 @@ import {
   StatusTimeline,
   TextAction,
   TextField,
+  SectionCard,
 } from '../../Custom-Components/index';
-import { APPOINTMENT_PAYMENT_STATUS, APPOINTMENT_STATUS, KIND_LABEL, appointmentTimeline, visitChangeNote } from '../../models/health/appointmentStatusModel';
+import { APPOINTMENT_PAYMENT_STATUS, APPOINTMENT_STATUS, KIND_LABEL, appointmentTimeline, visitChangeNote, eventLabel, isUpcomingStatus } from '../../models/health/appointmentStatusModel';
 import { CANCEL_REASONS, MAX_REASON, REASON_TAGS, validateCancel } from '../../models/health/bookingModel';
 import { recordTypeIcon, recordTypeLabel } from '../../models/health/recordModel';
 import type { IonName } from '../../Custom-Components/index';
@@ -170,7 +171,8 @@ const AppointmentDetailContent: React.FC<Props> = ({ route, navigation }) => {
       onRefresh={() => void dispatch(loadAppointmentAsync(code))}>
       {s.actionError.message && !s.cancelSheet.open && !r.open && !s.recordsSheet.open ? <InlineNotice message={s.actionError.message} /> : null}
 
-      <View style={styles.status}>
+      {/* Where the visit stands, what changed, and the one thing to do now, together. */}
+      <Card>
         <View style={styles.statusRow}>
           <StatusPill label={status.label} tone={status.tone} />
           {soon && (a.status === 'confirmed' || a.status === 'awaiting_payment' || a.status === 'checked_in') ? (
@@ -179,16 +181,20 @@ const AppointmentDetailContent: React.FC<Props> = ({ route, navigation }) => {
             </AppText>
           ) : null}
         </View>
-        <AppText variant="body" tone="muted">
-          {visitChangeNote(a) ?? status.description}
-        </AppText>
-      </View>
-
-      {f.canJoinVideo ? (
-        <Button label="Join consultation" leftIcon="videocam" onPress={() => navigation.navigate('VideoPrecheck', { code })} fullWidth />
-      ) : video && a.joinOpensAt && (a.status === 'confirmed' || a.status === 'awaiting_payment') ? (
-        <InlineNotice tone="info" message={`You can join from here 10 minutes before your time (from ${formatWhen(a.joinOpensAt, a.timezone)}).`} />
-      ) : null}
+        <View style={styles.status}>
+          <AppText variant="title">{formatWhen(a.startAt, a.timezone)}</AppText>
+          <AppText variant="body" tone="muted">
+            {visitChangeNote(a) ?? status.description}
+          </AppText>
+        </View>
+        {f.canJoinVideo ? (
+          <Button label="Join consultation" leftIcon="videocam" onPress={() => navigation.navigate('VideoPrecheck', { code })} fullWidth />
+        ) : f.canPay ? (
+          <Button label="Pay and send proof" leftIcon="card-outline" onPress={() => navigation.navigate('PaymentProof', { appointmentCode: a.code })} fullWidth />
+        ) : video && a.joinOpensAt && (a.status === 'confirmed' || a.status === 'awaiting_payment') ? (
+          <AppText variant="small" tone="muted">{`You can join from here 10 minutes before your time (from ${formatWhen(a.joinOpensAt, a.timezone)}).`}</AppText>
+        ) : null}
+      </Card>
 
       <Card onPress={() => nav.openDoctor(a.doctor.id, { name: a.doctor.name })} accessibilityLabel={`${a.doctor.name}, ${a.doctor.specialty.name}. Open profile`}>
         <View style={styles.doctor}>
@@ -293,7 +299,7 @@ const AppointmentDetailContent: React.FC<Props> = ({ route, navigation }) => {
           status={a.payment.status}
           proof={a.payment.proof}
           payee="doctor"
-          onPaid={f.canPay ? () => navigation.navigate('PaymentProof', { appointmentCode: a.code }) : undefined}
+          // Paying is the status card's action; this card says where and how much.
         />
       ) : (
         <Card>
@@ -305,7 +311,20 @@ const AppointmentDetailContent: React.FC<Props> = ({ route, navigation }) => {
         </Card>
       )}
 
-      <StatusTimeline steps={appointmentTimeline(a.status, a.kind, a.payment.method === 'transfer', a.payment.status)} />
+      {/* What really happened, from the visit's own events; the expected path before any. */}
+      <SectionCard title="History" icon="time-outline">
+        <StatusTimeline
+          steps={
+            a.timeline.length
+              ? a.timeline.map((e, i) => ({
+                  label: eventLabel(e.type),
+                  description: [formatWhen(e.createdAt, a.timezone), e.note].filter(Boolean).join(' · '),
+                  state: i === a.timeline.length - 1 && isUpcomingStatus(a.status) ? ('current' as const) : ('done' as const),
+                }))
+              : appointmentTimeline(a.status, a.kind, a.payment.method === 'transfer', a.payment.status)
+          }
+        />
+      </SectionCard>
 
       <View style={styles.actions}>
         {a.prescriptionId ? <Button label="View prescription" leftIcon="document-text-outline" onPress={() => nav.openPrescription(a.prescriptionId!)} fullWidth /> : null}

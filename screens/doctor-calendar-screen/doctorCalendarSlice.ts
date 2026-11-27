@@ -1,7 +1,9 @@
 // MetroMatrix — Calendar: a day or a week of appointments and time off.
 // Each load carries its request id (the newest answer wins when dates are
-// tapped quickly), and moving to another day or week clears the old range,
-// so its visits never show under the new date. The spinner is the pull's.
+// tapped quickly), and moving to another week clears the old range, so its
+// visits never show under the new date. The spinner is the pull's. Both
+// views read the whole week: the day view's strip counts each day's visits,
+// and moving between days of the same week needs no request.
 
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createAppSlice } from '../../store/createAppSlice';
@@ -40,7 +42,8 @@ const initialState: DoctorCalendarSliceState = {
   error: NO_ERROR,
 };
 
-const keyOf = (date: string, mode: CalendarMode) => `${mode}|${mode === 'day' ? date : weekStart(date)}`;
+/** The week a range covers (both views read the whole week). */
+export const calendarKeyOf = (date: string) => `week|${weekStart(date)}`;
 
 export const doctorCalendarSlice = createAppSlice({
   name: 'doctorCalendar',
@@ -49,18 +52,22 @@ export const doctorCalendarSlice = createAppSlice({
     setCalendarMode: create.reducer((state, action: PayloadAction<CalendarMode>) => {
       state.mode = action.payload;
     }),
+    /** Another day of the week already read: no request. */
+    showCalendarDay: create.reducer((state, action: PayloadAction<string>) => {
+      state.date = action.payload;
+    }),
     loadCalendarAsync: create.asyncThunk(
       async ({ date, mode }: { date: string; mode: CalendarMode; refresh?: boolean }, { rejectWithValue }) => {
         try {
-          return await getCalendar(calendarQuery(date, mode));
+          return await getCalendar(calendarQuery(date, 'week'));
         } catch (e) {
           return rejectWithValue(toRejectedValue(e));
         }
       },
       {
         pending: (state, action) => {
-          const { date, mode, refresh } = action.meta.arg;
-          const key = keyOf(date, mode);
+          const { date, refresh } = action.meta.arg;
+          const key = calendarKeyOf(date);
           state.date = date;
           state.requestId = action.meta.requestId;
           if (state.rangeKey !== key) state.range = null;
@@ -89,5 +96,5 @@ export const doctorCalendarSlice = createAppSlice({
   },
 });
 
-export const { setCalendarMode, loadCalendarAsync } = doctorCalendarSlice.actions;
+export const { setCalendarMode, showCalendarDay, loadCalendarAsync } = doctorCalendarSlice.actions;
 export const { selectDoctorCalendar } = doctorCalendarSlice.selectors;

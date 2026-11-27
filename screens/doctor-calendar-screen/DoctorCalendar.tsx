@@ -26,12 +26,13 @@ import {
   SegmentTabs,
   StatusPill,
   TextAction,
+  DateStrip,
 } from '../../Custom-Components/index';
 import { APPOINTMENT_STATUS } from '../../models/health/appointmentStatusModel';
 import { DAY_PART_LABEL, byDayPart } from '../../models/health/calendarModel';
-import type { CalendarItem, CalendarRange, DoctorPartnerStackParamList } from '../../models';
+import type { CalendarItem, CalendarRange, DoctorPartnerStackParamList, DayAvailability } from '../../models';
 import { PKT, addDays, dateInZone, formatDayChip, formatDayShort, formatSlot, todayInZone, weekStart } from '../../utils/health-time/healthTime';
-import { loadCalendarAsync, selectDoctorCalendar, setCalendarMode, type CalendarMode } from './doctorCalendarSlice';
+import { calendarKeyOf, loadCalendarAsync, selectDoctorCalendar, setCalendarMode, showCalendarDay, type CalendarMode } from './doctorCalendarSlice';
 import { selectHasDoctorFeature } from '../../store/doctorFeaturesSlice';
 import { DayHoursSheet } from '../day-hours-sheet/DayHoursSheet';
 import { loadDayHoursAsync, loadUsualHoursAsync, openDayHours, selectDayHours } from '../day-hours-sheet/dayHoursSlice';
@@ -39,8 +40,9 @@ import type { DayHours } from '../../models';
 
 type Props = NativeStackScreenProps<DoctorPartnerStackParamList, 'DoctorTabs'>;
 
-const makeStyles = ({ space, radius, size }: Theme) =>
+const makeStyles = ({ space, radius, size, gutter }: Theme) =>
   StyleSheet.create({
+    stripBleed: { marginHorizontal: -gutter },
     nav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     navLabel: { flex: 1, alignItems: 'center', gap: space.s0 },
     list: { gap: space.s16 },
@@ -112,6 +114,15 @@ const DoctorCalendarContent: React.FC<Props> = ({ navigation }) => {
   );
 
   const r = s.range;
+  // The week is read once; the day view shows its own day of it.
+  const dayItems = (r?.appointments ?? []).filter(a => dateInZone(a.startAt, a.timezone) === date);
+  /** Another day: from the week already read when it's the same week, else read that week. */
+  const go = (d: string) => (r && calendarKeyOf(d) === s.rangeKey ? dispatch(showCalendarDay(d)) : load(d, s.mode));
+  const weekDays: DayAvailability[] = Array.from({ length: 7 }, (_, i) => addDays(weekStart(date), i)).map(d => ({
+    date: d,
+    slotCount: (r?.appointments ?? []).filter(a => a.status !== 'cancelled' && dateInZone(a.startAt, a.timezone) === d).length,
+    status: null,
+  }));
   // Each location gets its own shade of the accent (tints, never new hues).
   const dots = [service.accent, service.accentDeep, mix(service.accent, colors.surface, 0.45), mix(service.accentDeep, colors.surface, 0.45)];
   const dotOf = (locationId: string) => dots[Math.max(0, r?.locations.findIndex(l => l.id === locationId) ?? 0) % dots.length];
@@ -173,21 +184,34 @@ const DoctorCalendarContent: React.FC<Props> = ({ navigation }) => {
       <View style={styles.nav}>
         <IconButton
           icon="chevron-back"
-          onPress={() => load(addDays(date, -step), s.mode)}
+          onPress={() => go(addDays(date, -step))}
           accessibilityLabel={s.mode === 'day' ? 'Previous day' : 'Previous week'}
         />
         <View style={styles.navLabel}>
           <AppText variant="title" align="center">
             {label}
           </AppText>
-          {date !== today ? <TextAction label={s.mode === 'day' ? 'Back to today' : 'This week'} onPress={() => load(today, s.mode)} /> : null}
+          {date !== today ? <TextAction label={s.mode === 'day' ? 'Back to today' : 'This week'} onPress={() => go(today)} /> : null}
         </View>
         <IconButton
           icon="chevron-forward"
-          onPress={() => load(addDays(date, step), s.mode)}
+          onPress={() => go(addDays(date, step))}
           accessibilityLabel={s.mode === 'day' ? 'Next day' : 'Next week'}
         />
       </View>
+
+      {s.mode === 'day' ? (
+        // The week at a glance: each day's visits, the chosen day in the accent.
+        <View style={styles.stripBleed}>
+          <DateStrip
+            days={weekDays}
+            selected={date}
+            onSelect={go}
+            loading={!r}
+            describe={d => ({ sub: d.slotCount ? `${d.slotCount} ${d.slotCount === 1 ? 'visit' : 'visits'}` : 'Free', label: d.slotCount ? `${d.slotCount} visits` : 'no visits' })}
+          />
+        </View>
+      ) : null}
 
       {r && r.locations.length > 1 ? (
         <View style={styles.legend}>
@@ -229,8 +253,8 @@ const DoctorCalendarContent: React.FC<Props> = ({ navigation }) => {
               message={t.reason ?? 'Patients can’t book you on this day.'}
             />
           ))}
-          {r.appointments.length ? (
-            byDayPart(r.appointments).map(g => (
+          {dayItems.length ? (
+            byDayPart(dayItems).map(g => (
               <View key={g.part} style={styles.group}>
                 <AppText variant="bodyStrong" tone="muted">
                   {`${DAY_PART_LABEL[g.part]} · ${g.items.length}`}
@@ -253,7 +277,7 @@ const DoctorCalendarContent: React.FC<Props> = ({ navigation }) => {
           {date >= today && ownHours && r.locations.length ? (
             <TextAction label="Change hours for this day" icon="time-outline" onPress={() => changeHours(date)} />
           ) : null}
-          {r.appointments.length && date >= today && !timeOffOn(r, date).length ? (
+          {dayItems.length && date >= today && !timeOffOn(r, date).length ? (
             <TextAction label="Take this day off" icon="close-circle-outline" onPress={() => nav.navigate('TimeOff', { date })} />
           ) : null}
         </View>
