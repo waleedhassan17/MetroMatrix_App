@@ -1,10 +1,10 @@
-// SegmentTabs — two looks, one control:
-// - on a page (auth's Sign In / Sign Up): the FYP's sunk track with the selected
-//   segment raised on white and an accent label;
-// - inside the gradient page header: section tabs, the enterprise pattern
-//   (Fluent / Material primary tabs) — white labels on the brand gradient over
-//   a faint baseline, the selected one bold with a short white underline. No
-//   boxes, no borders: the owner found the boxed version heavy (2026-11-27).
+// SegmentTabs — the app's one tab control: underline tabs, the enterprise
+// pattern (Fluent, Material, Atlassian, Carbon). Equal-width labels over a
+// faint baseline; the selected one bold with a short bar under it. No boxes
+// and no borders: the owner found the boxed segmented look odd (2026-11-27).
+// - On a page (auth's Sign In / Sign Up, a screen's Write / Preview): the
+//   selected label and its bar in the service's accent, the others muted.
+// - Inside the gradient page header: the same in white.
 
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -24,29 +24,11 @@ export interface SegmentTabsProps<K extends string> {
   accessibilityLabel?: string;
 }
 
-const makeStyles = ({ colors, space, radius, size, elevation, opacity }: Theme) =>
+const makeStyles = ({ space, size, opacity }: Theme) =>
   StyleSheet.create({
-    track: {
-      flexDirection: 'row',
-      backgroundColor: colors.surfaceSunk,
-      borderRadius: radius.sm,
-      padding: space.s4,
-      gap: space.s4,
-    },
-    segment: {
-      flex: 1,
-      minHeight: size.touch,
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderRadius: radius.sm,
-      paddingHorizontal: space.s8,
-    },
-    selected: { backgroundColor: colors.surface, ...elevation.raised },
-    // On the gradient header: underline tabs on a faint baseline.
     tabs: {
       flexDirection: 'row',
       borderBottomWidth: size.hairline,
-      borderBottomColor: colors.onScrimLine,
     },
     tab: {
       flex: 1,
@@ -64,7 +46,6 @@ const makeStyles = ({ colors, space, radius, size, elevation, opacity }: Theme) 
       height: size.tabIndicator,
       borderTopLeftRadius: size.tabIndicator,
       borderTopRightRadius: size.tabIndicator,
-      backgroundColor: colors.onScrim,
     },
   });
 
@@ -75,40 +56,15 @@ export function SegmentTabs<K extends string>({
   accessibilityLabel,
 }: SegmentTabsProps<K>) {
   const styles = useStyles(makeStyles);
-  const { colors, space } = useTheme();
+  const { colors, service, space } = useTheme();
   const onGradient = useOnGradient();
-
-  if (onGradient) {
-    return (
-      <View style={styles.tabs} accessibilityRole="tablist" accessibilityLabel={accessibilityLabel}>
-        {options.map(option => {
-          const selected = option.key === value;
-          return (
-            <Pressable
-              key={option.key}
-              onPress={() => onChange(option.key)}
-              accessibilityRole="tab"
-              aria-selected={selected}
-              accessibilityLabel={option.label}
-              hitSlop={{ top: space.s4, bottom: space.s4 }}
-              style={({ pressed }) => [styles.tab, pressed && !selected && styles.pressed]}>
-              <AppText
-                variant={selected ? 'bodyStrong' : 'label'}
-                tone="onScrim"
-                style={selected ? undefined : { color: colors.onScrimSoft }}
-                numberOfLines={1}>
-                {option.label}
-              </AppText>
-              {selected ? <View style={styles.indicator} /> : null}
-            </Pressable>
-          );
-        })}
-      </View>
-    );
-  }
+  // White on the brand gradient; the service's accent on a page.
+  const ink = onGradient
+    ? { on: colors.onScrim, off: colors.onScrimSoft, bar: colors.onScrim, base: colors.onScrimLine }
+    : { on: service.accentDeep, off: colors.inkMuted, bar: service.accent, base: colors.line };
 
   return (
-    <View style={styles.track} accessibilityRole="tablist" accessibilityLabel={accessibilityLabel}>
+    <View style={[styles.tabs, { borderBottomColor: ink.base }]} accessibilityRole="tablist" accessibilityLabel={accessibilityLabel}>
       {options.map(option => {
         const selected = option.key === value;
         return (
@@ -118,10 +74,12 @@ export function SegmentTabs<K extends string>({
             accessibilityRole="tab"
             aria-selected={selected}
             accessibilityLabel={option.label}
-            style={[styles.segment, selected && styles.selected]}>
-            <AppText variant={selected ? 'bodyStrong' : 'label'} tone={selected ? 'accent' : 'muted'} numberOfLines={1}>
+            hitSlop={{ top: space.s4, bottom: space.s4 }}
+            style={({ pressed }) => [styles.tab, pressed && !selected && styles.pressed]}>
+            <AppText variant={selected ? 'bodyStrong' : 'label'} style={{ color: selected ? ink.on : ink.off }} numberOfLines={1}>
               {option.label}
             </AppText>
+            {selected ? <View style={[styles.indicator, { backgroundColor: ink.bar }]} /> : null}
           </Pressable>
         );
       })}
