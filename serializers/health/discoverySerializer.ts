@@ -111,6 +111,10 @@ export const doctorCardSerializer = (raw: unknown): DoctorCardData | null => {
     rating: reviews > 0 ? rating(raw.ratingAvg) : null,
     reviewCount: reviews,
     waitMinutes: numOrNull(raw.avgWaitMinutes),
+    satisfactionPct: numOrNull(raw.satisfactionPct),
+    // An older server doesn't say: the card reads as taking bookings.
+    isAccepting: raw.isAccepting === undefined ? true : bool(raw.isAccepting),
+    clinicArea: strOrNull(raw.clinicArea),
     badges: badgesOf(raw),
     offersVideo: bool(raw.offersVideo),
     offersClinic: bool(raw.offersClinic),

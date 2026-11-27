@@ -1,11 +1,13 @@
 // ═══════════════════════════════════════════════════════
 // DoctorCard — what a patient needs to choose a doctor, at a glance
 // ═══════════════════════════════════════════════════════
-// Photo, name with the verified tick, specialty (in the accent, as the FYP's), one line
-// of qualifications, then a strip of numbers (experience, rating and its
-// reviews, measured wait; only what the API has), when they're next free
-// and the starting fee. Footer buttons only for what the doctor offers.
-// `compact` is the rail card, with the numbers on one line instead.
+// One shape for every doctor, so a list reads evenly: photo, name with the
+// verified tick, specialty, one line of qualifications and where they see
+// patients, then three equal proof columns (rating and its reviews, the
+// share who recommend them or the measured wait, years of practice), when
+// they're next free and the starting fee. Footer buttons only for what the
+// doctor offers; a doctor not taking bookings offers "See profile" instead.
+// `compact` is the rail card, with the numbers on one line.
 
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -69,26 +71,22 @@ const makeStyles = ({ colors, space, radius, size, elevation }: Theme) =>
     rule: { width: size.hairline, marginVertical: space.s4, backgroundColor: colors.line },
   });
 
-/** Experience · rating (with how many reviews) · measured wait: what the API has. */
-const stripCells = (d: DoctorCardData) =>
-  [
-    d.yearsExperience
-      ? { key: 'exp', value: `${d.yearsExperience} yrs`, caption: 'Experience', star: false }
-      : null,
-    d.rating !== null
-      ? {
-          key: 'rating',
-          value: d.rating.toFixed(1),
-          caption: `${d.reviewCount.toLocaleString('en-US')} ${
-            d.reviewCount === 1 ? 'review' : 'reviews'
-          }`,
-          star: true,
-        }
-      : { key: 'rating', value: 'New', caption: 'No reviews yet', star: false },
-    d.waitMinutes !== null
+/**
+ * Always three columns, so every card is one height: the rating (or "New"),
+ * the share who recommend them (else the measured wait, else a dash), and
+ * years of practice (else a dash).
+ */
+const stripCells = (d: DoctorCardData) => [
+  d.rating !== null
+    ? { key: 'rating', value: d.rating.toFixed(1), caption: `${d.reviewCount.toLocaleString('en-US')} ${d.reviewCount === 1 ? 'review' : 'reviews'}`, star: true }
+    : { key: 'rating', value: 'New', caption: 'No reviews yet', star: false },
+  d.satisfactionPct !== null
+    ? { key: 'happy', value: `${Math.round(d.satisfactionPct)}%`, caption: 'Recommend', star: false }
+    : d.waitMinutes !== null
       ? { key: 'wait', value: `~${d.waitMinutes} min`, caption: 'Wait time', star: false }
-      : null,
-  ].filter((c): c is { key: string; value: string; caption: string; star: boolean } => c !== null);
+      : { key: 'happy', value: '–', caption: 'Recommend', star: false },
+  { key: 'exp', value: d.yearsExperience ? `${d.yearsExperience} yrs` : '–', caption: 'Experience', star: false },
+];
 
 export const DoctorCard: React.FC<DoctorCardProps> = ({
   doctor: d,
@@ -123,19 +121,20 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({
           <DoctorPhoto name={d.name} uri={d.photoUrl} size={compact ? 'sm' : 'md'} />
           <View style={styles.text}>
             <View style={styles.nameRow}>
-              <AppText variant="title" numberOfLines={compact ? 1 : 2} style={styles.name}>
+              <AppText variant="title" numberOfLines={1} style={styles.name}>
                 {d.name}
               </AppText>
               {verified ? (
                 <IonIcon name="checkmark-circle" size="sm" color={service.accent} />
               ) : null}
             </View>
-            <AppText variant="small" tone="accentDeep" numberOfLines={1}>
+            <AppText variant="small" numberOfLines={1}>
               {d.specialty.name}
             </AppText>
-            {d.qualifications && !compact ? (
+            {!compact ? (
+              // Always the line, so cards match: qualifications, then where they see patients.
               <AppText variant="caption" tone="muted" numberOfLines={1}>
-                {d.qualifications}
+                {[d.qualifications, d.clinicArea].filter(Boolean).join(' · ') || (d.offersVideo && !d.offersClinic ? 'Video consultations' : '\u00A0')}
               </AppText>
             ) : null}
             {compact ? (
@@ -177,13 +176,21 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({
           </View>
         ) : null}
         <View style={styles.meta}>
-          <AvailabilityChip availability={d.availability} />
+          {d.isAccepting ? (
+            <AvailabilityChip availability={d.availability} />
+          ) : (
+            <AppText variant="small" tone="muted">
+              Not taking new bookings
+            </AppText>
+          )}
           <AppText variant="small" tone="muted">
             from <AppText variant="bodyStrong">{formatPKR(d.fromFee)}</AppText>
           </AppText>
         </View>
       </Pressable>
-      {!compact && (onVideo || onVisit) && (d.offersVideo || d.offersClinic) ? (
+      {!compact && !d.isAccepting ? (
+        <Button label="See profile" variant="secondary" size="sm" onPress={onPress} fullWidth />
+      ) : !compact && (onVideo || onVisit) && (d.offersVideo || d.offersClinic) ? (
         <View style={styles.buttons}>
           {d.offersVideo && onVideo ? (
             <View style={styles.button}>

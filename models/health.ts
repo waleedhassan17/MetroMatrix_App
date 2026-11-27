@@ -64,6 +64,12 @@ export interface DoctorCardData {
   reviewCount: number;
   /** Measured average wait, when the API has enough visits to say. */
   waitMinutes: number | null;
+  /** Share of reviews that recommend the doctor (null under 5 reviews). */
+  satisfactionPct: number | null;
+  /** False while the doctor has paused new bookings. */
+  isAccepting: boolean;
+  /** Where their first clinic is ("Model Town"); null for video only or an older server. */
+  clinicArea: string | null;
   badges: DoctorBadge[];
   offersVideo: boolean;
   offersClinic: boolean;
