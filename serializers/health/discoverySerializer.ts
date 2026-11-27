@@ -262,6 +262,9 @@ export const doctorProfileSerializer = (raw: unknown): DoctorProfile | null => {
   return {
     ...card,
     title: TITLE_PREFIX[str(raw.title)] ?? 'Dr.',
+    // A placeholder number (UNSET-…) is never shown.
+    pmdcNumber: str(raw.pmdcNumber) && !str(raw.pmdcNumber).startsWith('UNSET-') ? str(raw.pmdcNumber) : null,
+    patientsServed: numOrNull(stats.patientsServed),
     about: str(raw.about),
     languages: strings(raw.languages),
     services: strings(raw.services),

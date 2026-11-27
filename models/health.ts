@@ -166,6 +166,10 @@ export interface BookingRules {
 
 export interface DoctorProfile extends DoctorCardData {
   title: string;
+  /** Their PMDC registration, shown with the verified tick (null when the API doesn't send it). */
+  pmdcNumber: string | null;
+  /** People seen in the app. */
+  patientsServed: number | null;
   about: string;
   languages: string[];
   services: string[];

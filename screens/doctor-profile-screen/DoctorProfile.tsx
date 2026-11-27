@@ -24,7 +24,9 @@ import {
   ConditionChip,
   DateStrip,
   Divider,
+  Card,
   DoctorBadges,
+  IonIcon,
   DoctorCard,
   DoctorPhoto,
   DoctorReviewItem,
@@ -66,6 +68,7 @@ type Props = NativeStackScreenProps<HomeStackParamList, 'DoctorProfile'>;
 const makeStyles = ({ colors, space, radius, gutter }: Theme) =>
   StyleSheet.create({
     hero: { flexDirection: 'row', gap: space.s16 },
+    verified: { flexDirection: 'row', alignItems: 'center', gap: space.s4 },
     heroText: { flex: 1, gap: space.s4 },
     block: { gap: space.s12 },
     bleed: { marginHorizontal: -gutter },
@@ -98,7 +101,7 @@ const DoctorProfileContent: React.FC<Props> = ({ route, navigation }) => {
   const { back } = useBack({ name: 'HealthHome' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { size } = useTheme();
+  const { size, service } = useTheme();
   const nav = useHealthNav();
   const key = route.key;
   const id = route.params.id;
@@ -145,8 +148,9 @@ const DoctorProfileContent: React.FC<Props> = ({ route, navigation }) => {
 
   return (
     <ScreenShell
-      title={d?.name ?? route.params.name ?? 'Doctor'}
-      subtitle={d ? d.specialty.name : undefined}
+      // The name lives in the hero (two lines); a long one never gets cut in the bar.
+      title="Doctor"
+      subtitle={d ? d.specialty.name : route.params.name}
       onBack={back}
       headerRight={d ? <IconButton icon="share-social-outline" onPress={() => void share()} accessibilityLabel="Share this doctor" /> : undefined}
       footer={d && view?.accepting !== false ? <Button label={cta} onPress={book} disabled={!view?.selected} fullWidth accessibilityHint="Opens the confirmation" /> : undefined}
@@ -168,17 +172,40 @@ const DoctorProfileContent: React.FC<Props> = ({ route, navigation }) => {
         )
       ) : (
         <>
-          <View style={styles.hero}>
-            <DoctorPhoto name={d.name} uri={d.photoUrl} size="lg" />
-            <View style={styles.heroText}>
-              <DoctorBadges badges={d.badges} />
-              <AppText variant="bodyStrong" tone="accentDeep">{d.specialty.name}</AppText>
-              {d.qualifications ? <AppText variant="small">{d.qualifications}</AppText> : null}
-              <AppText variant="small" tone="muted">
-                {[d.yearsExperience ? `${d.yearsExperience} years experience` : null, d.languages.length ? `Speaks ${d.languages.join(', ')}` : null].filter(Boolean).join(' · ')}
-              </AppText>
+          <Card>
+            <View style={styles.hero}>
+              <DoctorPhoto name={d.name} uri={d.photoUrl} size="lg" />
+              <View style={styles.heroText}>
+                <AppText variant="cardTitle" numberOfLines={2} accessibilityRole="header">
+                  {d.name}
+                </AppText>
+                <AppText variant="bodyStrong">{d.specialty.name}</AppText>
+                {d.qualifications ? (
+                  <AppText variant="small" tone="muted" numberOfLines={2}>
+                    {d.qualifications}
+                  </AppText>
+                ) : null}
+                {d.badges.includes('pmdc_verified') ? (
+                  <View style={styles.verified}>
+                    <IonIcon name="checkmark-circle" size="sm" color={service.accent} />
+                    <AppText variant="small" tone="accentDeep">
+                      {d.pmdcNumber ? `PMDC verified · ${d.pmdcNumber}` : 'PMDC verified'}
+                    </AppText>
+                  </View>
+                ) : null}
+              </View>
             </View>
-          </View>
+            {d.badges.filter(b => b !== 'pmdc_verified').length ? <DoctorBadges badges={d.badges.filter(b => b !== 'pmdc_verified')} /> : null}
+            <AppText variant="small" tone="muted">
+              {[
+                d.yearsExperience ? `${d.yearsExperience} years in practice` : null,
+                d.patientsServed ? `${d.patientsServed.toLocaleString('en-US')} patients seen` : null,
+                d.languages.length ? `Speaks ${d.languages.join(', ')}` : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </AppText>
+          </Card>
 
           <StatTrio stats={d.stats} />
 
@@ -212,6 +239,14 @@ const DoctorProfileContent: React.FC<Props> = ({ route, navigation }) => {
           ) : location && view ? (
             <View style={styles.block}>
               <HealthSection title="Choose a time" subtitle={location.kind === 'video' ? 'Video consultation' : location.name} />
+              {/* The rules before the choice: how cancelling and paying work here. */}
+              <AppText variant="small" tone="muted">
+                {[
+                  d.bookingRules.cancelCutoffHours > 0 ? `Free to cancel until ${d.bookingRules.cancelCutoffHours} h before` : 'Free to cancel before the visit',
+                  location.kind === 'video' ? (location.requiresPrepay ? 'Pay by transfer before the call' : 'Pay the doctor by transfer') : 'Pay at the clinic',
+                  `Fee ${formatPKR(location.fee)}`,
+                ].join(' · ')}
+              </AppText>
               <View style={styles.bleed}>
                 <DateStrip
                   days={view.days}
