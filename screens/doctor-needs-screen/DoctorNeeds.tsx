@@ -9,7 +9,6 @@
 import React from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useFocusEffect } from '@react-navigation/native';
 import { usePagedList } from '../../hooks/usePagedList';
 import { useBack } from '../../hooks/useBack';
 import { fetchDoctorAppointments } from '../../networks/health/doctor/doctorAppointments';
@@ -46,13 +45,7 @@ const DoctorNeedsContent: React.FC<Props> = ({ navigation, route }) => {
   const styles = useStyles(makeStyles);
   const list = usePagedList((page, size) => fetchDoctorAppointments({ needs: kind, page, pageSize: size }), queuePageSerializer, `needs|${kind}`);
   const Gap = React.useCallback(() => <View style={styles.gap} />, [styles.gap]);
-  // Back from a visit: what was done there drops off the list.
-  useFocusEffect(
-    React.useCallback(() => {
-      list.refresh();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []),
-  );
+  // Back from a visit, the list reads again in place (usePagedList), so what was done drops off.
 
   return (
     <View style={styles.root}>

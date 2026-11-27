@@ -33,7 +33,7 @@ export const healthHomeSlice = createAppSlice({
       state.cityPicker = action.payload;
     }),
     loadHealthHomeAsync: create.asyncThunk(
-      async ({ city }: { city: string | null; refresh?: boolean }, { rejectWithValue }) => {
+      async ({ city }: { city: string | null; refresh?: boolean; quiet?: boolean }, { rejectWithValue }) => {
         try {
           return await fetchHealthHome(city);
         } catch (e) {
@@ -42,6 +42,8 @@ export const healthHomeSlice = createAppSlice({
       },
       {
         pending: (state, action) => {
+          // A quiet read (back on Home) keeps what's showing, with no spinner.
+          if (action.meta.arg.quiet) return;
           if (action.meta.arg.refresh) state.refreshing = true;
           else state.status = 'loading';
           state.city = action.meta.arg.city;
@@ -55,6 +57,8 @@ export const healthHomeSlice = createAppSlice({
           state.refreshing = false;
         },
         rejected: (state, action) => {
+          // A quiet read that fails leaves the page as it was.
+          if (action.meta.arg.quiet) return;
           state.status = 'failed';
           state.refreshing = false;
           state.error = readRejection(action, "Health didn't load. Check your connection and try again.");

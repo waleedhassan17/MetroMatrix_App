@@ -14,6 +14,12 @@ export const RELATIONS: { key: FamilyRelation; label: string }[] = [
 
 export const relationLabel = (r: FamilyRelation) => RELATIONS.find(x => x.key === r)?.label ?? 'Family';
 
+/** "Ali (Child)": a family member's first name and how they're related, for a visit booked for them. */
+export const forFamilyLabel = (f: { name: string; relation: string | null }) => {
+  const rel = f.relation ? RELATIONS.find(x => x.key === f.relation)?.label : null;
+  return `${f.name.split(' ')[0]}${rel ? ` (${rel})` : ''}`;
+};
+
 export const MAX_FAMILY = 8;
 
 export const emptyFamilyMember = (): FamilyMemberInput => ({

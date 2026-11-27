@@ -16,7 +16,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { useBack } from '../../hooks/useBack';
 import { validatePaymentProof } from '../../models/shopping/paymentProofModel';
 import { ServiceScope } from '../../theme/index';
-import { AppText, Button, Card, InlineNotice, PhotoStrip, ScreenShell, TextField } from '../../Custom-Components/index';
+import { AppText, Button, Card, InlineNotice, PhotoStrip, ScreenShell, TextField, PaymentInstructionsCard } from '../../Custom-Components/index';
 import type { OrdersStackParamList } from '../../models';
 import { haptics } from '../../utils/haptics/haptics';
 import { formatPKR } from '../../utils/money/money';
@@ -179,6 +179,10 @@ const PaymentProofContent: React.FC<Props> = ({ route }) => {
       footer={<Button label={`Send to ${payee}`} onPress={() => void submit()} loading={s.status === 'loading'} disabled={busy} fullWidth />}>
       {rejected ? <InlineNotice title={`${payee === 'the store' ? 'The store' : payee === 'the kitchen' ? 'The kitchen' : 'The doctor'} couldn’t find your last payment`} message={rejected} /> : null}
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
+      {/* A visit's fee: where to send it and by when, on the same page as the proof. */}
+      {appointment?.payment.instructions ? (
+        <PaymentInstructionsCard instructions={appointment.payment.instructions} status={appointment.payment.status} proof={appointment.payment.proof} payee="doctor" />
+      ) : null}
       <TextField
         label="Transaction ID"
         value={s.transactionId}

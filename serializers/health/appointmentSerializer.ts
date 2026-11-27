@@ -156,6 +156,7 @@ export const appointmentSummarySerializer = (raw: unknown): AppointmentSummary |
     doctor: doctorRefSerializer(raw.doctor),
     location: locationRefSerializer(raw.location),
     patientName: str(patient.name, 'Patient'),
+    forFamily: strOrNull(raw.familyMemberId) ? { name: str(patient.name, 'Patient'), relation: strOrNull(patient.relation) } : null,
     fee: money(raw.fee),
     paymentStatus: paymentStatus(pay),
     canJoinVideo: kind === 'video' && bool(can.joinVideo),

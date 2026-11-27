@@ -84,13 +84,21 @@ const PostConsultReviewContent: React.FC<Props> = ({ route }) => {
     );
   }
 
+  // Rated already: the thank-you, and no form to fill twice.
+  if (a.reviewed) {
+    return (
+      <ScreenShell title="Rate your visit" subtitle={a.doctor.name} onBack={back} footer={<Button label="Done" onPress={back} fullWidth />}>
+        <InlineNotice tone="success" title="Thank you" message="You have already rated this visit. Your review helps other patients choose." />
+      </ScreenShell>
+    );
+  }
+
   return (
     <ScreenShell
       title="Rate your visit"
       subtitle={`${a.doctor.name} · ${a.kind === 'video' ? 'Video consultation' : a.location.name}`}
       onBack={back}
       footer={<Button label="Post review" onPress={() => void submit()} loading={s.status === 'loading'} disabled={!s.form.rating} fullWidth />}>
-      {a.reviewed ? <InlineNotice tone="info" message="You have already rated this visit. Thank you." /> : null}
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
       <View style={styles.center}>
         <StarInput value={s.form.rating} onChange={n => dispatch(setVisitRating(n))} label="Overall" words={RATING_WORDS} />
@@ -101,9 +109,14 @@ const PostConsultReviewContent: React.FC<Props> = ({ route }) => {
       <View style={styles.group}>
         <AppText variant="label">Would you recommend this doctor?</AppText>
         <View style={styles.chips}>
-          <ChoiceChip label="Yes" selected={s.form.recommend} onPress={() => dispatch(setRecommend(true))} />
-          <ChoiceChip label="No" selected={!s.form.recommend} onPress={() => dispatch(setRecommend(false))} />
+          <ChoiceChip label="Yes" selected={s.form.recommend === true} onPress={() => dispatch(setRecommend(true))} />
+          <ChoiceChip label="No" selected={s.form.recommend === false} onPress={() => dispatch(setRecommend(false))} />
         </View>
+        {s.touched && errors.recommend ? (
+          <AppText variant="small" tone="danger">
+            {errors.recommend}
+          </AppText>
+        ) : null}
       </View>
       {dimensionsFor(a.kind).map(d => (
         <View key={d.key} style={styles.dim}>

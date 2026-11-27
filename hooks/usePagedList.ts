@@ -8,6 +8,7 @@
 // screen calls a network function instead of a thunk.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Toast from 'react-native-toast-message';
 import { useFocusEffect } from '@react-navigation/native';
 import { appendUnique, hasMorePages, LIST_PAGE_SIZE } from '../models/pagingModel';
 import type { Paged } from '../models/shopping';
@@ -81,28 +82,34 @@ export function usePagedList<P extends Paged<unknown>, T = RowOf<P>>(
   const moreInFlight = useRef(false);
 
   const load = useCallback(
-    (mode: 'reload' | 'refresh' | 'poll') => {
+    (mode: 'reload' | 'refresh' | 'poll' | 'focus') => {
       if (!enabled) return;
       // A poll never interrupts the person scrolling further pages in.
-      if (mode === 'poll' && moreInFlight.current) return;
+      if ((mode === 'poll' || mode === 'focus') && moreInFlight.current) return;
       const gen = ++generation.current;
       moreInFlight.current = false;
       if (mode === 'reload') setIsLoading(true);
       else if (mode === 'refresh') setIsRefreshing(true);
       setIsLoadingMore(false);
-      if (mode !== 'poll') setError('');
+      if (mode !== 'poll' && mode !== 'focus') setError('');
       fetchRef
         .current(1, pageSize)
         .then(p => {
           if (gen !== generation.current) return;
-          setRowsState(p.items as T[]);
           setFirst(p as P & Paged<T>);
-          setPage(1);
           setTotal(p.total);
+          if (mode === 'focus') {
+            // Back from a detail: page one read again in place, the pages
+            // scrolled in below it kept, so the list never jumps to the top.
+            setRowsState(prev => appendUnique(p.items as T[], prev.slice(pageSize), keyOfRef.current));
+            return;
+          }
+          setRowsState(p.items as T[]);
+          setPage(1);
           setHasMore(hasMorePages(p));
         })
         .catch((e: unknown) => {
-          if (gen !== generation.current || mode === 'poll') return;
+          if (gen !== generation.current || mode === 'poll' || mode === 'focus') return;
           setError(e instanceof Error ? e.message : 'Could not load this list.');
         })
         .finally(() => {
@@ -135,7 +142,8 @@ export function usePagedList<P extends Paged<unknown>, T = RowOf<P>>(
         setHasMore(hasMorePages(p));
       })
       .catch(() => {
-        /* the footer stays; scrolling again retries */
+        // Said once, plainly; scrolling again retries.
+        Toast.show({ type: 'error', text1: "More didn't load", text2: 'Scroll down to try again.' });
       })
       .finally(() => {
         if (gen !== generation.current) return;
@@ -146,8 +154,18 @@ export function usePagedList<P extends Paged<unknown>, T = RowOf<P>>(
 
   const setRows = useCallback((update: (rows: T[]) => T[]) => setRowsState(update), []);
 
-  // On focus (coming back from a detail) and whenever the filters change.
-  useFocusEffect(reload);
+  // Whenever the filters change: page one. Coming back into focus: page one
+  // read again quietly in place (first time on screen: an ordinary load).
+  const loadedKey = useRef<string | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      if (loadedKey.current === key) load('focus');
+      else {
+        loadedKey.current = key;
+        load('reload');
+      }
+    }, [key, load]),
+  );
 
   return { rows, first, total, hasMore, isLoading, isLoadingMore, isRefreshing, error, reload, refresh, poll, loadMore, setRows };
 }

@@ -41,7 +41,7 @@ export const MAX_REVIEW_TEXT = 1000;
 
 export const emptyDoctorReview = (): DoctorReviewInput => ({
   rating: 0,
-  recommend: true,
+  recommend: null,
   dimensions: {},
   tags: [],
   text: null,
@@ -51,6 +51,7 @@ export const emptyDoctorReview = (): DoctorReviewInput => ({
 export const validateDoctorReview = (r: DoctorReviewInput): ValidationErrors => {
   const errors: ValidationErrors = {};
   if (!Number.isInteger(r.rating) || r.rating < 1 || r.rating > 5) errors.rating = 'Tap a star rating';
+  if (r.recommend === null) errors.recommend = 'Choose yes or no';
   for (const [k, v] of Object.entries(r.dimensions)) {
     if (v !== undefined && (!Number.isInteger(v) || v < 1 || v > 5)) errors[`dimension.${k}`] = 'Choose 1 to 5 stars';
   }

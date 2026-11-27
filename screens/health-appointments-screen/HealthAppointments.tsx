@@ -5,26 +5,18 @@
 // (join, pay, directions, rate). A visit opens over the tabs.
 
 import React, { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { APPOINTMENT_SEGMENTS } from '../../models/health/appointmentStatusModel';
-import { useStyles, type Theme } from '../../theme/index';
-import { ChoiceChip, ScreenShell } from '../../Custom-Components/index';
+import { ScreenShell, SegmentTabs } from '../../Custom-Components/index';
 import type { HealthTabParamList } from '../../models';
 import { Appointments } from '../orders-screen/OrdersLists';
 import { selectOrdersView, setVisitsSegment } from '../orders-screen/ordersSlice';
 
 type Props = BottomTabScreenProps<HealthTabParamList, 'AppointmentsTab'>;
 
-const makeStyles = ({ space }: Theme) =>
-  StyleSheet.create({
-    chips: { flexDirection: 'row', gap: space.s8 },
-  });
-
 const HealthAppointments: React.FC<Props> = ({ navigation, route }) => {
   const dispatch = useAppDispatch();
-  const styles = useStyles(makeStyles);
   const { visits } = useAppSelector(selectOrdersView);
   const asked = route.params?.visits;
 
@@ -35,12 +27,18 @@ const HealthAppointments: React.FC<Props> = ({ navigation, route }) => {
   const go = navigation as unknown as { navigate: (name: string, params?: object) => void };
 
   return (
-    <ScreenShell title="Appointments" subtitle="Your upcoming and past visits" scroll={false}>
-      <View style={styles.chips}>
-        {APPOINTMENT_SEGMENTS.map(sg => (
-          <ChoiceChip key={sg.key} label={sg.label} selected={visits === sg.key} onPress={() => dispatch(setVisitsSegment(sg.key))} />
-        ))}
-      </View>
+    <ScreenShell
+      title="Appointments"
+      subtitle="Your upcoming and past visits"
+      scroll={false}
+      headerContent={
+        <SegmentTabs
+          options={APPOINTMENT_SEGMENTS.map(sg => ({ key: sg.key, label: sg.label }))}
+          value={visits}
+          onChange={k => dispatch(setVisitsSegment(k))}
+          accessibilityLabel="Appointments"
+        />
+      }>
       <Appointments segment={visits} onOpen={code => go.navigate('AppointmentDetail', { code })} onFind={() => navigation.navigate('HealthHomeTab')} />
     </ScreenShell>
   );

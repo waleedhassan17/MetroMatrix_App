@@ -40,7 +40,8 @@ export const conditionListSlice = createAppSlice({
         fulfilled: (state, action) => {
           const payload = conditionsSerializer(action.payload);
           if (action.meta.arg !== state.query.trim()) return;
-          state.items = payload;
+          // A to Z, so a patient scanning for "Back pain" finds it where they expect.
+          state.items = [...payload].sort((x, y) => x.name.localeCompare(y.name));
           state.status = 'succeeded';
         },
         rejected: (state, action) => {

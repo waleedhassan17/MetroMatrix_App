@@ -132,6 +132,7 @@ const APPOINTMENT: AppointmentSummary = {
   doctor: { id: 'demo', name: DOCTOR.name, photoUrl: null, specialty: DOCTOR.specialty },
   location: { id: 'v', kind: 'video', name: 'Video consultation', area: '', city: 'Lahore', address: null, lat: null, lng: null, phone: null, instructions: null },
   patientName: 'Zara Khan',
+  forFamily: null,
   fee: 1000,
   paymentStatus: 'paid',
   canJoinVideo: false,

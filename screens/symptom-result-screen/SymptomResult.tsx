@@ -13,7 +13,7 @@ import { useBack } from '../../hooks/useBack';
 import { useHealthNav } from '../../hooks/useHealth';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import { AppText, Button, Card, IonIcon, InlineNotice, ScreenShell } from '../../Custom-Components/index';
-import type { HomeStackParamList, SymptomResult } from '../../models';
+import type { HomeStackParamList, SymptomResult as CheckResult } from '../../models';
 import { selectSymptomChecker } from '../symptom-checker-screen/symptomCheckerSlice';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'SymptomResult'>;
@@ -33,7 +33,7 @@ const withArticle = (name: string) => {
 };
 
 /** How soon to be seen, in the checker's calm words (never alarming: red flags go to Emergency first). */
-const URGENCY: Record<NonNullable<SymptomResult['urgency']>, { title: string; tone: 'info' | 'warning' }> = {
+const URGENCY: Record<NonNullable<CheckResult['urgency']>, { title: string; tone: 'info' | 'warning' }> = {
   routine: { title: 'A routine visit is fine', tone: 'info' },
   soon: { title: 'See a doctor in the next few days', tone: 'info' },
   urgent: { title: 'See a doctor today', tone: 'warning' },

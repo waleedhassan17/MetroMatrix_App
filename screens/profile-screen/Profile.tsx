@@ -10,6 +10,7 @@
 //   Settings   name and mobile (email is fixed), password, notifications.
 // Partners and staff see Overview and Settings.
 
+import { useRoute } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -184,6 +185,9 @@ const ProfileContent: React.FC<Props> = ({ navigation }) => {
   // A tab's first screen in the customer app; pushed from More in the partner apps.
   const { back, canGoBack } = useBack();
   const asTab = useIsTabRoot();
+  // The Profile tab of a service's app (Health, Food Court), or the shell's own page.
+  const routeName = useRoute().name;
+  const inService: 'health' | 'food' | null = routeName === 'HealthProfileTab' ? 'health' : routeName === 'FoodProfileTab' ? 'food' : null;
   // Rows that belong to a service open in that service's app (over its tabs).
   const svc = useServiceNav();
   const dispatch = useAppDispatch();
@@ -362,9 +366,10 @@ const ProfileContent: React.FC<Props> = ({ navigation }) => {
         </View>
       ) : null}
       <MenuSection title="Account" items={account} />
-      <MenuSection title="Shopping" items={shopping} />
-      <MenuSection title="Health" items={health} />
-      <MenuSection title="Food Court" items={food} />
+      {/* Inside a service's own app, only that service's rows: Health's Profile tab is Health. */}
+      {inService === null ? <MenuSection title="Shopping" items={shopping} /> : null}
+      {inService === null || inService === 'health' ? <MenuSection title="Health" items={health} /> : null}
+      {inService === null || inService === 'food' ? <MenuSection title="Food Court" items={food} /> : null}
       <Pressable
         onPress={confirmSignOut}
         accessibilityRole="button"

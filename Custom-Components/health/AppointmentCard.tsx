@@ -8,6 +8,7 @@
 
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { forFamilyLabel } from '../../models/health/familyMemberModel';
 import { useStyles, useTheme, type Theme } from '../../theme';
 import type { AppointmentSummary } from '../../models/health';
 import { APPOINTMENT_STATUS } from '../../models/health/appointmentStatusModel';
@@ -53,7 +54,7 @@ export const AppointmentCard: React.FC<{
       <Pressable
         onPress={onPress}
         accessibilityRole="button"
-        accessibilityLabel={`${a.doctor.name}, ${a.doctor.specialty.name}, ${block.weekday} ${block.day} ${block.month} at ${formatSlot(a.startAt, a.timezone)}, ${where}, ${status.label}${a.patientName ? `, for ${a.patientName}` : ''}`}
+        accessibilityLabel={`${a.doctor.name}, ${a.doctor.specialty.name}, ${block.weekday} ${block.day} ${block.month} at ${formatSlot(a.startAt, a.timezone)}, ${where}, ${status.label}${a.forFamily ? `, for ${forFamilyLabel(a.forFamily)}` : ''}`}
         style={({ pressed }) => [styles.main, pressed && { opacity: opacity.pressed }]}>
         <View style={[styles.block, { backgroundColor: upcoming ? service.accentSoft : colors.surfaceSunk }]}>
           <AppText variant="micro" tone={upcoming ? 'accentDeep' : 'muted'}>
@@ -72,7 +73,7 @@ export const AppointmentCard: React.FC<{
           </AppText>
           <AppText variant="small" tone="muted" numberOfLines={2}>
             {a.doctor.specialty.name} · {formatSlot(a.startAt, a.timezone)}
-            {a.patientName ? ` · for ${a.patientName.split(' ')[0]}` : ''}
+            {a.forFamily ? ` · for ${forFamilyLabel(a.forFamily)}` : ''}
           </AppText>
           <View style={styles.where}>
             <IonIcon name={a.kind === 'video' ? 'videocam-outline' : 'location-outline'} size="sm" color={colors.inkMuted} />

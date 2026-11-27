@@ -35,7 +35,7 @@ const reviewBody = (r: DoctorReviewInput) => ({
   diagnosis: r.dimensions.diagnosis ?? r.rating,
   staff: r.dimensions.staff,
   environment: r.dimensions.environment,
-  recommend: r.recommend,
+  recommend: r.recommend ?? false,
   tags: reviewTagCodes(r.tags),
   text: r.text ?? undefined,
   isAnonymous: r.anonymous,

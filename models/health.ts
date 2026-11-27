@@ -345,6 +345,8 @@ export interface AppointmentSummary {
   doctor: AppointmentDoctorRef;
   location: AppointmentLocationRef;
   patientName: string;
+  /** Booked for a family member (null when it's the account holder's own visit). */
+  forFamily: { name: string; relation: string | null } | null;
   fee: number;
   paymentStatus: AppointmentPaymentStatus;
   canJoinVideo: boolean;
@@ -511,7 +513,8 @@ export interface PrescriptionInput {
 // ─── Reviews, video, symptoms ─────────────────────────
 export interface DoctorReviewInput {
   rating: number;
-  recommend: boolean;
+  /** null until the patient answers: the form never answers for them. */
+  recommend: boolean | null;
   dimensions: Partial<Record<ReviewDimension, number>>;
   tags: string[];
   text: string | null;
