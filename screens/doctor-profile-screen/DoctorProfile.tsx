@@ -49,6 +49,7 @@ import { BookAppointmentSheet } from '../book-appointment-sheet/BookAppointmentS
 import { openBooking } from '../book-appointment-sheet/bookAppointmentSlice';
 import {
   chooseDayAsync,
+  showProfileDay,
   moreDaysAsync,
   chooseLocationAsync,
   closeProfileView,
@@ -216,7 +217,12 @@ const DoctorProfileContent: React.FC<Props> = ({ route, navigation }) => {
                   days={view.days}
                   selected={view.date}
                   loading={view.loading && !view.days.length}
-                  onSelect={date => void dispatch(chooseDayAsync({ key, doctorId: d.id, locationId: location.id, date }))}
+                  onSelect={date =>
+                    // A day already read shows at once; only an unread one asks the server.
+                    view?.raw.length && view.days.some(x => x.date === date)
+                      ? dispatch(showProfileDay({ key, date }))
+                      : void dispatch(chooseDayAsync({ key, doctorId: d.id, locationId: location.id, date }))
+                  }
                 />
               </View>
               {view.windowDays && view.days.length && view.days.length < view.windowDays ? (

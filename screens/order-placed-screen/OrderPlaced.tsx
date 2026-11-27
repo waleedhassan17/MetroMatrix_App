@@ -122,8 +122,8 @@ const OrderPlacedContent: React.FC<Props> = ({ navigation, route }) => {
             We’ll tell you as each store confirms and ships it.
           </AppText>
           <Pressable onPress={() => void copy()} style={styles.code} accessibilityRole="button" accessibilityLabel={`Order ${groupCode}. Copy`}>
-            <AppText variant="tag" tone="muted">
-              ORDER
+            <AppText variant="caption" tone="muted">
+              Order
             </AppText>
             <AppText variant="bodyStrong">{groupCode}</AppText>
             <IonIcon name="copy-outline" size="sm" color={service.accentDeep} />

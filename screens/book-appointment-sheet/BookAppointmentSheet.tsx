@@ -238,7 +238,7 @@ export const BookAppointmentSheet: React.FC<{ viewKey: string }> = ({ viewKey })
         <AppText variant="small" tone="muted">
           {b.paymentMethod === 'transfer'
             ? loc.requiresPrepay
-              ? `This doctor asks for payment before video consultations. You'll see their account next: send ${formatPKR(loc.fee)} by ${formatSlot(prepayDeadline(b.startAt, now), tz)}, or this time is released for other patients.`
+              ? `This doctor asks for payment before video consultations. You'll see their account next: send ${formatPKR(loc.fee)} by ${formatWhen(prepayDeadline(b.startAt, now), tz)}, or this time is released for other patients.`
               : `You'll see the doctor's account next. Send ${formatPKR(loc.fee)} before your consultation. You pay the doctor directly.`
             : 'You pay the doctor directly. MetroMatrix never holds your money.'}
         </AppText>

@@ -197,8 +197,8 @@ const CustomerHome: React.FC<Props> = ({ navigation }) => {
 
         <View style={[styles.live, { backgroundColor: service.accentSoft }]}>
           <LiveDot color={colors.danger} />
-          <AppText variant="micro" tone="accentDeep">
-            LIVE SERVICES
+          <AppText variant="chip" tone="accentDeep">
+            Live services
           </AppText>
         </View>
 

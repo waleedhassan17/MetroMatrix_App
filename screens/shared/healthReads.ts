@@ -22,7 +22,8 @@ export const readAppointment = async (code: string) => required(appointmentDetai
 
 /** A doctor's profile with doctors like them. */
 export const getDoctor = async (id: string) => {
-  const [profile, similar] = await Promise.all([fetchDoctor(id), fetchSimilarDoctors(id)]);
+  // Similar doctors are a suggestion: their failure never takes the profile down with it.
+  const [profile, similar] = await Promise.all([fetchDoctor(id), fetchSimilarDoctors(id).catch(() => null)]);
   return required(doctorWithSimilarSerializer({ profile, similar }));
 };
 

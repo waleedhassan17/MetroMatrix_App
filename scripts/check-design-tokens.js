@@ -84,6 +84,7 @@ const RULES = [
   { re: /\b(height|width|size)=\{-?\d/g, msg: 'hardcoded dimension prop — use a size token (size.*)' },
   { re: /\btint=|\btint:\s*['"]/g, msg: 'categorical tint — icons are slate and wells neutral (IconWell); colour is for status and selection' },
   { re: /variant=["']overline["']/g, msg: 'uppercase eyebrow — name a section with sectionTitle' },
+  { re: /^\s+[A-Z][A-Z &'·-]{3,}$/g, msg: 'all-caps label — write it in sentence case (no eyebrows)' },
   { re: /\bFeather\b/g, msg: 'Feather glyph — the app has one icon set: Ionicons (IonIcon)' },
   { re: /fontWeight:\s*'\d00'/g, msg: 'hardcoded fontWeight — use a type role' },
   { re: /fontFamily:\s*'[^']+'/g, msg: 'hardcoded fontFamily — use a type role' },

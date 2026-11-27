@@ -14,7 +14,7 @@ import { useBack } from '../../hooks/useBack';
 import { useDebouncedValue } from '../../hooks/usePagedList';
 import { useHealthNav } from '../../hooks/useHealth';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Divider, IconButton, IconWell, IonIcon, PageHeader, type IonName } from '../../Custom-Components/index';
+import { AppText, Divider, IconButton, IconWell, InlineNotice, IonIcon, PageHeader, SkeletonLines, type IonName } from '../../Custom-Components/index';
 import { SearchField } from '../../Components/shopping/ShopParts';
 import {
   addRecentHealthSearch,
@@ -140,12 +140,17 @@ const HealthSearchContent: React.FC<Props> = ({ route }) => {
         />
       </PageHeader>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        {typed && !showSuggestions && s.status === 'failed' ? (
+          <InlineNotice message="Search didn't load. Check your connection." action={{ label: 'Try again', onPress: () => void dispatch(healthSuggestAsync(typed)) }} />
+        ) : typed && !showSuggestions ? (
+          <SkeletonLines lines={4} />
+        ) : null}
         {showSuggestions ? (
           <>
             {sug.conditions.length ? (
               <View style={styles.group}>
-                <AppText variant="micro" tone="muted">
-                  CONDITIONS
+                <AppText variant="bodyStrong" tone="muted" accessibilityRole="header">
+                  Conditions
                 </AppText>
                 {sug.conditions.map(c => (
                   <Row
@@ -163,8 +168,8 @@ const HealthSearchContent: React.FC<Props> = ({ route }) => {
             ) : null}
             {sug.specialties.length ? (
               <View style={styles.group}>
-                <AppText variant="micro" tone="muted">
-                  SPECIALTIES
+                <AppText variant="bodyStrong" tone="muted" accessibilityRole="header">
+                  Specialties
                 </AppText>
                 {sug.specialties.map(sp => (
                   <Row
@@ -183,8 +188,8 @@ const HealthSearchContent: React.FC<Props> = ({ route }) => {
             ) : null}
             {sug.doctors.length ? (
               <View style={styles.group}>
-                <AppText variant="micro" tone="muted">
-                  DOCTORS
+                <AppText variant="bodyStrong" tone="muted" accessibilityRole="header">
+                  Doctors
                 </AppText>
                 {sug.doctors.map(d => (
                   <Row

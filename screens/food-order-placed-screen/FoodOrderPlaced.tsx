@@ -112,8 +112,8 @@ const FoodOrderPlacedContent: React.FC<Props> = ({ navigation, route }) => {
             {o ? `${o.vendor.name} will accept it in the next few minutes, and we’ll tell you when they do.` : 'You can follow it from Orders.'}
           </AppText>
           <Pressable onPress={() => void copy()} style={styles.code} accessibilityRole="button" accessibilityLabel={`Order ${code}. Copy`}>
-            <AppText variant="tag" tone="muted">
-              ORDER
+            <AppText variant="caption" tone="muted">
+              Order
             </AppText>
             <AppText variant="bodyStrong">{code}</AppText>
             <IonIcon name="copy-outline" size="sm" color={service.accentDeep} />

@@ -61,7 +61,9 @@ const DoctorListContent: React.FC<Props> = ({ route }) => {
   const nav = useHealthNav();
   const key = route.key;
   const p = route.params ?? {};
-  const city = useAppSelector(selectHealthHome).home?.city ?? 'Lahore';
+  // The city the patient chose on Health home (even before its page loaded); Lahore only when nothing was chosen.
+  const healthHome = useAppSelector(selectHealthHome);
+  const city = healthHome.home?.city ?? healthHome.city ?? 'Lahore';
   const view = useAppSelector(st => selectDoctorListView(st, key));
 
   useEffect(() => {

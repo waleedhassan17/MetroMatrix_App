@@ -71,16 +71,16 @@ export const PrescriptionSheet: React.FC<{ prescription: PrescriptionDoc }> = ({
       </View>
       {p.diagnosis ? (
         <View style={styles.section}>
-          <AppText variant="micro" tone="muted">
-            DIAGNOSIS
+          <AppText variant="bodyStrong" tone="muted" accessibilityRole="header">
+            Diagnosis
           </AppText>
           <AppText variant="body">{p.diagnosis}</AppText>
         </View>
       ) : null}
       {p.medicines.length ? (
         <View style={styles.section}>
-          <AppText variant="micro" tone="muted">
-            MEDICINES
+          <AppText variant="bodyStrong" tone="muted" accessibilityRole="header">
+            Medicines
           </AppText>
           {p.medicines.map((m, i) => (
             <View key={`${m.name}-${i}`} style={styles.med}>
@@ -104,8 +104,8 @@ export const PrescriptionSheet: React.FC<{ prescription: PrescriptionDoc }> = ({
       ) : null}
       {p.tests.length ? (
         <View style={styles.section}>
-          <AppText variant="micro" tone="muted">
-            TESTS
+          <AppText variant="bodyStrong" tone="muted" accessibilityRole="header">
+            Tests
           </AppText>
           {p.tests.map(t => (
             <AppText key={t} variant="body">{`• ${t}`}</AppText>
@@ -114,8 +114,8 @@ export const PrescriptionSheet: React.FC<{ prescription: PrescriptionDoc }> = ({
       ) : null}
       {p.advice ? (
         <View style={styles.section}>
-          <AppText variant="micro" tone="muted">
-            ADVICE
+          <AppText variant="bodyStrong" tone="muted" accessibilityRole="header">
+            Advice
           </AppText>
           <AppText variant="body">{p.advice}</AppText>
         </View>

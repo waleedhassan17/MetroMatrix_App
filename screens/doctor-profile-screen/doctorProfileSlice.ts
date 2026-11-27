@@ -37,6 +37,8 @@ export interface ProfileView {
   /** How many days ahead patients may book (null from a server that doesn't say). */
   windowDays: number | null;
   loadingMore: boolean;
+  /** The days as read (each answer as it came), so tapping another of them needs no request. */
+  raw: unknown[];
 }
 
 export interface DoctorProfileSliceState {
@@ -48,6 +50,7 @@ const EMPTY: DoctorEntry = { profile: null, status: 'idle', error: NO_ERROR };
 const initialState: DoctorProfileSliceState = { doctors: {}, views: {} };
 
 const newView = (doctorId: string): ProfileView => ({
+  raw: [],
   doctorId,
   locationId: null,
   days: [],
@@ -75,6 +78,17 @@ export const doctorProfileSlice = createAppSlice({
     pickSlot: create.reducer((state, action: PayloadAction<{ key: string; startAt: string | null }>) => {
       const v = state.views[action.payload.key];
       if (v) v.selected = action.payload.startAt;
+    }),
+    /** A day already read: its times from what's loaded, no request. */
+    showProfileDay: create.reducer((state, action: PayloadAction<{ key: string; date: string }>) => {
+      const v = state.views[action.payload.key];
+      if (!v) return;
+      const from = v.raw.find(r => daysSerializer(r).some(d => d.date === action.payload.date));
+      if (!from) return;
+      v.date = action.payload.date;
+      v.day = slotDayOnSerializer(from, action.payload.date);
+      v.selected = null;
+      v.error = NO_ERROR;
     }),
     toggleAbout: create.reducer((state, action: PayloadAction<string>) => {
       const v = state.views[action.payload];
@@ -142,6 +156,7 @@ export const doctorProfileSlice = createAppSlice({
           v.days = days;
           v.day = day;
           v.date = day?.date ?? null;
+          v.raw = [action.payload.days];
         },
         rejected: (state, action) => {
           const v = state.views[action.meta.arg.key];
@@ -172,6 +187,7 @@ export const doctorProfileSlice = createAppSlice({
           v.loadingMore = false;
           const more = daysSerializer(action.payload).filter(d => !v.days.some(x => x.date === d.date));
           v.days = [...v.days, ...more];
+          v.raw = [...v.raw, action.payload];
         },
         rejected: (state, action) => {
           const v = state.views[action.meta.arg.key];
@@ -215,6 +231,15 @@ export const doctorProfileSlice = createAppSlice({
     ),
   }),
   extraReducers: builder => {
+    // Booked: the time is no longer chosen (or free) on any open grid for that location.
+    builder.addCase(confirmBookingAsync.fulfilled, (state, action) => {
+      const { locationId, startAt } = action.meta.arg.input;
+      for (const v of Object.values(state.views)) {
+        if (v.locationId !== locationId) continue;
+        if (v.selected === startAt) v.selected = null;
+        if (v.day) v.day.slots = v.day.slots.filter(s => s.startAt !== startAt);
+      }
+    });
     // Someone took the time first: it leaves every open grid for that location.
     builder.addCase(confirmBookingAsync.rejected, (state, action) => {
       if (readRejection(action, '').code !== 'SLOT_TAKEN') return;
@@ -232,6 +257,6 @@ export const doctorProfileSlice = createAppSlice({
   },
 });
 
-export const { openProfileView, closeProfileView, pickSlot, toggleAbout, loadDoctorAsync, chooseLocationAsync, chooseDayAsync, moreDaysAsync } =
+export const { openProfileView, closeProfileView, pickSlot, showProfileDay, toggleAbout, loadDoctorAsync, chooseLocationAsync, chooseDayAsync, moreDaysAsync } =
   doctorProfileSlice.actions;
 export const { selectDoctorEntry, selectProfileView } = doctorProfileSlice.selectors;
