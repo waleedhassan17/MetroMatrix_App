@@ -101,7 +101,7 @@ const ShopReports: React.FC<Props> = () => {
           ) : list.error ? (
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
-            <EmptyState icon="flag" title={s.status === 'open' ? 'Nothing to decide' : 'Nothing here'} body="Products shoppers report show here." />
+            <EmptyState icon="flag-outline" title={s.status === 'open' ? 'Nothing to decide' : 'Nothing here'} body="Products shoppers report show here." />
           )
         }
       />

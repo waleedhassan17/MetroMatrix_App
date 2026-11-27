@@ -35,12 +35,12 @@ const AddressCard: React.FC<{ address: Address; busy: boolean; onEdit: () => voi
   onDelete,
 }) => {
   const styles = useStyles(makeStyles);
-  const { service } = useTheme();
+  const { colors } = useTheme();
   const label = ADDRESS_LABELS.find(l => l.key === address.label) ?? ADDRESS_LABELS[0];
   return (
     <Card selected={address.isDefault}>
       <View style={styles.head}>
-        <IonIcon name={label.icon} size="md" color={service.accentDeep} />
+        <IonIcon name={label.icon} size="md" color={colors.inkMuted} />
         <AppText variant="title" style={styles.grow}>
           {label.label}
         </AppText>
@@ -119,7 +119,7 @@ const AddressBookContent: React.FC<Props> = ({ navigation }) => {
           ) : s.status === 'failed' ? (
             <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadAddressesAsync()) }} />
           ) : (
-            <EmptyState icon="map-pin" title="No addresses yet" body="Add where you'd like things delivered. You can keep home, work and more." />
+            <EmptyState icon="location-outline" title="No addresses yet" body="Add where you'd like things delivered. You can keep home, work and more." />
           )
         }
       />

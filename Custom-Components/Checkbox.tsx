@@ -4,7 +4,7 @@ import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { AppText } from './AppText';
-import { Icon } from './Icon';
+import { IonIcon } from './Icon';
 
 export interface CheckboxProps {
   checked: boolean;
@@ -47,7 +47,7 @@ export const Checkbox: React.FC<CheckboxProps> = ({ checked, onToggle, label, ac
           checked && { backgroundColor: service.accent, borderColor: service.accent },
           error && !checked && { borderColor: colors.danger },
         ]}>
-        {checked ? <Icon name="check" size="sm" color={service.onAccent} /> : null}
+        {checked ? <IonIcon name="checkmark" size="sm" color={service.onAccent} /> : null}
       </View>
       <View style={styles.label}>
         {typeof label === 'string' ? <AppText variant="body">{label}</AppText> : label}

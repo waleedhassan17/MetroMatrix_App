@@ -48,7 +48,7 @@ const SavedContent: React.FC<Props> = () => {
         topPad
         onRemoveFromSaved={id => list.setRows(rows => rows.filter(r => r.id !== id))}
         empty={{
-          ion: 'heart-outline',
+          icon: 'heart-outline',
           title: 'Nothing saved yet',
           body: 'Tap the heart on anything you like, and it waits for you here.',
           action: { label: 'Start shopping', onPress: () => root.navigate('ShopTabs', { screen: 'ShopHomeTab' }) },

@@ -135,7 +135,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <View style={styles.info}>
           <View style={styles.group}>
             {showStore && product.storeName ? (
-              <AppText variant="overline" tone="accentDeep" numberOfLines={1}>
+              <AppText variant="caption" tone="accentDeep" numberOfLines={1}>
                 {product.storeName}
               </AppText>
             ) : null}

@@ -94,7 +94,7 @@ const ConditionListContent: React.FC<Props> = () => {
             ) : s.status === 'failed' ? (
               <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadConditionsAsync(q)) }} />
             ) : (
-              <EmptyState icon="search" title={`Nothing matches "${q}"`} body="Try another word, or search all doctors." />
+              <EmptyState icon="search-outline" title={`Nothing matches "${q}"`} body="Try another word, or search all doctors." />
             )}
           </View>
         }

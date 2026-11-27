@@ -32,7 +32,7 @@ export const ToggleRow: React.FC<ToggleRowProps> = ({ label, helper, value, onCh
       aria-disabled={!!disabled}
       style={styles.root}>
       <View style={styles.text}>
-        <AppText variant="bodyStrong" tone={disabled ? 'faint' : 'ink'}>
+        <AppText variant="title" tone={disabled ? 'faint' : 'ink'}>
           {label}
         </AppText>
         {helper ? (

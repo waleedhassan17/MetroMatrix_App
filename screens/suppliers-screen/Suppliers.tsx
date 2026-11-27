@@ -74,7 +74,7 @@ const SuppliersContent: React.FC = () => {
           ) : s.status === 'failed' ? (
             <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadSuppliersAsync()) }} />
           ) : (
-            <EmptyState ion="bicycle-outline" title="No suppliers yet" body="Add the mandi stall, the meat shop, the cash and carry: then pick them on a purchase." />
+            <EmptyState icon="bicycle-outline" title="No suppliers yet" body="Add the mandi stall, the meat shop, the cash and carry: then pick them on a purchase." />
           )
         }
       />

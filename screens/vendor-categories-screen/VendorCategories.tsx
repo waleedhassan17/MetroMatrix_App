@@ -89,7 +89,7 @@ const VendorCategories: React.FC = () => {
         {s.status === 'loading' && !s.categories.length ? (
           <RowCardsSkeleton count={3} />
         ) : s.status === 'failed' && !s.categories.length ? null : !s.categories.length ? (
-          <EmptyState ion="layers-outline" title="No categories yet" body="Customers browse your menu by these: Biryani, BBQ, Drinks…" />
+          <EmptyState icon="layers-outline" title="No categories yet" body="Customers browse your menu by these: Biryani, BBQ, Drinks…" />
         ) : (
           <Card padded="horizontal">
             {s.categories.map((c, i) => (

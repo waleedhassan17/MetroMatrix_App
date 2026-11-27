@@ -102,7 +102,7 @@ const FoodCateringFormContent: React.FC<Props> = ({ navigation, route }) => {
   if (!v.open) {
     return (
       <ScreenShell title="Plan a dawat" subtitle={name} onBack={back}>
-        <EmptyState ion="calendar-outline" title="Not taking catering requests" body="This kitchen isn’t taking dawat requests right now. Try another, or ask it when it opens them again." />
+        <EmptyState icon="calendar-outline" title="Not taking catering requests" body="This kitchen isn’t taking dawat requests right now. Try another, or ask it when it opens them again." />
       </ScreenShell>
     );
   }

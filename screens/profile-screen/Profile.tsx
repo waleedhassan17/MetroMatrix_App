@@ -26,7 +26,7 @@ import { haptics } from '../../utils/haptics/haptics';
 import { formatPkPhoneForDisplay } from '../../utils/phone/phone';
 import { pickImageFromLibrary } from '../../utils/pickers/pickers';
 import { APP_VERSION } from '../../services/appInfo';
-import { PageHeaderScope, useStyles, useTheme, type RowTint, type Theme } from '../../theme/index';
+import { PageHeaderScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import {
   AppText,
   Avatar,
@@ -82,12 +82,10 @@ interface MenuItem {
   title: string;
   subtitle?: string;
   icon: IonName;
-  /** A categorical colour; omitted rows take the service accent (the FYP's module rows). */
-  tint?: RowTint;
   onPress: () => void;
 }
 
-const makeStyles = ({ colors, space, radius, size, rowTint, elevation }: Theme) =>
+const makeStyles = ({ colors, space, radius, size, elevation }: Theme) =>
   StyleSheet.create({
     hero: { alignItems: 'center', gap: space.s4, paddingBottom: space.s4 },
     avatar: { paddingBottom: space.s8 },
@@ -115,8 +113,7 @@ const makeStyles = ({ colors, space, radius, size, rowTint, elevation }: Theme) 
       backgroundColor: colors.surface,
       ...elevation.card,
     },
-    statIcon: { width: size.subTypeTile, height: size.subTypeTile, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
-    section: { gap: space.s8 },
+    section: { gap: space.s12 },
     signOut: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -127,40 +124,29 @@ const makeStyles = ({ colors, space, radius, size, rowTint, elevation }: Theme) 
       backgroundColor: colors.surface,
       ...elevation.card,
     },
-    signOutIcon: {
-      width: size.subTypeTile,
-      height: size.subTypeTile,
-      borderRadius: radius.md,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: rowTint.red.bg,
-    },
+    signOutIcon: { width: size.icon.lg, alignItems: 'center' },
     deleteLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.s4, minHeight: size.touch },
     addressHead: { flexDirection: 'row', alignItems: 'center', gap: space.s8 },
     grow: { flex: 1 },
   });
 
-/** One count in the stat row: an icon chip, the number, what it counts. */
-const StatTile: React.FC<{ icon: IonName; tint: RowTint | 'accent'; value: number | null; label: string; onPress: () => void }> = ({
+/** One count in the stat row: a plain glyph, the number, what it counts. */
+const StatTile: React.FC<{ icon: IonName; value: number | null; label: string; onPress: () => void }> = ({
   icon,
-  tint,
   value,
   label,
   onPress,
 }) => {
   const styles = useStyles(makeStyles);
-  const { rowTint, service, opacity } = useTheme();
-  const t = tint === 'accent' ? { bg: service.accentSoft, fg: service.accentDeep } : rowTint[tint];
+  const { colors, opacity } = useTheme();
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`${label}: ${value ?? 'loading'}`}
       style={({ pressed }) => [styles.stat, pressed && { opacity: opacity.pressed }]}>
-      <View style={[styles.statIcon, { backgroundColor: t.bg }]}>
-        <IonIcon name={icon} size="md" color={t.fg} />
-      </View>
-      <AppText variant="h2">{value ?? '–'}</AppText>
+      <IonIcon name={icon} size="md" color={colors.inkMuted} />
+      <AppText variant="stat">{value ?? '–'}</AppText>
       <AppText variant="caption" tone="muted" align="center" numberOfLines={1}>
         {label}
       </AppText>
@@ -173,14 +159,14 @@ const MenuSection: React.FC<{ title: string; items: MenuItem[] }> = ({ title, it
   if (!items.length) return null;
   return (
     <View style={styles.section}>
-      <AppText variant="overline" tone="muted" accessibilityRole="header">
+      <AppText variant="sectionTitle" accessibilityRole="header">
         {title}
       </AppText>
       <Card padded="horizontal">
         {items.map((item, i) => (
           <React.Fragment key={item.key}>
             {i > 0 ? <Divider /> : null}
-            <ListRow title={item.title} subtitle={item.subtitle} leftIcon={item.icon} tint={item.tint} onPress={item.onPress} />
+            <ListRow title={item.title} subtitle={item.subtitle} leftIcon={item.icon} onPress={item.onPress} />
           </React.Fragment>
         ))}
       </Card>
@@ -202,7 +188,7 @@ const ProfileContent: React.FC<Props> = ({ navigation }) => {
   const svc = useServiceNav();
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { colors, opacity, service } = useTheme();
+  const { colors, opacity } = useTheme();
   const user = useAppSelector(selectUser);
   const business = useAppSelector(selectBusiness);
   const p = useAppSelector(selectProfile);
@@ -280,7 +266,7 @@ const ProfileContent: React.FC<Props> = ({ navigation }) => {
   const who = [ROLE_LABEL[user.role], business?.name ?? since].filter(Boolean).join(' · ');
 
   const account: MenuItem[] = [
-    { key: 'edit', title: 'Edit profile', subtitle: 'Your name, mobile and photo', icon: 'create-outline', tint: 'violet', onPress: () => dispatch(setProfileTab('settings')) },
+    { key: 'edit', title: 'Edit profile', subtitle: 'Your name, mobile and photo', icon: 'create-outline', onPress: () => dispatch(setProfileTab('settings')) },
     ...(isCustomer
       ? [
           {
@@ -288,18 +274,16 @@ const ProfileContent: React.FC<Props> = ({ navigation }) => {
             title: 'My addresses',
             subtitle: addressBook.status === 'succeeded' ? `${addressBook.addresses.length} saved` : 'Where your orders are delivered',
             icon: 'location-outline' as IonName,
-            tint: 'red' as RowTint,
             onPress: () => dispatch(setProfileTab('addresses')),
           },
         ]
       : []),
-    { key: 'notifications', title: 'Notifications', subtitle: 'Orders, visits and offers', icon: 'notifications-outline', tint: 'amber', onPress: () => navigation.navigate('Notifications') },
+    { key: 'notifications', title: 'Notifications', subtitle: 'Orders, visits and offers', icon: 'notifications-outline', onPress: () => navigation.navigate('Notifications') },
     {
       key: 'password',
       title: googleOnly ? 'Set a password' : 'Change password',
       subtitle: googleOnly ? 'Sign in with email as well as Google' : 'Keep your account secure',
       icon: 'lock-closed-outline',
-      tint: 'blue',
       onPress: () => navigation.navigate('ChangePassword'),
     },
   ];
@@ -307,24 +291,24 @@ const ProfileContent: React.FC<Props> = ({ navigation }) => {
   const shopping: MenuItem[] = isCustomer
     ? [
         { key: 'orders', title: 'My orders', subtitle: 'Track and review every order', icon: 'receipt-outline', onPress: () => svc.openShopTab('ShopOrdersTab') },
-        { key: 'saved', title: 'Saved', subtitle: 'Products you hearted', icon: 'heart-outline', tint: 'rose', onPress: () => svc.openShopTab('SavedTab') },
+        { key: 'saved', title: 'Saved', subtitle: 'Products you hearted', icon: 'heart-outline', onPress: () => svc.openShopTab('SavedTab') },
       ]
     : [];
 
   const health: MenuItem[] = isCustomer
     ? [
         { key: 'visits', title: 'My appointments', subtitle: 'Upcoming and past visits', icon: 'calendar-outline', onPress: () => svc.openHealthTab('AppointmentsTab') },
-        { key: 'records', title: 'Health records', subtitle: 'Reports, scans and results', icon: 'folder-open-outline', tint: 'blue', onPress: () => svc.openHealthTab('RecordsTab') },
-        { key: 'rx', title: 'Prescriptions', subtitle: 'From your visits', icon: 'document-text-outline', tint: 'violet', onPress: () => svc.openHealth('PrescriptionList') },
-        { key: 'family', title: 'Family members', subtitle: 'Book and keep records for them', icon: 'people-outline', tint: 'amber', onPress: () => svc.openHealth('FamilyMembers') },
+        { key: 'records', title: 'Health records', subtitle: 'Reports, scans and results', icon: 'folder-open-outline', onPress: () => svc.openHealthTab('RecordsTab') },
+        { key: 'rx', title: 'Prescriptions', subtitle: 'From your visits', icon: 'document-text-outline', onPress: () => svc.openHealth('PrescriptionList') },
+        { key: 'family', title: 'Family members', subtitle: 'Book and keep records for them', icon: 'people-outline', onPress: () => svc.openHealth('FamilyMembers') },
       ]
     : [];
 
   // Food Court: the customer's own kitchen and nutrition (Kitchen Intelligence, 5C).
   const food: MenuItem[] = isCustomer
     ? [
-        { key: 'mykitchen', title: 'My Kitchen', subtitle: 'What’s at home, recipes, what to buy', icon: 'basket-outline', tint: 'blue', onPress: () => svc.openFood('MyKitchen') },
-        { key: 'nutrition', title: 'Nutrition', subtitle: 'Off unless you turn it on; only you see it', icon: 'nutrition-outline', tint: 'rose', onPress: () => svc.openFood('NutritionSettings') },
+        { key: 'mykitchen', title: 'My Kitchen', subtitle: 'What’s at home, recipes, what to buy', icon: 'basket-outline', onPress: () => svc.openFood('MyKitchen') },
+        { key: 'nutrition', title: 'Nutrition', subtitle: 'Off unless you turn it on; only you see it', icon: 'nutrition-outline', onPress: () => svc.openFood('NutritionSettings') },
       ]
     : [];
 
@@ -364,19 +348,17 @@ const ProfileContent: React.FC<Props> = ({ navigation }) => {
         <View style={styles.stats}>
           <StatTile
             icon="location-outline"
-            tint="red"
             value={addressBook.status === 'succeeded' ? addressBook.addresses.length : null}
             label="Addresses"
             onPress={() => dispatch(setProfileTab('addresses'))}
           />
           <StatTile
             icon="people-outline"
-            tint="violet"
             value={family.status === 'succeeded' ? family.members.length : null}
             label="Family"
             onPress={() => svc.openHealth('FamilyMembers')}
           />
-          <StatTile icon="heart-outline" tint="accent" value={savedStatus === 'succeeded' ? savedIds.length : null} label="Saved" onPress={() => svc.openShopTab('SavedTab')} />
+          <StatTile icon="heart-outline" value={savedStatus === 'succeeded' ? savedIds.length : null} label="Saved" onPress={() => svc.openShopTab('SavedTab')} />
         </View>
       ) : null}
       <MenuSection title="Account" items={account} />
@@ -414,14 +396,14 @@ const ProfileContent: React.FC<Props> = ({ navigation }) => {
         <InlineNotice message={addressBook.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadAddressesAsync()) }} />
       ) : null}
       {addressBook.status === 'succeeded' && !addressBook.addresses.length ? (
-        <EmptyState icon="map-pin" title="No addresses yet" body="Add where your orders should go. You can pick it at checkout." />
+        <EmptyState icon="location-outline" title="No addresses yet" body="Add where your orders should go. You can pick it at checkout." />
       ) : null}
       {addressBook.addresses.map(a => {
         const label = ADDRESS_LABELS.find(l => l.key === a.label) ?? ADDRESS_LABELS[0];
         return (
           <Card key={a.id} selected={a.isDefault}>
             <View style={styles.addressHead}>
-              <IonIcon name={label.icon} size="md" color={service.accentDeep} />
+              <IonIcon name={label.icon} size="md" color={colors.inkMuted} />
               <AppText variant="title" style={styles.grow}>
                 {label.label}
               </AppText>
@@ -445,7 +427,7 @@ const ProfileContent: React.FC<Props> = ({ navigation }) => {
   const settings = (
     <>
       <View style={styles.section}>
-        <AppText variant="overline" tone="muted" accessibilityRole="header">
+        <AppText variant="sectionTitle" accessibilityRole="header">
           Personal details
         </AppText>
         <Card>

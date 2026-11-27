@@ -106,7 +106,7 @@ const ReviewModeration: React.FC<Props> = () => {
           ) : list.error ? (
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
-            <EmptyState icon="message-square" title={s.hidden ? 'Nothing hidden' : 'No reviews yet'} body="Patients' reviews of doctors show here." />
+            <EmptyState icon="chatbox-outline" title={s.hidden ? 'Nothing hidden' : 'No reviews yet'} body="Patients' reviews of doctors show here." />
           )
         }
       />

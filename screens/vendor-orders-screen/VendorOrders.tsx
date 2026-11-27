@@ -126,7 +126,7 @@ const VendorOrdersContent: React.FC = () => {
   if (!live) {
     return (
       <ScreenShell title="Orders" subtitle={business?.name}>
-        <EmptyState ion="checkbox-outline" title="Finish your setup" body="Customers can order once your kitchen is live." action={{ label: 'Open setup', onPress: () => navigation.navigate('VendorSetup') }} />
+        <EmptyState icon="checkbox-outline" title="Finish your setup" body="Customers can order once your kitchen is live." action={{ label: 'Open setup', onPress: () => navigation.navigate('VendorSetup') }} />
       </ScreenShell>
     );
   }
@@ -310,7 +310,7 @@ const VendorOrdersContent: React.FC = () => {
           onRefresh={() => void pull()}
           ListEmptyComponent={
             <EmptyState
-              ion="file-tray-outline"
+              icon="file-tray-outline"
               title={b.column === 'new' ? 'No new orders' : 'Nothing here right now'}
               body={b.column === 'new' ? 'New orders ring here and wait for your answer, on any tab.' : 'Orders move along as you tap.'}
             />

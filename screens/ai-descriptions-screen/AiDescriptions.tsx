@@ -157,7 +157,7 @@ const AiDescriptionsContent: React.FC<Props> = ({ navigation }) => {
       {!items.length && (s.status === 'loading' || s.status === 'idle') ? <RowCardsSkeleton count={4} /> : null}
       {/* Loaded with nothing to describe: say so instead of loading forever. */}
       {!items.length && s.status === 'succeeded' ? (
-        <EmptyState ion="restaurant-outline" title="No dishes on the menu yet" body="Add a dish first, then the assistant can draft its description." action={{ label: 'Add a dish', onPress: () => navigation.navigate('VendorMenuItem', undefined) }} />
+        <EmptyState icon="restaurant-outline" title="No dishes on the menu yet" body="Add a dish first, then the assistant can draft its description." action={{ label: 'Add a dish', onPress: () => navigation.navigate('VendorMenuItem', undefined) }} />
       ) : null}
       {items.length ? (
         <Card padded="horizontal">

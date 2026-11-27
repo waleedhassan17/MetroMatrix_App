@@ -151,7 +151,7 @@ const NotificationsContent: React.FC<Props> = ({ navigation }) => {
           ) : list.error ? (
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
-            <EmptyState icon="bell" title="You’re all caught up" body={isStore ? 'New orders, payments and returns show here.' : 'Order updates and replies show here.'} />
+            <EmptyState icon="notifications-outline" title="You’re all caught up" body={isStore ? 'New orders, payments and returns show here.' : 'Order updates and replies show here.'} />
           )
         }
         ListFooterComponent={list.isLoadingMore ? <SkeletonLines lines={2} /> : null}

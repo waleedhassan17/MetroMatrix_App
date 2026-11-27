@@ -134,7 +134,7 @@ const DoctorListContent: React.FC<Props> = ({ route }) => {
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
             <EmptyState
-              icon="search"
+              icon="search-outline"
               title="No doctors match these filters"
               body="Clear the filters, or try another day or city."
               action={filters ? { label: 'Clear filters', onPress: () => dispatch(clearDoctorFilters(key)) } : undefined}

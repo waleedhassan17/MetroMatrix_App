@@ -83,7 +83,7 @@ const OrderDetailContent: React.FC<Props> = ({ navigation, route }) => {
   const { back } = useBack({ name: 'ShopTabs', params: { screen: 'ShopOrdersTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { service, opacity } = useTheme();
+  const { colors, service, opacity } = useTheme();
   const { groupCode } = route.params;
   const e = useAppSelector(s => selectOrderGroup(s, groupCode));
   const a = useAppSelector(selectOrderActions);
@@ -151,7 +151,7 @@ const OrderDetailContent: React.FC<Props> = ({ navigation, route }) => {
             style={({ pressed }) => [styles.tracking, pressed && { opacity: opacity.pressed }]}
             accessibilityRole="button"
             accessibilityLabel={`Shipped with ${o.shipment.courierName}, tracking ${o.shipment.trackingRef}. Copy`}>
-            <IonIcon name="cube-outline" size="lg" color={service.accentDeep} />
+            <IonIcon name="cube-outline" size="lg" color={colors.inkMuted} />
             <View style={styles.grow}>
               <AppText variant="small" tone="muted">
                 {o.shipment.courierName}

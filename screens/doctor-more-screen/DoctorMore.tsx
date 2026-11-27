@@ -12,7 +12,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import { useSignOut } from '../../hooks/useSignOut';
 import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
-import { ServiceScope, useStyles, type RowTint, type Theme } from '../../theme/index';
+import { ServiceScope, useStyles, type Theme } from '../../theme/index';
 import { AppText, Card, Divider, InlineNotice, ListRow, ScreenShell, StatusPill, type IonName } from '../../Custom-Components/index';
 import { selectBusiness } from '../../store/authSlice';
 import { Alert } from '../../utils/alert/alert';
@@ -25,7 +25,6 @@ interface Item {
   label: string;
   hint?: string;
   icon: IonName;
-  tint: RowTint;
   to: string;
   params?: object;
 }
@@ -34,26 +33,26 @@ const SECTIONS: { title: string; items: Item[] }[] = [
   {
     title: 'Your practice',
     items: [
-      { label: 'Availability', hint: 'Locations, weekly hours, preview', icon: 'time-outline', tint: 'blue', to: 'Availability' },
-      { label: 'Time off', hint: 'Days you won’t see patients', icon: 'sunny-outline', tint: 'amber', to: 'TimeOff' },
-      { label: 'Your profile', hint: 'Photo, qualifications, booking rules', icon: 'medkit-outline', tint: 'teal', to: 'DoctorProfileEdit' },
-      { label: 'Payment accounts', hint: 'Where patients send transfers', icon: 'card-outline', tint: 'green', to: 'PaymentAccounts' },
-      { label: 'Practice setup', hint: 'The checklist patients need', icon: 'checkmark-done-outline', tint: 'violet', to: 'PracticeSetup' },
+      { label: 'Availability', hint: 'Locations, weekly hours, preview', icon: 'time-outline', to: 'Availability' },
+      { label: 'Time off', hint: 'Days you won’t see patients', icon: 'sunny-outline', to: 'TimeOff' },
+      { label: 'Your profile', hint: 'Photo, qualifications, booking rules', icon: 'medkit-outline', to: 'DoctorProfileEdit' },
+      { label: 'Payment accounts', hint: 'Where patients send transfers', icon: 'card-outline', to: 'PaymentAccounts' },
+      { label: 'Practice setup', hint: 'The checklist patients need', icon: 'checkmark-done-outline', to: 'PracticeSetup' },
     ],
   },
   {
     title: 'Patients',
     items: [
-      { label: 'Reviews', hint: 'Read and reply', icon: 'star-outline', tint: 'amber', to: 'MyReviews' },
-      { label: 'Insights', hint: 'Visits, wait times, recorded fees', icon: 'stats-chart-outline', tint: 'blue', to: 'DoctorInsights' },
-      { label: 'Your bookable times', hint: 'The next 14 days, as patients see them', icon: 'eye-outline', tint: 'violet', to: 'Availability', params: { tab: 'preview' } },
+      { label: 'Reviews', hint: 'Read and reply', icon: 'star-outline', to: 'MyReviews' },
+      { label: 'Insights', hint: 'Visits, wait times, recorded fees', icon: 'stats-chart-outline', to: 'DoctorInsights' },
+      { label: 'Your bookable times', hint: 'The next 14 days, as patients see them', icon: 'eye-outline', to: 'Availability', params: { tab: 'preview' } },
     ],
   },
   {
     title: 'Account',
     items: [
-      { label: 'Notifications', icon: 'notifications-outline', tint: 'rose', to: 'Notifications' },
-      { label: 'My account', hint: 'Name, phone, password', icon: 'person-circle-outline', tint: 'grey', to: 'Profile' },
+      { label: 'Notifications', icon: 'notifications-outline', to: 'Notifications' },
+      { label: 'My account', hint: 'Name, phone, password', icon: 'person-circle-outline', to: 'Profile' },
     ],
   },
 ];
@@ -118,7 +117,7 @@ const DoctorMore: React.FC = () => {
 
         {listing ? (
           <View style={styles.section}>
-            <AppText variant="overline" tone="muted">
+            <AppText variant="sectionTitle">
               Your listing
             </AppText>
             <Card padded="horizontal">
@@ -132,21 +131,20 @@ const DoctorMore: React.FC = () => {
                       : "New patients can't find or book you."
                 }
                 leftIcon={listing.isListed ? 'eye-outline' : 'eye-off-outline'}
-                tint={listing.isListed ? 'green' : 'amber'}
                 right={<StatusPill label={listing.isListed ? 'Listed' : 'Hidden'} tone={listing.isListed ? 'success' : 'warning'} />}
                 chevron={false}
               />
               {listing.isListed ? (
                 <>
                   <Divider />
-                  <ListRow title="Share your profile" subtitle="A link patients can book from" leftIcon="share-social-outline" tint="blue" onPress={() => void share()} chevron={false} />
+                  <ListRow title="Share your profile" subtitle="A link patients can book from" leftIcon="share-social-outline" onPress={() => void share()} chevron={false} />
                   <Divider />
-                  <ListRow title="Hide from patients" leftIcon="eye-off-outline" tint="grey" onPress={hide} chevron={false} accessibilityHint="Asks first" />
+                  <ListRow title="Hide from patients" leftIcon="eye-off-outline" onPress={hide} chevron={false} accessibilityHint="Asks first" />
                 </>
               ) : !listing.hiddenByStaff ? (
                 <>
                   <Divider />
-                  <ListRow title={s.busy ? 'Showing your profile…' : 'Show to patients'} leftIcon="eye-outline" tint="green" onPress={s.busy ? undefined : show} chevron={false} />
+                  <ListRow title={s.busy ? 'Showing your profile…' : 'Show to patients'} leftIcon="eye-outline" onPress={s.busy ? undefined : show} chevron={false} />
                 </>
               ) : null}
             </Card>
@@ -155,21 +153,21 @@ const DoctorMore: React.FC = () => {
 
         {SECTIONS.map(section => (
           <View key={section.title} style={styles.section}>
-            <AppText variant="overline" tone="muted">
+            <AppText variant="sectionTitle">
               {section.title}
             </AppText>
             <Card padded="horizontal">
               {section.items.map((it, i) => (
                 <View key={it.label}>
                   {i > 0 ? <Divider /> : null}
-                  <ListRow title={it.label} subtitle={it.hint} leftIcon={it.icon} tint={it.tint} onPress={() => navigation.navigate(it.to, it.params)} />
+                  <ListRow title={it.label} subtitle={it.hint} leftIcon={it.icon} onPress={() => navigation.navigate(it.to, it.params)} />
                 </View>
               ))}
             </Card>
           </View>
         ))}
         <Card padded="horizontal">
-          <ListRow title="Sign out" leftIcon="log-out-outline" tint="red" destructive onPress={confirmSignOut} chevron={false} />
+          <ListRow title="Sign out" leftIcon="log-out-outline" destructive onPress={confirmSignOut} chevron={false} />
         </Card>
       </ScreenShell>
     </ServiceScope>

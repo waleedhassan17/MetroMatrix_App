@@ -111,7 +111,7 @@ const ProductReviewsContent: React.FC<Props> = ({ route }) => {
               <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
             ) : (
               <EmptyState
-                icon="message-square"
+                icon="chatbox-outline"
                 title={filter.rating || filter.withPhotos ? 'No reviews match' : 'No reviews yet'}
                 body={filter.rating || filter.withPhotos ? 'Try another filter.' : 'Buyers can review it once it is delivered.'}
               />

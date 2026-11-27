@@ -61,22 +61,22 @@ const VendorInsightsContent: React.FC<Props> = () => {
       headerContent={<SegmentTabs options={INSIGHT_RANGES} value={s.range} onChange={r => dispatch(setFoodInsightsRange(r))} accessibilityLabel="Range" />}>
       {s.error.message ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadFoodInsightsAsync(s.range)) }} /> : null}
       {!d ? (
-        s.error.message ? null : <StatGridSkeleton count={4} />
+        s.error.message ? null : <StatGridSkeleton count={4} hints />
       ) : isQuiet(d) ? (
         // A quiet period: just the empty state, never a page of zeros.
-        <EmptyState ion="bar-chart-outline" title="No orders in this period" body="Your numbers show here once customers order." />
+        <EmptyState icon="bar-chart-outline" title="No orders in this period" body="Your numbers show here once customers order." />
       ) : (
         <>
           <StatGrid
             stats={[
-              { key: 'sales', icon: 'cash-outline', tint: 'green', value: formatPKR(d.totals.recordedSales), label: 'Recorded sales' },
-              { key: 'done', icon: 'checkmark-done-outline', tint: 'blue', value: d.totals.completed, label: 'Orders completed', hint: `of ${d.totals.orders} placed` },
-              { key: 'avg', icon: 'receipt-outline', tint: 'violet', value: formatPKR(d.totals.averageOrderValue), label: 'Average order' },
-              { key: 'accepted', icon: 'thumbs-up-outline', tint: 'teal', value: percentLabel(d.acceptanceRate), label: 'Accepted', hint: d.autoRejected ? `${d.autoRejected} not answered in time` : null },
-              { key: 'answer', icon: 'timer-outline', tint: 'amber', value: answerTimeLabel(d.avgAcceptSeconds), label: 'Time to answer' },
-              { key: 'prep', icon: 'flame-outline', tint: 'red', value: minutesLabel(d.avgPrepMinutes), label: 'Prep time' },
-              { key: 'ontime', icon: 'alarm-outline', tint: 'green', value: percentLabel(d.onTimeRate), label: 'On time' },
-              { key: 'back', icon: 'repeat-outline', tint: 'violet', value: percentLabel(d.repeatCustomers.rate), label: 'Came back', hint: `${d.repeatCustomers.repeat} of ${d.repeatCustomers.customers} customers` },
+              { key: 'sales', icon: 'cash-outline', value: formatPKR(d.totals.recordedSales), label: 'Recorded sales' },
+              { key: 'done', icon: 'checkmark-done-outline', value: d.totals.completed, label: 'Orders completed', hint: `of ${d.totals.orders} placed` },
+              { key: 'avg', icon: 'receipt-outline', value: formatPKR(d.totals.averageOrderValue), label: 'Average order' },
+              { key: 'accepted', icon: 'thumbs-up-outline', value: percentLabel(d.acceptanceRate), label: 'Accepted', hint: d.autoRejected ? `${d.autoRejected} not answered in time` : null },
+              { key: 'answer', icon: 'timer-outline', value: answerTimeLabel(d.avgAcceptSeconds), label: 'Time to answer' },
+              { key: 'prep', icon: 'flame-outline', value: minutesLabel(d.avgPrepMinutes), label: 'Prep time' },
+              { key: 'ontime', icon: 'alarm-outline', value: percentLabel(d.onTimeRate), label: 'On time' },
+              { key: 'back', icon: 'repeat-outline', value: percentLabel(d.repeatCustomers.rate), label: 'Came back', hint: `${d.repeatCustomers.repeat} of ${d.repeatCustomers.customers} customers` },
             ]}
           />
           {isQuiet(d) ? null : (

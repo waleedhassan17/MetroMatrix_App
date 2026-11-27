@@ -85,7 +85,7 @@ const FoodSurplusReservedContent: React.FC<Props> = ({ navigation, route }) => {
     <ScreenShell title={r.vendor.name} subtitle={`${BACHAT_BOX} · ${r.pickupLabel}`} onBack={back} refreshing={ui.status === 'loading'} onRefresh={load}>
       {fresh && live ? <InlineNotice tone="success" title="Reserved" message={`It’s held for you. Collect it ${r.pickupLabel}.`} /> : null}
       <View style={styles.code} accessible accessibilityLabel={`Pickup code ${r.code.split('').join(' ')}. ${status.label}.`}>
-        <AppText variant="overline" tone="muted">
+        <AppText variant="small" tone="muted">
           Pickup code
         </AppText>
         <AppText variant="display" tone={live ? 'accentDeep' : 'muted'} selectable>

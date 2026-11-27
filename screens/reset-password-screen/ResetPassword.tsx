@@ -38,7 +38,7 @@ const makeStyles = ({ space, size, radius }: Theme) =>
 const ResetPassword: React.FC<Props> = ({ navigation, route }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { service } = useTheme();
+  const { colors } = useTheme();
   // Opened without an address (a bare link, a web bookmark): start at the email step instead of crashing.
   const email = route.params?.email ?? '';
   const userType = route.params?.userType ?? 'user';
@@ -87,8 +87,8 @@ const ResetPassword: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <AuthScreen onBack={back}>
-      <View style={[styles.hero, { backgroundColor: service.accentSoft }]}>
-        <IonIcon name="shield-checkmark-outline" size="xl" color={service.accent} />
+      <View style={[styles.hero, { backgroundColor: colors.surfaceSunk }]}>
+        <IonIcon name="shield-checkmark-outline" size="xl" color={colors.inkMuted} />
       </View>
       <AuthHeader hideLogo title="Reset Password" subtitle="Create a new password for your account." />
       {probablyChanged ? (

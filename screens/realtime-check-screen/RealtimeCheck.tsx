@@ -13,7 +13,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppText, Button, Card, Divider, ScreenShell, StatusPill } from '../../Custom-Components/index';
-import { useStyles, type Theme } from '../../theme/index';
+import { useStyles, useTheme, type Theme } from '../../theme/index';
 import type { CustomerStackParamList } from '../../models';
 import { useBack } from '../../hooks/useBack';
 import { useLayoutClass } from '../../hooks/useLayoutClass';
@@ -63,6 +63,7 @@ const RIDE_STEP_MS = 2000;
 
 export const RealtimeCheck: React.FC<Props> = () => {
   const styles = useStyles(makeStyles);
+  const { size } = useTheme();
   const { back } = useBack({ name: 'CustomerHome' });
   const layout = useLayoutClass();
   const status = useRealtimeStatus();
@@ -185,7 +186,7 @@ export const RealtimeCheck: React.FC<Props> = () => {
 
         <Card style={styles.card}>
           <AppText variant="sectionTitle">Map</AppText>
-          <FoodMap pins={DEMO_PINS} rider={riderAt} height={220} accessibilityLabel="Demo map: a kitchen in Gulberg, a drop-off in Model Town" />
+          <FoodMap pins={DEMO_PINS} rider={riderAt} height={size.trackingMap} accessibilityLabel="Demo map: a kitchen in Gulberg, a drop-off in Model Town" />
           <Row label="Rider" value={ride === null ? (loc.lastFix ? 'your location' : 'none') : `step ${ride} of ${RIDE_STEPS}`} />
           <View style={styles.buttons}>
             <Button label="Simulate a ride" size="sm" onPress={() => setRide(0)} />

@@ -45,7 +45,7 @@ export const TextAction: React.FC<{
       aria-disabled={!!disabled}
       style={({ pressed }) => [styles.root, pressed && { opacity: opacity.pressed }]}>
       {icon ? <IonIcon name={icon} size="sm" color={color} /> : null}
-      <AppText variant="small" style={{ color }}>
+      <AppText variant="link" style={{ color }}>
         {label}
       </AppText>
     </Pressable>

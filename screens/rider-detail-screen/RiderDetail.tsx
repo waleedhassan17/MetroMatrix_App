@@ -143,8 +143,8 @@ const RiderDetailContent: React.FC<Props> = ({ route }) => {
         tools={[
           ...(r.phone
             ? [
-                { key: 'call', title: formatPkPhoneForDisplay(r.phone), subtitle: 'Call', icon: 'call-outline' as const, tint: 'green' as const, onPress: () => callNumber(r.phone!) },
-                { key: 'wa', title: 'WhatsApp', icon: 'logo-whatsapp' as const, tint: 'teal' as const, onPress: () => openWhatsApp(r.phone!) },
+                { key: 'call', title: formatPkPhoneForDisplay(r.phone), subtitle: 'Call', icon: 'call-outline' as const, onPress: () => callNumber(r.phone!) },
+                { key: 'wa', title: 'WhatsApp', icon: 'logo-whatsapp' as const, onPress: () => openWhatsApp(r.phone!) },
               ]
             : []),
           {
@@ -152,13 +152,12 @@ const RiderDetailContent: React.FC<Props> = ({ route }) => {
             title: r.username ?? 'No username',
             subtitle: 'Username — riders sign in with it. Tap to copy',
             icon: 'person-outline' as const,
-            tint: 'grey' as const,
             onPress: () => {
               if (!r.username) return;
               void Clipboard.setStringAsync(r.username).then(() => Toast.show({ type: 'success', text1: 'Username copied' }));
             },
           },
-          { key: 'reset', title: 'Reset password', subtitle: 'Signs them out and gives a new password', icon: 'key-outline' as const, tint: 'amber' as const, onPress: reset },
+          { key: 'reset', title: 'Reset password', subtitle: 'Signs them out and gives a new password', icon: 'key-outline' as const, onPress: reset },
         ]}
       />
 

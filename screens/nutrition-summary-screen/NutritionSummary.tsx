@@ -78,10 +78,10 @@ const NutritionSummaryContent: React.FC<Props> = ({ navigation }) => {
               <ShopSection title="On the days you ordered" subtitle="A day’s average, estimated" inset={false} />
               <StatGrid
                 stats={[
-                  { key: 'kcal', icon: 'flame-outline', tint: 'amber', value: `${n(sum.averageOnOrderDays.kcal)}`, label: 'kcal' },
-                  { key: 'protein', icon: 'barbell-outline', tint: 'blue', value: `${sum.averageOnOrderDays.protein} g`, label: 'Protein' },
-                  { key: 'carbs', icon: 'leaf-outline', tint: 'green', value: `${sum.averageOnOrderDays.carbs} g`, label: 'Carbs' },
-                  { key: 'fat', icon: 'water-outline', tint: 'violet', value: `${sum.averageOnOrderDays.fat} g`, label: 'Fat' },
+                  { key: 'kcal', icon: 'flame-outline', value: `${n(sum.averageOnOrderDays.kcal)}`, label: 'kcal' },
+                  { key: 'protein', icon: 'barbell-outline', value: `${sum.averageOnOrderDays.protein} g`, label: 'Protein' },
+                  { key: 'carbs', icon: 'leaf-outline', value: `${sum.averageOnOrderDays.carbs} g`, label: 'Carbs' },
+                  { key: 'fat', icon: 'water-outline', value: `${sum.averageOnOrderDays.fat} g`, label: 'Fat' },
                 ]}
               />
               {vsTarget(sum.averageOnOrderDays.kcal, sum.targetKcal) ? (
@@ -91,7 +91,7 @@ const NutritionSummaryContent: React.FC<Props> = ({ navigation }) => {
               ) : null}
             </View>
           ) : (
-            <EmptyState ion="restaurant-outline" title="No orders this week" body="No Food Court orders delivered or collected in the last 7 days." />
+            <EmptyState icon="restaurant-outline" title="No orders this week" body="No Food Court orders delivered or collected in the last 7 days." />
           )}
 
           <Card>

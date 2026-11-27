@@ -47,7 +47,7 @@ const FoodCateringRequestsContent: React.FC<Props> = ({ navigation }) => {
         <RowCardsSkeleton count={3} />
       ) : !s.items.length && s.status === 'succeeded' ? (
         <EmptyState
-          ion="people-outline"
+          icon="people-outline"
           title="No dawat requests yet"
           body="Planning a dawat, a wedding or an office lunch? Ask a kitchen from its page: “Plan a dawat”."
           action={{ label: 'Browse kitchens', onPress: () => navigation.navigate('FoodVendors', { title: 'Kitchens' }) }}
@@ -60,7 +60,7 @@ const FoodCateringRequestsContent: React.FC<Props> = ({ navigation }) => {
               <RowCard
                 key={r.code}
                 title={r.vendor.name}
-                mark={{ icon: 'people-outline', tint: 'violet' }}
+                mark={{ icon: 'people-outline' }}
                 lines={[eventLine(r), q ? `Quote ${q.version}: ${formatPKR(q.total)}` : `${r.dishes.length} dishes asked for`]}
                 pill={{ label: CATERING_STATUS[r.status].label, tone: CATERING_STATUS[r.status].tone }}
                 chevron

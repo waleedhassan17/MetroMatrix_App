@@ -7,7 +7,7 @@ import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { AppText } from './AppText';
-import { Icon } from './Icon';
+import { IonIcon } from './Icon';
 import { ModalSheet } from './ModalSheet';
 
 export interface PickerOption<V extends string> {
@@ -77,7 +77,7 @@ export const PickerOptionRow: React.FC<{
           </AppText>
         ) : null}
       </View>
-      {selected ? <Icon name="check" size="md" color={service.accentDeep} /> : null}
+      {selected ? <IonIcon name="checkmark" size="md" color={service.accentDeep} /> : null}
     </Pressable>
   );
 };
@@ -134,7 +134,7 @@ export const PickerField: React.FC<{
         <AppText variant="input" tone={valueLabel ? 'ink' : 'faint'} style={{ flex: 1 }} numberOfLines={1}>
           {valueLabel ?? placeholder}
         </AppText>
-        <Icon name="chevron-down" size="md" color={colors.inkMuted} />
+        <IonIcon name="chevron-down" size="md" color={colors.inkMuted} />
       </Pressable>
       {error ? (
         <AppText variant="small" tone="danger">

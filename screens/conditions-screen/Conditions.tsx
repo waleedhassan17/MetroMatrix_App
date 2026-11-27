@@ -117,7 +117,7 @@ const Conditions: React.FC<Props> = () => {
             {s.status === 'loading' ? (
               <SkeletonLines lines={8} />
             ) : (
-              <EmptyState icon="search" title={s.query ? 'No condition matches' : 'No conditions yet'} body="Add the words patients type when they don't know the specialty." />
+              <EmptyState icon="search-outline" title={s.query ? 'No condition matches' : 'No conditions yet'} body="Add the words patients type when they don't know the specialty." />
             )}
           </View>
         }

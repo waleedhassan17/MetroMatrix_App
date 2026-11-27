@@ -87,7 +87,7 @@ const FoodBagContent: React.FC<Props> = ({ navigation }) => {
           <InlineNotice message={b.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadFoodBagAsync()) }} />
         ) : (
           <EmptyState
-            ion="bag-handle-outline"
+            icon="bag-handle-outline"
             title="Your bag is empty"
             body="Add dishes from a kitchen’s menu and they’ll wait here."
             action={{ label: 'Browse the Food Court', onPress: () => navigation.navigate('FoodTabs', { screen: 'FoodHomeTab' }) }}

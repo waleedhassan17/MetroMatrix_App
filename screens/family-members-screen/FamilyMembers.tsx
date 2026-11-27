@@ -82,7 +82,7 @@ const FamilyMembersContent: React.FC<Props> = ({ navigation }) => {
           })}
         </Card>
       ) : (
-        <EmptyState icon="users" title="No family members yet" body="Add your spouse, children or parents to book their visits and keep their records in one place." />
+        <EmptyState icon="people-outline" title="No family members yet" body="Add your spouse, children or parents to book their visits and keep their records in one place." />
       )}
     </ScreenShell>
   );

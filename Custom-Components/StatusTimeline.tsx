@@ -4,7 +4,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { AppText } from './AppText';
-import { Icon } from './Icon';
+import { IonIcon } from './Icon';
 
 export type TimelineState = 'done' | 'current' | 'upcoming' | 'failed';
 
@@ -55,8 +55,8 @@ export const StatusTimeline: React.FC<{ steps: TimelineStep[] }> = ({ steps }) =
             accessibilityLabel={`${step.label}: ${step.state}${step.description ? `. ${step.description}` : ''}`}>
             <View style={styles.rail}>
               <View style={[styles.dot, dotLook]}>
-                {step.state === 'done' ? <Icon name="check" size="sm" color={service.onAccent} /> : null}
-                {step.state === 'failed' ? <Icon name="x" size="sm" color={colors.onDanger} /> : null}
+                {step.state === 'done' ? <IonIcon name="checkmark" size="sm" color={service.onAccent} /> : null}
+                {step.state === 'failed' ? <IonIcon name="close" size="sm" color={colors.onDanger} /> : null}
               </View>
               {!last ? (
                 <View style={[styles.line, step.state === 'done' && { backgroundColor: service.accent }]} />

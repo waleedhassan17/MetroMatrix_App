@@ -205,7 +205,7 @@ const FoodCheckoutContent: React.FC<Props> = ({ navigation }) => {
   if (bag.cart.empty && bag.status !== 'loading') {
     return (
       <ScreenShell title="Checkout" onBack={back} scroll>
-        <EmptyState ion="bag-handle-outline" title="Your bag is empty" body="Add dishes from a kitchen’s menu, then check out here." action={{ label: 'Browse the Food Court', onPress: () => navigation.navigate('FoodTabs', { screen: 'FoodHomeTab' }) }} />
+        <EmptyState icon="bag-handle-outline" title="Your bag is empty" body="Add dishes from a kitchen’s menu, then check out here." action={{ label: 'Browse the Food Court', onPress: () => navigation.navigate('FoodTabs', { screen: 'FoodHomeTab' }) }} />
       </ScreenShell>
     );
   }
@@ -332,7 +332,7 @@ const FoodCheckoutContent: React.FC<Props> = ({ navigation }) => {
           {/* A code */}
           {c.promoCode ? (
             <View style={[styles.code, { borderColor: preview?.deal?.code ? service.accent : colors.lineStrong }]}>
-              <IonIcon name="pricetag-outline" size="md" color={service.accentDeep} />
+              <IonIcon name="pricetag-outline" size="md" color={colors.inkMuted} />
               <View style={styles.grow}>
                 <AppText variant="bodyStrong">{c.promoCode}</AppText>
                 <AppText variant="caption" tone={preview?.deal?.code ? 'success' : 'muted'}>

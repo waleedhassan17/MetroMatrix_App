@@ -36,7 +36,7 @@ import {
   Card,
   Divider,
   EmptyState,
-  Icon,
+  IonIcon,
   ImageViewer,
   InlineNotice,
   ListRow,
@@ -181,7 +181,7 @@ const BusinessReview: React.FC<Props> = ({ navigation, route }) => {
       <ScreenShell title={route.params.name ?? 'Application'} onBack={() => navigation.goBack()}>
         {s.loadStatus === 'failed' ? (
           <EmptyState
-            icon="alert-circle"
+            icon="alert-circle-outline"
             title="Couldn't load it"
             body={s.error.message}
             action={{ label: 'Try again', onPress: () => dispatch(loadBusinessAsync(id)) }}
@@ -296,7 +296,7 @@ const BusinessReview: React.FC<Props> = ({ navigation, route }) => {
                   left={
                     <View style={styles.thumb}>
                       {isPdf(doc) && !pdfPage(doc.url, 1, { w: size.thumb }) ? (
-                        <Icon name="file-text" size="lg" />
+                        <IonIcon name="document-text-outline" size="lg" />
                       ) : (
                         <Image
                           source={{ uri: isPdf(doc) ? pdfPage(doc.url, 1, { w: size.thumb })! : doc.url }}

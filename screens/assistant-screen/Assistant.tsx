@@ -26,10 +26,10 @@ import { loadAssistantAsync, selectAssistant } from './assistantSlice';
 type Props = NativeStackScreenProps<FoodVendorStackParamList, 'KitchenAssistant'>;
 
 const ACTIONS = [
-  { key: 'descriptions', to: 'KitchenAiDescriptions', icon: 'create-outline', tint: 'violet', title: 'Write descriptions', body: 'English and Urdu, side by side, for the dishes you pick.' },
-  { key: 'specials', to: 'KitchenAiSpecials', icon: 'flame-outline', tint: 'rose', title: 'Today’s specials', body: 'Dishes from what expires soonest, with a price and what you keep.' },
-  { key: 'combos', to: 'KitchenAiCombos', icon: 'git-merge-outline', tint: 'amber', title: 'Combo ideas', body: 'Dishes people order together, as a deal at one price.' },
-  { key: 'photo', to: 'KitchenAiPhotoCheck', icon: 'camera-outline', tint: 'blue', title: 'Photo check', body: 'Tips to make a dish’s photo sell it better.' },
+  { key: 'descriptions', to: 'KitchenAiDescriptions', icon: 'create-outline', title: 'Write descriptions', body: 'English and Urdu, side by side, for the dishes you pick.' },
+  { key: 'specials', to: 'KitchenAiSpecials', icon: 'flame-outline', title: 'Today’s specials', body: 'Dishes from what expires soonest, with a price and what you keep.' },
+  { key: 'combos', to: 'KitchenAiCombos', icon: 'git-merge-outline', title: 'Combo ideas', body: 'Dishes people order together, as a deal at one price.' },
+  { key: 'photo', to: 'KitchenAiPhotoCheck', icon: 'camera-outline', title: 'Photo check', body: 'Tips to make a dish’s photo sell it better.' },
 ] as const;
 
 const makeStyles = ({ space }: Theme) =>
@@ -74,7 +74,7 @@ const AssistantContent: React.FC<Props> = ({ navigation }) => {
           <View key={a.key} style={[styles.tile, !tablet && styles.tileFull]}>
             <Card onPress={() => go(a.to)} accessibilityLabel={`${a.title}. ${a.body}`}>
               <View style={styles.action}>
-                <IconWell icon={a.icon} tint={a.tint} />
+                <IconWell icon={a.icon} />
                 <AppText variant="title">{a.title}</AppText>
                 <AppText variant="small" tone="muted">
                   {a.body}
@@ -88,8 +88,8 @@ const AssistantContent: React.FC<Props> = ({ navigation }) => {
       <ToolSection
         title="Also"
         tools={[
-          { key: 'reviews', title: 'What reviews say', subtitle: 'This week’s themes, good and bad, with the reviews behind them', icon: 'chatbubbles-outline', tint: 'violet', onPress: () => go('KitchenReviewInsights') },
-          { key: 'nutrition', title: 'Nutrition', subtitle: 'Calories and macros per dish, from your recipe cards', icon: 'nutrition-outline', tint: 'blue', onPress: () => go('KitchenNutrition') },
+          { key: 'reviews', title: 'What reviews say', subtitle: 'This week’s themes, good and bad, with the reviews behind them', icon: 'chatbubbles-outline', onPress: () => go('KitchenReviewInsights') },
+          { key: 'nutrition', title: 'Nutrition', subtitle: 'Calories and macros per dish, from your recipe cards', icon: 'nutrition-outline', onPress: () => go('KitchenNutrition') },
         ]}
       />
     </ScreenShell>

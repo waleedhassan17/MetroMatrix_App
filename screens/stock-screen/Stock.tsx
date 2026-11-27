@@ -126,7 +126,7 @@ const StockContent: React.FC<Props> = ({ navigation, route }) => {
         refreshing={s.status === 'loading' && !!s.list}
         renderSectionHeader={({ section }) => (
           <View style={styles.head}>
-            <AppText variant="overline" tone="muted" accessibilityRole="header">
+            <AppText variant="sectionTitle" accessibilityRole="header">
               {section.title}
             </AppText>
           </View>
@@ -143,7 +143,7 @@ const StockContent: React.FC<Props> = ({ navigation, route }) => {
             <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadStockAsync({ segment: s.segment, q })) }} />
           ) : (
             <EmptyState
-              ion="cube-outline"
+              icon="cube-outline"
               title={q ? `Nothing called “${q}”` : s.segment === 'all' ? 'No ingredients yet' : 'Nothing here'}
               body={s.segment === 'all' ? 'Add a purchase and its ingredients join your stock.' : 'Good: nothing in this list needs you.'}
               action={s.segment === 'all' ? { label: 'Add an ingredient', onPress: () => navigation.navigate('KitchenIngredientForm', q ? { name: q } : undefined) } : undefined}

@@ -94,7 +94,7 @@ const AiSpecialsContent: React.FC<Props> = ({ navigation, route }) => {
         </SectionCard>
       ) : null}
       {s.status === 'loading' && !s.ideas.length ? <RowCardsSkeleton count={4} /> : null}
-      {s.status === 'succeeded' && !s.ideas.length ? <EmptyState ion="checkmark-circle-outline" title="Nothing about to expire" body="No stock runs out of date in the next two days." /> : null}
+      {s.status === 'succeeded' && !s.ideas.length ? <EmptyState icon="checkmark-circle-outline" title="Nothing about to expire" body="No stock runs out of date in the next two days." /> : null}
 
       {s.ideas.map(idea => {
         const priceError = validateDraftPrice(s.prices[idea.id] ?? '');

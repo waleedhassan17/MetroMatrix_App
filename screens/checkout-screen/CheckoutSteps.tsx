@@ -179,7 +179,7 @@ export const PaymentStep: React.FC<{
                 accessibilityRole="button"
                 accessibilityLabel="Add a coupon"
                 style={[styles.coupon, styles.couponAdd, { borderColor: colors.lineStrong }]}>
-                <IonIcon name="pricetag-outline" size="md" color={service.accentDeep} />
+                <IonIcon name="pricetag-outline" size="md" color={colors.inkMuted} />
                 <AppText variant="bodyStrong" style={styles.grow}>
                   Add a coupon
                 </AppText>

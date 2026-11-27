@@ -32,7 +32,7 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
     return (
       <View style={styles.root}>
         <EmptyState
-          icon="alert-triangle"
+          icon="warning-outline"
           title="Something went wrong"
           body="The app hit an unexpected error. Your data is safe."
           action={{ label: 'Try again', onPress: () => this.setState({ error: null }) }}

@@ -37,7 +37,7 @@ export const PrepList: React.FC<{ groups: PrepListGroup[]; done: Record<string, 
     <View style={styles.root}>
       {groups.map(g => (
         <View key={g.key} style={styles.group}>
-          <AppText variant="overline" tone="muted" accessibilityRole="header">
+          <AppText variant="sectionTitle" accessibilityRole="header">
             {g.title}
           </AppText>
           {g.lines.map((l, n) => (

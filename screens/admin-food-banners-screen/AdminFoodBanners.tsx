@@ -94,7 +94,7 @@ const AdminFoodBanners: React.FC<Props> = ({ navigation }) => {
       {s.status === 'loading' && !list.length ? <SkeletonLines lines={6} /> : null}
       {s.status === 'succeeded' && !list.length ? (
         <EmptyState
-          icon="image"
+          icon="image-outline"
           title="No banners"
           body="The Food Court home starts with cuisines until you add one."
         />

@@ -150,7 +150,7 @@ export const ShopOrders: React.FC<{ segment: OrderSegment; onOpen: (code: string
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
             <EmptyState
-              ion="receipt-outline"
+              icon="receipt-outline"
               title={segment === 'active' ? 'Nothing on its way' : segment === 'completed' ? 'No completed orders yet' : 'No cancelled orders'}
               body={segment === 'active' ? 'Orders you place show here until they arrive.' : 'They’ll show here.'}
               action={segment === 'active' ? { label: 'Start shopping', onPress: onShop } : undefined}
@@ -185,7 +185,7 @@ export const Appointments: React.FC<{ segment: AppointmentSegment; onOpen: (code
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
             <EmptyState
-              icon="calendar"
+              icon="calendar-outline"
               title={segment === 'upcoming' ? 'No upcoming appointments' : 'No past appointments'}
               body={segment === 'upcoming' ? 'Book a video consultation or a clinic visit in a few taps.' : 'Visits you’ve had show here, with their prescriptions.'}
               action={segment === 'upcoming' ? { label: 'Find a doctor', onPress: onFind } : undefined}
@@ -229,7 +229,7 @@ export const FoodOrdersList: React.FC<{ segment: 'active' | 'past'; onOpen: (cod
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
             <EmptyState
-              ion="receipt-outline"
+              icon="receipt-outline"
               title={segment === 'active' ? 'Nothing on its way' : 'No past Food Court orders'}
               body={segment === 'active' ? 'Orders you place show here until they reach you, with each kitchen’s time.' : 'Delivered, collected and cancelled orders show here.'}
               action={segment === 'active' ? { label: 'Browse the Food Court', onPress: onBrowse } : undefined}

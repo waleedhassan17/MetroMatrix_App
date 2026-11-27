@@ -15,9 +15,7 @@ import {
   motion,
   GUTTER,
   HEALTH_PALETTE,
-  ROW_TINTS,
-  CARE_TINTS,
-  SPECIALTY_TINTS,
+  LIST_GAP,
   type ColorMode,
   type Palette,
   type Elevation,
@@ -67,14 +65,11 @@ export interface Theme {
   elevation: Elevation;
   motion: typeof motion;
   gutter: number;
+  /** The gap between a list's cards (12, everywhere). */
+  listGap: number;
   header: HeaderStyle;
   /** Dynamic type is honoured up to this multiple (Health: 150%). */
   maxFontScale: number;
-  /** The FYP profile's categorical icon chips (fixed across services). */
-  rowTint: typeof ROW_TINTS;
-  /** Health home: the bento card grounds and the specialty wells. */
-  careTint: typeof CARE_TINTS;
-  specialtyTint: typeof SPECIALTY_TINTS;
   /** How this service's bottom tab bar marks the selected tab (the FYP's per-module bars). */
   tabBar: TabBarStyle;
 }
@@ -126,15 +121,13 @@ const build = (serviceName: ServiceName): Theme => {
     elevation: buildElevation(colors),
     motion,
     gutter: GUTTER,
+    listGap: LIST_GAP,
     header: {
       tone: GRADIENT_HEADERS.includes(serviceName) ? 'gradient' : 'surface',
       gradient: headerGradient(serviceName),
       actions: HEADER_ACTIONS[serviceName],
     },
     maxFontScale: clinical ? CLINICAL_FONT_SCALE : MAX_FONT_SCALE,
-    rowTint: ROW_TINTS,
-    careTint: CARE_TINTS,
-    specialtyTint: SPECIALTY_TINTS,
     tabBar: {
       variant: TAB_BARS[serviceName],
       gradient: [SERVICE_PALETTES.light[serviceName].highlight, SERVICE_PALETTES.light[serviceName].accent],

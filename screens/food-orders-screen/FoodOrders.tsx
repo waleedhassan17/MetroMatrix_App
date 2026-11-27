@@ -58,9 +58,9 @@ const FoodOrders: React.FC<Props> = ({ navigation }) => {
           <View style={styles.links}>
             <QuickActionGrid
               actions={[
-                { key: 'tiffins', icon: 'calendar-outline', tint: 'amber', label: 'My tiffins', onPress: () => stack?.navigate('FoodTiffins') },
-                { key: 'dawat', icon: 'people-outline', tint: 'violet', label: 'Dawat requests', onPress: () => stack?.navigate('FoodCateringRequests') },
-                { key: 'bachat', icon: 'gift-outline', tint: 'green', label: 'Bachat Box', onPress: () => stack?.navigate('FoodSurplusReservations') },
+                { key: 'tiffins', icon: 'calendar-outline', label: 'My tiffins', onPress: () => stack?.navigate('FoodTiffins') },
+                { key: 'dawat', icon: 'people-outline', label: 'Dawat requests', onPress: () => stack?.navigate('FoodCateringRequests') },
+                { key: 'bachat', icon: 'gift-outline', label: 'Bachat Box', onPress: () => stack?.navigate('FoodSurplusReservations') },
               ]}
             />
           </View>

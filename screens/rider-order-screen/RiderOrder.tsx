@@ -18,7 +18,7 @@ import { useRiderChannel } from '../../hooks/useFoodLive';
 import { RIDER_ACTION, RIDER_DECLINE_REASONS, primaryRiderStep, riderStepLabel, waitingForKitchen } from '../../models/food/foodStatusModel';
 import { dropOrderLabel } from '../../models/kitchen/reachModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, Card, Divider, IconButton, InlineNotice, IonIcon, RowCardsSkeleton, ScreenShell, SectionCard, Sheet, TextField } from '../../Custom-Components/index';
+import { AppText, Button, Card, Divider, IconButton, IconWell, InlineNotice, IonIcon, RowCardsSkeleton, ScreenShell, SectionCard, Sheet, TextField } from '../../Custom-Components/index';
 import { ChoiceLine } from '../../Custom-Components/food/ChoiceLine';
 import { FoodMap } from '../../Custom-Components/food/map/FoodMap';
 import type { RiderStackParamList } from '../../models';
@@ -49,7 +49,6 @@ const makeStyles = ({ space, gutter, radius, colors, size }: Theme) =>
     grow: { flex: 1, gap: space.s4 },
     row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.s12 },
     map: { borderRadius: radius.lg, overflow: 'hidden' },
-    cashWell: { width: size.statWell + space.s12, height: size.statWell + space.s12, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
     mapHolder: { height: size.zoneMap, borderRadius: radius.md, backgroundColor: colors.surfaceSunk, alignItems: 'center', justifyContent: 'center', gap: space.s8, padding: space.s16 },
   });
 
@@ -64,7 +63,7 @@ const RiderOrderContent: React.FC<Props> = ({ route }) => {
   const { back } = useBack({ name: 'RiderTabs' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { colors, service, size, rowTint } = useTheme();
+  const { colors, service, size } = useTheme();
   const { order: o, status, error } = useAppSelector(st => selectRiderOrderEntry(st, id));
   const ui = useAppSelector(selectRiderOrderUi);
   const [me, setMe] = useState<RiderLocationState>(riderLocation.current);
@@ -171,12 +170,10 @@ const RiderOrderContent: React.FC<Props> = ({ route }) => {
         ) : null}
 
         {o.cashToCollect > 0 ? (
-          // The cash at the door: a white card with a tinted well, the amount large.
+          // The cash at the door: a white card with a neutral well, the amount large.
           <Card>
             <View style={styles.head} accessible accessibilityLabel={`Collect ${formatPKR(o.cashToCollect)} in cash at the door`}>
-              <View style={[styles.cashWell, { backgroundColor: rowTint.amber.bg }]}>
-                <IonIcon name="cash-outline" size="lg" color={rowTint.amber.fg} />
-              </View>
+              <IconWell icon="cash-outline" size="lg" />
               <View style={styles.grow}>
                 <AppText variant="small" tone="muted">
                   Collect at the door

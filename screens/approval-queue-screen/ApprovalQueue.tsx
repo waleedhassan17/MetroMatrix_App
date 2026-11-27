@@ -80,7 +80,6 @@ const ApprovalQueue: React.FC<Props> = ({ navigation }) => {
 
   return (
     <ScreenShell
-      eyebrow="Admin"
       title="Approvals"
       subtitle="Partner applications waiting for a decision."
       refreshing={list.status === 'refreshing'}
@@ -97,7 +96,7 @@ const ApprovalQueue: React.FC<Props> = ({ navigation }) => {
       {firstLoad ? (
         <SkeletonRows />
       ) : list.items.length === 0 && list.status === 'loaded' ? (
-        <EmptyState icon="check-circle" title="All caught up" body="No applications are waiting in this list." />
+        <EmptyState icon="checkmark-circle-outline" title="All caught up" body="No applications are waiting in this list." />
       ) : list.items.length ? (
         <Card padded="horizontal">
           {list.items.map((b, i) => (

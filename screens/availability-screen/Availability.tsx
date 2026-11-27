@@ -369,7 +369,7 @@ const AvailabilityContent: React.FC<Props> = ({ route, navigation }) => {
           </View>
         ) : (
           <EmptyState
-            icon="map-pin"
+            icon="location-outline"
             title="No locations yet"
             body="Add the clinic where you see patients, or offer video consultations from anywhere."
             action={{ label: 'Offer video consultations', onPress: () => dispatch(openLocationSheet({ location: null, kind: 'video' })) }}
@@ -377,7 +377,7 @@ const AvailabilityContent: React.FC<Props> = ({ route, navigation }) => {
         )
       ) : s.tab === 'hours' ? (
         !s.locations.length ? (
-          <EmptyState icon="clock" title="Add a location first" body="Hours belong to a location." action={{ label: 'Add a location', onPress: () => dispatch(setAvailabilityTab('locations')) }} />
+          <EmptyState icon="time-outline" title="Add a location first" body="Hours belong to a location." action={{ label: 'Add a location', onPress: () => dispatch(setAvailabilityTab('locations')) }} />
         ) : (
           <View style={styles.list}>
             <View style={styles.chips}>
@@ -481,7 +481,7 @@ const AvailabilityContent: React.FC<Props> = ({ route, navigation }) => {
       ) : s.previewStatus !== 'succeeded' || !s.preview ? (
         <RowCardsSkeleton count={2} />
       ) : !s.preview.locations.length ? (
-        <EmptyState icon="calendar" title="Nothing to preview yet" body="Add a location and its weekly hours to see what patients will see." />
+        <EmptyState icon="calendar-outline" title="Nothing to preview yet" body="Add a location and its weekly hours to see what patients will see." />
       ) : (
         <View style={styles.list}>
           {s.preview.paused ? (

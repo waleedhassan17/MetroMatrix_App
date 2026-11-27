@@ -114,8 +114,7 @@ const ProviderSelection: React.FC<Props> = ({ navigation }) => {
           return (
             <ChoiceCard
               key={card.service}
-              icon={<MciIcon name={card.icon} size="xl" color={palette.accent} />}
-              iconBg={palette.accentSoft}
+              icon={<MciIcon name={card.icon} size="xl" color={colors.inkMuted} />}
               title={SERVICE_LABELS[card.service].partnerTitle}
               description={
                 card.expands && isThis && subType && !expanded

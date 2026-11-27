@@ -2,12 +2,27 @@
 // MetroMatrix — Type scale (the FYP app's)
 // ═══════════════════════════════════════════════════════
 // THE APP RENDERS IN THE PLATFORM SYSTEM FACE — Roboto on Android, San
-// Francisco on iOS — exactly as the FYP does. No custom family is loaded or
-// named for UI text; weight is `fontWeight`. Values are the FYP's `T` scale
-// (constants/theme.ts) plus the few auth-screen sizes the FYP sets inline
-// (logo 28, screen title 24, input 15, button 16).
+// Francisco on iOS — as the FYP and FinMatrix do (the owner's choice,
+// 2026-11-27). No custom family is loaded; every role names the system face
+// the way FinMatrix does (`Platform.select({ android: 'Roboto', default:
+// 'System' })`, which React Native Web turns into its system stack), and
+// weight is `fontWeight`, 400 to 700 only (Roboto has no 600 or 800 of its own,
+// so heavier steps snap and read uneven). Values are the FYP's `T` scale plus
+// the few auth-screen sizes the FYP sets inline (logo 28, screen title 24,
+// input 15, button 16).
+//
+// One role per job, so every screen reads the same:
+//   section names  sectionTitle (18 / 700), never an uppercase eyebrow
+//   row titles     title (16 / 600)
+//   meta lines     small (13 / 400), muted; timestamps caption
+//   numbers        stat (22 / 700)
+//   pills          micro
+//   links          link (14 / 600), the TextAction's
 
-import type { TextStyle } from 'react-native';
+import { Platform, type TextStyle } from 'react-native';
+
+/** The platform system face (FinMatrix's): Roboto on Android, San Francisco on iOS, the system stack on web. */
+export const FONT_FAMILY = Platform.select({ android: 'Roboto', default: 'System' }) as string;
 
 export type TypeRole =
   | 'display'
@@ -36,7 +51,9 @@ export type TypeRole =
   | 'pageTitle'
   | 'pageSubtitle'
   | 'price'
-  | 'sectionTitle';
+  | 'sectionTitle'
+  | 'stat'
+  | 'link';
 
 export type TypeScale = Record<TypeRole, TextStyle>;
 
@@ -45,7 +62,7 @@ const font = (
   fontSize: number,
   lineHeight: number,
   letterSpacing = 0,
-): TextStyle => ({ fontWeight, fontSize, lineHeight, letterSpacing });
+): TextStyle => ({ fontFamily: FONT_FAMILY, fontWeight, fontSize, lineHeight, letterSpacing });
 
 export const type: TypeScale = {
   /** Splash wordmark, screen-owning numbers. (T.display) */
@@ -76,8 +93,8 @@ export const type: TypeScale = {
   button: font('600', 16, 20),
   /** Field labels (FYP auth labels). */
   label: font('500', 14, 20),
-  /** Control labels, chips, links. (T.label) */
-  small: font('500', 13, 18),
+  /** Meta lines under a title, helper copy. (T.label at the body weight) */
+  small: font('400', 13, 18),
   /** Metadata, timestamps, helper text. (T.caption) */
   caption: font('400', 12, 16),
   /** Pill chips: "3 Available", "Explore" (FYP userHome countText / exploreText). */
@@ -86,20 +103,28 @@ export const type: TypeScale = {
   tag: font('700', 10, 12, 0.5),
   /** Counters and badges only. (T.micro) */
   micro: font('600', 11, 14),
-  /** Menu section titles, set in capitals: ACCOUNT, HEALTH (the FYP profile's sectionTitle). */
+  /**
+   * Kept for the few labels set in a photo badge's capitals. Never a section
+   * name: those are `sectionTitle` (the FYP removed its eyebrows as the
+   * loudest generated tell).
+   */
   overline: { ...font('700', 11, 14, 0.8), textTransform: 'uppercase' },
   /** Service tab bars: the FYP Health bar's 11 pt labels, bolder when selected; Shopping's 10 pt bold. */
   tab: font('500', 11, 14, 0.1),
   tabActive: font('700', 11, 14, 0.1),
   tabSmall: font('700', 10, 12),
-  /** The module page header's title: one line, the FYP's 26 / 700 (T.title). */
+  /** The module page header's title: one line, the FYP's 26 / 700 (T.title), the same as h1. */
   pageTitle: font('700', 26, 32, -0.5),
   /** The line under it (the FYP header's 13 / 500 T.label). */
   pageSubtitle: font('500', 13, 16),
   /** A product page's price (the FYP's 24 / 700). */
   price: font('700', 24, 30, -0.3),
-  /** A page's section heads: "Find by specialty", "Featured brands" (the FYP's 19 / 800). */
-  sectionTitle: font('800', 19, 24, -0.4),
+  /** Every section's name: "Find by specialty", "Featured brands", a menu group ("Account"). */
+  sectionTitle: font('700', 18, 24, -0.2),
+  /** A number on a stat tile or a glance card. */
+  stat: font('700', 22, 28, -0.3),
+  /** A quiet action in text ("See all", "Change"), and small buttons. */
+  link: font('600', 14, 20),
 };
 
 /** Dynamic type is honoured up to 130% — beyond that fixed-height controls clip. */
@@ -110,6 +135,7 @@ export const CLINICAL_FONT_SCALE = 1.5;
 
 /**
  * The same system face for raw DOM controls on web (the date input), which
- * do not inherit React Native Web's text font by themselves.
+ * do not inherit React Native Web's text font by themselves: React Native
+ * Web's own stack for `System`, so the field matches the text around it.
  */
-export const WEB_SYSTEM_FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+export const WEB_SYSTEM_FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';

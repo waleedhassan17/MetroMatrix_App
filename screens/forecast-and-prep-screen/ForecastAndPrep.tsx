@@ -149,7 +149,7 @@ const ForecastAndPrepContent: React.FC<Props> = ({ navigation, route }) => {
           <RowCardsSkeleton count={4} />
         )
       ) : !forecast.items.length ? (
-        <EmptyState ion="calendar-outline" title="Nothing on the menu that day" body={homeKitchen ? 'Choose the days for each dish in your weekly menu.' : 'No dishes are served that day.'} />
+        <EmptyState icon="calendar-outline" title="Nothing on the menu that day" body={homeKitchen ? 'Choose the days for each dish in your weekly menu.' : 'No dishes are served that day.'} />
       ) : (
         <Card padded="horizontal">
           {forecast.items.map((i, n) => (
@@ -198,7 +198,7 @@ const ForecastAndPrepContent: React.FC<Props> = ({ navigation, route }) => {
         prep?.status === 'failed' ? <InlineNotice message={prep.error.message} action={{ label: 'Try again', onPress: load }} /> : <RowCardsSkeleton count={4} />
       ) : !prep.data.groups.length ? (
         <EmptyState
-          icon="clipboard"
+          icon="clipboard-outline"
           title="No prep for this day"
           body={prep.data.dishes.length ? 'Add recipe cards to your dishes and their ingredients show up here.' : 'Nothing is expected that day.'}
           action={prep.data.dishes.length ? { label: 'Recipes and costs', onPress: () => navigation.navigate('KitchenRecipes', { needsRecipe: true }) } : undefined}
@@ -230,7 +230,7 @@ const ForecastAndPrepContent: React.FC<Props> = ({ navigation, route }) => {
       {!shop?.data ? (
         shop?.status === 'failed' ? <InlineNotice message={shop.error.message} action={{ label: 'Try again', onPress: load }} /> : <RowCardsSkeleton count={4} />
       ) : !shop.data.lines.length ? (
-        <EmptyState ion="bag-handle-outline" title="Nothing to buy" body="What is in stock covers the dishes expected that day." />
+        <EmptyState icon="bag-handle-outline" title="Nothing to buy" body="What is in stock covers the dishes expected that day." />
       ) : (
         <ShoppingCard
           list={shop.data}

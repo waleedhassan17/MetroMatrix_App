@@ -138,7 +138,7 @@ const PurchasesContent: React.FC<Props> = ({ navigation }) => {
         renderItem={({ item: p }) => (
           <RowCard
             title={p.supplier?.name ?? 'No supplier'}
-            mark={{ icon: p.source === 'receipt' ? 'receipt-outline' : p.source === 'voice' ? 'mic-outline' : 'cart-outline', tint: 'amber' }}
+            mark={{ icon: p.source === 'receipt' ? 'receipt-outline' : p.source === 'voice' ? 'mic-outline' : 'cart-outline' }}
             lines={[formatDayShort(p.date), p.lines.map(l => l.name).slice(0, 3).join(', ') + (p.lines.length > 3 ? ` and ${p.lines.length - 3} more` : '')]}
             pill={{ label: SOURCE[p.source], tone: 'neutral' }}
             amount={formatPKR(p.total)}
@@ -151,7 +151,7 @@ const PurchasesContent: React.FC<Props> = ({ navigation }) => {
           ) : list.error ? (
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
-            <EmptyState ion="cart-outline" title="No purchases yet" body="Add what you buy, and stock and costs keep themselves up to date." />
+            <EmptyState icon="cart-outline" title="No purchases yet" body="Add what you buy, and stock and costs keep themselves up to date." />
           )
         }
         ListFooterComponent={list.isLoadingMore ? <RowCardsSkeleton count={2} /> : null}

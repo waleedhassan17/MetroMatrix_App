@@ -102,7 +102,7 @@ const StoreTodayContent: React.FC = () => {
 
       {!sum ? (
         <>
-          <StatGridSkeleton />
+          <StatGridSkeleton count={3} columns={3} compact />
           <RowCardsSkeleton count={2} />
         </>
       ) : (
@@ -111,9 +111,9 @@ const StoreTodayContent: React.FC = () => {
             columns={3}
             compact
             stats={[
-              { key: 'new', icon: 'receipt-outline', tint: 'accent', value: sum.counts.newOrders, label: 'New orders', onPress: () => openOrders('new') },
-              { key: 'ship', icon: 'cube-outline', tint: 'blue', value: sum.counts.toShip, label: 'To ship', onPress: () => openOrders('to_pack') },
-              { key: 'pay', icon: 'card-outline', tint: 'amber', value: sum.counts.paymentsToConfirm, label: 'Payments to check', onPress: () => openOrders('payments') },
+              { key: 'new', icon: 'receipt-outline', value: sum.counts.newOrders, label: 'New orders', onPress: () => openOrders('new') },
+              { key: 'ship', icon: 'cube-outline', value: sum.counts.toShip, label: 'To ship', onPress: () => openOrders('to_pack') },
+              { key: 'pay', icon: 'card-outline', value: sum.counts.paymentsToConfirm, label: 'Payments to check', onPress: () => openOrders('payments') },
             ]}
           />
 
@@ -121,12 +121,12 @@ const StoreTodayContent: React.FC = () => {
             <ShopSection title="Quick actions" inset={false} />
             <QuickActionGrid
               actions={[
-                { key: 'add', icon: 'add-circle-outline', tint: 'accent', label: 'Add product', onPress: () => navigation.navigate('ProductForm') },
-                { key: 'stock', icon: 'layers-outline', tint: 'blue', label: 'Inventory', onPress: () => navigation.navigate('Inventory') },
-                { key: 'coupons', icon: 'pricetag-outline', tint: 'rose', label: 'Coupons', onPress: () => navigation.navigate('Coupons') },
-                { key: 'collections', icon: 'albums-outline', tint: 'violet', label: 'Collections', onPress: () => navigation.navigate('Collections') },
-                { key: 'insights', icon: 'stats-chart-outline', tint: 'amber', label: 'Insights', onPress: () => navigation.navigate('Insights') },
-                { key: 'share', icon: 'share-social-outline', tint: 'grey', label: 'Share store', onPress: share },
+                { key: 'add', icon: 'add-circle-outline', label: 'Add product', onPress: () => navigation.navigate('ProductForm') },
+                { key: 'stock', icon: 'layers-outline', label: 'Inventory', onPress: () => navigation.navigate('Inventory') },
+                { key: 'coupons', icon: 'pricetag-outline', label: 'Coupons', onPress: () => navigation.navigate('Coupons') },
+                { key: 'collections', icon: 'albums-outline', label: 'Collections', onPress: () => navigation.navigate('Collections') },
+                { key: 'insights', icon: 'stats-chart-outline', label: 'Insights', onPress: () => navigation.navigate('Insights') },
+                { key: 'share', icon: 'share-social-outline', label: 'Share store', onPress: share },
               ]}
             />
           </View>
@@ -164,7 +164,7 @@ const StoreTodayContent: React.FC = () => {
                   </React.Fragment>
                 ))
               ) : (
-                <EmptyState ion="receipt-outline" title="No new orders right now" body="New orders show here the moment they're placed." />
+                <EmptyState icon="receipt-outline" title="No new orders right now" body="New orders show here the moment they're placed." />
               )}
             </Card>
           </View>
@@ -176,7 +176,6 @@ const StoreTodayContent: React.FC = () => {
                 title="Low on stock"
                 subtitle="Variants running out"
                 leftIcon="alert-circle-outline"
-                tint="red"
                 value={String(sum.counts.lowStock)}
                 onPress={() => navigation.navigate('Inventory', { lowStock: true })}
               />
@@ -185,7 +184,6 @@ const StoreTodayContent: React.FC = () => {
                 title="Return requests"
                 subtitle="Customers waiting for your answer"
                 leftIcon="return-down-back-outline"
-                tint="rose"
                 value={String(sum.counts.returnsOpen)}
                 onPress={() => navigation.navigate('StoreReturns')}
               />
@@ -194,7 +192,6 @@ const StoreTodayContent: React.FC = () => {
                 title="Refunds to record"
                 subtitle="Money you owe back"
                 leftIcon="cash-outline"
-                tint="amber"
                 value={String(sum.counts.refundsDue)}
                 onPress={() => openOrders('refunds')}
               />

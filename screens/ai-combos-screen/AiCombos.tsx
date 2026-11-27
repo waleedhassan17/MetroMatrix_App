@@ -76,7 +76,7 @@ const AiCombosContent: React.FC<Props> = ({ navigation }) => {
         </SectionCard>
       ) : null}
       {s.status === 'loading' && !s.ideas.length ? <RowCardsSkeleton count={4} /> : null}
-      {s.status === 'succeeded' && !s.ideas.length ? <EmptyState ion="bag-handle-outline" title="No pairs yet" body="Once customers order a main with a side or a drink, ideas show here." /> : null}
+      {s.status === 'succeeded' && !s.ideas.length ? <EmptyState icon="bag-handle-outline" title="No pairs yet" body="Once customers order a main with a side or a drink, ideas show here." /> : null}
 
       {s.ideas.map(idea => {
         const priceError = validateDraftPrice(s.prices[idea.id] ?? '');

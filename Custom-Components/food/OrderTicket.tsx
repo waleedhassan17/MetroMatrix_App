@@ -106,7 +106,7 @@ export const OrderTicket: React.FC<OrderTicketProps> = ({ card, busy, onOpen, on
           <View style={styles.meta}>
             {card.scheduledFor ? (
               <View style={styles.metaItem}>
-                <IonIcon name="calendar-outline" size="sm" color={service.accentDeep} />
+                <IonIcon name="calendar-outline" size="sm" color={colors.inkMuted} />
                 <AppText variant="caption" tone="accentDeep">
                   {scheduledLabel(card.scheduledFor, day, 'Asia/Karachi')}
                 </AppText>

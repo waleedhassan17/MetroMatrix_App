@@ -14,7 +14,7 @@ import { useBack } from '../../hooks/useBack';
 import { useDebouncedValue } from '../../hooks/usePagedList';
 import { useHealthNav } from '../../hooks/useHealth';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Divider, IconButton, IonIcon, PageHeader, type IonName } from '../../Custom-Components/index';
+import { AppText, Divider, IconButton, IconWell, IonIcon, PageHeader, type IonName } from '../../Custom-Components/index';
 import { SearchField } from '../../Components/shopping/ShopParts';
 import {
   addRecentHealthSearch,
@@ -29,7 +29,7 @@ import { healthSuggestAsync, selectHealthSearch, setHealthQuery } from './health
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'HealthSearch'>;
 
-const makeStyles = ({ colors, space, size, radius, gutter }: Theme) =>
+const makeStyles = ({ colors, space, size, gutter }: Theme) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.canvas },
     content: {
@@ -48,13 +48,6 @@ const makeStyles = ({ colors, space, size, radius, gutter }: Theme) =>
       paddingVertical: space.s8,
     },
     rowText: { flex: 1, gap: space.s0 },
-    well: {
-      width: size.icon.xl,
-      height: size.icon.xl,
-      borderRadius: radius.pill,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
   });
 
 const HealthSearch: React.FC<Props> = props => (
@@ -69,8 +62,9 @@ const Row: React.FC<{
   caption?: string | null;
   onPress: () => void;
   label: string;
-  tint?: { fg: string; bg: string };
-}> = ({ icon, title, caption, onPress, label, tint }) => {
+  /** A glyph in a neutral well (a specialty), not a bare one. */
+  well?: boolean;
+}> = ({ icon, title, caption, onPress, label, well }) => {
   const styles = useStyles(makeStyles);
   const { colors, opacity } = useTheme();
   return (
@@ -79,10 +73,8 @@ const Row: React.FC<{
       style={({ pressed }) => [styles.row, pressed && { opacity: opacity.pressed }]}
       accessibilityRole="button"
       accessibilityLabel={label}>
-      {tint ? (
-        <View style={[styles.well, { backgroundColor: tint.bg }]}>
-          <IonIcon name={icon} size="md" color={tint.fg} />
-        </View>
+      {well ? (
+        <IconWell icon={icon} size="sm" />
       ) : (
         <IonIcon name={icon} size="md" color={colors.inkMuted} />
       )}
@@ -105,7 +97,7 @@ const HealthSearchContent: React.FC<Props> = ({ route }) => {
   const { back } = useBack({ name: 'HealthHome' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { colors, motion, opacity, specialtyTint } = useTheme();
+  const { colors, motion, opacity } = useTheme();
   const s = useAppSelector(selectHealthSearch);
   const recent = useAppSelector(selectRecentHealthSearches);
   // The specialties the Health home already loaded, for the city it chose.
@@ -283,7 +275,7 @@ const HealthSearchContent: React.FC<Props> = ({ route }) => {
                     {i > 0 ? <Divider /> : null}
                     <Row
                       icon={sp.icon as IonName}
-                      tint={specialtyTint[i % specialtyTint.length]}
+                      well
                       title={sp.name}
                       caption={
                         sp.doctorCount > 0

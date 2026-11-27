@@ -119,7 +119,7 @@ const PaymentAccountsContent: React.FC<Props> = () => {
       {s.status === 'loading' && !s.accounts.length ? (
         <RowCardsSkeleton count={2} />
       ) : s.status === 'failed' && !s.accounts.length ? null : !s.accounts.length ? (
-        <EmptyState icon="credit-card" title="No accounts yet" body={EMPTY_BODY[service ?? 'shopping']} />
+        <EmptyState icon="card-outline" title="No accounts yet" body={EMPTY_BODY[service ?? 'shopping']} />
       ) : (
         s.accounts.map(a => (
           <SectionCard

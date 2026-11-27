@@ -16,7 +16,7 @@ import { useAppDispatch, useAppSelector, useAppStore } from '../../hooks/useRedu
 import { useBack } from '../../hooks/useBack';
 import { CATERING_MODE, CATERING_STATUS, EVENT_TYPE_LABEL } from '../../models/kitchen/kitchenStatusModel';
 import { advanceLine, latestQuote, quoteCardData, whenLine } from '../../models/kitchen/cateringModel';
-import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
+import { ServiceScope, useStyles, type Theme } from '../../theme/index';
 import { AppText, Button, DangerRow, InlineNotice, QuoteCard, RowCardsSkeleton, ScreenShell, SectionCard, Sheet, StatusPill } from '../../Custom-Components/index';
 import { ChoiceLine } from '../../Custom-Components/food/ChoiceLine';
 import { TrustNote } from '../../Components/food/FoodParts';
@@ -56,7 +56,6 @@ const FoodCateringRequestContent: React.FC<Props> = ({ navigation, route }) => {
   const dispatch = useAppDispatch();
   const appStore = useAppStore();
   const styles = useStyles(makeStyles);
-  const { colors } = useTheme();
   const ui = useAppSelector(selectFoodCateringUi);
   const r = useAppSelector(st => selectMyCateringRequest(st, code));
   const [cancelling, setCancelling] = useState(false);
@@ -119,7 +118,7 @@ const FoodCateringRequestContent: React.FC<Props> = ({ navigation, route }) => {
         </>
       ) : null}
       {accepted ? (
-        <SectionCard title={r.status === 'confirmed' || r.status === 'completed' ? 'Confirmed' : `Quote ${accepted.version} accepted`} subtitle={advanceLine(accepted)} icon="checkmark-circle-outline" tint={{ fg: colors.success, bg: colors.successSoft }}>
+        <SectionCard title={r.status === 'confirmed' || r.status === 'completed' ? 'Confirmed' : `Quote ${accepted.version} accepted`} subtitle={advanceLine(accepted)} icon="checkmark-circle-outline">
           {r.balance !== null && r.advance?.status === 'paid' ? <AppText variant="small" tone="muted">{`${formatPKR(r.balance)} to pay ${r.vendor.name} on the day.`}</AppText> : null}
         </SectionCard>
       ) : null}

@@ -105,7 +105,7 @@ const VendorReviewsContent: React.FC<Props> = () => {
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
             <EmptyState
-              ion="chatbox-ellipses-outline"
+              icon="chatbox-ellipses-outline"
               title={s.unreplied ? 'Nothing waiting for a reply' : 'No reviews yet'}
               body="Customers can rate an order once it was delivered or collected."
             />

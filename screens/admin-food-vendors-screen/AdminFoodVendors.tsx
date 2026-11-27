@@ -169,7 +169,7 @@ const AdminFoodVendors: React.FC<Props> = ({ navigation, route }) => {
               />
             ) : (
               <EmptyState
-                icon="search"
+                icon="search-outline"
                 title="No vendors match"
                 body="Try another name, kind or status."
               />

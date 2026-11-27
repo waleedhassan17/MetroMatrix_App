@@ -7,7 +7,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, IonIcon, type AppointmentAction, type IonName } from '../../Custom-Components/index';
+import { AppText, IconWell, IonIcon, type AppointmentAction, type IonName } from '../../Custom-Components/index';
 import type { AppointmentSummary, HealthBanner, HealthBannerScreen, HealthBrowseParamList, ShopBrowseParamList } from '../../models';
 import { openDirections } from '../../utils/maps/maps';
 
@@ -26,14 +26,13 @@ const makeStyles = ({ colors, space, radius, size, elevation }: Theme) =>
       minHeight: size.touch,
       ...elevation.card,
     },
-    well: { width: size.specialtyWell, height: size.specialtyWell, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
-    row: { flexDirection: 'row', alignItems: 'center', gap: space.s12, padding: space.s16, borderRadius: radius.lg, minHeight: size.touch },
+    row: { flexDirection: 'row', alignItems: 'center', gap: space.s12, padding: space.s16, minHeight: size.touch },
     grow: { flex: 1, gap: space.s4 },
     card: { borderRadius: radius.lg, backgroundColor: colors.surface, ...elevation.card },
     quick: { flexDirection: 'row', alignItems: 'center', gap: space.s12, paddingHorizontal: space.s16, paddingVertical: space.s12, minHeight: size.touch },
-    quickWell: { width: size.icon.xl, height: size.icon.xl, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
     trust: { padding: space.s20, gap: space.s16 },
     trustRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.s12 },
+    trustGlyph: { width: size.icon.lg, alignItems: 'center', paddingTop: space.s0 },
   });
 
 /** A section title with an optional "See all". */
@@ -52,7 +51,7 @@ export const HealthSection: React.FC<{ title: string; subtitle?: string; onSeeAl
         </AppText>
         {onSeeAll ? (
           <Pressable onPress={onSeeAll} accessibilityRole="link" accessibilityLabel={`${seeAllLabel}: ${title}`} style={styles.link} hitSlop={8}>
-            <AppText variant="small" tone="accentDeep">
+            <AppText variant="link" tone="accentDeep">
               {seeAllLabel}
             </AppText>
           </Pressable>
@@ -67,45 +66,47 @@ export const HealthSection: React.FC<{ title: string; subtitle?: string; onSeeAl
   );
 };
 
-/** A big choice tile: icon, title, one line. */
+/** A big choice tile: a glyph in a neutral well, the title, one line. */
 export const ActionTile: React.FC<{ icon: IonName; title: string; body: string; onPress: () => void }> = ({ icon, title, body, onPress }) => {
   const styles = useStyles(makeStyles);
-  const { service, opacity } = useTheme();
+  const { opacity } = useTheme();
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`${title}. ${body}`}
       style={({ pressed }) => [styles.tile, pressed && { opacity: opacity.pressed }]}>
-      <View style={[styles.well, { backgroundColor: service.accentSoft }]}>
-        <IonIcon name={icon} size="lg" color={service.accentDeep} />
-      </View>
-      <AppText variant="title">{title}</AppText>
-      <AppText variant="small" tone="muted">
+      <IconWell icon={icon} size="lg" />
+      <AppText variant="title" numberOfLines={1}>
+        {title}
+      </AppText>
+      <AppText variant="small" tone="muted" numberOfLines={2}>
         {body}
       </AppText>
     </Pressable>
   );
 };
 
-/** A tinted row that leads somewhere (the symptom checker card). */
+/** A white row that leads somewhere (the symptom checker card): a neutral well, two lines, a chevron. */
 export const PromptRow: React.FC<{ icon: IonName; title: string; body: string; onPress: () => void }> = ({ icon, title, body, onPress }) => {
   const styles = useStyles(makeStyles);
-  const { service, opacity } = useTheme();
+  const { colors, opacity } = useTheme();
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`${title}. ${body}`}
-      style={({ pressed }) => [styles.row, { backgroundColor: service.accentSoft }, pressed && { opacity: opacity.pressed }]}>
-      <IonIcon name={icon} size="xl" color={service.accentDeep} />
+      style={({ pressed }) => [styles.card, styles.row, pressed && { opacity: opacity.pressed }]}>
+      <IconWell icon={icon} size="md" />
       <View style={styles.grow}>
-        <AppText variant="title">{title}</AppText>
-        <AppText variant="small" tone="muted">
+        <AppText variant="title" numberOfLines={1}>
+          {title}
+        </AppText>
+        <AppText variant="small" tone="muted" numberOfLines={2}>
           {body}
         </AppText>
       </View>
-      <IonIcon name="chevron-forward" size="md" color={service.accentDeep} />
+      <IonIcon name="chevron-forward" size="md" color={colors.inkFaint} />
     </Pressable>
   );
 };
@@ -113,20 +114,20 @@ export const PromptRow: React.FC<{ icon: IonName; title: string; body: string; o
 /** A slim white row that leads somewhere ("My appointments"). */
 export const QuickRow: React.FC<{ icon: IonName; title: string; body?: string; onPress: () => void }> = ({ icon, title, body, onPress }) => {
   const styles = useStyles(makeStyles);
-  const { service, colors, opacity } = useTheme();
+  const { colors, opacity } = useTheme();
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={body ? `${title}. ${body}` : title}
       style={({ pressed }) => [styles.card, styles.quick, pressed && { opacity: opacity.pressed }]}>
-      <View style={[styles.quickWell, { backgroundColor: service.accentSoft }]}>
-        <IonIcon name={icon} size="md" color={service.accentDeep} />
-      </View>
+      <IconWell icon={icon} size="sm" />
       <View style={styles.grow}>
-        <AppText variant="bodyStrong">{title}</AppText>
+        <AppText variant="title" numberOfLines={1}>
+          {title}
+        </AppText>
         {body ? (
-          <AppText variant="caption" tone="muted">
+          <AppText variant="small" tone="muted" numberOfLines={1}>
             {body}
           </AppText>
         ) : null}
@@ -142,10 +143,10 @@ const TRUST: { icon: IonName; title: string; body: string }[] = [
   { icon: 'lock-closed-outline', title: 'Private records', body: 'Your reports are shared only with the doctors you choose.' },
 ];
 
-/** "Why MetroMatrix Health": the three promises, each with its icon. */
+/** "Why MetroMatrix Health": the three promises, each with a plain glyph. */
 export const TrustList: React.FC = () => {
   const styles = useStyles(makeStyles);
-  const { service } = useTheme();
+  const { colors } = useTheme();
   return (
     <View style={[styles.card, styles.trust]}>
       <AppText variant="sectionTitle" accessibilityRole="header">
@@ -153,11 +154,11 @@ export const TrustList: React.FC = () => {
       </AppText>
       {TRUST.map(t => (
         <View key={t.title} style={styles.trustRow} accessible accessibilityLabel={`${t.title}. ${t.body}`}>
-          <View style={[styles.quickWell, { backgroundColor: service.accentSoft }]}>
-            <IonIcon name={t.icon} size="md" color={service.accentDeep} />
+          <View style={styles.trustGlyph}>
+            <IonIcon name={t.icon} size="md" color={colors.inkMuted} />
           </View>
           <View style={styles.grow}>
-            <AppText variant="bodyStrong">{t.title}</AppText>
+            <AppText variant="title">{t.title}</AppText>
             <AppText variant="small" tone="muted">
               {t.body}
             </AppText>

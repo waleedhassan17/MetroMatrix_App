@@ -34,12 +34,12 @@ const makeStyles = ({ space, size, radius, colors, elevation }: Theme) =>
 
 export const TiffinPlanCard: React.FC<{ plan: TiffinPlanCardData; onPress: () => void; rail?: boolean }> = ({ plan, onPress, rail }) => {
   const styles = useStyles(makeStyles);
-  const { service } = useTheme();
+  const { colors } = useTheme();
   const full = plan.placesLeft === 0;
   return (
     <Pressable onPress={onPress} style={[styles.root, rail && styles.rail]} accessibilityRole="button" accessibilityLabel={`${plan.name}, ${plan.scheduleLabel}, ${plan.priceLabel}${full ? ', full' : ''}`}>
       <View style={styles.head}>
-        <IonIcon name="calendar-outline" size="md" color={service.accentDeep} />
+        <IonIcon name="calendar-outline" size="md" color={colors.inkMuted} />
         <AppText variant="title" numberOfLines={1} style={styles.grow}>
           {plan.name}
         </AppText>
@@ -56,7 +56,7 @@ export const TiffinPlanCard: React.FC<{ plan: TiffinPlanCardData; onPress: () =>
       <AppText variant="bodyStrong">{plan.priceLabel}</AppText>
       {plan.rotation.slice(0, 3).map(r => (
         <View key={r} style={styles.day}>
-          <IonIcon name="ellipse" size="sm" color={service.accentSoft} />
+          <IonIcon name="ellipse" size="sm" color={colors.line} />
           <AppText variant="caption" tone="muted" numberOfLines={1} style={styles.grow}>
             {r}
           </AppText>

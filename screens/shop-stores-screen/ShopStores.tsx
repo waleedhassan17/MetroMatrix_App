@@ -65,7 +65,7 @@ const ShopStores: React.FC<Props> = () => {
           </Card>
         )}
         ListEmptyComponent={
-          list.isLoading ? <SkeletonLines lines={5} /> : list.error ? <InlineNotice message={list.error} /> : <EmptyState icon="shopping-bag" title="No stores match" body="Try another name or city." />
+          list.isLoading ? <SkeletonLines lines={5} /> : list.error ? <InlineNotice message={list.error} /> : <EmptyState icon="bag-outline" title="No stores match" body="Try another name or city." />
         }
       />
     </ScreenShell>

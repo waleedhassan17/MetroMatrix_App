@@ -1,50 +1,35 @@
-// EmptyState — a glyph in the service's soft well (the FYP's), a headline,
-// one line, one action. `ion` takes an Ionicons glyph (Shopping's set).
+// EmptyState — an Ionicons glyph in a soft neutral well, a headline, one
+// line, one action. The well is grey in every service: colour is for status
+// and the primary action, never decoration (the owner, 2026-11-27).
 
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useStyles, useTheme, type Theme } from '../theme';
+import { useStyles, type Theme } from '../theme';
 import { AppText } from './AppText';
 import { Button } from './Button';
-import { Icon, IonIcon, type IconName, type IonName } from './Icon';
+import { type IonName } from './Icon';
+import { IconWell } from './IconWell';
 
 export interface EmptyStateProps {
   title: string;
   body: string;
-  icon?: IconName;
-  ion?: IonName;
+  icon?: IonName;
   action?: { label: string; onPress: () => void };
 }
 
-const makeStyles = ({ space, size, radius }: Theme) =>
+const makeStyles = ({ space, size }: Theme) =>
   StyleSheet.create({
     root: { alignItems: 'center', paddingVertical: space.s40, gap: space.s16 },
-    badge: {
-      width: size.avatar.lg,
-      height: size.avatar.lg,
-      borderRadius: radius.pill,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    text: { gap: space.s8, alignItems: 'center' },
+    text: { gap: space.s8, alignItems: 'center', maxWidth: size.prose },
   });
 
-export const EmptyState: React.FC<EmptyStateProps> = ({ title, body, icon, ion, action }) => {
+export const EmptyState: React.FC<EmptyStateProps> = ({ title, body, icon, action }) => {
   const styles = useStyles(makeStyles);
-  const { service } = useTheme();
   return (
     <View style={styles.root}>
-      {icon || ion ? (
-        <View style={[styles.badge, { backgroundColor: service.accentSoft }]}>
-          {ion ? (
-            <IonIcon name={ion} size="xl" color={service.accentDeep} />
-          ) : icon ? (
-            <Icon name={icon} size="lg" color={service.accentDeep} />
-          ) : null}
-        </View>
-      ) : null}
+      {icon ? <IconWell icon={icon} size="xl" /> : null}
       <View style={styles.text}>
-        <AppText variant="h2" align="center" accessibilityRole="header">
+        <AppText variant="sectionTitle" align="center" accessibilityRole="header">
           {title}
         </AppText>
         <AppText variant="body" tone="muted" align="center">

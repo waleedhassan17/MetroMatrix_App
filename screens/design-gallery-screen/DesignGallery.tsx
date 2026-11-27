@@ -275,12 +275,12 @@ const Stories: React.FC = () => {
       </Section>
 
       <Section title="Loading">
-        <Skeleton height={120} shape="lg" />
+        <Skeleton height={size.promoCard} shape="lg" />
         <SkeletonLines lines={3} />
       </Section>
 
       <Section title="Empty">
-        <EmptyState icon="shopping-bag" title="Nothing here yet" body="Coming in the next update." action={{ label: 'Refresh', onPress: () => undefined }} />
+        <EmptyState icon="bag-outline" title="Nothing here yet" body="Coming in the next update." action={{ label: 'Refresh', onPress: () => undefined }} />
       </Section>
 
       <ShoppingStories />

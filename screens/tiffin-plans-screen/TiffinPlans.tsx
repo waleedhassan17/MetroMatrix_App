@@ -61,23 +61,23 @@ const TiffinPlansContent: React.FC<Props> = ({ navigation }) => {
       {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : null}
       <StatGrid
         stats={[
-          { key: 'pending', icon: 'person-add-outline', tint: 'amber', value: c ? c.pending : null, label: 'To approve', onPress: () => navigation.navigate('GrowthTiffinSubscribers', { status: 'pending' }) },
-          { key: 'active', icon: 'people-outline', tint: 'blue', value: c ? c.active : null, label: 'Subscribers', hint: c?.paused ? `${c.paused} paused` : null, onPress: () => navigation.navigate('GrowthTiffinSubscribers', { status: 'active' }) },
-          { key: 'tomorrow', icon: 'calendar-outline', tint: 'violet', value: t ? tomorrowCount : null, label: 'Tomorrow', hint: t ? formatDayShort(t.date) : null },
-          { key: 'receipts', icon: 'receipt-outline', tint: 'rose', value: c ? c.toCheck : null, label: 'Receipts to check', onPress: () => navigation.navigate('GrowthTiffinSubscribers', { status: 'active' }) },
+          { key: 'pending', icon: 'person-add-outline', value: c ? c.pending : null, label: 'To approve', onPress: () => navigation.navigate('GrowthTiffinSubscribers', { status: 'pending' }) },
+          { key: 'active', icon: 'people-outline', value: c ? c.active : null, label: 'Subscribers', hint: c?.paused ? `${c.paused} paused` : null, onPress: () => navigation.navigate('GrowthTiffinSubscribers', { status: 'active' }) },
+          { key: 'tomorrow', icon: 'calendar-outline', value: t ? tomorrowCount : null, label: 'Tomorrow', hint: t ? formatDayShort(t.date) : null },
+          { key: 'receipts', icon: 'receipt-outline', value: c ? c.toCheck : null, label: 'Receipts to check', onPress: () => navigation.navigate('GrowthTiffinSubscribers', { status: 'active' }) },
         ]}
       />
 
       <SectionHead title="Plans" />
       {!s.plans.length && s.status === 'loading' ? <RowCardsSkeleton count={2} /> : null}
       {!s.plans.length && s.status === 'succeeded' ? (
-        <EmptyState ion="cube-outline" title="No tiffin plans yet" body="Offer the same meal on set days, paid by the week or month: office lunches, home dinners, a breakfast box." />
+        <EmptyState icon="cube-outline" title="No tiffin plans yet" body="Offer the same meal on set days, paid by the week or month: office lunches, home dinners, a breakfast box." />
       ) : null}
       {s.plans.map(p => (
         <RowCard
           key={p.id}
           title={p.name}
-          mark={{ icon: p.meal === 'breakfast' ? 'cafe-outline' : p.meal === 'lunch' ? 'sunny-outline' : 'moon-outline', tint: 'amber' }}
+          mark={{ icon: p.meal === 'breakfast' ? 'cafe-outline' : p.meal === 'lunch' ? 'sunny-outline' : 'moon-outline' }}
           lines={[`${scheduleLabel(p)} · ${p.window.label}`, `${priceLabel(p)} · ${perMealLabel(p)}`, `${p.subscribers} of ${p.capacity} places taken`]}
           pill={placesHeadline(p.seatsLeft, p.isActive) ?? undefined}
           onPress={() => navigation.navigate('GrowthTiffinSubscribers', { planId: p.id })}

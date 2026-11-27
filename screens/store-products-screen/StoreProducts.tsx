@@ -106,7 +106,7 @@ const StoreProductsContent: React.FC = () => {
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
             <EmptyState
-              ion="pricetags-outline"
+              icon="pricetags-outline"
               title={q ? `Nothing matches "${q}"` : s.status === 'active' ? 'Nothing live yet' : s.status === 'draft' ? 'No drafts' : 'Nothing hidden'}
               body={s.status === 'active' ? 'Add your first product: photos, a price and stock, and it’s on sale.' : 'They’ll show here.'}
               action={s.status === 'active' && !q ? { label: 'Add a product', onPress: () => navigation.navigate('ProductForm') } : undefined}

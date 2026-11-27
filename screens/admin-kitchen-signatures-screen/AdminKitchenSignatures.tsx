@@ -83,7 +83,7 @@ const AdminKitchenSignatures: React.FC<Props> = () => {
           <RowCard
             key={d.recipeCardId}
             title={d.name}
-            mark={{ icon: 'ribbon-outline', tint: 'amber' }}
+            mark={{ icon: 'ribbon-outline' }}
             lines={[
               d.vendor?.name,
               d.creatorName ? `By ${d.creatorName}${d.since ? `, since ${formatDate(d.since)}` : ''}` : null,

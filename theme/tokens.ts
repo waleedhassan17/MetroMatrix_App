@@ -58,6 +58,8 @@ export interface Palette {
   scrim: string;
   /** The scrim's clear end — where a photo scrim fades from. */
   scrimClear: string;
+  /** White at zero opacity: where a photo fades into a white card. */
+  surfaceClear: string;
   /** The strong scrim (brand cards: copy sits mid-card, on any photo). */
   scrimFaint: string;
   scrimMid: string;
@@ -74,9 +76,6 @@ export interface Palette {
   glass: string;
   /** Ground of the full-screen document viewer. */
   viewer: string;
-  /** Role Selection's "Service Provider" card: the FYP's indigo icon on its tint. */
-  roleProvider: string;
-  roleProviderSoft: string;
 }
 
 const light: Palette = {
@@ -106,6 +105,7 @@ const light: Palette = {
   overlay: 'rgba(15, 23, 42, 0.45)',
   scrim: 'rgba(15, 23, 42, 0.62)',
   scrimClear: 'rgba(15, 23, 42, 0)',
+  surfaceClear: 'rgba(255, 255, 255, 0)',
   scrimFaint: 'rgba(15, 23, 42, 0.12)',
   scrimMid: 'rgba(15, 23, 42, 0.4)',
   scrimDeep: 'rgba(15, 23, 42, 0.88)',
@@ -115,8 +115,6 @@ const light: Palette = {
   onScrimLine: 'rgba(255, 255, 255, 0.35)',
   glass: 'rgba(255, 255, 255, 0.94)',
   viewer: '#020617',
-  roleProvider: '#6366F1',
-  roleProviderSoft: '#F0F4FF',
 };
 
 export const PALETTES: Record<ColorMode, Palette> = { light };
@@ -142,51 +140,13 @@ export const HEALTH_PALETTE: Palette = {
 /** The FYP cards' soft slate shadow colour. */
 export const CARD_SHADOW = '#64748B';
 
-// ─── Row tints — the FYP profile's categorical icon chips ──
-// A menu of a dozen rows in one colour is a wall; these let someone find
-// "Addresses" by its colour without reading. Fixed across services, like a
-// settings app's icons (the FYP's ROW_TINT). The FYP's hues, deepened where
-// they miss 3:1 on their own ground (rose, amber) so the glyph still reads.
-export type RowTint = 'violet' | 'blue' | 'rose' | 'amber' | 'red' | 'grey' | 'teal' | 'green';
-
-export const ROW_TINTS: Record<RowTint, { fg: string; bg: string }> = {
-  violet: { fg: '#7C3AED', bg: '#EDE9FE' },
-  blue: { fg: '#2563EB', bg: '#DBEAFE' },
-  rose: { fg: '#DB2777', bg: '#FCE7F3' },
-  amber: { fg: '#B45309', bg: '#FEF3C7' },
-  red: { fg: light.danger, bg: light.dangerSoft },
-  grey: { fg: light.inkMuted, bg: light.surfaceSunk },
-  // Kitchen menus, where rose would read as Food's own pink.
-  teal: { fg: '#0F766E', bg: '#CCFBF1' },
-  green: { fg: '#15803D', bg: '#DCFCE7' },
-};
-
-// ─── Health home: the "How can we help you today?" cards ─
-// Each card is a soft ground with its photo fading up into it (`fade` is
-// the ground at zero opacity, for the photo scrim). Ink stays slate.
-export type CareTint = 'video' | 'clinic' | 'today';
-
-export const CARE_TINTS: Record<CareTint, { bg: string; fade: string; fg: string }> = {
-  video: { bg: '#E6F0FF', fade: 'rgba(230, 240, 255, 0)', fg: '#1857C0' },
-  clinic: { bg: '#FDEEE6', fade: 'rgba(253, 238, 230, 0)', fg: '#9A3412' },
-  today: { bg: '#E3F6EE', fade: 'rgba(227, 246, 238, 0)', fg: '#047857' },
-};
-
-/**
- * Specialty wells: a categorical colour per tile (cycled), so a grid of
- * eight reads as eight things at a glance (the FYP's per-specialty colours).
- * Each glyph clears 3:1 on its ground.
- */
-export const SPECIALTY_TINTS: { fg: string; bg: string }[] = [
-  { fg: '#1857C0', bg: '#E6F0FF' },
-  { fg: '#BE185D', bg: '#FCE7F3' },
-  { fg: '#7C3AED', bg: '#EDE9FE' },
-  { fg: '#B45309', bg: '#FEF3C7' },
-  { fg: '#B91C1C', bg: '#FEE2E2' },
-  { fg: '#047857', bg: '#D1FAE5' },
-  { fg: '#0E7490', bg: '#CFFAFE' },
-  { fg: '#4338CA', bg: '#E0E7FF' },
-];
+// ─── Icons: no categorical colours ─────────────────
+// Icons are plain slate (`inkMuted`). Where an icon IS the element (a quick
+// action, a specialty, an empty state) it sits in a soft neutral well:
+// `inkMuted` on `surfaceSunk` (Custom-Components/IconWell). Colour carries
+// status and selection only, never decoration (the owner, 2026-11-27: the
+// FYP's per-row and per-specialty colours read as generated). There are no
+// row, care or specialty tints, and none may be added.
 
 // ─── Space — 4-pt scale ─────────────────────────────
 export const space = {
@@ -204,6 +164,9 @@ export const space = {
 
 /** Side gutter for every screen (the FYP's 20). */
 export const GUTTER = space.s20;
+
+/** The gap between the cards of a list, everywhere. */
+export const LIST_GAP = space.s12;
 
 // ─── Shape (the FYP's radius roles) ─────────────────
 export const radius = {
@@ -234,6 +197,10 @@ export const size = {
   /** hero: the glyph on a kitchen card's art panel. */
   icon: { sm: 16, field: 18, md: 20, lg: 24, xl: 32, hero: 56 },
   avatar: { sm: 32, md: 44, lg: 64, xl: 96 },
+  /** A list card's leading slot (an avatar, a time, an icon well): the same in every list. */
+  listMark: 44,
+  /** IconWell: sm a compact well, md a list mark or quick action, lg a specialty, xl an empty state. */
+  well: { sm: 32, md: 44, lg: 56, xl: 64 },
   /** The white ring around the avatar on the profile hero (the FYP's 3 px). */
   avatarRing: 3,
   /** Role / provider card icon tile. */
@@ -382,6 +349,8 @@ export const size = {
   careShort: 128,
   photoTile: { width: 112, image: 84 },
   spotlightCard: 272,
+  /** The Health home's loading blocks: the next visit, the specialty grid, a spotlight card, a rail card. */
+  homeSkeleton: { nextVisit: 64, grid: 232, spotlight: 164, railCard: 140 },
   /** The white ring round a portrait on a coloured card. */
   portraitRing: 2,
   // ── Kitchen Intelligence ──

@@ -203,7 +203,7 @@ const StoreHeader: React.FC<{
 /** About the store: its story, every policy, and how to reach it. */
 const MoreSheet: React.FC<{ store: StoreDetail; visible: boolean; onClose: () => void }> = ({ store, visible, onClose }) => {
   const styles = useStyles(makeStyles);
-  const { service } = useTheme();
+  const { colors } = useTheme();
   return (
     <Sheet visible={visible} onClose={onClose} title={store.name} subtitle={store.tagline || undefined}>
       {store.about ? (
@@ -213,7 +213,7 @@ const MoreSheet: React.FC<{ store: StoreDetail; visible: boolean; onClose: () =>
       ) : null}
       {policyLines(store.policies).map(l => (
         <View key={l.icon} style={styles.policy}>
-          <IonIcon name={l.icon} size="md" color={service.accentDeep} />
+          <IonIcon name={l.icon} size="md" color={colors.inkMuted} />
           <AppText variant="small">{l.text}</AppText>
         </View>
       ))}
@@ -306,7 +306,7 @@ const StorePageContent: React.FC<Props> = ({ route }) => {
             />
           }
           empty={{
-            ion: 'bag-handle-outline',
+            icon: 'bag-handle-outline',
             title: e.collectionId ? 'Nothing in this collection yet' : 'No products yet',
             body: e.collectionId ? 'Try another collection.' : `${title} hasn't listed anything yet.`,
           }}

@@ -60,7 +60,7 @@ const ShopBanners: React.FC<Props> = ({ navigation }) => {
       footer={<Button label="New banner" leftIcon="add" onPress={() => navigation.navigate('BannerForm')} fullWidth />}>
       {s.error.message ? <InlineNotice message={s.error.message} /> : null}
       {s.status === 'loading' && !list.length ? <SkeletonLines lines={6} /> : null}
-      {s.status === 'succeeded' && !list.length ? <EmptyState icon="image" title="No banners" body="The Shopping home starts with categories until you add one." /> : null}
+      {s.status === 'succeeded' && !list.length ? <EmptyState icon="image-outline" title="No banners" body="The Shopping home starts with categories until you add one." /> : null}
       {list.map((b, i) => (
         <Card key={b.id}>
           <Image source={{ uri: cdn(b.imageUrl, { w: size.storeCard * 1.5 }) ?? undefined }} style={styles.image} contentFit="cover" />

@@ -34,7 +34,7 @@ const makeStyles = ({ size, radius }: Theme) =>
 const ForgotPassword: React.FC<Props> = ({ navigation, route }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { service } = useTheme();
+  const { colors } = useTheme();
   const s = useAppSelector(selectForgotPassword);
   const prefill = route.params?.email;
   const userType = route.params?.userType ?? 'user';
@@ -69,8 +69,8 @@ const ForgotPassword: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <AuthScreen onBack={back}>
-      <View style={[styles.hero, { backgroundColor: service.accentSoft }]}>
-        <IonIcon name="lock-closed-outline" size="xl" color={service.accent} />
+      <View style={[styles.hero, { backgroundColor: colors.surfaceSunk }]}>
+        <IonIcon name="lock-closed-outline" size="xl" color={colors.inkMuted} />
       </View>
       <AuthHeader
         hideLogo

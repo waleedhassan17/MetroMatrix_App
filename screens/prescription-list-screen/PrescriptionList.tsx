@@ -70,7 +70,7 @@ const PrescriptionListContent: React.FC<Props> = () => {
           ) : list.error ? (
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
-            <EmptyState icon="file-text" title="No prescriptions yet" body="When a doctor writes one after your visit, it appears here and on the appointment." />
+            <EmptyState icon="document-text-outline" title="No prescriptions yet" body="When a doctor writes one after your visit, it appears here and on the appointment." />
           )
         }
       />

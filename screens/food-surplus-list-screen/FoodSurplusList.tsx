@@ -21,7 +21,7 @@ type Props = NativeStackScreenProps<FoodAppParamList, 'FoodSurplusList'>;
 
 const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
-    list: { gap: space.s16 },
+    list: { gap: space.s12 },
   });
 
 const FoodSurplusList: React.FC<Props> = props => (
@@ -53,13 +53,13 @@ const FoodSurplusListContent: React.FC<Props> = ({ navigation }) => {
         What a kitchen has left at the end of the day, at a lower price, so good food isn’t thrown away. What’s inside is a surprise; you collect it yourself.
       </AppText>
       {!point ? (
-        <EmptyState ion="location-outline" title="Choose your address" body="Pick your address on the Food Court home to see Bachat Boxes near you." />
+        <EmptyState icon="location-outline" title="Choose your address" body="Pick your address on the Food Court home to see Bachat Boxes near you." />
       ) : s.status === 'failed' ? (
         <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} />
       ) : s.status === 'loading' && !s.items.length ? (
         <RowCardsSkeleton count={3} />
       ) : !s.items.length ? (
-        <EmptyState ion="gift-outline" title="None nearby right now" body="Kitchens put Bachat Boxes up towards the end of the day. Check back this evening." />
+        <EmptyState icon="gift-outline" title="None nearby right now" body="Kitchens put Bachat Boxes up towards the end of the day. Check back this evening." />
       ) : (
         <View style={styles.list}>
           {s.items.map(b => (

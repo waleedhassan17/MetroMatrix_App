@@ -83,7 +83,7 @@ const AppointmentLookup: React.FC<Props> = ({ navigation, route }) => {
           <Button label="Find" onPress={find} disabled={s.code.length < 4} loading={s.status === 'loading'} fullWidth />
         </>
       }>
-      {s.status === 'idle' ? <EmptyState icon="search" title="Find any appointment" body="Type the HC- code from the patient's booking." /> : null}
+      {s.status === 'idle' ? <EmptyState icon="search-outline" title="Find any appointment" body="Type the HC- code from the patient's booking." /> : null}
       {s.status === 'failed' ? <InlineNotice message={s.error.message} /> : null}
       {s.status === 'loading' ? <SkeletonLines lines={6} /> : null}
       {a ? (

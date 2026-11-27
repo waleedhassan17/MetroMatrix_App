@@ -97,7 +97,7 @@ const BagContent: React.FC<Props> = ({ navigation }) => {
           </>
         ) : !cart.groups.length ? (
           <EmptyState
-            ion="bag-handle-outline"
+            icon="bag-handle-outline"
             title="Your bag is empty"
             body="Add something you love from any store. Each store delivers its own items."
             action={{ label: 'Start shopping', onPress: () => root.navigate('ShopTabs', { screen: 'ShopHomeTab' }) }}

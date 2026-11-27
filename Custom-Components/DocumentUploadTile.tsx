@@ -17,7 +17,7 @@ import { Image } from 'expo-image';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { AppText } from './AppText';
 import { Button } from './Button';
-import { Icon, IonIcon } from './Icon';
+import { IonIcon } from './Icon';
 import { ProgressBar } from './ProgressBar';
 import { StatusPill } from './StatusPill';
 import { TextAction } from './TextAction';
@@ -120,7 +120,7 @@ export const DocumentUploadTile: React.FC<DocumentUploadTileProps> = ({
       {thumbnailUri && !isPdf ? (
         <Image source={{ uri: thumbnailUri }} style={StyleSheet.absoluteFill} contentFit="cover" />
       ) : (
-        <Icon name={isPdf ? 'file-text' : empty ? 'upload' : 'image'} size="lg" color={service.accent} />
+        <IonIcon name={isPdf ? 'document-text-outline' : empty ? 'cloud-upload-outline' : 'image-outline'} size="lg" color={colors.inkMuted} />
       )}
     </Pressable>
   );
@@ -172,7 +172,7 @@ export const DocumentUploadTile: React.FC<DocumentUploadTileProps> = ({
     state === 'empty' ? (
       <View style={[styles.add, { backgroundColor: service.accentSoft }]}>
         <IonIcon name="add" size="sm" color={service.accentDeep} />
-        <AppText variant="small" tone="accentDeep">
+        <AppText variant="chip" tone="accentDeep">
           Add
         </AppText>
       </View>

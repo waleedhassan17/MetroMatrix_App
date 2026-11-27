@@ -80,7 +80,7 @@ const MissingItemsContent: React.FC<Props> = ({ route }) => {
       {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : null}
       {bag.addError.message ? <InlineNotice message={bag.addError.message} /> : null}
       {!items.length && s.status === 'loading' ? <RowCardsSkeleton count={4} /> : null}
-      {s.status === 'succeeded' && !items.length ? <EmptyState ion="checkmark-circle-outline" title="Nothing missing" body="You have everything this recipe needs." /> : null}
+      {s.status === 'succeeded' && !items.length ? <EmptyState icon="checkmark-circle-outline" title="Nothing missing" body="You have everything this recipe needs." /> : null}
       {items.map(m => (
         <Card key={m.key}>
           <View style={styles.gap}>

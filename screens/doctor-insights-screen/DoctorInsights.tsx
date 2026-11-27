@@ -82,7 +82,7 @@ const DoctorInsightsContent: React.FC<Props> = () => {
       {!d ? (
         s.status === 'failed' ? null : (
           <>
-            <StatGridSkeleton count={4} />
+            <StatGridSkeleton count={4} columns={2} compact hints />
             <RowCardsSkeleton count={3} />
           </>
         )
@@ -114,10 +114,10 @@ const InsightsBody: React.FC<{ d: Insights; styles: ReturnType<typeof makeStyles
         columns={2}
         compact
         stats={[
-          { key: 'done', icon: 'checkmark-done-outline', tint: 'green', value: o.completed, label: 'Completed', hint: pct(d.rates.completion) ? `${pct(d.rates.completion)} of visits that ended` : null },
-          { key: 'cancelled', icon: 'close-circle-outline', tint: 'red', value: o.cancelled, label: 'Cancelled', hint: o.cancelled ? [pct(d.rates.cancellation), o.lateCancelled ? `${o.lateCancelled} late` : null, o.cancelledByDoctor ? `${o.cancelledByDoctor} by you` : null].filter(Boolean).join(' · ') : null },
-          { key: 'missed', icon: 'alert-circle-outline', tint: 'amber', value: o.noShow, label: 'Missed', hint: o.noShow ? pct(d.rates.noShow) : null },
-          { key: 'upcoming', icon: 'calendar-outline', tint: 'blue', value: o.upcoming, label: 'Still ahead', hint: 'Booked, not yet seen' },
+          { key: 'done', icon: 'checkmark-done-outline', value: o.completed, label: 'Completed', hint: pct(d.rates.completion) ? `${pct(d.rates.completion)} of visits that ended` : null },
+          { key: 'cancelled', icon: 'close-circle-outline', value: o.cancelled, label: 'Cancelled', hint: o.cancelled ? [pct(d.rates.cancellation), o.lateCancelled ? `${o.lateCancelled} late` : null, o.cancelledByDoctor ? `${o.cancelledByDoctor} by you` : null].filter(Boolean).join(' · ') : null },
+          { key: 'missed', icon: 'alert-circle-outline', value: o.noShow, label: 'Missed', hint: o.noShow ? pct(d.rates.noShow) : null },
+          { key: 'upcoming', icon: 'calendar-outline', value: o.upcoming, label: 'Still ahead', hint: 'Booked, not yet seen' },
         ]}
       />
 

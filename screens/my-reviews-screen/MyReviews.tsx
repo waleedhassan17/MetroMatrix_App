@@ -140,9 +140,9 @@ const MyReviewsContent: React.FC<Props> = () => {
           ) : list.error ? (
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : s.unreplied ? (
-            <EmptyState ion="checkmark-done-outline" title="All answered" body="Every review has your reply." />
+            <EmptyState icon="checkmark-done-outline" title="All answered" body="Every review has your reply." />
           ) : (
-            <EmptyState ion="chatbubbles-outline" title="No reviews yet" body="Patients can review you after a completed visit." />
+            <EmptyState icon="chatbubbles-outline" title="No reviews yet" body="Patients can review you after a completed visit." />
           )
         }
         ListFooterComponent={list.isLoadingMore ? <RowCardsSkeleton count={1} /> : null}

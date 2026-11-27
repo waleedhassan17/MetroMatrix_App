@@ -195,7 +195,7 @@ const InventoryContent: React.FC<Props> = ({ route }) => {
           ) : list.error ? (
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
-            <EmptyState ion="layers-outline" title={s.lowOnly ? 'Nothing low on stock' : 'No stock to show'} body={s.lowOnly ? 'Every option has more than 3 left.' : 'Add products to track their stock.'} />
+            <EmptyState icon="layers-outline" title={s.lowOnly ? 'Nothing low on stock' : 'No stock to show'} body={s.lowOnly ? 'Every option has more than 3 left.' : 'Add products to track their stock.'} />
           )
         }
         ListFooterComponent={

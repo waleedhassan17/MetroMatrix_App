@@ -16,6 +16,11 @@
  *   borderRadius: 12        -> radius.md
  *   padding: 16, gap: 8     -> space.s16, space.s8
  *   shadowRadius / elevation literals             -> elevation.float
+ * and the owner's consistency rules (2026-11-27):
+ *   height={232} / width={64} -> a size token (size.*), never a number in JSX
+ *   tint= / tint: 'blue'    -> no categorical colours: icons are slate, wells neutral
+ *   variant="overline"      -> no uppercase eyebrows: section names are sectionTitle
+ *   Feather                 -> one icon set: Ionicons (IonIcon)
  * and rule 8 of CLAUDE.md:
  *   expo-linear-gradient    (no gradients as surfaces)
  *   emoji anywhere in UI code
@@ -76,6 +81,10 @@ const RULES = [
     msg: 'spinner in a screen — load content with Skeleton (rule 8)',
     roots: ['screens'],
   },
+  { re: /\b(height|width|size)=\{-?\d/g, msg: 'hardcoded dimension prop — use a size token (size.*)' },
+  { re: /\btint=|\btint:\s*['"]/g, msg: 'categorical tint — icons are slate and wells neutral (IconWell); colour is for status and selection' },
+  { re: /variant=["']overline["']/g, msg: 'uppercase eyebrow — name a section with sectionTitle' },
+  { re: /\bFeather\b/g, msg: 'Feather glyph — the app has one icon set: Ionicons (IonIcon)' },
   { re: /fontWeight:\s*'\d00'/g, msg: 'hardcoded fontWeight — use a type role' },
   { re: /fontFamily:\s*'[^']+'/g, msg: 'hardcoded fontFamily — use a type role' },
   // Both quote styles: matching only single quotes lets every JSX attribute

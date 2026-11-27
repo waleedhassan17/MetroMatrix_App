@@ -21,7 +21,7 @@ export const ConfigErrorScreen: React.FC = () => {
     <View style={styles.fill} onLayout={releaseNativeSplash}>
       <ScreenShell scroll={false}>
         <EmptyState
-          icon="alert-triangle"
+          icon="warning-outline"
           title="This version can't connect"
           body="It was built without a server address. Install the latest version of MetroMatrix, or contact support if this keeps happening."
           action={{

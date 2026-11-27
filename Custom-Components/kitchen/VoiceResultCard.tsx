@@ -47,7 +47,7 @@ export const VoiceResultCard: React.FC<VoiceResultCardProps> = ({ result, onConf
         <View style={styles.head}>
           <ToneWell icon="mic-outline" tone={action && !unsure ? 'accent' : 'warning'} />
           <View style={styles.text}>
-            <AppText variant="overline" tone="muted">
+            <AppText variant="small" tone="muted">
               {result.heard === 'audio' ? 'You said' : 'You typed'}
             </AppText>
             <ContentText variant="body">{result.transcript || 'Nothing we could make out'}</ContentText>

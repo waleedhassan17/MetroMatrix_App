@@ -110,7 +110,7 @@ const CateringContent: React.FC<Props> = ({ navigation, route }) => {
           {!s.calendar || s.calendar.month !== month ? (
             <RowCardsSkeleton count={2} />
           ) : !s.calendar.days.length ? (
-            <EmptyState ion="calendar-outline" title="Nothing booked this month" body="Accepted and confirmed events show here by day." />
+            <EmptyState icon="calendar-outline" title="Nothing booked this month" body="Accepted and confirmed events show here by day." />
           ) : (
             s.calendar.days.map(d => (
               <Card key={d.date}>
@@ -139,7 +139,7 @@ const CateringContent: React.FC<Props> = ({ navigation, route }) => {
         s.status === 'failed' ? null : <RowCardsSkeleton count={3} />
       ) : !items.length ? (
         <EmptyState
-          ion="people-outline"
+          icon="people-outline"
           title={s.tab === 'new' ? 'No new requests' : 'Nothing here'}
           body={s.tab === 'new' ? 'When a customer plans a dawat with you, it comes here to quote.' : 'Requests move here as they go along.'}
         />
@@ -150,7 +150,7 @@ const CateringContent: React.FC<Props> = ({ navigation, route }) => {
             <RowCard
               key={r.code}
               title={r.customer?.name ?? 'Customer'}
-              mark={{ icon: 'people-outline', tint: 'violet' }}
+              mark={{ icon: 'people-outline' }}
               lines={[eventLine(r), r.budget ? `Budget about ${formatPKR(r.budget)}` : null, q ? `Quote ${q.version}: ${formatPKR(q.total)}` : `${r.dishes.length} dishes asked for`]}
               pill={{ label: CATERING_STATUS[r.status].vendorLabel, tone: CATERING_STATUS[r.status].tone }}
               onPress={() => navigation.navigate('GrowthCateringRequest', { code: r.code })}

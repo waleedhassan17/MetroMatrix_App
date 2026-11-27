@@ -97,7 +97,7 @@ const FoodSearchContent: React.FC<Props> = ({ route, navigation }) => {
       </PageHeader>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.body, { paddingBottom: space.s40 + dockInset }]}>
         {!point ? (
-          <EmptyState ion="location-outline" title="Choose your address first" body="Search shows the kitchens that deliver to you." />
+          <EmptyState icon="location-outline" title="Choose your address first" body="Search shows the kitchens that deliver to you." />
         ) : !showing ? (
           recent.length ? (
             <View style={styles.padded}>
@@ -112,7 +112,7 @@ const FoodSearchContent: React.FC<Props> = ({ route, navigation }) => {
               </Card>
             </View>
           ) : (
-            <EmptyState ion="search-outline" title="What are you craving?" body="Search a dish like biryani or karahi, or a kitchen by name." />
+            <EmptyState icon="search-outline" title="What are you craving?" body="Search a dish like biryani or karahi, or a kitchen by name." />
           )
         ) : s.status === 'failed' ? (
           <View style={styles.padded}>
@@ -123,7 +123,7 @@ const FoodSearchContent: React.FC<Props> = ({ route, navigation }) => {
             <RowCardsSkeleton count={5} />
           </View>
         ) : !r.vendors.length && !r.dishes.length ? (
-          <EmptyState ion="search-outline" title={`Nothing for “${s.query}”`} body="Try another dish or a shorter word." />
+          <EmptyState icon="search-outline" title={`Nothing for “${s.query}”`} body="Try another dish or a shorter word." />
         ) : (
           <>
             <View style={styles.padded}>
@@ -138,7 +138,7 @@ const FoodSearchContent: React.FC<Props> = ({ route, navigation }) => {
               r.vendors.length ? (
                 r.vendors.map(v => <VendorCard key={v.id} vendor={v} onPress={() => open(v.slug)} />)
               ) : (
-                <EmptyState ion="storefront-outline" title="No kitchen by that name" body="The dishes tab has kitchens that cook it." />
+                <EmptyState icon="storefront-outline" title="No kitchen by that name" body="The dishes tab has kitchens that cook it." />
               )
             ) : r.dishes.length ? (
               r.dishes.map(g => (
@@ -164,7 +164,7 @@ const FoodSearchContent: React.FC<Props> = ({ route, navigation }) => {
                 </View>
               ))
             ) : (
-              <EmptyState ion="search-outline" title="No dish by that name" body="The kitchens tab has places that match." />
+              <EmptyState icon="search-outline" title="No dish by that name" body="The kitchens tab has places that match." />
             )}
           </>
         )}

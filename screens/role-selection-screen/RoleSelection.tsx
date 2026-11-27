@@ -41,13 +41,12 @@ const makeStyles = ({ colors, space, gutter, size, radius, elevation }: Theme) =
     },
   });
 
-/** Painted in Food Court's colours (the ServiceScope around it): riders deliver for its vendors. */
+/** Inside Food Court's scope (its selected line and check): riders deliver for its vendors. */
 const RiderChoice: React.FC<{ onPress: () => void }> = ({ onPress }) => {
-  const { service } = useTheme();
+  const { colors } = useTheme();
   return (
     <ChoiceCard
-      icon={<IonIcon name="bicycle" size="xl" color={service.accentDeep} />}
-      iconBg={service.accentSoft}
+      icon={<IonIcon name="bicycle-outline" size="xl" color={colors.inkMuted} />}
       title="Rider"
       description="Deliver orders for a Food Court vendor who added you"
       onPress={onPress}
@@ -58,7 +57,7 @@ const RiderChoice: React.FC<{ onPress: () => void }> = ({ onPress }) => {
 const RoleSelection: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { colors, service } = useTheme();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
   const choose = (role: AuthUserType) => {
@@ -91,15 +90,13 @@ const RoleSelection: React.FC<Props> = ({ navigation }) => {
 
           <View style={styles.cards}>
             <ChoiceCard
-              icon={<IonIcon name="construct" size="xl" color={colors.roleProvider} />}
-              iconBg={colors.roleProviderSoft}
+              icon={<IonIcon name="construct-outline" size="xl" color={colors.inkMuted} />}
               title="Service Provider"
               description="Offer your services to customers in your area"
               onPress={() => choose('provider')}
             />
             <ChoiceCard
-              icon={<IonIcon name="person" size="xl" color={service.highlight} />}
-              iconBg={service.accentSoft}
+              icon={<IonIcon name="person-outline" size="xl" color={colors.inkMuted} />}
               title="User"
               description="Discover local food vendors, book doctors and shop from trusted sellers"
               onPress={() => choose('user')}
@@ -115,7 +112,7 @@ const RoleSelection: React.FC<Props> = ({ navigation }) => {
             accessibilityRole="link"
             accessibilityLabel="Need help choosing? Email our support team"
             accessibilityHint={SUPPORT_EMAIL}>
-            <IonIcon name="help-circle-outline" size="md" color={colors.roleProvider} />
+            <IonIcon name="help-circle-outline" size="md" color={colors.inkMuted} />
             <AppText variant="small" tone="muted" style={{ flex: 1 }}>
               Need help choosing?{' '}
               <AppText variant="small" tone="accentDeep">

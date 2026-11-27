@@ -234,7 +234,7 @@ const DoctorCalendarContent: React.FC<Props> = ({ navigation }) => {
           {r.appointments.length ? (
             byDayPart(r.appointments).map(g => (
               <View key={g.part} style={styles.group}>
-                <AppText variant="overline" tone="muted">
+                <AppText variant="bodyStrong" tone="muted">
                   {`${DAY_PART_LABEL[g.part]} · ${g.items.length}`}
                 </AppText>
                 <Card padded="horizontal">{g.items.map(visitRow)}</Card>
@@ -242,7 +242,7 @@ const DoctorCalendarContent: React.FC<Props> = ({ navigation }) => {
             ))
           ) : (
             <EmptyState
-              ion="calendar-clear-outline"
+              icon="calendar-clear-outline"
               title="No appointments"
               body={date < today ? 'Nothing was booked on this day.' : 'Bookings for this day appear here as patients make them.'}
               action={

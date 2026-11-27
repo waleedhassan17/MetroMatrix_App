@@ -95,7 +95,7 @@ const PatientHistoryContent: React.FC<Props> = ({ route, navigation }) => {
           );
         })
       ) : (
-        <EmptyState ion="clipboard-outline" title="No visits yet" body="Their visits with you appear here, with your notes and prescriptions." />
+        <EmptyState icon="clipboard-outline" title="No visits yet" body="Their visits with you appear here, with your notes and prescriptions." />
       )}
     </ScreenShell>
   );

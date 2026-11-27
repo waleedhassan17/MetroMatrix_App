@@ -241,7 +241,7 @@ const ShoppingHomeContent: React.FC<Props> = ({ navigation }) => {
             </View>
           ) : brands.error ? null : (
             <View style={styles.state}>
-              <EmptyState ion="storefront-outline" title="No brands yet" body="Brands appear here as they open." />
+              <EmptyState icon="storefront-outline" title="No brands yet" body="Brands appear here as they open." />
             </View>
           )
         }

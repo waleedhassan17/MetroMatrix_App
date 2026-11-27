@@ -125,7 +125,6 @@ const AdminFoodOrders: React.FC<Props> = ({ navigation, route }) => {
               title={o.code}
               mark={{
                 icon: o.fulfilment === 'pickup' ? 'bag-handle-outline' : 'bicycle-outline',
-                tint: 'accent',
               }}
               lines={[
                 [o.customerName, o.itemsSummary].filter(Boolean).join(' · '),
@@ -151,7 +150,7 @@ const AdminFoodOrders: React.FC<Props> = ({ navigation, route }) => {
               />
             ) : (
               <EmptyState
-                icon="search"
+                icon="search-outline"
                 title={searching ? `No order ${searching}` : s.status || s.vendor ? 'No orders match' : 'No orders yet'}
                 body={searching ? "Check the code on the customer's receipt." : s.status || s.vendor ? 'Try another status.' : 'Orders show here as customers place them.'}
               />

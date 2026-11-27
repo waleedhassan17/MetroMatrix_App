@@ -144,7 +144,7 @@ const WasteFormContent: React.FC<Props> = () => {
           ))}
         </Card>
       ) : (
-        <EmptyState ion="trash-outline" title="Add what went to waste" body="An ingredient (rice that went bad), or a cooked dish (six plates left over)." />
+        <EmptyState icon="trash-outline" title="Add what went to waste" body="An ingredient (rice that went bad), or a cooked dish (six plates left over)." />
       )}
       {s.errors.lines ? <InlineNotice message={s.errors.lines} /> : null}
       <View style={styles.adds}>

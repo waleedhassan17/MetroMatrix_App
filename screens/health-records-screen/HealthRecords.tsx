@@ -151,7 +151,7 @@ const HealthRecordsContent: React.FC<Props> = ({ navigation, route }) => {
             ) : list.error ? (
               <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
             ) : (
-              <EmptyState icon="folder" title="No records here yet" body="Upload lab reports, scans and old prescriptions, and share them with your doctor before a visit." />
+              <EmptyState icon="folder-outline" title="No records here yet" body="Upload lab reports, scans and old prescriptions, and share them with your doctor before a visit." />
             )}
           </View>
         }

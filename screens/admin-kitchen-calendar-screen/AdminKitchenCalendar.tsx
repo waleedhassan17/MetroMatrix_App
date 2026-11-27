@@ -88,7 +88,7 @@ const AdminKitchenCalendar: React.FC<Props> = () => {
         <RowCard
           key={e.id}
           title={e.name}
-          mark={{ icon: e.kind === 'ramadan' ? 'moon-outline' : e.kind === 'eid' ? 'sparkles-outline' : 'calendar-outline', tint: e.kind === 'ramadan' ? 'violet' : e.kind === 'eid' ? 'amber' : 'blue' }}
+          mark={{ icon: e.kind === 'ramadan' ? 'moon-outline' : e.kind === 'eid' ? 'sparkles-outline' : 'calendar-outline' }}
           lines={[EVENT_KIND_LABEL[e.kind], eventLine(e)]}
           pill={EVENT_STATE[e.state]}>
           <View style={styles.actions}>

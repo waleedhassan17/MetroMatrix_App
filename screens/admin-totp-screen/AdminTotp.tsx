@@ -8,7 +8,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/useReduxHooks';
 import { OTP_LENGTH } from '../../models/authModel';
 import { haptics } from '../../utils/haptics/haptics';
 import { useStyles, useTheme, type Theme } from '../../theme/index';
-import { AppText, Button, InlineNotice, IonIcon, OtpInput, TextField } from '../../Custom-Components/index';
+import { Button, InlineNotice, IonIcon, OtpInput, TextField } from '../../Custom-Components/index';
 import { AuthHeader, AuthScreen } from '../../Components/auth/AuthChrome';
 import { selectPendingTotp, endPendingTotp } from '../../store/authSlice';
 import { resetTotp, selectAdminTotp, setCode, setRecoveryCode, toggleRecovery, verifyTotpAsync } from './adminTotpSlice';
@@ -29,7 +29,7 @@ const makeStyles = ({ space, size, radius }: Theme) =>
 const AdminTotp: React.FC = () => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { service } = useTheme();
+  const { colors } = useTheme();
   const s = useAppSelector(selectAdminTotp);
   const pendingTotp = useAppSelector(selectPendingTotp);
   const loading = s.status === 'loading';
@@ -58,8 +58,8 @@ const AdminTotp: React.FC = () => {
 
   return (
     <AuthScreen onBack={cancel}>
-      <View style={[styles.hero, { backgroundColor: service.accentSoft }]}>
-        <IonIcon name="shield-checkmark-outline" size="xl" color={service.accent} />
+      <View style={[styles.hero, { backgroundColor: colors.surfaceSunk }]}>
+        <IonIcon name="shield-checkmark-outline" size="xl" color={colors.inkMuted} />
       </View>
       <AuthHeader
         hideLogo

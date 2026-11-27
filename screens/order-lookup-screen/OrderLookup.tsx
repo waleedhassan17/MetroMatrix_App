@@ -55,7 +55,7 @@ const OrderLookup: React.FC<Props> = ({ route }) => {
           <Button label="Find" onPress={find} disabled={s.code.length < 4} loading={s.status === 'loading'} fullWidth />
         </>
       }>
-      {s.status === 'idle' ? <EmptyState icon="search" title="Find any Shopping order" body="Type the MM- code from the shopper's receipt or email." /> : null}
+      {s.status === 'idle' ? <EmptyState icon="search-outline" title="Find any Shopping order" body="Type the MM- code from the shopper's receipt or email." /> : null}
       {s.status === 'failed' ? <InlineNotice message={s.error.message} /> : null}
       {s.status === 'loading' ? <SkeletonLines lines={6} /> : null}
       {g ? (

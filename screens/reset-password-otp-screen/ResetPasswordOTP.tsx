@@ -41,7 +41,7 @@ const waitLabel = (seconds: number) => (seconds < 90 ? `${seconds}s` : `${Math.c
 const ResetPasswordOTP: React.FC<Props> = ({ navigation, route }) => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { service } = useTheme();
+  const { colors } = useTheme();
   // Opened without an address (a bare link, a web bookmark): start at the email step instead of crashing.
   const email = route.params?.email ?? '';
   const userType = route.params?.userType ?? 'user';
@@ -86,8 +86,8 @@ const ResetPasswordOTP: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <AuthScreen onBack={back}>
-      <View style={[styles.hero, { backgroundColor: service.accentSoft }]}>
-        <IonIcon name="keypad-outline" size="xl" color={service.accent} />
+      <View style={[styles.hero, { backgroundColor: colors.surfaceSunk }]}>
+        <IonIcon name="keypad-outline" size="xl" color={colors.inkMuted} />
       </View>
       {/* As the FYP does: never says whether an account exists for the address. */}
       <AuthHeader hideLogo title="Enter Verification Code" subtitle="If an account exists for this email, a 6-digit code is on its way to" />

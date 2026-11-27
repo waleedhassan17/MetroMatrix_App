@@ -233,7 +233,7 @@ const DoctorTodayContent: React.FC<Props> = ({ navigation }) => {
       {!t ? (
         s.status === 'failed' ? null : (
           <>
-            <StatGridSkeleton count={4} />
+            <StatGridSkeleton count={4} columns={2} compact />
             <RowCardsSkeleton count={3} />
           </>
         )
@@ -243,10 +243,10 @@ const DoctorTodayContent: React.FC<Props> = ({ navigation }) => {
             columns={2}
             compact
             stats={[
-              { key: 'booked', icon: 'calendar-outline', tint: 'blue', value: counts!.booked, label: 'Booked' },
-              { key: 'in', icon: 'people-outline', tint: 'teal', value: counts!.checkedIn, label: 'Checked in' },
-              { key: 'done', icon: 'checkmark-done-outline', tint: 'green', value: counts!.done, label: 'Done' },
-              { key: 'missed', icon: 'close-circle-outline', tint: 'amber', value: counts!.noShow, label: 'Missed' },
+              { key: 'booked', icon: 'calendar-outline', value: counts!.booked, label: 'Booked' },
+              { key: 'in', icon: 'people-outline', value: counts!.checkedIn, label: 'Checked in' },
+              { key: 'done', icon: 'checkmark-done-outline', value: counts!.done, label: 'Done' },
+              { key: 'missed', icon: 'close-circle-outline', value: counts!.noShow, label: 'Missed' },
             ]}
           />
           {canWalkIn ? (
@@ -280,7 +280,7 @@ const DoctorTodayContent: React.FC<Props> = ({ navigation }) => {
             t.queue.map(row)
           ) : (
             <EmptyState
-              icon="calendar"
+              icon="calendar-outline"
               title="No appointments today"
               body="New bookings appear here as patients make them."
               action={{ label: 'Check your availability', onPress: () => go.navigate('Availability', { tab: 'preview' }) }}

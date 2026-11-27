@@ -149,7 +149,7 @@ const PantryContent: React.FC<Props> = ({ navigation }) => {
       {s.stats ? (
         <Card>
           <View style={styles.head}>
-            <IconWell icon="leaf-outline" tint="blue" />
+            <IconWell icon="leaf-outline" />
             <View style={styles.grow}>
               <AppText variant="title">{statsLine(s.stats)}</AppText>
               <AppText variant="small" tone="muted">
@@ -163,10 +163,10 @@ const PantryContent: React.FC<Props> = ({ navigation }) => {
       <QuickActionGrid
         columns={4}
         actions={[
-          { key: 'add', icon: 'add-circle-outline', tint: 'teal', label: 'Add', onPress: () => dispatch(openPantryForm(true)) },
-          { key: 'voice', icon: 'mic-outline', tint: 'violet', label: 'Speak', onPress: () => setSheet('voice') },
-          { key: 'order', icon: 'bag-handle-outline', tint: 'amber', label: 'From an order', onPress: openOrders },
-          { key: 'reminders', icon: 'notifications-outline', tint: 'blue', label: 'Reminders', onPress: () => setSheet('reminders') },
+          { key: 'add', icon: 'add-circle-outline', label: 'Add', onPress: () => dispatch(openPantryForm(true)) },
+          { key: 'voice', icon: 'mic-outline', label: 'Speak', onPress: () => setSheet('voice') },
+          { key: 'order', icon: 'bag-handle-outline', label: 'From an order', onPress: openOrders },
+          { key: 'reminders', icon: 'notifications-outline', label: 'Reminders', onPress: () => setSheet('reminders') },
         ]}
       />
 
@@ -179,7 +179,7 @@ const PantryContent: React.FC<Props> = ({ navigation }) => {
       {!s.list && s.status !== 'failed' ? <RowCardsSkeleton count={4} /> : null}
       {s.list && !items.length ? (
         <EmptyState
-          ion="archive-outline"
+          icon="archive-outline"
           title={s.segment === 'all' ? 'Nothing here yet' : s.segment === 'use_soon' ? 'Nothing to use soon' : 'Nothing expired'}
           body={s.segment === 'all' ? 'Add what you have, and you’ll get ideas to cook it before it goes off.' : 'All good for now.'}
         />

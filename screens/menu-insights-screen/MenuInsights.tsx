@@ -102,7 +102,7 @@ const MenuInsightsContent: React.FC<Props> = ({ navigation, route }) => {
               key={e.id}
               title={e.itemName}
               lines={[changeLine(e), progressLine(e)]}
-              mark={{ icon: 'flask-outline', tint: 'violet' }}
+              mark={{ icon: 'flask-outline' }}
               pill={{ label: EXPERIMENT_STATUS[e.status].label, tone: EXPERIMENT_STATUS[e.status].tone }}
               onPress={() => navigation.navigate('GrowthExperiment', { id: e.id })}
             />
@@ -127,8 +127,8 @@ const MenuInsightsContent: React.FC<Props> = ({ navigation, route }) => {
           <ToolSection
             title="Also"
             tools={[
-              { key: 'combos', title: 'Combo ideas', subtitle: 'Dishes ordered together, as one deal', icon: 'git-merge-outline', tint: 'amber', onPress: () => navigation.navigate('KitchenAiCombos') },
-              { key: 'reviews', title: 'What reviews say', subtitle: 'The week’s themes, good and bad', icon: 'chatbubbles-outline', tint: 'rose', onPress: () => navigation.navigate('KitchenReviewInsights') },
+              { key: 'combos', title: 'Combo ideas', subtitle: 'Dishes ordered together, as one deal', icon: 'git-merge-outline', onPress: () => navigation.navigate('KitchenAiCombos') },
+              { key: 'reviews', title: 'What reviews say', subtitle: 'The week’s themes, good and bad', icon: 'chatbubbles-outline', onPress: () => navigation.navigate('KitchenReviewInsights') },
             ]}
           />
           {QUADRANT_ORDER.map(q => {
@@ -185,7 +185,7 @@ const MenuInsightsContent: React.FC<Props> = ({ navigation, route }) => {
             </View>
             <Card>
               <View style={styles.tight}>
-                <AppText variant="overline" tone="muted">
+                <AppText variant="small" tone="muted">
                   Suggestion
                 </AppText>
                 <AppText variant="body">{open.suggestion.text}</AppText>

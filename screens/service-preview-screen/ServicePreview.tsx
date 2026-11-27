@@ -107,7 +107,7 @@ const Preview: React.FC<Props> = ({ navigation, route }) => {
           </AppText>
           {POINTS[key].map(p => (
             <View key={p} style={styles.point}>
-              <MciIcon name="check-circle" size="md" color={service.accent} />
+              <MciIcon name="check-circle-outline" size="md" color={colors.inkMuted} />
               <AppText variant="body">{p}</AppText>
             </View>
           ))}

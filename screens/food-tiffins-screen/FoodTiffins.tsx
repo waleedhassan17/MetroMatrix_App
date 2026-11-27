@@ -46,7 +46,7 @@ const FoodTiffinsContent: React.FC<Props> = ({ navigation }) => {
     <RowCard
       key={x.code}
       title={x.plan.name}
-      mark={{ icon: 'calendar-outline', tint: 'amber' }}
+      mark={{ icon: 'calendar-outline' }}
       lines={[
         `${x.vendor.name} · ${scheduleLabel(x.plan)}`,
         x.nextDelivery ? `Next: ${formatDayShort(x.nextDelivery.date)} · ${x.nextDelivery.dishes.join(', ')}` : priceLabel(x.plan),
@@ -65,7 +65,7 @@ const FoodTiffinsContent: React.FC<Props> = ({ navigation }) => {
       {s.status === 'loading' && !s.items.length ? (
         <RowCardsSkeleton count={3} />
       ) : !s.items.length && s.status === 'succeeded' ? (
-        <EmptyState ion="calendar-outline" title="No tiffins yet" body="Home kitchens offer weekday lunches and monthly dinners. Find one on a kitchen’s page." action={{ label: 'Browse home kitchens', onPress: () => navigation.navigate('FoodVendors', { rail: 'homeKitchens', title: 'Home kitchens' }) }} />
+        <EmptyState icon="calendar-outline" title="No tiffins yet" body="Home kitchens offer weekday lunches and monthly dinners. Find one on a kitchen’s page." action={{ label: 'Browse home kitchens', onPress: () => navigation.navigate('FoodVendors', { rail: 'homeKitchens', title: 'Home kitchens' }) }} />
       ) : (
         <View style={styles.list}>
           {current.length ? <SectionHead title="Current" /> : null}

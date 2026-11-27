@@ -51,7 +51,7 @@ const ResultCard: React.FC<{ r: GrowthLookup }> = ({ r }) => {
       <View style={styles.gap}>
         <View style={styles.head}>
           <View style={styles.grow}>
-            <AppText variant="overline" tone="muted">
+            <AppText variant="small" tone="muted">
               {`${KIND_LABEL[r.kind]} · ${r.code}`}
             </AppText>
             <AppText variant="title">{r.vendor}</AppText>

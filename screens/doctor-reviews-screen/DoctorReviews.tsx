@@ -89,7 +89,7 @@ const DoctorReviewsContent: React.FC<Props> = ({ route }) => {
             ) : list.error ? (
               <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
             ) : (
-              <EmptyState icon="message-square" title="No reviews match" body="Try all visits, or another star count." />
+              <EmptyState icon="chatbox-outline" title="No reviews match" body="Try all visits, or another star count." />
             )}
           </View>
         }

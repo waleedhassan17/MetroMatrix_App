@@ -107,9 +107,9 @@ const VendorMenu: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         {filtering ? null : (
           <QuickActionGrid
             actions={[
-              { key: 'cats', icon: 'albums-outline', tint: 'violet', label: 'Categories', onPress: () => navigation.navigate('VendorCategories') },
-              { key: 'addons', icon: 'layers-outline', tint: 'blue', label: 'Add-on groups', onPress: () => navigation.navigate('VendorOptionGroups') },
-              { key: 'deals', icon: 'pricetag-outline', tint: 'amber', label: 'Deals', onPress: () => navigation.navigate('VendorPromotions') },
+              { key: 'cats', icon: 'albums-outline', label: 'Categories', onPress: () => navigation.navigate('VendorCategories') },
+              { key: 'addons', icon: 'layers-outline', label: 'Add-on groups', onPress: () => navigation.navigate('VendorOptionGroups') },
+              { key: 'deals', icon: 'pricetag-outline', label: 'Deals', onPress: () => navigation.navigate('VendorPromotions') },
             ]}
           />
         )}
@@ -118,7 +118,7 @@ const VendorMenu: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           <MenuSkeleton />
         ) : !s.categories.length && s.status !== 'failed' ? (
           <EmptyState
-            ion="book-outline"
+            icon="book-outline"
             title="Start your menu"
             body="Add a category first, like Biryani or Drinks, then the dishes in it."
             action={{ label: 'Add a category', onPress: () => navigation.navigate('VendorCategories') }}
@@ -166,7 +166,7 @@ const VendorMenu: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             );
           })
         )}
-        {filtering && !s.items.some(shown) ? <EmptyState ion="search-outline" title="No dish matches" body={onlyOff ? 'Every dish is on right now.' : 'Try another name.'} /> : null}
+        {filtering && !s.items.some(shown) ? <EmptyState icon="search-outline" title="No dish matches" body={onlyOff ? 'Every dish is on right now.' : 'Try another name.'} /> : null}
 
         <Sheet visible={!!offItem} onClose={() => dispatch(closeOffSheet())} title={offItem ? `Switch off ${offItem.name}` : ''}>
           <AppText variant="small" tone="muted">

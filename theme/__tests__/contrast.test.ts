@@ -167,11 +167,16 @@ describe('Kitchen Intelligence charts and bars', () => {
   });
 });
 
-describe('row tints (menus, quick actions, stat wells)', () => {
-  it('every tint’s glyph reads on its own well (WCAG non-text, 3:1), the new Kitchen teal and green included', () => {
-    const { ROW_TINTS } = jest.requireActual('../tokens') as typeof import('../tokens');
-    for (const [name, t] of Object.entries(ROW_TINTS)) {
-      expect([name, contrastRatio(t.fg, t.bg) >= AA_LARGE]).toEqual([name, true]);
+describe('icon wells (quick actions, specialties, empty states, list marks)', () => {
+  it('the one neutral well: a slate glyph reads on the sunk grey (WCAG non-text, 3:1), on white and on Health', () => {
+    const { PALETTES: P, HEALTH_PALETTE: H } = jest.requireActual('../tokens') as typeof import('../tokens');
+    for (const pal of [P.light, H]) {
+      expect(contrastRatio(pal.inkMuted, pal.surfaceSunk)).toBeGreaterThanOrEqual(AA_LARGE);
     }
+  });
+
+  it('there are no categorical tints to drift back in', () => {
+    const tokens = jest.requireActual('../tokens') as Record<string, unknown>;
+    expect(['ROW_TINTS', 'CARE_TINTS', 'SPECIALTY_TINTS'].filter(k => k in tokens)).toEqual([]);
   });
 });

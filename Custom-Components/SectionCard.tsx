@@ -1,7 +1,8 @@
 // SectionCard — a titled part of a long page (the FYP's section cards):
 // checkout's steps, an order's customer and items, a form's Photos or Price.
-// The FYP card with a head row: an optional tinted icon well, the title (a
-// header for screen readers), a muted line under it, and one quiet action.
+// The FYP card with a head row: an optional plain slate glyph (no well, no
+// colour), the title (a header for screen readers), a muted line under it,
+// and one quiet action.
 // A form's bare fields go in one of these, never loose on the canvas.
 
 import React from 'react';
@@ -16,8 +17,6 @@ export interface SectionCardProps {
   title: string;
   subtitle?: string;
   icon?: IonName;
-  /** The icon well's colours (a row tint); the service's soft accent by default. */
-  tint?: { fg: string; bg: string };
   /** One quiet action at the head's end ("Change", "Edit"), or anything else. */
   action?: { label: string; onPress: () => void } | React.ReactNode;
   /** A section that needs attention (a missing photo): the danger line. */
@@ -28,16 +27,9 @@ export interface SectionCardProps {
   style?: StyleProp<ViewStyle>;
 }
 
-const makeStyles = ({ space, size, radius }: Theme) =>
+const makeStyles = ({ space }: Theme) =>
   StyleSheet.create({
     head: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
-    well: {
-      width: size.subTypeTile,
-      height: size.subTypeTile,
-      borderRadius: radius.md,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
     text: { flex: 1, gap: space.s4 },
     body: { gap: space.s12 },
   });
@@ -49,7 +41,6 @@ export const SectionCard: React.FC<SectionCardProps> = ({
   title,
   subtitle,
   icon,
-  tint,
   action,
   invalid,
   selected,
@@ -57,16 +48,11 @@ export const SectionCard: React.FC<SectionCardProps> = ({
   style,
 }) => {
   const styles = useStyles(makeStyles);
-  const { service } = useTheme();
-  const well = tint ?? { fg: service.accentDeep, bg: service.accentSoft };
+  const { colors } = useTheme();
   return (
     <Card invalid={invalid} selected={selected} style={style}>
       <View style={styles.head}>
-        {icon ? (
-          <View style={[styles.well, { backgroundColor: well.bg }]}>
-            <IonIcon name={icon} size="md" color={well.fg} />
-          </View>
-        ) : null}
+        {icon ? <IonIcon name={icon} size="md" color={colors.inkMuted} /> : null}
         <View style={styles.text}>
           <AppText variant="title" accessibilityRole="header">
             {title}

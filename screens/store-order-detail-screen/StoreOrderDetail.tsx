@@ -113,7 +113,7 @@ const StoreOrderDetailContent: React.FC<Props> = ({ route }) => {
   const { back } = useBack({ name: 'StoreTabs', params: { screen: 'OrdersTab' } });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { size, service, rowTint } = useTheme();
+  const { colors, size, service } = useTheme();
   const { id } = route.params;
   const e = useAppSelector(s => selectStoreOrder(s, id));
   const ui = useAppSelector(selectStoreOrderUi);
@@ -175,7 +175,7 @@ const StoreOrderDetailContent: React.FC<Props> = ({ route }) => {
         {order.shipBlockedReason ? <InlineNotice tone="warning" title="Not ready to ship" message={order.shipBlockedReason} /> : null}
 
         {order.paymentStatus === 'proof_submitted' && proof ? (
-          <SectionCard title="Check this transfer" subtitle="Confirm only once you see it in your own account." icon="card-outline" tint={rowTint.amber} selected>
+          <SectionCard title="Check this transfer" subtitle="Confirm only once you see it in your own account." icon="card-outline" selected>
             <View style={styles.row}>
               <View style={styles.grow}>
                 <AppText variant="h2">{formatPKR(order.total)}</AppText>
@@ -200,7 +200,6 @@ const StoreOrderDetailContent: React.FC<Props> = ({ route }) => {
             title="Record the refund you sent"
             subtitle={`${order.customer.name} paid ${formatPKR(order.total)} before the order was cancelled. Send it back, then note it here.`}
             icon="cash-outline"
-            tint={rowTint.amber}
             selected>
             <View style={styles.two}>
               <View style={styles.half}>
@@ -220,7 +219,7 @@ const StoreOrderDetailContent: React.FC<Props> = ({ route }) => {
           </SectionCard>
         ) : null}
 
-        <SectionCard title="Ship to" icon="location-outline" tint={rowTint.blue}>
+        <SectionCard title="Ship to" icon="location-outline">
           <View style={styles.grow}>
             <AppText variant="bodyStrong">{order.customer.name}</AppText>
             <AppText variant="small" tone="muted">
@@ -241,9 +240,9 @@ const StoreOrderDetailContent: React.FC<Props> = ({ route }) => {
           </View>
           <Divider />
           <View style={styles.row}>
-            <IonIcon name="wallet-outline" size="md" color={service.accentDeep} />
+            <IonIcon name="wallet-outline" size="md" color={colors.inkMuted} />
             <View style={styles.grow}>
-              <AppText variant="overline" tone="muted">
+              <AppText variant="small" tone="muted">
                 Payment
               </AppText>
               <AppText variant="bodyStrong">{PAYMENT_METHOD_LABEL[order.paymentMethod]}</AppText>
@@ -252,7 +251,7 @@ const StoreOrderDetailContent: React.FC<Props> = ({ route }) => {
           </View>
         </SectionCard>
 
-        <SectionCard title={`Items (${order.items.reduce((n, it) => n + it.quantity, 0)})`} icon="bag-handle-outline" tint={rowTint.violet}>
+        <SectionCard title={`Items (${order.items.reduce((n, it) => n + it.quantity, 0)})`} icon="bag-handle-outline">
           {order.items.map((it, i) => (
             <React.Fragment key={it.id}>
               {i > 0 ? <Divider /> : null}
@@ -275,10 +274,10 @@ const StoreOrderDetailContent: React.FC<Props> = ({ route }) => {
           />
         </SectionCard>
 
-        <SectionCard title="Shipping and notes" icon="cube-outline" tint={rowTint.grey}>
+        <SectionCard title="Shipping and notes" icon="cube-outline">
           {order.shipment ? (
             <View style={styles.row}>
-              <IonIcon name="cube-outline" size="lg" color={service.accentDeep} />
+              <IonIcon name="cube-outline" size="lg" color={colors.inkMuted} />
               <View style={styles.grow}>
                 <AppText variant="small" tone="muted">
                   {order.shipment.courierName}
@@ -305,7 +304,7 @@ const StoreOrderDetailContent: React.FC<Props> = ({ route }) => {
           ) : null}
         </SectionCard>
 
-        <SectionCard title="Journey" icon="git-commit-outline" tint={rowTint.blue}>
+        <SectionCard title="Journey" icon="git-commit-outline">
           <OrderTimeline order={order} />
         </SectionCard>
       </>

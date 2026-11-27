@@ -16,7 +16,7 @@ export const MaintenanceGate: React.FC = () => {
   return (
     <ScreenShell scroll={false}>
       <EmptyState
-        icon="tool"
+        icon="construct-outline"
         title="We'll be right back"
         body={maintenance.message || MAINTENANCE_FALLBACK}
         action={{

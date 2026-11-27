@@ -174,9 +174,9 @@ const BoxContent: React.FC<Props> = ({ route }) => {
       <AppText variant="body">{b.contentsHint}</AppText>
       <StatGrid
         stats={[
-          { key: 'reserved', icon: 'bookmark-outline', tint: 'blue', value: b.reserved, label: 'Reserved', hint: `of ${b.quantity}` },
-          { key: 'collected', icon: 'checkmark-done-outline', tint: 'violet', value: b.collected, label: 'Collected' },
-          { key: 'left', icon: 'gift-outline', tint: 'rose', value: b.left, label: 'Left' },
+          { key: 'reserved', icon: 'bookmark-outline', value: b.reserved, label: 'Reserved', hint: `of ${b.quantity}` },
+          { key: 'collected', icon: 'checkmark-done-outline', value: b.collected, label: 'Collected' },
+          { key: 'left', icon: 'gift-outline', value: b.left, label: 'Left' },
         ]}
       />
 
@@ -211,7 +211,7 @@ const BoxContent: React.FC<Props> = ({ route }) => {
       ) : null}
 
       <AppText variant="sectionTitle">{toCollect.length ? `To collect · ${toCollect.length}` : 'Reservations'}</AppText>
-      {!b.reservations.length ? <EmptyState icon="bookmark" title="No reservations yet" body="Customers nearby see it on Food Court’s home. Reservations show here, each with a pickup code." /> : null}
+      {!b.reservations.length ? <EmptyState icon="bookmark-outline" title="No reservations yet" body="Customers nearby see it on Food Court’s home. Reservations show here, each with a pickup code." /> : null}
       {toCollect.map(ticket)}
       {done.length ? <Divider /> : null}
       {done.map(ticket)}

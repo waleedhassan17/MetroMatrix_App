@@ -41,16 +41,16 @@ const HealthOverview: React.FC<Props> = ({ navigation }) => {
   );
 
   const stats: AdminStat[] = [
-    { key: 'doctors', icon: 'medkit-outline', tint: 'blue', value: o?.listedDoctors ?? null, label: 'Listed doctors', hint: 'Patients can book' },
-    { key: 'bookings', icon: 'calendar-outline', tint: 'accent', value: o?.bookingsToday ?? null, label: 'Bookings today', hint: 'Since midnight', onPress: () => navigation.navigate('AppointmentLookup') },
-    { key: 'cancelled', icon: 'close-circle-outline', tint: 'grey', value: o?.cancelledToday ?? null, label: 'Cancelled today', hint: 'By patients or doctors' },
-    { key: 'noshows', icon: 'person-remove-outline', tint: 'amber', value: o?.noShowsToday ?? null, label: 'No-shows today', hint: 'Marked by the doctor' },
+    { key: 'doctors', icon: 'medkit-outline', value: o?.listedDoctors ?? null, label: 'Listed doctors', hint: 'Patients can book' },
+    { key: 'bookings', icon: 'calendar-outline', value: o?.bookingsToday ?? null, label: 'Bookings today', hint: 'Since midnight', onPress: () => navigation.navigate('AppointmentLookup') },
+    { key: 'cancelled', icon: 'close-circle-outline', value: o?.cancelledToday ?? null, label: 'Cancelled today', hint: 'By patients or doctors' },
+    { key: 'noshows', icon: 'person-remove-outline', value: o?.noShowsToday ?? null, label: 'No-shows today', hint: 'Marked by the doctor' },
   ];
   const top = o?.bySpecialty.slice(0, 8) ?? [];
   const most = Math.max(1, ...top.map(x => x.count));
 
   return (
-    <ScreenShell eyebrow="Admin" title="Health" subtitle="Doctors, bookings and what patients say" refreshing={s.status === 'loading' && !!o} onRefresh={() => void dispatch(loadHealthOverviewAsync())}>
+    <ScreenShell title="Health" subtitle="Doctors, bookings and what patients say" refreshing={s.status === 'loading' && !!o} onRefresh={() => void dispatch(loadHealthOverviewAsync())}>
       {s.error.message ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadHealthOverviewAsync()) }} /> : null}
       <StatGrid stats={stats} />
       {o?.pendingVerification ? (
@@ -62,7 +62,6 @@ const HealthOverview: React.FC<Props> = ({ navigation }) => {
               title: `${plural(o.pendingVerification, 'doctor')} to check`,
               subtitle: 'The PMDC number, before approval',
               icon: 'shield-checkmark-outline',
-              tint: 'amber',
               onPress: () => navigation.navigate('DoctorVerification'),
             },
           ]}
@@ -76,13 +75,12 @@ const HealthOverview: React.FC<Props> = ({ navigation }) => {
             title: 'Doctor verification',
             subtitle: o?.pendingVerification ? `${o.pendingVerification} waiting for a PMDC check` : 'Nothing waiting',
             icon: 'shield-checkmark-outline',
-            tint: 'blue',
             onPress: () => navigation.navigate('DoctorVerification'),
           },
-          { key: 'reviews', title: 'Reviews', subtitle: 'Hide a review that breaks the rules', icon: 'chatbox-ellipses-outline', tint: 'rose', onPress: () => navigation.navigate('ReviewModeration') },
-          { key: 'specialties', title: 'Specialties', subtitle: 'What patients browse, and in what order', icon: 'grid-outline', tint: 'violet', onPress: () => navigation.navigate('Specialties') },
-          { key: 'conditions', title: 'Conditions', subtitle: 'Search words and the specialty each leads to', icon: 'list-outline', tint: 'amber', onPress: () => navigation.navigate('Conditions') },
-          { key: 'lookup', title: 'Find an appointment', subtitle: 'By its HC- code', icon: 'search-outline', tint: 'grey', onPress: () => navigation.navigate('AppointmentLookup') },
+          { key: 'reviews', title: 'Reviews', subtitle: 'Hide a review that breaks the rules', icon: 'chatbox-ellipses-outline', onPress: () => navigation.navigate('ReviewModeration') },
+          { key: 'specialties', title: 'Specialties', subtitle: 'What patients browse, and in what order', icon: 'grid-outline', onPress: () => navigation.navigate('Specialties') },
+          { key: 'conditions', title: 'Conditions', subtitle: 'Search words and the specialty each leads to', icon: 'list-outline', onPress: () => navigation.navigate('Conditions') },
+          { key: 'lookup', title: 'Find an appointment', subtitle: 'By its HC- code', icon: 'search-outline', onPress: () => navigation.navigate('AppointmentLookup') },
         ]}
       />
       {top.length ? (

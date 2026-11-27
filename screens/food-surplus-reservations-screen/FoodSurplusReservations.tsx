@@ -45,7 +45,7 @@ const FoodSurplusReservationsContent: React.FC<Props> = ({ navigation }) => {
     <RowCard
       key={r.code}
       title={r.vendor.name}
-      mark={{ icon: 'gift-outline', tint: 'green' }}
+      mark={{ icon: 'gift-outline' }}
       lines={[`${r.code} · ${r.box.title}`, `Pick up ${r.pickupLabel}`]}
       pill={reservationHeadline(r)}
       amount={formatPKR(r.total)}
@@ -62,7 +62,7 @@ const FoodSurplusReservationsContent: React.FC<Props> = ({ navigation }) => {
       {s.status === 'loading' && !s.items.length ? (
         <RowCardsSkeleton count={3} />
       ) : !s.items.length && s.status === 'succeeded' ? (
-        <EmptyState ion="gift-outline" title="No reservations yet" body="Kitchens nearby put tonight’s food up as Bachat Boxes at a lower price. Reserve one from Food Court’s home." action={{ label: 'See Bachat Boxes', onPress: () => navigation.navigate('FoodSurplusList') }} />
+        <EmptyState icon="gift-outline" title="No reservations yet" body="Kitchens nearby put tonight’s food up as Bachat Boxes at a lower price. Reserve one from Food Court’s home." action={{ label: 'See Bachat Boxes', onPress: () => navigation.navigate('FoodSurplusList') }} />
       ) : (
         <View style={styles.list}>
           {toCollect.length ? <SectionHead title="To collect" /> : null}

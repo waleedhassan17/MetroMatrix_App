@@ -62,13 +62,13 @@ const RiderProfile: React.FC = () => {
         {home ? (
           // Details only the vendor changes: rows without a chevron.
           <Card padded="horizontal">
-            <ListRow title={home.rider.username ?? 'No username'} subtitle="Username — you sign in with it" leftIcon="person-outline" tint="grey" chevron={false} />
+            <ListRow title={home.rider.username ?? 'No username'} subtitle="Username — you sign in with it" leftIcon="person-outline" chevron={false} />
             <Divider />
-            <ListRow title={riderVehicleLabel(home.rider.vehicle)} subtitle="Vehicle" leftIcon="bicycle-outline" tint="teal" chevron={false} />
+            <ListRow title={riderVehicleLabel(home.rider.vehicle)} subtitle="Vehicle" leftIcon="bicycle-outline" chevron={false} />
             {home.rider.phone ? (
               <>
                 <Divider />
-                <ListRow title={formatPkPhoneForDisplay(home.rider.phone)} subtitle="Phone" leftIcon="call-outline" tint="green" chevron={false} />
+                <ListRow title={formatPkPhoneForDisplay(home.rider.phone)} subtitle="Phone" leftIcon="call-outline" chevron={false} />
               </>
             ) : null}
           </Card>
@@ -81,8 +81,8 @@ const RiderProfile: React.FC = () => {
         <ToolSection
           title="Account"
           tools={[
-            { key: 'password', title: 'Change password', icon: 'key-outline', tint: 'amber', onPress: () => navigation.navigate('ChangePassword') },
-            { key: 'notifications', title: 'Notifications', icon: 'notifications-outline', tint: 'violet', onPress: () => navigation.navigate('Notifications') },
+            { key: 'password', title: 'Change password', icon: 'key-outline', onPress: () => navigation.navigate('ChangePassword') },
+            { key: 'notifications', title: 'Notifications', icon: 'notifications-outline', onPress: () => navigation.navigate('Notifications') },
           ]}
         />
         <Card padded="horizontal">
@@ -90,7 +90,7 @@ const RiderProfile: React.FC = () => {
             title="Sign out"
             subtitle={active.length ? `Finish or hand back your ${active.length === 1 ? 'delivery' : `${active.length} deliveries`} first.` : undefined}
             leftIcon="log-out-outline"
-            tint="red"
+            destructive
             onPress={active.length ? () => navigation.navigate('RiderTabs', { screen: 'DeliveriesTab' }) : confirmSignOut}
             chevron={false}
           />

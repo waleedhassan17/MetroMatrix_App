@@ -109,7 +109,7 @@ const StoreReviewsContent: React.FC<Props> = () => {
           ) : list.error ? (
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
-            <EmptyState ion="chatbubbles-outline" title="No reviews here" body="Customers review items after delivery." />
+            <EmptyState icon="chatbubbles-outline" title="No reviews here" body="Customers review items after delivery." />
           )
         }
       />

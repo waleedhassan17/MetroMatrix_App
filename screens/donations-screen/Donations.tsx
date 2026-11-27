@@ -67,8 +67,8 @@ const DonationsContent: React.FC<Props> = () => {
       {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: load }} /> : null}
       <StatGrid
         stats={[
-          { key: 'total', icon: 'heart-outline', tint: 'rose', value: s.data ? total : null, label: 'Meals rescued', hint: 'Bachat Box pickups and donations' },
-          { key: 'week', icon: 'calendar-outline', tint: 'blue', value: s.data ? s.data.mealsRescued.week : null, label: 'This week' },
+          { key: 'total', icon: 'heart-outline', value: s.data ? total : null, label: 'Meals rescued', hint: 'Bachat Box pickups and donations' },
+          { key: 'week', icon: 'calendar-outline', value: s.data ? s.data.mealsRescued.week : null, label: 'This week' },
         ]}
       />
       {total > 0 ? (
@@ -99,9 +99,9 @@ const DonationsContent: React.FC<Props> = () => {
       {!s.data ? (
         s.status === 'failed' ? null : <RowCardsSkeleton count={2} />
       ) : !s.data.items.length ? (
-        <EmptyState ion="heart-outline" title="No donations yet" body="Food you give away to a shelter, a mosque or a langar counts here." />
+        <EmptyState icon="heart-outline" title="No donations yet" body="Food you give away to a shelter, a mosque or a langar counts here." />
       ) : (
-        s.data.items.map(d => <RowCard key={d.id} title={d.to} mark={{ icon: 'heart-outline', tint: 'rose' }} lines={[formatWhen(d.at, TZ), d.note]} amount={`${d.meals} ${d.meals === 1 ? 'meal' : 'meals'}`} />)
+        s.data.items.map(d => <RowCard key={d.id} title={d.to} mark={{ icon: 'heart-outline' }} lines={[formatWhen(d.at, TZ), d.note]} amount={`${d.meals} ${d.meals === 1 ? 'meal' : 'meals'}`} />)
       )}
     </ScreenShell>
   );

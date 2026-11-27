@@ -55,7 +55,6 @@ const FoodOverview: React.FC<Props> = ({ navigation }) => {
     {
       key: 'vendors',
       icon: 'storefront-outline',
-      tint: 'violet',
       value: o?.activeVendors.total ?? null,
       label: 'Live vendors',
       hint: o
@@ -66,7 +65,6 @@ const FoodOverview: React.FC<Props> = ({ navigation }) => {
     {
       key: 'orders',
       icon: 'receipt-outline',
-      tint: 'blue',
       value: o?.ordersToday ?? null,
       label: 'Orders today',
       hint: 'Since midnight',
@@ -75,7 +73,6 @@ const FoodOverview: React.FC<Props> = ({ navigation }) => {
     {
       key: 'active',
       icon: 'bicycle-outline',
-      tint: 'accent',
       value: o?.activeOrders ?? null,
       label: 'On their way now',
       hint: 'Accepted, cooking or out',
@@ -83,7 +80,6 @@ const FoodOverview: React.FC<Props> = ({ navigation }) => {
     {
       key: 'accepted',
       icon: 'checkmark-done-outline',
-      tint: 'amber',
       value: o ? percentLabel(o.acceptanceRateToday) : null,
       label: 'Accepted today',
       hint: !o
@@ -102,7 +98,6 @@ const FoodOverview: React.FC<Props> = ({ navigation }) => {
           title: `${plural(o.waiting.foodSafetyChecks, 'home kitchen')} to check`,
           subtitle: 'Food safety, before it can go live',
           icon: 'shield-checkmark-outline' as const,
-          tint: 'amber' as const,
           onPress: () =>
             navigation.navigate('AdminFoodVendors', { type: 'home_kitchen', status: 'draft' }),
         }
@@ -113,7 +108,6 @@ const FoodOverview: React.FC<Props> = ({ navigation }) => {
           title: `${plural(o.waiting.approvals, 'application')} to approve`,
           subtitle: 'Food businesses, in the Approvals tab',
           icon: 'hourglass-outline' as const,
-          tint: 'blue' as const,
           onPress: () => (navigation as Nav).getParent()?.navigate('ApprovalsTab'),
         }
       : null,
@@ -123,7 +117,6 @@ const FoodOverview: React.FC<Props> = ({ navigation }) => {
           title: `${plural(kw.hygiene, 'hygiene check')} waiting`,
           subtitle: 'Kitchens asking MetroMatrix to verify their checklist',
           icon: 'shield-half-outline' as const,
-          tint: 'violet' as const,
           onPress: () => navigation.navigate('AdminKitchenHygiene', { status: 'pending' }),
         }
       : null,
@@ -133,7 +126,6 @@ const FoodOverview: React.FC<Props> = ({ navigation }) => {
           title: `${plural(kw.signatures, 'new signature dish', 'new signature dishes')} to look at`,
           subtitle: 'Keep the label, or take it off with a note',
           icon: 'ribbon-outline' as const,
-          tint: 'rose' as const,
           onPress: () => navigation.navigate('AdminKitchenSignatures'),
         }
       : null,
@@ -142,7 +134,6 @@ const FoodOverview: React.FC<Props> = ({ navigation }) => {
 
   return (
     <ScreenShell
-      eyebrow="Admin"
       title="Food Court"
       subtitle={o ? dayjs(o.date).format('dddd, D MMMM') : 'Today on Food Court'}
       refreshing={s.status === 'loading' && !!o}
@@ -163,7 +154,6 @@ const FoodOverview: React.FC<Props> = ({ navigation }) => {
             title: 'Vendors',
             subtitle: 'Feature, suspend, food-safety checks, plans',
             icon: 'storefront-outline',
-            tint: 'violet',
             onPress: () => navigation.navigate('AdminFoodVendors'),
           },
           {
@@ -171,7 +161,6 @@ const FoodOverview: React.FC<Props> = ({ navigation }) => {
             title: 'Find an order',
             subtitle: 'By its FC- code, for a dispute',
             icon: 'search-outline',
-            tint: 'blue',
             onPress: () => navigation.navigate('AdminFoodOrders'),
           },
           {
@@ -179,7 +168,6 @@ const FoodOverview: React.FC<Props> = ({ navigation }) => {
             title: 'Reviews',
             subtitle: 'Hide a review that breaks the rules',
             icon: 'chatbox-ellipses-outline',
-            tint: 'rose',
             onPress: () => navigation.navigate('AdminFoodReviews'),
           },
           {
@@ -187,7 +175,6 @@ const FoodOverview: React.FC<Props> = ({ navigation }) => {
             title: 'Cuisines',
             subtitle: 'What customers browse, and in what order',
             icon: 'restaurant-outline',
-            tint: 'amber',
             onPress: () => navigation.navigate('AdminFoodCuisines'),
           },
           {
@@ -195,7 +182,6 @@ const FoodOverview: React.FC<Props> = ({ navigation }) => {
             title: 'Home banners',
             subtitle: 'What the Food Court home leads with',
             icon: 'images-outline',
-            tint: 'grey',
             onPress: () => navigation.navigate('AdminFoodBanners'),
           },
         ]}
@@ -208,7 +194,6 @@ const FoodOverview: React.FC<Props> = ({ navigation }) => {
             title: 'The assistant',
             subtitle: 'Voice and drafts: use, failures, limits',
             icon: 'sparkles-outline',
-            tint: 'violet',
             onPress: () => navigation.navigate('AdminKitchenAi'),
           },
           {
@@ -216,7 +201,6 @@ const FoodOverview: React.FC<Props> = ({ navigation }) => {
             title: 'City prices',
             subtitle: 'What Price watch compares purchases with',
             icon: 'pricetags-outline',
-            tint: 'amber',
             onPress: () => navigation.navigate('AdminKitchenPrices'),
           },
           {
@@ -224,7 +208,6 @@ const FoodOverview: React.FC<Props> = ({ navigation }) => {
             title: 'Nutrition foods',
             subtitle: 'Where dishes’ estimated calories come from',
             icon: 'nutrition-outline',
-            tint: 'rose',
             onPress: () => navigation.navigate('AdminKitchenNutrition'),
           },
           {
@@ -232,7 +215,6 @@ const FoodOverview: React.FC<Props> = ({ navigation }) => {
             title: 'Words voice understands',
             subtitle: 'Roman Urdu, Urdu and English names',
             icon: 'mic-outline',
-            tint: 'blue',
             onPress: () => navigation.navigate('AdminKitchenAliases'),
           },
           {
@@ -240,7 +222,6 @@ const FoodOverview: React.FC<Props> = ({ navigation }) => {
             title: 'Calendar',
             subtitle: 'Ramadan and Eid dates kitchens follow',
             icon: 'moon-outline',
-            tint: 'grey',
             onPress: () => navigation.navigate('AdminKitchenCalendar'),
           },
           {
@@ -248,7 +229,6 @@ const FoodOverview: React.FC<Props> = ({ navigation }) => {
             title: 'Hygiene checks',
             subtitle: 'Verify a kitchen, or send it back',
             icon: 'shield-half-outline',
-            tint: 'violet',
             value: kw?.hygiene ? `${kw.hygiene} waiting` : undefined,
             onPress: () => navigation.navigate('AdminKitchenHygiene'),
           },
@@ -257,7 +237,6 @@ const FoodOverview: React.FC<Props> = ({ navigation }) => {
             title: 'Signature dishes',
             subtitle: 'What kitchens say they’re known for',
             icon: 'ribbon-outline',
-            tint: 'rose',
             value: kw?.signatures ? `${kw.signatures} new` : undefined,
             onPress: () => navigation.navigate('AdminKitchenSignatures'),
           },
@@ -266,7 +245,6 @@ const FoodOverview: React.FC<Props> = ({ navigation }) => {
             title: 'Demand across the city',
             subtitle: 'Searches nothing open could answer',
             icon: 'map-outline',
-            tint: 'blue',
             onPress: () => navigation.navigate('AdminKitchenDemand'),
           },
           {
@@ -274,7 +252,6 @@ const FoodOverview: React.FC<Props> = ({ navigation }) => {
             title: 'Find a tiffin or catering',
             subtitle: 'By its TF- or CT- code, for a dispute',
             icon: 'search-outline',
-            tint: 'amber',
             onPress: () => navigation.navigate('AdminKitchenLookup'),
           },
         ]}

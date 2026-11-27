@@ -95,7 +95,7 @@ export const CsvImport = ({
             <AppText variant="bodyStrong">{importSummary(result)}</AppText>
             {result.errors.length ? (
               <View>
-                <AppText variant="overline" tone="muted">
+                <AppText variant="small" tone="muted">
                   Problems
                 </AppText>
                 {result.errors.map((e, n) => (

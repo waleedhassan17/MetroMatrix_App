@@ -6,15 +6,15 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { ToastConfig, ToastConfigParams } from 'react-native-toast-message';
-import { useStyles, useTheme, type Theme } from '../theme';
+import { useStyles, type Theme } from '../theme';
 import { AppText } from './AppText';
-import { Icon, type IconName } from './Icon';
+import { IconWell } from './IconWell';
+import { NOTICE_LOOK } from './InlineNotice';
 
 type Tone = 'success' | 'error' | 'info';
 
-const makeStyles = ({ colors, space, radius, elevation, gutter, size }: Theme) =>
+const makeStyles = ({ colors, space, radius, elevation, gutter }: Theme) =>
   StyleSheet.create({
-    well: { width: size.subTypeTile, height: size.subTypeTile, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
     root: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -31,17 +31,10 @@ const makeStyles = ({ colors, space, radius, elevation, gutter, size }: Theme) =
 
 const ToastCard: React.FC<ToastConfigParams<unknown> & { tone: Tone }> = ({ text1, text2, tone }) => {
   const styles = useStyles(makeStyles);
-  const { colors, service } = useTheme();
-  const look: Record<Tone, { icon: IconName; color: string; bg: string }> = {
-    success: { icon: 'check-circle', color: colors.success, bg: colors.successSoft },
-    error: { icon: 'alert-circle', color: colors.danger, bg: colors.dangerSoft },
-    info: { icon: 'info', color: service.accentDeep, bg: service.accentSoft },
-  };
+  const look = NOTICE_LOOK[tone];
   return (
     <View style={styles.root} accessibilityRole="alert" accessibilityLiveRegion="polite">
-      <View style={[styles.well, { backgroundColor: look[tone].bg }]}>
-        <Icon name={look[tone].icon} size="md" color={look[tone].color} />
-      </View>
+      <IconWell icon={look.icon} tone={look.tone} size="sm" />
       <View style={styles.text}>
         {text1 ? <AppText variant="bodyStrong">{text1}</AppText> : null}
         {text2 ? (

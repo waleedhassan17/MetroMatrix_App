@@ -99,7 +99,7 @@ const FoodVendorsContent: React.FC<Props> = ({ route, navigation }) => {
         )}
         ListEmptyComponent={
           !point ? (
-            <EmptyState ion="location-outline" title="Choose your address" body="Go back to the Food Court and pick an address first." />
+            <EmptyState icon="location-outline" title="Choose your address" body="Go back to the Food Court and pick an address first." />
           ) : list.isLoading ? (
             <VendorCardSkeleton />
           ) : list.error ? (
@@ -107,7 +107,7 @@ const FoodVendorsContent: React.FC<Props> = ({ route, navigation }) => {
               <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
             </View>
           ) : (
-            <EmptyState ion="search-outline" title="Nothing matches" body="Try fewer filters, or another sort." />
+            <EmptyState icon="search-outline" title="Nothing matches" body="Try fewer filters, or another sort." />
           )
         }
         ListFooterComponent={list.isLoadingMore ? <VendorCardSkeleton count={1} /> : null}

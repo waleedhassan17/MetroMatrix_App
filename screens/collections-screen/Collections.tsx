@@ -74,7 +74,7 @@ const CollectionsContent: React.FC<Props> = () => {
       {s.status === 'loading' && !list.length ? (
         <RowCardsSkeleton count={3} />
       ) : !list.length ? (
-        <EmptyState ion="albums-outline" title="No collections yet" body="Group products the way you'd arrange a shop window: new arrivals, Eid edit, basics." />
+        <EmptyState icon="albums-outline" title="No collections yet" body="Group products the way you'd arrange a shop window: new arrivals, Eid edit, basics." />
       ) : (
         <Card padded="horizontal">
           {list.map((c, i) => (

@@ -62,7 +62,7 @@ const TIPS: { icon: IonName; text: string }[] = [
 const EmailVerification: React.FC = () => {
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { service } = useTheme();
+  const { colors, service } = useTheme();
   const user = useAppSelector(selectUser);
   const s = useAppSelector(selectEmailVerification);
   const secondsLeft = useCountdown(s.resendAvailableAt);
@@ -92,8 +92,8 @@ const EmailVerification: React.FC = () => {
 
   return (
     <AuthScreen>
-      <View style={[styles.hero, { backgroundColor: service.accentSoft }]}>
-        <IonIcon name="mail-unread-outline" size="xl" color={service.accent} />
+      <View style={[styles.hero, { backgroundColor: colors.surfaceSunk }]}>
+        <IonIcon name="mail-unread-outline" size="xl" color={colors.inkMuted} />
       </View>
       <AuthHeader hideLogo title="Check your inbox" />
 
@@ -156,7 +156,7 @@ const EmailVerification: React.FC = () => {
           <AppText variant="title">Didn&apos;t get the email?</AppText>
           {TIPS.map(tip => (
             <View key={tip.text} style={styles.tip}>
-              <IonIcon name={tip.icon} size="md" color={service.accent} />
+              <IonIcon name={tip.icon} size="md" color={colors.inkMuted} />
               <AppText variant="body" tone="muted" style={styles.grow}>
                 {tip.text}
               </AppText>

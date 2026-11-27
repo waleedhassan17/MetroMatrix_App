@@ -193,7 +193,7 @@ const AdminFoodReviews: React.FC<Props> = ({ route }) => {
             />
           ) : (
             <EmptyState
-              icon="message-square"
+              icon="chatbox-outline"
               title={s.hidden ? 'Nothing hidden' : 'No reviews here'}
               body="Customers' reviews of vendors show here."
             />

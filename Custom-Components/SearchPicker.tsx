@@ -10,7 +10,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useStyles, useTheme, type Theme } from '../theme';
 import { AppText } from './AppText';
 import { PickerOptionRow, type PickerOption } from './BottomSheetPicker';
-import { Icon } from './Icon';
+import { IonIcon } from './Icon';
 import { ModalSheet } from './ModalSheet';
 import { TextField } from './TextField';
 
@@ -113,7 +113,7 @@ export const SearchPicker: React.FC<SearchPickerProps> = ({
             accessibilityRole="button"
             accessibilityLabel={`Use ${typed}`}
             style={styles.use}>
-            <Icon name="plus-circle" size="md" color={service.accentDeep} />
+            <IonIcon name="add-circle-outline" size="md" color={service.accentDeep} />
             <AppText variant="title" tone="accentDeep" style={styles.useText}>
               {`Use “${typed}”`}
             </AppText>

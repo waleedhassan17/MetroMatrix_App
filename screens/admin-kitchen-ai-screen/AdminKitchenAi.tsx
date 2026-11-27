@@ -48,16 +48,15 @@ const AdminKitchenAi: React.FC<Props> = () => {
   };
 
   const stats: AdminStat[] = [
-    { key: 'actions', icon: 'sparkles-outline', tint: 'violet', value: r ? n(r.totals.actions) : null, label: 'Actions', hint: 'Voice and drafts' },
+    { key: 'actions', icon: 'sparkles-outline', value: r ? n(r.totals.actions) : null, label: 'Actions', hint: 'Voice and drafts' },
     {
       key: 'failed',
       icon: 'alert-circle-outline',
-      tint: 'rose',
       value: r ? `${Math.round(r.totals.failureRate * 100)}%` : null,
       label: 'Failed',
       hint: r ? `${n(r.totals.failures)} of ${n(r.totals.actions)}` : null,
     },
-    { key: 'cached', icon: 'flash-outline', tint: 'blue', value: r ? n(r.totals.cached) : null, label: 'Answered from cache', hint: 'No model call' },
+    { key: 'cached', icon: 'flash-outline', value: r ? n(r.totals.cached) : null, label: 'Answered from cache', hint: 'No model call' },
   ];
 
   return (
@@ -104,7 +103,7 @@ const AdminKitchenAi: React.FC<Props> = () => {
               <RowCard
                 key={b.businessId}
                 title={b.name}
-                mark={{ icon: 'storefront-outline', tint: 'violet' }}
+                mark={{ icon: 'storefront-outline' }}
                 lines={[`${n(b.actions)} in these ${r.days} days · ${failedLabel(b.failures, b.actions)}`]}
                 accessibilityLabel={`${b.name}, ${n(b.actions)} actions`}
               />

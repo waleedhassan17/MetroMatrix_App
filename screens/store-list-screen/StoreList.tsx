@@ -69,9 +69,9 @@ const StoreListContent: React.FC<Props> = () => {
           ) : list.error ? (
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : q ? (
-            <EmptyState ion="search-outline" title={`No stores match "${q}"`} body="Check the spelling, or try what they sell." />
+            <EmptyState icon="search-outline" title={`No stores match "${q}"`} body="Check the spelling, or try what they sell." />
           ) : (
-            <EmptyState ion="storefront-outline" title="No stores yet" body="Stores appear here as they open." />
+            <EmptyState icon="storefront-outline" title="No stores yet" body="Stores appear here as they open." />
           )
         }
         ListFooterComponent={

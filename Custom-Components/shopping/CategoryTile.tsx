@@ -1,7 +1,8 @@
-// CategoryTile — a category's glyph in a soft accent well, its name below.
+// CategoryTile — a category's glyph in a neutral well, its name below; the
+// selected one in the accent (colour means selection, never decoration).
 // `photo` is the Shopping home's "Shop by category" tile (the FYP's): an
 // 84 × 100 photo, rounded, with the name under it; with no photo the glyph
-// sits on the soft accent in the same shape.
+// sits on the sunk grey in the same shape.
 
 import React from 'react';
 import { Pressable, StyleSheet, View, type ImageSourcePropType } from 'react-native';
@@ -62,7 +63,7 @@ export const CategoryTile: React.FC<{
   photo?: ImageSourcePropType | null;
 }> = ({ name, icon, onPress, selected, variant = 'glyph', photo }) => {
   const styles = useStyles(makeStyles);
-  const { service, opacity, motion } = useTheme();
+  const { colors, service, opacity, motion } = useTheme();
   if (variant === 'photo') {
     return (
       <Pressable
@@ -70,11 +71,11 @@ export const CategoryTile: React.FC<{
         accessibilityRole="button"
         accessibilityLabel={name}
         style={({ pressed }) => [styles.photoRoot, pressed && { opacity: opacity.pressed }]}>
-        <View style={[styles.photo, !photo && { backgroundColor: service.accentSoft }]}>
+        <View style={styles.photo}>
           {photo ? (
             <Image source={photo} style={styles.image} contentFit="cover" transition={motion.imageFade} />
           ) : (
-            <IonIcon name={categoryIcon(icon)} size="xl" color={service.accentDeep} />
+            <IonIcon name={categoryIcon(icon)} size="xl" color={colors.inkMuted} />
           )}
         </View>
         <AppText variant="small" align="center" numberOfLines={2}>
@@ -90,8 +91,8 @@ export const CategoryTile: React.FC<{
       accessibilityLabel={name}
       aria-selected={!!selected}
       style={({ pressed }) => [styles.root, pressed && { opacity: opacity.pressed }]}>
-      <View style={[styles.well, { backgroundColor: selected ? service.accent : service.accentSoft }]}>
-        <IonIcon name={categoryIcon(icon)} size="lg" color={selected ? service.onAccent : service.accentDeep} />
+      <View style={[styles.well, { backgroundColor: selected ? service.accent : colors.surfaceSunk }]}>
+        <IonIcon name={categoryIcon(icon)} size="lg" color={selected ? service.onAccent : colors.inkMuted} />
       </View>
       <AppText variant="caption" align="center" numberOfLines={2}>
         {name}

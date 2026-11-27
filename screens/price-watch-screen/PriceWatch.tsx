@@ -75,7 +75,7 @@ const PriceWatchContent: React.FC<Props> = ({ navigation }) => {
           ) : s.status === 'failed' ? (
             <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadPriceWatchAsync()) }} />
           ) : (
-            <EmptyState ion="trending-down-outline" title="Your prices look fair" body="Nothing you buy costs you 10% more than the city’s price this week." />
+            <EmptyState icon="trending-down-outline" title="Your prices look fair" body="Nothing you buy costs you 10% more than the city’s price this week." />
           )
         }
       />

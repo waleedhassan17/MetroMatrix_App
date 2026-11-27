@@ -86,9 +86,9 @@ const DoctorPatientsContent: React.FC<Props> = ({ navigation }) => {
           ) : list.error ? (
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : q ? (
-            <EmptyState ion="search-outline" title={`No patient matches "${q}"`} body="Try their name, or the phone number they booked with." />
+            <EmptyState icon="search-outline" title={`No patient matches "${q}"`} body="Try their name, or the phone number they booked with." />
           ) : (
-            <EmptyState ion="people-outline" title="No patients yet" body="Patients appear here after their first booking with you." />
+            <EmptyState icon="people-outline" title="No patients yet" body="Patients appear here after their first booking with you." />
           )
         }
       />

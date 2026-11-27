@@ -32,7 +32,7 @@ const PromotionCard: React.FC<{ p: FoodPromotion; onPress: () => void }> = ({ p,
   return (
     <RowCard
       title={p.title}
-      mark={{ icon: 'pricetag-outline', tint: 'amber' }}
+      mark={{ icon: 'pricetag-outline' }}
       lines={[p.label || dealLabel(p), [p.code ? `Code ${p.code}` : 'Applies by itself', whenLine(p)].join(' · ')]}
       pill={{ label: state.label, tone: state.tone }}
       foot={{
@@ -90,7 +90,7 @@ const VendorPromotionsContent: React.FC<Props> = ({ navigation }) => {
           ) : s.status === 'failed' ? (
             <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadPromotionsAsync()) }} />
           ) : (
-            <EmptyState ion="pricetag-outline" title="No deals yet" body="A deal shows on your card and menu, and brings customers back. Start with free delivery or a share off." />
+            <EmptyState icon="pricetag-outline" title="No deals yet" body="A deal shows on your card and menu, and brings customers back. Start with free delivery or a share off." />
           )
         }
       />

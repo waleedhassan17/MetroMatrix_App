@@ -163,7 +163,7 @@ const ProductListContent: React.FC<Props> = ({ route }) => {
         header={header}
         showStore={!storeId}
         empty={{
-          ion: 'search-outline',
+          icon: 'search-outline',
           title: count ? 'Nothing matches these filters' : q ? `No results for "${q}"` : 'Nothing here yet',
           body: count ? 'Loosen a filter to see more.' : q ? 'Check the spelling, or try a broader word.' : 'Check back soon.',
           action: count ? { label: 'Clear filters', onPress: () => dispatch(setFilters({ key, filters: { ...DEFAULT_FILTERS, sort: filters.sort } })) } : undefined,

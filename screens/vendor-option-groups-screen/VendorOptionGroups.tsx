@@ -52,7 +52,7 @@ const VendorOptionGroups: React.FC = () => {
         {s.status === 'loading' && !s.groups.length ? (
           <RowCardsSkeleton count={4} />
         ) : s.status === 'failed' && !s.groups.length ? null : !s.groups.length ? (
-          <EmptyState ion="options-outline" title="No add-on groups yet" body="Spice level, extra toppings, a drink with the meal: customers pick from them on the dish." />
+          <EmptyState icon="options-outline" title="No add-on groups yet" body="Spice level, extra toppings, a drink with the meal: customers pick from them on the dish." />
         ) : (
           s.groups.map(g => (
             <Card key={g.id} style={styles.card}>

@@ -385,10 +385,10 @@ const ProductFormContent: React.FC<Props> = ({ navigation, route }) => {
         ) : null}
         {f.hasOptions && f.variants.length ? (
           <View style={styles.tableHead}>
-            <AppText variant="overline" tone="muted" style={styles.variantName}>
+            <AppText variant="small" tone="muted" style={styles.variantName}>
               Combination
             </AppText>
-            <AppText variant="overline" tone="muted" style={styles.stock}>
+            <AppText variant="small" tone="muted" style={styles.stock}>
               Stock
             </AppText>
             <View style={styles.moreSpace} />
@@ -500,7 +500,7 @@ const ProductFormContent: React.FC<Props> = ({ navigation, route }) => {
             <ListRow
               title="Remove this photo"
               leftIcon="trash-outline"
-              tint="red"
+              destructive
               chevron={false}
               onPress={() => {
                 dispatch(removeProductPhoto(photoAt));

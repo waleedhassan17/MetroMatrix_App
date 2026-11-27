@@ -83,7 +83,7 @@ const VendorClosuresContent: React.FC<Props> = () => {
       {s.status === 'loading' && !s.closures.length ? (
         <RowCardsSkeleton count={2} />
       ) : s.status === 'failed' && !s.closures.length ? null : !s.closures.length ? (
-        <EmptyState ion="calendar-outline" title="No closed days" body="Add the days you won’t cook — a holiday or a family event. Your weekly hours stay as they are." />
+        <EmptyState icon="calendar-outline" title="No closed days" body="Add the days you won’t cook — a holiday or a family event. Your weekly hours stay as they are." />
       ) : (
         s.closures.map(c => {
           const label = daysLabel(c.startsAt, c.endsAt);

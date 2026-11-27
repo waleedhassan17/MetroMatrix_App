@@ -20,7 +20,7 @@ import {
   Button,
   Card,
   EmptyState,
-  Icon,
+  IonIcon,
   ImageViewer,
   InlineNotice,
   ScreenShell,
@@ -169,7 +169,7 @@ const DoctorVerification: React.FC<Props> = ({ navigation, route }) => {
                 accessibilityHint="Opens the document">
                 <View style={styles.thumb}>
                   {isPdf(doc) && !pdfPage(doc.url, 1, { w: size.thumb }) ? (
-                    <Icon name="file-text" size="lg" />
+                    <IonIcon name="document-text-outline" size="lg" />
                   ) : (
                     <Image
                       source={{ uri: isPdf(doc) ? pdfPage(doc.url, 1, { w: size.thumb })! : doc.url }}
@@ -212,7 +212,7 @@ const DoctorVerification: React.FC<Props> = ({ navigation, route }) => {
             <SkeletonLines lines={6} />
           ) : (
             <EmptyState
-              icon="shield"
+              icon="shield-outline"
               title={s.filter === 'pending' ? 'No doctor waiting' : 'No doctors yet'}
               body="Doctors who apply show here with their PMDC number and documents."
             />

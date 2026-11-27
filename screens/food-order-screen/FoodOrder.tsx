@@ -97,7 +97,7 @@ const FoodOrderContent: React.FC<Props> = ({ route, navigation }) => {
   const dispatch = useAppDispatch();
   const appStore = useAppStore();
   const styles = useStyles(makeStyles);
-  const { service, size } = useTheme();
+  const { colors, service, size } = useTheme();
   const { order: o, tracking, status, error } = useAppSelector(st => selectFoodOrderEntry(st, code));
   const ui = useAppSelector(selectFoodOrderUi);
   const now = useNow(1000);
@@ -242,7 +242,7 @@ const FoodOrderContent: React.FC<Props> = ({ route, navigation }) => {
             {live && rider ? (
               <View style={styles.head}>
                 <View style={[styles.riderBadge, { backgroundColor: service.accentSoft }]}>
-                  <IonIcon name="bicycle-outline" size="lg" color={service.accentDeep} />
+                  <IonIcon name="bicycle-outline" size="lg" color={colors.inkMuted} />
                 </View>
                 <View style={styles.grow}>
                   <AppText variant="bodyStrong">{rider.name}</AppText>

@@ -29,7 +29,7 @@ export const AiMeterCard: React.FC<{ usage: AiUsage; onPress?: () => void; hint?
     <Card onPress={onPress} accessibilityLabel={onPress ? `${usageLine(usage)}. Opens the assistant.` : undefined}>
       <View style={styles.gap}>
         <View style={styles.head}>
-          <IconWell icon="sparkles-outline" tint="teal" />
+          <IconWell icon="sparkles-outline" />
           <View style={styles.grow}>
             <AppText variant="title">{usageLine(usage)}</AppText>
             <AppText variant="small" tone="muted">

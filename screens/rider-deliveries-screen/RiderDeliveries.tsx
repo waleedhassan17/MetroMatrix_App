@@ -57,7 +57,7 @@ const DeliveryCard: React.FC<{ o: RiderOrder; onPress: () => void }> = ({ o, onP
   return (
     <RowCard
       title={o.code}
-      mark={{ icon: 'bicycle-outline', tint: 'accent' }}
+      mark={{ icon: 'bicycle-outline' }}
       lines={[`${o.pickup.name} → ${[o.drop?.name, o.drop?.area].filter(Boolean).join(' · ') || 'the customer'}`, o.dropOrder ? dropOrderLabel(o.dropOrder) : null]}
       pill={pill}
       foot={{ left: o.cashToCollect ? 'Collect in cash' : 'Already paid: nothing to collect', right: o.cashToCollect ? formatPKR(o.cashToCollect) : undefined }}
@@ -150,7 +150,7 @@ const RiderDeliveriesContent: React.FC = () => {
       <View style={styles.vendor}>
         <Avatar name={v.name} uri={v.logoUrl} size="md" />
         <View style={styles.grow}>
-          <AppText variant="overline" tone="muted">
+          <AppText variant="small" tone="muted">
             You deliver for
           </AppText>
           <AppText variant="title">{v.name}</AppText>
@@ -197,7 +197,7 @@ const RiderDeliveriesContent: React.FC = () => {
           ) : (
             <RowCard
               title={item.code}
-              mark={{ icon: 'checkmark-done-outline', tint: 'grey' }}
+              mark={{ icon: 'checkmark-done-outline' }}
               lines={[`${item.pickup.name} → ${item.drop?.area ?? 'the customer'}`]}
               pill={riderDeliveryHeadline(item)}
               amount={item.codCollected ? formatPKR(item.codCollected) : undefined}
@@ -211,12 +211,12 @@ const RiderDeliveriesContent: React.FC = () => {
             <RowCardsSkeleton count={3} />
           ) : segment === 'history' && history.error ? null : segment === 'active' ? (
             <EmptyState
-              ion="cube-outline"
+              icon="cube-outline"
               title={onDuty ? 'No deliveries right now' : 'You’re off duty'}
               body={onDuty ? `When ${v?.name ?? 'your vendor'} gives you an order, it appears here.` : 'Go on duty when you’re ready to deliver.'}
             />
           ) : (
-            <EmptyState ion="time-outline" title="No past deliveries" body="Deliveries you finish show here." />
+            <EmptyState icon="time-outline" title="No past deliveries" body="Deliveries you finish show here." />
           )
         }
       />

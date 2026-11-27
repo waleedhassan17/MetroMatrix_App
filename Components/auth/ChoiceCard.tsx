@@ -1,8 +1,10 @@
 // ═══════════════════════════════════════════════════════
 // ChoiceCard — the FYP's role / provider card
 // ═══════════════════════════════════════════════════════
-// White card, radius 20, hairline border, soft lift; a 64 pt tinted icon
-// tile, an 18 pt title over a muted description, and a trailing affordance:
+// White card, radius 20, hairline border, soft lift; a 64 pt neutral icon
+// tile (slate glyph on the sunk grey: no colour per role or service, the
+// owner's 2026-11-27 rule), an 18 pt title over a muted description, and a
+// trailing affordance:
 // a chevron in a round well (navigates), a check (selected), or a
 // chevron-down (expands to sub-types, which the caller passes as children).
 
@@ -13,8 +15,8 @@ import { AppText } from '../../Custom-Components/AppText';
 import { IonIcon } from '../../Custom-Components/Icon';
 
 export interface ChoiceCardProps {
+  /** The glyph, in `colors.inkMuted`. */
   icon: React.ReactNode;
-  iconBg: string;
   title: string;
   description: string;
   onPress: () => void;
@@ -59,7 +61,6 @@ const makeStyles = ({ colors, space, size, radius, elevation }: Theme) =>
 
 export const ChoiceCard: React.FC<ChoiceCardProps> = ({
   icon,
-  iconBg,
   title,
   description,
   onPress,
@@ -81,7 +82,7 @@ export const ChoiceCard: React.FC<ChoiceCardProps> = ({
         aria-selected={selected}
         aria-expanded={trailing === 'expand' ? expanded : undefined}
         style={({ pressed }) => [styles.content, pressed && { opacity: opacity.pressed }]}>
-        <View style={[styles.tile, { backgroundColor: iconBg }]}>{icon}</View>
+        <View style={[styles.tile, { backgroundColor: colors.surfaceSunk }]}>{icon}</View>
         <View style={styles.text}>
           <AppText variant="barTitle">
             {title}

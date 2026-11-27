@@ -83,7 +83,7 @@ const StoreReturnsContent: React.FC<Props> = ({ navigation }) => {
           ) : list.error ? (
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
-            <EmptyState ion="return-down-back-outline" title={s.view === 'all' ? 'No returns yet' : 'Nothing here'} body="When a customer asks to return something, it shows here." />
+            <EmptyState icon="return-down-back-outline" title={s.view === 'all' ? 'No returns yet' : 'Nothing here'} body="When a customer asks to return something, it shows here." />
           )
         }
       />

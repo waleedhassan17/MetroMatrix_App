@@ -140,7 +140,7 @@ const TimeOffContent: React.FC<Props> = ({ route }) => {
           ))}
         </Card>
       ) : (
-        <EmptyState icon="sun" title="No time off planned" body="Add leave or a closed day, and those days stop taking bookings." />
+        <EmptyState icon="sunny-outline" title="No time off planned" body="Add leave or a closed day, and those days stop taking bookings." />
       )}
 
       <Sheet

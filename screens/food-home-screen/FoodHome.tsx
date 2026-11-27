@@ -155,10 +155,10 @@ const FoodHomeContent: React.FC = () => {
         <QuickActionGrid
           columns={4}
           actions={[
-            { key: 'bachat', icon: 'gift-outline', tint: 'green', label: 'Bachat Box', onPress: () => navigation.navigate('FoodSurplusList') },
-            { key: 'tiffins', icon: 'calendar-outline', tint: 'amber', label: 'My tiffins', onPress: () => navigation.navigate('FoodTiffins') },
-            { key: 'dawat', icon: 'people-outline', tint: 'violet', label: 'Dawat requests', onPress: () => navigation.navigate('FoodCateringRequests') },
-            { key: 'kitchen', icon: 'basket-outline', tint: 'teal', label: 'My Kitchen', onPress: () => navigation.navigate('MyKitchen') },
+            { key: 'bachat', icon: 'gift-outline', label: 'Bachat Box', onPress: () => navigation.navigate('FoodSurplusList') },
+            { key: 'tiffins', icon: 'calendar-outline', label: 'My tiffins', onPress: () => navigation.navigate('FoodTiffins') },
+            { key: 'dawat', icon: 'people-outline', label: 'Dawat requests', onPress: () => navigation.navigate('FoodCateringRequests') },
+            { key: 'kitchen', icon: 'basket-outline', label: 'My Kitchen', onPress: () => navigation.navigate('MyKitchen') },
           ]}
         />
       </View>
@@ -185,7 +185,7 @@ const FoodHomeContent: React.FC = () => {
       {liveOrder}
       {!point ? (
         <View style={styles.padded}>
-          <EmptyState ion="location-outline" title="Choose your address" body="Pick a saved address or use where you are, and we’ll show the kitchens that deliver there." />
+          <EmptyState icon="location-outline" title="Choose your address" body="Pick a saved address or use where you are, and we’ll show the kitchens that deliver there." />
           <Button label="Choose an address" onPress={() => dispatch(openPointSheet())} fullWidth />
         </View>
       ) : s.error.message && !home ? (
@@ -198,7 +198,7 @@ const FoodHomeContent: React.FC = () => {
         <>
           <View style={styles.padded}>
             <EmptyState
-              ion="map-outline"
+              icon="map-outline"
               title="Not delivering here yet"
               body={
                 home.coverage.pickupNearby

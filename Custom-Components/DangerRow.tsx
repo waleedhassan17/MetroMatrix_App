@@ -42,7 +42,7 @@ export const DangerRow: React.FC<DangerRowProps> = ({ label, onConfirm, confirm,
       accessibilityLabel={label}
       style={({ pressed }) => [styles.row, (pressed || disabled) && { opacity: disabled ? opacity.disabled : opacity.pressed }]}>
       <IonIcon name={icon} size="md" color={colors.danger} />
-      <AppText variant="bodyStrong" tone="danger">
+      <AppText variant="title" tone="danger">
         {label}
       </AppText>
     </Pressable>

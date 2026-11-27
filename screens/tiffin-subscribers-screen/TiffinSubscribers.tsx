@@ -205,7 +205,7 @@ const TiffinSubscribersContent: React.FC<Props> = ({ navigation, route }) => {
         s.status === 'failed' ? null : <RowCardsSkeleton count={3} />
       ) : !items.length ? (
         <EmptyState
-          ion="people-outline"
+          icon="people-outline"
           title={s.tab === 'pending' ? 'No requests to answer' : 'Nobody here'}
           body={s.tab === 'pending' ? 'New tiffin requests wait here for you to approve. Their first period is due once you do.' : 'Subscriptions move here as they change.'}
         />

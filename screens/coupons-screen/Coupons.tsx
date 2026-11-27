@@ -62,7 +62,7 @@ const CouponsContent: React.FC<Props> = ({ navigation }) => {
           const st = COUPON_STATUS_LABEL[c.status];
           return (
             <RowCard
-              mark={{ icon: 'pricetag-outline', tint: 'rose' }}
+              mark={{ icon: 'pricetag-outline' }}
               title={c.code}
               lines={[`${couponValueLabel(c)}${c.minOrder ? ` on ${formatPKR(c.minOrder)} or more` : ''}`, `${couponWindow(c)} · ${usage(c)}`]}
               pill={{ label: st.label, tone: st.tone }}
@@ -76,7 +76,7 @@ const CouponsContent: React.FC<Props> = ({ navigation }) => {
           ) : s.status === 'failed' ? (
             <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadCouponsListAsync()) }} />
           ) : (
-            <EmptyState ion="pricetag-outline" title="No coupons yet" body="A code like EID15 brings customers back. You choose the discount, the minimum and the dates." />
+            <EmptyState icon="pricetag-outline" title="No coupons yet" body="A code like EID15 brings customers back. You choose the discount, the minimum and the dates." />
           )
         }
       />

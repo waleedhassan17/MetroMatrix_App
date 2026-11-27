@@ -112,7 +112,7 @@ const WasteAndSurplusContent: React.FC<Props> = ({ navigation }) => {
       {s.suggestion && !s.boxes.length ? (
         <Card>
           <View style={styles.gap}>
-            <AppText variant="overline" tone="accentDeep">
+            <AppText variant="small" tone="accentDeep">
               Suggested for tonight
             </AppText>
             <AppText variant="title">{s.suggestion.title}</AppText>
@@ -127,7 +127,7 @@ const WasteAndSurplusContent: React.FC<Props> = ({ navigation }) => {
         <RowCard
           key={b.id}
           title={b.title}
-          mark={{ icon: 'gift-outline', tint: 'rose' }}
+          mark={{ icon: 'gift-outline' }}
           lines={[`Pickup ${b.pickupLabel}`, `${b.reserved} of ${b.quantity} reserved${b.collected ? ` · ${b.collected} collected` : ''}`]}
           pill={{ label: BOX_STATUS[b.status].label, tone: BOX_STATUS[b.status].tone }}
           amount={formatPKR(b.price)}
@@ -185,7 +185,7 @@ const WasteAndSurplusContent: React.FC<Props> = ({ navigation }) => {
                 ))}
                 {w.topItems.length ? <Divider /> : null}
                 {w.topItems.length ? (
-                  <AppText variant="overline" tone="muted">
+                  <AppText variant="small" tone="muted">
                     Most wasted
                   </AppText>
                 ) : null}
@@ -204,7 +204,7 @@ const WasteAndSurplusContent: React.FC<Props> = ({ navigation }) => {
             <RowCard
               key={e.id}
               title={e.lines.map(l => l.name).slice(0, 2).join(', ') + (e.lines.length > 2 ? ` and ${e.lines.length - 2} more` : '')}
-              mark={{ icon: 'trash-outline', tint: 'grey' }}
+              mark={{ icon: 'trash-outline' }}
               lines={[formatWhen(e.at, TZ), [...new Set(e.lines.map(l => WASTE_REASON_LABEL[l.reason]))].join(', '), e.note]}
               amount={formatPKR(e.cost)}
             />
@@ -216,8 +216,8 @@ const WasteAndSurplusContent: React.FC<Props> = ({ navigation }) => {
       <SectionHead title="Meals rescued" action={{ label: 'Donations', onPress: () => navigation.navigate('KitchenDonations') }} />
       <StatGrid
         stats={[
-          { key: 'total', icon: 'heart-outline', tint: 'rose', value: w ? rescued : null, label: 'Meals rescued', hint: 'Bachat Box pickups and donations' },
-          { key: 'range', icon: 'calendar-outline', tint: 'blue', value: w ? w.mealsRescued.inRange : null, label: s.range === '7d' ? 'This week' : 'Last 30 days' },
+          { key: 'total', icon: 'heart-outline', value: w ? rescued : null, label: 'Meals rescued', hint: 'Bachat Box pickups and donations' },
+          { key: 'range', icon: 'calendar-outline', value: w ? w.mealsRescued.inRange : null, label: s.range === '7d' ? 'This week' : 'Last 30 days' },
         ]}
       />
       {rescued > 0 ? (

@@ -42,7 +42,7 @@ const RiderCash: React.FC = () => {
             <TrustNote text={`Hand the cash to ${vendor}; they record it and it comes off here. It’s ${vendor}’s money: MetroMatrix holds none of it.`} />
           </>
         ) : (
-          <EmptyState ion="cash-outline" title="No cash held" body="Cash you collect on delivery adds up here until you hand it over at the kitchen." />
+          <EmptyState icon="cash-outline" title="No cash held" body="Cash you collect on delivery adds up here until you hand it over at the kitchen." />
         )}
       </ScreenShell>
     </ServiceScope>

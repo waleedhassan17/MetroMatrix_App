@@ -231,7 +231,7 @@ export const PhotoTopBar: React.FC<{
 /** When it ships, what delivery costs, returns: three columns in one card. */
 export const PolicyStrip: React.FC<{ lines: PolicyLine[] }> = ({ lines }) => {
   const styles = useStyles(makeStyles);
-  const { service } = useTheme();
+  const { colors } = useTheme();
   return (
     <Card>
       <View style={styles.policy} accessible accessibilityLabel={lines.map(l => l.text).join('. ')}>
@@ -239,7 +239,7 @@ export const PolicyStrip: React.FC<{ lines: PolicyLine[] }> = ({ lines }) => {
           <React.Fragment key={l.text}>
             {i > 0 ? <View style={styles.policyRule} /> : null}
             <View style={styles.policyItem}>
-              <IonIcon name={l.icon} size="md" color={service.accentDeep} />
+              <IonIcon name={l.icon} size="md" color={colors.inkMuted} />
               <AppText variant="caption" align="center" numberOfLines={2}>
                 {l.text}
               </AppText>

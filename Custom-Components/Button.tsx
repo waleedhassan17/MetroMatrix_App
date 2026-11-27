@@ -140,7 +140,7 @@ export const Button: React.FC<ButtonProps> = ({
       <View style={[styles.content, loading && styles.hidden]}>
         {leftIcon ? <IonIcon name={leftIcon} size="md" color={palette.fg} /> : null}
         <AppText
-          variant={size === 'sm' ? 'small' : 'button'}
+          variant={size === 'sm' ? 'link' : 'button'}
           style={{ color: palette.fg }}
           numberOfLines={1}>
           {label}

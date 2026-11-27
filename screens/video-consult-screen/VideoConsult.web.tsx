@@ -35,7 +35,7 @@ const VideoConsultContent: React.FC<Props> = ({ route, navigation }) => {
   };
   return (
     <ScreenShell title="Video consultation" onBack={end}>
-      <EmptyState icon="smartphone" title="Use the mobile app for video" body="Video consultations run in the MetroMatrix app on your phone, where the camera and microphone work inside the call." />
+      <EmptyState icon="phone-portrait-outline" title="Use the mobile app for video" body="Video consultations run in the MetroMatrix app on your phone, where the camera and microphone work inside the call." />
       <View style={styles.actions}>
         {room ? <Button label="Open the call in a new tab" variant="secondary" leftIcon="open-outline" onPress={() => void Linking.openURL(room.roomUrl)} fullWidth /> : null}
         <Button label="I've finished" onPress={end} fullWidth />

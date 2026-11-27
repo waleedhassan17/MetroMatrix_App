@@ -159,7 +159,7 @@ const ProviderBadgeInner: React.FC<{ label: string; signingIn?: boolean }> = ({
         { backgroundColor: service.accentSoft, borderColor: service.accentLine },
       ]}
       accessibilityLabel={`${signingIn ? 'Signing in as' : 'Registering as'} ${label}`}>
-      <AppText variant="small" tone="accentDeep">
+      <AppText variant="chip" tone="accentDeep">
         {label}
       </AppText>
     </View>

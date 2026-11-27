@@ -11,7 +11,7 @@ import { StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSignOut } from '../../hooks/useSignOut';
 import { useAppSelector } from '../../hooks/useReduxHooks';
-import { ServiceScope, useStyles, useTheme, type RowTint, type Theme } from '../../theme/index';
+import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import { AppText, Card, ListRow, ScreenShell, StoreMark, TextAction, type IonName } from '../../Custom-Components/index';
 import { ToolSection } from '../../Components/admin/AdminParts';
 import { selectBusiness } from '../../store/authSlice';
@@ -23,7 +23,6 @@ interface Item {
   label: string;
   hint?: string;
   icon: IonName;
-  tint: RowTint;
   to: string;
 }
 
@@ -31,31 +30,31 @@ const SECTIONS: { title: string; items: Item[] }[] = [
   {
     title: 'Your store',
     items: [
-      { label: 'Settings', hint: 'Delivery, returns, cash on delivery, pause', icon: 'settings-outline', tint: 'grey', to: 'StoreSettings' },
-      { label: 'Payment accounts', hint: 'Where customers send transfers', icon: 'card-outline', tint: 'blue', to: 'PaymentAccounts' },
+      { label: 'Settings', hint: 'Delivery, returns, cash on delivery, pause', icon: 'settings-outline', to: 'StoreSettings' },
+      { label: 'Payment accounts', hint: 'Where customers send transfers', icon: 'card-outline', to: 'PaymentAccounts' },
     ],
   },
   {
     title: 'Catalogue',
     items: [
-      { label: 'Inventory', hint: 'Stock for every size and colour', icon: 'layers-outline', tint: 'blue', to: 'Inventory' },
-      { label: 'Collections', hint: 'The shelves on your store page', icon: 'albums-outline', tint: 'violet', to: 'Collections' },
-      { label: 'Coupons', hint: 'Codes customers use at checkout', icon: 'pricetag-outline', tint: 'rose', to: 'Coupons' },
+      { label: 'Inventory', hint: 'Stock for every size and colour', icon: 'layers-outline', to: 'Inventory' },
+      { label: 'Collections', hint: 'The shelves on your store page', icon: 'albums-outline', to: 'Collections' },
+      { label: 'Coupons', hint: 'Codes customers use at checkout', icon: 'pricetag-outline', to: 'Coupons' },
     ],
   },
   {
     title: 'Customers',
     items: [
-      { label: 'Returns', hint: 'Requests and refunds', icon: 'return-down-back-outline', tint: 'amber', to: 'StoreReturns' },
-      { label: 'Reviews', hint: 'What buyers said, and your replies', icon: 'star-outline', tint: 'amber', to: 'StoreReviews' },
-      { label: 'Insights', hint: 'Recorded sales and best sellers', icon: 'stats-chart-outline', tint: 'violet', to: 'Insights' },
+      { label: 'Returns', hint: 'Requests and refunds', icon: 'return-down-back-outline', to: 'StoreReturns' },
+      { label: 'Reviews', hint: 'What buyers said, and your replies', icon: 'star-outline', to: 'StoreReviews' },
+      { label: 'Insights', hint: 'Recorded sales and best sellers', icon: 'stats-chart-outline', to: 'Insights' },
     ],
   },
   {
     title: 'Account',
     items: [
-      { label: 'Notifications', icon: 'notifications-outline', tint: 'rose', to: 'Notifications' },
-      { label: 'My account', hint: 'Name, phone, password', icon: 'person-circle-outline', tint: 'blue', to: 'Profile' },
+      { label: 'Notifications', icon: 'notifications-outline', to: 'Notifications' },
+      { label: 'My account', hint: 'Name, phone, password', icon: 'person-circle-outline', to: 'Profile' },
     ],
   },
 ];
@@ -108,13 +107,12 @@ const StoreMoreContent: React.FC = () => {
             title: it.label,
             subtitle: it.hint,
             icon: it.icon,
-            tint: it.tint,
             onPress: () => navigation.navigate(it.to),
           }))}
         />
       ))}
       <Card padded="horizontal">
-        <ListRow title="Sign out" leftIcon="log-out-outline" tint="red" onPress={confirmSignOut} chevron={false} />
+        <ListRow title="Sign out" leftIcon="log-out-outline" destructive onPress={confirmSignOut} chevron={false} />
       </Card>
     </ScreenShell>
   );

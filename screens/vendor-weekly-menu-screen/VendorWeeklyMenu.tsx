@@ -56,7 +56,7 @@ const VendorWeeklyMenu: React.FC = () => {
         {s.status === 'loading' && !s.saved.length ? (
           <RowCardsSkeleton count={4} />
         ) : s.status === 'failed' && !s.saved.length ? null : !s.saved.length ? (
-          <EmptyState ion="calendar-outline" title="No dishes yet" body="Add dishes to your menu, then choose the days you cook each one." />
+          <EmptyState icon="calendar-outline" title="No dishes yet" body="Add dishes to your menu, then choose the days you cook each one." />
         ) : (
           s.saved.map(r => {
             const days = s.days[r.itemId] ?? [];

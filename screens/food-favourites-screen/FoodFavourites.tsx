@@ -85,7 +85,7 @@ const FoodFavouritesContent: React.FC<Props> = ({ navigation }) => {
           ) : s.status === 'failed' ? (
             <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadFavouritesAsync()) }} />
           ) : (
-            <EmptyState ion="heart-outline" title="No saved kitchens yet" body="Tap the heart on a kitchen’s page to keep it here." action={{ label: 'Browse the Food Court', onPress: back }} />
+            <EmptyState icon="heart-outline" title="No saved kitchens yet" body="Tap the heart on a kitchen’s page to keep it here." action={{ label: 'Browse the Food Court', onPress: back }} />
           )
         }
       />

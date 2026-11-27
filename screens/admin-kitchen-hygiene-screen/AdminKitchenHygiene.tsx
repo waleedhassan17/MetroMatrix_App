@@ -59,7 +59,7 @@ const AdminKitchenHygiene: React.FC<Props> = ({ navigation, route }) => {
           <RowCard
             key={h.businessId}
             title={h.vendor?.name ?? 'Kitchen'}
-            mark={{ icon: 'shield-checkmark-outline', tint: h.status === 'verified' ? 'accent' : 'amber' }}
+            mark={{ icon: 'shield-checkmark-outline' }}
             lines={[
               `${h.vendor?.isHomeKitchen ? 'Home kitchen' : 'Kitchen'} · ${done(h.items)}`,
               h.status === 'self_declared' && h.requestedAt ? `Ticked on ${formatDate(h.requestedAt)}` : h.reviewedAt ? `Verified on ${formatDate(h.reviewedAt)}` : null,

@@ -8,9 +8,10 @@
 
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useStyles, useTheme, type Theme } from '../theme';
+import { useStyles, type Theme } from '../theme';
 import { AppText } from './AppText';
-import { Icon, type IconName } from './Icon';
+import { type IonName } from './Icon';
+import { IconWell, type WellTone } from './IconWell';
 import { TextAction } from './TextAction';
 
 export type NoticeTone = 'error' | 'info' | 'success' | 'warning';
@@ -37,25 +38,23 @@ const makeStyles = ({ colors, space, radius, size }: Theme) =>
       borderColor: colors.line,
     },
     embedded: { padding: space.s0, borderWidth: space.s0 },
-    well: { width: size.subTypeTile, height: size.subTypeTile, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
-    body: { flex: 1, gap: space.s4, alignItems: 'flex-start', justifyContent: 'center', minHeight: size.subTypeTile },
+    body: { flex: 1, gap: space.s4, alignItems: 'flex-start', justifyContent: 'center', minHeight: size.well.sm },
   });
+
+/** A tone's well: the status colour, or the scope's accent for plain information. */
+export const NOTICE_LOOK: Record<NoticeTone, { tone: WellTone; icon: IonName }> = {
+  error: { tone: 'danger', icon: 'alert-circle-outline' },
+  warning: { tone: 'warning', icon: 'warning-outline' },
+  success: { tone: 'success', icon: 'checkmark-circle-outline' },
+  info: { tone: 'accent', icon: 'information-circle-outline' },
+};
 
 export const InlineNotice: React.FC<InlineNoticeProps> = ({ tone = 'error', title, message, action, embedded }) => {
   const styles = useStyles(makeStyles);
-  const { colors, service } = useTheme();
-  const look: Record<NoticeTone, { bg: string; fg: string; icon: IconName }> = {
-    error: { bg: colors.dangerSoft, fg: colors.danger, icon: 'alert-circle' },
-    warning: { bg: colors.warningSoft, fg: colors.warning, icon: 'alert-triangle' },
-    success: { bg: colors.successSoft, fg: colors.success, icon: 'check-circle' },
-    info: { bg: service.accentSoft, fg: service.accentDeep, icon: 'info' },
-  };
-  const l = look[tone];
+  const l = NOTICE_LOOK[tone];
   return (
     <View style={[styles.root, embedded && styles.embedded]} accessibilityRole="alert" accessibilityLiveRegion="polite">
-      <View style={[styles.well, { backgroundColor: l.bg }]}>
-        <Icon name={l.icon} size="md" color={l.fg} />
-      </View>
+      <IconWell icon={l.icon} tone={l.tone} size="sm" />
       <View style={styles.body}>
         {title ? <AppText variant="bodyStrong">{title}</AppText> : null}
         <AppText variant={title ? 'small' : 'body'} tone={title ? 'muted' : 'ink'}>

@@ -113,7 +113,7 @@ const StoreOrdersContent: React.FC = () => {
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
             <EmptyState
-              ion="receipt-outline"
+              icon="receipt-outline"
               title={q ? `No orders match "${q}"` : payments ? 'No payments to check' : refunds ? 'No refunds to record' : 'Nothing here'}
               body={
                 payments

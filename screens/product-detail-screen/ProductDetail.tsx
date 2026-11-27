@@ -212,7 +212,7 @@ const ProductBody: React.FC<Props & { product: ProductDetail; back: () => void }
             accessibilityRole="link"
             accessibilityLabel={`Sold by ${p.store.name}. Visit the store`}>
             <StoreMark store={p.store} size="sm" />
-            <AppText variant="overline" tone="accentDeep">
+            <AppText variant="small" tone="accentDeep">
               {p.store.name}
             </AppText>
             <IonIcon name="chevron-forward" size="sm" color={service.accentDeep} />
@@ -289,7 +289,7 @@ const ProductBody: React.FC<Props & { product: ProductDetail; back: () => void }
               <Button label={`See all ${reviews} reviews`} variant="secondary" onPress={openReviews} fullWidth />
             </View>
           ) : (
-            <EmptyState ion="chatbubble-ellipses-outline" title="No reviews yet" body="Buyers can review it once it's delivered." />
+            <EmptyState icon="chatbubble-ellipses-outline" title="No reviews yet" body="Buyers can review it once it's delivered." />
           )}
         </View>
 

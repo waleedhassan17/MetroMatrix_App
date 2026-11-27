@@ -1,20 +1,20 @@
-// ListRow — title, optional subtitle, leading icon tile, trailing value/chevron.
-// The leading icon sits in a soft tile of the service accent (danger for a
-// destructive row), the settings-list pattern people read at a glance.
+// ListRow — a menu or settings row: a plain leading glyph, the title, one
+// muted line, a trailing value and chevron. The glyph is slate and has no
+// well (danger for a destructive row): rows never carry decorative colour
+// (the owner, 2026-11-27). Every row is one height: the title and the line
+// under it are one line each.
 
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { useStyles, useTheme, type RowTint, type Theme } from '../theme';
+import { useStyles, useTheme, type Theme } from '../theme';
 import { AppText } from './AppText';
 import { IonIcon, type IonName } from './Icon';
 
 export interface ListRowProps {
   title: string;
   subtitle?: string;
-  /** Ionicons glyph, shown in a tinted tile. */
+  /** Ionicons glyph, plain and slate, in a fixed slot so titles line up. */
   leftIcon?: IonName;
-  /** The tile's colour: the service accent unless a categorical tint is given (profile menus). */
-  tint?: RowTint;
   left?: React.ReactNode;
   right?: React.ReactNode;
   value?: string;
@@ -24,7 +24,7 @@ export interface ListRowProps {
   accessibilityHint?: string;
 }
 
-const makeStyles = ({ space, size, radius }: Theme) =>
+const makeStyles = ({ space, size }: Theme) =>
   StyleSheet.create({
     root: {
       flexDirection: 'row',
@@ -33,21 +33,15 @@ const makeStyles = ({ space, size, radius }: Theme) =>
       paddingVertical: space.s12,
       gap: space.s12,
     },
-    tile: {
-      width: size.subTypeTile,
-      height: size.subTypeTile,
-      borderRadius: radius.md,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
+    glyph: { width: size.icon.lg, alignItems: 'center' },
     body: { flex: 1, gap: space.s4 },
+    value: { maxWidth: '40%' },
   });
 
 export const ListRow: React.FC<ListRowProps> = ({
   title,
   subtitle,
   leftIcon,
-  tint,
   left,
   right,
   value,
@@ -57,12 +51,7 @@ export const ListRow: React.FC<ListRowProps> = ({
   accessibilityHint,
 }) => {
   const styles = useStyles(makeStyles);
-  const { colors, service, opacity, rowTint } = useTheme();
-  const tile = destructive
-    ? { bg: colors.dangerSoft, fg: colors.danger }
-    : tint
-      ? rowTint[tint]
-      : { bg: service.accentSoft, fg: service.accent };
+  const { colors, opacity } = useTheme();
   return (
     <Pressable
       onPress={onPress}
@@ -73,8 +62,8 @@ export const ListRow: React.FC<ListRowProps> = ({
       style={({ pressed }) => [styles.root, pressed && { opacity: opacity.pressed }]}>
       {left ??
         (leftIcon ? (
-          <View style={[styles.tile, { backgroundColor: tile.bg }]}>
-            <IonIcon name={leftIcon} size="md" color={tile.fg} />
+          <View style={styles.glyph}>
+            <IonIcon name={leftIcon} size="md" color={destructive ? colors.danger : colors.inkMuted} />
           </View>
         ) : null)}
       <View style={styles.body}>
@@ -82,13 +71,13 @@ export const ListRow: React.FC<ListRowProps> = ({
           {title}
         </AppText>
         {subtitle ? (
-          <AppText variant="small" tone="muted" numberOfLines={2}>
+          <AppText variant="small" tone="muted" numberOfLines={1}>
             {subtitle}
           </AppText>
         ) : null}
       </View>
       {value ? (
-        <AppText variant="small" tone="muted" numberOfLines={1}>
+        <AppText variant="small" tone="muted" numberOfLines={1} style={styles.value}>
           {value}
         </AppText>
       ) : null}

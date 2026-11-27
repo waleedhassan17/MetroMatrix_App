@@ -72,7 +72,7 @@ const HealthHomeContent: React.FC<Props> = ({ navigation }) => {
   const { leaveService: back } = useServiceNav();
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { specialtyTint } = useTheme();
+  const { size } = useTheme();
   const s = useAppSelector(selectHealthHome);
   const user = useAppSelector(selectUser);
   const nav = useHealthNav();
@@ -88,7 +88,6 @@ const HealthHomeContent: React.FC<Props> = ({ navigation }) => {
   const city = home?.city ?? s.city ?? 'Lahore';
   const specialties = home?.specialties ?? [];
   const grid = homeSpecialties(specialties);
-  const tintAt = (i: number) => specialtyTint[i % specialtyTint.length];
 
   const tiles: { key: string; label: string; image: (typeof HEALTH_PHOTOS)[keyof typeof HEALTH_PHOTOS]; onPress: () => void; tone?: 'danger' }[] = [
     { key: 'specialties', label: 'Specialties', image: HEALTH_PHOTOS.specialties, onPress: () => navigation.navigate('SpecialtyList') },
@@ -116,7 +115,6 @@ const HealthHomeContent: React.FC<Props> = ({ navigation }) => {
           <View style={styles.bentoColumn}>
             <CareCard
               tall
-              tint="video"
               title="Video consultation"
               body="See a doctor from home"
               image={HEALTH_PHOTOS.video}
@@ -125,14 +123,12 @@ const HealthHomeContent: React.FC<Props> = ({ navigation }) => {
           </View>
           <View style={styles.bentoColumn}>
             <CareCard
-              tint="clinic"
               title="Clinic visit"
               body="Book a confirmed time"
               image={HEALTH_PHOTOS.clinic}
               onPress={() => nav.openDoctors({ kind: 'clinic', title: 'Clinic visit' })}
             />
             <CareCard
-              tint="today"
               title="Available today"
               body="Doctors free now"
               image={HEALTH_PHOTOS.available}
@@ -142,7 +138,7 @@ const HealthHomeContent: React.FC<Props> = ({ navigation }) => {
         </View>
 
         {!home ? (
-          <Skeleton height={64} shape="lg" />
+          <Skeleton height={size.homeSkeleton.nextVisit} shape="lg" />
         ) : home.upcoming ? (
           <View style={styles.block}>
             <HealthSection title="Your next visit" onSeeAll={() => nav.openAppointments()} seeAllLabel="All appointments" />
@@ -163,13 +159,13 @@ const HealthHomeContent: React.FC<Props> = ({ navigation }) => {
         <View style={styles.block}>
           <HealthSection title="Find by specialty" onSeeAll={() => navigation.navigate('SpecialtyList')} />
           {!home ? (
-            <Skeleton height={232} shape="lg" />
+            <Skeleton height={size.homeSkeleton.grid} shape="lg" />
           ) : (
             <View style={styles.grid}>
               {[grid.slice(0, 4), grid.slice(4, 8)].map((row, r) => (
                 <View key={r} style={styles.gridRow}>
-                  {row.map((sp, i) => (
-                    <SpecialtyTile key={sp.slug} specialty={sp} bare tint={tintAt(r * 4 + i)} onPress={() => nav.openDoctors({ specialty: sp.slug, title: sp.name })} />
+                  {row.map(sp => (
+                    <SpecialtyTile key={sp.slug} specialty={sp} bare onPress={() => nav.openDoctors({ specialty: sp.slug, title: sp.name })} />
                   ))}
                 </View>
               ))}
@@ -186,7 +182,7 @@ const HealthHomeContent: React.FC<Props> = ({ navigation }) => {
             {!home ? (
               <View style={styles.railSkeleton}>
                 <View style={styles.spotlightSkeleton}>
-                  <Skeleton height={164} shape="lg" />
+                  <Skeleton height={size.homeSkeleton.spotlight} shape="lg" />
                 </View>
               </View>
             ) : (
@@ -209,7 +205,7 @@ const HealthHomeContent: React.FC<Props> = ({ navigation }) => {
           {!home ? (
             <View style={styles.railSkeleton}>
               <View style={styles.railCardSkeleton}>
-                <Skeleton height={140} shape="lg" />
+                <Skeleton height={size.homeSkeleton.railCard} shape="lg" />
               </View>
             </View>
           ) : home.availableToday.length ? (
@@ -234,12 +230,11 @@ const HealthHomeContent: React.FC<Props> = ({ navigation }) => {
               seeAllLabel="All conditions"
             />
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.rail} contentContainerStyle={styles.concerns}>
-              {home.commonConditions.map((c, i) => (
+              {home.commonConditions.map(c => (
                 <ConcernTile
                   key={c.slug}
                   name={c.name}
                   icon={concernIcon(c, specialties) as IonName}
-                  tint={tintAt(i + 3)}
                   onPress={() => nav.openDoctors({ condition: c.slug, title: `Doctors who treat ${c.name}` })}
                 />
               ))}

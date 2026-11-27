@@ -61,7 +61,7 @@ const SpecialtyListContent: React.FC<Props> = () => {
       onRefresh={() => void dispatch(loadSpecialtiesAsync(city))}>
       {s.status === 'failed' ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadSpecialtiesAsync(city)) }} /> : null}
       {!s.items.length && s.status !== 'failed' ? <SkeletonLines lines={8} /> : null}
-      {s.items.length && !shown.length ? <EmptyState icon="search" title={`No specialty matches "${s.query.trim()}"`} body="Try a symptom from Search instead." /> : null}
+      {s.items.length && !shown.length ? <EmptyState icon="search-outline" title={`No specialty matches "${s.query.trim()}"`} body="Try a symptom from Search instead." /> : null}
       <View style={styles.grid}>
         {rows.map((row, i) => (
           <View key={i} style={styles.row}>

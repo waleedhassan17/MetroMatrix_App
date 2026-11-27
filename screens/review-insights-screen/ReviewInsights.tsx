@@ -98,7 +98,7 @@ const ReviewInsightsContent: React.FC<Props> = ({ navigation }) => {
               <ChoiceChip key={w.week} label={`${weekLabel(w.week)} · ${w.count}`} selected={w.week === d.week} onPress={() => load(w.week)} />
             ))}
           </ScrollView>
-          {!d.themes.length ? <EmptyState ion="chatbox-ellipses-outline" title="Nothing to read yet" body="No reviews that week. Pick another week above." /> : null}
+          {!d.themes.length ? <EmptyState icon="chatbox-ellipses-outline" title="Nothing to read yet" body="No reviews that week. Pick another week above." /> : null}
           {bad.length ? (
             <View style={styles.group}>
               <SectionHead title="To look at" />

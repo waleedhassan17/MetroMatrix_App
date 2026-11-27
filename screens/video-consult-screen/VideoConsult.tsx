@@ -64,7 +64,7 @@ const VideoConsultContent: React.FC<Props> = ({ route, navigation }) => {
   if (!room) {
     return (
       <View style={styles.empty}>
-        <EmptyState icon="video-off" title="Not in a consultation" body="Join from the appointment when the room is open." action={{ label: 'Back', onPress: () => navigation.goBack() }} />
+        <EmptyState icon="videocam-off-outline" title="Not in a consultation" body="Join from the appointment when the room is open." action={{ label: 'Back', onPress: () => navigation.goBack() }} />
       </View>
     );
   }

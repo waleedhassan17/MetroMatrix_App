@@ -129,7 +129,7 @@ const RecipesAndCostsContent: React.FC<Props> = ({ navigation, route }) => {
           ) : s.status === 'failed' ? (
             <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadRecipesAsync(s.needsRecipe)) }} />
           ) : (
-            <EmptyState ion="checkmark-circle-outline" title={s.needsRecipe ? 'Every dish has a recipe card' : 'No dishes yet'} body={s.needsRecipe ? 'Costs, stock and the prep sheet can use all of them.' : 'Add dishes to your menu first.'} />
+            <EmptyState icon="checkmark-circle-outline" title={s.needsRecipe ? 'Every dish has a recipe card' : 'No dishes yet'} body={s.needsRecipe ? 'Costs, stock and the prep sheet can use all of them.' : 'Add dishes to your menu first.'} />
           )
         }
       />

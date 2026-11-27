@@ -81,7 +81,7 @@ const VendorRidersContent: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         <RowCardsSkeleton count={3} />
       ) : !s.riders.length && s.status !== 'failed' ? (
         <>
-          <EmptyState ion="bicycle-outline" title="No riders yet" body="Add the people who deliver for you. Each gets a username and password for the MetroMatrix app, and you see them on the map while they deliver." />
+          <EmptyState icon="bicycle-outline" title="No riders yet" body="Add the people who deliver for you. Each gets a username and password for the MetroMatrix app, and you see them on the map while they deliver." />
           <InlineNotice tone="info" message="Riders are optional — you can also mark an order as handed to your own rider." />
         </>
       ) : (

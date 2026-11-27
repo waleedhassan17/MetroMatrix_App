@@ -36,7 +36,7 @@ const Suspended: React.FC = () => {
       title="Account paused"
       footer={<Button label="Sign out" variant="secondary" onPress={confirmSignOut} fullWidth />}>
       <EmptyState
-        icon="pause-circle"
+        icon="pause-circle-outline"
         title={business?.name ?? 'Your business'}
         body="Customers can't see your business while it's paused."
       />

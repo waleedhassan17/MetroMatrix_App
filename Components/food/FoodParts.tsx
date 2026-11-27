@@ -306,7 +306,7 @@ export const ActiveOrderCard: React.FC<{ orders: FoodOrderSummary[]; total: numb
       <RowCard
         title={`${Math.max(total, orders.length)} orders in progress`}
         lines={[orders.map(o => o.vendor.name).join(' · ')]}
-        mark={{ icon: 'receipt-outline', tint: 'accent' }}
+        mark={{ icon: 'receipt-outline' }}
         chevron
         onPress={onAll}
       />

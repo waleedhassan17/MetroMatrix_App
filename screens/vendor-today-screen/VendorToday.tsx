@@ -127,22 +127,22 @@ const VendorToday: React.FC = () => {
             columns={3}
             compact
             stats={[
-              { key: 'new', icon: 'receipt-outline', tint: 'accent', value: newOrders, label: 'New orders', onPress: () => navigation.navigate('VendorTabs', { screen: 'OrdersTab' }) },
-              { key: 'cooking', icon: 'flame-outline', tint: 'amber', value: cookingNow.length, label: 'Cooking today' },
-              { key: 'plates', icon: 'restaurant-outline', tint: 'green', value: limited ? platesLeft : '—', label: 'Plates left' },
+              { key: 'new', icon: 'receipt-outline', value: newOrders, label: 'New orders', onPress: () => navigation.navigate('VendorTabs', { screen: 'OrdersTab' }) },
+              { key: 'cooking', icon: 'flame-outline', value: cookingNow.length, label: 'Cooking today' },
+              { key: 'plates', icon: 'restaurant-outline', value: limited ? platesLeft : '—', label: 'Plates left' },
             ]}
           />
         ) : s.status !== 'failed' ? (
-          <StatGridSkeleton />
+          <StatGridSkeleton count={3} columns={3} compact />
         ) : null}
         <QuickActionGrid
           actions={[
-            { key: 'weekly', icon: 'calendar-number-outline', tint: 'amber', label: 'Weekly menu', onPress: () => navigation.navigate('VendorWeeklyMenu') },
-            { key: 'slots', icon: 'alarm-outline', tint: 'green', label: 'Pre-order slots', onPress: () => navigation.navigate('VendorPreorderSlots') },
-            { key: 'menu', icon: 'book-outline', tint: 'rose', label: 'Menu', onPress: () => navigation.navigate('VendorMenuPage') },
-            { key: 'box', icon: 'gift-outline', tint: 'teal', label: 'Bachat Box', onPress: () => navigation.navigate('KitchenBoxForm', { suggest: evening }) },
-            { key: 'tiffin', icon: 'calendar-outline', tint: 'violet', label: 'Tiffins', onPress: () => navigation.navigate('GrowthTiffin') },
-            { key: 'riders', icon: 'bicycle-outline', tint: 'blue', label: 'Riders', onPress: () => navigation.navigate('VendorRidersPage') },
+            { key: 'weekly', icon: 'calendar-number-outline', label: 'Weekly menu', onPress: () => navigation.navigate('VendorWeeklyMenu') },
+            { key: 'slots', icon: 'alarm-outline', label: 'Pre-order slots', onPress: () => navigation.navigate('VendorPreorderSlots') },
+            { key: 'menu', icon: 'book-outline', label: 'Menu', onPress: () => navigation.navigate('VendorMenuPage') },
+            { key: 'box', icon: 'gift-outline', label: 'Bachat Box', onPress: () => navigation.navigate('KitchenBoxForm', { suggest: evening }) },
+            { key: 'tiffin', icon: 'calendar-outline', label: 'Tiffins', onPress: () => navigation.navigate('GrowthTiffin') },
+            { key: 'riders', icon: 'bicycle-outline', label: 'Riders', onPress: () => navigation.navigate('VendorRidersPage') },
           ]}
         />
         {suggested.length && !dirty ? (
@@ -162,7 +162,7 @@ const VendorToday: React.FC = () => {
                 .map(p => `${p.name}: ${p.count} (${p.dishes.join(', ')})`)
                 .join(' · '),
             ]}
-            mark={{ icon: 'calendar-outline', tint: 'violet' }}
+            mark={{ icon: 'calendar-outline' }}
             chevron
             onPress={() => navigation.navigate('GrowthTiffin')}
           />
@@ -171,7 +171,7 @@ const VendorToday: React.FC = () => {
           <RowCard
             title="Food left tonight?"
             lines={['Put it up as a Bachat Box: sold for pickup at a lower price instead of thrown away.']}
-            mark={{ icon: 'gift-outline', tint: 'teal' }}
+            mark={{ icon: 'gift-outline' }}
             chevron
             onPress={() => navigation.navigate('KitchenBoxForm', { suggest: true })}
           />
@@ -179,7 +179,7 @@ const VendorToday: React.FC = () => {
         {!t ? (
           s.status === 'failed' ? null : <RowCardsSkeleton count={3} />
         ) : !t.items.length ? (
-          <EmptyState ion="book-outline" title="Add your dishes first" body="Put your dishes on the menu, then set how many plates you cook each day." action={{ label: 'Open the menu', onPress: () => navigation.navigate('VendorMenuPage') }} />
+          <EmptyState icon="book-outline" title="Add your dishes first" body="Put your dishes on the menu, then set how many plates you cook each day." action={{ label: 'Open the menu', onPress: () => navigation.navigate('VendorMenuPage') }} />
         ) : (
           <>
             <ShopSection title="Cooking today" subtitle="Turn a dish off for the day, or set how many plates" inset={false} />

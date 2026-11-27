@@ -53,7 +53,7 @@ const ShopCategories: React.FC<Props> = () => {
   const { back } = useBack({ name: 'ShopOverview' });
   const dispatch = useAppDispatch();
   const styles = useStyles(makeStyles);
-  const { service } = useTheme();
+  const { colors, service } = useTheme();
   const s = useAppSelector(selectShopCategories);
 
   useEffect(() => {
@@ -74,7 +74,7 @@ const ShopCategories: React.FC<Props> = () => {
 
   const renderRow = (c: ShopCategory, siblings: ShopCategory[], i: number, parentId: string | null) => (
     <View style={[styles.row, parentId ? styles.child : null]}>
-      <IonIcon name={categoryIcon(c.icon)} size="md" color={service.accentDeep} />
+      <IonIcon name={categoryIcon(c.icon)} size="md" color={colors.inkMuted} />
       <View style={styles.text}>
         <AppText variant={parentId ? 'body' : 'bodyStrong'}>{c.name}</AppText>
         <AppText variant="caption" tone="muted">

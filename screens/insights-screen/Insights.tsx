@@ -79,24 +79,23 @@ const InsightsContent: React.FC<Props> = () => {
       {s.error.message ? <InlineNotice message={s.error.message} action={{ label: 'Try again', onPress: () => void dispatch(loadInsightsAsync(s.range)) }} /> : null}
       {!d ? (
         <>
-          <StatGridSkeleton count={4} />
+          <StatGridSkeleton count={4} hints />
           <RowCardsSkeleton count={2} />
         </>
       ) : (
         <>
           <StatGrid
             stats={[
-              { key: 'sales', icon: 'cash-outline', tint: 'accent', value: formatPKR(d.recordedSales), label: 'Recorded sales' },
+              { key: 'sales', icon: 'cash-outline', value: formatPKR(d.recordedSales), label: 'Recorded sales' },
               {
                 key: 'orders',
                 icon: 'cube-outline',
-                tint: 'blue',
                 value: d.orderCount,
                 label: 'Orders delivered',
                 hint: `${d.deliveredRatePct}% of those placed`,
               },
-              { key: 'avg', icon: 'receipt-outline', tint: 'violet', value: formatPKR(avg), label: 'Average order' },
-              { key: 'repeat', icon: 'people-outline', tint: 'rose', value: `${d.repeatCustomerPct}%`, label: 'Repeat customers' },
+              { key: 'avg', icon: 'receipt-outline', value: formatPKR(avg), label: 'Average order' },
+              { key: 'repeat', icon: 'people-outline', value: `${d.repeatCustomerPct}%`, label: 'Repeat customers' },
             ]}
           />
           <SectionCard title="Recorded sales" icon="trending-up-outline">
@@ -134,7 +133,7 @@ const InsightsContent: React.FC<Props> = () => {
                 </View>
               ))
             ) : (
-              <EmptyState ion="trophy-outline" title="Nothing delivered yet" body="Your best sellers show here once orders are delivered." />
+              <EmptyState icon="trophy-outline" title="Nothing delivered yet" body="Your best sellers show here once orders are delivered." />
             )}
           </SectionCard>
           <AppText variant="caption" tone="muted">

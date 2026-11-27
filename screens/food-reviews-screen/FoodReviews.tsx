@@ -71,7 +71,7 @@ const FoodReviewsContent: React.FC<Props> = ({ route }) => {
           ) : list.error ? (
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (
-            <EmptyState ion="chatbox-ellipses-outline" title="No reviews yet" body="Reviews show here once customers rate their orders." />
+            <EmptyState icon="chatbox-ellipses-outline" title="No reviews yet" body="Reviews show here once customers rate their orders." />
           )
         }
       />

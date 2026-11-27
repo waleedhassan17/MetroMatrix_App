@@ -331,7 +331,6 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
                   title="Plan a dawat"
                   subtitle={`Catering from ${page.catering.minGuests} guests, ${page.catering.leadDays} days ahead. Ask for a quote.`}
                   leftIcon="people-outline"
-                  tint="violet"
                   onPress={() => navigation.navigate('FoodCateringForm', { slug: page.slug, name: page.name })}
                 />
               ) : null}
@@ -345,7 +344,6 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
                     .filter(Boolean)
                     .join(' · ')}
                   leftIcon="moon-outline"
-                  tint="blue"
                   chevron={false}
                 />
               ) : null}
@@ -448,7 +446,7 @@ const FoodVendorContent: React.FC<Props> = ({ route, navigation }) => {
         )}
         ListEmptyComponent={
           <View style={styles.padded}>
-            <EmptyState ion="restaurant-outline" title="Nothing on the menu right now" body="The kitchen hasn’t put its dishes up yet. Check back soon." />
+            <EmptyState icon="restaurant-outline" title="Nothing on the menu right now" body="The kitchen hasn’t put its dishes up yet. Check back soon." />
           </View>
         }
         onViewableItemsChanged={onViewable}

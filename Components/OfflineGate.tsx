@@ -20,7 +20,7 @@ export const OfflineGate: React.FC = () => {
   return (
     <ScreenShell scroll={false}>
       <EmptyState
-        icon={server ? 'cloud-off' : 'wifi-off'}
+        icon={server ? 'server-outline' : 'cloud-offline-outline'}
         title={server ? "We can't reach MetroMatrix" : "You're offline"}
         body={
           server

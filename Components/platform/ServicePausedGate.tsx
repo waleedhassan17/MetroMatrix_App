@@ -26,7 +26,7 @@ export const ServicePausedScreen: React.FC<{ service: PlatformService; onLeave?:
   return (
     <ScreenShell scroll={false}>
       <EmptyState
-        icon="pause-circle"
+        icon="pause-circle-outline"
         title={`${SERVICE_LABEL[service]} is paused`}
         body="MetroMatrix has paused this service for a short while. Nothing you saved is lost. Please check back soon."
         action={

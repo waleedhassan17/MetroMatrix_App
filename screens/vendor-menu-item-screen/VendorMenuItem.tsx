@@ -275,7 +275,7 @@ const VendorMenuItemContent: React.FC<Props> = ({ route, navigation }) => {
       {id ? (
         <>
           <Card padded="horizontal">
-            <ListRow title="Make a copy" subtitle="With the same sizes and add-ons" leftIcon="copy-outline" tint="blue" onPress={() => void duplicate()} />
+            <ListRow title="Make a copy" subtitle="With the same sizes and add-ons" leftIcon="copy-outline" onPress={() => void duplicate()} />
           </Card>
           <DangerRow label="Delete dish" onConfirm={remove} />
         </>
