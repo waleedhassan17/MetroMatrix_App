@@ -18,6 +18,7 @@ import { fetchFoodOrders } from '../../networks/food/orders';
 import { FoodOrderRow } from '../../Components/food/FoodParts';
 import { useAppointmentAction } from '../../Components/health/HealthParts';
 import { groupHeadline } from '../../models/shopping/orderStatusModel';
+import { appointmentGroup } from '../../models/health/appointmentStatusModel';
 import { ServiceScope, useStyles, useTheme, type Theme } from '../../theme/index';
 import {
   AppText,
@@ -28,6 +29,7 @@ import {
   InlineNotice,
   IonIcon,
   OrderCardSkeleton,
+  RowCardsSkeleton,
   SkeletonLines,
   StatusPill,
   StoreMark,
@@ -55,6 +57,8 @@ const makeStyles = ({ colors, space, size, radius }: Theme) =>
   StyleSheet.create({
     chips: { flexDirection: 'row', gap: space.s8 },
     list: { gap: space.s12, paddingBottom: space.s40 },
+    // A heading above the first card of its group.
+    groupItem: { gap: space.s12 },
     row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.s12 },
     head: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
     marks: { flexDirection: 'row', alignItems: 'center', gap: space.s8 },
@@ -177,10 +181,25 @@ export const Appointments: React.FC<{ segment: AppointmentSegment; onOpen: (code
         onEndReachedThreshold={0.5}
         onRefresh={list.refresh}
         refreshing={list.isRefreshing}
-        renderItem={({ item }) => <AppointmentCard appointment={item} onPress={() => onOpen(item.code)} action={actionFor(item)} />}
+        renderItem={({ item, index }) => {
+          // A heading where the group changes: Today, Tomorrow, This week, Later; past visits by month.
+          const group = appointmentGroup(item.startAt, item.timezone, segment === 'upcoming');
+          const prev = index > 0 ? list.rows[index - 1] : null;
+          const showHead = !prev || appointmentGroup(prev.startAt, prev.timezone, segment === 'upcoming') !== group;
+          return (
+            <View style={styles.groupItem}>
+              {showHead ? (
+                <AppText variant="sectionTitle" accessibilityRole="header">
+                  {group}
+                </AppText>
+              ) : null}
+              <AppointmentCard appointment={item} onPress={() => onOpen(item.code)} action={actionFor(item)} />
+            </View>
+          );
+        }}
         ListEmptyComponent={
           list.isLoading ? (
-            <SkeletonLines lines={6} />
+            <RowCardsSkeleton count={3} lines={2} />
           ) : list.error ? (
             <InlineNotice message={list.error} action={{ label: 'Try again', onPress: list.reload }} />
           ) : (

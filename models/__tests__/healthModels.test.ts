@@ -1,6 +1,6 @@
 // Health form rules and the one status map.
 
-import { APPOINTMENT_PAYMENT_STATUS, APPOINTMENT_STATUS, appointmentTimeline, visitChangeNote } from '../health/appointmentStatusModel';
+import { APPOINTMENT_PAYMENT_STATUS, APPOINTMENT_STATUS, appointmentGroup, appointmentTimeline, visitChangeNote } from '../health/appointmentStatusModel';
 import { cancelReasonText, defaultPaymentFor, paymentOptionsFor, prepayDeadline, validateBooking, validateCancel } from '../health/bookingModel';
 import {
   appDayFromWeekday,
@@ -369,3 +369,16 @@ describe('visitChangeNote (what changed, and who changed it)', () => {
     expect(visitChangeNote(base)).toBeNull();
   });
 });
+
+describe('appointmentGroup (the headings in Appointments)', () => {
+  const now = Date.parse('2026-11-27T06:00:00Z'); // 11:00 in Karachi, a Friday
+  it('groups upcoming visits by calendar day in the practice’s zone, and past ones by month', () => {
+    expect(appointmentGroup('2026-11-27T13:00:00Z', 'Asia/Karachi', true, now)).toBe('Today');
+    // 23:30 UTC on the 27th is 04:30 on the 28th in Karachi: tomorrow there.
+    expect(appointmentGroup('2026-11-27T23:30:00Z', 'Asia/Karachi', true, now)).toBe('Tomorrow');
+    expect(appointmentGroup('2026-12-02T10:00:00Z', 'Asia/Karachi', true, now)).toBe('This week');
+    expect(appointmentGroup('2026-12-20T10:00:00Z', 'Asia/Karachi', true, now)).toBe('Later');
+    expect(appointmentGroup('2026-10-03T10:00:00Z', 'Asia/Karachi', false, now)).toBe('October 2026');
+  });
+});
+

@@ -16,6 +16,8 @@ import type {
 } from '../health';
 import type { StatusMeta } from '../shopping/orderStatusModel';
 
+import { addDays, dateInZone, todayInZone } from '../../utils/health-time/healthTime';
+
 export const APPOINTMENT_STATUS: Record<AppointmentStatus, StatusMeta> = {
   awaiting_payment: {
     label: 'Payment needed',
@@ -154,4 +156,24 @@ export const visitChangeNote = (a: {
   if (a.followUpOfId) return `A follow-up ${a.doctor.name} booked after your last visit.`;
   return null;
 };
+
+/**
+ * The heading a visit sits under in Appointments: upcoming ones by when
+ * (Today, Tomorrow, This week, Later), past ones by month ("November 2026"),
+ * in calendar days of the practice's zone.
+ */
+export const appointmentGroup = (startAt: string, timezone: string, upcoming: boolean, now: number = Date.now()): string => {
+  const day = dateInZone(startAt, timezone);
+  if (!upcoming) {
+    const [y, m] = day.split('-').map(Number);
+    return `${MONTHS[m - 1]} ${y}`;
+  }
+  const today = todayInZone(timezone, now);
+  if (day <= today) return 'Today';
+  if (day === addDays(today, 1)) return 'Tomorrow';
+  if (day <= addDays(today, 6)) return 'This week';
+  return 'Later';
+};
+
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
