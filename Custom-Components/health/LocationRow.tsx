@@ -44,8 +44,9 @@ export const LocationRow: React.FC<{ location: PracticeLocation; selected: boole
         aria-selected={selected}
         accessibilityLabel={`${l.name}, ${where}, fee ${formatPKR(l.fee)}${l.availability.label ? `, ${l.availability.label}` : ''}`}
         style={styles.main}>
-        <View style={[styles.well, { backgroundColor: selected ? colors.surface : service.accentSoft }]}>
-          <IonIcon name={video ? 'videocam-outline' : 'business-outline'} size="md" color={service.accentDeep} />
+        {/* Neutral like every well; the chosen place shows by its accent line and ground. */}
+        <View style={[styles.well, { backgroundColor: selected ? colors.surface : colors.surfaceSunk }]}>
+          <IonIcon name={video ? 'videocam-outline' : 'business-outline'} size="md" color={selected ? service.accentDeep : colors.inkMuted} />
         </View>
         <View style={styles.text}>
           <View style={styles.top}>
